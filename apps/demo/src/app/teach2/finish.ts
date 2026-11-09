@@ -8,11 +8,12 @@
 // app's hook (main.ts: a fresh engine, the room kept) and clears the field for the next name; "Debrief now" opens the
 // Debrief view on the saved debrief, the case still paused; "Save and close" ends the case through the app's hook (the
 // default patient, the no-case window's three cards). A restart or a close leaves the new patient running. If the archive cannot be
-// written (storage full or blocked) nothing ends and the pane stays.
+// written (storage full or blocked) nothing ends, the pane stays and says which. The save is asynchronous (the bodies are
+// in IndexedDB, N39): nothing restarts, opens or closes until it is written, and no button answers meanwhile.
 import './finish.css';
 import { isV2, type ScenarioDoc } from '@pme/controller';
 import type { ScenarioDriver } from '@pme/controller/scenario';
-import { archive, hhmm, markCounts, marksLine, objectiveCounts, objectivesLine } from '../archive.ts';
+import { archive, hhmm, markCounts, marksLine, objectiveCounts, objectivesLine, refusalText } from '../archive.ts';
 import type { Link } from '../link.ts';
 import { APP_BUILD } from '../position.ts';
 import { cardOf, scenarioById, type ScenarioCard } from '../scenarios.ts';
@@ -55,7 +56,6 @@ export interface Finish {
 
 export const LEAD_TAIL = 'the clock stops here. The debrief is written now, with every step, mark and verdict, and kept in this browser’s archive until you clear it. A reload after “Save and close” returns to the empty window; after “Save and restart” it restores the new run.';
 export const NOTE = '“Save and restart the case” saves the debrief and starts the same card again from its first stage with fresh physiology; the room setup stays as it is (skin, devices, probes, phones). Changing or resetting the room is its own window in the sidebar, Room setup.';
-export const NOT_SAVED = 'The debrief could not be saved: this browser’s storage is full or blocked. Export the archive and clear it on the Debrief page, then try again.';
 
 const time = (link: Link, action: 'pause' | 'resume') => link.send({ type: 'time', action });
 
@@ -76,7 +76,7 @@ export function mountFinish(el: HTMLElement, ctx: Teach2Ctx, repaint: () => void
   const saved = h('p', { class: 'ip2-finish-saved', role: 'status', hidden: true });
   const btn = (cls: string, label: string, act: () => void) => h('button', { type: 'button', class: cls, onclick: () => void (busy || act()) }, label);
   const count = h('span', { class: 'ip2-arc-count' });
-  const exportBtn = h('button', { type: 'button', class: 'ip2-arc-export', onclick: (e: Event) => (e.preventDefault(), exportAll()) }, 'export all as one JSON file');
+  const exportBtn = h('button', { type: 'button', class: 'ip2-arc-export', onclick: (e: Event) => (e.preventDefault(), void exportAll()) }, 'export all as one JSON file');
   const runId = () => {
     const d = link.host?.record.data;
     return d ? (archive.forRun(d.startedAt)?.id ?? null) : null;
@@ -133,16 +133,17 @@ export function mountFinish(el: HTMLElement, ctx: Teach2Ctx, repaint: () => void
   };
 
   /** A button: the debrief into the archive first, then what the button does. */
-  const end = (how: 'restart' | 'now' | 'close') => {
+  const end = async (how: 'restart' | 'now' | 'close') => {
     const d = link.host?.record.data;
     if (!open || !d) return;
     busy = true;
+    pane.setAttribute('aria-busy', 'true');
     try {
       // a /2 card: the run's end in its record (the Debrief grades it final: failed what is still open; design §6, Q11)
       const doc = link.ctl.scenario.doc;
       if (doc && isV2(doc) && !caseFinished(link)) link.note(FINISHED, 'marker');
-      const e = archive.save(d, field.value, APP_BUILD);
-      if (!e) return toast(NOT_SAVED, 'alert');
+      const e = await archive.save(d, field.value, APP_BUILD);
+      if ('refused' in e) return toast(refusalText(e), 'alert');
       if (how === 'now') {
         location.hash = archiveHref(e.id);
         return;
@@ -156,6 +157,7 @@ export function mountFinish(el: HTMLElement, ctx: Teach2Ctx, repaint: () => void
       toast(`Debrief saved: ${entryTitle(e)}. ${how === 'restart' ? 'The case starts again.' : 'The case is closed.'}`);
     } finally {
       busy = false;
+      pane.removeAttribute('aria-busy');
       repaint();
     }
   };
@@ -190,7 +192,7 @@ export function mountFinish(el: HTMLElement, ctx: Teach2Ctx, repaint: () => void
     const at = id ? archive.list().find((x) => x.id === id)?.savedAt : undefined;
     saved.hidden = !id;
     setText(saved, id && at !== undefined ? `Saved to the archive at ${hhmm(at)} as debrief ${n}. A button below saves it again in its place.` : '');
-    setText(count, `Archive · ${archive.savedToday()} saved today`);
+    setText(count, `Archive · ${archive.savedToday()} saved today · ${archive.holdsLine()}`);
     list.draw();
   };
 

@@ -1,10 +1,20 @@
 // The Debrief archive (the owner's board "Finish 2", approved 30 October): every debrief "Finish the case" saves, kept
-// in THIS browser (localStorage) until the instructor clears it on the Debrief page. One key holds the index (what a
-// list shows: the resident, the card, when it was saved, the run's simulated duration and its objective counts), and
-// one key per entry holds the debrief's JSON as the Debrief view builds it (`debriefJson`, `pme-debrief/2`), so a list
-// never parses a debrief. A second save of one run (its record's `startedAt`) replaces that run's entry. A storage that
-// refuses (full, blocked, a private window) saves nothing and the caller says so. "Export all" is one JSON file (no
-// zip library is in the dependency tree). Also the counts the Finish pane shows. No DOM.
+// in THIS browser (the debriefs in IndexedDB, their index in localStorage) until the instructor clears it on the Debrief
+// page. One localStorage key holds the index (what a list
+// shows: the resident, the card, when it was saved, the run's simulated duration, its objective counts and the body's
+// size), and each debrief's JSON as the Debrief view builds it (`debriefJson`, `pme-debrief/2`) is one record of an
+// IndexedDB object store keyed by the entry's id, so a list never parses a debrief. A second save of one run (its
+// record's `startedAt`) replaces that run's entry. "Export all" is one JSON file (no zip library is in the dependency
+// tree). Also the counts the Finish pane shows. No DOM.
+//
+// Why IndexedDB (defect N39, 9 November): a body is the whole run record, one sample per second (≈ 10 k UTF-16 units
+// per simulated minute), and holds characters past U+00FF (the ₂ of SpO₂), so WebKit counts it at 2 bytes a character
+// against its 5 MiB localStorage quota per origin: ≈ 260 simulated minutes in all, five debriefs of a week. IndexedDB's
+// quota is a share of the disk (WebKit and Chromium ≈ 60 %, Firefox 10 % up to 10 GiB). The index stays in localStorage
+// (≈ 300 bytes an entry, so it would take > 10 000 debriefs to fill it): the lists stay synchronous and a second tab
+// reads it fresh. A body is written before the index names it, and taken back if the index cannot be written. Bodies a
+// build before this one left in localStorage move to IndexedDB once, on first use (written, then removed). Where
+// IndexedDB cannot be opened the bodies stay in localStorage, as before, and the archive says so.
 import { endOf, marks, objectives } from './debrief.ts';
 import { debriefJson } from './debrief-export.ts';
 import type { RunData } from './record.ts';
@@ -39,6 +49,16 @@ export interface ArchiveMeta {
   /** The run's simulated length (s), on the kept course. */
   durationS: number;
   objectives: ObjectiveCounts;
+  /** The stored debrief's size, UTF-8 bytes (what its JSON file weighs). Absent on an entry of an earlier build until
+   *  its body moves to IndexedDB. */
+  bytes?: number;
+}
+
+/** Why a save wrote nothing: the storage is full, the browser keeps no data for this site (a private window, site data
+ *  turned off), or it refused for another reason (`detail`: the browser's error name). */
+export interface Refusal {
+  refused: 'full' | 'blocked' | 'failed';
+  detail: string;
 }
 
 const INDEX = 'pme.archive';
@@ -85,14 +105,91 @@ const localStore = (): Storage | null => {
     return null;
   }
 };
+const idbFactory = (): IDBFactory | null => {
+  try {
+    return globalThis.indexedDB ?? null;
+  } catch {
+    return null; // a sandboxed frame or blocked site data throws on the getter
+  }
+};
+
+const DB = 'pme-archive';
+const STORE = 'bodies';
+const utf8Bytes = (s: string): number => new TextEncoder().encode(s).length;
+const ask = <T>(r: IDBRequest<T>): Promise<T> =>
+  new Promise((ok, no) => {
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => no(r.error);
+  });
+/** A transaction's end: resolved when it committed, rejected with its error when it aborted (a full disk aborts it
+ *  with QuotaExceededError). */
+const committed = (tx: IDBTransaction): Promise<void> =>
+  new Promise((ok, no) => {
+    tx.oncomplete = () => ok();
+    tx.onerror = tx.onabort = () => no(tx.error ?? new DOMException('The transaction was aborted', 'AbortError'));
+  });
+function openDb(f: IDBFactory): Promise<IDBDatabase> {
+  const r = f.open(DB, 1);
+  r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+  return ask(r);
+}
+
+/** What a browser's refusal means. A full storage: QuotaExceededError (Firefox's older NS_ERROR_DOM_QUOTA_REACHED,
+ *  legacy code 22 or 1014); blocked: SecurityError (site data turned off) or InvalidStateError (a private window of a
+ *  browser whose IndexedDB refuses writes there). */
+export function refusalOf(e: unknown): Refusal {
+  const x = e as { name?: string; code?: number } | null;
+  const detail = x?.name ?? String(e);
+  if (detail === 'QuotaExceededError' || detail === 'NS_ERROR_DOM_QUOTA_REACHED' || x?.code === 22 || x?.code === 1014) return { refused: 'full', detail };
+  if (detail === 'SecurityError' || detail === 'InvalidStateError') return { refused: 'blocked', detail };
+  return { refused: 'failed', detail };
+}
+const BLOCKED: Refusal = { refused: 'blocked', detail: 'no localStorage' };
+
+/** What the instructor reads when a save wrote nothing (the archive is then as it was). */
+export function refusalText(r: Refusal): string {
+  if (r.refused === 'full') return 'The debrief could not be saved: this browser’s storage for this site is full. Export the archive and clear it on the Debrief page, then try again.';
+  if (r.refused === 'blocked') return 'The debrief could not be saved: this browser keeps no data for this site (a private window, or site data turned off in its settings). Download the record from the Debrief page to keep it.';
+  return `The debrief could not be saved: the browser refused the write (${r.detail}). Download the record from the Debrief page to keep it, then try again.`;
+}
+
+/** "241 kB", "1.7 MB" (decimal units, as a file's size reads in Finder and Explorer's details). */
+export const sizeText = (bytes: number): string => (bytes < 1e6 ? `${Math.round(bytes / 1e3)} kB` : `${(bytes / 1e6).toFixed(1)} MB`);
 
 export class Archive {
   /** Bumped by every save and clear (a list redraws only then). */
   version = 0;
+  /** Where the bodies are: 'indexeddb', or 'localStorage' where IndexedDB could not be opened (about 5 MB in all);
+   *  null until `ready()` first settled. */
+  backend: 'indexeddb' | 'localStorage' | null = null;
   private readonly storage: () => Storage | null;
+  private readonly idb: () => IDBFactory | null;
+  private opened: { f: IDBFactory | null; db: Promise<IDBDatabase | null> } | null = null;
+  /** Saves and clears one after another: each reads the index the one before it wrote. */
+  private queue: Promise<unknown> = Promise.resolve();
 
-  constructor(storage: () => Storage | null = localStore) {
+  constructor(storage: () => Storage | null = localStore, idb: () => IDBFactory | null = idbFactory) {
     this.storage = storage;
+    this.idb = idb;
+  }
+
+  /** The database, opened once (and the move of an earlier build's bodies done), or null: the localStorage path. A
+   *  different factory (a test's fresh browser) opens again. */
+  ready(): Promise<IDBDatabase | null> {
+    const f = this.idb();
+    if (this.opened?.f === f) return this.opened.db;
+    const db = (async () => {
+      if (!f) return null;
+      try {
+        const db = await openDb(f);
+        await this.migrate(db);
+        return db;
+      } catch {
+        return null; // IndexedDB refused to open (an old private window, a blocked origin): the localStorage path
+      }
+    })().then((db) => ((this.backend = db ? 'indexeddb' : 'localStorage'), db));
+    this.opened = { f, db };
+    return db;
   }
 
   /** Every saved debrief, oldest first. */
@@ -116,42 +213,125 @@ export class Archive {
     return this.list().filter((e) => new Date(e.savedAt).toDateString() === day).length;
   }
 
-  /**
-   * Save the debrief of the run `d` under `resident` (the run's earlier entry replaced, in its place); null when the
-   * storage refused, and the archive is then as it was.
-   */
-  save(d: RunData, resident: string, build: string, now = Date.now()): ArchiveMeta | null {
-    const s = this.storage();
-    if (!s) return null;
+  /** "5 saved · 1.7 MB": how much the archive holds ("5 saved" alone while an earlier build's entry has no size yet). */
+  holdsLine(): string {
     const list = this.list();
-    const was = list.find((e) => e.runStartedAt === d.startedAt);
-    const card = d.doc ? cardOf(d.doc) : null;
-    const meta: ArchiveMeta = {
-      id: was?.id ?? `${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-      runStartedAt: d.startedAt, resident: resident.trim(), cardId: d.doc?.id ?? null, title: card ? card.title : 'Free run',
-      savedAt: now, durationS: endOf(d), objectives: objectiveCounts(d),
-    };
+    return list.some((e) => e.bytes === undefined) ? `${list.length} saved` : `${list.length} saved · ${sizeText(list.reduce((n, e) => n + (e.bytes ?? 0), 0))}`;
+  }
+
+  /** Where it is kept, for the archive's summary line. */
+  whereLine(): string {
+    return this.backend === 'localStorage'
+      ? 'kept in this browser’s localStorage (IndexedDB is unavailable here, so about 5 MB in all)'
+      : 'kept in this browser until you clear it';
+  }
+
+  /**
+   * Save the debrief of the run `d` under `resident` (the run's earlier entry replaced, in its place). A refusal when
+   * the storage wrote nothing, and the archive is then as it was.
+   */
+  save(d: RunData, resident: string, build: string, now = Date.now()): Promise<ArchiveMeta | Refusal> {
+    // the debrief as it stands at the press, before anything is awaited
     const body = JSON.stringify(JSON.parse(debriefJson(d, build))); // stored compact
-    const prevBody = was ? s.getItem(bodyKey(meta.id)) : null;
-    try {
-      s.setItem(bodyKey(meta.id), body);
-      s.setItem(INDEX, JSON.stringify(was ? list.map((e) => (e.id === meta.id ? meta : e)) : [...list, meta]));
-    } catch {
-      // leave the archive as it was: the new body out (or the old one back)
+    const card = d.doc ? cardOf(d.doc) : null;
+    const fields = {
+      runStartedAt: d.startedAt, resident: resident.trim(), cardId: d.doc?.id ?? null, title: card ? card.title : 'Free run',
+      savedAt: now, durationS: endOf(d), objectives: objectiveCounts(d), bytes: utf8Bytes(body),
+    };
+    return this.inTurn(async () => {
+      const s = this.storage();
+      if (!s) return BLOCKED;
+      const db = await this.ready();
+      const list = this.list();
+      const was = list.find((e) => e.runStartedAt === d.startedAt);
+      const meta: ArchiveMeta = { id: was?.id ?? `${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`, ...fields };
+      const prevBody = was ? await this.body(db, meta.id) : null;
       try {
-        if (prevBody !== null) s.setItem(bodyKey(meta.id), prevBody);
-        else s.removeItem(bodyKey(meta.id));
-      } catch {
-        /* nothing more to undo */
+        await this.put(db, s, meta.id, body);
+      } catch (e) {
+        return refusalOf(e);
       }
-      return null;
-    }
-    this.version++;
-    return meta;
+      try {
+        s.setItem(INDEX, JSON.stringify(was ? list.map((e) => (e.id === meta.id ? meta : e)) : [...list, meta]));
+      } catch (e) {
+        // leave the archive as it was: the new body out (or the old one back)
+        try {
+          if (prevBody !== null) await this.put(db, s, meta.id, prevBody);
+          else await this.remove(db, s, [meta.id]);
+        } catch {
+          /* nothing more to undo */
+        }
+        return refusalOf(e);
+      }
+      this.version++;
+      return meta;
+    });
   }
 
   /** The saved debrief's JSON (`pme-debrief/2`), or null. */
-  debrief(id: string): string | null {
+  async debrief(id: string): Promise<string | null> {
+    return this.body(await this.ready(), id);
+  }
+
+  /** One entry as a file: its list fields and the debrief (`pme-archive-entry/1`), or null. */
+  async entryJson(id: string): Promise<string | null> {
+    const e = this.list().find((x) => x.id === id);
+    const body = e ? await this.debrief(id) : null;
+    return e && body ? JSON.stringify(this.entryOf(e, body), null, 1) : null;
+  }
+
+  /** Every entry in one file (`pme-archive/1`): "Export all". */
+  async bundleJson(now = Date.now()): Promise<string> {
+    const db = await this.ready();
+    const entries = [];
+    for (const e of this.list()) {
+      const body = await this.body(db, e.id);
+      if (body) entries.push(this.entryOf(e, body));
+    }
+    return JSON.stringify({ schema: 'pme-archive/1', exportedAt: now, entries }, null, 1);
+  }
+
+  /** Every saved debrief deleted from this browser. */
+  clear(): Promise<void> {
+    return this.inTurn(async () => {
+      const s = this.storage();
+      const db = await this.ready();
+      try {
+        if (db) {
+          const tx = db.transaction(STORE, 'readwrite');
+          tx.objectStore(STORE).clear();
+          await committed(tx);
+        }
+      } catch {
+        /* the database refused: the index goes all the same, so nothing is listed */
+      }
+      try {
+        for (const e of this.list()) s?.removeItem(bodyKey(e.id));
+        s?.removeItem(INDEX);
+      } catch {
+        /* blocked storage: nothing was kept */
+      }
+      this.version++;
+    });
+  }
+
+  private inTurn<T>(job: () => Promise<T>): Promise<T> {
+    const next = this.queue.then(job, job);
+    this.queue = next.catch(() => undefined);
+    return next;
+  }
+
+  /** A body from the database, else from localStorage (the localStorage path, or a body an earlier build left there
+   *  that has not moved yet). */
+  private async body(db: IDBDatabase | null, id: string): Promise<string | null> {
+    try {
+      if (db) {
+        const v = await ask(db.transaction(STORE, 'readonly').objectStore(STORE).get(id));
+        if (typeof v === 'string') return v;
+      }
+    } catch {
+      /* read the old place */
+    }
     try {
       return this.storage()?.getItem(bodyKey(id)) ?? null;
     } catch {
@@ -159,30 +339,46 @@ export class Archive {
     }
   }
 
-  /** One entry as a file: its list fields and the debrief (`pme-archive-entry/1`), or null. */
-  entryJson(id: string): string | null {
-    const e = this.list().find((x) => x.id === id);
-    const body = e ? this.debrief(id) : null;
-    return e && body ? JSON.stringify(this.entryOf(e, body), null, 1) : null;
+  private async put(db: IDBDatabase | null, s: Storage, id: string, body: string): Promise<void> {
+    if (!db) return s.setItem(bodyKey(id), body);
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(body, id);
+    await committed(tx);
+    s.removeItem(bodyKey(id)); // an earlier build's copy of this entry, if any
   }
 
-  /** Every entry in one file (`pme-archive/1`): "Export all". */
-  bundleJson(now = Date.now()): string {
-    const entries = this.list().flatMap((e) => {
-      const body = this.debrief(e.id);
-      return body ? [this.entryOf(e, body)] : [];
-    });
-    return JSON.stringify({ schema: 'pme-archive/1', exportedAt: now, entries }, null, 1);
+  private async remove(db: IDBDatabase | null, s: Storage, ids: string[]): Promise<void> {
+    for (const id of ids) s.removeItem(bodyKey(id));
+    if (!db) return;
+    const tx = db.transaction(STORE, 'readwrite');
+    for (const id of ids) tx.objectStore(STORE).delete(id);
+    await committed(tx);
   }
 
-  /** Every saved debrief deleted from this browser. */
-  clear(): void {
+  /** The bodies an earlier build kept in localStorage, into the database in one transaction; once it committed, out of
+   *  localStorage, and their sizes into the index. A refusal leaves them where they were (still read from there). */
+  private async migrate(db: IDBDatabase): Promise<void> {
     const s = this.storage();
+    if (!s) return;
+    const list = this.list();
+    const moved = new Map<string, string>();
+    for (const e of list) {
+      const b = s.getItem(bodyKey(e.id));
+      if (b !== null) moved.set(e.id, b);
+    }
+    if (!moved.size) return;
     try {
-      for (const e of this.list()) s?.removeItem(bodyKey(e.id));
-      s?.removeItem(INDEX);
+      const tx = db.transaction(STORE, 'readwrite');
+      for (const [id, b] of moved) tx.objectStore(STORE).put(b, id);
+      await committed(tx);
     } catch {
-      /* blocked storage: nothing was kept */
+      return;
+    }
+    for (const id of moved.keys()) s.removeItem(bodyKey(id)); // first: a full localStorage has room for the sizes then
+    try {
+      s.setItem(INDEX, JSON.stringify(list.map((e) => { const b = moved.get(e.id); return b === undefined ? e : { ...e, bytes: utf8Bytes(b) }; })));
+    } catch {
+      /* the sizes stay unknown; the bodies are in the database all the same */
     }
     this.version++;
   }
@@ -192,5 +388,5 @@ export class Archive {
   }
 }
 
-/** The app's one archive (this browser's localStorage). */
+/** The app's one archive (this browser's IndexedDB, the index in its localStorage). */
 export const archive = new Archive();

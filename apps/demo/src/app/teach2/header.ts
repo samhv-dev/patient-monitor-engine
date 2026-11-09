@@ -5,7 +5,7 @@
 // phone count (the top bar's own controls: the same toggle and the same link). Fast forward moved to STATE (ff.ts).
 // Every control sends exactly what today's session bar (`sessionbar.ts`) sends for it, with the same toasts: `time
 // pause` / `time resume` and `time scale`. The speed box folds back on a choice, on a click elsewhere and on Esc.
-import type { StateVar } from '@pme/engine-core';
+import { BEHIND_REPORT_S, type StateVar } from '@pme/engine-core';
 import { activeText } from '../events.ts';
 import type { Link } from '../link.ts';
 import { oneLiner } from '../patients.ts';
@@ -80,13 +80,18 @@ export function mountHeader(link: Link, top?: TopControls): Header {
   const pillIcon = h('span', { class: 'ip2-pill-icon' });
   const pill = h('button', { type: 'button', class: 'ip2-pill', 'aria-keyshortcuts': 'Space' }, pillIcon, pillWord, pillTime);
   const drawPill = () => {
+    // brief 105: a busy computer leaves the engine behind real time; the pill says so (it catches up by itself)
+    const b = link.host?.behindS?.() ?? 0; // a test's partial host has none
+    const behind = !paused && b > BEHIND_REPORT_S;
     pill.dataset.state = paused ? 'paused' : 'running';
+    pill.toggleAttribute('data-behind', behind);
     pillIcon.innerHTML = paused ? STOP_SVG : PLAY_SVG;
-    setText(pillWord, paused ? 'PAUSED' : 'RUNNING');
+    setText(pillWord, paused ? 'PAUSED' : behind ? 'BEHIND' : 'RUNNING');
     setText(pillTime, clock(link.simT));
-    pill.setAttribute('aria-label', `${paused ? 'Paused' : 'Running'} at ${clock(link.simT)}; press to ${paused ? 'resume' : 'pause'}`);
+    const behindText = `The simulation is ${b.toFixed(1)} s behind real time: the computer is busy. It catches up by itself.`;
+    pill.setAttribute('aria-label', `${paused ? 'Paused' : behind ? `Running ${b.toFixed(1)} s behind real time` : 'Running'} at ${clock(link.simT)}; press to ${paused ? 'resume' : 'pause'}`);
     // the paused rule, once the banner of v9 (the owner dropped it for option G): on the pill's tooltip
-    pill.title = paused ? `Paused. Timers are frozen. A step pressed now is given at ${clock(link.simT)} and acts when you resume.` : 'Space pauses';
+    pill.title = paused ? `Paused. Timers are frozen. A step pressed now is given at ${clock(link.simT)} and acts when you resume.` : behind ? `${behindText} Space pauses` : 'Space pauses';
   };
   pill.addEventListener('click', () => {
     paused = !paused;

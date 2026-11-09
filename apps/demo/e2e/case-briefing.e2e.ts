@@ -49,13 +49,10 @@ const count = async (p: Page) => {
   return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
 };
 
-// @known-flaky, PRODUCT defect N25 under investigation (orchestrator ruling of 9 Nov, brief 103): under load the session
-// clock runs at 0.37–0.70 of real time at a card's start, so "the monitor keeps running" reads 1.5–2.8 sim-s in the 4-s
-// window (> 2.5 asserted; the bound is right). Measured: CI Chromium 1 in 48 runs (42428252701: 0.0 → 1.5, then 2.4) and
-// this brief's own PR run 42564540888 (0.0 → 2.4, 2.41); the first clock comes 3–49 ms after the briefing shows (local),
-// so t0 is not read early. The fix's brief is not yet assigned (orchestrator, defect N25); the PR that fixes N25 removes
-// this tag.
-test('the Case briefing: over the running monitor on the host and the phones, a press-and-hold ends it on a phone, End briefing everywhere; Persian', { tag: '@known-flaky' }, async ({ page, browser, browserName }, info) => {
+// Defect N25 (brief 103) was the session clock under load: the 250 ms frame clamp ran the body at 0.4-0.7 of real time
+// and a worker's start-up delayed it behind the session clock. Brief 105 fixed both (the whole wall time is owed and run
+// within a frame budget; the monitor's clock starts at its mount); the tag came off with it.
+test('the Case briefing: over the running monitor on the host and the phones, a press-and-hold ends it on a phone, End briefing everywhere; Persian', async ({ page, browser, browserName }, info) => {
   // FX-2, as mobile-learner.e2e.ts and sim-line.e2e.ts: the 2-vCPU CI WebKit runner cannot hold an instructor, two phones
   // and the relay in step. After the waits were made robust (48c5b101, 485065b8, 0833320a) and the relay's two-phone bug
   // fixed (9ce27f41), the phones still did not reach 'synced' within 30 s on CI WebKit (run 41204528331: 2 attempts of 3,

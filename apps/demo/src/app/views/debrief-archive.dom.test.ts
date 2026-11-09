@@ -6,8 +6,9 @@
 // duration; open · PDF · JSON), exports it all as one JSON file and clears it behind a confirm.
 import type { WireEvent } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { archive } from '../archive.ts';
+import { archive, type ArchiveMeta } from '../archive.ts';
 import type { Link } from '../link.ts';
+import { asFactory, MemoryIDB } from '../memory-idb.ts';
 import { MemoryStorage } from '../memory-storage.ts';
 import { RunRecord } from '../record.ts';
 import type { AppSession } from '../session.ts';
@@ -46,7 +47,10 @@ function downloads() {
 
 describe('the Debrief view and the archive (board "Finish 2")', () => {
   let leave: (() => void) | undefined;
-  beforeEach(() => void vi.stubGlobal('localStorage', new MemoryStorage()));
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', new MemoryStorage());
+    vi.stubGlobal('indexedDB', asFactory(new MemoryIDB())); // a fresh browser: the archive opens it again
+  });
   afterEach(() => {
     leave?.();
     document.body.replaceChildren();
@@ -61,16 +65,16 @@ describe('the Debrief view and the archive (board "Finish 2")', () => {
     view.enter?.(sub);
     leave = view.leave;
     const text = (s: string) => view.el.querySelector(s)?.textContent?.replace(/\s+/g, ' ').trim() ?? null;
-    return { view, el: view.el, text, enter: (s: string) => view.enter?.(s) };
+    return { view, el: view.el, text, enter: async (s: string) => (view.enter?.(s), await settle()) };
   };
 
-  it('the resident saved for the live run is in the header band and in the learner handout\'s', () => {
+  it('the resident saved for the live run is in the header band and in the learner handout\'s', async () => {
     const live = record(induction, Date.UTC(2026, 9, 30, 9, 0));
     const before = show(live);
     expect(before.el.querySelector('.db-resident')).toBeNull(); // not saved yet: the header as before
     leave?.();
     document.body.replaceChildren();
-    archive.save(live.data, 'Dr Rahimi', 'b');
+    await archive.save(live.data, 'Dr Rahimi', 'b');
     const r = show(live);
     expect(r.text('#db-live-1 .db-band .db-resident')).toBe('Resident: Dr Rahimi');
     expect(r.text('.db-handout-live .db-band .db-resident')).toBe('Resident: Dr Rahimi');
@@ -79,9 +83,10 @@ describe('the Debrief view and the archive (board "Finish 2")', () => {
 
   it('#/debrief/archive/<id> opens a saved debrief, not the live run; …/print prints it', async () => {
     const saved = record(mh, Date.UTC(2026, 9, 30, 8, 0));
-    const e = archive.save(saved.data, 'Dr Karimi', 'b');
+    const e = (await archive.save(saved.data, 'Dr Karimi', 'b')) as ArchiveMeta;
     const live = record(induction, Date.UTC(2026, 9, 30, 9, 0));
-    const r = show(live, `archive/${e?.id}`);
+    const r = show(live, `archive/${e.id}`);
+    await settle(); // the body is read from IndexedDB
     expect(r.text('#db-live-1 .db-band .db-title')).toBe('Malignant hyperthermia');
     expect(r.text('#db-live-1 .db-band .db-resident')).toBe('Resident: Dr Karimi');
     expect(r.text('.db-viewing')).toMatch(/^Saved debrief 1: Dr Karimi · Malignant hyperthermia, saved at \d\d:\d\d\. Back to the current run$/);
@@ -89,16 +94,17 @@ describe('the Debrief view and the archive (board "Finish 2")', () => {
     // the JSON button downloads the saved debrief, with its resident
     const got = downloads();
     ([...r.el.querySelectorAll('.db-tools button')].find((b) => b.textContent === 'Download the record (JSON)') as HTMLElement).click();
+    await settle();
     expect(got.map((x) => x.name)).toEqual(['debrief-showcase-mh-2026-10-30-Dr-Karimi.json']);
     expect(JSON.parse(await (got[0]?.blob as Blob).text())).toMatchObject({ schema: 'pme-archive-entry/1', resident: 'Dr Karimi', debrief: { record: { startedAt: saved.data.startedAt } } });
     // the live run again
-    r.enter('');
+    await r.enter('');
     expect(r.text('#db-live-1 .db-band .db-title')).toBe('Healthy induction');
     expect(r.el.querySelector('.db-viewing')?.closest('[hidden]') ?? r.el.querySelector('.db-viewing[hidden]')).not.toBeNull();
     // print: the saved debrief, then the address without /print
     const print = vi.fn();
     Object.assign(window, { print });
-    r.enter(`archive/${e?.id}/print`);
+    await r.enter(`archive/${e?.id}/print`);
     await settle();
     await settle();
     expect(print).toHaveBeenCalledTimes(1);
@@ -106,19 +112,22 @@ describe('the Debrief view and the archive (board "Finish 2")', () => {
     expect(location.hash).toBe(`#/debrief/archive/${e?.id}`);
   });
 
-  it('an unknown archive id says so and shows the live run', () => {
+  it('an unknown archive id says so and shows the live run', async () => {
     const r = show(record(induction, 1), 'archive/nope');
+    await settle();
     expect(r.text('#db-live-1 .db-band .db-title')).toBe('Healthy induction');
     expect([...document.querySelectorAll('.toast')].map((t) => t.textContent)).toContain('That saved debrief is not in this browser’s archive');
   });
 
   it('the Archive section: the rows, open · PDF · JSON, export all as one JSON file, clear behind a confirm', async () => {
     const got = downloads();
-    const a = archive.save(record(mh, Date.UTC(2026, 9, 30, 8, 0)).data, 'Dr Karimi', 'b');
-    const b = archive.save(record(induction, Date.UTC(2026, 9, 30, 9, 0)).data, '', 'b');
+    const a = (await archive.save(record(mh, Date.UTC(2026, 9, 30, 8, 0)).data, 'Dr Karimi', 'b')) as ArchiveMeta;
+    const b = (await archive.save(record(induction, Date.UTC(2026, 9, 30, 9, 0)).data, '', 'b')) as ArchiveMeta;
     const r = show(record(induction, 3));
+    await settle();
     expect(r.text('#db-archive h2')).toBe('Archive');
-    expect(r.text('#db-archive .db-arc-count')).toBe('2 saved today · kept in this browser until you clear it');
+    // how much the archive holds, so an instructor sees it grow (N39)
+    expect(r.text('#db-archive .db-arc-count')).toBe(`2 saved · ${Math.round(((a.bytes as number) + (b.bytes as number)) / 1e3)} kB, 2 today · kept in this browser until you clear it`);
     const rows = [...r.el.querySelectorAll<HTMLElement>('#db-archive .db-arc-row')];
     expect(rows.map((x) => [x.querySelector('.db-arc-n')?.textContent, x.querySelector('.db-arc-title')?.textContent])).toEqual([
       ['1', 'Dr Karimi · Malignant hyperthermia'],
@@ -130,8 +139,10 @@ describe('the Debrief view and the archive (board "Finish 2")', () => {
     (rows[0]?.querySelector('.db-arc-pdf') as HTMLElement).click();
     expect(location.hash).toBe(`#/debrief/archive/${a?.id}/print`);
     (rows[0]?.querySelector('.db-arc-json') as HTMLElement).click();
+    await settle();
     expect(got[0]?.name).toBe('debrief-showcase-mh-2026-10-30-Dr-Karimi.json');
     ([...r.el.querySelectorAll<HTMLElement>('#db-archive button')].find((x) => x.textContent === 'Export all (one JSON file)') as HTMLElement).click();
+    await settle();
     const all = JSON.parse(await (got[1]?.blob as Blob).text());
     expect(all.schema).toBe('pme-archive/1');
     expect(all.entries).toHaveLength(2);
@@ -154,6 +165,14 @@ describe('the Debrief view and the archive (board "Finish 2")', () => {
     expect(archive.list()).toEqual([]);
     expect(r.text('#db-archive .db-arc-count')).toBe('Nothing saved in this browser. “Finish the case” in Instructor v2 saves each run here.');
     expect(r.el.querySelectorAll('#db-archive .db-arc-row')).toHaveLength(0);
+  });
+
+  it('the archive says where it is kept when IndexedDB cannot be opened (the localStorage path, about 5 MB)', async () => {
+    vi.stubGlobal('indexedDB', asFactory(new MemoryIDB(Infinity, true)));
+    await archive.save(record(mh, Date.UTC(2026, 9, 30, 8, 0)).data, 'Dr Karimi', 'b');
+    const r = show(record(induction, 3));
+    await settle();
+    expect(r.text('#db-archive .db-arc-count')).toMatch(/^1 saved · \d+ kB, 1 today · kept in this browser’s localStorage \(IndexedDB is unavailable here, so about 5 MB in all\)$/);
   });
 
   it('#/debrief/archive opens the view on its Archive section', () => {
