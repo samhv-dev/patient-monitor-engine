@@ -51,9 +51,10 @@ reads it for the tick order, the ventilator link and the events it emits.
 | Where | Relation |
 |---|---|
 | [`driver.ts:17`](../../packages/engine-core/src/l2/resp/driver.ts#L17) | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
-| [`driver.ts:387`](../../packages/engine-core/src/l2/resp/driver.ts#L387) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
-| [`pipeline.ts:406`](../../packages/engine-core/src/l2/resp/pipeline.ts#L406) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
-| [`pipeline.ts:461`](../../packages/engine-core/src/l2/resp/pipeline.ts#L461) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
+| [`driver.ts:77`](../../packages/engine-core/src/l2/resp/driver.ts#L77) | the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p. |
+| [`driver.ts:442`](../../packages/engine-core/src/l2/resp/driver.ts#L442) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
+| [`pipeline.ts:437`](../../packages/engine-core/src/l2/resp/pipeline.ts#L437) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
+| [`pipeline.ts:492`](../../packages/engine-core/src/l2/resp/pipeline.ts#L492) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
 ## Couplings
 
@@ -161,11 +162,17 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `EXP_TAU_S` | `0.5` | s | — | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
 | `VCV_PMAX_DEFAULT` | `40` | — | [ENG: device] | The volume-control pressure limit (cmH2O) when the command sets none — the anaesthesia-ventilator factory default Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG: device]; above it the breath is pressure-limited. |
 | `NEVER` | `1e12` | — | — | JSON-safe 'never' (snapshots travel as JSON: Infinity would become null). |
+| `LINK_PMUS_RISE_S` | `0.3` | s | [ENG: device; the ventilator package's own DEFAULT_CONFIG pmusRise 0.30, pmusHold 0.05, pmusDecay 0.40 s, responsiveness 80 — pinned equal by packages/ventilator/test/effort-parity.test.ts] | The ONE effort waveform of the ventilator link (brief 93). The cockpit (packages/ventilator) shapes the same patient's Pmus as a smoothstep rise, a hold and a half-cosine decay (its `pmusValue`, ported bit-exact from the v1.9 prototype and checked on its ten reference scenarios), at an amplitude of pmus × (0.4 + 0.6 × responsiveness), responsiveness 80. The engine's own ventilator uses exactly that shape and gain, so a patient handed between the two ventilators makes the same effort on both — an engine-only waveform (it was a half-sine over the whole neural Ti) put a second, unvalidated expression of the patient's muscle pressure on the internal ventilator and the link's peak-pressure parity failed (17.2 on the cockpit, 11.6 after the hand-over). [ENG: device; the ventilator package's own DEFAULT_CONFIG pmusRise 0.30, pmusHold 0.05, pmusDecay 0.40 s, responsiveness 80 — pinned equal by packages/ventilator/test/effort-parity.test.ts] |
+| `LINK_PMUS_HOLD_S` | `0.05` | s | — | — |
+| `LINK_PMUS_DECAY_S` | `0.4` | s | — | — |
+| `LINK_PMUS_GAIN` | `0.4 + 0.6 * 0.8` | — | — | — |
 
 ### [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
+| `TRIGGER_FLOW_LPM` | `2` | L/min | [ENG: device; the ventilator package's own DEFAULT_CONFIG — pinned by packages/ventilator/test/effort-parity.test.ts] | The ventilator's trigger, as the cockpit's own `patientTriggers` computes it (packages/ventilator/src/vent.ts, ported bit-exact from the v1.9 prototype): the effort first has to undo the trapped-gas pressure — net = max(0, Pmus − autoPEEP), which is why a trapping patient makes INEFFECTIVE efforts — and what remains is read by the set trigger. The package's DEFAULT_CONFIG triggers on FLOW at 2.0 L/min, so the test is net/max(2, R) × 60 ≥ 2.0; its pressure trigger (`presTrig` −2 cmH2O) is the alternative. Mirrored here so the same patient triggers the engine's ventilator and the cockpit alike [ENG: device; the ventilator package's own DEFAULT_CONFIG — pinned by packages/ventilator/test/effort-parity.test.ts]. |
+| `TRIGGER_CMH2O` | `2` | cmH2O | — | — |
 | `KINK_R_MULT` | `150` | — | [ENG: device; fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale] | A kinked tube multiplies the tube resistance by 1 + (KINK_R_MULT − 1)·severity — a complete kink (severity 1) × 150, so a 40 cmH2O Pmax moves ≤ 20 % of the set VT [ENG: device; fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale]. |
 | `BUCK_CMH2O` | `30` | cmH2O | McCool 2006; research/44 L2; [FIT: bucking expiratory muscle pressure; McCool 2006 Chest 129:48S; brief research/44 L2-51; src McCool 2006] | Bucking — an expiratory muscle pressure (cmH2O) over the first BUCK_S of a mechanical inspiration [FIT: bucking expiratory muscle pressure; McCool 2006 Chest 129:48S; brief research/44 L2-51; src McCool 2006]. |
 | `BUCK_S` | `0.5` | s | — | — |
@@ -176,6 +183,8 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 
 | Function | File | Doc |
 |---|---|---|
+| `ownEffortPmus` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The patient's own inspiratory muscle pressure at `t` during a mechanical breath, cmH2O (≥ 0; |
+| `linkEffortShape` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The waveform's fraction of its peak `u` s after the effort's start: |
 | `alveolarFraction` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The mixed-expirate share of a breath at the sampling site (Fowler 1948 single-breath washout; |
 | `cycleAt` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The cycle containing t (last one starting at or before t), or undefined. |
 | `lastCycleBefore` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The last cycle that started at or before t (running or finished). |
@@ -190,6 +199,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `meanAirwayPressure` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Mean airway pressure (cmH2O) now: |
 | `alveolarVentilation` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Alveolar ventilation (L/min) delivered at time t: |
 | `nominalRate` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Nominal breaths/min and VT of the current settings (MANUAL calibration and the `state` event). |
+| `ownEffort` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | The patient's own inspiratory effort under the machine (MODELED; |
 | `respBreathU` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | The seam the haemodynamics reads: |
 | `inductionFactor` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Induction-atelectasis factor by body size (catalogue §10: |
 | `lungDrive` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | How the breath driver drives the lung units at time t. |
@@ -201,7 +211,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `validateRespCommand` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Validation hook. |
 | `applyRespCommand` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Apply hook. |
 
-Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `createRespState`, `applyLungSpecs`, `gaLevel`.
+Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `createRespState`, `effortTriggers`, `applyLungSpecs`, `gaLevel`.
 
 ## Source files
 
@@ -250,6 +260,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | [`engine/resp-child-rest.test.ts`](../../packages/engine-core/test/engine/resp-child-rest.test.ts) | 1 | 0 |
 | [`engine/resp-coupling.test.ts`](../../packages/engine-core/test/engine/resp-coupling.test.ts) | 0 | 0 |
 | [`engine/resp-drive-nonchemical.test.ts`](../../packages/engine-core/test/engine/resp-drive-nonchemical.test.ts) | 1 | 0 |
+| [`engine/resp-effort-under-ventilator.test.ts`](../../packages/engine-core/test/engine/resp-effort-under-ventilator.test.ts) | 0 | 0 |
 | [`engine/resp-engine.test.ts`](../../packages/engine-core/test/engine/resp-engine.test.ts) | 0 | 0 |
 | [`engine/resp-ga-state.test.ts`](../../packages/engine-core/test/engine/resp-ga-state.test.ts) | 1 | 0 |
 | [`engine/resp-induction.test.ts`](../../packages/engine-core/test/engine/resp-induction.test.ts) | 0 | 0 |

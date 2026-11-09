@@ -11,6 +11,10 @@ async function classIv(): Promise<{ minVol: number; minCvp: number }> {
   e.advanceTo(1);
   e.dispatch({ id: 'a', issuedBy: 'test', ...(ev({ kind: 'airwayDevice', device: 'ett' }) as object) } as never);
   e.dispatch({ id: 'b', issuedBy: 'test', ...(ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 }) as object) } as never);
+  // Brief 93: the class IV card's patient is intubated and ventilated; a tracheal intubation in haemorrhagic shock is a
+  // rapid-sequence intubation, so the ventilated patient is paralysed (rocuronium 1.2 mg/kg: RSI with a non-depolariser, 1.0–1.2 mg/kg, Miller 10e
+  // ch. 40 p. 1237) — not an awake patient breathing against the machine, which the engine's drive now makes him
+  e.dispatch({ id: 'r', issuedBy: 'test', ...(ev({ kind: 'drug', drugId: 'rocuronium', dose: 1.2, unit: 'mg/kg', route: 'iv' }) as object) } as never);
   e.advanceTo(60);
   e.dispatch({ id: 'c', issuedBy: 'test', ...(ev({ kind: 'bleed', volumeMl: 2500, overS: 600 }) as object) } as never);
   let minVol = Infinity;

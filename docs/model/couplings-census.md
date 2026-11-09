@@ -34,19 +34,19 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | pressure-waveforms | 60 | 26 |
 | lungs | 66 | 22 |
 | gas-exchange | 44 | 12 |
-| breathing | 15 | 5 |
+| breathing | 21 | 8 |
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
-| neuro | 187 | 91 |
+| neuro | 189 | 93 |
 | pharmacology | 29 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
 | engine-runtime | 11 | 2 |
-| **All** | 1128 | 426 |
+| **All** | 1136 | 431 |
 
-## The ten effector expressions with the most factors (of 1609)
+## The ten effector expressions with the most factors (of 1629)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 886 products)
+## The ten products with the most factors (of 897 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

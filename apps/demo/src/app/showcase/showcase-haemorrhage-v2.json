@@ -188,14 +188,24 @@
         "bleeding",
         "decompensating"
       ],
-      "$comment": "Graded as done in Bleeding or Decompensating (no window: see src). Positive pressure then takes the empty patient into arrest: the lesson needs no phase (design §4.2).",
-      "notes": "Ventilator 12 × 500, PEEP 5, FiO₂ 1.0.",
+      "$comment": "Graded as done in Bleeding or Decompensating (no window: see src). Positive pressure then takes the empty patient into arrest: the lesson needs no phase (design §4.2). Brief 93: an intubation in class IV shock is a rapid-sequence intubation, so the ventilated patient is paralysed (rocuronium 1.2 mg/kg; Miller 10e ch. 40 p. 1237: RSI with a non-depolariser, 1.0–1.2 mg/kg); unparalysed and unsedated, the engine's drive makes him breathe against the ventilator.",
+      "notes": "Ventilator 12 × 500, PEEP 5, FiO₂ 1.0; rapid-sequence intubation, rocuronium 1.2 mg/kg.",
       "give": [
         {
           "type": "applyEvent",
           "event": {
             "kind": "airwayDevice",
             "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "rocuronium",
+            "dose": 1.2,
+            "unit": "mg/kg",
+            "route": "iv"
           }
         },
         {
