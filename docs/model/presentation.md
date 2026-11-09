@@ -1155,6 +1155,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/learner-baseline.dom.test.ts`](../../apps/demo/src/app/views/learner-baseline.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/mechanisms.dom.test.ts`](../../apps/demo/src/app/views/mechanisms.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/remote-pin.dom.test.ts`](../../apps/demo/src/app/views/remote-pin.dom.test.ts) | 0 | 0 |
