@@ -2,7 +2,10 @@
 // in the column of its longest-path distance from the trigger once the feedback edges are set aside (the graph is then
 // acyclic), the observables at the leaves. Inside a column the nodes are ordered by the mean row of their parents (two
 // sweeps, ties in discovery order), so the picture is the same for the same registry and trigger.
-import type { Tree } from './graph.ts';
+import type { TreeEdge } from './graph.ts';
+
+/** What layout reads of a tree or of a view of it (graph.ts view()). */
+export interface Drawable { nodes: readonly { id: string }[]; edges: readonly TreeEdge[] }
 
 export interface Placed { id: string; gen: number; row: number; x: number; y: number }
 export interface Layout {
@@ -13,19 +16,21 @@ export interface Layout {
   height: number;
 }
 
-/** A node box's width, SVG px [ENG: display]: 27 characters of an 11 px label. */
-export const NODE_W = 164;
-/** A node box's height, SVG px [ENG: display]: a label line and an engine-key line. */
-export const NODE_H = 38;
-/** The gap between two columns, SVG px [ENG: display]: room for the feedback edges' lanes. */
-export const COL_GAP = 64;
+/** A node box's width, SVG px [ENG: display]: 21 characters of an 11 px label per line; five columns (the default
+ *  view, brief 104) fit the 934 px frame the page has at a 1440 px wide window (measured, e2e). */
+export const NODE_W = 148;
+/** A node box's height, SVG px [ENG: display]: two label lines and a unit line (brief 104: the clinical label, which
+ *  is longer than the engine key it replaced, wraps rather than being cut). */
+export const NODE_H = 46;
+/** The gap between two columns, SVG px [ENG: display]: room for the feedback edges' lanes (4 lanes a side, 4 px apart). */
+export const COL_GAP = 40;
 /** The gap between two nodes of a column, SVG px [ENG: display]. */
 export const ROW_GAP = 14;
-/** The margin round the drawing, SVG px [ENG: display]. */
-export const PAD = 16;
+/** The margin round the drawing, SVG px [ENG: display]: room above a node for its "+n" button. */
+export const PAD = 12;
 
 /** Longest-path generation of every node over the non-feedback edges (Kahn's order, discovery order among ties). */
-export function generations(tree: Tree): Map<string, number> {
+export function generations(tree: Drawable): Map<string, number> {
   const ids = tree.nodes.map((n) => n.id);
   const fwd = tree.edges.filter((e) => !e.feedback);
   const indeg = new Map(ids.map((id) => [id, 0]));
@@ -45,7 +50,7 @@ export function generations(tree: Tree): Map<string, number> {
   return gen;
 }
 
-export function layout(tree: Tree): Layout {
+export function layout(tree: Drawable): Layout {
   const gen = generations(tree);
   const order = new Map(tree.nodes.map((n, i) => [n.id, i]));
   const n = Math.max(0, ...gen.values()) + 1;

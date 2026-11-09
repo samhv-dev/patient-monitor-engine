@@ -110,7 +110,11 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
 type F = W & { __pmeApp: { archive: { list(): Array<{ resident: string; title: string }> }; session: { last: { state?: { sensors?: Record<string, string> } } } } };
 const fin = <T>(p: Page, fn: (w: F) => T) => p.evaluate(`(${fn.toString()})(window)`) as Promise<Awaited<T>>;
 
-test('Finish the case: a reload after "Save and restart" restores the new run; after "Save and close" the empty window', async ({ page, browserName }) => {
+// @known-flaky, class crash (outside our code; brief 103): in 45 ci runs with the gating WebKit jobs, 8 Nov 12:05 to 9 Nov 02:50 UTC (after PR #342), the first attempt failed in 3 runs (7 %), each
+// a lost page ("Target page, context or browser has been closed"; "page.reload: Page crashed"); once (run 42527976772)
+// before that the CVP line read "none" for the 5-s poll, then the retry lost its page too. Local macOS WebKit 20/20;
+// Chromium 0 sightings.
+test('Finish the case: a reload after "Save and restart" restores the new run; after "Save and close" the empty window', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(150_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
@@ -188,7 +192,11 @@ const V2_CASES: Array<{ id: string; title: string; phase: string; presses: numbe
 const HAEM_ROWS = ['Oxygen by face mask, FiO₂ 1.0', 'Call for help'];
 
 for (const c of V2_CASES) {
-  test(`a reload mid-card brings a /2 card back in its phase, with its takings: ${c.imported ? 'an imported copy' : c.id}`, async ({ page, browserName }) => {
+  // @known-flaky, class crash (outside our code; brief 103): in 45 ci runs with the gating WebKit jobs, 8 Nov 12:05 to 9 Nov 02:50 UTC (after PR #342), a first attempt lost its page in 5 runs
+  // (11 %), each "page.evaluate: Target page, context or browser has been closed" at 98–111 s; no other failure. Local
+  // macOS WebKit 58/60 under load (two read the clock back 10.3 and 14.8 s from where it was, against < 10: a local
+  // observation, reported in brief 103, not seen on CI); Chromium 0 sightings.
+  test(`a reload mid-card brings a /2 card back in its phase, with its takings: ${c.imported ? 'an imported copy' : c.id}`, { tag: '@known-flaky' }, async ({ page, browserName }) => {
     test.setTimeout(300_000);
     if (c.imported) {
       const doc = JSON.parse(readFileSync(resolve(import.meta.dirname, '../src/app/showcase/showcase-mh-v2.json'), 'utf8')) as Record<string, unknown>;

@@ -194,3 +194,198 @@ export function mechanismTree(data: TreeData, trigger: string, gloss: Labeller =
   const loopsFound = sccs.filter((c) => c.length > 1).sort((a, b) => b.length - a.length);
   return { root: trigger, nodes, edges, loops: loopsFound, inner };
 }
+
+// ---------- the readable view (brief 104, piece T1b): depth, folds, path filter ----------
+// The whole forward tree of a trigger is 74–93 nodes and 123–153 edges: too many to read on one screen or one A4 page.
+// The plan's readability rule for the backward read (Q5: P-1 = 4 generations, P-2 = 5 %) applies to the forward tree
+// too (the owner's ruling on T1, brief 104): the default view draws the trigger and 4 generations past it; a node with
+// undrawn children carries "show more", which draws one more generation from it; the monitor's values fold into one box
+// per device module until opened; a node with more than MAX_CHILDREN children shows the strongest by class and folds
+// the rest into "n more" (no live share exists before piece L1, so the 5 % share fold of P-2 is not computable: the
+// fold is by count); "path to…" keeps the near-shortest routes from the trigger to one node. The whole tree is one click away.
+// None of this changes what the tree computes: view() only chooses what of mechanismTree()'s result is drawn.
+
+import { generations } from './layout.ts';
+
+/** P-1: generations drawn past the trigger by default [ENG: display; readable on one A4 page, the owner's teaching use] (plan Q5,
+ *  §10.1; ruled for the backward read, applied to the forward tree by brief 104). */
+export const DEPTH = 4;
+/** Children a node shows before the rest fold into "n more" [ENG: display; brief 104's 6, the fold by count stands in for P-2's
+ *  5 % share until live shares exist (piece L1)]. */
+export const MAX_CHILDREN = 6;
+/** "Path to…" keeps the shortest routes and those up to this many generations longer [ENG: display; 2, brief 104: propofol to
+ *  the MAP then shows the SVR route, the contractility route and the baroreflex's answer, not half the tree]. */
+export const PATH_SLACK = 2;
+/** The order in which a folded node keeps its children: the edge whose size the most is known about first (sourced, then
+ *  fitted, an engineering choice, untagged, a pass-through), an absent mechanism last (it has no size); ties in registry
+ *  order. "Strongest by class" in brief 104. */
+export const STRENGTH: readonly DrawClass[] = ['SOURCED', 'FIT', 'ENG', 'UNTAGGED', 'NONE', 'ABSENT'];
+/** The modules whose rows are the device layer: what the monitor shows of the patient (the transducer's mean, the
+ *  oximeter's average, the counted QRS). Their target nodes fold into one box per module. */
+export const DEVICE_MODULES: readonly string[] = ['monitor'];
+/** A device box's words, per module. */
+export const DEVICE_WORDS: Readonly<Record<string, string>> = { monitor: 'Monitor values' };
+
+export interface ViewState {
+  /** Generations drawn past the trigger (default DEPTH). */
+  depth?: number;
+  /** Children a node shows before "n more" (default MAX_CHILDREN). */
+  maxChildren?: number;
+  /** Frontier nodes opened by "show more" (one generation each). */
+  expanded?: ReadonlySet<string>;
+  /** Folds opened: a device box's id (`device.<module>`) or a node's "n more" (`more.<node id>`). */
+  opened?: ReadonlySet<string>;
+  /** Keep only the routes from the trigger to this node id (the depth cut and the folds do not apply). */
+  pathTo?: string;
+  /** How many generations longer than the shortest a route to `pathTo` may be (default PATH_SLACK). */
+  slack?: number;
+  /** The whole tree, nothing folded. */
+  whole?: boolean;
+}
+export interface ViewNode extends Omit<TreeNode, 'kind'> {
+  kind: TreeNode['kind'] | 'device' | 'fold';
+  /** A frontier node: how many of its children are not drawn ("show more"). */
+  more?: number;
+  /** A fold ("n more"): the node it folds for, and the words of the children it holds. */
+  of?: string;
+  names?: string[];
+}
+export interface ViewTree extends Omit<Tree, 'nodes'> {
+  nodes: ViewNode[];
+  /** Nodes of the whole tree this view does not draw (a device box's members count as drawn inside it). */
+  hidden: number;
+}
+
+/** A node of the device layer: every row into it is a device module's, and it is not the trigger. */
+export function deviceModule(tree: Tree, id: string): string | null {
+  if (id === tree.root) return null;
+  const into = tree.edges.filter((e) => e.to === id).flatMap((e) => e.rows);
+  const m = into[0]?.module;
+  return m && DEVICE_MODULES.includes(m) && into.every((r) => r.module === m) ? m : null;
+}
+
+const mostCautious = (rows: readonly TreeRow[], absent: boolean): DrawClass =>
+  absent ? 'ABSENT' : (CAUTION.find((c) => rows.map(drawClass).includes(c)) ?? 'NONE');
+
+/** What of the tree is drawn (brief 104). Pure: the same tree and state draw the same view. */
+export function view(tree: Tree, s: ViewState = {}): ViewTree {
+  const keep = (ids: Set<string>, edges: TreeEdge[], extra: ViewNode[] = []): ViewTree => {
+    const nodes: ViewNode[] = [];
+    const placed = new Set<string>();
+    for (const n of tree.nodes) {
+      const id = boxOf(n.id);
+      if (!ids.has(id) || placed.has(id)) continue;
+      placed.add(id);
+      if (id === n.id) nodes.push({ ...n, keys: [...n.keys] });
+      else {
+        const members = tree.nodes.filter((m) => boxOf(m.id) === id);
+        const mod = id.slice('device.'.length);
+        nodes.push({ id, kind: 'device', label: DEVICE_WORDS[mod] ?? mod, keys: members.flatMap((m) => m.keys) });
+      }
+    }
+    nodes.push(...extra);
+    const fresh = edges.map((e) => ({ ...e, feedback: false }));
+    const { sccs, feedback } = components(nodes.map((n) => n.id), fresh, tree.root);
+    for (const i of feedback) (fresh[i] as TreeEdge).feedback = true;
+    const drawn = new Set(tree.nodes.filter((n) => ids.has(boxOf(n.id))).map((n) => n.id));
+    return { root: tree.root, nodes, edges: fresh, loops: sccs.filter((c) => c.length > 1).sort((a, b) => b.length - a.length), inner: tree.inner, hidden: tree.nodes.length - drawn.size };
+  };
+  let boxOf = (id: string): string => id;
+  if (s.whole) return keep(new Set(tree.nodes.map((n) => n.id)), tree.edges);
+
+  if (s.pathTo !== undefined) {
+    // the near-shortest routes: every edge on a walk from the trigger to the target at most PATH_SLACK generations
+    // longer than the shortest (breadth-first distances over all edges, feedback included). Every path is not a
+    // readable set: past the baroreflex most nodes reach most others, so "every path to the HR" is half the tree.
+    const dist = (start: string, fwd: boolean): Map<string, number> => {
+      const d = new Map([[start, 0]]);
+      const q = [start];
+      for (let i = 0; i < q.length; i++)
+        for (const e of tree.edges) {
+          const [a, b] = fwd ? [e.from, e.to] : [e.to, e.from];
+          if (a === q[i] && !d.has(b)) d.set(b, (d.get(a) as number) + 1), q.push(b);
+        }
+      return d;
+    };
+    const dr = dist(tree.root, true);
+    const dt = dist(s.pathTo, false);
+    const best = dr.get(s.pathTo);
+    if (best === undefined) return keep(new Set([tree.root]), []); // no path: the trigger alone
+    const limit = best + (s.slack ?? PATH_SLACK);
+    const on = tree.edges.filter((e) => dr.has(e.from) && dt.has(e.to) && (dr.get(e.from) as number) + 1 + (dt.get(e.to) as number) <= limit);
+    return keep(new Set([tree.root, s.pathTo, ...on.flatMap((e) => [e.from, e.to])]), on);
+  }
+
+  const depth = s.depth ?? DEPTH;
+  const max = s.maxChildren ?? MAX_CHILDREN;
+  const expanded = s.expanded ?? new Set<string>();
+  const opened = s.opened ?? new Set<string>();
+  const box = new Map<string, string>();
+  for (const n of tree.nodes) {
+    const m = deviceModule(tree, n.id);
+    if (m && !opened.has(`device.${m}`)) box.set(n.id, `device.${m}`);
+  }
+  boxOf = (id: string): string => box.get(id) ?? id;
+
+  // the contracted edges: a device box stands for its members; rows between the same two drawn nodes merge
+  const merged = new Map<string, TreeEdge>();
+  for (const e of tree.edges) {
+    const from = boxOf(e.from);
+    const to = boxOf(e.to);
+    if (from === to) continue;
+    const key = `${from}\u0000${to}\u0000${e.absent ? 'A' : 'P'}`;
+    const m = merged.get(key);
+    if (m) {
+      for (const r of e.rows) if (!m.rows.includes(r)) m.rows.push(r);
+      m.feedback &&= e.feedback;
+      m.cls = mostCautious(m.rows, !!m.absent);
+    } else merged.set(key, { ...e, from, to, rows: [...e.rows] });
+  }
+  const edges = [...merged.values()];
+  const children = new Map<string, TreeEdge[]>();
+  for (const e of edges) if (!e.feedback) (children.get(e.from) ?? children.set(e.from, []).get(e.from)!).push(e);
+  const rank = (e: TreeEdge): number => STRENGTH.indexOf(e.cls);
+
+  // the generation of D6 (longest path from the trigger in the whole tree, the column the whole tree draws it in); a
+  // device box at its first member's
+  const genAll = generations(tree as Tree);
+  const gen = (id: string): number => (id.startsWith('device.') ? Math.min(...tree.nodes.filter((n) => boxOf(n.id) === id).map((n) => genAll.get(n.id) as number)) : (genAll.get(id) as number));
+  // breadth first from the trigger: a node draws its children of generation <= depth (all of them once "show more"
+  // opened it), the strongest MAX_CHILDREN of them while its "n more" is closed
+  const level = new Map([[tree.root, 0]]);
+  const q = [tree.root];
+  const folded = new Set<string>();
+  for (let i = 0; i < q.length; i++) {
+    const u = q[i] as string;
+    let kids = (children.get(u) ?? []).filter((e) => expanded.has(u) || gen(e.to) <= depth);
+    if (kids.length > max && !opened.has(`more.${u}`)) {
+      kids = kids.map((e, k) => ({ e, k })).sort((a, b) => rank(a.e) - rank(b.e) || a.k - b.k).slice(0, max).map((x) => x.e);
+      folded.add(u);
+    }
+    for (const e of kids) if (!level.has(e.to)) level.set(e.to, (level.get(u) as number) + 1), q.push(e.to);
+  }
+  const ids = new Set(level.keys());
+  const drawn = edges.filter((e) => ids.has(e.from) && ids.has(e.to));
+  const extra: ViewNode[] = [];
+  const out: TreeEdge[] = [...drawn];
+  const moreOf = new Map<string, number>();
+  for (const u of ids) {
+    const hiddenKids = (children.get(u) ?? []).filter((e) => !ids.has(e.to));
+    if (!hiddenKids.length) continue;
+    const inView = hiddenKids.filter((e) => expanded.has(u) || gen(e.to) <= depth);
+    const fold = folded.has(u) && inView.length > 0;
+    if (fold) {
+      const id = `more.${u}`;
+      const rows = inView.flatMap((e) => e.rows);
+      const words = (to: string): string => (to.startsWith('device.') ? DEVICE_WORDS[to.slice(7)] ?? to : tree.nodes.find((n) => n.id === to)?.label ?? to);
+      extra.push({ id, kind: 'fold', label: `${inView.length} more`, keys: inView.map((e) => e.to), of: u, names: inView.map((e) => words(e.to)) });
+      out.push({ from: u, to: id, rows, cls: mostCautious(rows, inView.every((e) => e.absent)), feedback: false });
+    }
+    // "show more": the children beyond the depth (those the fold holds are one click away in the fold)
+    const beyond = hiddenKids.length - (fold ? inView.length : 0);
+    if (beyond > 0) moreOf.set(u, beyond);
+  }
+  const v = keep(ids, out, extra);
+  for (const n of v.nodes) if (moreOf.has(n.id)) n.more = moreOf.get(n.id);
+  return v;
+}

@@ -328,6 +328,13 @@ unregistered seams; nothing else in `docs/model/` changes except the new section
 - [ ] e2e: `#/explore/mechanisms` loads, the trigger picker lists the six, choosing one draws, the page prints one
   A4 page without clipping (Playwright `page.pdf` page count 1 for the six).
 **Acceptance:** the instructor can open the page and read the static tree for six triggers; this PR is useful alone.
+- **T1b (brief 104, after the owner read T1: "too crowded", "the physiological parts must carry clinical labels").** D3's
+  label rule is superseded on this page: a node shows a clinical label ([mechanism-tree-labels.md](mechanism-tree-labels.md),
+  the glossary's where it has one, every row unreviewed until the owner reads it) and never its engine key outside the
+  tooltip. Q5's readability rule (P-1 = 4 generations) applies to the forward tree: the page opens on the trigger and
+  4 generations (D6's), with "+n" per frontier node, the monitor's values folded into one box, more than six children
+  folded into "n more" (by class, since no live share exists before L1; P-2 takes over then), "path to" one monitor
+  value (the shortest routes and those up to 2 generations longer), and the whole tree one button away.
 
 ### R2: The registry for every module (plan 24 h · 3.0–4.0 executor-h; four PRs in parallel)
 
