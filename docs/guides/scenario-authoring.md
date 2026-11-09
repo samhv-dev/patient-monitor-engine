@@ -192,6 +192,10 @@ express (`validate.ts`, `validateV2`). The two demo cards are the worked example
 `apps/demo/src/app/showcase/showcase-mh-v2.json` (malignant hyperthermia) and `showcase-haemorrhage-v2.json`
 (class IV haemorrhage). A `/2` card runs in Instructor v2 (`#/teach2`). `pme-scenario/1` stays readable, unchanged.
 
+A card names a drug by its library id; how that drug is prepared (its products, diluents, compatibility and
+stability, each with its source) is not written in the card but in the formulary layer, for the learner remote's
+preparation bench: see [Writing a formulary entry](formulary.md). The layer ships empty: no drug has an entry yet.
+
 ### The document
 
 `schema` (`"pme-scenario/2"`), `id`, `title`, `phases` and `actions` are required. The header is `/1`'s: `notes`,
