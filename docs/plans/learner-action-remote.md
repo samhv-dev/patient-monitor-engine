@@ -1,8 +1,10 @@
 # Learner action remote (E136): drugs and infusions, lab samples and the lab view, with the preparation bench inside the drugs menu — Implementation Plan
 
-**STATUS: DRAFT FOR THE OWNER (2026-11-08).** Written by a planning executor from brief 99 of the post-demo set. Nothing
-in it is ruled until the owner answers §10 (LQ1–LQ14) and the orchestrator reviews the pieces. No product code, test,
-card, kit or data file was changed while writing it: this pull request adds this page and updates one roadmap row.
+**STATUS: READY TO BUILD (2026-11-09).** Every owner question (LQ1–LQ14) is ruled (9 November; section 0 below, and
+§10). Written by a planning executor from brief 99 of the post-demo set on 8 November as a draft, and amended on 9
+November with the rulings: each ruling is applied to its pieces, and the totals, the critical path and the merge order
+are re-made (§9). No product code, test, card, kit or data file was changed while writing it: this pull request adds
+this page and updates one roadmap row.
 
 **Base and preconditions.**
 - Base: `origin/main` **d3dcb34d** (Merge PR #320, `feat/eeg-signal`), read in the worktree
@@ -14,9 +16,9 @@ card, kit or data file was changed while writing it: this pull request adds this
   is a deviation, a violation if delivered; the loss of effect is modelled; particulate harm is a debrief consequence),
   and the 8 November evening replies 3 and 11 (scope: the WHOLE drug library; the bench lives in the drugs menu of a
   learner remote the learner opens from the room QR, from which the learner gives drugs and infusions, sends lab
-  samples and reads the results in a lab view; the formulary of record: Trissel's Handbook on Injectable Drugs for
-  compatibility and stability, the open Stabilis database as the cross-check of every entry, the product monograph of
-  the stocked preparation for concentrations and diluents; every entry carries its source, none is a placeholder).
+  samples and reads the results in a lab view; every entry carries its source, none is a placeholder), and the
+  rulings of 9 November on this plan's questions (section 0), which set the formulary's sources (Stabilis primary,
+  Trissel 2013 the cross-check, the product monograph).
 - The rule over every number: mechanisms first, sources set the numbers (owner, 7 November;
   `scratch/briefs/post-demo/00-common-rules.md`). A quantity a source does not give is named as a gap and put to the
   owner (§10), never invented.
@@ -31,6 +33,32 @@ card, kit or data file was changed while writing it: this pull request adds this
 
 ---
 
+## 0. Rulings, 9 November (the owner's answers to LQ1–LQ14)
+
+| ID | Ruling | Applied in |
+|---|---|---|
+| **LQ1** | **A separate learner PIN** (option B), handed out by the instructor. The remote joins with the room code AND that PIN. The learner PIN is not the instructor's PIN and grants the learner role only | §3, §4 D1, D9; L3, L4, L6 |
+| **LQ2** | **Option C**: the point-of-care gas panel, AND a laboratory chemistry panel (creatinine, coagulation, fibrinogen, CK, electrolytes), AND INR. The first analyser is the **Radiometer ABL800**: its analyte list and its specification-sheet times are one data row; another device later is another row. The laboratory turnaround comes from **Hawkins 2007** until the owner's laboratory gives its own figure. Critical values: the hospital's list, or the Kost list | §1.3, §9 L10a–L10d, L11, L15 |
+| **LQ3** | The instructor's card has **ONE control: "Show the incompatibility notice to the learner"** (no let-stand, no remove). On the learner's remote the notice is a **sound**, as an aide raising a concern in the real room, plus the finding shown inside the remote. The card also shows on the **instructor's phone**. If the learner presses Give before the instructor acts, the preparation IS given, and the record states whether the notice had been shown, and when | §4 D7; L5, L7, L9, L13 |
+| **LQ4** | **Option B**: any remote may change any infusion. Every change is recorded with the device that made it and the rate it replaced | §4 D2, D8; L4, L5, L8, L13 |
+| **LQ5** | Formulary sources: **the Stabilis database is the source of record** (primary). **Trissel's Handbook on Injectable Drugs, 17th edition (2013)**, is the cross-check, available to executors as a PDF in the workspace library (`library/sources/full-pdfs/Handbook of Injectable Drugs (Trissel) 2013.pdf`, from the workspace root): it is read in place, never copied into the repository, and cited by edition and page. The stocked product's monograph gives concentrations and diluents. **Every entry says which of the three it has** | §5; L1, FS, F1–F3 |
+| **LQ6** | **Option B for now**: a public label (DailyMed or EMC), named per entry; each entry is re-pointed to the department's product when the owner finds the stock list | §5; FS, F1–F3 |
+| **LQ7** | Default stands (A): no source for the preparation time → ready at once, "no source for the preparation time" in the Debrief | L2, L7, L13 |
+| **LQ8** | Default stands (A): incompatible with no quantity → the full amount delivered, "loss not modelled", the harm named in the Debrief | §7.2; L2 |
+| **LQ9** | Default stands (A): "≥ 90 % for T h" → 100 % within T; beyond T the last measured value, flagged | §7.2; L2 |
+| **LQ10** | Default stands (A): the bench is on the remote only; the laptop's Drug sheet gives as today | §3 |
+| **LQ11** | Default stands (A): wrong diluent = not listed in the stocked product's monograph (graded); the effect follows the stability sources (modelled) | §4 D5; L2, L5 |
+| **LQ12** | Default stands (A): no Y-site compatibility; preparations only | §3, §9.3 |
+| **LQ13** | **Option B**: a remote sees the results of its own samples; the laptop sees every result, in a small Labs view: piece **L15** (≈ 4 h) | §4 D6; L11, L15 |
+| **LQ14** | Default stands (A): no card change; the formulary grades every preparation | §6 |
+
+Also carried, from the owner's message of 9 November: the learner remote is a **second commanding instrument by the
+owner's ruling** (§4 D9; §11 point 5 is now a decision, not a disagreement); the engine's 120 s lab turnaround gets its
+source in the lab piece (L10a). The 8 November "formulary of record" wording (Trissel primary, Stabilis the
+cross-check) is superseded by LQ5: Stabilis is primary, Trissel 2013 the cross-check.
+
+---
+
 ## 1. Inventory: what exists on d3dcb34d
 
 ### 1.1 The learner's devices today: followers, and one command path
@@ -42,7 +70,7 @@ card, kit or data file was changed while writing it: this pull request adds this
 | The follower's instrument hashes: `#/pick`, `#/monitor`, `#/monitor/wide`, `#/defib`; anything else is the learner monitor | `apps/demo/src/app/classroom.ts:51–61` (`instrumentOf`, `hashOf`); `apps/demo/src/app/main.ts:59–93` | A new hash `#/remote/learner` (§4 D1) |
 | The picker's cards: Learner monitor, Patient monitor, Ventilator (not on a device), Depth (not available), IABP (later); the defibrillator is Room setup's opener only | `apps/demo/src/app/views/join.ts:20–35` (`PICKER_WORDS`), `:18` | The picker gains a "Learner remote" card (L6) |
 | The device key, 12 of `[a-z0-9]`, kept on the device | `join.ts:57` (`deviceKey`) | The remote's `by` (who gave what) |
-| The instructor's phone remote: a PIN form, then role `instructor`, granted by the laptop | `apps/demo/src/app/views/remote.ts:1–11`, `:150–183`; `docs/plans/instructor-peer-role.md` §1 | The learner remote does NOT reuse this (no PIN by default, LQ1); it reuses the instructor's command path on the HOST |
+| The instructor's phone remote: a PIN form, then role `instructor`, granted by the laptop | `apps/demo/src/app/views/remote.ts:1–11`, `:150–183`; `docs/plans/instructor-peer-role.md` §1 | The learner remote reuses its PIN FORM (keypad, memory-only PIN, the state words) with the LEARNER PIN (LQ1 ruled), and the instructor's command path on the HOST |
 | `Role` includes `defib` (R5c): joins as a learner (no PIN), follows as a viewer, may send `LEARNER_DEFIB_COMMANDS` only | `packages/controller/src/protocol.ts:27–31`, `:398–418` (`LEARNER_DEFIB_COMMANDS`, `learnerDefibMay`) | The pattern copied exactly for a `learner` role (L3) |
 | The guard's roles and the roles that may carry `show`/`device` | `packages/controller/src/guard.ts:115`, `:117` | `learner` joins both sets |
 | The relay: a `defib` socket's command passes only `learnerDefibMay`, at most 4 a second, else `forbidden` | `packages/controller/relay/server.ts:162` (`DEFIB_PER_S`), `:303–313`, `:540` (the classroom rule admits `defib` from another device) | The same three places admit `learner` and its allow-list (L3) |
@@ -56,7 +84,7 @@ card, kit or data file was changed while writing it: this pull request adds this
 | THE drug library: 65 rows in three files, by family; 4 are volatiles (sevoflurane, isoflurane, desflurane, N₂O), **61 are injectable** | `packages/engine-core/src/l2/pk/data/drugs.ts:1–12`; `rows-anaesthetic.ts`, `rows-cardiovascular.ts`, `rows-other.ts` | The bench's scope: 61 formulary entries (§9.1). Three rows are `cls: 'placeholder'` (tranexamic acid, ondansetron, dexamethasone): they still need a preparation entry |
 | 14 rows carry a syringe concentration for the pump (`syringePerMl`): propofol, fentanyl, remifentanil, sufentanil, phenylephrine, norepinephrine, epinephrine, vasopressin, dobutamine, milrinone, dopamine, nitroglycerin, nitroprusside, esmolol | `packages/engine-core/src/l2/pk/row.ts:112`; the rows | Today's fixed syringe; the bench replaces it with the learner's own preparation's concentration |
 | The engine's drug events: `drug` (bolus, or `infusion: true` with a rate), `infusion` (rate, optional `concentration {amount, unit, perMl}`), `tci`, `vaporiser` | `packages/engine-core/src/types-pk.ts:13–17` | An infusion already takes the syringe's concentration (`pk/pipeline.ts:274–275`): the bench's concentration rides an existing field |
-| The wire's `ClinicalEvent` carries `drug`, `infusion`, `tci`, `vaporiser`; it has **no `lab`** | `packages/controller/src/protocol.ts:52–57` | L10 adds `lab` to the wire type (the engine accepts it already) |
+| The wire's `ClinicalEvent` carries `drug`, `infusion`, `tci`, `vaporiser`; it has **no `lab`** | `packages/controller/src/protocol.ts:52–57` | L10a adds `lab` to the wire type (the engine accepts it already) |
 | The app's dose picker: names and classes from the library, presets are drafts | `apps/demo/src/app/drugs.ts:1–3`, `:18` | The remote's drug list reads the same `DRUGS` and the formulary (L7) |
 | Instructor v2's Drug sheet: groups, presets, "Add to the cache for staged delivery", Deliver / Give | `apps/demo/src/app/teach2/drug-sheet.ts:1–12`, `:245` | The remote's tray and Deliver copy its shape; the laptop's sheet is unchanged unless LQ10 says otherwise |
 | The same-drug lock: a bolus of a drug given within 10 s of sim time, from any device, is refused `recent` (owner, 5 November) | `packages/controller/src/session/drug-lock.ts:1–11`, `:28–32` (`bolusDrugOf`), `:35–38` (`givenByOf`: laptop, phone, card) | Reused unchanged; `GivenBy` gains `learner` so the refusal says "from a learner's remote" (L4) |
@@ -67,12 +95,12 @@ card, kit or data file was changed while writing it: this pull request adds this
 | Today | Where | What it means |
 |---|---|---|
 | The engine emits `labs` (1 Hz truth) and, on `applyEvent {kind:'lab', panel:'abg'|'vbg', turnaroundS?}`, freezes the panel at the draw and returns it as `labResult` after the turnaround | `packages/engine-core/src/types-blood.ts:29–30`, `:48`; `l2/blood/pipeline.ts:260–262`, `:324–326` (turnaround 30–3600 s), `:411` | A sample is an engine event; a follower's engine produces the same `labResult` at the same tick (sample-identical), so the remote needs no new event to read its results (§4 D6) |
-| The turnaround: one number for the whole panel, `LAB_TURNAROUND_S = 120`, "point-of-care analyser ≈ 60–90 s + the walk", marked `[ENG: device]` | `packages/engine-core/src/l2/blood/labs.ts:9` | Not sourced; L10 replaces it with sourced per-panel turnarounds (LQ2) |
-| The panel: pH, PCO₂, PO₂, HCO₃⁻, BE, sO₂, COHb, MetHb, lactate, Na⁺, K⁺, Cl⁻, iCa²⁺, Mg²⁺, Hb, glucose, AG, osmolality | `types-blood.ts:39–44` (`LabPanel`); `labs.ts:20–49` (`labPanel`) | Every value a POC analyser reports is here; Mg²⁺, AG and osmolality are not what most blood-gas analysers measure (LQ2). INR is computed by the liver model (`types-organs.ts:48`) but is in no panel |
+| The turnaround: one number for the whole panel, `LAB_TURNAROUND_S = 120`, "point-of-care analyser ≈ 60–90 s + the walk", marked `[ENG: device]` | `packages/engine-core/src/l2/blood/labs.ts:9` | Not sourced; L10a replaces it with the ABL800 row's and the laboratory row's sourced turnarounds (LQ2 ruled) |
+| The panel: pH, PCO₂, PO₂, HCO₃⁻, BE, sO₂, COHb, MetHb, lactate, Na⁺, K⁺, Cl⁻, iCa²⁺, Mg²⁺, Hb, glucose, AG, osmolality | `types-blood.ts:39–44` (`LabPanel`); `labs.ts:20–49` (`labPanel`) | Every value a POC analyser reports is here; Mg²⁺, AG and osmolality are not what most blood-gas analysers measure, so the ABL800 row (LQ2 ruled) decides what the gas panel returns. INR is computed by the liver model (`types-organs.ts:48`) but is in no panel; GFR is computed (`types-organs.ts:44`) but no creatinine; **no creatinine, no PT/aPTT or platelet count, no fibrinogen and no CK are computed** (`grep` of `packages/engine-core/src` on d3dcb34d): the laboratory panel the owner ruled needs those mechanisms built (L10b–L10d) |
 | The only lab view in the product: the renderer's `mountLabPanel`, a table flagged against reference ranges, used by the developer page `blood-acid-base` only | `packages/renderer/src/lab-panel.ts:6–23`, `:30–41`; `apps/demo/src/dev/blood-acid-base.ts:27–28` | **There is no instructor lab view in the app** (§11 disagreement 1). The remote's lab view is built on `mountLabPanel` (L11) |
 | No app control sends `applyEvent lab`; the instructor allow-list has no `applyEvent lab` | `protocol.ts:370–378` (`INSTRUCTOR_COMMANDS`); `grep -rn "kind: 'lab'" apps/demo/src/app` finds nothing outside tests | The remote is the first app control that draws a sample |
 | A `/2` card's `sample` action is recorded by its taking only (no engine command), as `procedure` and `communication` are | `packages/controller/src/scenario/driver.ts:557` (`RECORDED_KINDS`); `apps/demo/src/app/teach2/press.ts:25–27` | The format needs a way for a learner's real draw to satisfy a card's sample action (§6) |
-| Critical values for the phone's labs line: Kost's critical-limits list recommended, not yet ruled (O15) | `research/lab-critical-values-2026-10-29.md` §1; `research/40-post-demo-inventory.md:202` | The lab view's flags (LQ2) |
+| Critical values for the phone's labs line: Kost's critical-limits list recommended (O15) | `research/lab-critical-values-2026-10-29.md` §1; `research/40-post-demo-inventory.md:202` | The lab views' flags: the hospital's list, else Kost (LQ2 ruled) |
 
 ### 1.4 The scenario format `/2`: what grading can say today
 
@@ -87,9 +115,9 @@ card, kit or data file was changed while writing it: this pull request adds this
 ### 1.5 The Room plan's fixed points this plan keeps
 
 - Anti-goal: "The phones stop following the host … No instrument sends a command, with ONE exception … the
-  defibrillator window" (`docs/plans/room-and-instruments.md:117–121`). The owner's 8 November ruling makes the learner
-  remote the SECOND learner-operated command path; it follows R5c's pattern and is recorded here as an owner-ruled
-  exception, not a widening of the first.
+  defibrillator window" (`docs/plans/room-and-instruments.md:117–121`). The owner's rulings of 8 and 9 November make the learner
+  remote the SECOND commanding instrument (§4 D9); it follows R5c's pattern, admitted by the room code and the learner
+  PIN (LQ1).
 - No accounts (`room-and-instruments.md:114`): the remote is a device, named by its key and Room setup's remembered
   name (R7), never a person's login.
 - One QR (`room-and-instruments.md` §4 D4): the remote is a card in the picker, not a second QR.
@@ -100,36 +128,41 @@ card, kit or data file was changed while writing it: this pull request adds this
 
 A learner scans the room QR, chooses "Learner remote" and gets, on the phone, three menus beside a small follower
 monitor: **Drugs** (the preparation bench, then staging, then delivery), **Infusions** (start, change, stop) and
-**Labs** (draw a sample, see it pending, read the result). Every press travels the R5c way: an allow-list on the
-device's role, the relay forwarding only those shapes, the host re-checking and applying through the same command
+**Labs** (draw a sample, see it pending, read the result). The remote joins with the room code and the learner PIN the instructor hands out (LQ1). Every
+press travels the R5c way: an allow-list on the device's role, the relay forwarding only those shapes, the host re-checking and applying through the same command
 path as the instructor's own actions, and every applied action recorded with `by` = the device, so the Debrief says
 who gave what. Inside the drugs menu, the learner builds a preparation from components; the formulary layer, a data
 file per drug with a source on every statement, says its concentration, diluents, compatibility, stability and
-preparation time; a compatibility problem shows on the instructor's screen at staging and the instructor decides; a
-wrong diluent is a deviation, a violation if delivered; the loss of effect follows the source's own stability
+preparation time; a compatibility problem shows on the instructor's laptop and phone at staging, and the instructor
+decides whether to sound the incompatibility notice on the learner's remote (LQ3); a wrong diluent is a deviation, a violation if delivered; the loss of effect follows the source's own stability
 figures; particulate harm is named in the Debrief, never computed.
 
 ## 3. Goals, non-goals, anti-goals
 
 Goals
-- **The `learner` role**, admitted by the room code (R5c's pattern; LQ1 asks whether a PIN or a grant is wanted).
-- **The allow-list** (§4 D2): stage a preparation, discard it, deliver it (bolus), start / change / stop an infusion
-  from one of the device's preparations, draw a sample. Nothing else.
+- **The `learner` role**, admitted by the room code and the learner PIN (LQ1 ruled: option B), R5c's pattern for
+  everything it may send.
+- **The allow-list** (§4 D2): stage a preparation, discard it, deliver it (bolus), start an infusion from one of the
+  device's preparations, change or stop ANY running infusion (LQ4 ruled), draw a sample. Nothing else.
 - **The formulary layer** for all 61 injectable drugs of the library, plus the diluents, each statement sourced
-  (Trissel; Stabilis as the cross-check; the stocked product's monograph), proved sourced by a CI test (§5).
+  (Stabilis primary; Trissel 2013 the cross-check; the stocked product's public label, LQ5 and LQ6 ruled), proved
+  sourced by a CI test (§5).
 - **The bench** in the remote's drugs menu: components → preparation (concentration, diluent, volume, preparation
   time) → staging (the tray) → delivery, reusing staged delivery and the same-drug lock.
 - **The physiology of a wrong preparation** as a true mechanism: the active amount delivered is the prepared amount
   times the fraction the source says remains (§7); nothing where the source gives no quantity (LQ8, LQ9).
-- **The lab view** on the remote: which samples, a sourced turnaround per panel, results as `mountLabPanel` shows them.
+- **The lab views**: the point-of-care gas panel (the ABL800 row), a laboratory chemistry panel and INR (LQ2 ruled),
+  each with its sourced turnaround; the remote shows its own samples' results, the laptop shows every result (LQ13
+  ruled), both on `mountLabPanel`.
 - **Grading** by `/2`: a wrong diluent staged = deviation; delivered = violation (§6).
 - **The Debrief** names who gave what and the consequences (particulate harm as text).
 
 Non-goals
-- The instructor's own Drug sheet becoming a bench (the roadmap row's old wording): LQ10.
-- A line model (which cannula, which lumen) and Y-site compatibility with running infusions: LQ12.
+- The instructor's own Drug sheet becoming a bench (the roadmap row's old wording): ruled out (LQ10).
+- A line model (which cannula, which lumen) and Y-site compatibility with running infusions: ruled out (LQ12).
 - Pharmacy workflow (orders, labels, barcode scanning), stock counts, expiry dates.
-- New analytes the engine does not compute (coagulation beyond INR, troponin, CK, creatinine): §9.3.
+- Analytes outside the ruled panels (troponin, myoglobin, lipase and the rest): §9.3. The ruled ones the engine does not
+  compute yet (creatinine, coagulation, fibrinogen, CK) are built as mechanisms in L10b–L10d.
 - A second QR, accounts, profiles.
 
 Anti-goals (a piece that does one of these is rejected)
@@ -153,7 +186,8 @@ Anti-goals (a piece that does one of these is rejected)
 
 - **D1. The remote is an instrument page on a follower.** Hash `#/remote/learner` on a `?join=CODE` page; it mounts
   the follower (`mountFollower`, `show: 'learner'` layout, smaller) and three tabs. Its hello is `{role: 'learner',
-  show: 'learner', device}` (the device key, `join.ts:57`). A follower engine is what lets results and the patient's
+  show: 'learner', device, pin}` (the device key, `join.ts:57`; the learner PIN typed in the remote's PIN form, held in
+  the page's memory only, as P7's instructor PIN, `views/remote.ts:1–11`). A follower engine is what lets results and the patient's
   response appear on the device with no new event (D6).
 - **D2. The allow-list, `LEARNER_COMMANDS`, exactly these shapes** (`protocol.ts`, beside `LEARNER_DEFIB_COMMANDS`):
   1. `prep stage` — `{type:'prep', action:'stage', prep:{id, components:[{productId, amount, unit}], diluent?:
@@ -162,9 +196,12 @@ Anti-goals (a piece that does one of these is rejected)
   2. `prep discard` — `{type:'prep', action:'discard', id}`.
   3. `prep deliver` — `{type:'prep', action:'deliver', id, volumeMl | 'all', route, overS?}`: a bolus from the
      preparation. Several in one `stageGroup` (a tray delivered at once), batch `n` as today.
-  4. `prep infuse` — `{type:'prep', action:'infuse', id, rateMlH}` (start or change) and `{…, rateMlH: 0}` (stop).
+  4. `prep infuse` — `{type:'prep', action:'infuse', id, rateMlH}`: start an infusion from one of this device's
+     preparations (or change its rate).
+  4b. `infusion set` — `{type:'infusion', action:'set', drugId, rateMlH}`: change (or, at 0, stop) ANY running
+     infusion of that drug, whoever started it (LQ4 ruled); the host keeps the running infusion's concentration.
   5. `applyEvent lab` — `{type:'applyEvent', event:{kind:'lab', panel}}`, panel from the ruled list (LQ2); no
-     `turnaroundS` (the panel's sourced turnaround is the engine's, L10).
+     `turnaroundS` (the panel's sourced turnaround is the engine's, L10a).
   Every other shape, and any extra field on these, is refused, at the relay and again at the host (`learnerMay`, as
   `learnerDefibMay`, `protocol.ts:410–418`). The `prep` type is new; the host never forwards it to the engine (D3).
   Rate: at most 6 commands a second per socket [ENG: network; a tray of up to 4 items delivered in one press plus a
@@ -173,13 +210,14 @@ Anti-goals (a piece that does one of these is rejected)
   calls the formulary's pure `prepare(components, diluent, formulary, simT)` (L2) and keeps the result in a
   preparations table keyed by device and id: concentration, volume, the preparation's ready time (`simT` + the
   sourced preparation time, else `simT` with the gap noted), its findings (compatibility, wrong diluent), and its
-  stability curve. It broadcasts the preparation to the instructor's screens and to that device (a new host-only
-  event `prep`, never in `VIEWER_EVENTS` except to its own device, §4 D7). On `prep deliver` the host computes the
+  stability curve. It broadcasts the preparation to the instructor's screens (laptop and phone) and to that device (a new
+  host-only event `prep`, never in `VIEWER_EVENTS`, sent to its own device only, §4 D7). On `prep deliver` the host computes the
   active amount = volume × concentration × the source's remaining fraction at the preparation's age (§7) and issues
   `applyEvent drug {drugId, dose, unit, route, overS}` through `command()` exactly as the instructor's press, with
   `issuedBy: 'learner'`, `by` = the device key, and the preparation's id on the command (`prepId`, additive). On
   `prep infuse` it issues `applyEvent infusion {drugId, rate, unit: 'mL/h', concentration}` with the preparation's
-  active concentration. So the lock, staged delivery, the engine's validation and the record are today's.
+  active concentration; on `infusion set` it issues the same event with the running infusion's own concentration and
+  records the rate it replaced and who had set it (LQ4). So the lock, staged delivery, the engine's validation and the record are today's.
 - **D4. The formulary lives in the controller, not in a new package.** Data: `packages/controller/formulary/<drugId>.json`
   and `diluents/<id>.json`, `sources.json`; code: `packages/controller/src/formulary/` (types, loader, `prepare`,
   `remaining`). Reason: the host (controller) and the remote (demo app) both read it, the controller is already a
@@ -189,17 +227,33 @@ Anti-goals (a piece that does one of these is rejected)
   product's monograph does not list for that preparation is wrong (deviation; violation when delivered). Whether, and
   how much, the active drug is lost is a separate question answered by the stability and compatibility statements.
   A diluent can be wrong and lose nothing (graded, no effect), or listed and still lose drug past its stated time
-  (no deviation, the effect follows the figures). LQ11 asks the owner to confirm this split.
-- **D6. Lab results come from the remote's own engine.** A sample is `applyEvent lab`; the host applies it; every
+  (no deviation, the effect follows the figures). Ruled 9 November (LQ11, A).
+- **D6. Lab results come from each device's own engine; each device shows what LQ13 ruled.** A sample is `applyEvent lab`; the host applies it; every
   follower's engine, the remote's included, freezes the same panel at the same tick and emits the same `labResult`
-  after the same turnaround (`pipeline.ts:261`, `:411`). The remote's lab view listens to `labResult` only. No result
-  crosses the wire; the relay and `VIEWER_EVENTS` are unchanged for results.
-- **D7. Who sees a preparation.** The host's `prep` event (made, findings, decided, delivered, discarded) goes to the
-  host's own screens, to granted instructors, and to the one `learner` socket that staged it, never to other
-  learners or viewers (the relay routes it as it routes an ack to the socket that sent the command, `server.ts:324–330`). The findings are shown to the
-  instructor at once (the ruling) and to the learner only as LQ3 rules.
-- **D8. A learner's infusion is the learner's.** The infusions menu lists every running infusion (it reads them from
-  its own engine's state) but offers change and stop only on infusions its own preparations started, until LQ4 rules.
+  after the same turnaround (`pipeline.ts:261`, `:411`). The remote's lab view listens to `labResult` only, and shows a
+  result only for a sample this device drew (the `labResult` is matched to the device's own `applyEvent lab` by its
+  draw tick and panel; LQ13 ruled: a remote sees its own samples). The laptop's Labs view (L15) shows every
+  `labResult` of its engine. No result crosses the wire; the relay and `VIEWER_EVENTS` are unchanged for results.
+- **D7. Who sees a preparation, and the incompatibility notice (LQ3 ruled).** The host's `prep` event (made, findings,
+  notice, delivered, discarded) goes to the host's own screens, to granted instructors (the instructor's phone shows
+  the same card), and to the one `learner` socket that staged it, never to other learners or viewers (the relay
+  routes it as it routes an ack to the socket that sent the command, `server.ts:324–330`). The finding is shown to
+  the instructor at once. The learner learns of it only when the instructor presses the card's one control, "Show the
+  incompatibility notice to the learner": the remote then sounds the notice (an aide raising a concern in the real
+  room) and shows the finding inside the preparation. The instructor never removes or blocks a preparation; a Give
+  pressed before the notice is given, and the record says whether the notice had been shown, and at what time.
+- **D8. Any remote may change any infusion (LQ4 ruled, option B).** The infusions menu lists every running infusion
+  (from its own engine's state) with Change and Stop on each, whoever started it. Every change is recorded with the
+  device that made it and the rate it replaced (and who had set that rate).
+- **D9. The learner remote is the second commanding instrument, by the owner's ruling.** The Room plan's anti-goal
+  allowed one (the defibrillator window, `room-and-instruments.md:117–121`); the rulings of 8 and 9 November add the
+  learner remote. It is admitted by the room code and the learner PIN: the laptop draws the learner PIN (4–6 digits
+  [ENG: ui; P7's PIN rule]) and shows it on Room setup behind press-and-hold, as P7 shows the instructor's; it is kept
+  in the laptop's store (`pme.learnerPin`) beside `pme.instructorPin`, never in an address, the QR, a log, the record
+  or `room.json`. The relay keeps a learner socket PENDING until the host's `grant`, under the same per-address
+  wrong-PIN limits as an instructor; the host checks the learner PIN with the same check as P3's (`verify`), and a
+  learner PIN never grants `instructor` (nor the instructor's PIN `learner`). Changing the learner PIN revokes every
+  granted remote.
 
 ## 5. The formulary layer: data with sources, and the CI check that proves it
 
@@ -218,35 +272,50 @@ from, not data):**
   "diluents": [
     { "id": "water", "listed": true, "src": "S2" },
     { "id": "saline", "listed": false, "src": "S2",
-      "compat": { "verdict": "incompatible | compatible | conditional | not tested", "statement": "<our words>", "src": "S1",
-                  "crossCheck": { "stabilis": "agrees | differs | not listed", "src": "S3", "ruling": "<when differs>" } } }
+      "compat": { "verdict": "incompatible | compatible | conditional | not tested", "statement": "<our words>", "src": "S3",
+                  "crossCheck": { "trissel": "agrees | differs | not listed", "src": "S1", "ruling": "<when differs>" } } }
   ],
   "admixtures": [ { "with": "<drugId>", "verdict": "…", "statement": "…", "src": "S1", "crossCheck": { … } } ],
   "stability": [ { "diluent": "water", "container": "vial | syringe-pp | bag-pvc | bag-polyolefin", "tempC": 25,
-                   "points": [["<h from S1>", "<fraction from S1>"]], "statement": "…", "src": "S1", "crossCheck": { … } } ],
+                   "points": [["<h from S3>", "<fraction from S3>"]], "statement": "…", "src": "S3", "crossCheck": { … } } ],
+  "has": { "stabilis": true, "trissel": true, "monograph": true },
   "sources": "keys into sources.json"
 }
 ```
 
-`sources.json` entries: `trissel` (edition, monograph title, page or section, the reader and date), `stabilis` (the
-monograph id, the retrieval date), `monograph` (product name, marketing-authorisation holder, document version or
-date, the issuing body: DailyMed, EMC, or the department's leaflet), `study` (a cited paper, DOI or PMID) for a
-preparation time or a measured loss.
+**The three sources and their roles (LQ5, LQ6 ruled 9 November).** **Stabilis** (stabilis.org) is the source of
+record: a compatibility or stability statement and its figures come from it when it has them. **Trissel's Handbook on
+Injectable Drugs, 17th edition (2013)** is the cross-check of every such statement; executors read it in place in the
+workspace library (`library/sources/full-pdfs/Handbook of Injectable Drugs (Trissel) 2013.pdf`, from the workspace
+root), never copy it or an extract of it into the repository, and cite it by edition and page. Where Stabilis has no
+statement and Trissel has one, Trissel's is used and the entry says so (`has.stabilis: false`). The **product
+monograph** gives the products, strengths, concentrations and listed diluents: for now a public label, DailyMed or
+EMC, named per entry (LQ6, B), re-pointed to the department's product when the owner finds the stock list. **Every
+entry says which of the three it has** (`has`).
+
+`sources.json` entries: `stabilis` (the monograph id, the retrieval date, the reference Stabilis cites for the
+figure), `trissel` (edition `17 (2013)`, monograph title, page, the reader and date), `monograph` (product name,
+marketing-authorisation holder, document version or date, the issuing body: DailyMed or EMC, later the department's
+leaflet), `study` (a cited paper, DOI or PMID) for a preparation time or a measured loss.
 
 **The CI check** (`packages/controller/test/formulary/sources.test.ts`, run in the controller's unit job on every PR):
 1. Every number in a data file sits in an object that has a `src` (or the object is marked `gap` with an `LQ` id), and
    every `src` resolves in `sources.json`.
-2. Each source entry has its kind's required fields (above); a `trissel` entry without edition and monograph, a
-   `stabilis` entry without id and date, a `monograph` without product and version fail.
-3. Every `compat`, `admixtures` and `stability` statement has a `crossCheck.stabilis`; `differs` requires a `ruling`
-   (who, date, which source the entry follows).
+2. Each source entry has its kind's required fields (above); a `trissel` entry without edition and page, a
+   `stabilis` entry without id and date, a `monograph` without product, holder and version fail.
+3. Every `compat`, `admixtures` and `stability` statement has its `src` (Stabilis, else Trissel when `has.stabilis` is
+   false) and a `crossCheck.trissel` (`agrees`, `differs` or `not listed`); `differs` requires a `ruling` (who, date,
+   which source the entry follows). Every file has `has` with its three flags, and the flags match the sources the
+   file actually cites.
 4. No `gap` without an owner question id from §10, and the bench refuses a gap where the field is required to deliver
    (a concentration); it accepts a gap in preparation time (ready at once, the Debrief says "no source for the
    preparation time").
 5. Coverage: `files ∪ pending.json = the 61 injectable DRUG_IDS` and `files ∩ pending = ∅`; the bench offers only
    drugs with a file; `pending.json` may only shrink (the last batch, F3, asserts it empty). A drug added to the
    library without a file and not in `pending` fails the build.
-6. Statements are short (≤ 200 characters) [ENG: test; keeps an entry a paraphrase, never a copied monograph].
+6. Statements are short (≤ 200 characters) [ENG: test; keeps an entry a paraphrase, never a copied monograph], and
+   no file under `packages/` is a PDF or holds text extracted from the Trissel PDF (a size and type check on the
+   formulary folder).
 
 What CI cannot prove is that an entry says what its source says. That is the **second reading**: every entry is read
 against its sources by a second executor before its batch merges, and the PR lists each entry with the reader's
@@ -256,12 +325,15 @@ against its sources by a second executor before its batch merges, and the PR lis
 
 All additive; `pme-scenario/2` documents stay valid; the runner state gains optional fields (restore of an older
 state keeps working).
-- `Administration.source` gains `'learner'`; `Administration` gains `by?: string` (the device key) and
+- `Administration.source` gains `'learner'`; `Administration` gains `by?: string` (the device key),
+  `replaced?: { rate; rateUnit; by }` (an infusion change: the rate it replaced and who had set it, LQ4) and
   `prep?: { id; drugId; productId; diluent?; concentration: {amount, unit, perMl}; volumeMl; findings: Finding[];
-  remaining: number; activeAmount; unit }` (`types-v2.ts:169–190`). `administrationOf` (`driver.ts:573–576`) maps
+  notice: { shownAt: number } | null; remaining: number; activeAmount; unit }` (`notice`: whether the instructor had
+  shown the incompatibility notice before the Give, and when, LQ3) (`types-v2.ts:169–190`). `administrationOf` (`driver.ts:573–576`) maps
   `issuedBy: 'learner'` to `learner` and copies `prepId`'s record.
 - `DrugCriteria.diluent?: { set: string[] }` (`types-v2.ts:60–70`): a deviation line "diluent saline, water asked"
-  (`grade.ts` `deviations`) when a card asks for one.
+  (`grade.ts` `deviations`) when a card asks for one. No shipped card gains it (LQ14 ruled, A); it is there for
+  authors.
 - Formulary findings independent of any card: `Grades.preparations: Array<{ prepId; t; by; drugId; findings;
   delivered: boolean; grade: 'ok' | 'deviation' | 'violation' }>` and `Violation.source?: 'card' | 'formulary'`
   (`grade.ts:63–66`). The rule: a staged preparation whose diluent the monograph does not list (D5) is a
@@ -324,10 +396,10 @@ particles. The instructor decides at staging (LQ3); the Debrief records the deci
 **Every piece:** `00-common-rules.md` applies (own worktree under `scratch/`, one PR per piece, draft until its
 checks pass, `npx -y pnpm@9.15.9`, the executor's port range, no owner identifier, no closing keyword before a
 `#number`, identity through `GIT_AUTHOR_*` / `GIT_COMMITTER_*`, never re-run a job with a failed test). Tests first.
-**Must not touch (every piece unless the piece names it):** `packages/engine-core` (L10 and L12 only, each with the
+**Must not touch (every piece unless the piece names it):** `packages/engine-core` (L10a–L10d and L12 only, each with the
 validation workflow), `packages/skins`, the showcase cards (`apps/demo/src/app/showcase`; LQ14), `viewer-sync.ts`,
 the relay's `defib` path and `LEARNER_DEFIB_COMMANDS`, what any Instructor press sends, the drug lock's rule and its
-10 s, `INSTRUCTOR_COMMANDS` (except L10's `applyEvent lab` if LQ13 gives the instructor a sample button).
+10 s, `INSTRUCTOR_COMMANDS` (except L9's `prep notice`).
 **Common gate (before every push):** as `room-and-instruments.md` §5 (install, typecheck, the touched package's tests,
 model docs and known misses regenerated, `it.fails` count unchanged), plus `node scripts/ci/markers.mjs`, plus the
 formulary source test once L1 is in.
@@ -354,7 +426,7 @@ Sizes are plan hours (est.), human-equivalent focused hours as in the Room plan.
 `apps/demo/src/app/views/learner-baseline.dom.test.ts` (tests only). **Tests first (they pin today):** a viewer's
 `applyEvent drug` is refused by the host and the relay; a `defib` socket's `applyEvent drug` and `applyEvent lab` are
 refused; `applyEvent lab abg` applied on a host gives a `labResult` on a follower at the same tick 120 s later (pins
-D6 before L10 changes the number); a `/2` sample action is recorded only by its taking; the drug library has 61
+D6 before L10a changes the number); a `/2` sample action is recorded only by its taking; the drug library has 61
 injectable ids (the formulary's coverage target). **Acceptance:** pass on main. **Must not touch:** any source file.
 **Gate:** common, `@pme/controller`, `@pme/demo`. **CI:** 1 run.
 
@@ -381,24 +453,28 @@ defaulting to the plan's defaults until ruled. Fixture entries are test-only fil
 **Acceptance:** 100 % branch coverage of the three files [ENG: test]. **Must not touch:** anything outside the folder.
 **Gate:** common, `@pme/controller`. **CI:** 1 run.
 
-### FS: Formulary batch S, the showcase drugs and the diluents (28 h; owner access needed, LQ5, LQ6)
-**Depends on:** L1; LQ5 (Trissel access) and LQ6 (the stocked products) answered. **Files:** 14 drug files and the
+### FS: Formulary batch S, the showcase drugs and the diluents (32.2 h with second readings)
+**Depends on:** L1. LQ5 and LQ6 are ruled (Stabilis primary, Trissel 2013 in the workspace library, public labels). **Files:** 14 drug files and the
 diluent files (0.9 % sodium chloride, 5 % dextrose, sterile water for injection, Ringer's lactate, and any the 14
 monographs name), `sources.json`, `pending.json` shrunk by 14; the second reader's table in the PR. The 14 are the
 drugs the showcase cards give (`grep drugId apps/demo/src/app/showcase/*.json`): epinephrine, propofol, dantrolene,
 rocuronium, midazolam, fentanyl, tranexamic acid, succinylcholine, sodium bicarbonate, salbutamol, insulin with
 dextrose, calcium chloride, phenylephrine, ephedrine. **Acceptance:** the source check passes; every entry has a
-second reading; every Stabilis `differs` has a ruling from the orchestrator or the owner. **Gate:** common,
+second reading; every Trissel `differs` has a ruling from the orchestrator or the owner; every entry's `has` flags are
+in the PR's table. **Gate:** common,
 `@pme/controller`. **CI:** 1 run.
 
-### L3: The `learner` role: hello, guard, relay allow-list (5 h)
+### L3: The `learner` role: hello with the learner PIN, guard, relay allow-list (7 h; 5 h before LQ1's PIN)
 **Depends on:** nothing (R5c's files, after R5d merges to avoid rebasing over it). **Files:** `protocol.ts` (`Role`
-gains `'learner'`; `LEARNER_COMMANDS`; `learnerMay(c)`; the `prep` command type; `lab` in `ClinicalEvent` is L10's),
-`guard.ts` (`ROLES`, `SHOWS_WITH`, the `prep` body's shape), `relay/server.ts` (the classroom rule admits `learner`
-from another device, counted under `--max-peers`; its commands pass `learnerMay` or get `forbidden`; 6 a second;
+gains `'learner'`; the hello's `pin` legal with `learner` too; `LEARNER_COMMANDS`; `learnerMay(c)`; the `prep` and
+`infusion set` command types; `lab` in `ClinicalEvent` is L10a's), `guard.ts` (`ROLES`, `SHOWS_WITH`, the bodies'
+shapes), `relay/server.ts` (the classroom rule admits `learner` from another device, counted under `--max-peers`,
+PENDING until the host's `grant` as an instructor is, under the same per-address wrong-PIN limits, D9; a pending
+learner's command is `forbidden`; a granted one's commands pass `learnerMay` or get `forbidden`; 6 a second;
 the host's `prep` events routed to the one learner socket they name, like an ack), `relay/README.md`; tests in
-`test/guard.test.ts`, new `test/relay/relay-learner.test.ts`, `relay-hostile.test.ts`. **Tests first:** the relay
-forwards exactly §4 D2's five shapes and refuses each of: `applyEvent drug` (raw), `applyEvent infusion` (raw),
+`test/guard.test.ts`, new `test/relay/relay-learner.test.ts`, `relay-hostile.test.ts`. **Tests first:** a learner hello without a PIN is
+refused; a pending learner cannot command; after the host's grant the relay forwards exactly §4 D2's shapes and
+refuses each of: `applyEvent drug` (raw), `applyEvent infusion` (raw),
 `applyEvent defib charge` (that is the `defib` role's), `time pause`, `scenario goto`, `setRhythm`, `device`, `note`,
 `pin`, a `prep deliver` with `atTick`, a `prep stage` with a `concentration` field, a hello as another role on the
 same socket; a viewer and a `defib` socket are unchanged; learners' and viewers' frames byte-identical; a `prep`
@@ -416,31 +492,38 @@ is a `formulary` violation with `harm` per §6; a learner's `lab abg` satisfies 
 before (the MH and haemorrhage `/2` slow tests unchanged). **Must not touch:** the cards. **Gate:** common,
 `@pme/controller`, `@pme/demo`. **CI:** 1 run.
 
-### L4: The host applies a learner's commands; the record says who (8 h)
+### L4: The host grants on the learner PIN, applies a learner's commands; the record says who (9 h; 8 h before LQ1, LQ4)
 **Depends on:** L3, L2, L5, R5d merged (same branch point in `host-session.ts`, same `by` and `RowKind 'learner'`).
-**Files:** `host-session.ts` (the `learner` branch beside R5d's `defib` branch: `learnerMay` again on the host, the
-preparations table, D3's translation into `command()`, the `prep` events of D7), `drug-lock.ts` (`GivenBy` gains
+**Files:** `host-session.ts` (`HostSessionOptions.learnerPin`; P3's `verify` extended to the `learner` role with the
+learner PIN, D9; the `learner` branch beside R5d's `defib` branch: `learnerMay` again on the host, the preparations
+table, D3's translation into `command()`, `infusion set` on any running infusion with the replaced rate, the `prep`
+events of D7), `apps/demo/src/app/session.ts` and `store.ts` (`pme.learnerPin`, drawn once, a new one on request), `drug-lock.ts` (`GivenBy` gains
 `learner`, "from a learner's remote"), `apps/demo/src/app/record.ts` (the `learner` row carries `prepId`), tests in
 new `test/session/host-learner.test.ts`, `host-drug-lock.test.ts`. **Tests first:** a learner's `prep stage` then
 `prep deliver` lands as an `applyEvent drug` with the active amount, `issuedBy: 'learner'`, `by` = the device; a forged
 field on `prep stage` (a concentration, a finding) is refused; a second bolus of the same drug within 10 s from the
 learner or from the laptop is refused `recent` with the right "from"; a tray of three preparations delivered in one
-`stageGroup` applies in one dispatch and meets the lock item by item (#337's test, extended); `prep infuse` starts an
-infusion with the preparation's concentration and a later `prep infuse 0` stops it; a learner may not change an
-infusion it did not start (D8, until LQ4); a delivery before the ready time is refused "not ready yet (m:ss)"; a
+`stageGroup` applies in one dispatch and meets the lock item by item (#337's test, extended); **the learner PIN grants `learner` only, and
+the instructor's PIN does not grant `learner` (nor the learner PIN `instructor`); a new learner PIN revokes every
+granted remote;** `prep infuse` starts an infusion with the preparation's concentration; `infusion set` from ANY
+remote changes or stops an infusion the instructor or another remote started, keeping its concentration, and the
+record holds the device and the rate replaced (LQ4); a delivery before the ready time is refused "not ready yet (m:ss)"; a
 preparation's `prep` event reaches the instructor and its own device only. **Acceptance:** P3's, R5d's and the
 census tests pass unchanged. **Must not touch:** the engine, `INSTRUCTOR_COMMANDS`. **Gate:** common,
 `@pme/controller`, `@pme/demo`. **CI:** 1 run.
 
-### L6: The remote's page and the picker card (6 h)
+### L6: The remote's page with its learner-PIN form, the picker card, the learner PIN on Room setup (8 h; 6 h before LQ1)
 **Depends on:** L3. **Files:** `classroom.ts` (`#/remote/learner` in `instrumentOf`, `hashOf`), `main.ts` (the
-follower branch mounts the remote), new `apps/demo/src/app/views/learner-remote.ts` (the follower monitor strip, the
-three tabs, the connection line), `join.ts` (a card "Learner remote": "Give drugs and infusions, send samples and read
+follower branch mounts the remote), new `apps/demo/src/app/views/learner-remote.ts` (the learner-PIN form, reusing
+P7's keypad and state words with "learner PIN" in them; then the follower monitor strip, the three tabs, the
+connection line), `views/room.ts` (the learner PIN beside the instructor's, behind press-and-hold, with "New learner
+PIN", D9), `join.ts` (a card "Learner remote": "Give drugs and infusions, send samples and read
 their results from this phone. Everything you give is recorded under this phone's name." [the owner rules the
 words]), `app.css`; tests `learner-remote.dom.test.ts`, `join.dom.test.ts`, `classroom.test.ts`. **Tests first:** the
-card's words equal one literal; its action opens `#/remote/learner`; the page says hello as `learner` with its
-device key; the monitor follows; "Change" returns to `#/pick`; the three tabs are 44 px targets [ENG: ui]. **Must not
-touch:** `remote.ts` (the instructor's), `views/room.ts` beyond the row label. **Gate:** common, `@pme/demo`, plus
+card's words equal one literal; its action opens `#/remote/learner`; the PIN form comes first, the PIN is never in the
+address or the store of the phone; a wrong learner PIN and too many tries say so in words; the page says hello as
+`learner` with its device key and the PIN; the monitor follows; "Change" returns to `#/pick`; the three tabs are 44 px targets [ENG: ui]. **Must not
+touch:** what `remote.ts` (the instructor's) sends; `views/room.ts` beyond the learner-PIN panel and the row label. **Gate:** common, `@pme/demo`, plus
 `mobile-learner.e2e.ts` on both projects. **CI:** 1 run.
 
 ### L7: The drugs menu with the bench (9 h)
@@ -448,57 +531,105 @@ touch:** `remote.ts` (the instructor's), `views/room.ts` beyond the row label. *
 `apps/demo/e2e/learner-remote.e2e.ts`. **The flow:** search a drug (the library's names, `drugs.ts`) → its products
 from the formulary (vial strength, form) → the diluent and the volume (the monograph's listed diluents first; any
 other diluent offered too, because choosing it is the learner's act that the format grades) → the bench shows the
-concentration, the preparation time (a countdown on the case clock, or "no source" per LQ7) → "Put on the tray"
-(`prep stage`) → the tray lists preparations with their state (preparing, ready, the instructor's decision per LQ3) →
+concentration, the preparation time (a countdown on the case clock, or "no source", LQ7 ruled) → "Put on the tray"
+(`prep stage`) → the tray lists preparations with their state (preparing, ready; when the instructor shows the
+incompatibility notice, the remote plays its sound once and the preparation shows the finding with its source, LQ3) →
 "Give" one (`prep deliver`, volume or all, route, over s) or "Deliver the tray" (one `stageGroup`). The concentration
 shown is the HOST's, from its `prep` event; the device's own computation is only a preview, labelled so until the
 host answers. **Tests first:** dom: each step's words; the tray's states from scripted `prep` events; a refusal
 shows the host's words ("given 4 s ago from the laptop", "not ready yet"). e2e (in-process relay, phone viewport):
 the MH card, a learner prepares dantrolene in the listed diluent and gives it, the record row says the phone's name;
-a second learner phone cannot see the first's tray. **Must not touch:** the laptop's Drug sheet. **Gate:** common,
+a second learner phone cannot see the first's tray; with an
+incompatible admixture, the notice's sound plays only after the instructor's press, and a Give before it is given. **Must not touch:** the laptop's Drug sheet. **Gate:** common,
 `@pme/demo`, the new e2e 3 of 3 on chromium and webkit. **CI:** 1 run.
 
-### L8: The infusions menu (6 h)
+### L8: The infusions menu (7 h; 6 h before LQ4)
 **Depends on:** L7. **Files:** `apps/demo/src/app/remote/infusions.ts` and test; e2e cases. **The flow:** from a ready
 preparation, start at a rate in mL/h (the dose rate shown beside it, from the host's concentration and the patient's
-weight); running infusions listed from the engine's state, the device's own with Change and Stop (D8 / LQ4).
-**Tests first:** starting, changing and stopping send `prep infuse`; an infusion the instructor started shows no
-control (until LQ4); the dose-rate line equals the host's arithmetic. **Gate:** common, `@pme/demo`, the e2e. **CI:**
+weight); every running infusion listed from the engine's state, whoever started it, each with Change and Stop (D8,
+LQ4 ruled), and a line "set by <device or the instructor> at mm:ss".
+**Tests first:** starting sends `prep infuse`; changing and stopping send `infusion set`, on the instructor's infusion
+and another remote's alike; the record row says the device and the rate replaced; the dose-rate line equals the
+host's arithmetic. **Gate:** common, `@pme/demo`, the e2e. **CI:**
 1 run.
 
-### L9: The instructor sees the staging, and decides (7 h)
+### L9: The instructor sees the staging and can show the incompatibility notice, on the laptop and the phone (9 h; 7 h before LQ3)
 **Depends on:** L4, L7. **Files:** `apps/demo/src/app/teach2/learner-preps.ts` (a dock card), `teach2/header.ts` (a
-count), the decision command (an instructor-only `prep decide {by, id, decision}`, added to `INSTRUCTOR_COMMANDS`
-because the laptop sends it: the census test gains it), `host-session.ts` (applies the decision, sends `prep decided`
-to the device), tests, e2e cases. **The proposed UI (LQ3):** when a learner stages a preparation with a finding, the
-laptop's dock shows a card at once, above the action rows: "**Bed 2 remote staged** sodium bicarbonate 8.4 % 50 mL +
-calcium chloride 10 % 10 mL, one syringe · **Incompatible**: <the entry's statement> (Trissel <monograph>; Stabilis
-agrees)" and three buttons: **Let it stand** (nothing is said to the learner; the preparation can be given, and the
-format and the effect apply), **Tell the learner** (the remote shows the finding as "Pharmacy:" plus the statement and
-its source, and the learner chooses), **Remove it** (the preparation leaves the tray; the remote says "The instructor
-removed this preparation"). The card also lists clean preparations, collapsed ("3 preparations, no finding").
-Whether the learner's Give waits for the decision is LQ3's second half. **Tests first:** the card appears within one
-host tick of staging; each decision's effect on the device; the record keeps the decision and its time; the Debrief
-reads it (L13). **Gate:** common, `@pme/controller`, `@pme/demo`; census test updated. **CI:** 1 run.
+count), the same card in the instructor phone's panel (`views/remote.ts` mounts it; P7's phone), the notice command
+(an instructor-only `prep notice {by, id}`, added to `INSTRUCTOR_COMMANDS` because the laptop and the phone send it:
+the census test gains it), `host-session.ts` (records the notice's time, sends `prep notice` to the device), the
+remote's notice sound (a short tone from the app's own audio, no file), tests, e2e cases. **The UI (LQ3 ruled):**
+when a learner stages a preparation with a finding, the laptop's dock and the instructor's phone show a card at once:
+"**Bed 2 remote staged** sodium bicarbonate 8.4 % 50 mL + calcium chloride 10 % 10 mL, one syringe ·
+**Incompatible**: <the entry's statement> (Stabilis <id>; Trissel 2013 p. <n> agrees)" and ONE control: **Show the
+incompatibility notice to the learner**. Pressed, the remote sounds the notice, as an aide raising a concern in the
+real room, and shows the finding inside the preparation; the card then reads "Notice shown at mm:ss". There is no
+let-stand and no remove: the preparation stays the learner's. If the learner gives it before the press, it is given,
+and the card and the record say "given at mm:ss, notice not shown" (or "notice shown at mm:ss"). The card also lists
+clean preparations, collapsed ("3 preparations, no finding"). **Tests first:** the card appears within one host tick
+of staging on the laptop and on the instructor's phone; the press reaches the remote once, from either; the record
+keeps the notice's time and, on a Give, whether it had been shown; the Debrief reads it (L13). **Gate:** common,
+`@pme/controller`, `@pme/demo`; census test updated. **CI:** 1 run.
 
-### L10: Lab panels and their turnarounds from sources, in the engine (5 h; validation workflow)
-**Depends on:** LQ2 answered. **Owner-ruled exception needed to the global must-not-touch of the engine.** **Files:**
-`packages/engine-core/src/l2/blood/labs.ts` (`LAB_TURNAROUND_S` replaced by a per-panel table, each with its source;
-the POC panel's analytes = the ruled analyser's measured list; a `chem` panel if LQ2 says so), `types-blood.ts`
-(`panel` widened), `pipeline.ts:324–326` (validation), `protocol.ts` (`lab` in `ClinicalEvent`), model docs
-regenerated. **Tests first:** each panel returns after its sourced turnaround; a panel returns only its analytes;
-`turnaroundS` from a card still overrides within 30–3600 s; snapshot and restore keep pending samples.
-**Acceptance:** validation suites and showcase goldens unchanged (no card draws a sample today). **Gate:** common,
-`@pme/engine-core`, `@pme/validation`, plus the validation workflow (`run-validation` label). **CI:** 1 run + the
-validation workflow.
+### L10a: The analyser rows, the panels and their sourced turnarounds, in the engine (6 h; validation workflow)
+**Depends on:** nothing (LQ2 ruled). **Engine change ruled by the owner (LQ2).** **Files:** new
+`packages/engine-core/src/l2/blood/analysers.ts`: one data row per analyser, the first the **Radiometer ABL800**, with
+its measured analyte list and its specification-sheet analysis time, each with its source (the manufacturer's
+specification sheet, document number and date); another device later is another row, and the room's analyser is a
+setting (default the ABL800); a **laboratory** row: the chemistry panel's analytes and its turnaround from Hawkins
+(Clin Biochem Rev 2007;28:179–94; the figure and page the executor reads), replaced by the owner's laboratory figure
+when it is given; `labs.ts` (`LAB_TURNAROUND_S`, today `[ENG: device]`, removed: the gas panel's turnaround is the
+analyser row's, sourced; the chemistry panel's the laboratory row's; the INR's the laboratory row's coagulation
+figure), `types-blood.ts` (`panel: 'abg' | 'vbg' | 'chem' | 'coag'`), `pipeline.ts:324–326` (validation),
+`protocol.ts` (`lab` in `ClinicalEvent`), model docs regenerated. **The panels:** the gas panel returns exactly the
+ABL800 row's analytes that the engine computes (gas, co-oximetry, electrolytes, lactate, glucose, Hb); `chem`
+returns electrolytes now, and creatinine and CK when L10b and L10d land; `coag` returns INR now, and the coagulation
+tests and fibrinogen when L10c lands. An analyte the engine does not compute yet is not in the panel (never a blank
+or a made-up value). Any time the result needs beyond the analyser's (the walk to it) has no source and is not added;
+the Labs views say "analyser time only". **Tests first:** each panel returns after its row's turnaround; a panel
+returns only its analytes; `turnaroundS` from a card still overrides within 30–3600 s; snapshot and restore keep
+pending samples; no `[ENG]` marker remains on a turnaround. **Acceptance:** validation suites and showcase goldens
+unchanged (no card draws a sample today). **Gate:** common, `@pme/engine-core`, `@pme/validation`, plus the
+validation workflow (`run-validation` label). **CI:** 1 run + the validation workflow.
+
+### L10b: Creatinine from the kidney's own filtration (6 h; validation workflow)
+**Depends on:** L10a. **The mechanism:** plasma creatinine follows its production (from muscle mass, the patient's
+size and sex) and its clearance (the GFR the renal model computes, `types-organs.ts:44`) through a one-compartment
+mass balance in total body water; the baseline is the steady state, and an acute fall in GFR raises creatinine with
+the true kinetic lag (hours), so a short case shows little change, which is the physiology. Sources to read first: a
+creatinine-kinetics paper (the executor starts from Waikar and Bonventre's creatinine-kinetics framework, JASN 2009,
+and a production-rate source such as the Cockcroft–Gault derivation), the figures cited beside each number.
+**Tests first:** steady state equals production ÷ GFR; a halved GFR rises toward double at the sourced time
+constant; the `chem` panel gains `creatinine`. **Gate:** common, `@pme/engine-core`, the validation workflow. **CI:**
+1 run + validation.
+
+### L10c: Coagulation and fibrinogen (12 h; validation workflow; may need its own plan)
+**Depends on:** L10a. **The mechanism:** clotting factor and fibrinogen levels as amounts in the plasma, diluted by
+crystalloid and colloid, lost with bleeding, replaced by FFP, cryoprecipitate-equivalent and whole blood (the blood
+model already moves volumes and products, `types-blood.ts:9–10`), consumed by a sourced rate where a condition
+consumes them; PT/INR and aPTT from the factor levels by a sourced relation; the platelet count by the same
+dilution and loss; the liver's own INR term (`types-organs.ts:48`) joined to it, not duplicated. Sources: the
+dilutional-coagulopathy and massive-transfusion literature (the executor names them before code; a figure without
+a source stops the piece). The `coag` panel gains PT/INR, aPTT, fibrinogen and platelets. **This is the largest
+lab piece; if its sources do not support the whole relation, the executor stops and reports, and it becomes an
+engine plan of its own.** **Gate:** common, `@pme/engine-core`, the validation workflow. **CI:** 1 run + validation.
+
+### L10d: CK from muscle injury (4 h; validation workflow)
+**Depends on:** L10a; the muscle-injury mechanism of E134 (PR #154, `fix-e134-anaerobic-k`, open at the time of
+writing). **The mechanism:** CK released by the injured muscle mass E134 computes, distributed and cleared with
+sourced kinetics (rise over hours). **Tests first:** no injury, the baseline; the MH course raises CK on the sourced
+time scale. The `chem` panel gains `ck`. **Gate:** common, `@pme/engine-core`, the validation workflow. **CI:** 1 run +
+validation.
 
 ### L11: The lab view on the remote (6 h)
-**Depends on:** L6, L3, L10. **Files:** `apps/demo/src/app/remote/labs.ts` and test; e2e cases. **The flow:** "Send"
-a panel (`applyEvent lab`) → a pending row "ABG drawn 12:04, result expected ~12:06" (the panel's turnaround, from the
-engine's table) → the result, from the device's own engine's `labResult`, shown by `mountLabPanel` (the renderer's
-one lab view), flagged against its ranges, critical values marked per the ruled list (O15, LQ2). Earlier results stay
-listed by draw time. **Tests first:** the view never renders a `labs` event (a test feeds both and checks); the result
-appears at the tick its `labResult` arrives; results of other devices' samples per LQ13. **Gate:** common,
+**Depends on:** L6, L3, L10a. **Files:** `apps/demo/src/app/remote/labs.ts` and test; `packages/renderer/src/lab-panel.ts`
+(rows for the chemistry and coagulation analytes as they land, each range with its source); e2e cases. **The flow:**
+"Send" a gas, chemistry or coagulation sample (`applyEvent lab`) → a pending row "Blood gas drawn 12:04, result
+expected 12:0x (ABL800, analyser time only)" (the panel's turnaround, from the engine's rows) → the result, from the
+device's own engine's `labResult`, shown by `mountLabPanel`, flagged against its ranges, critical values marked from
+the hospital's list when given, else the Kost list (O15, LQ2 ruled). Earlier results stay listed by draw time.
+**Tests first:** the view never renders a `labs` event (a test feeds both and checks); the result appears at the tick
+its `labResult` arrives; a result of another device's or the instructor's sample is not shown (LQ13 ruled, B). **Gate:** common,
 `@pme/demo`, the e2e. **CI:** 1 run.
 
 ### L12: An infusion's potency over time, in the engine (6 h; conditional; validation workflow)
@@ -509,17 +640,26 @@ integral of the given curve to 0.1 % [ENG: numerics]; snapshot and restore keep 
 unchanged. **Gate:** common, `@pme/engine-core`, the validation workflow. **CI:** 1 run + validation. **If the census
 finds no qualifying drug, L12 is not built and §7.1 says so in the docs.**
 
-### L13: The Debrief: who gave what, the preparations, the consequences (5 h)
-**Depends on:** L5, L9; the Debrief 2 record (merged). **Files:** `apps/demo/src/app/views/debrief*.ts` (the who
+### L13: The Debrief: who gave what, the preparations, the notice, the consequences (5 h)
+**Depends on:** L5, L9, L8; the Debrief 2 record (merged). **Files:** `apps/demo/src/app/views/debrief*.ts` (the who
 line for `learner` rows, from R7's remembered names; a "Preparations" section on page 2: each preparation, its
-findings with sources, the instructor's decision and time, delivered or not, the prepared and the active amount, the
+findings with sources, whether the incompatibility notice was shown and when, delivered or not (and whether before
+or after the notice), the prepared and the active amount, the
 consequence text of §7.3), `debrief.e2e.ts` additions. **Tests first:** "Dantrolene 2.5 mg/kg at 04:12, by Remote
-(bed 2)"-style lines from the record; the section's rows from a scripted run; nothing printed for a run with no
+(bed 2)"-style lines from the record; an infusion change reads "Norepinephrine 4 → 8 mL/h at 06:30, by Remote (bed 3),
+replacing the instructor's rate"; the section's rows from a scripted run; nothing printed for a run with no
 learner remote. **Gate:** common, `@pme/demo`, `debrief.e2e.ts` on both projects. **CI:** 1 run.
 
 ### F1, F2, F3: Formulary batches for the rest of the library (30 h, 32.5 h, 20.5 h, plus second readings)
 **Depends on:** L1, FS (the conventions settled on the first 14). Each one PR, as FS. Contents in §9.1. F3 empties
 `pending.json`. They run beside the code pieces and do not block L4–L11.
+
+### L15: The laptop's Labs view (4 h)
+**Depends on:** L10a, L11 (the shared rows). **LQ13 ruled, B: the laptop sees every result.** **Files:** new
+`apps/demo/src/app/teach2/labs-sheet.ts` (a small sheet in Instructor v2 listing every `labResult` of the host's
+engine by draw time, with who drew it, the remote's name or "Instructor", each shown by `mountLabPanel`), its dom
+test. It has no draw button (the instructor's sample button is not ruled). **Tests first:** every result appears, the
+learner's and the card's alike; the 1 Hz `labs` truth is never shown. **Gate:** common, `@pme/demo`. **CI:** 1 run.
 
 ### L14: Kit, docs and the end-to-end measurement (5 h, last)
 **Depends on:** everything above that is built. **Files:** `docs/showcase/CLASSROOM.md` (the remote in the run
@@ -559,29 +699,34 @@ L1 ─┬─► L2 ─► L5 ─┐
     │    └─► F1 ─► F2 ─► F3 ─► [census] ─► L12 ┤
     │                                          ├─► L14
     │   L3 ─► L6 ─► L7                         │
-    │   [LQ2] ─► L10 ─► L11 ───────────────────┘
+    │   L10a ─┬─► L11 ─► L15 ──────────────────┤
+    │         ├─► L10b ────────────────────────┤
+    │         ├─► L10c ────────────────────────┤
+    │  [E134] └─► L10d ────────────────────────┘
 [R5d merged] ─► L3, L4
-[LQ5, LQ6 answered] ─► FS
 ```
 
-- **Critical path to a usable remote (showcase drugs):** L1 (6) → FS (32.2) → L7 (9) → L9 (7) → L13 (5) → L14 (5) =
-  **64.2 h**, bound by the formulary, which needs LQ5 (Trissel access) and LQ6 (the stocked products) before it can
-  start. The code path L1 → L2 → L5 → L4 reaches L7's start after 26 h, inside FS's span (38.2 h from the start), so the code does not set the pace.
+- **Critical path to a usable remote (showcase drugs):** L1 (6) → FS (32.2) → L7 (9) → L9 (9) → L13 (5) → L14 (5) =
+  **66.2 h**, bound by the formulary; LQ5 and LQ6 are ruled, so FS can start as soon as L1 merges. The code path L1 →
+  L2 → L5 → L4 reaches L7's start after 27 h, inside FS's span (38.2 h from the start), so the code does not set the
+  pace. The lab chain L10a → L10c (18 h) runs beside it.
 - **To the stage's end (the whole library):** the formulary chain L1 → FS → F1 → F2 → F3 is **135.3 h** with one
   source-holding executor; with two readers holding access, FS then {F1 ∥ F2} then F3 is ≈ 100 h. Then L12 (if built)
   and L14.
-- **Parallelism:** {L0, L1, L3} first; then {L2, FS, L6, L10 once LQ2 is ruled}; then {L5, F1}; then {L4}; then
-  {L7, L11, F2}; then {L8, L9, F3}; then {L12?, L13}; L14 last. At most three code executors and one or two formulary
-  readers.
-- **Merge order:** L0, L1, L3, L2, L6, FS, L5, L10, L4, F1, L7, L11, L8, L9, F2, F3, L12 (if), L13, L14. L3 and L4 touch
+- **Parallelism:** {L0, L1, L3, L10a} first; then {L2, FS, L6, L10b}; then {L5, F1, L10c}; then {L4, L10d once E134
+  is in}; then {L7, L11, F2}; then {L8, L9, L15, F3}; then {L12?, L13}; L14 last. At most three code executors (of which
+  at most one on the engine, which serialises the validation workflow) and one or two formulary readers.
+- **Merge order:** L0, L1, L3, L10a, L2, L6, FS, L5, L10b, L4, F1, L7, L11, L15, L8, L9, L10c, L10d, F2, F3, L12 (if),
+  L13, L14. The engine pieces (L10a–L10d, L12) each regenerate the model docs and so conflict with any other engine
+  PR in flight: merge them one at a time, nothing else on the engine in between. L3 and L4 touch
   the relay and `host-session.ts` after R5d; L4 and L9 both touch `host-session.ts` (L9 rebases on L4); L5 and L13
   touch the record and the Debrief, which the Debrief 2 PRs also change (the later rebases); L7, L8, L11 share
   `remote/` (each rebases on the one before).
-- **CI load:** 19 PRs (15 code, 4 formulary), one full CI run each (median ≈ 409 runner-minutes and 61 min wall per
+- **CI load:** 23 PRs (19 code, 4 formulary), one full CI run each (median ≈ 409 runner-minutes and 61 min wall per
   PR run, `research/42-ci-and-process-review.md` §1.2), plus re-merge runs (≈ 1 in 2 that week). Formulary PRs touch
   only `packages/controller/formulary/` and its test: code = true, engine = false, so the engine's slow groups skip
-  (`ci.yml:30–31`). **L10 and L12 run the validation workflow** (the `run-validation` label, `validation.yml:13–18`);
-  no other piece touches the engine. New e2e files: `learner-remote.e2e.ts`, `learner-remote-room.e2e.ts`; new cases
+  (`ci.yml:30–31`). **L10a, L10b, L10c, L10d and L12 run the validation workflow** (the `run-validation` label,
+  `validation.yml:13–18`); no other piece touches the engine. New e2e files: `learner-remote.e2e.ts`, `learner-remote-room.e2e.ts`; new cases
   in `mobile-learner.e2e.ts` and `debrief.e2e.ts`; no new CI job.
 
 **Effort**
@@ -591,39 +736,46 @@ L1 ─┬─► L2 ─► L5 ─┐
 | L0 baseline | 2 |
 | L1 formulary schema, loader, source check, guide | 6 |
 | L2 preparation core (pure) | 6 |
-| L3 `learner` role, guard, relay allow-list | 5 |
-| L4 host applies; record `by`; lock and staged delivery reused | 8 |
+| L3 `learner` role with the learner PIN, guard, relay allow-list | 7 |
+| L4 host grants on the learner PIN, applies; record `by`; lock and staged delivery reused; any infusion | 9 |
 | L5 `/2` format additions | 6 |
-| L6 remote page and picker card | 6 |
+| L6 remote page with its PIN form, picker card, learner PIN on Room setup | 8 |
 | L7 drugs menu with the bench | 9 |
-| L8 infusions menu | 6 |
-| L9 instructor's staging card and decision | 7 |
-| L10 lab panels and turnarounds (engine) | 5 |
+| L8 infusions menu (any infusion) | 7 |
+| L9 instructor's staging card and the notice, laptop and phone | 9 |
+| L10a analyser rows (ABL800, laboratory), panels, sourced turnarounds (engine) | 6 |
+| L10b creatinine from filtration (engine) | 6 |
+| L10c coagulation and fibrinogen (engine; may become its own plan) | 12 |
+| L10d CK from muscle injury (engine; after E134) | 4 |
 | L11 lab view on the remote | 6 |
 | L12 infusion potency over time (engine, conditional) | 6 |
 | L13 Debrief: who, preparations, consequences | 5 |
+| L15 the laptop's Labs view | 4 |
 | L14 kit, docs, end-to-end | 5 |
-| **Code subtotal** | **88** (82 without L12) |
+| **Code subtotal** | **123** (117 without L12) |
 | FS, F1, F2, F3 formulary (incl. second readings) | 129.3 |
-| **Total** | **≈ 217 h** in 19 PRs (18 without L12), plus review |
+| **Total** | **≈ 252 h** in 23 PRs (22 without L12), plus review (≈ 217 h in 19 PRs before the rulings of 9 November: LQ1 +5 h in L3, L4 and L6; LQ2 +23 h in L10a–L10d; LQ3 +2 h in L9; LQ4 +1 h in L8; LQ13 +4 h, L15) |
 
 ### 9.3 Dependencies out of this plan
 
 - **R5d** (brief 96) merged: L3 and L4 build on its `defib` branch and `RowKind 'learner'`.
-- **Trissel access** (LQ5): a paid handbook; without it no entry meets the ruling.
-- **Analytes the engine does not compute** (coagulation beyond INR, troponin, CK, myoglobin, creatinine): a lab
-  chemistry panel can only carry what the engine computes; more analytes are engine work of their own.
+- **E134** (PR #154, muscle injury) for L10d's CK.
+- **The owner's laboratory turnaround** replaces Hawkins 2007 in the laboratory row when given; **the department's
+  stock list** re-points the formulary's product monographs (LQ6); **another analyser** is another row in L10a's table.
+- **Analytes outside the ruled panels** (troponin, myoglobin, lipase and the rest): engine work of their own.
 - **A line model** (cannula, lumens, dead space, flush): needed for Y-site compatibility and for the delay between a
   push and its arrival; not modelled today (LQ12).
-- **The instructor's laptop lab view** (§11 disagreement 1): if LQ13 wants results on the laptop too, a Labs sheet in
-  Instructor v2 on `mountLabPanel` is a piece of its own (≈ 4 h), not in the totals.
+- **An instructor's own sample button** on the laptop (LQ13 gave the laptop a Labs view, not a draw control): not
+  ruled, not planned.
 
-## 10. Questions for the owner (LQ1–LQ14), each with the default the plan uses if no answer comes
+## 10. Questions for the owner (LQ1–LQ14): all ruled 9 November
 
-Nothing clinical is decided by the plan. Where a question carries a number, the source named is the one the executor
-would read first; the owner may name another.
+The questions as they were put on 8 November, kept for the record; the last column was the plan's default, and the
+rulings are in section 0 (LQ1 B; LQ2 C with the ABL800 and Hawkins 2007; LQ3 one control, a sound, on laptop and
+phone, a Give before it is given and recorded; LQ4 B; LQ5 Stabilis primary, Trissel 2013 the cross-check; LQ6 B;
+LQ7–LQ12 and LQ14 the defaults; LQ13 B with a laptop Labs view).
 
-| ID | Question, in plain words | Options | Default |
+| ID | Question, in plain words | Options | Default proposed on 8 November (the ruling: section 0) |
 |---|---|---|---|
 | **LQ1** | **Does a learner remote need the PIN, or the room code alone?** The defibrillator window joins on the room code alone because it can only press Charge and Shock. A remote can give any drug in the library, so anyone who can see the room code on the projector can give drugs | **A** the room code alone (R5c's pattern exactly; the instructor sees every remote in Room setup and can remove one); **B** a learner PIN, a second short PIN shown on the Room page, different from the instructor's; **C** the instructor admits each remote with one tap in Room setup's device table (no secret to share; nothing works until admitted) | **A**, the brief's fixed point, with a "Remove" control on the remote's row in Room setup (L6) |
 | **LQ2** | **Which samples, which analytes, and how long until results?** Today one number (120 s, an engineering guess, not a source) covers every result. A point-of-care blood-gas analyser and the hospital laboratory take very different times, and analysers differ in what they measure (most do not report magnesium or osmolality) | **A** one point-of-care panel (arterial or venous gas with electrolytes, lactate, glucose, haemoglobin, co-oximetry) with the department's analyser's own analyte list and analysis time from its specification sheet, plus the walk measured in your theatre; **B** A plus a laboratory chemistry panel (Na, K, Cl, Ca, Mg, glucose) with a laboratory turnaround from a published source (the executor would start from Hawkins, Clin Biochem Rev 2007;28:179–94) or your laboratory's own figure; **C** B plus INR (the liver model computes it). Critical values: the Kost list recommended on 29 October (O15), or your hospital's | **A**, with the analyser to be named by you; until named, no turnaround number ships (the remote's Labs tab says "the analyser's time is not set") |
@@ -683,14 +835,18 @@ would read first; the owner may name another.
 Disagreements found while reading:
 1. The brief asks for results "shown as the instructor's lab view shows them". **The app has no instructor lab view**:
    no app control draws a sample (`INSTRUCTOR_COMMANDS` has no `applyEvent lab`; no app file sends `kind: 'lab'`), and
-   the one lab view, the renderer's `mountLabPanel`, is mounted only by a developer page. The plan builds the remote's
-   view on `mountLabPanel`; a laptop Labs view is LQ13 and §9.3.
+   the one lab view, the renderer's `mountLabPanel`, is mounted only by a developer page. The plan builds both views
+   on `mountLabPanel`: the remote's (L11) and, by LQ13's ruling, the laptop's (L15).
 2. The turnaround the engine uses (120 s) is marked `[ENG: device]` with "≈ 60–90 s + the walk" and no source; under
-   the 7 November rule it must be replaced by a sourced figure before a learner-facing lab view shows a time (L10).
+   the 7 November rule it is replaced in L10a by the ABL800 row's specification-sheet time (and the laboratory row's
+   Hawkins 2007 figure for chemistry and coagulation).
 3. The wire's `ClinicalEvent` lacks `lab` while the engine accepts it; nothing sent it until now.
 4. The roadmap row E136 says the Drug sheet becomes the bench; the 8 November ruling puts the bench in the learner
-   remote. This PR rewrites the row; LQ10 asks whether the laptop gets it too.
-5. The Room plan's anti-goal allows one commanding instrument; the 8 November ruling adds the learner remote. The
-   plan records it as a second owner-ruled exception (§1.5), not a change to the Room plan's text.
-6. Trissel is a paid publication: the ruling that every entry cites it makes access (LQ5) a precondition the brief
-   did not name.
+   remote. This PR rewrites the row; LQ10 ruled the laptop's Drug sheet unchanged.
+5. ~~The Room plan's anti-goal allows one commanding instrument.~~ **Now a decision (§4 D9):** the owner ruled the
+   learner remote a second commanding instrument (8 and 9 November), admitted by the room code and the learner PIN.
+6. ~~Trissel is a paid publication, so access was a precondition.~~ **Resolved by LQ5:** Stabilis (open) is the source
+   of record; Trissel 2013 is the cross-check, read in place from the workspace library.
+7. The laboratory panel the owner ruled (LQ2) names creatinine, coagulation, fibrinogen and CK, which the engine does
+   not compute on d3dcb34d. Under the mechanisms-first rule they are built (L10b–L10d), never shown as numbers the
+   engine did not compute; until each lands, its analyte is absent from the panel.
