@@ -43,4 +43,10 @@ What is illustrative (invented for the layout)
   - Page 3's "How it grades" lines: the grades follow the guide's rules for this card's criteria, but the strings were
     written for the page, not printed by grade() (B4 prints grade()'s own).
   - Page 6's card, its diff, its hash, its dates, the author's chosen line "a resident, Anaesthesia", "2 cards".
-  - The wording of the signature's assertion is a DRAFT for the owner (BQ1, BQ3), not his text.
+  - The wording of the signature's assertion was drawn as a DRAFT for the owner; he accepted it as written on
+    9 November (BQ1), so it is now his text.
+
+After the owner's rulings of 9 November (not re-rendered; the plan's section 12 captions give the product's words)
+  - Page 5 draws "Community, unverified" (shelf heading and tags) and a separate version tag; the product says
+    "Unverified" (BQ14) and shows one card with a version menu and change-log lines (BQ13).
+  - Page 1's save chip draws "unverified" in lower case; the product's tag is "Unverified".
