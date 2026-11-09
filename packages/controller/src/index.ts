@@ -50,3 +50,7 @@ export const transports = {
   websocket: createWebSocketTransport,
   webrtc: createWebRtcTransport,
 };
+// Plan learner-action-remote.md L1: the formulary layer's types, the source check and the loader (no file reading,
+// no ajv: the bench is handed the parsed files; the schema and the folder checks run in CI)
+export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT } from './formulary/load.ts';
+export type * from './formulary/types.ts';
