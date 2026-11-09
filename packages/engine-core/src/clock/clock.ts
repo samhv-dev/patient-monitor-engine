@@ -125,16 +125,27 @@ export class Clock {
 }
 
 /**
- * Run the clock's owed ticks one 20-ms tick at a time (`runTo(simT)` after each), within `budgetMs` of wall time; at
- * least one when any is owed. What the budget leaves stays owed (the clock's behindS). Returns the ticks run.
+ * Run the clock's owed ticks within `budgetMs` of wall time; at least one when any is owed. `runTo(simT)` must step the
+ * engine to `simT` tick by tick (the engine's own 20 ms; MonitorEngine.advanceTo does), so a chunk changes nothing in
+ * the run, only how often the engine's once-per-call look-ahead is redone. The first chunk is one tick; each next chunk
+ * is what the budget left, at the measured cost per tick (PR #369's second CI run: one call per tick redid the look-ahead,
+ * a clone of the whole pipeline state, every tick of a catch-up, and the CI WebKit page crashed 3 times of 3). What the
+ * budget leaves stays owed (the clock's behindS). Returns the ticks run.
  */
 export function runOwed(clock: Clock, runTo: (simT: number) => void, budgetMs = FRAME_BUDGET_MS, now: () => number = () => performance.now()): number {
   const t0 = now();
   let n = 0;
-  while (clock.take(1) === 1) {
-    n++;
+  let chunk = 1;
+  for (;;) {
+    const t = now();
+    const k = clock.take(chunk);
+    if (k === 0) break;
+    n += k;
     runTo(clock.simT);
-    if (now() - t0 >= budgetMs) break;
+    const done = now();
+    const left = budgetMs - (done - t0);
+    if (left <= 0) break;
+    chunk = Math.max(1, Math.floor(left / Math.max((done - t) / k, 1e-3)));
   }
   return n;
 }

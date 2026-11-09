@@ -49,7 +49,7 @@ too busy to keep real time says so (the clock pill reads BEHIND) instead of runn
 | Where | Relation |
 |---|---|
 | [`clock.ts:1`](../../packages/engine-core/src/clock/clock.ts#L1) | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. |
-| [`engine.ts:683`](../../packages/engine-core/src/engine.ts#L683) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`engine.ts:684`](../../packages/engine-core/src/engine.ts#L684) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
@@ -83,7 +83,7 @@ No exported `…State` type in this module.
 | Function | File | Doc |
 |---|---|---|
 | `frameBudgetMs` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | The work budget of a frame `wallDeltaMs` after the last one (FRAME_BUDGET_MS–FRAME_BUDGET_MAX_MS). |
-| `runOwed` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | Run the clock's owed ticks one 20-ms tick at a time (`runTo(simT)` after each), within `budgetMs` of wall time; |
+| `runOwed` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | Run the clock's owed ticks within `budgetMs` of wall time; |
 | `restingPatient` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). |
 | `sfc32Next` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Advance the state in place and return the next uint32. |
 | `seedStream` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Seed one named stream from hash(seed, name), then discard 15 outputs to mix the state. |

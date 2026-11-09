@@ -36,32 +36,37 @@ describe('clock/Clock', () => {
     }
   });
 
-  it('brief 105: runOwed runs 20-ms ticks one at a time within the budget, leaves the rest owed, and catches up later', () => {
+  it('brief 105: runOwed runs owed 20-ms ticks within the budget, in chunks sized by the measured cost, leaves the rest owed, and catches up later', () => {
     const clock = new Clock();
     let wall = 0;
     const costMs = 7; // a starved machine's tick (brief 105 measured 6.6 ms)
-    const ran: number[] = [];
+    const calls: number[] = [];
+    let at = 0;
     const runTo = (simT: number) => {
-      ran.push(simT);
-      wall += costMs;
+      const ticks = Math.round((simT - at) / 0.02);
+      calls.push(ticks);
+      at = simT;
+      wall += ticks * costMs; // runTo steps the engine tick by tick (advanceTo): k ticks cost k × 7 ms
     };
     clock.credit(400); // one frame 400 ms after the last: 20 ticks owed
     const n = runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
-    expect(n).toBe(Math.ceil(FRAME_BUDGET_MS / costMs)); // 8 ticks: the budget is spent, then one more check
-    expect(ran.map((t, i) => t - (ran[i - 1] ?? 0)).every((d) => Math.abs(d - TICK_MS / 1000) < 1e-9)).toBe(true); // never a larger dt
+    expect(calls[0]).toBe(1); // the first chunk measures the cost
+    expect(calls).toEqual([1, 6, 1]); // 7 + 42 ms of the 50-ms budget, then the 1 ms left still runs one tick
+    expect(n).toBe(8);
     expect(clock.owedTicks).toBe(20 - n);
     expect(clock.behindS).toBeCloseTo((20 - n) * 0.02, 12);
     expect(clock.renderT).toBeLessThan(clock.simT + TICK_MS / 1000); // a renderer never draws the owed ticks
-    runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
-    runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
+    for (let f = 0; f < 3; f++) runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
     expect(clock.owedTicks).toBe(0);
     expect(clock.simT).toBeCloseTo(0.4, 12); // nothing lost: 400 ms of wall is 400 ms of sim
+    expect(at).toBeCloseTo(0.4, 12);
   });
 
   it('brief 105: a machine that cannot keep up stays behind and says how far, it never runs slow in silence', () => {
     const clock = new Clock();
     let wall = 0;
-    const runTo = () => void (wall += 30); // a tick costs more than the 20 ms it simulates
+    let at = 0;
+    const runTo = (simT: number) => void ((wall += Math.round((simT - at) / 0.02) * 30), (at = simT)); // a tick costs more than the 20 ms it simulates
     let last = 0;
     for (let f = 0; f < 50; f++) {
       clock.credit(wall - last + 16);
@@ -80,19 +85,22 @@ describe('clock/Clock', () => {
     // (worse than CI, the 6.6 ms of a starved laptop) the gap's budget runs every owed tick, frame after frame
     const clock = new Clock();
     let wall = 0;
+    let at = 0;
+    const per7 = (simT: number) => void ((wall += Math.round((simT - at) / 0.02) * 7), (at = simT));
     for (let f = 0; f < 50; f++) {
       wall = f * 400;
       clock.credit(400);
-      runOwed(clock, () => void (wall += 7), frameBudgetMs(400), () => wall);
+      runOwed(clock, per7, frameBudgetMs(400), () => wall);
     }
     expect(clock.behindS).toBe(0);
     expect(clock.simT).toBeCloseTo(20, 9);
     // the fixed 50 ms floor alone would not: the same frames owe more and more
     const slow = new Clock();
+    at = 0;
     for (let f = 0; f < 50; f++) {
       wall = f * 400;
       slow.credit(400);
-      runOwed(slow, () => void (wall += 7), FRAME_BUDGET_MS, () => wall);
+      runOwed(slow, per7, FRAME_BUDGET_MS, () => wall);
     }
     expect(slow.behindS).toBeGreaterThan(10);
   });

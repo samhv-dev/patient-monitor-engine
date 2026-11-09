@@ -457,7 +457,8 @@ class Engine implements MonitorEngine {
       const gap = now - this.lastWall;
       this.clock.credit(gap); // in full: a late interval owes its whole gap (brief 105)
       this.lastWall = now;
-      runOwed(this.clock, () => this.runTicks(1), frameBudgetMs(gap)); // one 20-ms tick at a time, within the budget
+      let ran = this.clock.tick;
+      runOwed(this.clock, () => (this.runTicks(this.clock.tick - ran), (ran = this.clock.tick)), frameBudgetMs(gap)); // the ticks each chunk took
     }, TICK_MS);
   }
   pause(): void {
