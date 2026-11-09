@@ -497,7 +497,6 @@ Measured locally on this branch (all suites; PWDB refused with 403, so the pwdb-
 | E: septic time course and fluid-refractory vasoplegia (mechanism brief) | onset over hours (the condition's τ 600 s compresses those hours into minutes, kept for now); vasoplegia whose depth matches the source | t16-septic-shock-state MAP 17.4 (49–60) | V-12 |
 | F: preload-fixed stroke volume at low CVP (mechanism brief) | SV set by preload, so the slower β-blocked heart loses output | t17-bb-contrast SBP(17b)/SBP(17a) 1.063 (< 1), CO(17b)/CO(17a) 1.033 (< 1) | research 46 §F |
 | G: respiratory effort under controlled ventilation (mechanism brief) | drive and effort visible under the ventilator | t25 rr-back 0 s (60–240 s) | DEV-06 |
-| H: pleth reference SV₀ = the settled resting SV (PR #333) | PI reference SV₀ = the patient's settled resting SV | regression sinus-75/pleth (625/625 samples > 2 %, max 10.2 %) | T-17 |
 
 The three cells C, E and F were set to their sourced physiology (research 46):
 - **C, s9 EtCO2 after VF without CPR.** The 0–30 s row had no source and is replaced. True EtCO2 (`breath:etco2True`)
