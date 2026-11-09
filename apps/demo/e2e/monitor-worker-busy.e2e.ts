@@ -22,7 +22,12 @@ test.afterAll(async () => vite?.close());
 
 type W = { __pmeApp: { session: { monitor: { renderPath: Promise<string>; advance(t: number, last: boolean): Promise<{ tick: number }>; dispatch(c: unknown): Promise<{ accepted: boolean }> } } }; failed?: string[]; slow?: number };
 
-test('a worker busy for several seconds with a request out reports its progress: not warned about, not stopped', async ({ page }) => {
+// @known-flaky, class crash (outside our code; brief 103): in 45 ci runs with the gating WebKit jobs, 8 Nov 12:05 to 9 Nov 02:50 UTC (after PR #342), the first attempt lost its page in 6 runs
+// (13 %), every time "page.evaluate: Target page, context or browser has been closed" inside the ≈ 8-s busy-worker step below,
+// and in run 42540487370 on all three attempts (the job failed); since 7 Nov 12:00 UTC 19 more retry-only passes, all the same.
+// No failure of any other kind. Local macOS WebKit 14/14 (6 more skipped: no worker there), Chromium 0 sightings. An 8-s
+// busy worker is the measurement, and CI's Linux WebKit web process does not survive it often enough to gate on.
+test('a worker busy for several seconds with a request out reports its progress: not warned about, not stopped', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(90_000);
   await page.addInitScript(() => {
     const w = window as unknown as W;

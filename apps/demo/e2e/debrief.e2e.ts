@@ -586,7 +586,10 @@ for (const [name, run, card, hints] of [
 // since the owner's ruling of 5 November retired judged rows, its window from Early signs' entry, as the /1 card's
 // recognition runs from its "early signs" state (brief fv2-debrief-recognition-clock-nov1 and the ruling the same day),
 // met in seconds, not from the pre-intubation EtCO₂ of 03:51.
-test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', async ({ page, browserName }) => {
+// @known-flaky, class crash (outside our code; brief 103): in 45 ci runs with the gating WebKit jobs, 8 Nov 12:05 to 9 Nov 02:50 UTC (after PR #342), the first attempt lost its page in 5 runs
+// (11 %): "Target page, context or browser has been closed" at 32–122 s, during the presses or a page.evaluate, never a
+// failed assertion; the retry passed each time. Local macOS WebKit 20/20; Chromium 0 sightings.
+test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(480_000);
   await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 1500 }));
   const CALL = PATH.findIndex(([, x]) => x.startsWith('MH crisis'));
