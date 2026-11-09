@@ -4,8 +4,10 @@
 // one line and its action; the room code under the title. m5 was drawn as the host's page; on the device each card's
 // one action is "Show here". Learner monitor first and preselected: one tap. The choice is kept on this device and
 // preselected next time, never applied without a tap. The picker grants nothing and follows nothing.
+// R8d: the Ventilator card's "Show here" opens the ventilator's own page for this room (`vent-hamilton.html?join=CODE#/vent`,
+// classroom.ts), where P7's PIN form signs it in as the `ventilator`; the cockpit then fills the screen.
 import { DEVICE_RE } from '@pme/controller';
-import { hashOf } from '../classroom.ts';
+import { hashOf, ventDeviceUrl, type PageLocation } from '../classroom.ts';
 import { store as appStore } from '../store.ts';
 import { h } from '../ui.ts';
 
@@ -27,8 +29,8 @@ export const PICKER_WORDS = {
   cards: [
     { show: 'learner', title: 'Learner monitor', chip: 'Ready', text: 'This phone follows the patient monitor.', foot: 'Upright on a phone', action: true },
     { show: 'monitor', title: 'Patient monitor', chip: 'Ready', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style.", foot: 'Sideways, the whole screen', action: true },
-    // its frames do not cross the relay (§3.4): built for a device in R8a–R8d
-    { show: 'vent', title: 'Ventilator', chip: "On the instructor's computer", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'Not on a device yet', action: false },
+    // R8d: on a tablet over the relay (R8a–R8c), signed in with the instructor's PIN on its own page
+    { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
     // Q7 ruled 5 November: the engine has no EEG (§9a)
     { show: 'depth', title: 'Depth of anaesthesia', chip: 'Not available yet', text: 'Needs a simulated EEG: planned as an engine stage of its own.', foot: '—', action: false },
     // Q8: a console needs a balloon-pressure wave the engine does not compute (§9)
@@ -51,7 +53,8 @@ const PIC: Record<CardShow, string> = {
   learner: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="70" y="4" width="60" height="92" rx="10" fill="#111" stroke="#2a3340"/><rect x="76" y="14" width="48" height="66" rx="3" fill="#0b0e12"/><polyline points="80,40 92,40 96,32 100,48 104,40 120,40" fill="none" stroke="#5fd99b" stroke-width="1.5"/></svg>',
 };
 
-const SHOWN: ReadonlySet<string> = new Set(PICKER_WORDS.cards.filter((c) => c.action).map((c) => c.show));
+/** What a tap shows on this page and is remembered for next time (the ventilator opens a page of its own: R8d). */
+const SHOWN: ReadonlySet<string> = new Set(PICKER_WORDS.cards.filter((c) => c.action && c.show !== 'vent').map((c) => c.show));
 
 /** This device's own key (§4 D1, for the remembered layout): 12 of [a-z0-9], drawn once and kept in its store. */
 export function deviceKey(s: Store = appStore): string {
@@ -86,6 +89,10 @@ export interface PickerOptions {
   go?: (hash: string) => void;
   /** Appended here, with the preselected card's action focused. */
   parent?: HTMLElement;
+  /** R8d: opens another page of the app (default `location.assign`): the Ventilator's own page. */
+  open?: (url: string) => void;
+  /** R8d: this page's address, whose search (the code, the relay) the Ventilator's page keeps (default `location`). */
+  here?: Pick<PageLocation, 'pathname' | 'search'>;
 }
 
 /** The picker's page for room `code`: the cards, the preselected one marked and (with `parent`) its action focused. */
@@ -98,9 +105,10 @@ export function pickerView(o: PickerOptions): HTMLElement {
   let focus: HTMLButtonElement | null = null;
   const card = (c: Card) => {
     const shownHere = c.action && c.show === last;
-    const act = c.action
-      ? h('button', { type: 'button', class: `btn${c.show === pre ? ' primary' : ''}`, onclick: () => (s.set('instrument', c.show), go(hashOf(c.show as Shown))) }, W.action)
-      : null;
+    const tap = c.show === 'vent'
+      ? () => (o.open ?? ((u: string) => location.assign(u)))(ventDeviceUrl(o.here ?? location)) // the picker grants nothing: the PIN is typed there
+      : () => (s.set('instrument', c.show), go(hashOf(c.show as Shown)));
+    const act = c.action ? h('button', { type: 'button', class: `btn${c.show === pre ? ' primary' : ''}`, onclick: tap }, W.action) : null;
     if (c.show === pre) focus = act;
     return instrumentCard({ show: c.show, title: c.title, chip: shownHere ? W.lastHere : c.chip, on: shownHere, text: c.text, foot: c.foot, selected: c.show === pre, actions: act ? [act] : [] });
   };

@@ -46,7 +46,8 @@ const WORDS = {
   cards: [
     { show: 'learner', title: 'Learner monitor', chip: 'Ready', text: 'This phone follows the patient monitor.', foot: 'Upright on a phone', action: true },
     { show: 'monitor', title: 'Patient monitor', chip: 'Ready', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style.", foot: 'Sideways, the whole screen', action: true },
-    { show: 'vent', title: 'Ventilator', chip: "On the instructor's computer", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'Not on a device yet', action: false },
+    // R8d: the ventilator on a tablet, signed in with the instructor's PIN (m5's card; its chip and foot say how)
+    { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
     { show: 'depth', title: 'Depth of anaesthesia', chip: 'Not available yet', text: 'Needs a simulated EEG: planned as an engine stage of its own.', foot: '—', action: false },
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
   ],
@@ -92,7 +93,10 @@ describe('the instrument picker at #/pick (R4)', () => {
     const titles = cards(el).map((c) => c.querySelector('h2')?.textContent);
     expect(titles).not.toContain('Defibrillator');
     expect(titles).not.toContain('Instructor remote');
-    expect(el.textContent).not.toMatch(/PIN|tick what they noticed|SQI|EMG|BIS/);
+    expect(el.textContent).not.toMatch(/tick what they noticed|SQI|EMG|BIS/);
+    // R8d: the PIN is named on the Ventilator card only (the card that signs in with it), never asked for here
+    for (const c of cards(el)) if (c.dataset.show !== 'vent') expect(c.textContent, c.dataset.show).not.toMatch(/PIN/);
+    expect(el.querySelector('input')).toBeNull();
   });
 
   it('Learner monitor is preselected and focused; one tap opens it, and the choice is kept on this device', () => {
@@ -131,9 +135,21 @@ describe('the instrument picker at #/pick (R4)', () => {
       expect(cards(pickerView({ code: CODE, store: memory({ instrument: bad }), go: () => {} }))[0]?.dataset.selected, bad).toBe('true');
   });
 
-  it('the Ventilator, Depth of anaesthesia and balloon pump cards have no action; each says why in its chip', () => {
+  it("R8d: the Ventilator's Show here opens the ventilator's own page for this room (its PIN form), the code and relay only", () => {
+    const store = memory();
+    const go = vi.fn();
+    const open = vi.fn();
+    const el = pickerView({ code: CODE, store, go, open, here: { pathname: '/', search: `?join=${CODE}&relay=ws%3A%2F%2F10.0.0.2%3A8787%2F` } });
+    (el.querySelector('.join-card[data-show="vent"] button') as HTMLButtonElement).click();
+    expect(open).toHaveBeenCalledExactlyOnceWith(`/vent-hamilton.html?join=${CODE}&relay=ws%3A%2F%2F10.0.0.2%3A8787%2F#/vent`);
+    expect(go).not.toHaveBeenCalled();
+    // the picker grants nothing: the PIN is typed on the ventilator's page; the choice is not preselected next time
+    expect(store.m.get('instrument')).toBeUndefined();
+  });
+
+  it('the Depth of anaesthesia and balloon pump cards have no action; each says why in its chip', () => {
     const el = pickerView({ code: CODE, store: memory(), go: () => {} });
-    for (const show of ['vent', 'depth', 'iabp']) {
+    for (const show of ['depth', 'iabp']) {
       const c = el.querySelector(`.join-card[data-show="${show}"]`) as HTMLElement;
       expect(c.querySelector('button, a'), show).toBeNull();
       expect(c.querySelector('.st')?.textContent, show).not.toBe('');

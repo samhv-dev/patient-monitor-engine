@@ -48,6 +48,31 @@ for (const fps of [60, 30] as const) {
   });
 }
 
+// Room plan R8d: the gate holds with the laptop's ventilator window open beside the monitor. The window is the cockpit
+// page itself, running on its own (no `?link`: its mechanics and its drawing every frame, as a cockpit driving the
+// patient does; linked to no host it would stop at its clock limit and only draw), in a second page of the same browser.
+test('frame-time histogram at 60 fps (worker path) with the ventilator window open', async ({ page }) => {
+  await page.setViewportSize({ width: 1300, height: 760 });
+  const win = await page.context().newPage();
+  await win.setViewportSize({ width: 1280, height: 800 });
+  await win.goto(`${base}/vent-hamilton.html`);
+  await win.waitForFunction(() => '__vent' in window);
+  await page.bringToFront();
+  await page.goto(`${base}/validation-perf.html?fps=60`);
+  await page.waitForFunction(() => '__pmePerf' in window);
+  await page.waitForTimeout(5000);
+  await perf(page, (w) => w.__pmePerf.frames.splice(0));
+  // its 5 ms steps (VentState.n; DT = 0.005 s) as sim seconds
+  const ventT0 = await win.evaluate(() => (window as unknown as { __vent: { vs: { n: number } } }).__vent.vs.n * 0.005);
+  await page.waitForTimeout(60_000);
+  const h = hist(await perf(page, (w) => w.__pmePerf.frames.slice()));
+  const ventS = (await win.evaluate(() => (window as unknown as { __vent: { vs: { n: number } } }).__vent.vs.n * 0.005)) - ventT0;
+  record.frames60vent = { ...h, ventSimS: +ventS.toFixed(1) };
+  await win.close();
+  expect(ventS, 'the window ran its cockpit meanwhile').toBeGreaterThan(30); // [ENG: test] at least half of the 60 s minute
+  expect(h.p95).toBeLessThan((1000 / 60) * 1.5); // [ENG: test] the gate above, unchanged
+});
+
 test('soak: heap growth ≤ 5 MB, no spurious apnoea alarm', async ({ page }) => {
   const minutes = Number(process.env.PME_SOAK_MIN ?? 60);
   await page.setViewportSize({ width: 1300, height: 760 });

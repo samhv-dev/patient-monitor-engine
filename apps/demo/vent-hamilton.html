@@ -132,6 +132,22 @@ select,input[type=number]{width:100%;border:1px solid var(--edge);background:var
 .async .btns{display:flex;flex-wrap:wrap;gap:8px}
 .async .btns button{background:var(--btn-sel);color:#fff;border:0;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer}
 .credit{position:fixed;bottom:1px;left:6px;font-size:9px;color:var(--dim);opacity:.6;z-index:1}
+/* R8d: the device page's sign-in (P7's PIN form, views/pin-form.ts) before the cockpit fills the screen */
+body:has(.vent-signin){overflow:auto}
+.vent-signin{max-width:420px;margin:24px auto;padding:0 16px}
+.vent-signin[hidden]{display:none}
+.vent-signin h1{font-size:22px;margin:0 0 8px}
+.vent-signin .lede{color:var(--numlab);font-size:14px;line-height:1.4}
+.vent-signin .field{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+.vent-signin label{font-size:13px;color:var(--numlab)}
+.vent-signin .input{border:1px solid var(--edge);background:var(--panel);color:var(--ink);border-radius:6px;padding:10px;font-size:16px;font-family:var(--font)}
+.vent-signin .ip-peer-pin{font-family:var(--mono);font-size:28px;letter-spacing:.3em;text-align:center}
+.vent-signin .ip-peer-keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.vent-signin .btn{background:var(--btn);border:1px solid var(--btn-ring);color:var(--btn-ink);border-radius:8px;min-height:56px;font-size:22px;cursor:pointer;font-family:var(--font)}
+.vent-signin .btn.primary{background:var(--btn-sel);font-size:17px}
+.vent-signin .error{color:#ffb3b0;min-height:1.2em;font-size:14px}
+.vent-device-status{position:fixed;top:54px;left:50%;transform:translateX(-50%);margin:0;padding:8px 14px;border-radius:8px;background:#5a4a10;color:#fff;font-size:13px;z-index:60;max-width:90vw}
+.vent-device-status[hidden]{display:none}
 </style>
 </head>
 <body>
