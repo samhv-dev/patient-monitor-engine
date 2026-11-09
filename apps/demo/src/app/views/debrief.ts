@@ -14,7 +14,8 @@
 // …/print prints it), with the resident's name in the header band and the handout's; the view lists the archive in its
 // own section (screen only), exports it all as one JSON file and clears it behind a confirm.
 // Persian (Debrief 2, D13): a switch beside the print buttons (per browser, English by default; i18n/lang.ts, also the
-// Briefing's language) draws the two live containers, the handout and the footer through the one table and matcher the
+// Briefing's language) draws the two live containers, the talking points, the notes' heading, the handout and the
+// footer through the one table and matcher the
 // handout script uses (i18n/fa-dom.ts), right to left in the bundled Vazirmatn; while an entry printed is unread by the
 // owner, "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed page (DQ10).
 import { asV1, type MarkKind } from '@pme/controller';
@@ -471,28 +472,39 @@ export function debriefView(session: AppSession, link: Link): View {
   // between them are created once here and never re-created or re-appended, so typing in them is never interrupted
   const live1 = h('div', { id: 'db-live-1' });
   const live2 = h('div', { id: 'db-live-2' });
-  const pearls = section('pearls', 'Talking points', h('div', { class: 'db-pearls' },
-    ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt)))));
+  const PEARLS_H = 'Talking points';
+  const pearlBoxes = (): HTMLElement => h('div', { class: 'db-pearls' }, ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt))));
+  const pearls = section('pearls', PEARLS_H, pearlBoxes());
+  const NOTES_H = 'Notes';
+  const notesSec = section('notes', NOTES_H, notes);
+  const notesH = notesSec.firstElementChild as HTMLElement;
   const handout = h('div', { class: 'db-handout-live' });
   const HANDOUT_H = 'Learner handout (printed separately)';
   const handoutH = h('h2', { id: 'db-handout-h' }, HANDOUT_H);
   const handoutSec = h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, handoutH, handout);
   const foot = h('footer', { class: 'db-foot db-runfoot' }, FOOT);
   // D13: the language of the report and the handout (per browser, English by default; Decision 15: the host's one
-  // setting, also the Briefing's language). Only the two live containers, the handout and the footer change with it.
+  // setting, also the Briefing's language). The two live containers, the talking points, the notes' heading, the
+  // handout and the footer change with it.
   const draft = h('p', { class: 'db-draft', lang: 'en', dir: 'ltr', hidden: true }, DRAFT_LINE);
   const faMissing = h('details', { class: 'db-fa-missing', hidden: true }, h('summary', {}), h('ul', {}));
   const langSwitch = seg<HostLang>('Language of the report', [['en', 'English'], ['fa', 'فارسی']], hostLang(), (l) => (setHostLang(l), render()));
   langSwitch.lang = 'en'; // the Persian option names itself in Persian
   const pageStyle = h('style', { id: 'db-page-style' }, PAGE_CSS);
   /** The page in the host's language: Persian puts the containers right to left and through the table, counts what
-   *  the table lacks (listed on screen) and, while an entry printed is unread, shows DQ10's line. */
+   *  the table lacks (listed on screen) and, while an entry printed is unread, shows DQ10's line. The talking points
+   *  and the notes' heading, made once outside the live containers (Decision 11), go through it too (P-S3: they
+   *  printed in English): the talking points hold no typing and are drawn afresh in English first; of the notes only
+   *  the heading is touched, the typed notes never. */
   const applyLang = (): void => {
     const fa = hostLang() === 'fa';
     langSwitch.set(fa ? 'fa' : 'en');
     handoutH.textContent = HANDOUT_H;
     foot.textContent = FOOT;
-    for (const x of [live1, live2, handoutSec, foot]) {
+    pearls.replaceChildren(h('h2', { id: 'db-pearls-h' }, PEARLS_H), pearlBoxes());
+    notesH.textContent = NOTES_H;
+    const parts = [live1, live2, pearls, notesH, handoutSec, foot];
+    for (const x of parts) {
       if (fa) x.setAttribute('lang', 'fa'), x.setAttribute('dir', 'rtl');
       else x.removeAttribute('lang'), x.removeAttribute('dir');
     }
@@ -502,7 +514,7 @@ export function debriefView(session: AppSession, link: Link): View {
       return;
     }
     const p = faPass();
-    for (const x of [live1, live2, handoutSec, foot]) translateTree(x, p);
+    for (const x of parts) translateTree(x, p);
     pageStyle.textContent = pageCssFa(foot.textContent ?? FOOT, false, p);
     const unread = unreviewed(p);
     draft.hidden = !unread;
@@ -695,7 +707,7 @@ export function debriefView(session: AppSession, link: Link): View {
       live1,
       h('div', { class: 'field db-who' }, h('label', { for: 'db-who' }, 'Run by'), who),
       pearls,
-      section('notes', 'Notes', notes),
+      notesSec,
       live2,
       handoutSec,
       archiveSec,

@@ -46,6 +46,29 @@ describe('the Debrief in Persian (D13)', () => {
     expect(v.el.querySelector('#db-objectives-h')?.textContent).toBe('Objectives');
   });
 
+  it('P-S3: the talking points and the notes\' heading print in Persian too; the typed notes are never touched', () => {
+    const v = open(exportOf(TAMPONADE).record);
+    leave = v.leave;
+    const notes = v.el.querySelector('.db-notes') as HTMLElement;
+    notes.textContent = 'Typed in English: Reactions first.';
+    press(v.el, 'fa');
+    const pearls = v.el.querySelector('#db-pearls') as HTMLElement;
+    expect(pearls.getAttribute('lang')).toBe('fa');
+    expect(pearls.getAttribute('dir')).toBe('rtl');
+    expect(v.el.querySelector('#db-pearls-h')?.textContent).toBe('محورهای گفت‌وگو');
+    expect(pearls.querySelector('bdi.en'), 'no talking point in English').toBeNull();
+    expect(pearls.textContent).not.toMatch(/[A-Za-z]/);
+    expect(v.el.querySelector('#db-notes-h')?.textContent).toBe('یادداشت‌ها');
+    expect(notes.textContent).toBe('Typed in English: Reactions first.');
+    expect(notes.hasAttribute('lang'), 'the notes keep the instructor\'s own direction').toBe(false);
+    press(v.el, 'en');
+    expect(v.el.querySelector('#db-pearls-h')?.textContent).toBe('Talking points');
+    expect(pearls.hasAttribute('lang')).toBe(false);
+    expect([...pearls.querySelectorAll('.db-pearl b')].map((b) => b.textContent)).toEqual(['Reactions', 'Description', 'Analysis', 'Summary']);
+    expect(v.el.querySelector('#db-notes-h')?.textContent).toBe('Notes');
+    expect(notes.textContent).toBe('Typed in English: Reactions first.');
+  });
+
   it('«فارسی»: the containers right to left in Persian, kept per browser; back to English restores the page', () => {
     const v = open(exportOf(TAMPONADE).record);
     leave = v.leave;
