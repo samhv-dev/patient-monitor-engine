@@ -58,9 +58,9 @@ renderer, audio and skin contracts.
 | [`calibration.ts:3`](../../packages/renderer/src/calibration.ts#L3) | Default calibration: 96 CSS px per inch = 3.78 CSS px/mm [05 §3.1] until the user calibrates. |
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:891`](../../packages/renderer/src/device-ui.ts#L891) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
-| [`mount.ts:190`](../../packages/renderer/src/mount.ts#L190) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:409`](../../packages/renderer/src/mount.ts#L409) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
-| [`protocol.ts:25`](../../packages/renderer/src/protocol.ts#L25) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
+| [`mount.ts:196`](../../packages/renderer/src/mount.ts#L196) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
+| [`mount.ts:428`](../../packages/renderer/src/mount.ts#L428) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
 ## State
@@ -296,7 +296,7 @@ renderer, audio and skin contracts.
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `LABEL_W` | `56` | — | — | CSS px reserved at the left of each lane for chrome |
-| `STALL_MS` | `1000` | ms | [ENG: display] | FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG: display] |
+| `STALL_MS` | `1000` | ms | [ENG: display] | FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every ≤ 250 ms. It is caught up in bulk at once like a hidden stretch (catchUp), not over the next frames' budget, so the hidden minutes are there when the worker's rAF wakes before the page's visibility catch-up. [ENG: display] |
 | `PROGRESS_MS` | `250` | ms | [ENG: display] | FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG: display]. |
 | `PROGRESS_TICKS` | `50` | — | [ENG: display] | …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000 ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG: display]. |
 

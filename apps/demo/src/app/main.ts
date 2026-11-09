@@ -155,6 +155,16 @@ if (follow && shows === 'pick') {
   // FX-11a: the watchdog warns first — a busy or starved worker is slow, not dead, and catches up by itself
   shell.monitorHost.addEventListener('pme-monitor-slow', () => toast('The monitor is slow to answer: the computer is busy. It catches up by itself.'));
   shell.monitorHost.addEventListener('pme-monitor-recovered', () => toast('The monitor has caught up'));
+  // Brief 105: the clock keeps real time by catching up; when the computer is too busy for that the monitor says so,
+  // and the session log keeps when and by how much (the Instructor view's clock pill shows BEHIND meanwhile)
+  shell.monitorHost.addEventListener('pme-monitor-behind', (e) => {
+    const s = (e as CustomEvent<{ behindS: number }>).detail.behindS;
+    toast(`The simulation is ${s.toFixed(1)} s behind real time: the computer is busy. It catches up by itself.`);
+    link.note(`The engine fell behind real time by ${s.toFixed(1)} s: the computer is busy`, 'system');
+  });
+  shell.monitorHost.addEventListener('pme-monitor-caught-up', (e) => {
+    link.note(`The engine caught up with real time (it was up to ${(e as CustomEvent<{ worstS: number }>).detail.worstS.toFixed(1)} s behind)`, 'system');
+  });
 
   const loadScenario = (c: ScenarioCard, room?: RoomKeep): boolean => {
     const r = session.loadScenario(c.doc, room);
