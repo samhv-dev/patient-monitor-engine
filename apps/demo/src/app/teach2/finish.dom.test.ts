@@ -10,8 +10,9 @@ import { createEngine, type Command, type EngineEvent, type PatientSnapshot } fr
 import { ScenarioView, type AckResult, type CommandInput, type ScenarioCommand, type ScenarioDoc, type WireEvent } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, type Action, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { archive } from '../archive.ts';
+import { archive, type ArchiveMeta } from '../archive.ts';
 import type { Link } from '../link.ts';
+import { asFactory, MemoryIDB } from '../memory-idb.ts';
 import { MemoryStorage } from '../memory-storage.ts';
 import { RunRecord } from '../record.ts';
 import { cardOf, scenarioById, type ScenarioCard } from '../scenarios.ts';
@@ -124,7 +125,10 @@ function rig(o: { loaded?: boolean; paused?: boolean; hooks?: boolean } = {}) {
 let open: Teach2View | null = null;
 const use = <T extends { v: Teach2View }>(r: T): T => ((open = r.v), r);
 const times = (r: ReturnType<typeof rig>) => r.sent.filter((c) => c.type === 'time').map((c) => (c as { action: string }).action);
-beforeEach(() => void vi.stubGlobal('localStorage', new MemoryStorage()));
+beforeEach(() => {
+  vi.stubGlobal('localStorage', new MemoryStorage());
+  vi.stubGlobal('indexedDB', asFactory(new MemoryIDB())); // a fresh browser: the archive opens it again
+});
 afterEach(() => {
   open?.destroy();
   open = null;
@@ -245,7 +249,7 @@ describe('Finish the case: the three buttons', () => {
     expect(r.calls).toEqual([['restart', 1]]); // saved first
     const [e] = archive.list();
     expect(e).toMatchObject({ resident: 'Dr Rahimi', title: 'Healthy induction', runStartedAt: run, durationS: 100, objectives: { met: 2, total: 4 } });
-    expect(JSON.parse(archive.debrief(e?.id as string) as string).schema).toBe('pme-debrief/2');
+    expect(JSON.parse((await archive.debrief(e?.id as string)) as string).schema).toBe('pme-debrief/2');
     expect(times(r)).toEqual(['pause', 'resume']);
     expect(r.shown('.ip2-finish')).toBe(false);
     expect(r.shown('.ip2-rows')).toBe(true);
@@ -291,17 +295,49 @@ describe('Finish the case: the three buttons', () => {
     expect(r.shown('.ip2-finish-btn')).toBe(false);
   });
 
-  it('a storage that refuses: nothing ends, the pane stays, the instructor is told', async () => {
+  it('a storage that refuses: nothing ends, the pane stays, the instructor is told which (full, or blocked)', async () => {
     const r = use(rig());
     vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('QuotaExceededError');
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
     });
     await r.press('.ip2-finish-btn');
     await r.press('.ip2-finish-close');
     expect(r.calls).toEqual([]);
     expect(times(r)).toEqual(['pause']);
     expect(r.shown('.ip2-finish')).toBe(true);
-    expect([...document.querySelectorAll('.toast')].map((t) => t.textContent)).toContain('The debrief could not be saved: this browser’s storage is full or blocked. Export the archive and clear it on the Debrief page, then try again.');
+    expect(archive.list()).toEqual([]);
+    expect([...document.querySelectorAll('.toast')].map((t) => t.textContent)).toContain('The debrief could not be saved: this browser’s storage for this site is full. Export the archive and clear it on the Debrief page, then try again.');
+    // a browser that keeps no data for the site (the localStorage getter throws, as with site data turned off)
+    vi.stubGlobal('localStorage', undefined);
+    await r.press('.ip2-finish-restart');
+    expect(r.calls).toEqual([]);
+    expect(r.shown('.ip2-finish')).toBe(true);
+    expect([...document.querySelectorAll('.toast')].map((t) => t.textContent)).toContain('The debrief could not be saved: this browser keeps no data for this site (a private window, or site data turned off in its settings). Download the record from the Debrief page to keep it.');
+  });
+
+  it('nothing restarts, opens or closes until the save is written; the buttons and Esc do not answer meanwhile', async () => {
+    const r = use(rig());
+    const real = archive.save.bind(archive);
+    let release = () => undefined as void;
+    const spy = vi.spyOn(archive, 'save').mockImplementation((...a) => new Promise((ok) => (release = () => void real(...a).then(ok))));
+    await r.press('.ip2-finish-btn');
+    type(r, 'Dr Slow');
+    await r.press('.ip2-finish-restart');
+    expect(r.q('.ip2-finish')?.getAttribute('aria-busy')).toBe('true');
+    await r.press('.ip2-finish-close'); // a second press while the first save is pending
+    r.key('Escape');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(r.calls).toEqual([]);
+    expect(times(r)).toEqual(['pause']);
+    expect(r.shown('.ip2-finish')).toBe(true);
+    release();
+    await settle();
+    await settle();
+    r.paint();
+    expect(r.calls).toEqual([['restart', 1]]);
+    expect(archive.list().map((x) => x.resident)).toEqual(['Dr Slow']);
+    expect(r.shown('.ip2-finish')).toBe(false);
+    expect(r.q('.ip2-finish')?.hasAttribute('aria-busy')).toBe(false);
   });
 });
 
@@ -324,11 +360,12 @@ describe('Finish the case: the archive under the buttons, and #210\'s Debrief ar
 
   it('one row per saved debrief: number, resident and card, save time, met, duration; open, PDF and JSON; export all', async () => {
     const got = downloads();
-    const saved = archive.save(record(Date.UTC(2026, 9, 30, 8, 0)).data, 'Dr Karimi', 'b');
+    const saved = (await archive.save(record(Date.UTC(2026, 9, 30, 8, 0)).data, 'Dr Karimi', 'b')) as ArchiveMeta;
     const r = use(rig());
     await r.press('.ip2-finish-btn');
-    expect(r.text('.ip2-finish-archive > summary .ip2-arc-count')).toBe('Archive · 1 saved today');
-    expect(r.text('.ip2-finish-archive > summary')).toBe('Archive · 1 saved today · also on the Debrief page · export all as one JSON file');
+    // how much the archive holds, so an instructor sees it grow (N39)
+    expect(r.text('.ip2-finish-archive > summary .ip2-arc-count')).toBe(`Archive · 1 saved today · 1 saved · ${Math.round((saved.bytes as number) / 1e3)} kB`);
+    expect(r.text('.ip2-finish-archive > summary')).toMatch(/^Archive · 1 saved today · 1 saved · \d+ kB · also on the Debrief page · export all as one JSON file$/);
     expect((r.q('.ip2-finish-archive') as HTMLDetailsElement).open).toBe(true);
     const rows = r.all('.ip2-finish-archive .ip2-arc-row');
     expect(rows).toHaveLength(1);
@@ -341,9 +378,11 @@ describe('Finish the case: the archive under the buttons, and #210\'s Debrief ar
     (rows[0]?.querySelector('.ip2-arc-pdf') as HTMLElement).click();
     expect(location.hash).toBe(`#/debrief/archive/${saved?.id}/print`);
     (rows[0]?.querySelector('.ip2-arc-json') as HTMLElement).click();
+    await settle(); // the body is read from IndexedDB first
     expect(got.map((x) => x.name)).toEqual([`debrief-showcase-induction-2026-10-30-Dr-Karimi.json`]);
     expect(JSON.parse(await (got[0]?.blob as Blob).text())).toMatchObject({ schema: 'pme-archive-entry/1', resident: 'Dr Karimi' });
     (r.q('.ip2-finish-archive .ip2-arc-export') as HTMLElement).click();
+    await settle();
     expect(got[1]?.name).toMatch(/^debrief-archive-\d{4}-\d\d-\d\d\.json$/);
     expect(JSON.parse(await (got[1]?.blob as Blob).text())).toMatchObject({ schema: 'pme-archive/1', entries: [{ resident: 'Dr Karimi' }] });
   });
@@ -361,7 +400,7 @@ describe('Finish the case: the archive under the buttons, and #210\'s Debrief ar
     const r = use(rig({ loaded: false }));
     const card = () => r.q('.ip2-begin-card[data-way="archive"] .ip2-begin-btn');
     expect(card()?.textContent).toBe('Open · 0');
-    archive.save(record(Date.UTC(2026, 9, 30, 8, 0)).data, 'Dr Karimi', 'b');
+    await archive.save(record(Date.UTC(2026, 9, 30, 8, 0)).data, 'Dr Karimi', 'b');
     r.paint();
     expect(card()?.textContent).toBe('Open · 1');
     r.key('3');
@@ -473,7 +512,7 @@ describe('"Save and restart the case" on a /2 card', () => {
     const [e] = archive.list();
     expect(archive.list()).toHaveLength(1);
     expect(e).toMatchObject({ resident: 'Dr Karimi', title: 'Malignant hyperthermia (phases)', runStartedAt: run });
-    const saved = JSON.parse(archive.debrief(e?.id as string) as string) as { schema: string };
+    const saved = JSON.parse((await archive.debrief(e?.id as string)) as string) as { schema: string };
     expect(saved.schema).toBe('pme-debrief/3');
     // then the same card again, with the room as it stood, through the app's one load
     expect(r.loads).toEqual([['showcase-mh-v2', r.ROOM]]);

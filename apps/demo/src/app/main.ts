@@ -321,6 +321,7 @@ if (follow && shows === 'pick') {
   // Another tab took this session (or started it anew): stop hosting it here, and say where it went
   announceHost(session.code, { kept: () => keptItems(), gone: () => (session.destroy(), location.replace(`${location.pathname}?moved=${session.code}`)) });
   shell.start();
+  void archive.ready(); // the archive's database opened, and an earlier build's debriefs moved out of localStorage (N39)
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
   Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach2, engineIds, skinAlarmBar, room, rail, archive } });

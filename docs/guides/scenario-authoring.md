@@ -135,6 +135,14 @@ card does (phases, actions, the Debrief). Opening a file with the same `id` agai
 replaces the earlier copy; **Remove** takes it out. The card lives in this browser's storage only: it is not sent to
 the learners' phones (they see the running case as always) and another computer does not have it.
 
+The debriefs **Finish the case** saves are kept in this browser too, in its archive (the Debrief page's Archive
+section), until you clear it there. Each holds the whole run record, one sample a second (about 10 kB per simulated
+minute), so they live in the browser's IndexedDB, which grows with the disk, not in its localStorage (5 MB for the
+whole site in Safari, the cards above included). The archive's line says how much it holds ("5 saved · 1.7 MB"). Where
+a browser has no IndexedDB the archive falls back to localStorage and says so; there "Export all" and **Clear the
+archive** make room. A browser can still delete a site's data (Safari does after seven days of browser use without a
+visit to the site), so export the archive you want to keep.
+
 ### How Instructor v2 reads a card
 
 Instructor v2 (`#/teach2`, E127) reads the same `pme-scenario/1` document; nothing new is needed in a card, but these
