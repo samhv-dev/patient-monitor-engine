@@ -102,6 +102,7 @@ const { createEngine } = await import('@pme/engine-core');
 const { createLocalPortPair, createRelayPort, createVentDriver, ventWireOver } = await import('@pme/ventilator');
 const { AppSession } = await import('../session.ts');
 const { cockpitDesk, COCKPIT_SILENCE_MS, engineVentilation, serveRemoteCockpit } = await import('./vent.ts');
+const { VENTILATOR_REASONS } = await import('@pme/controller');
 
 const CODE = 'VNTH2K';
 const PIN = '4729';
@@ -272,7 +273,11 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     expect(cockpitDesk(s).driving).toBeNull();
   });
 
-  it('back after the silence: it takes over again from the engine\'s settings', async () => {
+  // The hand-over contract (R8c/R8d, fix after main run 42570518946): a silence hand-over REVOKES that cockpit id. The
+  // frames its browser held while the network was gone arrive late from that id: they never re-take the patient, and
+  // that id's end hands over nothing (the engine already holds the settings, and the instructor may have changed them
+  // since). It takes over again only on a fresh sign-in (a new socket id), from the engine's settings at that moment.
+  it("silent → revoked: the id's late frames never re-take the patient and are refused; its end applies nothing", async () => {
     const v = await remote('vent-a.1');
     await vi.advanceTimersByTimeAsync(3000);
     v.d.vs.cfg.rate = 18;
@@ -280,13 +285,44 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     v.sock.muted = true;
     await vi.advanceTimersByTimeAsync(2000);
     expect(handOvers()).toHaveLength(1);
-    v.d.vs.cfg.rate = 10; // changed on the cockpit while it was cut off
-    v.sock.muted = false;
+    expect(v.got.filter((m) => m.kind === 'grant' && m.to === 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: VENTILATOR_REASONS.silent });
+    // the instructor sets the engine's ventilator while the tablet is away
+    expect((await s.host.submit({ id: 'set-1', issuedBy: 'panel', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 16, vtMl: 450, peep: 6, fio2: 0.5 } } as never)).accepted).toBe(true);
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(s.ventSettings).toMatchObject({ rr: 16, vtMl: 450, peep: 6 });
+    // the late frames: the held batch and settings from the revoked id
+    const grantsBefore = v.got.filter((m) => m.kind === 'grant').length;
     const before = frames('vent-a.1').length;
+    v.sock.muted = false;
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(cockpitDesk(s).driving, 'the revoked id never re-takes the patient').toBeNull();
+    expect(frames('vent-a.1').length - before).toBe(0);
+    expect(v.got.filter((m) => m.kind === 'grant').length, 'answered so it signs in again').toBeGreaterThan(grantsBefore);
+    // its socket closes: its end hands nothing over
+    v.stop();
+    v.sock.close();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(handOvers()).toHaveLength(2); // the silence hand-over and the instructor's own setting, nothing from its end
+    expect(s.ventSettings).toMatchObject({ rr: 16, vtMl: 450, peep: 6 });
+    expect(sources(simNow() - 2)).toEqual(expect.arrayContaining(['ventilator']));
+  });
+
+  it('a fresh sign-in after the silence (a new socket id) takes over from the engine\'s current settings', async () => {
+    const v = await remote('vent-a.1');
+    await vi.advanceTimersByTimeAsync(3000);
+    v.sock.muted = true;
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(handOvers()).toHaveLength(1);
+    await s.host.submit({ id: 'set-1', issuedBy: 'panel', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 16, vtMl: 450, peep: 6, fio2: 0.5 } } as never);
+    await vi.advanceTimersByTimeAsync(1500);
+    v.stop();
+    const w = await remote('vent-a.2');
+    expect(w.granted).toBe(true);
     await vi.advanceTimersByTimeAsync(3000);
     expect(cockpitDesk(s).driving?.remote).toBe(true);
-    expect(frames('vent-a.1').length - before).toBeGreaterThan(100);
-    expect(v.d.vs.cfg.rate).toBe(18); // the engine's settings: what it handed over
+    expect(frames('vent-a.2').length).toBeGreaterThan(100);
+    expect(w.d.vs.cfg).toMatchObject({ mode: 'VC', rate: 16, vt: 450, peep: 6, fio2: 50 });
+    expect(s.ventSettings).toMatchObject({ rr: 16, vtMl: 450, peep: 6 }); // nothing from the old id overwrote it
   });
 
   it('hidden, closed or revoked → the hand-over at once, once each', async () => {
