@@ -562,6 +562,7 @@ dose difference the sets' own equations give; a set without ke0 refuses effect m
 `xPump` match today's `tci.ts` tests on a patient identical to the set. **Acceptance:** validation suites unchanged
 except the rows the PR attributes, row by row, to D3. **Gate:** common, `@pme/engine-core`, `@pme/validation`,
 validation workflow. **CI:** 1 run + validation.
+**Shared with the scenario builder (its BQ11 = B, 9 Nov 22:04):** the patient's true Cp and Ce that §9's mirror reads become phase-rule truth variables through piece DC1 of `docs/plans/scenario-builder.md`, which merges before the builder's PR 1; E2 keeps `DrugPanelRow` the patient's truth, never `xPump`'s prediction, and DC1's test is that guard.
 
 ### S1: Stock syringes and bags, and the device profiles (6 h)
 **Depends on:** learner plan L1 and FS (the formulary). **Files:** `packages/controller/formulary/stock-syringes.json`
