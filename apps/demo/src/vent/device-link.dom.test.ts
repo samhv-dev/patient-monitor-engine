@@ -5,7 +5,7 @@
 // A refusal (wrong PIN, taken over, the PIN changed, too many tries) ends the link and says why. The network gone (the
 // browser's `offline`), it drops its socket, so the host hears the silence and hands over; back (`online`) it signs in
 // again with the PIN it holds. The relay is a fake link the test drives with the host's and the relay's frames.
-import { createStamper, INSTRUCTOR_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
+import { createStamper, INSTRUCTOR_REASONS, VENTILATOR_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
 import { afterEach, describe, expect, it } from 'vitest';
 import { signInVentilator, type VentDevice } from './device-link.ts';
 
@@ -132,6 +132,24 @@ describe("R8d: the ventilator device's sign-in over the relay", () => {
     r2.setStatus('open');
     expect(hellos(r2)).toMatchObject([{ role: 'ventilator', pin: PIN }]);
     expect(d.state).toBe('pending');
+    host(r2).grant(true);
+    expect(d.state).toBe('granted');
+    expect(d.sender).not.toBe(was);
+  });
+
+  it('handed over for its silence, it signs in again at once on a new socket with the PIN it holds (no form)', () => {
+    const d = start();
+    const r = links[0] as Relay;
+    r.setStatus('open');
+    host(r).grant(true);
+    const was = d.sender;
+    host(r).grant(false, VENTILATOR_REASONS.silent);
+    expect(r.status).toBe('closed');
+    expect(d.state).toBe('pending');
+    expect(links).toHaveLength(2);
+    const r2 = links[1] as Relay;
+    r2.setStatus('open');
+    expect(hellos(r2)).toMatchObject([{ role: 'ventilator', pin: PIN }]);
     host(r2).grant(true);
     expect(d.state).toBe('granted');
     expect(d.sender).not.toBe(was);
