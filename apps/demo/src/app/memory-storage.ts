@@ -23,7 +23,7 @@ export class MemoryStorage implements Storage {
   }
   setItem(k: string, v: string): void {
     const used = [...this.m].reduce((n, [a, b]) => n + (a === k ? 0 : a.length + b.length), 0);
-    if (used + k.length + v.length > this.limit) throw new Error('QuotaExceededError');
+    if (used + k.length + v.length > this.limit) throw new DOMException('The quota has been exceeded.', 'QuotaExceededError'); // as a browser throws it
     this.m.set(k, String(v));
   }
 }

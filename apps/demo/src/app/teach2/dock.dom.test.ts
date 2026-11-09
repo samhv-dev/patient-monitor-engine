@@ -8,6 +8,7 @@ import { bookmark } from '../commands.ts';
 import type { Link } from '../link.ts';
 import { anyShowcaseDoc } from '../showcase/harness.ts';
 import { archive } from '../archive.ts';
+import { asFactory, MemoryIDB } from '../memory-idb.ts';
 import { MemoryStorage } from '../memory-storage.ts';
 import { RunRecord } from '../record.ts';
 import { caseFinished, FINISHED, mountDock } from './dock.ts';
@@ -112,6 +113,7 @@ describe('Instructor v2 dock: the Debrief ready flag of a /2 card', () => {
 
   it('Finish the case on a /2 card: "Debrief now" writes "Case finished" into the record before the archive saves it', async () => {
     vi.stubGlobal('localStorage', new MemoryStorage());
+    vi.stubGlobal('indexedDB', asFactory(new MemoryIDB()));
     const r = rig2(anyShowcaseDoc('showcase-mh-v2') as AnyScenarioDoc, 'treated');
     const el = document.createElement('div');
     const ctx = { link: r.link, keys: { escape: () => () => undefined } } as unknown as Teach2Ctx;
@@ -120,8 +122,9 @@ describe('Instructor v2 dock: the Debrief ready flag of a /2 card', () => {
     await settle();
     (el.querySelector('.ip2-finish-now') as HTMLButtonElement).click();
     expect(r.record.data.rows.filter((x) => x.kind === 'note').map((x) => x.text)).toEqual([FINISHED]);
+    await settle();
     const saved = archive.list().at(0);
-    expect(saved && archive.debrief(saved.id)?.includes(FINISHED)).toBe(true);
+    expect(saved && (await archive.debrief(saved.id))?.includes(FINISHED)).toBe(true);
     f.destroy();
   });
 
