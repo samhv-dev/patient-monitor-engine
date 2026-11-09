@@ -129,7 +129,7 @@ describe('the Debrief in Persian (D13)', () => {
     leave = v.leave;
     press(v.el, 'fa');
     // the section heads both print
-    for (const id of ['objectives', 'facts', 'trends', 'drugs', 'timeline', 'bookmarks', 'minutes', 'actions', 'outcomes', 'violations']) {
+    for (const id of ['objectives', 'facts', 'trends', 'drugs', 'timeline', 'bookmarks', 'actions', 'outcomes', 'violations']) {
       const s = doc.querySelector(`section#${id} > h2`)?.textContent;
       const a = v.el.querySelector(`#db-${id}-h`)?.textContent;
       if (s === undefined || a === undefined) continue;

@@ -1,9 +1,9 @@
 /* Stage 13: the Debrief view on screen (the bench palette) and in print. Print: A4 portrait, only the report (the top
    bar, session bar, monitor and toasts hidden), black on white, every status and mark in words as well as shape — no
    meaning carried by colour (the two accents of E45 always come with a shape and a legend in words); the objectives,
-   facts and each chart never split across pages; trends and the minute appendix start on a new page (drugs, the
-   timeline and bookmarks share one); the tables' headers repeat on each page; the undone course struck through (with
-   its words), set-up rows grey. The footer and the build on every page: @page margin boxes (the view's <style>, Chromium); where
+   facts and each chart never split across pages; the trends start a new page (drugs, the timeline and bookmarks
+   share one; the minute appendix is no longer printed, the owner's decision of 9 November); the tables' headers
+   repeat on each page; the undone course struck through (with its words), set-up rows grey. The footer and the build on every page: @page margin boxes (the view's <style>, Chromium); where
    the browser has none (WebKit: .db-nomargin), a footer line before each forced page break. The @page size and margins
    apply to printing any route of the app (R50 M-9). Redesign B: page 1 is the header band, the key-time tiles, the
    course strip and the objectives; the key moments start page 2 (only when there is one); the learner handout prints
@@ -63,8 +63,6 @@
 .debrief .db-table td.num { white-space: nowrap; width: 4.5em; }
 .debrief .db-table tr.undone td, .debrief li.undone { color: var(--text-muted); font-style: italic; text-decoration: line-through; }
 .debrief .db-table tr.db-setup td { color: #666; }
-.debrief .db-scroll { overflow-x: auto; }
-.debrief .db-minutes th .unit { display: block; font-weight: 400; color: var(--text-muted); }
 .debrief .db-runfoot:not(.db-foot) { display: none; }
 .debrief .db-pearls { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--s-2); }
 .debrief .db-pearl { border: 1px solid var(--line-strong); border-radius: var(--r-control); padding: var(--s-2); min-height: 5.5em; }
@@ -172,9 +170,7 @@
   .debrief .db-course text, .debrief .db-course .db-badge-n, .debrief .db-course .db-bm-n, .debrief .db-svg text { font-family: 'Inter Print', sans-serif; }
   .debrief h2 { font-size: 13pt; break-after: avoid; }
   .debrief .db-sec { margin-top: 6mm; }
-  .debrief #db-trends, .debrief #db-minutes { break-before: page; } /* drugs, the timeline and bookmarks share a page */
-  .debrief .db-scroll { overflow: visible; }
-  .debrief .db-minutes { font-size: 8.5pt; }
+  .debrief #db-trends { break-before: page; } /* drugs, the timeline and bookmarks share a page */
   .debrief #db-objectives, .debrief #db-facts, .debrief #db-bookmarks, .debrief #db-pearls, .debrief #db-notes, .debrief .db-chart, .debrief .db-obj li { break-inside: avoid; }
   .debrief .db-charts { display: block; }
   .debrief .db-chart { margin-bottom: 4mm; }

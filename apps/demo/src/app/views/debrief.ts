@@ -3,8 +3,8 @@
 // return to a bookmark included, struck through as undone; a staged delivery on one line), the card's steps with
 // their status (Instructor v2, IP8) — for a pme-scenario/2 run the action table with its grades, the outcomes, the
 // violations (plan F7; a team act the instructor observes is a record action in the table: judged rows are retired,
-// the owner's ruling of 5 November) —, bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
-// appendix; page 1 reads the key times, the course strip (the instructor's marks on it at their times) and the
+// the owner's ruling of 5 November) —, bookmarks with a mark's kind and note and the instructor's notes (the printed one-row-per-minute appendix was
+// deleted by the owner on 9 November; the JSON keeps `minutes`); page 1 reads the key times, the course strip (the instructor's marks on it at their times) and the
 // objectives, page 2 the key moments with what the
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
@@ -21,10 +21,10 @@ import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
-import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
+import { TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey } from '../record.ts';
 import { COURSE_W, courseSvg, tracePath, type CourseMark } from './debrief-course.ts';
 import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
 import { MARKS } from '../teach2/dock.ts';
@@ -283,31 +283,10 @@ function pageCssFa(foot: string, draft: boolean, p: FaPass): string {
 @top-center { content: ${css(DRAFT_LINE)}; font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: bottom; }` : ''} }`;
 }
 
-/** The pressures' column heads (D6), each in whole mmHg as the record keeps it. */
-const PRESSURE_HEAD: Readonly<Record<PressureKey, string>> = { sys: 'SBP', dia: 'DBP', cvp: 'CVP' };
 /** What a record made before Debrief 2 lacks, said once under a table (plan §3: a missing fact is "not recorded in this
  *  file", never a dash, which means "not measured"). */
 const NOT_RECORDED = ' not recorded in this file.';
 const notRecorded = (what: string): HTMLElement => h('p', { class: 'db-norecord' }, `${what}:${NOT_RECORDED}`);
-
-/** Q1: the appendix table — the six trends, the systolic, diastolic and CVP after MAP (D6), and the five labs, the first
- *  sample of each minute; a pre-D file prints "·" in the pressures and says once that they were not recorded. */
-function minutes(d: RunData): HTMLElement {
-  const kept = !!d.keeps?.includes('pressures');
-  const keys: Array<ValueKey | PressureKey> = [...TREND_KEYS.flatMap((k): Array<ValueKey | PressureKey> => (k === 'map' ? [k, ...PRESSURE_KEYS] : [k])), ...LAB_KEYS];
-  const isP = (k: ValueKey | PressureKey): k is PressureKey => (PRESSURE_KEYS as string[]).includes(k);
-  const head = keys.map((k) => {
-    const m = isP(k) ? { label: PRESSURE_HEAD[k], unit: 'mmHg' } : trendMeta(k);
-    return h('th', { scope: 'col' }, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null);
-  });
-  const cell = (k: ValueKey | PressureKey, v: number | null | undefined) =>
-    h('td', { class: 'num' }, isP(k) && !kept ? '·' : v === null || v === undefined ? '–' : isP(k) ? String(v) : v.toFixed(trendMeta(k).digits));
-  return h('div', { class: 'db-scroll' }, h('table', { class: 'db-table db-minutes' },
-    h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), ...head)),
-    h('tbody', {}, ...perMinute(d).map((r) => h('tr', {}, h('td', { class: 'num' }, mmss(r.t)),
-      ...keys.map((k) => cell(k, (r.values as Record<string, number | null | undefined>)[k])))))),
-  kept ? null : notRecorded('SBP, DBP and CVP'));
-}
 
 /** The shapes of the moments: the report's course strip (`debrief-course.ts`) draws each as a down arrow, a scenario
  *  state's outlined; the learner's strip a square, a dot and an open square; a trend chart a square, a dot and a bare
@@ -635,8 +614,6 @@ export function debriefView(session: AppSession, link: Link): View {
       section('bookmarks', 'Bookmarks', marks.length
         ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, nums.has(r) ? numberedLine(r, nums.get(r) as number) : markLine(r))))
         : h('p', { class: 'muted' }, 'No bookmarks.')),
-      runFoot(),
-      section('minutes', 'Appendix: one row per minute', minutes(d)),
     );
     // the learner handout (E51): what happened and when, no verdict, no objective, no value
     const learnerCourse = h('div', { class: 'db-course' });

@@ -1,6 +1,6 @@
 // Stage 13: a showcase run to its end, then the Debrief — the anaphylaxis card at ×4 with a bookmark and a return to it
 // (the first reaction is undone, the retry is judged), treated with the card's own button. The report's timeline,
-// facts (labs included), objectives, the minute appendix and the JSON download are checked on both engines, with the
+// facts (labs included), objectives, the JSON download (its minute rows; the printed appendix deleted, 9 November) are checked on both engines, with the
 // R56 engine-id scan and the print layout (print media: only the report, A4 page breaks, charts kept whole, the undone
 // course struck through, the footer and the build on every page); Chromium also prints it with page.pdf(): its page
 // count, A4 pages and title on every platform, its text — every page's footer and build included — on macOS (R50 I-2:
@@ -118,10 +118,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(listed).toMatch(/^1 · 00:0\d Bookmark: Mark \d+ at 00:0\d · good$/); // the mark's kind follows its words // numbered as on the strip (the owner, 2 November)
   expect(await mark.locator('title').textContent()).toBe(listed);
   expect(Number(await mark.getAttribute('data-t'))).toBeLessThan(10);
-  const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
-  expect(minuteRows.length).toBeGreaterThanOrEqual(2); // the kept course is ≈ 1½–2 sim-min
-  expect(minuteRows[0]).toMatch(/^00:00\s+\d+/);
-  await expect(view.locator('#db-minutes thead th')).toHaveCount(15); // D6: SBP, DBP and CVP
+  await expect(view.locator('#db-minutes')).toHaveCount(0); // the owner, 9 November: the printed appendix is deleted; the JSON keeps "minutes" (below)
   // R56: no engine id in the report (as stage9-glossary: an id that is also an English word, "epinephrine", is not a leak)
   const ids = (await page.evaluate(() => (window as unknown as W).__pmeApp.engineIds)).filter((id) => /[A-Z0-9]/.test(id));
   expect(await scanEngineIds(page, ids)).toEqual([]);
@@ -133,8 +130,10 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-anaphylaxis-\d{4}-\d\d-\d\d\.json$/);
   const json = readFileSync(await dl.path(), 'utf8');
-  const j = JSON.parse(json) as { schema: string; version: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }>; steps: Array<{ id: string; status: string }> };
+  const j = JSON.parse(json) as { schema: string; version: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }>; steps: Array<{ id: string; status: string }>; minutes: Array<{ t: number; values: Record<string, unknown> }> };
   expect(j.schema).toBe('pme-debrief/2');
+  expect(j.minutes.length).toBeGreaterThanOrEqual(2); // Q1: one row per minute, in the JSON only; the kept course is ≈ 1½–2 sim-min
+  expect(Object.keys(j.minutes[0]?.values ?? {})).toEqual(expect.arrayContaining(['hr', 'sys', 'dia', 'cvp'])); // D6
   expect(j.steps.filter((x) => x.status === 'taken').map((x) => x.id)).toEqual(['giveEpi']); // IP8: additive, still /2
   expect(j.version).toMatch(/^\d+\.\d+\.\d+/); // the renderer's version: the footer below is built from it, never written here
   expect(j.objectives.map((o) => o.verdict.status)).toEqual(['not assessable', 'met', 'not met']);
@@ -145,15 +144,15 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const foot = `For educational use only; Not to be used in patient care. Version ${j.version}${j.version.includes('-') ? ' (pre-release)' : ''}, build ${build}.`;
   await expect(view.locator('.db-foot')).toHaveText(foot);
 
-  // print layout, both engines: only the report; trends and the appendix on new pages (drugs, the timeline and
-  // bookmarks share one); a chart never split
+  // print layout, both engines: only the report; trends on a new page (drugs, the timeline and bookmarks share one);
+  // a chart never split
   await page.emulateMedia({ media: 'print' });
   const layout = await page.evaluate(() => {
     const vis = (s: string) => { const e = document.querySelector(s); return !!e && getComputedStyle(e).display !== 'none'; };
     const css = (s: string, p: string) => getComputedStyle(document.querySelector(s) as Element).getPropertyValue(p);
     return {
       topbar: vis('.topbar'), stage: vis('.stage'), bar: vis('.sessionbar'), tools: vis('.db-tools'), report: vis('.debrief'),
-      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), swimlane: css('#db-swimlane', 'break-before'), moments: css('#db-moments', 'break-before'),
+      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), swimlane: css('#db-swimlane', 'break-before'), moments: css('#db-moments', 'break-before'),
       chart: css('.db-chart', 'break-inside'), ink: css('.db-svg path', 'stroke'), body: css('body', 'overflow'),
       undone: css('#db-timeline tbody tr.undone td', 'text-decoration-line'),
       // the footer on every page: @page margin boxes where the browser has them (Chromium), else a line before each break
@@ -162,7 +161,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     };
   });
   const boxes = browserName === 'chromium';
-  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', swimlane: 'page', moments: 'auto', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
+  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', swimlane: 'page', moments: 'auto', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 3 });
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course g.db-bm') as Element).display), 'the mark prints').not.toBe('none');
   expect(await page.evaluate(() => document.querySelector('#db-course g.db-bm .db-bm-n')?.textContent), 'its number inside').toBe('1');
   mkdirSync(out, { recursive: true });
@@ -173,7 +172,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     writeFileSync(`${out}/debrief.pdf`, pdf);
     const info = pdfInfo(pdf); // every platform: no font read
     expect(info.title).toMatch(/^Debrief Anaphylaxis under anaesthesia \d{4}-\d\d-\d\d$/);
-    expect(info.boxes.length).toBeGreaterThanOrEqual(4); // header, trends, drugs + timeline + bookmarks, appendix (Decision 12)
+    expect(info.boxes.length).toBeGreaterThanOrEqual(4); // header, key moments, trends, drugs + timeline + bookmarks (Decision 12; no appendix since 9 November)
     for (const b of info.boxes) expect([Math.round(b[2] ?? 0), Math.round(b[3] ?? 0)]).toEqual([595, 842]);
     if (process.platform === 'darwin' || process.env.PME_PDF_TEXT === '1') {
       const { text, pages } = pdfText(pdf);
@@ -181,7 +180,8 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
       const t = squash(text);
       for (const want of ['DEBRIEF', 'Anaphylaxis under anaesthesia', 'Run by', 'Dr Instructor, two residents', 'Scenario state: Anaphylaxis — undone by return 1',
         'Epinephrine 100 µg IV', '✓ Observed', '✗ Not observed', '– Not assessable', 'Epinephrine, boluses in all', '100 µg (1 dose)', 'Good closed-loop communication.',
-        'Talking points', 'Appendix: one row per minute']) expect(t, want).toContain(squash(want)); // the h1 prints as the band's capital kicker
+        'Talking points']) expect(t, want).toContain(squash(want)); // the h1 prints as the band's capital kicker
+      expect(t, 'no minute appendix (the owner, 9 November)').not.toContain(squash('Appendix: one row per minute'));
       // B6 (a): page 1 is the key times, the course and the objectives; the facts follow the key moments on page 2
       const page1 = squash(text.split('\f')[0] ?? '');
       for (const want of ['Key times', 'The course']) expect(page1, want).toContain(squash(want));
@@ -221,7 +221,7 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 });
 
 // Decision 12: a free run (no scenario) prints in at most four A4 pages — the header band with facts, talking points and
-// notes; trends; drugs, timeline and bookmarks; the appendix. Its /2 export is saved for the Persian check (A7 Step 4).
+// notes; trends; drugs, timeline and bookmarks (the appendix is no longer printed, 9 November). Its /2 export is saved for the Persian check (A7 Step 4).
 // The run goes at ×4 and is paused before the Debrief opens: the CI Linux WebKit runner cannot hold ×8 (S10-F5), and
 // there a click on the session bar's Debrief link at ×8 was not served within 5 s (main run 39173099640, 3 of 3). At ×4
 // it then failed the same way (PR #105 run 39524573921, PR #107 39578631031 attempts 1 and 3): there it now goes at ×2
