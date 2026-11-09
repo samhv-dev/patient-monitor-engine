@@ -10,17 +10,17 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 |---|---|---|---|
 | [Patient state and the two modes](patient-state.md) | 5 | 5 | 0 |
 | [Rhythms and the ECG](rhythms-ecg.md) | 38 | 47 | 3 |
-| [Circulation](circulation.md) | 21 | 67 | 19 |
+| [Circulation](circulation.md) | 21 | 67 | 18 |
 | [Pressure waveforms and pleth](pressure-waveforms.md) | 9 | 16 | 3 |
-| [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 31 |
+| [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 28 |
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
 | [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 32 | 20 |
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 12 | 41 | 10 |
-| [Brain, kidney and liver](organs.md) | 14 | 30 | 13 |
+| [Brain, kidney and liver](organs.md) | 14 | 30 | 12 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 17 |
-| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 31 | 6 |
-| [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 47 | 34 |
-| [Monitor measurements (device layer)](monitor.md) | 18 | 33 | 8 |
+| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 31 | 7 |
+| [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 47 | 32 |
+| [Monitor measurements (device layer)](monitor.md) | 18 | 33 | 7 |
 | [Alarms](alarms.md) | 4 | 17 | 0 |
 | [Defibrillator and pacer](defib-pacer.md) | 4 | 9 | 0 |
 | [Ventilator](ventilator.md) | 16 | 24 | 6 |

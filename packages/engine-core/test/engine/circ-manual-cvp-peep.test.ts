@@ -47,7 +47,9 @@ const raises = (ev: EngineEvent[], id: string): number[] =>
   ev.flatMap((x) => (x.type === 'alarm' && x.id === id && x.state === 'raised' && x.level !== undefined ? [x.t] : []));
 
 describe('MANUAL CVP under positive-pressure ventilation', () => {
-  it.fails('brief §4.9: CVP 6 ventilated from t = 0, PEEP 15 reads 30–50 % of the 10 cmH2O step (2.2–3.7 mmHg) above PEEP 5 (measured 4.82: T_IT 0.65)', { timeout: 120_000 }, async () => {
+  // Band to its source (calibration-pass ruling, brief 88): Sun 2021 (PMID 34689516, n 70) PEEP 5 → 15 raised CVP by a median
+  // 3.75 (IQR 3.00–4.63) mmHg with high and 3.00 (1.63–4.00) with low chest-wall/respiratory elastance; envelope of the two IQRs.
+  it.fails('CVP 6 ventilated from t = 0, PEEP 15 reads 1.63–4.63 mmHg above PEEP 5 (Sun 2021: IQR envelope) (measured 4.82: T_IT 0.65)', { timeout: 120_000 }, async () => {
     const a = soak('philips-like', 5);
     const b = soak('philips-like', 15);
     await run(a.e, 300);
@@ -55,8 +57,9 @@ describe('MANUAL CVP under positive-pressure ventilation', () => {
     const d = mean(cvpMeans(b.ev, 120, 300)) - mean(cvpMeans(a.ev, 120, 300));
     console.log(`FU-3 MANUAL CVP PEEP 5 → 15 step ${d.toFixed(2)} mmHg`);
     const step = 10 * 0.7356; // mmHg (CMH2O_TO_MMHG)
-    expect(d).toBeGreaterThanOrEqual(0.3 * step);
-    expect(d).toBeLessThanOrEqual(0.5 * step);
+    void step;
+    expect(d).toBeGreaterThanOrEqual(1.63);
+    expect(d).toBeLessThanOrEqual(4.63);
   });
 
   it.fails('the validation-harness soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17; no raise since the displayed 10 is not above the limit)', { timeout: 120_000 }, async () => {

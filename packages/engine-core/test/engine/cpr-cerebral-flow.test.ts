@@ -60,9 +60,10 @@ describe('cerebral blood flow under CPR (research/20, gap V8)', () => {
   }, 120_000);
   // Title left for Stage 14 (fix-citations): its "Meaney 2013 consensus [VERIFY]" is resolved — the 30–40 % is Kern,
   // Niemann & Steen 2007's best case (see the header), which Meaney 2013 only repeats. The band is unchanged.
-  it.fails('VF + CPR q 1: CBF 0.30–0.40 of normal (Meaney 2013 consensus [VERIFY]; research/20 band 0.2–0.45) — measured 0.45 (a model limitation for the calibration pass)', async () => {
+  // Band to its source (calibration-pass ruling, brief 88): Kern, Niemann & Steen 2007 give standard compressions "at best
+  // 30 % to 40 %" of normal CBF — a ceiling; the 0.30 floor was not stated and is removed.
+  it.fails('VF + CPR q 1: CBF ≤ 0.40 of normal (Kern, Niemann & Steen 2007: at best 30–40 %) — measured 0.45 (a model limitation for the calibration pass)', async () => {
     const v = await vfCpr();
-    expect(v.cbf).toBeGreaterThanOrEqual(0.3);
     expect(v.cbf).toBeLessThanOrEqual(0.4);
   }, 120_000);
 });
