@@ -28,7 +28,7 @@ describe('rebreathing acts on PaCO2', { timeout: 600_000 }, () => {
   // from +5.99994 to +6.00045, so the band is met — by 4.5 × 10⁻⁴, a knife edge, not a rebreathing mechanism change.
   // Re-merge of 9 Nov (brief 112): both sides flipped this row — PR #352 (mechanism G, the drive and effort under the
   // ventilator) and main (Bowman 18). On the merge of both the rise reads PaCO2 +6.665 / EtCO2 +6.01240; band untouched.
-  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.67 / EtCO2 +6.0124 with brief 93's effort (+6.00045 after Bowman 18, +5.99994 before)', async () => {
+  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.67 / EtCO2 +6.0124 with the brief-93 effort (+6.00045 after Bowman 18, +5.99994 before)', async () => {
     const c = await run(0);
     const r = await run(8);
     // eslint-disable-next-line no-console -- the PR's numbers

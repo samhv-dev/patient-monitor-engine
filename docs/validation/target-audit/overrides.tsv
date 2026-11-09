@@ -8,8 +8,8 @@
 11	packages/engine-core/test/engine/stimulus-surge.test.ts	awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP measured 40.3 with the alveolar washout (38.4 without it)
 33	packages/engine-core/test/engine/tension-ptx.test.ts	decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (ventilator triggering; MAP ≥ 65 at +5 s without it)
 41	packages/engine-core/test/engine/clinical-suite.test.ts	S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)
-78	packages/engine-core/test/engine/resp-inspired-co2.test.ts	RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.67 / EtCO2 +6.0124 with brief 93's effort (+6.00045 after Bowman 18, +5.99994 before)
-89	packages/engine-core/test/engine/resp-suite.test.ts	RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.67 / EtCO2 +6.0124 with brief 93's effort (+6.00045 after Bowman 18, +5.99994 before)
+78	packages/engine-core/test/engine/resp-inspired-co2.test.ts	RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.67 / EtCO2 +6.0124 with the brief-93 effort (+6.00045 after Bowman 18, +5.99994 before)
+89	packages/engine-core/test/engine/resp-suite.test.ts	RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.67 / EtCO2 +6.0124 with the brief-93 effort (+6.00045 after Bowman 18, +5.99994 before)
 18	packages/engine-core/test/engine/arrest-etco2.test.ts	VF with CPR q 0.8 from +30 s: EtCO2 ≥ 10 at +2 min of CPR (Sanders 1989: none below 10 resuscitated) — measured 15.9 with the alveolar washout
 39	packages/engine-core/test/engine/circ-manual-cvp-peep.test.ts	CVP 6 ventilated from t = 0, PEEP 15 reads 1.63–4.63 mmHg above PEEP 5 (Sun 2021: IQR envelope) (measured 4.82: T_IT 0.65)
 44	packages/engine-core/test/engine/clinical-suite.test.ts	S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 95.0, CVP 9.3, MAP 82.1)
@@ -26,3 +26,7 @@
 139	packages/engine-core/test/l2/pk/interactions-misc.test.ts	diabetic dexamethasone 8 mg: maximum glucose rise over control +1.50–2.22 mmol/L (PADDI, Bach 2026: 1.86, 95 % CI 1.50–2.22): measured +1.83; non-diabetic +1.02
 140	packages/engine-core/test/l2/temp/temp.test.ts	GA: the hour-8 plateau sits at 34.8–35.4 °C (Kurz 1993: threshold 35.1 ± 0.3 at 30–50 y) — measured 34.37
 7	packages/engine-core/test/engine/neuro-engine.test.ts	propofol 2 mg/kg: depth-index nadir 18.4–39.0 (Blum 2006: BIS minimum 28.7 ± 10.3 after a 5-s bolus) — measured 50
+30	packages/engine-core/test/engine/circ-coronary-supply.test.ts	healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 quiet band) — measured 0.89 in this rig, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance)
+48	packages/engine-core/test/engine/circ-body-size.test.ts	term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min (isometric §2.2 scaling)
+71	packages/engine-core/test/engine/clinical-suite.test.ts	S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is the owner's, item 15; measured 97.8 %)
+73	packages/engine-core/test/engine/obstructive-aliases.test.ts	PROPOSED band (Q15, samhv-dev): SaO2 ≤ 92 % at FiO2 0.5 — measured 97.3 (the PE row shunt +0.10 is sourced, tables §18)

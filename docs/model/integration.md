@@ -52,7 +52,6 @@ No exported numeric constants.
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % | MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share | — | UNSUPPORTED ([audit row 41](../../docs/validation/target-audit/30-target-audit.md#row-41)) | keep MAP < 55 as a teaching floor (owner ruling); CO fall: direction-only (CO falls more than in the same dose without tamponade) unless a source is found | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S5 severe tamponade, PEEP 5 → 10: CO −20 % and MAP ≥ 10 mmHg more than the same PEEP in a healthy patient (Barash | ΔMAP 4.1 vs 1.5, CO ×0.88 | — | UNSUPPORTED ([audit row 42](../../docs/validation/target-audit/30-target-audit.md#row-42)) | direction-only: tamponade CO fall >= 2 x the healthy CO fall and MAP fall > healthy MAP fall for the same PEEP step; magnitude to the owner | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture | nadir 2.7, −97 % with an arrest when propofol removes the tonic sympathetic share | — | UNSUPPORTED ([audit row 43](../../docs/validation/target-audit/30-target-audit.md#row-43)) | keep as the owner's teaching picture (R45), tagged [ENG/owner]; no evidence to narrow or widen it | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is the owner's, item 15 | 97.8 % | — | MIS-SPECIFIED ([audit row 71](../../docs/validation/target-audit/30-target-audit.md#row-71)) | Ventilated at FiO2 0.5 without a PFO: SaO2 stays ≥ 92 %, with a fall of 1–6 points by 5 min. Move "SpO2 ≤ 92" to the awake room-air arm (RS13). If on-O2 desaturation is wanted, add a PFO (right-to-left shunt) variant | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
@@ -67,7 +66,7 @@ No exported numeric constants.
 
 | File | Expected failures | Skipped |
 |---|---|---|
-| [`engine/clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) | 10 | 0 |
+| [`engine/clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) | 9 | 0 |
 
 ## Related documents
 

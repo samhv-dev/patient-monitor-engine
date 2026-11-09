@@ -378,7 +378,7 @@ describe('respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
   // research/44 L2-26 (Bowman's pressure 17.1 → 18): the EtCO2 rise moves +5.99994 → +6.00045 and meets the band by
   // 4.5 × 10⁻⁴ — a knife edge, not a rebreathing mechanism change; the twin in resp-inspired-co2.test.ts flips with it.
   // Re-merge of 9 Nov (brief 112): PR #352 (mechanism G) flipped it too; on the merge of both EtCO2 +6.01240; band untouched.
-  it('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.67 / EtCO2 +6.0124 with brief 93's effort (+6.00045 after Bowman 18, +5.99994 before)', async () => {
+  it('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.67 / EtCO2 +6.0124 with the brief-93 effort (+6.00045 after Bowman 18, +5.99994 before)', async () => {
     const run = async (fico2: number) => {
       const e = rig6();
       await ventRig(e);
