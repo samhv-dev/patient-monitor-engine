@@ -6,7 +6,11 @@
 // pass-through that names no constant thin; absent dashed with its audit id written on it. A feedback edge (it closes a
 // loop) runs back under the columns. Hover shows an edge's rows, constants and their tags (<title>); the page shows the
 // same words on focus. Strings go through `t` as they are built (Q13: the DOM's Persian pass never touches SVG text).
-import type { DrawClass, Tree, TreeEdge, TreeNode, TreeRow } from './graph.ts';
+// Brief 104 (T1b): a node shows its clinical label (wrapped over two lines) and its unit, never its engine key (the key
+// is in the tooltip); a device box (the monitor's values folded) is a heavy box with ▸; a fold ("n more") a dashed pill;
+// a frontier node carries a "+n" button that draws one more generation from it. A box or button that opens something
+// is a button: it has `data-open` / `data-expand`, a role and a key-press handler on the page (views/mechanisms.ts).
+import type { DrawClass, TreeEdge, TreeRow, ViewNode } from './graph.ts';
 import { layout, NODE_H, NODE_W, PAD, type Layout } from './layout.ts';
 
 export const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -22,11 +26,27 @@ export const CLASS_WORDS: Readonly<Record<DrawClass, string>> = {
   NONE: 'no constant',
   ABSENT: 'absent',
 };
-const KIND_WORDS: Readonly<Record<TreeNode['kind'], string>> = { trigger: 'trigger', state: 'state', effector: 'effector', observable: 'monitor value', loop: 'reflex loop' };
+const KIND_WORDS: Readonly<Record<ViewNode['kind'], string>> = { trigger: 'trigger', state: 'state', effector: 'effector', observable: 'monitor value', loop: 'reflex loop', device: 'monitor values, folded', fold: 'folded children' };
 
 export interface SvgOpts {
   /** A string as printed: the identity in English; the Persian table's words otherwise (unmatched: the English). */
   t?: (en: string) => string;
+  /** A node's unit and one sentence of meaning (mechanisms/labels.ts), for its unit line and its tooltip. */
+  about?: (id: string) => { unit: string; meaning: string } | undefined;
+}
+
+/** A label over at most two lines of `n` characters, broken at the space that makes the longer line shortest; a label
+ *  that does not fit ends in "…" (the tooltip has it whole). */
+export function wrap(s: string, n = 21): string[] {
+  if (s.length <= n) return [s];
+  let best: string[] | null = null;
+  for (let i = s.indexOf(' '); i > 0; i = s.indexOf(' ', i + 1)) {
+    const two = [s.slice(0, i), s.slice(i + 1)];
+    if (two[0]!.length <= n && two[1]!.length <= n && (!best || Math.max(...two.map((x) => x.length)) < Math.max(...best.map((x) => x.length)))) best = two;
+  }
+  if (best) return best;
+  const sp = s.lastIndexOf(' ', n);
+  return sp > 0 ? [s.slice(0, sp), cut(s.slice(sp + 1), n)] : [cut(s, n)];
 }
 
 const constLine = (c: TreeRow['consts'][number]): string => `${c.name}${c.value !== undefined ? ` = ${c.value}${c.unit && c.unit !== '—' ? ` ${c.unit}` : ''}` : ''}: ${c.source}`;
@@ -41,26 +61,40 @@ export function edgeWords(e: TreeEdge, label: (id: string) => string): string {
   return [head, ...rows].join('\n\n');
 }
 
-function nodeSvg(n: TreeNode, x: number, y: number, t: (s: string) => string, inner: number): string {
+function nodeSvg(n: ViewNode, x: number, y: number, t: (s: string) => string, inner: number, about: SvgOpts['about']): string {
   const W = NODE_W;
   const H = NODE_H;
-  const shape = n.kind === 'trigger'
+  const shape = n.kind === 'trigger' || n.kind === 'fold'
     ? `<rect class="mt-box" x="${f(x)}" y="${f(y)}" width="${W}" height="${H}" rx="${H / 2}"/>`
     : n.kind === 'loop'
       ? `<rect class="mt-box" x="${f(x)}" y="${f(y)}" width="${W}" height="${H}" rx="12"/>`
       : n.kind === 'effector'
         ? `<rect class="mt-box" x="${f(x)}" y="${f(y)}" width="${W}" height="${H}" rx="3"/><rect class="mt-box2" x="${f(x + 3)}" y="${f(y + 3)}" width="${W - 6}" height="${H - 6}" rx="2"/>`
         : `<rect class="mt-box" x="${f(x)}" y="${f(y)}" width="${W}" height="${H}" rx="3"/>`;
-  const label = n.kind === 'loop' ? `⟲ ${t(n.label)}` : t(n.label);
-  const sub = n.kind === 'loop' ? `${n.keys.length} ${t(n.keys.length === 1 ? 'state' : 'states')}${inner ? ` · ${inner} ${t(inner === 1 ? 'edge' : 'edges')}` : ''}` : n.absent ?? (n.label !== n.keys[0] ? (n.keys[0] as string) : '');
+  const label = n.kind === 'loop' ? `⟲ ${t(n.label)}` : n.kind === 'device' ? `▸ ${t(n.label)}` : n.kind === 'fold' ? `+ ${n.label.replace(/ more$/, ` ${t('more')}`)}` : t(n.label);
+  const a = n.kind === 'loop' || n.kind === 'device' || n.kind === 'fold' ? undefined : about?.(n.id);
+  const sub = n.kind === 'loop'
+    ? `${n.keys.length} ${t(n.keys.length === 1 ? 'state' : 'states')}${inner ? ` · ${inner} ${t(inner === 1 ? 'edge' : 'edges')}` : ''}`
+    : n.kind === 'device' ? `${n.keys.length} ${t(n.keys.length === 1 ? 'value' : 'values')} · ${t('open')}`
+      : n.kind === 'fold' ? t('open')
+        : n.absent ?? a?.unit ?? '';
+  const lines = wrap(label);
   const cx = x + W / 2;
   const title = [
-    `${label} (${t(KIND_WORDS[n.kind])}${n.absent ? `; ${t('absent')}, ${n.absent}` : ''})`,
-    ...(n.kind === 'loop' ? n.keys : n.label !== n.keys[0] ? n.keys : []),
+    `${label}${a?.unit ? ` (${a.unit})` : ''}: ${t(KIND_WORDS[n.kind])}${n.absent ? `; ${t('absent')}, ${n.absent}` : ''}`,
+    ...(a?.meaning ? [t(a.meaning)] : []),
+    ...(n.kind === 'fold' ? (n.names ?? []).map((w) => `· ${t(w)}`) : n.keys),
   ].join('\n');
-  return `<g class="mt-n" data-key="${esc(n.id)}" data-kind="${n.kind}"${n.absent ? ` data-absent="${esc(n.absent)}"` : ''} tabindex="0"><title>${esc(title)}</title>${shape}`
-    + `<text class="mt-l" x="${f(cx)}" y="${f(y + (sub ? 16 : 23))}" text-anchor="middle">${esc(cut(label, 27))}</text>`
-    + `${sub ? `<text class="mt-k" x="${f(cx)}" y="${f(y + 30)}" text-anchor="middle">${esc(cut(sub, 30))}</text>` : ''}</g>`;
+  const button = n.kind === 'device' || n.kind === 'fold' ? ` data-open="${esc(n.id)}" role="button" aria-label="${esc(`${t('Open')}: ${label}`)}"` : '';
+  const y0 = y + (lines.length === 2 ? 15 : 20) - (sub ? 0 : 5);
+  const text = lines.map((l, i) => `<text class="mt-l" x="${f(cx)}" y="${f(y0 + i * 13)}" text-anchor="middle">${esc(l)}</text>`).join('');
+  const more = n.more
+    ? `<g class="mt-more" data-expand="${esc(n.id)}" role="button" tabindex="0" aria-label="${esc(`${t('Show more')}: ${n.more} ${t('from')} ${label}`)}"><title>${esc(`${t('Show more')}: ${n.more} ${t(n.more === 1 ? 'effect' : 'effects')} ${t('of')} ${label}, ${t('one generation further')}`)}</title>`
+      + `<rect class="mt-more-b" x="${f(x + W - 26)}" y="${f(y - 8)}" width="30" height="16" rx="8"/><text class="mt-more-t" x="${f(x + W - 11)}" y="${f(y + 4)}" text-anchor="middle">+${n.more}</text></g>`
+    : '';
+  return `<g class="mt-n" data-key="${esc(n.id)}" data-kind="${n.kind}"${n.absent ? ` data-absent="${esc(n.absent)}"` : ''}${button} tabindex="0"><title>${esc(title)}</title>${shape}`
+    + text
+    + `${sub ? `<text class="mt-k" x="${f(cx)}" y="${f(y + H - 7)}" text-anchor="middle">${esc(cut(sub, 26))}</text>` : ''}${more}</g>`;
 }
 
 function edgePath(e: TreeEdge, L: Layout, k: number): { d: string; mx: number; my: number } {
@@ -70,7 +104,7 @@ function edgePath(e: TreeEdge, L: Layout, k: number): { d: string; mx: number; m
     // back under the columns, in the gaps between them: out of the source's right side, down its gap, left along the
     // bottom, up the gap before the target, into its left side (never through a node)
     const yb = L.height - PAD / 2 + 8 + k * 7;
-    const lane = 6 + (k % 5) * 5;
+    const lane = 5 + (k % 4) * 4;
     const sx = a.x + NODE_W + lane;
     const tx = b.x - lane;
     const sy = a.y + NODE_H / 2 + 6;
@@ -86,7 +120,7 @@ function edgePath(e: TreeEdge, L: Layout, k: number): { d: string; mx: number; m
 }
 
 /** The tree as one SVG string (and the layout it used). */
-export function treeSvg(tree: Tree, opts: SvgOpts = {}): { svg: string; layout: Layout } {
+export function treeSvg(tree: { root: string; nodes: readonly ViewNode[]; edges: readonly TreeEdge[]; inner: ReadonlyMap<string, readonly TreeRow[]> }, opts: SvgOpts = {}): { svg: string; layout: Layout } {
   const t = opts.t ?? ((s: string) => s);
   const L = layout(tree);
   const byId = new Map(tree.nodes.map((n) => [n.id, n]));
@@ -105,7 +139,7 @@ export function treeSvg(tree: Tree, opts: SvgOpts = {}): { svg: string; layout: 
   });
   const nodes = tree.nodes.map((n) => {
     const p = L.at.get(n.id) as { x: number; y: number };
-    return nodeSvg(n, p.x, p.y, t, tree.inner.get(n.id)?.length ?? 0);
+    return nodeSvg(n, p.x, p.y, t, tree.inner.get(n.id)?.length ?? 0, opts.about);
   });
   const root = byId.get(tree.root);
   const aria = `${t('Mechanism tree of')} ${root ? t(root.label) : tree.root}: ${tree.nodes.length} ${t('nodes')}, ${tree.edges.length} ${t('edges')}, ${fb.length} ${t('feedback')}, ${tree.edges.filter((e) => e.absent).length} ${t('absent')}`;

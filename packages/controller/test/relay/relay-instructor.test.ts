@@ -23,20 +23,18 @@ afterEach(async () => {
   for (const c of closers.splice(0)) c();
   await relay?.close();
   relay = null;
-  relayLog = [];
   clock = 1_000_000;
 });
 
-// Each relay writes to its OWN log: the last test's relay terminates its sockets on close and their `close` events can
-// fire after the next test has started, so a shared log got the old relay's "instructor ins-a.1 left" line and the next
-// test's wait for its own instructor's removal passed at once (CI run 42529120955: `denied` read peers 2, not 1)
+// Each relay writes to a log of its own. relay.close() resolves before the closed sockets' close handlers have run, so
+// the last test's relay still writes its `left` lines into the next test; into a shared log they read as this relay's.
 const start = async (o: RelayOptions = {}) => {
-  const lines: string[] = (relayLog = []);
+  const own: string[] = (relayLog = []);
   return (relay = await startRelay({
     port: 0, host: '::', heartbeatMs: 60_000, takenCheckMs: 300, remoteRoles: 'viewer',
     isLocal: (_address, req) => !req?.url?.includes('e2e-remote'),
     now: () => clock,
-    log: (l) => lines.push(l),
+    log: (l) => own.push(l),
     ...o,
   }));
 };
@@ -193,7 +191,8 @@ describe("the host's grant", () => {
     expect(ins.errorBeforeClose).toBe('denied'); // the frame first, then the close (P5's contract)
     expect(errorOf(ins)).toEqual({ relay: 'error', code: 'denied', message: 'wrong PIN' });
     // The client's close event can come before the relay's own close handler has removed the peer, so the count is
-    // read only after the relay records the removal (its `left` line is written after it deletes the peer).
+    // read only after THIS relay records the removal (its `left` line is written after it deletes the peer; the last
+    // test's relay writes the same line, late, into its own log, not this one).
     await waitFor(() => relayLog.includes(`room ${SESSION}: instructor ins-a.1 left`), 2000, 'the relay removed the instructor');
     expect(relay!.room(SESSION)?.peers).toBe(1);
   });
