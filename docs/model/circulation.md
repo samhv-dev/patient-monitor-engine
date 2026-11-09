@@ -320,6 +320,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `rrRef` | `number` | Running normal RR, s |
 | `pespNext` | `number` | Emax boost for the next beat |
 | `ref` | `Stabilised['ref']` | the stabilised resting reference (coronary demand, pulsatile sensing) |
+| `svRest` | `number` | SV₀ of the pleth's PI × SVᵢ/SV₀: the patient's own settled resting stroke volume as the running engine reaches it (engine.ts REST_AVG_S), mL. Absent (a bare model, or the resting run itself) → the stand-alone `ref.sv`. |
 | `cor` | `CoronaryState` | Coronary supply/demand (stepped at 1 Hz by the pipeline) |
 | `cppAcc` | `{ sum: number; n: number }` | Sum and count of the relaxation-phase aortic − RA pressure since the coronary step last read it (2 ms). |
 | `mapNow` | `number` | Mean radial pressure, low-passed (τ 2 s) at the 10 Hz control step in both modes — beats or none. |
