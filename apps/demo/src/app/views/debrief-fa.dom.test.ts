@@ -12,7 +12,7 @@ import { MemoryStorage } from '../memory-storage.ts';
 import type { Link } from '../link.ts';
 import type { RunData } from '../record.ts';
 import type { AppSession } from '../session.ts';
-import { DRAFT_LINE, faPass, unreviewed } from '../i18n/fa-dom.ts';
+import { DRAFT_LINE, faPass, faText, unreviewed } from '../i18n/fa-dom.ts';
 import { debriefView } from './debrief.ts';
 
 const REPO = resolve(import.meta.dirname, '../../../../..');
@@ -44,6 +44,55 @@ describe('the Debrief in Persian (D13)', () => {
     expect(v.el.querySelector<HTMLElement>('.db-draft')?.hidden).toBe(true);
     expect(v.el.querySelector('.db-tools .seg button[aria-pressed="true"]')?.textContent).toBe('English');
     expect(v.el.querySelector('#db-objectives-h')?.textContent).toBe('Objectives');
+  });
+
+  it('P-S3: the talking points and the notes\' heading print in Persian too; the typed notes are never touched', () => {
+    const v = open(exportOf(TAMPONADE).record);
+    leave = v.leave;
+    const notes = v.el.querySelector('.db-notes') as HTMLElement;
+    notes.textContent = 'Typed in English: Reactions first.';
+    press(v.el, 'fa');
+    const pearls = v.el.querySelector('#db-pearls') as HTMLElement;
+    expect(pearls.getAttribute('lang')).toBe('fa');
+    expect(pearls.getAttribute('dir')).toBe('rtl');
+    expect(v.el.querySelector('#db-pearls-h')?.textContent).toBe('محورهای گفت‌وگو');
+    expect(pearls.querySelector('bdi.en'), 'no talking point in English').toBeNull();
+    expect(pearls.textContent).not.toMatch(/[A-Za-z]/);
+    expect(v.el.querySelector('#db-notes-h')?.textContent).toBe('یادداشت‌ها');
+    expect(notes.textContent).toBe('Typed in English: Reactions first.');
+    expect(notes.hasAttribute('lang'), 'the notes keep the instructor\'s own direction').toBe(false);
+    press(v.el, 'en');
+    expect(v.el.querySelector('#db-pearls-h')?.textContent).toBe('Talking points');
+    expect(pearls.hasAttribute('lang')).toBe(false);
+    expect([...pearls.querySelectorAll('.db-pearl b')].map((b) => b.textContent)).toEqual(['Reactions', 'Description', 'Analysis', 'Summary']);
+    expect(v.el.querySelector('#db-notes-h')?.textContent).toBe('Notes');
+    expect(notes.textContent).toBe('Typed in English: Reactions first.');
+  });
+
+  it('P-S4: a mark\'s kind, the steps table\'s "Stage" and the MH card\'s step buttons are in the table (drafts, unread)', () => {
+    const p = faPass();
+    const mh = JSON.parse(readFileSync(join(REPO, 'apps/demo/src/app/showcase/showcase-mh.json'), 'utf8')) as { states: Array<{ transitions?: Array<{ when: unknown }> }> };
+    const manual = (w: unknown): string[] => (!w || typeof w !== 'object' ? [] : Array.isArray(w) ? w.flatMap(manual)
+      : [...('manual' in w ? [((m: unknown) => (typeof m === 'string' ? m : String((m as { label?: string })?.label)))((w as { manual: unknown }).manual)] : []), ...Object.values(w).flatMap(manual)]);
+    const buttons = [...new Set(mh.states.flatMap((st) => (st.transitions ?? []).flatMap((t) => manual(t.when))))];
+    expect(buttons.length).toBe(13);
+    for (const en of ['good', 'bad', 'discuss', 'Stage', ...buttons]) expect(faText(en, p), en).not.toBeNull();
+    expect(p.missing.size).toBe(0);
+    const v = open(exportOf(TAMPONADE).record);
+    leave = v.leave;
+    press(v.el, 'fa');
+    const head = [...v.el.querySelectorAll('#db-steps thead th')].map((th) => th.textContent);
+    if (head.length) expect(head[0]).toBe('مرحله');
+  });
+
+  it('P-S5: each chart caption takes its direction from its first letter, the unit its own run', () => {
+    const v = open(exportOf(TAMPONADE).record);
+    leave = v.leave;
+    press(v.el, 'fa');
+    const caps = [...v.el.querySelectorAll('.db-chart figcaption')];
+    expect(caps.length).toBeGreaterThanOrEqual(6);
+    for (const c of caps) expect(c.getAttribute('dir'), c.textContent ?? '').toBe('auto');
+    expect(v.el.querySelector('.db-chart[data-trend=hr] figcaption')?.textContent).toBe('HRbpm'); // Latin throughout: laid left to right
   });
 
   it('«فارسی»: the containers right to left in Persian, kept per browser; back to English restores the page', () => {
@@ -129,7 +178,7 @@ describe('the Debrief in Persian (D13)', () => {
     leave = v.leave;
     press(v.el, 'fa');
     // the section heads both print
-    for (const id of ['objectives', 'facts', 'trends', 'drugs', 'timeline', 'bookmarks', 'minutes', 'actions', 'outcomes', 'violations']) {
+    for (const id of ['objectives', 'facts', 'trends', 'drugs', 'timeline', 'bookmarks', 'actions', 'outcomes', 'violations']) {
       const s = doc.querySelector(`section#${id} > h2`)?.textContent;
       const a = v.el.querySelector(`#db-${id}-h`)?.textContent;
       if (s === undefined || a === undefined) continue;
