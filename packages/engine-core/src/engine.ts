@@ -3,7 +3,7 @@
 // QRS detections early enough to schedule beeps. A command changes the committed state, so the next
 // look-ahead pass regenerates everything after "now" (look-ahead invalidation) and a toneCancel revokes
 // tones already posted. All pipeline state is plain JSON-safe data (snapshot/restore, structuredClone).
-import { Clock, TICK_MS } from './clock/clock.ts';
+import { Clock, frameBudgetMs, runOwed, TICK_MS } from './clock/clock.ts';
 import { RingBuffer } from './buffers/ring.ts';
 import { constantRamp, rampValue, retarget, type RampState } from './l1/ramp.ts';
 import { ECG_RATE, pruneEvents } from './l2/ecg/generator.ts';
@@ -35,6 +35,7 @@ import {
   type Modifiers,
   type MonitorEngine,
   type NumericId,
+  type PatientProfile,
   type PatientSnapshot,
   type Ramp,
   type RhythmId,
@@ -49,6 +50,7 @@ import {
   applyHemoCommand,
   createHemoState,
   HEMO_CHANNELS,
+  MANUAL_TRACK_MAX_S,
   HEMO_TEACHING,
   type HemoTeachingChannel,
   hemoChannelActive,
@@ -266,6 +268,67 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
   return RHYTHMS[id].defaultRateBpm;
 }
 
+/**
+ * SV₀, the reference of the pleth's PI × SVᵢ/SV₀ rule (brief §4.3), is the patient's OWN settled resting stroke volume:
+ * what this engine reaches for this patient at rest — spontaneously breathing, unventilated, in sinus rhythm — once
+ * its own stabilisation (the MANUAL trackers, or MODELED's reflexes) has run. It is MEASURED here by running the real
+ * engine on that resting patient, not typed and not taken from the stand-alone stabiliser, so the pulse equals the
+ * instructor's PI exactly at that rest and departs from it only as the stroke volume departs from it.
+ *
+ * Why the stand-alone stabiliser's `circ.ref.sv` (79.1 mL for the default adult) is not that value — the running
+ * engine settles the same MANUAL patient at ≈ 89 mL (brief 76, research/45; measured below): `stabilise.ts` solves the
+ * bare circuit for the PROFILE's targets (HR 70, CVP 5, the band's SBP/DBP) at a CONSTANT end-expiratory pleural
+ * pressure (P_PL0 −4 mmHg). Three couplings of the running engine are missing from it:
+ *  1. MANUAL: the instructor's own numbers (L1 defaults HR 75, CVP 6, 120/80), which the MANUAL trackers then impose
+ *     with THEIR knobs — the venous unstressed volume (≈ −400 mL) and LV Emax (×0.74) — not the stabiliser's (R_sys,
+ *     C_art). Measured at seed 42, 45–90 s: HR 75/CVP 6 → 88 mL; HR 70/CVP 4.85 (the stabiliser's own targets) → 86 mL.
+ *  2. The breath driver: spontaneous breathing swings the pleural pressure from −4 to ≈ −7 mmHg (mean ≈ −5), which
+ *     raises venous return, and the MANUAL CVP tracker holds the breath-AVERAGED right-atrial pressure, so it fills by
+ *     a further ≈ 130 mL to lift the inspiratory dips (that residual 86 against 79 mL).
+ *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.5 mL at rest: SV₀; 70.8 mL on IPPV).
+ * The same fault — the trackers starting from a circulation that is not the instructor's patient and taking ≈ 40–60 s
+ * to reach it — is behind the MANUAL PEEP 0 < PEEP 5 stroke volume (84.0 against 85.5 mL): a ventilator started at
+ * t = 0 runs while the trackers are still converging. Under PEEP 5 the pressure tracker kept running to 38 s (LV Emax
+ * ×0.80) and the volume tracker, which subtracts the pleural RISE from its CVP, transfused 665 mL; under PEEP 0 the
+ * pressure tracker released at ≈ 10 s (Emax ×1.00, SBP then drifting to 129) and the volume tracker gave 367 mL. The
+ * order PEEP 0 < PEEP 5 is that race, not physiology; it is left to the trackers' own brief (no waveform here changes).
+ *
+ * The rest is the patient as configured at t = 0 (profile, conditions and the instructor's baseline values) with its
+ * scripted arrhythmia removed: a rhythm and its rate are the scenario's (the AF pulse deficit must show against the
+ * patient's sinus stroke volume, research/45), so a non-sinus `rhythm` drops with its `baseline.hr`, and the monitor's
+ * `sensors` drop too. The settling ends
+ * when both MANUAL trackers have released (each releases by MANUAL_TRACK_MAX_S of its own run), or after
+ * REST_SETTLE_MODELED_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the
+ * numerator the pleth uses) over REST_AVG_S of beats. A patient property, not the scenario's random stream: the run uses
+ * REST_SEED, so it is deterministic and cached per resting patient and mode, and it runs ONCE, when the engine is
+ * created — never inside a step, whatever the time scale. The run steps only the three pipelines that set a resting
+ * stroke volume (`restAdvance`: the rhythm engine, the breath driver, the haemodynamics), tick by tick as the engine
+ * does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED, measured with a
+ * 20-s mean after a 60-s MODELED settle) at ≈ 60 % of its cost. The resting patient carries no sensors (their transducers are not physiology: SV₀ is
+ * the same with or without them) and MODELED settles REST_SETTLE_MODELED_S, so a run is ≈ 0.03–0.17 s in Node and
+ * Chromium (SV₀ 88.59 / 81.45 mL); the whole engine's 80 s took 0.23–0.29 s and, on the CI runner, delayed a case's monitor by 1–2 s.
+ * A restored snapshot carries its own SV₀. [ENG: measurement; REST_AVG_S, two spontaneous breaths at the default
+ * 15/min; REST_SEED, the engine's default seed; REST_SETTLE_MODELED_S, the measured settling]
+ */
+export const REST_AVG_S = 8;
+export const REST_SEED = 1;
+/** MODELED has no tracker to wait for: its resting SV is within ± 0.5 % (the breath-to-breath spread) from 8 s on
+ * (8-s means 81.0, 81.9, 81.8, 81.5, 81.3, 81.8 mL from 8 to 56 s, seed 1). */
+export const REST_SETTLE_MODELED_S = 8;
+const restSvCache = new Map<string, number>();
+
+/** The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). */
+export function restingPatient(p: PatientProfile | undefined): PatientProfile | undefined {
+  if (!p) return p;
+  // the monitor's sensors are not the patient (and their transducers are most of a run's cost)
+  const { sensors: _sensors, ...q } = p;
+  if (!q.rhythm || q.rhythm.id === 'sinus') return q;
+  const { rhythm: _rhythm, ...rest } = q;
+  if (!rest.baseline || rest.baseline.hr === undefined) return rest;
+  const { hr: _hr, ...baseline } = rest.baseline;
+  return { ...rest, baseline };
+}
+
 class Engine implements MonitorEngine {
   readonly version = engineKey; // `${version}+${build}`, the snapshot compatibility key
   private readonly seed: number;
@@ -291,7 +354,8 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // For restoring older snapshots
   private readonly truthEvery: number; // Ticks between truth events, 0 = off
 
-  constructor(opts: EngineOptions) {
+  /** `rest`: this engine IS the resting run that measures SV₀ (no recursion). */
+  constructor(opts: EngineOptions, rest = false) {
     // MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
@@ -344,6 +408,7 @@ class Engine implements MonitorEngine {
       organs: createOrgansState(opts.patient, l1),
     };
     holdRate(this.st, rhythmId, rhythmOpts.rateBpm !== undefined);
+    if (!rest) this.st.hemo.circ.svRest = Engine.restingSv(opts); // SV₀, once per resting patient (REST_AVG_S)
     rebaselineOrgans(this.st.organs, this.organsCtx(this.st)); // Calibrate on the pipelines' t = 0 truths
     this.syncCo2Sampler();
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
@@ -352,15 +417,48 @@ class Engine implements MonitorEngine {
     this.speculate();
   }
 
+  /** SV₀: the settled resting stroke volume of this patient in the real engine (see REST_AVG_S). */
+  private static restingSv(opts: EngineOptions): number {
+    const ro: EngineOptions = { seed: REST_SEED, mode: opts.mode ?? 'manual', ...(opts.patient ? { patient: restingPatient(opts.patient) as PatientProfile } : {}) };
+    const key = JSON.stringify(ro);
+    const hit = restSvCache.get(key);
+    if (hit !== undefined) return hit;
+    const e = new Engine(ro, true);
+    const manual = ro.mode !== 'modeled';
+    const mh = () => e.st.hemo.manHold;
+    let t = 0;
+    const STEP_S = 4; // read the beats every 4 s: ≤ the 16-beat buffer up to 240/min
+    const go = (to: number) => {
+      // tick by tick, as the engine couples its pipelines (in 4 s chunks the MODELED chemoreflex read the gas exchange
+      // late: 82.16 against the full engine's 81.29 mL)
+      for (let n = e.st.n - 1 + SAMPLES_PER_TICK; n <= Math.round(to * ECG_RATE); n += SAMPLES_PER_TICK) e.restAdvance(e.st, n);
+    };
+    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < REST_SETTLE_MODELED_S) go((t += STEP_S));
+    const t0 = t;
+    const seen = new Map<number, { t: number; lvedv: number; lvesv: number }>();
+    while (t < t0 + REST_AVG_S) {
+      go((t += STEP_S));
+      for (const b of e.st.hemo.circ.beats) if (b.t > t0) seen.set(b.t, b);
+    }
+    const bs = [...seen.values()].sort((a, b) => a.t - b.t);
+    let sum = 0;
+    for (let i = 1; i < bs.length; i++) sum += Math.max(0, (bs[i] as { lvedv: number }).lvedv - (bs[i - 1] as { lvesv: number }).lvesv);
+    const sv = bs.length > 1 ? sum / (bs.length - 1) : e.st.hemo.circ.ref.sv;
+    restSvCache.set(key, sv);
+    return sv;
+  }
+
   // --- lifecycle -------------------------------------------------------------------------------
   start(): void {
     if (this.timer !== null) return;
     this.lastWall = performance.now();
     this.timer = setInterval(() => {
       const now = performance.now();
-      const n = this.clock.advance(now - this.lastWall);
+      const gap = now - this.lastWall;
+      this.clock.credit(gap); // in full: a late interval owes its whole gap (brief 105)
       this.lastWall = now;
-      this.runTicks(n);
+      let ran = this.clock.tick;
+      runOwed(this.clock, () => (this.runTicks(this.clock.tick - ran), (ran = this.clock.tick)), frameBudgetMs(gap)); // the ticks each chunk took
     }, TICK_MS);
   }
   pause(): void {
@@ -473,6 +571,7 @@ class Engine implements MonitorEngine {
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
+    data.st.hemo.circ.svRest ??= data.st.hemo.circ.ref.sv; // a snapshot without SV₀ keeps the reference it was drawn with
     this.st = data.st;
     this.queue = data.queue;
     this.groupTicks = new Map(data.groups ?? []); // The bookmark's pending groups, never the discarded future's
@@ -615,6 +714,34 @@ class Engine implements MonitorEngine {
         holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false); // An engine-initiated rate belongs to the reflex
       },
     };
+  }
+
+  /**
+   * The resting run's step (REST_AVG_S): the three pipelines that set a resting stroke volume, in `advance`'s own
+   * order and with its own contexts — the rhythm engine's beats, the breath driver (its pleural pressure) and the
+   * haemodynamics with the MANUAL trackers or MODELED's reflexes. No ECG synthesis, drug, neuro, blood, endocrine or
+   * organ step, and no samples written: at rest, unventilated and undrugged, those hold their t = 0 state (measured:
+   * adding the blood, endocrine, organ, drug, neuro steps and the ECG synthesis back moves SV₀ by < 0.01 mL).
+   */
+  private restAdvance(ps: PipelineState, end: number): void {
+    if (end < ps.n) return;
+    planUntil(ps.rhythm, end / ECG_RATE + PLAN_LEAD_S, rhythmCtx(ps));
+    ps.rhythm.events = pruneEvents(ps.rhythm.events, ps.n / ECG_RATE);
+    ps.rhythm.fwaves = ps.rhythm.fwaves.filter((f) => f.end >= ps.n / ECG_RATE);
+    const none = () => {};
+    advanceResp(ps.resp, {
+      l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
+      bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, histamine: ps.pk.bus.airway.histamine,
+    }, Math.floor(end / 8), none);
+    const resp = ps.resp;
+    advanceHemo(ps.hemo, {
+      l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t), pIt: (t) => respPleural(resp, t),
+      requestHr: (bpm) => {
+        ps.hr = constantRamp(bpm);
+      },
+      ph: ps.blood.core.ab.ph,
+    }, Math.floor(end / 4), none);
+    ps.n = end + 1;
   }
 
   /**

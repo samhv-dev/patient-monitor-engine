@@ -105,7 +105,7 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
       r.release.hidden = !(m === 'modeled' && !r.s.direct && (flag === 'pinned' || flag === 'ramping' || (flag === 'override' && !!r.s.modelOwned)));
       r.row.dataset.staged = String(staging.has(`v-${r.s.v}`));
       const ramp = link.ramps.get(r.s.v);
-      const p = ramp ? Math.min(1, (link.simT - ramp.t0) / ramp.dur) : 1;
+      const p = ramp ? Math.max(0, Math.min(1, (link.simT - ramp.t0) / ramp.dur)) : 1; // sim time from the engine's apply tick (brief 105)
       r.bar.hidden = !ramp || p >= 1;
       if (ramp && p >= 1) link.ramps.delete(r.s.v);
       (r.bar.firstElementChild as HTMLElement).style.width = `${Math.round(p * 100)}%`;

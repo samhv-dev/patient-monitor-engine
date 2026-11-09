@@ -13,7 +13,8 @@
 The engine runtime: the fixed-step clock, the committed pipeline state and its look-ahead, the sample ring buffers, the
 seeded random streams and snapshots. It decides when and in which order each model is advanced, and makes a run
 reproducible: the same seed and command log give the same patient. It matters mostly to an embedding developer; a
-clinician-educator needs only that time moves in 20 ms ticks and can run from 0.25 to 8 times real time.
+clinician-educator needs only that time moves in 20 ms ticks, can run from 0.25 to 8 times real time, and that a computer
+too busy to keep real time says so (the clock pill reads BEHIND) instead of running the patient slow.
 <!-- /hand:purpose -->
 
 ## Equations in words
@@ -21,8 +22,13 @@ clinician-educator needs only that time moves in 20 ms ticks and can run from 0.
 <!-- hand:equations -->
 > Draft — owner review pending.
 
-- Clock: simT = tick × 20 ms; wall time feeds an accumulator, acc += min(wall Δ, 250 ms) × timeScale, and a tick runs
-  while acc ≥ 20 ms; timeScale is limited to 0.25–8 ("Fix Your Timestep", Gaffer on Games; `clock/clock.ts`).
+- Clock: simT = tick × 20 ms; wall time feeds an accumulator in full, acc += wall Δ × timeScale, and owed ticks run one
+  20-ms tick at a time within a work budget per frame of the wall time that passed since the last one (at least 50,
+  at most 250 ms); what the budget leaves stays owed for the next frames,
+  and the owed time is how far the engine is behind real time, reported to the page when it passes 0.5 s (brief 105:
+  until then a frame's credit was clamped to 250 ms, and a busy machine ran the body slow in silence). The monitor's
+  clock starts at its mount, so a worker's start-up is owed time too. timeScale is limited to 0.25–8 ("Fix Your
+  Timestep", Gaffer on Games; `clock/clock.ts`).
 - The ECG runs at 500 Hz, 10 samples per tick (`engine.ts`); ring buffers are indexed by absolute sample number, sample
   n belonging to time n/rate, and keep the most recent 120 s (`buffers/ring.ts`).
 - Look-ahead: every tick a clone of the committed state is run 100 ms ahead to fill the buffers and find QRS detections
@@ -42,8 +48,8 @@ clinician-educator needs only that time moves in 20 ms ticks and can run from 0.
 
 | Where | Relation |
 |---|---|
-| [`clock.ts:2`](../../packages/engine-core/src/clock/clock.ts#L2) | simT = tick × 20 ms. Frames feed wall time through an accumulator: |
-| [`engine.ts:585`](../../packages/engine-core/src/engine.ts#L585) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`clock.ts:1`](../../packages/engine-core/src/clock/clock.ts#L1) | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. |
+| [`engine.ts:684`](../../packages/engine-core/src/engine.ts#L684) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
@@ -55,8 +61,10 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `TICK_MS` | `20` | ms | brief §3.3; [ENG: numerics] | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames feed wall time through an accumulator: acc += min(wallΔ, 250 ms) × timeScale; while (acc ≥ 20 ms) tick() The 250 ms clamp is [ENG: numerics]. timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
-| `MAX_FRAME_MS` | `250` | ms | — | — |
+| `TICK_MS` | `20` | ms | brief §3.3 | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames credit wall time IN FULL to an accumulator, acc += wallΔ × timeScale, and the caller runs owed ticks of the engine's own 20 ms, one at a time, within a work budget per frame (runOwed, frameBudgetMs); what the budget leaves stays owed and runs on the next frames. Sim time is never thrown away and a tick is never longer than 20 ms: when the machine cannot keep up, the clock is BEHIND by the owed time (behindS), which the runtime reports, rather than running slow in silence. Until brief 105 a frame's credit was clamped to 250 ms, so every frame slower than that lost the rest without a word: on a busy machine (frames every ≈ 400 ms) the body ran at 0.6 of real time (defect N25). timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
+| `FRAME_BUDGET_MS` | `50` | ms | [ENG: control] | A frame may spend on owed ticks as much wall time as passed since the last frame, at least FRAME_BUDGET_MS and at most FRAME_BUDGET_MAX_MS (frameBudgetMs) [ENG: control]. Spending what passed keeps real time whenever a tick costs less than the 20 ms it simulates, however far apart the frames are: a fixed 50 ms let a worker whose frames came every 400 ms use only 50/400 of the wall time, so it fell behind on a machine that could keep up (PR #369's first CI run: 1.8 s owed after 20 s of 400-ms frames, ≈ 2.7 ms a tick). The floor, three 60 fps frames, lets catch-up outrun real time at a normal frame rate (at the measured 0.07–6.6 ms a tick, 0.15–14 s of sim per frame); the ceiling keeps a frame coming back to draw and post within the 250 ms the page expects between posts. At least one owed tick runs per frame whatever its cost, so the clock always progresses. |
+| `FRAME_BUDGET_MAX_MS` | `250` | ms | — | — |
+| `BEHIND_REPORT_S` | `0.5` | s | [ENG: control] | The runtime says it is behind real time when the owed sim time exceeds this, s [ENG: control]. Above the ≤ 1-tick remainder of a normal frame and the ≈ 0.25 s a busy frame owes before the next one catches it up, so a passing slow frame is not announced; well under the 1 s granularity of the clock the instructor reads, so a behind clock is said before it shows as a wrong second. |
 | `MIN_TIME_SCALE` | `0.25` | — | — | — |
 | `MAX_TIME_SCALE` | `8` | — | — | — |
 
@@ -66,11 +74,17 @@ No exported `…State` type in this module.
 |---|---|---|---|---|
 | `BUFFER_SECONDS` | `120` | — | brief §3.5 | brief §3.5 |
 | `BEEP_DELAY_S` | `0.03` | s | — | Tone at detected R + 30 ms. |
+| `REST_AVG_S` | `8` | s | brief §4.3; research/45; [ENG: measurement; REST_AVG_S, two spontaneous breaths at the default 15/min; REST_SEED, the engine's default seed; REST_SETTLE_MODELED_S, the measured settling] | SV₀, the reference of the pleth's PI × SVᵢ/SV₀ rule (brief §4.3), is the patient's OWN settled resting stroke volume: what this engine reaches for this patient at rest — spontaneously breathing, unventilated, in sinus rhythm — once its own stabilisation (the MANUAL trackers, or MODELED's reflexes) has run. It is MEASURED here by running the real engine on that resting patient, not typed and not taken from the stand-alone stabiliser, so the pulse equals the instructor's PI exactly at that rest and departs from it only as the stroke volume departs from it. Why the stand-alone stabiliser's `circ.ref.sv` (79.1 mL for the default adult) is not that value — the running engine settles the same MANUAL patient at ≈ 89 mL (brief 76, research/45; measured below): `stabilise.ts` solves the bare circuit for the PROFILE's targets (HR 70, CVP 5, the band's SBP/DBP) at a CONSTANT end-expiratory pleural pressure (P_PL0 −4 mmHg). Three couplings of the running engine are missing from it: 1. MANUAL: the instructor's own numbers (L1 defaults HR 75, CVP 6, 120/80), which the MANUAL trackers then impose with THEIR knobs — the venous unstressed volume (≈ −400 mL) and LV Emax (×0.74) — not the stabiliser's (R_sys, C_art). Measured at seed 42, 45–90 s: HR 75/CVP 6 → 88 mL; HR 70/CVP 4.85 (the stabiliser's own targets) → 86 mL. 2. The breath driver: spontaneous breathing swings the pleural pressure from −4 to ≈ −7 mmHg (mean ≈ −5), which raises venous return, and the MANUAL CVP tracker holds the breath-AVERAGED right-atrial pressure, so it fills by a further ≈ 130 mL to lift the inspiratory dips (that residual 86 against 79 mL). 3. MODELED: the same breathing, and the baroreflex settling at its own point (81.5 mL at rest: SV₀; 70.8 mL on IPPV). The same fault — the trackers starting from a circulation that is not the instructor's patient and taking ≈ 40–60 s to reach it — is behind the MANUAL PEEP 0 < PEEP 5 stroke volume (84.0 against 85.5 mL): a ventilator started at t = 0 runs while the trackers are still converging. Under PEEP 5 the pressure tracker kept running to 38 s (LV Emax ×0.80) and the volume tracker, which subtracts the pleural RISE from its CVP, transfused 665 mL; under PEEP 0 the pressure tracker released at ≈ 10 s (Emax ×1.00, SBP then drifting to 129) and the volume tracker gave 367 mL. The order PEEP 0 < PEEP 5 is that race, not physiology; it is left to the trackers' own brief (no waveform here changes). The rest is the patient as configured at t = 0 (profile, conditions and the instructor's baseline values) with its scripted arrhythmia removed: a rhythm and its rate are the scenario's (the AF pulse deficit must show against the patient's sinus stroke volume, research/45), so a non-sinus `rhythm` drops with its `baseline.hr`, and the monitor's `sensors` drop too. The settling ends when both MANUAL trackers have released (each releases by MANUAL_TRACK_MAX_S of its own run), or after REST_SETTLE_MODELED_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the numerator the pleth uses) over REST_AVG_S of beats. A patient property, not the scenario's random stream: the run uses REST_SEED, so it is deterministic and cached per resting patient and mode, and it runs ONCE, when the engine is created — never inside a step, whatever the time scale. The run steps only the three pipelines that set a resting stroke volume (`restAdvance`: the rhythm engine, the breath driver, the haemodynamics), tick by tick as the engine does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED, measured with a 20-s mean after a 60-s MODELED settle) at ≈ 60 % of its cost. The resting patient carries no sensors (their transducers are not physiology: SV₀ is the same with or without them) and MODELED settles REST_SETTLE_MODELED_S, so a run is ≈ 0.03–0.17 s in Node and Chromium (SV₀ 88.59 / 81.45 mL); the whole engine's 80 s took 0.23–0.29 s and, on the CI runner, delayed a case's monitor by 1–2 s. A restored snapshot carries its own SV₀. [ENG: measurement; REST_AVG_S, two spontaneous breaths at the default 15/min; REST_SEED, the engine's default seed; REST_SETTLE_MODELED_S, the measured settling] |
+| `REST_SEED` | `1` | — | — | — |
+| `REST_SETTLE_MODELED_S` | `8` | s | — | MODELED has no tracker to wait for: its resting SV is within ± 0.5 % (the breath-to-breath spread) from 8 s on (8-s means 81.0, 81.9, 81.8, 81.5, 81.3, 81.8 mL from 8 to 56 s, seed 1). |
 
 ## Functions
 
 | Function | File | Doc |
 |---|---|---|
+| `frameBudgetMs` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | The work budget of a frame `wallDeltaMs` after the last one (FRAME_BUDGET_MS–FRAME_BUDGET_MAX_MS). |
+| `runOwed` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | Run the clock's owed ticks within `budgetMs` of wall time; |
+| `restingPatient` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). |
 | `sfc32Next` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Advance the state in place and return the next uint32. |
 | `seedStream` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Seed one named stream from hash(seed, name), then discard 15 outputs to mix the state. |
 | `uniform` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Uniform in [0, 1) with 32 bits of resolution. |

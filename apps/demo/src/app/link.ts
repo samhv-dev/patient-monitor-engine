@@ -2,7 +2,7 @@
 // ControllerSession (commands, acks, state, measurements, scenario view, bookmarks) plus a tap on the same transport
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
-import type { AlarmEntry, EngineEvent } from '@pme/engine-core';
+import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
 import { asV1, isV2, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
@@ -91,8 +91,11 @@ export class Link {
 
   /** What the panel keeps of an answered command: the onsets in progress and the acute events started. */
   private track(c: CommandInput, r: AckResult): void {
-    const ramp = (c as { ramp?: { durationS?: number } }).ramp?.durationS;
-    if (r.accepted && (c.type === 'setTarget' || c.type === 'pin') && ramp) this.ramps.set(c.variable, { t0: this.simT, dur: ramp, to: c.value ?? 0 });
+    const rampOf = (c as { ramp?: { durationS?: number; delayS?: number } }).ramp;
+    const ramp = rampOf?.durationS;
+    // Brief 105: the onset runs on sim time from the tick the engine applies the command at (the ack's tick), plus its
+    // delay, not from the moment the ack reached this page (the round trip and the clock estimate are wall time)
+    if (r.accepted && (c.type === 'setTarget' || c.type === 'pin') && ramp) this.ramps.set(c.variable, { t0: r.tick * TICK_S + (rampOf?.delayS ?? 0), dur: ramp, to: c.value ?? 0 });
     if (r.accepted && (c.type === 'setTarget' || c.type === 'pin' || c.type === 'release') && !ramp) this.ramps.delete(c.variable);
     const ev = c.type === 'applyEvent' ? (c.event as { kind?: string; id?: string; severity?: number }) : null;
     if (r.accepted && ev?.kind === 'condition' && typeof ev.id === 'string') {

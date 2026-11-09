@@ -114,6 +114,12 @@ export const INSTRUCTOR_REASONS = {
 export const VENTILATOR_REASONS = {
   noVentilator: 'this computer does not take a remote ventilator',
   noCommands: 'a ventilator drives through its link, not with commands',
+  /**
+   * The hand-over contract (R8c/R8d): the cockpit fell silent and the engine's own ventilator took the patient, so that
+   * socket id no longer drives; frames its browser held arrive late and are refused; the device signs in again on a
+   * new socket, from the engine's settings then (a change made meanwhile is never undone by the old id).
+   */
+  silent: 'handed over: the ventilator was silent; sign in again',
 } as const;
 /** The span `instructorDenials()` counts over, ms (the Room page: "3 wrong PINs in the last minute"). */
 export const DENIAL_WINDOW_MS = 60_000;
@@ -208,6 +214,8 @@ export class HostSession {
    * R8c: the one granted remote ventilator has its own single place beside it, option B within its own role only.
    */
   private readonly signedIn: Record<SignsIn, Holder | null> = { instructor: null, ventilator: null };
+  /** The ventilator ids revoked for their silence, and their transports: their late `vent` is answered again, never heard. */
+  private readonly silentVents = new Map<string, ManagedTransport>();
   private denials: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong PINs within DENIAL_WINDOW_MS (no lockout)
   private readonly seen = new Map<string, AckBody>();
   private readonly groups = new Map<string, { tick: Tick; at: number }>();
@@ -294,6 +302,20 @@ export class HostSession {
   /** R8c: the granted remote ventilator's peer id (null: none). */
   get ventilator(): string | null {
     return this.signedIn.ventilator?.from ?? null;
+  }
+
+  /**
+   * The hand-over contract: revoke the granted ventilator `from` (a silence hand-over: `reason` VENTILATOR_REASONS.silent).
+   * It is told so; its place is free; a `vent` from it later is not heard and is answered with the same refusal, so the
+   * device signs in again on a new socket. False: `from` is not the holder (nothing changes).
+   */
+  revokeVentilator(from: string, reason: string): boolean {
+    const h = this.signedIn.ventilator;
+    if (!h || h.from !== from) return false;
+    if (this.silentVents.size >= 16) this.silentVents.delete(this.silentVents.keys().next().value as string); // [ENG: network] bounded: one tablet, a few outages
+    this.silentVents.set(from, h.t);
+    this.revoke('ventilator', reason);
+    return true;
   }
 
   /** R8c: send a link message to the granted remote ventilator only (`to` its id). False: none is granted. */
@@ -534,6 +556,7 @@ export class HostSession {
     p?.left.add(from);
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
+    if (this.silentVents.get(from) === t) this.silentVents.delete(from); // its socket is gone: nothing more can come from it
   }
 
   private queue(e: WireEvent): void {
@@ -570,7 +593,11 @@ export class HostSession {
     if (m.kind === 'hello' && m.role === 'ventilator') return; // R8c: it follows nothing (no welcome, no snapshot)
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
     // R8c: only the granted ventilator's link messages reach the app, while its PIN holds
-    if (m.kind === 'vent') return void (this.o.onVent && this.holds('ventilator', t, m.from) && this.o.onVent(m.from, m.body));
+    if (m.kind === 'vent') {
+      // a late frame from an id revoked for its silence: answered again (it signs in anew), never heard
+      if (this.silentVents.get(m.from) === t) return this.grant(t, m.from, false, VENTILATOR_REASONS.silent);
+      return void (this.o.onVent && this.holds('ventilator', t, m.from) && this.o.onVent(m.from, m.body));
+    }
     if (m.kind !== 'command') return;
     const role = p.roles.get(m.from);
     const refuse = (reason: string) => t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason }));

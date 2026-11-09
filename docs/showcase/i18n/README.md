@@ -148,6 +148,18 @@ The only text the page still prints in English is a card's own text that the tab
 and openers (D10) and the handout's card questions (D16). These are printed as written, in italic, until the owner
 writes or confirms their Persian.
 
+**Debrief 2 gate, 8 November 2026 (plan D15, `docs/gates/debrief-2.md`):** the kit round on `main` d3dcb34d read the
+page in Persian on the A3.1 tamponade run and the `/2` MH phases card, and the script on both runs' exports. Every
+page and every script PDF carried the DQ10 line. What still prints in English, and why:
+- the `/2` MH phases card's own words (its title, phases, actions and "Scenario state: …" lines): 23 strings on the
+  page, 18 from the script. The table holds the `/1` MH card's words; no `/2` MH run had been committed when D12 was
+  drafted. Their Persian is new text for the owner's reading;
+- on the tamponade run, 5 strings on the page (the "Stage" head of the steps table, three of the card's step labels,
+  "Run of ventricular tachycardia (4 beats)") and 1 from the script (the last).
+The MH learner handout in Persian printed on two A4 pages in Chromium (the last two take-home lines and the closing
+line on page 2); the tamponade handout in Persian printed on one. The owner's reading of the entries and his hand print
+in Safari are still pending (the gate note).
+
 ## The Persian-writing pass (skill `persian-writing` 1.4.0)
 
 The table and the printed text were checked with the skill's bundled toolkit before the PDFs were made; every count,

@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import type { ChannelId, Command } from '@pme/engine-core';
 import { capture, clinical, cmd } from '../engine/capture.ts';
 import type { ExpectedMiss, Grade } from '../segments/types.ts';
-import { miss } from '../report/expected-ids.ts';
 
 export const REL_LIMIT = 0.02;
 export const FLOOR_FRAC_PP = 0.05;
@@ -18,7 +17,7 @@ export interface BaselineCase {
   expectedMiss?: Partial<Record<ChannelId, ExpectedMiss>>;
 }
 export const CASES: BaselineCase[] = [
-  { id: 'sinus-75', seed: 42, patient: { baseline: { hr: 75 }, sensors: { abp: 'connected', spo2: 'on', co2: 'on' } }, script: [{ t: 0, cmd: clinical({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }) }], channels: ['ecgII', 'V5', 'abp', 'pleth', 'co2'], expectedMiss: { pleth: miss('H', '2026-11-08', '625/625 samples > 2 %, max 10.2 %') } },
+  { id: 'sinus-75', seed: 42, patient: { baseline: { hr: 75 }, sensors: { abp: 'connected', spo2: 'on', co2: 'on' } }, script: [{ t: 0, cmd: clinical({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }) }], channels: ['ecgII', 'V5', 'abp', 'pleth', 'co2'] },
   { id: 'afib-110', seed: 42, patient: { baseline: { hr: 110 }, rhythm: { id: 'afib' }, sensors: { abp: 'connected', spo2: 'on' } }, script: [], channels: ['ecgII', 'abp', 'pleth'] },
   { id: 'vf-coarse', seed: 42, patient: { rhythm: { id: 'vfCoarse' }, sensors: { abp: 'connected' } }, script: [], channels: ['ecgII', 'abp'] },
   { id: 'bronchospasm', seed: 42, patient: { sensors: { co2: 'on' } }, script: [{ t: 0, cmd: clinical({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }) }, { t: 5, cmd: clinical({ kind: 'airway', state: 'bronchospasm', severity: 0.8 }) }], channels: ['co2'] },
