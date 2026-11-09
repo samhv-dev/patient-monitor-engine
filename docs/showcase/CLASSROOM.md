@@ -54,6 +54,16 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   ventilator at the cockpit's settings, so the phones follow it with no repeated fresh starts. Going back to the
   Ventilator view restarts the cockpit at the engine's current settings and holds the phones again until you leave
   it.
+- **The ventilator on its own screen.** On the Room page, the Ventilator card's **New window** opens the cockpit in a
+  window of its own on the laptop (drag it to a second screen); the main window keeps the instructor's pages. On a
+  tablet: scan the room's QR code, choose **Ventilator** → **Show here**, and enter the PIN from the Room page's
+  **Instructor's phone** card (press and hold to see it there); the cockpit then fills the tablet's screen. Either way,
+  only one cockpit drives the patient at a time (opening one hands the other over first), the phones hold while it
+  drives, and the Room page's table says "Ventilator · driving" or "handed over". Closing the window, hiding the
+  tablet's page or a tablet that goes silent for 1 s (Wi-Fi lost) hands the patient to the engine's own ventilator at
+  the cockpit's last settings, and the phones follow again; the tablet signs in again by itself when its network comes
+  back and takes over from the engine's settings at that moment. The PIN is typed on the tablet only: it is in no
+  address and no QR code.
 - A phone that is locked, switched to another app or loses the Wi-Fi for a moment catches up by itself when it comes
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
@@ -168,7 +178,8 @@ laptop. Is it on the classroom Wi-Fi?" — nothing breaks.
 | The sheet says "This computer is on no network" | Join the Wi-Fi (or turn on the hotspot), click **Phones** again. |
 | Phones say "cannot reach the instructor's laptop" | They are on another network, or the Wi-Fi isolates devices: use (b), or (c). |
 | Phones say "The instructor's monitor is not answering" | The instructor's page was closed or reloaded: reopen it from the Classroom window's address; the phones find it again. |
-| A phone says "The ventilator is on the main screen" | Expected while the Ventilator view is on the main screen; it follows again when you leave that view. |
+| A phone says "The ventilator is on the main screen" | Expected while the Ventilator view, the ventilator window or the ventilator tablet drives the patient; it follows again when that cockpit closes or hands over. |
+| The ventilator tablet says "Wrong PIN" | Enter the PIN the Room page shows under **Instructor's phone** (press and hold). After a **Change the PIN** the tablet signs in again with the new one. |
 | A phone says "This session is full" | 60 phones are following; ask a neighbour to share a screen. |
 
 Measured on the presenting Mac class of machine (Apple M3, Stage 12 plan "Capacity"): 30 phones cost the relay under

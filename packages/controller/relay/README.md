@@ -83,6 +83,11 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   `applyEvent` of kind `airway` or a `setTarget`; `settings` may carry `measured {RR, VTE}` and `hidden`; a body is at
   most 4 KB. It follows
   nothing: no event, no snapshot, no cached snapshot, and learners are neither counted it nor ever sent a `vent`.
+  It is said by the ventilator's own page on a device (R8d: `vent-hamilton.html?join=CODE#/vent`, opened from the
+  picker's Ventilator card), after its user types the PIN into P7's form; every new socket says it again from a new
+  id, and the page drops its socket when the browser goes offline (the host hands over within 1 s of the silence). A
+  ventilator window on the laptop itself (`vent-hamilton.html?link=CODE`) never comes here: it links over the
+  browser's BroadcastChannel, trusted as every window of that browser is (§4 D9).
 - **The defibrillator window** (`hello {role:'defib'}`, plan room-and-instruments.md R5c, Q5 ruled 5 November: learners
   press Charge and Shock themselves). It joins as a learner does: from any device, with no PIN (a PIN on its hello is
   refused by the guard), in a learner's place under `--max-peers`, and counted in `peers`. It may name `show` and

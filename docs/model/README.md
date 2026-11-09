@@ -14,9 +14,9 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Pressure waveforms and pleth](pressure-waveforms.md) | 9 | 16 | 3 |
 | [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 28 |
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
-| [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 32 | 20 |
+| [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 32 | 18 |
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 12 | 41 | 10 |
-| [Brain, kidney and liver](organs.md) | 14 | 30 | 12 |
+| [Brain, kidney and liver](organs.md) | 14 | 30 | 13 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 17 |
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 31 | 7 |
 | [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 47 | 32 |
@@ -26,6 +26,6 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Ventilator](ventilator.md) | 16 | 24 | 6 |
 | [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 25 | 17 | 0 |
 | [Control: commands, transports, scenarios](control.md) | 44 | 86 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 211 | 326 | 3 |
+| [Presentation: renderer, audio, skins, the app](presentation.md) | 213 | 329 | 3 |
 | [Validation harness](validation-harness.md) | 60 | 51 | 0 |
 | [Whole-patient scenario suites](integration.md) | 0 | 1 | 10 |
