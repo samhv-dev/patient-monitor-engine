@@ -5,7 +5,7 @@
 import {
   AlarmSounder, beepMsAt, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
 } from '@pme/audio';
-import { EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type AlarmEntry, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
+import { BEHIND_REPORT_S, EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type AlarmEntry, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
 import { resolveSkin, type ResolvedSkin } from '@pme/skins';
 import { AlarmAudioBridge } from './alarm-audio.ts';
 import { DeviceUI, gridOf } from './device-ui.ts';
@@ -155,6 +155,12 @@ export interface MonitorHandle {
    * (with `layout.grid`, the whole screen scaled as one unit). The engine and the trends are kept.
    */
   setPortrait(on: boolean): void;
+  /**
+   * Brief 105: sim seconds the engine's clock is behind real time (owed ticks a busy machine has not run yet; 0 when it
+   * keeps up). Crossing BEHIND_REPORT_S fires `pme-monitor-behind` on the canvas (detail { behindS }), and coming back
+   * under it `pme-monitor-caught-up` (detail { worstS }): the page says so and records it.
+   */
+  behindS(): number;
   /** With `audioSilence: 'window'`, this window's own alarm-sound Silence (pressed again: ends it). Returns
    *  whether this window is now silenced; false before sound is enabled. */
   silenceAudio(): boolean;
@@ -300,8 +306,20 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   let nominalRate: number | undefined; // a viewer's session speed (set by ViewerSync); a host gates on its own rate
   let lastBeatT: number | null = null; // sim time of the last beat tone: the beat interval that caps the beep's length
   const simNow = () => anchor.simT + ((performance.now() - anchor.perfMs) / 1000) * anchor.timeScale;
+  let behind = 0; // the engine's clock behind real time, sim s (the last anchor's)
+  let worstBehind = 0; // the most it was behind since it went behind (0: it is not)
+  const onBehind = (b: number) => {
+    behind = b;
+    if (b > BEHIND_REPORT_S && worstBehind === 0) canvas.dispatchEvent(new CustomEvent('pme-monitor-behind', { bubbles: true, detail: { behindS: b } }));
+    if (b > BEHIND_REPORT_S) worstBehind = Math.max(worstBehind, b);
+    else if (worstBehind > 0) {
+      canvas.dispatchEvent(new CustomEvent('pme-monitor-caught-up', { bubbles: true, detail: { worstS: worstBehind } }));
+      worstBehind = 0;
+    }
+  };
   const onEvents = (a: ClockAnchor, events: EngineEvent[]) => {
     anchor = { simT: a.simT, perfMs: a.epochMs - performance.timeOrigin, timeScale: a.timeScale };
+    onBehind(a.behindS ?? 0);
     scheduler?.clock.setAnchor({ simT: a.simT, perfMs: anchor.perfMs, timeScale: a.timeScale });
     for (const e of events) {
       trends.record(e);
@@ -397,6 +415,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ...(opts.fps ? { fps: opts.fps } : {}),
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
     ...(r ? { plan: renderPlan(r, page, only, portrait, ibpScales) } : {}),
+    startEpochMs: performance.timeOrigin + performance.now(), // the monitor's clock starts at its mount (brief 105)
   };
   let planIn: RenderPlan | null = coreOpts.plan ?? null; // the plan last sent (the IBP lanes' fixed ranges are read from it)
   /** The lanes the canvas draws, as data for tests and embedders (the labels themselves are canvas pixels). */
@@ -652,6 +671,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         }
       }),
     setHeaderNote: (text) => ui?.setNote(text) ?? false,
+    behindS: () => behind,
     setPortrait(on) {
       if (on === portrait) return;
       portrait = on;

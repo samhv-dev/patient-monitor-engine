@@ -1,6 +1,6 @@
 # Showcase 2: run sheet (30 minutes, the owner's slot)
 
-> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed.
+> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed, except one addendum to §4 (8 November 2026): what the Debrief shows on the Debrief 2 build.
 
 *Tuesday 3 November 2026 (12 Aban 1405), university deans and clinical staff. Presenter: the owner. **One case
 (owner, 29 October): malignant hyperthermia on the E119 card, with three pauses ("look-inside stops") in which the
@@ -643,6 +643,24 @@ Open it with the case Paused at its end (it reports the current run). **Not prin
 The Recognition tile now counts from the early signs to the tick (kit a88f95a7); on kit 2ebd743d it counted from Load
 [UIR #18]. If the report were printed: 8 A4 pages on kits e0c73a47 and 503caeab, the learner handout 1 page [E132;
 E132 rc.4]. **The Persian handout printed for the day is the MH one only** (§1 "Handouts").
+
+### §4 on the Debrief 2 build (addendum, 8 November 2026)
+
+The 3 November record above stays as it was. On `main` d3dcb34d (Debrief 2 complete, `docs/gates/debrief-2.md`) the
+MH case is the phases card, "Malignant hyperthermia (phases)" (`pme-scenario/2`), run on Instructor v2, and the
+Debrief reads as follows. Measured on the kit round of 8 November (kit d3dcb34d, the A4 `/2` MH path, Chromium; WebKit
+within 1 s) [D15].
+
+| Do | The audience sees |
+|---|---|
+| Instructor v2: **Finish the case** → **Debrief now** | page 1: the header, **Key times**, **The course** (no objectives list on a `/2` card: its actions table comes later in the report) |
+| **Recognition** | A `/2` card has no Recognised button: naming MH is the card's timed action "Name malignant hyperthermia from the monitor", pressed on its row in the Instructor view. Its tile reads **Recognition (timed action) 2 s**, "08:16 early signs → 08:18 · asked ≤ 2 min 00 s · ✓ met"; it is key moment 8, "Recognised (timed action, recorded by the instructor)", and a ◇ on the swimlane's Team lane. (On a `/1` card without a recognition objective the instructor presses **Recognised** on the dock instead.) |
+| Page 2: **The run, lane by lane** | five lanes: Patient, Team, **Expected windows** (six, each band from its anchor to its deadline with the act as a tick, all "✓ met", the dantrolene's repeat too), Monitor alarms (raise to end, a ring where acknowledged), Drugs and fluids |
+| **Key moments**, the new columns | 16 key moments, each with **SBP/DBP and CVP** beside HR, MAP, SpO₂ and EtCO₂ (here from the arterial line; a cuff value would carry its age; CVP "–": the MH patient has no central line), and an alarm listed under a moment carries its end and acknowledgement |
+| The actions table | every action met; potassium (two rows) and CPR not applicable |
+
+Printed: the report 8 A4 pages, the learner handout 1 page (Chromium). The card carries no author's hints and no
+handout questions yet (they wait for the owner's review).
 
 ---
 

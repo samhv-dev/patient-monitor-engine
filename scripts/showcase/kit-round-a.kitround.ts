@@ -379,6 +379,20 @@ class Run {
     const keyTimes = Object.fromEntries(await view.locator('#db-keytimes .db-tile').evaluateAll((t) => t.map((x) => [x.querySelector('.db-tile-cap')?.textContent ?? '', `${x.querySelector('.db-tile-v')?.textContent ?? ''} (${x.querySelector('.db-tile-sub')?.textContent ?? ''})`])));
     const moments = (await view.locator('#db-moments tbody tr[data-n]').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim());
     const d: Row = { openedAt: mmss(at), objectives, facts: Object.fromEntries(dts.map((k, i) => [k, dds[i]])), keyTimes, moments, timelineRows: timeline.length, timeline, minuteRows };
+    // Debrief 2 (D15): the tiles by key (the hands-off and recognition tiles of D3/D5 among them, each with its state), the
+    // swimlane's lanes as drawn (D7a/D7b: their data-lane ids and the words at their left), the card author's hints
+    // (D9: show lines, openers printed and left out) and the handout's card questions (D16), each as the page shows it
+    d.tiles = await view.locator('#db-keytimes .db-tile').evaluateAll((t) => t.map((x) => ({ key: x.getAttribute('data-key'), state: x.getAttribute('data-state'), cap: x.querySelector('.db-tile-cap')?.textContent ?? '', v: x.querySelector('.db-tile-v')?.textContent ?? '', sub: x.querySelector('.db-tile-sub')?.textContent ?? '' })));
+    d.swimlane = await view.locator('#db-swimlane .db-swim-lane').evaluateAll((g) => g.map((x) => ({
+      lane: x.getAttribute('data-lane'), words: (x.querySelector('.db-swim-l')?.textContent ?? '').trim(), sub: (x.querySelector('.db-swim-sub')?.textContent ?? '').trim(),
+      // the expected-windows lane: each window's label (its <title>) and the verdict words of its ticks and misses
+      ...(x.getAttribute('data-lane') === 'windows' ? { windows: [...x.querySelectorAll('.db-swim-win')].map((w) => ({ label: w.querySelector('title')?.textContent ?? '', mark: w.getAttribute('data-mark'), words: [...w.querySelectorAll('.db-swim-v')].map((t) => t.textContent ?? '') })) } : {}),
+    })));
+    d.hints = await view.evaluate((v) => {
+      const sec = v.querySelector('#db-hints');
+      const left = sec?.querySelector('.db-hint-left')?.textContent?.trim() ?? '';
+      return { section: !!sec, show: sec?.querySelectorAll('.db-hint-show li').length ?? 0, openersShown: sec?.querySelectorAll('.db-hint-openers li').length ?? 0, openersLeftOut: left ? Number(/^\d+/.exec(left)?.[0] ?? 0) : 0, handoutQuestions: v.querySelectorAll('#db-handout .db-q-card').length };
+    });
     // a /2 card: the action table (every row: the action's first administration, then each repeat, with its grade)
     if (this.card === 2) d.actions = await view.locator('#db-actions tbody tr').evaluateAll((trs) => trs.map((tr) => { const td = [...tr.querySelectorAll('td')].map((c) => (c.firstChild?.textContent ?? '').trim()); return { row: tr.classList.contains('db-repeat') ? 'repeat' : 'action', grade: tr.getAttribute('data-grade'), label: td[0], due: td[1], given: td[2], why: [...tr.querySelectorAll('.db-why')].map((w) => (w.textContent ?? '').trim()) }; }));
     this.r.debrief = d;
@@ -434,7 +448,7 @@ class Run {
       '', `Alarms raised: ${this.r.alarms.join(' · ') || 'none'}`,
       '', `Spans: ${this.r.spans.map((s) => JSON.stringify(s)).join('\n\n')}`,
       '', `Measures: ${JSON.stringify(this.r.measures)}`,
-      '', `Debrief: ${this.r.debrief ? JSON.stringify({ objectives: this.r.debrief.objectives, ...(this.card === 2 ? { actions: this.r.debrief.actions } : {}), facts: this.r.debrief.facts, timelineRows: this.r.debrief.timelineRows, minuteRows: this.r.debrief.minuteRows }) : 'not opened'}`,
+      '', `Debrief: ${this.r.debrief ? JSON.stringify({ objectives: this.r.debrief.objectives, ...(this.card === 2 ? { actions: this.r.debrief.actions } : {}), facts: this.r.debrief.facts, timelineRows: this.r.debrief.timelineRows, minuteRows: this.r.debrief.minuteRows, tiles: this.r.debrief.tiles, swimlane: this.r.debrief.swimlane, hints: this.r.debrief.hints }) : 'not opened'}`,
       '', `Phones: ${JSON.stringify(this.r.phones)}`,
       '', `Notes: ${this.r.notes.join(' · ')}`, '', `Errors: ${this.r.errors.slice(0, 8).join(' · ') || 'none'}`, ''];
     writeFileSync(join(OUTDIR, `${base}.md`), md.join('\n'));
@@ -1249,8 +1263,8 @@ test('A3 tamponade: the cue card path (CPR from PEA, x4/x1, drainage 1:30 into C
       roscAt: tBack === null ? null : mmss(tBack), drainToRoscS: tBack === null ? null : r1(tBack - tD), stopAt: mmss(tStop), stopAfterRoscS: tBack === null ? null : r1(tStop - tBack),
       maxSystolicDrainToRosc: r1(maxOf(h, 'abpSys')), artAtStop: R.r.rows.find((x) => String(x.what).includes('Pulse back'))?.art ?? null,
     };
-    // the Debrief moment (card 7): read it, then Run by + Notes, print
-    await R.debrief();
+    // the Debrief moment (card 7): read it (with the JSON export, the Persian handout's input, D15), then Run by + Notes, print
+    await R.debrief({ json: true });
     await R.debriefLink().click();
     const view = page.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
@@ -1273,8 +1287,7 @@ test('A3 tamponade: the cue card path (CPR from PEA, x4/x1, drainage 1:30 into C
       writeFileSync(join(OUTDIR, 'a3-tamponade-handout-chromium.pdf'), pdf);
       R.r.measures.handoutPdf = { pages: pdfInfo(pdf).boxes.length };
     }
-    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
-    await page.emulateMedia({ media: 'screen' });
+    await faPrint(R, page, 'a3-tamponade');
     await page.evaluate((h) => (location.hash = h), R.home());
     await page.waitForTimeout(800);
   } finally {
@@ -1567,6 +1580,48 @@ test('Q1 FX-12 probe: Restart patient, then Return here; does the restored case 
 
 // ------------------------------------------------------------------------------- kit round A4 (24 Oct): the live-demo cards
 
+/** Debrief 2 (D15): the same Debrief in Persian, by the page's own switch (English · فارسی, D13), printed as the English
+ *  one was: the report and the learner handout (Chromium: PDF and its page count; WebKit: print-media screenshot), the
+ *  DQ10 line and the strings the table lacks as the page lists them; then English again (the switch is kept per browser).
+ *  Called with the page in print media on the English handout; leaves it in screen media on the English report. */
+async function faPrint(R: Run, page: Page, prefix: string): Promise<void> {
+  const view = page.locator('[data-view=debrief]');
+  await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+  await page.emulateMedia({ media: 'screen' });
+  await view.getByRole('button', { name: 'فارسی' }).click();
+  await view.locator('#db-live-1[lang=fa]').waitFor({ timeout: 10_000 });
+  await page.emulateMedia({ media: 'print' });
+  await page.evaluate(() => document.fonts.load('1em Vazirmatn')).catch(() => undefined);
+  const fa: Row = await page.evaluate(() => {
+    const draft = document.querySelector('.db-draft') as HTMLElement | null;
+    const miss = document.querySelector('.db-fa-missing') as HTMLElement | null;
+    return {
+      draftLine: draft && !draft.hidden ? (draft.textContent ?? '').trim() : null,
+      missing: miss && !miss.hidden ? [...miss.querySelectorAll('li')].map((li) => (li.textContent ?? '').trim()) : [],
+      font: getComputedStyle(document.querySelector('#db-live-1 h2') as Element).fontFamily,
+    };
+  });
+  await page.screenshot({ path: join(OUTDIR, `${prefix}-debrief-fa-print-${R.r.browser}.png`), fullPage: true }).catch(() => undefined);
+  if (R.r.browser === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(join(OUTDIR, `${prefix}-debrief-fa-chromium.pdf`), pdf);
+    const info = pdfInfo(pdf);
+    fa.pdf = { pages: info.boxes.length, a4: info.boxes.every((b) => Math.round(b[2] ?? 0) === 595 && Math.round(b[3] ?? 0) === 842) };
+  }
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  await page.screenshot({ path: join(OUTDIR, `${prefix}-handout-fa-print-${R.r.browser}.png`), fullPage: true }).catch(() => undefined);
+  if (R.r.browser === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(join(OUTDIR, `${prefix}-handout-fa-chromium.pdf`), pdf);
+    fa.handoutPdf = { pages: pdfInfo(pdf).boxes.length };
+  }
+  await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+  await page.emulateMedia({ media: 'screen' });
+  await view.getByRole('button', { name: 'English', exact: true }).click();
+  await view.locator('#db-live-1:not([lang])').waitFor({ timeout: 10_000 });
+  R.r.measures.fa = fa;
+}
+
 /** The Debrief moment of an A4 path: read it (with the JSON export, the Persian handout's input), then Run by + Notes, the
  *  report printed (Chromium: PDF and its page count; WebKit: print-media screenshot) and the learner handout (E51). */
 async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
@@ -1592,8 +1647,7 @@ async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
     writeFileSync(join(OUTDIR, `a4-${key}-handout-chromium.pdf`), pdf);
     R.r.measures.handoutPdf = { pages: pdfInfo(pdf).boxes.length };
   }
-  await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
-  await page.emulateMedia({ media: 'screen' });
+  await faPrint(R, page, `a4-${key}`);
   await page.evaluate((h) => (location.hash = h), R.home());
   await page.waitForTimeout(800);
 }

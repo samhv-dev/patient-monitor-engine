@@ -13,7 +13,8 @@
 The engine runtime: the fixed-step clock, the committed pipeline state and its look-ahead, the sample ring buffers, the
 seeded random streams and snapshots. It decides when and in which order each model is advanced, and makes a run
 reproducible: the same seed and command log give the same patient. It matters mostly to an embedding developer; a
-clinician-educator needs only that time moves in 20 ms ticks and can run from 0.25 to 8 times real time.
+clinician-educator needs only that time moves in 20 ms ticks, can run from 0.25 to 8 times real time, and that a computer
+too busy to keep real time says so (the clock pill reads BEHIND) instead of running the patient slow.
 <!-- /hand:purpose -->
 
 ## Equations in words
@@ -21,8 +22,13 @@ clinician-educator needs only that time moves in 20 ms ticks and can run from 0.
 <!-- hand:equations -->
 > Draft — owner review pending.
 
-- Clock: simT = tick × 20 ms; wall time feeds an accumulator, acc += min(wall Δ, 250 ms) × timeScale, and a tick runs
-  while acc ≥ 20 ms; timeScale is limited to 0.25–8 ("Fix Your Timestep", Gaffer on Games; `clock/clock.ts`).
+- Clock: simT = tick × 20 ms; wall time feeds an accumulator in full, acc += wall Δ × timeScale, and owed ticks run one
+  20-ms tick at a time within a work budget per frame of the wall time that passed since the last one (at least 50,
+  at most 250 ms); what the budget leaves stays owed for the next frames,
+  and the owed time is how far the engine is behind real time, reported to the page when it passes 0.5 s (brief 105:
+  until then a frame's credit was clamped to 250 ms, and a busy machine ran the body slow in silence). The monitor's
+  clock starts at its mount, so a worker's start-up is owed time too. timeScale is limited to 0.25–8 ("Fix Your
+  Timestep", Gaffer on Games; `clock/clock.ts`).
 - The ECG runs at 500 Hz, 10 samples per tick (`engine.ts`); ring buffers are indexed by absolute sample number, sample
   n belonging to time n/rate, and keep the most recent 120 s (`buffers/ring.ts`).
 - Look-ahead: every tick a clone of the committed state is run 100 ms ahead to fill the buffers and find QRS detections
@@ -42,8 +48,8 @@ clinician-educator needs only that time moves in 20 ms ticks and can run from 0.
 
 | Where | Relation |
 |---|---|
-| [`clock.ts:2`](../../packages/engine-core/src/clock/clock.ts#L2) | simT = tick × 20 ms. Frames feed wall time through an accumulator: |
-| [`engine.ts:682`](../../packages/engine-core/src/engine.ts#L682) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`clock.ts:1`](../../packages/engine-core/src/clock/clock.ts#L1) | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. |
+| [`engine.ts:684`](../../packages/engine-core/src/engine.ts#L684) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
@@ -55,8 +61,10 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `TICK_MS` | `20` | ms | brief §3.3; [ENG: numerics] | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames feed wall time through an accumulator: acc += min(wallΔ, 250 ms) × timeScale; while (acc ≥ 20 ms) tick() The 250 ms clamp is [ENG: numerics]. timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
-| `MAX_FRAME_MS` | `250` | ms | — | — |
+| `TICK_MS` | `20` | ms | brief §3.3 | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames credit wall time IN FULL to an accumulator, acc += wallΔ × timeScale, and the caller runs owed ticks of the engine's own 20 ms, one at a time, within a work budget per frame (runOwed, frameBudgetMs); what the budget leaves stays owed and runs on the next frames. Sim time is never thrown away and a tick is never longer than 20 ms: when the machine cannot keep up, the clock is BEHIND by the owed time (behindS), which the runtime reports, rather than running slow in silence. Until brief 105 a frame's credit was clamped to 250 ms, so every frame slower than that lost the rest without a word: on a busy machine (frames every ≈ 400 ms) the body ran at 0.6 of real time (defect N25). timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
+| `FRAME_BUDGET_MS` | `50` | ms | [ENG: control] | A frame may spend on owed ticks as much wall time as passed since the last frame, at least FRAME_BUDGET_MS and at most FRAME_BUDGET_MAX_MS (frameBudgetMs) [ENG: control]. Spending what passed keeps real time whenever a tick costs less than the 20 ms it simulates, however far apart the frames are: a fixed 50 ms let a worker whose frames came every 400 ms use only 50/400 of the wall time, so it fell behind on a machine that could keep up (PR #369's first CI run: 1.8 s owed after 20 s of 400-ms frames, ≈ 2.7 ms a tick). The floor, three 60 fps frames, lets catch-up outrun real time at a normal frame rate (at the measured 0.07–6.6 ms a tick, 0.15–14 s of sim per frame); the ceiling keeps a frame coming back to draw and post within the 250 ms the page expects between posts. At least one owed tick runs per frame whatever its cost, so the clock always progresses. |
+| `FRAME_BUDGET_MAX_MS` | `250` | ms | — | — |
+| `BEHIND_REPORT_S` | `0.5` | s | [ENG: control] | The runtime says it is behind real time when the owed sim time exceeds this, s [ENG: control]. Above the ≤ 1-tick remainder of a normal frame and the ≈ 0.25 s a busy frame owes before the next one catches it up, so a passing slow frame is not announced; well under the 1 s granularity of the clock the instructor reads, so a behind clock is said before it shows as a wrong second. |
 | `MIN_TIME_SCALE` | `0.25` | — | — | — |
 | `MAX_TIME_SCALE` | `8` | — | — | — |
 
@@ -74,6 +82,8 @@ No exported `…State` type in this module.
 
 | Function | File | Doc |
 |---|---|---|
+| `frameBudgetMs` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | The work budget of a frame `wallDeltaMs` after the last one (FRAME_BUDGET_MS–FRAME_BUDGET_MAX_MS). |
+| `runOwed` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | Run the clock's owed ticks within `budgetMs` of wall time; |
 | `restingPatient` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). |
 | `sfc32Next` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Advance the state in place and return the next uint32. |
 | `seedStream` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Seed one named stream from hash(seed, name), then discard 15 outputs to mix the state. |
