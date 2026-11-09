@@ -59,8 +59,9 @@ const MUTSCHLER_SRC = 'Mutschler 2013 (PMID 23497602) Table 2';
 const GULY_SRC = 'Guly 2011 (PMID 21349628): median HR 82 → 95 from class 1 to 4, inside';
 // t17b, chronic β-blockade: no registry gives class-III HR on a β-blocker. Havens 2012 (Int J Surg 10:518, n 380 trauma
 // patients) found a presenting HR 6 bpm lower on a pre-injury β-blocker (83 vs 89, p 0.007), with more bradycardia
-// (7.1 vs 2.3 %). The band is the class-III registry band shifted by that difference.
-const HAVENS_BB_III = { lo: Math.round((95.9 - 22.5 - 6) * 10) / 10, hi: Math.round((95.9 + 22.5 - 6) * 10) / 10, text: `${MUTSCHLER_SRC} class III ED HR 95.9 ± 22.5, shifted by Havens 2012's β-blocker difference (83 vs 89 bpm, −6): 67.4–112.4; an expected miss until the autonomic hub (v2.0 workstream 2, FU-12): measured 64.4 on 3bca4a61` };
+// (7.1 vs 2.3 %). The band is the class-III registry band shifted by that difference: a DERIVED band, not a measured
+// one. Brief 116 searched for a measured statistic and found none (research/52): Havens 2012 stays the best indirect source.
+const HAVENS_BB_III = { lo: Math.round((95.9 - 22.5 - 6) * 10) / 10, hi: Math.round((95.9 + 22.5 - 6) * 10) / 10, text: `derived band (no source states class-III HR on a β-blocker; research/52): ${MUTSCHLER_SRC} class III ED HR 95.9 ± 22.5, shifted by Havens 2012's (PMID 22906692) β-blocker difference (83 vs 89 bpm, −6): 67.4–112.4; an expected miss until the autonomic hub (v2.0 workstream 2, FU-12): measured 64.4 on 3bca4a61` };
 
 // s9 (brief 84, research 46 §C). After VF with ventilation continued, alveolar CO2 washes out with τ = V_lung / V̇A. The
 // window is computed from this rig's ventilator settings and the sourced lung volume, never from the engine's output:
