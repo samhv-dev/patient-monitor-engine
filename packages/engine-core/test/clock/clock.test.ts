@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BEHIND_REPORT_S, Clock, FRAME_BUDGET_MS, MAX_TIME_SCALE, runOwed, TICK_MS } from '../../src/clock/clock.ts';
+import { BEHIND_REPORT_S, Clock, FRAME_BUDGET_MAX_MS, FRAME_BUDGET_MS, frameBudgetMs, MAX_TIME_SCALE, runOwed, TICK_MS } from '../../src/clock/clock.ts';
 import { createRng } from '../../src/rng/sfc32.ts';
 
 describe('clock/Clock', () => {
@@ -70,6 +70,31 @@ describe('clock/Clock', () => {
     }
     expect(clock.simT + clock.behindS).toBeGreaterThan((wall / 1000) * 0.99); // run + owed = the wall time credited
     expect(clock.behindS).toBeGreaterThan(BEHIND_REPORT_S);
+  });
+
+  it('brief 105: a frame may spend what passed since the last one (50–250 ms), so frames 400 ms apart keep real time', () => {
+    expect(frameBudgetMs(16)).toBe(FRAME_BUDGET_MS);
+    expect(frameBudgetMs(120)).toBe(120);
+    expect(frameBudgetMs(400)).toBe(FRAME_BUDGET_MAX_MS);
+    // PR #369's first CI run: with a fixed 50 ms, 400-ms frames at ≈ 2.7 ms a tick owed 1.8 s after 20 s. At 7 ms a tick
+    // (worse than CI, the 6.6 ms of a starved laptop) the gap's budget runs every owed tick, frame after frame
+    const clock = new Clock();
+    let wall = 0;
+    for (let f = 0; f < 50; f++) {
+      wall = f * 400;
+      clock.credit(400);
+      runOwed(clock, () => void (wall += 7), frameBudgetMs(400), () => wall);
+    }
+    expect(clock.behindS).toBe(0);
+    expect(clock.simT).toBeCloseTo(20, 9);
+    // the fixed 50 ms floor alone would not: the same frames owe more and more
+    const slow = new Clock();
+    for (let f = 0; f < 50; f++) {
+      wall = f * 400;
+      slow.credit(400);
+      runOwed(slow, () => void (wall += 7), FRAME_BUDGET_MS, () => wall);
+    }
+    expect(slow.behindS).toBeGreaterThan(10);
   });
 
   it('brief 105: at least one owed tick runs per frame however slow a tick is', () => {

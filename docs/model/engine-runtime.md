@@ -23,7 +23,8 @@ too busy to keep real time says so (the clock pill reads BEHIND) instead of runn
 > Draft — owner review pending.
 
 - Clock: simT = tick × 20 ms; wall time feeds an accumulator in full, acc += wall Δ × timeScale, and owed ticks run one
-  20-ms tick at a time within a work budget of 50 ms per frame; what the budget leaves stays owed for the next frames,
+  20-ms tick at a time within a work budget per frame of the wall time that passed since the last one (at least 50,
+  at most 250 ms); what the budget leaves stays owed for the next frames,
   and the owed time is how far the engine is behind real time, reported to the page when it passes 0.5 s (brief 105:
   until then a frame's credit was clamped to 250 ms, and a busy machine ran the body slow in silence). The monitor's
   clock starts at its mount, so a worker's start-up is owed time too. timeScale is limited to 0.25–8 ("Fix Your
@@ -48,7 +49,7 @@ too busy to keep real time says so (the clock pill reads BEHIND) instead of runn
 | Where | Relation |
 |---|---|
 | [`clock.ts:1`](../../packages/engine-core/src/clock/clock.ts#L1) | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. |
-| [`engine.ts:585`](../../packages/engine-core/src/engine.ts#L585) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`engine.ts:586`](../../packages/engine-core/src/engine.ts#L586) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
@@ -60,8 +61,9 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `TICK_MS` | `20` | ms | brief §3.3 | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames credit wall time IN FULL to an accumulator, acc += wallΔ × timeScale, and the caller runs owed ticks of the engine's own 20 ms, one at a time, within a work budget per frame (runOwed, FRAME_BUDGET_MS); what the budget leaves stays owed and runs on the next frames. Sim time is never thrown away and a tick is never longer than 20 ms: when the machine cannot keep up, the clock is BEHIND by the owed time (behindS), which the runtime reports, rather than running slow in silence. Until brief 105 a frame's credit was clamped to 250 ms, so every frame slower than that lost the rest without a word: on a busy machine (frames every ≈ 400 ms) the body ran at 0.6 of real time (defect N25). timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
-| `FRAME_BUDGET_MS` | `50` | ms | [ENG: control] | The wall time a frame may spend running owed ticks, ms [ENG: control]. Catch-up must outrun real time when the machine allows it, and a frame must still come back to draw and to answer the page. 50 ms is three 60 fps frames: at the engine's measured cost (0.07–2 ms a tick on a laptop, 6.6 ms a tick on a starved one, brief 105) it runs 25–700 ticks, 0.5–14 s of sim time, per frame, so an owed second is caught up within a few frames, while a frame never holds the worker for more than ≈ 50 ms plus one tick. At least one owed tick runs per frame whatever its cost, so the clock always progresses. |
+| `TICK_MS` | `20` | ms | brief §3.3 | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames credit wall time IN FULL to an accumulator, acc += wallΔ × timeScale, and the caller runs owed ticks of the engine's own 20 ms, one at a time, within a work budget per frame (runOwed, frameBudgetMs); what the budget leaves stays owed and runs on the next frames. Sim time is never thrown away and a tick is never longer than 20 ms: when the machine cannot keep up, the clock is BEHIND by the owed time (behindS), which the runtime reports, rather than running slow in silence. Until brief 105 a frame's credit was clamped to 250 ms, so every frame slower than that lost the rest without a word: on a busy machine (frames every ≈ 400 ms) the body ran at 0.6 of real time (defect N25). timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
+| `FRAME_BUDGET_MS` | `50` | ms | [ENG: control] | A frame may spend on owed ticks as much wall time as passed since the last frame, at least FRAME_BUDGET_MS and at most FRAME_BUDGET_MAX_MS (frameBudgetMs) [ENG: control]. Spending what passed keeps real time whenever a tick costs less than the 20 ms it simulates, however far apart the frames are: a fixed 50 ms let a worker whose frames came every 400 ms use only 50/400 of the wall time, so it fell behind on a machine that could keep up (PR #369's first CI run: 1.8 s owed after 20 s of 400-ms frames, ≈ 2.7 ms a tick). The floor, three 60 fps frames, lets catch-up outrun real time at a normal frame rate (at the measured 0.07–6.6 ms a tick, 0.15–14 s of sim per frame); the ceiling keeps a frame coming back to draw and post within the 250 ms the page expects between posts. At least one owed tick runs per frame whatever its cost, so the clock always progresses. |
+| `FRAME_BUDGET_MAX_MS` | `250` | ms | — | — |
 | `BEHIND_REPORT_S` | `0.5` | s | [ENG: control] | The runtime says it is behind real time when the owed sim time exceeds this, s [ENG: control]. Above the ≤ 1-tick remainder of a normal frame and the ≈ 0.25 s a busy frame owes before the next one catches it up, so a passing slow frame is not announced; well under the 1 s granularity of the clock the instructor reads, so a behind clock is said before it shows as a wrong second. |
 | `MIN_TIME_SCALE` | `0.25` | — | — | — |
 | `MAX_TIME_SCALE` | `8` | — | — | — |
@@ -77,6 +79,7 @@ No exported `…State` type in this module.
 
 | Function | File | Doc |
 |---|---|---|
+| `frameBudgetMs` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | The work budget of a frame `wallDeltaMs` after the last one (FRAME_BUDGET_MS–FRAME_BUDGET_MAX_MS). |
 | `runOwed` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | Run the clock's owed ticks one 20-ms tick at a time (`runTo(simT)` after each), within `budgetMs` of wall time; |
 | `sfc32Next` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Advance the state in place and return the next uint32. |
 | `seedStream` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Seed one named stream from hash(seed, name), then discard 15 outputs to mix the state. |

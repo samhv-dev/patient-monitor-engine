@@ -43,10 +43,10 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
-| engine-runtime | 7 | 2 |
-| **All** | 1124 | 426 |
+| engine-runtime | 8 | 2 |
+| **All** | 1125 | 426 |
 
-## The ten effector expressions with the most factors (of 1604)
+## The ten effector expressions with the most factors (of 1605)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

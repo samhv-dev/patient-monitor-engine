@@ -1,6 +1,6 @@
 // Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms.
 // Frames credit wall time IN FULL to an accumulator, acc += wallΔ × timeScale, and the caller runs owed ticks of the
-// engine's own 20 ms, one at a time, within a work budget per frame (runOwed, FRAME_BUDGET_MS); what the budget leaves
+// engine's own 20 ms, one at a time, within a work budget per frame (runOwed, frameBudgetMs); what the budget leaves
 // stays owed and runs on the next frames. Sim time is never thrown away and a tick is never longer than 20 ms: when the
 // machine cannot keep up, the clock is BEHIND by the owed time (behindS), which the runtime reports, rather than
 // running slow in silence. Until brief 105 a frame's credit was clamped to 250 ms, so every frame slower than that lost
@@ -11,14 +11,21 @@
 export const TICK_MS = 20;
 export const TICK_S = TICK_MS / 1000;
 /**
- * The wall time a frame may spend running owed ticks, ms [ENG: control]. Catch-up must outrun real time when the machine
- * allows it, and a frame must still come back to draw and to answer the page. 50 ms is three 60 fps frames: at the
- * engine's measured cost (0.07–2 ms a tick on a laptop, 6.6 ms a tick on a starved one, brief 105) it runs 25–700 ticks,
- * 0.5–14 s of sim time, per frame, so an owed second is caught up within a few frames, while a frame never holds the
- * worker for more than ≈ 50 ms plus one tick. At least one owed tick runs per frame whatever its cost, so the clock
- * always progresses.
+ * A frame may spend on owed ticks as much wall time as passed since the last frame, at least FRAME_BUDGET_MS and at
+ * most FRAME_BUDGET_MAX_MS (frameBudgetMs) [ENG: control]. Spending what passed keeps real time whenever a tick costs less
+ * than the 20 ms it simulates, however far apart the frames are: a fixed 50 ms let a worker whose frames came every
+ * 400 ms use only 50/400 of the wall time, so it fell behind on a machine that could keep up (PR #369's first CI run:
+ * 1.8 s owed after 20 s of 400-ms frames, ≈ 2.7 ms a tick). The floor, three 60 fps frames, lets catch-up outrun real
+ * time at a normal frame rate (at the measured 0.07–6.6 ms a tick, 0.15–14 s of sim per frame); the ceiling keeps a frame
+ * coming back to draw and post within the 250 ms the page expects between posts. At least one owed tick runs per frame
+ * whatever its cost, so the clock always progresses.
  */
 export const FRAME_BUDGET_MS = 50;
+export const FRAME_BUDGET_MAX_MS = 250;
+/** The work budget of a frame `wallDeltaMs` after the last one (FRAME_BUDGET_MS–FRAME_BUDGET_MAX_MS). */
+export function frameBudgetMs(wallDeltaMs: number): number {
+  return Math.min(FRAME_BUDGET_MAX_MS, Math.max(FRAME_BUDGET_MS, wallDeltaMs || 0));
+}
 /**
  * The runtime says it is behind real time when the owed sim time exceeds this, s [ENG: control]. Above the ≤ 1-tick
  * remainder of a normal frame and the ≈ 0.25 s a busy frame owes before the next one catches it up, so a passing slow

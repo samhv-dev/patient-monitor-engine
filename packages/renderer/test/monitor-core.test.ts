@@ -118,7 +118,7 @@ describe('MonitorCore hidden-tab catch-up', () => {
     const { core, posts } = make();
     for (let f = 0; f <= 50; f++) core.frame(1000 + f * 400); // 20 s of wall time in 50 slow frames
     expect(core.clock.simT + core.clock.behindS).toBeGreaterThanOrEqual(19.98);
-    expect(core.clock.behindS).toBeLessThan(0.5); // this machine runs the 20 owed ticks of each frame within its budget
+    expect(core.clock.behindS).toBeLessThan(0.5); // each frame's budget is the 400 ms that passed (≤ 250 ms): 20 ticks fit while a tick costs < 12.5 ms
     expect(posts.at(-1)?.anchor.behindS).toBe(core.clock.behindS);
   });
 

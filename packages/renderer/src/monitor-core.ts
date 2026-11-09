@@ -3,7 +3,7 @@
 // (engine-core Clock), and lanes draw at clock.renderT, so sweep speed is independent of frame rate.
 // The layout comes from a RenderPlan (skin-plan.ts), a skin switch relayouts without restarting the engine, ECG
 // lanes can auto-gain, and event overlays (pace, sync, shock, lead-off) are drawn.
-import { capture12, Clock, createEngine, runOwed, type Capture12, type ChannelId, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
+import { capture12, Clock, createEngine, frameBudgetMs, runOwed, type Capture12, type ChannelId, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
 import { AUTO_GAIN_WINDOW_S, beatAmplitude, judgeGain, newJudge, type GainJudge } from './ecg-gain.ts';
@@ -334,7 +334,7 @@ export class MonitorCore {
     // Brief 105: the whole gap is owed (no 250 ms clamp), run tick by tick within the frame budget; the rest runs on the
     // next frames, and the anchor says how far behind the clock is meanwhile
     this.clock.credit(dt);
-    runOwed(this.clock, (simT) => this.engine.advanceTo(simT));
+    runOwed(this.clock, (simT) => this.engine.advanceTo(simT), frameBudgetMs(dt));
     const t = this.clock.renderT;
     if (this.visible) {
       this.autoGain(t);

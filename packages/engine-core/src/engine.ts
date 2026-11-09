@@ -3,7 +3,7 @@
 // QRS detections early enough to schedule beeps. A command changes the committed state, so the next
 // look-ahead pass regenerates everything after "now" (look-ahead invalidation) and a toneCancel revokes
 // tones already posted. All pipeline state is plain JSON-safe data (snapshot/restore, structuredClone).
-import { Clock, runOwed, TICK_MS } from './clock/clock.ts';
+import { Clock, frameBudgetMs, runOwed, TICK_MS } from './clock/clock.ts';
 import { RingBuffer } from './buffers/ring.ts';
 import { constantRamp, rampValue, retarget, type RampState } from './l1/ramp.ts';
 import { ECG_RATE, pruneEvents } from './l2/ecg/generator.ts';
@@ -358,9 +358,10 @@ class Engine implements MonitorEngine {
     this.lastWall = performance.now();
     this.timer = setInterval(() => {
       const now = performance.now();
-      this.clock.credit(now - this.lastWall); // in full: a late interval owes its whole gap (brief 105)
+      const gap = now - this.lastWall;
+      this.clock.credit(gap); // in full: a late interval owes its whole gap (brief 105)
       this.lastWall = now;
-      runOwed(this.clock, () => this.runTicks(1)); // one 20-ms tick at a time, within the frame budget
+      runOwed(this.clock, () => this.runTicks(1), frameBudgetMs(gap)); // one 20-ms tick at a time, within the budget
     }, TICK_MS);
   }
   pause(): void {
