@@ -672,23 +672,23 @@ export function debriefView(session: AppSession, link: Link): View {
   const drawArchive = () => {
     const all = archive.list().length;
     const today = archive.savedToday();
-    arcCount.textContent = all ? `${today} saved today${all > today ? `, ${all} in all` : ''} · kept in this browser until you clear it` : 'Nothing saved in this browser. “Finish the case” in Instructor v2 saves each run here.';
+    arcCount.textContent = all ? `${archive.holdsLine()}, ${today} today · ${archive.whereLine()}` : 'Nothing saved in this browser. “Finish the case” in Instructor v2 saves each run here.';
     arcList.draw();
   };
   const clearArchive = async () => {
     if (!(await confirmDialog('Clear the archive?', 'Every saved debrief in this browser is deleted, for good. Export them first to keep them.', 'Clear', true, 'Keep them'))) return;
-    archive.clear();
+    await archive.clear();
     if (viewing) location.hash = hrefOf('debrief');
     render();
   };
   const archiveSec = section('archive', 'Archive', arcCount, arcList.el,
-    h('div', { class: 'db-arc-tools' }, button('Export all (one JSON file)', exportAll, 'ghost small'), button('Clear the archive', () => void clearArchive(), 'ghost small db-arc-clear')));
+    h('div', { class: 'db-arc-tools' }, button('Export all (one JSON file)', () => void exportAll(), 'ghost small'), button('Clear the archive', () => void clearArchive(), 'ghost small db-arc-clear')));
 
   const el = h('section', { class: 'debrief', 'aria-labelledby': 'db-h' },
     h('div', { class: 'page wide' },
       h('div', { class: 'db-tools' }, button('Print or save as PDF', printWithFont, 'primary'),
         button('Download the record (JSON)', () => {
-          if (viewing) return downloadEntry(viewing.meta); // the saved debrief, with its resident
+          if (viewing) return void downloadEntry(viewing.meta); // the saved debrief, with its resident
           const d = session.record.data;
           download(`debrief-${d.doc?.id ?? 'free-run'}-${new Date(d.startedAt).toISOString().slice(0, 10)}.json`, debriefJson(d, BUILD), 'application/json');
         }, 'ghost'),
@@ -730,6 +730,8 @@ export function debriefView(session: AppSession, link: Link): View {
   });
 
   let iv: ReturnType<typeof setInterval> | null = null;
+  /** Bumped by each enter and leave: an archive read answers only the visit that asked. */
+  let entered = 0;
   return {
     id: 'debrief', el, bench: true,
     enter: (sub = '') => {
@@ -738,27 +740,37 @@ export function debriefView(session: AppSession, link: Link): View {
       // #/debrief/archive: the Archive section; #/debrief/archive/<id>: that saved debrief; …/print: printed on arrival
       const m = /^archive(?:\/([^/]+)(\/print)?)?$/.exec(sub);
       viewing = null;
-      if (m?.[1]) {
+      const go = ++entered;
+      const show = () => {
+        render();
+        iv ??= setInterval(() => viewing || render(), 5000); // a saved debrief does not change
+        if (m && !m[1]) archiveSec.scrollIntoView?.({ block: 'start' });
+        const d = shown();
+        const who = residentOf(d);
+        // the print file's name (Save as PDF): the shell sets the title after enter()
+        const title = `Debrief ${d.doc ? cardOf(d.doc).title : 'free run'}${who ? ` ${who}` : ''} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
+        queueMicrotask(() => (document.title = title));
+        if (m?.[2] && viewing) {
+          history.replaceState(null, '', `${location.pathname}${location.search}${archiveHref(viewing.meta.id)}`); // a reload does not print again
+          printWithFont();
+        }
+      };
+      // the archive's place known (IndexedDB, or localStorage where it is unavailable) and an earlier build's bodies moved
+      void archive.ready().then(() => go === entered && drawArchive());
+      if (!m?.[1]) return show();
+      const id = m[1];
+      // a saved debrief's body is read asynchronously (IndexedDB): the view draws it once it is here, unless left meanwhile
+      void archive.debrief(id).then((body) => {
+        if (go !== entered) return;
         const list = archive.list();
-        const i = list.findIndex((x) => x.id === m[1]);
-        const body = i >= 0 ? archive.debrief(m[1]) : null;
-        if (body) viewing = { meta: list[i] as ArchiveMeta, n: i + 1, data: (JSON.parse(body) as DebriefExport).record };
+        const i = list.findIndex((x) => x.id === id);
+        if (body && i >= 0) viewing = { meta: list[i] as ArchiveMeta, n: i + 1, data: (JSON.parse(body) as DebriefExport).record };
         else toast('That saved debrief is not in this browser’s archive', 'alert');
-      }
-      render();
-      iv ??= setInterval(() => viewing || render(), 5000); // a saved debrief does not change
-      if (m && !m[1]) archiveSec.scrollIntoView?.({ block: 'start' });
-      const d = shown();
-      const who = residentOf(d);
-      // the print file's name (Save as PDF): the shell sets the title after enter()
-      const title = `Debrief ${d.doc ? cardOf(d.doc).title : 'free run'}${who ? ` ${who}` : ''} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
-      queueMicrotask(() => (document.title = title));
-      if (m?.[2] && viewing) {
-        history.replaceState(null, '', `${location.pathname}${location.search}${archiveHref(viewing.meta.id)}`); // a reload does not print again
-        printWithFont();
-      }
+        show();
+      });
     },
     leave: () => {
+      entered++; // a saved debrief still being read is not drawn
       pageStyle.remove();
       if (iv) clearInterval(iv);
       iv = null;

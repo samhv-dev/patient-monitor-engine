@@ -140,11 +140,11 @@ test('Finish the case at the MH card\'s Recovering: the clock stops, the Finish 
   expect((await send(page, { type: 'scenario', action: 'goto', target: 'recovering' })).accepted).toBe(true);
   await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === 'recovering', null, { timeout: 15_000 });
   // two earlier runs in the archive (the board's rows), and marks on this one
-  await page.evaluate(() => {
-    const a = (window as unknown as { __pmeApp: { archive: { save(d: unknown, who: string, b: string, at?: number): unknown }; session: { record: { data: { startedAt: number } } } } }).__pmeApp;
+  await page.evaluate(async () => {
+    const a = (window as unknown as { __pmeApp: { archive: { save(d: unknown, who: string, b: string, at?: number): Promise<unknown> }; session: { record: { data: { startedAt: number } } } } }).__pmeApp;
     const d = a.session.record.data;
-    a.archive.save({ ...d, startedAt: d.startedAt - 7_200_000 }, 'Dr Saberi', 'e2e', Date.now() - 7_000_000);
-    a.archive.save({ ...d, startedAt: d.startedAt - 3_600_000 }, 'Dr Karimi', 'e2e', Date.now() - 3_500_000);
+    await a.archive.save({ ...d, startedAt: d.startedAt - 7_200_000 }, 'Dr Saberi', 'e2e', Date.now() - 7_000_000);
+    await a.archive.save({ ...d, startedAt: d.startedAt - 3_600_000 }, 'Dr Karimi', 'e2e', Date.now() - 3_500_000);
   });
   for (const kind of ['good', 'good', 'bad', 'discuss']) await page.locator(`.ip2-dock .ip2-mark[data-kind="${kind}"]`).click();
   await page.waitForTimeout(4500); // the marks' toasts are gone before the screenshot

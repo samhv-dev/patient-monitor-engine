@@ -116,7 +116,7 @@ describe('the page acknowledges each batch once it has read it', () => {
     const w = FakeWorker.last as FakeWorker;
     w.answer({ type: 'ready', path: 'worker-raf' });
     const host = await hostP;
-    const anchor = { simT: 1, epochMs: 0, timeScale: 1 };
+    const anchor = { simT: 1, epochMs: 0, timeScale: 1, behindS: 0 };
     w.answer({ type: 'events', anchor, events: [{ type: 'marker', t: 1 } as never] });
     w.answer({ type: 'events', anchor, events: [] });
     expect(seen).toEqual(['read 1, acks so far 0', 'read 0, acks so far 1']);

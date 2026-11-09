@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
-import { createStamper, INSTRUMENTS, LEARNER_DEFIB_COMMANDS, learnerDefibMay, NOTE_EVENTS, type CommandInput, type WireMessage } from '../src/protocol.ts';
+import { createStamper, INSTRUMENTS, LEARNER_COMMANDS, LEARNER_DEFIB_COMMANDS, LEARNER_LAB_PANELS, learnerDefibMay, learnerMay, NOTE_EVENTS, type CommandInput, type WireMessage } from '../src/protocol.ts';
 import { createEngine } from '@pme/engine-core';
 
 const stamp = createStamper('ABC234', 'host-1');
@@ -199,5 +199,118 @@ describe('the learner defibrillator role (plan room-and-instruments.md R5c)', ()
       ['applyEvent without an event', cmd({ type: 'applyEvent' })],
     ];
     for (const [what, c] of refused) expect(learnerDefibMay(c), what).toEqual(expect.any(String));
+  });
+});
+
+// Plan learner-action-remote.md L3 (§4 D1, D2, D9; LQ1 ruled 9 November): the learner action remote joins as `learner` with
+// the LEARNER PIN, and once granted may send exactly the shapes of §4 D2; the guard types their values, learnerMay their fields.
+describe('the learner action remote role (plan learner-action-remote.md L3)', () => {
+  const hello = (role: string, extra: Record<string, unknown> = {}) => ({ ...stamp({ kind: 'hello', role: 'viewer' }), role, ...extra });
+  it('a `learner` hello must carry a PIN of 4 to 8 digits; it may name show and device, as D1 writes it', () => {
+    expect(parseWireMessage(hello('learner', { pin: '4729' }))).toMatchObject({ kind: 'hello', role: 'learner', pin: '4729' });
+    expect(parseWireMessage(hello('learner', { pin: '472913', show: 'learner', device: 'k3x9q2m7' }))).toMatchObject({ role: 'learner', show: 'learner', device: 'k3x9q2m7' });
+    expect(parseWireMessage(hello('learner'))).toBeNull(); // no PIN: refused
+    expect(parseWireMessage(hello('learner', { show: 'learner', device: 'k3x9q2m7' }))).toBeNull();
+    for (const pin of ['472', '472912345', '47a9', 4729, null, '']) expect(parseWireMessage(hello('learner', { pin })), JSON.stringify(pin)).toBeNull();
+    expect(parseWireMessage(hello('learner', { pin: '4729', device: 'K3X9' }))).toBeNull();
+    expect(parseWireMessage(hello('learner', { pin: '4729', show: 'vent' }))).toBeNull();
+  });
+  it('a PIN is still refused on a viewer, a defibrillator window, a controller and a host', () => {
+    for (const role of ['viewer', 'defib', 'controller', 'host']) expect(parseWireMessage(hello(role, { pin: '4729' })), role).toBeNull();
+  });
+
+  const cmd = (c: object) => ({ id: 'k1', issuedBy: 'learner-a', ...c }) as unknown as CommandInput;
+  const stage = (prep: object = {}, extra: object = {}) =>
+    cmd({ type: 'prep', action: 'stage', prep: { id: 'p0000001', components: [{ productId: 'propofol1pct20ml', amount: 20, unit: 'mL' }], ...prep }, ...extra });
+  const SHAPES: Array<[string, CommandInput]> = [
+    ['prep stage', stage()],
+    ['prep stage with a diluent and a container', stage({ diluent: { id: 'sodiumChloride09', volumeMl: 30 }, container: 'syringe50ml' })],
+    ['prep discard', cmd({ type: 'prep', action: 'discard', prepId: 'p0000001' })],
+    ['prep deliver', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv' })],
+    ['prep deliver all over 30 s in a tray', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 'all', route: 'iv', overS: 30, stageGroup: 'g1', batch: { id: 'g1', n: 3 } })],
+    ['prep infuse', cmd({ type: 'prep', action: 'infuse', prepId: 'p0000001', rateMlH: 12 })],
+    ['infusion set', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4 })],
+    ['infusion set 0 (stop)', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 0 })],
+    ['applyEvent lab abg', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } })],
+    ['applyEvent lab vbg', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'vbg' } })],
+  ];
+  it('LEARNER_COMMANDS is exactly §4 D2; learnerMay passes each shape, and the guard parses each', () => {
+    expect([...LEARNER_COMMANDS].sort()).toEqual(['applyEvent lab', 'infusion set', 'prep deliver', 'prep discard', 'prep infuse', 'prep stage']);
+    expect([...LEARNER_LAB_PANELS].sort()).toEqual(['abg', 'vbg']);
+    for (const [what, c] of SHAPES) {
+      expect(learnerMay(c), what).toBeNull();
+      expect(parseWireMessage({ ...stamp({ kind: 'command', body: c as never }) }), what).not.toBeNull();
+    }
+  });
+
+  // the plan's list (L3, Tests first), plus forged values and every other shape a learner might try
+  const REFUSED: Array<[string, CommandInput]> = [
+    ['applyEvent drug (raw)', cmd({ type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 200, unit: 'mg', route: 'iv' } })],
+    ['applyEvent infusion (raw)', cmd({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'propofol', rate: 10, unit: 'mL/h' } })],
+    ['applyEvent defib charge', cmd({ type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })],
+    ['applyEvent defib shock', cmd({ type: 'applyEvent', event: { kind: 'defib', action: 'shock' } })],
+    ['applyEvent tci', cmd({ type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', target: 3 } })],
+    ['applyEvent fluid', cmd({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 500, overS: 600 } })],
+    ['time pause', cmd({ type: 'time', action: 'pause' })],
+    ['time jump', cmd({ type: 'time', action: 'jump', value: 60 })],
+    ['scenario goto', cmd({ type: 'scenario', action: 'goto', target: 's2' })],
+    ['setRhythm', cmd({ type: 'setRhythm', rhythm: 'vf' })],
+    ['device', cmd({ type: 'device', action: { device: 'alarm', action: 'ack' } })],
+    ['note', cmd({ type: 'note', kind: 'note', text: 'gave it' })],
+    ['pin', cmd({ type: 'pin', variable: 'hr', value: 30 })],
+    ['setTarget', cmd({ type: 'setTarget', variable: 'hr', value: 80 })],
+    ['prep deliver with atTick', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv', atTick: 5000 })],
+    ['prep stage with a concentration', stage({}, { concentration: { amount: 10, unit: 'mg', perMl: 1 } })],
+    ['prep stage with a concentration inside the preparation', stage({ concentration: 10 })],
+    ['prep stage with a concentration on a component', stage({ components: [{ productId: 'propofol1pct20ml', amount: 20, unit: 'mL', perMl: 10 }] })],
+    ['prep stage with a finding', stage({ findings: [] })],
+    ['prep stage with a fraction on the diluent', stage({ diluent: { id: 'sodiumChloride09', volumeMl: 30, remaining: 1 } })],
+    ['prep stage with a forged by', stage({}, { by: 'someoneelse1' })],
+    ['prep deliver with a forged by', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv', by: 'someoneelse1' })],
+    ['prep deliver with an actionId', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv', actionId: 'a1' })],
+    ['prep deliver with a dose', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv', dose: 200 })],
+    ['prep deliver without a route', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5 })],
+    ['prep deliver with a stray batch field', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv', batch: { id: 'g', n: 2, x: 1 } })],
+    ['prep infuse with a concentration', cmd({ type: 'prep', action: 'infuse', prepId: 'p0000001', rateMlH: 12, concentration: 10 })],
+    ['prep infuse with atTick', cmd({ type: 'prep', action: 'infuse', prepId: 'p0000001', rateMlH: 12, atTick: 0 })],
+    ['prep discard with a stageGroup', cmd({ type: 'prep', action: 'discard', prepId: 'p0000001', stageGroup: 'g' })],
+    ['prep notice (the instructor\'s, L9)', cmd({ type: 'prep', action: 'notice', prepId: 'p0000001' })],
+    ['infusion set with a concentration', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4, concentration: { amount: 4, unit: 'mg', perMl: 50 } })],
+    ['infusion set with a unit', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4, unit: 'mcg/kg/min' })],
+    ['infusion start', cmd({ type: 'infusion', action: 'start', drugId: 'norepinephrine', rateMlH: 4 })],
+    ['applyEvent lab with a turnaroundS', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg', turnaroundS: 30 } })],
+    ['applyEvent lab of a panel the engine has not', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'chem' } })],
+    ['applyEvent lab with atTick', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' }, atTick: 100 })],
+    ['applyEvent without an event', cmd({ type: 'applyEvent' })],
+  ];
+  it('learnerMay refuses every other shape and any extra field on these', () => {
+    for (const [what, c] of REFUSED) expect(learnerMay(c), what).toEqual(expect.any(String));
+  });
+  it('the defibrillator window\'s allow-list is unchanged: it refuses every learner shape', () => {
+    for (const [what, c] of SHAPES) expect(learnerDefibMay(c), what).toEqual(expect.any(String));
+  });
+
+  it('the guard drops a prep or infusion command whose values are not their types, from anyone', () => {
+    const body = (c: CommandInput) => ({ ...stamp({ kind: 'command', body: c as never }) });
+    const BAD: Array<[string, CommandInput]> = [
+      ['a preparation id not [a-z0-9]{8}', stage({ id: 'P1' })],
+      ['no components', stage({ components: [] })],
+      ['nine components', stage({ components: Array.from({ length: 9 }, () => ({ productId: 'x1', amount: 1, unit: 'mL' })) })],
+      ['a negative amount', stage({ components: [{ productId: 'x1', amount: -1, unit: 'mL' }] })],
+      ['an amount as a string', stage({ components: [{ productId: 'x1', amount: '20', unit: 'mL' }] })],
+      ['an infinite amount', stage({ components: [{ productId: 'x1', amount: Number.POSITIVE_INFINITY, unit: 'mL' }] })],
+      ['a unit that is not a unit', stage({ components: [{ productId: 'x1', amount: 1, unit: 'mL; drop' }] })],
+      ['a product id with spaces', stage({ components: [{ productId: 'x 1', amount: 1, unit: 'mL' }] })],
+      ['a diluent of 0 mL', stage({ diluent: { id: 'sodiumChloride09', volumeMl: 0 } })],
+      ['a container that is a number', stage({ container: 50 })],
+      ['a delivery of -5 mL', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: -5, route: 'iv' })],
+      ['a delivery by inhalation', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'inh' })],
+      ['a delivery over -1 s', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv', overS: -1 })],
+      ['an infusion at 0 mL/h from a preparation', cmd({ type: 'prep', action: 'infuse', prepId: 'p0000001', rateMlH: 0 })],
+      ['an infusion set at -1 mL/h', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: -1 })],
+      ['an unknown prep action', cmd({ type: 'prep', action: 'mix', prepId: 'p0000001' })],
+      ['a discard without its preparation', cmd({ type: 'prep', action: 'discard' })],
+    ];
+    for (const [what, c] of BAD) expect(parseWireMessage(body(c)), what).toBeNull();
   });
 });
