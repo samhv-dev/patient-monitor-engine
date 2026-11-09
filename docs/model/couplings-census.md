@@ -6,7 +6,7 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 154; sites: 192.
+Seams (de-duplicated on module, kind and field): 154; sites: 195.
 
 Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 57; unregistered: 97
 (the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
@@ -34,19 +34,19 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | pressure-waveforms | 60 | 26 |
 | lungs | 66 | 22 |
 | gas-exchange | 44 | 12 |
-| breathing | 15 | 5 |
+| breathing | 21 | 8 |
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
-| neuro | 187 | 91 |
+| neuro | 189 | 93 |
 | pharmacology | 29 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
-| engine-runtime | 6 | 2 |
-| **All** | 1123 | 426 |
+| engine-runtime | 11 | 2 |
+| **All** | 1136 | 431 |
 
-## The ten effector expressions with the most factors (of 1603)
+## The ten effector expressions with the most factors (of 1629)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 885 products)
+## The ten products with the most factors (of 897 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -304,11 +304,11 @@ The seams no coupling-registry row carries yet (piece R2 registers the rest); th
 | organs | ext | `rSysF` | `l2/organs/effects.ts#applyOrganEffects` | 1 |
 | organs | ext | `cbfRel` | `l2/organs/effects.ts#applyOrganEffects` | 1 |
 | engine-runtime | bus-read | `bus.metabolic.dantroleneE` | `engine.ts#stateSignals` | 1 |
+| engine-runtime | bus-read | `bus.airway.bronchodilation` | `engine.ts#restAdvance` | 2 |
+| engine-runtime | bus-read | `bus.hpvInhibit` | `engine.ts#restAdvance` | 2 |
+| engine-runtime | bus-read | `bus.airway.histamine` | `engine.ts#restAdvance` | 3 |
 | engine-runtime | bus-read | `bus.agents` | `engine.ts#advance` | 1 |
 | engine-runtime | bus-read | `bus.avNodeBlock` | `engine.ts#advance` | 1 |
-| engine-runtime | bus-read | `bus.airway.histamine` | `engine.ts#advance` | 2 |
-| engine-runtime | bus-read | `bus.airway.bronchodilation` | `engine.ts#advance` | 1 |
-| engine-runtime | bus-read | `bus.hpvInhibit` | `engine.ts#advance` | 1 |
 | blood | bus-read | `bus.doses` | `l2/blood/pipeline.ts#advanceBlood` | 2 |
 | neuro | bus-read | `bus.cns.hypByClass` | `l2/eeg/state.ts#cortexInputsOf` | 1 |
 | neuro | bus-read | `bus.volatiles` | `l2/eeg/state.ts#mac` | 2 |

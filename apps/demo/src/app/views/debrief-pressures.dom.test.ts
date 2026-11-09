@@ -49,12 +49,8 @@ describe('D6: the key moments read the new facts', () => {
     expect(el.querySelector('#db-moments tr.db-alarms')?.textContent).toBe('Alarms since the last row: CVP high 06:02 ▸ cleared 07:40 · acknowledged 06:20; HR high 06:05 ▸ (still on)');
   });
 
-  it('the minute table gains SBP, DBP and CVP (the first measured in the minute; – when none was)', () => {
-    const el = open(now);
-    expect(cells(el.querySelector('#db-minutes thead tr')).slice(0, 6)).toEqual(['Time', 'HRbpm', 'ART M / NIBP MmmHg', 'SBPmmHg', 'DBPmmHg', 'CVPmmHg']);
-    const r = [...el.querySelectorAll('#db-minutes tbody tr')].map(cells);
-    expect(r.slice(0, 3).map((x) => x.slice(3, 6))).toEqual([['92', '58', '17'], ['92', '58', '17'], ['98', '60', '17']]);
-    expect(r[3]?.slice(3, 6)).toEqual(['–', '–', '17']);
+  it('the report prints no minute table (the owner, 9 November): the JSON export keeps `minutes` (debrief.test.ts D6)', () => {
+    expect(open(now).querySelector('#db-minutes, .db-minutes')).toBeNull();
   });
 
   it('a pre-D file (the A3.1 export): "·" in the new cells, "not recorded in this file" once under each table, alarms as before', () => {
@@ -65,8 +61,7 @@ describe('D6: the key moments read the new facts', () => {
     expect(el.querySelectorAll('#db-moments .db-norecord')).toHaveLength(1);
     expect(el.querySelector('#db-moments .db-norecord')?.textContent).toBe('SBP/DBP and CVP, and when an alarm ended or was acknowledged: not recorded in this file.');
     expect(el.querySelector('#db-moments tr.db-alarms')?.textContent).toBe('Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low');
-    expect([...el.querySelectorAll('#db-minutes tbody tr')].every((tr) => cells(tr).slice(3, 6).every((c) => c === '·'))).toBe(true);
-    expect(el.querySelectorAll('#db-minutes .db-norecord')).toHaveLength(1);
+    expect(el.querySelectorAll('#db-trends .db-norecord')).toHaveLength(1);
   });
 });
 

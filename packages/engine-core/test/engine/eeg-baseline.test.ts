@@ -15,6 +15,15 @@
 // events): those rows are asserted against sevo1Mac's and the fixture stores each run from 601 s only. The fixture pins TODAY's engine, so this test is green on the commit that adds
 // it; a later EEG PR that moves any of these numbers fails it. Regenerate ONLY when a ruled physiology change says so:
 //   PME_EEG_BASELINE_WRITE=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/eeg-baseline.test.ts
+// Regenerated once (8 Nov, brief 93, the owner's ruling on mechanism G: the respiratory drive is built and exists on the
+// ventilator). Attributed run by run, from the diff of the old fixture against the new: the four VENTILATED runs move and
+// the two that never see a ventilator do not. sevo1Mac, sevoKetamine and emergence connect the tube and the ventilator at
+// 0 s while the sevoflurane is only starting, so for their first minutes the patient is awake and unparalysed on the
+// machine and his drive now makes efforts there: MAP and HR move from the first second (the effort's pleural swing, at
+// most 2.4 / 0.9), PaCO2 from the second (the trigger; at most 0.03 mmHg), and diRaw from 25 s through the volatile's
+// uptake (at most 0.038). propofolRocIncision connects the ventilator at 180 s and moves from there (diRaw at most 0.65;
+// awarenessRisk flips on 11 of 1200 samples where diRaw crosses its 60 threshold a few seconds apart). awake and
+// propofolTci (no ventilator) are bit-identical. No number was fitted; nothing else in the EEG chain changed.
 // Yields once per sim-minute (CI rule).
 // Re-recorded (research/44 L2-26, PR fix-bowman-pressure): Bowman's capsule pressure 17.1 → 18 mmHg (Miller 10e Fig. 15.8)
 // is the only cause. With 17.1 restored on the same tree the six runs equal the old fixture exactly. The chain at the
@@ -24,6 +33,11 @@
 // circulation: cbfRel in the metabolic row, and the drugs' flow and clearance coupling. The sampled MAP/HR move more
 // (≤ 1.44 mmHg, 0.2 bpm) because the 1 Hz sample lands at a slightly different beat phase. One discrete change: in
 // propofolRocIncision, awarenessRisk is 1 at 956 s where it was 0 (diRaw sits at the 60 edge under full block).
+// Re-recorded on the re-merge of 9 Nov (brief 112: main into PR #352): both causes above together, nothing new. Against
+// main's fixture the two runs without a ventilator (awake, propofolTci) are bit-identical and only the four ventilated runs
+// move, by the mechanism-G sizes stated above (diRaw ≤ 0.647, MAP ≤ 4.02, awarenessRisk on 10 samples, all in
+// propofolRocIncision's case); against the branch's fixture every run moves only by Bowman-18 sizes (diRaw ≤ 0.004, MAP
+// ≤ 1.43 at the 1 Hz beat phase, HR ≤ 0.24). No number fitted.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type EngineEvent, type MonitorEngine } from '../../src/index.ts';

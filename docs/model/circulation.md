@@ -320,6 +320,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `rrRef` | `number` | Running normal RR, s |
 | `pespNext` | `number` | Emax boost for the next beat |
 | `ref` | `Stabilised['ref']` | the stabilised resting reference (coronary demand, pulsatile sensing) |
+| `svRest` | `number` | SV₀ of the pleth's PI × SVᵢ/SV₀: the patient's own settled resting stroke volume as the running engine reaches it (engine.ts REST_AVG_S), mL. Absent (a bare model, or the resting run itself) → the stand-alone `ref.sv`. |
 | `cor` | `CoronaryState` | Coronary supply/demand (stepped at 1 Hz by the pipeline) |
 | `cppAcc` | `{ sum: number; n: number }` | Sum and count of the relaxation-phase aortic − RA pressure since the coronary step last read it (2 ms). |
 | `mapNow` | `number` | Mean radial pressure, low-passed (τ 2 s) at the 10 Hz control step in both modes — beats or none. |
@@ -697,13 +698,15 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | the validation-harness soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s | max 10.17 | — | RIGHT ([audit row 178](../../docs/validation/target-audit/30-target-audit.md#row-178)) | keep (< 9.5 and no raise); equivalently assert the PEEP 5 -> 15 step at 2.2-3.7 mmHg (the it.fails at :50) | [`circ-manual-cvp-peep.test.ts`](../../packages/engine-core/test/engine/circ-manual-cvp-peep.test.ts) |
 | 90/52 in the 75 y HTN profile under GA: no ischaemic spiral (kIsch > 0.9) and LVEDP back under the congestion threshold (18) in the last 2 min | kIsch 0.200, LVEDP 46.1 | — | RIGHT ([audit row 22](../../docs/validation/target-audit/30-target-audit.md#row-22)) | keep kIsch > 0.9; state the LVEDP side as "<= baseline LVEDP (20) and < 25" or re-base the profile's resting LVEDP | [`circ-manual-ischaemia.test.ts`](../../packages/engine-core/test/engine/circ-manual-ischaemia.test.ts) |
 | severe tamponade: pulsus paradoxus ≥ 10 mmHg | 3.1 | Spodick 2003 | RIGHT ([audit row 40](../../docs/validation/target-audit/30-target-audit.md#row-40)) | keep (>= 10 mmHg) | [`circ-pulsus.test.ts`](../../packages/engine-core/test/engine/circ-pulsus.test.ts) |
+| class II haemorrhage: HR 100–125 | 95.4 | ATLS | not audited | — | [`circ-sanity-1.test.ts`](../../packages/engine-core/test/engine/circ-sanity-1.test.ts) |
+| β-blocked 35 % haemorrhage, awake, breathing: HR 75–95 (tables §7 17b; prototype 79) | 66.3 | tables §7 17b | not audited | — | [`circ-sanity-1.test.ts`](../../packages/engine-core/test/engine/circ-sanity-1.test.ts) |
 | AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it | — | — | MIS-SPECIFIED ([audit row 23](../../docs/validation/target-audit/30-target-audit.md#row-23)) | condition the assertion on the insult: kIsch < 0.85 within 2 min WHEN CPP <= 30 (or DBP <= 45) in the CFR 1.4 profile, with the rig deepened to get there (propofol 2 mg/kg or a MAP target); keep the phenylephrine half | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
 | the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min) | — | — | UNSUPPORTED ([audit row 24](../../docs/validation/target-audit/30-target-audit.md#row-24)) | an ordering, not a level: after the same insult, phenylephrine restores S/D and kIsch faster than ephedrine, and ephedrine raises HR >= 10/min | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
 | RV infarct, presenting state: CVP 9–13 | — | Dell'Italia 1985 | not audited | — | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
+| untreated HTN 60 y falls at least 5 points more than the healthy 40 y | 4.42 points | — | not audited | — | [`circ-sympathetic-tone.test.ts`](../../packages/engine-core/test/engine/circ-sympathetic-tone.test.ts) |
 | VF + CPR q 1: CBF ≤ 0.40 of normal | 0.45 | Niemann & Steen 2007 | MIS-SPECIFIED ([audit row 31](../../docs/validation/target-audit/30-target-audit.md#row-31)) | 0.20-0.40 at q 1 (ceiling 0.40); cite Kern 2007, not Meaney 2013 | [`cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) |
 | quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) | 20.5 / 25.2 / 26.6 / 26.6 at the circulation's CPR flow | — | UNSUPPORTED ([audit row 28](../../docs/validation/target-audit/30-target-audit.md#row-28)) | 0.8 -> 15-26; 1.0 -> 20-30; monotone, with q 1.0 at least 3 mmHg above q 0.5; q 0.5 -> 10-20; q 1.2 -> 22-35 (Berve 29 +/- 17, research/09) | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
 | ventilation: +10 breaths/min lowers EtCO2 by 8.7–17.4 % at the learner default | −19 % | Sheak 2015; Murphy 2016 | MIS-SPECIFIED ([audit row 29](../../docs/validation/target-audit/30-target-audit.md#row-29)) | relative: -10 % to -25 % per +10 breaths/min | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
-| decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S | no MAP at all, the patient is in PEA from +3.87 min | — | RIGHT ([audit row 33](../../docs/validation/target-audit/30-target-audit.md#row-33)) | keep; add the PEA case explicitly: decompression of a tension-PEA restores a pulse within 30-60 s (no CPR needed in the swine model). The rig conflict (PEA band 3-10 min vs decompression at +4 min) is a test-design problem, not a band problem | [`tension-ptx.test.ts`](../../packages/engine-core/test/engine/tension-ptx.test.ts) |
 
 ## Tests
 
@@ -736,9 +739,9 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | [`engine/circ-pulseless-arrest.test.ts`](../../packages/engine-core/test/engine/circ-pulseless-arrest.test.ts) | 0 | 0 |
 | [`engine/circ-pulsus.test.ts`](../../packages/engine-core/test/engine/circ-pulsus.test.ts) | 1 | 0 |
 | [`engine/circ-rate-rule.test.ts`](../../packages/engine-core/test/engine/circ-rate-rule.test.ts) | 0 | 0 |
-| [`engine/circ-sanity-1.test.ts`](../../packages/engine-core/test/engine/circ-sanity-1.test.ts) | 0 | 0 |
+| [`engine/circ-sanity-1.test.ts`](../../packages/engine-core/test/engine/circ-sanity-1.test.ts) | 2 | 0 |
 | [`engine/circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) | 3 | 0 |
-| [`engine/circ-sympathetic-tone.test.ts`](../../packages/engine-core/test/engine/circ-sympathetic-tone.test.ts) | 0 | 0 |
+| [`engine/circ-sympathetic-tone.test.ts`](../../packages/engine-core/test/engine/circ-sympathetic-tone.test.ts) | 1 | 0 |
 | [`engine/circ-tamponade-drainage.test.ts`](../../packages/engine-core/test/engine/circ-tamponade-drainage.test.ts) | 0 | 0 |
 | [`engine/circ-teaching.test.ts`](../../packages/engine-core/test/engine/circ-teaching.test.ts) | 0 | 0 |
 | [`engine/cpr-beating-coronary.test.ts`](../../packages/engine-core/test/engine/cpr-beating-coronary.test.ts) | 0 | 0 |
@@ -747,7 +750,7 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | [`engine/cpr-etco2-circulation.test.ts`](../../packages/engine-core/test/engine/cpr-etco2-circulation.test.ts) | 0 | 0 |
 | [`engine/cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) | 2 | 0 |
 | [`engine/spo2-cpr-e126.test.ts`](../../packages/engine-core/test/engine/spo2-cpr-e126.test.ts) | 0 | 0 |
-| [`engine/tension-ptx.test.ts`](../../packages/engine-core/test/engine/tension-ptx.test.ts) | 1 | 0 |
+| [`engine/tension-ptx.test.ts`](../../packages/engine-core/test/engine/tension-ptx.test.ts) | 0 | 0 |
 | [`engine/vagal-events.test.ts`](../../packages/engine-core/test/engine/vagal-events.test.ts) | 0 | 0 |
 | [`l2/circ/activation.test.ts`](../../packages/engine-core/test/l2/circ/activation.test.ts) | 0 | 0 |
 | [`l2/circ/arrest.test.ts`](../../packages/engine-core/test/l2/circ/arrest.test.ts) | 0 | 0 |

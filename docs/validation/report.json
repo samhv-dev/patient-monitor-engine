@@ -1,21 +1,16 @@
 {
  "schema": "pme-validation-report/1",
- "createdAt": "2026-10-18T11:44:29.774Z",
- "commit": "3db25a3b",
- "engineVersion": "1.0.0-rc.1",
+ "createdAt": "2026-11-08T06:04:31.855Z",
+ "commit": "68f14a6f",
+ "engineVersion": "1.0.0-rc.5",
  "options": {
   "suites": [
-   "morphology",
-   "intervals",
+   "segments",
    "sanity",
-   "gates",
-   "regression",
-   "determinism",
-   "oracle"
+   "regression"
   ],
   "seeds": [
-   11,
-   12
+   11
   ],
   "maxWindows": null
  },
@@ -39,1173 +34,18 @@
    "title": "Pulse Wave Database (PWDB)",
    "licence": "PDDL 1.0",
    "attribution": "Charlton PH, Mariscal Harana J, Vennin S, Li Y, Chowienczyk P, Alastruey J. Modeling arterial pulse waves in healthy aging: a database for in silico evaluation of hemodynamics and pulse wave indexes. Am J Physiol Heart Circ Physiol 317:H1062-H1085 (2019).",
-   "windows": 0,
-   "unavailable": "GET https://zenodo.org/api/records/2633175/files/pwdb_pw_indices.csv/content → 403"
+   "windows": 0
   },
   {
    "id": "ptbxl",
    "title": "PTB-XL",
    "licence": "CC BY 4.0",
    "attribution": "Wagner P, Strodthoff N, Bousseljot R, Samek W, Schaeffter T. PTB-XL, a large publicly available electrocardiography dataset (version 1.0.3). PhysioNet (2022).",
-   "windows": 100
+   "windows": 0
   }
  ],
- "morphology": [
-  {
-   "band": "V1",
-   "metric": "rToFootMs",
-   "group": "HR other",
-   "recorded": {
-    "n": 25670,
-    "median": 149.93284180174982,
-    "p25": 122.68915512737965,
-    "p75": 163.8454285025901
-   },
-   "engine": {
-    "n": 23817,
-    "median": 94.52033227867673,
-    "p25": 88.26073007892887,
-    "p75": 108.67038849337973
-   },
-   "ks": 0.6613957919200126,
-   "w1": 53.04049709603225,
-   "engineStat": 94.52033227867673,
-   "expected": "130–170",
-   "grade": "yellow",
-   "errPct": 27.254471642439043,
-   "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
-  },
-  {
-   "band": "V1",
-   "metric": "rToFootMs",
-   "group": "HR 90–110",
-   "recorded": {
-    "n": 12852,
-    "median": 154.30187492090397,
-    "p25": 140.3739377485067,
-    "p75": 179.958293301695
-   },
-   "engine": {
-    "n": 12774,
-    "median": 97.3506801774775,
-    "p25": 93.93958562327853,
-    "p75": 107.0815174115225
-   },
-   "ks": 0.8201463143579022,
-   "w1": 58.13531962311936,
-   "engineStat": 97.3506801774775,
-   "expected": "134–174",
-   "grade": "yellow",
-   "errPct": 27.513536028583804,
-   "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
-  },
-  {
-   "band": "V1",
-   "metric": "rToFootMs",
-   "group": "HR 70–90",
-   "recorded": {
-    "n": 24744,
-    "median": 170.71861750606843,
-    "p25": 159.15303898058042,
-    "p75": 193.16094863790312
-   },
-   "engine": {
-    "n": 25080,
-    "median": 106.61349385568286,
-    "p25": 95.84295206976122,
-    "p75": 115.92175503837865
-   },
-   "ks": 0.907456179024406,
-   "w1": 70.5101694917119,
-   "engineStat": 106.61349385568286,
-   "expected": "151–191",
-   "grade": "yellow",
-   "errPct": 29.26322200945729,
-   "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
-  },
-  {
-   "band": "V1",
-   "metric": "rToFootMs",
-   "group": "HR 50–70",
-   "recorded": {
-    "n": 18604,
-    "median": 190.14515596296278,
-    "p25": 178.81851309556396,
-    "p75": 208.76877920633774
-   },
-   "engine": {
-    "n": 17782,
-    "median": 103.62868961815686,
-    "p25": 98.94982197572588,
-    "p75": 108.24337206928413
-   },
-   "ks": 0.9814018490647173,
-   "w1": 92.24197079548648,
-   "engineStat": 103.62868961815686,
-   "expected": "170–210",
-   "grade": "red",
-   "errPct": 39.093952436286365,
-   "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
-  },
-  {
-   "band": "V1-lit",
-   "metric": "rToFootMs",
-   "group": "all",
-   "recorded": {
-    "n": 81870,
-    "median": 166.79031634578223,
-    "p25": 148.3936131508372,
-    "p75": 193.50411463601702
-   },
-   "engine": {
-    "n": 79453,
-    "median": 101.9034776281238,
-    "p25": 93.67623011718096,
-    "p75": 110.96634419065943
-   },
-   "ks": 0.7901693319091642,
-   "w1": 67.84202507453548,
-   "engineStat": 101.9034776281238,
-   "expected": "150–220",
-   "grade": "red",
-   "errPct": 32.06434824791747,
-   "source": "research 03 §2.1: R → radial upstroke 150–220 ms"
-  },
-  {
-   "band": "V1-lit",
-   "metric": "rToFootMs",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 67748,
-    "median": 171.50875959987388,
-    "p25": 154.53870191385022,
-    "p75": 197.50446798116172
-   },
-   "engine": {
-    "n": 64892,
-    "median": 103.40782100620771,
-    "p25": 94.48855985876125,
-    "p75": 110.76545760037249
-   },
-   "ks": 0.8455221556310415,
-   "w1": 72.45329460103251,
-   "engineStat": 103.40782100620771,
-   "expected": "150–220",
-   "grade": "red",
-   "errPct": 31.06145266252819,
-   "source": "research 03 §2.1: R → radial upstroke 150–220 ms"
-  },
-  {
-   "band": "V1-lit",
-   "metric": "rToFootMs",
-   "group": "mghdb",
-   "recorded": {
-    "n": 14122,
-    "median": 144.79428864754595,
-    "p25": 130.058550628682,
-    "p75": 170.0336667016984
-   },
-   "engine": {
-    "n": 14561,
-    "median": 95.13752846129364,
-    "p25": 88.32026267185711,
-    "p75": 121.75843870146963
-   },
-   "ks": 0.6368916719052717,
-   "w1": 46.05911138789621,
-   "engineStat": 95.13752846129364,
-   "expected": "150–220",
-   "grade": "red",
-   "errPct": 36.57498102580424,
-   "source": "research 03 §2.1: R → radial upstroke 150–220 ms"
-  },
-  {
-   "band": "V2",
-   "metric": "rToNotchMs",
-   "group": "HR other",
-   "recorded": {
-    "n": 25654,
-    "median": 360.00000000001364,
-    "p25": 327.7777777777686,
-    "p75": 427.9444444444424
-   },
-   "engine": {
-    "n": 23789,
-    "median": 258.0000000000098,
-    "p25": 250,
-    "p75": 296.0000000000207
-   },
-   "ks": 0.6856028103132205,
-   "w1": 90.4129861111101,
-   "engineStat": 258.0000000000098,
-   "expected": "340–380",
-   "grade": "yellow",
-   "errPct": 24.117647058823696,
-   "source": "brief §9 V2: ±20 ms"
-  },
-  {
-   "band": "V2",
-   "metric": "rToNotchMs",
-   "group": "HR 90–110",
-   "recorded": {
-    "n": 12848,
-    "median": 427.77777777777715,
-    "p25": 386.0000000000028,
-    "p75": 477.99999999999443
-   },
-   "engine": {
-    "n": 12756,
-    "median": 269.9999999999818,
-    "p25": 256.0000000000002,
-    "p75": 287.9999999999967
-   },
-   "ks": 0.8805332054810141,
-   "w1": 150.96444444444376,
-   "engineStat": 269.9999999999818,
-   "expected": "408–448",
-   "grade": "red",
-   "errPct": 33.78746594005886,
-   "source": "brief §9 V2: ±20 ms"
-  },
-  {
-   "band": "V2",
-   "metric": "rToNotchMs",
-   "group": "HR 70–90",
-   "recorded": {
-    "n": 24728,
-    "median": 484.00000000000887,
-    "p25": 444.0000000000168,
-    "p75": 525.9999999999998
-   },
-   "engine": {
-    "n": 25060,
-    "median": 282.0000000000107,
-    "p25": 262.00000000000045,
-    "p75": 310.0000000000023
-   },
-   "ks": 0.9543484508096131,
-   "w1": 195.3848125000009,
-   "engineStat": 282.0000000000107,
-   "expected": "464–504",
-   "grade": "red",
-   "errPct": 39.22413793103334,
-   "source": "brief §9 V2: ±20 ms"
-  },
-  {
-   "band": "V2",
-   "metric": "rToNotchMs",
-   "group": "HR 50–70",
-   "recorded": {
-    "n": 18594,
-    "median": 518.0000000000007,
-    "p25": 447.9999999999791,
-    "p75": 554.000000000002
-   },
-   "engine": {
-    "n": 17756,
-    "median": 283.9999999999918,
-    "p25": 269.999999999996,
-    "p75": 299.99999999999716
-   },
-   "ks": 0.9578321173350229,
-   "w1": 212.92591944444496,
-   "engineStat": 283.9999999999918,
-   "expected": "498–538",
-   "grade": "red",
-   "errPct": 42.971887550202524,
-   "source": "brief §9 V2: ±20 ms"
-  },
-  {
-   "band": "V2-depth",
-   "metric": "notchDepth",
-   "group": "all",
-   "recorded": {
-    "n": 81824,
-    "median": 0.7010843621590317,
-    "p25": 0.5839752733584533,
-    "p75": 0.8150378545388142
-   },
-   "engine": {
-    "n": 79361,
-    "median": 0.7395017381350736,
-    "p25": 0.5576214836699024,
-    "p75": 0.8360751279573967
-   },
-   "ks": 0.1129566094405896,
-   "w1": 3.6005786482972097,
-   "engineStat": 0.7395017381350736,
-   "expected": "0.55–0.85",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] notch depth within ±0.15 of the recording"
-  },
-  {
-   "band": "V2-depth",
-   "metric": "notchDepth",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 67704,
-    "median": 0.6987596904024532,
-    "p25": 0.5921391733485392,
-    "p75": 0.807157940962253
-   },
-   "engine": {
-    "n": 64818,
-    "median": 0.7391368318188352,
-    "p25": 0.5548229169034202,
-    "p75": 0.8199535280006414
-   },
-   "ks": 0.12910825959620648,
-   "w1": 4.066822315335645,
-   "engineStat": 0.7391368318188352,
-   "expected": "0.55–0.85",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] notch depth within ±0.15 of the recording"
-  },
-  {
-   "band": "V2-depth",
-   "metric": "notchDepth",
-   "group": "mghdb",
-   "recorded": {
-    "n": 14120,
-    "median": 0.7205351523435561,
-    "p25": 0.5293051562614237,
-    "p75": 0.8421093200812186
-   },
-   "engine": {
-    "n": 14543,
-    "median": 0.7449661934783217,
-    "p25": 0.58070841929722,
-    "p75": 0.9318982800938611
-   },
-   "ks": 0.25745898798892564,
-   "w1": 0.778267301271438,
-   "engineStat": 0.7449661934783217,
-   "expected": "0.57–0.87",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] notch depth within ±0.15 of the recording"
-  },
-  {
-   "band": "V2-kind",
-   "metric": "notchMinimumFrac",
-   "group": "all",
-   "recorded": {
-    "n": 192,
-    "median": 0.9290641426400992,
-    "p25": 0.3432636397377211,
-    "p75": 0.9801816635408034
-   },
-   "engine": {
-    "n": 190,
-    "median": 0.9982237786506396,
-    "p25": 0.997229916897507,
-    "p75": 1
-   },
-   "ks": 0.7333333333333334,
-   "w1": 0.23946667653605455,
-   "engineStat": 0.9982237786506396,
-   "expected": "0.63–1.23",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] share of beats with a true notch minimum within ±0.3 of the recording"
-  },
-  {
-   "band": "V2-kind",
-   "metric": "notchMinimumFrac",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 160,
-    "median": 0.9348113416881325,
-    "p25": 0.6558587030236867,
-    "p75": 0.9793778631594503
-   },
-   "engine": {
-    "n": 158,
-    "median": 0.9982158772599949,
-    "p25": 0.9971098265895953,
-    "p75": 1
-   },
-   "ks": 0.7487341772151899,
-   "w1": 0.2081426024750831,
-   "engineStat": 0.9982158772599949,
-   "expected": "0.63–1.23",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] share of beats with a true notch minimum within ±0.3 of the recording"
-  },
-  {
-   "band": "V2-kind",
-   "metric": "notchMinimumFrac",
-   "group": "mghdb",
-   "recorded": {
-    "n": 32,
-    "median": 0.6207851541161955,
-    "p25": 0.17294920434618727,
-    "p75": 0.9845790612451756
-   },
-   "engine": {
-    "n": 32,
-    "median": 0.9982773458365481,
-    "p25": 0.9978786808636212,
-    "p75": 1
-   },
-   "ks": 0.65625,
-   "w1": 0.4091149634077209,
-   "engineStat": 0.9982773458365481,
-   "expected": "0.32–0.92",
-   "grade": "yellow",
-   "errPct": 8.415881964857757,
-   "source": "[ENG] share of beats with a true notch minimum within ±0.3 of the recording"
-  },
-  {
-   "band": "upstroke",
-   "metric": "upstrokeSlope",
-   "group": "all",
-   "recorded": {
-    "n": 81870,
-    "median": 791.0846075557885,
-    "p25": 590.3966174497298,
-    "p75": 962.9649096839623
-   },
-   "engine": {
-    "n": 79453,
-    "median": 971.4561298859596,
-    "p25": 740.0430819588611,
-    "p75": 1123.7357126478873
-   },
-   "ks": 0.29813885143959107,
-   "w1": 181.5205998456812,
-   "engineStat": 1.2280053493740253,
-   "expected": "0.70–1.30",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] max dP/dt within ×0.7–1.3 of the recording at matched pressures"
-  },
-  {
-   "band": "upstroke",
-   "metric": "upstrokeSlope",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 67748,
-    "median": 777.3289861132967,
-    "p25": 579.6149642593598,
-    "p75": 914.0933416455432
-   },
-   "engine": {
-    "n": 64892,
-    "median": 962.9626414435082,
-    "p25": 759.4885826728761,
-    "p75": 1110.32858585689
-   },
-   "ks": 0.34419575394455687,
-   "w1": 197.47864232467566,
-   "engineStat": 1.238809639993478,
-   "expected": "0.70–1.30",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] max dP/dt within ×0.7–1.3 of the recording at matched pressures"
-  },
-  {
-   "band": "upstroke",
-   "metric": "upstrokeSlope",
-   "group": "mghdb",
-   "recorded": {
-    "n": 14122,
-    "median": 962.2079067250195,
-    "p25": 661.8700049062986,
-    "p75": 1327.8700665008737
-   },
-   "engine": {
-    "n": 14561,
-    "median": 1037.9708021854563,
-    "p25": 659.2138283773199,
-    "p75": 1168.4628921543565
-   },
-   "ks": 0.21223161111524524,
-   "w1": 144.78423211781848,
-   "engineStat": 1.0787385916608232,
-   "expected": "0.70–1.30",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] max dP/dt within ×0.7–1.3 of the recording at matched pressures"
-  },
-  {
-   "band": "V3-delay",
-   "metric": "ppgDelayMs",
-   "group": "all",
-   "recorded": {
-    "n": 55802,
-    "median": 442.17550022197827,
-    "p25": 383.58323774142633,
-    "p75": 473.39343815372104
-   },
-   "engine": {
-    "n": 79703,
-    "median": 112.43516382167229,
-    "p25": 87.21921018729262,
-    "p75": 121.2713343654066
-   },
-   "ks": 0.9245003574641867,
-   "w1": 290.5470499780503,
-   "engineStat": 112.43516382167229,
-   "expected": "20.0–100",
-   "grade": "yellow",
-   "errPct": 12.43516382167229,
-   "source": "brief §9 V3 / research 03 §3.1: PPG foot − ABP foot 20–100 ms (recorded VitalDB delay is device-latency-contaminated, report only)"
-  },
-  {
-   "band": "V3-delay",
-   "metric": "ppgDelayMs",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 55802,
-    "median": 442.17550022197827,
-    "p25": 383.58323774142633,
-    "p75": 473.39343815372104
-   },
-   "engine": {
-    "n": 64868,
-    "median": 114.55146588860998,
-    "p25": 89.95439111688341,
-    "p75": 121.91447967696689
-   },
-   "ks": 0.9279479993168261,
-   "w1": 288.71989011276196,
-   "engineStat": 114.55146588860998,
-   "expected": "20.0–100",
-   "grade": "yellow",
-   "errPct": 14.551465888609982,
-   "source": "brief §9 V3 / research 03 §3.1: PPG foot − ABP foot 20–100 ms (recorded VitalDB delay is device-latency-contaminated, report only)"
-  },
-  {
-   "band": "V3-delay",
-   "metric": "ppgDelayMs",
-   "group": "mghdb",
-   "recorded": null,
-   "engine": {
-    "n": 14835,
-    "median": 91.34227639182768,
-    "p25": 80.37829950077224,
-    "p75": 112.61751278394172
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 91.34227639182768,
-   "expected": "20.0–100",
-   "grade": "green",
-   "errPct": 0,
-   "source": "brief §9 V3 / research 03 §3.1: PPG foot − ABP foot 20–100 ms (recorded VitalDB delay is device-latency-contaminated, report only)"
-  },
-  {
-   "band": "V3-shape",
-   "metric": "ppgShapeR",
-   "group": "all",
-   "recorded": {
-    "n": 160,
-    "median": 0.9353597677068841,
-    "p25": 0.8086667579841648,
-    "p75": 0.9561001217859415
-   },
-   "engine": {
-    "n": 192,
-    "median": 0.4235785591656881,
-    "p25": 0.25544064163752117,
-    "p75": 0.7389095207145138
-   },
-   "ks": 0.6239583333333334,
-   "w1": 0.3724037391223634,
-   "engineStat": 0.4235785591656881,
-   "expected": "0.80–1.00",
-   "grade": "red",
-   "errPct": 47.052680104288996,
-   "source": "brief §9 V3: r ≥ 0.8 [ENG]"
-  },
-  {
-   "band": "V3-shape",
-   "metric": "ppgShapeR",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 160,
-    "median": 0.9353597677068841,
-    "p25": 0.8086667579841648,
-    "p75": 0.9561001217859415
-   },
-   "engine": {
-    "n": 160,
-    "median": 0.39733789926372803,
-    "p25": 0.26912116701405464,
-    "p75": 0.6871987075312167
-   },
-   "ks": 0.65,
-   "w1": 0.3835991124606775,
-   "engineStat": 0.39733789926372803,
-   "expected": "0.80–1.00",
-   "grade": "red",
-   "errPct": 50.332762592033994,
-   "source": "brief §9 V3: r ≥ 0.8 [ENG]"
-  },
-  {
-   "band": "V3-shape",
-   "metric": "ppgShapeR",
-   "group": "mghdb",
-   "recorded": {
-    "n": 0,
-    "median": null,
-    "p25": null,
-    "p75": null
-   },
-   "engine": {
-    "n": 32,
-    "median": 0.48132319281594793,
-    "p25": 0.19371174962160492,
-    "p75": 0.840744348277081
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 0.48132319281594793,
-   "expected": "0.80–1.00",
-   "grade": "red",
-   "errPct": 39.834600898006514,
-   "source": "brief §9 V3: r ≥ 0.8 [ENG]"
-  },
-  {
-   "band": "V3-count",
-   "metric": "ppgCountRatio",
-   "group": "all",
-   "recorded": {
-    "n": 160,
-    "median": 0.9972543178672444,
-    "p25": 0.9858817301875378,
-    "p75": 1
-   },
-   "engine": {
-    "n": 192,
-    "median": 1,
-    "p25": 1,
-    "p75": 1
-   },
-   "ks": 0.49895833333333334,
-   "w1": 0.02234284944243609,
-   "engineStat": 1,
-   "expected": "0.98–1.02",
-   "grade": "green",
-   "errPct": 0,
-   "source": "brief §9 V3: PR = HR in sinus"
-  },
-  {
-   "band": "V3-count",
-   "metric": "ppgCountRatio",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 160,
-    "median": 0.9972543178672444,
-    "p25": 0.9858817301875378,
-    "p75": 1
-   },
-   "engine": {
-    "n": 160,
-    "median": 1,
-    "p25": 1,
-    "p75": 1
-   },
-   "ks": 0.5,
-   "w1": 0.022815093521941034,
-   "engineStat": 1,
-   "expected": "0.98–1.02",
-   "grade": "green",
-   "errPct": 0,
-   "source": "brief §9 V3: PR = HR in sinus"
-  },
-  {
-   "band": "V3-count",
-   "metric": "ppgCountRatio",
-   "group": "mghdb",
-   "recorded": {
-    "n": 0,
-    "median": null,
-    "p25": null,
-    "p75": null
-   },
-   "engine": {
-    "n": 32,
-    "median": 1,
-    "p25": 1,
-    "p75": 1
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 1,
-   "expected": "0.98–1.02",
-   "grade": "green",
-   "errPct": 0,
-   "source": "brief §9 V3: PR = HR in sinus"
-  },
-  {
-   "band": "V4",
-   "metric": "alpha",
-   "group": "all",
-   "recorded": {
-    "n": 10960,
-    "median": 111.05560237895267,
-    "p25": 107.61969895713779,
-    "p75": 115.5834193833017
-   },
-   "engine": {
-    "n": 13202,
-    "median": 107.19422293432422,
-    "p25": 105.96298463587081,
-    "p75": 107.78127242371369
-   },
-   "ks": 0.6001903328073495,
-   "w1": 5.27744005450411,
-   "engineStat": 107.19422293432422,
-   "expected": "100–110",
-   "grade": "green",
-   "errPct": 0,
-   "source": "R39 item 6: normal α 105° (100–110) on the 25 mmHg/s axis"
-  },
-  {
-   "band": "V4",
-   "metric": "alpha",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 10960,
-    "median": 111.05560237895267,
-    "p25": 107.61969895713779,
-    "p75": 115.5834193833017
-   },
-   "engine": {
-    "n": 11044,
-    "median": 107.1259181572828,
-    "p25": 105.53214636049984,
-    "p75": 107.7954712196632
-   },
-   "ks": 0.6006196845002207,
-   "w1": 5.43448940401549,
-   "engineStat": 107.1259181572828,
-   "expected": "100–110",
-   "grade": "green",
-   "errPct": 0,
-   "source": "R39 item 6: normal α 105° (100–110) on the 25 mmHg/s axis"
-  },
-  {
-   "band": "V4",
-   "metric": "alpha",
-   "group": "mghdb",
-   "recorded": null,
-   "engine": {
-    "n": 2158,
-    "median": 107.40149053693764,
-    "p25": 107.09451351851712,
-    "p75": 107.73881522176441
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 107.40149053693764,
-   "expected": "100–110",
-   "grade": "green",
-   "errPct": 0,
-   "source": "R39 item 6: normal α 105° (100–110) on the 25 mmHg/s axis"
-  },
-  {
-   "band": "V4-rec",
-   "metric": "alpha",
-   "group": "all",
-   "recorded": {
-    "n": 10960,
-    "median": 111.05560237895267,
-    "p25": 107.61969895713779,
-    "p75": 115.5834193833017
-   },
-   "engine": {
-    "n": 13202,
-    "median": 107.19422293432422,
-    "p25": 105.96298463587081,
-    "p75": 107.78127242371369
-   },
-   "ks": 0.6001903328073495,
-   "w1": 5.27744005450411,
-   "engineStat": 107.19422293432422,
-   "expected": "106–116",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] α within ±5° of the VitalDB (sidestream, Primus) recording"
-  },
-  {
-   "band": "V4-rec",
-   "metric": "alpha",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 10960,
-    "median": 111.05560237895267,
-    "p25": 107.61969895713779,
-    "p75": 115.5834193833017
-   },
-   "engine": {
-    "n": 11044,
-    "median": 107.1259181572828,
-    "p25": 105.53214636049984,
-    "p75": 107.7954712196632
-   },
-   "ks": 0.6006196845002207,
-   "w1": 5.43448940401549,
-   "engineStat": 107.1259181572828,
-   "expected": "106–116",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] α within ±5° of the VitalDB (sidestream, Primus) recording"
-  },
-  {
-   "band": "PPV",
-   "metric": "ppvPct",
-   "group": "all",
-   "recorded": {
-    "n": 160,
-    "median": 7.28478419298024,
-    "p25": 3.895822148898395,
-    "p75": 22.230129847344898
-   },
-   "engine": {
-    "n": 190,
-    "median": 8.269028707031966,
-    "p25": 4.080836287076756,
-    "p75": 14.102862118777162
-   },
-   "ks": 0.21447368421052626,
-   "w1": 20.224081017512873,
-   "engineStat": 8.269028707031966,
-   "expected": "4.28–10.3",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] PPV within ±3 points of the recording at matched ventilator settings"
-  },
-  {
-   "band": "PPV",
-   "metric": "ppvPct",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 160,
-    "median": 7.28478419298024,
-    "p25": 3.895822148898395,
-    "p75": 22.230129847344898
-   },
-   "engine": {
-    "n": 158,
-    "median": 8.200281987918153,
-    "p25": 4.3990464622217225,
-    "p75": 12.648559323972599
-   },
-   "ks": 0.22499999999999998,
-   "w1": 20.604992471347877,
-   "engineStat": 8.200281987918153,
-   "expected": "4.28–10.3",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] PPV within ±3 points of the recording at matched ventilator settings"
-  },
-  {
-   "band": "SPV",
-   "metric": "spvMmHg",
-   "group": "all",
-   "recorded": {
-    "n": 160,
-    "median": 4.930706199822744,
-    "p25": 3.334715504274847,
-    "p75": 10.11349594024855
-   },
-   "engine": {
-    "n": 190,
-    "median": 2.7617961099237007,
-    "p25": 1.6404887261680408,
-    "p75": 5.125036586993154
-   },
-   "ks": 0.3730263157894737,
-   "w1": 6.3412086678367325,
-   "engineStat": 2.7617961099237007,
-   "expected": "1.93–7.93",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] SPV within ±3 mmHg of the recording"
-  },
-  {
-   "band": "SPV",
-   "metric": "spvMmHg",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 160,
-    "median": 4.930706199822744,
-    "p25": 3.334715504274847,
-    "p75": 10.11349594024855
-   },
-   "engine": {
-    "n": 158,
-    "median": 2.554085133237436,
-    "p25": 1.5789605040652006,
-    "p75": 4.726905153322708
-   },
-   "ks": 0.4136075949367089,
-   "w1": 6.697616470675149,
-   "engineStat": 2.554085133237436,
-   "expected": "1.93–7.93",
-   "grade": "green",
-   "errPct": 0,
-   "source": "[ENG] SPV within ±3 mmHg of the recording"
-  },
-  {
-   "band": "HR-avg",
-   "metric": "hrErrAbs",
-   "group": "all",
-   "recorded": {
-    "n": 23134,
-    "median": 0.842759071591928,
-    "p25": 0.3849743705000783,
-    "p75": 4.6849334428282905
-   },
-   "engine": {
-    "n": 55690,
-    "median": 0.24666198172881337,
-    "p25": 0.120879120879124,
-    "p75": 0.3864168618266923
-   },
-   "ks": 0.6177816384444741,
-   "w1": 6.649801957959154,
-   "engineStat": 0.24666198172881337,
-   "expected": "0.00–2.00",
-   "grade": "green",
-   "errPct": 0,
-   "source": "brief §6.1: displayed HR within 2 bpm of the 12-RR average at steady state [ENG]"
-  },
-  {
-   "band": "HR-avg",
-   "metric": "hrErrAbs",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 23134,
-    "median": 0.842759071591928,
-    "p25": 0.3849743705000783,
-    "p75": 4.6849334428282905
-   },
-   "engine": {
-    "n": 46372,
-    "median": 0.24300275036411279,
-    "p25": 0.11762054979727665,
-    "p75": 0.37953526294325
-   },
-   "ks": 0.6303630096061388,
-   "w1": 7.055872334109423,
-   "engineStat": 0.24300275036411279,
-   "expected": "0.00–2.00",
-   "grade": "green",
-   "errPct": 0,
-   "source": "brief §6.1: displayed HR within 2 bpm of the 12-RR average at steady state [ENG]"
-  },
-  {
-   "band": "HR-avg",
-   "metric": "hrErrAbs",
-   "group": "mghdb",
-   "recorded": null,
-   "engine": {
-    "n": 9318,
-    "median": 0.28200497092986154,
-    "p25": 0.138695116946991,
-    "p75": 0.42292490118565595
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 0.28200497092986154,
-   "expected": "0.00–2.00",
-   "grade": "green",
-   "errPct": 0,
-   "source": "brief §6.1: displayed HR within 2 bpm of the 12-RR average at steady state [ENG]"
-  },
-  {
-   "band": "NIBP-bias",
-   "metric": "nibpMinusAbp",
-   "group": "all",
-   "recorded": {
-    "n": 10,
-    "median": 1.069669681629648,
-    "p25": -9.000216203431037,
-    "p75": 4.6172072283426076
-   },
-   "engine": {
-    "n": 939,
-    "median": -0.39487111457404467,
-    "p25": -2.5444994180140412,
-    "p75": 2.0265192994413823
-   },
-   "ks": 0.3978700745473909,
-   "w1": 6.6449464850523965,
-   "engineStat": -0.39487111457404467,
-   "expected": "-5.00–5.00",
-   "grade": "green",
-   "errPct": 0,
-   "source": "Stage 2 acceptance 9 / ISO 81060-2 style: bias ≤ 5 mmHg"
-  },
-  {
-   "band": "NIBP-bias",
-   "metric": "nibpMinusAbp",
-   "group": "vitaldb",
-   "recorded": {
-    "n": 10,
-    "median": 1.069669681629648,
-    "p25": -9.000216203431037,
-    "p75": 4.6172072283426076
-   },
-   "engine": {
-    "n": 787,
-    "median": -0.31994987656422325,
-    "p25": -2.5365493602596345,
-    "p75": 2.0142081619677867
-   },
-   "ks": 0.3974587039390089,
-   "w1": 6.658358939251408,
-   "engineStat": -0.31994987656422325,
-   "expected": "-5.00–5.00",
-   "grade": "green",
-   "errPct": 0,
-   "source": "Stage 2 acceptance 9 / ISO 81060-2 style: bias ≤ 5 mmHg"
-  },
-  {
-   "band": "NIBP-bias",
-   "metric": "nibpMinusAbp",
-   "group": "mghdb",
-   "recorded": null,
-   "engine": {
-    "n": 152,
-    "median": -0.5558457418224307,
-    "p25": -2.5489315491287883,
-    "p75": 2.210521439817736
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": -0.5558457418224307,
-   "expected": "-5.00–5.00",
-   "grade": "green",
-   "errPct": 0,
-   "source": "Stage 2 acceptance 9 / ISO 81060-2 style: bias ≤ 5 mmHg"
-  },
-  {
-   "band": "V5-QTc",
-   "metric": "qtcMs",
-   "group": "all",
-   "recorded": null,
-   "engine": {
-    "n": 12,
-    "median": 376.89995764592425,
-    "p25": 373.7078555575187,
-    "p75": 378.6389577896846
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 376.89995764592425,
-   "expected": "339–396",
-   "grade": "green",
-   "errPct": 0,
-   "source": "PTB-XL NORM p10–p90 by the same method (filled at run time)"
-  },
-  {
-   "band": "V5-QTc",
-   "metric": "qtcMs",
-   "group": "vitaldb",
-   "recorded": null,
-   "engine": {
-    "n": 12,
-    "median": 376.89995764592425,
-    "p25": 373.7078555575187,
-    "p75": 378.6389577896846
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 376.89995764592425,
-   "expected": "339–396",
-   "grade": "green",
-   "errPct": 0,
-   "source": "PTB-XL NORM p10–p90 by the same method (filled at run time)"
-  },
-  {
-   "band": "V5-PR",
-   "metric": "prMs",
-   "group": "all",
-   "recorded": null,
-   "engine": {
-    "n": 12,
-    "median": 217,
-    "p25": 210,
-    "p75": 220
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 217,
-   "expected": "140–216",
-   "grade": "yellow",
-   "errPct": 0.3700277520813982,
-   "source": "PTB-XL NORM p10–p90 by the same method (filled at run time)"
-  },
-  {
-   "band": "V5-PR",
-   "metric": "prMs",
-   "group": "vitaldb",
-   "recorded": null,
-   "engine": {
-    "n": 12,
-    "median": 217,
-    "p25": 210,
-    "p75": 220
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 217,
-   "expected": "140–216",
-   "grade": "yellow",
-   "errPct": 0.3700277520813982,
-   "source": "PTB-XL NORM p10–p90 by the same method (filled at run time)"
-  },
-  {
-   "band": "V5-QRS",
-   "metric": "qrsMs",
-   "group": "all",
-   "recorded": null,
-   "engine": {
-    "n": 12,
-    "median": 61,
-    "p25": 52,
-    "p75": 62
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 61,
-   "expected": "44.0–76.0",
-   "grade": "green",
-   "errPct": 0,
-   "source": "PTB-XL NORM p10–p90 by the same method (filled at run time)"
-  },
-  {
-   "band": "V5-QRS",
-   "metric": "qrsMs",
-   "group": "vitaldb",
-   "recorded": null,
-   "engine": {
-    "n": 12,
-    "median": 61,
-    "p25": 52,
-    "p75": 62
-   },
-   "ks": null,
-   "w1": null,
-   "engineStat": 61,
-   "expected": "44.0–76.0",
-   "grade": "green",
-   "errPct": 0,
-   "source": "PTB-XL NORM p10–p90 by the same method (filled at run time)"
-  }
- ],
- "intervals": {
-  "ptbxl": 100,
-  "engine": 12
- },
+ "morphology": [],
+ "intervals": null,
  "segments": {
   "docs": [
    {
@@ -1215,7 +55,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 3361.8427909999737
+    "wallMs": 4400.58575
    },
    {
     "id": "s1-phenylephrine",
@@ -1227,7 +67,7 @@
      "7a",
      "7g"
     ],
-    "wallMs": 1480.6611659999471
+    "wallMs": 2054.9552919999996
    },
    {
     "id": "s2-class2-haemorrhage",
@@ -1239,7 +79,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 7117.924916999997
+    "wallMs": 9199.773291000001
    },
    {
     "id": "s3-propofol-induction",
@@ -1250,7 +90,7 @@
     "requires": [
      "7g"
     ],
-    "wallMs": 2033.1882079999777
+    "wallMs": 2661.6375829999997
    },
    {
     "id": "s4-class-i",
@@ -1262,7 +102,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 7322.474083000037
+    "wallMs": 9474.205750000001
    },
    {
     "id": "s4-class-iii",
@@ -1274,7 +114,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 7340.562166999967
+    "wallMs": 9345.035624999997
    },
    {
     "id": "s4-class-iv",
@@ -1286,7 +126,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 7389.953333000012
+    "wallMs": 9432.705625000002
    },
    {
     "id": "s6-apnoea-preoxygenated",
@@ -1295,7 +135,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 7154.874167000002
+    "wallMs": 9062.034166000005
    },
    {
     "id": "s6-apnoea-room-air",
@@ -1304,7 +144,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 2320.275250000006
+    "wallMs": 3000.812374999994
    },
    {
     "id": "s7-apnoea-child",
@@ -1313,7 +153,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 4731.000540999987
+    "wallMs": 6047.117125000004
    },
    {
     "id": "s8-co2-apnoea-first-breath",
@@ -1322,7 +162,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 1629.446333000029
+    "wallMs": 2126.385875
    },
    {
     "id": "s9-witnessed-vf",
@@ -1331,7 +171,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 1484.8636249999981
+    "wallMs": 1952.4441249999945
    },
    {
     "id": "t10-as-cad-propofol",
@@ -1343,7 +183,7 @@
      "7a",
      "7g"
     ],
-    "wallMs": 3047.792333999998
+    "wallMs": 3966.2274590000015
    },
    {
     "id": "t11-chronic-mr-fluid",
@@ -1356,7 +196,7 @@
      "7b",
      "7c"
     ],
-    "wallMs": 22027.556500000006
+    "wallMs": 28444.16383399999
    },
    {
     "id": "t12-massive-pe",
@@ -1368,7 +208,7 @@
      "7a",
      "7b"
     ],
-    "wallMs": 2539.63949999999
+    "wallMs": 3385.1896670000133
    },
    {
     "id": "t13-tension-ptx",
@@ -1380,7 +220,7 @@
      "7a",
      "7b"
     ],
-    "wallMs": 4170.794750000001
+    "wallMs": 5618.624542000005
    },
    {
     "id": "t14-tamponade",
@@ -1391,7 +231,7 @@
     "requires": [
      "7a"
     ],
-    "wallMs": 5975.246041999955
+    "wallMs": 7532.146166999999
    },
    {
     "id": "t15-rv-infarct",
@@ -1402,7 +242,7 @@
     "requires": [
      "7a"
     ],
-    "wallMs": 2432.4742079999996
+    "wallMs": 2867.4086249999964
    },
    {
     "id": "t16-septic-shock-warm",
@@ -1413,7 +253,29 @@
     "requires": [
      "7f"
     ],
-    "wallMs": 5105.326209000021
+    "wallMs": 5862.591667000001
+   },
+   {
+    "id": "t16-septic-shock-state",
+    "title": "Septic shock, established, unresuscitated",
+    "suite": "sanity",
+    "measurable": true,
+    "unsupported": [],
+    "requires": [
+     "7f"
+    ],
+    "wallMs": 37771.09720800001
+   },
+   {
+    "id": "t16-septic-shock-fluid",
+    "title": "Septic shock, 30 mL/kg crystalloid, no vasopressor",
+    "suite": "sanity",
+    "measurable": true,
+    "unsupported": [],
+    "requires": [
+     "7f"
+    ],
+    "wallMs": 40816.083209000004
    },
    {
     "id": "t17a-class3-no-bb",
@@ -1425,7 +287,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 14585.051124999998
+    "wallMs": 17476.98550000001
    },
    {
     "id": "t17b-class3-bb",
@@ -1438,7 +300,7 @@
      "7c",
      "7g"
     ],
-    "wallMs": 14691.989583000017
+    "wallMs": 16921.962291999982
    },
    {
     "id": "t18-htn-hypocapnia-cbf",
@@ -1449,7 +311,7 @@
     "requires": [
      "7d"
     ],
-    "wallMs": 5156.107415999984
+    "wallMs": 5690.461374999984
    },
    {
     "id": "t19-tbi-haematoma",
@@ -1460,7 +322,7 @@
     "requires": [
      "7d"
     ],
-    "wallMs": 14827.265458000009
+    "wallMs": 17416.498417000024
    },
    {
     "id": "t20-low-flow-oliguria",
@@ -1472,7 +334,7 @@
      "7d",
      "7g"
     ],
-    "wallMs": 29907.901332999987
+    "wallMs": 39201.40433300001
    },
    {
     "id": "t21-mh",
@@ -1481,7 +343,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 12529.030667000043
+    "wallMs": 14913.95874999999
    },
    {
     "id": "t22-term-spinal",
@@ -1499,7 +361,7 @@
      "7a",
      "7f"
     ],
-    "wallMs": 517.5422919999692
+    "wallMs": 623.1628330000094
    },
    {
     "id": "t23-term-apnoea",
@@ -1510,7 +372,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 4904.561125000007
+    "wallMs": 5533.4382909999695
    },
    {
     "id": "t24-edmark-fio2-1",
@@ -1521,7 +383,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 7018.70208399999
+    "wallMs": 8122.691625000036
    },
    {
     "id": "t24-edmark-fio2-0.8",
@@ -1532,7 +394,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 7113.81487500004
+    "wallMs": 8169.066791999969
    },
    {
     "id": "t24-edmark-fio2-0.6",
@@ -1543,7 +405,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 7069.3102090000175
+    "wallMs": 8126.801792000013
    },
    {
     "id": "t25-rocuronium-sugammadex",
@@ -1555,7 +417,7 @@
      "7f",
      "7g"
     ],
-    "wallMs": 20155.91537500004
+    "wallMs": 23268.53316599998
    },
    {
     "id": "t25-apnoea",
@@ -1567,72 +429,7 @@
      "7f",
      "7g"
     ],
-    "wallMs": 14047.656374999962
-   },
-   {
-    "id": "g2-displayed-abp",
-    "title": "Stage 2: displayed ABP follows targets 120/80 and a ramp to 90/50",
-    "suite": "gates",
-    "measurable": true,
-    "unsupported": [],
-    "requires": [],
-    "wallMs": 908.3049999999348
-   },
-   {
-    "id": "g3-rr-three-ways",
-    "title": "Stage 3: RR from capnograph and impedance at ventilator 14/min",
-    "suite": "gates",
-    "measurable": true,
-    "unsupported": [],
-    "requires": [],
-    "wallMs": 1001.892000000109
-   },
-   {
-    "id": "g3-peep-map",
-    "title": "Stage 3: PEEP 5 → 15 lowers MAP by ≈ 14 mmHg (MANUAL coupling)",
-    "suite": "gates",
-    "measurable": true,
-    "unsupported": [],
-    "requires": [],
-    "wallMs": 1979.1227909999434
-   },
-   {
-    "id": "g3-disconnect-apnoea-alarm",
-    "title": "Stage 3/4b: disconnection → apnoea-co2 alarm",
-    "suite": "gates",
-    "measurable": true,
-    "unsupported": [],
-    "requires": [],
-    "wallMs": 984.361957999994
-   },
-   {
-    "id": "g4b-asystole-saadat-like",
-    "title": "Stage 4b: asystole alarm delay on saadat-like",
-    "suite": "gates",
-    "measurable": true,
-    "unsupported": [],
-    "requires": [],
-    "wallMs": 475.75608299998567
-   },
-   {
-    "id": "g4b-asystole-philips-like",
-    "title": "Stage 4b: asystole alarm delay on philips-like",
-    "suite": "gates",
-    "measurable": true,
-    "unsupported": [],
-    "requires": [],
-    "wallMs": 473.84370899992064
-   },
-   {
-    "id": "g3-cpr-etco2",
-    "title": "CPR EtCO2 at the default learner quality (R39 item 2)",
-    "suite": "gates",
-    "measurable": true,
-    "unsupported": [],
-    "requires": [
-     "3.1"
-    ],
-    "wallMs": 2133.6098749999655
+    "wallMs": 16217.896624999994
    }
   ],
   "results": [
@@ -1655,7 +452,7 @@
     "target": "displayed-hr",
     "type": "Range",
     "series": "numeric:hr",
-    "source": "brief §6.1: displayed HR within 3 bpm of truth at steady state [ENG]",
+    "source": "brief §6.1: displayed HR within 3 bpm of truth at steady state [ENG: device]",
     "measured": 78.35,
     "errPct": 0,
     "grade": "green",
@@ -1707,7 +504,7 @@
     "target": "hr-above-awake",
     "type": "GreaterThan",
     "series": "state:hr",
-    "source": "reflex tachycardia ≥ 30 % above awake [ENG]",
+    "source": "reflex tachycardia ≥ 30 % above awake [FIT: reflex tachycardia band; brief research/44 X-15]",
     "measured": 122,
     "errPct": 0,
     "grade": "green",
@@ -1733,8 +530,8 @@
     "target": "steady-map",
     "type": "Range",
     "series": "state:map",
-    "source": "baseline MAP physiological [ENG]",
-    "measured": 94.01749906636725,
+    "source": "baseline MAP physiological [FIT: physiological normal range without a cited source; brief research/44 X-15]",
+    "measured": 92.64098325013576,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1747,11 +544,11 @@
     "type": "Range",
     "series": "state:map",
     "source": "brief §4.9 1: MAP +15–25 within 30–60 s",
-    "measured": 120.52659216618575,
+    "measured": 115.30356947563145,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "111–121"
+    "expected": "109–119"
    },
    {
     "doc": "s1-phenylephrine",
@@ -1760,11 +557,11 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 1: reflex HR −5–15",
-    "measured": 75,
-    "errPct": 7.142857142857143,
-    "grade": "yellow",
+    "measured": 57.00513058754063,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
-    "expected": "60.0–70.0"
+    "expected": "52.6–62.6"
    },
    {
     "doc": "s2-class2-haemorrhage",
@@ -1772,8 +569,8 @@
     "target": "pp0",
     "type": "Range",
     "series": "state:pp",
-    "source": "baseline PP [ENG]",
-    "measured": 40.10200176639595,
+    "source": "baseline PP [FIT: physiological normal range without a cited source; brief research/44 X-15]",
+    "measured": 42.414361794204325,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1786,8 +583,8 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 2: HR 100–120",
-    "measured": 75,
-    "errPct": 25,
+    "measured": 80.9449451303174,
+    "errPct": 19.055054869682607,
     "grade": "yellow",
     "pass": true,
     "expected": "100–120"
@@ -1799,7 +596,7 @@
     "type": "Range",
     "series": "state:sbp",
     "source": "brief §4.9 2: SBP near normal (R45 b)",
-    "measured": 110.11283123864433,
+    "measured": 109.2827082331093,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1812,11 +609,11 @@
     "type": "LessThan",
     "series": "state:pp",
     "source": "brief §4.9 2: PP narrowed",
-    "measured": 32.085716507307254,
+    "measured": 30.353524666819496,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "< 36.1"
+    "expected": "< 38.2"
    },
    {
     "doc": "s3-propofol-induction",
@@ -1824,8 +621,8 @@
     "target": "steady-map",
     "type": "Range",
     "series": "state:map",
-    "source": "baseline MAP physiological [ENG]",
-    "measured": 94.01749906636725,
+    "source": "baseline MAP physiological [FIT: physiological normal range without a cited source; brief research/44 X-15]",
+    "measured": 92.64098325013576,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1838,11 +635,11 @@
     "type": "EqualTo",
     "series": "state:map",
     "source": "brief §4.9 3: MAP ≈ 70 % of baseline at 2 min",
-    "measured": 75.41409041578619,
+    "measured": 73.19480478127238,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "= 65.8 ±15 %"
+    "expected": "= 64.8 ±15 %"
    },
    {
     "doc": "s3-propofol-induction",
@@ -1851,11 +648,11 @@
     "type": "LessThan",
     "series": "state:hr",
     "source": "brief §4.9 3: little HR rise",
-    "measured": 75,
+    "measured": 70.90676075177832,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "< 82.5"
+    "expected": "< 74.4"
    },
    {
     "doc": "s4-class-i",
@@ -1864,7 +661,7 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 4 / ATLS class I: HR 60–100",
-    "measured": 75,
+    "measured": 74.73716922615719,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1877,10 +674,10 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 4 / ATLS class III: HR 120–140",
-    "measured": 75,
-    "errPct": 37.5,
-    "grade": "red",
-    "pass": false,
+    "measured": 103.52017917707052,
+    "errPct": 13.733184019107902,
+    "grade": "yellow",
+    "pass": true,
     "expected": "120–140"
    },
    {
@@ -1890,9 +687,9 @@
     "type": "LessThan",
     "series": "state:sbp",
     "source": "brief §4.9 4 / ATLS class III: SBP decreased",
-    "measured": 103.15019560895179,
-    "errPct": 3.1501956089517904,
-    "grade": "yellow",
+    "measured": 99.92489920158239,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
     "expected": "< 100"
    },
@@ -1903,10 +700,10 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 4 / ATLS class IV: HR 140–180",
-    "measured": 75,
-    "errPct": 46.42857142857143,
-    "grade": "red",
-    "pass": false,
+    "measured": 127.3397498299192,
+    "errPct": 9.043035835772,
+    "grade": "yellow",
+    "pass": true,
     "expected": "140–180"
    },
    {
@@ -1916,7 +713,7 @@
     "type": "LessThan",
     "series": "state:sbp",
     "source": "brief §4.9 4 / ATLS class IV: SBP decreased",
-    "measured": 87.13447302706503,
+    "measured": 83.40172138753341,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1929,7 +726,7 @@
     "type": "LessThan",
     "series": "state:pp",
     "source": "brief §4.9 4: class IV PP < 25",
-    "measured": 19.20580965809087,
+    "measured": 14.285217291793996,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1993,7 +790,7 @@
     "target": "et0",
     "type": "Range",
     "series": "breath:etco2True",
-    "source": "normocapnia [ENG]",
+    "source": "normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]",
     "measured": 38.3,
     "errPct": 0,
     "grade": "green",
@@ -2019,7 +816,7 @@
     "target": "et0",
     "type": "Range",
     "series": "numeric:etco2",
-    "source": "normocapnia [ENG]",
+    "source": "normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]",
     "measured": 37.233333333333334,
     "errPct": 0,
     "grade": "green",
@@ -2042,15 +839,28 @@
    {
     "doc": "s9-witnessed-vf",
     "segment": "arrest",
-    "target": "etco2-gone",
+    "target": "etco2-true-gone",
     "type": "Range",
+    "series": "breath:etco2True",
+    "source": "research 46 §C: true EtCO2 < 5 at 2τ ± one breath, τ = V_lung / V̇A = 31–40 s on this rig (V_lung 2.2–2.8 L, Miller 10e ch. 12; V̇A = RR × (VT − 150 mL)); Falk 1988, Gudipati 1988",
+    "measured": 75.12,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "58.0–85.0"
+   },
+   {
+    "doc": "s9-witnessed-vf",
+    "segment": "arrest",
+    "target": "etco2-shown-lag",
+    "type": "LessThan",
     "series": "numeric:etco2",
-    "source": "Stage 3: EtCO2 < 5 within 30 s",
+    "source": "research 46 §C: displayed EtCO2 < 5 within a capnograph's response of the true value: transport delay ≤ 5 s plus one breath (5 s); Miller 10e ch. 37 p. 1164, ISO 80601-2-55",
     "measured": 83,
-    "errPct": 176.66666666666666,
-    "grade": "red",
-    "pass": false,
-    "expected": "0.00–30.0"
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "< 85.1"
    },
    {
     "doc": "t10-as-cad-propofol",
@@ -2058,10 +868,10 @@
     "target": "steady-map",
     "type": "Range",
     "series": "state:map",
-    "source": "baseline MAP physiological [ENG]",
-    "measured": 111.57717883629299,
-    "errPct": 1.4337989420845334,
-    "grade": "yellow",
+    "source": "baseline MAP physiological [FIT: physiological normal range without a cited source; brief research/44 X-15]",
+    "measured": 105.99300356600904,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
     "expected": "60.0–110"
    },
@@ -2072,8 +882,8 @@
     "type": "Range",
     "series": "state:map",
     "source": "tables §7 10: MAP 103 → 60–65 at 2 min",
-    "measured": 69.92813172167727,
-    "errPct": 7.581741110272731,
+    "measured": 74.5206605407188,
+    "errPct": 14.647170062644298,
     "grade": "yellow",
     "pass": true,
     "expected": "60.0–65.0"
@@ -2085,9 +895,9 @@
     "type": "GreaterThan",
     "series": "state:map",
     "source": "tables §7 10: phenylephrine → MAP ≥ 85 within 90 s",
-    "measured": 98.24377392311975,
-    "errPct": 0,
-    "grade": "green",
+    "measured": 69.25635033222761,
+    "errPct": 18.521940785614575,
+    "grade": "yellow",
     "pass": true,
     "expected": "> 85.0"
    },
@@ -2098,7 +908,7 @@
     "type": "GreaterThan",
     "series": "state:pawp",
     "source": "tables §7 11: PCWP 15 → > 25 by 15–25 min",
-    "measured": 25.448646446430615,
+    "measured": 26.773357274374405,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2111,8 +921,8 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "tables §7 11: SpO2 96 → 89–92",
-    "measured": 96.45665123548582,
-    "errPct": 4.844186125528068,
+    "measured": 96.03987166450504,
+    "errPct": 4.391164852722873,
     "grade": "yellow",
     "pass": true,
     "expected": "89.0–92.0"
@@ -2123,7 +933,7 @@
     "target": "et0",
     "type": "Range",
     "series": "numeric:etco2",
-    "source": "normocapnia [ENG]",
+    "source": "normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]",
     "measured": 35,
     "errPct": 0,
     "grade": "green",
@@ -2149,7 +959,7 @@
     "target": "papm",
     "type": "Range",
     "series": "state:papSys",
-    "source": "tables §7 12: mPAP 30–40, never > 45 (systolic proxy) [ENG]",
+    "source": "tables §7 12: mPAP 30–40, never > 45 (systolic proxy) [FIT: mPAP band as a systolic proxy; brief research/44 V-09]",
     "measured": 24,
     "errPct": 20,
     "grade": "yellow",
@@ -2163,8 +973,8 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "tables §7 12: SpO2 85–92 on FiO2 1",
-    "measured": 99.98414267969929,
-    "errPct": 8.678415956194879,
+    "measured": 99.98428102096146,
+    "errPct": 8.678566327132023,
     "grade": "yellow",
     "pass": true,
     "expected": "85.0–92.0"
@@ -2175,8 +985,8 @@
     "target": "steady-map",
     "type": "Range",
     "series": "state:map",
-    "source": "baseline MAP physiological [ENG]",
-    "measured": 92.34156026812174,
+    "source": "baseline MAP physiological [FIT: physiological normal range without a cited source; brief research/44 X-15]",
+    "measured": 91.70542651823025,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2189,7 +999,7 @@
     "type": "LessThan",
     "series": "state:sbp",
     "source": "tables §7 13: SBP < 90 by 3 min",
-    "measured": 69.17378183902484,
+    "measured": 79.90070260112245,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2202,11 +1012,11 @@
     "type": "Range",
     "series": "state:cvp",
     "source": "tables §7 13: CVP +5–15",
-    "measured": 22.741669688522993,
+    "measured": 21.15376783678808,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "12.9–22.9"
+    "expected": "12.0–22.0"
    },
    {
     "doc": "t14-tamponade",
@@ -2215,7 +1025,7 @@
     "type": "Range",
     "series": "state:cvp",
     "source": "tables §7 14: CVP ≈ PAD ≈ PCWP 15–20",
-    "measured": 19.238107152538387,
+    "measured": 17.900409259727986,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2228,8 +1038,8 @@
     "type": "Range",
     "series": "state:pawp",
     "source": "tables §7 14",
-    "measured": 23.896174130707646,
-    "errPct": 19.48087065353823,
+    "measured": 22.519674958071697,
+    "errPct": 12.598374790358484,
     "grade": "yellow",
     "pass": true,
     "expected": "15.0–20.0"
@@ -2241,11 +1051,17 @@
     "type": "Range",
     "series": "state:cvp",
     "source": "tables §7 15: CVP 14–18",
-    "measured": 6.933144101380309,
-    "errPct": 50.47754213299779,
+    "measured": 6.773440971773433,
+    "errPct": 51.6182787730469,
     "grade": "red",
     "pass": false,
-    "expected": "14.0–18.0"
+    "expected": "14.0–18.0",
+    "expectedMiss": {
+     "id": "D: RV diastolic/pericardial mechanics (mechanism brief)",
+     "mechanism": "RV dilation under pericardial constraint and ventricular interdependence in RV infarct (audit V-11)",
+     "since": "2026-11-08",
+     "measured": "CVP 6.8"
+    }
    },
    {
     "doc": "t15-rv-infarct",
@@ -2254,11 +1070,17 @@
     "type": "Range",
     "series": "state:pawp",
     "source": "tables §7 15: PCWP 8–12",
-    "measured": 3.264150917357384,
-    "errPct": 59.1981135330327,
+    "measured": 3.3291050099631208,
+    "errPct": 58.386187375461,
     "grade": "red",
     "pass": false,
-    "expected": "8.00–12.0"
+    "expected": "8.00–12.0",
+    "expectedMiss": {
+     "id": "D: RV diastolic/pericardial mechanics (mechanism brief)",
+     "mechanism": "RV dilation under pericardial constraint and ventricular interdependence in RV infarct (audit V-11)",
+     "since": "2026-11-08",
+     "measured": "PCWP 3.3"
+    }
    },
    {
     "doc": "t15-rv-infarct",
@@ -2267,24 +1089,11 @@
     "type": "Range",
     "series": "state:map",
     "source": "tables §7 15: MAP 60–70",
-    "measured": 85.86564913304278,
-    "errPct": 22.66521304720397,
+    "measured": 87.36117852596064,
+    "errPct": 24.8016836085152,
     "grade": "yellow",
     "pass": true,
     "expected": "60.0–70.0"
-   },
-   {
-    "doc": "t16-septic-shock-warm",
-    "segment": "warm",
-    "target": "map",
-    "type": "Range",
-    "series": "state:map",
-    "source": "tables §7 16: MAP 55–60",
-    "measured": 86.70438241726355,
-    "errPct": 44.50730402877257,
-    "grade": "red",
-    "pass": false,
-    "expected": "55.0–60.0"
    },
    {
     "doc": "t16-septic-shock-warm",
@@ -2293,11 +1102,43 @@
     "type": "Range",
     "series": "state:hr",
     "source": "tables §7 16: HR 115–130",
-    "measured": 75,
-    "errPct": 34.78260869565217,
+    "measured": 87.42060461712518,
+    "errPct": 23.98208294163028,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "115–130"
+   },
+   {
+    "doc": "t16-septic-shock-state",
+    "segment": "established",
+    "target": "map",
+    "type": "Range",
+    "series": "state:map",
+    "source": "research 46 §E: established septic shock, unresuscitated, anaesthetised, ventilated: MAP 49–60 (Garcia 2023, control IQR at 4 h)",
+    "measured": 19.48102930894655,
+    "errPct": 60.24279732868051,
     "grade": "red",
     "pass": false,
-    "expected": "115–130"
+    "expected": "49.0–60.0",
+    "expectedMiss": {
+     "id": "E: septic time course and fluid-refractory vasoplegia (mechanism brief)",
+     "mechanism": "the onset over hours, not a 600-s ramp, and arteriolar tone that fluid alone does not restore (audit V-12)",
+     "since": "2026-11-08",
+     "measured": "MAP 17.4 at 3000–3600 s: 40.9 at 2700–3000 s, then circulatory arrest from ≈ 3000 s"
+    }
+   },
+   {
+    "doc": "t16-septic-shock-fluid",
+    "segment": "after-fluid",
+    "target": "map",
+    "type": "LessThan",
+    "series": "state:map",
+    "source": "research 46 §E: after 30 mL/kg and no vasopressor MAP stays < 65 (Sepsis-3, Singer 2016)",
+    "measured": 51.95278033628014,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "< 65.0"
    },
    {
     "doc": "t17a-class3-no-bb",
@@ -2306,10 +1147,10 @@
     "type": "Range",
     "series": "state:hr",
     "source": "tables §7 17a: HR 120–140",
-    "measured": 75,
-    "errPct": 37.5,
-    "grade": "red",
-    "pass": false,
+    "measured": 94.19805738558536,
+    "errPct": 21.501618845345536,
+    "grade": "yellow",
+    "pass": true,
     "expected": "120–140"
    },
    {
@@ -2319,8 +1160,8 @@
     "type": "Range",
     "series": "state:sbp",
     "source": "tables §7 17a: SBP 80–90",
-    "measured": 101.22065825840497,
-    "errPct": 12.467398064894407,
+    "measured": 97.9062500752395,
+    "errPct": 8.784722305821663,
     "grade": "yellow",
     "pass": true,
     "expected": "80.0–90.0"
@@ -2332,9 +1173,9 @@
     "type": "Range",
     "series": "state:pp",
     "source": "tables §7 17a: PP 20–25",
-    "measured": 27.02526543496354,
-    "errPct": 8.10106173985416,
-    "grade": "yellow",
+    "measured": 22.72640185987459,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
     "expected": "20.0–25.0"
    },
@@ -2345,24 +1186,11 @@
     "type": "Range",
     "series": "state:hr",
     "source": "tables §7 17b: HR 80–95",
-    "measured": 75,
-    "errPct": 6.25,
+    "measured": 64.37082232021933,
+    "errPct": 19.536472099725835,
     "grade": "yellow",
     "pass": true,
     "expected": "80.0–95.0"
-   },
-   {
-    "doc": "t17b-class3-bb",
-    "segment": "late",
-    "target": "sbp",
-    "type": "Range",
-    "series": "state:sbp",
-    "source": "tables §7 17b: SBP 65–80",
-    "measured": 101.35952184472214,
-    "errPct": 26.699402305902673,
-    "grade": "yellow",
-    "pass": true,
-    "expected": "65.0–80.0"
    },
    {
     "doc": "t18-htn-hypocapnia-cbf",
@@ -2370,9 +1198,9 @@
     "target": "etco2",
     "type": "Range",
     "series": "numeric:etco2",
-    "source": "tables §7 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [ENG]",
-    "measured": 15.755,
-    "errPct": 21.224999999999998,
+    "source": "tables §7 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [FIT: EtCO2 proxy for PaCO2 25; brief research/44 V-15]",
+    "measured": 15.7,
+    "errPct": 21.500000000000004,
     "grade": "yellow",
     "pass": true,
     "expected": "20.0–28.0"
@@ -2384,9 +1212,9 @@
     "type": "LessThan",
     "series": "state:hr",
     "source": "tables §7 19: HR 80 → 45–55 at CPP < 40",
-    "measured": 75,
-    "errPct": 25,
-    "grade": "yellow",
+    "measured": 53.22201440951926,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
     "expected": "< 60.0"
    },
@@ -2397,8 +1225,8 @@
     "type": "Range",
     "series": "state:map",
     "source": "tables §7 20: MAP 72 on dobutamine",
-    "measured": 84.18166484498569,
-    "errPct": 10.765348480244327,
+    "measured": 83.74680603075957,
+    "errPct": 10.193165829946805,
     "grade": "yellow",
     "pass": true,
     "expected": "68.0–76.0"
@@ -2409,7 +1237,7 @@
     "target": "et0",
     "type": "Range",
     "series": "numeric:etco2",
-    "source": "normocapnia [ENG]",
+    "source": "normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]",
     "measured": 38.166666666666664,
     "errPct": 0,
     "grade": "green",
@@ -2423,9 +1251,9 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "tables §7 21: EtCO2 40 → 60 by 10 min (±15 %)",
-    "measured": 63.71666666666667,
-    "errPct": 0,
-    "grade": "green",
+    "measured": 73.5,
+    "errPct": 6.521739130434782,
+    "grade": "yellow",
     "pass": true,
     "expected": "51.0–69.0"
    },
@@ -2436,11 +1264,11 @@
     "type": "GreaterThan",
     "series": "numeric:etco2",
     "source": "tables §7 21: keeps rising 3–5 mmHg/min",
-    "measured": 100.07,
+    "measured": 120.32,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "> 78.7"
+    "expected": "> 88.5"
    },
    {
     "doc": "t23-term-apnoea",
@@ -2496,16 +1324,42 @@
    },
    {
     "doc": "t25-rocuronium-sugammadex",
+    "segment": "block",
+    "target": "first-effort",
+    "type": "Range",
+    "series": "lung:effort",
+    "source": "first own effort under the ventilator 12–24 min after rocuronium 0.6 mg/kg: diaphragm recovery onset 15.9 min (young) / 22.0 min (> 65), Moerer 2005; diaphragm twitch 10 % recovery 17 ± 10 min, Cantineau 1994",
+    "measured": 544.1,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "480–1200"
+   },
+   {
+    "doc": "t25-rocuronium-sugammadex",
+    "segment": "block",
+    "target": "effort-before-t2",
+    "type": "GreaterThan",
+    "series": "lung:effort",
+    "source": "tables §7 25: capnogram cleft and spontaneous effort return before TOF ≥ 2 (the effort is present when sugammadex is given at T2)",
+    "measured": 0.75,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "> 0.00"
+   },
+   {
+    "doc": "t25-rocuronium-sugammadex",
     "segment": "recovery",
     "target": "rr-back",
-    "type": "Range",
-    "series": "state:rr",
-    "source": "tables §7 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG]",
-    "measured": 0,
-    "errPct": 100,
-    "grade": "red",
-    "pass": false,
-    "expected": "60.0–240"
+    "type": "GreaterThan",
+    "series": "numeric:awrr",
+    "source": "tables §7 25: off the ventilator after sugammadex 2 mg/kg the patient breathes throughout its onset (TOFR 0.9 in 2.2 min, the label; effort is back before TOF ≥ 2)",
+    "measured": 12,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "> 4.00"
    },
    {
     "doc": "t25-apnoea",
@@ -2514,167 +1368,62 @@
     "type": "Range",
     "series": "state:sbp",
     "source": "asphyxial arrest 5–20 min after the dose [P: DeBehnke 1995; Varvarousi 2011]",
-    "measured": 805,
+    "measured": 807,
     "errPct": 0,
     "grade": "green",
     "pass": true,
     "expected": "300–1200"
    },
    {
-    "doc": "g2-displayed-abp",
-    "segment": "steady",
-    "target": "sys",
-    "type": "Range",
-    "series": "numeric:abpSys",
-    "source": "gate 2 acc. 1: 120.8 (±3)",
-    "measured": 121.32788068305233,
+    "doc": "t17-bb-contrast",
+    "segment": "late",
+    "target": "hr-response-ratio",
+    "type": "LessThan",
+    "series": "derived (t17a-class3-no-bb, t17b-class3-bb)",
+    "source": "research 46 §F: β-blockade blunts the reflex tachycardia, ΔHR(17b) ≤ 0.6 × ΔHR(17a) from each arm's baseline (Bjurstedt 1977: 48 % of control; Kinsky 2008; Havens 2012)",
+    "measured": 0.18907822291530507,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "117–124"
+    "expected": "< 0.60"
    },
    {
-    "doc": "g2-displayed-abp",
-    "segment": "steady",
-    "target": "dia",
-    "type": "Range",
-    "series": "numeric:abpDia",
-    "source": "gate 2 acc. 1: 80.8 (±3)",
-    "measured": 80.27236554598183,
-    "errPct": 0,
-    "grade": "green",
+    "doc": "t17-bb-contrast",
+    "segment": "late",
+    "target": "sbp-ratio",
+    "type": "LessThan",
+    "series": "derived (t17a-class3-no-bb, t17b-class3-bb)",
+    "source": "research 46 §F: awake, SBP(17b) ≤ SBP(17a) at the same loss, direction only (Bjurstedt 1977; Convertino 2000)",
+    "measured": 1.0633977571856215,
+    "errPct": 6.339775718562146,
+    "grade": "yellow",
     "pass": true,
-    "expected": "77.0–84.0"
+    "expected": "< 1.00",
+    "expectedMiss": {
+     "id": "F: preload-fixed stroke volume at low CVP (mechanism brief)",
+     "mechanism": "SV set by preload, so a slower β-blocked heart loses output at near-zero filling pressure (research 46 §F)",
+     "since": "2026-11-08",
+     "measured": "SBP 104.1 / 97.9 = 1.063"
+    }
    },
    {
-    "doc": "g2-displayed-abp",
-    "segment": "after-ramp",
-    "target": "sys",
-    "type": "Range",
-    "series": "numeric:abpSys",
-    "source": "gate 2 acc. 3: 91.2 (±3)",
-    "measured": 90.58442520248515,
-    "errPct": 0,
-    "grade": "green",
+    "doc": "t17-bb-contrast",
+    "segment": "late",
+    "target": "co-ratio",
+    "type": "LessThan",
+    "series": "derived (t17a-class3-no-bb, t17b-class3-bb)",
+    "source": "research 46 §F: awake, CO(17b) < CO(17a) at the same loss, SV unchanged (Convertino 2000)",
+    "measured": 1.0334092543795224,
+    "errPct": 3.3409254379522357,
+    "grade": "yellow",
     "pass": true,
-    "expected": "88.0–94.0"
-   },
-   {
-    "doc": "g2-displayed-abp",
-    "segment": "after-ramp",
-    "target": "dia",
-    "type": "Range",
-    "series": "numeric:abpDia",
-    "source": "gate 2 acc. 3: 52.2 (±3)",
-    "measured": 50.287470538166055,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "49.0–55.0"
-   },
-   {
-    "doc": "g3-rr-three-ways",
-    "segment": "steady",
-    "target": "awrr",
-    "type": "Range",
-    "series": "numeric:awrr",
-    "source": "gate 3: awRR 14.0",
-    "measured": 14,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "13.5–14.5"
-   },
-   {
-    "doc": "g3-rr-three-ways",
-    "segment": "steady",
-    "target": "rr",
-    "type": "Range",
-    "series": "numeric:rr",
-    "source": "gate 3: impedance RR 14.0",
-    "measured": 14,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "13.0–15.0"
-   },
-   {
-    "doc": "g3-peep-map",
-    "segment": "peep5",
-    "target": "map",
-    "type": "Range",
-    "series": "numeric:abpMean",
-    "source": "gate 3: MAP ≈ 97 at PEEP 5 (displayed radial mean) [ENG band]",
-    "measured": 96.07026439447206,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "94.0–104"
-   },
-   {
-    "doc": "g3-peep-map",
-    "segment": "peep15",
-    "target": "drop",
-    "type": "Range",
-    "series": "numeric:abpMean",
-    "source": "gate 3: PEEP 5 → 15 drops MAP by 14 (97 → 83) ± 3",
-    "measured": 82.64723427170392,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "79.1–85.1"
-   },
-   {
-    "doc": "g3-disconnect-apnoea-alarm",
-    "segment": "disconnected",
-    "target": "alarm",
-    "type": "Range",
-    "series": "alarm:apnoea-co2",
-    "source": "gate 3 acc. 3: raised 16.9 s after the event = 20 ± 1 s after the last breath (breath phase adds ≤ 5 s)",
-    "measured": 19.36,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "15.0–22.0"
-   },
-   {
-    "doc": "g4b-asystole-saadat-like",
-    "segment": "arrest",
-    "target": "delay",
-    "type": "Range",
-    "series": "alarm:ASYSTOLE",
-    "source": "gate 4b: asystole 10 s on saadat-like (alarm delays ±1 s, brief §9 V7)",
-    "measured": 9.700000000000003,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "9.00–11.5"
-   },
-   {
-    "doc": "g4b-asystole-philips-like",
-    "segment": "arrest",
-    "target": "delay",
-    "type": "Range",
-    "series": "alarm:ASYSTOLE",
-    "source": "gate 4b: asystole 4 s on philips-like (alarm delays ±1 s, brief §9 V7)",
-    "measured": 3.700000000000003,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "3.00–5.50"
-   },
-   {
-    "doc": "g3-cpr-etco2",
-    "segment": "cpr",
-    "target": "etco2",
-    "type": "Range",
-    "series": "numeric:etco2",
-    "source": "R39-2: default quality 0.8 → ≈ 20 mmHg",
-    "measured": 20.375,
-    "errPct": 0,
-    "grade": "green",
-    "pass": true,
-    "expected": "17.0–23.0"
+    "expected": "< 1.00",
+    "expectedMiss": {
+     "id": "F: preload-fixed stroke volume at low CVP (mechanism brief)",
+     "mechanism": "SV set by preload, so a slower β-blocked heart loses output at near-zero filling pressure (research 46 §F)",
+     "since": "2026-11-08",
+     "measured": "CO 4.02 / 3.89 L/min = 1.033 (SV 62 vs 41 mL at CVP 0.75 vs 0.86)"
+    }
    }
   ]
  },
@@ -2711,18 +1460,24 @@
    "channel": "pleth",
    "n": 625,
    "failed": 625,
-   "maxRelErr": 0.08377837116154878,
-   "rms": 0.07933628435967999,
-   "grade": "red"
+   "maxRelErr": 0.10208983905837132,
+   "rms": 0.08026129149222559,
+   "grade": "red",
+   "expectedMiss": {
+    "id": "H: pleth reference SV₀ = the settled resting SV (PR #333)",
+    "mechanism": "the PI reference stroke volume is the patient's own settled resting SV, not the bare-circuit stabiliser's (brief 79, PR #333)",
+    "since": "2026-11-08",
+    "measured": "625/625 samples > 2 %, max 10.2 %"
+   }
   },
   {
    "case": "sinus-75",
    "channel": "co2",
    "n": 313,
-   "failed": 230,
-   "maxRelErr": 0.05423303705007484,
-   "rms": 1.5642463982406818,
-   "grade": "red"
+   "failed": 0,
+   "maxRelErr": 0,
+   "rms": 0,
+   "grade": "green"
   },
   {
    "case": "afib-110",
@@ -2746,10 +1501,10 @@
    "case": "afib-110",
    "channel": "pleth",
    "n": 625,
-   "failed": 625,
-   "maxRelErr": 0.38865836791147995,
-   "rms": 0.2597378402004606,
-   "grade": "red"
+   "failed": 0,
+   "maxRelErr": 0,
+   "rms": 0,
+   "grade": "green"
   },
   {
    "case": "vf-coarse",
@@ -2773,10 +1528,10 @@
    "case": "bronchospasm",
    "channel": "co2",
    "n": 313,
-   "failed": 234,
-   "maxRelErr": 0.11947297900848591,
-   "rms": 2.51345534258505,
-   "grade": "red"
+   "failed": 0,
+   "maxRelErr": 0,
+   "rms": 0,
+   "grade": "green"
   },
   {
    "case": "hypovolaemia-ppv",
@@ -2791,247 +1546,16 @@
    "case": "hypovolaemia-ppv",
    "channel": "pleth",
    "n": 625,
-   "failed": 625,
-   "maxRelErr": 0.2540276179516687,
-   "rms": 0.24003407841387855,
-   "grade": "red"
+   "failed": 0,
+   "maxRelErr": 0,
+   "rms": 0,
+   "grade": "green"
   }
  ],
- "determinism": {
-  "runs": 216,
-  "nonDeterministic": [],
-  "goldenChanged": [
-   "sinus/1",
-   "sinus/2",
-   "sinus/3",
-   "sinusBrady/1",
-   "sinusBrady/2",
-   "sinusBrady/3",
-   "sinusTachy/1",
-   "sinusTachy/2",
-   "sinusTachy/3",
-   "sinusArrhythmia/1",
-   "sinusArrhythmia/2",
-   "sinusArrhythmia/3",
-   "sinusPause/1",
-   "sinusPause/2",
-   "sinusPause/3",
-   "atrialTach/1",
-   "atrialTach/2",
-   "atrialTach/3",
-   "mat/1",
-   "mat/2",
-   "mat/3",
-   "afib/1",
-   "afib/2",
-   "afib/3",
-   "aflutter/1",
-   "aflutter/2",
-   "aflutter/3",
-   "svtAvnrt/1",
-   "svtAvnrt/2",
-   "svtAvnrt/3",
-   "svtAvrt/1",
-   "svtAvrt/2",
-   "svtAvrt/3",
-   "wpwSinus/1",
-   "wpwSinus/2",
-   "wpwSinus/3",
-   "preexcitedAf/1",
-   "preexcitedAf/2",
-   "preexcitedAf/3",
-   "junctionalEscape/1",
-   "junctionalEscape/2",
-   "junctionalEscape/3",
-   "junctionalAccel/1",
-   "junctionalAccel/2",
-   "junctionalAccel/3",
-   "junctionalTachy/1",
-   "junctionalTachy/2",
-   "junctionalTachy/3",
-   "avb1/1",
-   "avb1/2",
-   "avb1/3",
-   "avb2Mobitz1/1",
-   "avb2Mobitz1/2",
-   "avb2Mobitz1/3",
-   "avb2Mobitz2/1",
-   "avb2Mobitz2/2",
-   "avb2Mobitz2/3",
-   "avb2to1/1",
-   "avb2to1/2",
-   "avb2to1/3",
-   "avbHighGrade/1",
-   "avbHighGrade/2",
-   "avbHighGrade/3",
-   "avb3Narrow/1",
-   "avb3Narrow/2",
-   "avb3Narrow/3",
-   "avb3Wide/1",
-   "avb3Wide/2",
-   "avb3Wide/3",
-   "idioventricular/1",
-   "idioventricular/2",
-   "idioventricular/3",
-   "aivr/1",
-   "aivr/2",
-   "aivr/3",
-   "vtMono/1",
-   "vtMono/2",
-   "vtMono/3",
-   "vtPoly/1",
-   "vtPoly/2",
-   "vtPoly/3",
-   "torsades/1",
-   "torsades/2",
-   "torsades/3",
-   "vfCoarse/1",
-   "vfCoarse/2",
-   "vfCoarse/3",
-   "vfFine/1",
-   "vfFine/2",
-   "vfFine/3",
-   "asystole/1",
-   "asystole/2",
-   "asystole/3",
-   "pWaveAsystole/1",
-   "pWaveAsystole/2",
-   "pWaveAsystole/3",
-   "agonal/1",
-   "agonal/2",
-   "agonal/3",
-   "pacedAAI/1",
-   "pacedAAI/2",
-   "pacedAAI/3",
-   "pacedVVI/1",
-   "pacedVVI/2",
-   "pacedVVI/3",
-   "pacedDDD/1",
-   "pacedDDD/2",
-   "pacedDDD/3"
-  ]
- },
+ "determinism": null,
  "oracle": {
-  "buildHash": "a3be71adfd49bd53eaec7c5e9c7e74ec0878ad0509e545b73ca927478ff6ff74",
-  "rows": [
-   {
-    "scenario": "O1",
-    "id": "hr",
-    "ours": 72,
-    "pulse": 71.13705050353131,
-    "grade": "green",
-    "expected": "±5 % of Pulse",
-    "note": "1.2 %"
-   },
-   {
-    "scenario": "O1",
-    "id": "map",
-    "ours": 87.33333333333336,
-    "pulse": 95.37583640343439,
-    "grade": "yellow",
-    "expected": "±5 % of Pulse",
-    "note": "8.4 %"
-   },
-   {
-    "scenario": "O1",
-    "id": "sao2",
-    "ours": 96.54310534197165,
-    "pulse": 97.44808522456437,
-    "grade": "green",
-    "expected": "±10 % of Pulse",
-    "note": "0.9 %"
-   },
-   {
-    "scenario": "O1",
-    "id": "etco2",
-    "ours": 36.378221940936506,
-    "pulse": 36.72194142737783,
-    "grade": "green",
-    "expected": "±10 % of Pulse",
-    "note": "0.9 %"
-   },
-   {
-    "scenario": "O1",
-    "id": "rr",
-    "ours": 15,
-    "pulse": 12.244897959183639,
-    "grade": "yellow",
-    "expected": "±10 % of Pulse",
-    "note": "22.5 %"
-   },
-   {
-    "scenario": "O1",
-    "id": "cvp",
-    "ours": 6,
-    "pulse": 4.730262945537822,
-    "grade": "yellow",
-    "expected": "±10 % of Pulse",
-    "note": "26.8 %"
-   },
-   {
-    "scenario": "O2",
-    "id": "hr-delta",
-    "ours": 0,
-    "pulse": 47.70191834624316,
-    "grade": "red",
-    "expected": "±20 % of Pulse",
-    "note": "100.0 %"
-   },
-   {
-    "scenario": "O2",
-    "id": "map-delta",
-    "ours": -4.963775036799888,
-    "pulse": -16.339664686534576,
-    "grade": "red",
-    "expected": "±20 % of Pulse",
-    "note": "69.6 %"
-   },
-   {
-    "scenario": "O2",
-    "id": "lactate",
-    "ours": null,
-    "pulse": null,
-    "expected": "n/a",
-    "grade": "yellow",
-    "note": "Pulse aborted after 1570 s (wasm abort); no Pulse value at 1800 s"
-   },
-   {
-    "scenario": "O4",
-    "id": "map-delta",
-    "ours": -18.929036924620405,
-    "pulse": -27.90751831973283,
-    "grade": "red",
-    "expected": "±15 % of Pulse",
-    "note": "32.2 %"
-   },
-   {
-    "scenario": "O4",
-    "id": "hr-150s",
-    "ours": 72,
-    "pulse": 48.938643761278406,
-    "grade": "green",
-    "expected": "Pulse < 58 (D8)",
-    "note": "known Pulse disagreement D8"
-   },
-   {
-    "scenario": "O-VF",
-    "id": "map-60s",
-    "ours": 11.320682035089321,
-    "pulse": 19.434581860856074,
-    "grade": "green",
-    "expected": "±50 % of Pulse",
-    "note": "41.7 %"
-   },
-   {
-    "scenario": "O-VF",
-    "id": "ph-30min",
-    "ours": null,
-    "pulse": 10.577938833559907,
-    "grade": "green",
-    "expected": "Pulse > 7.45 (D1)",
-    "note": "known Pulse disagreement D1"
-   }
-  ],
+  "buildHash": null,
+  "rows": [],
   "backlog": [
    "O3 crystalloid 1 L",
    "O5 norepinephrine 0.1 µg/kg/min",
@@ -3044,5 +1568,5 @@
    "O12 hepatic clearance in haemorrhage"
   ]
  },
- "wallS": 787.8961208339999
+ "wallS": 387.471470167
 }

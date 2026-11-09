@@ -25,6 +25,9 @@ describe('CPR over a beating heart: the coronary supply does not alias the compr
     e.advanceTo(60);
     ev({ kind: 'airwayDevice', device: 'ett' });
     ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 1 });
+    // Brief 93: the card intubates a patient in class IV shock — a rapid-sequence intubation, paralysed (rocuronium
+    // 1.2 mg/kg: RSI with a non-depolariser, 1.0–1.2 mg/kg, Miller 10e ch. 40 p. 1237); unparalysed and unsedated he would breathe against the ventilator
+    ev({ kind: 'drug', drugId: 'rocuronium', dose: 1.2, unit: 'mg/kg', route: 'iv' });
     // the card's two rules: junctional 50 once the systolic stays below 60 for 10 s; "PEA" once it stays below 25 for 10 s
     let below60 = 0;
     let below25 = 0;

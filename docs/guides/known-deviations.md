@@ -25,6 +25,12 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 
 | Test file | Band and measured value (test title, verbatim) | Tracked in |
 |---|---|---|
+| `apps/demo/src/app/showcase/healthy-induction.slow.test.ts` | airway not secured: the first ineffective 31–41 mL breath comes before the pulse loss — measured none at all (the DIAPH_APNOEA crossing is 18.8 min, the loss 18–22 min) | brief 93 (PR #352): the rig set to its source's condition, the band kept, the number recorded; `docs/guides/known-deviations.md` "Test rigs matched to their sources' conditions" |
+| `packages/engine-core/test/engine/circ-sanity-1.test.ts` | class II haemorrhage (25 % over 10 min, awake, breathing — ATLS): HR 100–125 — measured 95.4 (the autonomic hub, audit T-01) | brief 93 (PR #352): the rig set to its source's condition, the band kept, the number recorded; `docs/guides/known-deviations.md` "Test rigs matched to their sources' conditions" |
+| `packages/engine-core/test/engine/circ-sanity-1.test.ts` | β-blocked 35 % haemorrhage, awake, breathing: HR 75–95 (tables §7 17b; prototype 79) — measured 66.3 (the autonomic hub, audit T-01) | brief 93 (PR #352): the rig set to its source's condition, the band kept, the number recorded; `docs/guides/known-deviations.md` "Test rigs matched to their sources' conditions" |
+| `packages/engine-core/test/engine/circ-sympathetic-tone.test.ts` | untreated HTN 60 y falls at least 5 points more than the healthy 40 y — measured 4.42 points (−35.74 vs −31.32 %) on the induction rig (5.14 when the awake patient was ventilated); the HTN tonic size is A23 | brief 93 (PR #352): the rig set to its source's condition, the band kept, the number recorded; `docs/guides/known-deviations.md` "Test rigs matched to their sources' conditions" |
+| `packages/engine-core/test/engine/pk-acceptance-pd.test.ts` | dobutamine 5 µg/kg/min, awake, breathing: the β-blocked profile gets ≤ half of the free CO rise (decision 7) — measured 8.8 of 16.9 % (52 %) | brief 93 (PR #352): the rig set to its source's condition, the band kept, the number recorded; `docs/guides/known-deviations.md` "Test rigs matched to their sources' conditions" |
+| `packages/engine-core/test/l2/neuro/diaphragm-recovery.test.ts` | rocuronium 0.6 mg/kg: the efforts stay below the dead space for ≥ 5 min — measured 2.8 min (first breath 18.8, effective ventilation 22.0 min) | brief 93 (PR #352): the rig set to its source's condition, the band kept, the number recorded; `docs/guides/known-deviations.md` "Test rigs matched to their sources' conditions" |
 | `apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts` | untreated: VF from hyperthermia — measured: no VF in 51 min (core 38.7 °C at +51 min); the band (VF at 42.3 °C, 40–49 min after the sux) needs ≈ 2.3 °C per 15 min, above the registry maximum rates of 0.50–1.00 (E131-2) | `CHANGELOG.md` [Unreleased] E131 (the PR "one muscle metabolic rate for MH … (E131)"); "Malignant hyperthermia now warms the core" (the PR "the MH sympathetic surge constricts the skin … (E131)"); "The untreated MH core rises at the registry median rate" (the PR "E131-2 …") |
 | `apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts` | treated late (the run-sheet path): crisis 1 min into the established crisis — measured: the call comes at +46.6 min (band 17.8–21.8) and Recovering is not reached by 60 min (E131) | `CHANGELOG.md` [Unreleased] E131 (the PR "one muscle metabolic rate for MH … (E131)"); "Malignant hyperthermia now warms the core" (the PR "the MH sympathetic surge constricts the skin … (E131)") |
 | `apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts` | sysMaxAtRosc 194.9–204.9 mmHg, the physiology alone (191.07 + 8.9 from the coronary reading) — measured 210.8: +10.9 is the arterial detector missing feet under compressions over a beating heart (research/41 row 50) | `docs/validation/notes/tamponade-sysmax.md` "The pin on the physiology alone"; `docs/review-inputs/research/44-physiology-compromise-audit.md` rows T-22 / V-24; the detector defect is research/41 row 50 |
@@ -46,7 +52,6 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S5 severe tamponade, PEEP 5 → 10: CO −20 % and MAP ≥ 10 mmHg more than the same PEEP in a healthy patient (Barash; measured ΔMAP 4.1 vs 1.5, CO ×0.88 — 4 vs 1, ×0.89 on the prototype; Q2) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row S5 (Q2) |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 2.7, −97 % with an arrest when propofol removes the tonic sympathetic share — 26.5, −68 % when it does not, 28.7 on the prototype) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "S6a nadir 30–50" (Q1, item 19); the arrest is a record: `docs/gates/stage-fu-8b.md` §4 "Class III haemorrhage + propofol 2 mg/kg" (E-FU8B-2) |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is the owner's, item 15; measured 97.8 %) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "S9 SaO2 (truth)" (item 15, the owner's proposed band) |
-| `packages/engine-core/test/engine/clinical-suite.test.ts` | S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 95.0, CVP 9.3, MAP 82.1) | calibration pass, `docs/validation/target-audit/rulings.tsv` row 44 (brief 88) |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 0–21.9 mmHg (Paradis 1990: 13.4 ± 8.5 with ROSC, none below 0; measured 26.3–28.1) | calibration pass, `docs/validation/target-audit/rulings.tsv` row 25 (brief 88) |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min with the humoral fade (+105 s without it) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "CPR + 2 L + adrenaline after full exsanguination"; §5 "Exceptions", E-FU4-19 |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | 10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 with the outflow limiter, 0.91 without) — measured 1.00 with the pulseless apnoea (the unventilated rig is apnoeic while pulseless) | `docs/gates/fu-6.md` "Fix round (orchestrator gate on PR #28 …)" (reads 1.00: the rig is not ventilated); history in `docs/gates/fu-8-part-a.md` §4 "The rows FU-8 moves" |
@@ -329,6 +334,16 @@ otherwise; no assertion was removed and no band was loosened. Read a run with `g
 | 2026-11-06 | `ui-polish-b.e2e.ts:47` (UI-B #14), CI WebKit, tagged `@known-flaky`: brief 38 | Same run, `e2e (webkit 3/3)`, attempt 1 ended at 53.4 s inside its 90-s wait without the time-out (Playwright ends an expect early only when the page is closed under it), the cuff mid-cycle and normal at 78 mmHg; retry #1 passed in 30.3 s. One cycle from Load is 27.7 sim s (local probe, at ×1 under CPU load). Local WebKit 20/20 | Class (c), crash (outside our code): tagged, with the evidence in the tag's comment and a row in `docs/gates/stage-14/known-flaky.tsv` |
 | 2026-11-06 | `debrief.e2e.ts:230` (a free run) and `fx25-co2-attach.e2e.ts:80`, CI WebKit, tagged `@known-flaky`: brief 38 | PR #288 run 42132450433, `e2e (webkit 1/3)`, attempt 1 of each: "Target page, context or browser has been closed", the free run at 101.7 s inside its 150-s clock wait (no time-out), FX-25 at 32 s on the Devices tab click, before the attach (so not the device-pixel mechanism of #275); no page snapshot in either; both retries passed (FX-25: 0 of 12 captures beyond the sweep). Local WebKit 10/10 (free run) and 20/20 (FX-25) | Class (c), crash (outside our code): tagged, the evidence in each tag's comment, rows in `docs/gates/stage-14/known-flaky.tsv` |
 | 2026-11-06 | `teach2-fit.e2e.ts:505` (a stage's box at 1440 × 900), CI Chromium: brief 38 | PR #264 run 42113324793 attempt 1, `e2e (chromium 2/3)`: after three quick gotos the past stage "Midazolam 2 mg and fentanyl 100 µg given" carried `ip2-skipped` for the full 5 s. The host's clock estimate stepped back when an engine event came in behind it, so a goto got an entry time earlier than the one before it, which the strip reads as a rewind | Class (a), the product: `AppSession.simNow` never returns less than a time it gave on the course (CHANGELOG, Fixed); `sim-clock-monotonic.dom.test.ts` red before, green after. Local Chromium 20/20 before and after |
+| 2026-11-09 | `monitor-worker-busy.e2e.ts:30`, `reload-keeps-case.e2e.ts:117` and `:199`, `debrief.e2e.ts:592`, `saadat-bfi-etaa-row.e2e.ts:120`, CI WebKit, tagged `@known-flaky`: brief 103 | In the 45 `ci` runs with gating WebKit jobs after PR #342 (8 Nov 12:05 to 9 Nov 02:50 UTC), first attempts lost their page ("Target page, context or browser has been closed", once "Page crashed") in 6, 3, 5, 5 and 6 runs (7–13 %); `monitor-worker-busy` on all three attempts in run 42540487370, inside its ≈ 8-s busy-worker step. Two single non-crash first attempts (a 5-s CVP poll, a 60-s AGENTS wait) in runs that also crashed. Local macOS WebKit under load: 14/14, 20/20, 58/60, 20/20, 60/60; Chromium: no sighting | Class (c), crash (outside our code): tagged, the measured rate in each tag's comment, rows in `docs/gates/stage-14/known-flaky.tsv`; the quarantine job keeps measuring them |
+| 2026-11-09 | `case-briefing.e2e.ts:58` (Chromium) and `teach2-keys.e2e.ts:123` (both engines), tagged `@known-flaky` as PRODUCT defects under investigation: brief 103, orchestrator ruling of 9 Nov | **N25**: under load the session clock runs at 0.37–0.70 of real time at a card's start (1.5–2.8 sim-s in the 4-s window, > 2.5 asserted). CI Chromium 1 in 48 runs (42428252701) and PR #361's run 42564540888 (2.41). The first clock comes 3–49 ms after the briefing shows, so this is not an early read. **N26**: under load a staged delivery's onset barely progresses. CI Chromium 1 in 47 runs (no arrival in 100 wall-s), CI WebKit 6 in 45 (5 lost pages; the onset bar at 2 % after 30 wall-s) | Tagged so the quarantine job keeps measuring them instead of blocking merges; each tag's comment names the defect and its rate. The PR that fixes each defect removes its tag; the teach2-keys failure diagnostic is kept. **Fixed by brief 105 (PR fix-session-clock-under-load), both tags off:** the cause was the clock's 250 ms frame clamp (frames every ≈ 400 ms under load lost the rest in silence) and, at a card's start, the worker's start-up delaying the body behind the session clock. The whole wall time is now owed and run in 20-ms ticks within a 50-ms budget per frame, a computer that cannot keep up shows BEHIND and logs it, and the monitor's clock starts at its mount |
+
+## Printing: what a browser does not honour
+
+Limits of the browser's own print layout, measured and kept by the owner's decision; no code works around them.
+
+| Browser | What happens | Measured | What to do |
+|---|---|---|---|
+| Safari (WebKit) | A table row of the printed Debrief report can be cut across a page edge: half the row at the foot of one page, the rest at the top of the next. WebKit does not honour `break-inside: avoid` on table rows (`.debrief .db-table tr` already carries it) | The owner's Safari hand print of 9 November (the steps table, page 6 to 7). Brief 111 (PR #371), a multi-column proxy in Playwright on both engines: Chromium keeps every row whole with the rule, WebKit splits rows as in the owner's print; an avoid-breaking block in each cell made WebKit worse (120 split rows against 72 over 24 offsets) and one `tbody` per row did not help. Only each row as its own fixed-layout table kept rows whole in WebKit (0 split rows), which needs fixed column widths for all six printed tables and drops the repeated header; the owner chose to leave the layout and record it (decision of 9 November, P-S2) | Chromium (Chrome, Edge) keeps rows whole: print the report from Chrome to avoid it |
 
 ## Validation harness: rows outside their band
 
@@ -377,12 +392,37 @@ Groups, in short:
   26.9 against 27.9 (green; it was red). Outside the harness the reflex raises the rate further (HR 139 at 8:00 in the
   showcase haemorrhage run; 69.6 → 149 in an awake 50 % bleed, `cardiac-reflexes-audit.md` §5.1). The tables below
   are the report's until it is regenerated.
-- **Breathing back after sugammadex (t25, 0 s against 60–240 s):** the document has been ventilated from induction
-  since FU-4, and the ventilator is stopped at the moment of sugammadex. Measured on main `458903cc`: the first
-  spontaneous breath comes at that moment (221 mL; effort 1.0 within 0.1 s, 311 mL at +8.6 s), so the 0 s means the
-  effort was already back under the ventilator, 29 min after rocuronium 0.6 mg/kg. The evidence audit predicts exactly
-  that and judges the band mis-specified (target audit row 16: the first effort returns 12–24 min after rocuronium,
-  before any reversal); the row stays as it is until the owner rules on the restated target.
+- **Breathing back after sugammadex (t25):** settled by brief 93 (PR for `feat-respiratory-drive-effort`). The cell had
+  read the tables' 2.2 min — a TOFR-0.9 endpoint — as breathing. It now reads what its sources state about the
+  diaphragm after rocuronium 0.6 mg/kg (Moerer 2005, PMID 15832241: onset of diaphragm recovery 15.9 min young /
+  22.0 min over 65; Cantineau 1994, PMID 8092503: diaphragm twitch 10 % recovery 17 ± 10 min, adductor pollicis
+  34 ± 10), measured under the ventilator through the effort the engine now produces there, and after the ventilator is
+  stopped as the airway rate. Measured on the branch: first effort **13.07 min** after the dose (band 12–24), effort
+  present when sugammadex is given at T2 (0.75 of a resting breath), airway rate ≥ 4 throughout the reversal's onset —
+  all green, and the expected-failure mark G is removed.
+- **Test rigs matched to their sources' conditions (brief 93, the owner's ruling of 8 Nov):** once the engine gives a
+  ventilated patient the drive he has, a MODELED rig that ventilates an **awake, unparalysed** patient makes him breathe
+  against the machine, and the pleural swing changes the haemodynamics such a rig measured on a passive patient. Thirteen
+  rigs were therefore set to the conditions of the source each band came from; **no band was moved, widened or
+  re-recorded**. Awake and breathing (no ventilator): the ATLS class II haemorrhage rows and the tables' §7 17b
+  β-blocked bleed (17a lists a spontaneous RR 28–35), the dobutamine dose–response pair (decision 7), the high-risk-PE
+  SBP < 90 row (ESC 2019's presenting patient, oxygen by mask). Passive on controlled ventilation: the PPV row, on its own
+  rig at VT 8 mL/kg under propofol + rocuronium — Miller 10e ch. 32 p. 1037 states PPV/SVV are valid only under
+  controlled ventilation with VT ≥ 8 mL/kg and a regular rhythm, not in a spontaneously breathing patient, and
+  Michard 2000's 13 % threshold comes from mechanically ventilated ICU patients. Intubated when the clinical story
+  intubates: the class IV haemorrhage card's rigs and the CPR-over-a-beating-heart rig are given the RSI blocker
+  (rocuronium 1.2 mg/kg; Miller 10e ch. 40 p. 1237: RSI with a non-depolariser, 1.0–1.2 mg/kg), and the induction rigs
+  (sympathetic-tone, the low-flow case) breathe on their own until the induction dose and are intubated 30 s after it.
+  Four rows that the **corrected** rig misses keep their bands and are recorded with their numbers (`it.fails`, R45):
+  class II HR 95.4 (100–125) and 17b HR 66.3 (75–95) — both the known missing autonomic hub (audit T-01 / DEV-05, the
+  same gap that makes the gate's class III and IV HR rows red); the HTN-vs-healthy induction gap 4.42 points (≥ 5; the
+  HTN tonic size is the owner's A23); dobutamine's β-blocked share 52 % (≤ 50 %, decision 7).
+- **Six expected failures that the mechanism turned green (brief 93)** and are now plain passing tests: S4b severe
+  tamponade with propofol (MAP nadir 45.9 < 55, CO −31 % ≥ −25 %), awake laryngoscopy (ΔMAP 39.5 in 20–40, ΔHR 13.6 in
+  12–30), RS14 rebreathing in both files (PaCO2 +6.8, EtCO2 +6.16 in 6–10), the VCV Pmax row (healthy delivered VT
+  500.0 mL, band ±5), and the tension-pneumothorax decompression (MAP ≥ 65 at +8 s). The VCV Pmax row is NOT among them any more: with the
+  link's one effort waveform (below) the healthy delivered VT reads 494.3 mL again — main's own number — so that row keeps
+  its `it.fails` exactly as main has it.
 - **Haemorrhage, what is measured:** the systemic vascular resistance rises as the patient bleeds (+659 at 8:00 in
   the showcase kit's haemorrhage run, `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in an awake 50 %
   bleed, `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F3). The reflex does not decompensate: in that awake
@@ -438,7 +478,6 @@ Groups, in short:
 | 🔴 | segments | t16-septic-shock-warm/warm/map | 86.7 | 55.0–60.0 | tables §7 16: MAP 55–60 |
 | 🔴 | segments | t16-septic-shock-warm/warm/hr | 75.0 | 115–130 | tables §7 16: HR 115–130 |
 | 🔴 | segments | t17a-class3-no-bb/late/hr | 75.0 | 120–140 | tables §7 17a: HR 120–140 |
-| 🔴 | segments | t25-rocuronium-sugammadex/recovery/rr-back | 0.0 | 60.0–240 | tables §7 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG] |
 
 **Yellow rows**
 
@@ -494,8 +533,6 @@ Measured locally on this branch (all suites; PWDB refused with 403, so the pwdb-
 | D: RV diastolic/pericardial mechanics (mechanism brief) | RV dilation under pericardial constraint, ventricular interdependence: built in brief 94 (regional RV and inferior-LV ESPVR shifts inside the shared pericardium, Bezold–Jarisch rate); still missing: direct septal interdependence, the ischaemic RV's diastolic stiffening, and a sourced pericardial free space (the resting-engaged sac of Freeman & LeWinter 1986 was built and withdrawn: it moved the resting heart for every patient, PR #351) | t15 rest CVP 8.2 (9–13, Dell'Italia 1985 before volume loading; was 6.8 against the tables' 14–18); PCWP 7.7 (6–14) is green and unmarked | V-11 |
 | E: septic time course and fluid-refractory vasoplegia (mechanism brief) | onset over hours (the condition's τ 600 s compresses those hours into minutes, kept for now); vasoplegia whose depth matches the source | t16-septic-shock-state MAP 17.4 (49–60) | V-12 |
 | F: preload-fixed stroke volume at low CVP (mechanism brief) | SV set by preload, so the slower β-blocked heart loses output | t17-bb-contrast SBP(17b)/SBP(17a) 1.063 (< 1), CO(17b)/CO(17a) 1.033 (< 1) | research 46 §F |
-| G: respiratory effort under controlled ventilation (mechanism brief) | drive and effort visible under the ventilator | t25 rr-back 0 s (60–240 s) | DEV-06 |
-| H: pleth reference SV₀ = the settled resting SV (PR #333) | PI reference SV₀ = the patient's settled resting SV | regression sinus-75/pleth (625/625 samples > 2 %, max 10.2 %) | T-17 |
 
 The three cells C, E and F were set to their sourced physiology (research 46):
 - **C, s9 EtCO2 after VF without CPR.** The 0–30 s row had no source and is replaced. True EtCO2 (`breath:etco2True`)

@@ -1,6 +1,7 @@
 // Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope
 // validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel).
 import { INSTRUMENTS, NOTE_EVENTS, type WireMessage } from './protocol.ts';
+import type { PkRoute } from '@pme/engine-core';
 
 export const WIRE_LIMITS = {
   /** Largest serialised message accepted anywhere (an L1-only snapshot is ≈ 7 KB) [ENG: network]. */
@@ -27,6 +28,18 @@ export const WIRE_LIMITS = {
 export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16 } as const;
 // `batch` (R8c): the most `cmds` one relay-port message packs [ENG: network; at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
 // 16 holds two windows, an animation frame that came late]; `bytes` bounds it too (a steady tick is 0.25 KB).
+
+/**
+ * A learner's `prep` and `infusion` commands (plan learner-action-remote.md §4 D2): `components`, the most products one
+ * preparation draws [ENG: network; a drug, its reconstitution and an admixture are 3]; ids are a formulary or drug-library
+ * id (camelCase today) or a device's own preparation id.
+ */
+export const PREP_LIMITS = { components: 8 } as const;
+const PREP_ID_RE = /^[a-z0-9]{8}$/;
+const ITEM_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+const UNIT_RE = /^[A-Za-z%/.]{1,16}$/;
+/** The routes a preparation is given by: the drug model's (engine-core PkRoute) less `inh`, which is a vaporiser's. */
+const PREP_ROUTES: ReadonlySet<unknown> = new Set<PkRoute>(['iv', 'io', 'im', 'neb', 'sc', 'perineural', 'central']);
 
 /** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */
 export const PIN_RE = /^[0-9]{4,8}$/;
@@ -112,9 +125,14 @@ export function assertWireSafe(m: WireMessage): void {
 }
 
 const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant', 'vent']);
-const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator', 'defib']);
-/** The roles a hello may name an instrument and a device key with: a learner's follower and the defibrillator window (R5c). */
-const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib']);
+const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator', 'defib', 'learner']);
+/**
+ * The roles a hello may name an instrument and a device key with: a learner's follower, the defibrillator window (R5c) and
+ * the learner action remote (learner-action-remote.md §4 D1: its device key is its `by`).
+ */
+const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib', 'learner']);
+/** The roles whose hello proves a PIN (the instructor's, or for `learner` the learner PIN); the last two must carry one. */
+const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner']);
 
 const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
 const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);
@@ -130,6 +148,31 @@ function ventCommandOk(c: unknown): boolean {
 const cmdsOk = (b: unknown): boolean =>
   isObj(b) && b.v === 1 && b.kind === 'cmds' && Number.isInteger(b.tick) && Array.isArray(b.cmds) && b.cmds.length <= VENT_LIMITS.cmds && b.cmds.every(ventCommandOk);
 const isNum = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
+const isPos = (x: unknown) => isNum(x) && (x as number) > 0;
+const isId = (x: unknown) => typeof x === 'string' && ITEM_ID_RE.test(x);
+/** The value types of a `prep` or `infusion` command (§4 D2), whoever sends it; which fields a learner may send is learnerMay's. */
+function prepBodyOk(b: Record<string, unknown>): boolean {
+  if (b.type === 'infusion') return b.action === 'set' && isId(b.drugId) && isNum(b.rateMlH) && (b.rateMlH as number) >= 0;
+  if (b.action === 'stage') {
+    const p = b.prep;
+    if (!isObj(p) || typeof p.id !== 'string' || !PREP_ID_RE.test(p.id)) return false;
+    if (!Array.isArray(p.components) || p.components.length === 0 || p.components.length > PREP_LIMITS.components) return false;
+    if (!p.components.every((k) => isObj(k) && isId(k.productId) && isPos(k.amount) && typeof k.unit === 'string' && UNIT_RE.test(k.unit))) return false;
+    if (p.diluent !== undefined && !(isObj(p.diluent) && isId(p.diluent.id) && isPos(p.diluent.volumeMl))) return false;
+    return p.container === undefined || isId(p.container);
+  }
+  if (typeof b.prepId !== 'string' || !PREP_ID_RE.test(b.prepId)) return false;
+  switch (b.action) {
+    case 'discard':
+      return true;
+    case 'deliver':
+      return (b.volumeMl === 'all' || isPos(b.volumeMl)) && PREP_ROUTES.has(b.route) && (b.overS === undefined || (isNum(b.overS) && (b.overS as number) >= 0));
+    case 'infuse':
+      return isPos(b.rateMlH);
+    default:
+      return false;
+  }
+}
 function ventBodyOk(b: unknown): boolean {
   if (!isObj(b) || b.v !== 1) return false;
   switch (b.kind) {
@@ -184,8 +227,9 @@ export function parseWireMessage(data: unknown): WireMessage | null {
   switch (m.kind) {
     case 'hello':
       if (!ROLES.has(m.role as string)) return null;
-      if (m.pin !== undefined && ((m.role !== 'instructor' && m.role !== 'ventilator') || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
-      if (m.role === 'ventilator' && m.pin === undefined) return null; // R8a: a device that drives the patient proves the PIN
+      if (m.pin !== undefined && (!PIN_WITH.has(m.role) || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
+      // R8a: a device that drives the patient proves the PIN; L3 (LQ1): the learner remote proves the learner PIN
+      if ((m.role === 'ventilator' || m.role === 'learner') && m.pin === undefined) return null;
       if (m.show !== undefined && (!SHOWS_WITH.has(m.role) || !SHOWS.has(m.show))) return null;
       if (m.device !== undefined && (!SHOWS_WITH.has(m.role) || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
@@ -194,6 +238,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       if (!b || typeof b !== 'object' || typeof b.id !== 'string' || typeof b.type !== 'string' || typeof b.issuedBy !== 'string') return null;
       if (b.type === 'note' && ((b.kind !== 'note' && b.kind !== 'marker') || typeof b.text !== 'string' || b.text.length > WIRE_LIMITS.noteChars)) return null;
       if (b.type === 'note' && b.ev !== undefined && !(NOTE_EVENTS as readonly unknown[]).includes(b.ev)) return null; // a known tag only
+      if ((b.type === 'prep' || b.type === 'infusion') && !prepBodyOk(b)) return null; // L3: a learner's shapes, typed
       break;
     }
     case 'ack':

@@ -121,7 +121,7 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
     expect(a).toBeDefined();
     expect((a as number) - 660).toBeLessThanOrEqual(600);
   });
-  it.fails('S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)', async () => {
+  it('S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)', async () => {
     const r = await scenario([[60, TAMP], [660, drug('propofol', 1, 'mg/kg')]], 1260);
     const co0 = mean(win(r, 630, 660), 'co');
     const w = win(r, 660, 840);
@@ -197,7 +197,11 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
   });
   // Band to its source (calibration-pass ruling, brief 88): massive PE is acute PE with hypotension, SBP < 90 (Dellinger 5e
   // ch. 42 p. 682). The CVP ≥ 15 and MAP < 65 edges had no source (Miller & Sutton 1970: RVEDP 11.5 ± 4.9) and are removed.
-  it.fails('S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 95.0, CVP 9.3, MAP 82.1)', async () => {
+  // Re-merge of 9 Nov (brief 112): this band came from main (brief 88) after PR #352 branched; on the merge the patient's
+  // effort under the ventilator (mechanism G, the pleural swing on the heart) brings the SBP 5 min after the PE (360–420 s) to 89.2 (main alone
+  // 95.0, CVP 11.5, MAP 81.6; the branch alone CVP 13.7, MAP 77.3), so the expected failure turned green and is a plain
+  // test with its number. Met by 0.8 mmHg — a knife edge; the band is untouched.
+  it('S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 89.2, CVP 12.5, MAP 76.9 with the patient effort of mechanism G; 95.0 before it)', async () => {
     const w = win(await s9(), 360, 420);
     console.log(`S9: SBP ${mean(w, 'sbp').toFixed(1)}`);
     expect(mean(w, 'sbp')).toBeLessThan(90);

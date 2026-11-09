@@ -5,7 +5,11 @@ import type { Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 
 export async function startVite(): Promise<{ vite: ViteDevServer; base: string }> {
-  const vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
+  // PME_E2E_PORT: a fixed port per Playwright worker (that port + TEST_PARALLEL_INDEX), for a machine whose runs must keep
+  // to a port range; unset, the system picks a free one
+  const fixed = Number(process.env.PME_E2E_PORT) || 0;
+  const port = fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0;
+  const vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port, strictPort: !!fixed, host: '127.0.0.1' }, logLevel: 'error' });
   await vite.listen();
   const addr = vite.httpServer?.address();
   return { vite, base: `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}` };

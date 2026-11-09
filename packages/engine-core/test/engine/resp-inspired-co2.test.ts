@@ -26,9 +26,13 @@ describe('rebreathing acts on PaCO2', { timeout: 600_000 }, () => {
   // widened — the alveolar-washout fall moves the EtCO2 rise to +5.99994, red by 6 × 10⁻⁵. PaCO2 +6.7 unchanged.
   // research/44 L2-26 (Bowman's pressure 17.1 → 18, the sourced value): the renal acid–base term moves the EtCO2 rise
   // from +5.99994 to +6.00045, so the band is met — by 4.5 × 10⁻⁴, a knife edge, not a rebreathing mechanism change.
-  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.67 / EtCO2 +6.00045 (was +5.99994 before Bowman 18)', async () => {
+  // Re-merge of 9 Nov (brief 112): both sides flipped this row — PR #352 (mechanism G, the drive and effort under the
+  // ventilator) and main (Bowman 18). On the merge of both the rise reads PaCO2 +6.665 / EtCO2 +6.01240; band untouched.
+  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.67 / EtCO2 +6.0124 with the brief-93 effort (+6.00045 after Bowman 18, +5.99994 before)', async () => {
     const c = await run(0);
     const r = await run(8);
+    // eslint-disable-next-line no-console -- the PR's numbers
+    console.log(`brief 93 RS14: PaCO2 +${(r.pa - c.pa).toFixed(3)}, EtCO2 +${(r.et - c.et).toFixed(5)}`);
     expect(r.pa - c.pa).toBeGreaterThanOrEqual(6);
     expect(r.pa - c.pa).toBeLessThanOrEqual(10);
     expect(r.et - c.et).toBeGreaterThanOrEqual(6);

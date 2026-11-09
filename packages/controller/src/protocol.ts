@@ -26,9 +26,11 @@ import type { RelayFrame } from './transport/relay-frames.ts';
  * (plan room-and-instruments.md R8a, §4 D9): the cockpit on another device, which proves the same PIN and, once granted,
  * exchanges only `vent` messages with the host — it sends no `command`. `defib` (R5c, Q5 ruled 5 November): the learner
  * defibrillator window, which joins as a learner does (no PIN) and follows as a viewer, and may send only
- * LEARNER_DEFIB_COMMANDS.
+ * LEARNER_DEFIB_COMMANDS. `learner` (plan learner-action-remote.md L3, §4 D9; LQ1 ruled 9 November): the learner action
+ * remote, which proves the LEARNER PIN (never the instructor's) in its hello, is pending until the host grants it, follows
+ * as a viewer, and may send only LEARNER_COMMANDS.
  */
-export type Role = 'host' | 'controller' | 'viewer' | 'instructor' | 'ventilator' | 'defib';
+export type Role = 'host' | 'controller' | 'viewer' | 'instructor' | 'ventilator' | 'defib' | 'learner';
 export type TransportKind = 'in-process' | 'postMessage' | 'broadcastChannel' | 'websocket' | 'webrtc';
 export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
@@ -113,7 +115,33 @@ export type ExtraCommand = CommandBase &
         type: 'attachSensor'; sensor: SensorId; state: string; site?: string; leadSet?: 3 | 5 | 12;
         sampling?: 'sidestream' | 'mainstream';
       }
+    | PrepCommand
+    | InfusionSetCommand
   );
+/**
+ * Plan learner-action-remote.md §4 D2: a learner remote asks the HOST to make (`stage`), throw away (`discard`), give as a
+ * bolus from (`deliver`) or run as an infusion from (`infuse`) one of its own preparations. The host computes everything
+ * clinical from the formulary (D3, L4): the device names products, amounts and volumes, never a concentration, a finding or
+ * a fraction. `prep.id` is the device's own name for the preparation ([a-z0-9]{8}, unique per device); the later actions
+ * name it as `prepId` (D2 wrote `id`, which is the command's own id on the wire; `prepId` is the name D3 gives it on the
+ * applied drug command). The host never forwards a `prep` command to the engine.
+ */
+export type PrepCommand =
+  | { type: 'prep'; action: 'stage'; prep: { id: string; components: PrepComponent[]; diluent?: { id: string; volumeMl: number }; container?: string } }
+  | { type: 'prep'; action: 'discard'; prepId: string }
+  | { type: 'prep'; action: 'deliver'; prepId: string; volumeMl: number | 'all'; route: PkRoute; overS?: number }
+  | { type: 'prep'; action: 'infuse'; prepId: string; rateMlH: number };
+/** One product drawn into a preparation: the formulary's product id, and how much of it, in that product's unit. */
+export interface PrepComponent {
+  productId: string;
+  amount: number;
+  unit: string;
+}
+/**
+ * §4 D2 4b (LQ4 ruled, option B): change, or at 0 stop, ANY running infusion of `drugId`, whoever started it; the host keeps
+ * that infusion's own concentration and records the rate it replaced (L4).
+ */
+export type InfusionSetCommand = { type: 'infusion'; action: 'set'; drugId: string; rateMlH: number };
 /** The run events a `note` command may carry (the guard refuses any other): 'recognised', the /1 Recognised press
  *  (the demo's record.ts KEEPS; brief 52). */
 export const NOTE_EVENTS = ['recognised'] as const;
@@ -202,7 +230,14 @@ export type ExtraEvent =
    * The host's view feed for a granted instructor (plan §6): what Instructor v2 shows (rows, cue, strip), computed by
    * the host app. Opaque here, and never in VIEWER_EVENTS: learners never receive it.
    */
-  | { type: 'instructorView'; t: SimSeconds; body: unknown };
+  | { type: 'instructorView'; t: SimSeconds; body: unknown }
+  /**
+   * Plan learner-action-remote.md §4 D7: a preparation's news (made, its findings, the notice, delivered, discarded), for
+   * the host's own screens, granted instructors and the ONE learner socket that staged it, named by its peer id in `to`.
+   * Never in VIEWER_EVENTS: the relay sends it to no other learner, viewer or defibrillator window. `body` is the host's
+   * (L4); opaque here, as instructorView's.
+   */
+  | { type: 'prep'; t: SimSeconds; to: string; body: unknown };
 
 /** A running Case briefing: the card's `briefing` with its defaults, and when the host started it (epoch ms, its clock). */
 export interface BriefingNotice {
@@ -301,9 +336,9 @@ export type VentLinkKind = VentLinkBody['kind'];
 
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  // `pin`: only with role 'instructor' or 'ventilator' (which must carry one), 4 to 8 digits; `show` and `device` (a key
-  // the device keeps, [a-z0-9]{8,16}): only with role 'viewer' or 'defib' (guard.ts; plan room-and-instruments.md §4 D1,
-  // R8a, R5c)
+  // `pin`: only with role 'instructor', 'ventilator' or 'learner' (the last two must carry one; a learner's is the LEARNER
+  // PIN), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role 'viewer', 'defib' or
+  // 'learner' (guard.ts; plan room-and-instruments.md §4 D1, R8a, R5c; learner-action-remote.md §4 D1, L3)
   | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
   /**
    * R8a: a ventilator link message between the host and ONE granted ventilator (the relay routes it, R8b): from the
@@ -421,6 +456,66 @@ export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
     return 'The defibrillator window sends Charge and Shock only.';
   const extra = [...Object.keys(c).filter((k) => !DEFIB_COMMAND_KEYS.has(k)), ...Object.keys(ev).filter((k) => !DEFIB_EVENT_KEYS.has(k))];
   if (extra.length > 0) return `The room's defibrillator sets the rest (${extra.join(', ')} is not the window's).`;
+  return null;
+}
+
+// --- what the learner action remote may send (plan learner-action-remote.md L3, §4 D2) ---------------------------
+/**
+ * The shapes a GRANTED `learner` peer may send (§4 D2), nothing else: its preparations, a change to any running infusion
+ * (LQ4), a sample. No raw `applyEvent drug` or `infusion` (the host turns a delivery into those, D3), no defibrillator, no
+ * clock, scenario, device, note or pin.
+ */
+export const LEARNER_COMMANDS: ReadonlySet<string> = new Set(['prep stage', 'prep discard', 'prep deliver', 'prep infuse', 'infusion set', 'applyEvent lab']);
+/**
+ * The panels a learner may draw (§4 D2 item 5): the engine's panels today (engine-core types-blood.ts `lab`). L10a adds the
+ * laboratory panels LQ2 ruled when the engine computes them, so a learner never asks for a panel the engine refuses.
+ */
+export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set(['abg', 'vbg']);
+/** Every field each learner shape may carry, on the command (`cmd`) and inside it; any other field is refused (§4 D2). */
+const LEARNER_KEYS: Readonly<Record<string, { cmd: readonly string[]; need: readonly string[] }>> = {
+  'prep stage': { cmd: ['prep'], need: ['prep'] },
+  'prep discard': { cmd: ['prepId'], need: ['prepId'] },
+  // a tray delivered at once is one stageGroup, its items numbered by `batch` as today (§4 D2 item 3)
+  'prep deliver': { cmd: ['prepId', 'volumeMl', 'route', 'overS', 'stageGroup', 'batch'], need: ['prepId', 'volumeMl', 'route'] },
+  'prep infuse': { cmd: ['prepId', 'rateMlH'], need: ['prepId', 'rateMlH'] },
+  'infusion set': { cmd: ['drugId', 'rateMlH'], need: ['drugId', 'rateMlH'] },
+  'applyEvent lab': { cmd: ['event'], need: ['event'] },
+};
+const PREP_KEYS: ReadonlySet<string> = new Set(['id', 'components', 'diluent', 'container']);
+const COMPONENT_KEYS: ReadonlySet<string> = new Set(['productId', 'amount', 'unit']);
+const DILUENT_KEYS: ReadonlySet<string> = new Set(['id', 'volumeMl']);
+const BATCH_KEYS: ReadonlySet<string> = new Set(['id', 'n']);
+const LAB_EVENT_KEYS: ReadonlySet<string> = new Set(['kind', 'panel']);
+const isRecord = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
+const strays = (o: Record<string, unknown>, keys: ReadonlySet<string>, at: string) => Object.keys(o).filter((k) => !keys.has(k)).map((k) => `${at}${k}`);
+
+/**
+ * Null when a granted `learner` peer may send `c` (one of LEARNER_COMMANDS, with its own fields only), else the reason it is
+ * refused (§4 D2). The relay asks it of every learner command, and the host asks it again (L4). The values' types are the
+ * guard's (guard.ts); the clinical meaning of every value is the host's, from the formulary (D3).
+ */
+export function learnerMay(c: WireCommand | CommandInput): string | null {
+  const x = c as Record<string, unknown>;
+  const shape = commandShape(c);
+  const keys = LEARNER_KEYS[shape];
+  if (!LEARNER_COMMANDS.has(shape) || keys === undefined) return "The learner remote sends its preparations, an infusion's rate and a sample only.";
+  const extra = strays(x, new Set(['id', 'issuedBy', 'type', ...(shape === 'applyEvent lab' ? [] : ['action']), ...keys.cmd]), '');
+  const missing = keys.need.filter((k) => x[k] === undefined);
+  if (missing.length > 0) return `A learner's ${shape} needs ${missing.join(', ')}.`;
+  if (shape === 'prep stage') {
+    const p = x.prep;
+    if (!isRecord(p) || !Array.isArray(p.components)) return "A learner's prep stage needs a preparation with its components.";
+    extra.push(...strays(p, PREP_KEYS, 'prep.'));
+    for (const [i, k] of p.components.entries()) extra.push(...(isRecord(k) ? strays(k, COMPONENT_KEYS, `prep.components[${i}].`) : [`prep.components[${i}]`]));
+    if (p.diluent !== undefined) extra.push(...(isRecord(p.diluent) ? strays(p.diluent, DILUENT_KEYS, 'prep.diluent.') : ['prep.diluent']));
+  }
+  if (shape === 'prep deliver' && x.batch !== undefined) extra.push(...(isRecord(x.batch) ? strays(x.batch, BATCH_KEYS, 'batch.') : ['batch']));
+  if (shape === 'applyEvent lab') {
+    const ev = x.event as Record<string, unknown>;
+    extra.push(...strays(ev, LAB_EVENT_KEYS, 'event.'));
+    if (!LEARNER_LAB_PANELS.has(String(ev.panel))) return `A learner draws ${[...LEARNER_LAB_PANELS].join(' or ')} only.`;
+  }
+  if (extra.length > 0) return `The instructor's computer sets the rest (${extra.join(', ')} is not the learner remote's).`;
   return null;
 }
 

@@ -3,17 +3,19 @@
 // return to a bookmark included, struck through as undone; a staged delivery on one line), the card's steps with
 // their status (Instructor v2, IP8) — for a pme-scenario/2 run the action table with its grades, the outcomes, the
 // violations (plan F7; a team act the instructor observes is a record action in the table: judged rows are retired,
-// the owner's ruling of 5 November) —, bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
-// appendix; page 1 reads the key times, the course strip (the instructor's marks on it at their times) and the
-// objectives, page 2 the key moments with what the
-// monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
+// the owner's ruling of 5 November) —, bookmarks with a mark's kind and note and the instructor's notes (the printed
+// one-row-per-minute appendix was deleted by the owner on 9 November; the JSON keeps `minutes`); page 1 reads the key
+// times and the course strip (the instructor's marks on it at their times) with the swimlane under it (the owner, 9
+// November), page 2 the objectives and the key moments with what the monitor showed (Debrief redesign B; a run with
+// no key moment keeps its objectives on page 1), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
 // The archive (board "Finish 2", archive.ts): a debrief "Finish the case" saved opens here (#/debrief/archive/<id>, and
 // …/print prints it), with the resident's name in the header band and the handout's; the view lists the archive in its
 // own section (screen only), exports it all as one JSON file and clears it behind a confirm.
 // Persian (Debrief 2, D13): a switch beside the print buttons (per browser, English by default; i18n/lang.ts, also the
-// Briefing's language) draws the two live containers, the handout and the footer through the one table and matcher the
+// Briefing's language) draws the two live containers, the talking points, the notes' heading, the handout and the
+// footer through the one table and matcher the
 // handout script uses (i18n/fa-dom.ts), right to left in the bundled Vazirmatn; while an entry printed is unread by the
 // owner, "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed page (DQ10).
 import { asV1, type MarkKind } from '@pme/controller';
@@ -21,10 +23,10 @@ import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
-import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
+import { TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey } from '../record.ts';
 import { COURSE_W, courseSvg, tracePath, type CourseMark } from './debrief-course.ts';
 import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
 import { MARKS } from '../teach2/dock.ts';
@@ -158,12 +160,16 @@ const MARK_SVG: Readonly<Record<Who, (x: number, top: number) => string>> = {
 };
 const MARK_INK: Readonly<Record<Who, string>> = { team: '#0072B2', patient: '#D55E00', scenario: '#777' };
 
+/** A chart's caption takes its direction from its own first letter (P-S5): a trend's label and unit are Latin
+ *  throughout, so in the Persian page they read left to right ("HR bpm", not "bpmHR" laid right to left); the Pressures
+ *  caption, which the table puts into Persian, stays right to left. The unit is its own isolated run (debrief.css). */
+const CAPTION = { dir: 'auto' } as const;
 /** One trend as inline SVG over the kept course: a black line with gaps where nothing was measured, the first and
  *  last value of the axis, minutes on the time axis, a dashed line at each return to a bookmark, and the numbered key
  *  moments. */
 function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }> = []): HTMLElement {
   const m = trendMeta(k);
-  const fig = h('figure', { class: 'db-chart', 'data-trend': k }, h('figcaption', {}, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null));
+  const fig = h('figure', { class: 'db-chart', 'data-trend': k }, h('figcaption', CAPTION, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null));
   const pts = d.samples.filter((s) => s[k] !== null);
   if (!pts.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
   const vals = pts.map((s) => s[k] as number);
@@ -230,7 +236,7 @@ function pressurePath(d: RunData, k: PressureKey, x: (t: number) => number, y: (
  *  draw a CVP of 5–20 mmHg as a flat line. A record made before Debrief 2 (no 'pressures' in `keeps`) has no panel. */
 function pressuresChart(d: RunData, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }>): HTMLElement | null {
   if (!d.keeps?.includes('pressures')) return null;
-  const fig = h('figure', { class: 'db-chart', 'data-trend': 'pressures' }, h('figcaption', {}, 'Pressures', h('span', { class: 'unit' }, PRESSURES_UNIT)));
+  const fig = h('figure', { class: 'db-chart', 'data-trend': 'pressures' }, h('figcaption', CAPTION, 'Pressures', h('span', { class: 'unit' }, PRESSURES_UNIT)));
   const vals = (k: PressureKey) => d.samples.map((s) => s[k]).filter((v): v is number => typeof v === 'number');
   const [sys, dia, cvp] = PRESSURE_KEYS.map(vals) as [number[], number[], number[]];
   if (!sys.length && !dia.length && !cvp.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
@@ -263,9 +269,12 @@ const runFoot = (): HTMLElement => h('p', { class: 'db-runfoot', 'aria-hidden': 
 const PAGE_CSS = `@page { @bottom-left { content: "${FOOT}"; font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; }
 @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; } }`;
 
-/** The bundled print font (debrief.css @font-face): loaded on entering the view, and awaited before the print buttons
+/** Every code point of the bundled "Print Symbols" faces (debrief.css, brief 113): a face with a unicode-range loads
+ *  only for text it covers, so the load names them all. */
+export const PRINT_SYMBOLS = '\u207A\u2082\u2192\u21BA\u2248\u2264\u2265\u2713\u2717\u2502\u25A0\u25A1\u25AC\u25AD\u25B2\u25B8\u25BC\u25BD\u25C6\u25C7\u25CB\u25CF';
+/** The bundled print fonts (debrief.css @font-face): loaded on entering the view, and awaited before the print buttons
  *  print, so a print never lays out in a fallback font. A failed load still prints (in the system font). */
-const loadPrintFont = (): Promise<unknown> => Promise.all([document.fonts?.load("1em 'Inter Print'"), hostLang() === 'fa' ? document.fonts?.load('1em Vazirmatn') : undefined]).catch(() => undefined);
+const loadPrintFont = (): Promise<unknown> => Promise.all([document.fonts?.load("1em 'Inter Print'"), document.fonts?.load("1em 'Print Symbols'", PRINT_SYMBOLS), hostLang() === 'fa' ? document.fonts?.load('1em Vazirmatn') : undefined]).catch(() => undefined);
 const printWithFont = (): void => void loadPrintFont().then(() => window.print());
 
 /** D13: the Persian page's @page boxes: the footer (the table's footer entry, as the foot line printed it) right,
@@ -283,31 +292,10 @@ function pageCssFa(foot: string, draft: boolean, p: FaPass): string {
 @top-center { content: ${css(DRAFT_LINE)}; font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: bottom; }` : ''} }`;
 }
 
-/** The pressures' column heads (D6), each in whole mmHg as the record keeps it. */
-const PRESSURE_HEAD: Readonly<Record<PressureKey, string>> = { sys: 'SBP', dia: 'DBP', cvp: 'CVP' };
 /** What a record made before Debrief 2 lacks, said once under a table (plan §3: a missing fact is "not recorded in this
  *  file", never a dash, which means "not measured"). */
 const NOT_RECORDED = ' not recorded in this file.';
 const notRecorded = (what: string): HTMLElement => h('p', { class: 'db-norecord' }, `${what}:${NOT_RECORDED}`);
-
-/** Q1: the appendix table — the six trends, the systolic, diastolic and CVP after MAP (D6), and the five labs, the first
- *  sample of each minute; a pre-D file prints "·" in the pressures and says once that they were not recorded. */
-function minutes(d: RunData): HTMLElement {
-  const kept = !!d.keeps?.includes('pressures');
-  const keys: Array<ValueKey | PressureKey> = [...TREND_KEYS.flatMap((k): Array<ValueKey | PressureKey> => (k === 'map' ? [k, ...PRESSURE_KEYS] : [k])), ...LAB_KEYS];
-  const isP = (k: ValueKey | PressureKey): k is PressureKey => (PRESSURE_KEYS as string[]).includes(k);
-  const head = keys.map((k) => {
-    const m = isP(k) ? { label: PRESSURE_HEAD[k], unit: 'mmHg' } : trendMeta(k);
-    return h('th', { scope: 'col' }, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null);
-  });
-  const cell = (k: ValueKey | PressureKey, v: number | null | undefined) =>
-    h('td', { class: 'num' }, isP(k) && !kept ? '·' : v === null || v === undefined ? '–' : isP(k) ? String(v) : v.toFixed(trendMeta(k).digits));
-  return h('div', { class: 'db-scroll' }, h('table', { class: 'db-table db-minutes' },
-    h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), ...head)),
-    h('tbody', {}, ...perMinute(d).map((r) => h('tr', {}, h('td', { class: 'num' }, mmss(r.t)),
-      ...keys.map((k) => cell(k, (r.values as Record<string, number | null | undefined>)[k])))))),
-  kept ? null : notRecorded('SBP, DBP and CVP'));
-}
 
 /** The shapes of the moments: the report's course strip (`debrief-course.ts`) draws each as a down arrow, a scenario
  *  state's outlined; the learner's strip a square, a dot and an open square; a trend chart a square, a dot and a bare
@@ -491,28 +479,39 @@ export function debriefView(session: AppSession, link: Link): View {
   // between them are created once here and never re-created or re-appended, so typing in them is never interrupted
   const live1 = h('div', { id: 'db-live-1' });
   const live2 = h('div', { id: 'db-live-2' });
-  const pearls = section('pearls', 'Talking points', h('div', { class: 'db-pearls' },
-    ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt)))));
+  const PEARLS_H = 'Talking points';
+  const pearlBoxes = (): HTMLElement => h('div', { class: 'db-pearls' }, ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt))));
+  const pearls = section('pearls', PEARLS_H, pearlBoxes());
+  const NOTES_H = 'Notes';
+  const notesSec = section('notes', NOTES_H, notes);
+  const notesH = notesSec.firstElementChild as HTMLElement;
   const handout = h('div', { class: 'db-handout-live' });
   const HANDOUT_H = 'Learner handout (printed separately)';
   const handoutH = h('h2', { id: 'db-handout-h' }, HANDOUT_H);
   const handoutSec = h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, handoutH, handout);
   const foot = h('footer', { class: 'db-foot db-runfoot' }, FOOT);
   // D13: the language of the report and the handout (per browser, English by default; Decision 15: the host's one
-  // setting, also the Briefing's language). Only the two live containers, the handout and the footer change with it.
+  // setting, also the Briefing's language). The two live containers, the talking points, the notes' heading, the
+  // handout and the footer change with it.
   const draft = h('p', { class: 'db-draft', lang: 'en', dir: 'ltr', hidden: true }, DRAFT_LINE);
   const faMissing = h('details', { class: 'db-fa-missing', hidden: true }, h('summary', {}), h('ul', {}));
   const langSwitch = seg<HostLang>('Language of the report', [['en', 'English'], ['fa', 'فارسی']], hostLang(), (l) => (setHostLang(l), render()));
   langSwitch.lang = 'en'; // the Persian option names itself in Persian
   const pageStyle = h('style', { id: 'db-page-style' }, PAGE_CSS);
   /** The page in the host's language: Persian puts the containers right to left and through the table, counts what
-   *  the table lacks (listed on screen) and, while an entry printed is unread, shows DQ10's line. */
+   *  the table lacks (listed on screen) and, while an entry printed is unread, shows DQ10's line. The talking points
+   *  and the notes' heading, made once outside the live containers (Decision 11), go through it too (P-S3: they
+   *  printed in English): the talking points hold no typing and are drawn afresh in English first; of the notes only
+   *  the heading is touched, the typed notes never. */
   const applyLang = (): void => {
     const fa = hostLang() === 'fa';
     langSwitch.set(fa ? 'fa' : 'en');
     handoutH.textContent = HANDOUT_H;
     foot.textContent = FOOT;
-    for (const x of [live1, live2, handoutSec, foot]) {
+    pearls.replaceChildren(h('h2', { id: 'db-pearls-h' }, PEARLS_H), pearlBoxes());
+    notesH.textContent = NOTES_H;
+    const parts = [live1, live2, pearls, notesH, handoutSec, foot];
+    for (const x of parts) {
       if (fa) x.setAttribute('lang', 'fa'), x.setAttribute('dir', 'rtl');
       else x.removeAttribute('lang'), x.removeAttribute('dir');
     }
@@ -522,7 +521,7 @@ export function debriefView(session: AppSession, link: Link): View {
       return;
     }
     const p = faPass();
-    for (const x of [live1, live2, handoutSec, foot]) translateTree(x, p);
+    for (const x of parts) translateTree(x, p);
     pageStyle.textContent = pageCssFa(foot.textContent ?? FOOT, false, p);
     const unread = unreviewed(p);
     draft.hidden = !unread;
@@ -594,7 +593,12 @@ export function debriefView(session: AppSession, link: Link): View {
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
-      d.samples.length ? section('course', 'The course', legend('course', ' · numbers match Key moments', markKeys(cm)), course) : null,
+      // the owner, 9 November (decision B): the swimlane under the course strip, in its section, with no heading of its own
+      d.samples.length ? section('course', 'The course', legend('course', ' · numbers match Key moments', markKeys(cm)), course,
+        ms.length ? h('div', { id: 'db-swimlane', class: 'db-swimlane' }, swimLegend(r3 !== null), swim) : null) : null,
+      // page 1 is then full (the swimlane is 47–60 mm high on the recorded runs): the objectives open page 2, the key
+      // moments follow them there; a run without key moments has no swimlane and keeps its objectives on page 1
+      ms.length && !r3 ? runFoot() : null,
       r3 ? null
       : section('objectives', 'Objectives', h('p', { class: 'db-subhead' }, 'What the record shows: it reads the run, it does not grade the person'), obj.length
         ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
@@ -603,8 +607,8 @@ export function debriefView(session: AppSession, link: Link): View {
             o.verdict.measure ? bar(o.verdict.measure) : null, h('div', { class: 'db-why' }, m.why));
         }))
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
-      // page 2 (DQ5, option A), which a run with key moments has: the swimlane at its head, then the key moments
-      ...(ms.length ? [runFoot(), section('swimlane', 'The run, lane by lane', swimLegend(r3 !== null), swim), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
+      // the key moments: page 2's head on a /2 run (no objectives), after the objectives on page 2 otherwise
+      ...(ms.length ? [r3 ? runFoot() : null, section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
       hintsSection(d, ms),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
@@ -635,8 +639,6 @@ export function debriefView(session: AppSession, link: Link): View {
       section('bookmarks', 'Bookmarks', marks.length
         ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, nums.has(r) ? numberedLine(r, nums.get(r) as number) : markLine(r))))
         : h('p', { class: 'muted' }, 'No bookmarks.')),
-      runFoot(),
-      section('minutes', 'Appendix: one row per minute', minutes(d)),
     );
     // the learner handout (E51): what happened and when, no verdict, no objective, no value
     const learnerCourse = h('div', { class: 'db-course' });
@@ -673,23 +675,23 @@ export function debriefView(session: AppSession, link: Link): View {
   const drawArchive = () => {
     const all = archive.list().length;
     const today = archive.savedToday();
-    arcCount.textContent = all ? `${today} saved today${all > today ? `, ${all} in all` : ''} · kept in this browser until you clear it` : 'Nothing saved in this browser. “Finish the case” in Instructor v2 saves each run here.';
+    arcCount.textContent = all ? `${archive.holdsLine()}, ${today} today · ${archive.whereLine()}` : 'Nothing saved in this browser. “Finish the case” in Instructor v2 saves each run here.';
     arcList.draw();
   };
   const clearArchive = async () => {
     if (!(await confirmDialog('Clear the archive?', 'Every saved debrief in this browser is deleted, for good. Export them first to keep them.', 'Clear', true, 'Keep them'))) return;
-    archive.clear();
+    await archive.clear();
     if (viewing) location.hash = hrefOf('debrief');
     render();
   };
   const archiveSec = section('archive', 'Archive', arcCount, arcList.el,
-    h('div', { class: 'db-arc-tools' }, button('Export all (one JSON file)', exportAll, 'ghost small'), button('Clear the archive', () => void clearArchive(), 'ghost small db-arc-clear')));
+    h('div', { class: 'db-arc-tools' }, button('Export all (one JSON file)', () => void exportAll(), 'ghost small'), button('Clear the archive', () => void clearArchive(), 'ghost small db-arc-clear')));
 
   const el = h('section', { class: 'debrief', 'aria-labelledby': 'db-h' },
     h('div', { class: 'page wide' },
       h('div', { class: 'db-tools' }, button('Print or save as PDF', printWithFont, 'primary'),
         button('Download the record (JSON)', () => {
-          if (viewing) return downloadEntry(viewing.meta); // the saved debrief, with its resident
+          if (viewing) return void downloadEntry(viewing.meta); // the saved debrief, with its resident
           const d = session.record.data;
           download(`debrief-${d.doc?.id ?? 'free-run'}-${new Date(d.startedAt).toISOString().slice(0, 10)}.json`, debriefJson(d, BUILD), 'application/json');
         }, 'ghost'),
@@ -712,7 +714,7 @@ export function debriefView(session: AppSession, link: Link): View {
       live1,
       h('div', { class: 'field db-who' }, h('label', { for: 'db-who' }, 'Run by'), who),
       pearls,
-      section('notes', 'Notes', notes),
+      notesSec,
       live2,
       handoutSec,
       archiveSec,
@@ -731,6 +733,8 @@ export function debriefView(session: AppSession, link: Link): View {
   });
 
   let iv: ReturnType<typeof setInterval> | null = null;
+  /** Bumped by each enter and leave: an archive read answers only the visit that asked. */
+  let entered = 0;
   return {
     id: 'debrief', el, bench: true,
     enter: (sub = '') => {
@@ -739,27 +743,37 @@ export function debriefView(session: AppSession, link: Link): View {
       // #/debrief/archive: the Archive section; #/debrief/archive/<id>: that saved debrief; …/print: printed on arrival
       const m = /^archive(?:\/([^/]+)(\/print)?)?$/.exec(sub);
       viewing = null;
-      if (m?.[1]) {
+      const go = ++entered;
+      const show = () => {
+        render();
+        iv ??= setInterval(() => viewing || render(), 5000); // a saved debrief does not change
+        if (m && !m[1]) archiveSec.scrollIntoView?.({ block: 'start' });
+        const d = shown();
+        const who = residentOf(d);
+        // the print file's name (Save as PDF): the shell sets the title after enter()
+        const title = `Debrief ${d.doc ? cardOf(d.doc).title : 'free run'}${who ? ` ${who}` : ''} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
+        queueMicrotask(() => (document.title = title));
+        if (m?.[2] && viewing) {
+          history.replaceState(null, '', `${location.pathname}${location.search}${archiveHref(viewing.meta.id)}`); // a reload does not print again
+          printWithFont();
+        }
+      };
+      // the archive's place known (IndexedDB, or localStorage where it is unavailable) and an earlier build's bodies moved
+      void archive.ready().then(() => go === entered && drawArchive());
+      if (!m?.[1]) return show();
+      const id = m[1];
+      // a saved debrief's body is read asynchronously (IndexedDB): the view draws it once it is here, unless left meanwhile
+      void archive.debrief(id).then((body) => {
+        if (go !== entered) return;
         const list = archive.list();
-        const i = list.findIndex((x) => x.id === m[1]);
-        const body = i >= 0 ? archive.debrief(m[1]) : null;
-        if (body) viewing = { meta: list[i] as ArchiveMeta, n: i + 1, data: (JSON.parse(body) as DebriefExport).record };
+        const i = list.findIndex((x) => x.id === id);
+        if (body && i >= 0) viewing = { meta: list[i] as ArchiveMeta, n: i + 1, data: (JSON.parse(body) as DebriefExport).record };
         else toast('That saved debrief is not in this browser’s archive', 'alert');
-      }
-      render();
-      iv ??= setInterval(() => viewing || render(), 5000); // a saved debrief does not change
-      if (m && !m[1]) archiveSec.scrollIntoView?.({ block: 'start' });
-      const d = shown();
-      const who = residentOf(d);
-      // the print file's name (Save as PDF): the shell sets the title after enter()
-      const title = `Debrief ${d.doc ? cardOf(d.doc).title : 'free run'}${who ? ` ${who}` : ''} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
-      queueMicrotask(() => (document.title = title));
-      if (m?.[2] && viewing) {
-        history.replaceState(null, '', `${location.pathname}${location.search}${archiveHref(viewing.meta.id)}`); // a reload does not print again
-        printWithFont();
-      }
+        show();
+      });
     },
     leave: () => {
+      entered++; // a saved debrief still being read is not drawn
       pageStyle.remove();
       if (iv) clearInterval(iv);
       iv = null;

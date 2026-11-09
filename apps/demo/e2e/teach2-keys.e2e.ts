@@ -115,6 +115,9 @@ test('a past stage returns to its start (the owner\'s ruling on answer 3, his re
   await expect(page.locator('.ip2-strip .ip2-current')).toContainText('Trigger off');
 });
 
+// Defect N26 (brief 103) was the session clock under load: the 250 ms frame clamp ran the body slow, so the onset (sim
+// time) crawled against the wall. Brief 105 fixed the clock (owed ticks caught up within a frame budget, a BEHIND state
+// when they cannot be) and runs the bar from the engine's apply tick; the tag came off with it.
 test('the onset of a staged delivery (retire-instructor-v1 G3): a held value delivered "Over 1 min" moves the Vitals progress bar and arrives 60 ± 2 s of simulated time later', async ({ page }) => {
   test.setTimeout(150_000);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -130,14 +133,15 @@ test('the onset of a staged delivery (retire-instructor-v1 G3): a held value del
   await row.locator('input').dispatchEvent('change');
   await row.getByRole('button', { name: 'Set', exact: true }).click();
   await vitals.locator('.ip2-onset select').selectOption('60');
-  // the page records every state it receives (sim time, HR, HR's control flag) from the moment of Deliver
+  // the page records every state it receives (sim time, HR, HR's control flag; the wall ms and the host's pause for a failure's
+  // diagnostic) from the moment of Deliver
   await page.evaluate(() => {
-    const w = window as unknown as S & { __g3: Array<[number, number, string]> };
+    const w = window as unknown as S & { __g3: Array<[number, number, string, number?, boolean?]> };
     w.__g3 = [];
     const tick = () => {
       const st = w.__pmeApp.link.ctl.state;
       const last = w.__g3.at(-1);
-      if (st && (!last || last[0] !== w.__pmeApp.link.simT)) w.__g3.push([w.__pmeApp.link.simT, st.values.hr ?? NaN, st.control.hr ?? '']);
+      if (st && (!last || last[0] !== w.__pmeApp.link.simT)) w.__g3.push([w.__pmeApp.link.simT, st.values.hr ?? NaN, st.control.hr ?? '', Math.round(performance.now()), (w.__pmeApp.link.ctl as { hostPaused?: boolean }).hostPaused]);
       requestAnimationFrame(tick);
     };
     tick();
@@ -145,14 +149,23 @@ test('the onset of a staged delivery (retire-instructor-v1 G3): a held value del
   await vitals.locator('.ip2-deliver').click();
   await expect.poll(() => page.evaluate(() => (window as unknown as S).__pmeApp.link.log.some((e) => /^Staged delivery, 1 at one instant: .*over 1 min/.test(e.text))), { timeout: 10_000 }).toBe(true);
   const t0 = await page.evaluate(() => ((window as unknown as S).__pmeApp.link.log.filter((e) => e.text.startsWith('Staged delivery')).at(-1) as { simT: number }).simT);
+  // a failure names what the page received (diagnostic): each 10th state and the last five (sim time, HR, HR's flag, the host paused, the page's wall ms)
+  const g3Tail = () => page.evaluate(() => {
+    const r = (window as unknown as { __g3: Array<[number, number, string, number?, boolean?]> }).__g3;
+    return JSON.stringify({ n: r.length, every10: r.filter((_, i) => i % 10 === 0).map(([t, hr, f, ms, paused]) => `${t.toFixed(1)} s ${hr.toFixed(1)} ${f}${paused ? ' paused' : ''} @${ms} ms`), last: r.slice(-5) });
+  });
   // the Vitals body's progress bar moves while the value changes (panel/vitals.ts)
   const bar = row.locator('[role=progressbar]');
   await expect(bar).toBeVisible({ timeout: 10_000 });
-  await expect.poll(async () => Number(await bar.getAttribute('aria-valuenow')), { timeout: 30_000 }).toBeGreaterThan(20);
+  await expect.poll(async () => Number(await bar.getAttribute('aria-valuenow')), { timeout: 30_000 }).toBeGreaterThan(20).catch(async (e: Error) => {
+    throw new Error(`${e.message}\nstates received since Deliver (t0 ${t0.toFixed(2)}): ${await g3Tail()}`);
+  });
   // arrival: the first state whose HR reads the held 140 and is no longer ramping
-  await expect.poll(() => page.evaluate(() => (window as unknown as { __g3: Array<[number, number, string]> }).__g3.some(([, hr, f]) => Math.abs(hr - 140) < 0.5 && f !== 'ramping')), { timeout: 100_000, intervals: [1000] }).toBe(true);
-  const rows = await page.evaluate(() => (window as unknown as { __g3: Array<[number, number, string]> }).__g3);
-  const arrived = rows.find(([, hr, f]) => Math.abs(hr - 140) < 0.5 && f !== 'ramping') as [number, number, string];
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __g3: Array<[number, number, string, number?, boolean?]> }).__g3.some(([, hr, f]) => Math.abs(hr - 140) < 0.5 && f !== 'ramping')), { timeout: 100_000, intervals: [1000] }).toBe(true).catch(async (e: Error) => {
+    throw new Error(`${e.message}\nstates received since Deliver (t0 ${t0.toFixed(2)}): ${await g3Tail()}`);
+  });
+  const rows = await page.evaluate(() => (window as unknown as { __g3: Array<[number, number, string, number?, boolean?]> }).__g3);
+  const arrived = rows.find(([, hr, f]) => Math.abs(hr - 140) < 0.5 && f !== 'ramping') as [number, number, string, number?, boolean?];
   const before = rows.filter(([t]) => t > t0 && t < arrived[0]);
   expect(before.some(([, hr]) => hr > 85 && hr < 135), 'HR passes through the values between: a ramp, not a jump').toBe(true);
   const arrival = arrived[0] - t0;
