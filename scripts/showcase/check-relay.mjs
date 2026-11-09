@@ -13,8 +13,11 @@
 // controller with its measured round trip (`devices`, plan room-and-instruments.md R2); a ventilator says hello with a
 // PIN, the host grants it, its `vent` `cmds` reach the host and the host's `vent` `clock` reaches it, byte for byte
 // (R8b); a defibrillator window says hello as `defib`, its charge reaches the host byte for byte and its
-// `selectEnergy` does not (`forbidden` to the window; its next shock is the host's next command) (R5c); the relay is
-// still running; then the relay is stopped and the port is free again.
+// `selectEnergy` does not (`forbidden` to the window; its next shock is the host's next command) (R5c); a learner
+// remote says hello as `learner` with the learner PIN, its `prep stage` is `forbidden` while pending and, once the host
+// grants it, reaches the host byte for byte, while its `applyEvent drug` with a forged `by` and an instructor's
+// `time pause` are `forbidden` and never reach the host (its next `prep deliver` is the host's next command) (learner
+// remote L3); the relay is still running; then the relay is stopped and the port is free again.
 // Room plan R1b: each run gets a state directory of its own (relay.mjs --state-dir; the launchers' PME_STATE_DIR, which
 // stands in for the application-data folder they use): after the host hello /pme-relay.json answers lastRoom and
 // room.json in that directory holds the room code only. After every run the kit's own folder is as it was.
@@ -226,6 +229,41 @@ async function frames(port, proc, steps, state) {
   const nextCmd = JSON.parse(await hostNext('the defib shock', (f) => f.kind === 'command'));
   if (nextCmd.body?.id !== 'kit-defib-shock') throw new Error(`the host's next command after the refused selectEnergy: ${JSON.stringify(nextCmd)}`);
   step(`defib window: its charge (${Buffer.byteLength(charge)} bytes) reached the host byte for byte; its selectEnergy was refused (${refusal.code}) and never reached the host`);
+  // Learner remote L3: the learner PIN signs it in; granted, its own shapes reach the host, nothing else does
+  const LRN_ID = 'kit-check-learner';
+  const learner = socket(port, proc);
+  await learner.opened;
+  learner.ws.send(wire('hello', LRN_ID, 1, { role: 'learner', show: 'learner', device: 'kitlearner01', pin: '582913' }));
+  await hostNext('the learner hello', (f) => f.kind === 'hello' && f.from === LRN_ID && f.role === 'learner');
+  const learnerRefusal = async (what) => {
+    for (let i = 0; i < 6; i++) {
+      const f = JSON.parse(await learner.next(what));
+      if (f.relay === 'error') return f;
+    }
+    return null;
+  };
+  const lrnCmd = (seq, body) => wire('command', LRN_ID, seq, { body: { issuedBy: 'learner', ...body } });
+  const prep = { id: 'kitprep1', components: [{ productId: 'propofol', amount: 20, unit: 'mL' }] };
+  learner.ws.send(lrnCmd(2, { id: 'kit-lrn-early', type: 'prep', action: 'stage', prep }));
+  const early = await learnerRefusal('the refusal of a pending learner prep');
+  if (early?.code !== 'forbidden') throw new Error(`a pending learner's prep was not refused: ${JSON.stringify(early)}`);
+  host.ws.send(wire('grant', 'kit-check-host-0123456789abcdef', 5, { to: LRN_ID, granted: true }));
+  for (let f = null; f?.kind !== 'grant'; ) f = JSON.parse(await learner.next('the grant at the learner'));
+  const stageCmd = lrnCmd(3, { id: 'kit-lrn-stage', type: 'prep', action: 'stage', prep });
+  learner.ws.send(stageCmd);
+  const stageGot = await hostNext('the learner prep stage', (f) => f.kind === 'command');
+  if (stageGot !== stageCmd) throw new Error(`the learner prep stage differs at the host: ${stageGot}`);
+  learner.ws.send(lrnCmd(4, { id: 'kit-lrn-drug', type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 200, unit: 'mg', route: 'iv' }, by: 'kitlearner02' }));
+  const drugNo = await learnerRefusal('the refusal of the learner drug');
+  if (drugNo?.code !== 'forbidden') throw new Error(`the learner's applyEvent drug was not refused: ${JSON.stringify(drugNo)}`);
+  learner.ws.send(lrnCmd(5, { id: 'kit-lrn-pause', type: 'time', action: 'pause' }));
+  const pauseNo = await learnerRefusal('the refusal of the learner time pause');
+  if (pauseNo?.code !== 'forbidden') throw new Error(`the instructor's time pause on a learner socket was not refused: ${JSON.stringify(pauseNo)}`);
+  learner.ws.send(lrnCmd(6, { id: 'kit-lrn-deliver', type: 'prep', action: 'deliver', prepId: 'kitprep1', volumeMl: 5, route: 'iv' }));
+  const afterNo = JSON.parse(await hostNext('the learner prep deliver', (f) => f.kind === 'command'));
+  if (afterNo.body?.id !== 'kit-lrn-deliver') throw new Error(`the host's next command after the refused ones: ${JSON.stringify(afterNo)}`);
+  step(`learner remote: pending, its prep was refused (${early.code}); granted, its prep stage (${Buffer.byteLength(stageCmd)} bytes) reached the host byte for byte; its applyEvent drug with a forged by and a time pause were refused (${drugNo.code}, ${pauseNo.code}) and never reached the host`);
+  learner.ws.close();
   defib.ws.close();
   vent.ws.close();
   view.ws.close();
