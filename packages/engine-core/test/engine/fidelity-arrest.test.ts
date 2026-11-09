@@ -78,12 +78,17 @@ describe('VF → CPR → ROSC, per skin', () => {
   // (research/10 §13, [FIT: floor fitted to the 70 s low-flow lag; brief research/44 TIME-01]). Falk's own patients read ≈ 7.6 mmHg (1.0 ± 0.5 %) once compressions were in place, and
   // research/26 T3 bands CPR as 5–10 poor / 10–20 adequate, so the engine's first-20-s value is defensible; the band
   // is NOT widened — the floor goes back to the owner with the number (FU-7.1 Q9).
-  it.fails.each([['philips-like'], ['mindray-like'], ['saadat-like']] as const)(
-    '%s: the CPR window\'s EtCO2 floor is 10 mmHg (research/10 §13) — measured 7 in the first 15 s of compressions with the alveolar washout (mean 15.3–15.6, max 20–21)',
+  // Band to its source (calibration-pass ruling, brief 88): Sanders 1989 (PMID 2761035) reports the AVERAGE EtCO2 during CPR,
+  // 15 ± 4 mmHg in the resuscitated → mean ± 1 SD 11–19 over the compression window. The per-sample floor of 10 was not stated.
+  it.each([['philips-like'], ['mindray-like'], ['saadat-like']] as const)(
+    '%s: the CPR window\'s mean EtCO2 is 11–19 mmHg (Sanders 1989: 15 ± 4 in the resuscitated) — measured 7 in the first 15 s of compressions with the alveolar washout (mean 15.3–15.6, max 20–21)',
     async (skin) => {
       const run = await monitorRun({ mode: 'manual', skin, steps: arrest('vfCoarse'), tEnd: 330 });
       const et = run.rows.filter((r) => r.t >= 170 && r.t <= 295).map((r) => r.m.etco2?.value ?? -1);
-      expect(Math.min(...et)).toBeGreaterThanOrEqual(10);
+      const m = et.reduce((s, v) => s + v, 0) / et.length;
+      console.log(`fidelity-arrest ${skin}: CPR window EtCO2 mean ${m.toFixed(1)}`);
+      expect(m).toBeGreaterThanOrEqual(11);
+      expect(m).toBeLessThanOrEqual(19);
     },
     120_000,
   );

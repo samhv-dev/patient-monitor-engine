@@ -14,6 +14,7 @@ import type { AppSession } from '../session.ts';
 import type { SiteProfile } from '../site.ts';
 import { button, clock, h, setText, throttle, tip, toggle } from '../ui.ts';
 import type { View } from '../shell.ts';
+import { mechanismsPanel, TITLE as MECHANISMS_TITLE, type MechanismsPanel } from './mechanisms.ts';
 
 interface Section {
   id: string;
@@ -26,6 +27,9 @@ interface Section {
   withGroup?: GroupId;
   placeholder?: string;
 }
+
+/** The mechanism tree's section id (`#/explore/mechanisms`). */
+export const MECHANISMS = 'mechanisms';
 
 export const SECTIONS: readonly Section[] = [
   { id: 'overview', title: 'At the bedside', groups: ['monitor'], intro: 'What the monitor shows, with the adult normal range beside each value.' },
@@ -109,7 +113,12 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
   });
   session.onMount(() => model.clear());
 
-  const nav = h('nav', { class: 'xnav', 'aria-label': 'Body systems' }, ...SECTIONS.map((s) => h('a', { href: hrefOf('explore', s.id), 'data-id': s.id }, s.title)));
+  // Q12 (mechanism tree): the last entry of the nav, its own view module, built on first visit
+  const nav = h('nav', { class: 'xnav', 'aria-label': 'Body systems' }, ...SECTIONS.map((s) => h('a', { href: hrefOf('explore', s.id), 'data-id': s.id }, s.title)),
+    h('a', { href: hrefOf('explore', MECHANISMS), 'data-id': MECHANISMS }, MECHANISMS_TITLE));
+  let mech: MechanismsPanel | null = null;
+  const pageStyle = h('style', { id: 'mt-page-style' }, '@page { size: A4 landscape; margin: 10mm; }');
+  const mechBox = h('div', { class: 'xmain mt-main', hidden: true }, h('h1', { id: 'mt-h' }, MECHANISMS_TITLE));
   const title = h('h1', { id: 'x-h' });
   const intro = h('p', { class: 'lede' });
   const place = h('div', { class: 'placeholder', hidden: true });
@@ -126,6 +135,7 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
     toggle('Changed only', false, (on) => ((changedOnly = on), draw()), 'small'));
 
   const draw = throttle(() => {
+    if (cur === MECHANISMS) return;
     const s = SECTIONS.find((x) => x.id === cur) ?? (SECTIONS[0] as Section);
     setText(title, s.title);
     setText(intro, s.intro);
@@ -156,15 +166,28 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
   }, 500);
   internals.addEventListener('toggle', draw);
 
-  const el = h('section', { 'aria-labelledby': 'x-h' }, h('div', { class: 'page wide' }, h('div', { class: 'xgrid' }, nav,
-    h('div', { class: 'xmain' }, title, intro, vitals, place, h('div', { class: 'row between' }, stamp, tools), table, internals))));
+  const main = h('div', { class: 'xmain' }, title, intro, vitals, place, h('div', { class: 'row between' }, stamp, tools), table, internals);
+  const el = h('section', { 'aria-labelledby': 'x-h' }, h('div', { class: 'page wide' }, h('div', { class: 'xgrid' }, nav, main, mechBox)));
   return {
     id: 'explore', el, bench: true,
     enter: (sub) => {
       visible = true;
-      cur = SECTIONS.some((s) => s.id === sub) ? sub : 'overview';
+      cur = sub === MECHANISMS || SECTIONS.some((s) => s.id === sub) ? sub : 'overview';
+      const isMech = cur === MECHANISMS;
+      main.hidden = isMech;
+      mechBox.hidden = !isMech;
+      el.setAttribute('aria-labelledby', isMech ? 'mt-h' : 'x-h');
+      for (const a of nav.querySelectorAll('a')) a.setAttribute('aria-current', String(a.dataset.id === cur));
+      if (isMech) {
+        if (!mech) mechBox.append((mech = mechanismsPanel()).el);
+        else mech.draw();
+      }
+      // the tree prints on one A4 page in landscape: an @page rule while it is shown (the debrief's own is portrait, and
+      // a named page does not reach through the app's grid)
+      if (isMech) document.head.append(pageStyle);
+      else pageStyle.remove();
       draw();
     },
-    leave: () => (visible = false),
+    leave: () => ((visible = false), pageStyle.remove()),
   };
 }
