@@ -118,6 +118,48 @@ stream, so a seeded run replays exactly.
 }
 ```
 
+## Debrief hints (`debriefHints`, both formats)
+
+Optional, at the document level, in `pme-scenario/1` and `pme-scenario/2` (Debrief 2, D8, D9 and D16). It holds the
+card author's own words for the Debrief, printed as written: nothing in it is generated, and a record time stands
+beside a sentence as a separate label, never inside it. Only words the clinical owner has reviewed enter a showcase
+card; on this build no showcase card carries the block yet.
+
+| Key | Size | What prints, and where |
+|---|---|---|
+| `show` | 1–4 non-empty lines | "What this case is built to show", on the instructor's page 2 after the key moments, under "From the card's author" |
+| `openers` | 1–4 `{ "at", "text" }` | "Openers for the analysis", in the same section: each sentence as written, with its anchor's `mm:ss` (and " · moment n" when a key moment falls within 3 s of it) as a label beside it. An opener whose event did not happen on the kept course is left out and counted ("1 opener not shown: its event did not happen in this run") |
+| `handoutQuestions` | 1–3 `{ "at", "text" }`, `text` at most 92 characters | "Questions to think about" on the learner handout: the questions whose events happened on the kept course take the places of the first two fixed prompts (at most two, in the card's order), each with its anchor's `mm:ss` as a label and three ruled lines; the third fixed prompt always closes the list, and a place no question fills keeps its fixed prompt |
+
+`show` and `openers` never print on the learner handout; the section is absent when the card has no `debriefHints`
+and does not split across pages. The 92 characters are measured, not chosen: one printed line of the A4 handout after
+the time label, in Chromium and WebKit print (a wrapped question pushed the MH handout over one page).
+
+**Anchors (`at`).** On `/1`, a run event in the forms an objective's rule names (`start`, `drug:<id>`, `value:…`,
+`state:<id>`, where the state must be one of this card's). On `/2`, one of the anchors the report reads: `start`,
+`pulseLoss`, `rosc`, `phase:<id>` (the phase's first entry) or `action:<id>` (the action's graded taking), naming a
+phase or action of this card. `validateScenario` refuses, with the JSON path: a fifth `show` line or opener, a fourth
+question, an empty line or text, an unknown key, an empty block, an anchor on a state, phase or action the card does
+not have, an anchor of the other format, and a question over 92 characters.
+
+```json
+"debriefHints": {
+  "show": ["Your line: what the case is built to show, as the clinical owner reviewed it"],
+  "openers": [{ "at": "drug:phenylephrine", "text": "Your opener, as reviewed" }],
+  "handoutQuestions": [{ "at": "state:deteriorating", "text": "Your question, as reviewed" }]
+}
+```
+
+In Persian (the Debrief page's language switch, and `scripts/showcase/debrief-fa.mjs`), a card's hints, openers and
+questions print as the card has them, in English and in italic, until their Persian is written or confirmed by the
+clinical owner (`docs/showcase/i18n/README.md`).
+
+**Recognition.** The Debrief has one reading of when the team named the problem. On a `/1` card it is the
+recognition objective's tick (`"debrief": "recognition"`, ticked on the Scenario tab or Instructor v2's row); on a
+`/1` card without one, or a free run, it is the instructor's **Recognised** press (the session bar and the Instructor
+v2 dock), which writes a `recognised` note. A `/2` card has no press: mark its timed "recognise and announce" action
+`"recognition": true` (below).
+
 ## Running a scenario
 
 In the clinical app, the Scenarios page's library and the Instructor view's case list load the built-in scenarios (the developer page `dev/scenario-runner.html` loads one into the controller's own developer panel). In code, `ScenarioDriver` /
@@ -414,7 +456,15 @@ From the card, the Debrief prints:
 - every graded action, with its `label`, `kind`, grade, lines, window, the time it was given and its repeats;
 - every outcome, with its `text` and a line of why;
 - every violation, with its `text` and its harm;
-- `takeHome`, on the learner handout.
+- `takeHome`, on the learner handout;
+- `debriefHints` (the show lines and openers on page 2, the questions on the handout), as for `/1`
+  ([Debrief hints](#debrief-hints-debriefhints-both-formats)).
+
+**The recognition is an action.** Mark at most one action `"recognition": true`: the moment the team names the
+problem aloud, a timed action the instructor presses (a record action with a `window`). The Debrief's recognition tile, its key
+moment and the ◇ on the swimlane's Team lane read that action's window, press and grade; a card that marks none has no
+recognition tile. Every timed action's window is drawn on the swimlane's "Expected windows" lane, from its anchor to
+its deadline, with the act as a tick and the grade's words beside it.
 
 The export of a `/2` run is `pme-debrief/3`. It has no `judged` key, and a recognition is its own row in the action
 table.

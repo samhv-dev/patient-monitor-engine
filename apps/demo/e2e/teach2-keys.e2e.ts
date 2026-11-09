@@ -115,12 +115,10 @@ test('a past stage returns to its start (the owner\'s ruling on answer 3, his re
   await expect(page.locator('.ip2-strip .ip2-current')).toContainText('Trigger off');
 });
 
-// @known-flaky, PRODUCT defect N26 under investigation (orchestrator ruling of 9 Nov, brief 103): under load a staged
-// delivery's onset barely progresses. Measured: CI Chromium 1 in 47 runs (42537228686: no arriving state within 100 s of wall
-// time); CI WebKit 6 in 45 (5 lost pages, and the onset bar at 2 % after 30 wall-s in 42507754928; before PR #342 also 2, 8
-// and 12 %). Local 40/40 Chromium, 20/20 WebKit. The diagnostic below names the states received when it fails. The fix's
-// brief is not yet assigned (orchestrator, defect N26); the PR that fixes N26 removes this tag.
-test('the onset of a staged delivery (retire-instructor-v1 G3): a held value delivered "Over 1 min" moves the Vitals progress bar and arrives 60 ± 2 s of simulated time later', { tag: '@known-flaky' }, async ({ page }) => {
+// Defect N26 (brief 103) was the session clock under load: the 250 ms frame clamp ran the body slow, so the onset (sim
+// time) crawled against the wall. Brief 105 fixed the clock (owed ticks caught up within a frame budget, a BEHIND state
+// when they cannot be) and runs the bar from the engine's apply tick; the tag came off with it.
+test('the onset of a staged delivery (retire-instructor-v1 G3): a held value delivered "Over 1 min" moves the Vitals progress bar and arrives 60 ± 2 s of simulated time later', async ({ page }) => {
   test.setTimeout(150_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, base, '#/teach2', { warmMs: 1500 }); // the default patient, MODELED: Set holds the value (a pin)

@@ -475,6 +475,12 @@ export class AppSession {
     return this.readT;
   }
 
+  /** Brief 105: sim seconds the monitor's engine is behind real time (a busy computer; it catches up by itself), 0 when
+   *  it keeps up. The monitor fires `pme-monitor-behind` / `pme-monitor-caught-up` as it crosses BEHIND_REPORT_S. */
+  behindS(): number {
+    return this.monitor?.behindS?.() ?? 0; // a test's stand-in monitor may not have it
+  }
+
   send(c: Omit<Command, 'id' | 'issuedBy'> & Record<string, unknown>): Promise<{ accepted: boolean; reason?: string }> {
     return this.panel.send(c as never);
   }

@@ -20,6 +20,10 @@ export interface CoreOptions {
   fps?: 60 | 30;
   /** The skin's lane layout (skin-plan.ts); when present, `lanes`/`waves` are ignored. */
   plan?: RenderPlan;
+  /** The wall epoch (timeOrigin + now, ms) the monitor's clock starts from: the page's mount. The worker's start-up
+   *  until its first frame is then owed sim time like any late frame (brief 105), so the body is at the time the page's
+   *  session clock says from the first frame on. Absent: the clock starts at the first frame. */
+  startEpochMs?: number;
 }
 
 /** Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. */
@@ -27,6 +31,8 @@ export interface ClockAnchor {
   simT: number;
   epochMs: number;
   timeScale: number;
+  /** Sim seconds the engine's clock is behind real time (owed ticks a busy machine has not run yet; brief 105). */
+  behindS: number;
 }
 
 export type ToWorker =

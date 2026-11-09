@@ -1,6 +1,6 @@
 # Showcase 2: cue cards (Tuesday 3 November 2026, 12 Aban 1405, the 30-minute slot)
 
-> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed.
+> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed, except one addendum to card MH-4 (8 November 2026): the Debrief on the Debrief 2 build.
 
 *One card per page, for the lectern. Print from a Markdown preview at 150 % or more, one card per page (a page break
 follows each card). **The programme (owner, 29 October, P29): one case, malignant hyperthermia on the E119 card, with
@@ -251,6 +251,12 @@ referral for testing and family counselling."*
 reads the run, it does not grade the person."*
 
 **If asked about the end:** ventilation back again at 27:12 (headless), then up to 44, below 40 for good from 43:10.
+
+**On the Debrief 2 build (addendum, 8 November; the phases card, kit d3dcb34d, run sheet §4 addendum):** no
+Recognised button on this card: press **Name malignant hyperthermia from the monitor** on its row when you name it.
+Tile: **Recognition (timed action) 2 s** (08:16 → 08:18, ≤ 2 min, ✓ met). Page 2 opens on the swimlane (Patient · Team ·
+Expected windows, all ✓ met · Monitor alarms · Drugs and fluids); the key moments add **SBP/DBP and CVP** (CVP "–":
+no central line), and an alarm under a moment carries its end and acknowledgement.
 
 <div style="page-break-after: always;"></div>
 

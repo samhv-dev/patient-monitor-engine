@@ -40,6 +40,8 @@
 .ip2-pill-time { font: 500 20px/1 var(--font-plex-mono); font-variant-numeric: tabular-nums; }
 .ip2-pill[data-state='paused'] { border-color: var(--ip2-pause-line); background: var(--ip2-pause-bg); color: var(--ip2-pause); }
 .ip2-pill[data-state='paused'] :is(.ip2-pill-icon, .ip2-pill-word) { color: var(--ip2-pause); }
+/* brief 105: the engine is behind real time (a busy computer): the word turns to the pause colour, the pill stays running */
+.ip2-pill[data-behind] .ip2-pill-word { color: var(--ip2-pause); }
 .ip2-fanwrap { flex: none; display: inline-flex; align-items: center; gap: 6px; }
 .ip2-fanbox { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border: 1px solid var(--ip2-control); border-radius: 8px; background: transparent; color: var(--ip2-text); white-space: nowrap; cursor: pointer; }
 .ip2-fanbox.ip2-speed { background: var(--ip2-blue-soft); color: var(--ip2-blue-text); font-weight: 600; }
