@@ -10,7 +10,6 @@ export const MECHANISMS = {
   E: { id: 'E: septic time course and fluid-refractory vasoplegia (mechanism brief)', mechanism: 'the onset over hours, not a 600-s ramp, and arteriolar tone that fluid alone does not restore (audit V-12)' },
   F: { id: 'F: preload-fixed stroke volume at low CVP (mechanism brief)', mechanism: 'SV set by preload, so a slower β-blocked heart loses output at near-zero filling pressure (research 46 §F)' },
   G: { id: 'G: respiratory effort under controlled ventilation (mechanism brief)', mechanism: 'the drive and effort visible while the ventilator breathes, so effort before reversal can be measured (audit DEV-06)' },
-  H: { id: 'H: pleth reference SV₀ = the settled resting SV (PR #333)', mechanism: 'the PI reference stroke volume is the patient\'s own settled resting SV, not the bare-circuit stabiliser\'s (brief 79, PR #333)' },
 } as const;
 
 export const miss = (k: keyof typeof MECHANISMS, since: string, measured: string): ExpectedMiss => ({ ...MECHANISMS[k], since, measured });
