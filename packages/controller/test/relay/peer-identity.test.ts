@@ -26,11 +26,13 @@ afterEach(async () => {
   hs = null;
   await relay?.close();
   relay = null;
-  relayLog = [];
 });
 
-const startClassroomRelay = async () =>
-  (relay = await startRelay({ port: 0, host: '::', heartbeatMs: 60_000, remoteRoles: 'viewer', isLocal: (a) => a !== '::1', log: (l) => relayLog.push(l) }));
+// A log of its own per relay: a closed relay's sockets still log after relay.close() resolves (see relay-instructor).
+const startClassroomRelay = async () => {
+  const own: string[] = (relayLog = []);
+  return (relay = await startRelay({ port: 0, host: '::', heartbeatMs: 60_000, remoteRoles: 'viewer', isLocal: (a) => a !== '::1', log: (l) => own.push(l) }));
+};
 
 /** A raw socket with hand-made frames (so the id and the seq can be chosen). `phone`: another device ([::1]). */
 async function socket(from: string, opts: { phone?: boolean; role?: Role } = {}) {

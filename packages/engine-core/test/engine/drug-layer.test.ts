@@ -177,10 +177,13 @@ describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
     });
     // R45: the plan's own prototype table gives thiopental LOC +10 s with no LOC band (Task 5: "+10 s / 360 s"); the
     // 20–60 s band appears only in Task 19's list. The chain is not slowed to meet it.
-    it.fails('thiopental 4 mg/kg: unconscious within 20–60 s (DI-69; one arm–brain circulation) — measured +10 s (Task 5 prototype +10 s)', async () => {
+    // Band to its source (calibration-pass ruling, brief 88): Miller 10e ch. 21 Table 21.4 p. 527, thiopental 3–4 mg/kg onset
+    // 10–30 s (text p. 526: 15–30 s, inside). The 20–60 s band had no source.
+    it('thiopental 4 mg/kg: unconscious within 10–30 s (Miller 10e Table 21.4: onset 10–30 s) — measured +10 s', async () => {
       const r = await arm('t', 'thiopental', 4);
-      expect(loc(r)).toBeGreaterThanOrEqual(20);
-      expect(loc(r)).toBeLessThanOrEqual(60);
+      console.log(`drug-layer: thiopental LOC +${loc(r)} s`);
+      expect(loc(r)).toBeGreaterThanOrEqual(10);
+      expect(loc(r)).toBeLessThanOrEqual(30);
     });
     it('etomidate 0.3 mg/kg: 150–600 s of unconsciousness (DI-69; M10 ch. 21 p. 541), apnoeic while unconscious', async () => {
       const r = await arm('e', 'etomidate', 0.3);
@@ -393,10 +396,13 @@ describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
     });
     // R45 (Task 14 Step 5, reported there): the two Mg paths agree at EQUAL blood Mg (fu7-nmb unit test, 1e-9), but the
     // 60 mg/kg load peaks at 2.1 mmol/L in 7c's blood and falls through the block, so the drug arm prolongs less.
-    it.fails('a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (M10 ch. 24 p. 698) — measured +11.4 % (+12.0 % before the blood/fluids merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)', async () => {
+    // Band to its source (calibration-pass ruling, brief 88): Czarnetzki 2010 (PMID 19919585, RCT, 60 mg/kg over 15 min then
+    // rocuronium 0.6 mg/kg) Dur25 44.7 vs 33.2 min, +34.6 %; the 1-SEM interval on the ratio of means is +23 to +48 % (rounded out
+    // to +20–50 %). The +90 % ceiling had no source.
+    it.fails('a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–50 % (Czarnetzki 2010: +34.6 %) — measured +11.4 % (+12.0 % before the blood/fluids merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)', async () => {
       const r = await mgArms();
       expect((100 * (r.drug - r.c)) / r.c).toBeGreaterThanOrEqual(20);
-      expect((100 * (r.drug - r.c)) / r.c).toBeLessThanOrEqual(90);
+      expect((100 * (r.drug - r.c)) / r.c).toBeLessThanOrEqual(50);
     });
     it('denervation + succinylcholine 1.5 mg/kg raises K⁺ by 3–7 mmol/L (DI-37c; M10 ch. 24: the burns-size surge)', async () => {
       const i = await F7.runArm(V([[1, F7.A.neuroProfile({ nm: 'denervation' })], d(T, 'succinylcholine', 1.5, 'mg/kg')]));

@@ -34,6 +34,17 @@ export type ObjectiveVerdict = Verdict & { tickedT?: number };
 
 /** mm:ss of simulated time (the session bar's clock). */
 export const mmss = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+/**
+ * The who line of a learner defibrillator press (Room plan R5d): "Shock 200 J at 04:12, by Defibrillator (bed 2)". The
+ * device's name is the one Room setup keeps for its key now (R7's remembered layout, `names`), else the one the row kept
+ * when it pressed, else "Defibrillator window n": the n-th device key to press in this run.
+ */
+export function learnerWho(rows: readonly Row[], r: Row, names: (key: string) => string | null): string {
+  const name = (r.by !== undefined ? names(r.by) : null) ?? r.name ?? null;
+  const keys = [...new Set(rows.filter((x) => x.kind === 'learner').map((x) => x.by ?? ''))];
+  const who = name ? `Defibrillator (${name})` : `Defibrillator window ${keys.indexOf(r.by ?? '') + 1}`;
+  return `${r.text} at ${mmss(r.t)}, by ${who}`;
+}
 /** A span: "40 s", "2 min 05 s". Rounded to whole seconds before the split, so 119.7 s is "2 min 00 s", never "1 min 60 s" (FX-13). */
 export const span = (s: number): string => {
   const t = Math.round(s);

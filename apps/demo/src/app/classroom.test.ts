@@ -1,6 +1,6 @@
 // The QR payload and where a learner's phone finds the relay (pure; the QR panel and the learner page read these).
 import { describe, expect, it } from 'vitest';
-import { hashOf, instructorTarget, instructorUrl, instrumentOf, joinCode, learnerUrl, qrTarget, relayInfo, relayOf, type PageLocation, type RelayInfo } from './classroom.ts';
+import { hashOf, instructorTarget, instructorUrl, instrumentOf, joinCode, learnerUrl, qrTarget, relayInfo, relayOf, VENT_HASH, ventDeviceUrl, ventWindowUrl, type PageLocation, type RelayInfo } from './classroom.ts';
 import { drawPin, instructorPin } from './instructor-pin.ts';
 import { pairingOf, pairingUrl } from './pairing.ts';
 import { encodeQr } from './qr.ts';
@@ -117,6 +117,10 @@ describe('no address the app builds carries the PIN (a property over the builder
         learnerUrl(code, origin, path, relay), instructorUrl(code, origin, path, relay), pairingUrl(code, page), pairingOf(code, page).url,
         ...[qrTarget(code, page, relay, ri), instructorTarget(code, page, relay, ri)].flatMap((t) => (t.ok ? [t.url, ...t.others] : [])),
       ];
+      // R8d: the ventilator's laptop window and its device page (from the picker's address)
+      const picker = qrTarget(code, page, relay, ri);
+      urls.push(origin + ventWindowUrl(code, path));
+      if (picker.ok) urls.push(new URL(ventDeviceUrl(new URL(picker.url)), picker.url).href);
       for (const u of urls) {
         expect(u).not.toContain(pin);
         expect(new URL(u).searchParams.has('pin')).toBe(false);
@@ -125,6 +129,22 @@ describe('no address the app builds carries the PIN (a property over the builder
       }
     }
     expect(checked).toBeGreaterThan(2000);
+  });
+});
+
+describe("the ventilator's own screen (R8d)", () => {
+  it('the laptop window is vent-hamilton.html?link=CODE beside the app (BroadcastChannel: no relay, no PIN)', () => {
+    expect(ventWindowUrl('AB2CD3', '/')).toBe('/vent-hamilton.html?link=AB2CD3');
+    expect(ventWindowUrl('AB2CD3', '/patient-monitor-engine/index.html')).toBe('/patient-monitor-engine/vent-hamilton.html?link=AB2CD3');
+  });
+  it("the device page is vent-hamilton.html with the picker's own search (the code, the relay) and #/vent", () => {
+    expect(VENT_HASH).toBe('#/vent');
+    expect(ventDeviceUrl({ pathname: '/', search: '?join=AB2CD3' })).toBe('/vent-hamilton.html?join=AB2CD3#/vent');
+    expect(ventDeviceUrl({ pathname: '/app/', search: '?join=AB2CD3&relay=ws%3A%2F%2F10.0.0.2%3A8787%2F' })).toBe('/app/vent-hamilton.html?join=AB2CD3&relay=ws%3A%2F%2F10.0.0.2%3A8787%2F#/vent');
+    // the page joins the code and reads its relay as a learner's page does
+    const u = new URL(`http://10.0.0.2:8787${ventDeviceUrl({ pathname: '/', search: '?join=AB2CD3' })}`);
+    expect(joinCode(u)).toBe('AB2CD3');
+    expect(relayOf(at(u.href))).toBe('ws://10.0.0.2:8787/');
   });
 });
 

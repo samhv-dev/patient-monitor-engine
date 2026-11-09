@@ -44,7 +44,7 @@ import { instructorRoomCard } from './views/room-instructor.ts';
 import { scenariosView } from './views/scenarios.ts';
 import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
-import { serveRemoteCockpit, ventView } from './views/vent.ts';
+import { serveRemoteCockpit, serveWindowCockpit, ventScreens, ventView } from './views/vent.ts';
 
 const site = loadSite();
 setDrugNames(site.drugNames); // One set of drug names on every screen
@@ -187,6 +187,7 @@ if (follow && shows === 'pick') {
     instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
+    vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
   });
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario }));
@@ -210,6 +211,7 @@ if (follow && shows === 'pick') {
   shell.add(exploreView(session, site));
   shell.add(ventView(session));
   serveRemoteCockpit(session); // R8c: the host drives from a granted remote cockpit too, one cockpit at a time
+  serveWindowCockpit(session); // R8d: and from the cockpit in a window of this computer (Room setup's "New window")
   shell.add(validateView());
   shell.add(devView());
   shell.add(settingsView(site, session));

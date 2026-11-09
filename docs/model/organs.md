@@ -74,11 +74,11 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`kidney.ts:49`](../../packages/engine-core/src/l2/renal/kidney.ts#L49) | leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol |
 | [`kidney.ts:51`](../../packages/engine-core/src/l2/renal/kidney.ts#L51) | 125. GFR is the root of G = Kf·(P_gc − P_B − π̄(G/RPF)), found by bisection (monotone), so FF saturates near 0.3–0.35 |
 | [`model.ts:195`](../../packages/engine-core/src/l2/renal/model.ts#L195) | furosemide: depot → plasma (ka) → elimination (ke); effect E = Cp/(Cp + ED50-equivalent) |
-| [`params.ts:46`](../../packages/engine-core/src/l2/renal/params.ts#L46) | used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 |
-| [`params.ts:47`](../../packages/engine-core/src/l2/renal/params.ts#L47) | (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. |
-| [`params.ts:75`](../../packages/engine-core/src/l2/renal/params.ts#L75) | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
-| [`params.ts:89`](../../packages/engine-core/src/l2/renal/params.ts#L89) | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
-| [`params.ts:90`](../../packages/engine-core/src/l2/renal/params.ts#L90) | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref |
+| [`params.ts:51`](../../packages/engine-core/src/l2/renal/params.ts#L51) | used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 |
+| [`params.ts:52`](../../packages/engine-core/src/l2/renal/params.ts#L52) | (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. |
+| [`params.ts:80`](../../packages/engine-core/src/l2/renal/params.ts#L80) | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
+| [`params.ts:94`](../../packages/engine-core/src/l2/renal/params.ts#L94) | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
+| [`params.ts:95`](../../packages/engine-core/src/l2/renal/params.ts#L95) | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref |
 
 ## Couplings
 
@@ -347,9 +347,9 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `TGF_TAU_S` | `60` | s | Pulse | TGF time constant: Pulse's 0.001-per-beat damping ≈ 60–90 s (annex B2 "Take") → 60 s. |
 | `KF_PER_KIDNEY` | `3.67647 * 2.0` | — | — | glomerular Lp·A, mL/min/mmHg (CFG 604–605) |
 | `PI_GLOM0` | `32` | — | — | Glomerular oncotic pressure, mmHg (SET 1386–1389) at albumin 42 g/L — its MEAN at FF_REF |
-| `HCT_REF` | `0.45` | — | — | The healthy reference's filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit, where the mean glomerular oncotic pressure equals PI_GLOM0 (the calibrated resting GFR is unchanged). |
+| `HCT_REF` | `0.45` | — | research/44 L2 | The filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit at which the mean glomerular oncotic pressure equals PI_GLOM0. Since Bowman's pressure is the sourced 18 (research/44 L2-26), the resting FF is 0.224, not this 0.239, so the resting mean oncotic pressure is 31.7 mmHg, not 32. |
 | `ALBUMIN0_G_L` | `42` | — | — | — |
-| `P_BOWMAN` | `17.1` | — | research/44 L2; Pulse gives 147; [FIT: Bowman's pressure calibrated to resting GFR 125 mL/min; brief research/44 L2-26] | Bowman's space pressure [FIT: Bowman's pressure calibrated to resting GFR 125 mL/min; brief research/44 L2-26]: calibrated so the resting GFR is 125 mL/min (tables/annex reference 180 L/day; Pulse gives 147.5 L/day, D12). UOP is calibrated separately (ef0), so this only sets GFR and the filtration fraction. |
+| `P_BOWMAN` | `18` | — | Miller 10e ch. 15 Fig. 15.8 (p. 334; Guyton & Hall 13e; Pulse divider gives P_gc 57; Guyton & Hall; Pulse; research/44 L2 | Bowman's capsule pressure, mmHg: Miller 10e ch. 15 Fig. 15.8 (p. 334, redrawn from Guyton & Hall 13e): 18 mmHg against a glomerular hydrostatic 60 and oncotic 32 (net 10). It was 17.1, fitted so the resting GFR was 125 mL/min. With the sourced 18 the resting GFR is 117 mL/min (168 L/day): the Pulse divider gives P_gc 57.6 where the figure has 60. The calibration was NOT moved onto Kf: holding 125 would need Kf 16.4 mL/min/mmHg, and the sourced value is 12.5 (Guyton & Hall; the same figure's GFR 125 ÷ net 10). Pulse's 14.7 is kept (research/44 L2-26). UOP is calibrated separately (ef0), so this sets only GFR and the filtration fraction. |
 | `RENAL_REF_MAP` | `93` | — | — | The healthy reference the kidney is calibrated on (createRenal): MAP 93, CVP 5, CO 0.08 L/min/kg (5.6 L/min at 70 kg). |
 | `RENAL_REF_CVP` | `5` | — | — | — |
 | `RENAL_REF_CO_L_KG` | `0.08` | kg | — | — |
@@ -470,10 +470,10 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | furosemide 40 mg at K 7.5: K ≥ 0.1 lower at 3 h | −0.029 | — | UNSUPPORTED ([audit row 118](../../docs/validation/target-audit/30-target-audit.md#row-118)) | keep >= 0.1 only as an owner [ENG] floor, and add a premise check that 40 mg IV gives >= 0.5-1 L of urine in 3 h before grading K | [`organs-renal-kaliuresis.test.ts`](../../packages/engine-core/test/engine/organs-renal-kaliuresis.test.ts) |
 | check 20 (MODELED hfref): low-output premise, UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min | — | — | UNSUPPORTED ([audit row 129](../../docs/validation/target-audit/30-target-audit.md#row-129)) | premise UOP < 0.3 (oliguric low-output state); dobutamine 5: CO +20-50 %, UOP rises >= +0.1 mL/kg/h (or >= +50 %) by 60 min, no 0.3 ceiling | [`organs-renal.test.ts`](../../packages/engine-core/test/engine/organs-renal.test.ts) |
 | check 20 (MANUAL contractility): premise UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min | — | — | UNSUPPORTED ([audit row 130](../../docs/validation/target-audit/30-target-audit.md#row-130)) | as :39 (premise UOP < 0.3; UOP rise >= +0.1 by 60 min; no ceiling) | [`organs-renal.test.ts`](../../packages/engine-core/test/engine/organs-renal.test.ts) |
-| hyperventilation: ICP falls no more than 30 % by the time PaCO2 reaches 30 | 30.5 % | — | TOO NARROW ([audit row 10](../../docs/validation/target-audit/30-target-audit.md#row-10)) | ICP -20-45 % at PaCO2 30 from ~40 with ICP ~20 | [`organs-tbi-treatment.test.ts`](../../packages/engine-core/test/engine/organs-tbi-treatment.test.ts) |
 | Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex | ratio 0.803 | — | UNSUPPORTED ([audit row 9](../../docs/validation/target-audit/30-target-audit.md#row-9)) | direction only: HR at end <= baseline (ratio <= 0.9), with an initial tachycardia allowed; or keep 0.6-0.85 as an explicit [ENG] teaching choice | [`organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) |
 | check 18: PaCO2 25 → CBF 35–40 % of the anaesthetised baseline (model at CVP 6) | — | — | TOO NARROW ([audit row 8](../../docs/validation/target-audit/30-target-audit.md#row-8)) | 0.35-0.55 of the anaesthetised baseline | [`model.test.ts`](../../packages/engine-core/test/l2/brain/model.test.ts) |
 | IAP 25: UOP < 0.1 mL/kg/h | 0.69 | WSACS | TOO NARROW ([audit row 131](../../docs/validation/target-audit/30-target-audit.md#row-131)) | kidney-only rig at MAP 93: UOP <= 0.3 mL/kg/h (<= 30 % of control) at IAP 25; keep < 0.1 (anuria) for IAP >= 30-40 or APP < 50 | [`filtration.test.ts`](../../packages/engine-core/test/l2/renal/filtration.test.ts) |
+| rest GFR ≈ 125 mL/min | 117 | M10 ch. 15 p. 335 | not audited | — | [`kidney.test.ts`](../../packages/engine-core/test/l2/renal/kidney.test.ts) |
 
 ## Tests
 
@@ -488,7 +488,7 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | [`engine/organs-renal-kaliuresis.test.ts`](../../packages/engine-core/test/engine/organs-renal-kaliuresis.test.ts) | 1 | 0 |
 | [`engine/organs-renal.test.ts`](../../packages/engine-core/test/engine/organs-renal.test.ts) | 2 | 0 |
 | [`engine/organs-soak.test.ts`](../../packages/engine-core/test/engine/organs-soak.test.ts) | 0 | 0 |
-| [`engine/organs-tbi-treatment.test.ts`](../../packages/engine-core/test/engine/organs-tbi-treatment.test.ts) | 1 | 0 |
+| [`engine/organs-tbi-treatment.test.ts`](../../packages/engine-core/test/engine/organs-tbi-treatment.test.ts) | 0 | 0 |
 | [`engine/organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) | 1 | 0 |
 | [`engine/organs-wiring.test.ts`](../../packages/engine-core/test/engine/organs-wiring.test.ts) | 0 | 0 |
 | [`l2/brain/cushing.test.ts`](../../packages/engine-core/test/l2/brain/cushing.test.ts) | 0 | 0 |
@@ -506,7 +506,7 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | [`l2/renal/aki.test.ts`](../../packages/engine-core/test/l2/renal/aki.test.ts) | 0 | 0 |
 | [`l2/renal/cold-diuresis.test.ts`](../../packages/engine-core/test/l2/renal/cold-diuresis.test.ts) | 0 | 0 |
 | [`l2/renal/filtration.test.ts`](../../packages/engine-core/test/l2/renal/filtration.test.ts) | 1 | 0 |
-| [`l2/renal/kidney.test.ts`](../../packages/engine-core/test/l2/renal/kidney.test.ts) | 0 | 0 |
+| [`l2/renal/kidney.test.ts`](../../packages/engine-core/test/l2/renal/kidney.test.ts) | 1 | 0 |
 | [`l2/renal/model.test.ts`](../../packages/engine-core/test/l2/renal/model.test.ts) | 0 | 0 |
 | [`l2/renal/volume-expansion.test.ts`](../../packages/engine-core/test/l2/renal/volume-expansion.test.ts) | 0 | 0 |
 
