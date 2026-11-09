@@ -3,10 +3,11 @@
 // return to a bookmark included, struck through as undone; a staged delivery on one line), the card's steps with
 // their status (Instructor v2, IP8) — for a pme-scenario/2 run the action table with its grades, the outcomes, the
 // violations (plan F7; a team act the instructor observes is a record action in the table: judged rows are retired,
-// the owner's ruling of 5 November) —, bookmarks with a mark's kind and note and the instructor's notes (the printed one-row-per-minute appendix was
-// deleted by the owner on 9 November; the JSON keeps `minutes`); page 1 reads the key times, the course strip (the instructor's marks on it at their times) and the
-// objectives, page 2 the key moments with what the
-// monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
+// the owner's ruling of 5 November) —, bookmarks with a mark's kind and note and the instructor's notes (the printed
+// one-row-per-minute appendix was deleted by the owner on 9 November; the JSON keeps `minutes`); page 1 reads the key
+// times and the course strip (the instructor's marks on it at their times) with the swimlane under it (the owner, 9
+// November), page 2 the objectives and the key moments with what the monitor showed (Debrief redesign B; a run with
+// no key moment keeps its objectives on page 1), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
 // The archive (board "Finish 2", archive.ts): a debrief "Finish the case" saved opens here (#/debrief/archive/<id>, and
@@ -573,7 +574,12 @@ export function debriefView(session: AppSession, link: Link): View {
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
-      d.samples.length ? section('course', 'The course', legend('course', ' · numbers match Key moments', markKeys(cm)), course) : null,
+      // the owner, 9 November (decision B): the swimlane under the course strip, in its section, with no heading of its own
+      d.samples.length ? section('course', 'The course', legend('course', ' · numbers match Key moments', markKeys(cm)), course,
+        ms.length ? h('div', { id: 'db-swimlane', class: 'db-swimlane' }, swimLegend(r3 !== null), swim) : null) : null,
+      // page 1 is then full (the swimlane is 47–60 mm high on the recorded runs): the objectives open page 2, the key
+      // moments follow them there; a run without key moments has no swimlane and keeps its objectives on page 1
+      ms.length && !r3 ? runFoot() : null,
       r3 ? null
       : section('objectives', 'Objectives', h('p', { class: 'db-subhead' }, 'What the record shows: it reads the run, it does not grade the person'), obj.length
         ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
@@ -582,8 +588,8 @@ export function debriefView(session: AppSession, link: Link): View {
             o.verdict.measure ? bar(o.verdict.measure) : null, h('div', { class: 'db-why' }, m.why));
         }))
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
-      // page 2 (DQ5, option A), which a run with key moments has: the swimlane at its head, then the key moments
-      ...(ms.length ? [runFoot(), section('swimlane', 'The run, lane by lane', swimLegend(r3 !== null), swim), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
+      // the key moments: page 2's head on a /2 run (no objectives), after the objectives on page 2 otherwise
+      ...(ms.length ? [r3 ? runFoot() : null, section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
       hintsSection(d, ms),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))

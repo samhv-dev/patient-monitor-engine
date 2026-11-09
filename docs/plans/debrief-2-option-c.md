@@ -540,6 +540,16 @@ No pressures lane (section 10, R2). **Depends on:** PR 3 merged (D7a needs D4, D
   band and tick, the verdict glyphs); page 1 (key times, the 2 November course strip, objectives) is unchanged. The
   mock-up the owner chose: `scratch/debrief2-mockups/option-A-swimlane-page2.pdf` (outside the repository; the
   executor copies it into the PR body as a reference image, not into the repo).
+- [x] **Superseded 9 November by the owner (decision B, brief 111):** after his Safari hand print, the swimlane moves
+  directly under the course strip on page 1, inside "The course" (`#db-course > #db-swimlane`), with its legend line
+  and no heading of its own; its page break (`#db-swimlane { break-before: page }`) and the
+  `#db-swimlane + #db-moments` rule are gone. Measured in print at the 182 mm content width, page 1 to the end of the
+  course section is then 196–235 mm on the MH, A3.1 and haemorrhage records (English and Persian), and the objectives
+  (72–130 mm) no longer fit under it on any of them: so the objectives open page 2 (a forced break, with WebKit's
+  footer line before it) and the key moments follow them on page 2; a `/2` run, which has no objectives section,
+  opens page 2 with the key moments as before; a run with no key moment has no swimlane and keeps its objectives on
+  page 1. The same day the owner deleted the printed "Appendix: one row per minute" (decision A); the JSON keeps
+  `minutes`.
 - [ ] e2e (both projects): the section exists on the A3.1 path and the `/2` MH card, with one window row per timed
   action and each tick's verdict word present; in print media it does not split (`break-inside: avoid`); page counts
   as measured, written in the PR body; page 1 heights unchanged (`debrief.e2e.ts:321`, `:433`, `:464`, `:491`).
@@ -861,7 +871,7 @@ the executor would use; the owner may name another.
 | **DQ2** | An alarm's end: when its condition cleared, or when it was acknowledged? | **Ruled 5 November:** both are stored: the end (condition cleared) and the acknowledgement time (D2, Decision 4) |
 | **DQ3** | CPR hands-off: what to print, and any target? | **Ruled 5 November:** the seconds, the compression fraction, and reference lines at both 60 % and 80 %; no grade (D3) |
 | **DQ4** | The Recognised press | **Ruled 5 November:** "recognise and announce the diagnosis" is a timed action in `/2` cards (judged rows retired on 5 November); the generic "Recognised" button exists only as the `/1` fallback (D5, Decision 3) |
-| **DQ5** | The swimlane: on page 1, or heading page 2? | **Ruled 5 November: option A**, the swimlane heads page 2 above the key moments; page 1 unchanged (D7b). Plus a new requirement: every timed action's expected window drawn on its lane, the act as a tick, marked with the verdict words (D7a) |
+| **DQ5** | The swimlane: on page 1, or heading page 2? | **Ruled 5 November: option A**, the swimlane heads page 2 above the key moments; page 1 unchanged (D7b). **Superseded 9 November by the owner:** the swimlane under the course strip on page 1, in "The course", no heading of its own; the objectives open page 2 (D7b, decision B). Plus a new requirement: every timed action's expected window drawn on its lane, the act as a tick, marked with the verdict words (D7a) |
 | **DQ6** | The card's hints: the two blocks, or also the PEARLS mode table? | **Ruled 5 November:** the two hint blocks only (D9; D14 withdrawn) |
 | **DQ7** | Who writes the hints and openers? | **Ruled 5 November:** an executor drafts them from each card's objectives, marked drafts; the owner edits or rejects before anything prints (D10) |
 | **DQ8** | The mock-up's "○ Instructor" and "◆ Gap to explore", or the ruled words? | **Ruled 5 November:** the ruled verdict words everywhere (Decision 11) |

@@ -182,10 +182,11 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
         'Epinephrine 100 µg IV', '✓ Observed', '✗ Not observed', '– Not assessable', 'Epinephrine, boluses in all', '100 µg (1 dose)', 'Good closed-loop communication.',
         'Talking points']) expect(t, want).toContain(squash(want)); // the h1 prints as the band's capital kicker
       expect(t, 'no minute appendix (the owner, 9 November)').not.toContain(squash('Appendix: one row per minute'));
-      // B6 (a): page 1 is the key times, the course and the objectives; the facts follow the key moments on page 2
+      // B6 (a), as the owner placed the swimlane on 9 November: page 1 is the key times and the course with the swimlane
+      // under it, page 2 the objectives and the key moments; the facts follow the key moments
       const page1 = squash(text.split('\f')[0] ?? '');
-      for (const want of ['Key times', 'The course']) expect(page1, want).toContain(squash(want));
-      for (const o of await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => x.childNodes[2]?.textContent ?? ''))) expect(page1, `objective on page 1: ${o}`).toContain(squash(o));
+      for (const want of ['Key times', 'The course', 'expected window, │ the act']) expect(page1, want).toContain(squash(want));
+      for (const o of await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => x.childNodes[2]?.textContent ?? ''))) expect(squash(text.split('\f')[1] ?? ''), `objective on page 2: ${o}`).toContain(squash(o));
       expect(page1, 'facts not on page 1').not.toContain(squash('Measured facts'));
       expect(squash(text.split('\f')[1] ?? ''), 'key moments and facts on page 2').toContain(squash('Measured facts'));
       text.split('\f').forEach((p, i) => {
@@ -309,8 +310,9 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE, debriefHint
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(page.locator('[data-view=debrief] #db-moments')).toBeVisible();
 }
-/** Heights in print media (mm): the page-1 block (header band to the end of the objectives; a /2 run has no objectives
- *  section since judged rows were retired, 5 November: to the end of the course strip) and the handout; whether
+/** Heights in print media (mm): the page-1 block (header band to the end of "The course", the swimlane under its strip
+ *  since the owner's decision of 9 November, the objectives opening page 2; a run with no key moment has no swimlane
+ *  and keeps its objectives on page 1: to their end) and the handout; whether
  *  the bundled print font is loaded (rc.3: the heights are measured in it on every platform); and the printed size (pt)
  *  of the handout course strip's labels (0 when the handout is not shown). */
 /** The view loads the bundled print font on entering (loadPrintFont, not awaited) and its print buttons await it; a
@@ -326,18 +328,21 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   const label = strip.querySelector('.db-lane-l') as SVGTextElement;
   const stripPt = (strip.getBoundingClientRect().width / strip.viewBox.baseVal.width) * parseFloat(getComputedStyle(label).fontSize) * 0.75;
   const printFont = [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded');
-  const end = document.querySelector('#db-objectives') ? '#db-objectives' : '#db-course';
+  const end = document.querySelector('#db-swimlane') || !document.querySelector('#db-objectives') ? '#db-course' : '#db-objectives';
   return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
-/** D7b: the swimlane heads page 2, before the key moments, whole on its page; its printed height (mm) at the 182 mm
- *  content width, and its window rows' labels and verdict words. Read in print media. */
+/** D7b, placed by the owner on 9 November (decision B, superseding DQ5 option A): the swimlane under the course strip,
+ *  inside "The course" with no heading of its own, the section whole on page 1; the objectives open page 2 (none on a
+ *  /2 run) and the key moments follow them, or open page 2 themselves; its printed height (mm) at the 182 mm content
+ *  width, and its window rows' labels and verdict words. Read in print media. */
 const swimPrint = (page: Page) => page.evaluate((mm) => {
   const sec = document.querySelector('#db-swimlane') as HTMLElement;
-  const cs = getComputedStyle(sec);
+  const course = document.querySelector('#db-course') as HTMLElement;
+  const obj = document.querySelector('#db-objectives');
   return {
-    next: sec.nextElementSibling?.id ?? '', prev: (sec.previousElementSibling as HTMLElement | null)?.className ?? '',
-    breakBefore: cs.breakBefore, breakInside: cs.breakInside,
+    parent: sec.parentElement?.id ?? '', prev: (sec.previousElementSibling as HTMLElement | null)?.className ?? '', heading: !!sec.querySelector('h2, h3'),
+    courseBreakInside: getComputedStyle(course).breakInside, objectivesBreak: obj ? getComputedStyle(obj).breakBefore : 'none',
     momentsBreak: getComputedStyle(document.querySelector('#db-moments') as Element).breakBefore,
     heightMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().height / mm,
     widthMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().width / mm,
@@ -375,8 +380,10 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
 
-  // D7b: page 2 opens with the swimlane — one window row per timed objective, each tick with its verdict words
-  await expect(view.locator('#db-swimlane h2')).toHaveText('The run, lane by lane');
+  // D7b: the swimlane under the course strip (the owner, 9 November): one window row per timed objective, each tick with
+  // its verdict words; no heading of its own
+  await expect(view.locator('#db-course > #db-swimlane')).toHaveCount(1);
+  await expect(view.locator('#db-swimlane h2')).toHaveCount(0);
   await expect(view.locator('#db-swimlane .db-legend')).toContainText('▭ expected window, │ the act, with its verdict');
   expect(await swimRows(page)).toEqual([{ label: 'Objective 2', words: ['✓ Observed'] }, { label: 'Objective 3', words: ['✓ Observed'] }, { label: 'Objective 4', words: ['✓ Observed'] }]);
   await expect(view.locator('#db-swimlane svg')).toHaveAttribute('aria-label', /expected windows: Objective 2, 07:48 to 07:58: 07:51 ✓ Observed; Objective 3/);
@@ -417,7 +424,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   expect(report.printFont, 'the bundled print font is loaded').toBe(true);
   expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
   const sw = await swimPrint(page);
-  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  expect(sw).toMatchObject({ parent: 'db-course', prev: 'db-course', heading: false, courseBreakInside: 'avoid', objectivesBreak: 'page', momentsBreak: 'auto' });
   expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
   test.info().annotations.push({ type: 'A3.1 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide` });
   await expect(view.locator('#db-handout')).toBeHidden(); // never with the report
@@ -457,9 +464,11 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
     expect(pages).toBeLessThanOrEqual(7); // B6 Step 3: measured, expected 6–7 (Review Focus 6)
     expect(pdfInfo(handoutPdf).boxes).toHaveLength(1);
     if (process.platform === 'darwin' || process.env.PME_PDF_TEXT === '1') {
-      // (a) page 1 holds the key times, the course and every objective; (c) the handout's one page, its footer, no verdict
-      const page1 = squash(pdfText(reportPdf).text.split('\f')[0] ?? '');
-      for (const want of ['Key times', 'The course', ...(JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives as Array<{ text: string }>).map((o) => o.text)]) expect(page1, want).toContain(squash(want));
+      // (a) page 1 holds the key times, the course and the swimlane under it, page 2 every objective (the owner, 9
+      // November); (c) the handout's one page, its footer, no verdict
+      const [page1 = '', page2 = ''] = pdfText(reportPdf).text.split('\f').map(squash);
+      for (const want of ['Key times', 'The course', 'expected window, │ the act']) expect(page1, want).toContain(squash(want));
+      for (const want of ['Objectives', ...(JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives as Array<{ text: string }>).map((o) => o.text)]) expect(page2, want).toContain(squash(want));
       const h = pdfText(handoutPdf);
       expect(h.pages).toBe(1);
       expect(squash(h.text)).toContain(squash('Questions to think about'));
@@ -663,7 +672,7 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
   const sw = await swimPrint(page);
   test.info().annotations.push({ type: 'MH /2 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide, ${rows.length} windows` });
-  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  expect(sw).toMatchObject({ parent: 'db-course', prev: 'db-course', heading: false, courseBreakInside: 'avoid', objectivesBreak: 'none', momentsBreak: 'page' }); // a /2 run: no objectives
   if (rows.length <= 6) expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout } = await printHeights(page);
@@ -728,7 +737,7 @@ test('D9: the card author\'s hints on page 2 of the MH run, whole, the handout u
   const page2 = () => page.evaluate((mm) => {
     const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
     const hints = document.querySelector('#db-hints');
-    return { page2: (r('#db-facts').bottom - r('#db-swimlane').top) / mm, hints: hints ? hints.getBoundingClientRect().height / mm : 0,
+    return { page2: (r('#db-facts').bottom - r('#db-objectives').top) / mm, hints: hints ? hints.getBoundingClientRect().height / mm : 0,
       breakInside: hints ? getComputedStyle(hints).breakInside : '', labelFont: [...document.querySelectorAll('#db-hints .db-hint-at')].map((x) => getComputedStyle(x).fontFamily), prev: hints?.previousElementSibling?.id ?? '', handout: (document.querySelector('#db-handout') as HTMLElement).innerHTML };
   }, MM);
   const before = await page2();
