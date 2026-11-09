@@ -12,7 +12,7 @@
 89	packages/engine-core/test/engine/resp-suite.test.ts	RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.67 / EtCO2 +6.0124 with the brief-93 effort (+6.00045 after Bowman 18, +5.99994 before)
 18	packages/engine-core/test/engine/arrest-etco2.test.ts	VF with CPR q 0.8 from +30 s: EtCO2 ≥ 10 at +2 min of CPR (Sanders 1989: none below 10 resuscitated) — measured 15.9 with the alveolar washout
 39	packages/engine-core/test/engine/circ-manual-cvp-peep.test.ts	CVP 6 ventilated from t = 0, PEEP 15 reads 1.63–4.63 mmHg above PEEP 5 (Sun 2021: IQR envelope) (measured 4.82: T_IT 0.65)
-44	packages/engine-core/test/engine/clinical-suite.test.ts	S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 95.0, CVP 9.3, MAP 82.1)
+44	packages/engine-core/test/engine/clinical-suite.test.ts	S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 89.2, CVP 12.5, MAP 76.9 with the patient effort of mechanism G; 95.0 before it)
 25	packages/engine-core/test/engine/clinical-suite.test.ts	S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 0–21.9 mmHg (Paradis 1990: 13.4 ± 8.5 with ROSC, none below 0; measured 26.3–28.1)
 29	packages/engine-core/test/engine/cpr-etco2.test.ts	ventilation: +10 breaths/min lowers EtCO2 by 8.7–17.4 % (Sheak 2015; Murphy 2016) at the learner default — measured −19 % (−4.8 mmHg) at the circulation's CPR flow
 152	packages/engine-core/test/engine/drug-layer.test.ts	thiopental 4 mg/kg: unconscious within 10–30 s (Miller 10e Table 21.4: onset 10–30 s) — measured +10 s

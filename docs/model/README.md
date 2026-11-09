@@ -28,4 +28,4 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Control: commands, transports, scenarios](control.md) | 46 | 88 | 0 |
 | [Presentation: renderer, audio, skins, the app](presentation.md) | 213 | 330 | 4 |
 | [Validation harness](validation-harness.md) | 60 | 51 | 0 |
-| [Whole-patient scenario suites](integration.md) | 0 | 1 | 9 |
+| [Whole-patient scenario suites](integration.md) | 0 | 1 | 8 |
