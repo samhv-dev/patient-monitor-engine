@@ -62,6 +62,18 @@ export const hashOf = (show: Exclude<FollowerHash, 'pick'>): string => (show ===
 /** The QR's address ends here: the device that scans it opens the picker (Q1 ruled 5 November). */
 export const PICK_HASH = '#/pick';
 
+/** R8d (plan room-and-instruments.md §7): the ventilator's own page ends here (`vent-hamilton.html?join=CODE#/vent`). */
+export const VENT_HASH = '#/vent';
+const dirOf = (pathname: string) => pathname.replace(/[^/]*$/, '');
+/**
+ * R8d: the ventilator's page for a device, from the picker's own address: its search carries the room code and the relay
+ * (`?join=CODE[&relay=…]`), the page says the `ventilator` hello over that relay once its user has typed the PIN into its
+ * form (P7's), which never puts the PIN in an address.
+ */
+export const ventDeviceUrl = (loc: Pick<PageLocation, 'pathname' | 'search'>): string => `${dirOf(loc.pathname)}vent-hamilton.html${loc.search}${VENT_HASH}`;
+/** R8d: the ventilator in a window of this computer, linked by the room code over BroadcastChannel (§4 D9: no PIN). */
+export const ventWindowUrl = (code: string, pathname: string): string => `${dirOf(pathname)}vent-hamilton.html?link=${code}`;
+
 /** `others`: the learner address on this computer's other networks (shown under the code, for a phone the QR fails). */
 export type QrTarget = { ok: true; url: string; origin: string; others: string[] } | { ok: false; why: string };
 

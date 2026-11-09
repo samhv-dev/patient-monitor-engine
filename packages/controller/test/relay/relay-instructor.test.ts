@@ -27,14 +27,19 @@ afterEach(async () => {
   clock = 1_000_000;
 });
 
-const start = async (o: RelayOptions = {}) =>
-  (relay = await startRelay({
+// Each relay writes to its OWN log: the last test's relay terminates its sockets on close and their `close` events can
+// fire after the next test has started, so a shared log got the old relay's "instructor ins-a.1 left" line and the next
+// test's wait for its own instructor's removal passed at once (CI run 42529120955: `denied` read peers 2, not 1)
+const start = async (o: RelayOptions = {}) => {
+  const lines: string[] = (relayLog = []);
+  return (relay = await startRelay({
     port: 0, host: '::', heartbeatMs: 60_000, takenCheckMs: 300, remoteRoles: 'viewer',
     isLocal: (_address, req) => !req?.url?.includes('e2e-remote'),
     now: () => clock,
-    log: (l) => relayLog.push(l),
+    log: (l) => lines.push(l),
     ...o,
   }));
+};
 
 interface Sock {
   ws: WebSocket;

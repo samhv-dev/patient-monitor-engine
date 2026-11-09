@@ -179,6 +179,9 @@ export interface CircModelState {
   ext: {
     kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number;
     vFluidRate?: number; // Pericardial fluid accumulation (+) or drainage (−), mL/s (conditions.ts)
+    rvIschFrac?: number; // Infarcted fraction of the RV myocardium, 0–1 (conditions.ts rvInfarct)
+    lvIschFrac?: number; // Infarcted fraction of the LV myocardium, 0–1 (conditions.ts rvInfarct: the inferior wall)
+    bjVagalMs?: number; // Bezold–Jarisch vagal RR increment of an inferior infarct, ms (conditions.ts rvInfarct)
     pvrLung?: number; pvrLungL?: number; pvrLungR?: number;
     rSysF?: number; hrF?: number; // Systemic resistance and HR set-point multipliers (Cushing response)
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // Endocrine stress response
@@ -367,6 +370,9 @@ function control(m: CircModelState, env: CircEnv): void {
   // Tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
   // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops
   p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
+  // Regional infarcts (conditions.ts): each ESPVR shifts rightward by the infarcted share of its resting cavity
+  p.dV0RvIsch = (m.ext.rvIschFrac ?? 0) * (m.ref.rvedv ?? 0);
+  p.dV0LvIsch = (m.ext.lvIschFrac ?? 0) * m.ref.lvedv;
   m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp * (env.modeled ? m.cor.kIschRv : 1); // β-blockade blunts the surge; RV ischaemia (MODELED)
   p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc * kHyp; // Atrial active elastance (blood kChem; hypoxic kHyp)
   p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc * kHyp;
@@ -378,7 +384,8 @@ function control(m: CircModelState, env: CircEnv): void {
   // abolishes it (the drug model already multiplies `vagalMs` by 1 − muscarinic occupancy) and why the bradycardia is
   // deeper in a patient whose rate is already low.
   // The stimulus-driven vagal event, the same additive term, MODELED only
-  const vStim = env.modeled ? vagalEventMs(m) : 0;
+  // + the Bezold–Jarisch vagal drive of an inferior infarct (conditions.ts rvInfarct), the same additive SA-node term
+  const vStim = env.modeled ? vagalEventMs(m) + (m.ext.bjVagalMs ?? 0) : 0;
   const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000 + ((de.vagalMs ?? 0) + vStim * (1 - (de.muscBlock ?? 0))) / 1000; // β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
