@@ -30,7 +30,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | Module | Exported numeric constants | Inside an effector product or sum |
 |---|---:|---:|
 | rhythms-ecg | 62 | 32 |
-| circulation | 191 | 50 |
+| circulation | 193 | 52 |
 | pressure-waveforms | 60 | 26 |
 | lungs | 66 | 22 |
 | gas-exchange | 44 | 12 |
@@ -44,9 +44,9 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
 | engine-runtime | 9 | 2 |
-| **All** | 1124 | 424 |
+| **All** | 1126 | 426 |
 
-## The ten effector expressions with the most factors (of 1601)
+## The ten effector expressions with the most factors (of 1606)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 879 products)
+## The ten products with the most factors (of 885 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

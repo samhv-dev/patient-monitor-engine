@@ -404,7 +404,6 @@ Exported without a doc comment: `breathMechanics`, `conditionData`, `interp`, `w
 | neonatalRds: shunt 0.2–0.4 | 0.158 | catalogue §30 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | bronchospasm: inspiratory resistance 46 cmH2O·s/L | 46.005 | catalogue §2 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | bronchospasm: auto-PEEP 6–10 cmH2O | 10.6 | catalogue §2 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
-| ards: Crs 35 mL/cmH2O | 34.6 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | ards: plateau 19 cmH2O | 19.2 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | ards: driving pressure 14 cmH2O | 14.2 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | ards: shunt 0.30 | 0.285 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
@@ -414,8 +413,6 @@ Exported without a doc comment: `breathMechanics`, `conditionData`, `interp`, `w
 | chestWall: inspiratory resistance 10 cmH2O·s/L | 9.88 | catalogue §9 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | pe: PaCO2 − EtCO2 gap 15–25 mmHg | 25.9 | catalogue §18 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | cf: inspiratory resistance 20 cmH2O·s/L | 20.3 | catalogue §26 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
-| cf: SpO2 88–94 % at FiO2 0.21 | 94.9 | catalogue §26 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
-| covidPneumonitis: Crs 50 mL/cmH2O | 49.8 | catalogue §31 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | covidPneumonitis: shunt 0.30 | 0.320 | catalogue §31 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 | 71 % | — | RIGHT ([audit row 109](../../docs/validation/target-audit/30-target-audit.md#row-109)) | keep | [`volumes.test.ts`](../../packages/engine-core/test/l2/lung/volumes.test.ts) |
 
@@ -457,7 +454,7 @@ Exported without a doc comment: `breathMechanics`, `conditionData`, `interp`, `w
 | [`l2/lung/perfusion.test.ts`](../../packages/engine-core/test/l2/lung/perfusion.test.ts) | 0 | 0 |
 | [`l2/lung/pulse-targets.test.ts`](../../packages/engine-core/test/l2/lung/pulse-targets.test.ts) | 0 | 0 |
 | [`l2/lung/recruit.test.ts`](../../packages/engine-core/test/l2/lung/recruit.test.ts) | 0 | 0 |
-| [`l2/lung/signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) | 25 | 0 |
+| [`l2/lung/signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) | 22 | 0 |
 | [`l2/lung/venegas.test.ts`](../../packages/engine-core/test/l2/lung/venegas.test.ts) | 0 | 0 |
 | [`l2/lung/vent-reference-seams.test.ts`](../../packages/engine-core/test/l2/lung/vent-reference-seams.test.ts) | 0 | 0 |
 | [`l2/lung/volumes.test.ts`](../../packages/engine-core/test/l2/lung/volumes.test.ts) | 1 | 0 |

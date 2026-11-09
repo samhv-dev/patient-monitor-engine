@@ -134,13 +134,23 @@ export interface KnownDevice {
  * device's last answer to a ping as of that frame, plus this (the relay reports at each heartbeat, before its ping, so
  * an answer is heard of one heartbeat later).
  */
-export function deviceRows(o: { relay: RelayState; phones: number; peers: readonly PeerSeen[]; now: number; devices: readonly RelayDevice[] | null; known?: Readonly<Record<string, KnownDevice>>; ageMs?: number }): DeviceRow[] {
+/** R8d: whether a cockpit drives the patient now ('driving') or has handed it to the engine's ventilator; null: none heard. */
+export type CockpitState = 'driving' | 'handed over' | null;
+/** R8d: the ventilator's own screens, as the host's desk knows them: the laptop window and the granted tablet. */
+export interface VentScreens {
+  window: CockpitState;
+  device: CockpitState;
+}
+
+export function deviceRows(o: { relay: RelayState; phones: number; peers: readonly PeerSeen[]; now: number; devices: readonly RelayDevice[] | null; known?: Readonly<Record<string, KnownDevice>>; ageMs?: number; vent?: VentScreens }): DeviceRow[] {
   const known = o.known ?? {};
   const base = { id: null, device: null, show: null, named: false } as const;
   const rows: DeviceRow[] = [{ ...base, level: 'stable', name: 'This window', where: '', showing: 'Instructor pages and the monitor', state: '—', ping: '—', heard: 'now' }];
   let w = 1;
   for (const x of o.peers.filter((p) => p.via === 'local'))
     rows.push({ ...base, id: x.id, show: x.show, level: 'stable', name: `Window ${++w}`, where: 'this computer', showing: showingOf(x.role, x.show), state: 'connected', ping: 'this computer', heard: ago(o.now - x.lastAt) });
+  // R8d: the ventilator's window on this computer (BroadcastChannel: no hello, the desk knows it), once it has been heard
+  if (o.vent?.window) rows.push({ ...base, level: 'stable', name: 'Ventilator window', where: 'this computer', showing: 'Ventilator', state: o.vent.window, ping: 'this computer', heard: '—' });
   let p = 0;
   const phone = (key: string | null) => (key && known[key]?.name) || `Phone ${++p}`;
   const down = o.relay !== 'open';
@@ -150,7 +160,8 @@ export function deviceRows(o: { relay: RelayState; phones: number; peers: readon
       if (d.device) here.add(d.device);
       const lvl = deviceLevel(d);
       const depth = d.role === 'viewer' && d.show === 'depth';
-      const state = d.role === 'instructor' || d.role === 'ventilator' ? (d.granted ? 'granted' : 'signing in') : depth ? 'Not available yet' : missed(d) ? 'missed a heartbeat' : lvl === 'weak' ? 'slow' : 'connected';
+      // R8d: a granted ventilator says whether it drives the patient or has handed it over
+      const state = d.role === 'ventilator' && d.granted && o.vent?.device ? o.vent.device : d.role === 'instructor' || d.role === 'ventilator' ? (d.granted ? 'granted' : 'signing in') : depth ? 'Not available yet' : missed(d) ? 'missed a heartbeat' : lvl === 'weak' ? 'slow' : 'connected';
       rows.push({ level: lvl, id: d.id, device: d.device, show: d.role === 'viewer' ? d.show : null, name: phone(d.device), named: !!d.device, where: '', showing: showingOf(d.role, d.role === 'viewer' ? d.show : null), state, ping: d.rttMs === null ? '—' : `${d.rttMs} ms`, heard: ago(d.sinceMs + (o.ageMs ?? 0)) });
     }
     for (const [key, k] of Object.entries(known)) {
