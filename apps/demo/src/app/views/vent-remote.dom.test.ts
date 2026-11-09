@@ -285,7 +285,7 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     v.sock.muted = true;
     await vi.advanceTimersByTimeAsync(2000);
     expect(handOvers()).toHaveLength(1);
-    expect(v.got.filter((m) => m.kind === 'grant' && m.to === 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: VENTILATOR_REASONS.silent });
+    // (the host's revocation went while the network was gone: this socket did not hear it)
     // the instructor sets the engine's ventilator while the tablet is away
     expect((await s.host.submit({ id: 'set-1', issuedBy: 'panel', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 16, vtMl: 450, peep: 6, fio2: 0.5 } } as never)).accepted).toBe(true);
     await vi.advanceTimersByTimeAsync(1500);
@@ -298,6 +298,7 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     expect(cockpitDesk(s).driving, 'the revoked id never re-takes the patient').toBeNull();
     expect(frames('vent-a.1').length - before).toBe(0);
     expect(v.got.filter((m) => m.kind === 'grant').length, 'answered so it signs in again').toBeGreaterThan(grantsBefore);
+    expect(v.got.filter((m) => m.kind === 'grant' && m.to === 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: VENTILATOR_REASONS.silent });
     // its socket closes: its end hands nothing over
     v.stop();
     v.sock.close();
