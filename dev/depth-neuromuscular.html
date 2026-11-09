@@ -20,18 +20,24 @@
       button, select, input { font: inherit; }
       #panel { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; max-width: 1240px; }
       #log { font: 12px ui-monospace, monospace; white-space: pre; color: #fc8; max-height: 120px; overflow: auto; }
+      #eeg { max-width: 1240px; margin: 10px 0; display: none; }
+      #eeg canvas { display: block; width: 100%; background: #050505; border: 1px solid #333; }
+      #eegRaw { height: 120px; }
+      #eegDsa { height: 110px; image-rendering: pixelated; }
+      #eegLabel { color: #9ad0ff; }
+      #eegNums { font: 13px ui-monospace, monospace; color: #8f8; white-space: pre; }
     </style>
-    <script type="module" crossorigin src="../assets/depth-neuromuscular-CX3iyiVc.js"></script>
+    <script type="module" crossorigin src="../assets/depth-neuromuscular-C2ibc41I.js"></script>
     <link rel="modulepreload" crossorigin href="../assets/modulepreload-polyfill-B5Qt9EMX.js">
     <link rel="modulepreload" crossorigin href="../assets/context-C68p7EUL.js">
     <link rel="modulepreload" crossorigin href="../assets/alarm-voice-eJ32c041.js">
-    <link rel="modulepreload" crossorigin href="../assets/engine.worker-DOVGzob5.js">
+    <link rel="modulepreload" crossorigin href="../assets/engine.worker-D6clfzeV.js">
     <link rel="modulepreload" crossorigin href="../assets/wave-lanes-DQlLuakQ.js">
     <link rel="modulepreload" crossorigin href="../assets/conditions-lxWqyi4i.js">
-    <link rel="modulepreload" crossorigin href="../assets/engine-CAgoYzIa.js">
-    <link rel="modulepreload" crossorigin href="../assets/numerics-dom-BpjmYFgr.js">
-    <link rel="modulepreload" crossorigin href="../assets/mount-SwbGvfqB.js">
-    <link rel="modulepreload" crossorigin href="../assets/relay-frames-DSpOyRqU.js">
+    <link rel="modulepreload" crossorigin href="../assets/engine-ClZlJtEs.js">
+    <link rel="modulepreload" crossorigin href="../assets/numerics-dom-DCyfuNp7.js">
+    <link rel="modulepreload" crossorigin href="../assets/mount-B6sdRrcO.js">
+    <link rel="modulepreload" crossorigin href="../assets/relay-frames-DARJXPTn.js">
   </head>
   <body>
     <div class="row">
@@ -53,9 +59,18 @@
       <fieldset><legend>Devices</legend>
         <button id="tofStart">TOF every 15 s</button> <button id="ptc">PTC</button> <button id="depthOn">Depth monitor</button>
       </fieldset>
+      <fieldset><legend>EEG</legend>
+        <button id="eegOn">EEG on (generic)</button> <button id="eegOff">EEG off</button>
+        <button id="eegImp">Electrode 9 kΩ</button> <button id="eegImpOk">Electrodes 2 kΩ</button> <button id="eegDia">Diathermy 3 s</button>
+      </fieldset>
       <fieldset><legend>Speed</legend>
         <select id="speed"><option value="1">×1</option><option value="2">×2</option><option value="4" selected>×4</option></select>
       </fieldset>
+    </div>
+    <div id="eeg">
+      <div><span id="eegLabel"></span> <span id="eegNums"></span></div>
+      <canvas id="eegRaw" width="1000" height="120" title="raw EEG, the device's window, ±100 µV"></canvas>
+      <canvas id="eegDsa" width="1800" height="101" title="spectrogram, 0–50 Hz (bottom to top), about the last hour, red high, blue low"></canvas>
     </div>
     <div id="panel"></div>
     <div id="log"></div>
