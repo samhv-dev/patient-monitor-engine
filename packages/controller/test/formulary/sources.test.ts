@@ -15,7 +15,7 @@ import { checkFormulary, injectableDrugIds, loadFormulary, type FormularyFiles, 
 const pkg = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const FOLDER = join(pkg, 'formulary');
 const PACKAGES = resolve(pkg, '..');
-/** A formulary file larger than this is not an entry (a class C entry is a few kB): an extract would be (rule 6). */
+/** A formulary file larger than this is not an entry (a class C entry is a few kB): an extract would be (rule 6) [ENG: test]. */
 const MAX_FILE_BYTES = 32 * 1024;
 
 /** Every file under `dir` (relative path), skipping node_modules and build output. */
