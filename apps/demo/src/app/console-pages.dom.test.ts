@@ -379,14 +379,14 @@ describe('Room', () => {
     v.leave?.();
   });
 
-  it("R7 the openers on R4's cards: Learner monitor, Monitor and Defibrillator windows (R5), the Ventilator in this window, the chips say which window shows each", () => {
+  it("R7 the openers on R4's cards: Learner monitor, Monitor and Defibrillator windows (R5), the Ventilator here or in a window (R8d), the chips say which window shows each", () => {
     const { v, opened, local } = setup();
     const cards = () => [...v.el.querySelectorAll<HTMLElement>('.room-openers .join-card')];
     expect(cards().map((c) => [c.dataset.show, c.querySelector('h2')?.textContent, c.querySelector('.st')?.textContent, [...c.querySelectorAll('.btn')].map((b) => b.textContent)])).toEqual([
       ['learner', 'Learner monitor', 'Not open', ['New window']],
       ['monitor', 'Patient monitor', 'This window', ['New window']],
       ['defib', 'Defibrillator', 'Not open', ['New window']],
-      ['vent', 'Ventilator', 'On this computer', ['Open here']],
+      ['vent', 'Ventilator', 'On this computer', ['Open here', 'New window']], // R8d: and a window of its own
       ['depth', 'Depth of anaesthesia', 'Not available yet', []],
       ['iabp', 'Intra-aortic balloon pump', 'Coming later', []],
     ]);
