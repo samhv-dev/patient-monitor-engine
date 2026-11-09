@@ -359,6 +359,7 @@ None recorded.
 | [`session/host-stage-group.test.ts`](../../packages/controller/test/session/host-stage-group.test.ts) | 0 | 0 |
 | [`session/host-time.test.ts`](../../packages/controller/test/session/host-time.test.ts) | 0 | 0 |
 | [`session/host-ventilator.test.ts`](../../packages/controller/test/session/host-ventilator.test.ts) | 0 | 0 |
+| [`session/learner-baseline.test.ts`](../../packages/controller/test/session/learner-baseline.test.ts) | 0 | 0 |
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |
 | [`session/timeline-reset.test.ts`](../../packages/controller/test/session/timeline-reset.test.ts) | 0 | 0 |
 | [`session/timeline-restore.test.ts`](../../packages/controller/test/session/timeline-restore.test.ts) | 0 | 0 |
