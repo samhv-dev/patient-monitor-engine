@@ -3,7 +3,7 @@
 // (engine-core Clock), and lanes draw at clock.renderT, so sweep speed is independent of frame rate.
 // The layout comes from a RenderPlan (skin-plan.ts), a skin switch relayouts without restarting the engine, ECG
 // lanes can auto-gain, and event overlays (pace, sync, shock, lead-off) are drawn.
-import { capture12, Clock, createEngine, type Capture12, type ChannelId, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
+import { capture12, Clock, createEngine, runOwed, type Capture12, type ChannelId, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
 import { AUTO_GAIN_WINDOW_S, beatAmplitude, judgeGain, newJudge, type GainJudge } from './ecg-gain.ts';
@@ -53,8 +53,8 @@ const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frame
 const RESP_MIN_SPAN = 0.5;
 const EVENT_POST_MS = 250; // post the clock anchor at least this often even without events
 /** FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every
- *  ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden
- *  minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG: display] */
+ *  ≤ 250 ms. It is caught up in bulk at once like a hidden stretch (catchUp), not over the next frames' budget, so the
+ *  hidden minutes are there when the worker's rAF wakes before the page's visibility catch-up. [ENG: display] */
 export const STALL_MS = 1000;
 /** The R times the auto-gain keeps for its per-beat amplitude: a 4-s window's beats at any rate, with room [ENG: display]. */
 const GAIN_BEATS_KEPT = 64;
@@ -138,6 +138,7 @@ export class MonitorCore {
     this.plan = opts.plan ?? legacyPlan(opts.lanes ?? ['ecgII', 'V5'], opts.waves ?? []);
     this.userPxPerMm = opts.pxPerMm ?? null;
     this.fps = opts.fps ?? 60;
+    this.lastEpoch = opts.startEpochMs ?? null; // brief 105: the start-up is owed time (CoreOptions.startEpochMs)
     this.size = size;
     this.sendLeads();
     this.engine.on((e) => {
@@ -283,16 +284,16 @@ export class MonitorCore {
   }
 
   /**
-   * Hidden tab (brief §3.3): advance sim time by the FULL wall delta (no 250 ms clamp), without drawing.
+   * Hidden tab (brief §3.3): advance sim time by the FULL wall delta at once (no frame budget), without drawing.
    * The lanes restart cleanly on the next drawn frame because the jump exceeds one lane.
    */
   catchUp(epochMs: number): void {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
     if (this.clock.paused || dt === 0 || this.ffWasPaused !== null) return;
-    if (this.clock.advanceUnclamped(dt) > 0) this.runTo(this.clock.simT); // Remainder carried
+    if (this.clock.advance(dt) > 0) this.runTo(this.clock.simT); // Remainder carried
     // Post what was generated while hidden, so the batch does not grow without frames.
-    this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
+    this.post(this.anchor(this.clock.renderT, epochMs), this.batch);
     this.batch = [];
     this.lastPost = epochMs;
     this.overlays.due(this.clock.renderT); // marks from the hidden stretch are not drawn
@@ -317,7 +318,7 @@ export class MonitorCore {
       this.lastEpoch = null; // the next frame counts from itself, not from the fast-forward's start
     }
     const epochMs = performance.timeOrigin + performance.now();
-    this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
+    this.post(this.anchor(this.clock.renderT, epochMs), this.batch);
     this.batch = [];
     this.lastPost = epochMs;
     return { tick: this.clock.tick, simT: this.clock.simT };
@@ -330,8 +331,10 @@ export class MonitorCore {
     if (this.fps === 30 && this.parity++ % 2 === 1) return; // 30 fps mode: skip every other frame
     const dt = this.lastEpoch === null ? 0 : epochMs - this.lastEpoch;
     this.lastEpoch = epochMs;
-    const ticks = this.clock.advance(dt);
-    if (ticks > 0) this.engine.advanceTo(this.clock.simT);
+    // Brief 105: the whole gap is owed (no 250 ms clamp), run tick by tick within the frame budget; the rest runs on the
+    // next frames, and the anchor says how far behind the clock is meanwhile
+    this.clock.credit(dt);
+    runOwed(this.clock, (simT) => this.engine.advanceTo(simT));
     const t = this.clock.renderT;
     if (this.visible) {
       this.autoGain(t);
@@ -358,10 +361,15 @@ export class MonitorCore {
       }
     }
     if (this.batch.length > 0 || epochMs - this.lastPost >= EVENT_POST_MS) {
-      this.post({ simT: t, epochMs, timeScale: this.clock.timeScale }, this.batch);
+      this.post(this.anchor(t, epochMs), this.batch);
       this.batch = [];
       this.lastPost = epochMs;
     }
+  }
+
+  /** The clock anchor a post carries: sim time at `epochMs`, the speed, and how far the clock is behind real time. */
+  private anchor(simT: number, epochMs: number): ClockAnchor {
+    return { simT, epochMs, timeScale: this.clock.timeScale, behindS: this.clock.behindS };
   }
 
   private ecgLaneIndices(): number[] {

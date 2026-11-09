@@ -96,7 +96,7 @@ describe('MonitorCore hidden-tab catch-up', () => {
     expect(Math.abs(core.clock.renderT - 60.6)).toBeLessThan(0.021);
   });
 
-  it('FX-15: a frame after a 7-min stall (the worker woke first) credits the whole gap; a slow frame is still clamped', () => {
+  it('FX-15: a frame after a 7-min stall (the worker woke first) credits the whole gap; a slow frame is owed in full too (brief 105)', () => {
     const { core } = make();
     core.frame(1000);
     core.frame(1016);
@@ -107,8 +107,28 @@ describe('MonitorCore hidden-tab catch-up', () => {
     core.catchUp(1016 + 420_010); // the page's catch-up then finds no gap left to double-count
     expect(core.clock.simT).toBeLessThanOrEqual(420.03);
     const t = core.clock.simT;
-    core.frame(1016 + 420_010 + 900); // under STALL_MS: a slow frame, clamped to 250 ms as before
-    expect(core.clock.simT - t).toBeLessThanOrEqual(0.2501);
+    core.frame(1016 + 420_010 + 900); // under STALL_MS: a slow frame, owed in full (until brief 105 clamped to 250 ms)
+    for (let f = 1; f <= 30; f++) core.frame(1016 + 420_010 + 900 + f * 16); // owed ticks the budget left run on the next frames
+    expect(core.clock.simT - t).toBeGreaterThanOrEqual(0.9 + 30 * 0.016 - 0.021);
+    expect(core.clock.behindS).toBe(0);
+    expect(core.engine.now().simT).toBe(core.clock.simT);
+  });
+
+  it('brief 105: busy frames every 400 ms lose nothing (the 250 ms clamp ran the body at 0.6 of real time)', () => {
+    const { core, posts } = make();
+    for (let f = 0; f <= 50; f++) core.frame(1000 + f * 400); // 20 s of wall time in 50 slow frames
+    expect(core.clock.simT + core.clock.behindS).toBeGreaterThanOrEqual(19.98);
+    expect(core.clock.behindS).toBeLessThan(0.5); // this machine runs the 20 owed ticks of each frame within its budget
+    expect(posts.at(-1)?.anchor.behindS).toBe(core.clock.behindS);
+  });
+
+  it('brief 105: the start-up is owed time — a first frame 1.5 s after the mount puts the body at 1.5 s', () => {
+    const ctx = new FakeCtx();
+    const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 300, dpr: 2 }, { engine: { seed: 1 }, startEpochMs: 10_000 }, () => {});
+    core.frame(11_500); // the worker's first frame, after its start-up
+    for (let f = 1; f <= 10; f++) core.frame(11_500 + f * 16);
+    expect(core.clock.simT + core.clock.behindS).toBeGreaterThanOrEqual(1.5 + 0.16 - 0.021);
+    expect(core.clock.simT).toBeGreaterThan(1.5);
   });
 
   it('FX-15: a stall while paused credits nothing', () => {

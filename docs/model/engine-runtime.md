@@ -13,7 +13,8 @@
 The engine runtime: the fixed-step clock, the committed pipeline state and its look-ahead, the sample ring buffers, the
 seeded random streams and snapshots. It decides when and in which order each model is advanced, and makes a run
 reproducible: the same seed and command log give the same patient. It matters mostly to an embedding developer; a
-clinician-educator needs only that time moves in 20 ms ticks and can run from 0.25 to 8 times real time.
+clinician-educator needs only that time moves in 20 ms ticks, can run from 0.25 to 8 times real time, and that a computer
+too busy to keep real time says so (the clock pill reads BEHIND) instead of running the patient slow.
 <!-- /hand:purpose -->
 
 ## Equations in words
@@ -21,8 +22,12 @@ clinician-educator needs only that time moves in 20 ms ticks and can run from 0.
 <!-- hand:equations -->
 > Draft — owner review pending.
 
-- Clock: simT = tick × 20 ms; wall time feeds an accumulator, acc += min(wall Δ, 250 ms) × timeScale, and a tick runs
-  while acc ≥ 20 ms; timeScale is limited to 0.25–8 ("Fix Your Timestep", Gaffer on Games; `clock/clock.ts`).
+- Clock: simT = tick × 20 ms; wall time feeds an accumulator in full, acc += wall Δ × timeScale, and owed ticks run one
+  20-ms tick at a time within a work budget of 50 ms per frame; what the budget leaves stays owed for the next frames,
+  and the owed time is how far the engine is behind real time, reported to the page when it passes 0.5 s (brief 105:
+  until then a frame's credit was clamped to 250 ms, and a busy machine ran the body slow in silence). The monitor's
+  clock starts at its mount, so a worker's start-up is owed time too. timeScale is limited to 0.25–8 ("Fix Your
+  Timestep", Gaffer on Games; `clock/clock.ts`).
 - The ECG runs at 500 Hz, 10 samples per tick (`engine.ts`); ring buffers are indexed by absolute sample number, sample
   n belonging to time n/rate, and keep the most recent 120 s (`buffers/ring.ts`).
 - Look-ahead: every tick a clone of the committed state is run 100 ms ahead to fill the buffers and find QRS detections

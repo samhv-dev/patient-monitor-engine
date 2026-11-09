@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Clock, MAX_FRAME_MS, MAX_TIME_SCALE, TICK_MS } from '../../src/clock/clock.ts';
+import { BEHIND_REPORT_S, Clock, FRAME_BUDGET_MS, MAX_TIME_SCALE, runOwed, TICK_MS } from '../../src/clock/clock.ts';
 import { createRng } from '../../src/rng/sfc32.ts';
 
 describe('clock/Clock', () => {
@@ -24,14 +24,60 @@ describe('clock/Clock', () => {
     }
   });
 
-  it('clamps a 5 s frame to at most 250 ms × scale', () => {
+  it('brief 105: a 5 s frame is owed in full (no clamp), × scale', () => {
     for (const scale of [0.25, 1, 4, 8]) {
       const clock = new Clock();
       clock.timeScale = scale;
-      const n = clock.advance(5000);
-      expect(n * TICK_MS).toBeLessThanOrEqual(MAX_FRAME_MS * scale);
-      expect(n).toBe(Math.floor((MAX_FRAME_MS * scale) / TICK_MS));
+      clock.credit(5000);
+      expect(clock.owedTicks).toBe(Math.floor((5000 * scale) / TICK_MS));
+      expect(clock.behindS).toBeCloseTo(clock.owedTicks * 0.02, 12);
+      expect(clock.take()).toBe(Math.floor((5000 * scale) / TICK_MS));
+      expect(clock.behindS).toBe(0);
     }
+  });
+
+  it('brief 105: runOwed runs 20-ms ticks one at a time within the budget, leaves the rest owed, and catches up later', () => {
+    const clock = new Clock();
+    let wall = 0;
+    const costMs = 7; // a starved machine's tick (brief 105 measured 6.6 ms)
+    const ran: number[] = [];
+    const runTo = (simT: number) => {
+      ran.push(simT);
+      wall += costMs;
+    };
+    clock.credit(400); // one frame 400 ms after the last: 20 ticks owed
+    const n = runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
+    expect(n).toBe(Math.ceil(FRAME_BUDGET_MS / costMs)); // 8 ticks: the budget is spent, then one more check
+    expect(ran.map((t, i) => t - (ran[i - 1] ?? 0)).every((d) => Math.abs(d - TICK_MS / 1000) < 1e-9)).toBe(true); // never a larger dt
+    expect(clock.owedTicks).toBe(20 - n);
+    expect(clock.behindS).toBeCloseTo((20 - n) * 0.02, 12);
+    expect(clock.renderT).toBeLessThan(clock.simT + TICK_MS / 1000); // a renderer never draws the owed ticks
+    runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
+    runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
+    expect(clock.owedTicks).toBe(0);
+    expect(clock.simT).toBeCloseTo(0.4, 12); // nothing lost: 400 ms of wall is 400 ms of sim
+  });
+
+  it('brief 105: a machine that cannot keep up stays behind and says how far, it never runs slow in silence', () => {
+    const clock = new Clock();
+    let wall = 0;
+    const runTo = () => void (wall += 30); // a tick costs more than the 20 ms it simulates
+    let last = 0;
+    for (let f = 0; f < 50; f++) {
+      clock.credit(wall - last + 16);
+      last = wall;
+      runOwed(clock, runTo, FRAME_BUDGET_MS, () => wall);
+    }
+    expect(clock.simT + clock.behindS).toBeGreaterThan((wall / 1000) * 0.99); // run + owed = the wall time credited
+    expect(clock.behindS).toBeGreaterThan(BEHIND_REPORT_S);
+  });
+
+  it('brief 105: at least one owed tick runs per frame however slow a tick is', () => {
+    const clock = new Clock();
+    let wall = 0;
+    clock.credit(100);
+    expect(runOwed(clock, () => void (wall += 1000), FRAME_BUDGET_MS, () => wall)).toBe(1);
+    expect(clock.owedTicks).toBe(4);
   });
 
   it('simT and renderT follow the tick count and the accumulator', () => {
@@ -51,6 +97,16 @@ describe('clock/Clock', () => {
     expect(clock.tick).toBe(3);
     clock.resume();
     expect(clock.advance(40)).toBe(2);
+  });
+
+  it('a pause keeps what was owed before it, credits nothing during it, and the owed ticks run after resume', () => {
+    const clock = new Clock();
+    clock.credit(100); // owed: 5 ticks
+    clock.pause();
+    clock.credit(10_000);
+    expect(clock.take()).toBe(0);
+    clock.resume();
+    expect(clock.take()).toBe(5);
   });
 
   it('rejects timeScale outside 0.25–8 (×8 is the fastest speed)', () => {
