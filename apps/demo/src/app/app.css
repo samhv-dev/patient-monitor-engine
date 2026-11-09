@@ -881,15 +881,27 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .mt-svg .mt-l { font: 600 11px var(--font-ui, sans-serif); fill: var(--text-strong); }
 .mt-svg .mt-k { font: 9.5px var(--font-mono, ui-monospace, monospace); fill: var(--text-muted); }
 .mt-page [lang='fa'] h2 { letter-spacing: 0; }
+/* brief 104: the review line, the folds and "+n" (a button: an outline and a focus ring, never colour alone) */
+.mt-review { margin: 0; font-size: var(--t-13); color: var(--text-muted); }
+.mt-drawn, .mt-how { margin: 0; }
+.mt-svg .mt-n[data-kind='device'] .mt-box { stroke: var(--text-strong); stroke-width: 3.2; fill: var(--bezel-0); }
+.mt-svg .mt-n[data-kind='fold'] .mt-box { fill: var(--bezel-0); stroke-dasharray: 3 3; }
+.mt-svg [data-open], .mt-svg [data-expand] { cursor: pointer; }
+.mt-svg .mt-more-b { fill: var(--bezel-0); stroke: var(--text-strong); stroke-width: 1.4; }
+.mt-svg .mt-more-t { font: 700 10px var(--font-ui, sans-serif); fill: var(--text-strong); }
+.mt-svg .mt-more:is(:hover, :focus) .mt-more-b { stroke: var(--accent); stroke-width: 2.6; }
+.mt-svg .mt-more:focus { outline: none; }
 @media print {
-  .app[data-route='explore']:has(.mt-main:not([hidden])) :is(.topbar, .sessionbar, .stage, .skip, .rail, .xnav, .mt-tools, .seg, .mt-detail, .mt-draft) { display: none !important; }
+  .app[data-route='explore']:has(.mt-main:not([hidden])) :is(.topbar, .sessionbar, .stage, .skip, .rail, .xnav, .mt-tools, .seg, .mt-detail, .mt-draft, .mt-how) { display: none !important; }
   html:has(.mt-main:not([hidden])), body:has(.mt-main:not([hidden])) { height: auto; overflow: visible; background: #fff; color-scheme: light; }
   .app[data-route='explore']:has(.mt-main:not([hidden])) { display: block; height: auto; } /* a grid ignores named pages */
   .app[data-route='explore']:has(.mt-main:not([hidden])) :is(.main, .view, .page, .xgrid) { display: block; overflow: visible; height: auto; padding: 0; margin: 0; max-width: none; }
   .mt-main .mt-page { --mt-ink: #000; --mt-faint: #444; gap: 2mm; }
   .mt-main h1 { font-size: 14pt; margin: 0; }
-  .mt-main :is(.lede, .mt-nolive, .mt-counts, .mt-legend) { font-size: 7.5pt; color: #000; }
+  .mt-main :is(.lede, .mt-nolive, .mt-counts, .mt-drawn, .mt-review, .mt-legend) { font-size: 7.5pt; color: #000; }
   .mt-fig { overflow: visible; max-height: none; border: 0; }
-  .mt-fig > .mt-svg { width: 100%; height: auto; }
+  /* the drawing as drawn, scaled to the page's width or to 95 mm of its height, whichever binds (a default view is
+     taller for its width than the whole tree; brief 104: one A4 page either way) */
+  .mt-fig > .mt-svg { width: auto; height: auto; max-width: 100%; max-height: 95mm; }
   .mt-legend { grid-template-columns: repeat(3, 1fr); }
 }
