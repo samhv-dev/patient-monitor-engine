@@ -204,3 +204,43 @@ describe('the host grants one remote ventilator (R8c)', () => {
     expect(seen).toEqual(['vent-a.1', null]);
   });
 });
+
+describe('a silence hand-over revokes the cockpit id (R8c/R8d hand-over contract)', () => {
+  it('revokeVentilator(id) tells that id it is revoked (silent), releases its place, and its late `vent` never reaches the app but is refused again', async () => {
+    const { host, relay, got, vents, holders } = setup();
+    const v = device(relay, 'vent-a.1');
+    v.hello(PIN);
+    await waitFor(() => grants(got, 'vent-a.1').some((g) => g.granted));
+    v.vent(cmds(1));
+    await waitFor(() => vents.length === 1);
+    expect(host.revokeVentilator('vent-a.1', VENTILATOR_REASONS.silent)).toBe(true);
+    await settle();
+    expect(grants(got, 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: VENTILATOR_REASONS.silent });
+    expect(holders.at(-1)).toBeNull();
+    expect(host.ventilator).toBeNull();
+    // the frames the device's browser held while it was away arrive late, from the revoked id
+    const before = grants(got, 'vent-a.1').length;
+    v.vent({ v: 1, kind: 'batch', msgs: [{ v: 1, kind: 'cmds', tick: 2, cmds: [] }] } as never);
+    v.vent({ v: 1, kind: 'settings', cfg: { mode: 'VC' } as never } as never);
+    await settle();
+    expect(vents).toHaveLength(1); // nothing more reached the app: it never re-takes the patient
+    expect(grants(got, 'vent-a.1').length).toBeGreaterThan(before); // answered: it signs in again
+    expect(grants(got, 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: VENTILATOR_REASONS.silent });
+  });
+
+  it('only the holder named is revoked; a fresh sign-in (a new socket id) is granted and drives', async () => {
+    const { host, relay, got, vents } = setup();
+    const v1 = device(relay, 'vent-a.1');
+    v1.hello(PIN);
+    await waitFor(() => grants(got, 'vent-a.1').some((g) => g.granted));
+    expect(host.revokeVentilator('vent-zz.9', VENTILATOR_REASONS.silent)).toBe(false);
+    expect(host.ventilator).toBe('vent-a.1');
+    host.revokeVentilator('vent-a.1', VENTILATOR_REASONS.silent);
+    const v2 = device(relay, 'vent-a.2');
+    v2.hello(PIN);
+    await waitFor(() => grants(got, 'vent-a.2').some((g) => g.granted));
+    v2.vent(cmds(5));
+    await waitFor(() => vents.some((x) => x.from === 'vent-a.2'));
+    expect(host.ventilator).toBe('vent-a.2');
+  });
+});
