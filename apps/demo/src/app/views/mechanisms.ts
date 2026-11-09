@@ -5,13 +5,20 @@
 // where it has the key, else the registry's declared label, else the engine key. Persian (Q13): the SVG's strings are
 // matched through fa-match.mjs as they are built, the page's other text through the DOM pass, and the draft line stands
 // while any entry printed is unread by the clinical owner.
-import { labelOf } from '../glossary.ts';
+// Brief 104 (T1b), the owner's feedback on T1 ("too crowded"; "the physiological parts must carry clinical labels"): a
+// node shows its clinical label (mechanisms/labels.ts; the glossary's where it has one) and its unit, never its engine
+// key (in the tooltip only), with the line "labels under the owner's review" while a drawn label is unreviewed; the
+// default view is the trigger and 4 generations (P-1) past it, with "+n" on a node to draw one generation more, the
+// monitor's values folded into one box, a node's children beyond six folded into "n more", a "path to…" picker, and
+// the whole tree one button away (mechanisms/graph.ts view()). Print takes the view as drawn.
 import { DRAFT_LINE, faPass, faText, translateTree, unreviewed } from '../i18n/fa-dom.ts';
 import { hostLang, setHostLang, type HostLang } from '../i18n/lang.ts';
-import { mechanismTree, type DrawClass, type TreeData } from '../mechanisms/graph.ts';
+import { DEPTH, mechanismTree, view, type DrawClass, type TreeData, type ViewState } from '../mechanisms/graph.ts';
+import { clinicalLabel } from '../mechanisms/clinical.ts';
+import { nodeLabel, REVIEW_LINE } from '../mechanisms/labels.ts';
 import { REGISTRY } from '../mechanisms/registry-data.ts';
 import { treeSvg } from '../mechanisms/svg.ts';
-import { h, seg, setText } from '../ui.ts';
+import { button, h, seg, setText } from '../ui.ts';
 
 /** The six first triggers (plan Q8). The circulation's `tensionPtx` condition is an alias the engine routes to the lung
  *  condition (its one registry row says so), so the picker lists the lung condition once. */
@@ -43,7 +50,10 @@ export const LEGEND: ReadonlyArray<{ cls?: DrawClass; shape?: string; words: str
   { shape: 'loop', words: '⟲ rounded box: a reflex drawn as one loop (its states inside, its effects outside)' },
   { shape: 'absentNode', words: 'dashed box: a mechanism the engine does not have' },
 ];
-export const HINT = 'Hover or focus an edge to read its rows, its constants and their sources and tags; a node, to read its engine keys.';
+export const HINT = 'Hover or focus an edge to read its rows, its constants and their sources and tags; a node, to read what it is and its engine keys.';
+export const HOW = 'The tree opens at the trigger and 4 generations past it. “+n” on a node draws one generation more from it; “+ n more” opens the rest of a node\'s effects (six are shown, the best-sourced first); “▸ Monitor values” opens what the monitor shows. “Path to” keeps only the paths to one monitor value.';
+
+const about = (id: string): { unit: string; meaning: string } | undefined => nodeLabel(id);
 
 const swatch = (l: (typeof LEGEND)[number]): string => {
   if (l.cls) return `<svg class="mt-svg mt-sw" width="44" height="12" viewBox="0 0 44 12" aria-hidden="true"><g class="mt-e" data-class="${l.cls}"><path class="mt-line" d="M2 6H42"/></g></svg>`;
@@ -56,21 +66,34 @@ const swatch = (l: (typeof LEGEND)[number]): string => {
 
 export interface MechanismsPanel {
   el: HTMLElement;
-  /** Draw (again) for the chosen trigger and the host's language. */
+  /** Draw (again) for the chosen trigger, view and the host's language. */
   draw(): void;
   readonly trigger: string;
 }
 
 export function mechanismsPanel(data: TreeData = REGISTRY): MechanismsPanel {
   let trigger: string = 'trigger.drug.propofol';
-  const select = h('select', { id: 'mt-trigger', onchange: () => ((trigger = select.value), draw()) },
+  // the view: what is opened, the path filter, the whole tree (reset when the trigger changes)
+  let expanded = new Set<string>();
+  let opened = new Set<string>();
+  let pathTo = '';
+  let whole = false;
+  const reset = (): void => void ((expanded = new Set()), (opened = new Set()), (pathTo = ''), (whole = false));
+  const select = h('select', { id: 'mt-trigger', onchange: () => ((trigger = select.value), reset(), draw()) },
     ...PICKER.map((p) => h('option', { value: p }, PICKER_WORDS[p])));
   select.value = trigger;
+  const pathSel = h('select', { id: 'mt-path', onchange: () => ((pathTo = pathSel.value), (whole = false), draw()) });
   const langSwitch = seg<HostLang>('Language of the page', [['en', 'English'], ['fa', 'فارسی']], hostLang(), (l) => (setHostLang(l), draw()));
   langSwitch.lang = 'en';
   const draft = h('p', { class: 'mt-draft', lang: 'en', dir: 'ltr', hidden: true }, DRAFT_LINE);
+  const review = h('p', { class: 'mt-review', lang: 'en', dir: 'ltr' }, REVIEW_LINE);
   const triggerLabel = h('label', { for: 'mt-trigger' }, 'Trigger');
-  const tools = h('div', { class: 'row mt-tools' }, triggerLabel, select);
+  const pathLabel = h('label', { for: 'mt-path' }, 'Path to');
+  const wholeBtn = button('Whole tree', () => ((whole = true), (pathTo = ''), draw()), 'small');
+  const defaultBtn = button('Default view', () => (reset(), draw()), 'small');
+  wholeBtn.id = 'mt-whole';
+  defaultBtn.id = 'mt-default';
+  const tools = h('div', { class: 'row mt-tools' }, triggerLabel, select, pathLabel, pathSel, wholeBtn, defaultBtn);
   const fig = h('div', { class: 'mt-fig' });
   const detail = h('p', { class: 'mt-detail', 'aria-live': 'polite' }, HINT);
   // rebuilt in English on every draw, then put through the DOM's Persian pass when the page is in Persian
@@ -78,28 +101,58 @@ export function mechanismsPanel(data: TreeData = REGISTRY): MechanismsPanel {
   const legendBox = h('div', { class: 'mt-legend-box' });
 
   const show = (ev: Event): void => {
-    const g = (ev.target as Element | null)?.closest?.('.mt-e, .mt-n');
-    const words = g?.querySelector('title')?.textContent;
+    const g = (ev.target as Element | null)?.closest?.('.mt-more, .mt-e, .mt-n');
+    const words = g?.querySelector(':scope > title')?.textContent;
     if (words) setText(detail, words);
   };
   fig.addEventListener('focusin', show);
   fig.addEventListener('mouseover', show);
+  // "+n" draws one generation more from its node; a device box or "n more" opens its fold (click, Enter or Space)
+  const act = (ev: Event): void => {
+    const el = ev.target as Element | null;
+    const more = el?.closest?.('[data-expand]');
+    const open = more ? null : el?.closest?.('[data-open]');
+    if (!more && !open) return;
+    if (ev instanceof KeyboardEvent) {
+      if (ev.key !== 'Enter' && ev.key !== ' ') return;
+      ev.preventDefault();
+    }
+    const id = (more ?? open)?.getAttribute(more ? 'data-expand' : 'data-open') as string;
+    if (more) expanded.add(id);
+    else opened.add(id);
+    draw();
+    // keep the focus where the reader was: on the node that was opened, or the first drawn child of a fold's parent
+    const back = fig.querySelector(`.mt-n[data-key="${CSS.escape(more ? id : (id.startsWith('more.') ? id.slice(5) : id))}"]`) as SVGGElement | null;
+    back?.focus?.();
+  };
+  fig.addEventListener('click', act);
+  fig.addEventListener('keydown', act);
 
   function draw(): void {
     const fa = hostLang() === 'fa';
     langSwitch.set(fa ? 'fa' : 'en');
     const p = faPass();
     const t = fa ? (en: string) => faText(en, p) ?? en : (en: string) => en;
-    const tree = mechanismTree(data, trigger, labelOf);
-    const { svg } = treeSvg(tree, { t });
+    const tree = mechanismTree(data, trigger, clinicalLabel);
+    const state: ViewState = { expanded, opened, ...(pathTo ? { pathTo } : {}), whole };
+    const shown = view(tree, state);
+    const { svg } = treeSvg(shown, { t, about });
     fig.innerHTML = svg;
     const fb = tree.edges.filter((e) => e.feedback).length;
     const absent = tree.edges.filter((e) => e.absent).length;
     const big = tree.loops[0]?.length ?? 0;
+    const target = tree.nodes.find((n) => n.id === pathTo)?.label ?? pathTo;
+    const drawnLine = whole
+      ? `Drawn: the whole tree, ${shown.nodes.length} nodes.`
+      : pathTo
+        ? `Drawn: the ${shown.nodes.length} nodes on the paths from the trigger to ${target}.`
+        : `Drawn: ${tree.nodes.length - shown.hidden} of the ${tree.nodes.length} nodes, the trigger and ${DEPTH} generations past it${expanded.size || opened.size ? ', with what you opened' : ''}.`;
     text.replaceChildren(
       h('p', { class: 'lede' }, INTRO),
       h('p', { class: 'mt-nolive' }, NO_LIVE),
-      h('p', { class: 'hint mt-counts' }, `${tree.nodes.length} nodes, ${tree.edges.length} edges: ${fb} feedback, ${absent} absent. ${big ? `${big} of the nodes lie on one feedback system (each reaches every other).` : 'No loop.'}`));
+      h('p', { class: 'hint mt-counts' }, `${tree.nodes.length} nodes, ${tree.edges.length} edges: ${fb} feedback, ${absent} absent. ${big ? `${big} of the nodes lie on one feedback system (each reaches every other).` : 'No loop.'}`),
+      h('p', { class: 'hint mt-drawn' }, drawnLine),
+      h('p', { class: 'hint mt-how' }, HOW));
     legendBox.replaceChildren(h('h2', {}, 'Legend'), h('ul', { class: 'mt-legend' }, ...LEGEND.map((l) => {
       const li = h('li', {}, h('span', { class: 'mt-words' }, l.words));
       li.insertAdjacentHTML('afterbegin', swatch(l));
@@ -107,15 +160,21 @@ export function mechanismsPanel(data: TreeData = REGISTRY): MechanismsPanel {
     })));
     detail.textContent = HINT;
     triggerLabel.textContent = t('Trigger');
+    pathLabel.textContent = t('Path to');
     for (const o of select.options) o.textContent = t(PICKER_WORDS[o.value as (typeof PICKER)[number]]);
+    pathSel.replaceChildren(h('option', { value: '' }, t('— (the default view)')),
+      ...tree.nodes.filter((n) => n.kind === 'observable').map((n) => h('option', { value: n.id }, t(n.label))));
+    pathSel.value = pathTo;
     for (const x of [text, legendBox, detail]) {
       if (fa) x.setAttribute('lang', 'fa'), x.setAttribute('dir', 'rtl'), translateTree(x, p);
       else x.removeAttribute('lang'), x.removeAttribute('dir');
     }
     draft.hidden = !(fa && unreviewed(p));
+    // every drawn node's label (a loop, box or fold has none of its own): the line stands while one is unreviewed
+    review.hidden = !shown.nodes.some((n) => nodeLabel(n.id)?.reviewed === false);
   }
 
-  const el = h('div', { class: 'mt-page' }, h('div', { class: 'row between' }, tools, langSwitch), draft, text, fig, detail, legendBox);
+  const el = h('div', { class: 'mt-page' }, h('div', { class: 'row between' }, tools, langSwitch), draft, review, text, fig, detail, legendBox);
   draw();
   return { el, draw, get trigger() { return trigger; } };
 }
