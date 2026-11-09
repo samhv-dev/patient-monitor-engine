@@ -1,12 +1,13 @@
 /* Stage 13: the Debrief view on screen (the bench palette) and in print. Print: A4 portrait, only the report (the top
    bar, session bar, monitor and toasts hidden), black on white, every status and mark in words as well as shape — no
    meaning carried by colour (the two accents of E45 always come with a shape and a legend in words); the objectives,
-   facts and each chart never split across pages; trends and the minute appendix start on a new page (drugs, the
-   timeline and bookmarks share one); the tables' headers repeat on each page; the undone course struck through (with
-   its words), set-up rows grey. The footer and the build on every page: @page margin boxes (the view's <style>, Chromium); where
+   facts and each chart never split across pages; the trends start a new page (drugs, the timeline and bookmarks
+   share one; the minute appendix is no longer printed, the owner's decision of 9 November); the tables' headers
+   repeat on each page; the undone course struck through (with its words), set-up rows grey. The footer and the build on every page: @page margin boxes (the view's <style>, Chromium); where
    the browser has none (WebKit: .db-nomargin), a footer line before each forced page break. The @page size and margins
    apply to printing any route of the app (R50 M-9). Redesign B: page 1 is the header band, the key-time tiles, the
-   course strip and the objectives; the key moments start page 2 (only when there is one); the learner handout prints
+   course strip with the swimlane under it (the owner, 9 November); the objectives and the key moments start page 2
+   (a run with no key moment keeps its objectives on page 1); the learner handout prints
    alone when the view carries data-print="handout" (E51) and never with the report. */
 /* rc.3: the print font. The report and the handout print in Inter (OFL-1.1, NOTICES N-016; the Latin subset, variable
    weight, 47 KB), bundled so a page measures the same on every platform (CI-5: Linux's system-ui fallback read MH page
@@ -48,6 +49,9 @@
 .debrief .db-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--s-3) var(--s-4); }
 .debrief .db-chart { margin: 0; }
 .debrief .db-chart figcaption { font-weight: 600; }
+/* P-S5: the unit an isolated run after its label on the caption's own side (the caption is dir="auto": left to right
+   for a trend's Latin label and unit, right to left for the Persian Pressures caption) */
+.debrief .db-chart figcaption .unit { margin-left: 0; margin-inline-start: 0.3em; unicode-bidi: isolate; }
 .debrief .db-svg svg { display: block; width: 100%; height: 130px; }
 .debrief .db-svg path { fill: none; stroke: var(--text-strong); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .debrief .db-svg .axis, .debrief .db-svg .ticks line { stroke: var(--text-muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -63,8 +67,6 @@
 .debrief .db-table td.num { white-space: nowrap; width: 4.5em; }
 .debrief .db-table tr.undone td, .debrief li.undone { color: var(--text-muted); font-style: italic; text-decoration: line-through; }
 .debrief .db-table tr.db-setup td { color: #666; }
-.debrief .db-scroll { overflow-x: auto; }
-.debrief .db-minutes th .unit { display: block; font-weight: 400; color: var(--text-muted); }
 .debrief .db-runfoot:not(.db-foot) { display: none; }
 .debrief .db-pearls { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--s-2); }
 .debrief .db-pearl { border: 1px solid var(--line-strong); border-radius: var(--r-control); padding: var(--s-2); min-height: 5.5em; }
@@ -172,9 +174,7 @@
   .debrief .db-course text, .debrief .db-course .db-badge-n, .debrief .db-course .db-bm-n, .debrief .db-svg text { font-family: 'Inter Print', sans-serif; }
   .debrief h2 { font-size: 13pt; break-after: avoid; }
   .debrief .db-sec { margin-top: 6mm; }
-  .debrief #db-trends, .debrief #db-minutes { break-before: page; } /* drugs, the timeline and bookmarks share a page */
-  .debrief .db-scroll { overflow: visible; }
-  .debrief .db-minutes { font-size: 8.5pt; }
+  .debrief #db-trends { break-before: page; } /* drugs, the timeline and bookmarks share a page */
   .debrief #db-objectives, .debrief #db-facts, .debrief #db-bookmarks, .debrief #db-pearls, .debrief #db-notes, .debrief .db-chart, .debrief .db-obj li { break-inside: avoid; }
   .debrief .db-charts { display: block; }
   .debrief .db-chart { margin-bottom: 4mm; }
@@ -199,9 +199,12 @@
   .debrief #db-live-1 > .db-sec { margin-top: 4mm; }
   .debrief #db-live-1 h2 { margin: 0 0 2mm; padding-bottom: 0.8mm; }
   .debrief .db-legend { margin: 0 0 1mm; font-size: 8.5pt; }
-  .debrief #db-moments, .debrief #db-swimlane { break-before: page; }
-  .debrief #db-swimlane + #db-moments { break-before: auto; } /* page 2 opens with the swimlane (DQ5, option A) */
-  .debrief #db-swimlane { break-inside: avoid; }
+  /* the owner, 9 November (decision B, superseding DQ5 option A): the swimlane prints under the course strip on page 1,
+     inside "The course" (#db-course, whole on its page); the objectives then open page 2 and the key moments follow
+     them (a /2 run, without objectives, opens page 2 with the key moments); the runfoot before each forced break */
+  .debrief #db-moments, .debrief .db-runfoot + #db-objectives { break-before: page; }
+  .debrief #db-objectives ~ #db-moments { break-before: auto; }
+  .debrief #db-swimlane { margin-top: 2mm; }
   .debrief #db-hints { break-inside: avoid; }
   .debrief .db-hint-block h3 { font-size: 9pt; margin: 1.5mm 0 0.5mm; }
   .debrief .db-hint-show, .debrief .db-hint-openers { font-size: 8.5pt; line-height: 1.3; }

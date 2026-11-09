@@ -459,5 +459,9 @@ export function describe(c: WireCommand): string {
       return `${c.kind} ${c.text}`;
     case 'externalDrive':
       return `drive paw ${c.frame.pawCmH2O.toFixed(1)} flow ${c.frame.flowLps.toFixed(2)}`;
+    case 'prep': // the learner remote's preparations (plan learner-action-remote.md §4 D2)
+      return c.action === 'stage' ? `prep stage ${c.prep.id} ${c.prep.components.map((k) => k.productId).join(' + ')}` : `prep ${c.action} ${c.prepId}`;
+    case 'infusion':
+      return `infusion ${c.drugId} ${c.rateMlH} mL/h`;
   }
 }
