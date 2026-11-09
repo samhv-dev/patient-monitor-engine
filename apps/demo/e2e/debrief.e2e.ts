@@ -321,6 +321,11 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE, debriefHint
 async function printFontLoaded(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded')),
     { timeout: 10_000, message: 'the Debrief view has loaded the bundled print font' }).toBe(true);
+  // brief 113: both faces of the bundled symbol font (Inter's ⁺ ₂ → ↺ ≈ ≤ ≥ ✓ ✗, Noto Sans Mono's │ and legend shapes)
+  await expect.poll(() => page.evaluate(() => {
+    const faces = [...document.fonts].filter((f) => f.family.replace(/["']/g, '') === 'Print Symbols');
+    return faces.length >= 2 && faces.every((f) => f.status === 'loaded');
+  }), { timeout: 10_000, message: 'the Debrief view has loaded both faces of the bundled symbol font' }).toBe(true);
 }
 const printHeights = (page: Page) => page.evaluate((mm) => {
   const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();

@@ -269,9 +269,12 @@ const runFoot = (): HTMLElement => h('p', { class: 'db-runfoot', 'aria-hidden': 
 const PAGE_CSS = `@page { @bottom-left { content: "${FOOT}"; font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; }
 @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; } }`;
 
-/** The bundled print font (debrief.css @font-face): loaded on entering the view, and awaited before the print buttons
+/** Every code point of the bundled "Print Symbols" faces (debrief.css, brief 113): a face with a unicode-range loads
+ *  only for text it covers, so the load names them all. */
+export const PRINT_SYMBOLS = '\u207A\u2082\u2192\u21BA\u2248\u2264\u2265\u2713\u2717\u2502\u25A0\u25A1\u25AC\u25AD\u25B2\u25B8\u25BC\u25BD\u25C6\u25C7\u25CB\u25CF';
+/** The bundled print fonts (debrief.css @font-face): loaded on entering the view, and awaited before the print buttons
  *  print, so a print never lays out in a fallback font. A failed load still prints (in the system font). */
-const loadPrintFont = (): Promise<unknown> => Promise.all([document.fonts?.load("1em 'Inter Print'"), hostLang() === 'fa' ? document.fonts?.load('1em Vazirmatn') : undefined]).catch(() => undefined);
+const loadPrintFont = (): Promise<unknown> => Promise.all([document.fonts?.load("1em 'Inter Print'"), document.fonts?.load("1em 'Print Symbols'", PRINT_SYMBOLS), hostLang() === 'fa' ? document.fonts?.load('1em Vazirmatn') : undefined]).catch(() => undefined);
 const printWithFont = (): void => void loadPrintFont().then(() => window.print());
 
 /** D13: the Persian page's @page boxes: the footer (the table's footer entry, as the foot line printed it) right,
