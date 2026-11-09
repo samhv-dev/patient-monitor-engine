@@ -112,7 +112,8 @@ describe('the mechanism tree page, propofol: the whole tree (the T1 pins)', () =
     expect(words(node(svg, 'hemo.circ.p.rSys'))).toBe('SVR (model) | mmHg·s/mL');
     expect(words(node(svg, 'hemo.circ.p.v0Sv'))).toBe('Vu | mL'); // the glossary's "Vu" (unstressed venous volume)
     expect(node(svg, 'hemo.circ.p.v0Sv')?.querySelector('title')?.textContent).toContain('hemo.circ.p.v0Sv');
-    expect(KEYS.filter((k) => visible(p.el).includes(k))).toEqual([]);
+    const seen = visible(p.el); // once: a clone of the whole tree per key took 7 s on CI's runner (run 42574693257)
+    expect(KEYS.filter((k) => seen.includes(k))).toEqual([]);
     const baro = node(svg, 'loop.baroreflex');
     expect(baro?.getAttribute('data-kind')).toBe('loop');
     expect(words(baro)).toBe('⟲ Baroreflex | 5 states · 3 edges');
