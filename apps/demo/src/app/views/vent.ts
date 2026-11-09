@@ -13,7 +13,7 @@
 // with its last settings the moment its page is hidden, its socket closes, its grant is revoked, or it is silent 1 s.
 // R8d: the laptop's own ventilator window (BroadcastChannel by the room code, no PIN) is served on the desk the same way.
 import type { Command } from '@pme/engine-core';
-import type { VentLinkBody } from '@pme/controller';
+import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
 import {
   attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
@@ -187,6 +187,10 @@ export const COCKPIT_SILENCE_MS = 1000;
  * settings); it is handed over with its last settings when it says its page is hidden or it is silent
  * COCKPIT_SILENCE_MS; it takes over again on its next message after a silence, or when its page is shown again (not
  * while another cockpit displaced it). `end()`: its link is gone (revoked, taken over, its socket closed).
+ * The hand-over contract (fix after main run 42570518946): with `revokeOnSilence` (a tablet over the relay) a SILENCE
+ * hand-over revokes that cockpit's id instead: frames its browser held while the network was gone arrive late from it,
+ * and they must neither re-take the patient nor, at that id's end, hand over its stale settings over a change the
+ * instructor made meanwhile. It is never heard again; the device signs in anew (a new id), from the engine's settings.
  */
 interface Served {
   readonly cockpit: Cockpit;
@@ -195,13 +199,14 @@ interface Served {
   end(): void;
 }
 
-function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort): Served {
+function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, o: { revokeOnSilence?: () => void } = {}): Served {
   let last: CockpitSettings | null = null;
   let heardAt = performance.now();
   let hidden = false;
   let displaced = false;
   let starting = false;
   let ended = false;
+  let revoked = false; // handed over for its silence: nothing it says is heard again
   /** The furthest ventilator tick it may have run to: its last frame heard, or the last clock limit it was sent. */
   let topTick = -1;
   let gen = 0; // bumped at its end: a hand-over or a start for it does nothing more
@@ -216,11 +221,18 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort): S
     close: () => port.close(),
   };
   const cockpit: Cockpit = { port: linkPort, remote: true, settings: () => last, displaced: () => void (displaced = true) };
-  const lose = () => {
+  const lose = (silent = false) => {
     if (desk.driving !== cockpit) return;
     const g = gen;
     // refused, it drives on (FU-11 H6): the watchdog runs again for it
-    void desk.handOver(cockpit, () => g === gen, true).then(() => arm());
+    void desk.handOver(cockpit, () => g === gen, true).then(() => {
+      if (silent && o.revokeOnSilence && g === gen && desk.driving !== cockpit) {
+        revoked = true;
+        o.revokeOnSilence();
+        return;
+      }
+      arm();
+    });
   };
   /** The silence watchdog: one timer, re-armed for what is left of the second since the last message. */
   const arm = () => {
@@ -228,7 +240,7 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort): S
     timer = setTimeout(() => {
       timer = null;
       if (ended || desk.driving !== cockpit) return;
-      if (now() - heardAt >= COCKPIT_SILENCE_MS) return lose();
+      if (now() - heardAt >= COCKPIT_SILENCE_MS) return lose(true);
       arm();
     }, Math.max(0, heardAt + COCKPIT_SILENCE_MS - now()));
   };
@@ -251,7 +263,7 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort): S
   return {
     cockpit,
     heard(b) {
-      if (ended) return;
+      if (ended || revoked) return;
       heardAt = now();
       for (const m of b.kind === 'batch' ? b.msgs : b.kind === 'cmds' ? [b] : []) topTick = Math.max(topTick, m.tick);
       if (b.kind === 'settings') {
@@ -271,7 +283,8 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort): S
       gen++;
       offScale();
       if (timer !== null) clearTimeout(timer);
-      if (desk.driving === cockpit) void desk.handOver(cockpit, () => true, true); // revoked, taken over, gone
+      // revoked, taken over, gone; a cockpit revoked for its silence was handed over then and hands nothing over now
+      if (!revoked && desk.driving === cockpit) void desk.handOver(cockpit, () => true, true);
       port.close();
     },
   };
@@ -313,7 +326,7 @@ export function serveRemoteCockpit(session: AppSession): () => void {
       r.served = serveCockpit(session, desk, createRelayPort({
         send: (b) => void session.host.ventPost(b as VentLinkBody),
         onBody: (fn) => ((r.deliver = fn), () => void (r.deliver = null)),
-      }));
+      }), { revokeOnSilence: () => void session.host.revokeVentilator(from, VENTILATOR_REASONS.silent) });
       cur = r;
       mine.device = r.served;
     },
