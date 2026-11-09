@@ -23,7 +23,7 @@ test.afterEach(async () => relay?.close());
 
 type W = {
   __pmeFollower: { sync: { status: string } | null };
-  __pmeApp: { session: { code: string; loadScenario(doc: unknown): { ok: boolean } }; link: { simT: number } };
+  __pmeApp: { session: { code: string; loadScenario(doc: unknown): { ok: boolean } }; link: { simT: number; ctl: { simT: number | null } } };
 };
 const MH = JSON.parse(readFileSync(resolve(import.meta.dirname, '../src/app/showcase/showcase-mh.json'), 'utf8')) as Record<string, unknown>;
 /** The board's Persian text (OrientationFa7, as checked with the project's Persian tooling): a rendering fixture only. */
@@ -72,12 +72,18 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(layer(page).locator('.cb-foot > span').nth(1)).toHaveText('Tap or click anywhere to continue now');
   // the monitor runs under it, dimmed to 40 per cent
   await expect(page.locator('.stage > .monitor-host')).toHaveCSS('opacity', '0.4');
+  // the window starts at the card's first clock. The card's load starts a new timeline at 0, and `link.simT` reads 0 until
+  // the new body publishes its first time: CI Chromium read t0 = 0.0 every time and counted the body's start-up inside
+  // the 4 s (run 42428252701: 0.0 → 1.5, then 0.0 → 2.4, "the monitor keeps running" > 2.5)
+  const w0 = Date.now();
+  await page.waitForFunction(() => ((window as unknown as W).__pmeApp.link.ctl.simT ?? 0) > 0, null, { timeout: 15_000, polling: 50 });
+  const firstClockMs = Date.now() - w0;
   const t0 = await page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
   const c0 = await count(page);
   await page.waitForTimeout(4000);
   const t1 = await page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
   const c1 = await count(page);
-  console.log(`briefing host: count ${c0} → ${c1}, simT ${t0.toFixed(1)} → ${t1.toFixed(1)}`);
+  console.log(`briefing host: first clock ${firstClockMs} ms after the briefing showed; count ${c0} → ${c1}, simT ${t0.toFixed(1)} → ${t1.toFixed(1)}`);
   expect(t1 - t0, 'the monitor keeps running').toBeGreaterThan(2.5);
   expect(c1).toBeLessThan(c0);
   await shot(page, 'briefing-host-1280x800-en');
