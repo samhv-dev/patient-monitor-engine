@@ -113,8 +113,9 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
   const stateDir = await classroom();
   const code = await host(page, '#/room');
   // the room's own QR address, as the tablet's camera reads it
+  // the Room page writes it once the relay has answered where this computer is (relayInfo): wait for that, then read it
+  await expect(page.locator('section.room-join .phones-url')).toHaveText(new RegExp(`\\?join=${code}#/pick$`));
   const qrUrl = (await page.locator('section.room-join .phones-url').textContent()) ?? '';
-  expect(qrUrl).toMatch(new RegExp(`\\?join=${code}#/pick$`));
   const learner = await phone(browser, browserName, code);
 
   const tctx = await browser.newContext(device(browserName));
