@@ -1,6 +1,6 @@
 // Stage 13: a showcase run to its end, then the Debrief — the anaphylaxis card at ×4 with a bookmark and a return to it
 // (the first reaction is undone, the retry is judged), treated with the card's own button. The report's timeline,
-// facts (labs included), objectives, the minute appendix and the JSON download are checked on both engines, with the
+// facts (labs included), objectives, the JSON download (its minute rows; the printed appendix deleted, 9 November) are checked on both engines, with the
 // R56 engine-id scan and the print layout (print media: only the report, A4 page breaks, charts kept whole, the undone
 // course struck through, the footer and the build on every page); Chromium also prints it with page.pdf(): its page
 // count, A4 pages and title on every platform, its text — every page's footer and build included — on macOS (R50 I-2:
@@ -118,10 +118,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(listed).toMatch(/^1 · 00:0\d Bookmark: Mark \d+ at 00:0\d · good$/); // the mark's kind follows its words // numbered as on the strip (the owner, 2 November)
   expect(await mark.locator('title').textContent()).toBe(listed);
   expect(Number(await mark.getAttribute('data-t'))).toBeLessThan(10);
-  const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
-  expect(minuteRows.length).toBeGreaterThanOrEqual(2); // the kept course is ≈ 1½–2 sim-min
-  expect(minuteRows[0]).toMatch(/^00:00\s+\d+/);
-  await expect(view.locator('#db-minutes thead th')).toHaveCount(15); // D6: SBP, DBP and CVP
+  await expect(view.locator('#db-minutes')).toHaveCount(0); // the owner, 9 November: the printed appendix is deleted; the JSON keeps "minutes" (below)
   // R56: no engine id in the report (as stage9-glossary: an id that is also an English word, "epinephrine", is not a leak)
   const ids = (await page.evaluate(() => (window as unknown as W).__pmeApp.engineIds)).filter((id) => /[A-Z0-9]/.test(id));
   expect(await scanEngineIds(page, ids)).toEqual([]);
@@ -133,8 +130,10 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-anaphylaxis-\d{4}-\d\d-\d\d\.json$/);
   const json = readFileSync(await dl.path(), 'utf8');
-  const j = JSON.parse(json) as { schema: string; version: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }>; steps: Array<{ id: string; status: string }> };
+  const j = JSON.parse(json) as { schema: string; version: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }>; steps: Array<{ id: string; status: string }>; minutes: Array<{ t: number; values: Record<string, unknown> }> };
   expect(j.schema).toBe('pme-debrief/2');
+  expect(j.minutes.length).toBeGreaterThanOrEqual(2); // Q1: one row per minute, in the JSON only; the kept course is ≈ 1½–2 sim-min
+  expect(Object.keys(j.minutes[0]?.values ?? {})).toEqual(expect.arrayContaining(['hr', 'sys', 'dia', 'cvp'])); // D6
   expect(j.steps.filter((x) => x.status === 'taken').map((x) => x.id)).toEqual(['giveEpi']); // IP8: additive, still /2
   expect(j.version).toMatch(/^\d+\.\d+\.\d+/); // the renderer's version: the footer below is built from it, never written here
   expect(j.objectives.map((o) => o.verdict.status)).toEqual(['not assessable', 'met', 'not met']);
@@ -145,15 +144,15 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const foot = `For educational use only; Not to be used in patient care. Version ${j.version}${j.version.includes('-') ? ' (pre-release)' : ''}, build ${build}.`;
   await expect(view.locator('.db-foot')).toHaveText(foot);
 
-  // print layout, both engines: only the report; trends and the appendix on new pages (drugs, the timeline and
-  // bookmarks share one); a chart never split
+  // print layout, both engines: only the report; trends on a new page (drugs, the timeline and bookmarks share one);
+  // a chart never split
   await page.emulateMedia({ media: 'print' });
   const layout = await page.evaluate(() => {
     const vis = (s: string) => { const e = document.querySelector(s); return !!e && getComputedStyle(e).display !== 'none'; };
     const css = (s: string, p: string) => getComputedStyle(document.querySelector(s) as Element).getPropertyValue(p);
     return {
       topbar: vis('.topbar'), stage: vis('.stage'), bar: vis('.sessionbar'), tools: vis('.db-tools'), report: vis('.debrief'),
-      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), swimlane: css('#db-swimlane', 'break-before'), moments: css('#db-moments', 'break-before'),
+      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), swimlane: css('#db-swimlane', 'break-before'), objectives: css('#db-objectives', 'break-before'), moments: css('#db-moments', 'break-before'),
       chart: css('.db-chart', 'break-inside'), ink: css('.db-svg path', 'stroke'), body: css('body', 'overflow'),
       undone: css('#db-timeline tbody tr.undone td', 'text-decoration-line'),
       // the footer on every page: @page margin boxes where the browser has them (Chromium), else a line before each break
@@ -162,7 +161,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     };
   });
   const boxes = browserName === 'chromium';
-  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', swimlane: 'page', moments: 'auto', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
+  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', swimlane: 'auto', objectives: 'page', moments: 'auto', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 3 });
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course g.db-bm') as Element).display), 'the mark prints').not.toBe('none');
   expect(await page.evaluate(() => document.querySelector('#db-course g.db-bm .db-bm-n')?.textContent), 'its number inside').toBe('1');
   mkdirSync(out, { recursive: true });
@@ -173,7 +172,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     writeFileSync(`${out}/debrief.pdf`, pdf);
     const info = pdfInfo(pdf); // every platform: no font read
     expect(info.title).toMatch(/^Debrief Anaphylaxis under anaesthesia \d{4}-\d\d-\d\d$/);
-    expect(info.boxes.length).toBeGreaterThanOrEqual(4); // header, trends, drugs + timeline + bookmarks, appendix (Decision 12)
+    expect(info.boxes.length).toBeGreaterThanOrEqual(4); // header, key moments, trends, drugs + timeline + bookmarks (Decision 12; no appendix since 9 November)
     for (const b of info.boxes) expect([Math.round(b[2] ?? 0), Math.round(b[3] ?? 0)]).toEqual([595, 842]);
     if (process.platform === 'darwin' || process.env.PME_PDF_TEXT === '1') {
       const { text, pages } = pdfText(pdf);
@@ -181,11 +180,13 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
       const t = squash(text);
       for (const want of ['DEBRIEF', 'Anaphylaxis under anaesthesia', 'Run by', 'Dr Instructor, two residents', 'Scenario state: Anaphylaxis — undone by return 1',
         'Epinephrine 100 µg IV', '✓ Observed', '✗ Not observed', '– Not assessable', 'Epinephrine, boluses in all', '100 µg (1 dose)', 'Good closed-loop communication.',
-        'Talking points', 'Appendix: one row per minute']) expect(t, want).toContain(squash(want)); // the h1 prints as the band's capital kicker
-      // B6 (a): page 1 is the key times, the course and the objectives; the facts follow the key moments on page 2
+        'Talking points']) expect(t, want).toContain(squash(want)); // the h1 prints as the band's capital kicker
+      expect(t, 'no minute appendix (the owner, 9 November)').not.toContain(squash('Appendix: one row per minute'));
+      // B6 (a), as the owner placed the swimlane on 9 November: page 1 is the key times and the course with the swimlane
+      // under it, page 2 the objectives and the key moments; the facts follow the key moments
       const page1 = squash(text.split('\f')[0] ?? '');
-      for (const want of ['Key times', 'The course']) expect(page1, want).toContain(squash(want));
-      for (const o of await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => x.childNodes[2]?.textContent ?? ''))) expect(page1, `objective on page 1: ${o}`).toContain(squash(o));
+      for (const want of ['Key times', 'The course', 'expected window, │ the act']) expect(page1, want).toContain(squash(want));
+      for (const o of await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => x.childNodes[2]?.textContent ?? ''))) expect(squash(text.split('\f')[1] ?? ''), `objective on page 2: ${o}`).toContain(squash(o));
       expect(page1, 'facts not on page 1').not.toContain(squash('Measured facts'));
       expect(squash(text.split('\f')[1] ?? ''), 'key moments and facts on page 2').toContain(squash('Measured facts'));
       text.split('\f').forEach((p, i) => {
@@ -221,7 +222,7 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 });
 
 // Decision 12: a free run (no scenario) prints in at most four A4 pages — the header band with facts, talking points and
-// notes; trends; drugs, timeline and bookmarks; the appendix. Its /2 export is saved for the Persian check (A7 Step 4).
+// notes; trends; drugs, timeline and bookmarks (the appendix is no longer printed, 9 November). Its /2 export is saved for the Persian check (A7 Step 4).
 // The run goes at ×4 and is paused before the Debrief opens: the CI Linux WebKit runner cannot hold ×8 (S10-F5), and
 // there a click on the session bar's Debrief link at ×8 was not served within 5 s (main run 39173099640, 3 of 3). At ×4
 // it then failed the same way (PR #105 run 39524573921, PR #107 39578631031 attempts 1 and 3): there it now goes at ×2
@@ -309,8 +310,9 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE, debriefHint
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(page.locator('[data-view=debrief] #db-moments')).toBeVisible();
 }
-/** Heights in print media (mm): the page-1 block (header band to the end of the objectives; a /2 run has no objectives
- *  section since judged rows were retired, 5 November: to the end of the course strip) and the handout; whether
+/** Heights in print media (mm): the page-1 block (header band to the end of "The course", the swimlane under its strip
+ *  since the owner's decision of 9 November, the objectives opening page 2; a run with no key moment has no swimlane
+ *  and keeps its objectives on page 1: to their end) and the handout; whether
  *  the bundled print font is loaded (rc.3: the heights are measured in it on every platform); and the printed size (pt)
  *  of the handout course strip's labels (0 when the handout is not shown). */
 /** The view loads the bundled print font on entering (loadPrintFont, not awaited) and its print buttons await it; a
@@ -319,6 +321,11 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE, debriefHint
 async function printFontLoaded(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded')),
     { timeout: 10_000, message: 'the Debrief view has loaded the bundled print font' }).toBe(true);
+  // brief 113: both faces of the bundled symbol font (Inter's ⁺ ₂ → ↺ ≈ ≤ ≥ ✓ ✗, Noto Sans Mono's │ and legend shapes)
+  await expect.poll(() => page.evaluate(() => {
+    const faces = [...document.fonts].filter((f) => f.family.replace(/["']/g, '') === 'Print Symbols');
+    return faces.length >= 2 && faces.every((f) => f.status === 'loaded');
+  }), { timeout: 10_000, message: 'the Debrief view has loaded both faces of the bundled symbol font' }).toBe(true);
 }
 const printHeights = (page: Page) => page.evaluate((mm) => {
   const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
@@ -326,18 +333,21 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   const label = strip.querySelector('.db-lane-l') as SVGTextElement;
   const stripPt = (strip.getBoundingClientRect().width / strip.viewBox.baseVal.width) * parseFloat(getComputedStyle(label).fontSize) * 0.75;
   const printFont = [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded');
-  const end = document.querySelector('#db-objectives') ? '#db-objectives' : '#db-course';
+  const end = document.querySelector('#db-swimlane') || !document.querySelector('#db-objectives') ? '#db-course' : '#db-objectives';
   return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
-/** D7b: the swimlane heads page 2, before the key moments, whole on its page; its printed height (mm) at the 182 mm
- *  content width, and its window rows' labels and verdict words. Read in print media. */
+/** D7b, placed by the owner on 9 November (decision B, superseding DQ5 option A): the swimlane under the course strip,
+ *  inside "The course" with no heading of its own, the section whole on page 1; the objectives open page 2 (none on a
+ *  /2 run) and the key moments follow them, or open page 2 themselves; its printed height (mm) at the 182 mm content
+ *  width, and its window rows' labels and verdict words. Read in print media. */
 const swimPrint = (page: Page) => page.evaluate((mm) => {
   const sec = document.querySelector('#db-swimlane') as HTMLElement;
-  const cs = getComputedStyle(sec);
+  const course = document.querySelector('#db-course') as HTMLElement;
+  const obj = document.querySelector('#db-objectives');
   return {
-    next: sec.nextElementSibling?.id ?? '', prev: (sec.previousElementSibling as HTMLElement | null)?.className ?? '',
-    breakBefore: cs.breakBefore, breakInside: cs.breakInside,
+    parent: sec.parentElement?.id ?? '', prev: (sec.previousElementSibling as HTMLElement | null)?.className ?? '', heading: !!sec.querySelector('h2, h3'),
+    courseBreakInside: getComputedStyle(course).breakInside, objectivesBreak: obj ? getComputedStyle(obj).breakBefore : 'none',
     momentsBreak: getComputedStyle(document.querySelector('#db-moments') as Element).breakBefore,
     heightMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().height / mm,
     widthMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().width / mm,
@@ -357,8 +367,8 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   expect(tiles).toEqual([['recognition', '–'], ['firstTeam', '7 min 51 s'], ['objective:1', '3 s'], ['objective:2', '1 min 30 s'], ['objective:3', '2 s'], ['pulseless', '3 min 07 s']]);
   await expect(view.locator('#db-keytimes [data-key=recognition] .db-tile-sub')).toHaveText('not ticked');
   await expect(view.locator('#db-course .db-badge')).toHaveCount(7);
-  await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(4); // the band, in each of the four panels
-  await expect(view.locator('#db-course .db-legend')).toHaveText('▼ team action · ▼ patient event · ▽ scenario state · numbers match Key moments · marks: bookmark'); // the recording's bookmark at 00:13
+  await expect(view.locator('#db-course .db-course rect.db-pulseless')).toHaveCount(4); // the band, in each of the strip's four panels (the swimlane under it has its own)
+  await expect(view.locator('#db-course > .db-legend')).toHaveText('▼ team action · ▼ patient event · ▽ scenario state · numbers match Key moments · marks: bookmark'); // the recording's bookmark at 00:13
   await expect(view.locator('#db-course g.db-bm')).toHaveCount(1);
   await expect(view.locator('#db-objectives .db-measure')).toHaveText(['3 s of 10 s', '1 min 30 s of 2 min 00 s', '2 s of 30 s']);
   expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report measured below').toBeGreaterThan(0);
@@ -375,8 +385,10 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
 
-  // D7b: page 2 opens with the swimlane — one window row per timed objective, each tick with its verdict words
-  await expect(view.locator('#db-swimlane h2')).toHaveText('The run, lane by lane');
+  // D7b: the swimlane under the course strip (the owner, 9 November): one window row per timed objective, each tick with
+  // its verdict words; no heading of its own
+  await expect(view.locator('#db-course > #db-swimlane')).toHaveCount(1);
+  await expect(view.locator('#db-swimlane h2')).toHaveCount(0);
   await expect(view.locator('#db-swimlane .db-legend')).toContainText('▭ expected window, │ the act, with its verdict');
   expect(await swimRows(page)).toEqual([{ label: 'Objective 2', words: ['✓ Observed'] }, { label: 'Objective 3', words: ['✓ Observed'] }, { label: 'Objective 4', words: ['✓ Observed'] }]);
   await expect(view.locator('#db-swimlane svg')).toHaveAttribute('aria-label', /expected windows: Objective 2, 07:48 to 07:58: 07:51 ✓ Observed; Objective 3/);
@@ -417,7 +429,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   expect(report.printFont, 'the bundled print font is loaded').toBe(true);
   expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
   const sw = await swimPrint(page);
-  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  expect(sw).toMatchObject({ parent: 'db-course', prev: 'db-course', heading: false, courseBreakInside: 'avoid', objectivesBreak: 'page', momentsBreak: 'auto' });
   expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
   test.info().annotations.push({ type: 'A3.1 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide` });
   await expect(view.locator('#db-handout')).toBeHidden(); // never with the report
@@ -457,9 +469,11 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
     expect(pages).toBeLessThanOrEqual(7); // B6 Step 3: measured, expected 6–7 (Review Focus 6)
     expect(pdfInfo(handoutPdf).boxes).toHaveLength(1);
     if (process.platform === 'darwin' || process.env.PME_PDF_TEXT === '1') {
-      // (a) page 1 holds the key times, the course and every objective; (c) the handout's one page, its footer, no verdict
-      const page1 = squash(pdfText(reportPdf).text.split('\f')[0] ?? '');
-      for (const want of ['Key times', 'The course', ...(JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives as Array<{ text: string }>).map((o) => o.text)]) expect(page1, want).toContain(squash(want));
+      // (a) page 1 holds the key times, the course and the swimlane under it, page 2 every objective (the owner, 9
+      // November); (c) the handout's one page, its footer, no verdict
+      const [page1 = '', page2 = ''] = pdfText(reportPdf).text.split('\f').map(squash);
+      for (const want of ['Key times', 'The course', 'expected window, │ the act']) expect(page1, want).toContain(squash(want));
+      for (const want of ['Objectives', ...(JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives as Array<{ text: string }>).map((o) => o.text)]) expect(page2, want).toContain(squash(want));
       const h = pdfText(handoutPdf);
       expect(h.pages).toBe(1);
       expect(squash(h.text)).toContain(squash('Questions to think about'));
@@ -663,7 +677,7 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
   const sw = await swimPrint(page);
   test.info().annotations.push({ type: 'MH /2 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide, ${rows.length} windows` });
-  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  expect(sw).toMatchObject({ parent: 'db-course', prev: 'db-course', heading: false, courseBreakInside: 'avoid', objectivesBreak: 'none', momentsBreak: 'page' }); // a /2 run: no objectives
   if (rows.length <= 6) expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout } = await printHeights(page);
@@ -728,7 +742,7 @@ test('D9: the card author\'s hints on page 2 of the MH run, whole, the handout u
   const page2 = () => page.evaluate((mm) => {
     const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
     const hints = document.querySelector('#db-hints');
-    return { page2: (r('#db-facts').bottom - r('#db-swimlane').top) / mm, hints: hints ? hints.getBoundingClientRect().height / mm : 0,
+    return { page2: (r('#db-facts').bottom - r('#db-objectives').top) / mm, hints: hints ? hints.getBoundingClientRect().height / mm : 0,
       breakInside: hints ? getComputedStyle(hints).breakInside : '', labelFont: [...document.querySelectorAll('#db-hints .db-hint-at')].map((x) => getComputedStyle(x).fontFamily), prev: hints?.previousElementSibling?.id ?? '', handout: (document.querySelector('#db-handout') as HTMLElement).innerHTML };
   }, MM);
   const before = await page2();

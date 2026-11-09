@@ -60,7 +60,7 @@ describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
     expect(record.data.rows.filter((r) => r.batch).map((r) => r.ev)).toEqual(['drug:epinephrine', 'fluid']); // the record keeps each item
     expect(cells(el, '#db-drugs').map((r) => r[1])).toEqual(['Epinephrine 1 mg IV', 'Crystalloid 500 mL over 5 min']);
     // the steps section sits between Drugs and fluids and the Timeline, on the page they share
-    expect([...el.querySelectorAll('#db-live-2 > section')].map((s) => s.id)).toEqual(['db-trends', 'db-drugs', 'db-steps', 'db-timeline', 'db-bookmarks', 'db-minutes']);
+    expect([...el.querySelectorAll('#db-live-2 > section')].map((s) => s.id)).toEqual(['db-trends', 'db-drugs', 'db-steps', 'db-timeline', 'db-bookmarks']); // no minute appendix (the owner, 9 November)
   });
 
   it('a free run and a record made before IP8 have no steps section; their bookmarks read as before, numbered', () => {
