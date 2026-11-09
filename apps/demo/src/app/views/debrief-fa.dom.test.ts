@@ -12,7 +12,7 @@ import { MemoryStorage } from '../memory-storage.ts';
 import type { Link } from '../link.ts';
 import type { RunData } from '../record.ts';
 import type { AppSession } from '../session.ts';
-import { DRAFT_LINE, faPass, unreviewed } from '../i18n/fa-dom.ts';
+import { DRAFT_LINE, faPass, faText, unreviewed } from '../i18n/fa-dom.ts';
 import { debriefView } from './debrief.ts';
 
 const REPO = resolve(import.meta.dirname, '../../../../..');
@@ -67,6 +67,22 @@ describe('the Debrief in Persian (D13)', () => {
     expect([...pearls.querySelectorAll('.db-pearl b')].map((b) => b.textContent)).toEqual(['Reactions', 'Description', 'Analysis', 'Summary']);
     expect(v.el.querySelector('#db-notes-h')?.textContent).toBe('Notes');
     expect(notes.textContent).toBe('Typed in English: Reactions first.');
+  });
+
+  it('P-S4: a mark\'s kind, the steps table\'s "Stage" and the MH card\'s step buttons are in the table (drafts, unread)', () => {
+    const p = faPass();
+    const mh = JSON.parse(readFileSync(join(REPO, 'apps/demo/src/app/showcase/showcase-mh.json'), 'utf8')) as { states: Array<{ transitions?: Array<{ when: unknown }> }> };
+    const manual = (w: unknown): string[] => (!w || typeof w !== 'object' ? [] : Array.isArray(w) ? w.flatMap(manual)
+      : [...('manual' in w ? [((m: unknown) => (typeof m === 'string' ? m : String((m as { label?: string })?.label)))((w as { manual: unknown }).manual)] : []), ...Object.values(w).flatMap(manual)]);
+    const buttons = [...new Set(mh.states.flatMap((st) => (st.transitions ?? []).flatMap((t) => manual(t.when))))];
+    expect(buttons.length).toBe(13);
+    for (const en of ['good', 'bad', 'discuss', 'Stage', ...buttons]) expect(faText(en, p), en).not.toBeNull();
+    expect(p.missing.size).toBe(0);
+    const v = open(exportOf(TAMPONADE).record);
+    leave = v.leave;
+    press(v.el, 'fa');
+    const head = [...v.el.querySelectorAll('#db-steps thead th')].map((th) => th.textContent);
+    if (head.length) expect(head[0]).toBe('مرحله');
   });
 
   it('«فارسی»: the containers right to left in Persian, kept per browser; back to English restores the page', () => {
