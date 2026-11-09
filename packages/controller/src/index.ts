@@ -17,7 +17,7 @@ export {
 } from './transport/webrtc.ts';
 export { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './transport/backoff.ts';
 export type { RelayDevice, RelayFrame } from './transport/relay-frames.ts';
-export { HostSession, INSTRUCTOR_REASONS, STAGE_LEAD_TICKS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
+export { HostSession, INSTRUCTOR_REASONS, STAGE_LEAD_TICKS, VENTILATOR_REASONS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
 export { bolusDrugOf, givenByOf, lockReason, RecentGives, SAME_DRUG_LOCK_S, type DrugLock, type GivenBy } from './session/drug-lock.ts';
 export { ControllerSession, describe, HOST_RESTARTED_REASON, NOT_CONFIRMED_REASON, type ControllerSessionOptions, type InstructorAccess, type LogEntry } from './session/controller-session.ts';
 export { ViewerSync, type ViewerSyncOptions, type ViewerStatus, type ViewerTarget } from './session/viewer-sync.ts';
@@ -50,3 +50,7 @@ export const transports = {
   websocket: createWebSocketTransport,
   webrtc: createWebRtcTransport,
 };
+// Plan learner-action-remote.md L1: the formulary layer's types, the source check and the loader (no file reading,
+// no ajv: the bench is handed the parsed files; the schema and the folder checks run in CI)
+export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT } from './formulary/load.ts';
+export type * from './formulary/types.ts';

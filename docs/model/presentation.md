@@ -65,7 +65,17 @@ renderer, audio and skin contracts.
 
 ## State
 
-No exported `…State` type in this module.
+### `ViewState` ([`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `depth` | `number` | Generations drawn past the trigger (default DEPTH). |
+| `maxChildren` | `number` | Children a node shows before "n more" (default MAX_CHILDREN). |
+| `expanded` | `ReadonlySet<string>` | Frontier nodes opened by "show more" (one generation each). |
+| `opened` | `ReadonlySet<string>` | Folds opened: a device box's id (`device.<module>`) or a node's "n more" (`more.<node id>`). |
+| `pathTo` | `string` | Keep only the routes from the trigger to this node id (the depth cut and the folds do not apply). |
+| `slack` | `number` | How many generations longer than the shortest a route to `pathTo` may be (default PATH_SLACK). |
+| `whole` | `boolean` | The whole tree, nothing folded. |
 
 ## Parameters
 
@@ -89,15 +99,23 @@ No exported `…State` type in this module.
 | `ASK_MS` | `200` | ms | [ENG: ui] | How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A same-browser round trip takes a few ms [ENG: ui]; this is the delay the check adds to every start of the page there. |
 | `TAKE_MS` | `2000` | ms | [ENG: ui] | How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG: ui]; without Web Locks, how long before it gives up and starts with no case. |
 
+### [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `DEPTH` | `4` | — | [ENG: display; readable on one A4 page, the owner's teaching use] | P-1: generations drawn past the trigger by default [ENG: display; readable on one A4 page, the owner's teaching use] (plan Q5, §10.1; ruled for the backward read, applied to the forward tree by brief 104). |
+| `MAX_CHILDREN` | `6` | — | [ENG: display; brief 104's 6, the fold by count stands in for P-2's 5 % share until live shares exist (piece L1)] | Children a node shows before the rest fold into "n more" [ENG: display; brief 104's 6, the fold by count stands in for P-2's 5 % share until live shares exist (piece L1)]. |
+| `PATH_SLACK` | `2` | — | [ENG: display; 2, brief 104: propofol to the MAP then shows the SVR route, the contractility route and the baroreflex's answer, not half the tree] | "Path to…" keeps the shortest routes and those up to this many generations longer [ENG: display; 2, brief 104: propofol to the MAP then shows the SVR route, the contractility route and the baroreflex's answer, not half the tree]. |
+
 ### [`apps/demo/src/app/mechanisms/layout.ts`](../../apps/demo/src/app/mechanisms/layout.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `NODE_W` | `164` | — | [ENG: display] | A node box's width, SVG px [ENG: display]: 27 characters of an 11 px label. |
-| `NODE_H` | `38` | — | [ENG: display] | A node box's height, SVG px [ENG: display]: a label line and an engine-key line. |
-| `COL_GAP` | `64` | — | [ENG: display] | The gap between two columns, SVG px [ENG: display]: room for the feedback edges' lanes. |
+| `NODE_W` | `148` | — | [ENG: display] | A node box's width, SVG px [ENG: display]: 21 characters of an 11 px label per line; five columns (the default view, brief 104) fit the 934 px frame the page has at a 1440 px wide window (measured, e2e). |
+| `NODE_H` | `46` | — | [ENG: display] | A node box's height, SVG px [ENG: display]: two label lines and a unit line (brief 104: the clinical label, which is longer than the engine key it replaced, wraps rather than being cut). |
+| `COL_GAP` | `40` | — | [ENG: display] | The gap between two columns, SVG px [ENG: display]: room for the feedback edges' lanes (4 lanes a side, 4 px apart). |
 | `ROW_GAP` | `14` | — | [ENG: display] | The gap between two nodes of a column, SVG px [ENG: display]. |
-| `PAD` | `16` | — | [ENG: display] | The margin round the drawing, SVG px [ENG: display]. |
+| `PAD` | `12` | — | [ENG: display] | The margin round the drawing, SVG px [ENG: display]: room above a node for its "+n" button. |
 
 ### [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts)
 
@@ -429,7 +447,11 @@ No exported `…State` type in this module.
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
 | `components` | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | Tarjan's strongly connected components, iterating nodes and out-edges in the given order; |
 | `mechanismTree` | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | The tree one trigger sets off, ready for layout (D3, D5): |
+| `deviceModule` | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | A node of the device layer: |
+| `view` | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | What of the tree is drawn (brief 104). |
+| `labelsTable` | [`apps/demo/src/app/mechanisms/labels.ts`](../../apps/demo/src/app/mechanisms/labels.ts) | The table as docs/plans/mechanism-tree-labels.md prints it (scripts/mechanism-labels.ts writes it). |
 | `generations` | [`apps/demo/src/app/mechanisms/layout.ts`](../../apps/demo/src/app/mechanisms/layout.ts) | Longest-path generation of every node over the non-feedback edges (Kahn's order, discovery order among ties). |
+| `wrap` | [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | A label over at most two lines of `n` characters, broken at the space that makes the longer line shortest; |
 | `edgeWords` | [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | An edge's words: |
 | `treeSvg` | [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | The tree as one SVG string (and the layout it used). |
 | `busyFraction` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | The busy fraction (0–1) of the main thread over [now − windowMs, now] (method above). |
@@ -714,7 +736,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
 | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | What the instructor panel talks to (research/13 brief §4.4: the same panel same-screen and as a Remote). |
 | [`apps/demo/src/app/main.ts`](../../apps/demo/src/app/main.ts) | The app (research/13 brief §4–§5): one document, one engine session for every view. |
+| [`apps/demo/src/app/mechanisms/clinical.ts`](../../apps/demo/src/app/mechanisms/clinical.ts) | A mechanism-tree node's words (brief 104): the clinical glossary's label where it has one (glossary.ts), else the tree's own clinical label (labels.ts). |
 | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | The mechanism tree's graph (docs/plans/mechanism-tree.md §4 D3, D5, D6; piece T1): pure, no DOM. |
+| [`apps/demo/src/app/mechanisms/labels.ts`](../../apps/demo/src/app/mechanisms/labels.ts) | The mechanism tree's clinical labels (brief 104, piece T1b): every node the coupling registry names, in the words an anaesthetist uses, with its unit where it has one and one sentence of meaning. |
 | [`apps/demo/src/app/mechanisms/layout.ts`](../../apps/demo/src/app/mechanisms/layout.ts) | The mechanism tree's layout (docs/plans/mechanism-tree.md §4 D6): pure, no DOM. |
 | [`apps/demo/src/app/mechanisms/registry-data.ts`](../../apps/demo/src/app/mechanisms/registry-data.ts) | GENERATED by scripts/couplings.ts from the coupling registry (packages/engine-core/src/couplings/); do not edit. |
 | [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | The mechanism tree as an SVG string (docs/plans/mechanism-tree.md §4 D7; the swimlane's pattern, no DOM state, no graph library). |
@@ -1041,6 +1065,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/graph.test.ts`](../../apps/demo/src/app/mechanisms/graph.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/mechanisms/labels.test.ts`](../../apps/demo/src/app/mechanisms/labels.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/meters.test.ts`](../../apps/demo/src/app/meters.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/oxygen.test.ts`](../../apps/demo/src/app/oxygen.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pairing.test.ts`](../../apps/demo/src/app/pairing.test.ts) | 0 | 0 |
@@ -1130,6 +1155,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/learner-baseline.dom.test.ts`](../../apps/demo/src/app/views/learner-baseline.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/mechanisms.dom.test.ts`](../../apps/demo/src/app/views/mechanisms.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/remote-pin.dom.test.ts`](../../apps/demo/src/app/views/remote-pin.dom.test.ts) | 0 | 0 |

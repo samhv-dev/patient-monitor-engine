@@ -5,8 +5,11 @@
 // link messages go out as `vent` only while it is granted, and only a `vent` for it is heard. A refusal ends the link
 // with the reason (the page shows the form again). When the browser says the network is gone (`offline`) it drops its
 // socket at once, so nothing it computes reaches the patient late: the host hears the silence and hands the patient to
-// the engine's own ventilator within 1 s (views/vent.ts COCKPIT_SILENCE_MS); back `online`, it signs in again.
-import { createStamper, createWebSocketTransport, newPeerId, type InstructorAccess, type ManagedTransport, type WireMessage } from '@pme/controller';
+// the engine's own ventilator within 1 s (views/vent.ts COCKPIT_SILENCE_MS); back `online`, it signs in again. A
+// host that handed it over for its silence revokes that socket id (VENTILATOR_REASONS.silent): it signs in again at once
+// on a new socket (closing the browser's socket does not stop Chromium sending frames it held on it once the network is
+// back; the host refuses those, by the revoked id).
+import { createStamper, createWebSocketTransport, newPeerId, VENTILATOR_REASONS, type InstructorAccess, type ManagedTransport, type WireMessage } from '@pme/controller';
 import type { VentWire, VentWireBody } from '@pme/ventilator';
 
 /** Plan §5 (instructor-peer-role.md): a socket that heard nothing this long is dropped and opened again, as the
@@ -76,6 +79,12 @@ export function signInVentilator(o: VentDeviceOptions): VentDevice {
         if (m.kind === 'grant') {
           if (m.to !== sender) return;
           if (m.granted) return set('granted');
+          // handed over for its silence (the hand-over contract): this socket id is done; sign in again at once on a
+          // new socket with the PIN held, and take over from the engine's settings then
+          if (m.reason === VENTILATOR_REASONS.silent) {
+            set('pending');
+            return open();
+          }
           drop();
           return set(state === 'granted' ? 'revoked' : 'denied', m.reason !== undefined ? { reason: m.reason } : {});
         }

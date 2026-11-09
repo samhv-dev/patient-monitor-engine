@@ -6,7 +6,8 @@
 // "Show here" → P7's PIN form; a wrong PIN is refused; the right one signs it in as the `ventilator` role and the cockpit
 // drives full screen; 5 s offline → the host hands over within 1 s of the silence and the patient stays ventilated;
 // back online the cockpit signs in again and takes over from the engine's settings; silent with its socket left open (its
-// sends held), it is handed over by the host's 1 s watchdog and takes over again. (3) The PIN never appears in an
+// sends held), it is handed over by the host's 1 s watchdog, its id revoked: it signs in again on a new socket and
+// drives, and the held frames of the old id, sent at last, are refused. (3) The PIN never appears in an
 // address, the QR, the relay's `room.json` or a learner's frames.
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -112,12 +113,25 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
   const stateDir = await classroom();
   const code = await host(page, '#/room');
   // the room's own QR address, as the tablet's camera reads it
+  // the Room page writes it once the relay has answered where this computer is (relayInfo): wait for that, then read it
+  await expect(page.locator('section.room-join .phones-url')).toHaveText(new RegExp(`\\?join=${code}#/pick$`));
   const qrUrl = (await page.locator('section.room-join .phones-url').textContent()) ?? '';
-  expect(qrUrl).toMatch(new RegExp(`\\?join=${code}#/pick$`));
   const learner = await phone(browser, browserName, code);
 
   const tctx = await browser.newContext(device(browserName));
   const t = await tctx.newPage();
+  // every socket the tablet's page opens, so a test step can stall one (and hold its frames) as a Wi-Fi stall does
+  await t.addInitScript(() => {
+    const Base = WebSocket;
+    const all: WebSocket[] = [];
+    (window as unknown as { __sockets: WebSocket[] }).__sockets = all;
+    window.WebSocket = class extends Base {
+      constructor(url: string | URL, protocols?: string | string[]) {
+        super(url, protocols);
+        all.push(this);
+      }
+    } as typeof WebSocket;
+  });
   const visited: string[] = [];
   t.on('framenavigated', (fr) => void visited.push(fr.url()));
   await t.goto(`${base}/?join=${code}&relay=${encodeURIComponent(`${ws()}?e2e-remote`)}#/pick`);
@@ -141,7 +155,6 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
   await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'the tablet drives the patient' }).toBe('external');
   await expect(learner.p.locator('.learner-hold')).toBeVisible({ timeout: 10_000 });
   await expect(ventRow(page)).toContainText('driving');
-  const first = await t.evaluate(() => (window as unknown as W).__pmeVentDevice!.sender);
 
   /** Watch, on the host, for the moment its desk unlinks the cockpit (the hand-over starts). */
   const watchUnlink = () =>
@@ -155,14 +168,19 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
       tick();
     });
 
-  // Silence with the socket left open (a Wi-Fi that stalls without the browser noticing): the tablet's frames stop
-  // leaving it (the test holds its WebSocket's sends for 3 s); the host's 1 s watchdog hands over; the patient stays
-  // ventilated; when its frames come again the cockpit takes over
+  // Silence with the socket left open (a Wi-Fi that stalls without the browser noticing): the frames on the tablet's
+  // socket stop leaving it and are held (the test holds that socket's sends, as a browser holds them on a stalled
+  // link); the host's 1 s watchdog hands over and revokes that socket id (the hand-over contract); the tablet hears it
+  // and signs in again on a new socket, which drives. When the held frames go at last, from the revoked id, the host
+  // refuses them: they never re-take the patient
   await watchUnlink();
+  const heldFrom = await t.evaluate(() => (window as unknown as W).__pmeVentDevice!.sender);
   const mutedAt = await t.evaluate(() => {
-    const ws = WebSocket.prototype as unknown as { send: (d: unknown) => void; __send?: (d: unknown) => void };
-    ws.__send = ws.send;
-    ws.send = () => undefined;
+    const w = window as unknown as { __sockets: Array<WebSocket & { __held?: unknown[] }> };
+    for (const ws of w.__sockets) {
+      ws.__held = [];
+      ws.send = (d: unknown) => void ws.__held!.push(d);
+    }
     return Date.now();
   });
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__r8d!.unlinkedAt), { timeout: 5000 }).not.toBeNull();
@@ -172,13 +190,21 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
   // the watchdog's timer and the host page's 5 ms poll
   expect(silentMs).toBeGreaterThanOrEqual(950);
   expect(silentMs).toBeLessThanOrEqual(1250);
-  await expect.poll(async () => (await patient(page)).source, { timeout: 5000 }).toBe('ventilator');
-  await page.waitForTimeout(1500);
+  await t.waitForFunction((was) => { const d = (window as unknown as W).__pmeVentDevice; return d?.state === 'granted' && d.sender !== was; }, heldFrom, { timeout: 15_000 });
+  await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'signed in again: the tablet drives again' }).toBe('external');
+  const again = await t.evaluate(() => (window as unknown as W).__pmeVentDevice!.sender);
+  // the held frames go at last, from the revoked id
   await t.evaluate(() => {
-    const ws = WebSocket.prototype as unknown as { send: (d: unknown) => void; __send?: (d: unknown) => void };
-    ws.send = ws.__send!;
+    const w = window as unknown as { __sockets: Array<WebSocket & { __held?: unknown[] }> };
+    for (const ws of w.__sockets) {
+      if (!ws.__held) continue;
+      delete (ws as { send?: unknown }).send; // the prototype's send again
+      if (ws.readyState === WebSocket.OPEN) for (const d of ws.__held.splice(0)) ws.send(d as string);
+    }
   });
-  await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'its frames again: the tablet drives again' }).toBe('external');
+  await page.waitForTimeout(2000);
+  expect((await patient(page)).source).toBe('external');
+  expect(await t.evaluate(() => (window as unknown as W).__pmeVentDevice!.sender), 'the held frames changed nothing on the tablet').toBe(again);
 
   // 5 s offline: the host hands over within 1 s of the silence; the patient is ventilated throughout
   await watchUnlink();
@@ -205,7 +231,7 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
 
   // back online: a new socket, a new hello with the PIN the page holds, and the cockpit takes over from the engine's settings
   await tctx.setOffline(false);
-  await t.waitForFunction((was) => { const d = (window as unknown as W).__pmeVentDevice; return d?.state === 'granted' && d.sender !== was; }, first, { timeout: 20_000 });
+  await t.waitForFunction((was) => { const d = (window as unknown as W).__pmeVentDevice; return d?.state === 'granted' && d.sender !== was; }, again, { timeout: 20_000 });
   await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'the tablet drives again' }).toBe('external');
   expect(await cockpitCfg(t)).toMatchObject({ mode: 'VC', rate: 16, vt: 450, peep: 6, fio2: 50, paused: false });
 
