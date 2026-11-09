@@ -55,6 +55,23 @@ reads it for the tick order, the ventilator link and the events it emits.
 | [`pipeline.ts:406`](../../packages/engine-core/src/l2/resp/pipeline.ts#L406) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
 | [`pipeline.ts:461`](../../packages/engine-core/src/l2/resp/pipeline.ts#L461) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 1, FIT 0, ENG 0, UNTAGGED 7, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `breathing.peep.set` | `trigger.ventilation.peep` (PEEP change on the ventilator) → `resp.driver.vent.peep` (PEEP) | + · state | UNTAGGED | — | — | The ventilation event sets the ventilator's PEEP. |
+| `breathing.pleural.peep` | `resp.driver.vent.peep` (PEEP), `resp.lung.peepTot` → `resp.pleural` (Pleural pressure handed to the circulation) | + · term | SOURCED | `T_IT` = 0.65, `CMH2O_TO_MMHG` = 0.7356, `P_PL0` = -4 | — | pIt = P_PL0 + T_IT·(PEEP + ΔV/C)·CMH2O_TO_MMHG on a mechanical breath, plus the trapped-gas pressure (total − set PEEP). |
+| `breathing.pleural.transmission` | `resp.lung.lp.tIt` → `resp.pleural` (Pleural pressure handed to the circulation) | + · gain | UNTAGGED | — | — | The condition's own airway-to-pleura transmission, relative to the healthy one. |
+| `breathing.pleural.pneumothorax` | `resp.lung.lp.pPtx` → `resp.pleural` (Pleural pressure handed to the circulation) | + · term | UNTAGGED | — | — | + max(0, lp.pPtx − circ ext.pPtx): the lungs' pleural pressure, max-combined so two commands do not count it twice. |
+| `breathing.drive.depression` | `neuro.resp.totalDep` → `resp.spont.ve` (V̇E (MV)) | − · factor | UNTAGGED | — | — | The neuro model's ventilatory depression scales the spontaneous drive (apnoea below its threshold). |
+| `breathing.drive.rate` | `neuro.resp.totalDep` → `resp.spont.rr` (RR (spont)) | − · factor | UNTAGGED | — | — | The same depression on the rate. |
+| `breathing.drive.co2` | `resp.co2.pf` (PaCO₂) → `resp.spont.ve` (V̇E (MV)) | + · gain | UNTAGGED | `CO2_SLOPE` = 1.5, `APNOEA_OFFSET` = 4 | — | The hypercapnic ventilatory response, CO2_SLOPE L/min/mmHg above the apnoeic threshold. |
+| `breathing.drive.brainstem` | `organs.brain.cbfRel` → `resp.spont.ve` (V̇E (MV)) | + · threshold | UNTAGGED | — | — | The respiratory gate closes as brainstem flow falls (the organs' CBF, one step late). |
+
 ## State
 
 ### `DriverState` ([`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts))
@@ -204,7 +221,6 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | CPR (quality 1, 110/min): the adult’s coRatio in the same 0.25–0.33 | 0.363 | — | RIGHT ([audit row 32](../../docs/validation/target-audit/30-target-audit.md#row-32)) | keep 0.25-0.33 at q 1 (a lower quality should scale below 0.25) | [`resp-child-rest.test.ts`](../../packages/engine-core/test/engine/resp-child-rest.test.ts) |
 | noxious stimulus 1.5 under remifentanil 0.1 + propofol 50 (SGA, FiO2 0.5): VE ≥ +20 % | +3.3 % | — | UNSUPPORTED ([audit row 76](../../docs/validation/target-audit/30-target-audit.md#row-76)) | VE rises (≥ +5 %) and rises less than the same stimulus under propofol alone [ENG; owner ruling] | [`resp-drive-nonchemical.test.ts`](../../packages/engine-core/test/engine/resp-drive-nonchemical.test.ts) |
 | child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) | 3.38 | — | RIGHT ([audit row 77](../../docs/validation/target-audit/30-target-audit.md#row-77)) | keep (±1 SD); if the owner wants population width, ±1.5 SD gives 1.9–3.4 min | [`resp-ga-state.test.ts`](../../packages/engine-core/test/engine/resp-ga-state.test.ts) |
-| RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control | PaCO2 +6.7 / EtCO2 +5.99994 | — | MIS-SPECIFIED ([audit row 78](../../docs/validation/target-audit/30-target-audit.md#row-78)) | ΔPaCO2 and ΔEtCO2 +3–8 mmHg at 20 min; +8 ± 1 only at steady state (≥ 60 min) | [`resp-inspired-co2.test.ts`](../../packages/engine-core/test/engine/resp-inspired-co2.test.ts) |
 | healthy adult under GA on VCV: Enghoff VD/VT 0.30–0.45 | 0.28 | Nunn 8e | RIGHT ([audit row 96](../../docs/validation/target-audit/30-target-audit.md#row-96)) | keep 0.30–0.45 (Enghoff, ETT + 50 mL apparatus); 0.33–0.42 would be the interpolated centre at 500 × 12 | [`resp-mechanics.test.ts`](../../packages/engine-core/test/engine/resp-mechanics.test.ts) |
 | COPD GOLD 3, VCV 490 × 14: PEEPi 4–8 | 3.6 | catalogue §5 band at the reference rate | MIS-SPECIFIED ([audit row 97](../../docs/validation/target-audit/30-target-audit.md#row-97)) | either run at VT 560, I:E 1:2 (the band's own reference) or scale to ≈ 3.5–7 cmH2O at VT 490 | [`resp-mechanics.test.ts`](../../packages/engine-core/test/engine/resp-mechanics.test.ts) |
 | preoxygenated apnoea to SaO2 90 %: 2.5–4.5 min | 4.82 | — | MIS-SPECIFIED ([audit row 79](../../docs/validation/target-audit/30-target-audit.md#row-79)) | 3.5–6.3 min (median 4.9) at term, not in labour; 1.5–3 min only for labour plus BMI ≥ 40. Correct tables §7 23 and validation t23 (150–240 s) the same way | [`resp-pregnancy.test.ts`](../../packages/engine-core/test/engine/resp-pregnancy.test.ts) |
@@ -217,7 +233,6 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | RS8 laryngospasm after propofol 1 mg/kg on air: pleural swing ≤ −20 cmH2O with pulsus ≥ 10 mmHg | −30.7 cmH2O | — | UNSUPPORTED ([audit row 86](../../docs/validation/target-audit/30-target-audit.md#row-86)) | pulsus ≥ 5 mmHg and rising with effort [ENG]; keep ≥ 10 only for swings ≤ −30 to −40 cmH2O, and read it before SaO2 < 60 % (owner ruling) | [`resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) |
 | RS10 a 30 s disconnection restores MAP to ≥ 85 % of the RR-10 value | 29.7 of 84.5 | — | UNSUPPORTED ([audit row 87](../../docs/validation/target-audit/30-target-audit.md#row-87)) | MAP rises clearly (e.g. ≥ 20 % above its hyperinflated value) within 30–60 s of disconnection while PEEPtot falls toward the set PEEP [ENG; owner ruling], with a guard that the patient is not arrested beforehand | [`resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) |
 | RS13 massive PE (one command), awake then ventilated: RR ≥ 25 and PaCO2 ≤ 35 awake; EtCO2 falls ≥ 10 with Pa–Et ≥ 15 ventilated; mPAP 30–45 | awake 28.2 / 33.1 | — | RIGHT ([audit row 88](../../docs/validation/target-audit/30-target-audit.md#row-88)) | keep (optionally mPAP 30–40 at φ 0.6) | [`resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) |
-| RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 | +6.7 / EtCO2 +5.99994 | — | MIS-SPECIFIED ([audit row 89](../../docs/validation/target-audit/30-target-audit.md#row-89)) | +3–8 at 20 min | [`resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) |
 | healthy breaths untouched: delivered VT within 5 mL of the set 500 | 494.3 | — | TOO NARROW ([audit row 190](../../docs/validation/target-audit/30-target-audit.md#row-190)) | delivered VT 465-535 mL (± 7 %), or relative: healthy VT with default Pmax ≥ 0.99 × VT with Pmax 80 | [`resp-vcv-pmax.test.ts`](../../packages/engine-core/test/engine/resp-vcv-pmax.test.ts) |
 
 ## Tests
@@ -238,7 +253,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | [`engine/resp-engine.test.ts`](../../packages/engine-core/test/engine/resp-engine.test.ts) | 0 | 0 |
 | [`engine/resp-ga-state.test.ts`](../../packages/engine-core/test/engine/resp-ga-state.test.ts) | 1 | 0 |
 | [`engine/resp-induction.test.ts`](../../packages/engine-core/test/engine/resp-induction.test.ts) | 0 | 0 |
-| [`engine/resp-inspired-co2.test.ts`](../../packages/engine-core/test/engine/resp-inspired-co2.test.ts) | 1 | 0 |
+| [`engine/resp-inspired-co2.test.ts`](../../packages/engine-core/test/engine/resp-inspired-co2.test.ts) | 0 | 0 |
 | [`engine/resp-longrun.test.ts`](../../packages/engine-core/test/engine/resp-longrun.test.ts) | 0 | 0 |
 | [`engine/resp-mechanics.test.ts`](../../packages/engine-core/test/engine/resp-mechanics.test.ts) | 2 | 0 |
 | [`engine/resp-obstruction.test.ts`](../../packages/engine-core/test/engine/resp-obstruction.test.ts) | 0 | 0 |
@@ -246,7 +261,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | [`engine/resp-pleural-effort.test.ts`](../../packages/engine-core/test/engine/resp-pleural-effort.test.ts) | 0 | 0 |
 | [`engine/resp-pregnancy.test.ts`](../../packages/engine-core/test/engine/resp-pregnancy.test.ts) | 1 | 0 |
 | [`engine/resp-rocuronium-apnoea.test.ts`](../../packages/engine-core/test/engine/resp-rocuronium-apnoea.test.ts) | 0 | 0 |
-| [`engine/resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) | 10 | 0 |
+| [`engine/resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) | 9 | 0 |
 | [`engine/resp-trigger.test.ts`](../../packages/engine-core/test/engine/resp-trigger.test.ts) | 0 | 0 |
 | [`engine/resp-vcv-pmax.test.ts`](../../packages/engine-core/test/engine/resp-vcv-pmax.test.ts) | 1 | 0 |
 | [`engine/vent-infant.test.ts`](../../packages/engine-core/test/engine/vent-infant.test.ts) | 0 | 0 |

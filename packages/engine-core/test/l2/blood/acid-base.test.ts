@@ -30,9 +30,15 @@ describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1)', () =
     expect(slope).toBeLessThanOrEqual(0.2);
   });
   // R45: the tables' 0.2 per mmHg needs cellular H+ release/alkalosis-driven lactate, which the one-pool Figge
-  // balance does not have (plan deviation list). Kept visible until Ali's calibration pass decides the mechanism.
-  it.fails('acute respiratory alkalosis reaches the tables’ 0.2 mmol/L per mmHg (40 → 30)', () => {
-    expect((solvePh(40, N).hco3 - solvePh(30, N).hco3) / 10).toBeGreaterThanOrEqual(0.18);
+  // balance does not have (plan deviation list). Kept visible until the owner's calibration pass decides the mechanism.
+  // Band to its source (calibration-pass ruling, brief 88): Miller 10e ch. 44 p. 1378, acute ΔHCO3 = 0.2 × ΔPaCO2 (Boston
+  // rule, the upper edge); Table 44.3, acute respiratory alkalosis ΔSBE = 0, which by Van Slyke and Henderson–Hasselbalch
+  // gives HCO3 24.30 → 22.85 for PaCO2 40 → 30, i.e. 0.145 per mmHg (the lower edge).
+  it.fails('acute respiratory alkalosis: ΔHCO3 0.14–0.20 mmol/L per mmHg (Miller 10e ch. 44: Boston 0.2, ΔSBE 0) (40 → 30)', () => {
+    const k = (solvePh(40, N).hco3 - solvePh(30, N).hco3) / 10;
+    console.log(`acid-base: acute respiratory alkalosis ${k.toFixed(3)} mmol/L per mmHg`);
+    expect(k).toBeGreaterThanOrEqual(0.14);
+    expect(k).toBeLessThanOrEqual(0.2);
   });
   it('HCO3 is consistent with pH and PCO2 (Henderson–Hasselbalch) within 0.5 mmol/L everywhere', () => {
     for (const pco2 of [10, 20, 40, 80, 120]) for (const sid of [15, 25, 38, 50, 60]) {

@@ -97,7 +97,7 @@ scheduler log): saadat-like L1 / L2 / L3 hand 5 / 3 / 1 pulses to Web Audio; Sil
 new L1 during it sounds at once (5 pulses). philips-like L1 / L2 / L3 hand 10 / 3 / 2 pulses; Silence shows 89 s and
 a new L1 during it stays silent. Device tones, SpO2 beeps at 100/90/80 and the volume slider ran without page errors.
 
-## What Ali checks at the bedside
+## What samhv-dev checks at the bedside
 
 ### Saadat-like values that are not documented
 

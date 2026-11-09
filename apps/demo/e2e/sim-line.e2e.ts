@@ -80,7 +80,12 @@ test('the line is on the Monitor view and the learner window, never on the instr
   expect(await page.locator('.stage .pme-hdr').boundingBox()).toEqual(teachHeader);
   expect(await hostBox(page)).toEqual(before);
   for (const r of ['#/', '#/room', '#/scenarios', '#/patient', '#/debrief', '#/explore', '#/settings']) {
-    await go(page, r);
+    // CI WebKit, run 42412485202: "Execution context was destroyed, most likely because of a navigation" in go()'s frame
+    // wait, and its error context showed a follower's page ("Waiting for the instructor: …"); no code path
+    // that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.
+    await go(page, r).catch((e: Error) => {
+      throw new Error(`${e.message}\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`);
+    });
     await expect.poll(() => page.evaluate((line) => document.body.innerText.includes(line), LINE), { message: r }).toBe(false);
   }
   // another skin (a one-row header): a strip above the monitor on the Monitor view only

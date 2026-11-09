@@ -1,7 +1,7 @@
 // FU-4 clinical scenario suite (plan Task 22; audit §6 S1–S16, adjusted; re-run after Tasks 18a–18g). What the
-// orchestrator inspects BEFORE Ali is asked to test again (R53). Rig (audit §1): adult 40 y 70 kg male, seed 7, MODELED
+// orchestrator inspects BEFORE samhv-dev is asked to test again (R53). Rig (audit §1): adult 40 y 70 kg male, seed 7, MODELED
 // unless stated, intubated (ETT) on VCV 12 × 600 mL / PEEP 5 / FiO2 0.5 from t = 1 s (removes 7f's propofol airway
-// obstruction as a confounder). Bands are the audit's proposals with their sources (Q1–Q12 are Ali's to confirm); R45: a
+// obstruction as a confounder). Bands are the audit's proposals with their sources (Q1–Q12 are the owner's to confirm); R45: a
 // band the mechanism misses is `it.fails` with the measured number in its title.
 // D27 / review F9: every physiological assertion reads TRUTH — `resp.o2.sa` (SaO2), `hemo.circ` — never the displayed
 // SpO2; the displayed value is carried in a separate column (`spo2Shown`) for the screenshots only, because once FU-5
@@ -112,7 +112,7 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
     expect(f).toBeLessThanOrEqual(-0.15);
     expect(f).toBeGreaterThanOrEqual(-0.3);
   });
-  it("S4a severe tamponade (compensated), propofol 2 mg/kg: collapse and PEA within 10 min (Ali; Barash, pericardial disease)", async () => {
+  it("S4a severe tamponade (compensated), propofol 2 mg/kg: collapse and PEA within 10 min (samhv-dev; Barash, pericardial disease)", async () => {
     const r = await scenario([[60, TAMP], [660, drug('propofol', 2, 'mg/kg')]], 1260);
     const pre = mean(win(r, 630, 660), 'map');
     const a = arrestAt(r, 660);
@@ -157,7 +157,7 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
     console.log(`S6a record: nadir ${minOf(w, 'map').toFixed(1)}; ${w.filter((x) => x.map < 35).length * 5} s < 35, ${w.filter((x) => x.map < 30).length * 5} s < 30; min CoPP ${minOf(w, 'cpp').toFixed(1)}; min kIsch ${minOf(w, 'kIsch').toFixed(3)}; arrest ${a !== undefined ? `+${a - 960} s` : 'none'}`);
     expect(w.length).toBe(108); // the run reached 1500 s; the outcome is the record above
   });
-  // R45 (Task 18e, D23): the two sourced targets pull against each other — kept with the numbers (Ali's Q1, item 19)
+  // R45 (Task 18e, D23): the two sourced targets pull against each other — kept with the numbers (the owner's Q1, item 19)
   it.fails('S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 2.7, −97 % with an arrest when propofol removes the tonic sympathetic share — 26.5, −68 % when it does not, 28.7 on the prototype)', async () => {
     const r = await s6a();
     const pre = mean(win(r, 930, 960), 'map');
@@ -192,13 +192,15 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
     console.log(`S9: SaO2 ${(mean(w, 'sao2') * 100).toFixed(1)} (shown SpO2 ${w.at(-1)?.spo2Shown?.toFixed(0) ?? 'invalid'}), EtCO2 ${et0.toFixed(0)} → ${mean(w, 'etco2').toFixed(0)}, CVP ${mean(w, 'cvp').toFixed(1)}, MAP ${mean(w, 'map').toFixed(1)}; PEA ${arrestAt(r, 420) ?? '–'}`);
     expect(et0 - mean(w, 'etco2')).toBeGreaterThanOrEqual(10);
   });
-  it.fails("S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is Ali's, item 15; measured 97.8 %)", async () => {
+  it.fails("S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is the owner's, item 15; measured 97.8 %)", async () => {
     expect(mean(win(await s9(), 360, 420), 'sao2')).toBeLessThan(0.9);
   });
-  it.fails('S9 the same: CVP ≥ 15 and MAP < 65 at 5 min (RV failure; Q15; measured CVP 9.3, MAP 82.1)', async () => {
+  // Band to its source (calibration-pass ruling, brief 88): massive PE is acute PE with hypotension, SBP < 90 (Dellinger 5e
+  // ch. 42 p. 682). The CVP ≥ 15 and MAP < 65 edges had no source (Miller & Sutton 1970: RVEDP 11.5 ± 4.9) and are removed.
+  it.fails('S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 95.0, CVP 9.3, MAP 82.1)', async () => {
     const w = win(await s9(), 360, 420);
-    expect(mean(w, 'cvp')).toBeGreaterThanOrEqual(15);
-    expect(mean(w, 'map')).toBeLessThan(65);
+    console.log(`S9: SBP ${mean(w, 'sbp').toFixed(1)}`);
+    expect(mean(w, 'sbp')).toBeLessThan(90);
   });
   it('S9 the same: propofol 1 mg/kg at 7 min → PEA within 10 min (ACLS "T")', async () => {
     expect(arrestAt(await s9(), 420)).toBeDefined();
@@ -219,7 +221,9 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
   });
   // R45 (Task 18a): 23.8 at 70 s on the 18a rig, but the CoPP climbs as the CPR circulation settles — 25.1–28.8 over
   // 1–5 min of CPR alone here (the plan's quality-1 rig read 43–46 before 18a). Kept with the number (Q13's residual).
-  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 with the outflow limiter, 25.1–28.8 without)', async () => {
+  // Band to its source (calibration-pass ruling, brief 88): Paradis 1990 (PMID 2386557, n 100) initial CPP 13.4 ± 8.5 mmHg
+  // in the patients with ROSC (mean + 1 SD = 21.9) and no ROSC with an initial CPP below 0. 15 is the ROSC threshold, not a range edge.
+  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 0–21.9 mmHg (Paradis 1990: 13.4 ± 8.5 with ROSC, none below 0; measured 26.3–28.1)', async () => {
     // commanded VF is a setRhythm, not an applyEvent: its own engine
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     const cpp: number[] = [];
@@ -228,8 +232,8 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 }, atTick: 120 * 50 } as unknown as Command);
     for (let t = 60; t <= 420; t += 60) { eng.advanceTo(t); await new Promise((res) => setImmediate(res)); }
     console.log(`S13: CPR CoPP ${Math.min(...cpp).toFixed(1)}–${Math.max(...cpp).toFixed(1)}`);
-    expect(Math.min(...cpp)).toBeGreaterThanOrEqual(15);
-    expect(Math.max(...cpp)).toBeLessThanOrEqual(25);
+    expect(Math.min(...cpp)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...cpp)).toBeLessThanOrEqual(21.9);
   });
   const s14 = memo(() => scenario([[300, drug('propofol', 2, 'mg/kg')]], 900, { patient: { ageY: 80, weightKg: 70, conditions: [{ id: 'htn' }] } as PatientProfile }));
   it('S14 80 y hypertensive, propofol 2 mg/kg: HR change ≤ +10 (Reich 2005; Miller geriatrics)', async () => {
@@ -284,7 +288,7 @@ describe('clinical scenario suite — resuscitation', { timeout: 600_000 }, () =
   // E-FU4-19 (orchestrator ruling G-FU4-1 final, 2026-09-29): this was the executor's own measured expectation from
   // ruling 3, not a sourced band; with the humoral effect withdrawn in the arrest, 2 L no longer refills a COMPLETE 3 L
   // bleed-out. Kept as a record with its number; the sourced ROSC-with-volume assertion is circ-lowflow-arrest's class IV
-  // rig (2 L + adrenaline 60 s after the arrest: pulse at +119 s). The volume threshold is measured below (Ali: A-new).
+  // rig (2 L + adrenaline 60 s after the arrest: pulse at +119 s). The volume threshold is measured below (samhv-dev: A-new).
   it.fails('CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min with the humoral fade (+105 s without it)', async () => {
     const { rows, tCpr } = await exsang('full', 1800);
     const back = win(rows, tCpr as number, (tCpr as number) + 600).find((x) => !x.pulseless);
@@ -293,8 +297,8 @@ describe('clinical scenario suite — resuscitation', { timeout: 600_000 }, () =
     expect((back as Row).t - (tCpr as number)).toBeLessThanOrEqual(240);
   });
   // A MEASUREMENT, not a band (orchestrator ruling G-FU4-1 final): the volume at which a complete 3 L bleed-out regains a
-  // pulse under CPR + adrenaline 1 mg, the volume given over 300 s from the first compression — for Ali's question A-new.
-  it('measurement: after a complete 3 L bleed-out, CPR + adrenaline + 2 / 2.5 / 3 / 3.5 L over 300 s — time to a pulse per volume (recorded, no band; Ali A-new)', async () => {
+  // pulse under CPR + adrenaline 1 mg, the volume given over 300 s from the first compression — for the owner's question A-new.
+  it('measurement: after a complete 3 L bleed-out, CPR + adrenaline + 2 / 2.5 / 3 / 3.5 L over 300 s — time to a pulse per volume (recorded, no band; samhv-dev A-new)', async () => {
     const out: string[] = [];
     for (const ml of [2000, 2500, 3000, 3500]) {
       const { rows, tCpr } = await exsang('full', 1800, ml);

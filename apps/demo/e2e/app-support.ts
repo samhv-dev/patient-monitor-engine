@@ -75,7 +75,7 @@ export interface A11yFinding {
 }
 
 /**
- * WCAG 2.2 AA checks that need no dependency (axe is Ali's question Q8): target size (2.5.8, 24 px; 44 px in the
+ * WCAG 2.2 AA checks that need no dependency (axe is the owner's question Q8): target size (2.5.8, 24 px; 44 px in the
  * instructor panel and the instructor phone's PIN form and Room card on a touch screen), accessible names (1.3.1/4.1.2), text contrast (1.4.3) from the rendered
  * colours, horizontal scroll (1.4.10) and clipped labels (brief §11.2), one h1 per view and a main landmark.
  */

@@ -30,10 +30,15 @@ describe('check 19 treatments through the engine (drugs are drug-model events; t
   })());
   // R45 (FU-4, E-FU4-8 re-derivation): at the re-derived normocapnic premise (RR 13, PaCO2 40.6) the drop is 30.5 % —
   // the upper edge is missed by 0.5 point (RR 14, PaCO2 38.6, gives 24.9 %: the band sits between two integer rates).
-  it.fails('hyperventilation: ICP falls no more than 30 % by the time PaCO2 reaches 30 — measured 30.5 %', async () => {
-    expect((await hyperventilation()).drop).toBeLessThanOrEqual(0.3);
+  // Band to its source (calibration-pass ruling, brief 88): Oertel 2002 (PMID 12450025, 33 patients, 57 tests) PaCO2 35 → 27
+  // lowered ICP 20 ± 11 → 13 ± 8 (a 35 % mean fall), and a fall of more than 20 % was seen in 77.2 % of tests. The ≤ 30 %
+  // ceiling sat below the source's own mean and is replaced by the stated 20 % threshold.
+  it('hyperventilation: ICP falls ≥ 20 % by the time PaCO2 reaches 30 (Oertel 2002: > 20 % in 77 % of tests, mean 35 %) — measured 30.7 %', async () => {
+    const drop = (await hyperventilation()).drop;
+    console.log(`tbi: hyperventilation ICP drop ${(100 * drop).toFixed(1)} %`);
+    expect(drop).toBeGreaterThanOrEqual(0.2);
   });
-  it('hyperventilation: ICP −25–30 % by the time PaCO2 reaches 30 (the ≤ 30 % edge: the it.fails above)', async () => {
+  it('hyperventilation: ICP −25–30 % by the time PaCO2 reaches 30', async () => {
     const r = await atIcp20();
     const before = r.last().brain.icp;
     const pc0 = r.last().brain.paco2;

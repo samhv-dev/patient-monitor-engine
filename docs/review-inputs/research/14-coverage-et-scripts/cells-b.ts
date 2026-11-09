@@ -153,7 +153,7 @@ const insMeasure = (R: Record<string, ArmResult>) => { const i = R.i!.rows, c = 
   sweating: anyR(i, T, T + 3 * H, (x) => x.sweating === true), glycoMax: mx(i, 'glyco', T, T + 3 * H), consciousLost: anyR(i, T, T + 3 * H, (x) => x.conscious === false), diMin: mn(i, 'di', T, T + 3 * H) }; };
 add({ id: 'ET-20a', tier: 'P1', ctx: 'X-A awake, spontaneous room air, non-diabetic', state: 'fasting normoglycaemia', intv: 'insulin 10 units IV (≈ 0.14 units/kg): glucose nadir and its time', sys: 'END',
   arms: insArms, measure: (R) => m(insMeasure(R)),
-  expect: [{ m: 'tNadirMin', lo: 40, hi: 60, invert: true, src: 'research/12 ET-20 (nadir at 40–60 min; tables §7 prototype nadir 38 mg/dL). The insulin-tolerance-test literature (0.1–0.15 units/kg IV) puts the nadir at 20–30 min [VERIFY] — Q for Ali' },
+  expect: [{ m: 'tNadirMin', lo: 40, hi: 60, invert: true, src: 'research/12 ET-20 (nadir at 40–60 min; tables §7 prototype nadir 38 mg/dL). The insulin-tolerance-test literature (0.1–0.15 units/kg IV) puts the nadir at 20–30 min [VERIFY] — Q for samhv-dev' },
     { m: 'below39', event: true, src: 'ADA level 1 (< 3.9 mmol/L) is certain after 0.14 units/kg IV in a non-diabetic (insulin tolerance test: < 2.2 mmol/L)' }],
   hand: { verdict: 'TS', why: 'glucose reaches its nadir 13 min after 10 units IV (research/12: 40–60 min; insulin-tolerance tests: 20–30 min) and only 2.9 mmol/L deep (ITT < 2.2): the bolus enters the insulin space at once (glucose.ts insulinBolus) with t½ 5 min and p2 0.025/min, so remote insulin peaks within minutes, and the counter-regulation (adrenaline ×16, glucagon-like EGP) pulls glucose back from 20 min. K −0.87 and HR +18 are in band' },
   owner: '7e glucose.ts (Bergman) / 7g insulin' });

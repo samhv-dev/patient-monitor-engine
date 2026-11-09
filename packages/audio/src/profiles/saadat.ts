@@ -1,6 +1,6 @@
 // `saadat` profile (brief §6.4.1; research 06 §4.2, M p.47, 49): L1 "DO-DO-DO--DO-DO" (one 3+2 group of 5 pulses)
 // every 10 s, L2 "DO-DO-DO" every 20 s, L3 "DO" every 30 s (it repeats, unlike IEC low). Pattern and repeat times
-// are documented; pulse length, gaps and pitch are NOT published and are [assumed] until Ali's recordings.
+// are documented; pulse length, gaps and pitch are NOT published and are [assumed] until the owner's recordings.
 import type { AlarmSoundProfile } from './types.ts';
 
 const PULSE = 150; // [assumed]

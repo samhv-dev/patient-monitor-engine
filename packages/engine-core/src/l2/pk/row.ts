@@ -123,7 +123,7 @@ export interface DrugRow {
   routeModels?: Partial<Record<PkRoute, RouteModel>>;
   /** A documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual weight;
    * `scope` 'cumulative' sums every bolus of the row. Only maxima the row's own `doses` text sources are set; the rest
-   * wait on Ali's dosing-preset table. */
+   * wait on the owner's dosing-preset table. */
   /** The documented maximum INFUSION rate (amount per hour); a faster rate or a bolus order is warned about. */
   maxRatePerH?: { amount: number; perKg?: boolean; src: string };
   maxDose?: { amount: number; perKg: boolean; scope: 'dose' | 'cumulative'; src: string };
@@ -132,7 +132,7 @@ export interface DrugRow {
   rateActsVia?: string;
   doses: string; // typical adult doses, text
   onset: string; // onset / peak / duration, text (research 03 §8.6)
-  ir: '?'; // Iranian availability — a question for Ali on every row
+  ir: '?'; // Iranian availability — a question for samhv-dev on every row
   src: string;
   tag: 'P' | 'TXT' | 'ENG' | 'VERIFY';
 }

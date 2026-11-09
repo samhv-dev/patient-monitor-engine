@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { RENAL_BASE, renalHold, uopMlKgH } from '../../helpers/renal-unit-rig.ts';
 
 describe('filtration equilibrium (Deen, Robertson & Brenner 1972)', () => {
-  it('rest: GFR 125 and FF 0.24 unchanged; low flow (MAP 70, CO 4): GFR falls and FF ≤ 0.35 (was GFR held, FF 0.48 under GA)', () => {
+  it('rest: GFR 117 and FF 0.224 (research/44 L2-26); low flow (MAP 70, CO 4): GFR falls and FF ≤ 0.35 (was GFR held, FF 0.48 under GA)', () => {
     const r = renalHold(RENAL_BASE, 600);
-    expect(r.gfr).toBeCloseTo(125, 0);
-    expect(r.gfr / (0.55 * r.rbf)).toBeCloseTo(0.239, 2);
+    // research/44 L2-26: re-recorded with Bowman's pressure 18 (M10 Fig. 15.8; was 17.1, fitted to 125): the engine's
+    // own resting GFR and filtration fraction (were 125 and 0.239); the sourced 125 is the named miss in kidney.test.ts
+    expect(r.gfr).toBeCloseTo(117.1, 0);
+    expect(r.gfr / (0.55 * r.rbf)).toBeCloseTo(0.224, 2);
     const lo = renalHold({ ...RENAL_BASE, map: 70, coLpm: 4 }, 1800);
     const ff = lo.gfr / (0.55 * lo.rbf);
     console.log(`FU-9 H2: low flow GFR ${lo.gfr.toFixed(0)}, FF ${ff.toFixed(3)}`);

@@ -29,9 +29,9 @@ export const MODULES: ModelModule[] = [
   { id: 'blood', title: 'Blood, acid–base, electrolytes and fluids', src: [E + 'l2/blood/', E + 'types-blood.ts'] },
   { id: 'organs', title: 'Brain, kidney and liver', src: [E + 'l2/brain/', E + 'l2/organs/', E + 'l2/renal/', E + 'l2/liver/', E + 'types-organs.ts'] },
   { id: 'endocrine-thermal', title: 'Endocrine, metabolism and temperature', src: [E + 'l2/endo/', E + 'l2/thermal/', E + 'l2/temp/', E + 'types-endo.ts'] },
-  { id: 'neuro', title: 'Anaesthetic depth, ventilatory drive and neuromuscular block', src: [E + 'l2/neuro/', E + 'types-neuro.ts'] },
+  { id: 'neuro', title: 'Anaesthetic depth, ventilatory drive and neuromuscular block', src: [E + 'l2/neuro/', E + 'l2/eeg/', E + 'types-neuro.ts', E + 'types-eeg.ts'], tests: ['packages/engine-core/test/engine/eeg-baseline.test.ts', 'packages/engine-core/test/engine/eeg-cortex.test.ts', 'packages/engine-core/test/engine/eeg-signal.test.ts'] }, // EEG E0 pins the depth index and the physiology reading it (l2/neuro)
   { id: 'pharmacology', title: 'Pharmacology: PK, PD and the drug rows', src: [E + 'l2/pk/', E + 'types-pk.ts'] },
-  { id: 'monitor', title: 'Monitor measurements (device layer)', src: [E + 'l3/', E + 'types-device.ts'] },
+  { id: 'monitor', title: 'Monitor measurements (device layer)', src: [E + 'l3/', E + 'types-device.ts'], tests: ['packages/engine-core/test/engine/eeg-device.test.ts'] }, // EEG E6: the device layer on the engine
   { id: 'alarms', title: 'Alarms', src: [E + 'l3/alarms/'] },
   { id: 'defib-pacer', title: 'Defibrillator and pacer', src: [E + 'l3/defib-pacer/'] },
   { id: 'ventilator', title: 'Ventilator', src: ['packages/ventilator/src/'] },

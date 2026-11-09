@@ -92,6 +92,23 @@ per-breath mechanics and the per-lung PVR it hands to the circulation.
 | [`volumes.ts:38`](../../packages/engine-core/src/l2/lung/volumes.ts#L38) | rest of the forced expiration: PEF = PEFpred × Σ VC_u·r_u^(−PEAK_TAU_EXP) / FVCpred, r_u = (Rex,u·Crs,u)/(Rex·Crs) |
 | [`volumes.ts:123`](../../packages/engine-core/src/l2/lung/volumes.ts#L123) | Forced-expiratory sensitivity to the unit's passive R·C ratio [FIT: the catalogue's COPD grades = GOLD FEV1 ≥ 80 / 50–79 / 30–49 / < 30 % pred with FEV1/FVC < 0.70, and the ILD grades' FVC bands; brief research/44 L2-32]. |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 0, FIT 4, ENG 0, UNTAGGED 4, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `lungs.ptx.pleural` | `trigger.lungCondition.ptxTension` (Tension pneumothorax (lung condition)) → `resp.lung.lp.pPtx` | + · state | FIT | `LUNG_CONDITIONS.ptxTension`, `PTX_VALVE_PER_CMH2O_S` = 0.12 | — | The affected side's pleural pressure builds under positive pressure (PTX_VALVE_PER_CMH2O_S per cmH2O·s of driving pressure) to the condition's ceiling. |
+| `lungs.ptx.collapse` | `trigger.lungCondition.ptxTension` (Tension pneumothorax (lung condition)) → `resp.lung.lp.side.1.consol` | + · state | FIT | `LUNG_CONDITIONS.ptxTension` | — | The ipsilateral lung collapses (non-recruitable until decompressed); Crs × 0.5. |
+| `lungs.peep.recruitment` | `resp.driver.vent.peep` (PEEP) → `resp.lung.aer` | + · state | UNTAGGED | `P_CLOSE` = 15, `P_OPEN_LO` = 5, `TAU_DEREC_S` = 120 | — | End-expiratory pressure above the closing pressure keeps units aerated; derecruitment with τ TAU_DEREC_S below it. |
+| `lungs.shunt.collapse` | `resp.lung.lp.side.1.consol`, `resp.lung.aer` → `resp.lung.perf.shunt` | ± · state | FIT | `ATEL_PERF` = 1.0 | — | Flow through the non-aerated part is true shunt (ATEL_PERF of its share), reduced by HPV: collapse raises it, aeration lowers it. |
+| `lungs.pvr.perSide` | `resp.lung.lp.side.1.consol`, `resp.lung.aer` → `resp.lung.perf.pvrMult` | ± · factor | FIT | `ATEL_PERF` = 1.0, `HPV_PAO2_HI` = 100, `HPV_PAO2_LO` = 40, `TAU_HPV1_S` = 300 | — | Each side's PVR multiplier = 1 / the HPV-weighted conductance of its collapsed, hypoxic and normal parts. |
+| `lungs.pvr.left` | `resp.lung.perf.pvrMult` → `hemo.circ.ext.pvrLungL` | + · state | UNTAGGED | — | — | writeCircPvr: left multiplier into the circulation. |
+| `lungs.pvr.right` | `resp.lung.perf.pvrMult` → `hemo.circ.ext.pvrLungR` | + · state | UNTAGGED | — | — | writeCircPvr: right multiplier into the circulation. |
+| `lungs.pvr.global` | `resp.lung.lp.pvr` → `hemo.circ.ext.pvrLung` | + · state | UNTAGGED | — | — | writeCircPvr: the lungs' global PVR multiplier (COPD, PH group 3, OLV). |
+
 ## State
 
 ### `LungState` ([`l2/lung/lung.ts`](../../packages/engine-core/src/l2/lung/lung.ts))
@@ -374,7 +391,29 @@ Exported without a doc comment: `breathMechanics`, `conditionData`, `interp`, `w
 | induction at FiO2 1.0 (no thermal switch): Qs/Qt ≥ 0.07 by 20 min | 0.015 | — | TOO NARROW ([audit row 72](../../docs/validation/target-audit/30-target-audit.md#row-72)) | Qs/Qt 0.04–0.12 at 20 min (FiO2 1.0, PEEP 5); ≥ 0.06 if the test is re-specified at ZEEP | [`lung-r14.test.ts`](../../packages/engine-core/test/engine/lung-r14.test.ts) |
 | CVP ≥ 15 mmHg | 11.5 | — | TOO NARROW ([audit row 51](../../docs/validation/target-audit/30-target-audit.md#row-51)) | CVP >= 10 mmHg (or >= baseline + 5) | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
 | MAP < 65 mmHg | 78.4 | — | MIS-SPECIFIED ([audit row 52](../../docs/validation/target-audit/30-target-audit.md#row-52)) | drop MAP < 65, or replace it with SBP < 90 (already present); add a PP plausibility check | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
-| PROPOSED band (Q15, Ali): SaO2 ≤ 92 % at FiO2 0.5 | 97.3 | — | MIS-SPECIFIED ([audit row 73](../../docs/validation/target-audit/30-target-audit.md#row-73)) | Same as row 1: SaO2 ≥ 92 % with a fall of 1–6 points at FiO2 0.5 without a PFO; SpO2 ≤ 92 on room air | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
+| PROPOSED band (Q15, samhv-dev): SaO2 ≤ 92 % at FiO2 0.5 | 97.3 | — | MIS-SPECIFIED ([audit row 73](../../docs/validation/target-audit/30-target-audit.md#row-73)) | Same as row 1: SaO2 ≥ 92 % with a fall of 1–6 points at FiO2 0.5 without a PFO; SpO2 ≤ 92 on room air | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
+| asthma: PaCO2 − EtCO2 gap 20–50 mmHg | 6.3 | catalogue §3 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| obesity: PaCO2 − EtCO2 gap 5–8 mmHg | 3.2 | catalogue §10 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| obesity: shunt 0.10–0.15 | 0.045 | catalogue §10 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| pneumonia: SpO2 88–93 % at FiO2 0.4 | 96.7 | catalogue §11 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| atelectasis: shunt 0.10–0.12 | 0.155 | catalogue §12 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ptxSimple: shunt 0.07 | 0.119 | catalogue §15 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| olv: Crs 25–30 mL/cmH2O | 33.9 | catalogue §22 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| olv: shunt 0.2–0.3 at FiO2 0.4 after 30 min | 0.140 | catalogue §22 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| endobronchial: Crs 27.5–30.25 mL/cmH2O | 34.0 | catalogue §23 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| neonatalRds: shunt 0.2–0.4 | 0.158 | catalogue §30 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| bronchospasm: inspiratory resistance 46 cmH2O·s/L | 46.005 | catalogue §2 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| bronchospasm: auto-PEEP 6–10 cmH2O | 10.6 | catalogue §2 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ards: plateau 19 cmH2O | 19.2 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ards: driving pressure 14 cmH2O | 14.2 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ards: shunt 0.30 | 0.285 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ild: Crs 32 mL/cmH2O | 31.8 | catalogue §7 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ild: inspiratory resistance 13 cmH2O·s/L | 12.9 | catalogue §7 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| chestWall: Crs 32 mL/cmH2O | 33.5 | catalogue §9 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| chestWall: inspiratory resistance 10 cmH2O·s/L | 9.88 | catalogue §9 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| pe: PaCO2 − EtCO2 gap 15–25 mmHg | 25.9 | catalogue §18 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| cf: inspiratory resistance 20 cmH2O·s/L | 20.3 | catalogue §26 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| covidPneumonitis: shunt 0.30 | 0.320 | catalogue §31 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 | 71 % | — | RIGHT ([audit row 109](../../docs/validation/target-audit/30-target-audit.md#row-109)) | keep | [`volumes.test.ts`](../../packages/engine-core/test/l2/lung/volumes.test.ts) |
 
 ## Tests
@@ -415,7 +454,7 @@ Exported without a doc comment: `breathMechanics`, `conditionData`, `interp`, `w
 | [`l2/lung/perfusion.test.ts`](../../packages/engine-core/test/l2/lung/perfusion.test.ts) | 0 | 0 |
 | [`l2/lung/pulse-targets.test.ts`](../../packages/engine-core/test/l2/lung/pulse-targets.test.ts) | 0 | 0 |
 | [`l2/lung/recruit.test.ts`](../../packages/engine-core/test/l2/lung/recruit.test.ts) | 0 | 0 |
-| [`l2/lung/signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) | 0 | 0 |
+| [`l2/lung/signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) | 22 | 0 |
 | [`l2/lung/venegas.test.ts`](../../packages/engine-core/test/l2/lung/venegas.test.ts) | 0 | 0 |
 | [`l2/lung/vent-reference-seams.test.ts`](../../packages/engine-core/test/l2/lung/vent-reference-seams.test.ts) | 0 | 0 |
 | [`l2/lung/volumes.test.ts`](../../packages/engine-core/test/l2/lung/volumes.test.ts) | 1 | 0 |

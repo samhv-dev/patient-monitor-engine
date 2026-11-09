@@ -8,7 +8,7 @@ import type { DrugRow, PdEffect } from '../row.ts';
  * Opioid haemodynamic EC50s [FIT: opioid haemodynamic EC50 sized to T6.3; brief research/44 X-10]: tables §6.3 give only the size (HR −10–20 %, SVR −5–15 %) with no concentration.
  * Each EC50 is the typical clinical Ce (remifentanil 3 ng/mL), scaled by the tables' §5d potency (fentanyl 1.6×
  * → 2 ng/mL; sufentanil 12× [FIT: opioid haemodynamic EC50 sized to T6.3; Q59; brief research/44 X-10] → 0.25), so a usual dose gives half of Emax −0.25/−0.15: HR −12.5 %,
- * SVR −7.5 % — mid-band of T6.3. Calibration items for Ali; no primary source.
+ * SVR −7.5 % — mid-band of T6.3. Calibration items for samhv-dev; no primary source.
  */
 const OPIOID_HEMO_SRC = 'haemodynamic EC50 [FIT: opioid haemodynamic EC50 sized to T6.3; brief research/44 X-10]: typical clinical Ce ÷ T5d potency, sized to T6.3';
 

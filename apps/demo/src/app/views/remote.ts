@@ -9,7 +9,8 @@
 // too many tries, taken over by another phone, the PIN changed, the instructor's computer restarted, and a kit that
 // does not answer an instructor after 10 s. Signed in, it mounts today's panel, the placeholder the phone layout
 // replaces. The Remote never runs an engine: it sends commands and reads state, as the controller's remote page does.
-import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, INSTRUCTOR_REASONS, newPeerId, normalizeSessionCode, PIN_RE, type InstructorAccess, type ManagedTransport, type WireMessage } from '@pme/controller';
+import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, newPeerId, normalizeSessionCode, type ManagedTransport, type WireMessage } from '@pme/controller';
+import { PHONE_WORDS, pinForm, refusalWords } from './pin-form.ts';
 import { relayOf } from '../classroom.ts';
 import { Link } from '../link.ts';
 import { mountPanel } from '../panel/panel.ts';
@@ -28,33 +29,8 @@ export const GIVE_UP_MS = 10_000;
 /** Plan §5: the phone drops a socket that heard nothing for 12 s and opens a new one (as the learner's phone does) [ENG: ui]. */
 export const INSTRUCTOR_LIVENESS_MS = 12_000;
 
-/** The words of each state the instructor's phone can be in (plan P7). `at`: the case clock, mm:ss. */
-export const PHONE_WORDS = {
-  signingIn: "Signing in: waiting for the instructor's computer…",
-  signedIn: (code: string) => `Signed in as the instructor's remote · ${code}`,
-  signingInAgain: "Signing in again: waiting for the instructor's computer…",
-  wrongPin: "Wrong PIN. Enter the PIN the instructor's computer shows on its Room page.",
-  tooManyTries: 'Too many wrong PINs from this phone. Wait a minute, then enter the PIN again.',
-  takenOver: (at: string) => `Taken over by another phone at ${at}. Enter the PIN to sign in again.`,
-  pinChanged: "The PIN was changed on the instructor's computer. Enter the new PIN.",
-  noPhone: "The instructor's computer does not take an instructor phone.",
-  restarted: (at: string) => `The instructor's computer restarted at ${at}: presses still waiting for an answer were not given.`,
-  kitTooOld: 'This classroom kit does not take an instructor phone. Use the kit from the same release as the app.',
-  noHost: "The instructor's computer is not in this session: check the code, and that the app is open on the laptop.",
-  unreachable: "This phone cannot reach the instructor's computer: check that it is on the same Wi-Fi, then try again.",
-  badCode: 'Error: the code has 6 letters and digits, as shown on the Room page.',
-  badPin: 'The PIN has 4 to 8 digits.',
-} as const;
-
-/** What the phone says for a refusal (`denied` or `revoked`): the host's or the relay's reason, in the page's words. */
-export function refusalWords(a: InstructorAccess, at: string): string {
-  if (a.code === 'too-many-tries') return PHONE_WORDS.tooManyTries;
-  if (a.reason === INSTRUCTOR_REASONS.wrongPin) return PHONE_WORDS.wrongPin;
-  if (a.reason === INSTRUCTOR_REASONS.takenOver) return PHONE_WORDS.takenOver(at);
-  if (a.reason === INSTRUCTOR_REASONS.pinChanged) return PHONE_WORDS.pinChanged;
-  if (a.reason === INSTRUCTOR_REASONS.noPhone) return PHONE_WORDS.noPhone;
-  return `Not signed in: ${a.reason ?? "the instructor's computer refused the phone"}.`;
-}
+// P7's words and its PIN form live in pin-form.ts (R8d: the ventilator's page signs in with the same form)
+export { PHONE_WORDS, refusalWords } from './pin-form.ts';
 
 export interface RemoteOptions {
   site: SiteProfile;
@@ -88,6 +64,11 @@ export function remoteView(o: RemoteOptions): View {
   return relay ? instructorPhone(o, relay) : sameBrowserRemote(o);
 }
 
+/** A connected Remote's first row: the page's heading beside the status. The join form, which holds the other h1, hides on
+ *  connecting, so without this the connected page had no visible h1 (the accessibility audit's one-h1 rule; research/41
+ *  row 62). */
+const connectedHead = (status: HTMLElement) => h('div', { class: 'remote-head' }, h('h1', { class: 'remote-title' }, 'Instructor remote'), status);
+
 /** A same-browser Remote: a `controller` over this browser's BroadcastChannel (as before P7). */
 function sameBrowserRemote(o: RemoteOptions): View {
   const status = h('p', { class: 'status-pill', role: 'status' }, 'Not connected');
@@ -111,7 +92,7 @@ function sameBrowserRemote(o: RemoteOptions): View {
     const ctl = new ControllerSession({ session: code, transport, issuedBy: 'remote' });
     const link = new Link(ctl, transport, null);
     join.hidden = true;
-    holder.append(status);
+    holder.append(connectedHead(status));
     mountSessionBar(o.bar, link);
     mountFastForward(document.body, ctl, { simT: () => link.simT });
     o.bar.hidden = false;
@@ -151,23 +132,12 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
   const status = h('p', { class: 'status-pill ip-peer-status', role: 'status' });
   const notice = h('p', { class: 'hint ip-peer-notice', role: 'status' });
   notice.hidden = true;
-  const codeIn = input('Session code', { maxlength: 8, autocapitalize: 'characters', autocomplete: 'off', inputmode: 'text', placeholder: 'For example AGD5YJ', class: 'input ip-peer-code' });
-  codeIn.inp.value = hashParam('code') ?? '';
-  // No `name`: the form never submits, and a browser that did submit it could not put the PIN in the address
-  const pinIn = input('PIN', { type: 'password', inputmode: 'numeric', pattern: '[0-9]*', maxlength: 8, autocomplete: 'off', enterkeyhint: 'go', class: 'input ip-peer-pin' });
-  const err = h('p', { class: 'error ip-peer-error', role: 'alert' });
-  const type = (d: string) => {
-    if (pinIn.inp.value.length < 8) pinIn.inp.value += d;
-  };
-  const keys = h('div', { class: 'ip-peer-keypad', role: 'group', 'aria-label': 'Keypad' },
-    ...['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => button(d, () => type(d), 'ip-peer-key')),
-    button('⌫', () => void (pinIn.inp.value = pinIn.inp.value.slice(0, -1)), 'ip-peer-key ip-peer-del', { 'aria-label': 'Delete the last digit' }),
-    button('0', () => type('0'), 'ip-peer-key'),
-    h('button', { type: 'submit', class: 'btn primary ip-peer-key ip-peer-go' }, 'Sign in'));
-  const form = h('form', { class: 'setup narrow ip-peer-form', autocomplete: 'off', onsubmit: (e: Event) => (e.preventDefault(), signIn()) },
-    h('h1', {}, 'Instructor remote'),
-    h('p', { class: 'lede' }, "Enter the PIN the instructor's computer shows on its Room page (press and hold to see it there)."),
-    codeIn.el, pinIn.el, err, keys);
+  const { form, pinIn, err, clear } = pinForm({
+    title: 'Instructor remote',
+    lede: "Enter the PIN the instructor's computer shows on its Room page (press and hold to see it there).",
+    code: hashParam('code') ?? '',
+    onSignIn: (code, pin) => signIn(code, pin),
+  });
   const holder = h('div', { class: 'remote-panel' });
   const el = h('section', { 'aria-label': 'Remote' }, form, holder);
 
@@ -182,12 +152,7 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
     pinIn.inp.focus();
   };
 
-  function signIn(): void {
-    const code = normalizeSessionCode(codeIn.inp.value);
-    const pin = pinIn.inp.value;
-    pinIn.inp.value = ''; // the PIN is in this closure from here on, nowhere else
-    if (!code) return void (setText(err, PHONE_WORDS.badCode), codeIn.inp.focus());
-    if (!PIN_RE.test(pin)) return void (setText(err, PHONE_WORDS.badPin), pinIn.inp.focus());
+  function signIn(code: string, pin: string): void {
     live?.stop();
     setText(err, '');
     history.replaceState(null, '', `${location.pathname}${location.search}#/remote?code=${code}`); // the code only
@@ -223,7 +188,7 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
       mounted = { panel, offs: [mountSessionBar(o.bar, link), mountFastForward(document.body, ctl, { simT: () => link.simT })] };
       o.bar.hidden = false;
       form.hidden = true;
-      holder.replaceChildren(status, notice, panel.el);
+      holder.replaceChildren(connectedHead(status), notice, panel.el);
       Object.assign(window, { __pmeRemote: { link, panel } }); // e2e hook
     };
     const draw = () => {
@@ -258,9 +223,5 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
     draw();
   }
 
-  // The field is emptied whenever the page is left (another route, the tab hidden or closed)
-  const clearPin = () => void (pinIn.inp.value = '');
-  addEventListener('pagehide', clearPin);
-  document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && clearPin());
-  return { id: 'remote', el, leave: clearPin };
+  return { id: 'remote', el, leave: clear };
 }

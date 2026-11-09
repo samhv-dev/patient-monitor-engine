@@ -24,7 +24,7 @@ describe('CPR EtCO2 (research 09 §2)', { timeout: 300_000 }, () => {
   // FU-8 (E-FU8-10, A22; research/20 DV-03): the gas exchange now reads the circulation's CPR pulmonary flow, not the
   // interim quality^1.9 fit this map was calibrated on. The circulation's CPR flow is filling-limited above quality 0.8
   // (0.87 / 1.08 / 1.64 / 1.80 / 1.75 L/min at 0.4 / 0.5 / 0.8 / 1.0 / 1.2), so the map is missed: R45, an it.fails with
-  // its numbers; the CPR flow's quality dependence is the R44 calibration pass's (plan "Waiting on Ali" W22)
+  // its numbers; the CPR flow's quality dependence is the R44 calibration pass's (plan "Waiting on samhv-dev" W22)
   it.fails('quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) — measured 20.5 / 25.2 / 26.6 / 26.6 at the circulation\'s CPR flow', async () => {
     const poor = await cprEtco2(0.5);
     const learner = await cprEtco2(undefined);
@@ -41,9 +41,13 @@ describe('CPR EtCO2 (research 09 §2)', { timeout: 300_000 }, () => {
   });
 
   // FU-8 (E-FU8-10): at the circulation's CPR flow the same +10 breaths/min lower EtCO2 by 4.8 (R45: it.fails)
-  it.fails('ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default — measured −4.8 at the circulation\'s CPR flow', async () => {
-    const d = (await cprEtco2(0.8, 20)) - (await cprEtco2(0.8, 10));
-    expect(d).toBeLessThanOrEqual(-2);
-    expect(d).toBeGreaterThanOrEqual(-4.5);
+  // Band to its sources (calibration-pass ruling, brief 88), relative: Sheak 2015 (PMID 25643651) −3.0 mmHg per +10/min
+  // against case means 34.5 / 23.1 (−8.7 % / −13.0 %); Murphy 2016 (PMID 26830353) −17.4 % per +10/min. Envelope −8.7 to −17.4 %.
+  it.fails('ventilation: +10 breaths/min lowers EtCO2 by 8.7–17.4 % (Sheak 2015; Murphy 2016) at the learner default — measured −19 % (−4.8 mmHg) at the circulation\'s CPR flow', async () => {
+    const lo = await cprEtco2(0.8, 10);
+    const d = ((await cprEtco2(0.8, 20)) - lo) / lo;
+    console.log(`cpr-etco2: +10/min ${(100 * d).toFixed(1)} %`);
+    expect(d).toBeLessThanOrEqual(-0.087);
+    expect(d).toBeGreaterThanOrEqual(-0.174);
   });
 });

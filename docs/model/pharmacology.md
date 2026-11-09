@@ -52,8 +52,8 @@ library rows and the outputs other modules consume.
 
 | Where | Relation |
 |---|---|
-| [`combine.ts:129`](../../packages/engine-core/src/l2/pk/combine.ts#L129) | Eleveld Ce50 age term (tables §5d): C50(age) = C50(35)·e^(−k(age − 35)) |
-| [`combine.ts:158`](../../packages/engine-core/src/l2/pk/combine.ts#L158) | CMRO2 per MAC, and the DIRECT vasodilation beyond coupling (the organ model's NET CBF = direct × coupling) (tables §5.1) |
+| [`combine.ts:157`](../../packages/engine-core/src/l2/pk/combine.ts#L157) | Eleveld Ce50 age term (tables §5d): C50(age) = C50(35)·e^(−k(age − 35)) |
+| [`combine.ts:187`](../../packages/engine-core/src/l2/pk/combine.ts#L187) | CMRO2 per MAC, and the DIRECT vasodilation beyond coupling (the organ model's NET CBF = direct × coupling) (tables §5.1) |
 | [`compartment.ts:21`](../../packages/engine-core/src/l2/pk/compartment.ts#L21) | states = 3 + ke0.length |
 | [`compartment.ts:23`](../../packages/engine-core/src/l2/pk/compartment.ts#L23) | n: response to R = 1 amount/min over dt |
 | [`compartment.ts:26`](../../packages/engine-core/src/l2/pk/compartment.ts#L26) | Microconstants from volumes (L) and clearances (L/min): k10 = CL1/V1, k12 = CL2/V1, k21 = CL2/V2, … |
@@ -77,11 +77,39 @@ library rows and the outputs other modules consume.
 | [`pd.ts:10`](../../packages/engine-core/src/l2/pk/pd.ts#L10) | Competitive antagonism: EC50·(1 + Cant/Ki), written with receptor occupancy o = Cant/(Cant + Ki) (capped 0.95). |
 | [`pd.ts:22`](../../packages/engine-core/src/l2/pk/pd.ts#L22) | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). |
 | [`pd.ts:39`](../../packages/engine-core/src/l2/pk/pd.ts#L39) | Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). |
-| [`pipeline.ts:209`](../../packages/engine-core/src/l2/pk/pipeline.ts#L209) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
-| [`pipeline.ts:621`](../../packages/engine-core/src/l2/pk/pipeline.ts#L621) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
+| [`pipeline.ts:219`](../../packages/engine-core/src/l2/pk/pipeline.ts#L219) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
+| [`pipeline.ts:633`](../../packages/engine-core/src/l2/pk/pipeline.ts#L633) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
 | [`row.ts:41`](../../packages/engine-core/src/l2/pk/row.ts#L41) | E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±\|emax\|·3 |
 | [`tci.ts:5`](../../packages/engine-core/src/l2/pk/tci.ts#L5) | Ce(k) = Ce_free(k) + r·Ce_unit(k), so r = min_k (target − Ce_free(k)) / Ce_unit(k) over k with Ce_unit(k) > 0 — |
 | [`volatile.ts:5`](../../packages/engine-core/src/l2/pk/volatile.ts#L5) | alveoli : VL·dFA/dt = VA·(FI − FA) − U,  U = Q·λb/g·(FA − Fv),  Fv = Σ q_i·F_i |
+
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 19 rows; SOURCED 6, FIT 9, ENG 0, UNTAGGED 4, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `pharmacology.propofol.ce` | `trigger.drug.propofol` (Propofol bolus), `hemo.circ.qFwd`, `blood.core.co0` → `pk.bus.cns.propCe` | + · state | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Eleveld PK to the effect site; the row is flow-dependent (flowDist), so CO / the settled resting CO scales V1 and the intercompartmental clearances. |
+| `pharmacology.propofol.svr` | `pk.bus.cns.propCe` → `pk.fx.svr` | − · factor | FIT | `ANAESTHETIC_ROWS.propofol`, `HEMO_SYN_MAX` = 0.2, `HEMO_SYN_U50` = 1.2 | — | SVR × (1 − 0.45·E), E = Ce/(Ce + 3.5); an opioid on board deepens it (the haemodynamic synergy). |
+| `pharmacology.propofol.ees` | `pk.bus.cns.propCe` → `pk.fx.ees` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Contractility × (1 − 0.2·E). |
+| `pharmacology.propofol.venous` | `pk.bus.cns.propCe` → `pk.fx.v0Frac` | + · term | FIT | `ANAESTHETIC_ROWS.propofol`, `HEMO_SYN_MAX` = 0.2, `HEMO_SYN_U50` = 1.2 | — | Venodilation + 8 %·E of blood volume into the unstressed pool. |
+| `pharmacology.propofol.reflex` | `pk.bus.cns.propCe` → `pk.fx.gv` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Baroreflex gains × (1 − 0.6·E). |
+| `pharmacology.propofol.reflexHr` | `pk.bus.cns.propCe` → `pk.fx.gvHr` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | The chronotropic reflex arm × (1 − 0.7·E). |
+| `pharmacology.propofol.sympatholysis` | `pk.bus.cns.propCe` → `pk.fx.symp` | − · factor | FIT | `PROPOFOL_SYMP` | — | Delivered sympathetic output × (1 − E), EC50 1 µg/mL, Hill 2. |
+| `pharmacology.propofol.setPoint` | `pk.bus.cns.propCe` → `pk.fx.setF` | − · factor | UNTAGGED | `PROPOFOL_SETF` | — | Baroreflex set point × (1 − 0.15·E). The comment that sizes it sits above PROPOFOL_SYMP, so this constant reads as untagged. |
+| `pharmacology.propofol.hypnotic` | `pk.bus.cns.propCe` → `pk.bus.cns.hypPropEq` (Ce prop-eq) | + · state | SOURCED | `PROP_HYP_C50_REF` = 3.08 | — | The one hypnotic-potency output: the propofol Ce with the same hypnotic effect at this age. |
+| `pharmacology.propofol.ventilatory` | `pk.bus.cns.propCe` → `pk.bus.cns.hypVentPropEq` (Propofol-equivalent at the ventilatory site (kept out of the truth tree)) | + · state | SOURCED | `PROP_HYP_C50_REF` = 3.08 | — | The propofol equivalent at the ventilatory site (ventShare-weighted), read by the neuro model's drive. |
+| `pharmacology.phenylephrine.svr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.svr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | α1 vasoconstriction, Emax +100 % at the rate-equivalent EC50; a catecholamine row (× acidosis factor × responsiveness). |
+| `pharmacology.phenylephrine.pvr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.pvr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | PVR Emax +15 %. |
+| `pharmacology.phenylephrine.venous` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.v0Frac` | − · term | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | Venoconstriction −4.5 % of blood volume at Emax. |
+| `pharmacology.cyp.hypothermia` | `resp.temp.tc` (Tcore), `organs.liver.liverFn` → `pk.drugs.midazolam.factor` | + · gain | UNTAGGED | `CYP_TEMP_PER_C` = 0.111, `CYP_TEMP_REF_C` = 36.5 | — | The clearance factor of a CYP450-cleared row (elim.cyp: midazolam, ketamine, fentanyl, sufentanil, the amides) × (1 − 0.111 per °C below 36.5 °C), on hepatic flow or on the organ model's liver function without its own temperature term (research/44 L2-27; Hostler 2010 inside Tortorici 2007). |
+| `pharmacology.catecholamine.acidosis` | `blood.core.ab.ph` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × acidosisFactor(pH) = max(0.4, 1 − 2.5·(7.4 − pH)); the numbers are inline in l2/pk/pd.ts. |
+| `pharmacology.catecholamine.responsiveness` | `cond.vasoResp` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × vasoResp (the endocrine model's cortisol permissive effect). |
+| `pharmacology.esmolol.occupancy` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.betaBlockAdd` | + · state | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | β-receptor occupancy Emax 0.9, EC50 100 (rate-equivalent); combined competitively with the profile's own. |
+| `pharmacology.esmolol.hr` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.fx.hr` | − · factor | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | Direct HR × (1 − 0.35·E). |
+| `pharmacology.esmolol.ees` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.fx.ees` | − · factor | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | Contractility × (1 − 0.2·E). |
 
 ## State
 
@@ -141,6 +169,8 @@ library rows and the outputs other modules consume.
 | `HEMO_SYN_U50` | `1.2` | — | — | — |
 | `PROP_HYP_C50_REF` | `3.08` | — | BIS 2024 | Propofol's hypnotic C50 at 35 y, µg/mL (Eleveld BIS 2024; the propofol-equivalent unit). |
 | `FENT_PER_REMI` | `1.25` | — | tables §5d | Remifentanil → fentanyl equivalence for the potency output (tables §5d: remi 1.2 ≈ fentanyl 1.5 ng/mL). |
+| `DEXMED_EEG_C50_NG_ML` | `2.5` | ng/mL | Colin 2017; Miller Ch23 Fig. 23.34 p. 663: the BIS-50 Ce; research/43 P; Miller Ch23 Table 23.6 p. 660; [INF] | Dexmedetomidine's EEG potency point, effect-site ng/mL: 2.5 ng/mL [Colin 2017, via Miller Ch23 Fig. 23.34 p. 663: the BIS-50 Ce; research/43 P-12]. The potency is borrowed from a processed index (BIS 50), not a cortical-state C50 [INF]. Its BIS ke0 0.120 /min (Miller Ch23 Table 23.6 p. 660) is NOT applied a second time here: the drug row is already an EFFECT curve (a gamma row peaking 15 min after the load, rows-anaesthetic.ts), with no plasma to lag. ng/mL |
+| `DEXMED_NG_PER_REF` | `0.5 / 60 / 0.01` | ng/mL | Miller Ch21 Table 21.1 (research/41 row 65; Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h; [FIT: ng/mL per reference unit, derived; src Miller Ch21 Table 21.1 (research/41 row 65) gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28] | ng/mL per reference unit of the dexmedetomidine gamma row (c = 1 at the 0.5 µg/kg/h steady state, and at the peak of 1 µg/kg): 0.5 µg/kg/h ÷ clearance 10 mL/kg/min = 0.83 ng/mL [FIT: ng/mL per reference unit, derived; src Miller Ch21 Table 21.1 (research/41 row 65) gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28]. The row itself is unchanged. ng/mL per reference unit |
 
 ### [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts)
 
@@ -184,6 +214,8 @@ library rows and the outputs other modules consume.
 | `NEVER` | `1e12` | — | — | "Never" / "long ago" as finite numbers: snapshots travel as JSON, which turns ±Infinity into null. |
 | `CYP_TEMP_PER_C` | `0.111` | — | Med 2007; Dispos 2010 | Hypothermic CYP450 clearance. Tortorici MA et al., Crit Care Med 2007;35:2196 (review of 21 studies): mild to moderate hypothermia lowers the systemic clearance of CYP450-metabolised drugs by about 7–22 % per °C below 37 °C during cooling. Within that range, the human measurement: Hostler D et al., Drug Metab Dispos 2010;38:781 (midazolam, the CYP3A4/5 probe, volunteers cooled to 35.4–35.8 °C; population PK): clearance −11.1 % per °C below 36.5 °C. Applied to every row whose hepatic share is CYP oxidation (elim.cyp). Below Hostler's 35.4 °C it is an extrapolation of the same slope. |
 | `CYP_TEMP_REF_C` | `36.5` | — | — | — |
+| `LIPID_SINK_CARDIAC` | `0.177` | — | research/44 X; Miller 10e ch. 25 p. 762; Anesthesiology 2013; Litonius 2012; ASRA 2020; M10 p. 762 −11 % cardiac at 3 min; M10 ch. 25 p. 762]. It replaces one sink of up to 50 %; [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 % cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762] | The lipid sink (research/44 X-06). Miller 10e ch. 25 p. 762, from Kuo & Akpa's PBPK model (Anesthesiology 2013;118: 1350): Intralipid lowers CARDIAC bupivacaine by 11 % within 3 minutes and CEREBRAL bupivacaine by 18 % within 15 minutes ("theoretical"; Litonius 2012 found no significant sink in human volunteers). The sink is a Hill on the emulsion's concentration (ec50 1 = the ASRA regimen's reference). Each emax is sized so the ASRA 2020 regimen (1.5 mL/kg, then 0.25 mL/kg/min) gives the cited fall at the cited time: lipid concentration 1.64 at 3 min → 0.11 ÷ (1.64/2.64) = 0.177; 1.33 at 15 min → 0.18 ÷ (1.33/2.33) = 0.315 [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 % cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762]. It replaces one sink of up to 50 %, an engineered value that contradicted the row's own citation. The time course is the emulsion's, not the PBPK's (that mechanism is the audit's later step). |
+| `LIPID_SINK_CEREBRAL` | `0.315` | — | — | — |
 | `ARM_BRAIN_S` | `12` | s | Guyton & Hall [TXT]; Guyton & Hall's 10–15 s; [TXT] | Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg), quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall [TXT]) (a point in Guyton & Hall's 10–15 s; value); the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). |
 
 ### [`l2/pk/tci.ts`](../../packages/engine-core/src/l2/pk/tci.ts)
@@ -249,7 +281,7 @@ library rows and the outputs other modules consume.
 | `adenosine` | Adenosine | adenosine | gamma | R03 §8.6; decision 11 (E 0.85 at 6 mg / 70 kg, 0.59 at 3 mg, 0.96 at 12 mg) | ENG |
 | `calciumChloride` | Calcium chloride 10 % | electrolyte | blood | 7c plan decision 8 | TXT |
 | `calciumGluconate` | Calcium gluconate 10 % | electrolyte | blood | 7c plan decision 8 | TXT |
-| `potassiumChloride` | Potassium chloride | electrolyte | blood | Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280) | TXT |
+| `potassiumChloride` | Potassium chloride | electrolyte | blood | samhv-dev 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280) | TXT |
 | `sodiumBicarbonate` | Sodium bicarbonate 8.4 % | electrolyte | blood | 7c plan decision 14 | TXT |
 | `insulinDextrose` | Insulin + dextrose | metabolic | gamma | 7c plan decision 7; FU-10 E-FU10-14 | TXT |
 | `magnesium` | Magnesium sulfate | electrolyte | perKg | T6.2; M10 ch. 24 | TXT |
@@ -265,9 +297,9 @@ library rows and the outputs other modules consume.
 | `lidocaine` | Lidocaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
 | `bupivacaine` | Bupivacaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
 | `ropivacaine` | Ropivacaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
-| `lipidEmulsion` | Lipid emulsion 20 % | lipid | gamma | ASRA 2020; M10 ch. 25 p. 762 | ENG |
+| `lipidEmulsion` | Lipid emulsion 20 % | lipid | gamma | ASRA 2020 (dose); M10 ch. 25 p. 762 (sink: LIPID_SINK_CARDIAC/CEREBRAL in pk/pipeline.ts) | TXT |
 | `tranexamicAcid` | Tranexamic acid | placeholder | gamma | CRASH-2; placeholder for 7i | TXT |
-| `ondansetron` | Ondansetron | placeholder | gamma | FDA 2012 label change; size [FIT: ondansetron QTc emax (label gives +5.6 ms at 8 mg); brief research/44 X-05] | ENG |
+| `ondansetron` | Ondansetron | placeholder | gamma | Ondansetron injection label §12.2 (thorough-QT trial); FDA Drug Safety Communication 2012 | TXT |
 | `dexamethasone` | Dexamethasone | placeholder | gamma | Hans 2006; M10 ch. 47; size [FIT: dexamethasone glucocorticoid emax fitted to glucose +10–60 mg/dL within 1 h; brief research/44 X-13] | ENG |
 
 ### Routes other than IV (`DrugRow.routeModels`; every other non-IV route is refused: "route X is not modelled")
@@ -280,6 +312,7 @@ library rows and the outputs other modules consume.
 
 | Function | File | Doc |
 |---|---|---|
+| `eegClassOf` | [`l2/pk/combine.ts`](../../packages/engine-core/src/l2/pk/combine.ts) | --- EEG stage E1: |
 | `volatileCbfDirect` | [`l2/pk/combine.ts`](../../packages/engine-core/src/l2/pk/combine.ts) | Direct CBF factor of a volatile at `mac` — the vasodilation beyond flow–metabolism coupling (Matta 1999 MCA velocity under an isoelectric EEG, tables §5.1) — piecewise linear through (0, 1), (0.5, 1 + |
 | `fromClearances` | [`l2/pk/compartment.ts`](../../packages/engine-core/src/l2/pk/compartment.ts) | Microconstants from volumes (L) and clearances (L/min): |
 | `pkSystem` | [`l2/pk/compartment.ts`](../../packages/engine-core/src/l2/pk/compartment.ts) | The exact discrete system for step dtS seconds (cached by value: |
@@ -358,7 +391,6 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | verapamil 5 mg in pre-excited AF produces VF or a faster ventricular rate than the same rhythm without it (DI-15; ALS — the AV-nodal-blocker hazard; AF arm at natural length: Task 0 Step 6b PASSED) | no change | DI-15; ALS | MIS-SPECIFIED ([audit row 149](../../docs/validation/target-audit/30-target-audit.md#row-149)) | shortest pre-excited RR shortens by 10-20 % (279 -> 236 ms) in the pre-excited subset, and/or the VF hazard rises (probabilistic), instead of "VF or +10 bpm mean rate" in every run | [`drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) |
 | … and MAP by 8–25 % (T6.3) | −6.7 % | — | MIS-SPECIFIED ([audit row 150](../../docs/validation/target-audit/30-target-audit.md#row-150)) | MAP -0 to -10 % at morphine 10 mg (keep -8 to -25 % only for >= 0.5 mg/kg); SVR -5 to -15 %, HR 0 to +20 | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
 | SV rises ≥ 8 % while MAP falls ≤ 15 % | SV +1.2 %, MAP −12.8 % | Cohn & Franciosa 1977 | MIS-SPECIFIED ([audit row 151](../../docs/validation/target-audit/30-target-audit.md#row-151)) | SV >= +15 % at 1 ug/kg/min with MAP allowed to fall 10-20 %, or titrate to a fixed MAP fall and then assert SV; keep SV >= +8 % only if the MAP cap is loosened | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
-| thiopental 4 mg/kg: unconscious within 20–60 s (DI-69; one arm–brain circulation) | +10 s | DI-69 | MIS-SPECIFIED ([audit row 152](../../docs/validation/target-audit/30-target-audit.md#row-152)) | 10-35 s | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
 | etomidate 0.3 mg/kg: unconscious within 20–60 s | +16 s | M10 ch. 21 p. 541 | UNSUPPORTED ([audit row 153](../../docs/validation/target-audit/30-target-audit.md#row-153)) | 10-40 s, and add a separate ordering assertion (etomidate and thiopental not slower than propofol) | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
 | ketamine 1.5 mg/kg loses consciousness no faster than 30 s | 16 s at 1 s sampling | M10 Table 21.1 | RIGHT ([audit row 154](../../docs/validation/target-audit/30-target-audit.md#row-154)) | keep >= 30 s (optionally 30-60 s); fix the locator to ch. 21 p. 537 | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
 | ephedrine's pressor rise under chronic β-blockade is 0.3–0.7 × the healthy rise | 0.99 | tables §1.5; DI-04a | MIS-SPECIFIED ([audit row 155](../../docs/validation/target-audit/30-target-audit.md#row-155)) | keep 0.3-0.7 for the HR and CO rise; MAP-rise ratio 0.8-1.3 under chronic beta1 blockade | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
@@ -366,8 +398,8 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | amiodarone 300 mg during CPR raises the modelled shock success: the ROSC share of outcomeProbabilities through two shocks ≥ 1.2 × the no-drug share | × 1.11 | ARREST 1999 | MIS-SPECIFIED ([audit row 157](../../docs/validation/target-audit/30-target-audit.md#row-157)) | express as a directional, occupancy-aware target - ROSC-share ratio 1.05-1.5 measured at >= 0.6 occupancy, or move the assertion to an admission-survival-like composite; do not read a per-shock multiplier off an admission-survival proportion | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
 | LAST is additive: lidocaine 1.5 mg/kg on top of bupivacaine 100 mg raises the CNS effect by > 0.02 | +0.014 | DI-23; ASRA 2020 | MIS-SPECIFIED ([audit row 158](../../docs/validation/target-audit/30-target-audit.md#row-158)) | assert dose-equivalence additivity at a sub-saturating level (e.g. bupivacaine 60-70 mg + lidocaine 1.5 mg/kg reaches the CNS effect of the dose-equivalent bupivacaine alone, +-0.05), instead of a +0.02 effect increment near saturation | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
 | second gas: 66 % N2O raises sevoflurane 2 %'s FA/FI at 5 min by ≥ +0.03 | +0.014 | Epstein 1964 | MIS-SPECIFIED ([audit row 159](../../docs/validation/target-audit/30-target-audit.md#row-159)) | FA/FI +0.04-0.08 at 2 min end-tidal (or >= +0.02 if the 5-min sample is kept), and a separate arterial/effect-site target 2-3 x the gas-phase effect | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
-| a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % | +11.4 % | M10 ch. 24 p. 698 | TOO WIDE ([audit row 160](../../docs/validation/target-audit/30-target-audit.md#row-160)) | +20 to +50 % for T1 25 % after MgSO4 60 mg/kg; keep a higher band for the Mg 2.5 mmol/L profile arm only if a source for a sustained 2.5 mmol/L is produced | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
-| the fall after fentanyl 2 µg/kg is 1.7–2.1 × the fall after propofol alone | 1.16 at HEMO_SYN_MAX 0.2 | Billard 1994 | TOO NARROW ([audit row 162](../../docs/validation/target-audit/30-target-audit.md#row-162)) | 1.4-2.2 x (and state it as a group-mean ratio, not a per-run one) | [`drug-opioid-induction-synergy.test.ts`](../../packages/engine-core/test/engine/drug-opioid-induction-synergy.test.ts) |
+| a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–50 % | +11.4 % | Czarnetzki 2010 | TOO WIDE ([audit row 160](../../docs/validation/target-audit/30-target-audit.md#row-160)) | +20 to +50 % for T1 25 % after MgSO4 60 mg/kg; keep a higher band for the Mg 2.5 mmol/L profile arm only if a source for a sustained 2.5 mmol/L is produced | [`drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) |
+| the fall after fentanyl 2 µg/kg is 1.79–1.89 × the fall after propofol alone | 1.16 at HEMO_SYN_MAX 0.2 | Billard 1994 | TOO NARROW ([audit row 162](../../docs/validation/target-audit/30-target-audit.md#row-162)) | 1.4-2.2 x (and state it as a group-mean ratio, not a per-run one) | [`drug-opioid-induction-synergy.test.ts`](../../packages/engine-core/test/engine/drug-opioid-induction-synergy.test.ts) |
 | dobutamine 5 µg/kg/min: CO +20–40 % | +13.6 | — | TOO NARROW ([audit row 164](../../docs/validation/target-audit/30-target-audit.md#row-164)) | 5 microg/kg/min: CO +10-30 % (healthy awake), +8-25 % ventilated; keep +20-40 % only if re-specified at 10 microg/kg/min | [`pk-acceptance-pd.test.ts`](../../packages/engine-core/test/engine/pk-acceptance-pd.test.ts) |
 | ephedrine 10 mg ×3 at 10 min: the third dose adds ≤ 0.6 × the SVR increment of the first (tachyphylaxis 0.7²) | direct SVR increments 0.040 / 0.010 / 0.005 | — | UNSUPPORTED ([audit row 165](../../docs/validation/target-audit/30-target-audit.md#row-165)) | third/first 0.35-0.65 (two-sided, from the tables' own x0.7 per repeat) and drop the > 0.05 precondition on the direct arm, which only measures the FU-7 Task 9 re-routing of the pressor to sympDrive | [`pk-acceptance-pd.test.ts`](../../packages/engine-core/test/engine/pk-acceptance-pd.test.ts) |
 | a sub-therapeutic lidocaine level (0.3 µg/mL) never converts VT in 200 seeded runs of its 20 min window | 3/200 | — | MIS-SPECIFIED ([audit row 166](../../docs/validation/target-audit/30-target-audit.md#row-166)) | conversion share <= 0.05 at 0.3 microg/mL (not exactly 0); or, if a hard floor is wanted, threshold the hazard below ~1 microg/mL and say so in the row | [`antiarrhythmic.test.ts`](../../packages/engine-core/test/l2/pk/antiarrhythmic.test.ts) |
@@ -380,7 +412,6 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | dexmedetomidine, the α2B arm: a fast load raises SVR early (5–10 min) and the rise then decays (DI-60; T6.3) | SVR × 0.994 at most | DI-60 | MIS-SPECIFIED ([audit row 174](../../docs/validation/target-audit/30-target-audit.md#row-174)) | assert the early pressor on a 2-min 1-2 microg/kg load (SVR rise peaking at ~3 min, gone by ~11 min; MAP +10-25 mmHg with HR/CO falling); for the 10-min load assert only the late fall (which the sibling it already passes) | [`interactions-misc.test.ts`](../../packages/engine-core/test/l2/pk/interactions-misc.test.ts) |
 | nitroprusside 1 µg/kg/min lowers SVR 30–50 % | −29.9999 % at 10 min | — | MIS-SPECIFIED ([audit row 175](../../docs/validation/target-audit/30-target-audit.md#row-175)) | 1 microg/kg/min: SVR -10-20 %; re-specify the 30-50 % band at 3-8 microg/kg/min and keep the offset assertion unchanged | [`interactions-misc.test.ts`](../../packages/engine-core/test/l2/pk/interactions-misc.test.ts) |
 | esmolol 0.5 mg/kg: its direct HR multiplier falls 10–20 % at the peak (DI-07's band; T6.2) | 6.5 % | DI-07 | TOO NARROW ([audit row 176](../../docs/validation/target-audit/30-target-audit.md#row-176)) | 0.5 mg/kg, no stimulus: direct HR fall 4-12 % (and fix DI-07's citation: tables §6.2's -10-20 % is the contractility entry, the HR rule is -10 % per 100 microg/kg/min, Emax -35 %) | [`interactions-misc.test.ts`](../../packages/engine-core/test/l2/pk/interactions-misc.test.ts) |
-| diabetic dexamethasone peak +2–4 mmol/L at 4–8 h (PADDI) | +1.83 | — | MIS-SPECIFIED ([audit row 139](../../docs/validation/target-audit/30-target-audit.md#row-139)) | Diabetic dexamethasone 8 mg minus control: max +1.5 to +2.6 mmol/L, with the window widened to 2-16 h after the dose (the PADDI peak is 8-12 h after surgery; Hans's 2 h peak sets the early edge). Keep the sibling 'diabetic > non-diabetic' test | [`interactions-misc.test.ts`](../../packages/engine-core/test/l2/pk/interactions-misc.test.ts) |
 
 ## Tests
 
@@ -391,7 +422,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`engine/drug-hypokalaemia-rocuronium.test.ts`](../../packages/engine-core/test/engine/drug-hypokalaemia-rocuronium.test.ts) | 0 | 0 |
 | [`engine/drug-layer-guards-csht.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards-csht.test.ts) | 0 | 0 |
 | [`engine/drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) | 3 | 0 |
-| [`engine/drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) | 11 | 0 |
+| [`engine/drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) | 10 | 0 |
 | [`engine/drug-nmb-volatile-sux.test.ts`](../../packages/engine-core/test/engine/drug-nmb-volatile-sux.test.ts) | 0 | 0 |
 | [`engine/drug-opioid-induction-synergy.test.ts`](../../packages/engine-core/test/engine/drug-opioid-induction-synergy.test.ts) | 1 | 0 |
 | [`engine/pk-acceptance-pd.test.ts`](../../packages/engine-core/test/engine/pk-acceptance-pd.test.ts) | 2 | 0 |
@@ -412,7 +443,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`l2/pk/flow-distribution.test.ts`](../../packages/engine-core/test/l2/pk/flow-distribution.test.ts) | 1 | 0 |
 | [`l2/pk/hooks.test.ts`](../../packages/engine-core/test/l2/pk/hooks.test.ts) | 0 | 0 |
 | [`l2/pk/insulin-reference.test.ts`](../../packages/engine-core/test/l2/pk/insulin-reference.test.ts) | 0 | 0 |
-| [`l2/pk/interactions-misc.test.ts`](../../packages/engine-core/test/l2/pk/interactions-misc.test.ts) | 9 | 0 |
+| [`l2/pk/interactions-misc.test.ts`](../../packages/engine-core/test/l2/pk/interactions-misc.test.ts) | 8 | 0 |
 | [`l2/pk/library.test.ts`](../../packages/engine-core/test/l2/pk/library.test.ts) | 0 | 0 |
 | [`l2/pk/nmb.test.ts`](../../packages/engine-core/test/l2/pk/nmb.test.ts) | 0 | 0 |
 | [`l2/pk/onset-chain.test.ts`](../../packages/engine-core/test/l2/pk/onset-chain.test.ts) | 0 | 0 |

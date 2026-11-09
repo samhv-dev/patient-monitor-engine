@@ -36,7 +36,7 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
     rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
     maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h [chapter not verified], central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 43 p. 1355; Stoelting Co-Existing 8e ch. 20 p. 404]' },
-    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
+    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'samhv-dev 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
   { id: 'sodiumBicarbonate', name: 'Sodium bicarbonate 8.4 %', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, pd: [], doses: '1 mmol/kg (1 mL/kg of 8.4 %)', onset: 'pH ↑ at once; EtCO2 +5 mmHg at 90 s (7c decision 14)', ir: '?', src: '7c plan decision 14', tag: 'TXT' },
   // The row's insulin is the plain insulin row's insulin — the same PK and the same K⁺ pharmacodynamics (`kShift` →
   // bus.metabolic.kShift → the blood model), so the blood model's empirical whole-effect curve is retired whenever the
@@ -99,16 +99,20 @@ export const OTHER_ROWS: DrugRow[] = [
     maxDose: { amount: 3, perKg: true, scope: 'cumulative', src: 'M10 Table 25.6, plain' },
     doses: 'max 3 mg/kg (200 mg plain / 250 with epinephrine, M10 Table 25.6)', onset: 'as bupivacaine with a higher CV threshold', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'lipidEmulsion', name: 'Lipid emulsion 20 %', cls: 'lipid', amountUnit: 'mL', pk: gammaPk(1.5, true, 60, 1800, 0.25), pd: [],
-    doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink: free LA ↓ up to 50 % [FIT: lipid sink free local anaesthetic fall (contradicts its own Miller citation); brief research/44 X-06]; M10 p. 762: cardiac bupivacaine −11 % in 3 min', ir: '?', src: 'ASRA 2020; M10 ch. 25 p. 762', tag: 'ENG' },
+    doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink (M10 ch. 25 p. 762): cardiac bupivacaine −11 % within 3 min, cerebral −18 % within 15 min (PBPK estimates; no significant sink in human volunteers, Litonius 2012)', ir: '?', src: 'ASRA 2020 (dose); M10 ch. 25 p. 762 (sink: LIPID_SINK_CARDIAC/CEREBRAL in pk/pipeline.ts)', tag: 'TXT' },
   // --- placeholders (panel only; no engine effect in v1) ---
   // TXA stays INERT until a coagulation model lands. Its dose log (bus.doses) is what that model will read, so the
   // row must not be removed: the fibrinolysis target will be added to THIS row.
   { id: 'tranexamicAcid', name: 'Tranexamic acid', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(1000, false, 600, 10800), pd: [], doses: '1 g over 10 min, then 1 g over 8 h', onset: 'antifibrinolytic: no monitor effect until 7i models coagulation (R58; CRASH-2 acts through bleeding)', ir: '?', src: 'CRASH-2; placeholder for 7i', tag: 'TXT' },
-  // Ondansetron 4–8 mg IV prolongs the QTc ≈ 10–20 ms (FDA 2012 label change; the 32 mg IV dose was withdrawn for this
-  // reason). No arrhythmia hazard is added in v1: torsades needs the QT-dependent trigger the torsades rhythm provides
-  // by instruction. emax 30 → 15 ms at the 4 mg reference dose (the Hill is emax·c/(ec50 + c)) [FIT: ondansetron QTc emax (label gives +5.6 ms at 8 mg); within the label
-  // range; measured: +14 ms at 10–30 min, +8 at 2 h; emax 15 gave 7; brief research/44 X-05].
-  { id: 'ondansetron', name: 'Ondansetron', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(4, false, 600, 14400), pd: [{ target: 'qtc', emax: 30, ec50: 1 }], doses: '4 mg', onset: 'QTc +10–20 ms (FDA 2012); no arrhythmia hazard in v1', ir: '?', src: 'FDA 2012 label change; size [FIT: ondansetron QTc emax (label gives +5.6 ms at 8 mg); brief research/44 X-05]', tag: 'ENG' },
+  // Ondansetron prolongs the QTc in proportion to its concentration. The injection label §12.2 (thorough-QT trial, 58
+  // healthy subjects, single 15-min infusions; the FDA 2012 safety communication that withdrew the 32 mg dose) measured
+  // a placebo- and baseline-corrected ΔΔQTcF of 19.5 ms (95 % upper 21.8) at 32 mg and 5.6 (7.4) at 8 mg, and found "a
+  // significant exposure-response relationship" between concentration and ΔΔQTcF, from which it predicts 9.1 ms at
+  // 16 mg and 14.0 at 24 mg. Linear in concentration (the label's model), slope from its 32 mg mean: 19.5 ms per 32 mg
+  // = 0.61 ms/mg, so ec50 8 (the 32 mg dose in units of the 4 mg reference) and emax 19.5. Measured (0–30 min peak):
+  // 4 mg +2.4, 8 mg +4.9, 16 +9.8, 24 +14.6, 32 +19.5 ms — every label value within its own 95 % bound. No arrhythmia
+  // hazard is added in v1: torsades needs the QT-dependent trigger the torsades rhythm provides by instruction.
+  { id: 'ondansetron', name: 'Ondansetron', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(4, false, 600, 14400), pd: [{ target: 'qtc', emax: 19.5, ec50: 8, linear: true }], doses: '4 mg', onset: 'QTc +2–3 ms at 4 mg, +5.6 at 8 mg, +19.5 at 32 mg (label §12.2 TQT); no arrhythmia hazard in v1', ir: '?', src: 'Ondansetron injection label §12.2 (thorough-QT trial); FDA Drug Safety Communication 2012', tag: 'TXT' },
   // Dexamethasone 8 mg raises glucose ≈ 1–2 mmol/L (18–36 mg/dL) over the first hours and more in diabetics (Hans 2006;
   // M10 ch. 47) — a GLUCOCORTICOID acting on the endocrine model's cortisol metabolic term (insulin resistance,
   // gluconeogenesis). emax 4000 → 2000 nmol/L cortisol-equivalent above basal at the 8 mg reference dose (≈ 200 mg

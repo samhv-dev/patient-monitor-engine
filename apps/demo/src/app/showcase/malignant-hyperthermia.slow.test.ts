@@ -81,11 +81,14 @@ const BANDS = {
   // 1:00): hrAtEstablished left its band and is re-centred on this build, same ± 5 (148 → 139). The single sample at the
   // entry sits inside the ectopy runs on both orders (HR read 116–157 within ± 60 s of the entry on the old order, 122–160
   // on the new, almost every sample within 10 s after a PVC), and the entry moved 18 s earlier (45.6 → 45.3 min): the
-  // averaging of the ectopic beats, not a different tachycardia. Reported; not tuned. research/44 L2-27 (the CYP450
-  // rows' clearance takes Hostler's slope from 36.5 °C on the liver function without the organ model's tempF: at the
-  // 36.8 °C start midazolam and fentanyl clear ≈ 2 % faster than with tempF 0.98): the same single sample reads 148 on
-  // CI, re-centred, same ± 5 (139 → 148).
-  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [143, 153], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
+  // averaging of the ectopic beats, not a different tachycardia. Reported; not tuned. Two sourced changes then moved
+  // the same single sample, and it is re-centred once on their combination, same ± 5:
+  // - research/44 L2-26 (Bowman's pressure 17.1 → 18, resting GFR 125 → 117): alone, 139 → 130;
+  // - research/44 L2-27 (the CYP450 rows take Hostler's −11.1 %/°C from 36.5 °C on the liver function without the organ
+  //   model's tempF, so at the 36.8 °C start midazolam and fentanyl clear ≈ 2 % faster than with tempF 0.98): alone, 139 → 148;
+  // - both, measured on main 8344539d with fix-hypothermic-clearance merged: 137 (130 + 148 do not add; the sample
+  //   sits inside the ectopy runs).
+  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [132, 142], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
   'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [18.67, 22.07], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [87, 97], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
