@@ -3,11 +3,16 @@ import { angiotensin, lpReab, natriuresis, renalHaemo, tgfTarget } from '../../.
 import { R_AFF, R_AFF_MAX, R_AFF_MIN } from '../../../src/l2/renal/params.ts';
 
 describe('ported renal haemodynamics (annex B2)', () => {
-  it('Pulse topology at rest (k = 0.879 calibrates RBF to 17 % of CO 5.6): RBF 952, P_gc ≈ 57.6, GFR ≈ 125 (180 L/day)', () => {
+  it('Pulse topology at rest (k = 0.879 calibrates RBF to 17 % of CO 5.6): RBF 952, P_gc ≈ 57.6', () => {
     const h = renalHaemo(93, 5, 0.879, R_AFF, 1, 1, 42);
     expect(h.rbf).toBeCloseTo(952, -1);
     expect(h.pgc).toBeCloseTo(57.6, 0);
-    expect(h.gfr).toBeCloseTo(125, -1);
+  });
+  // Named miss (research/44 L2-26). Bowman's pressure is the sourced 18 mmHg (M10 Fig. 15.8, p. 334), no longer the
+  // 17.1 fitted to this target. The Pulse divider gives P_gc 57.6 where the figure has 60, so the net filtration
+  // pressure is 7.6, not 10. Kf stays Pulse's 14.7: the 16.4 that would restore 125 has no source (Guyton & Hall: 12.5).
+  it.fails('rest GFR ≈ 125 mL/min (M10 ch. 15 p. 335: about 180 L/day): measured 117 (P_gc 57.6 vs 60)', () => {
+    expect(renalHaemo(93, 5, 0.879, R_AFF, 1, 1, 42).gfr).toBeCloseTo(125, -1);
   });
   it('filtration stops when P_gc < P_Bowman + π; albumin loss raises GFR', () => {
     expect(renalHaemo(55, 5, 0.879, R_AFF, 1, 1, 42).gfr).toBe(0);

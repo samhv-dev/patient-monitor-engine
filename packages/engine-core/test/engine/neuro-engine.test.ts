@@ -132,14 +132,18 @@ describe('neuro through the engine (drug events through the drug model)', { time
   // the band edge. it.fails with the number. FU-9 Task A12 (H3) flips it (bisected: 52 at A11, 50 at A12): hepatic flow
   // = CO/CO0 × 7d's factor, so propofol's flow-limited clearance under this rig is slightly lower and the nadir is back
   // below 52.
-  it('propofol 2 mg/kg: depth-index nadir < 52 — measured 50', async () => {
+  // Band to its source (calibration-pass ruling, brief 88): Blum 2006 (PMID 16878179, 99 unpremedicated adults) BIS minimum
+  // after propofol 2 mg/kg as a 5-s bolus 28.7 ± 10.3 → mean ± 1 SD 18.4–39.0, reached at 103 ± 44 s. The < 52 ceiling had
+  // no source. The engine's index is the interaction-model depth index, read here as the processed-EEG number it stands for.
+  it.fails('propofol 2 mg/kg: depth-index nadir 18.4–39.0 (Blum 2006: BIS minimum 28.7 ± 10.3 after a 5-s bolus) — measured 50', async () => {
     const e = createEngine({ seed: 6, patient: ADULT });
     const an: Extract<EngineEvent, { type: 'anaesthesia' }>[] = [];
     e.on((x) => { if (x.type === 'anaesthesia') an.push(x); }, ['anaesthesia']);
     e.dispatch(drug('propofol', 2, 'mg/kg'));
     await run(e, 180);
     console.log(`neuro-engine propofol 2 mg/kg: depth-index nadir ${Math.min(...an.map((a) => a.di))}`);
-    expect(Math.min(...an.map((a) => a.di))).toBeLessThan(52);
+    expect(Math.min(...an.map((a) => a.di))).toBeGreaterThanOrEqual(18.4);
+    expect(Math.min(...an.map((a) => a.di))).toBeLessThanOrEqual(39.0);
   });
   it('succinylcholine: the drug model consumes the dose, neuro observes it (fasciculation mark) and leaves ECG potassium alone (the blood owns it)', async () => {
     const e = createEngine({ seed: 7, patient: { ...ADULT, neuro: { nm: 'burn' } } });
