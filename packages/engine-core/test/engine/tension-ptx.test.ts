@@ -72,7 +72,7 @@ describe('the tension pneumothorax builds through a one-way valve', { timeout: 6
   // R45 (FU-6 executor, gate): see the PEA row — with FU-6's assist-control the unparalysed rig arrests before +4 min,
   // so decompression finds a pulseless patient. it.fails with the number; the rig question (paralyse, as FU-6's D19
   // does for its own ventilated rigs, or decompress earlier) is FU-4's — gate note.
-  it.fails('decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (ventilator triggering; MAP ≥ 65 at +5 s without it)', async () => {
+  it('decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (ventilator triggering; MAP ≥ 65 at +5 s without it)', async () => {
     const c = await run(true, 60 + 6 * 60, 60 + 240);
     const back = c.mapAfterDecomp.find(([, m]) => m >= 65);
     const p = c.pPtx[240 + PTX_DRAIN_TAU_S - 1] as number; // τ after the decompression

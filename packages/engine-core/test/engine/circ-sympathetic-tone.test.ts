@@ -7,9 +7,11 @@ import { createEngine } from '../../src/engine.ts';
 
 async function fall(pt: Record<string, unknown>): Promise<number> {
   const e = createEngine({ seed: 7, mode: 'modeled', patient: { sex: 'M', weightKg: 70, ...pt, sensors: { abp: 'connected' } } as never });
+  // Brief 93: an induction's patient breathes on his own until the induction dose and is intubated and ventilated once
+  // unconscious (the rig had ventilated an awake patient for 5 min, who now breathes against the machine, as the drive
+  // exists on it). Tube and ventilator 30 s after propofol (loss of consciousness ≈ one arm–brain circulation, Miller 10e
+  // ch. 21 p. 541); the pre-induction window is spontaneous.
   e.advanceTo(1);
-  e.dispatch({ id: 'a', issuedBy: 'test', type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } } as never);
-  e.dispatch({ id: 'b', issuedBy: 'test', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } } as never);
   const mapOf = () => (e as unknown as { st: { hemo: { circ: { mapNow: number } } } }).st.hemo.circ.mapNow;
   const pre: number[] = [];
   let nadir = Infinity;
@@ -17,6 +19,10 @@ async function fall(pt: Record<string, unknown>): Promise<number> {
     e.advanceTo(t);
     if (t > 240 && t <= 300) pre.push(mapOf());
     if (t === 300) e.dispatch({ id: 'p', issuedBy: 'test', type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' } } as never);
+    if (t === 330) {
+      e.dispatch({ id: 'a', issuedBy: 'test', type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } } as never);
+      e.dispatch({ id: 'b', issuedBy: 'test', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } } as never);
+    }
     if (t > 360) nadir = Math.min(nadir, mapOf());
     if (t % 60 === 0) await new Promise((r) => setImmediate(r));
   }
@@ -43,7 +49,11 @@ describe('the induction fall depends on resting sympathetic tone', () => {
   // R45 (E-FU8B-6): the plan's row, kept with its number — the HTN tonic size (+0.1) is the owner's calibration item (A23)
   // FU-7.1 gate B: flipped (a known miss that turns green is flipped) — FU-7.1 B3's alveolar-washout fall of the
   // low-flow factor moves the HTN induction fall to −35.42 % against the healthy −30.28 %: 5.14 points (was 4.96).
-  it('untreated HTN 60 y falls at least 5 points more than the healthy 40 y — measured 5.14 points (−35.42 vs −30.28 %) with the alveolar washout (4.96 without it)', async () => {
+  // R45 (brief 93): on the corrected rig — spontaneous until the induction dose, intubated and ventilated 30 s after it,
+  // as an induction is done — both arms fall slightly more (healthy −31.32, HTN −35.74 %) and the GAP narrows to 4.42
+  // points against the plan's ≥ 5 (it read 5.14 while the rig ventilated an awake patient for 5 min). The HTN tonic size
+  // is the owner's calibration item (A23), so the row keeps its number: band unchanged, nothing re-centred.
+  it.fails('untreated HTN 60 y falls at least 5 points more than the healthy 40 y — measured 4.42 points (−35.74 vs −31.32 %) on the induction rig (5.14 when the awake patient was ventilated); the HTN tonic size is A23', async () => {
     const h = await healthy();
     const v = await htn();
     console.log(`fu8 B4: HTN 60 y ${(v * 100).toFixed(2)} % vs healthy ${(h * 100).toFixed(2)} %`);

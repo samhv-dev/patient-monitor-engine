@@ -111,6 +111,16 @@
         {
           "type": "applyEvent",
           "event": {
+            "kind": "drug",
+            "drugId": "rocuronium",
+            "dose": 1.2,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
             "kind": "preoxygenate",
             "fio2": 0.21,
             "durationS": 1

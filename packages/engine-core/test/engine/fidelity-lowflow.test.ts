@@ -35,7 +35,9 @@ describe('SpO2, PI and pleth follow the perfusion', () => {
   const bleedRun = () => (bleed ??= monitorRun({ mode: 'modeled', tEnd: 1100, steps: [...VENTED, [60, M.bleed(3000, 900)]] }));
   let owner: ReturnType<typeof monitorRun> | undefined;
   const ownerRun = () => (owner ??= monitorRun({ mode: 'modeled', tEnd: 2700, steps: [
-    ...VENTED, [60, M.cond('tamponade', 1)], [660, M.drug('propofol', 2, 'mg/kg')], [900, M.drug('propofol', 1, 'mg/kg')],
+    // Brief 93: the case intubates AFTER the induction, not 11 min before it (an awake patient on a ventilator now
+    // breathes against it, as the drive exists there): tube and ventilator 30 s after the propofol
+    [60, M.cond('tamponade', 1)], [660, M.drug('propofol', 2, 'mg/kg')], [690, M.ett()], [690, M.vent()], [900, M.drug('propofol', 1, 'mg/kg')],
     [1200, M.vent(15, 0.5)], [1500, M.vap('sevoflurane', 2)], [2100, M.bleed(2000, 300)],
   ] }));
   it('MODELED 3 L bleed over 15 min: once MAP < 30 for 20 s the SpO2 is "?" or invalid, PI < 0.3, pleth ≤ 25 % of rest; never valid SpO2 with PR/PI invalid', async () => {

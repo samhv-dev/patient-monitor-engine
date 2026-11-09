@@ -1,6 +1,6 @@
 # Calibration queue (R44)
 
-From `pnpm validate` at 2026-10-18T11:44:29.774Z, commit `3db25a3b`. Every row outside its band; fill the last column during the calibration pass.
+From `pnpm validate` at 2026-11-08T06:04:31.855Z, commit `68f14a6f`. Every row outside its band; fill the last column during the calibration pass.
 
 | | Suite | Row | Measured | Expected | Source | samhv-dev: decision |
 |---|---|---|---|---|---|---|

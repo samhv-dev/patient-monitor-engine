@@ -60,9 +60,25 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  1.3–1.6 °C per 15 min from the trigger (≈ 300 W net, whole-body VO₂ × 4–5: measured × 1.8–2.7 in swine, × 2–3 in
  *  reviews of man). The established crisis moves to its own row in the passing untreated arm, re-centred on this build
  *  with the old tolerances; the hyperthermic VF stays an expected failure. No engine change. */
+/* Brief 93 (the owner's ruling of 8 Nov): the patient's effort now reaches the ventilator through a real pressure
+ * trigger — the cockpit's own rule: the effort first undoes the trapped gas, net = max(0, Pmus − autoPEEP), and what
+ * remains is read by its flow threshold of 2.0 L/min — instead of triggering on any committed rate, AND the diaphragm's
+ * force now follows its margin of safety. MEASURED on this card (the trace of 8 Nov, every 2 min): the drive drives
+ * HARDER as the MH runs — effort 1.64 of a resting breath at 24:00, PaCO2 124 — but the card gives rocuronium 0.6 mg/kg
+ * at 6:00, and at 24:00, 18 min into that block, the diaphragm's force is 0.0020, so Pmus is 0.02 cmH2O and nothing
+ * opens; autoPEEP is 0.07 cmH2O, so trapped gas is not what silences him. The first trigger comes at 26:00 (force 0.035,
+ * Pmus 0.43 cmH2O, 2.19 L/min) and full triggering by 28–30:00 — the block's own recovery (Moerer 2005: diaphragm
+ * recovery onset 15.9 min young / 22.0 min over 65; Cantineau 1994: 10 % twitch at 17 ± 10 min; the label's clinical
+ * duration 31 min). It is the NEUROMUSCULAR JUNCTION that silences the patient, not his drive and not the trigger. The
+ * untreated run therefore loses the triggered hyperventilation main had, and these recorded values moved with that
+ * verified cause and are re-recorded at the same width:
+ * etco2Max 106 → 117 (centre), measured 120, etco2At20 91 → 113 and phAt20 7.04 → 6.96 (the same hypercapnia, as its
+ * own respiratory acidosis: pH 6.96 at 20 min), and the established group's hrAtEstablished 139 → 146 (the same
+ * hypercapnia's sympathetic drive). hrAt20 126, kAt20 6.1, kMax 6.9 and every timing held. Not tuned; no clinical band touched (etco2At20, the core-rise rate and
+ * every timing held). The "Changed only" row's `monitor:awRR:up` is the same cause and is recorded below. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [37.08, 37.48], hrMax: [148, 158], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [38.54, 38.94], pulseLost: [0, 0] },
+  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [114, 120], etco2At20: [110, 116], hrAt20: [119, 129], phAt20: [6.93, 6.99], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [37.08, 37.48], hrMax: [148, 158], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [38.54, 38.94], pulseLost: [0, 0] },
   // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia). Measured first on the
   // pre-E131 course (to the hyperthermic VF at +44.5 min): first PVC +13.1 min, 256 events before the VF (36 runs).
   // Re-measured on the E131 course (rebase onto 5024f071, 2026-10-27; same tolerances, the reason: E131 moved the
@@ -81,14 +97,17 @@ const BANDS = {
   // 1:00): hrAtEstablished left its band and is re-centred on this build, same ± 5 (148 → 139). The single sample at the
   // entry sits inside the ectopy runs on both orders (HR read 116–157 within ± 60 s of the entry on the old order, 122–160
   // on the new, almost every sample within 10 s after a PVC), and the entry moved 18 s earlier (45.6 → 45.3 min): the
-  // averaging of the ectopic beats, not a different tachycardia. Reported; not tuned. Two sourced changes then moved
-  // the same single sample, and it is re-centred once on their combination, same ± 5:
-  // - research/44 L2-26 (Bowman's pressure 17.1 → 18, resting GFR 125 → 117): alone, 139 → 130;
-  // - research/44 L2-27 (the CYP450 rows take Hostler's −11.1 %/°C from 36.5 °C on the liver function without the organ
-  //   model's tempF, so at the 36.8 °C start midazolam and fentanyl clear ≈ 2 % faster than with tempF 0.98): alone, 139 → 148;
-  // - both, measured on main 8344539d with fix-hypothermic-clearance merged: 137 (130 + 148 do not add; the sample
-  //   sits inside the ectopy runs).
-  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [132, 142], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
+  // averaging of the ectopic beats, not a different tachycardia. Reported; not tuned. research/44 L2-26 (Bowman's
+  // pressure 17.1 → 18, resting GFR 125 → 117): the same single sample reads 130, re-centred, same ± 5 (139 → 130).
+  // Re-merge of 9 Nov (brief 112): PR #352 re-centred this sample 139 → 146 (brief 93: the hypercapnia's sympathetic
+  // drive), main 139 → 130 (Bowman 18); on the merge of both it reads 145 — one below the branch's 146, so the
+  // untriggered hypercapnia sets this sample, not the renal term — re-centred, same ± 5 (146 → 145). Not tuned.
+  // Second re-merge of 9 Nov (brief 117: main, with PR #352, into PR fix-hypothermic-clearance): research/44 L2-27 (the
+  // CYP450 rows take Hostler's −11.1 %/°C from 36.5 °C on the liver function without the organ model's tempF, so at the
+  // 36.8 °C start midazolam and fentanyl clear ≈ 2 % faster) moved this sample alone 139 → 148 on the earlier tree; on
+  // the merge it reads 148, and with every cyp flag removed on the same merge 145 (main's): the CYP term is +3 here.
+  // Inside the band, so the band stays [140, 150]. Not tuned.
+  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [140, 150], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
   'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [18.67, 22.07], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [87, 97], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
@@ -123,9 +142,13 @@ const CALL_S = 1440;
  *  face mask, the premedication given that second and not yet acting: CO no longer reads UP against it (it did against
  *  the premedicated baseline) and is dropped from the list (22 → 21 rows); the oxygen rows (FiO₂, PaO₂, PO₂, CaO₂, DO₂)
  *  now read DOWN (FiO₂ 1.0 on the mask then, 0.5 on the ventilator at 24:00), and SpO₂ and SaO₂ no longer read UP:
- *  none of them is in the list. */
+ *  none of them is in the list.
+ *  Brief 93 (the owner's ruling of 8 Nov): the patient's effort reaches the ventilator through a real pressure trigger
+ *  (−2 cmH2O), so the untreated MH patient's efforts under 2 % sevoflurane no longer add triggered breaths at 24:00 and
+ *  the airway rate stays the set rate: `monitor:awRR:up` leaves the list (21 → 20 rows), recorded with that cause. The
+ *  EtCO₂ row still reads UP — higher than before, which is the re-recorded etco2Max above. */
 const EXPLORE_AT_CALL = [
-  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:awRR:up', 'monitor:T1:up',
+  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:T1:up',
   'circulation:SV:down', 'circulation:SVR:down', 'circulation:LVEF:down', 'circulation:Myocardial O2 supply/demand:down',
   'blood:pH:down', 'blood:PCO₂:up', 'blood:BE:down', 'blood:Lactate:up', 'blood:K⁺:up', 'blood:Tcore:up', 'blood:VO₂:up', 'blood:SvO₂:down',
   'endocrine:MH activity:up', 'endocrine:Epinephrine:up', 'endocrine:Norepinephrine:up', 'brain:CMRO₂:down',

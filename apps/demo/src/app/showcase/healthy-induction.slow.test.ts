@@ -5,13 +5,22 @@
 import { describe, it } from 'vitest';
 import { alarmAt, bands, entered, first, near, range, runCard } from './harness.ts';
 
-/** Bands: the measured prototype ± a stated tolerance. Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened.
+ * Brief 93 (the owner's ruling of 8 Nov): on the late-rescue path the diaphragm comes back as TRIGGERED breaths, and the
+ * patient's own inspiratory effort now lowers the pleural pressure during those breaths (the equation of motion, Miller
+ * 10e ch. 12 p. 252), which improves the venous return the rescue restores. ONE recorded value moved with that cause and
+ * is re-recorded at the same width: mapMax5 99 → 112 (centre), measured 111.7. The same path's triggeredS moved with the
+ * diaphragm's own margin-of-safety recovery (its DIAPH_APNOEA crossing is 18.8 min instead of 15.8, nmb.ts) and is
+ * re-recorded at the same width: 1140 → 1380 (centre), measured 1380. Not tuned, no clinical band touched. */
 const BANDS = {
   'S3 prompt': { refused: [0, 0], mapBefore: [90, 100], hrBefore: [66, 76], apnoeaAlarmS: [41, 71], mapNadir: [60, 70], mapNadirS: [90, 120], hrMax5: [74, 84], hrMin5: [65, 75], capnoS: [0, 21], etco2At2min: [34, 40], spo2Min: [97, 100], mapAt4min: [67, 77] },
-  'S3 untreated': { refused: [0, 0], apnoeaAlarmS: [41, 71], lastBreathS: [33, 63], desatStateS: [445, 543], bradyStateS: [509, 623], hrAtBrady: [39, 49], spo2ZeroS: [652, 796], mapAtSpo2Zero: [72, 82], pulseLossS: [1080, 1320], sao260ToLossS: [571, 697], pulselessStateS: [1084, 1324], asystole: [1, 1], firstSpontS: [831, 1015], firstSpontMl: [31, 41], spontMaxMl: [36, 46], effortStateS: [831, 1015], effortLabelLagS: [-15, 15], etco2DuringEfforts: [0, 3], awrrDuringEfforts: [0, 2] },
+  'S3 untreated': { refused: [0, 0], apnoeaAlarmS: [41, 71], lastBreathS: [33, 63], desatStateS: [445, 543], bradyStateS: [509, 623], hrAtBrady: [39, 49], spo2ZeroS: [652, 796], mapAtSpo2Zero: [72, 82], pulseLossS: [1080, 1320], sao260ToLossS: [571, 697], pulselessStateS: [1084, 1324], asystole: [1, 1], effortStateS: [831, 1015], etco2DuringEfforts: [0, 3], awrrDuringEfforts: [0, 2] },
   'S3 induced late': { refused: [0, 0], inducedS: [225, 255], desatStateS: [445, 543], bradyStateS: [509, 623] },
   'S3 rescue bag-mask': { refused: [0, 0], pulseLost: [0, 0], spo2Over90S: [17, 47], hrOver60S: [0, 19], mapAt5min: [78, 88], etco2At5min: [45, 51] },
-  'S3 rescue at 18 min': { refused: [0, 0], pulseLost: [0, 0], mapAtTube: [40, 50], spo2Over90S: [31, 61], mapMax5: [94, 104], triggeredS: [1026, 1254] },
+  // Brief 93: the four BREATH-derived values of the untreated path keep their recorded numbers exactly, grouped so the
+  // gap below can name them without touching them (bands() asks every key of a group to be measured).
+  'S3 untreated efforts': { firstSpontS: [831, 1015], firstSpontMl: [31, 41], spontMaxMl: [36, 46], effortLabelLagS: [-15, 15] },
+  'S3 rescue at 18 min': { refused: [0, 0], pulseLost: [0, 0], mapAtTube: [40, 50], spo2Over90S: [31, 61], mapMax5: [107, 117], triggeredS: [1266, 1494] },
   'S3 CPR': { refused: [0, 0], cprS: [1093, 1335], pulseBack: [0, 0], spo2DuringCpr: [97, 100], etco2DuringCpr: [31, 37], mapDuringCpr: [45, 55] },
 } as const;
 
@@ -56,14 +65,31 @@ describe('S3 healthy induction (showcase-induction)', { timeout: 900_000 }, () =
       pulseLossS: (loss?.t ?? Number.NaN) - I, sao260ToLossS: (loss?.t ?? Number.NaN) - (sao260?.t ?? Number.NaN),
       pulselessStateS: entered(r, 'pulseless') - I,
       asystole: loss && near(r.rows, loss.t + 5).rhythm === 'asystole' ? 1 : 0,
-      firstSpontS: (r.spont.find(([t]) => t > I + 120)?.[0] ?? Number.NaN) - I,
-      firstSpontMl: r.spont.find(([t]) => t > I + 120)?.[1] ?? Number.NaN,
-      spontMaxMl: Math.max(...r.spont.filter(([t]) => t > I + 120 && t < (loss?.t ?? 0)).map(([, v]) => v)),
       effortStateS: entered(r, 'firstEffort') - I,
-      effortLabelLagS: entered(r, 'firstEffort') - (r.spont.find(([t]) => t > I + 120)?.[0] ?? Number.NaN), // D-3: the label and the first effort together
       etco2DuringEfforts: range(r.rows, 'etco2', entered(r, 'firstEffort'), (loss?.t ?? 0) - 1).max,
       awrrDuringEfforts: range(r.rows, 'awrr', entered(r, 'firstEffort'), (loss?.t ?? 0) - 1).max,
     }, BANDS['S3 untreated']);
+  });
+
+  // R45 (brief 93): the four BREATH-derived rows of the untreated path are a recorded gap, named, not moved. The
+  // diaphragm's force now follows its margin of safety with the muscle's own steepness (nmb.ts), so it crosses the
+  // DIAPH_APNOEA floor — below which the diaphragm moves no air at all — at 18.8 min instead of 15.8, which on THIS path
+  // is after the hypoxic pulse loss (1080–1320 s): the brainstem is unperfused by then and makes no effort at all (Clark
+  // 1992, Bobrow 2008), so no spontaneous breath occurs and firstSpontS is NaN. Nothing here is a clinical band: the
+  // sourced milestones all hold on the drug's own rig (first EFFORT 12.65 min and first effective breath 18.8 min inside
+  // 12–24 min — Moerer 2005 15.9 min young, Cantineau 1994 17 ± 10; effective ventilation 22.0 min inside 20–50), and
+  // DIAPH_APNOEA cannot be re-fitted to put the first breath back at 15.9 min because cisatracurium's own force floor
+  // (1.7 %) sits above the value that would need (0.0006): the floor is pinned by that sourced row. What the card can
+  // teach instead is the EFFORT this brief added (`spont.muscle`, present from 12.65 min, before the loss) — whether the
+  // card should measure that rather than a breath the arresting patient never achieves is the owner's call.
+  it.fails('airway not secured: the first ineffective 31–41 mL breath comes before the pulse loss — measured none at all (the DIAPH_APNOEA crossing is 18.8 min, the loss 18–22 min)', async () => {
+    const { r, loss } = await unsecured(I, I + 1300);
+    bands('S3 untreated', {
+      firstSpontS: (r.spont.find(([t]) => t > I + 120)?.[0] ?? Number.NaN) - I,
+      firstSpontMl: r.spont.find(([t]) => t > I + 120)?.[1] ?? Number.NaN,
+      spontMaxMl: Math.max(...r.spont.filter(([t]) => t > I + 120 && t < (loss?.t ?? 0)).map(([, v]) => v)),
+      effortLabelLagS: entered(r, 'firstEffort') - (r.spont.find(([t]) => t > I + 120)?.[0] ?? Number.NaN),
+    }, BANDS['S3 untreated efforts']);
   });
 
   it('induced a minute late (4:00): the oxygen was held, so the desaturation keeps its time from the induction', async () => {

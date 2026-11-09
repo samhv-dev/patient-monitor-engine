@@ -9,7 +9,7 @@
 //     rules), capped at 55 mmHg.
 //   drive: the lung model's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with the neuro model's
 //     opioidDep/hypnoticDep (fixed-CO2 depression); the resting pattern rr0/vt0 is the instructor's rr/vt target.
-//   NMB: VT × nmbVtMult (diaphragm strength), apnoea below DIAPH_APNOEA strength; upper-airway obstruction × (1 − obs);
+//   NMB: VT × nmbVtMult (diaphragm strength), no effective breath below DIAPH_APNOEA force (the effort exists from 0); upper-airway obstruction × (1 − obs);
 //     pti's pMax × diaphragm strength × the lung model's condition pMax (fatigue comes sooner in a weak patient).
 import { CHRONIC_HCO3_PER_MMHG, NORMAL } from '../blood/params.ts'; // ONE reference (blood normal + chronic rule)
 import { drive, pti, stepFatigue } from '../lung/drive.ts';
@@ -72,6 +72,15 @@ export interface SpontDrive {
   pc?: number; // Central (brain) PCO2 the drive reads, mmHg (absent = PaCO2)
   plS?: number; // Seconds pulseless (absent while there is a pulse)
   effort?: number; // The neural inspiratory effort relative to rest (neural VT / resting VT); absent = 1
+  /**
+   * The inspiratory MUSCLE effort relative to a resting breath's (brief 93): the neural effort × the diaphragm's force
+   * (its margin of safety, nmb.ts), after the brainstem gates. It exists whether or not a ventilator breathes for the
+   * patient — under controlled ventilation it is what triggers, notches the capnogram and swings the pleural pressure.
+   * Absent until first evaluated.
+   */
+  muscle?: number;
+  /** The rate of those efforts, /min — the drive's gated rate, before the DIAPH_APNOEA breath gate; absent = rr. */
+  effortRr?: number;
 }
 
 export function createSpontDrive(): SpontDrive {
@@ -153,9 +162,13 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   }, s.fatigue);
   const strength = n?.pMaxMult ?? 1;
   let { rr, vt } = out;
+  // The drive's own rate, before neuromuscular transmission: the brainstem asks whether or not the diaphragm can answer
+  let rrNeural = rr;
   // The neural VT has a ceiling; the effort is what the patient MAKES, the delivered VT what gets through
   vt = Math.min(vt, VT_MAX_ML_KG * (x.ibwKg ?? 70) * s.fatigue); // weakness is nmbVtMult's (below), not counted twice
   s.effort = rr > 0 && x.vt0 > 0 ? vt / x.vt0 : 0;
+  // No EFFECTIVE breath below DIAPH_APNOEA force (drive.ts), although the effort (`muscle`, below) exists from force > 0:
+  // the return of diaphragm activity is not the return of breathing
   if (strength < DIAPH_APNOEA) rr = vt = 0;
   else if (n) {
     vt *= n.nmbVtMult * (1 - Math.min(0.9, n.obstruction));
@@ -170,14 +183,21 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
     delete s.anoxS;
   }
   const anox = s.anoxS ?? 0;
+  // The brainstem's output (brief 93): the muscle effort below is the neural effort × what the perfusion gates let out
+  let brainstem = 1;
   if (anox > GASP_ONSET_S) {
     const fade = Math.max(0, 1 - (anox - GASP_ONSET_S) / (GASP_END_S - GASP_ONSET_S));
+    const vtNeural = (s.effort ?? 0) * x.vt0; // the neural VT, before any neuromuscular cap
     rr = Math.min(rr, GASP_RR * fade);
+    rrNeural = Math.min(rrNeural, GASP_RR * fade);
     vt = Math.min(vt, GASP_VT_FRAC * x.vt0 * fade);
-    if (fade <= 0) rr = vt = 0;
+    if (fade <= 0) rr = vt = rrNeural = 0;
+    brainstem = vtNeural > 0 ? Math.min(1, (GASP_VT_FRAC * x.vt0 * fade) / vtNeural) : 0; // a gasp is a small effort, fading
   } else if (s.gate !== undefined) {
     if (!unperfused) s.gate = Math.min(1, s.gate + SPONT_DT_S / GATE_REOPEN_S);
     rr *= s.gate;
+    rrNeural *= s.gate;
+    brainstem = s.gate;
     if (s.gate >= 1) delete s.gate;
   }
   // The patient's inspiratory effort — spontaneous and ventilator-triggering — is withdrawn while the circulation is
@@ -186,10 +206,18 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   // restored when the circulation returns.
   if (x.pulseless) s.plS = (s.plS ?? 0) + SPONT_DT_S;
   else if (s.plS !== undefined) delete s.plS;
-  if (s.plS !== undefined) rr *= Math.max(0, 1 - s.plS / NO_FLOW_S);
+  if (s.plS !== undefined) {
+    rr *= Math.max(0, 1 - s.plS / NO_FLOW_S);
+    rrNeural *= Math.max(0, 1 - s.plS / NO_FLOW_S);
+    brainstem *= Math.max(0, 1 - s.plS / NO_FLOW_S);
+  }
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;
+  // Drive × the brainstem's perfusion gates × neuromuscular transmission: an unperfused brainstem makes no effort
+  // (Clark 1992, Bobrow 2008: agonal gasps for ≈ 2 min, then apnoea; the drive returns over minutes once perfused)
+  s.muscle = rrNeural > 0 ? (s.effort ?? 0) * brainstem * Math.max(0, Math.min(1, strength)) : 0;
+  s.effortRr = rrNeural; // the rhythm of those efforts (the breath's own `rr` is 0 below DIAPH_APNOEA force)
   if (rr > 0) {
     const ttot = 60 / rr;
     s.fatigue = stepFatigue(s.fatigue, pti(vt, x.complianceMl, x.resistance, TI_FRAC * ttot, ttot, strength * x.pMaxMult), SPONT_DT_S);

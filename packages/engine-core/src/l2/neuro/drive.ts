@@ -33,11 +33,15 @@ export const VENT_ALPHA_HYP = 0;
 export const APNOEA_IN = 0.42;
 export const APNOEA_OUT = 0.5;
 export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37]
-export const DIAPH_APNOEA = 0.05; // No effective breath below 5 % strength [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37]; the FIRST diaphragmatic effort
+export const DIAPH_APNOEA = 0.05; // No effective breath below 5 % strength [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37]; the effort itself (spont.muscle) exists from force > 0
 /**
  * The return of diaphragm ACTIVITY is not the return of BREATHING (research/26 T1). After a non-depolarising blocker
- * the first efforts (strength DIAPH_APNOEA, ≈ 16 min after rocuronium 0.6 mg/kg — Moerer 2005 [P, PMID 15832241, read
- * from a search summary]: onset of diaphragm recovery 15.9 min in young adults) move almost nothing — the train fades,
+ * the first efforts (the diaphragm's force leaves 0 when its receptors' occupancy falls below the most resistant
+ * fibre's threshold — nmb.ts `diaphragmNdBlock`, the margin of safety; brief 93) come 12.7 min after rocuronium
+ * 0.6 mg/kg on the engine's PK. Sources, both after 0.6 mg/kg: Moerer 2005 (PMID 15832241; the abstract: airway
+ * pressure against an occluded tube on magnetic phrenic stimulation) onset of diaphragm recovery 15.9 min in young
+ * adults, 22.0 min over 65; Cantineau 1994 (Anesthesiology 81:585, PMID 8092503; the abstract: phrenic twitch force)
+ * 10 % recovery of the diaphragm's twitch 17 ± 10 min, the adductor pollicis's 34 ± 10. Those first efforts move almost nothing — the train fades,
  * so a SUSTAINED contraction (a breath) has far less force than a single twitch at the same block [TXT: Miller 10e ch.
  * 39 p. 1213, the diaphragm recovers first; the fade mechanism is the reason a twitch overstates the breath]. The
  * spontaneous VT of a non-depolarising block is capped by the weak diaphragm: VT ≤ IBW·max(VT_EFFORT_ML_KG,
@@ -174,7 +178,7 @@ export function neuroResp(x: DriveInputs): NeuroResp {
   // `resp.spont.rr` at 0), so the flag and the `apnoea` neuro mark read it; the drug-derived hysteresis stays for
   // MANUAL, where there is no chemoreflex. research/14: the flag was set for 255 s at VE 8.4 L/min.
   let apnoea = x.spontRr !== undefined ? x.spontRr <= 0 : x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
-  if (strength < DIAPH_APNOEA) apnoea = true; // no effective breath whatever the drive (diaphragm block)
+  if (strength < DIAPH_APNOEA) apnoea = true; // no effective breath whatever the drive (diaphragm block); the effort may exist below it
   // Upper airway: residual block (TOFR < 0.9) and sedation (DI < 60 or dOp > 0.3: tables §4.6 uaCollapse).
   // Arousal scales the RESIDUAL-BLOCK share between UA_AROUSAL (awake, Eikermann 2003) and 1 (unconscious — the
   // tables' own value); the sedation arm below is untouched, and a complete-obstruction event (`airway: 'obstructed'`,

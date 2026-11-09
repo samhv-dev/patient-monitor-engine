@@ -15,10 +15,13 @@ type St = {
 let n = 0;
 const ev = (event: Record<string, unknown>, atS = 0) => ({ id: `oa${++n}`, issuedBy: 'test', type: 'applyEvent', event, atTick: Math.round(atS * 50) }) as unknown as Command;
 
-async function run(event: Record<string, unknown>) {
+async function run(event: Record<string, unknown>, spontaneous = false) {
   const e = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected', cvp: 'connected', spo2: 'on' } } });
-  e.dispatch(ev({ kind: 'airwayDevice', device: 'ett' }));
-  e.dispatch(ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 }));
+  if (spontaneous) e.dispatch(ev({ kind: 'ventilation', source: 'spontaneous', o2Device: 'mask', o2FlowLpm: 10 })); // brief 93: awake, on oxygen
+  else {
+    e.dispatch(ev({ kind: 'airwayDevice', device: 'ett' }));
+    e.dispatch(ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 }));
+  }
   const accepted = e.dispatch(ev(event, 60)).accepted;
   const st = () => (e as unknown as { st: St }).st;
   e.advanceTo(55);
@@ -71,8 +74,13 @@ describe('the one-command massive-PE picture at 3 min (S9 sides, truth values)',
   // (AVP/angiotensin, unsuppressed) — SBP at 3 min 88.7 → 92.8. Split out of the test above unchanged, kept as a record.
   // FU-6 (R45 flip, executor at the gate): with FU-6 the SBP at 3 min is 84.6 — the pre-declared it.fails is met
   // (not bisected to one task; the PE row now also drives breathing, R12, and the viscosity/PVR terms act, R11/R14).
-  it('SBP < 90 at 3 min (massive PE: sustained SBP < 90) — measured 84.6', async () => {
-    expect((await pe()).sbp).toBeLessThan(90);
+  // Brief 93: the "massive" (high-risk) PE of the SBP < 90 definition is the presenting patient — awake and breathing
+  // on his own, given oxygen (ESC 2019 PE guideline, the haemodynamic definition of high-risk PE) — not an awake patient
+  // on a ventilator, who now breathes against it. This row runs on that patient; the rows above keep S9's ventilated sides.
+  it('SBP < 90 at 3 min (massive PE, awake, breathing, oxygen by mask: sustained SBP < 90)', async () => {
+    const x = await run({ kind: 'condition', id: 'pe', severity: 1 }, true);
+    console.log(`PE 3 min awake: SBP ${x.sbp.toFixed(1)} MAP ${x.map.toFixed(1)}`);
+    expect(x.sbp).toBeLessThan(90);
   }, 120_000);
   it.fails('CVP ≥ 15 mmHg — measured 11.5 (RV wall-stress demand added, Task 11 Step 1b)', async () => {
     expect((await pe()).cvp).toBeGreaterThanOrEqual(15);
