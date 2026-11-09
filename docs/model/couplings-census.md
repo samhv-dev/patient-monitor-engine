@@ -43,10 +43,10 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
-| engine-runtime | 9 | 2 |
-| **All** | 1134 | 431 |
+| engine-runtime | 11 | 2 |
+| **All** | 1136 | 431 |
 
-## The ten effector expressions with the most factors (of 1626)
+## The ten effector expressions with the most factors (of 1629)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 896 products)
+## The ten products with the most factors (of 897 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
