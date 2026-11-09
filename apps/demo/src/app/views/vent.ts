@@ -11,11 +11,13 @@
 // device (a `ventilator` granted with the instructor's PIN, over the relay) — through one desk sharing link, unlink and
 // handOver: opening one hands the other over first. The remote drives exactly as the view does, and is handed over
 // with its last settings the moment its page is hidden, its socket closes, its grant is revoked, or it is silent 1 s.
+// R8d: the laptop's own ventilator window (BroadcastChannel by the room code, no PIN) is served on the desk the same way.
 import type { Command } from '@pme/engine-core';
-import type { VentLinkBody } from '@pme/controller';
+import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
 import {
-  attachMonitorToLink, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type RelayPort, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
+import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
 import type { AppSession, VentSettings } from '../session.ts';
 import { h } from '../ui.ts';
@@ -180,112 +182,188 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
 export const COCKPIT_SILENCE_MS = 1000;
 
 /**
- * R8c: the host drives from the granted remote cockpit (HostSession onVent / onVentilator) exactly as the view does: its
- * frames go through `attachMonitorToLink(session.linked(m), relayPort)` on the desk, so the engine stays the master
- * clock, the frames are stamped on the host, mirrored to a same-browser viewer, and every network follower holds. It
- * starts on its first message (from the engine's own settings); it is handed over with its last settings when its page
- * says hidden, its grant ends (revoked, taken over, its socket closed) or it is silent COCKPIT_SILENCE_MS; it takes over
- * again on its next message after a silence, or when its page is shown again (not while another cockpit displaced it).
+ * One cockpit the host does not hold in its own page — a tablet over the relay (R8c) or the laptop's own window over
+ * BroadcastChannel (R8d) — served on the desk by the same rule: it starts on its first message (from the engine's own
+ * settings); it is handed over with its last settings when it says its page is hidden or it is silent
+ * COCKPIT_SILENCE_MS; it takes over again on its next message after a silence, or when its page is shown again (not
+ * while another cockpit displaced it). `end()`: its link is gone (revoked, taken over, its socket closed).
+ * The hand-over contract (fix after main run 42570518946): with `revokeOnSilence` (a tablet over the relay) a SILENCE
+ * hand-over revokes that cockpit's id instead: frames its browser held while the network was gone arrive late from it,
+ * and they must neither re-take the patient nor, at that id's end, hand over its stale settings over a change the
+ * instructor made meanwhile. It is never heard again; the device signs in anew (a new id), from the engine's settings.
  */
-export function serveRemoteCockpit(session: AppSession): () => void {
-  const desk = cockpitDesk(session);
-  type Remote = {
-    from: string; port: RelayPort; cockpit: Cockpit; deliver: ((b: VentWireBody) => void) | null;
-    last: CockpitSettings | null; heardAt: number; hidden: boolean; displaced: boolean; starting: boolean;
-    /** The furthest ventilator tick it may have run to: its last frame heard, or the last clock limit it was sent. */
-    topTick: number;
-  };
-  let cur: Remote | null = null;
-  let gen = 0; // bumped on every change of grant: a hand-over or a start for an old one does nothing more
+interface Served {
+  readonly cockpit: Cockpit;
+  /** A link message from it (before the link's own listeners hear it). */
+  heard(b: VentWireBody): void;
+  end(): void;
+}
+
+function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, o: { revokeOnSilence?: () => void } = {}): Served {
+  let last: CockpitSettings | null = null;
+  let heardAt = performance.now();
+  let hidden = false;
+  let displaced = false;
+  let starting = false;
+  let ended = false;
+  let revoked = false; // handed over for its silence: nothing it says is heard again
+  /** The furthest ventilator tick it may have run to: its last frame heard, or the last clock limit it was sent. */
+  let topTick = -1;
+  let gen = 0; // bumped at its end: a hand-over or a start for it does nothing more
   let timer: ReturnType<typeof setTimeout> | null = null;
   const now = () => performance.now();
-  const lose = (r: Remote) => {
-    if (desk.driving !== r.cockpit) return;
+  const linkPort: LinkPort = {
+    post: (m) => {
+      if (m.kind === 'clock' || m.kind === 'run') topTick = Math.max(topTick, m.ventTick);
+      port.post(m);
+    },
+    onMessage: (fn) => port.onMessage(fn),
+    close: () => port.close(),
+  };
+  const cockpit: Cockpit = { port: linkPort, remote: true, settings: () => last, displaced: () => void (displaced = true) };
+  const lose = (silent = false) => {
+    if (desk.driving !== cockpit) return;
     const g = gen;
     // refused, it drives on (FU-11 H6): the watchdog runs again for it
-    void desk.handOver(r.cockpit, () => g === gen, true).then(() => arm());
-  };
-  /** The silence watchdog: one timer, re-armed for what is left of the second since the last message. */
-  const arm = () => {
-    if (timer !== null || !cur || desk.driving !== cur.cockpit) return;
-    timer = setTimeout(() => {
-      timer = null;
-      if (!cur || desk.driving !== cur.cockpit) return;
-      if (now() - cur.heardAt >= COCKPIT_SILENCE_MS) return lose(cur);
-      arm();
-    }, Math.max(0, cur.heardAt + COCKPIT_SILENCE_MS - now()));
-  };
-  const start = (r: Remote) => {
-    r.starting = true;
-    const g = gen;
-    const s = session.ventSettings; // it takes over from the engine's own ventilator (what was handed over, or set since)
-    if (s) r.cockpit.port.post({ v: 1, kind: 'control', patch: cockpitPatch(s, r.last?.cfg) });
-    r.cockpit.port.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
-    const go = desk.take(r.cockpit, () => g === gen && !r.hidden);
-    void go.then(() => {
-      r.starting = false;
-      if (g !== gen || desk.driving !== r.cockpit) return;
-      // a cockpit at its clock limit sends no frame the new link could learn its offset from (cut off, it ran to the last
-      // limit it had; its frames on the way were lost): let it run past it, as the link does after a restore (FX-1)
-      if (r.topTick >= 0) r.cockpit.port.post({ v: 1, kind: 'clock', ventTick: r.topTick + 2 * LEAD_TICKS });
+    void desk.handOver(cockpit, () => g === gen, true).then(() => {
+      if (silent && o.revokeOnSilence && g === gen && desk.driving !== cockpit) {
+        revoked = true;
+        o.revokeOnSilence();
+        return;
+      }
       arm();
     });
   };
+  /** The silence watchdog: one timer, re-armed for what is left of the second since the last message. */
+  const arm = () => {
+    if (timer !== null || ended || desk.driving !== cockpit) return;
+    timer = setTimeout(() => {
+      timer = null;
+      if (ended || desk.driving !== cockpit) return;
+      if (now() - heardAt >= COCKPIT_SILENCE_MS) return lose(true);
+      arm();
+    }, Math.max(0, heardAt + COCKPIT_SILENCE_MS - now()));
+  };
+  const start = () => {
+    starting = true;
+    const g = gen;
+    const s = session.ventSettings; // it takes over from the engine's own ventilator (what was handed over, or set since)
+    if (s) linkPort.post({ v: 1, kind: 'control', patch: cockpitPatch(s, last?.cfg) });
+    linkPort.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
+    void desk.take(cockpit, () => g === gen && !hidden).then(() => {
+      starting = false;
+      if (g !== gen || desk.driving !== cockpit) return;
+      // a cockpit at its clock limit sends no frame the new link could learn its offset from (cut off, it ran to the last
+      // limit it had; its frames on the way were lost): let it run past it, as the link does after a restore (FX-1)
+      if (topTick >= 0) linkPort.post({ v: 1, kind: 'clock', ventTick: topTick + 2 * LEAD_TICKS });
+      arm();
+    });
+  };
+  const offScale = session.onTimeScale((k) => linkPort.post({ v: 1, kind: 'time', action: 'scale', value: k }));
+  return {
+    cockpit,
+    heard(b) {
+      if (ended || revoked) return;
+      heardAt = now();
+      for (const m of b.kind === 'batch' ? b.msgs : b.kind === 'cmds' ? [b] : []) topTick = Math.max(topTick, m.tick);
+      if (b.kind === 'settings') {
+        last = { cfg: b.cfg, ...(b.measured ? { measured: b.measured } : {}) };
+        if (b.hidden && !hidden) {
+          hidden = true;
+          displaced = false; // shown again, it takes over
+          lose();
+        } else if (!b.hidden) hidden = false;
+      }
+      if (desk.driving !== cockpit && !starting && !hidden && !displaced) start();
+      arm();
+    },
+    end() {
+      if (ended) return;
+      ended = true;
+      gen++;
+      offScale();
+      if (timer !== null) clearTimeout(timer);
+      // revoked, taken over, gone; a cockpit revoked for its silence was handed over then and hands nothing over now
+      if (!revoked && desk.driving === cockpit) void desk.handOver(cockpit, () => true, true);
+      port.close();
+    },
+  };
+}
+
+/** R8d: the ventilator's own screens on each session's desk, for Room setup's rows. */
+const screens = new WeakMap<AppSession, { window: Served | null; device: Served | null }>();
+const screensOf = (session: AppSession) => {
+  let s = screens.get(session);
+  if (!s) screens.set(session, (s = { window: null, device: null }));
+  return s;
+};
+/** R8d: whether the laptop's ventilator window and the granted tablet drive the patient now (null: none heard). */
+export function ventScreens(session: AppSession): VentScreens {
+  const s = screensOf(session);
+  const desk = cockpitDesk(session);
+  const of = (x: Served | null) => (x ? (desk.driving === x.cockpit ? 'driving' : 'handed over') : null);
+  return { window: of(s.window), device: of(s.device) };
+}
+
+/**
+ * R8c: the host drives from the granted remote cockpit (HostSession onVent / onVentilator) exactly as the view does: its
+ * frames go through `attachMonitorToLink(session.linked(m), relayPort)` on the desk, so the engine stays the master
+ * clock, the frames are stamped on the host, mirrored to a same-browser viewer, and every network follower holds. It
+ * is served as `serveCockpit` says; its end is its grant's (revoked, taken over, its socket closed).
+ */
+export function serveRemoteCockpit(session: AppSession): () => void {
+  const desk = cockpitDesk(session);
+  const mine = screensOf(session);
+  let cur: { from: string; served: Served; deliver: ((b: VentWireBody) => void) | null } | null = null;
   const offRemote = session.onRemoteVent({
     ventilator(from) {
       if (cur && cur.from === from) return;
-      gen++;
       const old = cur;
       cur = null;
-      if (old) {
-        if (desk.driving === old.cockpit) void desk.handOver(old.cockpit, () => true, true); // revoked, taken over, gone
-        old.port.close();
-      }
+      old?.served.end();
       if (from === null) return;
-      const r: Remote = {
-        from, deliver: null, last: null, heardAt: now(), hidden: false, displaced: false, starting: false, topTick: -1,
-        port: null as unknown as RelayPort, cockpit: null as unknown as Cockpit,
-      };
-      r.port = createRelayPort({
+      const r: { from: string; served: Served; deliver: ((b: VentWireBody) => void) | null } = { from, deliver: null, served: null as unknown as Served };
+      r.served = serveCockpit(session, desk, createRelayPort({
         send: (b) => void session.host.ventPost(b as VentLinkBody),
         onBody: (fn) => ((r.deliver = fn), () => void (r.deliver = null)),
-      });
-      const port: LinkPort = {
-        post: (m) => {
-          if (m.kind === 'clock' || m.kind === 'run') r.topTick = Math.max(r.topTick, m.ventTick);
-          r.port.post(m);
-        },
-        onMessage: (fn) => r.port.onMessage(fn),
-        close: () => r.port.close(),
-      };
-      r.cockpit = { port, remote: true, settings: () => r.last, displaced: () => void (r.displaced = true) };
+      }), { revokeOnSilence: () => void session.host.revokeVentilator(from, VENTILATOR_REASONS.silent) });
       cur = r;
+      mine.device = r.served;
     },
     vent(from, body) {
       const r = cur;
       if (!r || r.from !== from) return;
-      const b = body as VentWireBody;
-      r.heardAt = now();
-      for (const m of b.kind === 'batch' ? b.msgs : b.kind === 'cmds' ? [b] : []) r.topTick = Math.max(r.topTick, m.tick);
-      if (b.kind === 'settings') {
-        r.last = { cfg: b.cfg, ...(b.measured ? { measured: b.measured } : {}) };
-        if (b.hidden && !r.hidden) {
-          r.hidden = true;
-          r.displaced = false; // shown again, it takes over
-          lose(r);
-        } else if (!b.hidden) r.hidden = false;
-      }
-      if (desk.driving !== r.cockpit && !r.starting && !r.hidden && !r.displaced) start(r);
-      r.deliver?.(b);
-      arm();
+      r.served.heard(body as VentWireBody);
+      r.deliver?.(body as VentWireBody);
     },
   });
-  const offScale = session.onTimeScale((k) => cur?.port.post({ v: 1, kind: 'time', action: 'scale', value: k }));
   return () => {
     offRemote();
-    offScale();
-    if (timer !== null) clearTimeout(timer);
-    cur?.port.close();
+    cur?.served.end();
+  };
+}
+
+/**
+ * R8d: the cockpit in a window of this computer (Room setup's "Ventilator in a new window": `vent-hamilton.html?link=
+ * <code>`), linked by the room code over BroadcastChannel `pme-vent/<code>` — the same browser, trusted without a PIN as
+ * every window of it is (§4 D9). The window's page says its settings once a second and on every change, and whether
+ * it is hidden (hamilton-page.ts); served on the desk as a tablet is: it drives while it is open and shown, and closing
+ * it (its last word says hidden, or its silence) hands the patient to the engine's own ventilator.
+ */
+export function serveWindowCockpit(session: AppSession, open: (name: string) => LinkPort = createBroadcastPort): () => void {
+  const desk = cockpitDesk(session);
+  const port = open(session.code);
+  const served = serveCockpit(session, desk, port);
+  const off = port.onMessage((m) => served.heard(m as VentWireBody));
+  screensOf(session).window = null; // listed once it is heard
+  const offSeen = port.onMessage(() => {
+    screensOf(session).window = served;
+    offSeen();
+  });
+  return () => {
+    off();
+    offSeen();
+    served.end();
   };
 }
 

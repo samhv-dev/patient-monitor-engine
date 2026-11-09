@@ -375,7 +375,10 @@ describe('respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
   // EtCO2 rise from +6.1 to +5.99994 — red by 6 × 10⁻⁵ of an [FIT: EtCO2-rise band; brief research/44 T-30] band that read +5.98 before FU-8 B4 moved it just
   // inside (B1 alone measured +6.1). The PaCO2 rise (+6.7) is unchanged; the twin row in resp-inspired-co2.test.ts is
   // recorded the same way.
-  it('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)', async () => {
+  // research/44 L2-26 (Bowman's pressure 17.1 → 18): the EtCO2 rise moves +5.99994 → +6.00045 and meets the band by
+  // 4.5 × 10⁻⁴ — a knife edge, not a rebreathing mechanism change; the twin in resp-inspired-co2.test.ts flips with it.
+  // Re-merge of 9 Nov (brief 112): PR #352 (mechanism G) flipped it too; on the merge of both EtCO2 +6.01240; band untouched.
+  it('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.67 / EtCO2 +6.0124 with brief 93's effort (+6.00045 after Bowman 18, +5.99994 before)', async () => {
     const run = async (fico2: number) => {
       const e = rig6();
       await ventRig(e);

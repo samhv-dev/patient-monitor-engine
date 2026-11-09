@@ -59,6 +59,9 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | Where | Relation |
 |---|---|
 | [`ecg-filter.ts:10`](../../packages/engine-core/src/l3/ecg-filter.ts#L10) | Normalised biquad (a0 = 1): y = b0·x + b1·x₋₁ + b2·x₋₂ − a1·y₋₁ − a2·y₋₂. |
+| [`generic.ts:8`](../../packages/engine-core/src/l3/eeg-devices/generic.ts#L8) | SR = 100 × (time with \|x\| < 5 µV for ≥ 0.5 s) ÷ (valid time) over the last 60 s |
+| [`spectral.ts:5`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts#L5) | PSD_k = c·\|Σ w_i·(x_i − x̄)·e^(−2πik/N)\|² / (fs·Σ w_i²), c = 2 except at 0 Hz and fs/2; Hann window w |
+| [`spectral.ts:23`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts#L23) | One-sided power spectral density of one epoch, µV²/Hz, at k·fs/N for k = 0 … ⌊N/2⌋ (Hann window, mean removed). |
 | [`nibp.ts:4`](../../packages/engine-core/src/l3/nibp/nibp.ts#L4) | from the ACTUAL site beats:  A(Pc) = Amax·exp(−((Pc − MAP)/w)²), Amax = 4·tanh(PP/50) mmHg, |
 | [`nibp.ts:5`](../../packages/engine-core/src/l3/nibp/nibp.ts#L5) | w_hi = (SBP − MAP)/√(−ln Rs), w_lo = (MAP − DBP)/√(−ln Rd), Rs 0.50, Rd 0.80 → invert the envelope at |
 | [`nibp.ts:6`](../../packages/engine-core/src/l3/nibp/nibp.ts#L6) | Rs/Rd, MAP = envelope peak, + noise SD 4 mmHg → result + timestamp, or fail. |
@@ -104,6 +107,21 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `tcpKey` | `string` | — |
 | `statusLast` | `Array<number \| string \| boolean \| null>` | defib/pacer fields of the last deviceStatus (JSON-safe), compared field by field. |
 | `lastStatusT` | `number` | — |
+
+### `GenericState` ([`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fs` | `number` | — |
+| `n` | `number` | Samples read since switch-on. |
+| `ring` | `number[]` | The last epoch, a ring of fs·epochS samples, and its next write index. |
+| `head` | `number` | — |
+| `fresh` | `number[]` | The samples since the last reading (the raw display). |
+| `avg` | `number[] \| null` | The smoothed spectrum (valid epochs only), µV²/Hz; null until the first valid epoch. |
+| `run` | `number` | The current stretch below the threshold, samples. |
+| `open` | `number` | Suppressed samples in the open second, and the closed seconds of the window: suppressed samples, valid. |
+| `bins` | `number[]` | — |
+| `valid` | `boolean[]` | — |
 
 ### `HrState` ([`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts))
 
@@ -325,6 +343,39 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|---|---|
 | `TREND_HOURS` | `8` | — | — | — |
 
+### EEG devices: the registry's spec rows (EEG plan D8; `packages/engine-core/src/l3/eeg-devices/registry.ts`)
+
+| Device | Label | Constant | Value | Unit | Source / tag | What |
+|---|---|---|---|---|---|---|
+| `generic` | Processed EEG (generic) | `updateS` | 1 | s | [ENG: device; plan E6 "the generic reader 1 s"] | how often the numerics are published; each update reads the last epoch |
+| `generic` | Processed EEG (generic) | `epochS` | 2 | s | [TXT Ch35 p. 1106: 2-s epochs] | the epoch each spectrum is computed from |
+| `generic` | Processed EEG (generic) | `rawWindowS` | 8 | s | [TXT Ch36 p. 1137: the raw EEG over 5–10 s] [ENG: display; 8 inside it] | the raw trace the display keeps |
+| `generic` | Processed EEG (generic) | `dsaHistoryS` | 3600 | s | [TXT Ch36 pp. 1138–1139: the spectrogram of about the last hour] | the spectrogram the display keeps |
+| `generic` | Processed EEG (generic) | `dsaMaxHz` | 50 | Hz | [TXT Ch36 p. 1139, Fig. 36.3: 0–50 Hz] | the spectrogram's top frequency |
+| `generic` | Processed EEG (generic) | `spectrumLoHz` | 0.5 | Hz | [ENG: device; the lowest frequency a 2-s epoch resolves] | the lower edge of the SEF and median frequency |
+| `generic` | Processed EEG (generic) | `spectrumHiHz` | 30 | Hz | [ENG: device; the top of beta (Ch36 Table 36.1); above it EMG dominates (Ch36 p. 1142)] | the upper edge of the SEF and median frequency |
+| `generic` | Processed EEG (generic) | `sefFraction` | 0.95 | fraction | [P-14, the owner's placeholder: 95 %, the SEF95 of Bruhn 2003 (Miller Ch23 ref. 147, full book); Ch36 gives no percentile] | the spectral edge: the fraction of the power below it |
+| `generic` | Processed EEG (generic) | `smoothingS` | 5 | s | [ENG: device; no source, a single 2-s periodogram scatters the edge by several Hz] | the time constant of the spectrum the numerics read |
+| `generic` | Processed EEG (generic) | `suppressionUv` | 5 | µV | [TXT Ch36 p. 1139, Fig. 36.6: suppressed stretches < 5 µV] | the suppression threshold, \|x\| |
+| `generic` | Processed EEG (generic) | `suppressionMinS` | 0.5 | s | [P-8: > 0.5 s, Rampil 1998 (Ch36 ref. 45) via secondary sources, research/43] | the shortest stretch counted as suppression |
+| `generic` | Processed EEG (generic) | `srWindowS` | 60 | s | [ENG: device; Miller's 30–60 s (Ch36 p. 1140), the upper bound, the steadier (plan E5)] | the suppression ratio's window |
+| `generic` | Processed EEG (generic) | `impedanceLimitKOhm` | 5 | kΩ | [P-13, the plan default: Ch36 p. 1145 gives 5 or 8 kΩ] | above it the signal is questionable |
+| `generic` | Processed EEG (generic) | `impedanceUnequalKOhm` | 2.5 | kΩ | [ENG: device; half the limit, Ch36 p. 1145 names inequality without a number] | electrodes differing by more are unequal: questionable |
+| `generic` | Processed EEG (generic) | `cauteryLoHz` | 40 | Hz | [ENG: device; above the EEG and most of the scalp EMG (peak 20–30 Hz, research/43 P-9)] | the band the cautery detector reads |
+| `generic` | Processed EEG (generic) | `cauteryUv2` | 2000 | µV² | [ENG: device; ≈ 7 × the most the scalp EMG puts above 40 Hz, ≈ 1/11 of one diathermy burst (Ch36 p. 1146: power raised at all frequencies)] | above it in the cautery band, the epoch is invalid |
+| `generic` | Processed EEG (generic) | `slowLoHz` | 0.1 | Hz | [TXT Ch36 Table 36.1] | slow oscillation, lower edge (read from the first bin, 0.5 Hz) |
+| `generic` | Processed EEG (generic) | `slowHiHz` | 2 | Hz | [TXT Ch36 Table 36.1] | slow oscillation, upper edge |
+| `generic` | Processed EEG (generic) | `deltaLoHz` | 0.5 | Hz | [TXT Ch36 Table 36.1] | delta, lower edge |
+| `generic` | Processed EEG (generic) | `deltaHiHz` | 4 | Hz | [TXT Ch36 Table 36.1] | delta, upper edge |
+| `generic` | Processed EEG (generic) | `thetaLoHz` | 4 | Hz | [TXT Ch36 Table 36.1] | theta, lower edge |
+| `generic` | Processed EEG (generic) | `thetaHiHz` | 8 | Hz | [TXT Ch36 Table 36.1] | theta, upper edge |
+| `generic` | Processed EEG (generic) | `alphaLoHz` | 8 | Hz | [TXT Ch36 Table 36.1] | alpha, lower edge |
+| `generic` | Processed EEG (generic) | `alphaHiHz` | 12 | Hz | [TXT Ch36 Table 36.1] | alpha, upper edge |
+| `generic` | Processed EEG (generic) | `betaLoHz` | 12 | Hz | [TXT Ch36 Table 36.1] | beta, lower edge |
+| `generic` | Processed EEG (generic) | `betaHiHz` | 30 | Hz | [TXT Ch36 Table 36.1] | beta, upper edge |
+| `generic` | Processed EEG (generic) | `gammaLoHz` | 30 | Hz | [TXT Ch36 Table 36.1: gamma > 30 Hz] | gamma, lower edge |
+| `generic` | Processed EEG (generic) | `gammaHiHz` | 45 | Hz | [ENG: device; below the 50 Hz mains line] | gamma, upper edge |
+
 ## Functions
 
 | Function | File | Doc |
@@ -340,6 +391,10 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `createFilterState` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Plain-data filter state: |
 | `filterSample` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Filter one sample through the cascade, updating `state` in place. |
 | `magnitudeAt` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | \|H(e^{jω})\| of the cascade at frequency f (Hz). |
+| `genericRead` | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
+| `psdOf` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | One-sided power spectral density of one epoch, µV²/Hz, at k·fs/N for k = 0 … ⌊N/2⌋ (Hann window, mean removed). |
+| `bandPower` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | Power in [lo, hi) Hz, µV² (bins of width dfHz from 0 Hz). |
+| `edgeFrequency` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | The frequency below which a fraction q of the power in [lo, hi) Hz lies, Hz: |
 | `hrAveragingOf` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | The skin's HR averaging option, or undefined (the default method). |
 | `hrOnQrs` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | Feed one detected R time (sim seconds). |
 | `hrMeasure` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | The HR numeric at time t (call once per second); |
@@ -366,7 +421,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `deviceBias` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | Device bias: |
 | `spo2PitchHz` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): |
 
-Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
+Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
 
 ## Source files
 
@@ -376,6 +431,9 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts) | CO2 numerics (brief §4.4 "Numerics (L3)"; research 03 §4.5) measured from the DISPLAYED capnogram: breath detection on a rising edge above 50 % of the recent peak with hysteresis, EtCO2 = maximum breath peak of the last |
 | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | The device layer (brief §3.2 L3 "alarm engine, pacer and defibrillator"): one JSON-safe state object the engine keeps beside its pipeline state. |
 | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Monitor ECG filters (brief §4.1 "Measurement chain"; research 03 §1.11, Philips MP2 datasheet): Monitor 0.5–40 Hz + automatic mains notch (50 Hz default, brief §5 / the owner's decision) Diagnostic 0.05–150 Hz, no notch |
+| [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | EEG E5 (plan §7 E5; D8): the generic processed-EEG reader — everything Miller says a monitor shows, computed from the samples, the sample rate and the electrode impedance only (the device boundary, plan §5). |
+| [`l3/eeg-devices/registry.ts`](../../packages/engine-core/src/l3/eeg-devices/registry.ts) | EEG plan D8: the registry of EEG devices, one spec row each (like the room's defibrillator models): the device's label, update interval and every constant with its tag (docs/model/monitor.md lists them), and its reader — |
+| [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | EEG devices (plan §7 E5): the spectral analysis every reader shares — the periodogram of one epoch, band power and the edge frequency below which a fraction of the power lies (the spectral edge and the median frequency). |
 | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | Device heart rate (brief §6.1 "HR"; research 03 §1.12): average the last 12 RR, dropping the max and the min (IEC-style; the Philips-like skin uses the plain mean of 12); if the last 3 RR are all > 1200 ms use the last 4 |
 | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | Oscillometric NIBP (brief §4.5, §6.3; research 03 §5): a measurement over sim time, never a readout. |
 | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | Device pressure numerics (brief §4.2 "Numerics (L3)", §6.1; research 03 §2.2): per-beat SBP/DBP = max/min of the DISPLAYED (transducer + 12 Hz filter) waveform between two detected feet; MAP = the INTEGRAL of the beat (n |
@@ -394,19 +452,20 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 |---|---|---|---|---|---|
 | CVP limit chatter on a stable ventilated patient: CVP_M_HIGH raised ≤ 2 times in the 11-min MANUAL rhythm tour (the audit's chatter criterion) | 4 on philips-like and 4 on mindray-like | — | MIS-SPECIFIED ([audit row 179](../../docs/validation/target-audit/30-target-audit.md#row-179)) | Split: (a) no CVP_M_HIGH raise/clear cycle < 5 s (chatter, already tested); (b) no CVP_M_HIGH in the sinus/AF/sinus-tachy segments once baseline CVP is corrected; (c) a raise is ALLOWED (or expected) during VT, CHB, junctional and VVI segments | [`fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) |
 | philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats | 6 | — | MIS-SPECIFIED ([audit row 180](../../docs/validation/target-audit/30-target-audit.md#row-180)) | State the PEA kind. True PEA: spread ≤ 5 with no HR-synchronous component. Pseudo-PEA: PP 3-10 mmHg at the electrical rate, MAP 15-40, and NON-PULSATILE need not show | [`fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) |
-| %s: the CPR window's EtCO2 floor is 10 mmHg | 7 in the first 15 s of compressions | research/10 §13 | TOO NARROW ([audit row 181](../../docs/validation/target-audit/30-target-audit.md#row-181)) | window mean 10-20 mmHg at quality 0.8 (R39-2: ≈ 20), min ≥ 5 from 30 s after compressions start; no floor on the first 30 s | [`fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) |
 | saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) | 9 s | research/06 §4.1 | MIS-SPECIFIED ([audit row 182](../../docs/validation/target-audit/30-target-audit.md#row-182)) | Either keep ≤ 8 s but use the manual's end point (first displayed HR ≥ 110, expected ~6 s) or keep the 5 % end point with ≤ 10 s (8 s window + detection + update); the IEC ≤ 11 s row already passes | [`fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) |
 | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 | 1.49 | — | UNSUPPORTED ([audit row 184](../../docs/validation/target-audit/30-target-audit.md#row-184)) | PI 1.0-3.0 for a normal ventilated adult; PI(PPV) ≤ PI(spontaneous) and ≥ 0.75 × it (the SV ratio) | [`fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) |
 | MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor's 77/67 | 80/56 | — | MIS-SPECIFIED ([audit row 185](../../docs/validation/target-audit/30-target-audit.md#row-185)) | Reference = the arterial line at the reading (already passing, ± 8); add cuff PP ≤ line PP + 3 (no widening); the tracker's reach of 77/67 is a separate MANUAL-tracker test | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
 | MANUAL AF 150, 11 cycles: \|SBP bias\| ≤ 6 mmHg against the TRUE radial pressure (the audit's AF criterion) | +10.8 | — | MIS-SPECIFIED ([audit row 186](../../docs/validation/target-audit/30-target-audit.md#row-186)) | \|mean bias\| ≤ 5 mmHg vs the displayed arterial line (beat-detected), SD ≤ 8, with the first reading after AF onset excluded or 3-reading averages | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
+| AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | — | — | not audited | — | [`shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) |
 
 ## Tests
 
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`engine/device-determinism.test.ts`](../../packages/engine-core/test/engine/device-determinism.test.ts) | 0 | 0 |
+| [`engine/eeg-device.test.ts`](../../packages/engine-core/test/engine/eeg-device.test.ts) | 0 | 0 |
 | [`engine/fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) | 1 | 0 |
-| [`engine/fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) | 2 | 0 |
+| [`engine/fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) | 1 | 0 |
 | [`engine/fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) | 1 | 0 |
 | [`engine/fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) | 1 | 0 |
 | [`engine/fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) | 2 | 0 |
@@ -420,6 +479,8 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/co2-numerics/co2-numerics.test.ts`](../../packages/engine-core/test/l3/co2-numerics/co2-numerics.test.ts) | 0 | 0 |
 | [`l3/ecg-filter-bands.test.ts`](../../packages/engine-core/test/l3/ecg-filter-bands.test.ts) | 0 | 0 |
 | [`l3/ecg-filter.test.ts`](../../packages/engine-core/test/l3/ecg-filter.test.ts) | 0 | 0 |
+| [`l3/eeg-devices/boundary.test.ts`](../../packages/engine-core/test/l3/eeg-devices/boundary.test.ts) | 0 | 0 |
+| [`l3/eeg-devices/generic.test.ts`](../../packages/engine-core/test/l3/eeg-devices/generic.test.ts) | 0 | 0 |
 | [`l3/hr-averaging.test.ts`](../../packages/engine-core/test/l3/hr-averaging.test.ts) | 0 | 0 |
 | [`l3/hr.test.ts`](../../packages/engine-core/test/l3/hr.test.ts) | 0 | 0 |
 | [`l3/nibp/nibp.test.ts`](../../packages/engine-core/test/l3/nibp/nibp.test.ts) | 0 | 0 |
@@ -428,7 +489,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/qrs-pacing.test.ts`](../../packages/engine-core/test/l3/qrs-pacing.test.ts) | 0 | 0 |
 | [`l3/qrs.test.ts`](../../packages/engine-core/test/l3/qrs.test.ts) | 0 | 0 |
 | [`l3/resp/impedance.test.ts`](../../packages/engine-core/test/l3/resp/impedance.test.ts) | 0 | 0 |
-| [`l3/shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) | 0 | 0 |
+| [`l3/shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) | 1 | 0 |
 | [`l3/spo2/spo2-skin.test.ts`](../../packages/engine-core/test/l3/spo2/spo2-skin.test.ts) | 0 | 0 |
 | [`l3/spo2/spo2.test.ts`](../../packages/engine-core/test/l3/spo2/spo2.test.ts) | 0 | 0 |
 | [`l3/trends/rewind.test.ts`](../../packages/engine-core/test/l3/trends/rewind.test.ts) | 0 | 0 |

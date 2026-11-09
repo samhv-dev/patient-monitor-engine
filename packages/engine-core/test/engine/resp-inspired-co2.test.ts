@@ -24,7 +24,11 @@ describe('rebreathing acts on PaCO2', { timeout: 600_000 }, () => {
   // FU-8 B4 (E-FU8B-7): flipped — the anaesthetised rig's output moves with the tonic sympathetic share; EtCO2 +5.98 → +6.1
   // R45 (FU-7.1 B3; OWNER RULING Q5, 2026-10-10, the same assertion as resp-suite RS14): recorded with its number, NOT
   // widened — the alveolar-washout fall moves the EtCO2 rise to +5.99994, red by 6 × 10⁻⁵. PaCO2 +6.7 unchanged.
-  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)', async () => {
+  // research/44 L2-26 (Bowman's pressure 17.1 → 18, the sourced value): the renal acid–base term moves the EtCO2 rise
+  // from +5.99994 to +6.00045, so the band is met — by 4.5 × 10⁻⁴, a knife edge, not a rebreathing mechanism change.
+  // Re-merge of 9 Nov (brief 112): both sides flipped this row — PR #352 (mechanism G, the drive and effort under the
+  // ventilator) and main (Bowman 18). On the merge of both the rise reads PaCO2 +6.665 / EtCO2 +6.01240; band untouched.
+  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.67 / EtCO2 +6.0124 with brief 93's effort (+6.00045 after Bowman 18, +5.99994 before)', async () => {
     const c = await run(0);
     const r = await run(8);
     // eslint-disable-next-line no-console -- the PR's numbers

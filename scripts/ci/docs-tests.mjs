@@ -35,6 +35,8 @@ export const DOCS_TESTS = {
     'src/app/views/debrief-marks-course.dom.test.ts',
     'src/app/views/debrief-moments-print.dom.test.ts',
     'src/app/views/debrief-fa.dom.test.ts', // docs/showcase/i18n/fa-debrief.json, through the page (i18n/fa-dom.ts) and the script
+    'src/app/views/mechanisms.dom.test.ts', // docs/showcase/i18n/fa-debrief.json, the mechanism tree's Persian (i18n/fa-dom.ts)
+    'src/app/mechanisms/labels.test.ts', // docs/plans/mechanism-tree-labels.md, the clinical labels for the owner's review
   ],
 };
 

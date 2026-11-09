@@ -113,7 +113,11 @@ const shot = async (p: Page, name: string) => {
 
 // the review's two sizes and the owner's own window (1990 × 920 inside Safari)
 for (const [w, h] of [[1280, 800], [1920, 1080], [1990, 920]] as const) {
-  test(`UI-A #10 Saadat skin at ${w} × ${h}: the BFI/EtAA row has clear space on the Instructor and Monitor views`, async ({ page, browserName }) => {
+  // @known-flaky, class crash (outside our code; brief 103): in 45 ci runs with the gating WebKit jobs, 8 Nov 12:05 to 9 Nov 02:50 UTC (after PR #342), a first attempt of one of the three sizes
+  // failed in 6 runs (13 %), each "page.evaluate: Target page, context or browser has been closed"; in one of them
+  // (run 42491322502) the 1990 × 920 test also waited the full 60 s for the AGENTS tile's number. Local macOS WebKit
+  // 60/60; Chromium 0 sightings.
+  test(`UI-A #10 Saadat skin at ${w} × ${h}: the BFI/EtAA row has clear space on the Instructor and Monitor views`, { tag: '@known-flaky' }, async ({ page, browserName }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: w, height: h });
     await openApp(page, base, TEACH2, { warmMs: 2000, site: { skin: 'saadat-like' } }); // Instructor v2's monitor pane

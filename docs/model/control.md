@@ -121,6 +121,12 @@ transports (`src/protocol.ts`).
 
 ## Parameters
 
+### [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `MAX_STATEMENT` | `200` | — | [ENG: test; keeps an entry a paraphrase, never a copied monograph] | A statement is a paraphrase in our words, never a copied monograph (rule 6) [ENG: test; keeps an entry a paraphrase, never a copied monograph]. |
+
 ### [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -180,6 +186,8 @@ transports (`src/protocol.ts`).
 | `lanAddresses` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | This machine's IPv4 addresses another device can reach, best first (no loopback, no link-local 169.254/16). |
 | `isLocalAddress` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | A socket from this machine itself (loopback, or one of its own interface addresses): |
 | `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir`, or null when there is none or the file is not ours. |
+| `checkFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | §5's six rules over the layer's files (path relative to the formulary folder → parsed JSON): |
+| `loadFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | The typed layer, when every rule holds; |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
 | `assertWireSafe` | [`guard.ts`](../../packages/controller/src/guard.ts) | Throws WireSafetyError when `m` carries samples. |
@@ -239,6 +247,8 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`packages/controller/relay/bin.ts`](../../packages/controller/relay/bin.ts) | — |
 | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | Stage 12 (the classroom): the relay's HTTP side on the WebSocket's own port. |
 | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | @pme/controller relay (brief §3.7): rooms keyed by 6-character session code, host authority, a snapshot cache for late joiners, heartbeat and room expiry. |
+| [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | Plan learner-action-remote.md §5, L1: the formulary loader and the source check. |
+| [`formulary/types.ts`](../../packages/controller/src/formulary/types.ts) | Plan learner-action-remote.md §5, L1: the formulary layer's types. |
 | [`guard.ts`](../../packages/controller/src/guard.ts) | Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel). |
 | [`index.ts`](../../packages/controller/src/index.ts) | @pme/controller public API (brief §7.5; R7). |
 | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | Pure command builders for the generated controls (no DOM). |
@@ -290,6 +300,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
 | [`index.test.ts`](../../packages/controller/test/index.test.ts) | 0 | 0 |
@@ -351,6 +362,7 @@ None recorded.
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-instructor.test.ts`](../../packages/controller/test/session/host-instructor.test.ts) | 0 | 0 |
+| [`session/host-learner-defib.test.ts`](../../packages/controller/test/session/host-learner-defib.test.ts) | 0 | 0 |
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |
@@ -358,6 +370,7 @@ None recorded.
 | [`session/host-stage-group.test.ts`](../../packages/controller/test/session/host-stage-group.test.ts) | 0 | 0 |
 | [`session/host-time.test.ts`](../../packages/controller/test/session/host-time.test.ts) | 0 | 0 |
 | [`session/host-ventilator.test.ts`](../../packages/controller/test/session/host-ventilator.test.ts) | 0 | 0 |
+| [`session/learner-baseline.test.ts`](../../packages/controller/test/session/learner-baseline.test.ts) | 0 | 0 |
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |
 | [`session/timeline-reset.test.ts`](../../packages/controller/test/session/timeline-reset.test.ts) | 0 | 0 |
 | [`session/timeline-restore.test.ts`](../../packages/controller/test/session/timeline-restore.test.ts) | 0 | 0 |

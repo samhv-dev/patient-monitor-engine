@@ -28,8 +28,10 @@ export interface Stabilised {
   params: CircParams;
   ledger: LedgerRow[];
   converged: boolean;
-  /** Resting per-beat reference values (for the coronary demand normalisation and the tests). */
-  ref: { hr: number; sbp: number; dbp: number; map: number; cvp: number; lvedv: number; lvedp: number; lvsp: number; sv: number; co: number; pcwp: number };
+  /** Resting per-beat reference values (for the coronary demand normalisation and the tests). `sv` is the BARE circuit's
+   * at the profile's targets and a constant pleural pressure — NOT the patient's settled rest in the running engine,
+   * which the pleth's SV₀ is (engine.ts REST_AVG_S says why the two differ). */
+  ref: { hr: number; sbp: number; dbp: number; map: number; cvp: number; lvedv: number; rvedv?: number; lvedp: number; lvsp: number; sv: number; co: number; pcwp: number };
 }
 
 const zero = () => 0;
@@ -94,7 +96,7 @@ function solve(r: ResolvedProfile): Stabilised {
   let edvMax = 0;
   let edvRv = 0;
   let prevA = 1;
-  const ref = { hr, sbp: 0, dbp: 0, map: 0, cvp: 0, lvedv: 0, lvedp: 0, lvsp: 0, sv: 0, co: 0, pcwp: 0 };
+  const ref = { hr, sbp: 0, dbp: 0, map: 0, cvp: 0, lvedv: 0, rvedv: 0, lvedp: 0, lvsp: 0, sv: 0, co: 0, pcwp: 0 };
   for (let w = 0; w < STAB_MAX_WINDOWS; w++) {
     const tEnd = t + win;
     let sbp = -1e9, dbp = 1e9, map = 0, cvp = 0, pcwp = 0, n = 0, lvsp = -1e9, qav = 0, lvedp = 0, nEd = 0;
@@ -140,7 +142,7 @@ function solve(r: ResolvedProfile): Stabilised {
     const edpOk = !r.tuneLvedp || Math.abs(edp - r.lvedpTarget) <= STAB_LVEDP_TOL;
     const inTol = Math.abs(sbp - sT) <= 0.01 * sT && Math.abs(dbp - dT) <= 0.01 * dT && Math.abs(cvp - cT) <= 0.3 && edpOk;
     ok = inTol ? ok + 1 : 0;
-    ref.sbp = sbp; ref.dbp = dbp; ref.map = map; ref.cvp = cvp; ref.lvedv = edvMax; ref.lvsp = lvsp; ref.pcwp = pcwp;
+    ref.sbp = sbp; ref.dbp = dbp; ref.map = map; ref.cvp = cvp; ref.lvedv = edvMax; ref.rvedv = edvRv; ref.lvsp = lvsp; ref.pcwp = pcwp;
     ref.lvedp = edp;
     ref.sv = qav / (win / rr);
     ref.co = (qav / win) * 0.06;

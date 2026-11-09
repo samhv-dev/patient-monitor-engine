@@ -25,6 +25,19 @@
 // awarenessRisk flips on 11 of 1200 samples where diRaw crosses its 60 threshold a few seconds apart). awake and
 // propofolTci (no ventilator) are bit-identical. No number was fitted; nothing else in the EEG chain changed.
 // Yields once per sim-minute (CI rule).
+// Re-recorded (research/44 L2-26, PR fix-bowman-pressure): Bowman's capsule pressure 17.1 → 18 mmHg (Miller 10e Fig. 15.8)
+// is the only cause. With 17.1 restored on the same tree the six runs equal the old fixture exactly. The chain at the
+// awake rig's 120 s: GFR 124.15 → 116.14 mL/min; urine +5 µL cumulative; bvRel −1e-6; Hb +2e-5 g/dL; MAP
+// 96.29612 → 96.29605; cbfRel equal to 5 decimals; diRaw unchanged (awake.map moves in 7 of 120 samples by 0.001).
+// Anaesthetised runs: the same haemodynamic drift reaches diRaw (|Δ| ≤ 0.002) through what neuro reads from the
+// circulation: cbfRel in the metabolic row, and the drugs' flow and clearance coupling. The sampled MAP/HR move more
+// (≤ 1.44 mmHg, 0.2 bpm) because the 1 Hz sample lands at a slightly different beat phase. One discrete change: in
+// propofolRocIncision, awarenessRisk is 1 at 956 s where it was 0 (diRaw sits at the 60 edge under full block).
+// Re-recorded on the re-merge of 9 Nov (brief 112: main into PR #352): both causes above together, nothing new. Against
+// main's fixture the two runs without a ventilator (awake, propofolTci) are bit-identical and only the four ventilated runs
+// move, by the mechanism-G sizes stated above (diRaw ≤ 0.647, MAP ≤ 4.02, awarenessRisk on 10 samples, all in
+// propofolRocIncision's case); against the branch's fixture every run moves only by Bowman-18 sizes (diRaw ≤ 0.004, MAP
+// ≤ 1.43 at the 1 Hz beat phase, HR ≤ 0.24). No number fitted.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type EngineEvent, type MonitorEngine } from '../../src/index.ts';

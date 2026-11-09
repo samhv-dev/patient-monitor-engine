@@ -1,6 +1,7 @@
 // EEG stage public types (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E1, E2): the cortical state computed from the
 // drug bus and the physiology (l2/eeg/state.ts) and the spectral description each state produces (l2/eeg/spectra.ts).
-// No signal and no device here (E3, E5 on): nothing in this file is published on the wire.
+// The `eeg` channel's device commands (E3/E4: on/off and the electrodes; E6 adds the model choice). No EEG sample is
+// published on the wire (D3): a follower computes them from the commands.
 
 /** The drug model's hypnotic equivalent split by EEG class, propofol-equivalent brain Ce (bus: µg/mL; the cortex: ng/mL).
  * The five parts sum to `bus.cns.hypPropEq`. */
@@ -97,4 +98,68 @@ export interface EegSpectrum {
   suppression: { p: number; burstUv: number; suppressedUv: number };
   /** The forme fruste before burst suppression, 0–1: brief drops of power above ≈ 2 Hz with sustained 0.5–2 Hz. */
   formeFruste: number;
+}
+
+/** The EEG device commands (plan §7 E3/E4, E6): switch the frontal EEG on or off (the `eeg` channel and its state
+ * exist only while on, D4); set the electrode impedances, kΩ, one value for all or one per electrode; flag the ECG
+ * pickup (plan P-11: a patient-profile property, default off, set here while the scenario format is not touched);
+ * choose the device that reads it (`model`: an id of the registry, l3/eeg-devices/registry.ts; 'generic' when on). */
+export type EegDeviceAction =
+  | { device: 'eeg'; action: 'on' | 'off' }
+  | { device: 'eeg'; action: 'impedance'; value: number | number[] }
+  | { device: 'eeg'; action: 'ecgPickup'; value: boolean }
+  | { device: 'eeg'; action: 'model'; value: string };
+
+/**
+ * The numerics the EEG devices publish (plan D6), each device its own ids — never `di` or `sr`, which stay the present
+ * index's (`device depth`, Q3). The generic reader: spectral edge frequency and median frequency (Hz), its suppression
+ * ratio (%) and the highest electrode impedance (kΩ).
+ */
+export type EegNumericId = 'sef' | 'mf' | 'eegSr' | 'eegImp';
+
+/** The bands a device reports power in (µV²): the engine's names, Ch36 Table 36.1; each device its own edges. */
+export type EegBandName = 'slow' | 'delta' | 'theta' | 'alpha' | 'beta' | 'gamma';
+
+/** One reading of an EEG device (l3/eeg-devices/, D8): what it computed from the samples since its last reading. */
+export interface EegReading {
+  /** Samples the device has read when it made this reading (its own count from switch-on). */
+  n: number;
+  /** Its numerics; null while it cannot read (an invalid epoch). */
+  numerics: Partial<Record<EegNumericId, number | null>>;
+  flags: { questionable: boolean; invalid: boolean };
+  bands: Record<EegBandName, number>;
+  display: {
+    /** The samples since the previous reading, µV, unaltered (the raw trace). */
+    raw: number[];
+    /** A spectrogram column when an epoch of the density spectral array closes: dB re 1 µV²/Hz from 0 Hz in dfHz steps. */
+    dsa: { dfHz: number; db: number[] } | null;
+  };
+}
+
+/** The chosen EEG device's reading on the engine (its numerics go on `measurement` events, under their own ids). */
+export interface EegReadingEvent {
+  type: 'eegReading';
+  t: number;
+  model: string;
+  /** The device's screen label (Q8): what the reader is. */
+  label: string;
+  flags: EegReading['flags'];
+  bands: EegReading['bands'];
+  display: EegReading['display'];
+}
+
+/** One device constant in its spec row (plan D8): its value, unit, source tag (`[TXT …]`, `[P-n …]`, `[ENG: kind]`, `[INF …]`) and
+ * what it is — so the model page lists every number a device uses. */
+export interface EegDeviceConstant { value: number; unit: string; tag: string; what: string }
+
+/** A device's spec row in the registry (l3/eeg-devices/registry.ts, plan D8). */
+export interface EegDeviceSpec {
+  id: string;
+  /** The screen label (Q8): what the reader is. */
+  label: string;
+  /** How often it publishes, s. */
+  updateS: number;
+  /** Every device's display constants (the raw window, the spectrogram's history, epoch and top frequency), then its
+   * own. */
+  constants: Record<string, EegDeviceConstant> & Record<'rawWindowS' | 'dsaHistoryS' | 'epochS' | 'dsaMaxHz', EegDeviceConstant>;
 }

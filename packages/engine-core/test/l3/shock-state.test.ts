@@ -71,6 +71,25 @@ describe('shock outcome — DV amendment (research/20 DV-01a, DV-24a/b, DV-06a�
     expect(cv('afib', 20)).toBeLessThanOrEqual(0.3);
     expect(cv('afib', 200) - cv('afib', 20)).toBeGreaterThan(0.3); // DV-06a energy dependence (direction, tol 30)
   });
+  // Mittal 2000 (Circulation 101:1282; n = 88 biphasic): RECTILINEAR biphasic, escalating 70 → 120 → 150 → 170 J;
+  // first-shock success 60/88 = 68 % at 70 J, cumulative 83/88 = 94 % by 170 J. The engine's energy is the selected
+  // biphasic energy, read as Mittal's delivered rectilinear-biphasic joules (no waveform distinction is modelled).
+  it('AF converts in 68 % at a first 70 J biphasic shock (Mittal 2000: 60/88)', () => {
+    expect(cv('afib', 70)).toBeCloseTo(0.68, 2);
+    expect(cv('preexcitedAf', 70)).toBeCloseTo(0.68, 2);
+  });
+  it('AF first-shock success rises with energy toward, and never above, Mittal\'s cumulative 94 %', () => {
+    const e = [70, 120, 150, 170, 200, 360].map((j) => cv('afib', j));
+    for (let i = 1; i < e.length; i++) expect(e[i]!).toBeGreaterThan(e[i - 1]!);
+    expect(e.at(-1)!).toBeLessThanOrEqual(0.94);
+  });
+  // Named miss (research/44 X-08): the engine draws each shock independently, so Mittal's escalation 70/120/150/170 J
+  // converts 99.9 % cumulatively where the trial converted 94 %. The trial's non-responders are a patient-level
+  // property (Mittal: transthoracic impedance and AF duration predict failure); the engine has no such state yet.
+  it.fails('AF cumulative success over Mittal\'s 70/120/150/170 J escalation is 94 % (83/88)', () => {
+    const fail = [70, 120, 150, 170].reduce((f, j) => f * (1 - cv('afib', j)), 1);
+    expect(1 - fail).toBeCloseTo(0.94, 2);
+  });
   it('no rhythm id keeps the flat cardioversion 0.8', () => {
     expect(cv(undefined, 20)).toBeCloseTo(0.8, 9);
   });

@@ -12,6 +12,9 @@ import { drawHrvPhase, type HrvPhase } from './l2/ecg/hrv.ts';
 import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmState } from './l2/ecg/rhythm-engine.ts';
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
+import { advanceEeg, applyEegSetting, createEegState, EEG_RATE, validateEegCommand, type EegCtx, type EegState } from './l2/eeg/pipeline.ts';
+import { EEG_DEFAULT_MODEL, EEG_DEVICES, EEG_MODEL_IDS, type EegModelId } from './l3/eeg-devices/registry.ts';
+import type { EegDeviceAction, EegReading } from './types-eeg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
 import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrMethod, type HrState } from './l3/hr.ts';
 import { resolveSkin } from '@pme/skins'; // Data-only dependency
@@ -28,8 +31,11 @@ import {
   type EngineEventType,
   type EngineOptions,
   type LeadId,
+  type Measured,
   type Modifiers,
   type MonitorEngine,
+  type NumericId,
+  type PatientProfile,
   type PatientSnapshot,
   type Ramp,
   type RhythmId,
@@ -44,6 +50,7 @@ import {
   applyHemoCommand,
   createHemoState,
   HEMO_CHANNELS,
+  MANUAL_TRACK_MAX_S,
   HEMO_TEACHING,
   type HemoTeachingChannel,
   hemoChannelActive,
@@ -129,7 +136,18 @@ interface PipelineState {
   pkHooks: RhythmHookState;
   neuro: NeuroState; // NMB, depth, drive depression
   organs: OrgansState; // Brain, kidney, liver
+  eeg?: EegState & { dev: EegDev }; // The frontal EEG and the device reading it, only while on (l2/eeg/pipeline.ts, D4)
 }
+
+/** The EEG device reading the channel (l3/eeg-devices/registry.ts, plan D8): its model, the 125 Hz sample it started
+ * at, the reader's own state and its readings not yet due. */
+interface EegDev {
+  model: EegModelId;
+  m0: number;
+  st: unknown;
+  out: EngineEvent[];
+}
+const newEegDev = (model: EegModelId, m0: number): EegDev => ({ model, m0, st: EEG_DEVICES[model].create(EEG_RATE), out: [] });
 
 /**
  * The sensor-state map the `state` event carries. The states live with four owners — the ECG front end (the device
@@ -250,6 +268,67 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
   return RHYTHMS[id].defaultRateBpm;
 }
 
+/**
+ * SV₀, the reference of the pleth's PI × SVᵢ/SV₀ rule (brief §4.3), is the patient's OWN settled resting stroke volume:
+ * what this engine reaches for this patient at rest — spontaneously breathing, unventilated, in sinus rhythm — once
+ * its own stabilisation (the MANUAL trackers, or MODELED's reflexes) has run. It is MEASURED here by running the real
+ * engine on that resting patient, not typed and not taken from the stand-alone stabiliser, so the pulse equals the
+ * instructor's PI exactly at that rest and departs from it only as the stroke volume departs from it.
+ *
+ * Why the stand-alone stabiliser's `circ.ref.sv` (79.1 mL for the default adult) is not that value — the running
+ * engine settles the same MANUAL patient at ≈ 89 mL (brief 76, research/45; measured below): `stabilise.ts` solves the
+ * bare circuit for the PROFILE's targets (HR 70, CVP 5, the band's SBP/DBP) at a CONSTANT end-expiratory pleural
+ * pressure (P_PL0 −4 mmHg). Three couplings of the running engine are missing from it:
+ *  1. MANUAL: the instructor's own numbers (L1 defaults HR 75, CVP 6, 120/80), which the MANUAL trackers then impose
+ *     with THEIR knobs — the venous unstressed volume (≈ −400 mL) and LV Emax (×0.74) — not the stabiliser's (R_sys,
+ *     C_art). Measured at seed 42, 45–90 s: HR 75/CVP 6 → 88 mL; HR 70/CVP 4.85 (the stabiliser's own targets) → 86 mL.
+ *  2. The breath driver: spontaneous breathing swings the pleural pressure from −4 to ≈ −7 mmHg (mean ≈ −5), which
+ *     raises venous return, and the MANUAL CVP tracker holds the breath-AVERAGED right-atrial pressure, so it fills by
+ *     a further ≈ 130 mL to lift the inspiratory dips (that residual 86 against 79 mL).
+ *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.5 mL at rest: SV₀; 70.8 mL on IPPV).
+ * The same fault — the trackers starting from a circulation that is not the instructor's patient and taking ≈ 40–60 s
+ * to reach it — is behind the MANUAL PEEP 0 < PEEP 5 stroke volume (84.0 against 85.5 mL): a ventilator started at
+ * t = 0 runs while the trackers are still converging. Under PEEP 5 the pressure tracker kept running to 38 s (LV Emax
+ * ×0.80) and the volume tracker, which subtracts the pleural RISE from its CVP, transfused 665 mL; under PEEP 0 the
+ * pressure tracker released at ≈ 10 s (Emax ×1.00, SBP then drifting to 129) and the volume tracker gave 367 mL. The
+ * order PEEP 0 < PEEP 5 is that race, not physiology; it is left to the trackers' own brief (no waveform here changes).
+ *
+ * The rest is the patient as configured at t = 0 (profile, conditions and the instructor's baseline values) with its
+ * scripted arrhythmia removed: a rhythm and its rate are the scenario's (the AF pulse deficit must show against the
+ * patient's sinus stroke volume, research/45), so a non-sinus `rhythm` drops with its `baseline.hr`, and the monitor's
+ * `sensors` drop too. The settling ends
+ * when both MANUAL trackers have released (each releases by MANUAL_TRACK_MAX_S of its own run), or after
+ * REST_SETTLE_MODELED_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the
+ * numerator the pleth uses) over REST_AVG_S of beats. A patient property, not the scenario's random stream: the run uses
+ * REST_SEED, so it is deterministic and cached per resting patient and mode, and it runs ONCE, when the engine is
+ * created — never inside a step, whatever the time scale. The run steps only the three pipelines that set a resting
+ * stroke volume (`restAdvance`: the rhythm engine, the breath driver, the haemodynamics), tick by tick as the engine
+ * does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED, measured with a
+ * 20-s mean after a 60-s MODELED settle) at ≈ 60 % of its cost. The resting patient carries no sensors (their transducers are not physiology: SV₀ is
+ * the same with or without them) and MODELED settles REST_SETTLE_MODELED_S, so a run is ≈ 0.03–0.17 s in Node and
+ * Chromium (SV₀ 88.59 / 81.45 mL); the whole engine's 80 s took 0.23–0.29 s and, on the CI runner, delayed a case's monitor by 1–2 s.
+ * A restored snapshot carries its own SV₀. [ENG: measurement; REST_AVG_S, two spontaneous breaths at the default
+ * 15/min; REST_SEED, the engine's default seed; REST_SETTLE_MODELED_S, the measured settling]
+ */
+export const REST_AVG_S = 8;
+export const REST_SEED = 1;
+/** MODELED has no tracker to wait for: its resting SV is within ± 0.5 % (the breath-to-breath spread) from 8 s on
+ * (8-s means 81.0, 81.9, 81.8, 81.5, 81.3, 81.8 mL from 8 to 56 s, seed 1). */
+export const REST_SETTLE_MODELED_S = 8;
+const restSvCache = new Map<string, number>();
+
+/** The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). */
+export function restingPatient(p: PatientProfile | undefined): PatientProfile | undefined {
+  if (!p) return p;
+  // the monitor's sensors are not the patient (and their transducers are most of a run's cost)
+  const { sensors: _sensors, ...q } = p;
+  if (!q.rhythm || q.rhythm.id === 'sinus') return q;
+  const { rhythm: _rhythm, ...rest } = q;
+  if (!rest.baseline || rest.baseline.hr === undefined) return rest;
+  const { hr: _hr, ...baseline } = rest.baseline;
+  return { ...rest, baseline };
+}
+
 class Engine implements MonitorEngine {
   readonly version = engineKey; // `${version}+${build}`, the snapshot compatibility key
   private readonly seed: number;
@@ -275,7 +354,8 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // For restoring older snapshots
   private readonly truthEvery: number; // Ticks between truth events, 0 = off
 
-  constructor(opts: EngineOptions) {
+  /** `rest`: this engine IS the resting run that measures SV₀ (no recursion). */
+  constructor(opts: EngineOptions, rest = false) {
     // MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
@@ -328,12 +408,44 @@ class Engine implements MonitorEngine {
       organs: createOrgansState(opts.patient, l1),
     };
     holdRate(this.st, rhythmId, rhythmOpts.rateBpm !== undefined);
+    if (!rest) this.st.hemo.circ.svRest = Engine.restingSv(opts); // SV₀, once per resting patient (REST_AVG_S)
     rebaselineOrgans(this.st.organs, this.organsCtx(this.st)); // Calibrate on the pipelines' t = 0 truths
     this.syncCo2Sampler();
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
     this.st.detections.length = 0;
     this.speculate();
+  }
+
+  /** SV₀: the settled resting stroke volume of this patient in the real engine (see REST_AVG_S). */
+  private static restingSv(opts: EngineOptions): number {
+    const ro: EngineOptions = { seed: REST_SEED, mode: opts.mode ?? 'manual', ...(opts.patient ? { patient: restingPatient(opts.patient) as PatientProfile } : {}) };
+    const key = JSON.stringify(ro);
+    const hit = restSvCache.get(key);
+    if (hit !== undefined) return hit;
+    const e = new Engine(ro, true);
+    const manual = ro.mode !== 'modeled';
+    const mh = () => e.st.hemo.manHold;
+    let t = 0;
+    const STEP_S = 4; // read the beats every 4 s: ≤ the 16-beat buffer up to 240/min
+    const go = (to: number) => {
+      // tick by tick, as the engine couples its pipelines (in 4 s chunks the MODELED chemoreflex read the gas exchange
+      // late: 82.16 against the full engine's 81.29 mL)
+      for (let n = e.st.n - 1 + SAMPLES_PER_TICK; n <= Math.round(to * ECG_RATE); n += SAMPLES_PER_TICK) e.restAdvance(e.st, n);
+    };
+    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < REST_SETTLE_MODELED_S) go((t += STEP_S));
+    const t0 = t;
+    const seen = new Map<number, { t: number; lvedv: number; lvesv: number }>();
+    while (t < t0 + REST_AVG_S) {
+      go((t += STEP_S));
+      for (const b of e.st.hemo.circ.beats) if (b.t > t0) seen.set(b.t, b);
+    }
+    const bs = [...seen.values()].sort((a, b) => a.t - b.t);
+    let sum = 0;
+    for (let i = 1; i < bs.length; i++) sum += Math.max(0, (bs[i] as { lvedv: number }).lvedv - (bs[i - 1] as { lvesv: number }).lvesv);
+    const sv = bs.length > 1 ? sum / (bs.length - 1) : e.st.hemo.circ.ref.sv;
+    restSvCache.set(key, sv);
+    return sv;
   }
 
   // --- lifecycle -------------------------------------------------------------------------------
@@ -457,6 +569,7 @@ class Engine implements MonitorEngine {
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
+    data.st.hemo.circ.svRest ??= data.st.hemo.circ.ref.sv; // a snapshot without SV₀ keeps the reference it was drawn with
     this.st = data.st;
     this.queue = data.queue;
     this.groupTicks = new Map(data.groups ?? []); // The bookmark's pending groups, never the discarded future's
@@ -467,6 +580,7 @@ class Engine implements MonitorEngine {
     this.syncHemoBuffers();
     this.syncRespBuffers();
     this.syncOrganBuffers();
+    if (!this.st.eeg) this.bufs.delete('eeg'); // EEG off in the bookmark: no channel
     for (const b of this.bufs.values()) b.clear(); // The discarded timeline's samples are not history
     const simT = this.now().simT;
     this.emit({ type: 'toneCancel', after: simT }); // a different timeline: every tone after now is void
@@ -526,8 +640,8 @@ class Engine implements MonitorEngine {
    */
   private speculate(): void {
     const simT = this.now().simT;
-    const spec = structuredClone(this.st);
-    this.advance(spec, (this.tick + this.lookTicks) * SAMPLES_PER_TICK);
+    const spec = structuredClone({ ...this.st, eeg: undefined }); // the look-ahead pass skips the EEG, so it is not cloned
+    this.advance(spec, (this.tick + this.lookTicks) * SAMPLES_PER_TICK, true);
     const fresh = new Map<string, Detection>();
     for (const d of this.committedDet) if (d.n >= this.dirtyFromN) fresh.set(toneId(d), d);
     for (const d of spec.detections) fresh.set(toneId(d), d);
@@ -600,8 +714,40 @@ class Engine implements MonitorEngine {
     };
   }
 
-  /** Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. */
-  private advance(ps: PipelineState, end: number): void {
+  /**
+   * The resting run's step (REST_AVG_S): the three pipelines that set a resting stroke volume, in `advance`'s own
+   * order and with its own contexts — the rhythm engine's beats, the breath driver (its pleural pressure) and the
+   * haemodynamics with the MANUAL trackers or MODELED's reflexes. No ECG synthesis, drug, neuro, blood, endocrine or
+   * organ step, and no samples written: at rest, unventilated and undrugged, those hold their t = 0 state (measured:
+   * adding the blood, endocrine, organ, drug, neuro steps and the ECG synthesis back moves SV₀ by < 0.01 mL).
+   */
+  private restAdvance(ps: PipelineState, end: number): void {
+    if (end < ps.n) return;
+    planUntil(ps.rhythm, end / ECG_RATE + PLAN_LEAD_S, rhythmCtx(ps));
+    ps.rhythm.events = pruneEvents(ps.rhythm.events, ps.n / ECG_RATE);
+    ps.rhythm.fwaves = ps.rhythm.fwaves.filter((f) => f.end >= ps.n / ECG_RATE);
+    const none = () => {};
+    advanceResp(ps.resp, {
+      l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
+      bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, histamine: ps.pk.bus.airway.histamine,
+    }, Math.floor(end / 8), none);
+    const resp = ps.resp;
+    advanceHemo(ps.hemo, {
+      l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t), pIt: (t) => respPleural(resp, t),
+      requestHr: (bpm) => {
+        ps.hr = constantRamp(bpm);
+      },
+      ph: ps.blood.core.ab.ph,
+    }, Math.floor(end / 4), none);
+    ps.n = end + 1;
+  }
+
+  /**
+   * Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. `lookahead`: the
+   * speculative pass (speculate()), which the EEG skips — it has no tone to post, so its samples are committed ones
+   * only and the look-ahead costs it nothing.
+   */
+  private advance(ps: PipelineState, end: number, lookahead = false): void {
     if (end < ps.n) return;
     const ctx = rhythmCtx(ps);
     planUntil(ps.rhythm, end / ECG_RATE + PLAN_LEAD_S, ctx);
@@ -734,6 +880,15 @@ class Engine implements MonitorEngine {
       Math.floor(end / 4),
       (ch, m, v) => this.hemoWrite(ch, m, v),
     );
+    // The EEG (only while on, committed pass only): after the neuro and organ steps, reading what they published
+    if (ps.eeg && !lookahead) {
+      const fresh: number[] = [];
+      advanceEeg(ps.eeg, this.eegCtx(ps), Math.floor((end * EEG_RATE) / ECG_RATE), (m, v) => {
+        this.eegWrite(m, v);
+        fresh.push(v);
+      });
+      if (fresh.length > 0) this.readEeg(ps.eeg, fresh);
+    }
     ps.n = end + 1;
   }
 
@@ -758,6 +913,7 @@ class Engine implements MonitorEngine {
     this.st.neuro.out = keep(this.st.neuro.out);
     this.st.endo.out = keep(this.st.endo.out);
     this.st.organs.out = keep(this.st.organs.out);
+    if (this.st.eeg) this.st.eeg.dev.out = keep(this.st.eeg.dev.out);
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     for (const e of due) {
       if (e.type !== 'state') continue;
@@ -850,6 +1006,8 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const neuro = validateNeuroCommand(cmd); // After pk (the chain); null for every drug/vaporiser event
     if (neuro !== null) return neuro;
+    const eeg = validateEegCommand(cmd, this.st.eeg !== undefined, EEG_MODEL_IDS); // `device eeg …` only (null otherwise)
+    if (eeg !== null) return eeg;
     const organs = validateOrgansCommand(cmd); // After pk (and neuro), before blood/endo/resp — its own ids only (null otherwise)
     if (organs !== null) return organs;
     const blood = validateBloodCommand(cmd); // After pk — which owns `drug` — and before resp, whose `condition` rejects unknown ids
@@ -914,6 +1072,10 @@ class Engine implements MonitorEngine {
     if (applyDeviceCommand(this.dev, cmd, this.deviceHost(simT), devOut)) {
       this.syncCo2Sampler(); // A skin switch changes the sidestream module
       for (const e of devOut) this.emit(e);
+      return;
+    }
+    if (cmd.type === 'device' && (cmd.action as { device: string }).device === 'eeg') {
+      this.applyEeg(ps, cmd.action as EegDeviceAction);
       return;
     }
     const alias = obstructiveAlias(cmd); // One PE event, one tension-PTX source — both owners, before the chain
@@ -1099,6 +1261,69 @@ class Engine implements MonitorEngine {
     if (!b) {
       b = new RingBuffer(ICP_RATE, BUFFER_SECONDS);
       this.bufs.set(ch, b);
+    }
+    b.write(m, v);
+  }
+
+  /** What the EEG reads (l2/eeg/pipeline.ts): the drug bus, the neuro and organ models' last published state, the ECG
+   * model's artefact state and the heart's own VCG (for the ECG pickup). Read only. */
+  private eegCtx(ps: PipelineState): EegCtx {
+    const v = ps.organs.view;
+    const bx = this.bufs.get('vcgX') as RingBuffer;
+    const by = this.bufs.get('vcgY') as RingBuffer;
+    const bz = this.bufs.get('vcgZ') as RingBuffer;
+    const endo = (ps as unknown as { endo?: { cascade?: { macF?: number } } }).endo;
+    return {
+      bus: ps.pk.bus, ageY: ps.neuro.ageY, stimulus: ps.neuro.stim.level, antinoc: ps.neuro.antinoc, t1: ps.neuro.last.tof.t1,
+      tube: ps.neuro.airway === 'ett', cbfRel: ps.organs.brain.cbfRel, hb: v?.hb ?? 14, sao2: v?.sao2 ?? 0.97, pao2: v?.pao2 ?? 95,
+      tempC: ps.resp.temp.tc, macF: endo?.cascade?.macF ?? 1, art: ps.mods.artefact, mainsHz: this.mainsHz,
+      ecgMvAt: (tS) => {
+        const n = Math.round(tS * ECG_RATE);
+        const a = projectLead('aVF', bx.at(n), by.at(n), bz.at(n));
+        return Number.isFinite(a) ? a : 0;
+      },
+    };
+  }
+
+  /** `device eeg on|off` creates or drops the EEG state, its device and its channel; `model` starts the chosen device
+   * afresh (a different instrument on the same electrodes); the other actions set the running EEG. */
+  private applyEeg(ps: PipelineState, a: EegDeviceAction): void {
+    if (a.action === 'on') {
+      if (!ps.eeg) {
+        const es = createEegState(this.seed, Math.ceil((ps.n * EEG_RATE) / ECG_RATE), this.eegCtx(ps));
+        ps.eeg = { ...es, dev: newEegDev(EEG_DEFAULT_MODEL, es.m) };
+      }
+    } else if (a.action === 'off') {
+      delete ps.eeg;
+      this.bufs.delete('eeg');
+    } else if (a.action === 'model') {
+      if (ps.eeg && ps.eeg.dev.model !== a.value) ps.eeg.dev = newEegDev(a.value as EegModelId, ps.eeg.m);
+    } else if (ps.eeg) applyEegSetting(ps.eeg, a);
+  }
+
+  /** Hand the device this pass's new samples; each reading becomes its numerics (a `measurement` with the device's own
+   * ids, D6) and an `eegReading` (the display), stamped at the end of the samples it read. */
+  private readEeg(es: EegState & { dev: EegDev }, fresh: number[]): void {
+    const d = es.dev;
+    const dev = EEG_DEVICES[d.model];
+    for (const r of dev.read(d.st as never, fresh, es.impedanceKOhm) as EegReading[]) {
+      const t = (d.m0 + r.n) / EEG_RATE;
+      const values: Partial<Record<NumericId, Measured>> = {};
+      for (const [id, v] of Object.entries(r.numerics)) {
+        const flag = id === 'eegImp' ? (r.flags.questionable ? 'questionable' : 'valid') : r.flags.invalid ? 'invalid' : r.flags.questionable ? 'questionable' : 'valid';
+        values[id as NumericId] = { value: v ?? null, flag, at: t };
+      }
+      d.out.push({ type: 'measurement', t, values });
+      d.out.push({ type: 'eegReading', t, model: d.model, label: dev.spec.label, flags: r.flags, bands: r.bands, display: r.display });
+    }
+  }
+
+  /** Write one EEG sample; the buffer is created on the first write. */
+  private eegWrite(m: number, v: number): void {
+    let b = this.bufs.get('eeg');
+    if (!b) {
+      b = new RingBuffer(EEG_RATE, BUFFER_SECONDS);
+      this.bufs.set('eeg', b);
     }
     b.write(m, v);
   }

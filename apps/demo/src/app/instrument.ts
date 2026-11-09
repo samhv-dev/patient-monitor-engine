@@ -15,3 +15,14 @@ export function defibReadout(d: Pick<DefibStatus, 'energyJ' | 'state' | 'sync'> 
   if (!d) return '';
   return `${d.energyJ} J${d.state === 'charging' ? ' CHARGING' : d.state === 'ready' ? ' READY' : ''}${d.sync ? ' SYNC' : ''}`;
 }
+
+/**
+ * R5d: a refusal of the window's press, in the device's words. The engine's own reasons (defib.ts validateDefib) read as
+ * the defibrillator's screen would say them; any other reason (the host's: a fast-forward, a press it did not take) is
+ * shown as the host wrote it.
+ */
+export function defibWords(reason: string | undefined): string {
+  if (reason === 'defibrillator is not charged') return 'Not charged';
+  const r = reason?.trim() || 'Not taken';
+  return r.charAt(0).toUpperCase() + r.slice(1);
+}
