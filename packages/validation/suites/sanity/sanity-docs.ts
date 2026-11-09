@@ -41,6 +41,27 @@ const gt = (id: string, series: string, reduce: Target['reduce'], value: number 
 const lt = (id: string, series: string, reduce: Target['reduce'], value: Ref, source: string, extra: Partial<Target> = {}): Target => ({ id, series, reduce, type: 'LessThan', value, source, ...extra }) as Target;
 const base = (id = 'base', fromS = 30, toS = 60) => seg(id, fromS, toS, rng('steady-map', 'state:map', 'mean', 60, 110, 'baseline MAP physiological [FIT: physiological normal range without a cited source; brief research/44 X-15]'));
 
+// Haemorrhage heart rate and pressure (audit V-07; brief 88). The ATLS table's HR column (100–120 / 120–140 / > 140) is
+// contradicted by the registries: in the TraumaRegister DGU no class showed "a relevant tachycardia" (Mutschler 2013,
+// Crit Care 17:R42, PMID 23497602, n 16,305), and in TARN the median HR rose only from 82 (class 1) to 95 (class 4) by
+// estimated blood loss (Guly 2011, Resuscitation 82:556, PMID 21349628). Each band is the registry class's ED value,
+// mean ± 1 SD, from Mutschler 2013 Table 2 (classes by base deficit: I ≤ 2, II > 2–6, III > 6–10, IV > 10 mmol/L,
+// built as the counterpart of the ATLS classes I–IV; the rig's ATLS blood-loss class is read as the same-numbered class).
+// Guly's medians (by blood loss, the rig's own definition) lie inside every band. The engine's value plays no part.
+const sd1 = (mean: number, sd: number, what: string) => ({ lo: Math.round((mean - sd) * 10) / 10, hi: Math.round((mean + sd) * 10) / 10, text: `${what} ${mean} ± ${sd} → mean ± 1 SD ${(mean - sd).toFixed(1)}–${(mean + sd).toFixed(1)}` });
+const MUTSCHLER = {
+  II: sd1(89.8, 20.3, 'ED HR'),
+  III: sd1(95.9, 22.5, 'ED HR'),
+  IV: sd1(97.2, 32.4, 'ED HR'),
+} as const;
+const MUTSCHLER_SBP_III = sd1(112.7, 30.7, 'ED SBP');
+const MUTSCHLER_SRC = 'Mutschler 2013 (PMID 23497602) Table 2';
+const GULY_SRC = 'Guly 2011 (PMID 21349628): median HR 82 → 95 from class 1 to 4, inside';
+// t17b, chronic β-blockade: no registry gives class-III HR on a β-blocker. Havens 2012 (Int J Surg 10:518, n 380 trauma
+// patients) found a presenting HR 6 bpm lower on a pre-injury β-blocker (83 vs 89, p 0.007), with more bradycardia
+// (7.1 vs 2.3 %). The band is the class-III registry band shifted by that difference.
+const HAVENS_BB_III = { lo: Math.round((95.9 - 22.5 - 6) * 10) / 10, hi: Math.round((95.9 + 22.5 - 6) * 10) / 10, text: `${MUTSCHLER_SRC} class III ED HR 95.9 ± 22.5, shifted by Havens 2012's β-blocker difference (83 vs 89 bpm, −6): 67.4–112.4; an expected miss until the autonomic hub (v2.0 workstream 2, FU-12): measured 64.4 on 3bca4a61` };
+
 // s9 (brief 84, research 46 §C). After VF with ventilation continued, alveolar CO2 washes out with τ = V_lung / V̇A. The
 // window is computed from this rig's ventilator settings and the sourced lung volume, never from the engine's output:
 // V_lung at end-expiration 2.2–2.8 L (anaesthetised supine adult, FRC 2.0–2.5 L plus 0.2–0.3 L at PEEP 5; Miller 10e
@@ -72,7 +93,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1000, overS: 600 }))],
     segments: [seg('base', 30, 60, rng('pp0', 'state:pp', 'mean', 30, 70, 'baseline PP [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
       seg('class2', 660, 900,
-        rng('hr', 'state:hr', 'mean', 100, 120, `${S} 2: HR 100–120`),
+        rng('hr', 'state:hr', 'mean', MUTSCHLER.II.lo, MUTSCHLER.II.hi, `${MUTSCHLER_SRC} class II: ${MUTSCHLER.II.text}; ${GULY_SRC}`),
         rng('sbp-held', 'state:sbp', 'mean', { segment: 'base', factor: 0.9 }, { segment: 'base', factor: 1.05 }, `${S} 2: SBP near normal (R45 b)`),
         lt('pp-narrow', 'state:pp', 'mean', { segment: 'base', factor: 0.9 }, `${S} 2: PP narrowed`))],
   }),
@@ -83,11 +104,12 @@ export const SANITY_DOCS: ValidationDoc[] = [
       { id: 'map-70pct', series: 'state:map', reduce: 'mean', type: 'EqualTo', value: { segment: 'base', factor: 0.7 }, tolPct: 15, source: `${S} 3: MAP ≈ 70 % of baseline at 2 min` },
       lt('hr-little', 'state:hr', 'mean', { segment: 'base', factor: 1.1 }, `${S} 3: little HR rise`))],
   }),
-  ...([['I', 700, [60, 100], null], ['III', 1750, [120, 140], 90], ['IV', 2250, [140, 180], 90]] as const).map(([cls, ml, hr, sbpMax]) => doc({
+  // Class I keeps its band (not audited as mis-specified); classes III and IV take the registry HR (audit V-07).
+  ...([['I', 700, [60, 100], null], ['III', 1750, [MUTSCHLER.III.lo, MUTSCHLER.III.hi], 90], ['IV', 2250, [MUTSCHLER.IV.lo, MUTSCHLER.IV.hi], 90]] as const).map(([cls, ml, hr, sbpMax]) => doc({
     id: `s4-class-${cls.toLowerCase()}`, title: `ATLS class ${cls} haemorrhage (${ml} mL / 10 min)`, source: `${S} check 4`, durationS: 900, mode: 'modeled', requires: ['7a', '7c'],
     actions: [at(60, ev({ kind: 'bleed', volumeMl: ml, overS: 600 }))],
     segments: [seg('late', 660, 900,
-      rng('hr', 'state:hr', 'mean', hr[0], hr[1], `${S} 4 / ATLS class ${cls}: HR ${hr[0]}–${hr[1]}`),
+      rng('hr', 'state:hr', 'mean', hr[0], hr[1], cls === 'I' ? `${S} 4 / ATLS class ${cls}: HR ${hr[0]}–${hr[1]}` : `${MUTSCHLER_SRC} class ${cls}: ${MUTSCHLER[cls as 'III' | 'IV'].text}; ${GULY_SRC}`),
       ...(sbpMax !== null ? [lt('sbp', 'state:sbp', 'mean', sbpMax + (cls === 'III' ? 10 : 0), `${S} 4 / ATLS class ${cls}: SBP decreased`)] : []),
       ...(cls === 'IV' ? [lt('pp', 'state:pp', 'mean', 25, `${S} 4: class IV PP < 25`)] : []))],
   })),
@@ -146,7 +168,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 1, peep: 5 })), at(120, ev({ kind: 'condition', id: 'pe', severity: 0.6 }))],
     segments: [seg('base', 90, 120, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
       seg('pe', 120, 140, rng('etco2', 'numeric:etco2', 'min', 20, 25, `${T7} 12: EtCO2 35 → 20–25 within 3 breaths`)),
-      seg('pe-late', 180, 300, rng('papm', 'state:papSys', 'max', 30, 45, `${T7} 12: mPAP 30–40, never > 45 (systolic proxy) [FIT: mPAP band as a systolic proxy; brief research/44 V-09]`), rng('spo2', 'state:spo2', 'min', 85, 92, `${T7} 12: SpO2 85–92 on FiO2 1`))],
+      seg('pe-late', 180, 300, rng('papm', 'state:papSys', 'max', 31.6, 45.2, 'Miller & Sutton 1970 (PMID 5433313, massive PE): PA systolic 38.4 ± 6.8 → mean ± 1 SD 31.6–45.2 (relabelled: the row reads the PA systolic, not an mPAP proxy)'), rng('spo2', 'numeric:spo2', 'min', 96, 100, 'Santolicandro 1995 (PMID 7599843, 10 patients, two-thirds of the circulation obstructed): the hypoxaemia of PE is V̇A/Q̇ inequality, shunt "generally insignificant" (PaO2 63 ± 11.7 on air), so on FiO2 1.0 without a right-to-left shunt arterial blood is fully saturated; displayed SpO2 ≥ 100 − 4 (the oximeter accuracy limit, ISO 80601-2-61 Arms ≤ 4 %). The 85–92 band (tables §7 12) applies only with a PFO / right-to-left shunt'))],
   }),
   doc({
     id: 't13-tension-ptx', title: 'Tension pneumothorax, ventilated', source: `${T7} 13`, durationS: 480, mode: 'modeled', requires: ['7a', '7b'],
@@ -156,7 +178,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't14-tamponade', title: 'Tamponade (20 mL/min into the pericardium)', source: `${T7} 14`, durationS: 720, mode: 'modeled', requires: ['7a'],
     actions: [at(60, ev({ kind: 'condition', id: 'tamponade', severity: 1 }))],
-    segments: [seg('equalised', 540, 720, rng('cvp', 'state:cvp', 'mean', 15, 20, `${T7} 14: CVP ≈ PAD ≈ PCWP 15–20`), rng('pawp', 'state:pawp', 'mean', 15, 20, `${T7} 14`))],
+    segments: [seg('equalised', 540, 720, rng('cvp', 'state:cvp', 'mean', 12, 20, 'Reddy 1978 (PMID 668074, 14 patients in tamponade): right atrial pressure 16 ± 4 → mean ± 1 SD 12–20'), rng('pawp', 'state:pawp', 'mean', 12, 20, 'Reddy 1978: PAW equal to pericardial pressure (and RVEDP) in tamponade with pulsus, i.e. the same 16 ± 4 → 12–20; Dellinger 5e ch. 25 p. 347: equalisation of RA, RV diastolic, PA diastolic, wedge and pericardial pressures. On 3bca4a61 the wedge reads 22.5 against CVP 17.9: a real miss (the left filling pressure does not equalise with the pericardial pressure), not re-widened'))],
   }),
   doc({
     id: 't15-rv-infarct', title: 'RV infarct (inferior STEMI, Ees_RV ×0.35)', source: `${T7} 15`, durationS: 300, mode: 'modeled', requires: ['7a'],
@@ -164,11 +186,14 @@ export const SANITY_DOCS: ValidationDoc[] = [
     segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 14, 18, `${T7} 15: CVP 14–18`, { expectedMiss: miss('D', '2026-11-08', 'CVP 6.8') }), rng('pawp', 'state:pawp', 'mean', 8, 12, `${T7} 15: PCWP 8–12`, { expectedMiss: miss('D', '2026-11-08', 'PCWP 3.3') }), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
   }),
   doc({
-    id: 't16-septic-shock-warm', title: 'Septic shock, warm phase', source: `${T7} 16`, durationS: 600, mode: 'modeled', requires: ['7f'],
-    actions: [at(0, ev({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm' }))],
-    // Brief 84: the MAP 55–60 row at 300–600 s had no source for its time and is replaced by the state rows below; the HR
-    // row is kept as it was (its window has the same problem, audit V-12, outside brief 84).
-    segments: [seg('warm', 300, 600, rng('hr', 'state:hr', 'mean', 115, 130, `${T7} 16: HR 115–130`))],
+    id: 't16-septic-shock-warm', title: 'Septic shock, warm phase', source: `${T7} 16`, durationS: 3600, mode: 'modeled', requires: ['7f'],
+    // Audit V-12 (brief 88): the HR row is the tables' "resuscitated" column (tables §5e warm = "Septic shock, warm
+    // (resuscitated)"; Dellinger 5e ch. 22 p. 293: the hyperdynamic state "usually depends on resuscitation with fluids"),
+    // so the rig gives the 30 mL/kg (2100 mL over 30 min, Sepsis-3 volume repletion) and reads the HR once the condition's
+    // τ 600 s onset is complete (≥ 5 τ). The 115–130 number itself is the tables' (no primary source found: research 46 §E).
+    actions: [at(0, ev({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm' })), at(1200, ev({ kind: 'fluid', fluid: 'crystalloid', volumeMl: 2100, overS: 1800 }))],
+    // Brief 84: the MAP 55–60 row at 300–600 s had no source for its time and is replaced by the t16 state rows below.
+    segments: [seg('resuscitated', 3000, 3600, rng('hr', 'state:hr', 'mean', 115, 130, `${T7} 16: HR 115–130 (resuscitated column), after 30 mL/kg and ≥ 5 τ of onset; on 3bca4a61 106 bpm, a miss on the restated rig (the septic time course and vasoplegia are a mechanism brief, research 46 §E)`))],
   }),
   // Brief 84 / research 46 §E: septic shock is a state. The rig follows the source (Garcia 2023): anaesthetised (sevoflurane),
   // ventilated (8 mL/kg, PEEP 5), maintenance fluid 2 mL/kg/h only. The condition keeps its present onset (τ 600 s,
@@ -189,7 +214,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't17a-class3-no-bb', title: 'Class III haemorrhage (35 %), no β-blocker', source: `${T7} 17a`, durationS: 1800, mode: 'modeled', requires: ['7a', '7c'],
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1750, overS: 600 }))],
-    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', 120, 140, `${T7} 17a: HR 120–140`), rng('sbp', 'state:sbp', 'mean', 80, 90, `${T7} 17a: SBP 80–90`), rng('pp', 'state:pp', 'mean', 20, 25, `${T7} 17a: PP 20–25`))],
+    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', MUTSCHLER.III.lo, MUTSCHLER.III.hi, `${MUTSCHLER_SRC} class III: ${MUTSCHLER.III.text}; ${GULY_SRC}`), rng('sbp', 'state:sbp', 'mean', MUTSCHLER_SBP_III.lo, MUTSCHLER_SBP_III.hi, `${MUTSCHLER_SRC} class III: ${MUTSCHLER_SBP_III.text}`), rng('pp', 'state:pp', 'mean', 20, 25, `${T7} 17a: PP 20–25`))],
   }),
   doc({
     id: 't17b-class3-bb', title: 'Class III haemorrhage, chronic β-blocker', source: `${T7} 17b`, durationS: 1800, mode: 'modeled', requires: ['7a', '7c', '7g'],
@@ -197,12 +222,18 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1750, overS: 600 }))],
     // Brief 84 / research 46 §F: the SBP 65–80 band had no primary source and is deleted; the two rows that compare
     // this run with t17a at the same bleed (SANITY_CROSS) take its place.
-    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', 80, 95, `${T7} 17b: HR 80–95`))],
+    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', HAVENS_BB_III.lo, HAVENS_BB_III.hi, HAVENS_BB_III.text))],
   }),
   doc({
-    id: 't18-htn-hypocapnia-cbf', title: 'Hypertensive 75 y at MAP 65, PaCO2 40 → 25', source: `${T7} 18`, durationS: 600, mode: 'modeled', requires: ['7d'],
-    patient: { ageY: 75, profile: { conditions: [{ id: 'htn' }] } }, actions: [at(120, ev({ kind: 'ventilation', source: 'ventilator', rr: 24, vtMl: 600, fio2: 0.5, peep: 5 }))],
-    segments: [seg('hypocapnia', 400, 600, rng('etco2', 'numeric:etco2', 'mean', 20, 28, `${T7} 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [FIT: EtCO2 proxy for PaCO2 25; brief research/44 V-15]`))],
+    id: 't18-htn-hypocapnia-cbf', title: 'Hypertensive 75 y at MAP 65, PaCO2 40 → 25', source: `${T7} 18`, durationS: 1500, mode: 'modeled', requires: ['7d'],
+    // Audit V-15 (brief 88): the rig is titrated by the alveolar ventilation equation (PaCO2 = 0.863 · V̇CO2 / V̇A, Miller 10e
+    // ch. 12 p. 246): at constant V̇CO2 and dead space, PaCO2 40 → 25 needs V̇A × 40/25. Ventilated 12 × 500 from t = 0, then
+    // RR 19 × 500 (V̇A × 19/12 = 1.58), read once the CO2 stores have settled. The old rig (spontaneous → 24 × 600, V̇A ≈ 2.5×)
+    // went to PaCO2 ≈ 16, which the engine read. The row asserts the alveolar CO2 the equation gives (true end-tidal).
+    patient: { ageY: 75, profile: { conditions: [{ id: 'htn' }] } },
+    actions: [at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })), at(300, ev({ kind: 'ventilation', source: 'ventilator', rr: 19, vtMl: 500, fio2: 0.5, peep: 5 }))],
+    segments: [seg('before', 240, 300, rng('et0', 'breath:etco2True', 'mean', 30, 45, 'normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
+      seg('hypocapnia', 1200, 1500, { id: 'etco2', series: 'breath:etco2True', reduce: 'mean', type: 'EqualTo', value: { segment: 'before', factor: 12 / 19 }, tolPct: 15, source: `${T7} 18: PaCO2 40 → 25 by V̇A × 19/12 (alveolar ventilation equation, Miller 10e ch. 12 p. 246); default stated-change tolerance ±15 % (tables §7 header, as the tables state)` })],
   }),
   doc({
     id: 't19-tbi-haematoma', title: 'TBI, expanding haematoma', source: `${T7} 19`, durationS: 1800, mode: 'modeled', requires: ['7d'],
@@ -233,10 +264,15 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(0, ev({ kind: 'thermal', anaesthesia: 'general' })), at(0, ev({ kind: 'preoxygenate', fio2: 1, durationS: 180 })), at(180, ev({ kind: 'airway', state: 'apnoea' }))],
     segments: [seg('apnoea', 180, 600, rng('t90', 'state:spo2', 'firstTBelow', 150, 240, `${T7} 23: SpO2 90 % at 2.5–4 min`, { threshold: 90 }))],
   }),
-  ...([[1.0, 411], [0.8, 303], [0.6, 213]] as const).map(([fio2, s]) => doc({
-    id: `t24-edmark-fio2-${fio2}`, title: `Induction atelectasis: apnoea after FiO2 ${fio2}`, source: `${T7} 24 (Edmark)`, durationS: 900, requires: ['7b'],
-    actions: [at(0, ev({ kind: 'thermal', anaesthesia: 'general' })), at(0, ev({ kind: 'preoxygenate', fio2, durationS: 180 })), at(180, ev({ kind: 'airway', state: 'apnoea' }))],
-    segments: [seg('apnoea', 180, 900, rng('t90', 'state:spo2', 'firstTBelow', Math.round(0.8 * s), Math.round(1.2 * s), `${T7} 24: ${s} s ±20 %`, { threshold: 90 }))],
+  // Audit V-18 (brief 88): rig and band to Edmark 2003 (PMID 12502975): 36 healthy non-smoking WOMEN breathed 100 / 80 /
+  // 60 % O2 for 5 MIN at induction, then apnoea until SpO2 by PULSE OXIMETRY reached 90 %: 411 ± 84, 303 ± 59, 213 ± 69 s.
+  // Band = mean ± 1 SD (the ±20 % was an engineering width, and at 0.6 narrower than the source's own SD). Age and weight are not in the
+  // abstract; the default 40-y 70-kg adult is kept, as a woman.
+  ...([[1.0, 411, 84], [0.8, 303, 59], [0.6, 213, 69]] as const).map(([fio2, s, sd]) => doc({
+    id: `t24-edmark-fio2-${fio2}`, title: `Induction atelectasis: apnoea after FiO2 ${fio2}`, source: `${T7} 24 (Edmark)`, durationS: 1200, requires: ['7b'],
+    patient: { sex: 'F' },
+    actions: [at(0, ev({ kind: 'thermal', anaesthesia: 'general' })), at(0, ev({ kind: 'preoxygenate', fio2, durationS: 300 })), at(300, ev({ kind: 'airway', state: 'apnoea' }))],
+    segments: [seg('apnoea', 300, 1200, rng('t90', 'numeric:spo2', 'firstTBelow', s - sd, s + sd, `Edmark 2003 (PMID 12502975): ${s} ± ${sd} s after 5 min of FiO2 ${fio2}, women, SpO2 by pulse oximetry; mean ± 1 SD. On 3bca4a61 the engine sits +1.0 to +1.6 SD at all three FiO2 (498 / 396 / 282 s): the residual is the O2 store against V̇O2 (audit V-18), an expected miss where it falls outside, never re-widened`, { threshold: 90 }))],
   })),
   doc({
     id: 't25-rocuronium-sugammadex', title: 'Rocuronium 0.6 mg/kg → sugammadex 2 mg/kg at T2', source: `${T7} 25`, durationS: 2400, mode: 'modeled', requires: ['7f', '7g'],

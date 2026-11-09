@@ -17,12 +17,15 @@
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type WireEvent } from '@pme/controller';
+import { asV1, isV2, LEARNER_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type WireEvent } from '@pme/controller';
 import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
 
-export type RowKind = 'action' | 'remote' | 'scenario' | 'alarm' | 'bookmark' | 'restore' | 'patient' | 'note';
+/** How a state row's state was entered (`Row.by` on a state row). */
+export type StateBy = 'press' | 'rule' | 'goto';
+/** `learner` (Room plan R5d): a press of the learner defibrillator window, applied by the host as the instructor's own. */
+export type RowKind = 'action' | 'remote' | 'learner' | 'scenario' | 'alarm' | 'bookmark' | 'restore' | 'patient' | 'note';
 export interface Row {
   /** Simulated seconds, as the monitor's clock showed them. */
   t: number;
@@ -41,8 +44,11 @@ export interface Row {
   tr?: string;
   /** A state row: how the state was entered — the instructor's button (the transition's trigger was pressed), the
    *  transition's own rule, or a jump (`goto`), copied from the scenario event's `by` (the runner's own account of the
-   *  transition it took). Absent for the first state. */
-  by?: 'press' | 'rule' | 'goto';
+   *  transition it took). Absent for the first state. A `learner` row (R5d): the device key of the window that pressed,
+   *  as the host carried it (8 to 16 letters and digits, so never one of the three words). */
+  by?: StateBy | (string & {});
+  /** A `learner` row (R5d): the name the instructor gave that device in Room setup when it pressed (absent: none). */
+  name?: string;
   /** A bookmark row (Instructor v2 marks): the mark's kind, and the note the instructor wrote with it. */
   markKind?: Exclude<MarkKind, 'stage'>;
   note?: string;
@@ -168,16 +174,21 @@ export class RunRecord {
   /** The time each monitor numeric in `cur` was measured at (its `at`). */
   private readonly curAt: Record<string, number> = {};
   private readonly lab: Partial<Record<LabKey, number | null>> = {};
+  /** The defibrillator's energy as its last deviceStatus said (R5d: a learner's press carries none; the device's is it). */
+  private defibJ: number | null = null;
 
   private readonly who: () => { patient: string; weightKg: number };
   private readonly now: () => number;
   private readonly runner: () => GradeInputs | null;
+  private readonly deviceName: (key: string) => string | null;
 
-  /** `runner`: the host's phase runner (a follower has none). */
-  constructor(who: () => { patient: string; weightKg: number }, now: () => number = Date.now, runner: () => GradeInputs | null = () => null) {
+  /** `runner`: the host's phase runner (a follower has none). `deviceName`: the name the instructor gave a device key in
+   *  Room setup (R7's remembered layout), for a learner's press (R5d). */
+  constructor(who: () => { patient: string; weightKg: number }, now: () => number = Date.now, runner: () => GradeInputs | null = () => null, deviceName: (key: string) => string | null = () => null) {
     this.who = who;
     this.now = now;
     this.runner = runner;
+    this.deviceName = deviceName;
     const w = who();
     this.data = emptyRun(w.patient, w.weightKg, now());
   }
@@ -240,6 +251,7 @@ export class RunRecord {
       return this.add({ t, kind: c.action === 'restoreBookmark' ? 'restore' : 'scenario', text });
     }
     const ev = c.type === 'applyEvent' ? (c.event as Record<string, unknown>) : null;
+    if (c.issuedBy === LEARNER_ISSUED_BY) return this.add(this.learnerRow(t, c, ev));
     const row: Row = { t, kind: bySc ? 'scenario' : c.issuedBy === 'remote' ? 'remote' : 'action', text };
     const b = c.batch as { id?: unknown; n?: unknown } | undefined;
     if (!bySc && typeof b?.id === 'string' && typeof b.n === 'number') row.batch = { id: b.id, n: b.n };
@@ -254,8 +266,23 @@ export class RunRecord {
     this.add(row);
   }
 
+  /**
+   * R5d: a press of the learner defibrillator window (the host applied only Charge and Shock, bare: host-session.ts) —
+   * its words with the device's energy, the device key the host carried and the name the instructor gave it.
+   */
+  private learnerRow(t: number, c: Record<string, unknown>, ev: Record<string, unknown> | null): Row {
+    const shock = ev?.kind === 'defib' && ev.action === 'shock';
+    const by = typeof c.by === 'string' ? c.by : undefined;
+    const name = by !== undefined ? this.deviceName(by) : null;
+    return {
+      t, kind: 'learner', text: `${shock ? 'Shock' : 'Charge'}${this.defibJ !== null ? ` ${this.defibJ} J` : ''}`,
+      ...(shock ? { ev: 'shock' } : {}), ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}),
+    };
+  }
+
   /** The host's engine events (truth included: it stays on this page). */
   engine(e: EngineEvent): void {
+    if (e.type === 'deviceStatus' && e.defib) this.defibJ = e.defib.energyJ;
     if (e.type === 'alarmStatus') {
       for (const a of e.active) {
         if (!this.active.has(a.id)) {

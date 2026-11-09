@@ -89,6 +89,16 @@ No exported `…State` type in this module.
 | `ASK_MS` | `200` | ms | [ENG: ui] | How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A same-browser round trip takes a few ms [ENG: ui]; this is the delay the check adds to every start of the page there. |
 | `TAKE_MS` | `2000` | ms | [ENG: ui] | How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG: ui]; without Web Locks, how long before it gives up and starts with no case. |
 
+### [`apps/demo/src/app/mechanisms/layout.ts`](../../apps/demo/src/app/mechanisms/layout.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `NODE_W` | `164` | — | [ENG: display] | A node box's width, SVG px [ENG: display]: 27 characters of an 11 px label. |
+| `NODE_H` | `38` | — | [ENG: display] | A node box's height, SVG px [ENG: display]: a label line and an engine-key line. |
+| `COL_GAP` | `64` | — | [ENG: display] | The gap between two columns, SVG px [ENG: display]: room for the feedback edges' lanes. |
+| `ROW_GAP` | `14` | — | [ENG: display] | The gap between two nodes of a column, SVG px [ENG: display]. |
+| `PAD` | `16` | — | [ENG: display] | The margin round the drawing, SVG px [ENG: display]. |
+
 ### [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -360,6 +370,7 @@ No exported `…State` type in this module.
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
 | `openersAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card author's openers (D9) on this run: |
 | `handoutQuestionsAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card's handout questions (D16) whose anchor happened on the kept course, in the card's order, each with its anchor's time; |
+| `learnerWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The who line of a learner defibrillator press (Room plan R5d): |
 | `first` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The first kept row of `want` (or of any of a list) at or after `from`, or null. |
 | `eventWords` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | An event in words, for a reason line ("the alarm Apnoea (no CO₂ breaths)", "epinephrine", "SpO₂ below 90 %"). |
 | `trendMeta` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A trend's or a lab's label and unit from the glossary ("ART M / NIBP M", "mmHg"; |
@@ -407,8 +418,14 @@ No exported `…State` type in this module.
 | `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
 | `drawPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | Four random digits from the platform's cryptographic source. |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
+| `defibWords` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | R5d: a refusal of the window's press, in the device's words. |
 | `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
+| `components` | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | Tarjan's strongly connected components, iterating nodes and out-edges in the given order; |
+| `mechanismTree` | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | The tree one trigger sets off, ready for layout (D3, D5): |
+| `generations` | [`apps/demo/src/app/mechanisms/layout.ts`](../../apps/demo/src/app/mechanisms/layout.ts) | Longest-path generation of every node over the non-feedback edges (Kahn's order, discovery order among ties). |
+| `edgeWords` | [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | An edge's words: |
+| `treeSvg` | [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | The tree as one SVG string (and the layout it used). |
 | `busyFraction` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | The busy fraction (0–1) of the main thread over [now − windowMs, now] (method above). |
 | `memoryMb` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | This page's JS heap in MB, or null where the browser does not say (only Chromium has `performance.memory`). |
 | `oxygenBlock` | [`apps/demo/src/app/oxygen.ts`](../../apps/demo/src/app/oxygen.ts) | Why the oxygen control is off now, or null when it may act: |
@@ -653,7 +670,7 @@ No exported `…State` type in this module.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -689,6 +706,10 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
 | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | What the instructor panel talks to (research/13 brief §4.4: the same panel same-screen and as a Remote). |
 | [`apps/demo/src/app/main.ts`](../../apps/demo/src/app/main.ts) | The app (research/13 brief §4–§5): one document, one engine session for every view. |
+| [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | The mechanism tree's graph (docs/plans/mechanism-tree.md §4 D3, D5, D6; piece T1): pure, no DOM. |
+| [`apps/demo/src/app/mechanisms/layout.ts`](../../apps/demo/src/app/mechanisms/layout.ts) | The mechanism tree's layout (docs/plans/mechanism-tree.md §4 D6): pure, no DOM. |
+| [`apps/demo/src/app/mechanisms/registry-data.ts`](../../apps/demo/src/app/mechanisms/registry-data.ts) | GENERATED by scripts/couplings.ts from the coupling registry (packages/engine-core/src/couplings/); do not edit. |
+| [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | The mechanism tree as an SVG string (docs/plans/mechanism-tree.md §4 D7; the swimlane's pattern, no DOM state, no graph library). |
 | [`apps/demo/src/app/memory-storage.ts`](../../apps/demo/src/app/memory-storage.ts) | A Storage in memory for the tests (happy-dom here has no localStorage): `limit` characters in all, past which setItem throws as a full localStorage does. |
 | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). |
 | [`apps/demo/src/app/oxygen.ts`](../../apps/demo/src/app/oxygen.ts) | E121b: oxygen is never assumed; it is given like a drug. |
@@ -756,6 +777,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The learner monitor on a SECOND screen. |
 | [`apps/demo/src/app/views/home.ts`](../../apps/demo/src/app/views/home.ts) | Home (E125, owner's mockup f1-home): the page the app opens on (`#/`, `#/home`). |
 | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | The instrument picker (plan room-and-instruments.md R4; Q1 ruled 5 November): the device that scans the room's QR (`?join=CODE#/pick`) chooses what this screen shows. |
+| [`apps/demo/src/app/views/mechanisms.ts`](../../apps/demo/src/app/views/mechanisms.ts) | The mechanism tree (docs/plans/mechanism-tree.md piece T1; Q12: `#/explore/mechanisms`, the last entry of Explore's left nav): for one of the six first triggers, the static forward tree of the couplings the engine comput |
 | [`apps/demo/src/app/views/monitor.ts`](../../apps/demo/src/app/views/monitor.ts) | Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the instructor has switched it on for this scenario. |
 | [`apps/demo/src/app/views/patient.ts`](../../apps/demo/src/app/views/patient.ts) | Patient (E125): the free-run patient, the E123 start page's controls on their own page, unchanged in function — the presets, age, sex, weight, height and conditions, MODELED or MANUAL, and "start with the sensors off". |
 | [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts) | Remote (research/13 §4.4): on the host screen, how to pair (the code, "open here", and a QR code only where another device can use it); in a window opened at #/remote, the instructor panel alone, joined by the 6-letter c |
@@ -920,7 +942,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/mechanism-tree.e2e.ts`](../../apps/demo/e2e/mechanism-tree.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mobile-learner.e2e.ts`](../../apps/demo/e2e/mobile-learner.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-destroy-refuses.e2e.ts`](../../apps/demo/e2e/monitor-destroy-refuses.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-fidelity.e2e.ts`](../../apps/demo/e2e/monitor-fidelity.e2e.ts) | 0 | 0 |
@@ -1005,6 +1029,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/instrument-sync.dom.test.ts`](../../apps/demo/src/app/instrument-sync.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/mechanisms/graph.test.ts`](../../apps/demo/src/app/mechanisms/graph.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/meters.test.ts`](../../apps/demo/src/app/meters.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/oxygen.test.ts`](../../apps/demo/src/app/oxygen.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pairing.test.ts`](../../apps/demo/src/app/pairing.test.ts) | 0 | 0 |
@@ -1020,6 +1045,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/readers-v2.dom.test.ts`](../../apps/demo/src/app/readers-v2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/recognised.dom.test.ts`](../../apps/demo/src/app/recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |
@@ -1084,6 +1110,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/debrief-recognised.dom.test.ts`](../../apps/demo/src/app/views/debrief-recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-steps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-swimlane.test.ts`](../../apps/demo/src/app/views/debrief-swimlane.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/defib-window-press.dom.test.ts`](../../apps/demo/src/app/views/defib-window-press.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/defib-window.dom.test.ts`](../../apps/demo/src/app/views/defib-window.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore-drugs.dom.test.ts`](../../apps/demo/src/app/views/explore-drugs.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore.dom.test.ts`](../../apps/demo/src/app/views/explore.dom.test.ts) | 0 | 0 |
@@ -1092,6 +1119,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/mechanisms.dom.test.ts`](../../apps/demo/src/app/views/mechanisms.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/remote-pin.dom.test.ts`](../../apps/demo/src/app/views/remote-pin.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-defib.dom.test.ts`](../../apps/demo/src/app/views/room-defib.dom.test.ts) | 0 | 0 |

@@ -524,6 +524,7 @@ Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `o
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control | ratio 0.80 | — | MIS-SPECIFIED ([audit row 6](../../docs/validation/target-audit/30-target-audit.md#row-6)) | awake arm: VT ratio >= 0.8 (near-normal) with an obstruction/inspiratory-flow load present; keep < 0.75 only on a sedated (hypnotic) arm | [`neuro-acceptance.test.ts`](../../packages/engine-core/test/engine/neuro-acceptance.test.ts) |
+| propofol 2 mg/kg: depth-index nadir 18.4–39.0 | 50 | Blum 2006 | not audited | — | [`neuro-engine.test.ts`](../../packages/engine-core/test/engine/neuro-engine.test.ts) |
 | synergy: propofol 1 + remifentanil 1 depresses more than the product of each | equal at α 0 | — | RIGHT ([audit row 5](../../docs/validation/target-audit/30-target-audit.md#row-5)) | keep (both > Bliss prediction); optionally quantify: resting VE depression at propofol 1 + remi 1 clearly beyond Bliss | [`depth-drive.test.ts`](../../packages/engine-core/test/l2/neuro/depth-drive.test.ts) |
 | 1 MAC volatile lowers non-depolariser EC50 by ~33 % | × 0.847, −15 % | tables §5d | MIS-SPECIFIED ([audit row 2](../../docs/validation/target-audit/30-target-audit.md#row-2)) | 0.72-0.90 at 1 MAC | [`depth-drive.test.ts`](../../packages/engine-core/test/l2/neuro/depth-drive.test.ts) |
 | 1 MAC volatile: EC50 × 0.67 | × 0.847 | tables §5d | MIS-SPECIFIED ([audit row 1](../../docs/validation/target-audit/30-target-audit.md#row-1)) | EC50 multiplier 0.72-0.90 at 1 MAC sevoflurane (iso/des similar to sevo in Bock); keep 0.62-0.72 only if re-specified at 1.5 MAC | [`interactions.test.ts`](../../packages/engine-core/test/l2/neuro/interactions.test.ts) |
@@ -539,7 +540,7 @@ Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `o
 | [`engine/eeg-signal.test.ts`](../../packages/engine-core/test/engine/eeg-signal.test.ts) | 0 | 0 |
 | [`engine/neuro-acceptance.test.ts`](../../packages/engine-core/test/engine/neuro-acceptance.test.ts) | 1 | 0 |
 | [`engine/neuro-circ.test.ts`](../../packages/engine-core/test/engine/neuro-circ.test.ts) | 0 | 0 |
-| [`engine/neuro-engine.test.ts`](../../packages/engine-core/test/engine/neuro-engine.test.ts) | 0 | 0 |
+| [`engine/neuro-engine.test.ts`](../../packages/engine-core/test/engine/neuro-engine.test.ts) | 1 | 0 |
 | [`engine/neuro-longrun.test.ts`](../../packages/engine-core/test/engine/neuro-longrun.test.ts) | 0 | 0 |
 | [`engine/neuro-spont.test.ts`](../../packages/engine-core/test/engine/neuro-spont.test.ts) | 0 | 0 |
 | [`l2/eeg/artefacts.test.ts`](../../packages/engine-core/test/l2/eeg/artefacts.test.ts) | 0 | 0 |

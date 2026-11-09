@@ -7,9 +7,10 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { classify, parseRef, registry, renderUnregistered, resolveConst, seamCheck, UNREGISTERED_FILE } from '../../../scripts/couplings.ts';
+import { classify, parseRef, registry, renderTreeData, renderUnregistered, resolveConst, seamCheck, TREE_FILE, UNREGISTERED_FILE } from '../../../scripts/couplings.ts';
 import { extract } from '../../../scripts/model-docs.ts';
 import { MODULES } from '../../../scripts/model-modules.ts';
+import { REGISTRY } from '../../../apps/demo/src/app/mechanisms/registry-data.ts';
 import { COUPLINGS, UNREGISTERED, type ConstRef, type EdgeClass } from '../../engine-core/src/couplings/index.ts';
 
 const root = resolve(import.meta.dirname, '../../..');
@@ -106,5 +107,14 @@ describe('coupling registry: (4) the class of an edge', { timeout: 60_000 }, () 
     for (const id of ['circulation.baro.hr', 'circulation.baro.svr', 'endocrine-thermal.humoral.svr', 'endocrine-thermal.humoral.venous', 'pharmacology.phenylephrine.svr']) expect(cls.get(id), id).toBe('FIT'); // research/44 L2-03, L2-01, X-12
     for (const id of ['circulation.chemo.hr', 'circulation.chemo.svr']) expect(cls.get(id), id).toBe('UNTAGGED'); // L2-04: inline literals
     for (const id of ['circulation.absent.baroToHub', 'circulation.absent.chemoToHub', 'endocrine-thermal.absent.avp']) expect(cls.get(id), id).toBe('ABSENT');
+  });
+});
+
+describe('coupling registry: the mechanism-tree page\'s copy (plan piece T1)', { timeout: 60_000 }, () => {
+  it('apps/demo/src/app/mechanisms/registry-data.ts is current: every row, its computed class and its constants\' tags', () => {
+    expect(readFileSync(join(root, TREE_FILE), 'utf8'), 'run: node --experimental-strip-types scripts/couplings.ts').toBe(renderTreeData(root));
+  });
+  it('carries the class D2 computes for each row, never one of its own', () => {
+    expect(REGISTRY.rows.map((r) => `${r.id} ${r.cls}`)).toEqual(registry(root).map((x) => `${x.row.id} ${x.cls}`));
   });
 });
