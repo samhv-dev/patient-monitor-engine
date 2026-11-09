@@ -124,6 +124,37 @@ describe('hostile relay input', () => {
     expect(h.got.some((m) => m.includes('"bad"') || m.includes('"kind":"ack"') || m.includes('"kind":"grant"'))).toBe(false);
     await healthy('HDB234');
   });
+  // L3 (plan learner-action-remote.md §8 review focus 2): the device is never trusted. A learner remote's forged frames
+  // are dropped; a mistyped preparation is dropped by the guard; a forged value on a well-typed one is `forbidden`
+  it("a `learner` socket's forged grant, ack, event (its own `prep` news) and snapshot are dropped; forged preparations never reach the host", async () => {
+    const h = await open();
+    const l = await open();
+    const hs = createStamper('HPA234', 'h');
+    const ls = createStamper('HPA234', 'lrn-p.1');
+    h.ws.send(JSON.stringify(hs({ kind: 'hello', role: 'host' })));
+    l.ws.send(JSON.stringify(ls({ kind: 'hello', role: 'learner', pin: '582913' } as never)));
+    await waitFor(() => h.got.some((m) => m.includes('"lrn-p.1"')), 3000, 'learner hello at the host');
+    h.ws.send(JSON.stringify(hs({ kind: 'grant', to: 'lrn-p.1', granted: true })));
+    await waitFor(() => l.got.some((m) => m.includes('"grant"')), 3000, 'granted');
+    const before = relay.stats().dropped;
+    l.ws.send(JSON.stringify(ls({ kind: 'grant', to: 'lrn-p.1', granted: true })));
+    l.ws.send(JSON.stringify(ls({ kind: 'ack', commandId: 'x', accepted: true, tick: 1 })));
+    l.ws.send(JSON.stringify(ls({ kind: 'event', body: [{ type: 'prep', t: 1, to: 'lrn-p.1', body: { made: true } }] } as never)));
+    l.ws.send(JSON.stringify(ls({ kind: 'snapshot', body: { schema: 'pme-snapshot/1', tick: 0 } } as never)));
+    const prep = { id: 'p0000001', components: [{ productId: 'propofol', amount: 20, unit: 'mL' }] };
+    for (const p of [{ ...prep, id: 'NOT-OURS' }, { ...prep, components: [{ productId: 'propofol', amount: -20, unit: 'mL' }] }, { ...prep, components: 'propofol' }])
+      l.ws.send(JSON.stringify(ls({ kind: 'command', body: { id: 'bad', issuedBy: 'x', type: 'prep', action: 'stage', prep: p } } as never)));
+    await waitFor(() => relay.stats().dropped - before === 7, 3000, 'seven frames dropped');
+    for (const body of [
+      { type: 'prep', action: 'stage', prep: { ...prep, concentration: { amount: 10, unit: 'mg', perMl: 1 } } },
+      { type: 'prep', action: 'stage', prep, by: 'phone0001' },
+      { type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 200, unit: 'mg', route: 'iv' }, by: 'phone0001' },
+    ])
+      l.ws.send(JSON.stringify(ls({ kind: 'command', body: { id: 'forged', issuedBy: 'x', ...body } } as never)));
+    await waitFor(() => l.got.filter((m) => m.includes('"forbidden"')).length === 3, 3000, 'three forbidden');
+    expect(h.got.some((m) => m.includes('"bad"') || m.includes('"forged"') || m.includes('"kind":"ack"') || m.includes('"type":"prep"'))).toBe(false);
+    await healthy('HPB234');
+  });
 });
 
 // PR #306, CI run 42350190627: room-qr-tab-guard's afterEach waited 90 s in relay.close(). close() waited for every

@@ -100,11 +100,12 @@ export function roomView(d: RoomDeps): RoomView {
     if (m.from === d.hostPeerId) return;
     // R8a's `ventilator` is not listed from a hello (its window and tablet are the desk's rows, R8d). R5d's defibrillator
     // window says `defib`: one on this computer is a window that follows as a viewer does, shown as the defibrillator, and
-    // counts toward "Reopen that layout"; one over the relay is in the relay's table (R2)
+    // counts toward "Reopen that layout"; one over the relay is in the relay's table (R2). The learner action remote
+    // (learner-action-remote.md L3) is in the relay's table too; its own row label is L6's
     if (m.kind === 'hello' && m.role === 'defib') {
       if (via !== 'local') return;
       log.heard(m.from, via, 'viewer', now(), 'defib');
-    } else if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator' && m.role !== 'defib') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
+    } else if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator' && m.role !== 'defib' && m.role !== 'learner') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
     else if (m.kind === 'command') log.heard(m.from, via, 'controller', now());
     else return;
     if (via === 'local') writeWindows(kept, windowsOf(log.list()));
