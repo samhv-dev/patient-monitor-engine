@@ -160,12 +160,16 @@ const MARK_SVG: Readonly<Record<Who, (x: number, top: number) => string>> = {
 };
 const MARK_INK: Readonly<Record<Who, string>> = { team: '#0072B2', patient: '#D55E00', scenario: '#777' };
 
+/** A chart's caption takes its direction from its own first letter (P-S5): a trend's label and unit are Latin
+ *  throughout, so in the Persian page they read left to right ("HR bpm", not "bpmHR" laid right to left); the Pressures
+ *  caption, which the table puts into Persian, stays right to left. The unit is its own isolated run (debrief.css). */
+const CAPTION = { dir: 'auto' } as const;
 /** One trend as inline SVG over the kept course: a black line with gaps where nothing was measured, the first and
  *  last value of the axis, minutes on the time axis, a dashed line at each return to a bookmark, and the numbered key
  *  moments. */
 function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }> = []): HTMLElement {
   const m = trendMeta(k);
-  const fig = h('figure', { class: 'db-chart', 'data-trend': k }, h('figcaption', {}, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null));
+  const fig = h('figure', { class: 'db-chart', 'data-trend': k }, h('figcaption', CAPTION, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null));
   const pts = d.samples.filter((s) => s[k] !== null);
   if (!pts.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
   const vals = pts.map((s) => s[k] as number);
@@ -232,7 +236,7 @@ function pressurePath(d: RunData, k: PressureKey, x: (t: number) => number, y: (
  *  draw a CVP of 5–20 mmHg as a flat line. A record made before Debrief 2 (no 'pressures' in `keeps`) has no panel. */
 function pressuresChart(d: RunData, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }>): HTMLElement | null {
   if (!d.keeps?.includes('pressures')) return null;
-  const fig = h('figure', { class: 'db-chart', 'data-trend': 'pressures' }, h('figcaption', {}, 'Pressures', h('span', { class: 'unit' }, PRESSURES_UNIT)));
+  const fig = h('figure', { class: 'db-chart', 'data-trend': 'pressures' }, h('figcaption', CAPTION, 'Pressures', h('span', { class: 'unit' }, PRESSURES_UNIT)));
   const vals = (k: PressureKey) => d.samples.map((s) => s[k]).filter((v): v is number => typeof v === 'number');
   const [sys, dia, cvp] = PRESSURE_KEYS.map(vals) as [number[], number[], number[]];
   if (!sys.length && !dia.length && !cvp.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;

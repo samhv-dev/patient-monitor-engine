@@ -85,6 +85,16 @@ describe('the Debrief in Persian (D13)', () => {
     if (head.length) expect(head[0]).toBe('مرحله');
   });
 
+  it('P-S5: each chart caption takes its direction from its first letter, the unit its own run', () => {
+    const v = open(exportOf(TAMPONADE).record);
+    leave = v.leave;
+    press(v.el, 'fa');
+    const caps = [...v.el.querySelectorAll('.db-chart figcaption')];
+    expect(caps.length).toBeGreaterThanOrEqual(6);
+    for (const c of caps) expect(c.getAttribute('dir'), c.textContent ?? '').toBe('auto');
+    expect(v.el.querySelector('.db-chart[data-trend=hr] figcaption')?.textContent).toBe('HRbpm'); // Latin throughout: laid left to right
+  });
+
   it('«فارسی»: the containers right to left in Persian, kept per browser; back to English restores the page', () => {
     const v = open(exportOf(TAMPONADE).record);
     leave = v.leave;
