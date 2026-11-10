@@ -191,6 +191,12 @@ renderer, audio and skin contracts.
 | `UNREACHABLE_MS` | `6000` | ms | [ENG: ui] | The phone has not reached the relay for this long: it is probably not on the classroom network [ENG: ui]. |
 | `COCKPIT_QUIET_MS` | `2500` | ms | [ENG: ui] | The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG: ui]. |
 
+### [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `LEARNER_GIVE_UP_MS` | `10000` | ms | [ENG: ui; P7's 10 s] | Plan P7 §1: an older kit's relay refuses the learner's hello or an older host never answers; the phone gives up [ENG: ui; P7's 10 s]. |
+
 ### [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -392,7 +398,7 @@ renderer, audio and skin contracts.
 | `scenarioCard` | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | Scenario card: |
 | `relayOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The relay this page talks to: |
 | `learnerUrl` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The learner's address for the QR code: |
-| `instrumentOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | What a follower page at `hash` shows (the picker, or an instrument); |
+| `instrumentOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | What a follower page at `hash` shows (the picker, the learner remote, or an instrument); |
 | `instructorUrl` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The instructor phone's address (plan instructor-peer-role.md P7): |
 | `qrTarget` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Where the learners' QR code sends phones: |
 | `instructorTarget` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Where the instructor's QR code sends the instructor's phone: |
@@ -601,9 +607,13 @@ renderer, audio and skin contracts.
 | `deviceKey` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | This device's own key (§4 D1, for the remembered layout): |
 | `instrumentCard` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | One instrument card (m5): |
 | `pickerView` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | The picker's page for room `code`: |
+| `learnerRefusalWords` | [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts) | What the phone says for a refusal: |
+| `learnerRemoteView` | [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts) | The learner remote's page: |
 | `refusalWords` | [`apps/demo/src/app/views/pin-form.ts`](../../apps/demo/src/app/views/pin-form.ts) | What the phone says for a refusal (`denied` or `revoked`): |
 | `pinForm` | [`apps/demo/src/app/views/pin-form.ts`](../../apps/demo/src/app/views/pin-form.ts) | The form: `onSignIn` gets the code and the PIN once both are well formed; |
 | `rowWords` | [`apps/demo/src/app/views/room-instructor.ts`](../../apps/demo/src/app/views/room-instructor.ts) | The row's words (plan P7: |
+| `pinHold` | [`apps/demo/src/app/views/room-instructor.ts`](../../apps/demo/src/app/views/room-instructor.ts) | P7's press-and-hold (Q2), for a PIN of this computer: |
+| `learnerPinCard` | [`apps/demo/src/app/views/room.ts`](../../apps/demo/src/app/views/room.ts) | L6: the learner PIN beside the instructor's (§4 D9): |
 | `settingsView` | [`apps/demo/src/app/views/settings.ts`](../../apps/demo/src/app/views/settings.ts) | The Settings view on the site profile. |
 | `teach2View` | [`apps/demo/src/app/views/teach2.ts`](../../apps/demo/src/app/views/teach2.ts) | The Instructor v2 view on `link`, for `shell.add`. |
 | `engineVentilation` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The cockpit's settings as the engine's `ventilation` event takes them (its own ventilator is volume control). |
@@ -830,6 +840,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The learner monitor on a SECOND screen. |
 | [`apps/demo/src/app/views/home.ts`](../../apps/demo/src/app/views/home.ts) | Home (E125, owner's mockup f1-home): the page the app opens on (`#/`, `#/home`). |
 | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | The instrument picker (plan room-and-instruments.md R4; Q1 ruled 5 November): the device that scans the room's QR (`?join=CODE#/pick`) chooses what this screen shows. |
+| [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts) | The learner action remote's page (plan learner-action-remote.md L6, §4 D1, D9; LQ1 ruled 9 November): a phone that picked "Learner remote" on the instrument picker opens `?join=CODE#/remote/learner`. |
 | [`apps/demo/src/app/views/mechanisms.ts`](../../apps/demo/src/app/views/mechanisms.ts) | The mechanism tree (docs/plans/mechanism-tree.md piece T1; Q12: `#/explore/mechanisms`, the last entry of Explore's left nav): for one of the six first triggers, the static forward tree of the couplings the engine comput |
 | [`apps/demo/src/app/views/monitor.ts`](../../apps/demo/src/app/views/monitor.ts) | Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the instructor has switched it on for this scenario. |
 | [`apps/demo/src/app/views/patient.ts`](../../apps/demo/src/app/views/patient.ts) | Patient (E125): the free-run patient, the E123 start page's controls on their own page, unchanged in function — the presets, age, sex, weight, height and conditions, MODELED or MANUAL, and "start with the sensors off". |
@@ -1184,6 +1195,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/learner-baseline.dom.test.ts`](../../apps/demo/src/app/views/learner-baseline.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/learner-remote.dom.test.ts`](../../apps/demo/src/app/views/learner-remote.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/mechanisms.dom.test.ts`](../../apps/demo/src/app/views/mechanisms.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/remote-pin.dom.test.ts`](../../apps/demo/src/app/views/remote-pin.dom.test.ts) | 0 | 0 |
