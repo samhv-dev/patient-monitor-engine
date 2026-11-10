@@ -9,6 +9,21 @@ PATIENT MONITOR SIMULATOR - how to start it (no internet needed)
 6. To stop: close the black Terminal window (click "Terminate" if asked). Closing the browser alone does not stop it.
 7. If nothing works, use the rescue card; the recorded cases are in the "videos" folder.
 
+YOUR WORK: THE "user-data" FOLDER (inside this kit's folder)
+   Scenario cards you make in the builder are kept in this browser AND as plain files in the folder "user-data"
+   beside this file, so a cleared browser, or another browser on this computer, loses nothing (Builder > the list
+   "In this kit's user-data folder, not in this browser" opens them). The folder appears at the first save
+   (Ctrl+S, Export, or every 2 minutes of editing); each saved version is a file of its own, never overwritten.
+   It is written only when the kit runs on Node.js ("Start Classroom", or "Start Simulator" on the kit's own node),
+   and only by this computer. On ruby, perl or python, or on a read-only disk or locked USB stick, nothing is kept
+   there: the builder says so; export a file to keep your work.
+   The room code is kept there too, in a hidden file (.room.json; never the PIN).
+   TWO THINGS TO KNOW:
+   - A NEW KIT STARTS EMPTY unless you copy the "user-data" folder into it from the old kit.
+   - A copy of this kit folder handed to a colleague CARRIES YOUR DRAFTS unless you leave the
+     "user-data" folder out of the copy.
+   Back it up by copying the folder.
+
 LEARNERS' PHONES (optional; needs Node.js 22 or later on this Mac, and a network the phones share with it)
    Before the day: in Terminal, "node -v" must print v22 or later; if not, install the LTS from nodejs.org. Test it the
    day before with your own phone on the network you will use (the venue Wi-Fi, or this Mac's hotspot).

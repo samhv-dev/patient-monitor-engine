@@ -28,8 +28,9 @@ const winNode = (await import(pathToFileURL(join(showcase, 'win-node.mjs')).href
 };
 const launch = (await import(pathToFileURL(join(showcase, 'server/launch.mjs')).href)) as {
   openCommand: (url: string, platform?: string) => { cmd: string; args: string[]; opts: Record<string, unknown> };
-  stateDir: (platform: string, env: Record<string, string | undefined>) => string | null;
-  relayArgs: (relay: string, port: number, app: string, state: string | null) => string[];
+  stateDir: (kitDir: string, env?: Record<string, string | undefined>) => string;
+  oldStateDir: (platform: string, env: Record<string, string | undefined>) => string | null;
+  relayArgs: (relay: string, port: number, app: string, state: string | null, old?: string | null) => string[];
 };
 
 describe('the kit gets the Windows launchers', () => {
@@ -299,27 +300,39 @@ describe('make-bundle.mjs --win-node: the official Windows Node.js zip, verified
   });
 });
 
-// Room plan R1b: the room code survives the kit's move to the next port (a new origin, an empty store). The launchers
-// start the relay with --state-dir in this computer's own application-data folder; the kit's folder stays untouched.
-describe('the classroom keeps its last room code in the application-data folder (room plan R1b)', () => {
-  it('launch.mjs (what Start Classroom.cmd runs): %LOCALAPPDATA%\\PME Classroom on Windows, ~/Library/Application Support/PME Classroom on macOS', () => {
-    expect(launch.stateDir('win32', { LOCALAPPDATA: 'C:\\Users\\lab\\AppData\\Local' })).toBe('C:\\Users\\lab\\AppData\\Local\\PME Classroom');
-    expect(launch.stateDir('darwin', { HOME: '/Users/lab' })).toBe('/Users/lab/Library/Application Support/PME Classroom');
-    // no such folder known (a stripped environment, another system): no --state-dir, the relay writes nothing
-    expect(launch.stateDir('win32', {})).toBeNull();
-    expect(launch.stateDir('darwin', {})).toBeNull();
-    expect(launch.stateDir('linux', { HOME: '/home/lab' })).toBeNull();
-    // the kit's own tests (check-relay.mjs) point it at a folder of their own
-    for (const os of ['win32', 'darwin', 'linux']) expect(launch.stateDir(os, { PME_STATE_DIR: '/tmp/pme-state', HOME: '/Users/lab', LOCALAPPDATA: 'C:\\x' })).toBe('/tmp/pme-state');
+// Room plan R1b and the kit store (the owner's ruling of 10 November 2026): the launchers start the relay (and the
+// simulator's Node.js server) with --state-dir in the kit's OWN user-data folder, on every system; a room code an older
+// kit kept in this computer's application-data folder is passed as --old-state-dir, read once, never written.
+describe('the kit keeps its data in its own user-data folder; the old application-data folder is read only', () => {
+  it('launch.mjs (what the .cmd files run): <kit folder>/user-data on every system; PME_STATE_DIR first (the kit\'s own tests)', () => {
+    expect(launch.stateDir('/kit')).toBe(join('/kit', 'user-data'));
+    expect(launch.stateDir('/kit', { PME_STATE_DIR: '/tmp/pme-state' })).toBe('/tmp/pme-state');
   });
-  it('launch.mjs passes --state-dir only when there is a folder', () => {
-    expect(launch.relayArgs('/kit/server/relay.mjs', 8650, '/kit/app', '/Users/lab/Library/Application Support/PME Classroom')).toEqual(['/kit/server/relay.mjs', '--port', '8650', '--static', '/kit/app', '--state-dir', '/Users/lab/Library/Application Support/PME Classroom']);
-    expect(launch.relayArgs('/kit/server/relay.mjs', 8650, '/kit/app', null)).toEqual(['/kit/server/relay.mjs', '--port', '8650', '--static', '/kit/app']);
+  it('launch.mjs: the old folder is %LOCALAPPDATA%\\PME Classroom on Windows, ~/Library/Application Support/PME Classroom on macOS; none under PME_STATE_DIR', () => {
+    expect(launch.oldStateDir('win32', { LOCALAPPDATA: 'C:\\Users\\lab\\AppData\\Local' })).toBe('C:\\Users\\lab\\AppData\\Local\\PME Classroom');
+    expect(launch.oldStateDir('darwin', { HOME: '/Users/lab' })).toBe('/Users/lab/Library/Application Support/PME Classroom');
+    expect(launch.oldStateDir('win32', {})).toBeNull();
+    expect(launch.oldStateDir('darwin', {})).toBeNull();
+    expect(launch.oldStateDir('linux', { HOME: '/home/lab' })).toBeNull();
+    for (const os of ['win32', 'darwin', 'linux']) expect(launch.oldStateDir(os, { PME_STATE_DIR: '/tmp/pme-state', HOME: '/Users/lab', LOCALAPPDATA: 'C:\\x' })).toBeNull();
   });
-  it('Start Classroom.command: the same folder on macOS (PME_STATE_DIR first), passed to the relay; nothing in its own folder', () => {
+  it('launch.mjs passes --state-dir, and --old-state-dir only when there is one', () => {
+    expect(launch.relayArgs('/kit/server/relay.mjs', 8650, '/kit/app', '/kit/user-data', '/Users/lab/Library/Application Support/PME Classroom')).toEqual(['/kit/server/relay.mjs', '--port', '8650', '--static', '/kit/app', '--state-dir', '/kit/user-data', '--old-state-dir', '/Users/lab/Library/Application Support/PME Classroom']);
+    expect(launch.relayArgs('/kit/server/relay.mjs', 8650, '/kit/app', '/kit/user-data', null)).toEqual(['/kit/server/relay.mjs', '--port', '8650', '--static', '/kit/app', '--state-dir', '/kit/user-data']);
+  });
+  it('Start Classroom.command: $DIR/user-data (PME_STATE_DIR first), the old folder read only without PME_STATE_DIR', () => {
     const text = readFileSync(join(showcase, 'kit', 'start-classroom.command'), 'utf8');
-    expect(text).toContain('STATE="${PME_STATE_DIR:-${HOME:+$HOME/Library/Application Support/PME Classroom}}"');
-    expect(text).toContain('"$NODE" "$RELAY" --port "$p" --static "$APP" ${STATE:+--state-dir "$STATE"} >"$LOG" 2>&1 &');
-    expect(text).not.toMatch(/\$DIR\/[^"\s]*(room|state)/i);
+    expect(text).toContain('STATE="${PME_STATE_DIR:-$DIR/user-data}"');
+    expect(text).toContain('[ -n "${PME_STATE_DIR:-}" ] || OLD_STATE="${HOME:+$HOME/Library/Application Support/PME Classroom}"');
+    expect(text).toContain('"$NODE" "$RELAY" --port "$p" --static "$APP" --state-dir "$STATE" ${OLD_STATE:+--old-state-dir "$OLD_STATE"} >"$LOG" 2>&1 &');
+  });
+  it('Start Simulator.command: its Node.js server alone gets the folder (serve.mjs\'s 4th argument); ruby, perl and python do not', () => {
+    const text = readFileSync(join(showcase, 'kit', 'start-simulator.command'), 'utf8');
+    expect(text).toContain('STATE="${PME_STATE_DIR:-$DIR/user-data}"');
+    expect(text).toContain('"$@" "$APP" "$START_PORT" "$PORTFILE" ${EXTRA:+"$EXTRA"} >"$LOG" 2>&1 &');
+    const node = text.slice(text.indexOf('try_node()'), text.indexOf('try_ruby()'));
+    expect(node).toContain('EXTRA="$STATE"');
+    expect(node.trim().endsWith('EXTRA=""\n  return 1\n}')).toBe(true);
+    expect(text.slice(text.indexOf('try_ruby()')).match(/EXTRA=/g)).toBeNull();
   });
 });

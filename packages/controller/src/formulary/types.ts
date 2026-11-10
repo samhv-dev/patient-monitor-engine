@@ -40,12 +40,23 @@ export interface Reconstitution extends Sourced {
 /** The preparation time, or a gap (LQ7: ready at once, the Debrief says "no source for the preparation time"). */
 export type PrepTime = (Sourced & { s: number }) | Gap;
 
+/** A label's in-use time (brief 127): how long the label allows the prepared product, at what temperature. */
+export interface InUse extends Sourced {
+  h: number;
+  /** The temperature the label names (the upper end of a range); absent when it names none. */
+  tempC?: number;
+  /** The label's own condition, in our words (diluted, in a syringe, refrigerated, …). */
+  condition: string;
+}
+
 export interface Product {
   id: string;
   form: 'powder' | 'solution' | 'emulsion';
   strength: Strength;
   reconstitute?: Reconstitution;
   prepTime?: PrepTime;
+  /** Every in-use time the label states, each with its condition. */
+  inUse?: InUse[];
 }
 
 /** Trissel 2013's reading of a statement whose source of record is Stabilis (or Trissel itself). */
@@ -80,8 +91,21 @@ export interface Admixture extends Compat {
   with: string;
 }
 
+/** The concentration a stability row was measured at, as its source states it (brief 127): `amount`, or `amount`
+ *  to `max` for a stated range; `unit` is an amount per mL or per L (`mg/mL`, `µg/mL`, `mg/L`, `IU/mL`, `mmol/mL`). */
+export interface Concentration extends Sourced {
+  amount: number;
+  max?: number;
+  unit: string;
+}
+
 export interface Stability extends Statement {
+  /** `'stable'`: the source states "stable for T" (points `[[T, x]]`, at least x retained up to T h; LQ9 decides the
+   *  fraction inside T). Absent or `'measured'`: the points are measured fractions. */
+  kind?: 'measured' | 'stable';
   diluent: string;
+  /** Absent when the source states none: the row then answers for any concentration no stated row covers. */
+  concentration?: Concentration;
   container: 'vial' | 'syringe-pp' | 'bag-pvc' | 'bag-polyolefin';
   tempC: number;
   /** [hours, fraction remaining] pairs as the source gives them. */

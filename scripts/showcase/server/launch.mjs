@@ -6,10 +6,13 @@
 //   node launch.mjs simulator   server/serve.mjs on 127.0.0.1 only, port PME_PORT (8642) or the next free of 49
 // It prints the .command launchers' lines (the kit tests read "ADDRESS:" and "SERVER:"), opens the default browser once
 // the server answers (not with PME_NO_OPEN=1), and lives as long as the server: Ctrl+C or closing the window stops
-// both. It writes nothing into the kit (the simulator's port file goes to the temp folder). ASCII output only: the
-// Windows console's code page cannot garble it.
-// Room plan R1b: the classroom relay keeps the last room code (room.json, the code only) in this computer's own
-// application-data folder, `stateDir()` below, so the room code survives a restart and the move to the next port.
+// both. ASCII output only: the Windows console's code page cannot garble it.
+// The kit store (docs/plans/scenario-builder.md §8 layer 2; the owner's ruling of 10 November 2026): both servers get the
+// kit's own `user-data` folder, `stateDir()` below, created at the first save: the clinicians' scenario cards are kept
+// there as plain files, and the classroom relay keeps the last room code there in the hidden `.room.json` (the code
+// only), so it survives a restart and the move to the next port. Nothing else is written into the kit (the simulator's
+// port file goes to the temp folder), and nothing into this computer's application-data folder: a room code an older kit
+// kept there (`oldStateDir()`) is read once, and that file is left as it is.
 // The relay and serve.mjs are started with process.execPath: the node.exe the .cmd chose (the kit's runtime\node.exe
 // when it has one), never a second lookup; the "SERVER:" line names it.
 import { spawn } from 'node:child_process';
@@ -28,23 +31,29 @@ export function openCommand(url, platform = process.platform) {
   return { cmd: 'xdg-open', args: [url], opts: {} };
 }
 
-/** Where the classroom relay keeps the last room code: PME_STATE_DIR (the kit's own tests), else %LOCALAPPDATA%\PME
- *  Classroom on Windows, ~/Library/Application Support/PME Classroom on macOS; null (no --state-dir: nothing kept)
- *  when that folder is not known or on another system. */
-export function stateDir(platform = process.platform, env = process.env) {
-  if (env.PME_STATE_DIR) return env.PME_STATE_DIR;
+/** The kit's own data folder: PME_STATE_DIR (the kit's own tests), else `<kit folder>/user-data` on every system. */
+export function stateDir(kitDir, env = process.env) {
+  return env.PME_STATE_DIR || join(kitDir, 'user-data');
+}
+
+/** Where kits before 10 November kept the room code (read once, never written): %LOCALAPPDATA%\PME Classroom on
+ *  Windows, ~/Library/Application Support/PME Classroom on macOS; null on another system, when that folder is not
+ *  known, or under PME_STATE_DIR (a test reads no folder of this computer's). */
+export function oldStateDir(platform = process.platform, env = process.env) {
+  if (env.PME_STATE_DIR) return null;
   if (platform === 'win32') return env.LOCALAPPDATA ? win32.join(env.LOCALAPPDATA, 'PME Classroom') : null;
   if (platform === 'darwin') return env.HOME ? posix.join(env.HOME, 'Library', 'Application Support', 'PME Classroom') : null;
   return null;
 }
 
 /** The classroom relay's arguments. */
-export function relayArgs(relay, port, app, state) {
-  return [relay, '--port', String(port), '--static', app, ...(state ? ['--state-dir', state] : [])];
+export function relayArgs(relay, port, app, state, old = null) {
+  return [relay, '--port', String(port), '--static', app, ...(state ? ['--state-dir', state] : []), ...(old ? ['--old-state-dir', old] : [])];
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
-const app = join(resolve(here, '..'), 'app');
+const kitDir = resolve(here, '..');
+const app = join(kitDir, 'app');
 const say = (...lines) => console.log(lines.join('\n'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const big = (...lines) => say('', `  ${'='.repeat(70)}`, ...lines.map((l) => (l ? `  ${l}` : '')), `  ${'='.repeat(70)}`, '');
@@ -122,11 +131,12 @@ async function classroom() {
     fail('The kit is incomplete: the app or the relay is missing.', `no ${join(app, 'index.html')} or ${relay}`, 'If you opened it inside the .zip file: right-click the .zip, choose "Extract All", and start it from the extracted folder.');
   }
   const first = Number(process.env.PME_PORT || 8650);
-  const state = stateDir();
+  const state = stateDir(kitDir);
+  const old = oldStateDir();
   let s = null;
   let last = '';
   for (let port = first; port < first + 10 && !stopping; port++) {
-    const t = startNode(relayArgs(relay, port, app, state), (o) => /ready on ws:\/\//.test(o), 10_000);
+    const t = startNode(relayArgs(relay, port, app, state, old), (o) => /ready on ws:\/\//.test(o), 10_000);
     if (await t.up) {
       s = { ...t, port };
       break;
@@ -171,7 +181,7 @@ async function simulator() {
       return false;
     }
   };
-  const s = startNode([serve, app, String(Number(process.env.PME_PORT || 8642)), portFile], answers, 12_000);
+  const s = startNode([serve, app, String(Number(process.env.PME_PORT || 8642)), portFile, stateDir(kitDir)], answers, 12_000);
   if (!(await s.up)) {
     if (stopping) process.exit(0);
     fail('The small web server did not start.', tail(s.out()) || 'no answer in 12 s');

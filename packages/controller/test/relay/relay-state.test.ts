@@ -1,16 +1,18 @@
 // Room plan R1b (docs/plans/room-and-instruments.md §7; Q3 ruled 5 November = A): the room code survives the kit's port
-// change. The kit opens http://127.0.0.1:<port> and moves to the next port when 8650 is busy; a new port is a new origin
+// change. Since the owner's ruling of 10 November 2026 the state directory is the kit's own user-data folder and the
+// code's file in it is itself hidden (`.room.json`: a dot-file, and on Windows the hidden attribute too); a code an
+// older kit kept in the application-data folder (`--old-state-dir`, its room.json) is read once, never written. The kit opens http://127.0.0.1:<port> and moves to the next port when 8650 is busy; a new port is a new origin
 // with an empty store, so the app alone would draw a new code. With `--state-dir DIR` the relay keeps the code of the last
-// room a host opened in DIR/room.json and answers it as `lastRoom` in /pme-relay.json, across a restart on another port.
-// room.json holds the room code only (never a PIN, a peer id, an address or a name); without `--state-dir` (`pnpm relay`,
+// room a host opened in DIR/.room.json and answers it as `lastRoom` in /pme-relay.json, across a restart on another port.
+// .room.json holds the room code only (never a PIN, a peer id, an address or a name); without `--state-dir` (`pnpm relay`,
 // the developer's use) nothing is written anywhere.
-import { spawn } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createStamper, type Role } from '../../src/protocol.ts';
-import { startRelay, type RelayHandle, type RelayOptions } from '../../relay/server.ts';
+import { ROOM_FILE, startRelay, writeHidden, type RelayHandle, type RelayOptions } from '../../relay/server.ts';
 import { sleep } from '../helpers.ts';
 
 const relays: RelayHandle[] = [];
@@ -85,26 +87,81 @@ describe('the relay keeps the last room code in its state directory', () => {
     expect((await info(r.port)).lastRoom).toBe('QFBAWA');
     await hello(r.port, 'KKQB2N', 'host-2', 'host');
     await lastRoomIs(r.port, 'KKQB2N');
-    expect(JSON.parse(readFileSync(join(dir, 'room.json'), 'utf8'))).toEqual({ lastRoom: 'KKQB2N' });
+    expect(JSON.parse(readFileSync(join(dir, '.room.json'), 'utf8'))).toEqual({ lastRoom: 'KKQB2N' });
   });
 
-  it('room.json holds the room code only: never a PIN, a peer id, an address or a name', async () => {
+  it('.room.json holds the room code only: never a PIN, a peer id, an address or a name; nor does any file of the folder after a card is kept', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'relay-state-'));
     const r = await start({ stateDir: dir });
     await hello(r.port, 'QFBAWA', 'host-pme-laptop-name', 'host');
     await hello(r.port, 'QFBAWA', 'inst-phone', 'instructor', '4821');
     await hello(r.port, 'QFBAWA', 'view-phone', 'viewer');
+    await hello(r.port, 'QFBAWA', 'learner-phone', 'learner', '582913');
     await lastRoomIs(r.port, 'QFBAWA');
-    expect(readdirSync(dir)).toEqual(['room.json']);
-    const text = readFileSync(join(dir, 'room.json'), 'utf8');
+    expect(readdirSync(dir)).toEqual(['.room.json']);
+    const text = readFileSync(join(dir, '.room.json'), 'utf8');
     expect(Object.keys(JSON.parse(text) as object)).toEqual(['lastRoom']);
-    for (const never of ['4821', 'host-pme', 'laptop', 'inst-phone', 'view-phone', '127.0.0.1', 'pin', 'address', 'name']) expect(text).not.toContain(never);
+    // a card kept through the store: its folder holds the card, and still nothing of the room's sign-ins
+    const res = await fetch(`http://127.0.0.1:${r.port}/pme-store/scenarios/mh-copy`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'mh-copy', title: 'MH' }) });
+    expect(res.status).toBe(201);
+    const every = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? every(join(d, e.name)) : [join(d, e.name)]));
+    expect(every(dir).map((f) => f.slice(dir.length + 1)).sort()).toEqual(['.room.json', expect.stringMatching(/^scenarios\/mh-copy\/v0001-.*Z\.json$/)]);
+    for (const f of every(dir)) {
+      const t = readFileSync(f, 'utf8');
+      for (const never of ['4821', '582913', 'host-pme', 'laptop', 'inst-phone', 'view-phone', 'learner-phone', '127.0.0.1', 'pin', 'address']) expect(t, `${f}: ${never}`).not.toContain(never);
+    }
   });
 
-  it('a room.json that is not ours (unreadable, another shape, not a code) is no lastRoom; the relay starts', async () => {
+  it('the code\'s file is hidden: a dot-file that a plain listing (ls) does not show', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'relay-state-'));
+    const r = await start({ stateDir: dir });
+    await hello(r.port, 'QFBAWA', 'host-1', 'host');
+    await lastRoomIs(r.port, 'QFBAWA');
+    expect(readdirSync(dir)).toEqual(['.room.json']);
+    if (process.platform !== 'win32') expect(spawnSync('ls', [dir], { encoding: 'utf8' }).stdout).toBe('');
+  });
+
+  it('on Windows the file gets the hidden attribute too, taken off before a rename replaces it and put back after (UNTESTED ON WINDOWS: the calls)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'relay-state-'));
+    const file = join(dir, ROOM_FILE);
+    const calls: string[] = [];
+    const attrib = (args: string[]) => void calls.push(`${args[0]} ${args[1]!.slice(dir.length + 1)} ${existsSync(args[1]!) ? 'present' : 'absent'}`);
+    writeHidden(file, '{"lastRoom":"QFBAWA"}\n', 'win32', attrib);
+    expect(calls).toEqual(['+h .room.json.tmp present', '+h .room.json present']);
+    calls.length = 0;
+    writeHidden(file, '{"lastRoom":"KKQB2N"}\n', 'win32', attrib);
+    expect(calls).toEqual(['+h .room.json.tmp present', '-h .room.json present', '+h .room.json present']);
+    expect(readFileSync(file, 'utf8')).toBe('{"lastRoom":"KKQB2N"}\n');
+    calls.length = 0;
+    writeHidden(file, '{"lastRoom":"QFBAWA"}\n', 'darwin', attrib);
+    expect(calls).toEqual([]);
+  });
+
+  it('a code an older kit kept in the application-data folder is read once: the room keeps it, the next hello writes it into the kit\'s folder, the old file is left as it is', async () => {
+    const old = mkdtempSync(join(tmpdir(), 'relay-old-'));
+    const oldText = '{"lastRoom":"QFBAWA"}\n';
+    writeFileSync(join(old, 'room.json'), oldText);
+    const dir = join(mkdtempSync(join(tmpdir(), 'relay-state-')), 'user-data');
+    const a = await start({ stateDir: dir, oldStateDir: old });
+    expect((await info(a.port)).lastRoom).toBe('QFBAWA');
+    expect(existsSync(dir)).toBe(false); // nothing written before a host's hello
+    await hello(a.port, 'QFBAWA', 'host-1', 'host'); // the page started under the kept code
+    await expect.poll(() => existsSync(join(dir, '.room.json'))).toBe(true);
+    expect(JSON.parse(readFileSync(join(dir, '.room.json'), 'utf8'))).toEqual({ lastRoom: 'QFBAWA' });
+    await a.close();
+    relays.length = 0;
+    // the kit's own code wins over the old one from then on, and the old folder is as it was
+    writeFileSync(join(dir, '.room.json'), '{"lastRoom":"KKQB2N"}\n');
+    const b = await start({ stateDir: dir, oldStateDir: old });
+    expect((await info(b.port)).lastRoom).toBe('KKQB2N');
+    expect(readdirSync(old)).toEqual(['room.json']);
+    expect(readFileSync(join(old, 'room.json'), 'utf8')).toBe(oldText);
+  });
+
+  it('a .room.json that is not ours (unreadable, another shape, not a code) is no lastRoom; the relay starts', async () => {
     for (const body of ['not json', '{"lastRoom":"IIIIII"}', '{"lastRoom":7}', '[]', 'null']) {
       const dir = mkdtempSync(join(tmpdir(), 'relay-state-'));
-      writeFileSync(join(dir, 'room.json'), body);
+      writeFileSync(join(dir, '.room.json'), body);
       const r = await start({ stateDir: dir });
       expect((await info(r.port)).lastRoom, body).toBeUndefined();
     }

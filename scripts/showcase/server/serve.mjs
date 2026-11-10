@@ -1,17 +1,28 @@
 // Offline showcase kit: a static file server for the bundled Node runtime (node:http only, no packages).
-// Usage: node serve.mjs ROOT START_PORT PORT_FILE
+// Usage: node serve.mjs ROOT START_PORT PORT_FILE [STATE_DIR]
 //   Binds 127.0.0.1 only, tries START_PORT and the next 49 ports, writes the port it got into PORT_FILE.
 //   GET and HEAD; path traversal refused; MIME types for everything the built app uses.
+//   STATE_DIR (the launchers pass the kit's own user-data folder): the kit store's /pme-store/ paths, from store.mjs beside
+//   this file (the relay's store.ts, bundled by make-bundle.mjs): the clinicians' scenario cards kept as files there
+//   (docs/plans/scenario-builder.md §8 layer 2). Without it, or without store.mjs, those paths are not answered.
 import { createReadStream, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, isAbsolute, join, relative, sep } from 'node:path';
 
-const [rootArg, startPortArg, portFile] = process.argv.slice(2);
+const [rootArg, startPortArg, portFile, stateArg] = process.argv.slice(2);
 if (!portFile) {
   console.error('usage: node serve.mjs ROOT START_PORT PORT_FILE');
   process.exit(2);
 }
 const root = realpathSync(rootArg);
+let store = null;
+if (stateArg) {
+  try {
+    store = (await import('./store.mjs')).storeRoutes({ dir: stateArg });
+  } catch (e) {
+    console.error(`the kit store is off: ${e.message}`);
+  }
+}
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.htm': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
@@ -28,6 +39,7 @@ const send = (res, code, text, head) => {
 };
 
 const server = createServer((req, res) => {
+  if (store?.(req, res)) return;
   const head = req.method === 'HEAD';
   if (req.method !== 'GET' && !head) return send(res, 405, 'Only GET and HEAD\n', false);
   let path;
