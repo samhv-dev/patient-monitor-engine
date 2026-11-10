@@ -1,0 +1,82 @@
+/* The scenario builder's page (docs/plans/scenario-builder.md, mock-up 01-builder-main; piece B2). The mock-up's `sb-*`
+   classes (docs/plans/scenario-builder/mockup/mock.css), on the app's own tokens only (app.css :root and the light
+   theme's): no colour of their own. Scoped under `.sb-root` (the session bar has `.sb-left`, `.sb-right`). Hints use
+   --text-muted, not the mock-up's --text-faint, for 4.5:1 on the panels in both themes. */
+.sb-root .console-page.sb-page { max-width: none; padding: 20px 28px 28px; display: grid; gap: 14px; align-content: start; }
+.sb-root .sb-top { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.sb-root .sb-card { margin: 4px 0 0; color: var(--text-muted); font-size: 13.5px; }
+.sb-root .sb-card b { color: var(--text-strong); font-weight: 600; }
+.sb-root .sb-sp { flex: 1 1 auto; }
+.sb-root .sb-topr { display: grid; gap: 10px; justify-items: end; }
+.sb-root .sb-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sb-root .sb-saves { display: flex; gap: 8px; flex-wrap: wrap; }
+.sb-root .sb-save { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font-size: 12.5px; color: var(--text-muted); }
+.sb-root .sb-save i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.sb-root .sb-save.bad i { background: var(--bad); }
+.sb-root .sb-save b { color: var(--text-strong); font-weight: 500; }
+.sb-root .sb-grid { display: grid; grid-template-columns: 236px minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.sb-root .sb-panel { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
+.sb-root .sb-outline { padding: 10px 8px; }
+.sb-root .sb-outline h2 { margin: 10px 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+.sb-root .sb-out { display: flex; width: 100%; align-items: center; gap: 8px; min-height: 32px; padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.sb-root .sb-out:hover { background: var(--bezel-2); }
+.sb-root .sb-out[aria-current] { background: var(--go-soft); color: var(--text-strong); }
+.sb-root .sb-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: transparent; }
+.sb-root .sb-dot.bad { background: var(--bad); }
+.sb-root .sb-dot.warn { background: var(--warn); }
+.sb-root .sb-kept { margin: 0; padding: 0 10px; list-style: none; display: grid; gap: 2px; font-size: 14px; color: var(--text-muted); }
+.sb-root .sb-kept li { display: flex; padding: 4px 0; }
+.sb-root .sb-kept small { margin-left: auto; font-size: 12px; }
+.sb-root .sb-outline .sb-hint { margin: 6px 10px 4px; }
+.sb-root .sb-edit { padding: 18px 20px 22px; display: grid; gap: 16px; align-content: start; }
+.sb-root .sb-edit h2 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-strong); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sb-root .sb-edit h2 small { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.sb-root .sb-row { display: grid; align-items: start; gap: 12px; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); }
+.sb-root .sb-edit .input { min-height: 38px; }
+.sb-root .sb-edit textarea.input { min-height: 74px; padding: 8px 12px; line-height: 1.45; resize: vertical; font: inherit; }
+.sb-root .sb-hint { margin: 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
+.sb-root .sb-fixed { margin: 0; min-height: 38px; display: flex; align-items: center; color: var(--text-muted); }
+.sb-root .sb-msgs:empty { display: none; }
+.sb-root .sb-msgs { display: grid; gap: 4px; }
+.sb-root .sb-refuse, .sb-root .sb-warnline { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 0; padding: 6px 10px; border-radius: 0 6px 6px 0; color: var(--text-strong); font-size: 13px; line-height: 1.45; }
+.sb-root .sb-refuse { border-left: 3px solid var(--bad); background: var(--bad-soft); }
+.sb-root .sb-warnline { border-left: 3px solid var(--warn); background: var(--warn-soft); }
+.sb-root .sb-refuse code, .sb-root .sb-warnline code { font-size: 12px; color: var(--text-strong); }
+.sb-root .field.bad .input[aria-invalid='true'], .sb-root .input[aria-invalid='true'] { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.sb-root .sb-lines { display: grid; gap: 6px; }
+.sb-root .sb-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.sb-root .sb-sensors { margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.sb-root .sb-sensors legend { padding: 0 6px; font-size: var(--t-13); color: var(--text-muted); }
+.sb-root .sb-sensors > .sb-msgs { grid-column: 1 / -1; }
+.sb-root .sb-count { white-space: nowrap; }
+.sb-root .sb-count.over { color: var(--bad); font-weight: 600; }
+.sb-root .sb-checks { padding: 14px 16px; display: grid; gap: 12px; }
+.sb-root .sb-checks h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text-strong); }
+.sb-root .sb-checks ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 13px; }
+.sb-root .sb-checks li { position: relative; display: block; padding-left: 20px; color: var(--text); line-height: 1.4; overflow-wrap: anywhere; }
+.sb-root .sb-checks li::before { content: ''; position: absolute; left: 2px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+.sb-root .sb-checks li.bad::before { background: var(--bad); }
+.sb-root .sb-checks li.warn::before { background: var(--warn); }
+.sb-root .sb-checks li.off::before { background: var(--text-muted); }
+.sb-root .sb-checks li small { display: block; color: var(--text-muted); }
+.sb-root .sb-checks li .btn { margin-top: 4px; }
+.sb-root .sb-checks li.off .btn { margin: 2px 0 0; }
+.sb-root .sb-block { margin-top: 8px; }
+.sb-root .sb-block .scen-item .t code { font-size: 12.5px; color: var(--text-muted); }
+.sb-root .sb-drafts .scen-item { grid-template-columns: minmax(0, 1fr) auto auto; }
+.sb-root .sb-holds { margin-top: 8px; }
+.sb-root .sb-errs { margin: 6px 0 0; padding-left: 20px; font-size: 13px; color: var(--text); }
+.sb-root .sb-errs code { color: var(--text-strong); }
+.sb-root .sb-store-refuse { border-radius: 6px; }
+/* narrower windows: the checks under the editor, then the outline on top (no sideways scroll at 820 px) */
+@media (max-width: 1240px) {
+  .sb-root .sb-grid { grid-template-columns: 220px minmax(0, 1fr); }
+  .sb-root .sb-checks { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+  .sb-root .console-page.sb-page { padding: var(--s-5) var(--s-4) var(--s-6); }
+  .sb-root .sb-grid { grid-template-columns: minmax(0, 1fr); }
+  .sb-root .sb-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sb-root .sb-sensors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sb-root .sb-topr { justify-items: start; }
+}

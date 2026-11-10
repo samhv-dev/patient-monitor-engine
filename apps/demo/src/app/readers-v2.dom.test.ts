@@ -2,7 +2,9 @@
 // Plan F1: every reader of a card learns that a card may have no states. Given a pme-scenario/2 document, each /1
 // reader of the app gives the empty answer (no states, no objectives, no steps) and does not throw; its /1 path is
 // unchanged (the existing tests). F6 and F7 make them read phases and actions.
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { asFactory, MemoryIDB } from './memory-idb.ts';
+import { MemoryStorage } from './memory-storage.ts';
 import { ControllerSession, createInProcessHub, createStamper, ScenarioView, type AnyScenarioDoc, type CommandInput, type Transition, type WireEvent } from '@pme/controller';
 import { objectivesOf, reachable, rowsOf, stageOf, stagesOf, standingOf, untakenStatus, type Evidence } from './card-read.ts';
 import { eventWords, judged, objectives, steps } from './debrief.ts';
@@ -217,19 +219,27 @@ describe('the readers behind a cast or an "ended" test, and a pme-scenario/2 car
   });
 });
 
-// F6: session.ts loads a /2 card (the library's showcase-mh-v2; e2e teach2-mh-v2 drives it); importing one is not built.
+// F6: session.ts loads a /2 card (the library's showcase-mh-v2; e2e teach2-mh-v2 drives it). Finding 1 of the
+// scenario-builder plan (§4.3): the stub's Import refused /2; the builder (B2) replaces the stub and imports a /2 card file
+// as a draft of this browser, never as a load.
 describe('loading a pme-scenario/2 card in the app (F6)', () => {
-  it('views/scenarios.ts: an imported /2 file is not loaded and says why', async () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it('views/scenarios.ts: the builder imports a /2 file as a draft and opens it; nothing is loaded', async () => {
+    vi.stubGlobal('localStorage', new MemoryStorage());
+    vi.stubGlobal('indexedDB', asFactory(new MemoryIDB()));
     const loaded: string[] = [];
     const v = scenariosView({ session: { live: false }, loadScenario: (c: ScenarioCard) => (loaded.push(c.id), true) } as never);
     document.body.append(v.el);
     v.enter?.('builder');
-    const input = v.el.querySelector('#scen-import') as HTMLInputElement;
-    Object.defineProperty(input, 'files', { value: [new File([JSON.stringify(V2)], 'mh2.json', { type: 'application/json' })], configurable: true });
+    await settle();
+    const input = v.el.querySelector('#sb-import') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [new File([JSON.stringify({ ...V2, id: 'mh2-mine' })], 'mh2.json', { type: 'application/json' })], configurable: true });
     input.dispatchEvent(new Event('change'));
-    await settle();
-    await settle();
+    for (let i = 0; i < 40 && !location.hash.startsWith('#/scenarios/builder/'); i++) await settle();
     expect(loaded).toEqual([]);
-    expect(v.el.querySelector('p.error')?.textContent).toBe("Error: mh2.json is a pme-scenario/2 card; importing a pme-scenario/2 card is not built yet; the library's /2 card loads from Scenarios.");
+    expect(location.hash).toMatch(/^#\/scenarios\/builder\/d[0-9a-z]+$/);
+    expect(v.el.querySelector('.sb-import-err')?.textContent).toBe('');
+    v.el.remove();
+    location.hash = '';
   });
 });
