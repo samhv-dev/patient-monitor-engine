@@ -132,6 +132,7 @@ function rule4(s: TciSet): string[] {
   if (!w.src?.trim()) e.push(`${m.id}: the worked values name no table or page`);
   const entries = Object.entries(w.values) as [TciQuantity, string][];
   if (!entries.length) e.push(`${m.id}: no worked values`);
+  if (m.ke0.none !== true && m.ke0.method === 'device' && 'ke0' in w.values) e.push(`${m.id}: a device ke0 (derivation unpublished) has no worked value to reproduce; leave ke0 out of worked`);
   const p = s.params(w.patient, w.opts);
   for (const [q, printed] of entries) {
     if (!/^-?\d+(\.\d+)?$/.test(printed)) { e.push(`${m.id}: worked ${q} "${printed}" is not a printed number`); continue; }
@@ -153,7 +154,9 @@ function rule5(s: TciSet, moduleText: string | undefined): string[] {
 }
 
 /** Rule 6: a ke0 says how it was obtained; one not from the PK paper names its source and the PK it was fitted with;
- * a time-to-peak-effect ke0 is labelled so and gives that time with this PK. */
+ * a time-to-peak-effect ke0 is labelled so and gives that time with this PK; a device's value of unpublished derivation
+ * (kind `device`, the owner's ruling TQ2) names the paper reporting it, the device, the PK it ran with, says
+ * `derivation: 'unpublished'` and carries a label; nothing about it is reproduced. */
 function rule6(s: TciSet): string[] {
   const m = s.meta;
   const k = m.ke0;
@@ -162,7 +165,21 @@ function rule6(s: TciSet): string[] {
   if ((k.value === undefined) === (k.expr === undefined)) e.push(`${m.id}: ke0 needs exactly one of value or expr`);
   const fn = s.params(m.reference).ke0[0];
   if (k.value !== undefined && !(fn !== undefined && Math.abs(fn - k.value) <= 1e-12)) e.push(`${m.id}: ke0 states ${k.value}, the function returns ${fn}`);
-  if (!['pkpd', 'ttpe'].includes(k.method)) e.push(`${m.id}: ke0 method must be pkpd or ttpe`);
+  if (!['pkpd', 'ttpe', 'device'].includes(k.method)) e.push(`${m.id}: ke0 method must be pkpd, ttpe or device`);
+  const deviceFields = (['page', 'device', 'usedWith', 'derivation', 'derivationNote', 'label'] as const).filter((f) => k[f] !== undefined);
+  if (k.method === 'device') {
+    if (k.src === 'pk-paper' || !hasRef(k.src) || !k.src.authors?.trim()) e.push(`${m.id}: a device ke0 names the paper that reports it, with authors and a DOI or PMID`);
+    if (k.value === undefined) e.push(`${m.id}: a device ke0 is a value`);
+    if (!k.page?.trim()) e.push(`${m.id}: a device ke0 names the page that reports it`);
+    if (!k.device?.trim()) e.push(`${m.id}: a device ke0 names the device`);
+    if (!k.usedWith?.trim()) e.push(`${m.id}: a device ke0 names the PK it was used with`);
+    if (k.derivation !== 'unpublished' || !k.derivationNote?.trim()) e.push(`${m.id}: a device ke0 states derivation 'unpublished' with the reporting paper's statement`);
+    if (!k.label?.trim()) e.push(`${m.id}: a device ke0 carries the label a pump face shows`);
+    if (k.fittedWith !== undefined) e.push(`${m.id}: a device ke0 has no fittedWith (its derivation is unpublished)`);
+    if (k.ttpeMin !== undefined) e.push(`${m.id}: a device ke0 makes no time-to-peak claim`);
+    return e; // nothing about a device value can be reproduced: no fit and no time to peak are checked
+  }
+  if (deviceFields.length) e.push(`${m.id}: ${deviceFields.join(', ')} belong to a device ke0 only`);
   if (k.src !== 'pk-paper') {
     if (!hasRef(k.src) || !k.src.authors?.trim()) e.push(`${m.id}: the ke0's own source needs authors and a DOI or PMID`);
     if (!k.fittedWith?.trim()) e.push(`${m.id}: a ke0 not from the PK paper must name the PK it was fitted with`);
@@ -206,7 +223,7 @@ describe('TCI-set registry: every registered set meets rules 1–7', () => {
   it('rule 3: a set without a ke0 is plasma-only', () => expect(TCI_SETS.flatMap(rule3)).toEqual([]));
   it('rule 4: the paper\'s own worked values are reproduced', () => expect(TCI_SETS.flatMap(rule4)).toEqual([]));
   it('rule 5: no [VERIFY] mark remains', () => expect(TCI_SETS.flatMap((s) => rule5(s, moduleText(s.meta.id)))).toEqual([]));
-  it('rule 6: every ke0 names its source, and the PK it was fitted with when not the PK paper\'s', () => expect(TCI_SETS.flatMap(rule6)).toEqual([]));
+  it('rule 6: every ke0 names its source, and the PK it was fitted with when not the PK paper\'s; a device ke0 names its reporting paper, device, PK and unpublished derivation, and is not reproduced', () => expect(TCI_SETS.flatMap(rule6)).toEqual([]));
   it('rule 7: the TCI command accepts the registered and pending ids and nothing else', () => expect(rule7(TCI_SETS, PENDING_TCI_MODEL_IDS, engineAccepts)).toEqual([]));
   it('every pending id says why it is not registered and what its registration needs (T2)', () => {
     expect(Object.keys(PENDING_TCI_REASONS).sort()).toEqual(Object.keys(PENDING_TCI_MODEL_IDS).sort());
@@ -286,6 +303,22 @@ describe('TCI-set check: each rule refuses a fixture made to break it', () => {
     expect(rule6(fx({ ke0: { value: 0.3, method: 'ttpe', src: other, fittedWith: 'this set', ttpeMin: t } }))).toEqual([]);
     expect(rule6(fx({ ke0: { value: 0.3, method: 'ttpe', src: other, fittedWith: 'this set', ttpeMin: t + 0.5 } }))).toEqual([`fixture-a: with this PK the ke0 peaks at ${t.toFixed(3)} min, not the stated ${t + 0.5}`]);
     expect(rule6(fx({ ke0: { value: 0.3, method: 'pkpd', src: 'pk-paper', ttpeMin: t } }))).toEqual(['fixture-a: ttpeMin is stated, but the ke0 is not labelled ttpe']);
+  });
+  it('rule 6, kind device: a valid device ke0 passes; each missing field, a fittedWith, a time to peak, a device field elsewhere are refused', () => {
+    const reporter: TciPaper = { ...FIX_PAPER, authors: 'Reporter D', doi: '10.0000/reporter' };
+    const dev = { value: 0.3, method: 'device', src: reporter, page: 'p. 3', device: 'Fixture pump', usedWith: 'this set', derivation: 'unpublished', derivationNote: 'the reporter says the data were never published', label: 'device value; derivation unpublished' } as const;
+    expect(rule6(fx({ ke0: dev }))).toEqual([]);
+    expect(rule6(fx({ ke0: { ...dev, src: 'pk-paper' } }))).toEqual(['fixture-a: a device ke0 names the paper that reports it, with authors and a DOI or PMID']);
+    expect(rule6(fx({ ke0: { ...dev, src: { ...reporter, doi: undefined } } }))).toEqual(['fixture-a: a device ke0 names the paper that reports it, with authors and a DOI or PMID']);
+    expect(rule6(fx({ ke0: { ...dev, fittedWith: 'Fixture PK' } }))).toEqual(['fixture-a: a device ke0 has no fittedWith (its derivation is unpublished)']);
+    expect(rule6(fx({ ke0: { ...dev, derivation: undefined } }))).toEqual(["fixture-a: a device ke0 states derivation 'unpublished' with the reporting paper's statement"]);
+    expect(rule6(fx({ ke0: { ...dev, derivationNote: ' ' } }))).toEqual(["fixture-a: a device ke0 states derivation 'unpublished' with the reporting paper's statement"]);
+    expect(rule6(fx({ ke0: { ...dev, device: undefined } }))).toEqual(['fixture-a: a device ke0 names the device']);
+    expect(rule6(fx({ ke0: { ...dev, usedWith: undefined } }))).toEqual(['fixture-a: a device ke0 names the PK it was used with']);
+    expect(rule6(fx({ ke0: { ...dev, label: undefined } }))).toEqual(['fixture-a: a device ke0 carries the label a pump face shows']);
+    expect(rule6(fx({ ke0: { ...dev, ttpeMin: 1.6 } }))).toEqual(['fixture-a: a device ke0 makes no time-to-peak claim']);
+    expect(rule6(fx({ ke0: { value: 0.3, method: 'pkpd', src: 'pk-paper', label: 'x' } }))).toEqual(['fixture-a: label belong to a device ke0 only']);
+    expect(rule4(fx({ ke0: dev, worked: { patient: FIX_REF, values: { v1: '14.0', ke0: '0.30' }, src: 'Table 2, p. 3' } }))).toEqual(['fixture-a: a device ke0 (derivation unpublished) has no worked value to reproduce; leave ke0 out of worked']);
   });
   it('rule 7: a registered id the command refuses, a registered id still pending, an unregistered id accepted', () => {
     expect(rule7([FIX], {}, engineAccepts)).toEqual(['fixture-a: registered, but the TCI command refuses it']);

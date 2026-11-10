@@ -12,7 +12,6 @@ import { DEFAULT_PK_PATIENT, type PkPatient } from './covariates.ts';
 import { DRUGS } from './data/drugs.ts';
 import { LAST_THRESHOLDS } from './data/rows-other.ts';
 import { gammaConc, gammaN, onsetChain, ONSET_N_MIN, type GammaDose } from './gamma.ts';
-import { marshPropofol } from './models.ts';
 import { GEPTS } from './tci-sets/gepts.ts';
 import { PENDING_TCI_MODEL_IDS, TCI_SETS, tciSet } from './tci-sets/index.ts';
 import { bindSugammadex, bindSugammadexSites, CISATRACURIUM, MW, PCHE_CL_MULT, perKg, ROCURONIUM, SUCCINYLCHOLINE, SUGAMMADEX, VECURONIUM } from './nmb.ts';
@@ -163,11 +162,10 @@ function mgPerKgOf(row: DrugRow, amount: number, w: number): number | null {
 
 const NMB_PK = { rocuronium: ROCURONIUM, vecuronium: VECURONIUM, cisatracurium: CISATRACURIUM, succinylcholine: SUCCINYLCHOLINE, sugammadex: SUGAMMADEX } as const;
 
-/** The patient's PK model: a registered TCI set (tci-sets/), or Marsh while it is pending; an unknown id falls back to
- * Gepts, as before T2. Eleveld reads whether an opioid has been given. */
+/** The patient's PK model: a registered TCI set (tci-sets/); an unknown id falls back to Gepts, as before T2. Eleveld
+ * reads whether an opioid has been given. */
 function modelParams(pk: PkState, m: string): PkParams {
   const p = pk.patient;
-  if (m === 'marsh') return marshPropofol(p);
   if (m === 'eleveld') {
     const opioids = Object.values(pk.drugs).some((d) => DRUGS[d.id]?.cls === 'opioid' && d.total > 0);
     return tciSet('eleveld')!.params(p, { opioids });

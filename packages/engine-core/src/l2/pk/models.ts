@@ -1,8 +1,7 @@
 // Published PK(+ke0) models, as functions of the patient (tables §6.1). Units: volumes L, clearances L/min, ke0 /min;
 // amounts in the drug's amount unit (propofol mg → µg/mL; remifentanil/fentanyl µg → ng/mL). Since pump-rack T2 the
-// registered sets live in tci-sets/ with their papers; this module keeps the one still pending (Marsh), the
-// time-to-peak-effect tools, and the old names as re-exports.
-import type { PkPatient } from './covariates.ts';
+// registered sets live in tci-sets/ with their papers; this module keeps the time-to-peak-effect tools and
+// the old names as re-exports.
 import { pkStep, pkSystem, zeroState, type PkParams } from './compartment.ts';
 import type { TciSetOpts } from './tci-sets/types.ts';
 
@@ -11,18 +10,9 @@ export { schniderPropofol } from './tci-sets/schnider.ts';
 export { mintoRemifentanil } from './tci-sets/minto.ts';
 export { FENTANYL_KE0, shaferFentanyl } from './tci-sets/shafer.ts';
 export { SUFENTANIL_KE0, geptsSufentanil } from './tci-sets/gepts.ts';
+export { marshPropofol } from './tci-sets/marsh.ts';
 
 export type ModelOpts = TciSetOpts;
-
-/**
- * Marsh 1991 propofol (Br J Anaesth 67:41), Table I p. 42: weight-proportional V1 228 ml/kg, microconstants as printed
- * there (attributed to Gepts 1987, whose mean k12 is 0.1140). ke0 0.26: the first-generation pumps' (Diprifusor) value,
- * whose derivation was never published (Absalom 2009 p. 30) [TXT: tci-sets PENDING_TCI_REASONS]; or 1.21 (modified:
- * Struys 2000 p. 404, time to peak 1.6 min with this PK).
- */
-export function marshPropofol(p: PkPatient, modified = false): PkParams {
-  return { v1: 0.228 * p.weightKg, k10: 0.119, k12: 0.112, k21: 0.055, k13: 0.0419, k31: 0.0033, ke0: [modified ? 1.21 : 0.26] };
-}
 
 /** Time to peak effect-site concentration after a bolus (min), 0.1 s resolution, 20 min horizon. */
 export function ttpeMin(p: PkParams, site = 0): number {

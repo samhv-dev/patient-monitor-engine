@@ -76,8 +76,8 @@ library rows and the outputs other modules consume.
 | [`pd.ts:10`](../../packages/engine-core/src/l2/pk/pd.ts#L10) | Competitive antagonism: EC50·(1 + Cant/Ki), written with receptor occupancy o = Cant/(Cant + Ki) (capped 0.95). |
 | [`pd.ts:22`](../../packages/engine-core/src/l2/pk/pd.ts#L22) | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). |
 | [`pd.ts:39`](../../packages/engine-core/src/l2/pk/pd.ts#L39) | Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). |
-| [`pipeline.ts:223`](../../packages/engine-core/src/l2/pk/pipeline.ts#L223) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
-| [`pipeline.ts:637`](../../packages/engine-core/src/l2/pk/pipeline.ts#L637) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
+| [`pipeline.ts:221`](../../packages/engine-core/src/l2/pk/pipeline.ts#L221) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
+| [`pipeline.ts:635`](../../packages/engine-core/src/l2/pk/pipeline.ts#L635) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
 | [`row.ts:41`](../../packages/engine-core/src/l2/pk/row.ts#L41) | E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±\|emax\|·3 |
 | [`shafer.ts:8`](../../packages/engine-core/src/l2/pk/tci-sets/shafer.ts#L8) | Fentanyl ke0 = ke0ForTtpe(Shafer PK, 3.6 min) — decision 2 / D2 (tables 0.147 was fitted with another PK). |
 | [`tci.ts:5`](../../packages/engine-core/src/l2/pk/tci.ts#L5) | Ce(k) = Ce_free(k) + r·Ce_unit(k), so r = min_k (target − Ce_free(k)) / Ce_unit(k) over k with Ce_unit(k) > 0 — |
@@ -328,7 +328,6 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `matMul` | [`l2/pk/linalg.ts`](../../packages/engine-core/src/l2/pk/linalg.ts) | Small dense linear algebra for the compartment models. |
 | `matVec` | [`l2/pk/linalg.ts`](../../packages/engine-core/src/l2/pk/linalg.ts) | y = A·x. |
 | `expm` | [`l2/pk/linalg.ts`](../../packages/engine-core/src/l2/pk/linalg.ts) | e^A by scaling and squaring with an 18-term Taylor series (Moler & Van Loan 2003, method 3). |
-| `marshPropofol` | [`l2/pk/models.ts`](../../packages/engine-core/src/l2/pk/models.ts) | Marsh 1991 propofol (Br J Anaesth 67:41), Table I p. |
 | `ttpeMin` | [`l2/pk/models.ts`](../../packages/engine-core/src/l2/pk/models.ts) | Time to peak effect-site concentration after a bolus (min), 0.1 s resolution, 20 min horizon. |
 | `ke0ForTtpe` | [`l2/pk/models.ts`](../../packages/engine-core/src/l2/pk/models.ts) | ke0 fitted by the time-to-peak-effect method (Minto 2003; |
 | `bindSugammadex` | [`l2/pk/nmb.ts`](../../packages/engine-core/src/l2/pk/nmb.ts) | Instant 1:1 molar binding in the central compartment (tables §5d "Sugammadex mechanism"; |
@@ -347,6 +346,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `eleveldPropofol` | [`l2/pk/tci-sets/eleveld.ts`](../../packages/engine-core/src/l2/pk/tci-sets/eleveld.ts) | Eleveld 2018 propofol (Br J Anaesth 120:942–959), ARTERIAL PK, Table 2 θ1–θ18, reference 35 y, 70 kg, 170 cm, male, no opioids. |
 | `geptsSufentanil` | [`l2/pk/tci-sets/gepts.ts`](../../packages/engine-core/src/l2/pk/tci-sets/gepts.ts) | Gepts 1995 sufentanil (Anesthesiology 83:1194), Table 3 p. |
 | `tciModeRefusal` | [`l2/pk/tci-sets/index.ts`](../../packages/engine-core/src/l2/pk/tci-sets/index.ts) | The refusal for a TCI mode the set cannot run, or undefined when it can. |
+| `marshPropofol` | [`l2/pk/tci-sets/marsh.ts`](../../packages/engine-core/src/l2/pk/tci-sets/marsh.ts) | Marsh 1991 propofol (Br J Anaesth 67:41), Table I p. |
 | `mintoRemifentanil` | [`l2/pk/tci-sets/minto.ts`](../../packages/engine-core/src/l2/pk/tci-sets/minto.ts) | Minto 1997 remifentanil (Anesthesiology 86:10), LBM (James) and age covariates; |
 | `schniderPropofol` | [`l2/pk/tci-sets/schnider.ts`](../../packages/engine-core/src/l2/pk/tci-sets/schnider.ts) | Schnider 1998/1999 propofol (Anesthesiology 88:1170; |
 | `shaferFentanyl` | [`l2/pk/tci-sets/shafer.ts`](../../packages/engine-core/src/l2/pk/tci-sets/shafer.ts) | Shafer 1990 fentanyl (Anesthesiology 73:1091), Table 2 p. |
@@ -381,6 +381,8 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`l2/pk/tci-sets/eleveld.ts`](../../packages/engine-core/src/l2/pk/tci-sets/eleveld.ts) | Eleveld 2018 propofol, ARTERIAL PK and ke0: the paper's Table 2 (θ1–θ18, p. |
 | [`l2/pk/tci-sets/gepts.ts`](../../packages/engine-core/src/l2/pk/tci-sets/gepts.ts) | Gepts 1995 sufentanil: Table 3, p. |
 | [`l2/pk/tci-sets/index.ts`](../../packages/engine-core/src/l2/pk/tci-sets/index.ts) | The TCI-set registry (docs/plans/pump-rack-tci.md §6.1, pieces T1 and T2). |
+| [`l2/pk/tci-sets/marsh-modified.ts`](../../packages/engine-core/src/l2/pk/tci-sets/marsh-modified.ts) | Modified Marsh: Marsh 1991 Table I PK (marsh.ts) with Struys 2000's ke0 1.21 /min, which Struys calculated to give a 1.6 min time to peak with this PK (p. |
+| [`l2/pk/tci-sets/marsh.ts`](../../packages/engine-core/src/l2/pk/tci-sets/marsh.ts) | Marsh 1991 propofol: the adult model the first-generation pumps (Diprifusor) ran, Table I p. |
 | [`l2/pk/tci-sets/minto.ts`](../../packages/engine-core/src/l2/pk/tci-sets/minto.ts) | Minto 1997 remifentanil: the complex PK model, Table 3 (p. |
 | [`l2/pk/tci-sets/schnider.ts`](../../packages/engine-core/src/l2/pk/tci-sets/schnider.ts) | Schnider 1998 propofol PK: Table 2, p. |
 | [`l2/pk/tci-sets/shafer.ts`](../../packages/engine-core/src/l2/pk/tci-sets/shafer.ts) | Shafer 1990 fentanyl: Table 2, p. |
