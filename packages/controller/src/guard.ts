@@ -158,7 +158,8 @@ function prepBodyOk(b: Record<string, unknown>): boolean {
     if (!isObj(p) || typeof p.id !== 'string' || !PREP_ID_RE.test(p.id)) return false;
     if (!Array.isArray(p.components) || p.components.length === 0 || p.components.length > PREP_LIMITS.components) return false;
     if (!p.components.every((k) => isObj(k) && isId(k.productId) && isPos(k.amount) && typeof k.unit === 'string' && UNIT_RE.test(k.unit))) return false;
-    if (p.diluent !== undefined && !(isObj(p.diluent) && isId(p.diluent.id) && isPos(p.diluent.volumeMl))) return false;
+    // 0 mL: a powder reconstituted with its label's own volume and not diluted further (formulary/prepare.ts, L4)
+    if (p.diluent !== undefined && !(isObj(p.diluent) && isId(p.diluent.id) && isNum(p.diluent.volumeMl) && (p.diluent.volumeMl as number) >= 0)) return false;
     return p.container === undefined || isId(p.container);
   }
   if (typeof b.prepId !== 'string' || !PREP_ID_RE.test(b.prepId)) return false;

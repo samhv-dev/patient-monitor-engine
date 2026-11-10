@@ -5,22 +5,28 @@
 # learners' phones on the same Wi-Fi (or this Mac's hotspot), and carries the session from the instructor's page to the
 # phones. Phones may only FOLLOW (they cannot run the case). It needs Node.js 22 or later: the kit's own runtime/ if it
 # has one, else a Node.js installed on this Mac. Without one, use "Start Simulator" (the second screen still works).
-# It writes nothing into its own folder; temporary files go to $TMPDIR. The room code is kept for the next start (also
-# on another port) in ~/Library/Application Support/PME Classroom/room.json: the code only, written by the relay.
+# What the clinicians make in the app (scenario cards) is kept in this kit's own "user-data" folder, beside this file,
+# created at the first save (the owner's ruling of 10 November 2026: visible, never in a hidden place). The room code is
+# kept there for the next start (also on another port) in the hidden file user-data/.room.json: the code only, written
+# by the relay. A room code an older kit kept in ~/Library/Application Support/PME Classroom/room.json is read once; that
+# file is left as it is, and nothing is written outside this kit's folder. Temporary files go to $TMPDIR.
 #
 # Knobs for the kit's own tests (a presenter never needs them):
 #   PME_NO_OPEN=1      do not open the browser
 #   PME_PORT=8650      first port to try (the next 9 are tried if it is busy)
 #   PME_NODE=/path     try only this Node.js (the Node >= 22 check's own test)
-#   PME_STATE_DIR=/dir where the relay keeps the last room code instead (the kit's own tests)
+#   PME_STATE_DIR=/dir the data folder instead of user-data (the kit's own tests; no old folder is then read)
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 APP="$DIR/app"
 RELAY="$DIR/server/relay.mjs"
 RT="$DIR/runtime"
 START_PORT="${PME_PORT:-8650}"
-# The room code survives a restart and the move to the next port (a new address: the browser's store is empty there)
-STATE="${PME_STATE_DIR:-${HOME:+$HOME/Library/Application Support/PME Classroom}}"
+# The kit's data folder: the clinicians' cards, and the room code, which survives a restart and the move to the next port
+# (a new address: the browser's store is empty there)
+STATE="${PME_STATE_DIR:-$DIR/user-data}"
+OLD_STATE=""
+[ -n "${PME_STATE_DIR:-}" ] || OLD_STATE="${HOME:+$HOME/Library/Application Support/PME Classroom}"
 RPID=""
 TMPD=""
 
@@ -77,7 +83,7 @@ LOG="$TMPD/relay.log"
 PORT=""
 p=$START_PORT
 while [ $p -lt $((START_PORT + 10)) ]; do
-  "$NODE" "$RELAY" --port "$p" --static "$APP" ${STATE:+--state-dir "$STATE"} >"$LOG" 2>&1 &
+  "$NODE" "$RELAY" --port "$p" --static "$APP" --state-dir "$STATE" ${OLD_STATE:+--old-state-dir "$OLD_STATE"} >"$LOG" 2>&1 &
   RPID=$!
   i=0
   while [ $i -lt 50 ]; do

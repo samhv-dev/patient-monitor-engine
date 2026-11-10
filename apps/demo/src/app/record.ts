@@ -24,7 +24,8 @@ import { describeCommand } from './describe.ts';
 
 /** How a state row's state was entered (`Row.by` on a state row). */
 export type StateBy = 'press' | 'rule' | 'goto';
-/** `learner` (Room plan R5d): a press of the learner defibrillator window, applied by the host as the instructor's own. */
+/** `learner` (Room plan R5d): a press of the learner defibrillator window, applied by the host as the instructor's own;
+ *  (learner-action-remote.md L4) a give, an infusion change or a sample from a learner remote, the same way. */
 export type RowKind = 'action' | 'remote' | 'learner' | 'scenario' | 'alarm' | 'bookmark' | 'restore' | 'patient' | 'note';
 export interface Row {
   /** Simulated seconds, as the monitor's clock showed them. */
@@ -49,6 +50,14 @@ export interface Row {
   by?: StateBy | (string & {});
   /** A `learner` row (R5d): the name the instructor gave that device in Room setup when it pressed (absent: none). */
   name?: string;
+  /** A `learner` row (L4): it came from a learner remote, not the defibrillator window (absent: the window's, R5d). */
+  remote?: true;
+  /** A `learner` row (L4): the preparation the give came from (the remote's own id; the host's record of it is the /2
+   *  administration's `prep`). */
+  prepId?: string;
+  /** A `learner` row (L4, LQ4): an infusion change's replaced rate, and who had set it (a device key or the laptop,
+   *  phone or card), as the host wrote it on the command. */
+  replaced?: { rate: number; rateUnit: string; by: string };
   /** A bookmark row (Instructor v2 marks): the mark's kind, and the note the instructor wrote with it. */
   markKind?: Exclude<MarkKind, 'stage'>;
   note?: string;
@@ -251,8 +260,12 @@ export class RunRecord {
       return this.add({ t, kind: c.action === 'restoreBookmark' ? 'restore' : 'scenario', text });
     }
     const ev = c.type === 'applyEvent' ? (c.event as Record<string, unknown>) : null;
-    if (c.issuedBy === LEARNER_ISSUED_BY) return this.add(this.learnerRow(t, c, ev));
-    const row: Row = { t, kind: bySc ? 'scenario' : c.issuedBy === 'remote' ? 'remote' : 'action', text };
+    if (c.issuedBy === LEARNER_ISSUED_BY && ev?.kind === 'defib') return this.add(this.learnerRow(t, c, ev));
+    const learner = c.issuedBy === LEARNER_ISSUED_BY;
+    const row: Row = { t, kind: bySc ? 'scenario' : learner ? 'learner' : c.issuedBy === 'remote' ? 'remote' : 'action', text };
+    // L4: a learner remote's give names its device (and the name Room setup gave it), its preparation and, for an
+    // infusion change, the rate it replaced — all as the host wrote them on the command, never as the phone sent them
+    if (learner) Object.assign(row, this.learnerOf(c));
     const b = c.batch as { id?: unknown; n?: unknown } | undefined;
     if (!bySc && typeof b?.id === 'string' && typeof b.n === 'number') row.batch = { id: b.id, n: b.n };
     if (ev?.kind === 'drug' || ev?.kind === 'infusion' || ev?.kind === 'tci') row.ev = `drug:${String(ev.drugId)}`;
@@ -277,6 +290,17 @@ export class RunRecord {
     return {
       t, kind: 'learner', text: `${shock ? 'Shock' : 'Charge'}${this.defibJ !== null ? ` ${this.defibJ} J` : ''}`,
       ...(shock ? { ev: 'shock' } : {}), ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}),
+    };
+  }
+
+  /** L4: a learner remote's device key, the name Room setup gave it, its preparation and an infusion change's replaced rate. */
+  private learnerOf(c: Record<string, unknown>): Pick<Row, 'remote' | 'by' | 'name' | 'prepId' | 'replaced'> {
+    const by = typeof c.by === 'string' ? c.by : undefined;
+    const name = by !== undefined ? this.deviceName(by) : null;
+    const r = c.replaced as { rate?: unknown; rateUnit?: unknown; by?: unknown } | undefined;
+    return {
+      remote: true, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), ...(typeof c.prepId === 'string' ? { prepId: c.prepId } : {}),
+      ...(r && typeof r.rate === 'number' && typeof r.rateUnit === 'string' && typeof r.by === 'string' ? { replaced: { rate: r.rate, rateUnit: r.rateUnit, by: r.by } } : {}),
     };
   }
 

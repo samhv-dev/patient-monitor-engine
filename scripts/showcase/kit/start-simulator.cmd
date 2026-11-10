@@ -4,12 +4,14 @@ rem owner's checklist is in "READ ME FIRST.txt", section WINDOWS.
 rem It starts a small web server on this computer only (127.0.0.1), then opens the simulator in the default browser.
 rem It needs Node.js 22 or later: the kit's own runtime\node.exe if it has one (make-bundle.mjs --win-node), else an
 rem installed one (nodejs.org, the LTS). The steps are in server\launch.mjs (the same as
-rem "Start Simulator.command" on a Mac, with its bundled-node server); this file only finds Node.js. It writes nothing
-rem into its own folder (the kit can run from a read-only USB stick).
+rem "Start Simulator.command" on a Mac, with its bundled-node server); this file only finds Node.js. What the
+rem clinicians make in the app is kept in this kit's own "user-data" folder, created at the first save; nothing else
+rem is written into its own folder (on a read-only USB stick the app says the folder cannot be written).
 rem Knobs for the kit's own tests (a presenter never needs them), set without quotes:
 rem   PME_NO_OPEN=1   do not open the browser
 rem   PME_PORT=8642   first port to try (the next 49 are tried if it is busy)
 rem   PME_NODE=path   use only this node.exe, even if the kit has runtime\node.exe
+rem   PME_STATE_DIR=dir   the data folder instead of user-data (the kit's own tests)
 setlocal EnableExtensions DisableDelayedExpansion
 title Patient monitor simulator
 

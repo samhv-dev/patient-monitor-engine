@@ -59,7 +59,7 @@ renderer, audio and skin contracts.
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:891`](../../packages/renderer/src/device-ui.ts#L891) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
 | [`mount.ts:196`](../../packages/renderer/src/mount.ts#L196) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:428`](../../packages/renderer/src/mount.ts#L428) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`mount.ts:433`](../../packages/renderer/src/mount.ts#L433) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -85,11 +85,37 @@ renderer, audio and skin contracts.
 |---|---|---|---|---|
 | `BRIEFING_FADE_MS` | `600` | ms | — | The fade into the monitor, ms (the board: about 600 ms). |
 
+### [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `IMPORT_ERRORS_SHOWN` | `6` | — | [ENG: ui] | How many of the validator's lines an import's refusal lists (it reports up to 20); the rest are counted. [ENG: ui] |
+
 ### [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `CHECK_DELAY_MS` | `300` | ms | [ENG: ui] | The pause after the last change before the card is validated: the plan's 300 ms (§5.1). [ENG: ui] |
+
+### [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `SNAPSHOT_EVERY_MS` | `120000` | ms | [ENG: ui] | The time between two editing snapshots: the plan's "a local snapshot every 2 min of editing" (§8). [ENG: ui] |
+
+### [`apps/demo/src/app/builder/page.ts`](../../apps/demo/src/app/builder/page.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `SAVE_DELAY_MS` | `300` | ms | [ENG: ui] | The pause after the last change before the draft is saved in this browser: the plan's 300 ms (§8). [ENG: ui] |
+| `KIT_EVERY_MS` | `120000` | ms | [ENG: ui] | How often an open draft that changed is kept in the kit's folder: the plan's "every 2 min while the kit runs on Node" (§8). [ENG: ui] |
+
+### [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `TAKE_HOME_MAX` | `4` | — | [ENG: ui] | The take-home lines the schema accepts (`takeHome.maxItems`): "Add a line" stops there. [ENG: ui] |
+| `BRIEFING_MAX` | `4000` | — | [ENG: ui] | The briefing's longest text (`briefing.text.maxLength`), counted live under the field. [ENG: ui] |
 
 ### [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts)
 
@@ -104,6 +130,12 @@ renderer, audio and skin contracts.
 |---|---|---|---|---|
 | `ASK_MS` | `200` | ms | [ENG: ui] | How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A same-browser round trip takes a few ms [ENG: ui]; this is the delay the check adds to every start of the page there. |
 | `TAKE_MS` | `2000` | ms | [ENG: ui] | How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG: ui]; without Web Locks, how long before it gives up and starts with no case. |
+
+### [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `KIT_TIMEOUT_MS` | `3000` | ms | [ENG: network] | How long a probe or a read waits for the kit's server. [ENG: network] |
 
 ### [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts)
 
@@ -344,7 +376,7 @@ renderer, audio and skin contracts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `READY_TIMEOUT_MS` | `2000` | ms | — | The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). |
+| `READY_LATE_MS` | `2000` | ms | [ENG: control] | N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`; `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it: a late worker is still loading, not lost. Until brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at 2.2–6.0 s. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads it one module per request (278–1875 ms on an idle Mac). A worker that fails (an error before 'ready') still hands the monitor to the main thread, and the page says that too (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control]. |
 | `WORKER_SILENT_MS` | `3000` | ms | [ENG: display] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG: display]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
@@ -371,11 +403,48 @@ renderer, audio and skin contracts.
 | `briefingLayer` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The briefing layer over a learners' monitor (the shell's stage: |
 | `followBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | A follower's side: |
 | `mountHostBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The host's side: |
+| `actionSection` | [`apps/demo/src/app/builder/action-editor.ts`](../../apps/demo/src/app/builder/action-editor.ts) | The Actions section over `form`; |
+| `routeState` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | How the engine takes a dose of `drugId` by `route`: |
+| `amountProblem` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Why `a` is not a block the schema accepts, or null. |
+| `setAmount` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | `a` with field `k` set to `n` (undefined: |
+| `amountWords` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | An amount in words, as the grader asks for it ("2–3", "≥ 10", "20 ± 2"). |
+| `amountAll` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Every number of an amount in words, for "the card keeps …" ("2.5 mg/kg, accepted 2–3"). |
+| `amountWarning` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | A builder warning (§5.5, never a block) about an amount no number can satisfy: |
+| `actionIdProblem` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Why `id` cannot be action `i`'s id, or null. |
+| `actionIdFromLabel` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | An id for a new action from its label, unique among the card's actions. |
+| `renameAction` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Action `i` renamed to `to`, and every mention with it (in place, each string where it was). |
+| `reachablePhases` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The phases the case can reach from its start, by the phases' `next` lists. |
+| `draftBlock` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | ------------------------------------------------------------------------------------------- a new action, a kind The criteria block a kind starts with, complete enough for the validator once the autho |
+| `blockMissing` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | A draft block made complete: |
+| `setKind` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Write `block` as kind `kind`'s criteria on `a` (decision: |
+| `instructorRow` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | --------------------------------------------------------------------------------------------- Instructor v2's row The ACTION row Instructor v2 draws for action `i` in its first phase (`phaseRowsOf`, i |
+| `recordOf` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | A press's command as the driver records it (administrationOf's shapes, for the commands a card's `give` sends). |
+| `gradeExamples` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The examples of how grade() grades action `i` of `doc` (§5.4, mock-up 3 "How it grades"). |
+| `actionWarnings` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The builder's warnings about the actions (§5.5), as validator-shaped lines (`<path>: |
+| `readCardFile` | [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A file's text as a card the builder can open. |
 | `place` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Every line of a validation result on its field, errors first, each list in the validator's order. |
 | `checker` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Validation on every change: |
+| `draftRefusalText` | [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts) | What the author reads when a write was refused (the draft is then as it was before that write). |
 | `fieldOf` | [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The field a validator path lands on. |
 | `formOf` | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The form of a card: |
 | `docOf` | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The document the form writes: |
+| `coded` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | Text with the format's own names (a variable `phaseRuleWords` prints by name, a rhythm id) in `<code>`. |
+| `select` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | A select over `groups` of [value, text]; |
+| `numInput` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | A number field over `o[k]`: |
+| `ruleEditor` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | A truth rule as a tree an author reads and changes (§5.3: |
+| `phaseSection` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | The Phases section over `form`; |
+| `numProblem` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Why a typed number is not written, or null when it is one the schema accepts. |
+| `leafComplete` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | A leaf being written in the "add a condition" form: |
+| `draftLeaf` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | A new leaf of `kind` as the add form starts it: |
+| `nodeAt` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The node at `p` under `root`, or undefined. |
+| `flowOf` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Where phase `i` sits: |
+| `courseWarnings` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The builder's warnings about the course (§5.3): |
+| `mentionsOf` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Every place outside the phases' own `next` lists that names phase `id`, as a validator path. |
+| `idProblem` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Why `id` cannot be phase `i`'s id, or null. |
+| `renamePhase` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Phase `i` renamed to `to`, and every mention of its old id with it (the `next` lists, `visited`, `phaseEntered`, `phases`, `inPhases`, the `phase:<id>` anchors): |
+| `idFromLabel` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | An id for a new phase from its label ("Late signs" → "lateSigns"), made unique with a number. |
+| `instructorWords` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | ------------------------------------------------------------------------------------------- Instructor v2's words What Instructor v2 will show for phase `i`, produced by its own functions: |
+| `sections` | [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The three sections over `form`; |
 | `byItself` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Whether `w` can hold without a press: |
 | `stagesOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | The stages of the card: |
 | `stageOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | The stage `stateId` belongs to (a hop: |
@@ -433,6 +502,7 @@ renderer, audio and skin contracts.
 | `conditionCommand` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | The engine command that starts (severity > 0) or stops (0) an acute event. |
 | `activeText` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | "Cardiac tamponade (severe)", for the session bar and the Patient tab. |
 | `fastForwardDoneLines` | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | The two lines of the banner after a fast-forward, worded here only: |
+| `loadShippedFormulary` | [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | L4 (learner-action-remote.md §4 D3, D4): |
 | `entry` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The glossary entry by its research/11 number. |
 | `shortLabel` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The label a screen shows. |
 | `lookup` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | Glossary entry for a truth path, or null (then the path is a model internal and stays out of clinical views). |
@@ -454,8 +524,13 @@ renderer, audio and skin contracts.
 | `faText` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian of `en`, or null (counted as missing). |
 | `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
 | `drawPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | Four random digits from the platform's cryptographic source. |
+| `instructorPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | `avoid`: the other role's PIN, never drawn (L4: |
+| `learnerPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | L4: the learner PIN — the same keeping as the instructor's (four digits drawn at first use [ENG: |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `defibWords` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | R5d: a refusal of the window's press, in the device's words. |
+| `storeBase` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Where the store is: |
+| `kitWhere` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Where the work is kept, for a page's store line ("Kept …"), in the same words wherever the app says it. |
+| `kitOffLine` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Why the kit's folder is not written, with the way out, or '' when it is. |
 | `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
 | `components` | [`apps/demo/src/app/mechanisms/graph.ts`](../../apps/demo/src/app/mechanisms/graph.ts) | Tarjan's strongly connected components, iterating nodes and out-edges in the given order; |
@@ -713,7 +788,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -724,9 +799,17 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/alarms.ts`](../../apps/demo/src/app/alarms.ts) | The instructor's alarm mirror in glossary words (research/11 §5.16 rules 1 and 2). |
 | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The Debrief archive (the owner's board "Finish 2", approved 30 October): every debrief "Finish the case" saves, kept in THIS browser (the debriefs in IndexedDB, their index in localStorage) until the instructor clears it |
 | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The Case briefing (the owner's board Orientation 7b and its phone and Persian twins, 30 October): when a card with a `briefing` loads, every learners' screen — the host's Monitor view, a second-screen learner monitor and |
+| [`apps/demo/src/app/builder/action-editor.ts`](../../apps/demo/src/app/builder/action-editor.ts) | The builder's Actions section (docs/plans/scenario-builder.md §5.4, mock-up 03-action-editor; piece B4): what the team is expected to do, and how each act is graded, one action open at a time. |
+| [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The action editor's model (docs/plans/scenario-builder.md §5.4, piece B4): what an action may say and how it is graded. |
+| [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A card as a file (docs/plans/scenario-builder.md §8, "Export and import as files"; piece B2): a draft leaves the browser as its card JSON, `<id>.json`, the format a library card has (`JSON.stringify(card, null, 2)` and a |
 | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | The builder's validation (docs/plans/scenario-builder.md §5.1, §5.5; piece B1): the controller's own validator, run on the document the form would write, so the author sees exactly what a load would see; debounced, so ty |
+| [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts) | The builder's layer 1 (docs/plans/scenario-builder.md §8; piece B2): every draft card kept in THIS browser, with its local snapshots, in the pattern the Debrief archive uses since #370 (archive.ts): each body (the card's |
 | [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The path → field map (docs/plans/scenario-builder.md §5.1, piece B1): the validator reports `<json path>: <what is wrong>` (validate.ts), and the builder shows each line at the field the path names, found by prefix: `/ph |
 | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The scenario builder's model (docs/plans/scenario-builder.md §5.1, piece B1): a card as the form the editor shows, and back. |
+| [`apps/demo/src/app/builder/page.ts`](../../apps/demo/src/app/builder/page.ts) | The scenario builder's page (docs/plans/scenario-builder.md §5, §8, mock-up 01-builder-main; piece B2), in place of the stub that explained the /1 format. |
+| [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | The builder's Phases section (docs/plans/scenario-builder.md §5.3, mock-up 02-phase-editor; piece B3): the course of the case, one phase open at a time. |
+| [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The phase editor's model (docs/plans/scenario-builder.md §5.3, piece B3): what a phase rule may read and how it reads in words, the rule tree's edits, where a phase sits in the card's course, and a phase id's rename. |
+| [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The builder's first three sections (docs/plans/scenario-builder.md §5.2; piece B2): Header and story, Patient and sensors, Case briefing. |
 | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Reading a scenario card for Instructor v2 (E127, docs/plans/instructor-panel-redesign.md §3.2, §3.4, §7): the stages of the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, ju |
 | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | The scenario card (research/13 brief §7 "Scenario card"; TrainingMonitor's catalogue, CAE/REALITi objectives): title, draft flag, the learner-facing story, category, patient, duration and objectives. |
 | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Learners' phones follow the instructor's session over the relay (`pme-relay --static`), which serves this app on the laptop's network address (the classroom). |
@@ -740,6 +823,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/engine-bench.worker.ts`](../../apps/demo/src/app/engine-bench.worker.ts) | Home's "Engine · ms per tick" tile (E125). |
 | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | Acute events (showcase additions): the engine's systemic conditions an instructor starts and stops during a case — tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the re |
 | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | While the host fast-forwards, the window dims and blurs behind one centred panel — a double chevron in a ring of its colour, the two blinking together, "FAST FORWARD · 5 MIN" in amber in the monitor's typeface, a thin pr |
+| [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | Plan learner-action-remote.md L4: the laptop's copy of the formulary layer, for the host's learner preparations. |
 | [`apps/demo/src/app/glossary-data.ts`](../../apps/demo/src/app/glossary-data.ts) | The clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-and-glossary.md §5, 294 entries, generated 2026-09-28 from the workspace research file; edits go H |
 | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. |
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
@@ -748,6 +832,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/i18n/lang.ts`](../../apps/demo/src/app/i18n/lang.ts) | The host's language for learner-facing text (plan Decision 15): the Debrief page's switch (D13) and the language a card's Briefing is sent in (D13b). |
 | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | The instructor phone's PIN (plan instructor-peer-role.md §1, Q2): kept on the laptop only, in the app's store (localStorage `pme.instructorPin`), four random digits drawn at first use, changed on the Room page. |
 | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | Which skin an instrument wears, and what the defibrillator window reads out (Room plan R5, §4 D5). |
+| [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | The kit store from the page's side (docs/plans/scenario-builder.md §8 layer 2; the owner's ruling of 10 November 2026): when the app runs from a kit started on Node.js, the kit's server keeps the clinicians' work as plai |
 | [`apps/demo/src/app/learner-actions.ts`](../../apps/demo/src/app/learner-actions.ts) | The learner action bar: what the team at the bedside does. |
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
 | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | What the instructor panel talks to (research/13 brief §4.4: the same panel same-screen and as a Remote). |
@@ -971,6 +1056,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/audit-snapshot.e2e.ts`](../../apps/demo/e2e/audit-snapshot.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/audit-timeline.e2e.ts`](../../apps/demo/e2e/audit-timeline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/audit-worker.e2e.ts`](../../apps/demo/e2e/audit-worker.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/builder-action-editor.e2e.ts`](../../apps/demo/e2e/builder-action-editor.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/builder-local-store.e2e.ts`](../../apps/demo/e2e/builder-local-store.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/builder-phase-editor.e2e.ts`](../../apps/demo/e2e/builder-phase-editor.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/case-briefing.e2e.ts`](../../apps/demo/e2e/case-briefing.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-page.e2e.ts`](../../apps/demo/e2e/circulation-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-rhythm-rates.e2e.ts`](../../apps/demo/e2e/circulation-rhythm-rates.e2e.ts) | 0 | 0 |
@@ -985,6 +1073,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/fast-forward-main-thread.e2e.ts`](../../apps/demo/e2e/fast-forward-main-thread.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/finish-restart-v2.e2e.ts`](../../apps/demo/e2e/finish-restart-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx14-pause-while-hidden.e2e.ts`](../../apps/demo/e2e/fx14-pause-while-hidden.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx16-follower-beep-gate.e2e.ts`](../../apps/demo/e2e/fx16-follower-beep-gate.e2e.ts) | 0 | 0 |
@@ -995,6 +1084,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mechanism-tree.e2e.ts`](../../apps/demo/e2e/mechanism-tree.e2e.ts) | 0 | 0 |
@@ -1053,9 +1143,17 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/about.test.ts`](../../apps/demo/src/app/about.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/alarms.test.ts`](../../apps/demo/src/app/alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/archive.test.ts`](../../apps/demo/src/app/archive.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/action-editor.dom.test.ts`](../../apps/demo/src/app/builder/action-editor.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/actions.test.ts`](../../apps/demo/src/app/builder/actions.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/card-file.test.ts`](../../apps/demo/src/app/builder/card-file.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/checks.test.ts`](../../apps/demo/src/app/builder/checks.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/drafts.test.ts`](../../apps/demo/src/app/builder/drafts.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/fields.test.ts`](../../apps/demo/src/app/builder/fields.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/form.test.ts`](../../apps/demo/src/app/builder/form.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/kit.dom.test.ts`](../../apps/demo/src/app/builder/kit.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/page.dom.test.ts`](../../apps/demo/src/app/builder/page.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/phase-editor.dom.test.ts`](../../apps/demo/src/app/builder/phase-editor.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/phases.test.ts`](../../apps/demo/src/app/builder/phases.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-read.test.ts`](../../apps/demo/src/app/card-read.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-seed.dom.test.ts`](../../apps/demo/src/app/card-seed.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/case-briefing.dom.test.ts`](../../apps/demo/src/app/case-briefing.dom.test.ts) | 0 | 0 |
@@ -1076,6 +1174,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-panel.dom.test.ts`](../../apps/demo/src/app/fast-forward-panel.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-beep-gate.test.ts`](../../apps/demo/src/app/follower-beep-gate.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/formulary.test.ts`](../../apps/demo/src/app/formulary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/hidden-tab.test.ts`](../../apps/demo/src/app/hidden-tab.test.ts) | 0 | 0 |
@@ -1085,6 +1184,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/instructor-pin.test.ts`](../../apps/demo/src/app/instructor-pin.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument-sync.dom.test.ts`](../../apps/demo/src/app/instrument-sync.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/kit-store.test.ts`](../../apps/demo/src/app/kit-store.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/graph.test.ts`](../../apps/demo/src/app/mechanisms/graph.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/labels.test.ts`](../../apps/demo/src/app/mechanisms/labels.test.ts) | 0 | 0 |
@@ -1262,6 +1362,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`views.test.ts`](../../packages/renderer/test/views.test.ts) | 0 | 0 |
 | [`worker-event-backpressure.test.ts`](../../packages/renderer/test/worker-event-backpressure.test.ts) | 0 | 0 |
 | [`worker-pump-backpressure.test.ts`](../../packages/renderer/test/worker-pump-backpressure.test.ts) | 0 | 0 |
+| [`worker-ready-and-main-yield.test.ts`](../../packages/renderer/test/worker-ready-and-main-yield.test.ts) | 0 | 0 |
 | [`alarm-wording.test.ts`](../../packages/skins/test/alarm-wording.test.ts) | 0 | 0 |
 | [`co2-sampling.test.ts`](../../packages/skins/test/co2-sampling.test.ts) | 0 | 0 |
 | [`color.test.ts`](../../packages/skins/test/color.test.ts) | 0 | 0 |

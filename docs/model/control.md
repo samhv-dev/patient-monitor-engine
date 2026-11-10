@@ -51,6 +51,7 @@ transports (`src/protocol.ts`).
 |---|---|
 | [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
 | [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
+| [`preparations.ts:130`](../../packages/controller/src/session/preparations.ts#L130) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
 
 ## State
 
@@ -123,6 +124,13 @@ transports (`src/protocol.ts`).
 
 ## Parameters
 
+### [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `CARD_MAX_BYTES` | `512 * 1024` | — | November 2026; [ENG: scenario; BQ13] | The largest card file the store takes: the owner's limit for a card document (BQ13, 9 November 2026: "a card document ≤ 512 KB, text only"), here 512 KiB of UTF-8. The largest library card today is under 40 kB. [ENG: scenario; BQ13] |
+| `NAME_MAX` | `64` | — | [ENG: scenario] | The longest name: the card id's own limit (`^[A-Za-z][A-Za-z0-9_.-]{0,63}$`, 64 characters). [ENG: scenario] |
+
 ### [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -180,6 +188,13 @@ transports (`src/protocol.ts`).
 | `FF_STEP_TICKS` | `25` | — | [ENG: network] | A fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and its commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG: network]. |
 | `FF_MAX_S` | `600` | s | [ENG: network] | The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG: network]. |
 
+### [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `PREP_TEMP_C` | `25` | — | [ENG: scenario; the case is set in an air-conditioned theatre at controlled room temperature, and 25 °C is the condition the formulary's room-temperature rows were measured at (USP <659>, 20–25 °C)] | The temperature the room keeps a preparation at, °C: which of the source's stability rows applies (remaining.ts matches the row's temperature exactly) [ENG: scenario; the case is set in an air-conditioned theatre at controlled room temperature, and 25 °C is the condition the formulary's room-temperature rows were measured at (USP <659>, 20–25 °C)]. |
+| `PREPS_PER_DEVICE` | `32` | — | [ENG: network; a bound on the host's memory against a looping device: a tray of 4 (§4 D2) eight times over] | The most preparations one remote keeps at a time; one more is refused until it discards one [ENG: network; a bound on the host's memory against a looping device: a tray of 4 (§4 D2) eight times over]. |
+
 ## Functions
 
 | Function | File | Doc |
@@ -187,7 +202,17 @@ transports (`src/protocol.ts`).
 | `isInside` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | `file` lies inside the folder `root` (both real paths). |
 | `lanAddresses` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | This machine's IPv4 addresses another device can reach, best first (no loopback, no link-local 169.254/16). |
 | `isLocalAddress` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | A socket from this machine itself (loopback, or one of its own interface addresses): |
-| `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir`, or null when there is none or the file is not ours. |
+| `httpHandler` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | `store`: the kit store's paths (store.ts `storeRoutes`), answered first: |
+| `writeHidden` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | `text` written whole to `file` (a hidden temporary file, then a rename) and the file hidden. |
+| `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir` (in `file`: |
+| `safeName` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | `s` as a file name the store may use, or null: |
+| `parseVersionFile` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A version file's number and time, or null when the name is not one. |
+| `writeRefusal` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Why the folder cannot be written, in words for the page, or null when it can. |
+| `fromThisComputer` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A request from this computer's own browser to this computer: |
+| `listCards` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Every card the folder holds (a folder with a safe name and at least one version file), by id. |
+| `keepCard` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A new version of card `id`, `text` its card file. |
+| `readCard` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | One version's card file, or null. |
+| `storeRoutes` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The store's HTTP side: |
 | `findings` | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Every finding for these drugs (each with a file in `formulary`) in this diluent (null: |
 | `checkFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | §5's six rules over the layer's files (path relative to the formulary folder → parsed JSON): |
 | `loadFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | The typed layer, when every rule holds; |
@@ -240,6 +265,15 @@ transports (`src/protocol.ts`).
 | `givenByOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | `issuedBy` as a device, read as the scenario driver reads it (driver.ts `administrationOf`). |
 | `lockReason` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The refused ack's words: |
 | `samePin` | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The PIN comparison: |
+| `stagePrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Make the preparation a remote asked for (`prep stage`), or say why not. |
+| `remainingOf` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | r for one drug of a preparation at sim time `simT` (§7.1): |
+| `deliverPrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration × its r at `simT`, through the instructor's own path (the drug lock, staged del |
+| `infusePrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `prep infuse` → one `applyEvent infusion` per drug at the pump's mL/h, with that drug's concentration × its r at the start (§7.1: |
+| `setInfusion` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `infusion set` (LQ4, option B): |
+| `prepRecord` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | The scenario driver's record of a preparation for one of its drugs at its last give (types-v2.ts PrepRecord), or undefined. |
+| `stagedOf` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | The preparation as staged, for the scenario driver's record (driver.ts recordPreparation): |
+| `learnerView` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | What the remote that staged it is told (§4 D7): |
+| `instructorView` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | What the instructor's screens are told (§4 D7): |
 | `backoffDelay` | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Delay before reconnect attempt `attempt` (0-based): |
 | `windowEndpoint` | [`transport/post-message.ts`](../../packages/controller/src/transport/post-message.ts) | Endpoint for talking to another window (an iframe's contentWindow, or window.parent from inside the iframe). |
 | `createRelaySignaling` | [`transport/webrtc.ts`](../../packages/controller/src/transport/webrtc.ts) | Signalling over the relay's /signal endpoint (url is the relay base, e.g. |
@@ -248,7 +282,7 @@ transports (`src/protocol.ts`).
 | `stage1Vocabulary` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | What the base engine accepts (engine.ts validate()). |
 | `vocabularyOf` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | The engine's own vocabulary when it has one, else the base-engine description. |
 
-Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `formatAjvError`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
+Exported without a doc comment: `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `formatAjvError`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
 
 ## Source files
 
@@ -257,6 +291,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`packages/controller/relay/bin.ts`](../../packages/controller/relay/bin.ts) | — |
 | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | Stage 12 (the classroom): the relay's HTTP side on the WebSocket's own port. |
 | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | @pme/controller relay (brief §3.7): rooms keyed by 6-character session code, host authority, a snapshot cache for late joiners, heartbeat and room expiry. |
+| [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The kit store (docs/plans/scenario-builder.md §8 layer 2, piece B8; the owner's ruling of 10 November 2026): what the clinicians make in the app is kept as plain files in the kit's own `user-data` folder, beside the brow |
 | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Plan learner-action-remote.md L2 (§4 D5, LQ11, LQ12): what the bench finds in a preparation, from the formulary alone. |
 | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | Plan learner-action-remote.md §5, L1: the formulary loader and the source check. |
 | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | Plan learner-action-remote.md L2 and §4 D3: the host's pure preparation step. |
@@ -294,6 +329,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | The controller end (same-screen panel over in-process, or a remote over BroadcastChannel/WebSocket/WebRTC). |
 | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The same drug is not given twice within SAME_DRUG_LOCK_S of simulated time, from any device (the owner's ruling of 5 November 2026). |
 | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The host end of every transport (brief §3.7, R7): it owns the engine. |
+| [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Plan learner-action-remote.md L4 (§4 D3, D7, D8; §7.1; LQ3, LQ4, LQ7–LQ9): the host's table of the preparations its learner remotes staged, and the translation of a remote's `prep deliver`, `prep infuse` and `infusion se |
 | [`session/viewer-sync.ts`](../../packages/controller/src/session/viewer-sync.ts) | Viewer role (brief §3.7): a second monitor that runs its OWN engine and never receives samples. |
 | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Reconnect delays: exponential with jitter, capped [ENG: network]. |
 | [`transport/base.ts`](../../packages/controller/src/transport/base.ts) | Shared plumbing for every transport: listener sets, status replay on subscribe, send-side sample guard, receive-side validation. |
@@ -330,6 +366,7 @@ None recorded.
 | [`panel/scenario-tab.dom.test.ts`](../../packages/controller/test/panel/scenario-tab.dom.test.ts) | 0 | 0 |
 | [`panel/staging.test.ts`](../../packages/controller/test/panel/staging.test.ts) | 0 | 0 |
 | [`protocol.test.ts`](../../packages/controller/test/protocol.test.ts) | 0 | 0 |
+| [`relay/kit-store.test.ts`](../../packages/controller/test/relay/kit-store.test.ts) | 0 | 0 |
 | [`relay/kit-windows.test.ts`](../../packages/controller/test/relay/kit-windows.test.ts) | 0 | 0 |
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
 | [`relay/peer-left.test.ts`](../../packages/controller/test/relay/peer-left.test.ts) | 0 | 0 |
@@ -381,6 +418,7 @@ None recorded.
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-instructor.test.ts`](../../packages/controller/test/session/host-instructor.test.ts) | 0 | 0 |
 | [`session/host-learner-defib.test.ts`](../../packages/controller/test/session/host-learner-defib.test.ts) | 0 | 0 |
+| [`session/host-learner.test.ts`](../../packages/controller/test/session/host-learner.test.ts) | 0 | 0 |
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |

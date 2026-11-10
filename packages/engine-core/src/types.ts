@@ -186,7 +186,9 @@ export interface MonitorEngine {
   resume(): void;
   setTimeScale(k: number): void;
   step(ticks?: number): void;
-  advanceTo(simT: SimSeconds): void;
+  /** Run the engine's own ticks up to `simT`. `lookAhead` false skips the look-ahead (the tones and look-ahead samples)
+   *  after the last of them: a run cut into pieces of which only the last looks ahead is the uncut run (brief 126). */
+  advanceTo(simT: SimSeconds, lookAhead?: boolean): void;
   now(): { tick: Tick; simT: SimSeconds };
   dispatch(cmd: Command): DispatchResult;
   on(fn: (e: EngineEvent) => void, types?: EngineEventType[]): () => void;
