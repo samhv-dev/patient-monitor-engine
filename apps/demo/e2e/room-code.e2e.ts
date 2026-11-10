@@ -3,7 +3,7 @@
 // (a restart, the next day) runs the same room, and a phone left open on the old page follows the new one (the relay
 // admits the new host once the old socket is gone: server.ts `join`).
 // R1b: the kit moves to the next port when 8650 is busy, and a new port is a new origin with an empty store. The relay
-// keeps the last room's code in its state directory (--state-dir) and answers it in /pme-relay.json, so the page on the
+// keeps the last room's code in its state directory (--state-dir: the kit's user-data folder, the hidden .room.json) and answers it in /pme-relay.json, so the page on the
 // new origin starts under the same code. A phone's page talks to the relay of its own address (classroom.ts relayOf):
 // one left on the first address cannot follow the move by itself; its socket fails and it says so, as it does today.
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -65,13 +65,13 @@ test('the bare address after the page was closed: the same room code; a phone le
 
 test('the kit on another port (a new origin, an empty store): the relay\'s state directory gives the page the same code', async ({ page, browser, browserName }) => {
   test.setTimeout(120_000);
-  const state = join(mkdtempSync(join(tmpdir(), 'room-state-')), 'PME Classroom');
+  const state = join(mkdtempSync(join(tmpdir(), 'room-state-')), 'user-data'); // the kit's own data folder
   // the first day: the kit on 9172
   const first = await startRelay({ port: 9172, host: '127.0.0.1', remoteRoles: 'viewer', stateDir: state });
   relays.push(first);
   await openApp(page, base, `?relay=${encodeURIComponent(wsOf(first))}#/`, { warmMs: 500 });
   const code = await codeOf(page);
-  await expect.poll(() => { try { return JSON.parse(readFileSync(join(state, 'room.json'), 'utf8')) as unknown; } catch { return null; } }).toEqual({ lastRoom: code });
+  await expect.poll(() => { try { return JSON.parse(readFileSync(join(state, '.room.json'), 'utf8')) as unknown; } catch { return null; } }).toEqual({ lastRoom: code });
   const p = await phone(browser, browserName, code, wsOf(first));
   await expect(status(p)).toHaveText(`Following session ${code}`, { timeout: 30_000 });
   await page.context().close();

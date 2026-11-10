@@ -2,7 +2,10 @@
 # Start Simulator — double-click this file in Finder.
 #
 # It starts a small web server on this computer only (127.0.0.1), then opens the simulator in the default browser.
-# It writes nothing into its own folder (the kit can run from a read-only USB stick); temporary files go to $TMPDIR.
+# On the kit's Node.js (a), what the clinicians make in the app (scenario cards) is kept in this kit's own "user-data"
+# folder, beside this file, created at the first save (the owner's ruling of 10 November 2026); on ruby, perl or python
+# nothing is written there, and the app says so. Nothing else is written into its own folder (the kit can run from a
+# read-only USB stick: the app then says the folder cannot be written); temporary files go to $TMPDIR.
 # Server, first that works: (a) runtime/node-<cpu> bundled with the kit, (b) /usr/bin/ruby + WEBrick,
 # (c) /usr/bin/perl (core modules only), (d) python3 — only a real one, never the macOS install stub.
 #
@@ -10,12 +13,15 @@
 #   PME_ONLY=node|ruby|perl|python   try only that server
 #   PME_NO_OPEN=1                    do not open the browser
 #   PME_PORT=8642                    first port to try (the next 49 are tried if it is busy)
+#   PME_STATE_DIR=/dir               the data folder instead of user-data (the kit's own tests)
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 APP="$DIR/app"
 SRV="$DIR/server"
 RT="$DIR/runtime"
 START_PORT="${PME_PORT:-8642}"
+STATE="${PME_STATE_DIR:-$DIR/user-data}"
+EXTRA=""
 ONLY="${PME_ONLY:-}"
 SPID=""
 TMPD=""
@@ -73,7 +79,7 @@ start() {
   shift
   TRIED="$TRIED $name"
   rm -f "$PORTFILE" "$PORTFILE.tmp"
-  "$@" "$APP" "$START_PORT" "$PORTFILE" >"$LOG" 2>&1 &
+  "$@" "$APP" "$START_PORT" "$PORTFILE" ${EXTRA:+"$EXTRA"} >"$LOG" 2>&1 &
   SPID=$!
   local i=0
   while [ $i -lt 60 ]; do
@@ -100,8 +106,10 @@ try_node() {
   for n in "${list[@]}"; do
     [ -x "$n" ] || continue
     "$n" -e 'process.exit(0)' >/dev/null 2>&1 || continue
+    EXTRA="$STATE" # serve.mjs alone keeps the kit store (its 4th argument); the fallbacks take three
     start "node ($(basename "$n"))" "$n" "$SRV/serve.mjs" && return 0
   done
+  EXTRA=""
   return 1
 }
 try_ruby() {

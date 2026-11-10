@@ -10,10 +10,11 @@
 .sb-root .sb-topr { display: grid; gap: 10px; justify-items: end; }
 .sb-root .sb-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .sb-root .sb-saves { display: flex; gap: 8px; flex-wrap: wrap; }
-.sb-root .sb-save { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font-size: 12.5px; color: var(--text-muted); }
-.sb-root .sb-save i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
-.sb-root .sb-save.bad i { background: var(--bad); }
-.sb-root .sb-save b { color: var(--text-strong); font-weight: 500; }
+.sb-root .sb-kit-save[hidden] { display: none; }
+.sb-root .sb-save, .sb-root .sb-kit-save { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font-size: 12.5px; color: var(--text-muted); }
+.sb-root .sb-save i, .sb-root .sb-kit-save i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.sb-root .sb-save.bad i, .sb-root .sb-kit-save.bad i { background: var(--bad); }
+.sb-root .sb-save b, .sb-root .sb-kit-save b { color: var(--text-strong); font-weight: 500; }
 .sb-root .sb-grid { display: grid; grid-template-columns: 236px minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 .sb-root .sb-panel { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
 .sb-root .sb-outline { padding: 10px 8px; }

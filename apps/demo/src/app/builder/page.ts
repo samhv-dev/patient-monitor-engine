@@ -5,12 +5,17 @@
 // through `docOf`, checked by the controller's validator 300 ms after the last keystroke (`checker`), each line shown on
 // its field (`fieldOf`), and saved in this browser 300 ms after the last change (layer 1, drafts.ts). Export writes
 // the card file (Export waits while the validator refuses, unless this browser could not save the draft: then a file is
-// the only copy). The blocks the next pieces edit (script, outcomes, debrief) are kept as the card has
+// the only copy). Layer 2 (piece B8; the owner's ruling of 10 November 2026): when the app runs from a kit on Node.js,
+// the card is also kept as a version file in the kit's own user-data folder (kit-store.ts) on Ctrl+S, at Export, and
+// every 2 min of an open draft that changed; the drafts page lists the cards the folder holds that this browser lacks;
+// the store line says in words where the work is kept, or why the folder is not written. (B6's Run, not built yet, is
+// to call `keepInKit` too, as the plan says.) The blocks the next pieces edit (script, outcomes, debrief) are kept as the card has
 // them and counted in the outline.
 import { HOME_VERSION, REPO } from '../about.ts';
 import { hhmm } from '../archive.ts';
 import { hrefOf } from '../router.ts';
 import { LIBRARY } from '../scenarios.ts';
+import { kitOffLine, kitStore as defaultKit, kitWhere, type KitCard, type KitStore } from '../kit-store.ts';
 import { button, confirmDialog, download, h, toast } from '../ui.ts';
 import { cardFileName, cardFileText, readCardFile } from './card-file.ts';
 import { checker, type Placed } from './checks.ts';
@@ -25,6 +30,9 @@ import './builder.css';
 
 /** The pause after the last change before the draft is saved in this browser: the plan's 300 ms (§8). [ENG: ui] */
 export const SAVE_DELAY_MS = 300;
+/** How often an open draft that changed is kept in the kit's folder: the plan's "every 2 min while the kit runs on Node"
+ *  (§8). [ENG: ui] */
+export const KIT_EVERY_MS = 120_000;
 
 /** A line in the checks: the validator's, or the builder's own (a library card's id). */
 type Line = Placed & { by: 'validator' | 'builder' };
@@ -54,7 +62,7 @@ export interface BuilderPage {
   leave(): void;
 }
 
-export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
+export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defaultKit): BuilderPage {
   // ---------------------------------------------------------------------------------------------------- the drafts
   const draftList = h('div', { class: 'scen-list sb-drafts', 'aria-label': 'Your drafts' });
   const holds = h('p', { class: 'sb-hint sb-holds' });
@@ -92,13 +100,60 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
     draftList.replaceChildren(...(xs.length ? xs.map((m) => h('div', { class: 'scen-item' },
       h('div', {}, h('p', { class: 't' }, m.title || 'Untitled card', ' ', h('code', {}, m.cardId)), h('p', { class: 'd' }, `${m.from[0]?.toUpperCase()}${m.from.slice(1)} · saved ${when(m.savedAt)} · ${m.snapshots.length} ${m.snapshots.length === 1 ? 'snapshot' : 'snapshots'}`)),
       button('Delete', () => void (async () => {
-        if (!(await confirmDialog('Delete this draft?', `“${m.title || m.cardId}” and its ${m.snapshots.length} snapshots are deleted from this browser. An exported file is not affected.`, 'Delete draft', true, 'Keep the draft'))) return;
+        if (!(await confirmDialog('Delete this draft?', `“${m.title || m.cardId}” and its ${m.snapshots.length} snapshots are deleted from this browser. An exported file is not affected${kit.state?.on ? ', and neither are its versions in this kit’s user-data folder' : ''}.`, 'Delete draft', true, 'Keep the draft'))) return;
         await store.remove(m.id);
         drawDrafts();
+        void drawKit();
       })(), 'ghost', { 'aria-label': `Delete the draft ${m.title || m.cardId}` }),
       h('a', { class: 'btn', href: hrefOf('scenarios', `builder/${m.id}`), 'aria-label': `Open the draft ${m.title || m.cardId}` }, 'Open'),
     )) : [h('p', { class: 'hint' }, 'No drafts in this browser yet: open a library card as a copy, or import a card file.')]));
-    holds.textContent = `${store.holdsLine()}, ${store.whereLine()}.`;
+    holds.textContent = storeWords();
+  };
+  /** The store line: what this browser holds, where it is kept, and why the kit's folder is not written when it is not. */
+  const storeWords = () => {
+    const off = kitOffLine(kit.state);
+    return `${store.holdsLine()}, ${kit.state?.on ? `kept ${kitWhere(kit.state)}` : store.whereLine()}.${off ? ` ${off}` : ''}`;
+  };
+  // ------------------------------------------------------------------------- what the kit's folder holds, not this browser
+  const kitList = h('div', { class: 'scen-list sb-kit-cards', 'aria-label': 'Cards in this kit’s user-data folder, not in this browser' });
+  const kitBlock = h('section', { class: 'sb-block', 'aria-labelledby': 'sb-kit-h', hidden: true },
+    h('h2', { id: 'sb-kit-h', class: 'scen-h3' }, 'In this kit’s user-data folder, not in this browser'),
+    h('p', { class: 'sb-hint' }, 'Kept by this kit (another browser of this laptop, or this one before its data was cleared). Open one to edit it here: it opens at its newest version.'),
+    kitList);
+  const openFromKit = async (c: KitCard) => {
+    const last = c.versions.at(-1);
+    const text = last ? await kit.card(c.id, last.v) : null;
+    let doc: unknown = null;
+    try {
+      doc = text === null ? null : JSON.parse(text);
+    } catch {
+      /* not a card file */
+    }
+    if (!last || !doc || typeof doc !== 'object' || Array.isArray(doc)) {
+      startErr.hidden = false;
+      startErr.textContent = `${c.id} was not opened: the kit’s folder did not give back its newest version as a card file.`;
+      return;
+    }
+    const m = await store.create(doc as Body, `from this kit’s user-data folder, version ${last.v}`);
+    if ('refused' in m) {
+      startErr.hidden = false;
+      startErr.textContent = draftRefusalText(m);
+      return;
+    }
+    location.hash = hrefOf('scenarios', `builder/${m.id}`);
+  };
+  const drawKit = async () => {
+    const cards = await kit.cards();
+    const mine = new Set(store.list().map((m) => m.cardId));
+    const lacking = (cards ?? []).filter((c) => !mine.has(c.id));
+    kitBlock.hidden = !lacking.length;
+    kitList.replaceChildren(...lacking.map((c) => {
+      const last = c.versions.at(-1)!;
+      return h('div', { class: 'scen-item' },
+        h('div', {}, h('p', { class: 't' }, c.title || 'Untitled card', ' ', h('code', {}, c.id)), h('p', { class: 'd' }, `Version ${last.v} · kept ${when(last.at)} · ${c.versions.length} ${c.versions.length === 1 ? 'version' : 'versions'} in the folder`)),
+        h('span', {}),
+        button('Open', () => void openFromKit(c), '', { 'aria-label': `Open ${c.title || c.id} from this kit’s folder` }));
+    }));
   };
   const start = h('div', { class: 'console-page sb-start' },
     h('a', { class: 'console-back', href: hrefOf('scenarios') }, '← Scenarios'),
@@ -106,6 +161,7 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
     h('p', { class: 'console-sub' }, 'Edit a card in this browser: open a library card as a copy, or import a card file. Every change is kept in this browser as you type, with snapshots you can go back to; Export file is the way to take a card elsewhere.'),
     startErr,
     h('section', { class: 'sb-block', 'aria-labelledby': 'sb-drafts-h' }, h('h2', { id: 'sb-drafts-h', class: 'scen-h3' }, 'Your drafts'), draftList, holds),
+    kitBlock,
     h('section', { class: 'sb-block', 'aria-labelledby': 'sb-copy-h' }, h('h2', { id: 'sb-copy-h', class: 'scen-h3' }, 'Open a library card as a copy'),
       h('div', { class: 'scen-list' }, ...LIBRARY_V2().map((c) => h('div', { class: 'scen-item' },
         h('div', {}, h('p', { class: 't' }, c.title, ' ', h('code', {}, c.id)), h('p', { class: 'd' }, 'The copy gets its own id; the library card is not changed.')),
@@ -126,6 +182,12 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
   let dirty = false;
   const chip = h('b', {});
   const saveChip = h('span', { class: 'sb-save' }, h('i', { 'aria-hidden': 'true' }), 'This browser · ', chip);
+  const kitChipText = h('b', {});
+  const kitChip = h('span', { class: 'sb-kit-save', hidden: true }, h('i', { 'aria-hidden': 'true' }), 'Kit folder · ', kitChipText);
+  const kitRefusal = h('p', { class: 'sb-refuse sb-kit-refuse', role: 'alert', hidden: true });
+  /** The card file last kept in the kit's folder (or found there), so an unchanged draft writes nothing. */
+  let kitText: string | null = null;
+  let kitTimer: ReturnType<typeof setInterval> | null = null;
   const refusal = h('p', { class: 'sb-refuse sb-store-refuse', role: 'alert', hidden: true });
   const exportBtn = button('Export file', () => void doExport());
   const cardLine = h('p', { class: 'sb-card' });
@@ -260,7 +322,33 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
         h('span', {}, `Snapshot ${s.n} · ${when(s.at)} · ${whyWords(s, m)}`),
         button('Restore', () => void restore(s.n), 'small ghost', { 'aria-label': `Restore snapshot ${s.n}` }))),
     );
-    storeLine.textContent = `${store.holdsLine()}, ${store.whereLine()}.`;
+    storeLine.textContent = storeWords();
+  };
+  const drawKitChip = () => {
+    kitChip.hidden = !kit.state?.on;
+  };
+  /** The open draft kept in the kit's folder as a new version (`why`: what asked), unless it is as last kept there. */
+  const keepInKit = async (why: 'ctrl-s' | 'export' | 'timer' | 'run'): Promise<void> => {
+    if (!open || !(await kit.ready()).on) return;
+    const o = open;
+    const doc = docOf(o.form);
+    const text = cardFileText(doc);
+    if (text === kitText && why === 'timer') return;
+    const id = typeof doc.id === 'string' ? doc.id : '';
+    const r = await kit.keepCard(id, text);
+    if (open !== o) return;
+    if (r.ok) {
+      kitText = text;
+      kitChip.classList.remove('bad');
+      kitChipText.textContent = `version ${r.v} kept ${hms(r.at)}`;
+      kitRefusal.hidden = true;
+      if (why === 'ctrl-s') toast(r.same ? `Already kept as version ${r.v} in this kit’s user-data folder` : `Kept as version ${r.v} in this kit’s user-data folder`);
+    } else {
+      kitChip.classList.add('bad');
+      kitChipText.textContent = 'not kept';
+      kitRefusal.hidden = false;
+      kitRefusal.textContent = `Not kept in this kit’s user-data folder: ${r.why}. The draft is still kept in this browser; export a file to keep it elsewhere.`;
+    }
   };
   const drawSaved = (r: DraftMeta | { refused: string; detail: string }) => {
     if (!open) return;
@@ -336,6 +424,7 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
     toast(`Exported ${cardFileName(doc)}`);
     const r = await store.snapshot(open.meta.id, doc as unknown as Body, 'export');
     drawSaved(r);
+    await keepInKit('export');
   };
   const restore = async (n: number) => {
     if (!open) return;
@@ -349,8 +438,9 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
     h('div', { class: 'sb-top' },
       h('div', {}, h('a', { class: 'console-back', href: hrefOf('scenarios', 'builder') }, '← Your drafts'), h('h1', { id: 'scen-edit-h' }, 'Scenario builder'), cardLine),
       h('span', { class: 'sb-sp' }),
-      h('div', { class: 'sb-topr' }, h('div', { class: 'sb-saves', role: 'status', 'aria-label': 'Where this draft is saved' }, saveChip), h('div', { class: 'sb-acts' }, exportBtn))),
+      h('div', { class: 'sb-topr' }, h('div', { class: 'sb-saves', role: 'status', 'aria-label': 'Where this draft is saved' }, saveChip, kitChip), h('div', { class: 'sb-acts' }, exportBtn))),
     refusal,
+    kitRefusal,
     h('div', { class: 'sb-grid' }, outline, pane, checks));
   const missing = h('div', { class: 'console-page sb-missing', hidden: true },
     h('a', { class: 'console-back', href: hrefOf('scenarios', 'builder') }, '← Your drafts'),
@@ -370,18 +460,30 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
   addEventListener('pagehide', () => {
     if (open && dirty) store.rescue(open.meta.id, docOf(open.form) as unknown as Body);
   });
+  // Ctrl+S (⌘S on a Mac): the draft saved in this browser now, and kept in the kit's folder
+  addEventListener('keydown', (e) => {
+    if (!el.isConnected || showing !== 'editor' || !open || e.key.toLowerCase() !== 's' || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    e.preventDefault();
+    void saveNow().then(() => keepInKit('ctrl-s'));
+  });
+  const kitEditing = (on: boolean) => {
+    if (kitTimer !== null) clearInterval(kitTimer);
+    kitTimer = on ? setInterval(() => void keepInKit('timer'), KIT_EVERY_MS) : null;
+  };
   return {
     el,
     headingId: () => (showing === 'editor' ? 'scen-edit-h' : showing === 'missing' ? 'scen-miss-h' : 'scen-build-h'),
     enter(sub) {
       return (async () => {
-        await store.ready();
+        await Promise.all([store.ready(), kit.ready()]);
         if (!sub) {
           if (open) await saveNow();
           open = null;
+          kitEditing(false);
           check.cancel();
           startErr.hidden = true;
           drawDrafts();
+          await drawKit();
           return showOnly('start');
         }
         if (open?.meta.id === sub) return showOnly('editor');
@@ -394,6 +496,12 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
         }
         const rescued = store.rescued(sub);
         mount(meta, rescued ?? doc);
+        kitText = null;
+        kitChip.classList.remove('bad');
+        kitChipText.textContent = 'not kept yet (Ctrl+S)';
+        kitRefusal.hidden = true;
+        drawKitChip();
+        kitEditing(!!kit.state?.on);
         showOnly('editor');
         if (rescued) {
           // the edit typed just before the page went away: written now, as any change is
@@ -404,6 +512,7 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
     },
     leave() {
       void saveNow();
+      kitEditing(false);
     },
   };
 }

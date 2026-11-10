@@ -18,11 +18,13 @@
 // or not, plus the host's `prep` events that name it; its commands are `forbidden` until it is granted, then only
 // LEARNER_COMMANDS (learnerMay) go to the host, any other is `forbidden`, more than 6 a second close it.
 // A non-host socket keeps the role of its first hello: a hello as another role on it is `forbidden`.
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage } from 'node:http';
 import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
+import { storeRoutes } from './store.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
 import { SESSION_CODE_RE, VIEWER_EVENTS, learnerDefibMay, learnerMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
 import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayDevice, type RelayFrame } from '../src/transport/relay-frames.ts';
@@ -62,18 +64,56 @@ export interface RelayOptions {
    */
   takenCheckMs?: number;
   /**
-   * Room plan R1b: a folder where the relay keeps the code of the last room a host opened (`room.json`, the code only:
-   * never a PIN, a peer id, an address or a name), read again at start and answered as `lastRoom` in /pme-relay.json.
-   * The classroom kit moves to the next port when its first is busy, a new origin whose store is empty: the instructor's
-   * page then starts under this code. Created at the first write. Absent (the default, `pnpm relay`): nothing is written.
+   * Room plan R1b, and the kit store (docs/plans/scenario-builder.md §8 layer 2; the owner's ruling of 10 November 2026):
+   * the kit's own `user-data` folder. The relay keeps there the code of the last room a host opened, in `.room.json` (a
+   * hidden file, as the owner ruled: a dot-file, and on Windows the hidden attribute too; the code only: never a PIN, a
+   * peer id, an address or a name), read again at start and answered as `lastRoom` in /pme-relay.json; and it answers the
+   * kit store's paths (store.ts: the clinicians' scenario cards). The classroom kit moves to the next port when its first
+   * is busy, a new origin whose store is empty: the instructor's page then starts under this code. Created at the first
+   * write. Absent (the default, `pnpm relay`): nothing is written, and the store's paths are not answered.
    */
   stateDir?: string;
+  /**
+   * The folder where kits before the ruling of 10 November kept the room code (`room.json` in this computer's
+   * application-data folder): read, never written, when `stateDir` holds no code yet, so the room keeps its code. The
+   * file there is left as it is.
+   */
+  oldStateDir?: string;
+  /** The system whose hidden-file rule applies (tests; default process.platform). */
+  platform?: NodeJS.Platform;
+  /** Runs `attrib` on Windows (tests; default spawnSync). */
+  attrib?: (args: string[]) => void;
 }
 
-/** The last room's code kept in `dir`, or null when there is none or the file is not ours. */
-export function readLastRoom(dir: string): string | null {
+/** The room code's file in the kit's user-data folder: a dot-file (hidden on macOS and Linux). */
+export const ROOM_FILE = '.room.json';
+/** Its name in the old application-data folder. */
+export const OLD_ROOM_FILE = 'room.json';
+
+const runAttrib = (args: string[]) => void spawnSync('attrib', args, { stdio: 'ignore', windowsHide: true });
+
+/**
+ * `text` written whole to `file` (a hidden temporary file, then a rename) and the file hidden. On Windows a dot-file is
+ * not hidden by its name, so `attrib +h` hides it; and a hidden file cannot be replaced by a rename or opened for a
+ * fresh write there, so its hidden attribute is taken off first and put back after. UNTESTED ON WINDOWS at this release
+ * (the order of the calls is tested with `platform: 'win32'`).
+ */
+export function writeHidden(file: string, text: string, platform: NodeJS.Platform = process.platform, attrib: (args: string[]) => void = runAttrib): void {
+  const tmp = `${file}.tmp`;
+  writeFileSync(tmp, text);
+  if (platform === 'win32') {
+    attrib(['+h', tmp]);
+    if (existsSync(file)) attrib(['-h', file]);
+  }
+  renameSync(tmp, file);
+  if (platform === 'win32') attrib(['+h', file]);
+}
+
+/** The last room's code kept in `dir` (in `file`: ROOM_FILE, or OLD_ROOM_FILE in the old folder), or null when there is
+ *  none or the file is not ours. */
+export function readLastRoom(dir: string, file = ROOM_FILE): string | null {
   try {
-    const v = (JSON.parse(readFileSync(join(dir, 'room.json'), 'utf8')) as { lastRoom?: unknown } | null)?.lastRoom;
+    const v = (JSON.parse(readFileSync(join(dir, file), 'utf8')) as { lastRoom?: unknown } | null)?.lastRoom;
     return typeof v === 'string' && SESSION_CODE_RE.test(v) ? v : null;
   } catch {
     return null;
@@ -206,16 +246,19 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const clock = opts.now ?? Date.now;
   /** Per address: the times of its recent wrong PINs and instructor hellos, and until when it may not say `instructor`. */
   const denials = new Map<string, { at: number[]; hellos: number[]; until: number }>();
-  let lastRoom = opts.stateDir ? readLastRoom(opts.stateDir) : null;
+  const kept = opts.stateDir ? readLastRoom(opts.stateDir) : null;
+  /** The code in the folder: its own, else (read once, at start) the one an older kit kept in the application-data folder. */
+  let lastRoom = kept ?? (opts.stateDir && opts.oldStateDir ? readLastRoom(opts.oldStateDir, OLD_ROOM_FILE) : null);
+  /** Whether `.room.json` holds `lastRoom` (false after a code taken from the old folder: the next host's hello writes it). */
+  let written = kept !== null;
   /** R1b: a host's hello names the room it runs; kept (whole-file replace) when it changes. A write that fails is logged. */
   const keepLastRoom = (code: string) => {
-    if (!opts.stateDir || code === lastRoom) return;
+    if (!opts.stateDir || (code === lastRoom && written)) return;
     lastRoom = code;
     try {
       mkdirSync(opts.stateDir, { recursive: true });
-      const file = join(opts.stateDir, 'room.json');
-      writeFileSync(`${file}.tmp`, `${JSON.stringify({ lastRoom: code })}\n`);
-      renameSync(`${file}.tmp`, file);
+      writeHidden(join(opts.stateDir, ROOM_FILE), `${JSON.stringify({ lastRoom: code })}\n`, opts.platform, opts.attrib);
+      written = true;
     } catch (err) {
       log(`the last room was not kept in ${opts.stateDir}: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -245,7 +288,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     denials.set(address, d);
   };
   // Stage 12: one http server carries the WebSockets, `/pme-relay.json` and (with staticDir) the app itself
-  const http = createServer(httpHandler({ ...(opts.staticDir ? { staticDir: opts.staticDir } : {}), info: () => ({ relay: 'pme', port, addresses: lanAddresses(), serves: !!opts.staticDir, ...(lastRoom ? { lastRoom } : {}) }) }));
+  const http = createServer(httpHandler({ ...(opts.staticDir ? { staticDir: opts.staticDir } : {}), ...(opts.stateDir ? { store: storeRoutes({ dir: opts.stateDir }) } : {}), info: () => ({ relay: 'pme', port, addresses: lanAddresses(), serves: !!opts.staticDir, ...(lastRoom ? { lastRoom } : {}) }) }));
   await new Promise<void>((resolve, reject) => {
     http.once('listening', resolve);
     http.once('error', reject); // a busy port rejects (the WebSocketServer is attached after: it re-threw this error)
