@@ -338,7 +338,8 @@ export class MonitorCore {
    * slices, and the page gets its turn (`yieldTask`, a macrotask: it draws, runs its timers and answers input) whenever
    * the engine has used its budget since the last turn, within a step or between steps. The budget is the main thread's
    * own frame rule (frameBudgetMs, brief 105): as much wall time as the page's last turn took, 50–250 ms, so the engine
-   * keeps at least half of the thread and the page a turn at least every 250 ms of work. A first build that gave the
+   * keeps half of the thread or more while the page's turns take up to 250 ms, and the page gets a turn at least every
+   * 250 ms of work. A first build that gave the
    * page a turn every 16 ms left the engine so little of the thread at background QoS (a turn there is a frame of this
    * page, ≈ 150 ms) that a 5-min span took 150 s instead of 12. The first slice after an empty step (a span's start or
    * end) waits for a drawn frame (`yieldTask(true)`): the fast-forward panel shows before the engine runs. A slice is as
