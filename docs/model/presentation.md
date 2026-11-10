@@ -1256,6 +1256,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/views/debrief-handsoff.dom.test.ts`](../../apps/demo/src/app/views/debrief-handsoff.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hints.dom.test.ts`](../../apps/demo/src/app/views/debrief-hints.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hub-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-hub-steps.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-kit.dom.test.ts`](../../apps/demo/src/app/views/debrief-kit.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-marks-course.dom.test.ts`](../../apps/demo/src/app/views/debrief-marks-course.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-moments-print.dom.test.ts`](../../apps/demo/src/app/views/debrief-moments-print.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-oxygen.dom.test.ts`](../../apps/demo/src/app/views/debrief-oxygen.dom.test.ts) | 0 | 0 |
