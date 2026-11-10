@@ -1,0 +1,14 @@
+{
+  "diluentId": "dextrose5",
+  "name": "Glucose (dextrose) 5 %",
+  "content": {
+    "amount": 50,
+    "unit": "mg/mL glucose",
+    "src": "emc-1825"
+  },
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

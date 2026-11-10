@@ -1,0 +1,106 @@
+{
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Diluents listed are those of the 10 mg/mL concentrate; the 100 µg/mL vial is ready to use and names none.",
+  "drugId": "phenylephrine",
+  "products": [
+    {
+      "id": "phenylephrine-10mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 10,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-10818"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "phenylephrine-100mcg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 100,
+        "unit": "mcg",
+        "perVial": false,
+        "src": "emc-12563"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "emc-10818"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-10818"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-10818"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-10818"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-10818"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-10818"
+    }
+  ],
+  "admixtures": [],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          336,
+          0.95
+        ]
+      ],
+      "statement": "0.1 and 0.2 mg/mL in 0.9 % NaCl, PVC, 25 °C: stable 14 days. Stabilis level A.",
+      "src": "stabilis-phenylephrine-1891",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-phenylephrine-p1692"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          720,
+          0.95
+        ]
+      ],
+      "statement": "0.1 mg/mL in 0.9 % NaCl, PP syringe, 23-25 °C, in light: stable 30 days. Stabilis level A.",
+      "src": "stabilis-phenylephrine-2194",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-phenylephrine-p1691"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}

@@ -140,7 +140,10 @@ async function shot(page: Page, name: string, browserName: string): Promise<void
 // and the Fast forward box, beside ACTION; teach2.css), measured there on Chromium: 835 × 479 at 1990 × 920, 835 × 639
 // at 1990 × 1080, 607 × 381 at 1496 × 900 (today's view gave 1374 × 820, 1374 × 980 and 1000 × 800).
 for (const [w, h, paneW, pane] of [[1990, 920, 835, 479], [1990, 1080, 835, 639], [1496, 900, 607, 381]] as const) {
-  test(`Saadat-like on the Instructor view at ${w} × ${h}: no tile text overlaps; the RR tile is set as the EtCO2 tile`, async ({ page, browserName }) => {
+  // @known-flaky, class crash (outside our code; brief 118): a first attempt lost its page ("Target page, context or browser
+  // has been closed") in 19 of the 99 ci runs of 9 Nov with gating WebKit jobs (7 of the 25 carrying PR #369); 2 more first attempts were tile reads (42582524688, 42656928762). Linux WebKit's web process, as pass 3's crash rows; no Chromium sighting. Local runs were
+  // not made: the crash is CI's Linux WebKit and macOS has never reproduced one (pass 3); the quarantine keeps measuring it.
+  test(`Saadat-like on the Instructor view at ${w} × ${h}: no tile text overlaps; the RR tile is set as the EtCO2 tile`, { tag: '@known-flaky' }, async ({ page, browserName }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: w, height: h });
     // brief 47: how late the engine worker's event batches reach the page (now − the batch's own wall time), the largest

@@ -1,0 +1,14 @@
+{
+  "diluentId": "dextrose4Saline018",
+  "name": "Glucose 4 % in sodium chloride 0.18 %",
+  "content": {
+    "amount": 40,
+    "unit": "mg/mL glucose",
+    "src": "emc-1867"
+  },
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
