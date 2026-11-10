@@ -1,4 +1,4 @@
-/* Mock-up stylesheet for the EDP-TS-style ventilator face (plan docs/plans/vent-skin-edp-ts.md, §4 and §5).
+/* Mock-up stylesheet for the EDP-TS ventilator face (plan docs/plans/vent-skin-edp-ts.md, §4 and §5).
    Drawn from plain shapes. Fonts come from the app's own tokens (app.css, --font-ui / --font-num); every colour below is a
    PROPOSED token of the face's stylesheet, read from the owner's photographs (assets/ventilators/edp-ts/, not in the
    repository; uncorrected white balance, 7 x 7 px patch means, plan §2.13). No photograph, frame or manual page is used. */

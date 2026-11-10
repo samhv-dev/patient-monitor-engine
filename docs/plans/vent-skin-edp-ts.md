@@ -1,8 +1,14 @@
-# A second ventilator face: the EDP-TS-style face — Implementation Plan
+# A second ventilator face: the EDP-TS face — Implementation Plan
 
-**STATUS: DRAFT, waiting for the owner's rulings VQ1–VQ10 (§8).** Written 10 November 2026 by a planning executor from
-brief 141 of the post-demo set. Nothing is built: this pull request adds this page, four static mock-ups in
-`docs/plans/vent-skin-edp-ts/mockup/` and one roadmap row, and changes no product code, test, card, kit or data file.
+**STATUS: READY TO BUILD (version 1) — the owner's ten rulings folded in (10 November 2026).** Written 10 November
+2026 by a planning executor from brief 141 of the post-demo set; the owner ruled VQ1–VQ10 the same day (now §8
+"Decisions", each with the question and options kept for the record), and his rulings are applied in the sections
+they touch. The face is named after the device, **EDP-TS** (VQ1). The work is split into **version 1** (the working
+ventilator with all its modes, then EDP-TS becomes the default face) and **version 2** (the start-up sequence, tube
+compensation, capnography) (§7.2). What still waits: the owner's detailed video of the device being operated and his
+recordings of its alarm sounds (§7.3); until the video, the manual decides every point it covers (VQ7). Nothing is
+built: this pull request adds this page, four static mock-ups in `docs/plans/vent-skin-edp-ts/mockup/`, two roadmap
+rows and the README's affiliation sentence (§5), and changes no product code, test, card, kit or data file.
 
 **Base and inputs.**
 - Base: `origin/main` **c13cb826** (Merge PR #391), read in the worktree `scratch/wt-plan-vent-skin` (branch
@@ -48,8 +54,10 @@ setting, the same alarms in the same places.
    so that over the pieces the face gains them (§7).
 
 **Non-goals.**
-- A neonatal face. The manual's neonatal group (NEO, TCPL modes, proximal flow sensor) is an optional add-on of the
-  device (p. 3, p. 118 footnote) and the engine is adults only (README, "Adults only").
+- The paediatric and neonatal groups, for now (VQ3 = A: "A for now, pediatrics and neonates when the physiology are
+  added later"). PED and NEO are shown unavailable with the reason; the manual's neonatal group (NEO, TCPL modes,
+  proximal flow sensor) is also an optional add-on of the device (p. 3, p. 118 footnote). A roadmap row waits for the
+  engine's paediatric and neonatal physiology.
 - The device's service functions: calibration of the touch screen, software version, service hours, RS-232 export,
   the "Visual Net" PC software (p. 58, p. 61, p. 89).
 - Gas supply, power and hardware faults as simulated physics (wall pressure, battery, fan). They can come later as
@@ -63,8 +71,9 @@ setting, the same alarms in the same places.
   a reason under it) or absent (§3, mock-ups m2–m4).
 - **A2. A number the model does not compute.** A monitored value the model does not produce shows `---` (the device's
   own sign for "not active in this mode", p. 47), never a plausible constant.
-- **A3. Trade dress.** No logo, no maker's mark, no copied artwork; colours and shapes are drawn from plain shapes and
-  measured tokens, with a provenance entry each (§5).
+- **A3. Artwork.** The face is named after the device at the owner's ruling (VQ1), but no logo, no maker's mark and no
+  copied artwork is drawn; colours and shapes come from plain shapes and measured tokens, with a provenance entry
+  each (§5).
 - **A4. A manual copied.** Help texts and reasons are the project's own words; only the device's on-screen words and
   numbers are carried over, each cited.
 
@@ -247,7 +256,7 @@ Pimax (greyed in the figure), VD/VT Physiologic.
 
 **Scheme.** Audible and visible; three priorities and Vent Inop above them [M p. 88, p. 18]. If two alarms are active
 at once only the higher is shown [M p. 88] — but p. 17 says messages that do not fit rotate every 5 s with an arrow
-icon (a conflict, VQ7). Lamps: high red fast, medium yellow slow, low yellow steady [M p. 90, Table 9-1]. Audio: high 10
+icon (a conflict inside the manual; the face follows the alarm chapter, p. 88, until the owner's video, VQ7). Lamps: high red fast, medium yellow slow, low yellow steady [M p. 90, Table 9-1]. Audio: high 10
 pulses (2 × 5), medium 3, low 1; tones do not mix, the highest sounds [M p. 90–91, Table 9-3]. When the cause ends: the
 message goes at once; the front lamp stays lit, steady, until Esc [M p. 91, Table 9-4]; audio: high 5 pulses, medium 3,
 low none [M p. 92, Table 9-5]. Silence: 30 s (one press) or 60 s (two); every audible alarm can be silenced except
@@ -278,7 +287,9 @@ CPAP); Low tidal volume (20 s; not in CPAP); Power loss; High/Low O2 concentrati
 Non-compensable leak; Fan failure; Target volume not reached (PRVC, MMV+PSV); High PEEP (within 5 s). Low: High rate
 (30 s); Nebulization interrupted; Transport; Standby. Vent Inop: steady lamp, a continuous distinct tone, no message
 [M p. 95, Table 9-6]. The alarm-settings window [M p. 37, Figure 5-5] lists Inspiratory pressure, Tidal volume, Minute
-volume, Oxygen concentration, Respiratory rate, **Low PEEP** and ETCO2 (the tables have High PEEP: VQ7). In NIV (ADL)
+volume, Oxygen concentration, Respiratory rate, **Low PEEP** and ETCO2 (the tables have High PEEP). The owner's rule settles it (VQ7): a yellow limit tag shows
+the high limit, the low limit or both, as its symbol says; the face adopts that rule for every tag and window row, so
+the PEEP row holds the High PEEP limit the tables define, under the high-limit symbol of the screen's "20.0" tag. In NIV (ADL)
 the TV and MV alarms can be switched off together [M p. 93]; apnoea can be switched off in SIMV and APRV, which also
 switches the backup off [M p. 94].
 
@@ -324,19 +335,25 @@ compensation", "Peak", "Trach.", "Plateau", "Mean", "PEEP", "Pressure Limits", "
 "Flow Waveform", "Operative Modes", "Other Operative modes", "Press [Knob] Select - [Esc] Exit", "Alarm Limits",
 "30-60 s", "Menu", "Mode", "Suction %O2", "Manual Insp.", "Insp/Exp Pause", "Ctrl", "Esc", "Vent Inop", "High",
 "Med Low", "Alarm Signals", and the menu rows of §2.9. One label in a manual figure is Spanish ("% de fuga", p. 47);
-the face uses "% leak" only if the owner's device shows it so (VQ7).
+the face writes "% leak" (an English rendering; the owner's video confirms the device's word, §7.3).
 
 ### 2.14 Where the manual and the device differ
 
+The owner's ruling (VQ7 = B, 10 November 2026): **until his detailed video of the device, everything is based on the
+manual**; where the manual contradicts itself, the plan says which page it follows and the video settles it.
 1. The manual's mode window (2018) is titled "Ventilation Modes" and lists SIMV(VCV)+PSV under "Other ventilation
    Modes" [M p. 34]; the department's device titles it "Operative Modes" and lists SIMV(VCV)+PSV in the first window
-   [P IMG_1544]. **The face follows the photographs.**
+   [P IMG_1544]. **By VQ7 the face follows the manual until the video**; mock-up m2, drawn before the ruling, shows
+   the photographed version (its caption says so).
 2. Oxygen limits 60/40 in the manual, 50/30 on the device; VT limits 0.6/0.15 against 0.750/0.250 [M p. 122] [P]:
-   department settings, not a conflict. The face starts from the manual's defaults (VQ7).
+   department settings, not a conflict. The face starts from the manual's defaults.
 3. "Low PEEP" in the alarm window [M p. 37] against High PEEP in the tables [M p. 96, p. 123] and on the screen's tag
-   (20.0, [P IMG_1542]).
-4. One message at a time [M p. 88] against messages rotating every 5 s [M p. 17].
-5. Freeze left with Esc [M p. 40] or with Freeze again [M p. 67].
+   (20.0, [P IMG_1542]): **settled by the owner's tag rule** (§2.10): the row holds the High PEEP limit, as its symbol
+   shows.
+4. One message at a time [M p. 88] against messages rotating every 5 s [M p. 17]: the face follows the alarm chapter
+   (p. 88) until the video.
+5. Freeze left with Esc [M p. 40] or with Freeze again [M p. 67]: both pages are the manual; the face accepts both
+   until the video.
 
 ---
 
@@ -397,7 +414,7 @@ the face uses "% leak" only if the owner's device shows it so (VQ7).
 | GM9 | APRV | W | Work: two levels and two times, spontaneous breaths (PS optional) at both (vent). Hamilton's APRV row maps to PC today (`presets.ts:30`); this is the device's mode, not that one | V10 |
 | GM10 | PRVC | H | `PRVC` honours the adjusting pressure-controlled breath at ±3 cmH2O. What differs (no 0.5 s test breath, limits 5…Pmax−PEEP against PEEP+5…limit−5, no "target not reached") is aligned in V11 (vent) | V1, V11 |
 | GM11 | "Other Operative modes" | H | holds exactly MMV+PSV, PSV+VT Assured, APRV, PRVC [P IMG_1545] [M p. 34]: a face window | V1 |
-| GM12 | Neonatal modes (TCPL, SIMV(TCPL)+PSV, CPAP continuous flow) | N | absent (non-goal; ADL only, VQ3) | — |
+| GM12 | Neonatal modes (TCPL, SIMV(TCPL)+PSV, CPAP continuous flow) | N | absent (VQ3 = A: adults now, neonates when the engine has their physiology) | — |
 
 **Set parameters**
 
@@ -413,7 +430,7 @@ the face uses "% leak" only if the owner's device shows it so (VQ7).
 | GP8 | PEEP 0–50 | H | `peep` | V1 |
 | GP9 | Sens, flow / pressure; touched twice switches | H | `trigType`, `flowTrig`, `presTrig` | V1 |
 | GP10 | Oxygen 21–100 | H | `fio2`, sent on every frame to the engine | V1 |
-| GP11 | Rise Time | H | `riseTime` (s). The device shows only an icon and the manual gives no range or step: a named gap. Until the owner rules (VQ7), the knob steps through five values 0.05–0.25 s [ENG], said in the face's provenance | V1 |
+| GP11 | Rise Time | H | `riseTime` (s). The device shows only an icon and the manual gives no range or step: a named gap. Until the owner's video shows the key (§7.3; VQ7), the knob steps through five values 0.05–0.25 s [ENG], said in the face's provenance | V1 |
 | GP12 | Flow Waveform: constant | H | `flowPattern: 'square'` | V1 |
 | GP13 | Flow Waveform: descending (the device's default) | W | The model's `decel` ends at 2/3 of the mean flow, the device's ramp at zero [M p. 43]. Work: a ramp-to-zero pattern (peak = 2 × mean) as a new `flowPattern` value; `decel` unchanged for the Hamilton face and the fidelity traces (vent). Until V2 the face offers Constant only and shows Descending unavailable | V2 |
 | GP14 | Inspiratory pause 0–2 s (VCV) | H | `pause` (VC only, as on the device) | V1 |
@@ -421,12 +438,12 @@ the face uses "% leak" only if the owner's device shows it so (VQ7).
 | GP16 | PEEP High/Low, Ti High/Low | W | new keys with GM9 | V10 |
 | GP17 | Backup mode, apnoea time, backup in SIMV/APRV | W | `apneaTime` exists (alarm only); `backup`, `backupRate` are unwired. Work with GM3 | V2 |
 | GP18 | Sighs | W | `sigh` unwired. Work: every N-th breath per hour + % VT, own pressure limit (vent) | V7 |
-| GP19 | Tube compensation | N | unavailable, "not modelled" (VQ5) | — |
+| GP19 | Tube compensation | N | unavailable in version 1, reason "version 2: tube compensation is not modelled yet"; built in V15 (VQ5) | V15 |
 | GP20 | Volume compensation | N | unavailable, fixed "Yes": the model has no circuit compliance, so delivered and displayed volume are always the compensated ones | — |
 | GP21 | Humidifier | N | unavailable, "not modelled" (no BTPS correction in the model) | — |
 | GP22 | Leak compensation | N | unavailable, "no leak modelled" | — |
-| GP23 | Patient category ADL | H | the engine's adult patient; PED unavailable (VQ3) | V12 |
-| GP24 | IBW × mL/kg → initial VT | H | face arithmetic; the model's `pbw` is the same Devine formula as the manual's tables | V12 |
+| GP23 | Patient category ADL | H | the engine's adult patient; PED and NEO unavailable, reason "adult patient only" (VQ3) | V1, V12 |
+| GP24 | IBW × mL/kg → initial VT | H | face arithmetic; the model's `pbw` is the same Devine formula as the manual's tables; part of the start-up (version 2), until then VT starts at the manual's default 0.402 L | V12 |
 | GP25 | Pressure units, ambient pressure, sound, date/time, language, time of use | N | unavailable except Sound (V3: the face's alarm volume) and the date and time (the simulator's clock) | V3 |
 
 **Monitored values and displays**
@@ -439,7 +456,7 @@ the face uses "% leak" only if the owner's device shows it so (VQ7).
 | GD4 | Oxygen | H | `fio2`. The model has no oxygen sensor: the value is the set one, at once (the device's 20 s for 21→90 %, [M p. 118], is not modelled; said in the face's known differences) | V1 |
 | GD5 | Peak, Plateau, Mean | H | `PIP`, `PLAT`, `Pmean` | V1 |
 | GD6 | PEEP (last 50 ms of expiration) | H | the core averages Paw over the last 50 ms before inspiration | V1 |
-| GD7 | Trach. | N | `---` (GP19) | — |
+| GD7 | Trach. | N | `---` until V15 (GP19) | V15 |
 | GD8 | Lung icon (patient effort) | H | `p.lastPtT` within 0.4 s, as the Hamilton face's lung marker does | V1 |
 | GD9 | Battery and mains lamps | N | fixed: mains on, battery full; no power model (§1 non-goals) | — |
 | GD10 | Scalars Paw, VT, V̇, green and red by phase, 12 s sweep | H | the core's 5 ms buffers (`dispPaw`, `dispFlowLpm`, volume since breath start), coloured by `p.phase` | V1 |
@@ -450,7 +467,7 @@ the face uses "% leak" only if the owner's device shows it so (VQ7).
 | GD15 | Curve scales, autoscale, axis position | H | face | V4 |
 | GD16 | Patient's Data: VE Mandat, VE Spont, F Spont | H | the core's breath record, tagged by the markers (`mand`/`pt`) | V4 |
 | GD17 | TCexp, F/VT, Cdyn, Cst, Ri, Re, auto-PEEP, Ti/Ttot, WOBi | H | the core's arithmetic on the record, by the manual's formulas [M p. 48, p. 99–100]; Cst, Ri after an inspiratory hold, auto-PEEP after an expiratory hold | V4 |
-| GD18 | ETCO2, VCO2 | W | the CO2 signal must reach the ventilator over the link (an additive link message; no engine change) | V14 |
+| GD18 | ETCO2, VCO2 | W | the CO2 signal must reach the ventilator over the link (an additive link message; no engine change); version 2, with an on/off setting (VQ10) | V14 |
 | GD19 | Leak, % leak, Ptracheal | N | `---`, reason "not modelled" | — |
 | GD20 | Trends (72 h) | H | the core's record for the session (a session is shorter than 72 h) | V13 |
 
@@ -485,7 +502,7 @@ the face uses "% leak" only if the owner's device shows it so (VQ7).
 | GX1 | Manual Insp. | H | `manualBreath` | V4 |
 | GX2 | Ctrl+Manual Insp. (deep breath) | N | unavailable: the manual does not say how deep (named gap) | — |
 | GX3 | Insp/Exp Pause, held; 7 s / 20 s caps; VCV and PCV only | H | `toggleHold` on press and release; the caps and the mode rule in the core | V4 |
-| GX4 | Suction %O2 | W | the oxygen phases are `fio2` (H); the no-breath phase needs a model state (vent; VQ9) | V5 |
+| GX4 | Suction %O2 | W | the oxygen phases are `fio2` (H); the suction phase opens the circuit at the patient (VQ9 = A, open suction); whether the key itself pauses mandatory breaths follows the manual until the owner's video (§7.3) | V5 |
 | GX5 | Standby | W | a model state: no breaths, settings kept (vent) | V5 |
 | GX6 | Nebulizer | N | unavailable, "nebulised gas not modelled" (m1) | — |
 | GX7 | Screen lock (2 s hold) | H | face | V4 |
@@ -498,9 +515,9 @@ the face uses "% leak" only if the owner's device shows it so (VQ7).
 | GX14 | P0.1 | H | `measured.P01`; the face says it is the patient's own effort at 100 ms, not an occlusion measurement | V4 |
 | GX15 | PV flex | H | a core sequence over the existing VC mechanics: PEEP 0 for 3 s, a slow inflation at low constant flow to Pmax or Vmax, the curve, then the settings back; the model's recoil already has closure and an upper inflection | V4 |
 | GX16 | Slow vital capacity, Pimax | N | unavailable: no model of a cooperating or maximal effort | — |
-| GX17 | VD/VT | N | unavailable until V14, then with a typed PaCO2 (VQ10) | V14 |
+| GX17 | VD/VT | N | unavailable until V14 (version 2), then with a typed PaCO2 (VQ10) | V14 |
 | GX18 | Intrahospital transport | N | unavailable (no gas model) | — |
-| GX19 | Start-up: category, IBW, humidifier, calibration | H / N | category and IBW honoured; the calibration a decision (VQ4) | V12 |
+| GX19 | Start-up: category, IBW, humidifier, calibration | H / N | version 2 (VQ4 = C with a switch): scripted calibration screens with instructor-chosen failures, turned off in settings; until then the face opens at the mode window | V12 |
 
 ### 3.4 The counts
 
@@ -556,11 +573,12 @@ Hamilton look:
   face's alarm profile: which ids it shows, their priority, their delay, latching), silence for a duration, and the
   `onChange` / `onStep` subscriptions a face draws from.
 - `apps/demo/src/vent/core/{record.ts, alarms-view.ts, pending.ts}` — the parts above, each with its unit test.
-- `apps/demo/src/vent/faces/index.ts` — the registry: `{ 'hamilton-style': …, 'edp-ts-like': … }` and
-  `faceFromLocation(location)`; the default stays `hamilton-style` (VQ8).
+- `apps/demo/src/vent/faces/index.ts` — the registry: `{ 'hamilton-style': …, 'edp-ts': … }` and
+  `faceFromLocation(location)`; the default is `hamilton-style` until version 1 is complete, then `edp-ts` (VQ8,
+  piece VD).
 - `apps/demo/src/vent/faces/hamilton/face.ts` — today's `hamilton-ui.ts`, its logic replaced by core calls; its markup
   and CSS stay in `vent-hamilton.html` (V0 moves no CSS).
-- `apps/demo/src/vent/faces/edp-ts/{face.ts, face.css, face.json, modes.ts}` — the EDP-TS-style face: the DOM of
+- `apps/demo/src/vent/faces/edp-ts/{face.ts, face.css, face.json, modes.ts}` — the EDP-TS face: the DOM of
   §2.2, the tokens and words in `face.json` with `provenance`, the mode table and ranges of §2.6.
 - `apps/demo/src/vent/sim-tools.ts` — the patient drawer and the asynchrony scenarios lifted out of the Hamilton
   face, opened from a small "Simulator" handle OUTSIDE the device's bezel, the same for both faces (they are the
@@ -593,8 +611,9 @@ V0 changes no behaviour; the proof is that every test that touches the cockpit p
 
 ### 4.5 How a face is chosen
 
-1. **The address**: `vent-hamilton.html?…&face=edp-ts-like` in all three link modes (`?link=`, `&via=parent`,
-   `?join=CODE#/vent`) and in the embed's options (`face`). Unknown or missing → `hamilton-style`.
+1. **The address**: `vent-hamilton.html?…&face=edp-ts` in all three link modes (`?link=`, `&via=parent`,
+   `?join=CODE#/vent`) and in the embed's options (`face`). Unknown or missing → the default face: `hamilton-style`
+   until piece VD, `edp-ts` after it (VQ8).
 2. **Room setup** (V1b, the R5b pattern): "Ventilator in this room" with the faces as choices, kept per room in the
    site profile as the monitor style is (`site.ts`); the Ventilator view puts it in its iframe address
    (`views/vent.ts:475`), Room setup's laptop window in its URL, and the device page reads it from the host's `style`
@@ -609,42 +628,45 @@ face.
 
 ---
 
-## 5. Naming and look — the owner's questions, with the rules beside them
+## 5. Naming and look
 
-| Rule today | Where |
-|---|---|
-| "Not affiliated with any monitor or ventilator manufacturer (the ventilator's Hamilton-style look included). The `-like` skins evoke a general look; no logos or trade dress." | README.md:61 |
-| A monitor skin made from the owner's photographs of a named Iranian device carries the maker's name in its label: `saadat-like`, "Saadat-like (Iranian bedside, B9 family)" | `packages/skins/src/data/skins/saadat-like.json:4–5` |
-| The pump plan names the department's devices and builds a skin per device (PQ2 = B: JMS SP-500, JMS OT-701, Mindray BeneFusion SP5); "a skin whose source has not arrived is not built" | `docs/plans/pump-rack-tci.md` §11 PQ2, SK2 |
-| Every leaf of a device-like skin has a provenance entry (tag + a `research/NN §` or `brief §` source), checked by a test; the pump copies the rule rather than importing `packages/skins` (an engine-classified CI path) | `packages/skins/src/provenance.ts`, `test/provenance.test.ts`; pump plan SK1 |
-| The Hamilton-style face credits its ancestry (N-060, N-061) | NOTICES.md |
+The owner's ruling (VQ1 = B, 10 November 2026): "B is fine, call it 'EDP-TS'". The maker and the device are named.
 
-What this plan proposes, to be ruled (VQ1, VQ2): the face's id `edp-ts-like`; its label in Room setup "EDP-TS-like
-(the department's ICU ventilator)"; the device's model name in the label, the maker's name in neither the label nor the
-face (it appears in this plan and the research note, as Saadat's family does in research/06); **nothing** where the
-device shows its own marks (the bezel is drawn plain; the photographs show no mark on the screen itself); the README
-line extended to "(the ventilator's Hamilton-style and EDP-TS-style looks included)". **Provenance:** a research note
-(piece VR) transcribes §2 into `research/` with tags (`documented` for manual facts by page, `measured` for colours and
-proportions from the photographs, `inferred`, `eng` for the Rise Time steps); `face.json`'s every word, colour and
-layout number cites it; the face's test copies the skins' coverage rule (every leaf covered, no entry dangling, every
-source a `research/NN §` or `brief §`). The photographs themselves never enter the repository; the note names them by
-file name and date.
+| Rule before the ruling | Where | After the ruling |
+|---|---|---|
+| "Not affiliated with any monitor or ventilator manufacturer (the ventilator's Hamilton-style look included). The `-like` skins evoke a general look; no logos or trade dress." | README.md:61 | Amended in this pull request (below): still not affiliated; the EDP-TS face named after the device at the owner's ruling; no maker's logo or mark drawn |
+| A monitor skin made from the owner's photographs of a named Iranian device names its maker: `saadat-like`, "Saadat-like (Iranian bedside, B9 family)" | `packages/skins/src/data/skins/saadat-like.json:4–5` | The ventilator face goes one step further: its name is the device's own, without "-like" |
+| The pump plan names the department's devices (PQ2 = B) | `docs/plans/pump-rack-tci.md` §11 | Same practice |
+| Every leaf of a device skin has a provenance entry (tag + a `research/NN §` or `brief §` source), checked by a test; the pump copies the rule rather than importing `packages/skins` | `packages/skins/src/provenance.ts`; pump plan SK1 | Unchanged: the face's `face.json` carries it |
+
+**Applied:** the face's id is `edp-ts`, the address parameter `?face=edp-ts`, its name in the app (Room setup, the
+registry's label) **"EDP-TS"**; the maker, Ehya Darman Pishrafteh, is named in this plan, the research note and the
+face's provenance, not drawn on the face. **No logo artwork is drawn** (none was ruled in): where the device carries
+its marks the bezel is plain. The README's affiliation sentence, applied to README.md in this pull request, reads:
+
+> - **Not affiliated with any monitor or ventilator manufacturer.** The `-like` skins and the ventilator's Hamilton-style look evoke a general look. The planned EDP-TS ventilator face ([plan](docs/plans/vent-skin-edp-ts.md)) is named after the device at the clinical owner's ruling, to match the machine his residents use; no maker's logo or mark is drawn, and no logos or trade dress elsewhere.
+
+When V1 merges, "planned" goes and the link points at the face. **Provenance:** a research note (piece VR) transcribes
+§2 into `research/` with tags (`documented` for manual facts by page, `measured` for colours and proportions from the
+photographs, `inferred`, `eng` for the Rise Time steps and the tone pitches); `face.json`'s every word, colour and
+layout number cites it; the face's test copies the skins' coverage rule. The photographs never enter the repository;
+the note names them by file name and date.
 
 ---
 
 ## 6. Persian
 
-The device's interface is English (its language list has no Persian, [M p. 61]); the manual is Persian. Therefore:
-- **The face's words stay English**, exactly as the device prints them (§2.13), in both app languages: a resident
-  must read on the simulator what the department's screen says. They are displayed tokens and stay untranslated, as
-  the project's Persian conventions already keep units and device words.
-- **The simulator's own words around the face** — Room setup's "Ventilator in this room" and the face's label, the
-  reasons under unavailable controls, the Help texts, the "Simulator" handle — are the app's strings: English first,
-  Persian through the project's review path (the fa string files, reviewed by the owner before merging), never written
-  by an executor without that review. Whether the unavailable reasons follow the app's language or stay English with
-  the device is VQ10.
-- **The manual is a source, not a string file**: nothing is copied from it into the app in Persian or English
-  (anti-goal A4); facts are cited by page.
+The owner's ruling (VQ10, 10 November 2026): "there is no translation for the actual devices! none of the devices
+(instruments) have persian settings inside". Therefore:
+- **The face carries no Persian at all**, in either app language: the device's words as the device prints them
+  (§2.13), and every word the simulator adds INSIDE the face — the reasons under unavailable controls, the Help texts,
+  the start-up screens of V12 — in English only.
+- **Outside the face**, the app's own chrome stays as it is: Room setup's "Ventilator in this room" choice and the
+  "Simulator" handle beside the bezel are app strings, Persian through the project's review path when the app is in
+  Persian, never written by an executor without that review. The face's name, "EDP-TS", is a device name and is not
+  translated.
+- **The manual is a source, not a string file**: nothing is copied from it into the app in any language (anti-goal A4);
+  facts are cited by page.
 - This plan writes no Persian.
 
 ---
@@ -668,11 +690,11 @@ core unit tests (buffers trim to the sweep; freeze stops the buffers, not the ph
 `packages/ventilator`, `vent-hamilton.html`'s markup and CSS, the link. **Gate:** common with `@pme/demo`, the vent e2e
 set. **CI:** 1 run.
 
-### V1: The EDP-TS-style face, first usable (18 h) — **the first piece a resident can use**
+### V1: The EDP-TS face, first usable (18 h) — **the first piece a resident can use**
 **Depends on:** V0, VR, VQ1. **Files:** `faces/edp-ts/{face.ts, face.css, face.json, modes.ts}`, `faces/index.ts`
 (`?face=`), `embed.ts` (`face` option), the face's tests. **What a resident gets:** the screen of §2.2 and the keys of
-§2.3 drawn from plain shapes (m1); VCV (constant flow), PCV, PRVC, chosen through Operative Modes and its confirmation
-window (m2); the bottom row with select-turn-press, the 15 s revert, Ctrl steps, Esc; the top row, left column, three
+§2.3 drawn from plain shapes (m1); VCV (constant flow), PCV, PRVC, chosen through the mode window (the manual's titles and rows until the owner's video, VQ7; m2 shows the photographed
+version) and its confirmation window; the bottom row with select-turn-press, the 15 s revert, Ctrl steps, Esc; the top row, left column, three
 scalars and two loops; the alarm-limit tags and Pressure Limits keys editing the model's limits; the model's alarms in
 a red or yellow box (the device's colours, without delays or latching yet); everything not yet honoured present and
 unavailable with "needs piece Vn" or its N reason (m2–m4). **Tests first:** (1) every control on the face either
@@ -681,7 +703,7 @@ writes a `cfg` key or calls a core action, and a model-level test proves each ch
 VT within one step, under the link, at ×1 and ×4 (the matched-flow coupling off); (3) PCV with I:E 1:2.0 at f 12 gives
 `itime` 1.67 s; (4) a pending value is not in `cfg` until the knob press, and reverts at 15 s; (5) the frame's `mode` is
 the device's name; (6) the provenance coverage test of §5 over `face.json`; (7) an e2e: open `vent-hamilton.html?face=
-edp-ts-like&link=…`, choose PCV with the knob, change PEEP, see the monitor's airway pressure follow. **Must not touch:**
+edp-ts&link=…`, choose PCV with the knob, change PEEP, see the monitor's airway pressure follow. **Must not touch:**
 `packages/ventilator`, the Hamilton face. **Gate:** common with `@pme/demo`, the vent e2e set. **CI:** 1 run.
 
 ### V1b: Room setup's ventilator face, and the view, window and device follow it (4 h)
@@ -705,8 +727,8 @@ common with `@pme/ventilator`, `@pme/demo`; validation workflow. **CI:** 1 run +
 ### V3: The alarm scheme (8 h)
 **Depends on:** V1. **Files:** `packages/ventilator/src/alarms.ts` (new ids `lowPressure`, `contHighPressure`,
 `highPeep`, `o2High`, `o2Low`; `silenceAlarms(vs, seconds)`; defaults unchanged for Hamilton), `types.ts` (their
-limits), `core/alarms-view.ts` (delays and priorities from the face's profile; latching; one message at a time or the
-5 s rotation per VQ7), the face's lamps, message box, tones (VQ6), Ctrl+Alarm Limits test, Sound volume. **Tests
+limits), `core/alarms-view.ts` (delays and priorities from the face's profile; latching; one message at a time, the
+alarm chapter's rule, p. 88, VQ7), the face's lamps, message box, tones (VQ6), Ctrl+Alarm Limits test, Sound volume. **Tests
 first:** each delay from §2.10 on a fake clock; a High lamp stays steady after its cause ends until Esc; one press of
 silence = 30 s, two = 60 s; the Hamilton banner unchanged. **Gate:** common with `@pme/ventilator`, `@pme/demo`.
 **CI:** 1 run. (No mechanics change: no validation.)
@@ -720,11 +742,18 @@ VT/(Pplat − PEEP) of the model's lung within the display's rounding; PV flex r
 test unavailable in a mode the manual excludes. **Gate:** common with `@pme/demo`. **CI:** 1 run.
 
 ### V5: Standby and Suction %O2 (8 h; run-validation)
-**Depends on:** V3 (the Standby alarm). **Files:** `packages/ventilator/src/vent.ts` (a `standby` state: no breaths,
-settings kept; the frame then carries what an open circuit carries, per VQ9), core sequence for suction (60 s at
-`fio2 + enrichment`, the suction time, 60 s again), the Tools → Suction configuration window. **Tests first:** standby
-delivers no breath and resumes with the old settings on Esc; the suction sequence's three phases and its return to the
-set oxygen; the engine sees the oxygen rise in the frames. **Gate:** common with `@pme/ventilator`, `@pme/demo`;
+**Depends on:** V3 (the Standby alarm). **Intent (the owner, VQ9):** standby "pause[s] everything", the settings saved;
+he uses it to have the ventilator set before the patient is intubated or arrives, and to disconnect for transport when
+the patient will come back. Suction: "we do open suctioning routine here", so the suction period opens the circuit at
+the patient. **Files:** `packages/ventilator/src/vent.ts` (a `standby` state: no breaths, no alarms but Standby's low
+one, settings kept; the frame carries what an open circuit carries, the patient being off the ventilator), core
+sequence for suction as the manual reads (§2.11, pp. 39 and 57: 60 s at `fio2 + enrichment`, the suction time with
+the circuit opened at the patient, 60 s again), the Tools → Suction configuration window. **To confirm from the
+owner's video (§7.3):** whether the key itself pauses the mandatory breaths ("I'm not sure if the suction key does pause
+the mandatory ventilation, I know that it changes FiO2 to 100% for some time"); until then the manual's reading
+stands. **Tests first:** standby delivers no breath, raises no alarm but Standby, and resumes with the old settings on
+Esc; the suction sequence's three phases, the circuit open in the second, and the return to the set oxygen; the engine
+sees the oxygen rise and the open circuit in the frames. **Gate:** common with `@pme/ventilator`, `@pme/demo`;
 validation workflow. **CI:** 1 run + validation.
 
 ### V6: SIMV(VCV)+PSV and SIMV(PCV)+PSV (16 h; run-validation)
@@ -765,60 +794,121 @@ a PS breath on top without cycling the level; inverse I:E displayed. **Gate:** a
 limit − 5 range, re-test on the four events of [M p. 86]), `alarms.ts` (`targetNotReached`, shared with V9). The
 Hamilton face keeps today's PRVC (option off). **Gate:** as V2. **CI:** 1 run + validation.
 
-### V12: The start-up sequence (6 h)
-**Depends on:** V1, VQ4. **Files:** face only: category (ADL; PED unavailable, VQ3), IBW and mL/kg → VT, the
-humidifier choice (unavailable, the reason), and, per VQ4, the calibration screens. **Gate:** common with `@pme/demo`.
-**CI:** 1 run.
+### V12: The start-up sequence, with instructor-chosen failures and an off switch (14 h; version 2)
+**Depends on:** V1, V4 (the sim-tools handle), VD. **The ruling (VQ4 = C with a switch, version 2):** "C but with the
+option to have the start up sequence turned off in settings" and "I prefer to have the main ventilator working now and
+this as v2". **Until V12 the face opens at the mode window.** **Files:** face and core only: category (ADL; PED and NEO
+unavailable, VQ3), IBW and mL/kg → VT, the humidifier choice (unavailable, the reason), scripted screens for the
+circuit leak test, PEEP valve, expiratory flow sensor, oxygen sensor and compliance (§2.5) with the manual's messages
+and the knob/Esc choices; two failures the instructor chooses before or during the sequence from the sim-tools handle
+— a leak over 10 L/min (the sequence stops, ventilation impossible until a redo) and an oxygen sensor fault (Oxygen
+shows `---`); a setting "Start-up sequence: on/off" (Room setup's ventilator card, kept per room; off = today's start
+at the mode window). **Tests first:** off → the mode window at once; on → every step in the manual's order; a chosen
+leak stops the sequence and refuses ventilation; an oxygen fault leaves ventilation possible with Oxygen `---`.
+**Gate:** common with `@pme/demo`. **CI:** 1 run. (14 h against the draft's 6 h: the screens and their texts 6 h, the
+two failures and their instructor control 5 h, the setting 1 h, tests 2 h, est.)
 
 ### V13: Records: trends, activated alarms, saved loops (6 h)
 **Depends on:** V3, V4. **Files:** core record, face windows. **Gate:** common with `@pme/demo`. **CI:** 1 run.
 
-### V14: Capnography at the ventilator (10 h; only if VQ10 rules it in)
-**Depends on:** V4. **Files:** an additive link message carrying the engine's CO2 wave and EtCO2 to the cockpit
-(`packages/ventilator/src/link/`, and the controller's `vent` guard of R8a, which lists the bodies it accepts); the CO2
-layout, EtCO2 alarms (high priority), VD/VT with a typed PaCO2. No engine change. **Gate:** common with
+### V14: Capnography at the ventilator, with an on/off setting (10 h; version 2)
+**Depends on:** V4, VD. **The ruling (VQ10):** "in scope, needs a setting for on and off and a V2 feature". **Files:**
+an additive link message carrying the engine's CO2 wave and EtCO2 to the cockpit (`packages/ventilator/src/link/`, and
+the controller's `vent` guard of R8a, which lists the bodies it accepts); a setting "Capnography at the ventilator:
+on/off" (Room setup's ventilator card; off = the CO2 layout, ETCO2, VCO2 and VD/VT unavailable, as in version 1); the
+CO2 layout, EtCO2 alarms (high priority), VD/VT with a typed PaCO2. No engine change. **Gate:** common with
 `@pme/ventilator`, `@pme/controller`, `@pme/demo`. **CI:** 1 run.
+
+### V15: Tube compensation (20 h; version 2; run-validation)
+**Depends on:** V2, VD. **Why it is big (VQ5):** the model has ONE linear airway resistance, with the tube lumped into
+it (`resistance`, from the engine's `lungState`). Honest compensation needs the tube as its own flow-dependent element
+(a Rohrer-type pressure drop, P = K1·V̇ + K2·V̇², by inner diameter 4–12 mm and for tracheostomy tubes), the
+patient's own airway resistance separated from it, the tracheal pressure computed and drawn (a white curve and "Trach."
+under Peak, [M p. 52–53]), the compensation % applied in the pressure modes the manual lists, and the fidelity and
+regression traces re-recorded with the cause stated. **Sources to find and cite** (the executor reads them; none is
+verified here): Guttmann et al., Anesthesiology 1993 (continuous calculation of intratracheal pressure; tube
+coefficients by size); Fabry et al., Intensive Care Med 1997 (automatic tube compensation); a tracheostomy-tube
+resistance series for the tracheostomy coefficients; the engine's own airway model, to learn whether its resistance
+already includes a tube (if it does, the split touches `engine-core` and the piece carries the validation workflow by
+CI's own rule as well). **Tests first:** at zero compensation the breath is unchanged; at 100 % the tracheal pressure
+follows the set pressure within the stated tolerance at each size; the Hamilton face's TRC checkbox is honoured by the
+same mechanism or removed (A1). **Gate:** common with `@pme/ventilator` (and `@pme/engine-core` if the split reaches
+it); validation workflow. **CI:** 1 run + validation.
+
+### VD: EDP-TS becomes the default face (2 h; the last piece of version 1)
+**Depends on:** V1–V11, V13 merged and tried (VQ8: "Hamilton for now but as soon as EDP-TS is finished it should be the
+default face"). **Files:** `faces/index.ts` (the default), `site.ts` (a room with no choice gets `edp-ts`), the e2e
+tests that open the cockpit without `?face=` (they pass `face=hamilton-style` explicitly, or follow the new default,
+each said in the PR). Hamilton-style stays a choice in Room setup and by address. **Gate:** common with `@pme/demo`, the
+vent e2e set. **CI:** 1 run.
 
 ### 7.1 Order, totals, CI load
 
 ```
 VR ─┐
 V0 ─┴─► V1 ─► V1b
-         ├──► V2 ─► V6 ─► (V7, V8 any order)
+         ├──► V2 ─► V6 ─► (V7, V8)
          │     └──► V9, V10 (after V3)
          ├──► V3 ─► V5, V11, V13
-         ├──► V4 ─► V13, V14
-         └──► V12
+         ├──► V4 ─► V13
+         └──► ... V1–V11, V13 ─► VD ─► version 2: V12, V14, V15
 ```
-**Merge order:** VR, V0, V1, V1b, V2, V3, V4, V6, V5, V11, V9, V8, V7, V10, V12, V13, (V14). **Hours:** VR 3, V0 6,
-V1 18, V1b 4, V2 10, V3 8, V4 12, V5 8, V6 16, V7 5, V8 8, V9 12, V10 14, V11 5, V12 6, V13 6, V14 10 = **151 h**
-(141 h without V14). **CI load:** 17 PRs (16 without V14), one full run each; **8 carry `run-validation`** (V2, V5,
-V6, V7, V8, V9, V10, V11), each one validation run. No piece touches `packages/engine-core`.
+**Merge order (VQ2 = A: each mode merged and tried before the next):** VR, V0, V1, V1b, V2, V3, V4, V6, V5, V11, V9,
+V8, V7, V10, V13, **VD**; then version 2: V12, V14, V15. **Hours, version 1:** VR 3, V0 6, V1 18, V1b 4, V2 10, V3 8,
+V4 12, V5 8, V6 16, V7 5, V8 8, V9 12, V10 14, V11 5, V13 6, VD 2 = **137 h**. **Version 2:** V12 14, V14 10, V15 20 =
+**44 h**. **Total 181 h.** **CI load:** 16 PRs in version 1, 3 in version 2, one full run each; **`run-validation`**
+on V2, V5, V6, V7, V8, V9, V10, V11 (version 1) and V15 (version 2): 9 validation runs. No version-1 piece touches
+`packages/engine-core`; V15 may (§V15).
+
+### 7.2 Version 1 and version 2
+
+- **Version 1, the working ventilator** (the owner: "I prefer to have the main ventilator working now"): VR (the
+  research note every face value cites), V0, V1, V1b, V2–V11, V13, and the default switch VD at its end. At the end of
+  version 1 the EDP-TS face has every mode of the device, its alarm scheme, standby and suction, the manoeuvres and
+  records, and becomes the default face (Hamilton-style remaining a choice).
+- **Version 2:** the start-up sequence with its failures and off switch (V12), capnography with its on/off setting
+  (V14), tube compensation (V15). Until then their controls are present and unavailable with the reason "version 2".
+- **Later, outside this plan:** the paediatric and neonatal groups, when the engine has their physiology (VQ3; its
+  own roadmap row).
+
+### 7.3 What the owner brings from the device
+
+1. **A detailed video of the device being operated** (VQ7): the Mode key and choosing a mode; the Menu key pressed one
+   to four times; the Alarm Limits key and one limit changed; one setting changed with the knob (select, turn, press,
+   and what happens without the press); the Suction %O2 key through its whole sequence (does it pause the mandatory
+   breaths, what oxygen does it give); how Freeze is left; the Rise Time key and its values; Esc on a latched lamp.
+   It settles §2.14's points, GP11 and V5's open question; until it arrives the manual decides.
+2. **The alarm sound at each priority** (VQ6: "I'll record the ventilator alarm sounds so you can get the pitch"): high,
+   medium and low, and Vent Inop if it can be heard. Until then the tones' pitches are an engineering choice, tagged
+   `eng` in the face's provenance; the pulse counts are the manual's.
 
 ---
 
 ## 8. Risks, and the owner's decisions
 
 **Risks.**
-- **R1 Trade dress and affiliation.** A face that copies a named device's layout closely is nearer trade dress than a
-  "-like" monitor skin. Mitigation: no logos or marks, plain bezel, measured tokens rather than artwork, the README
-  line, VQ1.
+- **R1 Naming and affiliation.** The face carries the device's own name at the owner's ruling (VQ1) and copies its
+  layout closely. Mitigation: no logo or mark drawn, plain bezel, measured tokens rather than artwork, the README
+  sentence of §5 saying the project is not affiliated.
 - **R2 A face that pretends (A1).** Mitigation: §3's table is the face's control table; V1's walking test; every N row
   carries its reason; a reviewer checks m1–m4 against the built face.
 - **R3 Hamilton regressions in V0.** Mitigation: §4.4's list, the DOM-equality fixture, V0 touches no mechanics.
 - **R4 New modes without device traces.** SIMV, MMV, VT Assured, APRV, NIV are built from the manual and the literature;
   no EDP-TS trace exists to compare. They are teaching mechanics, said so in the known deviations; their numbers come
   from the manual's pages, never fitted.
-- **R5 Manual against device.** The 2018 manual differs from the department's software (§2.14). Mitigation: the
-  photographs win for what they show; the owner confirms the rest on the device (VQ7).
-- **R6 Load and CI time.** 17 PRs, 8 validation runs. Mitigation: the modes are independent after V2–V3 and can be
+- **R5 Manual against device.** The 2018 manual differs from the department's software (§2.14). By the owner's ruling
+  the manual decides until his detailed video (VQ7, §7.3); the points where the photographs already show otherwise
+  are listed so the video settles them.
+- **R6 Load and CI time.** 19 PRs, 9 validation runs. Mitigation: the modes are independent after V2–V3 and can be
   spaced; the pieces that do not change mechanics run no validation.
-- **R7 The video shows no operation.** The key and knob sequences rest on the manual and three photographs. A short
-  second video (Mode, Menu, Alarm Limits, one setting changed with the knob, Esc) would confirm them before V1.
+- **R7 The video shows no operation.** The key and knob sequences rest on the manual and three photographs; the owner
+  will provide a detailed video (§7.3). V1 is built on the manual meanwhile; what the video changes is a later
+  data-and-face PR.
 - **R8 Hand-over.** A patient in SIMV or APRV handed to the engine's volume-control ventilator changes pattern; each
   mode piece maps it in `engineVentilation` and its test says what the engine receives.
 
-**Decisions for the owner** (each: the question, a short explanation, the options, the proposal).
+**Decisions** (the owner ruled all ten on 10 November 2026; each keeps its question and options for the record, the
+proposal replaced by the ruling).
 
 **VQ1 — What is the face called, and whose name appears?**
 The README promises no logos or trade dress; the monitor's Saadat skin names its maker in the chooser; the pump plan
@@ -826,61 +916,56 @@ names the department's devices.
 A. `edp-ts-like`, "EDP-TS-like (the department's ICU ventilator)" in Room setup; no maker name, no mark on the face.
 B. Maker and device named: "Ehya Darman EDP-TS-like".
 C. No device name: "Iranian ICU ventilator".
-**Proposal: A**, the README line extended, the bezel plain where the device has its marks.
+**Ruling (10 November 2026): B — "B is fine, call it 'EDP-TS'".** The face is "EDP-TS", id `edp-ts`, `?face=edp-ts`; no
+logo artwork drawn; the README sentence of §5.
 
 **VQ2 — Which missing modes, in which order?**
-Three modes run today under the device's names (VCV, PCV, PRVC). Seven need mechanics (§3): PSV/CPAP's backup
-(V2), the two SIMV modes, NIV, MMV+PSV, PSV+VT Assured, APRV.
-A. All, in the order of §7 (SIMV first: it is the mode in every photograph and the video).
-B. SIMV, NIV and APRV only; MMV and VT Assured unavailable.
-C. Only what the photographs show (SIMV(VCV)+PSV); the rest unavailable.
-**Proposal: A**, spaced so that each mode merges and is tried before the next.
+Three modes run today under the device's names (VCV, PCV, PRVC). Seven need mechanics (§3).
+A. All, in the order of §7 (SIMV first). B. SIMV, NIV and APRV only. C. Only SIMV(VCV)+PSV.
+**Ruling (10 November 2026): A** — all, in the plan's order, each merged and tried before the next (§7.1).
 
 **VQ3 — Adults only, or the paediatric group too?**
-The device has ADL and PED (NEO is an add-on); the engine is adults only.
 A. ADL only; PED shown unavailable at start-up. B. PED's ranges and defaults on the adult patient.
-**Proposal: A**, until the engine has a paediatric patient.
+**Ruling (10 November 2026): A for now** — "A for now, pediatrics and neonates when the physiology are added later".
+PED and NEO unavailable with the reason; a roadmap row.
 
 **VQ4 — The start-up calibration?**
-The real device makes residents occlude the Y-piece and wait through a leak test and four calibrations (§2.5).
-A. Skip: the face starts at the mode window. B. Scripted calibration screens that always pass, said to be simulated.
-C. B, plus instructor-chosen failures (a leak over 10 L/min, an oxygen sensor fault).
-**Proposal: A now; B in V12 if residents should practise the sequence.**
+A. Skip: the face starts at the mode window. B. Scripted calibration screens that always pass. C. B, plus
+instructor-chosen failures (a leak over 10 L/min, an oxygen sensor fault).
+**Ruling (10 November 2026): C with an off switch, as version 2** — "C but with the option to have the start up
+sequence turned off in settings"; "I prefer to have the main ventilator working now and this as v2". V12 (14 h).
 
 **VQ5 — Tube compensation?**
-The device estimates tracheal pressure from tube size and flow and raises the airway pressure to compensate (§2.6); it
-needs a resistance coefficient per tube size from the literature.
 A. Unavailable. B. Built later as a sourced mechanic.
-**Proposal: A**, with B as a roadmap row.
+**Ruling (10 November 2026): version 2** — V15 (20 h, sources in §7); unavailable with the reason until then.
 
 **VQ6 — Alarm sound on the face?**
-The manual gives pulse counts (10/3/1, then 5/3/0) but not pitches; the cockpit has no sound today.
-A. Tones with the documented pulse counts, pitches an engineering choice said in the provenance. B. Silent; lamps and
-messages only. **Proposal: A.**
+A. Tones with the documented pulse counts, pitches an engineering choice. B. Silent.
+**Ruling (10 November 2026): A** — "I'll record the ventilator alarm sounds so you can get the pitch" (§7.3).
 
 **VQ7 — Where the manual is silent or contradicts itself, what do we follow?**
-Rise Time has no number on the device or in the manual; "Low PEEP" against High PEEP; one alarm message against a 5 s
-rotation; Freeze left by Esc or by Freeze; oxygen and VT limits 60/40 and 0.6/0.15 in the manual, 50/30 and
-0.750/0.250 on the department's device.
-A. The department's device: the owner (or a resident) checks these five on it, with a photograph each.
-B. The manual's tables, the photographs where they show it, my choices marked `eng` elsewhere.
-**Proposal: A for the five, B until then.**
+A. The department's device, checked by the owner. B. The manual's tables, the photographs where they show it, my
+choices marked `eng` elsewhere.
+**Ruling (10 November 2026): B, with the manual deciding** — "B but I need to provide a video with more details. until
+then everything should be based on the manual. the yellow tag can show the high or low limit or both depending on the
+symbol. and we should adopt that." Applied in §2.10, §2.14 and GP11.
 
 **VQ8 — Which face is the default?**
-A. Hamilton-style everywhere until a room chooses. B. EDP-TS-like for new rooms of the department's kit.
-**Proposal: A**, the department's kit choosing EDP-TS-like in Room setup once V1b merges.
+A. Hamilton-style everywhere until a room chooses. B. EDP-TS for new rooms of the department's kit.
+**Ruling (10 November 2026):** "Hamilton for now but as soon as EDP-TS is finished it should be the default face" —
+Hamilton-style until version 1 is complete, then EDP-TS the default for everyone (piece VD), Hamilton-style a choice.
 
 **VQ9 — Suction and standby: is the patient disconnected?**
-In open suction the circuit is opened; in closed suction it is not; the device itself only stops mandatory breaths.
-A. The suction phase opens the circuit (the engine's patient desaturates, as in practice).
-B. The circuit stays closed; no breaths are given. **Proposal: A** for suction; standby as B.
+A. The suction phase opens the circuit. B. The circuit stays closed; no breaths are given.
+**Ruling (10 November 2026): A for suction** — "we do open suctioning routine here"; the key's behaviour follows the
+manual until the video, with the owner's doubt about the mandatory breaths to confirm. **Standby:** "it pause
+everything", settings saved; its uses in V5's intent.
 
 **VQ10 — Capnography at the ventilator, and the language of the reasons?**
-The device shows ETCO2, VCO2 and a CO2 layout when its capnograph is fitted; the engine computes CO2 for the monitor.
-And: the reasons under unavailable controls are the simulator's words, not the device's.
-A. V14 in scope; reasons in the app's language (Persian through review).
-B. V14 out; reasons in English beside the device's words.
-**Proposal: A.**
+A. V14 in scope; reasons in the app's language. B. V14 out; reasons in English.
+**Ruling (10 November 2026):** capnography "in scope, needs a setting for on and off and a V2 feature" (V14, version
+2); the reasons in English only — "there is no translation for the actual devices! none of the devices (instruments)
+have persian settings inside" (§6).
 
 ---
 

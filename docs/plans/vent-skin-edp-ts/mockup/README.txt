@@ -1,4 +1,4 @@
-Mock-ups of the EDP-TS-style ventilator face, drawn 2026-11-10 for docs/plans/vent-skin-edp-ts.md (brief 141).
+Mock-ups of the EDP-TS ventilator face, drawn 2026-11-10 for docs/plans/vent-skin-edp-ts.md (brief 141).
 
   m1-main.html / .png     the main screen, SIMV(VCV)+PSV, with Exp. Sensitiv. selected (target state after piece V6)
   m2-modes.html / .png    the Mode key: Operative Modes and Other Operative modes (state after piece V1)
@@ -7,6 +7,9 @@ Mock-ups of the EDP-TS-style ventilator face, drawn 2026-11-10 for docs/plans/ve
   face.css                the proposed tokens of the face's stylesheet (plan §2.12), each with its photograph
   face.js                 draws the device from plain shapes, and an illustrative breath sequence for the traces
   capture.sh              the PNG captures (Chrome headless, 1180 x 870)
+
+Updated for the owner's rulings of 2026-11-10 (plan §8): the face is named "EDP-TS"; m2's titles and row order are
+the photographed device's, while the face follows the manual's until the owner's video (VQ7); reasons are English only.
 
 Product (what the plan proposes the face shows): the regions and their order (plan §2.2), the device's on-screen words
 (§2.13), the keys and lamps (§2.3), the mode and menu rows (§2.4, §2.9), the alarm-limit values of the department's

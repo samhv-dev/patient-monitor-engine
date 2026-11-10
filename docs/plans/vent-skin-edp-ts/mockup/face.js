@@ -1,4 +1,4 @@
-// Mock-up builder for the EDP-TS-style face (plan docs/plans/vent-skin-edp-ts.md). Plain shapes only; the traces are an
+// Mock-up builder for the EDP-TS face (plan docs/plans/vent-skin-edp-ts.md). Plain shapes only; the traces are an
 // ILLUSTRATIVE breath sequence drawn by this script (two volume-controlled breaths and two pressure-supported breaths,
 // SIMV(VCV)+PSV at the settings the bottom row shows), not the simulator's output and not traced from a photograph.
 /* exported face */

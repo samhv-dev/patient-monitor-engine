@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EDP-TS-style face: menu and adjuncts</title><link rel="stylesheet" href="../../../../apps/demo/src/app/app.css"><link rel="stylesheet" href="face.css"><script src="face.js"></script></head><body><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EDP-TS face: menu and adjuncts</title><link rel="stylesheet" href="../../../../apps/demo/src/app/app.css"><link rel="stylesheet" href="face.css"><script src="face.js"></script></head><body><script>
 face({ mode: "VCV", wave: "▭", note: "m4 — Menu pressed twice: Ventilatory adjuncts. Rows the model does not honour are present and visibly unavailable with the reason (anti-goal A1); Inspiratory pause is honoured from V1; Sighs from piece V7.",
   extra: [(s, H) => {
     const w0 = H("div", { class: "win", style: "left:300px;top:150px;width:250px;height:480px" });
@@ -7,7 +7,7 @@ face({ mode: "VCV", wave: "▭", note: "m4 — Menu pressed twice: Ventilatory a
       .forEach(([t, c, r, r2]) => w0.append(H("div", { class: "row " + c, style: "font-size:17px", html: t + (r || r2 ? `<span class="r">${r || r2}</span>` : "") })));
     const w = H("div", { class: "win", style: "left:560px;top:150px;width:326px;height:480px" });
     w.append(H("div", { class: "wt", html: "Ventilatory adjuncts" }));
-    [["Inspiratory pause", "hi", "", "Off"], ["Sighs", "na", "needs piece V7", "No ▸"], ["Tube compensation", "na", "not modelled (VQ5)", "No"], ["Volume compensation", "na", "no circuit modelled: always on", "Yes"], ["Humidifier", "na", "not modelled", "None"], ["Leak compensation", "na", "no leak modelled", "No"]]
+    [["Inspiratory pause", "hi", "", "Off"], ["Sighs", "na", "needs piece V7", "No ▸"], ["Tube compensation", "na", "version 2", "No"], ["Volume compensation", "na", "no circuit modelled: always on", "Yes"], ["Humidifier", "na", "not modelled", "None"], ["Leak compensation", "na", "no leak modelled", "No"]]
       .forEach(([t, c, why, r]) => w.append(H("div", { class: "row " + c, html: t + (r ? `<span class="r">${r}</span>` : "") + (why ? `<span class="why">${why}</span>` : "") })));
     w.append(H("div", { class: "foot", html: "Press [Knob] Select - [Esc] Exit" }));
     s.append(w0, w);
