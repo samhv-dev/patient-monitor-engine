@@ -16,7 +16,7 @@ const registryNodes = (): Set<string> => {
 describe('the clinical labels table', () => {
   it('has one row for every node the registry names, and no other', () => {
     const nodes = registryNodes();
-    expect(nodes.size).toBe(151);
+    expect(nodes.size).toBe(152);
     expect([...nodes].filter((p) => !nodeLabel(p))).toEqual([]);
     expect(NODE_LABELS.map((l) => l.path).filter((p) => !nodes.has(p))).toEqual([]);
     expect(new Set(NODE_LABELS.map((l) => l.path)).size).toBe(NODE_LABELS.length);
