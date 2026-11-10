@@ -170,7 +170,8 @@ describe('the phase editor (B3)', () => {
     e.all<HTMLButtonElement>('button').find((x) => x.textContent === 'Add to the list')!.click();
     await e.flush();
     expect(ph(await e.body(), 'treated').next).toEqual(['arrest', 'recovering']);
-    expect(e.all('.sb-checks li.warn')).toHaveLength(0);
+    // no warning on the course is left (B4's warning on the MH card's calcium press, /actions/11/give, is not the course's)
+    expect(e.all('.sb-checks li.warn').filter((x) => x.textContent?.includes('/phases/'))).toHaveLength(0);
   });
 
   it('the validator\'s refusals show at the rule node and the next row they name, and Show opens the phase', async () => {

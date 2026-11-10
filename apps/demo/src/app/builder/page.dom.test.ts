@@ -84,7 +84,7 @@ describe('the scenario builder page (B2)', () => {
     expect(e.q('.sb-save')?.textContent).toMatch(/^This browser · saved \d\d:\d\d:\d\d$/);
     // B3 edits the phases: they left the kept blocks for the outline's Course group, with their count
     expect(e.outline('Phases')?.textContent).toBe(`Phases${mh.phases.length}`);
-    expect([...e.p.el.querySelectorAll('.sb-kept li')].map((x) => x.textContent)).toEqual([`Script (card-set)${mh.script.length}`, `Actions${mh.actions.length}`, 'Outcomes—', 'Debrief hints—']);
+    expect([...e.p.el.querySelectorAll('.sb-kept li')].map((x) => x.textContent)).toEqual([`Script (card-set)${mh.script.length}`, 'Outcomes—', 'Debrief hints—']);
     expect(e.q('.sb-checks li')?.textContent).toMatch(/^The validator accepts this draft/);
     expect((e.q<HTMLButtonElement>('.sb-acts button'))?.disabled).toBe(false);
   });
