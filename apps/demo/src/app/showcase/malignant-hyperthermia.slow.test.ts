@@ -124,7 +124,17 @@ const BANDS = {
   // EtCO₂ 64 at the second dose (19:14), 50 a minute later, below 40 358 s after it (25:12), Recovering 23:34, the rule
   // met and ventilation back again at 27:12; at normal ventilation the EtCO₂ then rises to 44 (not past 45) and is below
   // 40 for good from 43:10. At the talk's end, 24:31, he is still hyperventilated: EtCO₂ 41, HR 69, MAP 67.
-  'S1 demo path (owner rc.4)': { refused: [0, 0], pulseLost: [0, 0], normoS: [806, 866], above45AfterNormoS: [0, 30], dose2S: [1124, 1184], etco2AtDose2: [61, 67], etco2Dose2Plus60: [47, 53], below40AfterDose2S: [328, 388], recovering2S: [1384, 1444], normo2S: [1602, 1662], etco2At2431: [38, 44], hrAt2431: [64, 74], mapAt2431: [62, 72], etco2MaxAfterNormo2: [41, 47], belowForGoodS: [2560, 2620] },
+  // Re-recorded (research/44 L2-26, brief 136, PR #401: the kidney's sourced set point 125 and Kf 12.5, the afferent tone
+  // from its feedback and the floor from the lower limit of autoregulation): belowForGoodS 2620 → 2622 (43:40 → 43:42),
+  // 2 s past the window's edge, re-centred on this build by the row's own rule (± 30 s): [2560, 2620] → [2592, 2652]. The
+  // path: under GA at MAP 65–80 the kidney now filters more (GFR 68 vs 62 at 44:00) but makes LESS urine (0.118 vs 0.125
+  // mL/min; the excreted fraction is calibrated at the higher resting GFR), all below the basal 1 mL/kg/h, so the renal
+  // seam's water, Na and Cl are 0 on both and only its distal K secretion (∝ √urine flow) differs: the patient retains a
+  // little more K, and the EtCO₂ comes under 40 for good 2 s later. Proven: with that K term set to 0 the old and the new
+  // kidney give the same times (belowForGoodS 2596 on both); pinning the GFR ÷ set point the drugs' renal clearance and
+  // the lactate clearance read changes nothing. Control: the three renal sources at main give 2620 again. Inside their
+  // bands: below40AfterDose2S 382 → 380, normo2S 1656 → 1653, mapAt2431 66.98 → 67.07. Not tuned.
+  'S1 demo path (owner rc.4)': { refused: [0, 0], pulseLost: [0, 0], normoS: [806, 866], above45AfterNormoS: [0, 30], dose2S: [1124, 1184], etco2AtDose2: [61, 67], etco2Dose2Plus60: [47, 53], below40AfterDose2S: [328, 388], recovering2S: [1384, 1444], normo2S: [1602, 1662], etco2At2431: [38, 44], hrAt2431: [64, 74], mapAt2431: [62, 72], etco2MaxAfterNormo2: [41, 47], belowForGoodS: [2592, 2652] },
   'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [72, 78], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.09, 7.15], etco2Plus2: [60, 66], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [33.54, 39.7], normoMin: [35.04, 42.82], hrAt60: [73, 83], mapAt60: [96, 106], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
 } as const;
 

@@ -53,6 +53,17 @@
 // mechanism-G sizes above (diRaw ≤ 0.647, MAP ≤ 4.02, awarenessRisk on 10 samples in propofolRocIncision); control:
 // with main's five mechanism-G sources (l2/neuro/drive, nmb, spont; l2/resp/driver, pipeline) at the merge base, all
 // six runs equal the branch's fixture exactly. No number fitted.
+// Re-recorded (research/44 L2-26, brief 136, PR #401 renal-sourced-setpoint-kf): the kidney's sourced set point (GFR
+// 125), sourced Kf (12.5), the resting afferent tone from the TGF equilibrium and the afferent floor derived from the
+// lower limit of autoregulation are the only cause. Control: with the three renal sources at main (Pulse's Kf 14.7, the
+// constant R_AFF, Pulse's floor) on the same tree the six runs equal the old fixture exactly (6 of 6). The chain at the
+// awake rig's 120 s: GFR 116.14 → 124.22 mL/min; urine −7 µL cumulative (2.514 → 2.507 mL); bvRel +1.4e-6; Hb −2e-5
+// g/dL; MAP 96.29605 → 96.29615. The kidney reaches the EEG rows only through its couplings, as Bowman 18 did (#348):
+// the renal seam's urine water and K, and the GFR ÷ set point that the drugs' renal clearance and lactate clearance
+// read (not separated path by path here). Sizes:
+// awarenessRisk unchanged everywhere; diRaw ≤ 0.004 (propofolRocIncision, 862 of 1200 samples; the others ≤ 0.001);
+// sr, cmro2Mult, mapSetShiftMmHg, obstruction, spo2, paco2 ≤ 0.001; the sampled MAP ≤ 1.40 mmHg and HR ≤ 0.20 bpm (the
+// 1 Hz sample's beat phase); awake moves only in map (11 of 120 samples, ≤ 0.034), hr and spo2 (≤ 0.001). No number fitted.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type EngineEvent, type MonitorEngine } from '../../src/index.ts';
