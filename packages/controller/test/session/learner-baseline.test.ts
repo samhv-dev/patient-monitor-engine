@@ -197,8 +197,11 @@ describe('L0: a lab sample drawn on the host comes back on a follower at the sam
 });
 
 // ---- the /2 format: a sample action counts by its taking, never by a real draw (L5 changes this) ----
+// L5 changed this pin on purpose (plan §6): an applyEvent lab is now a `sample` record with its panel, which a sample
+// action with `sample: { panel }` takes in its window; an action WITHOUT `sample` (this card's) still counts only by its
+// taking, so its grade is today's.
 describe('L0: a /2 sample action is recorded only by its taking', () => {
-  it('`scenario record` of a sample action records it; an applyEvent lab with no actionId records nothing', async () => {
+  it('`scenario record` of a sample action records it; an applyEvent lab with no actionId is a sample record the action without `sample` does not take', async () => {
     const host = manualHost({ seed: 42 });
     const driver = new ScenarioDriver({ target: host });
     const card = minimalV2();
@@ -210,11 +213,12 @@ describe('L0: a /2 sample action is recorded only by its taking', () => {
     const t = host.engine.now().simT;
     const draw = { id: 'l1', issuedBy: 'remote', ...LAB } as unknown as Command;
     expect((driver.host.dispatch(draw) as { accepted: boolean }).accepted).toBe(true); // the engine takes the sample
-    expect(driver.phaseRunner!.admin).toEqual([]); // ...and the record does not count it
+    // ...recorded as a sample since L5, not as a taking of the action
+    expect(driver.phaseRunner!.admin).toEqual([{ seq: 1, t, source: 'remote', kind: 'sample', settings: { panel: 'abg' }, result: { accepted: true } }]);
     expect(driver.phaseRunner!.takings.gas ?? 0).toBe(0);
     const rec = await driver.hook({ id: 'h1', issuedBy: 'instructor', type: 'scenario', action: 'record', target: 'gas' });
     expect(rec.accepted).toBe(true);
-    expect(driver.phaseRunner!.admin).toEqual([{ seq: 1, t, source: 'action', actionId: 'gas', kind: 'sample', result: { accepted: true } }]);
+    expect(driver.phaseRunner!.admin.at(-1)).toEqual({ seq: 2, t, source: 'action', actionId: 'gas', kind: 'sample', result: { accepted: true } });
     expect(driver.phaseRunner!.takings).toEqual({ gas: 1 });
   });
 });
