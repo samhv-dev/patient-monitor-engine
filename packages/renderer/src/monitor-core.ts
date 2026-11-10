@@ -268,13 +268,15 @@ export class MonitorCore {
   onProgress: (() => void) | null = null;
 
   /** The engine to `simT`, in slices of PROGRESS_TICKS with a progress report every PROGRESS_MS of wall time between
-   *  them. A slice boundary changes nothing in the run: the engine steps tick by tick either way. */
-  private runTo(simT: number): void {
+   *  them. A slice boundary changes nothing in the run: the engine steps tick by tick either way. `lookAhead` false: no
+   *  look-ahead after the last tick (advanceInSlices). */
+  private runTo(simT: number, lookAhead = true): void {
     const report = this.onProgress;
-    if (!report) return void this.engine.advanceTo(simT);
+    if (!report) return void this.engine.advanceTo(simT, lookAhead);
     let at = performance.now();
     while (this.engine.now().simT < simT - 1e-9) {
-      this.engine.advanceTo(Math.min(simT, this.engine.now().simT + PROGRESS_TICKS * 0.02));
+      const to = Math.min(simT, this.engine.now().simT + PROGRESS_TICKS * 0.02);
+      this.engine.advanceTo(to, lookAhead || to < simT - 1e-9);
       const now = performance.now();
       if (now - at >= PROGRESS_MS) {
         report();
@@ -305,12 +307,12 @@ export class MonitorCore {
    * The lanes restart on the next drawn frame (the jump exceeds a lane) from the engine's buffers, with no mark at the jump:
    * they look like a monitor that simply ran on.
    */
-  advance(ticks: number, last: boolean): { tick: number; simT: number } {
+  advance(ticks: number, last: boolean, lookAhead = true): { tick: number; simT: number } {
     if (this.ffWasPaused === null) {
       this.ffWasPaused = this.clock.paused;
       this.clock.pause();
     }
-    if (this.clock.step(ticks) > 0) this.runTo(this.clock.simT);
+    if (this.clock.step(ticks) > 0) this.runTo(this.clock.simT, lookAhead);
     this.overlays.due(this.clock.renderT); // marks from the skipped span are not drawn
     if (last) {
       if (!this.ffWasPaused) this.clock.resume();
@@ -322,6 +324,51 @@ export class MonitorCore {
     this.batch = [];
     this.lastPost = epochMs;
     return { tick: this.clock.tick, simT: this.clock.simT };
+  }
+
+  // advanceInSlices: the wall time per tick of the last slice (0: none measured yet); when the page last gave the thread
+  // back and how long its turn took; whether the next slice waits for a drawn frame first
+  private ffMsPerTick = 0;
+  private ffResumed = 0;
+  private ffTurnMs = 0;
+  private ffFrameNext = true;
+
+  /**
+   * N47 (brief 126): `advance` on the page's main thread, which must not hold the page for a whole span. The ticks run in
+   * slices, and the page gets its turn (`yieldTask`, a macrotask: it draws, runs its timers and answers input) whenever
+   * the engine has used its budget since the last turn, within a step or between steps. The budget is the main thread's
+   * own frame rule (frameBudgetMs, brief 105): as much wall time as the page's last turn took, 50–250 ms, so the engine
+   * keeps half of the thread or more while the page's turns take up to 250 ms, and the page gets a turn at least every
+   * 250 ms of work. A first build that gave the
+   * page a turn every 16 ms left the engine so little of the thread at background QoS (a turn there is a frame of this
+   * page, ≈ 150 ms) that a 5-min span took 150 s instead of 12. The first slice after an empty step (a span's start or
+   * end) waits for a drawn frame (`yieldTask(true)`): the fast-forward panel shows before the engine runs. A slice is as
+   * many ticks as fit in what is left of the budget at the last slice's measured cost, at least one. A test may fix
+   * `budgetMs`. The ticks are the ticks of one `advance(ticks, last)`, in order; only the final slice is `last`, and only
+   * it runs the engine's look-ahead (which posts the QRS tones from where a run ends): the step is one run of the engine
+   * cut in pieces, operation for operation, so its state and events are those of one call (fast-forward.test.ts proves
+   * it bit for bit).
+   */
+  async advanceInSlices(ticks: number, last: boolean, yieldTask: (frame: boolean) => Promise<void>, budgetMs?: number, now = () => performance.now()): Promise<{ tick: number; simT: number }> {
+    let left = ticks;
+    for (;;) {
+      const budget = budgetMs ?? frameBudgetMs(this.ffTurnMs);
+      if (this.ffFrameNext || now() - this.ffResumed >= budget) {
+        const y0 = now();
+        await yieldTask(this.ffFrameNext && left > 0);
+        this.ffResumed = now();
+        this.ffTurnMs = this.ffResumed - y0;
+        if (left > 0) this.ffFrameNext = false;
+      }
+      const t0 = now();
+      const room = budget - (t0 - this.ffResumed);
+      const n = left === 0 || this.ffMsPerTick === 0 ? left : Math.min(left, Math.max(1, Math.floor(room / this.ffMsPerTick)));
+      const r = this.advance(n, last && n === left, n === left);
+      if (n > 0) this.ffMsPerTick = (now() - t0) / n;
+      else this.ffFrameNext = true; // an empty step starts or ends a span: the page draws it before the next slice
+      left -= n;
+      if (left === 0) return r;
+    }
   }
 
   /** One animation frame. `epochMs` = performance.timeOrigin + frame timestamp (ms). */

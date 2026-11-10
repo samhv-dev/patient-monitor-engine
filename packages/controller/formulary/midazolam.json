@@ -13,7 +13,14 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "Mixed with 500 mL of dextrose 4 % in NaCl 0.18 %, dextrose 5 % or NaCl 0.9 %, at room temperature (no figure given).",
+          "src": "emc-10948"
+        }
+      ]
     }
   ],
   "diluents": [
@@ -35,7 +42,16 @@
     {
       "id": "ringerLactate",
       "listed": false,
-      "src": "emc-10948"
+      "src": "emc-10948",
+      "compat": {
+        "verdict": "incompatible",
+        "statement": "Trissel: in lactated Ringer's, 10 % calculated loss in 2, 6 and 10 h at 0.1, 0.5 and 1 g/L, ambient (ref 1868); visually clear 4 h (ref 355). Stabilis has none.",
+        "src": "trissel-midazolam-p1439",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-midazolam-p1439"
+        }
+      }
     },
     {
       "id": "dextrose5Saline",
@@ -72,7 +88,13 @@
   ],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 0.036,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-350"
+      },
       "container": "bag-pvc",
       "tempC": 21,
       "points": [
@@ -89,7 +111,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 1,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-399"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -106,7 +134,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 1,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-185"
+      },
       "container": "bag-pvc",
       "tempC": 24,
       "points": [
@@ -123,7 +157,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 1,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-3222"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -145,7 +185,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 0.5,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-231"
+      },
       "container": "bag-polyolefin",
       "tempC": 24,
       "points": [
@@ -162,7 +208,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 0.5,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-231"
+      },
       "container": "bag-polyolefin",
       "tempC": 24,
       "points": [
@@ -179,7 +231,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 1,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-3222"
+      },
       "container": "bag-polyolefin",
       "tempC": 25,
       "points": [
@@ -201,7 +259,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 1,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-4201"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -218,7 +282,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 3,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-401"
+      },
       "container": "syringe-pp",
       "tempC": 20,
       "points": [
@@ -235,7 +305,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 0.4,
+        "unit": "mg/mL",
+        "src": "stabilis-midazolam-4303"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [

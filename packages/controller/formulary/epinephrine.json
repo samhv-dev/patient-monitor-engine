@@ -13,7 +13,19 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 4,
+          "condition": "Diluted in dextrose 5 % or dextrose 5 % with NaCl, at room temperature (no figure given).",
+          "src": "dailymed-adrenalin-par"
+        },
+        {
+          "h": 24,
+          "condition": "Diluted in dextrose 5 % or dextrose 5 % with NaCl, refrigerated (no figure given).",
+          "src": "dailymed-adrenalin-par"
+        }
+      ]
     },
     {
       "id": "adrenaline-100mcg-ml-pfs",
@@ -103,7 +115,13 @@
   ],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 16,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-4026"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -120,7 +138,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 64,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-4026"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -137,7 +161,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 100,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-192"
+      },
       "container": "bag-pvc",
       "tempC": 23,
       "points": [
@@ -154,7 +184,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "water",
+      "concentration": {
+        "amount": 100,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-659"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -171,7 +207,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "water",
+      "concentration": {
+        "amount": 700,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-659"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -188,7 +230,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 10,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-4778"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -205,7 +253,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 10,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-4393"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -222,7 +276,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 20,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-3712"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [
@@ -239,7 +299,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 300,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-3712"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [
@@ -256,7 +322,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 900,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-3712"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [
@@ -273,7 +345,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 20,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-3712"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [
@@ -290,7 +368,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 300,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-3712"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [
@@ -307,7 +391,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 900,
+        "unit": "µg/mL",
+        "src": "stabilis-epinephrine-3712"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [

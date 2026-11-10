@@ -162,6 +162,24 @@ if (follow && shows === 'pick') {
     toast(`The simulation is ${s.toFixed(1)} s behind real time: the computer is busy. It catches up by itself.`);
     link.note(`The engine fell behind real time by ${s.toFixed(1)} s: the computer is busy`, 'system');
   });
+  // Brief 126 (N48): a worker slow to load is waited for, and said; a worker that failed leaves the engine on the page's
+  // main thread, and that is said too — the monitor never changes how it runs in silence
+  shell.monitorHost.addEventListener('pme-monitor-worker-late', (e) => {
+    const ms = (e as CustomEvent<{ waitedMs: number }>).detail.waitedMs;
+    toast('The monitor is still starting: the computer is busy.');
+    link.note(`The monitor was slow to start: its engine worker was not ready after ${(ms / 1000).toFixed(1)} s`, 'system');
+  });
+  shell.monitorHost.addEventListener('pme-monitor-worker-ready', (e) => {
+    const ms = (e as CustomEvent<{ readyMs: number }>).detail.readyMs;
+    toast('The monitor has started');
+    link.note(`The monitor started: its engine worker was ready after ${(ms / 1000).toFixed(1)} s`, 'system');
+  });
+  shell.monitorHost.addEventListener('pme-monitor-main-thread', (e) => {
+    const reason = (e as CustomEvent<{ reason: string }>).detail.reason;
+    console.error('monitor on the main thread:', reason);
+    toast('The monitor runs without its worker: on a busy computer it is slower');
+    link.note(`The monitor runs on the page's main thread: its engine worker failed (${reason})`, 'system');
+  });
   shell.monitorHost.addEventListener('pme-monitor-caught-up', (e) => {
     link.note(`The engine caught up with real time (it was up to ${(e as CustomEvent<{ worstS: number }>).detail.worstS.toFixed(1)} s behind)`, 'system');
   });

@@ -151,3 +151,68 @@ describe('the beat tone above ×4 (owner: at ×8 it would beep ≈ 10 times a se
     for (const kind of ['alarmBurst', 'charge', 'chargeReady', 'shock', 'nibpDone']) expect(beatToneAt(kind, 8)).toBe(true);
   });
 });
+
+// Brief 126 (N47): on the main thread a step runs in slices with the page's event loop between them
+// (MonitorCore.advanceInSlices). The span must be the span: the same ticks, the same events, the same state, bit for bit,
+// as one `advance` per step on the main thread before brief 126 and as the worker (which runs each step in
+// PROGRESS_TICKS slices of the engine, `onProgress` set).
+describe('MonitorCore.advanceInSlices (N47): a sliced step is the same step', () => {
+  // every number by its exact text (a double's shortest round-trip form), -0 and NaN included; typed arrays by value
+  const bits = (v: unknown) =>
+    JSON.stringify(v, (_k, x: unknown) =>
+      typeof x === 'number' ? (Object.is(x, -0) ? '-0' : `n${String(x)}`) : ArrayBuffer.isView(x) ? { [x.constructor.name]: Array.from(x as unknown as ArrayLike<number>) } : x,
+    );
+  const SPAN = 6000; // 2 min of sim in the host's 0.5-s steps (FF_STEP_TICKS)
+  const STEP = 25;
+  type Run = (c: MonitorCore, n: number, last: boolean) => Promise<unknown> | unknown;
+  async function span(run: Run, worker = false, sizes: number[] = []) {
+    const posts: Array<{ anchor: ClockAnchor; events: EngineEvent[] }> = [];
+    const c = make(posts);
+    if (worker) c.onProgress = () => {};
+    const adv = c.advance.bind(c);
+    c.advance = (n, last, look) => (sizes.push(n), adv(n, last, look)); // every call the engine is run by
+    frames(c, 0, 1000);
+    // VF from the start of the span, so the span carries alarms, rhythm and measurement events
+    c.command({ id: 'vf', issuedBy: 'test', type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' } as never);
+    posts.length = 0;
+    const ends: unknown[] = [await run(c, 0, false)];
+    for (let t = 0; t < SPAN; t += STEP) ends.push(await run(c, Math.min(STEP, SPAN - t), t + STEP >= SPAN));
+    return { ends, events: bits(posts.flatMap((p) => p.events)), state: bits(c.engine.snapshot()), n: posts.flatMap((p) => p.events).length };
+  }
+  const noYield = () => Promise.resolve();
+  it('one tick a slice, ragged slices, and the worker: identical ends, events and final state', async () => {
+    const before = await span((c, n, last) => c.advance(n, last)); // main before brief 126: one call per step
+    const worker = await span((c, n, last) => c.advance(n, last), true);
+    const one: number[] = [];
+    const oneTick = await span((c, n, last) => c.advanceInSlices(n, last, noYield, 0), false, one); // budget 0: one tick a slice
+    // a fake clock that reads the ticks run at an uneven cost, against a 6-ms budget: slices of many lengths
+    const sizes: number[] = [];
+    const ragged = await span((c, n, last) => c.advanceInSlices(n, last, noYield, 6, () => { const t = c.engine.now().tick; return t * 0.5 + ((t * 7) % 13) * 0.45; }), false, sizes);
+    expect(new Set(one.filter((n) => n > 0).slice(1))).toEqual(new Set([1])); // after the first, uncalibrated step
+    expect(sizes.filter((n) => n > 0 && n < STEP).length).toBeGreaterThan(100); // the steps really were cut
+    expect(before.n).toBeGreaterThan(100);
+    expect(before.events).toContain('alarm'); // the span is not quiet
+    for (const r of [worker, oneTick, ragged]) {
+      expect(r.ends).toEqual(before.ends);
+      expect(r.events === before.events).toBe(true);
+      expect(r.state === before.state).toBe(true);
+    }
+  });
+
+  it('awaits the yield before every slice, and only the final slice gives the clock back', async () => {
+    const c = make();
+    frames(c, 0, 500);
+    let yields = 0;
+    const lasts: boolean[] = [];
+    const adv = c.advance.bind(c);
+    c.advance = (n, last) => (lasts.push(last), adv(n, last));
+    await c.advanceInSlices(0, false, async () => void yields++, 0);
+    await c.advanceInSlices(5, false, async () => void yields++, 0); // calibrates: 5 one-tick slices from here on
+    lasts.length = 0;
+    yields = 0;
+    await c.advanceInSlices(5, true, async () => void yields++, 0);
+    expect(yields).toBe(5);
+    expect(lasts).toEqual([false, false, false, false, true]);
+    expect(c.clock.paused).toBe(false);
+  });
+});

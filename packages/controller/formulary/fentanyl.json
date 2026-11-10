@@ -13,7 +13,21 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 48,
+          "tempC": 25,
+          "condition": "Diluted product: chemical and physical in-use stability at 25 °C.",
+          "src": "emc-6617"
+        },
+        {
+          "h": 48,
+          "tempC": 8,
+          "condition": "Diluted product: chemical and physical in-use stability at 2-8 °C.",
+          "src": "emc-6617"
+        }
+      ]
     }
   ],
   "diluents": [
@@ -62,7 +76,13 @@
   ],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 10,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4228"
+      },
       "container": "bag-pvc",
       "tempC": 23,
       "points": [
@@ -79,7 +99,36 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 50,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4228"
+      },
+      "container": "bag-pvc",
+      "tempC": 23,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "10 and 50 µg/mL in 0.9 % NaCl, PVC, 23 °C: stable 90 days. Stabilis level B. Trissel nearest: 20 mg/L PVC, 30 d.",
+      "src": "stabilis-fentanyl-4228",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "kind": "stable",
+      "diluent": "saline",
+      "concentration": {
+        "amount": 20,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-222"
+      },
       "container": "bag-pvc",
       "tempC": 23,
       "points": [
@@ -96,7 +145,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 4.55,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-223"
+      },
       "container": "bag-pvc",
       "tempC": 22,
       "points": [
@@ -113,7 +168,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 4.55,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-223"
+      },
       "container": "bag-pvc",
       "tempC": 22,
       "points": [
@@ -130,7 +191,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 10,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-3916"
+      },
       "container": "bag-polyolefin",
       "tempC": 22,
       "points": [
@@ -147,7 +214,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 10,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4228"
+      },
       "container": "bag-polyolefin",
       "tempC": 23,
       "points": [
@@ -164,7 +237,36 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 50,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4228"
+      },
+      "container": "bag-polyolefin",
+      "tempC": 23,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "10 and 50 µg/mL in 0.9 % NaCl, polyolefin, 23 °C: stable 90 days. Stabilis level B.",
+      "src": "stabilis-fentanyl-4228",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "kind": "stable",
+      "diluent": "saline",
+      "concentration": {
+        "amount": 10,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4303"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -181,7 +283,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 13,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-929"
+      },
       "container": "syringe-pp",
       "tempC": 22,
       "points": [
@@ -198,7 +306,36 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 34,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-929"
+      },
+      "container": "syringe-pp",
+      "tempC": 22,
+      "points": [
+        [
+          168,
+          0.9
+        ]
+      ],
+      "statement": "13 and 34 µg/mL in 0.9 % NaCl, PP syringe, 22 °C: stable 7 days. Stabilis level B. Trissel nearest: 12.5 and 33.3 µg/mL, no loss 7 d.",
+      "src": "stabilis-fentanyl-929",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p903"
+      }
+    },
+    {
+      "kind": "stable",
+      "diluent": "saline",
+      "concentration": {
+        "amount": 20,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4223"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [
@@ -215,7 +352,36 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 40,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4223"
+      },
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          2160,
+          0.95
+        ]
+      ],
+      "statement": "20 and 40 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days. Stabilis level A. Trissel nearest: 33.3 µg/mL, no loss 7 d.",
+      "src": "stabilis-fentanyl-4223",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p903"
+      }
+    },
+    {
+      "kind": "stable",
+      "diluent": "saline",
+      "concentration": {
+        "amount": 5,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-2334"
+      },
       "container": "syringe-pp",
       "tempC": 27,
       "points": [
@@ -232,7 +398,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 50,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4223"
+      },
       "container": "syringe-pp",
       "tempC": 23,
       "points": [
@@ -249,7 +421,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 10,
+        "unit": "µg/mL",
+        "src": "stabilis-fentanyl-4303"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
