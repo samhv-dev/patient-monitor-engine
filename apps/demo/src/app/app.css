@@ -934,3 +934,40 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .lr-bar .status-pill:not([data-ok='true']) { border-color: #ffb000; }
 .lr-bar .btn { flex: 1 1 0; min-height: 44px; }
 .lr-bar .follower-note { flex: 1 1 100%; margin: 0; text-align: center; font-size: var(--t-13); color: var(--text-muted); }
+
+/* L7 (plan learner-action-remote.md): the Drugs tab: the bench over the tray, one column for a phone held upright with
+   one thumb. Every control a 44 px target [ENG: ui; WCAG 2.1 SC 2.5.5 and the app's --target], full width where a thumb
+   reaches across; long product names wrap rather than clip. The app's own tokens only. */
+.lr-drugs { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-3) var(--s-4); }
+.lr-h2 { margin: 0 0 var(--s-2); font-size: var(--t-18); color: var(--text-strong); }
+.lr-step, .lr-fill, .lr-diluent, .lr-result, .lr-give { display: grid; gap: var(--s-2); }
+.lr-step[hidden], .lr-give[hidden], .lr-finding[hidden] { display: none; }
+.lr-find > label, .lr-label, .lr-sub { font-size: var(--t-13); color: var(--text-muted); margin: 0; }
+.lr-results { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); max-height: 40dvh; overflow-y: auto; }
+.lr-results .btn, .lr-product, .lr-actions .btn { width: 100%; min-height: 44px; }
+.lr-results .btn { justify-content: flex-start; }
+.lr-product { flex-direction: column; align-items: flex-start; gap: 2px; padding: var(--s-2) var(--s-3); white-space: normal; text-align: left; }
+.lr-pname { color: var(--text-strong); font-weight: 600; }
+.lr-pdetail { color: var(--text-muted); font-size: var(--t-13); font-weight: 400; }
+.lr-drawn { display: grid; gap: var(--s-2); }
+.lr-drawn-row { display: grid; gap: var(--s-1); padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-card); }
+.lr-drawn-row p { margin: 0; }
+.lr-drawn-row .hint { margin: 0; }
+.lr-drugs .stepper { width: 100%; }
+.lr-drugs .btn.small { min-height: 44px; min-width: 44px; }
+.lr-actions { display: grid; gap: var(--s-2); }
+.lr-holds, .lr-conc { margin: 0; font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: var(--t-18); color: var(--text-strong); }
+.lr-holds:empty, .lr-conc:empty, .lr-said:empty, .lr-cannot:empty, .lr-time:empty, .lr-state:empty, .lr-ontop:empty, .lr-tray-cleared:empty { display: none; }
+.lr-time, .lr-state, .lr-said, .lr-cannot { margin: 0; }
+.lr-cannot, .lr-said { color: var(--warn); font-weight: 600; }
+.lr-tray-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.lr-item { display: grid; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-card); background: var(--bezel-2); }
+.lr-item-title { margin: 0; font-weight: 600; color: var(--text-strong); }
+.lr-conc-source { margin: 0; }
+.lr-state[data-state='ready'] { color: var(--ok, var(--text-strong)); font-weight: 600; }
+.lr-state[data-state='preparing'] { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.lr-finding { padding: var(--s-2) var(--s-3); border-left: 4px solid var(--danger); border-radius: var(--r-control); background: var(--bezel-3); }
+.lr-finding p { margin: 0 0 var(--s-1); }
+.lr-finding-src { color: var(--text-muted); }
+.lr-drugs .seg { display: flex; }
+.lr-drugs .seg button { flex: 1 1 0; }

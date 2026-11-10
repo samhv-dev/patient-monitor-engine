@@ -136,6 +136,13 @@ renderer, audio and skin contracts.
 | `SAVE_MS` | `1000` | ms | [ENG: ui; measured 2026-10-25] | How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed. Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG: ui; measured 2026-10-25]. |
 | `MAX_AGE_MS` | `6 * 3600000` | ms | [ENG: ui] | An older position is another day's run, not this one's [ENG: ui]. |
 
+### [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `TRAY_OVER_MAX_S` | `600` | s | [ENG: ui; ten minutes, the slowest push the library's bolus rows describe; longer is an infusion, L8] | The longest "over" the tray offers, s [ENG: ui; ten minutes, the slowest push the library's bolus rows describe; longer is an infusion, L8]. |
+| `TRAY_REDRAW_MS` | `250` | ms | [ENG: ui; four times a second keeps an m:ss countdown on the right second] | How often the countdowns redraw, ms [ENG: ui; four times a second keeps an m:ss countdown on the right second]. |
+
 ### [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -499,6 +506,11 @@ renderer, audio and skin contracts.
 | `noteRecent` | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | A card was loaded: |
 | `recognisedNote` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The note a press sends on `doc` (null: |
 | `recognisedButton` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The button (`cls` its classes where it sits): |
+| `sourceText` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A source as the phone names it (the finding after the notice, a product's label). |
+| `productWords` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A product as the bench names it: |
+| `benchView` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | The bench: the search, then the product and its amount, the diluent and volume, the container, the preview, "Put on the tray". |
+| `drugsMenu` | [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | The Drugs tab: |
+| `trayView` | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | The tray: its preparations, each with its state and Give, and "Deliver the tray". |
 | `rhythmGroups` | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | Groups with every library id placed once ("Other" collects ids the map does not name). |
 | `startCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | The code a starting instructor's page runs under, or null when it has none and draws a new one. |
 | `keepsRoomCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Whether the code this page runs becomes the room's, which it does when started without `?session=` and not after "Start a new session". |
@@ -795,6 +807,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | The Scenarios page's "Recent" (E125): the last three library cards loaded in this browser, newest first. |
 | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The instructor's "Recognised" press (Debrief 2, D5; plan Decision 3, the owner's ruling of 5 November, DQ4): the /1 fallback for the moment the team named the problem. |
 | [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with w |
+| [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | Plan learner-action-remote.md L7 (§4 D2, D3; LQ3, LQ7, LQ11): the preparation bench on the learner remote's Drugs tab. |
+| [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | Plan learner-action-remote.md L7: the learner remote's Drugs tab: the preparation bench (bench.ts) over the tray (tray.ts). |
+| [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | Plan learner-action-remote.md L7 (§4 D2, D3, D7; LQ3, LQ7): the tray on the learner remote's Drugs tab. |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Room plan R1 (docs/plans/room-and-instruments.md §7; Q3 ruled 5 November = A): the room code lives until the instructor asks for a new one, through reloads, restarts and the next day. |
 | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The remembered layout of the room (plan room-and-instruments.md R7, §4 D8; Q10 ruled 5 November = A: device names are kept across days, until "Forget the room"). |
@@ -1012,6 +1027,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/learner-remote.e2e.ts`](../../apps/demo/e2e/learner-remote.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mechanism-tree.e2e.ts`](../../apps/demo/e2e/mechanism-tree.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mobile-learner.e2e.ts`](../../apps/demo/e2e/mobile-learner.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-destroy-refuses.e2e.ts`](../../apps/demo/e2e/monitor-destroy-refuses.e2e.ts) | 0 | 0 |
@@ -1121,6 +1137,8 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/remote/bench.dom.test.ts`](../../apps/demo/src/app/remote/bench.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/remote/tray.dom.test.ts`](../../apps/demo/src/app/remote/tray.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/router.test.ts`](../../apps/demo/src/app/router.test.ts) | 0 | 0 |

@@ -205,8 +205,8 @@ export function stagedOf(h: HostPrep): StagedPrep {
   return { ...rest, by: h.by, t: h.t };
 }
 
-/** What a `prep` event says happened to the preparation (§4 D7). */
-export type PrepNewsKind = 'made' | 'delivered' | 'infusing' | 'discarded';
+/** What a `prep` event says happened to the preparation (§4 D7); `notice` (L7, LQ3): the instructor showed its finding. */
+export type PrepNewsKind = 'made' | 'delivered' | 'infusing' | 'discarded' | 'notice';
 /** The `prep` event's body to the remote that staged it (`to` its peer id): L7's tray reads this. */
 export interface LearnerPrepNews { news: PrepNewsKind; prep: LearnerPrepView }
 /** The `prep` event's body to the host's own screens and granted instructors (`to` the host's peer id): L9's card reads this. */
@@ -219,8 +219,14 @@ export interface LearnerPrepView {
   diluent: Preparation['diluent'];
   container: Preparation['container'];
   ready: { atS: number; gap: 'LQ7' | null };
+  /**
+   * LQ3 (§4 D7): present only once the instructor has shown the incompatibility notice: when, and the preparation's
+   * findings with their sources, which the remote then shows inside the preparation. Absent until then: the remote
+   * knows nothing of a finding before the instructor decides.
+   */
+  notice?: { shownAt: number; findings: Finding[] };
 }
-export interface InstructorPrepView extends Omit<LearnerPrepView, 'ready'> {
+export interface InstructorPrepView extends Omit<LearnerPrepView, 'ready' | 'notice'> {
   by: string;
   t: number;
   findings: Finding[];
@@ -228,14 +234,16 @@ export interface InstructorPrepView extends Omit<LearnerPrepView, 'ready'> {
   ready: Preparation['ready'];
 }
 
-/** What the remote that staged it is told (§4 D7): never the findings, which the instructor shows (LQ3, L9). */
+/** What the remote that staged it is told (§4 D7): the findings only once the instructor has shown the notice (LQ3). */
 export function learnerView(h: HostPrep): LearnerPrepView {
   return {
     id: h.id, actives: h.prep.actives, volumeMl: h.prep.volumeMl, leftMl: h.leftMl, diluent: h.prep.diluent, container: h.prep.container,
     ready: { atS: h.prep.ready.atS, gap: h.prep.ready.gap },
+    ...(h.notice ? { notice: { shownAt: h.notice.shownAt, findings: h.prep.findings } } : {}),
   };
 }
 /** What the instructor's screens are told (§4 D7): the whole preparation, its findings and the device that staged it. */
 export function instructorView(h: HostPrep): InstructorPrepView {
-  return { ...learnerView(h), by: h.by, t: h.t, findings: h.prep.findings, notice: h.notice, ready: h.prep.ready };
+  const { notice: _n, ...view } = learnerView(h);
+  return { ...view, by: h.by, t: h.t, findings: h.prep.findings, notice: h.notice, ready: h.prep.ready };
 }

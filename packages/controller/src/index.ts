@@ -59,3 +59,6 @@ export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITI
 export type * from './formulary/types.ts';
 // Plan learner-action-remote.md L5: the bench's Finding, which the /2 administration record's `prep` carries
 export type { Finding, FindingKind } from './formulary/findings.ts';
+// Plan learner-action-remote.md L7: the bench's preview on the learner's phone runs the host's own pure step (the host's
+// answer, not this preview, is what the phone then shows as the concentration)
+export { prepare, type Active, type Preparation, type PrepareResult } from './formulary/prepare.ts';
