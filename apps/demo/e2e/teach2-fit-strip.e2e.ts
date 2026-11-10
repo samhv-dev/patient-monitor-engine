@@ -14,7 +14,10 @@ const srv = serveApp();
 // Plan F11 (F6's acceptance on the /2 card), the second course; the path and the phase times are in mhV2Fit
 // (teach2-fit-support.ts).
 for (const [target, presses, tag] of [['recrudescence', 8, 'recrudescence'], ['treated', 9, 'treated-2'], ['recovering', 9, 'recovering-2']] as const) {
-  test(`Instructor v2 fits 1440 × 900 on the /2 MH card at ${tag}: no scroll, every open action a row, no row disabled`, async ({ page, browserName }, info) => {
+  // @known-flaky, class crash (outside our code; brief 118): a first attempt lost its page ("Target page, context or browser
+  // has been closed") in 17 of the 99 ci runs of 9 Nov with gating WebKit jobs (3 of the 25 carrying PR #369), every first attempt. Linux WebKit's web process, as pass 3's crash rows; no Chromium sighting. Local runs were
+  // not made: the crash is CI's Linux WebKit and macOS has never reproduced one (pass 3); the quarantine keeps measuring it.
+  test(`Instructor v2 fits 1440 × 900 on the /2 MH card at ${tag}: no scroll, every open action a row, no row disabled`, { tag: '@known-flaky' }, async ({ page, browserName }, info) => {
     test.setTimeout(360_000);
     await mhV2Fit(page, srv.base, browserName, info, target, presses, tag);
   });

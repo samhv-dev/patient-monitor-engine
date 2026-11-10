@@ -1,0 +1,94 @@
+{
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Stabilis has only an undiluted row, so has.stabilis is false and statements come from Trissel.",
+  "drugId": "rocuronium",
+  "products": [
+    {
+      "id": "esmeron-10mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 10,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-1345"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "emc-1345",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Trissel: rocuronium compatible and stable 24 h in 0.9 % sodium chloride (no container or temperature given). Stabilis has no diluted-solution row.",
+        "src": "trissel-rocuronium-p1832",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-rocuronium-p1832"
+        }
+      }
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-1345",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Trissel: rocuronium compatible and stable 24 h in 5 % dextrose (no container or temperature given). Stabilis has no diluted-solution row.",
+        "src": "trissel-rocuronium-p1832",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-rocuronium-p1832"
+        }
+      }
+    },
+    {
+      "id": "water",
+      "listed": true,
+      "src": "emc-1345"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": true,
+      "src": "emc-1345",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Trissel: rocuronium compatible and stable 24 h in lactated Ringer's (no container or temperature given). Stabilis has no diluted-solution row.",
+        "src": "trissel-rocuronium-p1832",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-rocuronium-p1832"
+        }
+      }
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "emc-1345",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Trissel: rocuronium compatible and stable 24 h in 5 % dextrose in 0.9 % sodium chloride (no container or temperature given). Stabilis has no diluted-solution row.",
+        "src": "trissel-rocuronium-p1832",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-rocuronium-p1832"
+        }
+      }
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-1345"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": true,
+    "monograph": true
+  }
+}
