@@ -41,11 +41,12 @@ test('on the main thread a 5-minute fast-forward shows its panel and the page ke
   await ffV2(page, 5);
   const veil = page.locator('.ff-veil.on');
   await expect(veil, 'the panel shows').toBeVisible({ timeout: 5000 });
+  // the page answers while the span runs (before brief 126 this read came back only after the span had ended) …
   const a = await state();
-  await page.waitForTimeout(1000);
-  const b = await state();
-  // while the span runs the page draws (before brief 126: no frame until it ended)
-  if (a.running && b.running) expect(b.frames - a.frames, JSON.stringify({ a, b })).toBeGreaterThan(2);
+  expect(a.running, 'the page answered during the span').toBe(true);
+  // … and draws: a new frame while it runs (before: none from the click to the span's end). CI's Linux WebKit drew one
+  // or two a second here (PR #389's run 42778057798), so no rate is asserted, only that frames go on
+  await expect.poll(async () => { const s = await state(); return s.running && s.frames > a.frames; }, { timeout: 5000 }).toBe(true);
   await expect(veil).toHaveCount(0, { timeout: 150_000 });
   const ff = await page.evaluate(() => (window as unknown as Win).__pmeApp.link.ctl.lastFastForward);
   expect(ff).not.toBeNull();
