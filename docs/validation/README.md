@@ -53,6 +53,9 @@ N-080…N-084 and the report's dataset table.
 
 `.github/workflows/validation.yml` runs weekly, on manual dispatch, and on a pull request carrying the
 `run-validation` label — never on every push (it is long). The unit tests of the metrics run in the normal CI.
+A pull request that changes the physiology engine (`packages/engine-core/src/`, test files and documents aside)
+must carry the label: the `validation label` check (`.github/workflows/validation-label.yml`) fails without it and
+says so, and re-runs when the label is added (CONTRIBUTING.md, rule 9). There is no opt-out label.
 
 ## Human reviews
 

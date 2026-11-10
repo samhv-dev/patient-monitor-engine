@@ -326,7 +326,10 @@
 @font-face { font-family: 'Vazirmatn'; src: url('../fonts/Vazirmatn-Bold.ttf') format('truetype'); font-weight: 600 900; font-style: normal; font-display: block; }
 .debrief [lang='fa'] { font-family: 'Vazirmatn', var(--font-ui); line-height: 1.7; }
 .debrief [lang='fa'] bdi.en { font-style: italic; }
-.debrief [lang='fa'] .db-table th, .debrief [lang='fa'] .db-table td { text-align: right; padding: 3px 0 3px 8px; }
+/* N13: the mirror is horizontal only. This rule once set all four paddings (3px 0 3px 8px) and, more specific than the
+   print's compact rows (0.3 mm, or 0 in .db-long), gave every Persian printed table row 3 px above and below: 12.9 mm on
+   the MH handout's twelve rows. */
+.debrief [lang='fa'] .db-table th, .debrief [lang='fa'] .db-table td { text-align: right; padding-right: 0; padding-left: 8px; }
 .debrief [lang='fa'] .db-obj, .debrief [lang='fa'] ul, .debrief [lang='fa'] ol { padding-left: 0; padding-right: 1.4em; }
 .debrief [lang='fa'] .db-chip { margin-right: 0; margin-left: var(--s-1); }
 .debrief [lang='fa'] .db-tile.met { border-left-width: 1px; border-right: 3px solid var(--text-strong); }
@@ -339,6 +342,21 @@
   .debrief :is(.db-draft, .db-fa-missing) { display: none !important; }
   .debrief [lang='fa'], .debrief [lang='fa'] :is(h1, h2, h3, p, li, td, th, dt, dd, div, span) { font-family: 'Vazirmatn', 'Inter Print', 'Print Symbols', sans-serif; }
   .debrief [lang='fa'] { line-height: 1.55; }
+  /* N13: the Persian handout always prints compact (views/debrief.ts, .db-long). Its text keeps this leading: 1.55 is
+     Vazirmatn's own ascent + descent (1.5625 em), so a wrapped line set tighter would overlap the one above, and it makes
+     every Persian text line ≈ 15 % taller than Inter's at 1.35, 12.7 mm past the page on the MH card at the full sizes.
+     The take-home lines wrap, so they keep it in the compact layout too. A table row is one line between two rules, so
+     its line box need only hold the letters' ink: Vazirmatn's ascent and descent are 1.025 and 0.537 em, and its
+     deepest letter (ي) reaches 0.449 em below the baseline, its tallest (آ) 0.878 em above (canvas measureText), so a
+     line-height of 1.5625 − 2 × (0.537 − 0.449) = 1.386, rounded up to 1.39, keeps every letter inside the row. At the
+     compact 1.1 (and at 1.25) the descenders cross the row rules. */
+  .debrief [lang='fa'] .db-long .db-take { line-height: 1.55; }
+  .debrief [lang='fa'] .db-long :is(.db-hmoments td, .db-hmoments th) { line-height: 1.39; }
+  /* A Persian cell's inline runs (the <bdi> of each Latin run, fa-dom.ts) would paint the print's white (above: every
+     element's background #fff) over their whole content area, 1.5625 em tall, and so over the row rules wherever the
+     row's line box is shorter than that (seen as rules broken under the text): they paint none; the cell's own white
+     stays. */
+  .debrief [lang='fa'] .db-table :is(td, th) :not(.db-chip, .db-chip *) { background: transparent !important; }
   .debrief.db-nomargin .db-draftline { display: block; font: 7pt 'Inter Print', sans-serif; direction: ltr; text-align: left; }
   .debrief.db-nomargin .db-handout-live > .db-draftline { margin: 0 0 1mm; }
 }

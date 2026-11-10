@@ -826,3 +826,39 @@ test('D13: the A3.1 tamponade Debrief in Persian: page 1 and the handout within 
   await view.getByRole('button', { name: 'English' }).click();
   await expect(view.locator('#db-live-1')).not.toHaveAttribute('lang', 'fa');
 });
+
+// N13: the Persian learner handout of the MH card (its twelve key moments) printed on two A4 pages: 292.6 mm in
+// Chromium, 296.4 in WebKit. Two causes: the Persian cells' mirrored padding set 3 px above and below every row over the
+// print's 0.3 mm (12.9 mm on twelve rows), and Vazirmatn's leading (1.55) left the full-size layout 12.7 mm past the page.
+// In Persian the handout prints compact, its rows at a leading that holds the letters' ink, so the rules stay whole.
+test('N13: the MH learner handout in Persian prints on one A4 page, its rules unbroken', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page, MH_RUN, MH);
+  const view = page.locator('[data-view=debrief]');
+  await view.getByRole('button', { name: 'فارسی' }).click();
+  await expect(view.locator('#db-handout')).toHaveAttribute('lang', 'fa');
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  await expect.poll(() => page.evaluate(() => [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Vazirmatn' && f.status === 'loaded')),
+    { timeout: 10_000, message: 'the view has loaded the bundled Vazirmatn' }).toBe(true);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout, stripPt } = await printHeights(page);
+  const cell = await page.evaluate(() => {
+    const td = document.querySelector('#db-handout .db-hmoments tbody td:last-child') as HTMLElement;
+    const cs = getComputedStyle(td);
+    return { padTop: parseFloat(cs.paddingTop), lh: parseFloat(cs.lineHeight) / parseFloat(cs.fontSize), inlineBg: [...td.querySelectorAll('bdi')].map((b) => getComputedStyle(b).backgroundColor) };
+  });
+  test.info().annotations.push({ type: 'MH Persian handout (mm)', description: handout.toFixed(1) });
+  expect(await view.locator('#db-handout .db-hmoments tbody tr').count()).toBe(12);
+  expect(cell.padTop, 'no screen padding over the print rows').toBeLessThan(1);
+  expect(cell.lh, "the row's line box holds Vazirmatn's ink").toBeGreaterThanOrEqual(1.386);
+  for (const bg of cell.inlineBg) expect(bg, 'an inline run paints no white over the rules').toBe('rgba(0, 0, 0, 0)');
+  expect(stripPt, 'handout course labels (pt)').toBeGreaterThanOrEqual(6);
+  expect(handout, 'handout in Persian (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    mkdirSync(out, { recursive: true });
+    writeFileSync(`${out}/debrief-fa-mh-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes, 'the Persian MH handout prints on one page').toHaveLength(1);
+  }
+});

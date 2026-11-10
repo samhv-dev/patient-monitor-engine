@@ -163,6 +163,7 @@
         "enter": { "$ref": "#/definitions/phaseRule" },
         "holdS": { "type": "number", "minimum": 0, "description": "The entry rule must hold without a break for this many seconds before the phase changes (the owner's 60-s boundary hold, 31 October)." },
         "cue": { "type": "string", "minLength": 1, "description": "What the learners see at this phase, shown beside its rule." },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the phase's numbers (its rule's thresholds and windows, its holdS): the source's own words quoted and cited (document, section or page); a number no source states is named as a PLACEHOLDER for the owner. Read by people; never interpreted (as an action's src; plan F-10)." },
         "next": { "$ref": "#/definitions/ids" }
       },
       "if": { "properties": { "initial": { "const": true } }, "required": ["initial"] },
@@ -307,7 +308,8 @@
         "$comment": { "type": "string" },
         "rule": { "$ref": "#/definitions/phaseRule" },
         "anchor": { "$ref": "#/definitions/anchor" },
-        "withinS": { "type": "number", "exclusiveMinimum": 0 }
+        "withinS": { "type": "number", "exclusiveMinimum": 0 },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the outcome's numbers: the source's own words quoted and cited (document, section or page); a number no source states is named as a PLACEHOLDER for the owner. Read by people; never interpreted (as an action's src; plan F-10)." }
       }
     },
     "scriptEntry": {
@@ -317,6 +319,7 @@
       "properties": {
         "id": { "$ref": "#/definitions/id" },
         "$comment": { "type": "string" },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the entry's commands' numbers: the source's own words quoted and cited (document, section or page); a number no source states is named as a PLACEHOLDER for the owner. Read by people; never interpreted (as an action's src; plan F-10)." },
         "on": {
           "description": "`phase:<id>` (its entry), `action:<id>#<n>` (the nth taking), or { atScenarioS }.",
           "anyOf": [

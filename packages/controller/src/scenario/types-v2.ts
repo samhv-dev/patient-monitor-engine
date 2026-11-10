@@ -134,15 +134,23 @@ export interface Phase extends C {
   holdS?: number;
   /** What the learners see at this phase, shown beside its rule. */
   cue?: string;
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
   next?: string[];
 }
 
-export interface Outcome extends C { id: string; text: string; rule: PhaseRule; anchor: Anchor; withinS: number }
+export interface Outcome extends C {
+  id: string; text: string; rule: PhaseRule; anchor: Anchor; withinS: number;
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
+}
 export interface ScriptEntry extends C {
   id: string;
   /** `phase:<id>` (its entry), `action:<id>#<n>` (the nth taking), or a scenario time. */
   on: `phase:${string}` | `action:${string}#${number}` | { atScenarioS: number };
   commands: DocCommand[];
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
 }
 
 /** The /1 header, whole (§3 and the plan's Q32). */
