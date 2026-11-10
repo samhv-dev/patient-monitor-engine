@@ -46,6 +46,9 @@ const WORDS = {
   cards: [
     { show: 'learner', title: 'Learner monitor', chip: 'Ready', text: 'This phone follows the patient monitor.', foot: 'Upright on a phone', action: true },
     { show: 'monitor', title: 'Patient monitor', chip: 'Ready', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style.", foot: 'Sideways, the whole screen', action: true },
+    // L6 (plan learner-action-remote.md): the learner action remote, signed in with the learner PIN on its own page. The
+    // line is the plan's draft: the owner rules the words
+    { show: 'remote', title: 'Learner remote', chip: 'With the learner PIN', text: "Give drugs and infusions, send samples and read their results from this phone. Everything you give is recorded under this phone's name.", foot: 'Upright on a phone', action: true },
     // R8d: the ventilator on a tablet, signed in with the instructor's PIN (m5's card; its chip and foot say how)
     { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
     { show: 'depth', title: 'Depth of anaesthesia', chip: 'Coming later', text: 'The engine simulates the EEG and reads it as a processed-EEG monitor; its screen in the room is still to come.', foot: 'Not in this release', action: false },
@@ -94,8 +97,8 @@ describe('the instrument picker at #/pick (R4)', () => {
     expect(titles).not.toContain('Defibrillator');
     expect(titles).not.toContain('Instructor remote');
     expect(el.textContent).not.toMatch(/tick what they noticed|SQI|EMG|BIS/);
-    // R8d: the PIN is named on the Ventilator card only (the card that signs in with it), never asked for here
-    for (const c of cards(el)) if (c.dataset.show !== 'vent') expect(c.textContent, c.dataset.show).not.toMatch(/PIN/);
+    // R8d, L6: a PIN is named on the cards that sign in with one only (the Ventilator, the Learner remote), never asked for here
+    for (const c of cards(el)) if (c.dataset.show !== 'vent' && c.dataset.show !== 'remote') expect(c.textContent, c.dataset.show).not.toMatch(/PIN/);
     expect(el.querySelector('input')).toBeNull();
   });
 
@@ -128,6 +131,23 @@ describe('the instrument picker at #/pick (R4)', () => {
     expect(go).not.toHaveBeenCalled();
     (monitor.querySelector('button') as HTMLButtonElement).click();
     expect(go).toHaveBeenCalledExactlyOnceWith('#/monitor/wide');
+  });
+
+  it("L6: the Learner remote's Show here opens #/remote/learner on this page (its learner-PIN form), and the choice is kept", () => {
+    const store = memory();
+    const go = vi.fn();
+    const el = pickerView({ code: CODE, store, go, open: () => expect.unreachable('the remote is this page'), parent: document.body });
+    const remote = cards(el).find((c) => c.dataset.show === 'remote') as HTMLElement;
+    expect(remote.querySelector('h2')?.textContent).toBe('Learner remote');
+    (remote.querySelector('button') as HTMLButtonElement).click();
+    expect(go).toHaveBeenCalledExactlyOnceWith('#/remote/learner');
+    expect(store.m.get('instrument')).toBe('remote');
+    // next time it is preselected and marked, never opened without a tap
+    const again = vi.fn();
+    const next = cards(pickerView({ code: CODE, store, go: again })).find((c) => c.dataset.show === 'remote') as HTMLElement;
+    expect(next.dataset.selected).toBe('true');
+    expect(next.querySelector('.st')?.textContent).toBe(WORDS.lastHere);
+    expect(again).not.toHaveBeenCalled();
   });
 
   it('a stored value that is not an instrument this device can show preselects the learner monitor', () => {

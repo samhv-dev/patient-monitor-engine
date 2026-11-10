@@ -64,11 +64,16 @@ async function startAnyRelay(o: RelayOptions): Promise<RelayHandle> {
     },
   } as RelayHandle;
 }
-/** A relay as the classroom runs it (app folder, phones may only follow), on a random port or a given one. */
+/**
+ * A relay as the classroom runs it (app folder, phones may only follow), on a random port or a given one.
+ * PME_E2E_RELAY_PORT: a fixed port per Playwright worker (that port + TEST_PARALLEL_INDEX), as PME_E2E_PORT is Vite's,
+ * for a machine whose runs must keep to a port range.
+ */
 async function classroom(o: RelayOptions = {}): Promise<void> {
   const dir = mkdtempSync(join(tmpdir(), 's12-'));
   writeFileSync(join(dir, 'index.html'), '<!doctype html>'); // the QR sheet reads `serves`; the pages come from Vite here
-  relay = await startAnyRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer', ...o });
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  relay = await startAnyRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer', ...o });
 }
 async function instructor(page: Page, scenario: string, site?: Record<string, unknown>): Promise<string> {
   await openApp(page, base, `?relay=${encodeURIComponent(ws())}&scenario=${scenario}#/teach2`, { warmMs: 1500, ...(site ? { site } : {}) });
@@ -246,7 +251,7 @@ test("R4: the QR's address opens the instrument picker; one tap gives today's le
   const pick = p.locator('.join-pick');
   await expect(pick.getByRole('heading', { level: 1 })).toHaveText('Choose what this screen shows');
   await expect(pick.locator('.join-code .code')).toHaveText(code);
-  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
+  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Learner remote', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
   const learnerBtn = pick.locator('.join-card[data-show="learner"] button');
   await expect(learnerBtn).toBeFocused(); // preselected: one tap
   expect(hellos).toEqual([]); // the picker follows nothing until the tap
@@ -295,4 +300,97 @@ test('R4: the picker is one column on a 375 px phone and three across at 1280 px
     for (const b of await p.locator('.join-card button').all()) expect(((await b.boundingBox())!).height, `${width} px`).toBeGreaterThanOrEqual(44);
     await ctx.close();
   }
+});
+
+// Plan learner-action-remote.md L6: the learner remote's page on a phone. The picker's "Learner remote" opens the
+// learner-PIN form (#/remote/learner); a wrong learner PIN is said in words; the PIN the laptop's Room setup shows behind
+// press-and-hold signs it in: its every hello is `learner` with its device key and the PIN, the monitor follows as a
+// strip over three 44 px tabs, the laptop's table lists it as "Learner remote", granted. The PIN is never in the phone's
+// address or store. "New learner PIN" on the laptop signs it out with the reason; "Change" returns to the picker.
+test('L6: the Learner remote card opens the learner-PIN form; the learner PIN from Room setup signs it in as `learner`; the monitor follows over three tabs; a new learner PIN signs it out', async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const code = await instructor(page, 'showcase-induction');
+  const learnerPin = (await page.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+  const instructorPin = (await page.evaluate(() => localStorage.getItem('pme.instructorPin'))) as string;
+  expect(learnerPin).toMatch(/^[0-9]{4}$/);
+  expect(learnerPin).not.toBe(instructorPin);
+  const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  const ctx = await browser.newContext(dev);
+  const p = await ctx.newPage();
+  const hellos: Array<Record<string, unknown>> = [];
+  p.on('websocket', (w) => w.on('framesent', (f) => {
+    const m = JSON.parse(String(f.payload)) as Record<string, unknown>;
+    if (m.kind === 'hello') hellos.push(m);
+  }));
+  const urls: string[] = [];
+  p.on('framenavigated', (fr) => void (fr === p.mainFrame() && urls.push(fr.url())));
+  await p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws())}#/pick`);
+  const card = p.locator('.join-card[data-show="remote"]');
+  await expect(card.locator('h2')).toHaveText('Learner remote');
+  await expect(card.locator('p').first()).toHaveText("Give drugs and infusions, send samples and read their results from this phone. Everything you give is recorded under this phone's name.");
+  await card.locator('button').click();
+  await expect(p).toHaveURL(new RegExp(`\\?join=${code}&relay=[^#]+#/remote/learner$`));
+  // the learner-PIN form first: nothing said on the wire yet
+  const form = p.locator('.ip-peer-form');
+  await expect(form.getByRole('heading', { level: 1 })).toHaveText('Learner remote');
+  await expect(form.getByLabel('Learner PIN')).toBeVisible();
+  expect(hellos).toEqual([]);
+  const typePin = async (pin: string) => {
+    for (const d of pin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+    await p.locator('.ip-peer-go').click();
+  };
+  const wrong = ['1111', '2222', '3333'].find((x) => x !== learnerPin && x !== instructorPin) as string;
+  await typePin(wrong);
+  await expect(p.locator('.ip-peer-error')).toHaveText('Wrong learner PIN. Enter the learner PIN the instructor reads out.');
+  await expect(p.locator('.ip-peer-pin')).toHaveValue('');
+  // the instructor's PIN is a wrong learner PIN too (§4 D9)
+  await typePin(instructorPin);
+  await expect(p.locator('.ip-peer-error')).toHaveText('Wrong learner PIN. Enter the learner PIN the instructor reads out.');
+  hellos.length = 0;
+  await typePin(learnerPin);
+  await expect(p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`);
+  await p.waitForFunction(() => (window as unknown as { __pmeLearnerRemote: { follower(): { sync: Sync | null } | null } }).__pmeLearnerRemote.follower()?.sync?.status === 'synced', null, { timeout: 30_000 });
+  const key = (await p.evaluate(() => localStorage.getItem('pme.device'))) as string;
+  expect(key).toMatch(/^[a-z0-9]{8,16}$/);
+  expect(hellos.length).toBeGreaterThan(0);
+  for (const m of hellos) expect(m).toMatchObject({ role: 'learner', show: 'learner', device: key, pin: learnerPin });
+  // the monitor follows, as a strip over the tabs, upright
+  await expect(p.locator('.pme-portrait')).toBeVisible();
+  await same(p, page);
+  await expect(p.locator('.lr-bar .status-pill')).toHaveText(`Following session ${code}`);
+  const tabs = p.getByRole('tab');
+  await expect(tabs).toHaveText(['Drugs', 'Infusions', 'Labs']);
+  for (const t of await tabs.all()) {
+    const r = (await t.boundingBox())!;
+    expect(Math.min(r.width, r.height), (await t.textContent()) ?? '').toBeGreaterThanOrEqual(44);
+  }
+  await tabs.nth(1).click();
+  await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(p.getByRole('tabpanel')).toHaveText('Starting and changing infusions from this phone: not in this release yet.');
+  const stage = (await p.locator('.stage').boundingBox())!;
+  expect(stage.height).toBeLessThan((p.viewportSize()?.height ?? 0) * 0.5); // a strip, not the whole screen
+  expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  // the PIN is in no address the page had and in neither of its stores
+  for (const u of [...urls, p.url()]) expect(u).not.toContain(learnerPin);
+  expect(await p.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }))).not.toContain(learnerPin);
+  // the laptop: the table lists it as a learner remote, granted; its PIN panel beside the instructor's, behind press-and-hold
+  await page.evaluate(() => (location.hash = '#/room'));
+  const row = page.locator(`.room-table tbody tr[data-device="${key}"] td`);
+  await expect(row.nth(2)).toHaveText('Learner remote');
+  await expect(row.nth(3)).toHaveText('granted');
+  const panel = page.locator('#room-learner');
+  await expect(panel.locator('.ip-peer-state')).toHaveText('1 learner remote signed in');
+  expect(await panel.innerText()).not.toContain(learnerPin);
+  // "New learner PIN": every learner remote is signed out, and says why
+  await panel.getByRole('button', { name: 'New learner PIN' }).click();
+  await expect(p.locator('.ip-peer-error')).toHaveText("The learner PIN was changed on the instructor's computer. Enter the new learner PIN.");
+  await expect(p.locator('.ip-peer-form')).toBeVisible();
+  await expect(p.getByRole('tab')).toHaveCount(0);
+  await expect(panel.locator('.ip-peer-state')).toHaveText('No learner remote signed in');
+  expect(await page.evaluate(() => localStorage.getItem('pme.learnerPin'))).not.toBe(learnerPin);
+  // "Change" goes back to the picker, which marks the last choice
+  await p.locator('.lr-change a').click();
+  await expect(p.locator('.join-card[data-show="remote"] .st.on')).toHaveText('Last on this device');
+  await ctx.close();
 });

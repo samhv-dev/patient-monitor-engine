@@ -6,8 +6,12 @@
 // of its sheets at 1280 × 800 where it audited today's eight tabs. A tablet instructor uses the Remote (Q5): the iPad
 // portrait run pairs a Remote to the host by code and audits each of its tabs, with the 44-px touch targets. The
 // connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there.
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
+import { startRelay } from '../../../packages/controller/relay/server.ts';
 import { audit, closeSheets, EXPLORE, focusWalk, go, openApp, sheet, type SheetId, startVite, TABS, tab, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
@@ -96,6 +100,65 @@ test("accessibility: the instructor phone's PIN form and the Room's instructor c
     expect(await page.locator('.ip-peer-room').innerText()).not.toContain(pin as string);
     found.push(...(await audit(page, { touchPanel: touch })).map((f) => `room ${name} ${f.rule}: ${f.what}`));
     await ctx.close();
+  }
+  expect(found).toEqual([]);
+});
+
+// Plan learner-action-remote.md L6: the learner remote on a phone — its learner-PIN form, a wrong learner PIN, and the
+// page signed in (the monitor strip, the three tabs, the connection line) — and the Room's learner PIN panel on the
+// laptop and the iPad. 44 px targets on touch, names, contrast, one h1, no sideways scroll, a focus walk on the phone.
+// A classroom relay on this machine (PME_E2E_RELAY_PORT + the worker's index when set, else any free port).
+test("accessibility: the learner remote's PIN form and signed-in page, and the Room's learner PIN", async ({ browser }) => {
+  test.setTimeout(150_000);
+  const dir = mkdtempSync(join(tmpdir(), 'l6-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  const relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
+  const found: string[] = [];
+  try {
+    for (const [name, vp, touch] of [['laptop', { width: 1280, height: 800 }, false], ['iPad', { width: 820, height: 1180 }, true]] as const) {
+      const ctx = await browser.newContext({ viewport: vp, hasTouch: touch, isMobile: touch });
+      const page = await ctx.newPage();
+      await openApp(page, base, `?relay=${ws}#/room`);
+      await page.waitForSelector('#room-learner .ip-peer-hold');
+      const pin = await page.evaluate(() => localStorage.getItem('pme.learnerPin'));
+      expect(await page.locator('#room-learner').innerText()).not.toContain(pin as string);
+      found.push(...(await audit(page, { touchPanel: touch })).map((f) => `room ${name} ${f.rule}: ${f.what}`));
+      await ctx.close();
+    }
+    const host = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+    await openApp(host, base, `?relay=${ws}&scenario=showcase-induction#/teach2`, { warmMs: 1500 });
+    const code = await host.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
+    const pin = (await host.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+    for (const theme of ['dark', 'light'] as const) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+      // the light screen is the site's projector-light theme (Settings' Screen), kept on the phone as on the laptop
+      if (theme === 'light') await phone.addInitScript(() => localStorage.setItem('pme.site', JSON.stringify({ schema: 'pme-site/1', theme: 'projector-light' })));
+      const p = await phone.newPage();
+      await p.goto(`${base}/?join=${code}&relay=${ws}#/remote/learner`);
+      await p.waitForSelector('.ip-peer-form');
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `learner form ${theme} ${f.rule}: ${f.what}`));
+      const typePin = async (x: string) => {
+        for (const d of x) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+        await p.locator('.ip-peer-go').click();
+      };
+      if (theme === 'dark') {
+        found.push(...(await focusWalk(p, 16)).map((f) => `learner form focus: ${f}`));
+        await typePin(pin === '1111' ? '2222' : '1111');
+        await expect(p.locator('.ip-peer-error')).toHaveText(/^Wrong learner PIN/);
+        found.push(...(await audit(p, { touchPanel: true })).map((f) => `learner wrong PIN ${f.rule}: ${f.what}`));
+      }
+      await typePin(pin);
+      await expect(p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`);
+      await expect(p.getByRole('tab')).toHaveCount(3);
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `learner signed in ${theme} ${f.rule}: ${f.what}`));
+      if (theme === 'dark') found.push(...(await focusWalk(p, 12)).map((f) => `learner signed in focus: ${f}`));
+      await phone.close();
+    }
+    await host.context().close();
+  } finally {
+    await relay.close();
   }
   expect(found).toEqual([]);
 });
