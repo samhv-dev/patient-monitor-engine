@@ -16,7 +16,7 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
 | [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 33 | 18 |
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 12 | 41 | 10 |
-| [Brain, kidney and liver](organs.md) | 14 | 30 | 13 |
+| [Brain, kidney and liver](organs.md) | 14 | 30 | 12 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 16 |
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 32 | 8 |
 | [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 30 | 50 | 33 |

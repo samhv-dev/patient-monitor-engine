@@ -14,11 +14,11 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`; those are listed by hand below.
 
-On main `128917d6` (10 November 2026) there are **180 expected-failure calls**, all read by the lister and all literal
+On main `128917d6` (10 November 2026), less the renal set-point miss brief 136 retired, there are **179 expected-failure calls**, all read by the lister and all literal
 `it.fails` (the bronchospasm row of `packages/ventilator/test/link-parity.test.ts` among them), and **6 skipped tests**
 (1 skipped test and 5 `.todo` entries: the harms and the device the scenario format declares "not modelled", and
 epinephrine IM). Both counts are the last line `node --experimental-strip-types scripts/deviations.ts` prints
-("deviations: 180 expected failures, 6 skipped"); re-read them there when the tables are regenerated. "Tracked in" names the gate note (and its section)
+("deviations: 179 expected failures, 6 skipped"); re-read them there when the tables are regenerated. "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
 
 ## Tests that record a miss (`it.fails`, and `test.fail` in the browser tests)
@@ -199,7 +199,6 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | nitroprusside 1 µg/kg/min lowers SVR 30–50 % — measured −29.9999 % at 10 min (the steady state is the band edge −30 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #33 |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | esmolol 0.5 mg/kg: its direct HR multiplier falls 10–20 % at the peak (DI-07's band; T6.2) — measured 6.5 % (ec50 150; 4.2 % at 250) | `docs/gates/fu-7.md` §4 "`it.fails` list", #34 |
 | `packages/engine-core/test/l2/renal/filtration.test.ts` | IAP 25: UOP < 0.1 mL/kg/h (WSACS) — measured 0.69 (the circulation half is left to the circulation) | `docs/gates/fu-9.md` §4 "`it.fails` (all with the merged-tree numbers in their titles)" |
-| `packages/engine-core/test/l2/renal/kidney.test.ts` | rest GFR ≈ 125 mL/min (M10 ch. 15 p. 335: about 180 L/day): measured 117 (P_gc 57.6 vs 60) | research/44 L2-26 (`docs/review-inputs/research/44-physiology-compromise-audit.md`); brief 89 PR fix-bowman-pressure: Bowman 18 (M10 Fig. 15.8); Kf 16.4 needed, no source (Guyton & Hall 12.5); the Pulse divider's P_gc 57.6 vs the figure's 60 |
 | `packages/engine-core/test/l2/temp/temp.test.ts` | GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37 | `docs/gates/stage-fu-10.md` §3 "Acceptance numbers, before (base) → after", row A3 "hour-8 plateau" (E-FU10-3b) |
 | `packages/engine-core/test/l2/temp/temp.test.ts` | GA: the hour-8 plateau sits at 34.8–35.4 °C (Kurz 1993: threshold 35.1 ± 0.3 at 30–50 y) — measured 34.37 | calibration pass, `docs/validation/target-audit/rulings.tsv` row 140 (brief 88) |
 | `packages/engine-core/test/l3/shock-state.test.ts` | AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | research/44 X-08 (`docs/review-inputs/research/44-physiology-compromise-audit.md`); brief 89 PR fix-cardioversion-success: independent per-shock draws give 99.9 %; no patient-level non-responder state (Mittal: impedance, AF duration) |

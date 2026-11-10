@@ -14,39 +14,66 @@ import { ICRP89_FLOW_FRACTIONS_M } from '../circ/params.ts';
 export const RENAL_DT_S = 1; // kidney and liver step at 1 Hz (annex B2 "one algebraic kidney at 1 Hz")
 // Pulse per-kidney resistances (annex B2 table), both kidneys in parallel → ÷ 2 where used
 export const R_ART = 0.025 * 1.25; // renal artery (male value)
-export const R_AFF = 0.0417 * 1.25; // afferent arteriole (TGF-controlled)
+/** Pulse's afferent resistance (TGF-controlled). It does NOT set the resting state: the resting afferent tone is the
+ *  feedback's own equilibrium at the reference (createRenal: tgfTarget at GFR_SET_REF; 0.0430, 1.74 × R_AFF_MIN). Kept
+ *  as Pulse's ported value for the topology test and as the initial value of tgfTarget's loop, overwritten on its first
+ *  step; it enters no state. */
+export const R_AFF = 0.0417 * 1.25;
 export const R_GLOM = 0.0019 * 1.25;
 export const R_EFF = 0.0763 * 1.25; // efferent arteriole
 export const R_PT = 0.0167 * 1.25; // peritubular capillaries
 export const R_RV = 0.0066 * 1.25; // renal vein
-/** TGF range for R_aff: Pulse 2.2–11.2 mmHg·s/mL = 0.0367–0.187 mmHg·min/mL (CFG 608–609). The upper bound is
+/** TGF range for R_aff: Pulse 2.2–11.2 mmHg·s/mL = 0.0367–0.187 mmHg·min/mL (CFG 608–609); the lower bound is now
+ *  R_AFF_MIN below (derived from the lower limit of autoregulation). The upper bound is
  *  raised by the MYOGENIC response Pulse lacks (afferent constriction to stretch, which with TGF holds RBF over RPP
  *  80–180, tables §5.2 `rblLL/rblUL`) [FIT: ×MYOGENIC_MAX; brief research/44 L2-26]: with Pulse's 11.2 alone RBF rose 21 % and GFR doubled at MAP 180. */
-export const R_AFF_MIN = 2.2 / 60;
 export const MYOGENIC_MAX = 2;
-export const R_AFF_MAX = (11.2 / 60) * MYOGENIC_MAX;
 /** TGF time constant: Pulse's 0.001-per-beat damping ≈ 60–90 s (annex B2 "Take") → 60 s. */
 export const TGF_TAU_S = 60;
-export const KF_PER_KIDNEY = 3.67647 * 2.0; // glomerular Lp·A, mL/min/mmHg (CFG 604–605)
+/** Resting GFR set point, mL/min, at the 70 kg reference (RBF_SET_REF): Miller 10e ch. 15 p. 334: normal GFR 180 L/day
+ *  (125 mL/min), the GFR of the same page's Fig. 15.8 Starling set (redrawn from Guyton & Hall 13e). TGF defends it
+ *  (research/44 L2-26). It was the GFR the constant R_AFF gave at the reference (117 mL/min with Bowman's 18). */
+export const GFR_SET_REF = 125;
+/** The reference renal blood flow the set point belongs to: 17 % of CO 0.08 L/min/kg at 70 kg = 952 mL/min. */
+export const RBF_SET_REF = 952;
+/** Glomerular filtration coefficient Lp·A per kidney, mL/min/mmHg: 12.5 for both kidneys, the GFR 125 ÷ net filtration
+ *  pressure 10 of Miller 10e Fig. 15.8 (p. 334; Guyton & Hall 13e). It was Pulse's 3.67647 × 2 (CFG 604–605; 14.7 in
+ *  total). Kf and the set point scale together with the patient's reference RBF (createRenal: the kidney's size)
+ *  [ENG: conversion; body size: the engine's RBF ∝ weight (CO 0.08 L/min/kg × 17 %) carried to the filtering surface, so FF and P_gc are the figure's at every weight; no source for linear scaling, neonatal and obese GFR not modelled]. */
+export const KF_PER_KIDNEY = 12.5 / 2;
 export const PI_GLOM0 = 32; // Glomerular oncotic pressure, mmHg (SET 1386–1389) at albumin 42 g/L — its MEAN at FF_REF
 /** The filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit at which the mean glomerular oncotic
- *  pressure equals PI_GLOM0. Since Bowman's pressure is the sourced 18 (research/44 L2-26), the resting FF is 0.224, not
- *  this 0.239, so the resting mean oncotic pressure is 31.7 mmHg, not 32. */
+ *  pressure equals PI_GLOM0. With the sourced set point the resting FF is this 0.239 again (research/44 L2-26). */
 export const HCT_REF = 0.45;
-export const FF_REF = 125 / (952 * (1 - HCT_REF));
+export const FF_REF = GFR_SET_REF / (RBF_SET_REF * (1 - HCT_REF));
 export const ALBUMIN0_G_L = 42;
 /** Bowman's capsule pressure, mmHg: Miller 10e ch. 15 Fig. 15.8 (p. 334, redrawn from Guyton & Hall 13e): 18 mmHg
- *  against a glomerular hydrostatic 60 and oncotic 32 (net 10). It was 17.1, fitted so the resting GFR was 125
- *  mL/min. With the sourced 18 the resting GFR is 117 mL/min (168 L/day): the Pulse divider gives P_gc 57.6 where
- *  the figure has 60. The calibration was NOT moved onto Kf: holding 125 would need Kf 16.4 mL/min/mmHg, and the
- *  sourced value is 12.5 (Guyton & Hall; the same figure's GFR 125 ÷ net 10). Pulse's 14.7 is kept (research/44
- *  L2-26). UOP is calibrated separately (ef0), so this sets only GFR and the filtration fraction. */
+ *  against a glomerular hydrostatic 60 and oncotic 32 (net 10). It was 17.1, fitted so the resting GFR was 125 mL/min.
+ *  With the sourced set point (GFR_SET_REF) and Kf (KF_PER_KIDNEY) the glomerular capillary pressure is no longer an
+ *  input: the TGF equilibrium settles the afferent tone, and P_gc is a prediction, 60.0 at the reference (research/44
+ *  L2-26). UOP is calibrated separately (ef0). */
 export const P_BOWMAN = 18;
 export const RENAL_FLOW_FRAC = ICRP89_FLOW_FRACTIONS_M.kidneys; // 0.17, both kidneys (ICRP-89 via Pulse SET 315, NOTICES N-P10) — audit borrow #7
 /** The healthy reference the kidney is calibrated on (createRenal): MAP 93, CVP 5, CO 0.08 L/min/kg (5.6 L/min at 70 kg). */
 export const RENAL_REF_MAP = 93;
 export const RENAL_REF_CVP = 5;
 export const RENAL_REF_CO_L_KG = 0.08;
+/** Lower limit of renal autoregulation, renal perfusion pressure, mmHg: tables §5.2 `rblLL` 80 (Renal-AR PMC4042104).
+ *  It is the FILTRATION limit: GFR 80.5 ± 3.5 vs blood flow 65.6 ± 1.3 mmHg (Kirchheim 1987 Pflügers Arch 410:441,
+ *  conscious dog; abstract read); RBF and GFR 80–180 (Carlström 2015 Physiol Rev 95:405; Miller 10e ch. 55 Fig. 55.3,
+ *  p. 1807, dog). Flow limits are lower: 60 (Miller 10e ch. 55 p. 1804), 70 for the myogenic response (ch. 15 p. 340;
+ *  Burke 2014). This kidney has one knee for both (research/55). */
+export const RENAL_AR_LL_RPP = 80;
+/** The afferent arteriole's maximal dilation (TGF's lower clamp), per kidney, mmHg·min/mL, DERIVED from the observable
+ *  lower limit of autoregulation, not measured: the R_aff at which the fully dilated afferent still holds the resting
+ *  P_gc (GFR_SET_REF/Kf + P_BOWMAN + PI_GLOM0 = 60, at the reference RBF) at RPP RENAL_AR_LL_RPP, so the plateau's knee
+ *  sits there. RPP_LL/(P_gc − P_v) = (pre + post)/post, and k cancels. It awaits a direct measurement of maximal
+ *  afferent dilation, which replaces it. Was Pulse's 2.2 mmHg·s/mL (0.0367; knee at RPP ≈ 85 with the sourced set point).
+ *  No source states maximal afferent dilation relative to rest (research/55).
+ *  [FIT: lower limit of renal autoregulation; src tables §5.2 rblLL (Renal-AR PMC4042104), Kirchheim 1987, Carlström 2015; brief 136]. */
+const POST_GLOM_R = R_GLOM / 2 + R_EFF + R_PT + R_RV;
+export const R_AFF_MIN = (RENAL_AR_LL_RPP / (GFR_SET_REF / (2 * KF_PER_KIDNEY) + P_BOWMAN + PI_GLOM0 - RENAL_REF_CVP) - 1) * POST_GLOM_R - R_ART - R_GLOM / 2;
+export const R_AFF_MAX = (11.2 / 60) * MYOGENIC_MAX;
 /** Pressure natriuresis: Pulse's tubular reabsorption permeability vs renal arterial pressure (PH/Renal 1983–2071),
  *  used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3
  *  (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. */
