@@ -51,6 +51,14 @@ every shard of a set reads that one plan, so the shards never split a set two wa
    when `scripts/changelog-assemble.ts` builds the dated section from the fragments (RELEASE.md, step 4). Distinct
    files never conflict, so two pull requests no longer collide in CHANGELOG.md.
 
+9. **A physiology change carries the `run-validation` label.** The validation workflow
+   (`.github/workflows/validation.yml`, 30–60 min) runs on a pull request only while it carries that label. The
+   `validation label` check (`.github/workflows/validation-label.yml`) fails on a pull request whose diff adds,
+   changes, deletes or renames a file under `packages/engine-core/src/` (test files `*.test.ts`/`*.spec.ts` and
+   documents `*.md` aside) without the label; its message says to add it. It re-runs on every push and whenever a label
+   is added or removed, and it does not run on main. Add the label from the first push and read the validation run's
+   conclusion as well as ci's. There is no opt-out label: a workflow is never relabelled away.
+
 ## Reporting realism problems
 
 Use the "Clinical realism" issue template: the scenario, the mode (MANUAL or MODELED), what a clinician expects with a
