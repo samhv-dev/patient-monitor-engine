@@ -100,6 +100,8 @@ export interface DrugRow {
   pk: PkSpec;
   /** elimination route fractions of CL (the rest organ-independent); hepatic high-extraction drugs follow liver FLOW */
   elim?: { hepatic?: number; highExtraction?: boolean; renal?: number;
+    /** The hepatic share is cytochrome-P450 oxidation: clearance takes the sourced hypothermia slope (CYP_TEMP_PER_C). */
+    cyp?: boolean;
     /** Gamma rows only (research/13): the TERMINAL elimination half-life, s. The share of the effect curve's
      * decline that clearance governs is min(1, (ln 2 / t12S) / chain ke); the rest is redistribution, which organ
      * function does not change. Absent = the decline is organ-independent (the row keeps its curve). */

@@ -285,6 +285,28 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
   });
 });
 
+describe('pme-scenario/2: src on a phase, an outcome and a script entry (plan V1, F-10)', () => {
+  const SRC = 'design §4.2: "SBP < 60 for 10 s"';
+  const withSrc = () => {
+    const d = minimalV2() as any;
+    d.phases[1].src = SRC;
+    d.outcomes = [{ id: 'o', text: 'MAP above 65', rule: { value: { var: 'map', op: '>', value: 65 } }, anchor: 'rosc', withinS: 300, src: SRC }];
+    d.script = [{ id: 's', on: 'phase:early', src: SRC, commands: [{ type: 'applyEvent', event: { kind: 'bleed', volumeMl: 2500, overS: 600 } }] }];
+    return d;
+  };
+  it('accepts a src on a phase, an outcome and a script entry, as on an action', () => {
+    const r = validateScenario(withSrc());
+    expect(r.ok ? [] : r.errors).toEqual([]);
+  });
+  it('refuses an empty src on each, and a src that is not a string', () => {
+    for (const set of [(d: any) => { d.phases[1].src = ''; }, (d: any) => { d.outcomes[0].src = ''; }, (d: any) => { d.script[0].src = ''; }, (d: any) => { d.phases[1].src = 60; }]) {
+      const d = withSrc();
+      set(d);
+      expect(errs(d).join(' ')).toMatch(/src/);
+    }
+  });
+});
+
 describe('pme-scenario/2: debriefHints (D8)', () => {
   const withHints = (h: unknown) => ({ ...minimalV2(), debriefHints: h });
   it('accepts openers on the anchor forms report3 reads: start, pulseLoss, rosc, phase:<id>, action:<id>', () => {

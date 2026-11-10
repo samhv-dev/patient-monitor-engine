@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { manualLabel, type ScenarioDoc } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
-import { conditionNotMet, isHop, objectivesOf, reachable, rowsOf, stageOf, stagesOf, stepCommand, type Row } from './card-read.ts';
+import { conditionNotMet, isHop, objectivesOf, phaseRuleWords, reachable, rowsOf, stageOf, stagesOf, stepCommand, type Row } from './card-read.ts';
 import { showcaseDoc } from './showcase/harness.ts';
 
 const MH = showcaseDoc('showcase-mh');
@@ -226,5 +226,19 @@ describe('reachable (answer 7: "failed" when the step\'s target cannot be reache
   it('haemorrhage: from VF, the return of circulation is reachable and the oxygen mask is not', () => {
     expect(reachable(HAEM, 'vf', 'rosc')).toBe(true);
     expect(reachable(HAEM, 'vf', 'bleedingO2')).toBe(false);
+  });
+});
+
+describe('phaseRuleWords: a drug concentration (DC1, BQ11 = B)', () => {
+  it('words cp:/ce: as the plasma or effect-site drug, the card\'s threshold in the drug panel\'s own unit', () => {
+    expect(phaseRuleWords({ value: { var: 'cp:propofol', op: '>', value: 4 } })).toBe('plasma propofol > 4 µg/mL');
+    expect(phaseRuleWords({ value: { var: 'ce:propofol', op: '<', value: 1.5, forS: 10 } })).toBe('effect-site propofol < 1.5 µg/mL for 10 s');
+    expect(phaseRuleWords({ value: { var: 'ce:remifentanil', op: '>=', value: 2 } })).toBe('effect-site remifentanil >= 2 ng/mL');
+    expect(phaseRuleWords({ slope: { var: 'cp:rocuronium', op: '<', perMin: 0, overS: 60 } })).toBe('plasma rocuronium falling');
+    expect(phaseRuleWords({ unchanged: { var: 'ce:norepinephrine', withinPct: 10, since: 'phaseStart' } })).toBe('effect-site norepinephrine unchanged since the phase began');
+  });
+  it('leaves every other variable\'s words as they were', () => {
+    expect(phaseRuleWords({ value: { var: 'etco2', op: '>', value: 45, forS: 20 } })).toBe('EtCO₂ > 45 for 20 s');
+    expect(phaseRuleWords({ value: { var: 'svr', op: '<', value: 800 } })).toBe('svr < 800');
   });
 });

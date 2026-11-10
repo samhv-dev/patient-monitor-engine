@@ -102,6 +102,11 @@ const BANDS = {
   // Re-merge of 9 Nov (brief 112): PR #352 re-centred this sample 139 → 146 (brief 93: the hypercapnia's sympathetic
   // drive), main 139 → 130 (Bowman 18); on the merge of both it reads 145 — one below the branch's 146, so the
   // untriggered hypercapnia sets this sample, not the renal term — re-centred, same ± 5 (146 → 145). Not tuned.
+  // Second re-merge of 9 Nov (brief 117: main, with PR #352, into PR fix-hypothermic-clearance): research/44 L2-27 (the
+  // CYP450 rows take Hostler's −11.1 %/°C from 36.5 °C on the liver function without the organ model's tempF, so at the
+  // 36.8 °C start midazolam and fentanyl clear ≈ 2 % faster) moved this sample alone 139 → 148 on the earlier tree; on
+  // the merge it reads 148, and with every cyp flag removed on the same merge 145 (main's): the CYP term is +3 here.
+  // Inside the band, so the band stays [140, 150]. Not tuned.
   'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [140, 150], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
   'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [18.67, 22.07], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [87, 97], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },

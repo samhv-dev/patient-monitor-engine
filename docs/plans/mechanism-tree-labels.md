@@ -2,9 +2,9 @@
 
 The mechanism tree page (`#/explore/mechanisms`, plan [mechanism-tree.md](mechanism-tree.md) pieces T1 and T1b) names
 every node by the clinical label below, never by its engine key (the key stays in the node's tooltip). The table holds
-every node the coupling registry names (`packages/engine-core/src/couplings/`): **151 nodes**, of which
+every node the coupling registry names (`packages/engine-core/src/couplings/`): **152 nodes**, of which
 **31** carry the clinical glossary's label unchanged (`apps/demo/src/app/glossary.ts`, From = glossary) and
-**120** were written for the tree (From = tree).
+**121** were written for the tree (From = tree).
 
 Every row is a draft until the clinical owner reads it: `reviewed` is `false` on every row, and the page shows the line
 "labels under the owner's review" while any label it draws is unreviewed. To record a review, set `reviewed` (or
@@ -133,6 +133,7 @@ A unit "×" is a factor (1 = no change); "fraction" and "0–1" are dimensionles
 | `organs.brain.cpp` | Cerebral perfusion pressure | mmHg | Mean arterial pressure at head height minus the intracranial (or cerebral venous) pressure. | tree | false |
 | `organs.brain.cush.drive` | Cushing response drive | 0–1 | The brainstem's pressor drive when cerebral perfusion pressure stays low. | tree | false |
 | `organs.brain.icp` | Intracranial pressure | mmHg | Intracranial pressure. | tree | false |
+| `organs.liver.liverFn` | Liver function (relative to normal) | × | The liver's working share of its normal metabolic capacity, without the temperature term: 1 is a healthy liver, less is a failing one; it scales the clearance of drugs the liver metabolises. | tree | false |
 | `eeg.cortex` | Cortical state (EEG) | — | The cortical state the EEG shows: hyperpolarisation, loss of responsiveness, burst suppression. | tree | false |
 | `eeg.ctx.device` | Mains and ECG pickup for the EEG | — | The mains frequency and the heart's voltage the EEG electrodes pick up. | tree | false |
 | `eeg.signal` | EEG trace | µV | The frontal EEG as the monitor draws it: brain signal, muscle activity and artefacts. | tree | false |
