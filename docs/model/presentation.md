@@ -59,7 +59,7 @@ renderer, audio and skin contracts.
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:891`](../../packages/renderer/src/device-ui.ts#L891) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
 | [`mount.ts:196`](../../packages/renderer/src/mount.ts#L196) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:428`](../../packages/renderer/src/mount.ts#L428) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`mount.ts:433`](../../packages/renderer/src/mount.ts#L433) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -168,6 +168,13 @@ renderer, audio and skin contracts.
 | `SAVE_MS` | `1000` | ms | [ENG: ui; measured 2026-10-25] | How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed. Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG: ui; measured 2026-10-25]. |
 | `MAX_AGE_MS` | `6 * 3600000` | ms | [ENG: ui] | An older position is another day's run, not this one's [ENG: ui]. |
 
+### [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `TRAY_OVER_MAX_S` | `600` | s | [ENG: ui; ten minutes, the slowest push the library's bolus rows describe; longer is an infusion, L8] | The longest "over" the tray offers, s [ENG: ui; ten minutes, the slowest push the library's bolus rows describe; longer is an infusion, L8]. |
+| `TRAY_REDRAW_MS` | `250` | ms | [ENG: ui; four times a second keeps an m:ss countdown on the right second] | How often the countdowns redraw, ms [ENG: ui; four times a second keeps an m:ss countdown on the right second]. |
+
 ### [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -222,6 +229,12 @@ renderer, audio and skin contracts.
 | `HOST_SILENT_MS` | `5000` | ms | [ENG: ui] | No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG: ui]. |
 | `UNREACHABLE_MS` | `6000` | ms | [ENG: ui] | The phone has not reached the relay for this long: it is probably not on the classroom network [ENG: ui]. |
 | `COCKPIT_QUIET_MS` | `2500` | ms | [ENG: ui] | The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG: ui]. |
+
+### [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `LEARNER_GIVE_UP_MS` | `10000` | ms | [ENG: ui; P7's 10 s] | Plan P7 §1: an older kit's relay refuses the learner's hello or an older host never answers; the phone gives up [ENG: ui; P7's 10 s]. |
 
 ### [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts)
 
@@ -376,7 +389,7 @@ renderer, audio and skin contracts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `READY_TIMEOUT_MS` | `2000` | ms | — | The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). |
+| `READY_LATE_MS` | `2000` | ms | [ENG: control] | N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`; `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it: a late worker is still loading, not lost. Until brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at 2.2–6.0 s. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads it one module per request (278–1875 ms on an idle Mac). A worker that fails (an error before 'ready') still hands the monitor to the main thread, and the page says that too (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control]. |
 | `WORKER_SILENT_MS` | `3000` | ms | [ENG: display] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG: display]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
@@ -461,7 +474,7 @@ renderer, audio and skin contracts.
 | `scenarioCard` | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | Scenario card: |
 | `relayOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The relay this page talks to: |
 | `learnerUrl` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The learner's address for the QR code: |
-| `instrumentOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | What a follower page at `hash` shows (the picker, or an instrument); |
+| `instrumentOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | What a follower page at `hash` shows (the picker, the learner remote, or an instrument); |
 | `instructorUrl` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The instructor phone's address (plan instructor-peer-role.md P7): |
 | `qrTarget` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Where the learners' QR code sends phones: |
 | `instructorTarget` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Where the instructor's QR code sends the instructor's phone: |
@@ -502,6 +515,7 @@ renderer, audio and skin contracts.
 | `conditionCommand` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | The engine command that starts (severity > 0) or stops (0) an acute event. |
 | `activeText` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | "Cardiac tamponade (severe)", for the session bar and the Patient tab. |
 | `fastForwardDoneLines` | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | The two lines of the banner after a fast-forward, worded here only: |
+| `loadShippedFormulary` | [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | L4 (learner-action-remote.md §4 D3, D4): |
 | `entry` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The glossary entry by its research/11 number. |
 | `shortLabel` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The label a screen shows. |
 | `lookup` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | Glossary entry for a truth path, or null (then the path is a model internal and stays out of clinical views). |
@@ -523,6 +537,8 @@ renderer, audio and skin contracts.
 | `faText` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian of `en`, or null (counted as missing). |
 | `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
 | `drawPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | Four random digits from the platform's cryptographic source. |
+| `instructorPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | `avoid`: the other role's PIN, never drawn (L4: |
+| `learnerPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | L4: the learner PIN — the same keeping as the instructor's (four digits drawn at first use [ENG: |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `defibWords` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | R5d: a refusal of the window's press, in the device's words. |
 | `storeBase` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Where the store is: |
@@ -562,6 +578,11 @@ renderer, audio and skin contracts.
 | `noteRecent` | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | A card was loaded: |
 | `recognisedNote` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The note a press sends on `doc` (null: |
 | `recognisedButton` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The button (`cls` its classes where it sits): |
+| `sourceText` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A source as the phone names it (the finding after the notice, a product's label). |
+| `productWords` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A product as the bench names it: |
+| `benchView` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | The bench: the search, then the product and its amount, the diluent and volume, the container, the preview, "Put on the tray". |
+| `drugsMenu` | [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | The Drugs tab: |
+| `trayView` | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | The tray: its preparations, each with its state and Give, and "Deliver the tray". |
 | `rhythmGroups` | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | Groups with every library id placed once ("Other" collects ids the map does not name). |
 | `startCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | The code a starting instructor's page runs under, or null when it has none and draws a new one. |
 | `keepsRoomCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Whether the code this page runs becomes the room's, which it does when started without `?session=` and not after "Start a new session". |
@@ -670,9 +691,13 @@ renderer, audio and skin contracts.
 | `deviceKey` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | This device's own key (§4 D1, for the remembered layout): |
 | `instrumentCard` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | One instrument card (m5): |
 | `pickerView` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | The picker's page for room `code`: |
+| `learnerRefusalWords` | [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts) | What the phone says for a refusal: |
+| `learnerRemoteView` | [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts) | The learner remote's page: |
 | `refusalWords` | [`apps/demo/src/app/views/pin-form.ts`](../../apps/demo/src/app/views/pin-form.ts) | What the phone says for a refusal (`denied` or `revoked`): |
 | `pinForm` | [`apps/demo/src/app/views/pin-form.ts`](../../apps/demo/src/app/views/pin-form.ts) | The form: `onSignIn` gets the code and the PIN once both are well formed; |
 | `rowWords` | [`apps/demo/src/app/views/room-instructor.ts`](../../apps/demo/src/app/views/room-instructor.ts) | The row's words (plan P7: |
+| `pinHold` | [`apps/demo/src/app/views/room-instructor.ts`](../../apps/demo/src/app/views/room-instructor.ts) | P7's press-and-hold (Q2), for a PIN of this computer: |
+| `learnerPinCard` | [`apps/demo/src/app/views/room.ts`](../../apps/demo/src/app/views/room.ts) | L6: the learner PIN beside the instructor's (§4 D9): |
 | `settingsView` | [`apps/demo/src/app/views/settings.ts`](../../apps/demo/src/app/views/settings.ts) | The Settings view on the site profile. |
 | `teach2View` | [`apps/demo/src/app/views/teach2.ts`](../../apps/demo/src/app/views/teach2.ts) | The Instructor v2 view on `link`, for `shell.add`. |
 | `engineVentilation` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The cockpit's settings as the engine's `ventilation` event takes them (its own ventilator is volume control). |
@@ -785,7 +810,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -820,6 +845,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/engine-bench.worker.ts`](../../apps/demo/src/app/engine-bench.worker.ts) | Home's "Engine · ms per tick" tile (E125). |
 | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | Acute events (showcase additions): the engine's systemic conditions an instructor starts and stops during a case — tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the re |
 | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | While the host fast-forwards, the window dims and blurs behind one centred panel — a double chevron in a ring of its colour, the two blinking together, "FAST FORWARD · 5 MIN" in amber in the monitor's typeface, a thin pr |
+| [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | Plan learner-action-remote.md L4: the laptop's copy of the formulary layer, for the host's learner preparations. |
 | [`apps/demo/src/app/glossary-data.ts`](../../apps/demo/src/app/glossary-data.ts) | The clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-and-glossary.md §5, 294 entries, generated 2026-09-28 from the workspace research file; edits go H |
 | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. |
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
@@ -862,6 +888,9 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | The Scenarios page's "Recent" (E125): the last three library cards loaded in this browser, newest first. |
 | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The instructor's "Recognised" press (Debrief 2, D5; plan Decision 3, the owner's ruling of 5 November, DQ4): the /1 fallback for the moment the team named the problem. |
 | [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with w |
+| [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | Plan learner-action-remote.md L7 (§4 D2, D3; LQ3, LQ7, LQ11): the preparation bench on the learner remote's Drugs tab. |
+| [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | Plan learner-action-remote.md L7: the learner remote's Drugs tab: the preparation bench (bench.ts) over the tray (tray.ts). |
+| [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | Plan learner-action-remote.md L7 (§4 D2, D3, D7; LQ3, LQ7): the tray on the learner remote's Drugs tab. |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Room plan R1 (docs/plans/room-and-instruments.md §7; Q3 ruled 5 November = A): the room code lives until the instructor asks for a new one, through reloads, restarts and the next day. |
 | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The remembered layout of the room (plan room-and-instruments.md R7, §4 D8; Q10 ruled 5 November = A: device names are kept across days, until "Forget the room"). |
@@ -907,6 +936,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The learner monitor on a SECOND screen. |
 | [`apps/demo/src/app/views/home.ts`](../../apps/demo/src/app/views/home.ts) | Home (E125, owner's mockup f1-home): the page the app opens on (`#/`, `#/home`). |
 | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | The instrument picker (plan room-and-instruments.md R4; Q1 ruled 5 November): the device that scans the room's QR (`?join=CODE#/pick`) chooses what this screen shows. |
+| [`apps/demo/src/app/views/learner-remote.ts`](../../apps/demo/src/app/views/learner-remote.ts) | The learner action remote's page (plan learner-action-remote.md L6, §4 D1, D9; LQ1 ruled 9 November): a phone that picked "Learner remote" on the instrument picker opens `?join=CODE#/remote/learner`. |
 | [`apps/demo/src/app/views/mechanisms.ts`](../../apps/demo/src/app/views/mechanisms.ts) | The mechanism tree (docs/plans/mechanism-tree.md piece T1; Q12: `#/explore/mechanisms`, the last entry of Explore's left nav): for one of the six first triggers, the static forward tree of the couplings the engine comput |
 | [`apps/demo/src/app/views/monitor.ts`](../../apps/demo/src/app/views/monitor.ts) | Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the instructor has switched it on for this scenario. |
 | [`apps/demo/src/app/views/patient.ts`](../../apps/demo/src/app/views/patient.ts) | Patient (E125): the free-run patient, the E123 start page's controls on their own page, unchanged in function — the presets, age, sex, weight, height and conditions, MODELED or MANUAL, and "start with the sensors off". |
@@ -1069,6 +1099,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/fast-forward-main-thread.e2e.ts`](../../apps/demo/e2e/fast-forward-main-thread.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/finish-restart-v2.e2e.ts`](../../apps/demo/e2e/finish-restart-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx14-pause-while-hidden.e2e.ts`](../../apps/demo/e2e/fx14-pause-while-hidden.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx16-follower-beep-gate.e2e.ts`](../../apps/demo/e2e/fx16-follower-beep-gate.e2e.ts) | 0 | 0 |
@@ -1082,6 +1113,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/learner-remote.e2e.ts`](../../apps/demo/e2e/learner-remote.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mechanism-tree.e2e.ts`](../../apps/demo/e2e/mechanism-tree.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mobile-learner.e2e.ts`](../../apps/demo/e2e/mobile-learner.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-destroy-refuses.e2e.ts`](../../apps/demo/e2e/monitor-destroy-refuses.e2e.ts) | 0 | 0 |
@@ -1170,6 +1202,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-panel.dom.test.ts`](../../apps/demo/src/app/fast-forward-panel.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-beep-gate.test.ts`](../../apps/demo/src/app/follower-beep-gate.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/formulary.test.ts`](../../apps/demo/src/app/formulary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/hidden-tab.test.ts`](../../apps/demo/src/app/hidden-tab.test.ts) | 0 | 0 |
@@ -1200,6 +1233,8 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/remote/bench.dom.test.ts`](../../apps/demo/src/app/remote/bench.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/remote/tray.dom.test.ts`](../../apps/demo/src/app/remote/tray.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/router.test.ts`](../../apps/demo/src/app/router.test.ts) | 0 | 0 |
@@ -1275,6 +1310,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/learner-baseline.dom.test.ts`](../../apps/demo/src/app/views/learner-baseline.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/learner-remote.dom.test.ts`](../../apps/demo/src/app/views/learner-remote.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/mechanisms.dom.test.ts`](../../apps/demo/src/app/views/mechanisms.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/remote-pin.dom.test.ts`](../../apps/demo/src/app/views/remote-pin.dom.test.ts) | 0 | 0 |
@@ -1358,6 +1394,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`views.test.ts`](../../packages/renderer/test/views.test.ts) | 0 | 0 |
 | [`worker-event-backpressure.test.ts`](../../packages/renderer/test/worker-event-backpressure.test.ts) | 0 | 0 |
 | [`worker-pump-backpressure.test.ts`](../../packages/renderer/test/worker-pump-backpressure.test.ts) | 0 | 0 |
+| [`worker-ready-and-main-yield.test.ts`](../../packages/renderer/test/worker-ready-and-main-yield.test.ts) | 0 | 0 |
 | [`alarm-wording.test.ts`](../../packages/skins/test/alarm-wording.test.ts) | 0 | 0 |
 | [`co2-sampling.test.ts`](../../packages/skins/test/co2-sampling.test.ts) | 0 | 0 |
 | [`color.test.ts`](../../packages/skins/test/color.test.ts) | 0 | 0 |

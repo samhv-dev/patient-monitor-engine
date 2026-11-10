@@ -17,7 +17,10 @@ export {
 } from './transport/webrtc.ts';
 export { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './transport/backoff.ts';
 export type { RelayDevice, RelayFrame } from './transport/relay-frames.ts';
-export { HostSession, INSTRUCTOR_REASONS, STAGE_LEAD_TICKS, VENTILATOR_REASONS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
+export { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, STAGE_LEAD_TICKS, VENTILATOR_REASONS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
+// Plan learner-action-remote.md L4: the host's preparations — what a remote may name as a container, the room temperature
+// the stability rows are read at, and the bodies of the host's `prep` events (L7's tray, L9's instructor card)
+export { PREP_CONTAINERS, PREP_TEMP_C, PREPS_PER_DEVICE, type InstructorPrepNews, type InstructorPrepView, type LearnerPrepNews, type LearnerPrepView, type PrepNewsKind } from './session/preparations.ts';
 export { bolusDrugOf, givenByOf, lockReason, RecentGives, SAME_DRUG_LOCK_S, type DrugLock, type GivenBy } from './session/drug-lock.ts';
 export { ControllerSession, describe, HOST_RESTARTED_REASON, NOT_CONFIRMED_REASON, type ControllerSessionOptions, type InstructorAccess, type LogEntry } from './session/controller-session.ts';
 export { ViewerSync, type ViewerSyncOptions, type ViewerStatus, type ViewerTarget } from './session/viewer-sync.ts';
@@ -56,3 +59,6 @@ export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITI
 export type * from './formulary/types.ts';
 // Plan learner-action-remote.md L5: the bench's Finding, which the /2 administration record's `prep` carries
 export type { Finding, FindingKind } from './formulary/findings.ts';
+// Plan learner-action-remote.md L7: the bench's preview on the learner's phone runs the host's own pure step (the host's
+// answer, not this preview, is what the phone then shows as the concentration)
+export { prepare, type Active, type Preparation, type PrepareResult } from './formulary/prepare.ts';

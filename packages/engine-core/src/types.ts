@@ -8,7 +8,7 @@ import type { BloodCommandBody, BloodEvent, BloodProfile } from './types-blood.t
 import type { OrganCommandBody, OrganNumericId, OrgansEvent } from './types-organs.ts';
 import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, TeachingChannel } from './types-circ.ts';
 import type { LungCommandBody, LungConditionSpec } from './types-lung.ts';
-import type { DrugLocalEffectEvent, DrugsEvent, DrugWarningEvent, PkClinicalEvent } from './types-pk.ts';
+import type { DrugLocalEffectEvent, DrugsEvent, DrugWarningEvent, PkClinicalEvent, PumpAlarmEvent, PumpRefusedEvent } from './types-pk.ts';
 import type { TruthEvent } from './types-truth.ts';
 import type { NeuroCommandBody, NeuroDeviceAction, NeuroEvent, NeuroNumericId, NeuroProfile } from './types-neuro.ts';
 import type { EegDeviceAction, EegNumericId, EegReadingEvent } from './types-eeg.ts';
@@ -157,6 +157,8 @@ export type EngineEvent =
   | DrugsEvent // types-pk.ts
   | DrugWarningEvent
   | DrugLocalEffectEvent
+  | PumpAlarmEvent
+  | PumpRefusedEvent
   | BloodEvent // types-blood.ts
   | NeuroEvent // types-neuro.ts
   | EndoEvent // types-endo.ts
@@ -184,7 +186,9 @@ export interface MonitorEngine {
   resume(): void;
   setTimeScale(k: number): void;
   step(ticks?: number): void;
-  advanceTo(simT: SimSeconds): void;
+  /** Run the engine's own ticks up to `simT`. `lookAhead` false skips the look-ahead (the tones and look-ahead samples)
+   *  after the last of them: a run cut into pieces of which only the last looks ahead is the uncut run (brief 126). */
+  advanceTo(simT: SimSeconds, lookAhead?: boolean): void;
   now(): { tick: Tick; simT: SimSeconds };
   dispatch(cmd: Command): DispatchResult;
   on(fn: (e: EngineEvent) => void, types?: EngineEventType[]): () => void;

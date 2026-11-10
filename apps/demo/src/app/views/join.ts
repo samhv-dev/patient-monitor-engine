@@ -6,13 +6,15 @@
 // preselected next time, never applied without a tap. The picker grants nothing and follows nothing.
 // R8d: the Ventilator card's "Show here" opens the ventilator's own page for this room (`vent-hamilton.html?join=CODE#/vent`,
 // classroom.ts), where P7's PIN form signs it in as the `ventilator`; the cockpit then fills the screen.
+// L6 (plan learner-action-remote.md): the Learner remote card's "Show here" opens `#/remote/learner` on this page, whose
+// learner-PIN form signs it in as a `learner` (views/learner-remote.ts); the picker itself asks for no PIN.
 import { DEVICE_RE } from '@pme/controller';
 import { hashOf, ventDeviceUrl, type PageLocation } from '../classroom.ts';
 import { store as appStore } from '../store.ts';
 import { h } from '../ui.ts';
 
 type Store = { get(k: string): string | null; set(k: string, v: string): void };
-type Shown = 'learner' | 'monitor';
+type Shown = 'learner' | 'monitor' | 'remote';
 type Card = { show: Shown | 'vent' | 'depth' | 'iabp'; title: string; chip: string; text: string; foot: string; action: boolean };
 
 /**
@@ -29,6 +31,10 @@ export const PICKER_WORDS = {
   cards: [
     { show: 'learner', title: 'Learner monitor', chip: 'Ready', text: 'This phone follows the patient monitor.', foot: 'Upright on a phone', action: true },
     { show: 'monitor', title: 'Patient monitor', chip: 'Ready', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style.", foot: 'Sideways, the whole screen', action: true },
+    // L6 (plan learner-action-remote.md §9 L6; LQ1 ruled 9 November): the learner action remote, signed in with the
+    // learner PIN on its own page (#/remote/learner). Its line is the plan's draft, kept as ONE literal: the owner rules
+    // the words. Its menus (drugs, infusions, labs) come with L7, L8 and L11; until then its tabs say so
+    { show: 'remote', title: 'Learner remote', chip: 'With the learner PIN', text: "Give drugs and infusions, send samples and read their results from this phone. Everything you give is recorded under this phone's name.", foot: 'Upright on a phone', action: true },
     // R8d: on a tablet over the relay (R8a–R8c), signed in with the instructor's PIN on its own page
     { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
     // The engine has had its EEG and a generic processed-EEG reader since PR #322 (EEG plan E5/E6); the depth window of
@@ -51,6 +57,8 @@ const PIC: Record<CardShow, string> = {
   vent: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="10" y="8" width="180" height="84" rx="6" fill="#111" stroke="#2a3340"/><rect x="18" y="16" width="110" height="52" rx="3" fill="#0b0e12" stroke="#2a3340"/><path d="M22 60 L40 60 L46 30 L60 30 L66 60 L84 60 L90 30 L104 30 L110 60 L126 60" fill="none" stroke="#f0c75e" stroke-width="2"/><circle cx="160" cy="42" r="16" fill="none" stroke="#3a4656" stroke-width="3"/><rect x="18" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="48" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="78" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="146" y="70" width="28" height="12" rx="2" fill="#5fd99b"/></svg>',
   depth: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="30" y="14" width="140" height="72" rx="8" fill="#111" stroke="#2a3340"/></svg>',
   iabp: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="8" y="8" width="184" height="84" rx="6" fill="#111" stroke="#2a3340"/><rect x="16" y="70" width="60" height="14" rx="3" fill="#263142"/><circle cx="160" cy="76" r="8" fill="none" stroke="#3a4656" stroke-width="2"/></svg>',
+  // L6: a phone with the monitor strip at its top and three tabs under it, no number or word
+  remote: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="70" y="4" width="60" height="92" rx="10" fill="#111" stroke="#2a3340"/><rect x="76" y="14" width="48" height="30" rx="3" fill="#0b0e12"/><polyline points="80,30 92,30 96,22 100,38 104,30 120,30" fill="none" stroke="#5fd99b" stroke-width="1.5"/><rect x="76" y="50" width="14" height="8" rx="2" fill="#5db7ff"/><rect x="93" y="50" width="14" height="8" rx="2" fill="#263142"/><rect x="110" y="50" width="14" height="8" rx="2" fill="#263142"/><rect x="76" y="62" width="48" height="22" rx="3" fill="#0b0e12" stroke="#2a3340"/></svg>',
   learner: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="70" y="4" width="60" height="92" rx="10" fill="#111" stroke="#2a3340"/><rect x="76" y="14" width="48" height="66" rx="3" fill="#0b0e12"/><polyline points="80,40 92,40 96,32 100,48 104,40 120,40" fill="none" stroke="#5fd99b" stroke-width="1.5"/></svg>',
 };
 

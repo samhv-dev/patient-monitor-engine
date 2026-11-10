@@ -109,3 +109,34 @@ describe('R5d: through a real host, as AppSession wires the record', () => {
     host.close();
   });
 });
+
+// Plan learner-action-remote.md L4: a learner REMOTE's give, infusion change and sample are `learner` rows too, with the
+// device key the host carried as `by`, the preparation (`prepId`) and, for an infusion change, the rate it replaced and
+// who had set it, all as the host wrote them; its drug counts in the drug totals as the laptop's does, and the Debrief
+// names it as the remote, never as a defibrillator window.
+describe('L4: the learner remote\'s rows', () => {
+  const RKEY = 'remote0001';
+  const give = (tick: number, extra: Record<string, unknown> = {}) =>
+    applied(tick, { issuedBy: LEARNER_ISSUED_BY, by: RKEY, prepId: 'p0000001', type: 'applyEvent', event: { kind: 'drug', drugId: 'fentanyl', dose: 50, unit: 'mcg', route: 'iv' }, ...extra });
+  it('a give is a learner row with its device, its name, its preparation and its dose; an infusion change keeps the replaced rate', () => {
+    const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names({ [RKEY]: 'bed 2 remote' }));
+    r.wire(give(500));
+    r.wire(applied(1000, { issuedBy: LEARNER_ISSUED_BY, by: RKEY, type: 'applyEvent', event: { kind: 'infusion', drugId: 'norepinephrine', rate: 5, unit: 'mL/h' }, replaced: { rate: 3, rateUnit: 'mL/h', by: 'laptop' } }));
+    r.wire(applied(1500, { issuedBy: LEARNER_ISSUED_BY, by: RKEY, type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } }));
+    const [a, b, c] = r.data.rows;
+    expect(a).toMatchObject({ t: 10, kind: 'learner', remote: true, by: RKEY, name: 'bed 2 remote', prepId: 'p0000001', ev: 'drug:fentanyl', dose: { drugId: 'fentanyl', dose: 50, unit: 'mcg' } });
+    expect(b).toMatchObject({ kind: 'learner', remote: true, by: RKEY, ev: 'drug:norepinephrine', replaced: { rate: 3, rateUnit: 'mL/h', by: 'laptop' } });
+    expect(c).toMatchObject({ kind: 'learner', remote: true, by: RKEY });
+    expect(learnerWho(r.data.rows, a as Row, names({}))).toBe(`${(a as Row).text} at 00:10, by Learner remote (bed 2 remote)`);
+  });
+  it('the Debrief numbers the remotes among remotes and the windows among windows', () => {
+    const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0);
+    r.wire(learner(100, 'charge'));
+    r.wire(give(200, { by: 'remote0002' }));
+    r.wire(give(300, { by: 'remote0003', prepId: 'p0000002' }));
+    const [w, x, y] = r.data.rows as [Row, Row, Row];
+    expect(learnerWho(r.data.rows, w, names({}))).toMatch(/by Defibrillator window 1$/);
+    expect(learnerWho(r.data.rows, x, names({}))).toMatch(/by Learner remote 1$/);
+    expect(learnerWho(r.data.rows, y, names({}))).toMatch(/by Learner remote 2$/);
+  });
+});

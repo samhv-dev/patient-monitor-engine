@@ -6,7 +6,7 @@ import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
 import { instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
-import { instructorPin } from './instructor-pin.ts';
+import { instructorPin, learnerPin, type InstructorPin } from './instructor-pin.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
@@ -34,6 +34,9 @@ import { mountFastForward } from './fast-forward.ts';
 import { watchHiddenTab } from './hidden-tab.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { deviceKey, pickerView } from './views/join.ts';
+import { learnerRemoteView } from './views/learner-remote.ts';
+import { drugsMenu } from './remote/drugs.ts';
+import { loadShippedFormulary } from './formulary.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
 import { settingsView } from './views/settings.ts';
@@ -62,6 +65,7 @@ const moved = normalizeSessionCode(q.get('moved') ?? '');
 const shows = follow ? instrumentOf(location.hash) : null;
 const defibWindow = shows === 'defib';
 if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
+if (follow && shows === 'remote') document.documentElement.dataset.learner = 'remote'; // L6: the monitor strip over the tabs (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -84,7 +88,38 @@ if (follow && shows === 'pick') {
   document.body.replaceChildren(); // a page of its own, as `?moved=` below: no shell, no monitor, no session
   pickerView({ code: follow, parent: document.body });
   document.title = 'Choose an instrument: patient monitor simulator';
-} else if (follow && shows && shows !== 'pick') {
+} else if (follow && shows === 'remote') {
+  // L6 (plan learner-action-remote.md §4 D1): the learner action remote. Its learner-PIN form first; at sign-in the
+  // follower, whose every hello says `{role: 'learner', show: 'learner', device, pin}` (the PIN from the page's memory);
+  // granted, the monitor strip, the three tabs and the connection line. The hash stays `#/remote/learner`, so a reload
+  // opens the form again (the PIN is typed again: it is kept nowhere)
+  let current: ReturnType<typeof mountFollower> | null = null;
+  const line = simLine(shell.stage, !!join);
+  // L7: the Drugs tab, the bench over the tray; its countdowns run on this phone's own engine clock (the case clock)
+  let caseClock: { renderT(): number } | null = null;
+  const drugs = drugsMenu({ now: () => caseClock?.renderT() ?? null });
+  void loadShippedFormulary().then((f) => drugs.ready(f));
+  const remote = learnerRemoteView({
+    code: follow,
+    stage: shell.stage,
+    drugs: drugs.el,
+    follow: (code, bar, pin) => {
+      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), pin });
+      line.set(f.monitor, f.style, true);
+      f.onStyle = (st) => line.set(f.monitor, st, true);
+      return (current = f);
+    },
+  });
+  remote.onSignedIn((f) => {
+    void f.monitor.viewerClock().then((c) => void (current === f && (caseClock = c)));
+    return drugs.attach(f);
+  });
+  shell.add(remote);
+  mountFastForward(shell.root, { get fastForward() { return current?.sync?.fastForward ?? null; }, get lastFastForward() { return current?.sync?.lastFastForward ?? null; } }, { simT: () => current?.sync?.fastForwardAt ?? null, font: () => current?.monitor.skin?.render.fontStack, latch: (a) => current?.monitor.latchAlarms(a) });
+  shell.start();
+  document.title = 'Learner remote: patient monitor simulator';
+  Object.assign(window, { __pmeLearnerRemote: remote, __pmeLearnerDrugs: drugs, __pmeApp: { shell, frames, site } });
+} else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
   const what = defibWindow ? 'Defibrillator' : 'Learner monitor';
@@ -125,8 +160,13 @@ if (follow && shows === 'pick') {
   if (!base) throw new Error('no patient presets');
   // The instructor phone's PIN (plan instructor-peer-role.md P7): this computer's store only; the host reads it at every
   // instructor hello. Never in an address, a QR code or the tab's state (instructor-pin.ts)
-  const pin = instructorPin();
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get() });
+  // L4 (learner-action-remote.md §4 D9): the learner PIN beside it, the same keeping, never equal to it; a new learner PIN
+  // revokes every learner remote (Room setup's "New learner PIN", views/room.ts learnerPinCard)
+  let lpin: InstructorPin | null = null;
+  const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
+  const learner = (lpin = learnerPin(() => pin.get()));
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales, defib: session.defibModel }), (f) => {
@@ -161,6 +201,24 @@ if (follow && shows === 'pick') {
     const s = (e as CustomEvent<{ behindS: number }>).detail.behindS;
     toast(`The simulation is ${s.toFixed(1)} s behind real time: the computer is busy. It catches up by itself.`);
     link.note(`The engine fell behind real time by ${s.toFixed(1)} s: the computer is busy`, 'system');
+  });
+  // Brief 126 (N48): a worker slow to load is waited for, and said; a worker that failed leaves the engine on the page's
+  // main thread, and that is said too — the monitor never changes how it runs in silence
+  shell.monitorHost.addEventListener('pme-monitor-worker-late', (e) => {
+    const ms = (e as CustomEvent<{ waitedMs: number }>).detail.waitedMs;
+    toast('The monitor is still starting: the computer is busy.');
+    link.note(`The monitor was slow to start: its engine worker was not ready after ${(ms / 1000).toFixed(1)} s`, 'system');
+  });
+  shell.monitorHost.addEventListener('pme-monitor-worker-ready', (e) => {
+    const ms = (e as CustomEvent<{ readyMs: number }>).detail.readyMs;
+    toast('The monitor has started');
+    link.note(`The monitor started: its engine worker was ready after ${(ms / 1000).toFixed(1)} s`, 'system');
+  });
+  shell.monitorHost.addEventListener('pme-monitor-main-thread', (e) => {
+    const reason = (e as CustomEvent<{ reason: string }>).detail.reason;
+    console.error('monitor on the main thread:', reason);
+    toast('The monitor runs without its worker: on a busy computer it is slower');
+    link.note(`The monitor runs on the page's main thread: its engine worker failed (${reason})`, 'system');
   });
   shell.monitorHost.addEventListener('pme-monitor-caught-up', (e) => {
     link.note(`The engine caught up with real time (it was up to ${(e as CustomEvent<{ worstS: number }>).detail.worstS.toFixed(1)} s behind)`, 'system');
@@ -198,6 +256,7 @@ if (follow && shows === 'pick') {
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
+    learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario }));

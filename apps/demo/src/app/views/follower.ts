@@ -86,13 +86,23 @@ export function followUrl(code: string, loc: { origin: string; pathname: string 
 export interface Follower {
   readonly monitor: MonitorHandle;
   readonly transport: ManagedTransport;
+  /** The peer id its hello says (the sync's); L7: a learner remote's own `prep` events are addressed `to` it. */
+  readonly peerId: string;
   /** The style this window shows (the instructor's). */
   style: { skin: string; theme: string };
   sync: ViewerSync | null;
+  /**
+   * L7: send one command to the host under this follower's own peer id and sequence (asOnePeer), as the learner remote's
+   * menus do; returns the command's id (the host's ack names it). Present on the learner remote's follower only.
+   */
+  command?: (body: FollowerCommand) => string;
   /** Called once this window has put on a new style (the simulation line follows the header it lands in). */
   onStyle?: (style: { skin: string; theme: string }) => void;
   destroy(): void;
 }
+
+/** L7: a learner remote's command as its menus build it: everything but the id and `issuedBy`, which the follower stamps. */
+export type FollowerCommand = { type: string } & Record<string, unknown>;
 
 /** A learner's phone follows over the relay at this WebSocket address instead of this browser's channel. */
 export interface NetFollow {
@@ -103,6 +113,11 @@ export interface NetFollow {
 export interface FollowerInstrument {
   show: Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
   device: string;
+  /**
+   * L6 (plan learner-action-remote.md §4 D1): the learner remote's page. Each hello then says the `learner` role with
+   * this learner PIN (read at each hello from the page's memory, never kept), and the host grants it on that PIN (L4).
+   */
+  pin?: () => string;
 }
 
 /**
@@ -110,7 +125,7 @@ export interface FollowerInstrument {
  * adds them (viewer-sync.ts, which says the hello, is not changed: §4 D1).
  */
 export function withInstrument(t: ManagedTransport, i: FollowerInstrument): ManagedTransport {
-  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, show: i.show, device: i.device } : m);
+  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, ...(i.pin ? { role: 'learner' as const, pin: i.pin() } : {}), show: i.show, device: i.device } : m);
   return new Proxy(t, {
     get(target, key) {
       if (key === 'send') return send;
@@ -124,10 +139,13 @@ export function withInstrument(t: ManagedTransport, i: FollowerInstrument): Mana
  * R5d: the defibrillator window's end of the wire. Every message it sends goes out under ONE id (the sync's) with one
  * sequence, so its presses are the same peer as its `defib` hello (the host reads the role and device key of that
  * hello; the relay checks the same socket). The sync's own stamps keep their id; the sequence is renumbered here.
+ * L7 (plan learner-action-remote.md): the learner remote's page sends its commands the same way, under the sync's id with
+ * the one sequence (`role` absent: its hello's `learner` role is withInstrument's), so the relay, which drops a message
+ * whose `from` is not the socket's hello id, and the host's sequence filter take them.
  */
-function asDefibWindow(t: ManagedTransport): ManagedTransport {
+function asOnePeer(t: ManagedTransport, role?: 'defib'): ManagedTransport {
   let seq = 0;
-  const send = (m: WireMessage) => t.send({ ...m, seq: ++seq, ...(m.kind === 'hello' ? { role: 'defib' as const } : {}) });
+  const send = (m: WireMessage) => t.send({ ...m, seq: ++seq, ...(m.kind === 'hello' && role ? { role } : {}) });
   return new Proxy(t, {
     get(target, key) {
       if (key === 'send') return send;
@@ -153,7 +171,7 @@ export interface FollowerOptions {
  * `defib` (R5). `show: 'defib'` is the defibrillator window too.
  */
 export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow, o: Partial<FollowerInstrument> & FollowerOptions = {}): Follower {
-  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device } : undefined;
+  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device, ...(o.pin ? { pin: o.pin } : {}) } : undefined;
   const defib = o.defib === true || o.show === 'defib';
   applySkinAlarmColours(site.skin, site.theme);
   // This window's alarm SOUND is its own (its Sound and Silence buttons); the alarms are the patient's
@@ -173,8 +191,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   };
   const link = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
   const said = instrument ? withInstrument(link, instrument) : link;
-  const transport = defib ? asDefibWindow(said) : said;
-  const peerId = newPeerId('view'); // the sync's id, which the window's presses share (asDefibWindow)
+  const transport = defib ? asOnePeer(said, 'defib') : instrument?.pin ? asOnePeer(said) : said;
+  const peerId = newPeerId('view'); // the sync's id, which the window's presses (and a learner remote's commands) share (asOnePeer)
   const status = h('span', { class: 'status-pill', role: 'status' }, `Waiting for the instructor's monitor ${code}…`);
   // On and off again, this window only
   const drawSound = () => ((sound.textContent = monitor.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
@@ -204,7 +222,14 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   let raf = 0;
   let offDraw = () => {}; // The pill's redraw on host messages (after the sync's own handler)
   let offReadout = () => {}; // R5: the defibrillator readout's subscription to this window's engine
-  const f: Follower = { monitor, transport, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
+  const f: Follower = { monitor, transport, peerId, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
+  // L7: the learner remote's commands, under the sync's id (the peer its learner hello made); `issuedBy` is the host's to set
+  let sentN = 0;
+  if (instrument?.pin) f.command = (body) => {
+    const id = `${peerId}-c${++sentN}`;
+    transport.send({ v: 1, session: code, from: peerId, seq: 0, sentAt: epochNow(), kind: 'command', body: { ...body, id, issuedBy: 'learner' } } as WireMessage);
+    return id;
+  };
   // R5: the defibrillator window's readout, from this window's own engine (its deviceStatus)
   const readout = defib ? h('p', { class: 'defib-readout', role: 'status', 'aria-label': 'Defibrillator' }) : null;
   if (readout) shell.stage.append(readout);

@@ -49,30 +49,24 @@ export function rowWords(r: Row): { level: 'stable' | 'weak' | 'down'; state: st
   return { level: 'weak', state: 'No phone signed in', when: '—' };
 }
 
-export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
-  const now = d.now ?? Date.now;
-  let row: Row = d.instructors() > 0 ? { state: 'in', since: now(), tookOver: false } : { state: 'none' };
-  let changing = false; // the revocation our own Change the PIN causes is "signed out", not "lost"
-
-  // ------------------------------------------------------------------------------------------------------- the row
-  const dot = h('i', { class: 'room-dot', role: 'img' });
-  const state = h('span', { class: 'ip-peer-state' });
-  const when = h('span', { class: 'ip-peer-when' });
-  const denials = h('p', { class: 'hint ip-peer-denials', role: 'status' });
-  const rowEl = h('div', { class: 'ip-peer-row', role: 'status', 'aria-live': 'polite' }, dot, h('b', {}, 'Instructor phone'), state, when);
-
-  // --------------------------------------------------------------------------------------------------- the PIN
-  const value = h('span', { class: 'ip-peer-pin-value', role: 'status', 'aria-label': 'PIN hidden' }, HIDDEN_PIN);
+/**
+ * P7's press-and-hold (Q2), for a PIN of this computer: while not held the digits are not in the page at all, so a
+ * laptop mirrored to the projector never shows them. L6 shows the learner PIN with the same control (views/room.ts).
+ * `what`: the PIN's name in a sentence ("PIN", "learner PIN").
+ */
+export function pinHold(o: { get(): string; what: string }): { value: HTMLElement; hold: HTMLButtonElement; reveal(on: boolean): void; held(): boolean } {
+  const name = o.what.charAt(0).toUpperCase() + o.what.slice(1);
+  const value = h('span', { class: 'ip-peer-pin-value', role: 'status', 'aria-label': `${name} hidden` }, HIDDEN_PIN);
   let held = false;
   const reveal = (on: boolean) => {
     held = on;
-    value.textContent = on ? d.pin.get() : HIDDEN_PIN; // never in the page while not held
-    value.setAttribute('aria-label', on ? `PIN ${d.pin.get().split('').join(' ')}` : 'PIN hidden');
+    value.textContent = on ? o.get() : HIDDEN_PIN; // never in the page while not held
+    value.setAttribute('aria-label', on ? `${name} ${o.get().split('').join(' ')}` : `${name} hidden`);
     hold.setAttribute('aria-pressed', String(on));
   };
   const key = (e: Event) => (e as KeyboardEvent).key === ' ' || (e as KeyboardEvent).key === 'Enter';
   const hold = h('button', {
-    type: 'button', class: 'btn ip-peer-hold', 'aria-pressed': 'false', title: 'Press and hold to show the PIN',
+    type: 'button', class: 'btn ip-peer-hold', 'aria-pressed': 'false', title: `Press and hold to show the ${o.what}`,
     onpointerdown: (e: Event) => {
       try {
         hold.setPointerCapture((e as PointerEvent).pointerId); // the release is heard even off the button
@@ -87,13 +81,30 @@ export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
     onkeyup: (e: Event) => void (key(e) && reveal(false)),
     onblur: () => reveal(false),
     oncontextmenu: (e: Event) => e.preventDefault(), // a long press on a touch screen
-  }, 'Hold to show the PIN');
+  }, `Hold to show the ${o.what}`);
+  return { value, hold, reveal, held: () => held };
+}
+
+export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
+  const now = d.now ?? Date.now;
+  let row: Row = d.instructors() > 0 ? { state: 'in', since: now(), tookOver: false } : { state: 'none' };
+  let changing = false; // the revocation our own Change the PIN causes is "signed out", not "lost"
+
+  // ------------------------------------------------------------------------------------------------------- the row
+  const dot = h('i', { class: 'room-dot', role: 'img' });
+  const state = h('span', { class: 'ip-peer-state' });
+  const when = h('span', { class: 'ip-peer-when' });
+  const denials = h('p', { class: 'hint ip-peer-denials', role: 'status' });
+  const rowEl = h('div', { class: 'ip-peer-row', role: 'status', 'aria-live': 'polite' }, dot, h('b', {}, 'Instructor phone'), state, when);
+
+  // --------------------------------------------------------------------------------------------------- the PIN
+  const { value, hold, reveal, held } = pinHold({ get: () => d.pin.get(), what: 'PIN' });
   const change = button('Change the PIN', () => {
     changing = true;
     d.pin.change();
     d.host.instructorPinChanged();
     changing = false;
-    if (held) reveal(true);
+    if (held()) reveal(true);
     draw();
   }, 'ip-peer-change');
   const pinBox = h('div', { class: 'ip-peer-pinbox' }, h('span', { class: 'ip-peer-pin-label' }, 'PIN'), value, hold, change);

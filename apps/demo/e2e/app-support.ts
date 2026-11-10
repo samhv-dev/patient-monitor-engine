@@ -112,7 +112,7 @@ export function audit(page: Page, o: { touchPanel: boolean }): Promise<A11yFindi
       const box = el.matches('input[type=checkbox], input[type=radio]') ? el.closest('label') ?? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) ?? el : el;
       const r = box.getBoundingClientRect();
       const inline = el.tagName === 'A' && !!el.closest('p, li') && !el.classList.contains('btn');
-      const min = touchPanel && el.closest('.panel, .sessionbar, .ip-peer-form, .ip-peer-room') && !el.classList.contains('tip') ? 44 : 24; // the instructor phone's way in (P7) too
+      const min = touchPanel && el.closest('.panel, .sessionbar, .ip-peer-form, .ip-peer-room, .lr-pin-room, .lr') && !el.classList.contains('tip') ? 44 : 24; // the instructor phone's way in (P7) and the learner remote with its Room panel (L6) too
       if (!inline && (r.width < min - 0.5 || r.height < min - 0.5)) out.push({ rule: 'target', what: `${el.tagName.toLowerCase()} "${(el.textContent ?? el.getAttribute('aria-label') ?? '').trim().slice(0, 30)}" ${Math.round(r.width)}×${Math.round(r.height)} < ${min}` });
       if (!name(el).trim() && el.getAttribute('type') !== 'file') out.push({ rule: 'name', what: `${el.tagName.toLowerCase()}#${el.id} has no accessible name` });
       if ((el.tagName === 'BUTTON' || el.getAttribute('role') === 'tab') && el.scrollWidth > el.clientWidth + 1) out.push({ rule: 'clipped', what: `"${el.textContent?.trim().slice(0, 30)}" clipped` });

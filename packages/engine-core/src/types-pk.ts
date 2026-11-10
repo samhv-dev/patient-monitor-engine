@@ -14,7 +14,82 @@ export type PkClinicalEvent =
   | { kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit; route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number } // concentrationPct: hypertonic saline 3 | 7.5 | 23.4 (default 3)
   | { kind: 'infusion'; drugId: string; rate: number; unit: RateUnit; concentration?: { amount: number; unit: 'mg' | 'mcg' | 'units' | 'g'; perMl: number } }
   | { kind: 'tci'; drugId: string; model?: string; mode: 'plasma' | 'effect'; target: number; maxRateMlH?: number }
-  | { kind: 'vaporiser'; agent: 'sevoflurane' | 'isoflurane' | 'desflurane'; dialPct: number; fgfLpm?: number; n2oFrac?: number };
+  | { kind: 'vaporiser'; agent: 'sevoflurane' | 'isoflurane' | 'desflurane'; dialPct: number; fgfLpm?: number; n2oFrac?: number }
+  | PumpEvent;
+
+/** A syringe's or a bag's concentration: `amount` `unit` per `perMl` mL. */
+export interface PumpConcentration { amount: number; unit: 'mg' | 'mcg' | 'g' | 'units' | 'mmol'; perMl: number }
+
+/**
+ * A pump channel's command (docs/plans/pump-rack-tci.md D2 and D4, piece E1): the host translates the pump device's
+ * press into one of these, with the syringe's or bag's TRUE `contents` on `load` and the PROGRAMMED drug on `program`;
+ * the device numbers the engine needs (the syringe size, the IV set, the bolus and purge rates) are resolved by the
+ * host from the device profile and carried here, so the engine holds none. `ch` is the channel, 1–8 (PQ1). Rate mode
+ * only; TCI on a channel is piece E2.
+ * - `load`: put a syringe (`channel: 'syringe'`, its size `syringeMl`) or a bag (`channel: 'drip'`) on the channel; a
+ *   channel keeps the kind of its first load.
+ * - `program`: the drug and concentration the learner chose from the pump's list (independent of the contents, §8);
+ *   on a drip channel also its IV set, drops/mL.
+ * - `rate`: mL/h; a dose rate, converted with the PROGRAMMED concentration (and `weightKg`, the weight typed into the
+ *   pump, for a per-kg rate); on a drip channel drops/min (mL/h = drops/min × 60 ÷ set) and a volume limit `limitMl`
+ *   (null: none).
+ * - `start` / `stop`: run and pause, the programme kept. `unload`: take the syringe or bag off.
+ * - `purge`: `volumeMl` at `rateMlH`, to waste before the channel has delivered anything, into the patient after (D7).
+ * - `bolus` (syringe channels): `volumeMl`, or `dose` converted with the programme, at `rateMlH`.
+ */
+export type PumpEvent =
+  | { kind: 'pump'; action: 'load'; ch: number; channel: 'syringe' | 'drip'; contents: { drugId: string; concentration: PumpConcentration; volumeMl: number }; syringeMl?: number }
+  | { kind: 'pump'; action: 'program'; ch: number; drugId: string; concentration: PumpConcentration; set?: number }
+  | { kind: 'pump'; action: 'rate'; ch: number; rate: number; unit: RateUnit | 'drops/min'; limitMl?: number | null; weightKg?: number }
+  | { kind: 'pump'; action: 'start' | 'stop' | 'unload'; ch: number }
+  | { kind: 'pump'; action: 'purge'; ch: number; volumeMl: number; rateMlH: number }
+  | { kind: 'pump'; action: 'bolus'; ch: number; volumeMl?: number; dose?: { amount: number; unit: DoseUnit }; weightKg?: number; rateMlH: number };
+
+/** The alarms a channel raises when it stops (D8): End (syringe), Empty Container and Infusion Complete (drip). */
+export type PumpAlarmId = 'end' | 'emptyContainer' | 'infusionComplete';
+
+/** One pump channel's state, in `PkState.pumps` (D4), so snapshot and restore carry it and every follower has it. */
+export interface PumpChannel {
+  ch: number;
+  kind: 'syringe' | 'drip';
+  /** What the syringe or bag TRULY holds; what the patient receives. null: nothing loaded. */
+  contents: { drugId: string; concentration: PumpConcentration; loadedMl: number } | null;
+  syringeMl: number | null; // the loaded syringe's size (syringe channels)
+  /** What the learner programmed: the face's drug, the dose-rate conversion. */
+  programmed: { drugId: string; concentration: PumpConcentration } | null;
+  set: number | null; // drip channels: the IV set, drops/mL
+  mode: 'rate'; // E2 adds 'tci'
+  rate: { rate: number; unit: RateUnit | 'drops/min'; weightKg?: number } | null; // as entered
+  rateMlH: number; // the entered rate in mL/h, under the current programme and set
+  limitMl: number | null; // drip channels: the volume limit (null: none)
+  volumeMl: number; // left in the syringe or bag
+  infusedMl: number; // into the patient since the load
+  wasteMl: number; // purged to waste (the line primed) since the load
+  paused: boolean;
+  /** A bolus or purge in progress: it runs at its own rate in place of the channel's. */
+  rapid: { what: 'bolus' | 'purge'; leftMl: number; rateMlH: number; toPatient: boolean } | null;
+  alarms: PumpAlarmId[];
+}
+
+/** One channel in the `drugs` event. The pump face renders `programmed`; `contents` is the instructor's truth (§8). */
+export interface PumpPanelRow {
+  ch: number; kind: 'syringe' | 'drip';
+  state: 'notLoaded' | 'loaded' | 'running' | 'paused' | 'alarm';
+  programmed: { drugId: string; concentration: PumpConcentration } | null;
+  contents: { drugId: string; concentration: PumpConcentration } | null;
+  syringeMl: number | null; set: number | null; mode: 'rate';
+  rate: { rate: number; unit: RateUnit | 'drops/min'; weightKg?: number } | null; rateMlH: number; limitMl: number | null;
+  volumeMl: number; infusedMl: number; wasteMl: number;
+  timeToEmptyMin: number | null; // at the running rate (null: not running)
+  alarms: PumpAlarmId[];
+}
+
+/** A validated `pump` command whose channel changed before it applied (the engine applies a command on a later tick
+ * than it validates it: the syringe emptied, another command unloaded it): not applied, and said. */
+export type PumpRefusedEvent = { type: 'pumpRefused'; t: SimSeconds; ch: number; action: string; reason: string };
+
+/** A channel stopped by its contents or its limit (D8), raised once when it happens. */
+export type PumpAlarmEvent = { type: 'pumpAlarm'; t: SimSeconds; ch: number; channel: 'syringe' | 'drip'; alarm: PumpAlarmId; programmed: string | null };
 
 /**
  * One drug's concentrations. All in `unit`, the library row's concentration unit: propofol µg/mL; opioids, NMB agents
@@ -117,4 +192,6 @@ export type DrugsEvent = {
   drugs: DrugPanelRow[];
   volatile: { agent: string; dialPct: number; fgfLpm: number; fi: number; fa: number; brain: number; macAge: number; macFrac: number; n2oFrac: number } | null;
   macTotal: number;
+  /** The pump channels (piece E1); absent until the first `pump` event, so a run without pumps is unchanged. */
+  pumps?: PumpPanelRow[];
 };
