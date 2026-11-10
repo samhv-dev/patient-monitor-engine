@@ -5,7 +5,10 @@
 // Since retire-instructor-v1 (PR 3) the laptop's Instructor view is Instructor v2: the laptop run audits ACTION and each
 // of its sheets at 1280 × 800 where it audited today's eight tabs. A tablet instructor uses the Remote (Q5): the iPad
 // portrait run pairs a Remote to the host by code and audits each of its tabs, with the 44-px touch targets. The
-// connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there.
+// connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there. The scenario
+// builder (B2) is audited with a draft open, at each of its three sections, and walked by keyboard; B3 adds its Phases
+// section with a phase open (and its add form), and B4 its Actions section with an action open (and two add forms), before
+// the walk.
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { audit, closeSheets, EXPLORE, focusWalk, go, openApp, sheet, type SheetId, startVite, TABS, tab, TEACH2 } from './app-support.ts';
@@ -53,6 +56,36 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
       await run(page, '#/room (New room code asked)');
       await page.keyboard.press('Escape');
     }
+    // Scenario builder B2: a draft open in the editor (a copy of the MH card) with a refusal shown in place, each of its
+    // three sections, and a focus walk through the page (keyboard reachable, a visible focus on every stop)
+    await go(page, '#/scenarios/builder');
+    await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();
+    await page.waitForSelector('.sb-page .sb-edit');
+    await page.locator('.sb-page .field').filter({ has: page.locator('label:text-is("Title")') }).locator('input').fill('');
+    await expect(page.locator('.sb-page .sb-edit .sb-refuse')).toHaveCount(1);
+    await run(page, '#/scenarios/builder/<draft> header (a refusal shown)');
+    for (const s of ['Patient and sensors', 'Case briefing']) {
+      await page.getByRole('button', { name: s }).click();
+      await run(page, `#/scenarios/builder/<draft> ${s}`);
+    }
+    // B3: the Phases section with Early signs open (its rule tree, its next list, Instructor v2's words), then its
+    // add-a-condition form open
+    await page.getByRole('button', { name: /^Phases/ }).click();
+    await page.locator('.sb-phases .sb-out', { hasText: 'Early signs' }).click();
+    await expect(page.locator('.sb-rule')).toBeVisible();
+    await run(page, '#/scenarios/builder/<draft> Phases, Early signs');
+    await page.getByRole('button', { name: 'Add a condition to the rule' }).click();
+    await run(page, '#/scenarios/builder/<draft> Phases, Early signs, a condition being added');
+    // B4: the Actions section with dantrolene open (its criteria, routes, window, repeat, violation, press, Instructor
+    // v2's row and grade()'s examples), then its add-a-violation and add-a-command forms open
+    await page.getByRole('button', { name: /^Actions/ }).click();
+    await page.locator('.sb-actions .sb-out').filter({ has: page.locator('.sb-pl:text-is("Dantrolene 2.5 mg/kg")') }).click();
+    await expect(page.locator('.sb-examples')).toBeVisible();
+    await run(page, '#/scenarios/builder/<draft> Actions, Dantrolene');
+    await page.getByRole('button', { name: 'Add a violation' }).click();
+    await page.getByRole('button', { name: 'Add from the Drug sheet' }).click();
+    await run(page, '#/scenarios/builder/<draft> Actions, Dantrolene, a violation and a command being added');
+    found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
     if (remote) {
       await remote.bringToFront();
       found.push(...(await focusWalk(remote)).map((f) => `focus (remote): ${f}`));

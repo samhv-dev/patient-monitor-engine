@@ -1,0 +1,166 @@
+/* The scenario builder's page (docs/plans/scenario-builder.md, mock-up 01-builder-main; piece B2). The mock-up's `sb-*`
+   classes (docs/plans/scenario-builder/mockup/mock.css), on the app's own tokens only (app.css :root and the light
+   theme's): no colour of their own. Scoped under `.sb-root` (the session bar has `.sb-left`, `.sb-right`). Hints use
+   --text-muted, not the mock-up's --text-faint, for 4.5:1 on the panels in both themes. */
+.sb-root .console-page.sb-page { max-width: none; padding: 20px 28px 28px; display: grid; gap: 14px; align-content: start; }
+.sb-root .sb-top { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.sb-root .sb-card { margin: 4px 0 0; color: var(--text-muted); font-size: 13.5px; }
+.sb-root .sb-card b { color: var(--text-strong); font-weight: 600; }
+.sb-root .sb-sp { flex: 1 1 auto; }
+.sb-root .sb-topr { display: grid; gap: 10px; justify-items: end; }
+.sb-root .sb-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sb-root .sb-saves { display: flex; gap: 8px; flex-wrap: wrap; }
+.sb-root .sb-save { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font-size: 12.5px; color: var(--text-muted); }
+.sb-root .sb-save i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.sb-root .sb-save.bad i { background: var(--bad); }
+.sb-root .sb-save b { color: var(--text-strong); font-weight: 500; }
+.sb-root .sb-grid { display: grid; grid-template-columns: 236px minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.sb-root .sb-panel { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
+.sb-root .sb-outline { padding: 10px 8px; }
+.sb-root .sb-outline h2 { margin: 10px 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+.sb-root .sb-out { display: flex; width: 100%; align-items: center; gap: 8px; min-height: 32px; padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.sb-root .sb-out:hover { background: var(--bezel-2); }
+.sb-root .sb-out[aria-current] { background: var(--go-soft); color: var(--text-strong); }
+.sb-root .sb-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: transparent; }
+.sb-root .sb-dot.bad { background: var(--bad); }
+.sb-root .sb-dot.warn { background: var(--warn); }
+.sb-root .sb-kept { margin: 0; padding: 0 10px; list-style: none; display: grid; gap: 2px; font-size: 14px; color: var(--text-muted); }
+.sb-root .sb-kept li { display: flex; padding: 4px 0; }
+.sb-root .sb-kept small { margin-left: auto; font-size: 12px; }
+.sb-root .sb-outline .sb-hint { margin: 6px 10px 4px; }
+.sb-root .sb-edit { padding: 18px 20px 22px; display: grid; gap: 16px; align-content: start; }
+.sb-root .sb-edit h2 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-strong); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sb-root .sb-edit h2 small { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.sb-root .sb-row { display: grid; align-items: start; gap: 12px; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); }
+.sb-root .sb-edit .input { min-height: 38px; }
+.sb-root .sb-edit textarea.input { min-height: 74px; padding: 8px 12px; line-height: 1.45; resize: vertical; font: inherit; }
+.sb-root .sb-hint { margin: 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
+.sb-root .sb-fixed { margin: 0; min-height: 38px; display: flex; align-items: center; color: var(--text-muted); }
+.sb-root .sb-msgs:empty { display: none; }
+.sb-root .sb-msgs { display: grid; gap: 4px; }
+.sb-root .sb-refuse, .sb-root .sb-warnline { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 0; padding: 6px 10px; border-radius: 0 6px 6px 0; color: var(--text-strong); font-size: 13px; line-height: 1.45; }
+.sb-root .sb-refuse { border-left: 3px solid var(--bad); background: var(--bad-soft); }
+.sb-root .sb-warnline { border-left: 3px solid var(--warn); background: var(--warn-soft); }
+.sb-root .sb-refuse code, .sb-root .sb-warnline code { font-size: 12px; color: var(--text-strong); }
+.sb-root .field.bad .input[aria-invalid='true'], .sb-root .input[aria-invalid='true'] { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.sb-root .sb-lines { display: grid; gap: 6px; }
+.sb-root .sb-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.sb-root .sb-sensors { margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.sb-root .sb-sensors legend { padding: 0 6px; font-size: var(--t-13); color: var(--text-muted); }
+.sb-root .sb-sensors > .sb-msgs { grid-column: 1 / -1; }
+.sb-root .sb-count { white-space: nowrap; }
+.sb-root .sb-count.over { color: var(--bad); font-weight: 600; }
+.sb-root .sb-checks { padding: 14px 16px; display: grid; gap: 12px; }
+.sb-root .sb-checks h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text-strong); }
+.sb-root .sb-checks ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 13px; }
+.sb-root .sb-checks li { position: relative; display: block; padding-left: 20px; color: var(--text); line-height: 1.4; overflow-wrap: anywhere; }
+.sb-root .sb-checks li::before { content: ''; position: absolute; left: 2px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+.sb-root .sb-checks li.bad::before { background: var(--bad); }
+.sb-root .sb-checks li.warn::before { background: var(--warn); }
+.sb-root .sb-checks li.off::before { background: var(--text-muted); }
+.sb-root .sb-checks li small { display: block; color: var(--text-muted); }
+.sb-root .sb-checks li .btn { margin-top: 4px; }
+.sb-root .sb-checks li.off .btn { margin: 2px 0 0; }
+.sb-root .sb-block { margin-top: 8px; }
+.sb-root .sb-block .scen-item .t code { font-size: 12.5px; color: var(--text-muted); }
+.sb-root .sb-drafts .scen-item { grid-template-columns: minmax(0, 1fr) auto auto; }
+.sb-root .sb-holds { margin-top: 8px; }
+.sb-root .sb-errs { margin: 6px 0 0; padding-left: 20px; font-size: 13px; color: var(--text); }
+.sb-root .sb-errs code { color: var(--text-strong); }
+.sb-root .sb-store-refuse { border-radius: 6px; }
+/* B3, the phase editor (mock-up 02-phase-editor): the phase list, the flow line, the rule tree, the `next` list and the
+   preview of Instructor v2's words; the mock-up's classes on the app's tokens, hints on --text-muted (4.5:1). */
+.sb-root .sb-phases { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.sb-root .sb-phases > li { display: grid; gap: 4px; }
+.sb-root .sb-phases .sb-out { width: auto; min-height: 32px; border: 1px solid var(--line); background: var(--surface); }
+.sb-root .sb-phases .sb-out small { font-size: 12px; color: var(--text-muted); }
+.sb-root .sb-phase { display: grid; gap: 16px; padding-top: 4px; border-top: 1px solid var(--line); }
+.sb-root .sb-phase-head { display: grid; gap: 8px; padding-top: 12px; }
+.sb-root .sb-phase-head h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-strong); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sb-root .sb-phase-head h3 small { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.sb-root .sb-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; }
+.sb-root .sb-flow .sb-ph { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 99px; background: transparent; color: var(--text); font-size: 13px; }
+.sb-root .sb-flow .sb-ph[aria-current] { border-color: var(--go); color: var(--text-strong); background: var(--go-soft); }
+.sb-root .sb-flow .sb-ar { color: var(--text-muted); }
+.sb-root .sb-warntext { color: var(--text-strong); }
+.sb-root .sb-rule, .sb-root .sb-kids { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.sb-root .sb-rule { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bezel-0); }
+.sb-root .sb-kids { padding-left: 14px; border-left: 2px solid var(--line-strong); }
+.sb-root .sb-node { display: grid; gap: 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13.5px; min-width: 0; }
+.sb-root .sb-node:focus-within { border-color: var(--line-strong); }
+.sb-root .sb-node-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sb-root .sb-node-head > select { width: auto; font: 600 12.5px/1 var(--font-plex-mono); letter-spacing: .04em; color: var(--go); }
+.sb-root .sb-op { font: 600 12.5px/1 var(--font-plex-mono); letter-spacing: .06em; color: var(--go); }
+.sb-root .sb-kind { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+.sb-root .sb-node-acts { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.sb-root .sb-leafrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.sb-root .sb-leafrow select.input { width: auto; max-width: min(100%, 24em); min-height: 34px; }
+.sb-root .sb-edit .sb-leafrow .input { min-height: 34px; }
+.sb-root .sb-num { width: 7.5em; }
+.sb-root .sb-leafrow code, .sb-root .sb-nextrow code, .sb-root .sb-says code, .sb-root .sb-preview code { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.sb-root .sb-numwhy { flex-basis: 100%; font-size: 12.5px; color: var(--text-strong); }
+.sb-root .sb-numwhy:empty { display: none; }
+.sb-root .sb-says { margin: 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.4; }
+.sb-root .sb-says-l { font-weight: 600; }
+.sb-root .sb-adder { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--line-strong); border-radius: 8px; background: var(--bezel-0); }
+.sb-root .sb-next { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.sb-root .sb-nextrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.sb-root .sb-nextrow select.input { width: auto; min-height: 34px; }
+.sb-root .sb-n { font: 600 12.5px/1 var(--font-plex-mono); color: var(--text-muted); min-width: 18px; }
+.sb-root .sb-preview { display: grid; gap: 8px; padding: 12px; border: 1px dashed var(--line-strong); border-radius: 10px; }
+.sb-root .sb-preview-l { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.sb-root .sb-preview-row { display: grid; gap: 2px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13.5px; color: var(--text); }
+.sb-root .sb-preview-row b { color: var(--text-strong); font-weight: 600; }
+.sb-root .sb-preview-row small { font-size: 12px; color: var(--text-muted); }
+.sb-root .sb-idwhy:empty { display: none; }
+/* B4, the action editor (mock-up 03-action-editor): the criteria and the window side by side, each criterion a small
+   framed group with its key in the mock-up's mono caps, routes as wrapped checkboxes with their modelled state, the
+   violations and the press as lists, and "How it grades" as grade()'s rows; the app's tokens only, hints on
+   --text-muted (4.5:1). */
+.sb-root .sb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.sb-root .sb-cols > .field, .sb-root .sb-crits, .sb-root .sb-crit > * { min-width: 0; }
+/* WebKit counts a narrowed select's own long option text as overflow of the page (it scrolled sideways at 1280 px): clipped */
+.sb-root .sb-edit select.input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.sb-root .sb-crits { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bezel-0); }
+.sb-root .sb-crit { display: grid; gap: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; font-size: 13.5px; }
+.sb-root .sb-crit .sb-num { width: 6em; }
+.sb-root .sb-crit-k { font: 600 11.5px/1.2 var(--font-plex-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.sb-root .sb-check { display: inline-flex; align-items: center; gap: 8px; min-height: 28px; font-size: 13.5px; color: var(--text); cursor: pointer; }
+.sb-root .sb-routes { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.sb-root .sb-route { display: grid; gap: 0; }
+.sb-root .sb-route .sb-hint { padding-left: 26px; font-size: 12px; }
+.sb-root .sb-switches { display: grid; gap: 4px; }
+.sb-root .sb-setting { display: grid; gap: 4px; padding-top: 4px; border-top: 1px dashed var(--line); }
+.sb-root .sb-setting:first-child { border-top: 0; padding-top: 0; }
+.sb-root .sb-settings { display: grid; gap: 8px; }
+.sb-root .sb-rulewrap { display: grid; gap: 6px; justify-items: start; }
+.sb-root .sb-rulewrap > .sb-rule { justify-self: stretch; }
+.sb-root .sb-viols { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.sb-root .sb-viol { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--bad); border-radius: 8px; background: var(--bezel-0); }
+.sb-root .sb-viol > .btn, .sb-root .sb-edit .field > .btn, .sb-root .sb-crit > .btn, .sb-root .sb-crit .sb-setting > .btn { justify-self: start; }
+.sb-root .sb-actions .sb-out small { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-root .sb-actions .sb-pl { max-width: 26em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-root .btn.sb-inline { min-height: 24px; padding: 0 6px; }
+.sb-root .sb-examples { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.sb-root .sb-ex { position: relative; display: grid; gap: 2px; padding: 6px 8px 6px 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px; color: var(--text); }
+.sb-root .sb-ex::before { content: ''; position: absolute; left: 8px; top: 11px; width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
+.sb-root .sb-ex.ok::before { background: var(--ok); }
+.sb-root .sb-ex.warn::before { background: var(--warn); }
+.sb-root .sb-ex.bad::before { background: var(--bad); }
+.sb-root .sb-ex-give { color: var(--text-strong); }
+.sb-root .sb-ex small, .sb-root .sb-ex-line { color: var(--text-muted); font-size: 12.5px; }
+.sb-root .sb-ex-viol { color: var(--text-strong); font-size: 12.5px; border-left: 3px solid var(--bad); padding-left: 6px; }
+.sb-root .sb-ex code { font-size: 12px; color: var(--text-muted); }
+/* narrower windows: the checks under the editor, then the outline on top (no sideways scroll at 820 px) */
+@media (max-width: 1240px) {
+  .sb-root .sb-grid { grid-template-columns: 220px minmax(0, 1fr); }
+  .sb-root .sb-checks { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+  .sb-root .console-page.sb-page { padding: var(--s-5) var(--s-4) var(--s-6); }
+  .sb-root .sb-grid { grid-template-columns: minmax(0, 1fr); }
+  .sb-root .sb-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sb-root .sb-sensors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sb-root .sb-topr { justify-items: start; }
+  .sb-root .sb-cols { grid-template-columns: minmax(0, 1fr); }
+}

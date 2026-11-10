@@ -44,7 +44,15 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 export type BatchMeta = { batch?: { id: string; n: number } };
 /** `actionId` (plan F3): the /2 card's action an A press sends the command for. Metadata, as `batch`: the host and the
  *  engine ignore it; the scenario driver reads it (a taking, and the administration record's source). */
-type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string; by?: string } & BatchMeta;
+/**
+ * `by`: the device key of a learner's device (R5d, L4); `prepId` (L4, §4 D3): the learner preparation a give came from;
+ * `replaced` (L4, LQ4): on a learner's infusion change, the rate it replaced and who had set it (a device key, or
+ * drug-lock.ts GivenBy). The host writes all three; a device's own are refused (learnerMay) or ignored.
+ */
+type CommandBase = {
+  id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string; by?: string; prepId?: string;
+  replaced?: { rate: number; rateUnit: string; by: string };
+} & BatchMeta;
 
 /**
  * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`
@@ -351,7 +359,7 @@ export type WireMessage = { v: 1; session: string; from: string; seq: number; se
   /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`. */
   | {
       kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
-      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' };
+      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' | 'learner' };
     }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }
