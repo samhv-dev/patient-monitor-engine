@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**180 known misses.** Split from the test titles: a band recognised in the target of 160, a measured value in 167, a source in 88; "—" = not stated in a form the generator reads.
+**179 known misses.** Split from the test titles: a band recognised in the target of 160, a measured value in 166, a source in 87; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 137 of these misses carry an audit verdict — RIGHT 29, TOO NARROW 24, TOO WIDE 3, MIS-SPECIFIED 56, UNSUPPORTED 25 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -21,7 +21,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Gas exchange and capnography](#gas-exchange) | 2 |
 | [Breathing, airway and the ventilator coupling](#breathing) | 18 |
 | [Blood, acid–base, electrolytes and fluids](#blood) | 10 |
-| [Brain, kidney and liver](#organs) | 13 |
+| [Brain, kidney and liver](#organs) | 12 |
 | [Endocrine, metabolism and temperature](#endocrine-thermal) | 16 |
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 8 |
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 33 |
@@ -190,7 +190,6 @@ Module page: [docs/model/organs.md](../model/organs.md)
 | Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex | ratio 0.803 | — | UNSUPPORTED ([audit row 9](../../docs/validation/target-audit/30-target-audit.md#row-9)) | direction only: HR at end <= baseline (ratio <= 0.9), with an initial tachycardia allowed; or keep 0.6-0.85 as an explicit [ENG] teaching choice | [`organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) |
 | check 18: PaCO2 25 → CBF 35–40 % of the anaesthetised baseline (model at CVP 6) | — | — | TOO NARROW ([audit row 8](../../docs/validation/target-audit/30-target-audit.md#row-8)) | 0.35-0.55 of the anaesthetised baseline | [`model.test.ts`](../../packages/engine-core/test/l2/brain/model.test.ts) |
 | IAP 25: UOP < 0.1 mL/kg/h | 0.69 | WSACS | TOO NARROW ([audit row 131](../../docs/validation/target-audit/30-target-audit.md#row-131)) | kidney-only rig at MAP 93: UOP <= 0.3 mL/kg/h (<= 30 % of control) at IAP 25; keep < 0.1 (anuria) for IAP >= 30-40 or APP < 50 | [`filtration.test.ts`](../../packages/engine-core/test/l2/renal/filtration.test.ts) |
-| rest GFR ≈ 125 mL/min | 117 | M10 ch. 15 p. 335 | not audited | — | [`kidney.test.ts`](../../packages/engine-core/test/l2/renal/kidney.test.ts) |
 
 <a id="endocrine-thermal"></a>
 ## Endocrine, metabolism and temperature

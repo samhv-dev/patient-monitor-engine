@@ -10,7 +10,7 @@ import { MANNITOL_MOSM_PER_G } from '../brain/params.ts';
 import { angiotensin, effFactor, natriuresis, renalHaemo, tgfTarget } from './kidney.ts';
 import {
   AKI_AFF_TONE, AKI_KF_LOSS, ALBUMIN0_G_L, COLD_DIURESIS_PER_C, COLD_ONSET_C, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
-  EABV_EXP, EABV_TAU_S, MANNITOL_KE_PER_MIN, P_BOWMAN, RENAL_REF_CO_L_KG, RENAL_REF_CVP, RENAL_REF_MAP, MANNITOL_ML_PER_G, NE_EXCESS_PER_01, NH_TAU_OFF_S, NH_TAU_ON_S, OLIGURIA_ML_KG_H, PEEP_PER_10, R_AFF, RENAL_FLOW_FRAC, S_GA,
+  EABV_EXP, EABV_TAU_S, GFR_SET_REF, MANNITOL_KE_PER_MIN, RBF_SET_REF, P_BOWMAN, RENAL_REF_CO_L_KG, RENAL_REF_CVP, RENAL_REF_MAP, MANNITOL_ML_PER_G, NE_EXCESS_PER_01, NH_TAU_OFF_S, NH_TAU_ON_S, OLIGURIA_ML_KG_H, PEEP_PER_10, RENAL_FLOW_FRAC, S_GA,
   R_AFF_MAX, R_AFF_MIN, SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30, V_EXP_GAIN, V_EXP_MAX,
 } from './params.ts';
 
@@ -39,7 +39,8 @@ export interface RenalInputs {
   /** The blood model's plasma mannitol amount, mmol (ONE pool); absent → the kidney's own depot (`mannitolG`). */
   mannitolMmol?: number;
 }
-export interface RenalParams { k: number; pRef: number; ef0: number; weightKg: number; gfrSet: number; aki: number; co0: number }
+/** `size`: the kidney's filtering size, the patient's reference RBF ÷ RBF_SET_REF; it multiplies the set point and Kf. */
+export interface RenalParams { k: number; pRef: number; ef0: number; weightKg: number; gfrSet: number; size: number; aki: number; co0: number }
 export interface RenalState {
   t: number;
   p: RenalParams;
@@ -126,11 +127,21 @@ function pv(inp: RenalInputs): number {
 export function createRenal(inp: RenalInputs, weightKg: number, aki = 0): RenalState {
   const co0 = RENAL_REF_CO_L_KG * weightKg;
   const rbf0 = RENAL_FLOW_FRAC * co0 * 1000;
-  const k0 = renalHaemo(RENAL_REF_MAP, RENAL_REF_CVP, 1, R_AFF, 1, 1, ALBUMIN0_G_L).rbf / rbf0; // Pulse's TuneCircuit idea
-  const h0 = renalHaemo(RENAL_REF_MAP, RENAL_REF_CVP, k0, R_AFF, 1, 1, ALBUMIN0_G_L);
+  // The sourced set point (Miller 10e p. 334) for this patient's kidney size, defended by TGF. The resting afferent tone
+  // is the feedback's equilibrium at the reference, and k (every resistance, Pulse's TuneCircuit idea) is calibrated so
+  // that equilibrium carries the reference RBF; the constant R_AFF has no part in it. P_gc and FF are then predictions.
+  const size = rbf0 / RBF_SET_REF;
+  const gfrSet = GFR_SET_REF * size;
+  let k0 = 1;
+  for (let i = 0; i < 8; i++) {
+    const r = tgfTarget(RENAL_REF_MAP, RENAL_REF_CVP, k0, 1, size, ALBUMIN0_G_L, gfrSet); // RBF ∝ 1/k at the target: converges in 2–3 steps
+    k0 *= renalHaemo(RENAL_REF_MAP, RENAL_REF_CVP, k0, r, 1, size, ALBUMIN0_G_L).rbf / rbf0;
+  }
+  const rAff0 = tgfTarget(RENAL_REF_MAP, RENAL_REF_CVP, k0, 1, size, ALBUMIN0_G_L, gfrSet);
+  const h0 = renalHaemo(RENAL_REF_MAP, RENAL_REF_CVP, k0, rAff0, 1, size, ALBUMIN0_G_L);
   const ef0 = (UOP0_ML_KG_H * weightKg) / 60 / h0.gfr;
   const s: RenalState = {
-    t: 0, p: { k: k0, pRef: RENAL_REF_MAP, ef0, weightKg, gfrSet: h0.gfr, aki, co0: Math.max(co0, inp.coLpm) }, rAff: R_AFF, furoDepot: 0, furoE: 0, furoPlasma: 0, mannitolG: 0,
+    t: 0, p: { k: k0, pRef: RENAL_REF_MAP, ef0, weightKg, gfrSet, size, aki, co0: Math.max(co0, inp.coLpm) }, rAff: rAff0, furoDepot: 0, furoE: 0, furoPlasma: 0, mannitolG: 0,
     vNh: 1, rbf: h0.rbf, pgc: h0.pgc, gfr: h0.gfr, uopMlMin: 0, ang: 0, cumMl: 0, bladderMl: 0, bagMl: 0, catheter: 'foley',
     bins: [], binAcc: 0, binT: 0, oliguriaS: 0, akiStage: 0, timeScale: 1,
   };
@@ -140,7 +151,7 @@ export function createRenal(inp: RenalInputs, weightKg: number, aki = 0): RenalS
   s.eabvLp = ev;
   s.ang = angiotensin(inp.map - pvn, ev);
   s.vNh = volumeFactor(ev);
-  const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * aki);
+  const kfF = size * (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
   s.rAff = nephronTone(tgfTarget(inp.map, pvn, k0, effFactor(s.ang), kfF, inp.albuminGL, s.p.gfrSet * (1 - AKI_KF_LOSS * aki), pb, inp.hct), aki);
   const h = renalHaemo(inp.map, pvn, k0, s.rAff, effFactor(s.ang), kfF, inp.albuminGL, pb, inp.hct);
@@ -184,7 +195,7 @@ export function stepRenal(s: RenalState, inp: RenalInputs, dt: number): void {
   const vT = volumeFactor(ev);
   s.vNh += (vT - s.vNh) * (1 - Math.exp(-dt / (vT < s.vNh ? NH_TAU_ON_S : NH_TAU_OFF_S)));
   const effF = effFactor(s.ang);
-  const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * s.p.aki);
+  const kfF = s.p.size * (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * s.p.aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
   const target = nephronTone(tgfTarget(inp.map, pvn, s.p.k, effF, kfF, inp.albuminGL, s.p.gfrSet * (1 - AKI_KF_LOSS * s.p.aki), pb, inp.hct), s.p.aki);
   s.rAff += (target - s.rAff) * (1 - Math.exp(-dt / TGF_TAU_S));

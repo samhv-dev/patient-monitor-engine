@@ -73,12 +73,16 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`kidney.ts:34`](../../packages/engine-core/src/l2/renal/kidney.ts#L34) | GFR = Kf·(P_gc − P_B − π_gc)+. `k` scales every resistance (calibration to the resting RBF), `rAff` is the TGF state |
 | [`kidney.ts:49`](../../packages/engine-core/src/l2/renal/kidney.ts#L49) | leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol |
 | [`kidney.ts:51`](../../packages/engine-core/src/l2/renal/kidney.ts#L51) | 125. GFR is the root of G = Kf·(P_gc − P_B − π̄(G/RPF)), found by bisection (monotone), so FF saturates near 0.3–0.35 |
-| [`model.ts:195`](../../packages/engine-core/src/l2/renal/model.ts#L195) | furosemide: depot → plasma (ka) → elimination (ke); effect E = Cp/(Cp + ED50-equivalent) |
-| [`params.ts:51`](../../packages/engine-core/src/l2/renal/params.ts#L51) | used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 |
-| [`params.ts:52`](../../packages/engine-core/src/l2/renal/params.ts#L52) | (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. |
-| [`params.ts:80`](../../packages/engine-core/src/l2/renal/params.ts#L80) | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
-| [`params.ts:94`](../../packages/engine-core/src/l2/renal/params.ts#L94) | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
-| [`params.ts:95`](../../packages/engine-core/src/l2/renal/params.ts#L95) | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref |
+| [`model.ts:137`](../../packages/engine-core/src/l2/renal/model.ts#L137) | RBF ∝ 1/k at the target: converges in 2–3 steps |
+| [`model.ts:206`](../../packages/engine-core/src/l2/renal/model.ts#L206) | furosemide: depot → plasma (ka) → elimination (ke); effect E = Cp/(Cp + ED50-equivalent) |
+| [`params.ts:37`](../../packages/engine-core/src/l2/renal/params.ts#L37) | The reference renal blood flow the set point belongs to: 17 % of CO 0.08 L/min/kg at 70 kg = 952 mL/min. |
+| [`params.ts:42`](../../packages/engine-core/src/l2/renal/params.ts#L42) | [ENG: conversion; body size: the engine's RBF ∝ weight (CO 0.08 L/min/kg × 17 %) carried to the filtering surface, so FF and P_gc are the figure's at every weight; no source for linear scaling, neonatal and obese GFR not modelled]. |
+| [`params.ts:70`](../../packages/engine-core/src/l2/renal/params.ts#L70) | sits there. RPP_LL/(P_gc − P_v) = (pre + post)/post, and k cancels. It awaits a direct measurement of maximal |
+| [`params.ts:78`](../../packages/engine-core/src/l2/renal/params.ts#L78) | used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 |
+| [`params.ts:79`](../../packages/engine-core/src/l2/renal/params.ts#L79) | (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. |
+| [`params.ts:107`](../../packages/engine-core/src/l2/renal/params.ts#L107) | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
+| [`params.ts:121`](../../packages/engine-core/src/l2/renal/params.ts#L121) | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
+| [`params.ts:122`](../../packages/engine-core/src/l2/renal/params.ts#L122) | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref |
 
 ## Couplings
 
@@ -337,22 +341,24 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|---|---|
 | `RENAL_DT_S` | `1` | s | — | kidney and liver step at 1 Hz (annex B2 "one algebraic kidney at 1 Hz") |
 | `R_ART` | `0.025 * 1.25` | — | Pulse per-kidney resistances | Pulse per-kidney resistances (annex B2 table), both kidneys in parallel → ÷ 2 where used renal artery (male value) |
-| `R_AFF` | `0.0417 * 1.25` | — | — | afferent arteriole (TGF-controlled) |
+| `R_AFF` | `0.0417 * 1.25` | — | Pulse | Pulse's afferent resistance (TGF-controlled). It does NOT set the resting state: the resting afferent tone is the feedback's own equilibrium at the reference (createRenal: tgfTarget at GFR_SET_REF; 0.0430, 1.74 × R_AFF_MIN). Kept as Pulse's ported value for the topology test and as the initial value of tgfTarget's loop, overwritten on its first step; it enters no state. |
 | `R_GLOM` | `0.0019 * 1.25` | — | — | — |
 | `R_EFF` | `0.0763 * 1.25` | — | — | efferent arteriole |
 | `R_PT` | `0.0167 * 1.25` | — | — | peritubular capillaries |
 | `R_RV` | `0.0066 * 1.25` | — | — | renal vein |
-| `R_AFF_MIN` | `2.2 / 60` | — | Pulse 2; Pulse lacks; tables §5.2; research/44 L2; Pulse; [FIT: ×MYOGENIC_MAX; brief research/44 L2-26] | TGF range for R_aff: Pulse 2.2–11.2 mmHg·s/mL = 0.0367–0.187 mmHg·min/mL (CFG 608–609). The upper bound is raised by the MYOGENIC response Pulse lacks (afferent constriction to stretch, which with TGF holds RBF over RPP 80–180, tables §5.2 `rblLL/rblUL`) [FIT: ×MYOGENIC_MAX; brief research/44 L2-26]: with Pulse's 11.2 alone RBF rose 21 % and GFR doubled at MAP 180. |
-| `MYOGENIC_MAX` | `2` | — | — | — |
+| `MYOGENIC_MAX` | `2` | — | Pulse 2; Pulse lacks; tables §5.2; research/44 L2; Pulse; [FIT: ×MYOGENIC_MAX; brief research/44 L2-26] | TGF range for R_aff: Pulse 2.2–11.2 mmHg·s/mL = 0.0367–0.187 mmHg·min/mL (CFG 608–609); the lower bound is now R_AFF_MIN below (derived from the lower limit of autoregulation). The upper bound is raised by the MYOGENIC response Pulse lacks (afferent constriction to stretch, which with TGF holds RBF over RPP 80–180, tables §5.2 `rblLL/rblUL`) [FIT: ×MYOGENIC_MAX; brief research/44 L2-26]: with Pulse's 11.2 alone RBF rose 21 % and GFR doubled at MAP 180. |
 | `TGF_TAU_S` | `60` | s | Pulse | TGF time constant: Pulse's 0.001-per-beat damping ≈ 60–90 s (annex B2 "Take") → 60 s. |
-| `KF_PER_KIDNEY` | `3.67647 * 2.0` | — | — | glomerular Lp·A, mL/min/mmHg (CFG 604–605) |
+| `GFR_SET_REF` | `125` | — | Miller 10e ch. 15 p. 334: normal GFR 180 L/day (125 mL/min; Guyton & Hall 13e; research/44 L2 | Resting GFR set point, mL/min, at the 70 kg reference (RBF_SET_REF): Miller 10e ch. 15 p. 334: normal GFR 180 L/day (125 mL/min), the GFR of the same page's Fig. 15.8 Starling set (redrawn from Guyton & Hall 13e). TGF defends it (research/44 L2-26). It was the GFR the constant R_AFF gave at the reference (117 mL/min with Bowman's 18). |
+| `RBF_SET_REF` | `952` | — | — | The reference renal blood flow the set point belongs to: 17 % of CO 0.08 L/min/kg at 70 kg = 952 mL/min. |
+| `KF_PER_KIDNEY` | `12.5 / 2` | — | Miller 10e Fig. 15.8 (p. 334; Guyton & Hall 13e; Pulse; [ENG: conversion; body size: the engine's RBF ∝ weight (CO 0.08 L/min/kg × 17 %) carried to the filtering surface, so FF and P_gc are the figure's at every weight; no source for linear scaling, neonatal and obese GFR not modelled] | Glomerular filtration coefficient Lp·A per kidney, mL/min/mmHg: 12.5 for both kidneys, the GFR 125 ÷ net filtration pressure 10 of Miller 10e Fig. 15.8 (p. 334; Guyton & Hall 13e). It was Pulse's 3.67647 × 2 (CFG 604–605; 14.7 in total). Kf and the set point scale together with the patient's reference RBF (createRenal: the kidney's size) [ENG: conversion; body size: the engine's RBF ∝ weight (CO 0.08 L/min/kg × 17 %) carried to the filtering surface, so FF and P_gc are the figure's at every weight; no source for linear scaling, neonatal and obese GFR not modelled]. |
 | `PI_GLOM0` | `32` | — | — | Glomerular oncotic pressure, mmHg (SET 1386–1389) at albumin 42 g/L — its MEAN at FF_REF |
-| `HCT_REF` | `0.45` | — | research/44 L2 | The filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit at which the mean glomerular oncotic pressure equals PI_GLOM0. Since Bowman's pressure is the sourced 18 (research/44 L2-26), the resting FF is 0.224, not this 0.239, so the resting mean oncotic pressure is 31.7 mmHg, not 32. |
+| `HCT_REF` | `0.45` | — | research/44 L2 | The filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit at which the mean glomerular oncotic pressure equals PI_GLOM0. With the sourced set point the resting FF is this 0.239 again (research/44 L2-26). |
 | `ALBUMIN0_G_L` | `42` | — | — | — |
-| `P_BOWMAN` | `18` | — | Miller 10e ch. 15 Fig. 15.8 (p. 334; Guyton & Hall 13e; Pulse divider gives P_gc 57; Guyton & Hall; Pulse; research/44 L2 | Bowman's capsule pressure, mmHg: Miller 10e ch. 15 Fig. 15.8 (p. 334, redrawn from Guyton & Hall 13e): 18 mmHg against a glomerular hydrostatic 60 and oncotic 32 (net 10). It was 17.1, fitted so the resting GFR was 125 mL/min. With the sourced 18 the resting GFR is 117 mL/min (168 L/day): the Pulse divider gives P_gc 57.6 where the figure has 60. The calibration was NOT moved onto Kf: holding 125 would need Kf 16.4 mL/min/mmHg, and the sourced value is 12.5 (Guyton & Hall; the same figure's GFR 125 ÷ net 10). Pulse's 14.7 is kept (research/44 L2-26). UOP is calibrated separately (ef0), so this sets only GFR and the filtration fraction. |
+| `P_BOWMAN` | `18` | — | Miller 10e ch. 15 Fig. 15.8 (p. 334; Guyton & Hall 13e; research/44 L2 | Bowman's capsule pressure, mmHg: Miller 10e ch. 15 Fig. 15.8 (p. 334, redrawn from Guyton & Hall 13e): 18 mmHg against a glomerular hydrostatic 60 and oncotic 32 (net 10). It was 17.1, fitted so the resting GFR was 125 mL/min. With the sourced set point (GFR_SET_REF) and Kf (KF_PER_KIDNEY) the glomerular capillary pressure is no longer an input: the TGF equilibrium settles the afferent tone, and P_gc is a prediction, 60.0 at the reference (research/44 L2-26). UOP is calibrated separately (ef0). |
 | `RENAL_REF_MAP` | `93` | — | — | The healthy reference the kidney is calibrated on (createRenal): MAP 93, CVP 5, CO 0.08 L/min/kg (5.6 L/min at 70 kg). |
 | `RENAL_REF_CVP` | `5` | — | — | — |
 | `RENAL_REF_CO_L_KG` | `0.08` | kg | — | — |
+| `RENAL_AR_LL_RPP` | `80` | — | tables §5.2; Kirchheim 1987; Miller 10e ch. 55 Fig. 55.3; Miller 10e ch. 55 p. 1804; Burke 2014; research/55 | Lower limit of renal autoregulation, renal perfusion pressure, mmHg: tables §5.2 `rblLL` 80 (Renal-AR PMC4042104). It is the FILTRATION limit: GFR 80.5 ± 3.5 vs blood flow 65.6 ± 1.3 mmHg (Kirchheim 1987 Pflügers Arch 410:441, conscious dog; abstract read); RBF and GFR 80–180 (Carlström 2015 Physiol Rev 95:405; Miller 10e ch. 55 Fig. 55.3, p. 1807, dog). Flow limits are lower: 60 (Miller 10e ch. 55 p. 1804), 70 for the myogenic response (ch. 15 p. 340; Burke 2014). This kidney has one knee for both (research/55). |
 | `LP_A` | `2.00943e-6` | — | Pulse; Renal 1983; Guyton renal output curve; research/44 L2; [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07] | Pressure natriuresis: Pulse's tubular reabsorption permeability vs renal arterial pressure (PH/Renal 1983–2071), used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. |
 | `LP_B` | `-8.09933e-4` | — | — | — |
 | `LP_C` | `9.37727e-2` | — | — | — |
@@ -473,7 +479,6 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex | ratio 0.803 | — | UNSUPPORTED ([audit row 9](../../docs/validation/target-audit/30-target-audit.md#row-9)) | direction only: HR at end <= baseline (ratio <= 0.9), with an initial tachycardia allowed; or keep 0.6-0.85 as an explicit [ENG] teaching choice | [`organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) |
 | check 18: PaCO2 25 → CBF 35–40 % of the anaesthetised baseline (model at CVP 6) | — | — | TOO NARROW ([audit row 8](../../docs/validation/target-audit/30-target-audit.md#row-8)) | 0.35-0.55 of the anaesthetised baseline | [`model.test.ts`](../../packages/engine-core/test/l2/brain/model.test.ts) |
 | IAP 25: UOP < 0.1 mL/kg/h | 0.69 | WSACS | TOO NARROW ([audit row 131](../../docs/validation/target-audit/30-target-audit.md#row-131)) | kidney-only rig at MAP 93: UOP <= 0.3 mL/kg/h (<= 30 % of control) at IAP 25; keep < 0.1 (anuria) for IAP >= 30-40 or APP < 50 | [`filtration.test.ts`](../../packages/engine-core/test/l2/renal/filtration.test.ts) |
-| rest GFR ≈ 125 mL/min | 117 | M10 ch. 15 p. 335 | not audited | — | [`kidney.test.ts`](../../packages/engine-core/test/l2/renal/kidney.test.ts) |
 
 ## Tests
 
@@ -506,7 +511,7 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | [`l2/renal/aki.test.ts`](../../packages/engine-core/test/l2/renal/aki.test.ts) | 0 | 0 |
 | [`l2/renal/cold-diuresis.test.ts`](../../packages/engine-core/test/l2/renal/cold-diuresis.test.ts) | 0 | 0 |
 | [`l2/renal/filtration.test.ts`](../../packages/engine-core/test/l2/renal/filtration.test.ts) | 1 | 0 |
-| [`l2/renal/kidney.test.ts`](../../packages/engine-core/test/l2/renal/kidney.test.ts) | 1 | 0 |
+| [`l2/renal/kidney.test.ts`](../../packages/engine-core/test/l2/renal/kidney.test.ts) | 0 | 0 |
 | [`l2/renal/model.test.ts`](../../packages/engine-core/test/l2/renal/model.test.ts) | 0 | 0 |
 | [`l2/renal/volume-expansion.test.ts`](../../packages/engine-core/test/l2/renal/volume-expansion.test.ts) | 0 | 0 |
 
