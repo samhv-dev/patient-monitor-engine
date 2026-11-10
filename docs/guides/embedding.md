@@ -29,6 +29,14 @@ The worker is created from a `blob:` URL holding the IIFE's own source, so a pag
 use `PatientMonitor.createEngine` headless: its monitor worker code starts only inside the worker it creates itself
 (named `pme-engine`), so it never touches your worker's messages.
 
+A worker that is slow to load is waited for, never dropped for the main thread: `renderPath` resolves when it is ready.
+The monitor's canvas tells the page (the events bubble): `pme-monitor-worker-late` (detail `{ waitedMs }`) when the
+worker is not ready 2 s after the mount, `pme-monitor-worker-ready` (detail `{ readyMs, path }`) when a late one is, and
+`pme-monitor-main-thread` (detail `{ reason }`) when a worker that failed before it was ready has left the engine on the
+main thread. On the main thread a fast-forward (`advance`) gives the page a turn whenever the engine has worked as long
+as the page's last turn took (50–250 ms, the main thread's frame rule), and the first slice of a span waits for a drawn
+frame, so the page shows the fast-forward and answers input while it runs.
+
 ## ES modules
 
 ```ts
