@@ -210,7 +210,7 @@
       "statement": "20 and 40 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days.",
       "src": "stabilis-fentanyl-4223",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-fentanyl-p903"
       }
     },
