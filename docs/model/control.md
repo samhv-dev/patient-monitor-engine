@@ -107,6 +107,7 @@ transports (`src/protocol.ts`).
 | `latched` | `Record<string, true>` | A phase whose running hold an `unchanged` leaf's break latched (the team's change answered the rise: the hold runs on to its end whatever the rule reads), by phase id; cleared at every phase entry. |
 | `phaseRef` | `Record<string, number>` | The value of each `since: 'phaseStart'` variable at the current phase's entry (the first value after it). |
 | `takings` | `Record<string, number>` | How many times each action has been taken (an `action:<id>#<n>` script anchor). |
+| `preps` | `StagedPrep[]` | The preparations staged on the course (plan learner-action-remote.md §6), one per device and id; absent until the first, so a state written before L5, or by a run that stages nothing, is the same. |
 
 ### `ScenarioState` ([`scenario/types.ts`](../../packages/controller/src/scenario/types.ts))
 
@@ -346,6 +347,7 @@ None recorded.
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |
 | [`scenario/host-scenario.test.ts`](../../packages/controller/test/scenario/host-scenario.test.ts) | 0 | 0 |
 | [`scenario/labeller.test.ts`](../../packages/controller/test/scenario/labeller.test.ts) | 0 | 0 |
+| [`scenario/learner-format.test.ts`](../../packages/controller/test/scenario/learner-format.test.ts) | 0 | 0 |
 | [`scenario/neuro-scenarios.test.ts`](../../packages/controller/test/scenario/neuro-scenarios.test.ts) | 0 | 0 |
 | [`scenario/phase-runner-mh-trace.test.ts`](../../packages/controller/test/scenario/phase-runner-mh-trace.test.ts) | 0 | 0 |
 | [`scenario/phase-runner.test.ts`](../../packages/controller/test/scenario/phase-runner.test.ts) | 0 | 0 |
