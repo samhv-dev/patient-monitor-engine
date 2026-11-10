@@ -373,7 +373,23 @@ own dose). The other criteria are:
 - `dose` (`unit` is the engine's; a per-kg unit is converted with the card's weight);
 - `cumulative` (only its `max` is graded today);
 - `route`: `{ "set": [...], "preferred" }`;
-- `rate`: `bolus`, `overS` or `infusion`.
+- `rate`: `bolus`, `overS` or `infusion`;
+- `diluent`: `{ "set": [<formulary diluent ids>] }`, the diluents the card accepts.
+
+**The diluent criterion** (`drug.diluent`; plan learner-action-remote.md §6) reads the preparation that a learner's give
+came from. That record is the host's, and the give carries it as `prep`. A give from a preparation in another diluent
+prints the line "diluent saline, water asked". A preparation with no diluent prints "no diluent, water asked". A give
+with no preparation on record prints "diluent not recorded, water asked": this is the laptop's Drug sheet, which makes no
+preparation (LQ10). Each of these is a deviation. No shipped card uses the criterion (LQ14): the formulary already
+grades every preparation without one (see "Preparations" below). Add the criterion only when the card's own teaching
+point is the diluent.
+
+**A sample action's panels** (`"sample": { "panel": ["abg"] }`, on a `sample` action only). A lab sample of a listed
+panel satisfies the action in its window, as a drug record satisfies a drug action. The sample may be drawn by the
+learner's remote or from the instructor's panel, and it is recorded as a `sample` with its panel. A press of the
+action is still recorded by its taking. A sample action without `sample` is matched only by its taking, as before. A
+card's `give` cannot send a lab event (the `/1` command schema has none). The validator warns about a panel the engine
+does not draw: no sample could ever satisfy it.
 
 **A wrong route leaves the action open.** A dose by a route outside `set` does not satisfy the action, and neither
 does one the engine refused. The row stays open and runs on to overdue or failed, with the reason as a line ("route
@@ -389,6 +405,15 @@ route show as a timed line as well, add a contraindication.
 
 Every administration that matches is a violation: a line with its time, never a grade, never blocked. Example: the
 haemorrhage card's epinephrine 1 mg IV or IO in ROSC.
+
+**Preparations: the formulary's grades, on every card** (plan learner-action-remote.md §6, D5, LQ11). `grade()` grades
+each preparation a learner stages, whatever the card says, and lists it under `preparations`. A preparation in a
+diluent that the stocked product's label does not list, or an admixture that the source calls incompatible, is a
+**deviation** while it is only staged. Once it is **delivered** (any volume, in a give the engine accepted), it is a
+**violation** with `source: "formulary"`. Its harm is "modelled" when the source's own figures reduced the active amount
+delivered, and "not modelled" otherwise. A preparation with none of these findings is "ok". A card's own
+contraindications have no `source`. A run that staged nothing has no `preparations`. The author writes nothing for any
+of this.
 
 **Other fields.**
 

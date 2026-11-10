@@ -29,7 +29,7 @@ import { compare } from './runner.ts';
 import { ruleConcentrations, type ConcentrationVar } from './concentration.ts';
 import { EPS, holds, namedRules, slopePerMin, spreadPct, walkLeaves, windowOf, type NamedRule, type RuleCtx } from './rules.ts';
 import type { DocCommand } from './types.ts';
-import type { Administration, AnyRule, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
+import type { Administration, AnyRule, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry, StagedPrep } from './types-v2.ts';
 
 export type PhaseRunnerEffect =
   | {
@@ -173,6 +173,10 @@ export class PhaseRunner {
   get admin(): ReadonlyArray<Administration> {
     return this.s.admin;
   }
+  /** The preparations staged on the course (plan learner-action-remote.md §6). */
+  get preps(): ReadonlyArray<StagedPrep> {
+    return this.s.preps ?? [];
+  }
   /** The current phase. */
   state(): Phase {
     return this.byId.get(this.s.stateId) as Phase;
@@ -274,6 +278,15 @@ export class PhaseRunner {
     const out = { seq: (this.s.admin.at(-1)?.seq ?? 0) + 1, ...a } as Administration;
     this.s.admin.push(out);
     return out;
+  }
+
+  /** Keep a staged preparation (the driver calls it for the host's `prep stage`, and again when its notice is shown): one
+   *  entry per device and id, the later copy replacing the earlier. State, so a restore rewinds it; not a decision. */
+  stage(p: StagedPrep): void {
+    const list = (this.s.preps ??= []);
+    const i = list.findIndex((x) => x.by === p.by && x.id === p.id);
+    if (i < 0) list.push(structuredClone(p));
+    else list[i] = structuredClone(p);
   }
 
   pause(t: number): void {
