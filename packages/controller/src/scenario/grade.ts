@@ -35,7 +35,15 @@
 //   first true EDGE at or after the previous dose, within intervalS.max − min; a condition already true at the dose that
 //   never falls and rises again makes no repeat row). NOT graded yet: `order`, `cumulative.min` and `cumulative.windowS` (the ceiling is summed over the whole run), and a decision with
 //   several effects is graded on the first effect of the record's kind.
-import type { Action, Administration, Amount, AnyRule, Dose, PhaseEntry, PhaseRule, RuleEdge, ScenarioDocV2, Settings, WindowAnchor } from './types-v2.ts';
+// - Plan learner-action-remote.md §6 (L5): a card's `drug.diluent` is one more criterion (a deviation line); a sample
+//   action with `sample` takes a `sample` record of a listed panel, a learner's or the instructor's, as a drug action
+//   takes a drug record; the formulary grades every preparation, independent of any card (LQ14): staged with a diluent
+//   the stocked product's label does not list, or as an admixture the source calls incompatible, it is a deviation
+//   (`preparations`); delivered (any volume, an accepted give), a violation of source 'formulary', its harm 'modelled'
+//   when the source's figures reduced the active amount (`remaining` < 1), else 'not modelled'. A card that uses none of
+//   it, in a run that staged nothing, grades exactly as before: no `preparations` key, no violation `source`.
+import type { Finding } from '../formulary/findings.ts';
+import type { Action, Administration, Amount, AnyRule, Dose, PhaseEntry, PhaseRule, RuleEdge, ScenarioDocV2, Settings, StagedPrep, WindowAnchor } from './types-v2.ts';
 
 export type Grade = 'met' | 'deviation' | 'overdue' | 'failed' | 'due' | 'not applicable';
 export interface RepeatGrade { n: number; grade: Grade; dueT?: number; t?: number; lines: string[] }
@@ -60,10 +68,14 @@ export interface ActionGrade {
   admin: number[];
 }
 export interface OutcomeGrade { id: string; text: string; grade: 'reached' | 'not reached' | 'pending'; t?: number }
-export interface Violation { t: number; seq: number; action: string; text: string; harm: 'modelled' | 'not modelled' }
+/** A violation: a card's contraindication (`action` its action's id), or, `source: 'formulary'`, a delivered preparation
+ *  the formulary finds wrong (`action` = `prep:<id>`). Absent `source`: the card's. */
+export interface Violation { t: number; seq: number; action: string; text: string; harm: 'modelled' | 'not modelled'; source?: 'card' | 'formulary' }
+/** A preparation as the formulary grades it (§6): `deviation` staged wrong, `violation` delivered wrong, else `ok`. */
+export interface PrepGrade { prepId: string; t: number; by: string; drugId: string; findings: Finding[]; delivered: boolean; grade: 'ok' | 'deviation' | 'violation' }
 /** The grades of a run: the actions (a team act the instructor observes is a record action among them: judged rows are
- *  retired, the owner's ruling of 5 November), the outcomes and the violations. */
-export interface Grades { actions: ActionGrade[]; outcomes: OutcomeGrade[]; violations: Violation[] }
+ *  retired, the owner's ruling of 5 November), the outcomes and the violations; the preparations when the run made any. */
+export interface Grades { actions: ActionGrade[]; outcomes: OutcomeGrade[]; violations: Violation[]; preparations?: PrepGrade[] }
 
 const EPS = 1e-6;
 const RANK: Record<Grade, number> = { 'not applicable': 0, met: 1, deviation: 2, due: 3, overdue: 4, failed: 5 };
@@ -147,6 +159,9 @@ function identity(act: Action, a: Administration): Ident | null {
       return a.kind === 'fluid' || a.kind === 'physical' ? (act.physical?.settings ? { settings: act.physical.settings } : {}) : null;
     case 'fluid':
       return a.kind === 'fluid' && (!act.fluid?.type || act.fluid.type.includes(a.fluid?.type ?? '')) ? {} : null;
+    case 'sample':
+      if (a.actionId === act.id) return {};
+      return act.sample && a.kind === 'sample' && act.sample.panel.includes(String(a.settings?.panel)) ? {} : null;
     default:
       return a.actionId === act.id ? {} : null;
   }
@@ -180,6 +195,13 @@ function deviations(act: Action, a: Administration, id: Ident, w?: number): stri
   } else if (rate && 'bolus' in rate) {
     if ((a.overS ?? 0) > 0) out.push(`over ${n2(a.overS ?? 0)} s, bolus asked`);
   }
+  const dil = d?.diluent?.set;
+  if (act.kind === 'drug' && dil) {
+    const want = dil.join(' or ');
+    if (!a.prep) out.push(`diluent not recorded, ${want} asked`);
+    else if (a.prep.diluent === undefined) out.push(`no diluent, ${want} asked`);
+    else if (!dil.includes(a.prep.diluent)) out.push(`diluent ${a.prep.diluent}, ${want} asked`);
+  }
   for (const [k, amt] of Object.entries(id.settings ?? {})) {
     let v = a.settings?.[k];
     if (k === 'vtMlPerKg' && v === undefined && typeof a.settings?.vtMl === 'number' && w) v = a.settings.vtMl / w;
@@ -195,6 +217,16 @@ function deviations(act: Action, a: Administration, id: Ident, w?: number): stri
   return out;
 }
 
+/** The findings the formulary grades (D5, LQ11): a diluent the label does not list, and what the source calls incompatible.
+ *  `conditional` and `notTested` are reported with the preparation, not graded. */
+const graded = (f: Finding) => f.kind === 'wrongDiluent' || f.kind === 'incompatible';
+/** A graded finding in words. */
+function findingWords(f: Finding): string {
+  const said = f.statement ? `: ${f.statement}` : '';
+  if (f.kind === 'wrongDiluent') return `${f.drugId} prepared in ${f.other}, a diluent its label does not list`;
+  return f.against === 'diluent' ? `${f.drugId} incompatible with the diluent ${f.other}${said}` : `${f.drugId} incompatible with ${f.other} in the preparation${said}`;
+}
+
 /** A row while it is graded: its deviations kept apart, for the live "deviation: <first>". */
 interface Row { grade: Grade; lines: string[]; devs: string[]; dueT?: number; windowS?: number; givenT?: number }
 
@@ -202,7 +234,10 @@ interface Row { grade: Grade; lines: string[]; devs: string[]; dueT?: number; wi
  * Grade the run at sim time `t`: every graded action, the outcomes and the violations. `final`
  * (the debrief): an open action is failed rather than due or overdue, an outcome not reached rather than pending.
  */
-export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: readonly Administration[], edges: readonly RuleEdge[], t: number, opts: { final?: boolean } = {}): Grades {
+export function grade(
+  doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: readonly Administration[], edges: readonly RuleEdge[], t: number,
+  opts: { final?: boolean; preparations?: readonly StagedPrep[] } = {},
+): Grades {
   const final = opts.final ?? false;
   const w = doc.patient?.weightKg;
   const byId = new Map(doc.actions.map((a) => [a.id, a]));
@@ -434,7 +469,26 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
       }
     });
   }
+  // §6: the formulary's violations, one per accepted give from a preparation with a graded finding
+  const gives = team.filter((a) => a.prep && a.result.accepted);
+  for (const a of gives) {
+    const bad = a.prep!.findings.filter(graded);
+    if (bad.length) violations.push({ t: a.t, seq: a.seq, action: `prep:${a.prep!.id}`, text: bad.map(findingWords).join('; '), harm: a.prep!.remaining < 1 - EPS ? 'modelled' : 'not modelled', source: 'formulary' });
+  }
   violations.sort((x, y) => x.t - y.t || x.seq - y.seq);
+
+  // §6: every preparation, staged (the runner's state) or seen only at its give, graded by its findings
+  const rows = new Map<string, PrepGrade>();
+  const key = (by: string, id: string) => `${by}\u0000${id}`;
+  for (const p of opts.preparations ?? []) rows.set(key(p.by, p.id), { prepId: p.id, t: p.t, by: p.by, drugId: p.drugId, findings: p.findings, delivered: false, grade: 'ok' });
+  for (const a of gives) {
+    const by = a.by ?? a.source;
+    const k = key(by, a.prep!.id);
+    const r = rows.get(k) ?? { prepId: a.prep!.id, t: a.t, by, drugId: a.prep!.drugId, findings: a.prep!.findings, delivered: false, grade: 'ok' as const };
+    r.delivered = true;
+    rows.set(k, r);
+  }
+  const preparations = [...rows.values()].map((r): PrepGrade => ({ ...r, grade: !r.findings.some(graded) ? 'ok' : r.delivered ? 'violation' : 'deviation' }));
 
   const outcomes: OutcomeGrade[] = (doc.outcomes ?? []).map((o) => {
     const base = { id: o.id, text: o.text };
@@ -446,5 +500,5 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     return { ...base, grade: !final && t < end - EPS ? 'pending' : 'not reached' };
   });
 
-  return { actions, outcomes, violations };
+  return { actions, outcomes, violations, ...(preparations.length ? { preparations } : {}) };
 }

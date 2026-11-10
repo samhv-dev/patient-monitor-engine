@@ -1,0 +1,332 @@
+{
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Rows: Stabilis, 20-27 C, PVC/polyolefin bags, PP syringes. Point [T h, 0.9], or 0.95 at level A/A+.",
+  "drugId": "epinephrine",
+  "products": [
+    {
+      "id": "adrenalin-1mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 1,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-adrenalin-par"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "adrenaline-100mcg-ml-pfs",
+      "form": "solution",
+      "strength": {
+        "amount": 0.1,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-3448"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "dailymed-adrenalin-par",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Stabilis: epinephrine 16 and 64 µg/mL in 0.9 % NaCl, PVC, 23-25 °C, stable 45 days. Label: not saline alone. Trissel nearest: 1 mg/L NaCl, 24 h at 5 °C.",
+        "src": "stabilis-epinephrine-4026",
+        "crossCheck": {
+          "trissel": "not listed",
+          "src": "trissel-epinephrine-p804"
+        }
+      }
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-adrenalin-par"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-adrenalin-par",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Stabilis: 100 µg/mL in water for injection, PP syringe, 25 °C, stable 7 days.",
+        "src": "stabilis-epinephrine-659",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-epinephrine-p803"
+        }
+      }
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-adrenalin-par"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "dailymed-adrenalin-par"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-adrenalin-par"
+    }
+  ],
+  "admixtures": [
+    {
+      "with": "sodiumBicarbonate",
+      "verdict": "incompatible",
+      "statement": "Stabilis: NaHCO3 as solvent degrades epinephrine (alkaline pH).",
+      "src": "stabilis-epinephrine-3642",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-epinephrine-p805"
+      }
+    },
+    {
+      "with": "calciumChloride",
+      "verdict": "compatible",
+      "statement": "Stabilis: epinephrine 32 µg/mL with calcium chloride 4 mg/mL in 0.9 % NaCl, 25 °C, stable 26 h (container not stated).",
+      "src": "stabilis-epinephrine-3622",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p805"
+      }
+    }
+  ],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          1080,
+          0.9
+        ]
+      ],
+      "statement": "16 µg/mL in 0.9 % NaCl, PVC, 23-25 °C: stable 45 days. Stabilis level D.",
+      "src": "stabilis-epinephrine-4026",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          1080,
+          0.9
+        ]
+      ],
+      "statement": "64 µg/mL in 0.9 % NaCl, PVC, 23-25 °C: stable 45 days. Stabilis level D.",
+      "src": "stabilis-epinephrine-4026",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-pvc",
+      "tempC": 23,
+      "points": [
+        [
+          24,
+          0.9
+        ]
+      ],
+      "statement": "100 µg/mL in 5 % glucose, PVC, 23 °C, protected from light: stable 24 h. Stabilis level B. Trissel nearest: D5W 87 mg/L, no loss 24 h at 23 °C.",
+      "src": "stabilis-epinephrine-192",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "water",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          168,
+          0.9
+        ]
+      ],
+      "statement": "100 µg/mL in water for injection, PP syringe, 25 °C, protected from light: stable 7 days. Stabilis level B.",
+      "src": "stabilis-epinephrine-659",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-epinephrine-p803"
+      }
+    },
+    {
+      "diluent": "water",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          1344,
+          0.9
+        ]
+      ],
+      "statement": "700 µg/mL in water for injection, PP syringe, 25 °C, protected from light: stable 56 days. Stabilis level B.",
+      "src": "stabilis-epinephrine-659",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-epinephrine-p803"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          288,
+          0.9
+        ]
+      ],
+      "statement": "10 µg/mL in 0.9 % NaCl, PP syringe, 20-25 °C, protected from light: stable 12 days. Stabilis level C.",
+      "src": "stabilis-epinephrine-4778",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          504,
+          0.9
+        ]
+      ],
+      "statement": "10 µg/mL in 0.9 % NaCl, PP syringe, 25 °C: stable 21 days; Stabilis marks this row conflicting data. Stabilis level D.",
+      "src": "stabilis-epinephrine-4393",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          84,
+          0.9
+        ]
+      ],
+      "statement": "20 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 84 h. Stabilis level D.",
+      "src": "stabilis-epinephrine-3712",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          84,
+          0.9
+        ]
+      ],
+      "statement": "300 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 84 h. Stabilis level D.",
+      "src": "stabilis-epinephrine-3712",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          84,
+          0.9
+        ]
+      ],
+      "statement": "900 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 84 h. Stabilis level D.",
+      "src": "stabilis-epinephrine-3712",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          84,
+          0.9
+        ]
+      ],
+      "statement": "20 µg/mL in 5 % glucose, PP syringe, 23 °C: stable 84 h. Stabilis level D.",
+      "src": "stabilis-epinephrine-3712",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          84,
+          0.9
+        ]
+      ],
+      "statement": "300 µg/mL in 5 % glucose, PP syringe, 23 °C: stable 84 h. Stabilis level D.",
+      "src": "stabilis-epinephrine-3712",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          84,
+          0.9
+        ]
+      ],
+      "statement": "900 µg/mL in 5 % glucose, PP syringe, 23 °C: stable 84 h. Stabilis level D.",
+      "src": "stabilis-epinephrine-3712",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-epinephrine-p804"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}

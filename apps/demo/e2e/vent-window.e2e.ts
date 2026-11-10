@@ -111,6 +111,23 @@ test('the laptop window: the Room opener opens the cockpit in its own window, it
 test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wrong PIN is refused; 5 s offline hands over within 1 s, back online it signs in again; the PIN stays secret', async ({ page, browser, browserName }) => {
   test.setTimeout(300_000);
   const stateDir = await classroom();
+  // when the host's page received each `vent` message (the relay carries those to the host from its one granted cockpit,
+  // the tablet): the last one before the hand-over is the moment the host's own silence watchdog counts from
+  // (views/vent.ts serveCockpit, heardAt); after it the tablet signs in again on a new socket, whose frames come later
+  await page.addInitScript(() => {
+    const Base = WebSocket;
+    const w = window as unknown as { __ventIn: number[] };
+    w.__ventIn = [];
+    window.WebSocket = class extends Base {
+      constructor(url: string | URL, protocols?: string | string[]) {
+        super(url, protocols);
+        this.addEventListener('message', (ev) => {
+          if (typeof ev.data !== 'string' || !/"kind":"vent"/.test(ev.data)) return;
+          if (w.__ventIn.push(Date.now()) > 4000) w.__ventIn.splice(0, 2000);
+        });
+      }
+    } as typeof WebSocket;
+  });
   const code = await host(page, '#/room');
   // the room's own QR address, as the tablet's camera reads it
   // the Room page writes it once the relay has answered where this computer is (relayInfo): wait for that, then read it
@@ -184,8 +201,18 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
     return Date.now();
   });
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__r8d!.unlinkedAt), { timeout: 5000 }).not.toBeNull();
-  const silentMs = (await page.evaluate(() => (window as unknown as W).__r8d!.unlinkedAt))! - mutedAt;
-  console.log(`[R8d] ${browserName}: hand-over ${silentMs} ms after the tablet fell silent (socket open)`);
+  // The silence is timed from the host's last receipt of the tablet's frames, the event its watchdog counts from, not
+  // from the tablet's mute: under CI load the two part by hundreds of ms either way (frames sent before the mute still
+  // in the relay, or the tablet's last send well before it), and the hand-over read 793, 915, 937 and 1372 ms after the
+  // mute in four WebKit runs after PR #368 (brief 118: 42635219342, 42635636872, 42640247672, 42657020904)
+  const { silentAt, ventInAt } = await page.evaluate(() => {
+    const at = (window as unknown as W).__r8d!.unlinkedAt!;
+    const before = (window as unknown as { __ventIn: number[] }).__ventIn.filter((t) => t <= at);
+    return { silentAt: at, ventInAt: before.length ? Math.max(...before) : null };
+  });
+  expect(ventInAt, 'the host heard the tablet before it fell silent').not.toBeNull();
+  const silentMs = silentAt - ventInAt!;
+  console.log(`[R8d] ${browserName}: hand-over ${silentMs} ms after the host last heard the tablet (${silentAt - mutedAt} ms after the tablet's mute; socket open)`);
   // [ENG: ui] COCKPIT_SILENCE_MS (1 s, views/vent.ts), less the up to 20 ms batch already on its way, plus 250 ms for
   // the watchdog's timer and the host page's 5 ms poll
   expect(silentMs).toBeGreaterThanOrEqual(950);

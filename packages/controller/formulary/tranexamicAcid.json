@@ -1,0 +1,75 @@
+{
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. No Trissel 2013 monograph. Listed diluents read from the label phrase electrolyte and carbohydrate solutions.",
+  "drugId": "tranexamicAcid",
+  "products": [
+    {
+      "id": "cyklokapron-100mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 100,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-1077"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "emc-1077"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-1077"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-1077"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": true,
+      "src": "emc-1077"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "emc-1077"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": true,
+      "src": "emc-1077"
+    }
+  ],
+  "admixtures": [],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "bag-polyolefin",
+      "tempC": 25,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "15 mg/mL in 0.9 % NaCl, polyolefin, 20-25 °C, protected from light: stable 90 days.",
+      "src": "stabilis-tranexamicacid-3756",
+      "crossCheck": {
+        "trissel": "not listed"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": false,
+    "monograph": true
+  }
+}
