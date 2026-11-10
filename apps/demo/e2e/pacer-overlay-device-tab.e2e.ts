@@ -31,7 +31,10 @@ async function open(page: Page, skin: string) {
   await expect.poll(() => hook(page)).toBeGreaterThan(0);
 }
 
-test('TCP pace marks drawn as overlays on a pacer skin', { tag: '@known-flaky' }, async ({ page }) => {
+// Untagged 2026-11-10 (brief 118): its CI WebKit first attempts failed at open()'s first poll (no engine event within 5 s)
+// in 27 of the 74 ci runs of 9 Nov before PR #369 and in none of the 25 after it (the start-up is owed time since #369,
+// so a loaded page posts its first events sooner); local macOS WebKit 20/20. A tag on a row that passes is a hole in the gate.
+test('TCP pace marks drawn as overlays on a pacer skin', async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1300, height: 640 });
   await open(page, 'zoll-like');
