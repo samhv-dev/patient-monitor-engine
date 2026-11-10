@@ -301,7 +301,8 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
       ['an infinite amount', stage({ components: [{ productId: 'x1', amount: Number.POSITIVE_INFINITY, unit: 'mL' }] })],
       ['a unit that is not a unit', stage({ components: [{ productId: 'x1', amount: 1, unit: 'mL; drop' }] })],
       ['a product id with spaces', stage({ components: [{ productId: 'x 1', amount: 1, unit: 'mL' }] })],
-      ['a diluent of 0 mL', stage({ diluent: { id: 'sodiumChloride09', volumeMl: 0 } })],
+      // L4: 0 mL is legal (a powder reconstituted with its label's volume and not diluted further, prepare.ts); below 0 is not
+      ['a diluent of -1 mL', stage({ diluent: { id: 'sodiumChloride09', volumeMl: -1 } })],
       ['a container that is a number', stage({ container: 50 })],
       ['a delivery of -5 mL', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: -5, route: 'iv' })],
       ['a delivery by inhalation', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'inh' })],

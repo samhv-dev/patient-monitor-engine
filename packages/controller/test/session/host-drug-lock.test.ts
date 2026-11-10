@@ -337,3 +337,109 @@ describe("a staged delivery (one stageGroup, `batch` of n) is checked against th
     s.ctl.close();
   });
 });
+
+// Plan learner-action-remote.md L4: a learner remote's delivery meets the lock exactly as the laptop's gives do. Its
+// preparations are made from the L2 fixture layer (TEST DATA ONLY: invented drugs, numbers [ENG: test]); the refusal
+// names the device kind, "from a learner's remote" (GivenBy 'learner').
+describe("a learner remote's delivery meets the same lock, and a tray of preparations is one staged delivery", () => {
+  /** `layer: 'shipped'`: the formulary as shipped (packages/controller/formulary/), read as the source check reads it. */
+  async function learnerSetup(layer: 'fixture' | 'shipped' = 'fixture') {
+    const { loadFormulary } = await import('../../src/formulary/load.ts');
+    const { BENCH_IDS, benchFiles } = await import('../formulary/fixtures/bench.fixture.ts');
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const { join, relative } = await import('node:path');
+    const dir = new URL('../../formulary', import.meta.url).pathname;
+    const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
+    const files = Object.fromEntries(walk(dir).filter((x) => x.endsWith('.json')).map((x) => [relative(dir, x), JSON.parse(readFileSync(x, 'utf8')) as unknown]));
+    const f = layer === 'shipped' ? loadFormulary(files) : loadFormulary(benchFiles(), BENCH_IDS);
+    if (!f.ok) throw new Error('the L2 fixture layer breaks §5');
+    const tg = fakeTarget();
+    const groups: Command[][] = [];
+    const t: HostTarget = { ...tg.t, dispatchGroup: (cs) => (groups.push(cs), cs.map((c) => tg.t.dispatch(c) as DispatchResult)) };
+    const host = new HostSession({ session: S, target: t, stateIntervalMs: 0, learnerPin: () => '582913', formulary: () => f.formulary });
+    hosts.push(host);
+    const wire = (from: string, role: 'controller' | 'learner', issuedBy: string) => {
+      const hub = createInProcessHub();
+      host.addTransport(hub.connect());
+      const end: ManagedTransport = hub.connect();
+      const got = collect(end);
+      const st = createStamper(S, from);
+      let n = 0;
+      end.send(st({ kind: 'hello', role, ...(role === 'learner' ? { show: 'learner', device: 'remote0001', pin: '582913' } : {}) } as never));
+      const send = (body: Record<string, unknown>) => {
+        const id = `${from}-${++n}`;
+        end.send(st({ kind: 'command', body: { id, issuedBy, ...body } as never }));
+        return id;
+      };
+      const ack = async (id: string) => {
+        await waitFor(() => got.some((m) => m.kind === 'ack' && m.commandId === id));
+        return got.find((m): m is Ack => m.kind === 'ack' && m.commandId === id) as Ack;
+      };
+      return { send, ack, got };
+    };
+    const laptop = wire('panel-1', 'controller', 'instructor');
+    const remote = wire('lr.1', 'learner', 'learner');
+    await waitFor(() => remote.got.some((m) => m.kind === 'grant' && m.granted));
+    const stage = async (id: string, productId = 'fixture-solution') =>
+      expect((await remote.ack(remote.send({ type: 'prep', action: 'stage', prep: { id, components: [{ productId, amount: 4, unit: 'mL' }] } }))).accepted).toBe(true);
+    return { tg, groups, laptop, remote, stage };
+  }
+  const bolus = { type: 'applyEvent', event: { kind: 'drug', drugId: 'benchsolution', dose: 10, unit: 'mg', route: 'iv' } };
+  const give = (prepId: string, extra: Record<string, unknown> = {}) => ({ type: 'prep', action: 'deliver', prepId, volumeMl: 2, route: 'iv', ...extra });
+
+  it("the learner at 0 s, the laptop at 4 s → the laptop is refused, \"given 4 s ago from a learner's remote\"", async () => {
+    const s = await learnerSetup();
+    await s.stage('p0000001');
+    s.tg.at(30);
+    expect((await s.remote.ack(s.remote.send(give('p0000001')))).accepted).toBe(true);
+    s.tg.at(34);
+    expect(await s.laptop.ack(s.laptop.send(bolus))).toMatchObject({ accepted: false, code: 'recent', reason: "given 4 s ago from a learner's remote", recent: { by: 'learner' } });
+  });
+
+  it('the laptop at 0 s, the learner at 4 s → the learner is refused, "given 4 s ago from the laptop"; nothing is taken from the syringe', async () => {
+    const s = await learnerSetup();
+    await s.stage('p0000002');
+    s.tg.at(30);
+    expect((await s.laptop.ack(s.laptop.send(bolus))).accepted).toBe(true);
+    s.tg.at(34);
+    expect(await s.remote.ack(s.remote.send(give('p0000002')))).toMatchObject({ accepted: false, code: 'recent', reason: 'given 4 s ago from the laptop' });
+    s.tg.at(45);
+    expect((await s.remote.ack(s.remote.send(give('p0000002', { volumeMl: 'all' })))).accepted).toBe(true);
+    expect((s.tg.got.at(-1) as unknown as { event: { dose: number } }).event.dose).toBe(20); // the whole 4 mL × 5 mg/mL: the refused push took none
+  });
+
+  it("a tray of three preparations in one stageGroup applies in one dispatch and meets the lock item by item (#337's rule)", async () => {
+    // the shipped fentanyl (50 mcg/mL) and midazolam (5 mg/mL), drawn undiluted: fentanyl, midazolam, fentanyl again
+    const s = await learnerSetup('shipped');
+    await s.stage('p0000003', 'fentanyl-50mcg-ml');
+    await s.stage('p0000004', 'hypnovel-5mg-ml');
+    await s.stage('p0000005', 'fentanyl-50mcg-ml');
+    s.tg.at(60);
+    const tray = { stageGroup: 'tray-1', batch: { id: 'tray-1', n: 3 } };
+    const ids = ['p0000003', 'p0000004', 'p0000005'].map((p) => s.remote.send(give(p, tray)));
+    const acks = await Promise.all(ids.map((id) => s.remote.ack(id)));
+    expect(acks.map((a) => a.accepted)).toEqual([true, true, false]);
+    expect(acks[2]).toMatchObject({ code: 'recent', reason: "given 0 s ago from a learner's remote" });
+    expect(s.groups).toHaveLength(1); // one dispatch: the two that passed the lock, on one tick
+    expect(s.groups[0]?.map((c) => [(c as unknown as { event: { drugId: string; dose: number; unit: string } }).event, (c as { prepId?: string }).prepId])).toEqual([
+      [{ kind: 'drug', drugId: 'fentanyl', dose: 100, unit: 'mcg', route: 'iv' }, 'p0000003'], // 2 mL × 50 mcg/mL × r 1
+      [{ kind: 'drug', drugId: 'midazolam', dose: 10, unit: 'mg', route: 'iv' }, 'p0000004'], // 2 mL × 5 mg/mL × r 1
+    ]);
+    expect(new Set(s.groups[0]?.map((c) => c.atTick)).size).toBe(1);
+  });
+
+  it('a tray of three different drugs → all three in ONE dispatch, on one tick, each filed with its own preparation', async () => {
+    const s = await learnerSetup();
+    await s.stage('p0000006');
+    expect((await s.remote.ack(s.remote.send({ type: 'prep', action: 'stage', prep: { id: 'p0000007', components: [{ productId: 'fixture-powder-vial', amount: 1, unit: 'vial' }], diluent: { id: 'water', volumeMl: 0 } } }))).accepted).toBe(true);
+    expect((await s.remote.ack(s.remote.send({ type: 'prep', action: 'stage', prep: { id: 'p0000008', components: [{ productId: 'fixture-ampoule', amount: 1, unit: 'mg' }] } }))).reason).toBe("fixture-ampoule's label gives no concentration");
+    s.tg.at(600);
+    const tray = { stageGroup: 'tray-2', batch: { id: 'tray-2', n: 2 } };
+    const acks = await Promise.all([s.remote.send(give('p0000006', tray)), s.remote.send(give('p0000007', tray))].map((id) => s.remote.ack(id)));
+    expect(acks.every((a) => a.accepted)).toBe(true);
+    expect(s.groups).toHaveLength(1);
+    expect(s.groups[0]?.map((c) => [(c as unknown as { event: { drugId: string } }).event.drugId, (c as { prepId?: string }).prepId, c.atTick])).toEqual([
+      ['benchsolution', 'p0000006', s.groups[0]?.[0]?.atTick], ['benchpowder', 'p0000007', s.groups[0]?.[0]?.atTick],
+    ]);
+  });
+});

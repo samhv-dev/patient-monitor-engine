@@ -433,6 +433,7 @@ renderer, audio and skin contracts.
 | `conditionCommand` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | The engine command that starts (severity > 0) or stops (0) an acute event. |
 | `activeText` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | "Cardiac tamponade (severe)", for the session bar and the Patient tab. |
 | `fastForwardDoneLines` | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | The two lines of the banner after a fast-forward, worded here only: |
+| `loadShippedFormulary` | [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | L4 (learner-action-remote.md §4 D3, D4): |
 | `entry` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The glossary entry by its research/11 number. |
 | `shortLabel` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The label a screen shows. |
 | `lookup` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | Glossary entry for a truth path, or null (then the path is a model internal and stays out of clinical views). |
@@ -454,6 +455,8 @@ renderer, audio and skin contracts.
 | `faText` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian of `en`, or null (counted as missing). |
 | `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
 | `drawPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | Four random digits from the platform's cryptographic source. |
+| `instructorPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | `avoid`: the other role's PIN, never drawn (L4: |
+| `learnerPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | L4: the learner PIN — the same keeping as the instructor's (four digits drawn at first use [ENG: |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `defibWords` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | R5d: a refusal of the window's press, in the device's words. |
 | `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
@@ -713,7 +716,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -740,6 +743,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/engine-bench.worker.ts`](../../apps/demo/src/app/engine-bench.worker.ts) | Home's "Engine · ms per tick" tile (E125). |
 | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | Acute events (showcase additions): the engine's systemic conditions an instructor starts and stops during a case — tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the re |
 | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | While the host fast-forwards, the window dims and blurs behind one centred panel — a double chevron in a ring of its colour, the two blinking together, "FAST FORWARD · 5 MIN" in amber in the monitor's typeface, a thin pr |
+| [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | Plan learner-action-remote.md L4: the laptop's copy of the formulary layer, for the host's learner preparations. |
 | [`apps/demo/src/app/glossary-data.ts`](../../apps/demo/src/app/glossary-data.ts) | The clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-and-glossary.md §5, 294 entries, generated 2026-09-28 from the workspace research file; edits go H |
 | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. |
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
@@ -1076,6 +1080,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-panel.dom.test.ts`](../../apps/demo/src/app/fast-forward-panel.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-beep-gate.test.ts`](../../apps/demo/src/app/follower-beep-gate.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/formulary.test.ts`](../../apps/demo/src/app/formulary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/hidden-tab.test.ts`](../../apps/demo/src/app/hidden-tab.test.ts) | 0 | 0 |
