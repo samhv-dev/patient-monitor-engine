@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. No Trissel 2013 monograph. Agilus prepTime: the measured mean on its label (50 s); the Dantrium IV label states none.",
+  "$comment": "FS batch; FQ2 (owner, 2026-11-10): Dantrium 90 s per vial from Agilus's label comparison. Measured beside it: study-baker-2007-dantrolene (93.87 s), study-quraishi-2006-dantrolene (90-130 s).",
   "drugId": "dantrolene",
   "products": [
     {
@@ -19,8 +19,17 @@
         "src": "emc-1097"
       },
       "prepTime": {
-        "gap": "LQ7"
-      }
+        "s": 90,
+        "src": "emc-15912-dantrolene-20mg-comparison"
+      },
+      "inUse": [
+        {
+          "h": 6,
+          "tempC": 25,
+          "condition": "Reconstituted solution, stored at 15-25 °C.",
+          "src": "emc-1097"
+        }
+      ]
     },
     {
       "id": "agilus-120mg",
@@ -41,7 +50,15 @@
       "prepTime": {
         "s": 50,
         "src": "emc-15912"
-      }
+      },
+      "inUse": [
+        {
+          "h": 6,
+          "tempC": 25,
+          "condition": "Reconstituted, protected from light, not refrigerated: chemical and physical in-use stability.",
+          "src": "emc-15912"
+        }
+      ]
     }
   ],
   "diluents": [
@@ -79,7 +96,13 @@
   "admixtures": [],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "water",
+      "concentration": {
+        "amount": 0.3333333333333333,
+        "unit": "mg/mL",
+        "src": "stabilis-dantrolene-1509"
+      },
       "container": "vial",
       "tempC": 25,
       "points": [

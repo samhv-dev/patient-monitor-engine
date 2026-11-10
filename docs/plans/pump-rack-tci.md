@@ -317,7 +317,9 @@ The check, `packages/engine-core/test/l2/pk/tci-sets.test.ts` (unit job, every P
 5. No `[VERIFY]` mark remains in a registered set (Shafer's and Gepts's today, `models.ts`).
 6. A ke0 whose source is not the PK paper names its own source and the PK it was fitted with (the rule in
    `covariates.ts:1–2`); the engine's time-to-peak-effect ke0s (fentanyl 0.117, sufentanil 0.176, `models.ts`) are
-   labelled as such.
+   labelled as such. A third kind, `device` (the owner's ruling TQ2, 10 Nov 2026): a value a named device ran whose
+   derivation a peer-reviewed paper reports as unpublished (Marsh's 0.26, Absalom 2009 p. 30), with that paper, the
+   device, the PK, a label, and no fit.
 7. The TCI event's accepted `model` ids are the registry's ids (today's hard-coded list, `pipeline.ts:263`, removed).
 
 What CI cannot prove is that a coefficient is the paper's. **Second reading**, as in the formulary: every set is read

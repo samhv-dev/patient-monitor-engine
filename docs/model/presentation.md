@@ -59,7 +59,7 @@ renderer, audio and skin contracts.
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:891`](../../packages/renderer/src/device-ui.ts#L891) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
 | [`mount.ts:196`](../../packages/renderer/src/mount.ts#L196) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:428`](../../packages/renderer/src/mount.ts#L428) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`mount.ts:433`](../../packages/renderer/src/mount.ts#L433) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -369,7 +369,7 @@ renderer, audio and skin contracts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `READY_TIMEOUT_MS` | `2000` | ms | — | The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). |
+| `READY_LATE_MS` | `2000` | ms | [ENG: control] | N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`; `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it: a late worker is still loading, not lost. Until brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at 2.2–6.0 s. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads it one module per request (278–1875 ms on an idle Mac). A worker that fails (an error before 'ready') still hands the monitor to the main thread, and the page says that too (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control]. |
 | `WORKER_SILENT_MS` | `3000` | ms | [ENG: display] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG: display]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
@@ -1033,6 +1033,7 @@ Exported without a doc comment: `builderPage`, `editsAt`, `rawNames`, `bookmark`
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/fast-forward-main-thread.e2e.ts`](../../apps/demo/e2e/fast-forward-main-thread.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/finish-restart-v2.e2e.ts`](../../apps/demo/e2e/finish-restart-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx14-pause-while-hidden.e2e.ts`](../../apps/demo/e2e/fx14-pause-while-hidden.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx16-follower-beep-gate.e2e.ts`](../../apps/demo/e2e/fx16-follower-beep-gate.e2e.ts) | 0 | 0 |
@@ -1315,6 +1316,7 @@ Exported without a doc comment: `builderPage`, `editsAt`, `rawNames`, `bookmark`
 | [`views.test.ts`](../../packages/renderer/test/views.test.ts) | 0 | 0 |
 | [`worker-event-backpressure.test.ts`](../../packages/renderer/test/worker-event-backpressure.test.ts) | 0 | 0 |
 | [`worker-pump-backpressure.test.ts`](../../packages/renderer/test/worker-pump-backpressure.test.ts) | 0 | 0 |
+| [`worker-ready-and-main-yield.test.ts`](../../packages/renderer/test/worker-ready-and-main-yield.test.ts) | 0 | 0 |
 | [`alarm-wording.test.ts`](../../packages/skins/test/alarm-wording.test.ts) | 0 | 0 |
 | [`co2-sampling.test.ts`](../../packages/skins/test/co2-sampling.test.ts) | 0 | 0 |
 | [`color.test.ts`](../../packages/skins/test/color.test.ts) | 0 | 0 |

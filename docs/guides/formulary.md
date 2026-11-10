@@ -36,10 +36,14 @@ library without a file and without a line in `pending.json` fails the build.
 
 1. Every number sits in an object that has a `src`, or in one marked `gap`; every `src` is a key of `sources.json`.
 2. Every source has its kind's required fields (the table above).
-3. Every compatibility (`diluents[].compat`), admixture and stability statement cites Stabilis, or Trissel when the
-   file's `has.stabilis` is false; and carries `crossCheck.trissel`: `agrees`, `differs` or `not listed`, with the
-   Trissel page as `crossCheck.src` unless `not listed`. A `differs` carries a `ruling`: who ruled, the date, and which
-   source the entry follows.
+3. Every compatibility (`diluents[].compat`), admixture and stability statement cites Stabilis, or Trissel for a
+   fact Stabilis does not state. The rule is applied **per statement**, not per file: a file whose other statements
+   cite Stabilis may hold a statement that only Trissel makes. Each statement carries `crossCheck.trissel`: `agrees`,
+   `differs` or `not listed`, with the Trissel page as `crossCheck.src` unless `not listed`. A `differs` carries a
+   `ruling`: who ruled, the date, and which source the entry follows. A statement taken from Trissel carries its own
+   Trissel source and page: its `src` is a `trissel` key with a page, and its cross-check is
+   `{ "trissel": "agrees", "src": <that same key> }`; anything else is refused. It is still a paraphrase in our words
+   (rule 6), never Trissel's text.
 4. A `gap` names an owner question of the plan's §10 (`LQ1`–`LQ14`) and holds no number. A preparation time may be a
    gap (`{ "gap": "LQ7" }`: the preparation is ready at once and the Debrief says "no source for the preparation
    time"); a strength, a reconstitution or a diluent's content may not, because the bench cannot deliver without it.
@@ -55,7 +59,8 @@ the difference.
 Every file says which of the three sources it has: `"has": { "stabilis": true, "trissel": true, "monograph": true }`.
 The flags must match the sources the file actually cites (rule 3): a file that cites a Trissel page has
 `trissel: true`, and one that cites none has `false`. A drug Stabilis does not cover has `stabilis: false`, and its
-statements then come from Trissel, which the entry says by that flag.
+statements then come from Trissel. A file that cites Stabilis for some statements and Trissel alone for others has
+both flags true: which source makes each statement is read from the statement's own `src`.
 
 ## The copyright rule
 
@@ -94,3 +99,18 @@ The angle-bracketed values are placeholders showing where each value comes from 
 `verdict` is `incompatible`, `compatible`, `conditional` or `not tested`. A stability row gives the diluent, the
 container (`vial`, `syringe-pp`, `bag-pvc`, `bag-polyolefin`), the temperature in °C and the source's points as
 `[hours, fraction remaining]`, as the source gives them; the bench never extrapolates past the last point.
+
+Three optional fields (added for the FS batch's findings):
+
+- **`concentration`** on a stability row: the concentration the row was measured at, as the source states it,
+  `{ "amount": 1, "unit": "mg/mL", "src": "<the row's source>" }`, or a stated range with `"max"`. The unit is an
+  amount per mL or per L (`g`, `mg`, `mcg`, `µg`, `ng`, `IU`, `units`, `mmol`, `mEq`). Rows that differ only in
+  concentration are told apart by it: the bench reads the row whose concentration covers the preparation's (mass
+  units converted; `IU` and `units` are one count; `mmol` and `mEq` only with themselves), else a row that states no
+  concentration, else none. It never takes the nearest row: a row at another concentration is not the same
+  statement. Two concentrations studied side by side ("10 and 50 µg/mL") are two rows, not a range.
+- **`kind: "stable"`** on a stability row: the source says "stable for T", not a measured curve. Its points are
+  `[[T, x]]` (at least x retained up to T h), and owner question LQ9 decides the fraction inside T.
+- **`inUse`** on a product: the label's in-use times, each `{ "h": 72, "tempC": 30, "condition": "<the label's
+  condition, in our words>", "src": "<a monograph key>" }`; `tempC` is the upper end of the label's range, absent when
+  the label names no temperature.

@@ -3,14 +3,10 @@
 // source's points, from 1 at age 0 (the points are fractions of the initial amount); never extrapolated: past the last
 // point it is the last point's value, flagged. No kinetic model, no interpolation across containers or temperatures.
 // The two owner rulings that decide what happens without a quantity are one switch each (RULINGS), at their ruled value.
-import type { DrugEntry, Stability } from './types.ts';
-
-/**
- * A stability row. `kind: 'stable'` is a statement "at least x retained for T h" (points `[[T, x]]`): LQ9 decides the
- * fraction inside T. Absent or `'measured'`: the points are measured fractions. The field is read here only; the
- * files' JSON Schema does not admit it yet (the first entry that needs it adds it there).
- */
-export type StabilityRow = Stability & { kind?: 'measured' | 'stable' };
+// Rows that differ only in the concentration they were measured at are told apart by their `concentration` (brief 127):
+// the row whose stated concentration covers the preparation's, else a row stating none; never the nearest row
+// (a row at another concentration is not the same statement: ruling C1, 10 November).
+import type { Concentration, DrugEntry, Stability } from './types.ts';
 
 export interface Rulings {
   /** LQ8, incompatible with no quantity: A the full amount ("loss not modelled"), B none, C it cannot be given. */
@@ -39,19 +35,59 @@ export interface Remaining {
 
 /** Seconds in an hour: the points are in hours, the age in seconds [ENG: conversion]. */
 const S_PER_H = 3600;
+/** A mass unit in mg [ENG: conversion]. */
+const MASS_MG: Readonly<Record<string, number>> = { g: 1000, mg: 1, mcg: 0.001, 'µg': 0.001, ng: 0.000001 };
+/** An insulin unit is an international unit: one count, two spellings. */
+const COUNT = new Set(['IU', 'units']);
+/** A concentration's volume in mL [ENG: conversion]. */
+const PER_ML: Readonly<Record<string, number>> = { mL: 1, L: 1000 };
+/** Two concentrations computed in floating point are the same within this relative difference [ENG: numerics]. */
+const REL_TOL = 1e-9;
+
+/** A drug amount's unit as [dimension, size]: mass in mg, a count, or any other unit (mmol, mEq) only as itself. */
+const dim = (unit: string): [string, number] => (unit in MASS_MG ? ['mass', MASS_MG[unit]!] : COUNT.has(unit) ? ['count', 1] : [unit, 1]);
+
+/** True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. */
+export function covers(c: Concentration, perMl: number, unit: string): boolean {
+  const m = /^(.+)\/(mL|L)$/.exec(c.unit);
+  if (!m) return false;
+  const [d, size] = dim(m[1]!);
+  const [pd, psize] = dim(unit);
+  if (d !== pd) return false;
+  const k = size / PER_ML[m[2]!]! / psize;
+  const lo = c.amount * k;
+  const hi = (c.max ?? c.amount) * k;
+  return perMl >= lo * (1 - REL_TOL) && perMl <= hi * (1 + REL_TOL);
+}
+
+/** The preparation's concentration, as prepare's `Active` gives it. */
+export interface AtConcentration {
+  perMl: number;
+  unit: string;
+}
+
+/** Indexes of `entry`'s stability rows for `diluent` and `container` (any temperature) that state `concentration` or
+ *  state none; every row for the pair when no concentration is given. */
+export function stabilityRows(entry: DrugEntry, diluent: string, container: Stability['container'], concentration?: AtConcentration): number[] {
+  return entry.stability.flatMap((s, i) =>
+    s.diluent === diluent && s.container === container && (!concentration || !s.concentration || covers(s.concentration, concentration.perMl, concentration.unit)) ? [i] : []);
+}
 
 /**
- * r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match; the first matching row).
- * `incompatible` overrides the entry's own diluent verdict (the caller passes an admixture finding).
+ * r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match). With the preparation's
+ * `concentration`, the row whose stated concentration covers it, else a row that states none; without it, the first
+ * row for the diluent, container and temperature. `incompatible` overrides the entry's own diluent verdict (the caller
+ * passes an admixture finding).
  * @throws RangeError on a negative or non-finite age.
  */
 export function remaining(
   entry: DrugEntry, diluent: string, container: Stability['container'], tempC: number, ageS: number,
-  opts: { incompatible?: boolean; rulings?: Rulings } = {},
+  opts: { incompatible?: boolean; rulings?: Rulings; concentration?: AtConcentration } = {},
 ): Remaining {
   if (!Number.isFinite(ageS) || ageS < 0) throw new RangeError(`a preparation's age is a non-negative number of seconds, not ${ageS}`);
   const rulings = opts.rulings ?? RULINGS;
-  const row = (entry.stability as StabilityRow[]).find((s) => s.diluent === diluent && s.container === container && s.tempC === tempC);
+  const rows = stabilityRows(entry, diluent, container, opts.concentration).map((i) => entry.stability[i]!).filter((s) => s.tempC === tempC);
+  const row = rows.find((s) => opts.concentration && s.concentration) ?? rows[0];
   if (!row) {
     const incompatible = opts.incompatible ?? entry.diluents.some((d) => d.id === diluent && d.compat?.verdict === 'incompatible');
     const none = { basis: 'none' as const, beyondData: false, src: null };
