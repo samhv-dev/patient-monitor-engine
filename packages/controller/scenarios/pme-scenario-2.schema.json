@@ -203,6 +203,11 @@
             "overS": { "$ref": "#/definitions/amount" },
             "infusion": { "$ref": "#/definitions/dose" }
           }
+        },
+        "diluent": {
+          "description": "The diluents the card accepts, as formulary diluent ids (plan learner-action-remote.md §6): a give from a preparation in another, with none, or with no preparation on record is a deviation line. No shipped card has it (LQ14).",
+          "type": "object", "required": ["set"], "additionalProperties": false,
+          "properties": { "set": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } }
         }
       },
       "oneOf": [{ "properties": { "id": { "type": "string" } }, "required": ["id"] }, { "properties": { "cls": { "type": "string" } }, "required": ["cls"] }, { "properties": { "alternatives": { "type": "array" } }, "required": ["alternatives"] }]
@@ -252,6 +257,11 @@
         "recognition": { "const": true, "description": "The card's recognition (Debrief 2, D5; the owner's ruling of 5 November): the team announcing the diagnosis, as a timed action the instructor presses. The Debrief's recognition tile and key moment read this action's window, press and grade. At most one action per card." },
         "give": { "type": "array", "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" }, "description": "The commands an A press sends (/1 command definitions)." },
         "drug": { "$ref": "#/definitions/drugCriteria" },
+        "sample": {
+          "description": "A sample action's panels (plan learner-action-remote.md §6): a lab sample of a listed panel, the learner's or the instructor's, satisfies the action in its window. Absent: the action is recorded by its taking. Only on a sample action.",
+          "type": "object", "required": ["panel"], "additionalProperties": false,
+          "properties": { "panel": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } }
+        },
         "device": {
           "type": "object", "required": ["kind", "settings"], "additionalProperties": false,
           "properties": { "kind": { "$ref": "#/definitions/deviceKind" }, "settings": { "$ref": "#/definitions/settings" } }

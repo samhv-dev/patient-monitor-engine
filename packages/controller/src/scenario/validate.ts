@@ -8,6 +8,7 @@ import Ajv, { type ErrorObject } from 'ajv';
 import { DRUGS, routeHonoured } from '@pme/engine-core';
 import schema from '../../scenarios/pme-scenario-1.schema.json';
 import schemaV2 from '../../scenarios/pme-scenario-2.schema.json';
+import { LEARNER_LAB_PANELS } from '../protocol.ts';
 import type { AnyScenarioDoc, DocCommand, ScenarioDoc, When } from './types.ts';
 import type { Anchor, DisplayRule, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
 
@@ -232,6 +233,9 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     if (own && !(own in a)) errors.push(`${at}: a ${a.kind} action needs "${own}"`);
     for (const b of BLOCKS) if (b !== own && b in a) errors.push(`${at}/${b}: only a ${b === 'effect' ? 'decision' : b} action has "${b}"`);
     commands(a.give, `${at}/give`);
+    // plan learner-action-remote.md §6: `sample` is a sample action's; a panel the engine never draws can never satisfy it
+    if (a.sample && a.kind !== 'sample') errors.push(`${at}/sample: only a sample action has "sample"`);
+    a.sample?.panel.forEach((x, k) => LEARNER_LAB_PANELS.has(x) || warnings.push(`${at}/sample/panel/${k}: "${x}" is not a panel the engine draws (${[...LEARNER_LAB_PANELS].join(', ')})`));
     if (a.drug) {
       drug(a.drug.id, `${at}/drug/id`);
       cls(a.drug.cls, `${at}/drug/cls`);

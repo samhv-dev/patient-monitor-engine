@@ -50,7 +50,9 @@ describe('§6: a learner\'s give in the administration record (driver.ts adminis
     phases: [{ id: 'calm', label: 'Calm', initial: true }],
     actions: [
       { id: 'dantrolene', label: 'Dantrolene', kind: 'drug', phases: ['calm'], drug: { id: 'dantrolene' } },
-      { id: 'abg', label: 'Send an ABG', kind: 'sample', phases: ['calm'], give: [{ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } }] },
+      // a card's give cannot send a lab event (the /1 command schema has none); the A press below is the panel's own lab
+      // command stamped with the action's id, as an A press is
+      { id: 'abg', label: 'Send an ABG', kind: 'sample', phases: ['calm'] },
     ],
   };
   function rig(preps: Record<string, PrepRecord> = {}) {
