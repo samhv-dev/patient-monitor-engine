@@ -44,7 +44,12 @@ export interface TciPopulation {
  *  - `method: 'pkpd'` estimated with a PK-PD model; `src: 'pk-paper'` when it is the PK paper's own, else the paper
  *    that estimated it, with `fittedWith` naming the PK it was estimated with;
  *  - `method: 'ttpe'` fitted to a published time to peak effect with THIS set's PK (Minto 2003; Shafer & Varvel 1991):
- *    `ttpeMin` is the published time, `src` the paper that gives it.
+ *    `ttpeMin` is the published time, `src` the paper that gives it;
+ *  - `method: 'device'` (the owner's ruling TQ2, 10 Nov 2026) the value a named device ran, whose derivation a
+ *    peer-reviewed paper reports as never published: `src` is that reporting paper (with its DOI), `page` where it says
+ *    so, `device` the device, `usedWith` the PK the device ran it with, `derivation: 'unpublished'` with the paper's
+ *    statement paraphrased in `derivationNote`, and `label` the words a pump face shows beside it. It has no
+ *    `fittedWith` and no `ttpeMin`: nothing about it can be reproduced, and the check says so.
  */
 export type TciKe0 =
   | { none: true }
@@ -52,12 +57,26 @@ export type TciKe0 =
       none?: false;
       value?: number;
       expr?: string;
-      method: 'pkpd' | 'ttpe';
+      method: 'pkpd' | 'ttpe' | 'device';
       src: 'pk-paper' | TciPaper;
       /** The PK model the ke0 was estimated with, when `src` is not the PK paper ("this set" for `ttpe`). */
       fittedWith?: string;
       /** Published time to peak effect (min), `ttpe` only. */
       ttpeMin?: number;
+      /** `device` only: the page of `src` that reports the value and its provenance. */
+      page?: string;
+      /** `device` only: the device that ran the value. */
+      device?: string;
+      /** `device` only: the PK the device ran it with. */
+      usedWith?: string;
+      /** `device` only: the derivation was never published. */
+      derivation?: 'unpublished';
+      /** `device` only: the reporting paper's statement, paraphrased. */
+      derivationNote?: string;
+      /** `device` only: what a pump face shows beside the set ("device value; derivation unpublished"). */
+      label?: string;
+      /** Any ke0: a note on the paper's own record (a discrepancy, a ruling). */
+      note?: string;
     };
 
 /** A quantity a paper may print for its reference patient, in the engine's units (L, L/min, /min). */

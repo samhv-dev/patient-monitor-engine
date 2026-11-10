@@ -153,7 +153,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     cns: { remiEq: 1.6, macRemiEq: 0.8, ventRemiEq: FENT_VENT_REMI_EQ }, syringePerMl: 50,
     doses: '1–3 µg/kg analgesia; 5–10 µg/kg blunting; plasma 15–30 ng/mL as sole agent (M10 ch. 22 Table 22.7)',
     onset: 'TTPE 3.6 min; CSHT rises steeply (M10 ch. 22 p. 588)',
-    ir: '?', src: `Shafer 1990 PK; ke0 by TTPE (decision 2); T5d potency 1.6× remifentanil; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
+    ir: '?', src: `Shafer 1990 PK (Table 2, read in T2); ke0 by TTPE (decision 2); T5d potency 1.6× remifentanil; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
   },
   {
     // Vent site ke0 0.92/min: Bouillon 2003 ventilatory ke0 (T5d "ke0 for CO2 0.92/min") [P]
@@ -171,7 +171,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     // no ventilatory C50 source; brief research/44 X-10]. MAC weight = remiEq (the neuro model's own scale, unchanged).
     cns: { remiEq: 12, ventRemiEq: 5 }, syringePerMl: 5,
     doses: '0.1–0.5 µg/kg; plasma 5–10 ng/mL as sole agent (M10 Table 22.7)', onset: 'TTPE 5.6 min (Shafer & Varvel 1991)',
-    ir: '?', src: `Gepts 1995 PK [VERIFY]; potency ×12 remifentanil [FIT: remifentanil potency ×12; Q59; brief research/44 X-10]; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
+    ir: '?', src: `Gepts 1995 PK (Table 3, read in T2); potency ×12 remifentanil [FIT: remifentanil potency ×12; Q59; brief research/44 X-10]; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
   },
   {
     id: 'morphine', name: 'Morphine', cls: 'opioid', amountUnit: 'mg', pk: gammaPk(0.1, true, 1200, 14400),

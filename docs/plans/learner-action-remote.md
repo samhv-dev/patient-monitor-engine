@@ -303,8 +303,8 @@ leaflet), `study` (a cited paper, DOI or PMID) for a preparation time or a measu
    every `src` resolves in `sources.json`.
 2. Each source entry has its kind's required fields (above); a `trissel` entry without edition and page, a
    `stabilis` entry without id and date, a `monograph` without product, holder and version fail.
-3. Every `compat`, `admixtures` and `stability` statement has its `src` (Stabilis, else Trissel when `has.stabilis` is
-   false) and a `crossCheck.trissel` (`agrees`, `differs` or `not listed`); `differs` requires a `ruling` (who, date,
+3. Every `compat`, `admixtures` and `stability` statement has its `src` (Stabilis, else Trissel where Stabilis has no
+   statement for it, judged per statement: brief 127) and a `crossCheck.trissel` (`agrees`, `differs` or `not listed`); `differs` requires a `ruling` (who, date,
    which source the entry follows). Every file has `has` with its three flags, and the flags match the sources the
    file actually cites.
 4. No `gap` without an owner question id from §10, and the bench refuses a gap where the field is required to deliver
