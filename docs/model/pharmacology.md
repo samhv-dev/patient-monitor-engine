@@ -456,6 +456,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`l2/pk/pipeline.test.ts`](../../packages/engine-core/test/l2/pk/pipeline.test.ts) | 0 | 0 |
 | [`l2/pk/potency-outputs.test.ts`](../../packages/engine-core/test/l2/pk/potency-outputs.test.ts) | 0 | 0 |
 | [`l2/pk/propofol.test.ts`](../../packages/engine-core/test/l2/pk/propofol.test.ts) | 0 | 0 |
+| [`l2/pk/pump-baseline.test.ts`](../../packages/engine-core/test/l2/pk/pump-baseline.test.ts) | 0 | 0 |
 | [`l2/pk/route-honoured.test.ts`](../../packages/engine-core/test/l2/pk/route-honoured.test.ts) | 0 | 0 |
 | [`l2/pk/route-models.test.ts`](../../packages/engine-core/test/l2/pk/route-models.test.ts) | 0 | 4 |
 | [`l2/pk/sux-repeat.test.ts`](../../packages/engine-core/test/l2/pk/sux-repeat.test.ts) | 0 | 0 |
