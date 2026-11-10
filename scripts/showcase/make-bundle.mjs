@@ -10,7 +10,12 @@
 //                             CRLF, ASCII: kit-launchers.mjs). UNTESTED ON WINDOWS until the owner's checklist is run
 //   server/                   serve.mjs (bundled node), serve.rb (ruby/WEBrick), serve.pl (core perl), serve.py;
 //                             launch.mjs (what the Windows launchers run);
-//                             relay.mjs (Stage 12: pme-relay in one file, its `ws` dependency inside)
+//                             relay.mjs (Stage 12: pme-relay in one file, its `ws` dependency inside);
+//                             store.mjs (the kit store's paths for serve.mjs: packages/controller/relay/store.ts)
+//   app/pme-kit.json          {"kit": true}: the app is running from a kit (the builder says why the kit store is off
+//                             when a fallback server answers no /pme-store/)
+//   NOT user-data/            the clinicians' data folder is made by the kit's servers at the first save, never shipped:
+//                             a rebuild into a used kit folder leaves it as it is, and the build fails if it made one
 //   runtime/                  node-<arch> ONLY if this machine's node is an official signed Node.js build; else empty
 //                             node.exe, NODE-LICENSE.txt, NODE-VERSION.txt ONLY with --win-node: the official Windows
 //                             build's node.exe, taken from a zip whose SHA-256 matches its SHASUMS256.txt (default: the
@@ -72,6 +77,8 @@ for (const k of KIT) rmSync(join(out, k), { recursive: true, force: true });
 step('build apps/demo (vite build --base ./)');
 run(vite, ['build', '--base', './', '--outDir', join(out, 'app'), '--emptyOutDir'], join(repo, 'apps/demo'));
 if (!existsSync(join(out, 'app/index.html'))) throw new Error('build produced no index.html');
+writeFileSync(join(out, 'app/pme-kit.json'), `${JSON.stringify({ kit: true })}\n`);
+const hadUserData = existsSync(join(out, 'user-data'));
 
 step('launcher, servers, read-me');
 const kit = join(here, 'kit');
@@ -103,6 +110,13 @@ await build({
 if (!existsSync(join(out, 'server/relay.mjs'))) throw new Error('the relay bundle was not written');
 if (/__viteOptionalPeerDep/.test(readFileSync(join(out, 'server/relay.mjs'), 'utf8'))) throw new Error('KR-A1: the relay bundle stubs an optional peer dependency (ws would call an empty bufferutil)');
 copyFileSync(join(repo, 'packages/controller/node_modules/ws/LICENSE'), join(out, 'server/relay.mjs.LICENSE-ws.txt')); // NOTICES N-007 (MIT)
+// the kit store for serve.mjs (Start Simulator on Node.js): the relay's own store.ts, node: built-ins only
+await build({
+  configFile: false, root: repo, logLevel: 'warn',
+  ssr: { noExternal: true, target: 'node' },
+  build: { ssr: join(repo, 'packages/controller/relay/store.ts'), outDir: join(out, 'server'), emptyOutDir: false, minify: false, target: 'node22', rollupOptions: { output: { entryFileNames: 'store.mjs' } } },
+});
+if (!existsSync(join(out, 'server/store.mjs'))) throw new Error('the store bundle was not written');
 
 step('runtime (bundled node only if it is an official signed build)');
 mkdirSync(join(out, 'runtime'));
@@ -162,5 +176,7 @@ writeFileSync(join(out, 'VERSION.txt'), [
   '',
 ].join('\n'));
 
+if (!hadUserData && existsSync(join(out, 'user-data'))) throw new Error('the build made a user-data folder: the kit must ship without one');
+if (hadUserData) console.log(`\nNote: ${join(out, 'user-data')} was there before this build and is kept as it was (the clinicians' data; leave it out of a copy you hand on).`);
 console.log(`\nKit ready: ${out}`);
 for (const f of readdirSync(out)) console.log(`  ${f}`);

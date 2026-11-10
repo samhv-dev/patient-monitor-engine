@@ -8,7 +8,7 @@
 // back online the cockpit signs in again and takes over from the engine's settings; silent with its socket left open (its
 // sends held), it is handed over by the host's 1 s watchdog, its id revoked: it signs in again on a new socket and
 // drives, and the held frames of the old id, sent at last, are refused. (3) The PIN never appears in an
-// address, the QR, the relay's `room.json` or a learner's frames.
+// address, the QR, the relay's `.room.json` or a learner's frames.
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -262,10 +262,10 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
   await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'the tablet drives again' }).toBe('external');
   expect(await cockpitCfg(t)).toMatchObject({ mode: 'VC', rate: 16, vt: 450, peep: 6, fio2: 50, paused: false });
 
-  // the PIN in no address (the tablet's, the QR's), not in the relay's room.json, not in a learner's frames
+  // the PIN in no address (the tablet's, the QR's), not in the relay's .room.json, not in a learner's frames
   for (const u of [...visited, t.url(), qrUrl]) expect(u.includes(PIN), `an address: ${u}`).toBe(false);
   const roomFiles = readdirSync(stateDir);
-  expect(roomFiles).toContain('room.json');
+  expect(roomFiles).toContain('.room.json');
   for (const name of roomFiles) expect(readFileSync(join(stateDir, name), 'utf8').includes(PIN), name).toBe(false);
   expect(learner.frames.length).toBeGreaterThan(0);
   expect(learner.frames.filter((x) => x.includes('"pin"') || x.includes(`"${PIN}"`))).toEqual([]);

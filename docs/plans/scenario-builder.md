@@ -124,7 +124,7 @@ Anti-goals (a piece that does one of these is rejected)
 | Per-browser storage | `store.ts` (localStorage, wrapped: private windows throw) |
 | Return to a phase | the runner places one stage mark per phase entry; Instructor v2's past chips restore it |
 | Jump the clock | Fast forward +2 and +5 min (`fast-forward.ts:19`, `FF_SPANS`), disabled while paused |
-| A durable folder on the kit laptop | the classroom relay keeps `room.json` in this computer's application-data folder (`launch.mjs:34`, `stateDir()`: `~/Library/Application Support/PME Classroom`, `%LOCALAPPDATA%\PME Classroom`), outside the kit folder, so it survives a kit update |
+| A durable folder on the kit laptop | the classroom relay keeps `room.json` in this computer's application-data folder (`launch.mjs:34`, `stateDir()`: `~/Library/Application Support/PME Classroom`, `%LOCALAPPDATA%\PME Classroom`), outside the kit folder, so it survives a kit update. **Superseded 10 November 2026** (§14, KS1): the kit's own `user-data` folder, inside the kit folder (B8) |
 | An HTTP server in the kit | the relay serves the app and its own paths (`relay/server.ts:589`, `:627`); `serve.mjs` for the simulator alone |
 | Persian through a table | one matcher (`i18n/fa-match.mjs`) over `docs/showcase/i18n/fa-debrief.json`, each entry `reviewed: false` until the owner reads it; `DRAFT_LINE` while any printed entry is unread (`i18n/fa-dom.ts`) |
 
@@ -350,17 +350,37 @@ request (one piece of work per PR).
 | Layer | Where | When | Survives | Shared with |
 |---|---|---|---|---|
 | 1. Autosave | this browser (IndexedDB through a wrapped store; localStorage's 5 MB and its throw in a private window are why not `store.ts` alone) | every change, debounced 300 ms; a local snapshot every 2 min of editing and at every Run, Export, Upload | a reload, a crash; NOT a cleared browser or another browser | nobody |
-| 2. Kit store | the department laptop: the relay's state folder (`stateDir()/scenarios/`), one JSON file per card version | Ctrl+S, Run in place, and every 2 min while the kit runs on Node | a kit update (the folder is outside the kit), a browser reset; NOT the laptop's loss | everyone using that laptop's kit |
+| 2. Kit store | the department laptop: the kit's OWN folder, `<kit folder>/user-data/` (visible, never a hidden place: the owner, 10 November, §14 KS1), `scenarios/<card id>/v0001-<UTC time>.json`, one card file per version | Ctrl+S, Export, Run in place (B6), and every 2 min of an open draft that changed while the kit runs on Node | a browser reset, a cleared browser, another browser of the laptop; NOT the laptop's loss, and NOT a new kit unless `user-data` is copied into it | everyone using that laptop's kit, and whoever is handed a copy of the kit folder with its `user-data` |
 | 3. Central store | the store the owner switches on (§9) | "Upload", a press per card, with a required one-line change log; queued while the store is unreachable; never automatic (BQ5 = A) | the laptop's loss | every app that reaches the store |
 
 - **Export and import as files** at every layer: a draft exports as its card JSON (`<id>.json`, the format a library
   card has, loadable by Instructor v2's open-a-file), and the kit store's whole folder exports as one archive. A file is
   always the way out when no store is reachable.
-- **The kit store's rules.** The relay accepts writes only from this computer (the loopback address), never from a phone
-  on the room network; reads are open to the room so another laptop window lists the drafts. It stores cards and
-  version metadata only. When the kit runs without Node (the simulator launched through ruby, perl or python, the
-  kit launchers' fallbacks when no Node.js is found), layer 2 is absent and the builder says so ("Kit store: not on this laptop's server;
-  export a file").
+- **The kit store's rules** (amended 10 November 2026, §14 KS1; built in B8: `packages/controller/relay/store.ts`, the
+  builder's `kit-store.ts`). The folder is `<kit folder>/user-data/` on every system, passed by every launcher (Start
+  Classroom's relay and Start Simulator's Node.js server, `--state-dir`; `PME_STATE_DIR` overrides it for the kit's own
+  tests); nothing is written to the computer's application-data folder any more. It is created at the first save and
+  never shipped: the kit build has none (`check-relay.mjs` checks the fresh build). The relay keeps the last room code
+  there too, in `.room.json`, a file that is itself hidden (a dot-file; on Windows also the hidden attribute); a code an
+  older kit kept in the application-data folder is read once, and that file is left as it is. The PIN is never written.
+  Writes come only from this computer: the loopback peer, a loopback `Host` and a loopback `Origin` or none (a phone on
+  the room network, a page of another site open in the laptop's browser, a rebound name: all refused, 403); card reads
+  are open to the room so another laptop window lists the drafts. A card's id is its folder's name only if it is a safe
+  file name on every system (letters, digits, `_`, `.`, `-`; a letter or digit first; at most 64; no trailing dot; no
+  Windows device name), so no path leaves the folder; a card file is at most 512 KiB (BQ13). A version is never
+  overwritten: each is a file created only where no file was (a hard link from a hidden temporary file); the same bytes
+  as the newest version write nothing. It stores card files only. The builder lists the cards the folder holds that this
+  browser lacks and opens one at its newest version as a draft. The store line says in words where the work is kept ("in
+  this browser and in this kit's user-data folder") or why it is not, and in each such case nothing is written anywhere
+  else and it says to export a file: the kit was started without Node.js (ruby, perl or python, the launchers'
+  fallbacks: they answer no `/pme-store/`, and the kit's `app/pme-kit.json` tells a kit from another site), the folder
+  cannot be written (a read-only disk or a locked USB stick: the system's reason is named), the page is on another
+  device, or the app is not running from a kit. Debriefs join the folder in `user-data/debriefs/` (brief 139, PR 2).
+- **Two consequences the owner accepted with the ruling** (the kit's READ ME FIRST says both): a new kit starts EMPTY
+  unless the `user-data` folder is copied into it from the old one; and a kit folder copied for a colleague carries its
+  drafts (and, with PR 2, its debriefs) unless `user-data` is left out of the copy.
+- The plan's "the kit store's whole folder exports as one archive" is not built: the folder is itself plain, visible
+  files a person copies or backs up as they are.
 - **Versions, not overwrites, under one card** (BQ13). Each layer keeps every version (a signature names an exact
   version, so none may be lost); a save never replaces the last version silently. What the author and the library see
   is ONE card with a version menu: each version with its number, date and change-log line; an older version opens from
@@ -795,6 +815,15 @@ waits is named in the status line.
 | **BQ13** | Limits | a card document ≤ 512 KB, text only; versions kept in the data (signatures need exact versions) but ONE card with a version menu, a required one-line change log per upload, older versions openable from the menu; no per-author limit, the administrator may withdraw the role | 22:15 | §8, §9.3, §9.6, B10 |
 | **BQ13.1** | (raised by the owner) Images and sounds on a card | a curated multimedia library replaces per-card attachments: items stored once by hash with a record, metadata stripped, DICOM refused, Unverified until signed, verified cards reference only verified items; JPEG/PNG/WebP/PDF ≤ 5 MB, WAV/FLAC ≤ 2 MB; images in the investigations view, the Debrief records when; files never in the repository, verified items in the kit by hash; sounds engine-timed in their own later plan; a CT stack later | 22:22–22:29 | §1, §2, §9.3, §9.7, §10, M1–M4 |
 | **BQ14** | The unverified shelf's name | **"Unverified"**, the owner's own word, for the shelf and the header tag | 22:50 | §3, §9.3, §9.8, mock-ups 1 and 5 |
+
+**10 November 2026, the kit store (KS1, the owner; brief 139).** "I do not want anything written into a hidden folder"; "I
+prefer option A for now until we have something central and durable"; "make sure the file holding the codes is hidden
+itself". The app does not ask the browser for persistent storage (N40 = B); everything worth keeping is written to a
+data folder on disk, and that folder is INSIDE the kit folder, `user-data/`, visible: scenario cards with their
+versions (B8, brief 139 PR 1) and debriefs (PR 2). The last room code moves there from the computer's hidden
+application-data folder, in a file that is itself hidden (`.room.json`). Its two consequences: **a new kit starts empty
+unless the `user-data` folder is copied into it**, and **a kit folder shared with a colleague carries its debriefs and
+drafts unless that folder is left out**. Applied in §4.1 (superseded row), §8 (layer 2's row and rules) and B8.
 
 **Where a ruling changed a decision of the draft** (each resolved in favour of the ruling):
 1. BQ11 = B against the draft's default ("later, its own piece") and its non-goal "no change to the `/2` format": DC1

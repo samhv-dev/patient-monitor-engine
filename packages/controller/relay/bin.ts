@@ -1,14 +1,18 @@
 #!/usr/bin/env -S node --experimental-strip-types --no-warnings
 // pme-relay: the @pme/controller WebSocket relay (brief §3.7). Usage: pme-relay [--port 8787] [--host 0.0.0.0]
-//   [--room-ttl-min 10] [--quiet] [--static DIR] [--max-peers 60] [--remote-roles viewer|all] [--state-dir DIR].
+//   [--room-ttl-min 10] [--quiet] [--static DIR] [--max-peers 60] [--remote-roles viewer|all] [--state-dir DIR]
+//   [--old-state-dir DIR].
 //   Runs on Node ≥ 22.12 with type stripping (no build step).
 // Stage 12 (the classroom): `--static DIR` also serves the built app on the same port, so learners' phones open
 // http://<this laptop>:<port>/?join=CODE. Other devices may only FOLLOW, or sign in as the instructor's phone with the
 // PIN (`--remote-roles viewer`, the default with or without `--static`: plan instructor-peer-role.md Q12(b), a relay
 // started by hand is no weaker than the classroom's); `--remote-roles all` lets any device that knows the code command.
-// `--state-dir DIR` (room plan R1b; the classroom kit's launchers pass this computer's application-data folder): the
-// code of the last room a host opened is kept in DIR/room.json, so the room code survives a restart on another port.
-// Without it nothing is written.
+// `--state-dir DIR` (room plan R1b; the kit store, the owner's ruling of 10 November 2026: the classroom kit's launchers
+// pass the kit's own `user-data` folder): the code of the last room a host opened is kept in DIR/.room.json (a hidden
+// file), so the room code survives a restart on another port, and the kit store's paths (store.ts) keep the clinicians'
+// scenario cards under DIR. `--old-state-dir DIR` (the launchers pass this computer's application-data folder, where
+// kits before that ruling kept the code): its room.json is read once when the state folder has no code; never written.
+// Without --state-dir nothing is written.
 import { parseArgs } from 'node:util';
 import { lanAddresses } from './http.ts';
 import { startRelay } from './server.ts';
@@ -24,6 +28,7 @@ const { values } = parseArgs({
     'max-peers': { type: 'string', default: '60' },
     'remote-roles': { type: 'string' },
     'state-dir': { type: 'string' },
+    'old-state-dir': { type: 'string' },
   },
 });
 const roles = values['remote-roles'] ?? 'viewer';
@@ -36,6 +41,7 @@ const relay = await startRelay({
   remoteRoles: roles,
   ...(values.static ? { staticDir: values.static } : {}),
   ...(values['state-dir'] ? { stateDir: values['state-dir'] } : {}),
+  ...(values['old-state-dir'] ? { oldStateDir: values['old-state-dir'] } : {}),
   ...(values.quiet ? {} : { log: (l: string) => console.log(`[pme-relay] ${l}`) }),
 });
 console.log(`pme-relay ready on ws://${values.host}:${relay.port}/ (Ctrl+C to stop)`);
