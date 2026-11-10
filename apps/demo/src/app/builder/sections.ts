@@ -9,7 +9,8 @@ import { button, h } from '../ui.ts';
 import type { CardForm } from './form.ts';
 
 type Rec = Record<string, unknown>;
-export type SectionId = 'header' | 'patient' | 'briefing';
+/** The sections the builder edits: B2's three here, B3's Phases in phase-editor.ts. */
+export type SectionId = 'header' | 'patient' | 'briefing' | 'phases';
 
 /** A place a message shows: the field's wrapper, its messages, its controls (one per row for a list). */
 export interface Slot {
