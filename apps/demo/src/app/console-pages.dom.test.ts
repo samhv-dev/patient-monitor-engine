@@ -387,7 +387,7 @@ describe('Room', () => {
       ['monitor', 'Patient monitor', 'This window', ['New window']],
       ['defib', 'Defibrillator', 'Not open', ['New window']],
       ['vent', 'Ventilator', 'On this computer', ['Open here', 'New window']], // R8d: and a window of its own
-      ['depth', 'Depth of anaesthesia', 'Not available yet', []],
+      ['depth', 'Depth of anaesthesia', 'Coming later', []],
       ['iabp', 'Intra-aortic balloon pump', 'Coming later', []],
     ]);
     expect(v.el.querySelector('.room-openers [data-show="vent"] a')?.getAttribute('href')).toBe('#/vent');

@@ -22,8 +22,12 @@ test('a worker that stops is reported: "The monitor stopped — Restart the pati
     };
   });
   await openApp(page, base, '#/monitor', { warmMs: 1500 });
-  const n = await page.evaluate(() => (window as unknown as { ws: Worker[] }).ws.length);
-  test.skip(n === 0, 'this browser runs the monitor on the main thread (no worker to lose)');
+  // The monitor's own render path, not the count of workers constructed: on a loaded machine the dev server's worker can
+  // miss READY_TIMEOUT_MS (2 s, worker-host.ts) and the monitor falls back to the main thread with that worker still
+  // built. Terminating it then kills nothing the monitor uses, and no toast can come (brief 118: CI run 42663782683; locally
+  // at background QoS, 6 workers, 18 of 20 runs were on 'main' with one worker built, every one of them the CI symptom)
+  const path = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { monitor: { renderPath: Promise<string> } } } }).__pmeApp.session.monitor.renderPath);
+  test.skip(!/^worker/.test(path), `the monitor runs on the main thread here (${path}): no worker to lose`);
   await page.evaluate(() => (window as unknown as { ws: Worker[] }).ws.at(-1)!.terminate()); // a silent death: no event
   // the watchdog listens while a request is out: the instructor's next action (here a command) finds the silence
   void page.evaluate(() => (window as unknown as { __pmeApp: { link: { send(c: unknown): Promise<unknown> } } }).__pmeApp.link.send({ type: 'setTarget', variable: 'hr', value: 90 }));

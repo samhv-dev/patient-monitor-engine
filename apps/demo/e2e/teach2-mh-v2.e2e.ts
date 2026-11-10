@@ -39,7 +39,14 @@ test('the /2 MH card\'s demo path, every press a row of Instructor v2', async ({
     pressed.push(...(await pressPath(page, (i) => (PATH[i] as [number, string])[0] < p, pressed.length)));
     await to(page, p);
     const a = await app(page);
-    atPauses.push([a.simT, (await page.locator('.ip2-chips .ip2-current .ip2-chip-name').first().textContent()) ?? '', a.stateId]);
+    // The strip is read once it has drawn the phase the app is in: the view repaints at most every 500 ms on a change
+    // and once a second (views/teach2.ts), and on CI WebKit to()'s 400 ms after the skip read the chip of an earlier
+    // phase (brief 118: runs 42624258604 and 42663551511, "Recrudescence" and "Early signs" while the app was in
+    // recovering). A strip that never draws the current phase still fails here, naming both
+    const current = page.locator('.ip2-chips .ip2-current .ip2-chip-name').first();
+    const label = await page.evaluate((id) => ((window as unknown as W).__pmeApp.link.ctl.scenario.doc as { phases: Array<{ id: string; label: string }> }).phases.find((x) => x.id === id)?.label ?? null, a.stateId);
+    if (label) await expect(current, `the strip shows the phase the app is in (${a.stateId})`).toHaveText(label);
+    atPauses.push([a.simT, (await current.textContent()) ?? '', a.stateId]);
   }
   pressed.push(...(await pressPath(page, () => true, pressed.length)));
   await to(page, END_S);

@@ -49,6 +49,7 @@ transports (`src/protocol.ts`).
 
 | Where | Relation |
 |---|---|
+| [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
 | [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
 
 ## State
@@ -186,8 +187,11 @@ transports (`src/protocol.ts`).
 | `lanAddresses` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | This machine's IPv4 addresses another device can reach, best first (no loopback, no link-local 169.254/16). |
 | `isLocalAddress` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | A socket from this machine itself (loopback, or one of its own interface addresses): |
 | `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir`, or null when there is none or the file is not ours. |
+| `findings` | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Every finding for these drugs (each with a file in `formulary`) in this diluent (null: |
 | `checkFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | §5's six rules over the layer's files (path relative to the formulary folder → parsed JSON): |
 | `loadFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | The typed layer, when every rule holds; |
+| `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
+| `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match; |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
 | `assertWireSafe` | [`guard.ts`](../../packages/controller/src/guard.ts) | Throws WireSafetyError when `m` carries samples. |
@@ -207,6 +211,8 @@ transports (`src/protocol.ts`).
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
 | `createStamper` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Adds {v, session, from, seq, sentAt}. |
 | `briefingOf` | [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts) | The card's briefing with its defaults (60 s, English), or null when it has none. |
+| `concentrationVar` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | A rule variable as a concentration: |
+| `ruleConcentrations` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | The concentration variables a card's rules read, once each, in the order first met: |
 | `manualLabel` | [`scenario/describe.ts`](../../packages/controller/src/scenario/describe.ts) | The manual label of a transition, or null when it has no manual trigger. |
 | `ruleWords` | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | A rule in words ("k > 5.5", "etco2 > 45 for 20 s"). |
 | `grade` | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | Grade the run at sim time `t`: |
@@ -248,7 +254,10 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`packages/controller/relay/bin.ts`](../../packages/controller/relay/bin.ts) | — |
 | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | Stage 12 (the classroom): the relay's HTTP side on the WebSocket's own port. |
 | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | @pme/controller relay (brief §3.7): rooms keyed by 6-character session code, host authority, a snapshot cache for late joiners, heartbeat and room expiry. |
+| [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Plan learner-action-remote.md L2 (§4 D5, LQ11, LQ12): what the bench finds in a preparation, from the formulary alone. |
 | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | Plan learner-action-remote.md §5, L1: the formulary loader and the source check. |
+| [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | Plan learner-action-remote.md L2 and §4 D3: the host's pure preparation step. |
+| [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Plan learner-action-remote.md L2 and §7: how much of the drug is still intact at a preparation's age, r(age), read from the source's own stability points for that drug, diluent, container and temperature. |
 | [`formulary/types.ts`](../../packages/controller/src/formulary/types.ts) | Plan learner-action-remote.md §5, L1: the formulary layer's types. |
 | [`guard.ts`](../../packages/controller/src/guard.ts) | Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel). |
 | [`index.ts`](../../packages/controller/src/index.ts) | @pme/controller public API (brief §7.5; R7). |
@@ -264,6 +273,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`remote/remote-app.ts`](../../packages/controller/src/remote/remote-app.ts) | Remote controller (R7): a phone/tablet page that joins a session code, shows the generated controls and a live 1 Hz readout, and never renders waveforms (samples never reach it anyway). |
 | [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts) | A card's Case briefing with its defaults (pme-scenario/1 `briefing`; owner's board Orientation 7b): what the host sends the learners' screens when the card loads. |
 | [`scenario/builtins.ts`](../../packages/controller/src/scenario/builtins.ts) | Built-in scenarios (JSON under packages/controller/scenarios/). |
+| [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and effect-site concentration in the PATIENT as a pme-scenario/2 phase-rule variable, `cp:<drugId>` and `ce: |
 | [`scenario/describe.ts`](../../packages/controller/src/scenario/describe.ts) | Human-readable trigger text for the panel and the remote ("EtCO2 ≥ 20 for 30 s", …). |
 | [`scenario/driver.ts`](../../packages/controller/src/scenario/driver.ts) | The host-side glue between a ScenarioRunner and the monitor the host owns (brief §3.7: the host owns the simulation, so the scenario runs there). |
 | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | The one grading function of a pme-scenario/2 run (docs/plans/scenario-format-v2.md §6–§8.3; plan F3). |
@@ -301,6 +311,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
@@ -334,6 +345,7 @@ None recorded.
 | [`scenario/briefing.test.ts`](../../packages/controller/test/scenario/briefing.test.ts) | 0 | 0 |
 | [`scenario/builtins.test.ts`](../../packages/controller/test/scenario/builtins.test.ts) | 0 | 0 |
 | [`scenario/clock-step-back.test.ts`](../../packages/controller/test/scenario/clock-step-back.test.ts) | 0 | 0 |
+| [`scenario/concentration-vars.test.ts`](../../packages/controller/test/scenario/concentration-vars.test.ts) | 0 | 0 |
 | [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |

@@ -28,7 +28,16 @@ type Win = {
   __bar: Array<{ text: string; latched: boolean; simT: number }>;
 };
 
-test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', async ({ page, context, browserName }) => {
+// @known-flaky, PRODUCT defect N47 under the orchestrator's ruling of 9 Nov (brief 118; owning fix brief not yet assigned):
+// on the main-thread fallback (N48: under load the dev server's worker misses READY_TIMEOUT_MS, 2 s, and the monitor runs
+// on the page) the host's fast-forward never yields to the page while it runs behind its pace: each step's advance
+// resolves as a microtask and the pace's sleep is skipped, so the 300-s span runs as one chain and the host page neither
+// paints the panel nor answers until it ends. Local, browser at background QoS, 2 workers: the host's `.ff-veil.on`
+// never appeared while the follower showed the panel ≈ 27 s, the click returned after 80–110 s, path 'main' every time.
+// CI Chromium: first attempts failed in 3 of 90 ci runs of 9 Nov (2 of the 22 runs carrying PR #369): the panel not seen
+// in 5 s though the host ran the span (42528046916, pass 3's N27), the panel gone before line 79 read it (42646000324,
+// 300-s time-out) and the follower's panel gone at line 81 (42695921395). The PR that fixes N47 removes this tag.
+test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', { tag: '@known-flaky' }, async ({ page, context, browserName }) => {
   test.setTimeout(300_000);
   // every oscillator the page starts (the end cue is 660 + 990 Hz)
   await page.addInitScript(() => {

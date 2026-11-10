@@ -26,6 +26,7 @@
 import type { ScenarioEvent, SensorId } from '../protocol.ts';
 import type { VitalHold } from './runner.ts';
 import { compare } from './runner.ts';
+import { ruleConcentrations, type ConcentrationVar } from './concentration.ts';
 import { EPS, holds, namedRules, slopePerMin, spreadPct, walkLeaves, windowOf, type NamedRule, type RuleCtx } from './rules.ts';
 import type { DocCommand } from './types.ts';
 import type { Administration, AnyRule, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
@@ -86,6 +87,8 @@ export class PhaseRunner {
   private readonly sinceVars = new Set<string>();
   private entered = 0; // phase entries by this instance (not in the state, so a restore does not rewind it)
   private readonly ctx: RuleCtx;
+  /** The drug concentrations (`cp:`/`ce:`, DC1) the card's rules read: the driver feeds these, and only these. */
+  readonly concentrations: ReadonlyArray<{ name: ConcentrationVar; site: 'cp' | 'ce'; drugId: string }>;
 
   constructor(doc: ScenarioDocV2, opts: { seed?: number } = {}) {
     this.doc = doc;
@@ -98,6 +101,7 @@ export class PhaseRunner {
       return e;
     });
     this.actions = new Set(doc.actions.map((a) => a.id));
+    this.concentrations = ruleConcentrations(doc);
     for (const nr of this.rules) {
       walkLeaves(nr.rule, nr.name, (leaf) => {
         if ('unchanged' in leaf && leaf.unchanged.since) return void this.sinceVars.add(leaf.unchanged.var);
