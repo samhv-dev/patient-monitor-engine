@@ -5,7 +5,7 @@ import { validateScenario, type ValidateOptions, type ValidationResult } from '@
 import { fieldOf, type FieldRef } from './fields.ts';
 import { docOf, type CardForm } from './form.ts';
 
-/** The pause after the last change before the card is validated (§5.1). */
+/** The pause after the last change before the card is validated: the plan's 300 ms (§5.1). [ENG: ui] */
 export const CHECK_DELAY_MS = 300;
 
 /** One validator line where the builder shows it: a refusal (an error: Run, Export and Submit wait) or a warning. */
