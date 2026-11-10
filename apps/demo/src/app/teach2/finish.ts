@@ -143,7 +143,12 @@ export function mountFinish(el: HTMLElement, ctx: Teach2Ctx, repaint: () => void
       const doc = link.ctl.scenario.doc;
       if (doc && isV2(doc) && !caseFinished(link)) link.note(FINISHED, 'marker');
       const e = await archive.save(d, field.value, APP_BUILD);
-      if ('refused' in e) return toast(refusalText(e), 'alert');
+      if ('refused' in e) {
+        toast(refusalText(e), 'alert');
+        // this browser refused it: the kit's user-data folder may still keep it (brief 139 PR 2), and a second toast says so
+        void archive.kitDone.then((k) => k?.ok && toast('This debrief is kept in this kit’s user-data folder.'));
+        return;
+      }
       if (how === 'now') {
         location.hash = archiveHref(e.id);
         return;
@@ -155,6 +160,7 @@ export function mountFinish(el: HTMLElement, ctx: Teach2Ctx, repaint: () => void
       // a new patient runs: the clock goes on, however it was before
       if (link.ctl.hostPaused) void time(link, 'resume');
       toast(`Debrief saved: ${entryTitle(e)}. ${how === 'restart' ? 'The case starts again.' : 'The case is closed.'}`);
+      void archive.kitDone.then((k) => k && !k.ok && toast(`This debrief was not kept in this kit’s user-data folder: ${k.why}. Export it from the Debrief page to keep a copy.`, 'alert'));
     } finally {
       busy = false;
       pane.removeAttribute('aria-busy');

@@ -3,7 +3,10 @@
 // paths (relay/store.ts). Versions are never overwritten; writes come from this computer only (tested from this
 // machine's own network address, which is not loopback, through the real relay); card reads are open to the room, as the
 // plan rules; a name is a safe file name on every system (no path leaves the folder); a card file is at most 512 KiB
-// (the owner's BQ13); nothing is written before the first save; a read-only folder says so.
+// (the owner's BQ13); nothing is written before the first save; a read-only folder says so. PR 2: debriefs, one file each
+// under debriefs/, listed, read, written and deleted by THIS computer only (a debrief names a resident): a phone on the
+// room network can neither list nor read one; a clear moves the file into debriefs/removed/ (the owner's ruling of 10
+// November 2026, "B for now"): nothing is destroyed, the app never reads it back, a person empties that folder by hand.
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,7 +14,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { lanAddresses } from '../../relay/http.ts';
 import { startRelay, type RelayHandle } from '../../relay/server.ts';
 import type { IncomingMessage } from 'node:http';
-import { CARD_MAX_BYTES, fromThisComputer, keepCard, listCards, parseVersionFile, readCard, safeName, versionFile, writeRefusal } from '../../relay/store.ts';
+import { CARD_MAX_BYTES, DEBRIEF_MAX_BYTES, fromThisComputer, keepCard, keepDebrief, listCards, listDebriefs, parseVersionFile, readCard, readDebrief, safeName, setAsideDebrief, versionFile, writeRefusal } from '../../relay/store.ts';
 
 const relays: RelayHandle[] = [];
 afterEach(async () => {
@@ -215,5 +218,91 @@ describe('through the relay: /pme-store/', () => {
     relays.push(r);
     expect((await fetch(`http://127.0.0.1:${r.port}/pme-store/`)).status).toBe(404);
     expect((await post(`http://127.0.0.1:${r.port}/pme-store/scenarios/a`, card('a'))).status).toBe(405);
+  });
+});
+
+describe('debriefs: one file each, this computer only', () => {
+  const entry = (id: string, resident = 'Dr Rahimi') => `${JSON.stringify({ schema: 'pme-archive-entry/1', id, runStartedAt: 1, resident, cardId: null, title: 'Free run', savedAt: 2, durationS: 60, objectives: { met: 0, total: 0, notMet: 0, notAssessable: 0 }, debrief: { schema: 'pme-debrief/2' } }, null, 1)}`;
+  it('written whole as debriefs/<id>.json; a re-save of the run replaces it; listed, read; a clear moves it into removed/, never destroyed', () => {
+    const dir = join(tmp(), 'user-data');
+    expect(keepDebrief(dir, 'mh9k2ab1', entry('mh9k2ab1'))).toMatchObject({ ok: true, entry: { id: 'mh9k2ab1' } });
+    expect(readdirSync(join(dir, 'debriefs'))).toEqual(['mh9k2ab1.json']);
+    expect(keepDebrief(dir, 'mh9k2ab1', entry('mh9k2ab1', 'Dr Karimi'))).toMatchObject({ ok: true });
+    expect(readDebrief(dir, 'mh9k2ab1')).toBe(entry('mh9k2ab1', 'Dr Karimi'));
+    expect(readdirSync(join(dir, 'debriefs'))).toEqual(['mh9k2ab1.json']); // no temporary file left
+    expect(listDebriefs(dir)).toEqual([{ id: 'mh9k2ab1', bytes: Buffer.byteLength(entry('mh9k2ab1', 'Dr Karimi')), at: expect.any(Number) }]);
+    expect(setAsideDebrief(dir, 'mh9k2ab1')).toBe('mh9k2ab1.json');
+    expect(readdirSync(join(dir, 'debriefs'))).toEqual(['removed']);
+    expect(readFileSync(join(dir, 'debriefs', 'removed', 'mh9k2ab1.json'), 'utf8')).toBe(entry('mh9k2ab1', 'Dr Karimi')); // the bytes kept
+    expect(listDebriefs(dir)).toEqual([]); // the app never lists what is under removed/
+    expect(readDebrief(dir, 'removed')).toBeNull();
+    expect(setAsideDebrief(dir, 'mh9k2ab1')).toBeNull(); // nothing left to move
+    // a re-save after the clear: a new file under debriefs/, as before
+    expect(keepDebrief(dir, 'mh9k2ab1', entry('mh9k2ab1', 'Dr Again'))).toMatchObject({ ok: true });
+    expect(listDebriefs(dir).map((d) => d.id)).toEqual(['mh9k2ab1']);
+  });
+  it('a name already under removed/ is kept: the second gets a suffix, the third another; nothing is overwritten', () => {
+    const dir = join(tmp(), 'user-data');
+    for (const who of ['Dr One', 'Dr Two', 'Dr Three']) {
+      keepDebrief(dir, 'same1', entry('same1', who));
+      setAsideDebrief(dir, 'same1');
+    }
+    const removed = join(dir, 'debriefs', 'removed');
+    expect(readdirSync(removed).sort()).toEqual(['same1-2.json', 'same1-3.json', 'same1.json']);
+    expect(readFileSync(join(removed, 'same1.json'), 'utf8')).toContain('Dr One');
+    expect(readFileSync(join(removed, 'same1-2.json'), 'utf8')).toContain('Dr Two');
+    expect(readFileSync(join(removed, 'same1-3.json'), 'utf8')).toContain('Dr Three');
+  });
+  it('refused: an unsafe id, a body that is not an archive entry with that id, one over 16 MiB', () => {
+    const dir = join(tmp(), 'user-data');
+    expect(keepDebrief(dir, '../x', entry('../x'))).toMatchObject({ ok: false, status: 400 });
+    expect(keepDebrief(dir, 'a', entry('b'))).toMatchObject({ ok: false, status: 400 });
+    expect(keepDebrief(dir, 'a', JSON.stringify({ id: 'a' }))).toMatchObject({ ok: false, status: 400 });
+    expect(keepDebrief(dir, 'a', entry('a').replace('"title"', `"pad":"${'x'.repeat(DEBRIEF_MAX_BYTES)}","title"`))).toMatchObject({ ok: false, status: 413 });
+    expect(existsSync(dir)).toBe(false);
+    expect(setAsideDebrief(dir, '../../etc')).toBeNull();
+    expect(readDebrief(dir, '..')).toBeNull();
+  });
+
+  it('through the relay from this computer: PUT, list, GET; DELETE moves the file into removed/', async () => {
+    const dir = join(tmp(), 'user-data');
+    const r = await startRelay({ port: 0, host: '0.0.0.0', heartbeatMs: 60_000, stateDir: dir });
+    relays.push(r);
+    const at = `http://127.0.0.1:${r.port}/pme-store/debriefs/`;
+    expect((await fetch(`${at}d1`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: entry('d1') })).status).toBe(200);
+    expect(await (await fetch(at)).json()).toMatchObject({ debriefs: [{ id: 'd1' }] });
+    expect(await (await fetch(`${at}d1`)).text()).toBe(entry('d1'));
+    const del = await fetch(`${at}d1`, { method: 'DELETE' });
+    expect(del.status).toBe(200);
+    expect(await del.json()).toEqual({ removed: 'd1', file: 'removed/d1.json' });
+    expect(await (await fetch(at)).json()).toEqual({ debriefs: [] });
+    expect((await fetch(`${at}d1`)).status).toBe(404);
+    expect((await fetch(`${at}removed`)).status).toBe(404);
+    expect((await fetch(`${at}removed/d1.json`)).status).toBe(404); // no path reads what is set aside
+    expect(readFileSync(join(dir, 'debriefs', 'removed', 'd1.json'), 'utf8')).toBe(entry('d1'));
+    // a page of another site in this computer's browser cannot read one either
+    expect((await fetch(at, { headers: { Origin: 'https://example.org' } })).status).toBe(403);
+  });
+
+  it.skipIf(!LAN)('a phone on the room network (this machine’s network address) can neither list, read, write nor delete a debrief', async () => {
+    const dir = join(tmp(), 'user-data');
+    const r = await startRelay({ port: 0, host: '0.0.0.0', heartbeatMs: 60_000, stateDir: dir });
+    relays.push(r);
+    expect((await fetch(`http://127.0.0.1:${r.port}/pme-store/debriefs/d1`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: entry('d1') })).status).toBe(200);
+    const room = `http://${LAN}:${r.port}/pme-store/debriefs/`;
+    for (const [what, res] of [
+      ['list', await fetch(room)],
+      ['read', await fetch(`${room}d1`)],
+      ['write', await fetch(`${room}d2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: entry('d2') })],
+      ['delete', await fetch(`${room}d1`, { method: 'DELETE' })],
+      ['removed/', await fetch(`${room}removed`)],
+      ['removed/<file>', await fetch(`${room}removed/d1.json`)],
+    ] as const) {
+      expect(res.status, what).toBe(403);
+      const text = await res.text();
+      expect(text, what).not.toContain('Dr Rahimi');
+      expect(JSON.parse(text), what).toMatchObject({ refused: 'not-this-computer' });
+    }
+    expect(readdirSync(join(dir, 'debriefs'))).toEqual(['d1.json']);
   });
 });

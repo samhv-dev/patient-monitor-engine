@@ -23,7 +23,9 @@
 // the kit's user-data folder): after the host hello /pme-relay.json answers lastRoom and the hidden .room.json in that
 // directory holds the room code only; a card POSTed to /pme-store/scenarios/<id> is kept as version 1, the same bytes
 // again write nothing, a changed card is version 2 (version 1 unchanged), the list and both versions read back, a card
-// id that would leave the folder is refused, and the folder holds those files only. After every run the kit's own
+// id that would leave the folder is refused, and the folder holds those files only; a debrief is written as
+// debriefs/<id>.json, replaced by a re-save, listed and read back, and on a clear moved into debriefs/removed/ (never
+// destroyed, never listed). After every run the kit's own
 // folder is as it was. Before the runs: the fresh build has no user-data folder, and server/store.mjs and
 // app/pme-kit.json are there. A fourth run starts "Start Classroom.command" with NO PME_STATE_DIR and a HOME whose
 // application-data folder holds a room code an older kit kept: the relay answers that code, the host's hello writes
@@ -304,6 +306,19 @@ async function storeSteps(port, state, step) {
   const files = readdirSync(join(state, 'scenarios', 'kit-check-card')).sort();
   if (readdirSync(join(state, 'scenarios')).join() !== 'kit-check-card' || files.length !== 2 || !files.every((f) => /^v000[12]-\d{4}-\d\d-\d\dT\d\d-\d\d-\d\dZ\.json$/.test(f))) throw new Error(`store folder: ${files.join()}`);
   step(`kit store: a card kept as version 1, the same bytes wrote nothing, a change is version 2 (${files.join(', ')}); the list and both versions read back; an id that leaves the folder refused (400)`);
+  // brief 139 PR 2: a debrief, one file, replaced by a re-save of its run, listed and read from here; a clear moves it
+  // into debriefs/removed/ (the owner's ruling of 10 November 2026, "B for now")
+  const entry = (resident) => JSON.stringify({ schema: 'pme-archive-entry/1', id: 'kitcheck1', resident, debrief: {} });
+  const put = (body) => withTimeout(fetch(`${at}debriefs/kitcheck1`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body }), 'a debrief PUT');
+  if ((await put(entry('Dr One'))).status !== 200 || (await put(entry('Dr Two'))).status !== 200) throw new Error('debrief writes refused');
+  const dl = await (await fetch(`${at}debriefs/`)).json();
+  const read = await (await fetch(`${at}debriefs/kitcheck1`)).text();
+  if (dl.debriefs?.length !== 1 || read !== entry('Dr Two') || readdirSync(join(state, 'debriefs')).join() !== 'kitcheck1.json') throw new Error(`debriefs: ${JSON.stringify(dl)} ${readdirSync(join(state, 'debriefs')).join()}`);
+  const del = await fetch(`${at}debriefs/kitcheck1`, { method: 'DELETE' });
+  const after = await (await fetch(`${at}debriefs/`)).json();
+  const moved = readdirSync(join(state, 'debriefs', 'removed')).join();
+  if (del.status !== 200 || readdirSync(join(state, 'debriefs')).join() !== 'removed' || moved !== 'kitcheck1.json' || readFileSync(join(state, 'debriefs', 'removed', 'kitcheck1.json'), 'utf8') !== entry('Dr Two') || after.debriefs?.length !== 0) throw new Error(`a debrief clear: ${del.status} ${readdirSync(join(state, 'debriefs')).join()} removed: ${moved}`);
+  step('kit store, debriefs: kitcheck1.json written, replaced by a re-save, listed and read back from this computer; a clear moved it to debriefs/removed/ as it was, and the list is empty');
 }
 
 async function stop(proc, port, steps) {

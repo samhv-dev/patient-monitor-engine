@@ -24,6 +24,13 @@ export interface KitCard {
   versions: KitVersion[];
 }
 
+/** A debrief in the folder (store.ts `DebriefEntry`). */
+export interface KitDebrief {
+  id: string;
+  bytes: number;
+  at: number;
+}
+
 /** How long a probe or a read waits for the kit's server. [ENG: network] */
 export const KIT_TIMEOUT_MS = 3000;
 
@@ -64,6 +71,11 @@ export class KitStore {
   constructor(loc: () => PageLocation & { href: string } = () => location, fetchFn: () => Fetch = () => fetch) {
     this.loc = loc;
     this.fetchFn = fetchFn;
+  }
+
+  /** The fetch this store uses (KitDebriefs shares it). */
+  fetchOf(): Fetch {
+    return this.fetchFn();
   }
 
   /** The store's state, asked once. */
@@ -130,6 +142,50 @@ export class KitStore {
     } catch (e) {
       return { ok: false, why: `the kit’s server did not answer (${e instanceof Error ? e.message : String(e)})` };
     }
+  }
+}
+
+export type KitWrite = { ok: true } | { ok: false; why: string };
+
+/** The debriefs' side (brief 139 PR 2): this computer only, on the server too. */
+export class KitDebriefs {
+  private readonly kit: KitStore;
+  constructor(kit: KitStore) {
+    this.kit = kit;
+  }
+  private async call(path: string, init: RequestInit = {}): Promise<Response | { why: string }> {
+    const s = await this.kit.ready();
+    if (!s.on) return { why: kitOffLine(s) };
+    try {
+      return await this.kit.fetchOf()(`${s.base}debriefs/${path}`, { cache: 'no-store', ...timeout(), ...init });
+    } catch (e) {
+      return { why: `the kit’s server did not answer (${e instanceof Error ? e.message : String(e)})` };
+    }
+  }
+  /** The debriefs the folder holds, or null when the store is off or does not answer. */
+  async list(): Promise<KitDebrief[] | null> {
+    const r = await this.call('');
+    if ('why' in r || !r.ok) return null;
+    const j = (await r.json()) as { debriefs?: unknown };
+    return Array.isArray(j.debriefs) ? (j.debriefs as KitDebrief[]) : null;
+  }
+  /** One debrief's file, or null. */
+  async read(id: string): Promise<string | null> {
+    const r = await this.call(encodeURIComponent(id));
+    return 'why' in r || !r.ok ? null : r.text();
+  }
+  /** The archive entry's file written (a re-save of the same run replaces it). */
+  async write(id: string, text: string): Promise<KitWrite> {
+    const r = await this.call(encodeURIComponent(id), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: text });
+    if ('why' in r) return { ok: false, why: r.why };
+    if (r.ok) return { ok: true };
+    return { ok: false, why: ((await r.json().catch(() => ({}))) as { why?: string }).why ?? `the kit’s server answered ${r.status}` };
+  }
+  /** The archive's Clear for one debrief: the server moves its file into user-data/debriefs/removed/ (store.ts
+   *  `setAsideDebrief`, the owner's ruling of 10 November 2026, "B for now"); true when it was there and is moved. */
+  async setAside(id: string): Promise<boolean> {
+    const r = await this.call(encodeURIComponent(id), { method: 'DELETE' });
+    return !('why' in r) && r.ok;
   }
 }
 

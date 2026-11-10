@@ -302,7 +302,7 @@
    every saved debrief (archive-list.ts) with its actions; the clear is quiet. Screen only (the print rule above). */
 .debrief .db-viewing { margin: var(--s-2) 0; padding: var(--s-2) var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-control); background: var(--surface); }
 .debrief .db-resident { font-weight: 600; color: var(--text-strong); }
-.debrief .db-arc-count { margin: var(--s-2) 0; color: var(--text-muted); }
+.debrief .db-arc-count, .debrief .db-arc-kit { margin: var(--s-2) 0; color: var(--text-muted); }
 .debrief .db-arc-list { margin: 0; padding: 0; list-style: none; }
 .debrief .db-arc-row { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
 .debrief .db-arc-row[data-current] { font-weight: 600; }
