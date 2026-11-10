@@ -7,7 +7,7 @@
 // team act the instructor observes is a record action); every /1-only reader gives it the empty answer.
 import { isV2, manualLabel, type AnyScenarioDoc, type CommandInput, type ScenarioDoc, type ScenarioState, type Transition, type When } from '@pme/controller';
 import type { Action, PhaseRule, ScenarioDocV2 } from '@pme/controller/scenario';
-import { HOP_MAX_S, isHop, type ObjectiveRule, type RunEventId } from '@pme/controller/scenario';
+import { concentrationVar, HOP_MAX_S, isHop, type ObjectiveRule, type RunEventId } from '@pme/controller/scenario';
 import { drugWords } from './glossary.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { objectiveText } from './scenarios.ts';
@@ -320,11 +320,21 @@ const VAR_WORDS: Record<string, string> = {
   etco2: 'EtCO₂', hr: 'HR', tempCore: 'core temperature', mhActivity: 'MH activity', mhExcess: 'MH metabolic excess', ph: 'pH', dantroleneE: 'dantrolene effect',
   setMinuteVentilationLMin: 'set minute ventilation', k: 'K⁺', sbp: 'SBP', abpSys: 'arterial systolic', nibpSys: 'cuff systolic', map: 'MAP', spo2: 'SpO₂', lactate: 'lactate',
 };
-const varWords = (v: string): string => VAR_WORDS[v] ?? v;
+/** A drug concentration (DC1) as its words and unit: "plasma propofol", "µg/mL"; null for any other variable. */
+const concWords = (v: string): { words: string; unit: string } | null => {
+  const c = concentrationVar(v);
+  return c?.ok ? c : null;
+};
+const varWords = (v: string): string => concWords(v)?.words ?? VAR_WORDS[v] ?? v;
+/** A value leaf's threshold, with the drug panel's unit for a concentration ("4 µg/mL"). */
+const valueWords = (v: string, x: number): string => {
+  const c = concWords(v);
+  return c ? `${x} ${c.unit}` : `${x}`;
+};
 
 /** A /2 phase rule in words: "EtCO₂ > 45 and EtCO₂ rising and set minute ventilation unchanged since the phase began". */
 export function phaseRuleWords(r: PhaseRule, doc?: ScenarioDocV2): string {
-  if ('value' in r) return `${varWords(r.value.var)} ${r.value.op} ${r.value.value}${r.value.forS ? ` for ${r.value.forS} s` : ''}`;
+  if ('value' in r) return `${varWords(r.value.var)} ${r.value.op} ${valueWords(r.value.var, r.value.value)}${r.value.forS ? ` for ${r.value.forS} s` : ''}`;
   if ('slope' in r) return `${varWords(r.slope.var)} ${r.slope.op === '>' || r.slope.op === '>=' ? 'rising' : 'falling'}`;
   if ('unchanged' in r) return `${varWords(r.unchanged.var)} unchanged${r.unchanged.since ? ' since the phase began' : ''}`;
   if ('visited' in r) return `after ${doc?.phases.find((p) => p.id === r.visited)?.label ?? r.visited}`;

@@ -1,0 +1,14 @@
+{
+  "diluentId": "ringerLactate",
+  "name": "Ringer's lactate (compound sodium lactate, Hartmann's)",
+  "content": {
+    "amount": 29,
+    "unit": "mmol/L lactate",
+    "src": "emc-1812"
+  },
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

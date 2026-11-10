@@ -27,7 +27,8 @@ import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, 
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
 import { isV2, type AnyScenarioDoc, type DocCommand, type ScenarioState } from './types.ts';
-import type { Administration, PhaseRunnerState, RunnerInputV2 } from './types-v2.ts';
+import type { Administration, PhaseRunnerState, PrepRecord, RunnerInputV2, StagedPrep } from './types-v2.ts';
+import { LEARNER_ISSUED_BY } from '../protocol.ts';
 import { validateScenario } from './validate.ts';
 
 export interface ScenarioDriverOptions {
@@ -43,6 +44,9 @@ export interface ScenarioDriverOptions {
   /** Place the automatic stage marks (Instructor v2, the owner's ruling on answer 3): a snapshot at every stage entry.
    *  Default off, so a run that no view reads them for takes no extra snapshots; `markStages(true)` turns them on. */
   stageMarks?: boolean;
+  /** The host's preparations table (plan learner-action-remote.md §4 D3, §6; L4): the record of the preparation a
+   *  learner's give names (`prepId`, in the device `by`'s own id space), at the give. Absent: a give carries no `prep`. */
+  preparation?: (by: string, prepId: string) => PrepRecord | undefined;
 }
 
 interface Mark {
@@ -456,7 +460,7 @@ export class ScenarioDriver {
         res = { accepted: true, tick: Math.max(c.atTick ?? 0, r.tick + 1), reason: `scenario only: the engine does not model ${w.type} yet` };
       }
       if (w.type === 'applyEvent' && this.cur instanceof PhaseRunner) {
-        const a = administrationOf(w, res, this.o.target.now().simT, this.cur.doc.patient?.weightKg);
+        const a = administrationOf(w, res, this.o.target.now().simT, this.cur.doc.patient?.weightKg, this.cur.admin, this.o.preparation);
         if (a) this.cur.record(a);
         else this.recordTaking(c, res);
       }
@@ -506,6 +510,12 @@ export class ScenarioDriver {
    * accepted or not: the script entries it anchors go out now, in the press's stage group, so they land on its tick.
    * The further commands of the same press (same action, same stage group) are the same taking.
    */
+  /** A preparation the host staged for a learner's device, or the same one again with its notice shown (§6): kept in a /2
+   *  runner's state, so grade() sees a preparation that is never delivered and a restore rewinds it. A /1 card: ignored. */
+  recordPreparation(p: StagedPrep): void {
+    if (this.cur instanceof PhaseRunner) this.cur.stage(p);
+  }
+
   private taking(c: Command): void {
     const actionId = (c as { actionId?: unknown }).actionId;
     const r = this.cur;
@@ -543,7 +553,17 @@ export class ScenarioDriver {
       // the rhythm id the state event already carries, for a PhaseRunner only (truthInputs adds F4's truths below)
       if (this.cur instanceof PhaseRunner && w.rhythm?.id) this.pending.push({ kind: 'rhythm', id: w.rhythm.id });
     }
-    if (this.cur instanceof PhaseRunner) this.pending.push(...truthInputs(w)); // F4: a /2 runner only
+    if (this.cur instanceof PhaseRunner) {
+      this.pending.push(...truthInputs(w)); // F4: a /2 runner only
+      // DC1: the patient's cp/ce of the drugs the card's rules read (none read: nothing fed, the run as before), from the
+      // panel row; a drug with no row has not been given: 0
+      const conc = this.cur.concentrations;
+      if (w.type === 'drugs' && conc.length) {
+        const values: Record<string, number> = {};
+        for (const c of conc) values[c.name] = w.drugs.find((r) => r.id === c.drugId)?.[c.site] ?? 0;
+        this.pending.push({ kind: 'values', rank: 3, values });
+      }
+    }
   }
 }
 
@@ -560,33 +580,50 @@ type FlatEvent = {
   kind: string; drugId: string; dose: number; unit: string; route: PkRoute; infusion?: boolean; overS?: number; rate: number;
   mode: string; target: number; agent: string; dialPct: number; fgfLpm?: number; fluid: string; volumeMl: number; source: string;
   rr?: number; vtMl?: number; fio2: number; peep?: number; active: boolean; action: string; energyJ?: number; device: string; durationS: number;
+  panel: string;
 };
 
 /**
  * One applyEvent as an administration (plan F3), or null for an event that is not a clinical act (a condition, a bleed,
  * an airway state, a line, a surgical stimulus, the pacer). Source: 'action' when the command carries an `actionId` (an A
  * press), 'script' (card-set, never graded) when the driver sent it (issuedBy 'scenario'), 'remote' for a Remote
- * (issuedBy 'remote' or a ControllerSession's 'controller:<peer>'), else 'panel'. `perKg` is the dose over the card's
+ * (issuedBy 'remote' or a ControllerSession's 'controller:<peer>'), 'learner' for a learner's device (issuedBy 'learner',
+ * its device key copied as `by`), else 'panel'. `perKg` is the dose over the card's
  * weight for a mass unit, the dose itself for a `/kg` unit. A face-mask preoxygenation is a 'procedure' (it is the act of
  * preoxygenating, not a ventilator setting); a `drug` event with `infusion: true` is an 'infusion' at that rate.
+ * Plan learner-action-remote.md §6: a learner's give that names its preparation (`prepId`) carries a copy of the host's
+ * record of it (`preparation`); a learner's infusion records the rate it replaced, the last accepted infusion of that
+ * drug in the record, and who had set it (LQ4). A lab sample is a 'sample' with its panel, unless it is an A press (the
+ * action's taking records it, as before) or card-set (not a clinical act of the team, as before).
  */
-function administrationOf(c: { issuedBy: string; actionId?: string; event: unknown }, res: DispatchResult, t: number, weightKg?: number): Omit<Administration, 'seq'> | null {
+function administrationOf(
+  c: { issuedBy: string; actionId?: string; by?: string; event: unknown }, res: DispatchResult, t: number, weightKg?: number,
+  admin: readonly Administration[] = [], preparation?: ScenarioDriverOptions['preparation'],
+): Omit<Administration, 'seq'> | null {
   const e = c.event as FlatEvent;
   const by = c.issuedBy;
-  const source: Administration['source'] = typeof c.actionId === 'string' ? 'action' : by === 'scenario' ? 'script' : by === 'remote' || by.startsWith('controller:') ? 'remote' : 'panel';
+  const source: Administration['source'] = typeof c.actionId === 'string' ? 'action' : by === 'scenario' ? 'script' : by === LEARNER_ISSUED_BY ? 'learner' : by === 'remote' || by.startsWith('controller:') ? 'remote' : 'panel';
   const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: e.kind === 'drug' && e.route !== undefined && e.drugId in DRUGS && !routeHonoured(e.drugId, e.route) };
-  const base = { t, source, ...(source === 'action' ? { actionId: c.actionId as string } : {}) };
-  const tail = { result, ...(source === 'script' ? { cardSet: true as const } : {}) };
+  const device = source === 'learner' && typeof c.by === 'string' ? c.by : undefined;
+  const prepId = (c as { prepId?: unknown }).prepId;
+  const prep = device !== undefined && typeof prepId === 'string' ? preparation?.(device, prepId) : undefined;
+  const base = { t, source, ...(source === 'action' ? { actionId: c.actionId as string } : {}), ...(device !== undefined ? { by: device } : {}) };
+  const tail = { ...(prep ? { prep: structuredClone(prep) } : {}), result, ...(source === 'script' ? { cardSet: true as const } : {}) };
+  /** LQ4: the running rate of this drug a learner's infusion replaces, and who had set it. */
+  const replaced = (drugId: string) => {
+    const prev = source === 'learner' ? [...admin].reverse().find((a) => a.kind === 'infusion' && a.drugId === drugId && a.result.accepted) : undefined;
+    return prev && prev.rate !== undefined && prev.rateUnit !== undefined ? { replaced: { rate: prev.rate, rateUnit: prev.rateUnit, by: prev.by ?? prev.source } } : {};
+  };
   const cls = (id: string) => (DRUGS[id]?.cls !== undefined ? { cls: DRUGS[id]?.cls as string } : {});
   const set = (o: Record<string, unknown>) => ({ settings: Object.fromEntries(Object.entries(o).filter(([, v]) => typeof v === 'number' || typeof v === 'string')) as Record<string, number | string> });
   switch (e.kind) {
     case 'drug': {
-      if (e.infusion) return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.dose, rateUnit: e.unit, route: e.route, ...tail };
+      if (e.infusion) return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.dose, rateUnit: e.unit, route: e.route, ...replaced(e.drugId), ...tail };
       const perKg = e.unit.endsWith('/kg') ? e.dose : MASS.test(e.unit) && weightKg ? e.dose / weightKg : undefined;
       return { ...base, kind: 'drug', drugId: e.drugId, ...cls(e.drugId), dose: e.dose, unit: e.unit, ...(perKg !== undefined ? { perKg } : {}), route: e.route, ...(e.overS !== undefined ? { overS: e.overS } : {}), ...tail };
     }
     case 'infusion':
-      return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.rate, rateUnit: e.unit, ...tail };
+      return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.rate, rateUnit: e.unit, ...replaced(e.drugId), ...tail };
     case 'tci':
       return { ...base, kind: 'tci', drugId: e.drugId, ...cls(e.drugId), ...set({ mode: e.mode, target: e.target }), ...tail };
     case 'vaporiser':
@@ -603,6 +640,8 @@ function administrationOf(c: { issuedBy: string; actionId?: string; event: unkno
       return { ...base, kind: 'airway', ...set({ device: e.device }), ...tail };
     case 'preoxygenate':
       return { ...base, kind: 'procedure', ...set({ fio2: e.fio2, durationS: e.durationS }), ...tail };
+    case 'lab':
+      return source === 'action' || source === 'script' ? null : { ...base, kind: 'sample', ...set({ panel: e.panel }), ...tail };
   }
   return null;
 }

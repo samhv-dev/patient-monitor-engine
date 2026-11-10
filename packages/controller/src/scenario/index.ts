@@ -5,6 +5,7 @@ export type * from './types-v2.ts';
 export { validateScenario, formatAjvError, SCENARIO_SCHEMA, SCENARIO_SCHEMA_V2, type ValidationResult, type ValidateOptions } from './validate.ts';
 export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry, type VitalHold } from './runner.ts';
 export { PhaseRunner, type PhaseRunnerEffect, type PhaseRunLogEntry, type PhaseHold } from './phase-runner.ts';
+export { concentrationVar, ruleConcentrations, CONCENTRATION_VAR, type ConcentrationVar, type ConcentrationInfo } from './concentration.ts';
 export { namedRules, holds, walkLeaves, windowOf, slopePerMin, spreadPct, type NamedRule, type RuleCtx } from './rules.ts';
 export { grade, ruleWords, type Grade, type Grades, type ActionGrade, type RepeatGrade, type OutcomeGrade, type Violation } from './grade.ts';
 export { replayRunLog, runLog, type ScenarioRunLog, type ScenarioRunLogV2 } from './replay.ts';

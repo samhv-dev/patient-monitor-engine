@@ -1,0 +1,46 @@
+name: validation label
+
+# A pull request that changes the physiology engine must carry the `run-validation` label, so that the validation
+# workflow (validation.yml, which runs on a pull request only when it carries that label) cannot be skipped by
+# forgetting it: PR #349 changed drug clearance without the label, so the validation workflow was skipped on every
+# one of its heads for two days (brief 125, row N47). "Changes the engine" = the PR's diff adds, changes, deletes or renames a
+# file under packages/engine-core/src/, other than a test file (*.test.ts, *.spec.ts) or a document (*.md). There is
+# no opt-out label: the project's rule is that a workflow is never relabelled away (CONTRIBUTING.md, rule 9).
+# Its own workflow, not a job of ci.yml: the check must re-evaluate when a label is added or removed, and ci.yml on
+# `labeled`/`unlabeled` would cancel the PR's running ci run (its concurrency group) and re-run every job, or, with
+# its jobs skipped on those events, post "skipped" check runs on the same head over the real ones.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+
+concurrency:
+  group: validation-label-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validation-label:
+    name: validation label
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: an engine change carries the run-validation label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'run-validation') }}
+        run: |
+          # the PR's files from the API (a rename counts by both its names): no checkout needed
+          gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | .filename, (.previous_filename // empty)' | sort -u > "$RUNNER_TEMP/files.txt"
+          grep -E '^packages/engine-core/src/' "$RUNNER_TEMP/files.txt" | grep -vE '\.(test|spec)\.ts$|\.md$' > "$RUNNER_TEMP/engine.txt" || true
+          n=$(wc -l < "$RUNNER_TEMP/engine.txt" | tr -d ' ')
+          echo "files in the PR: $(wc -l < "$RUNNER_TEMP/files.txt" | tr -d ' '); engine files (packages/engine-core/src/, tests and documents aside): $n; run-validation label: $LABELLED"
+          if [ "$n" = 0 ]; then echo "No engine file changes: the label is not required."; exit 0; fi
+          cat "$RUNNER_TEMP/engine.txt"
+          if [ "$LABELLED" = true ]; then echo "The PR carries run-validation: the validation workflow runs on it. Read its conclusion as well as ci's."; exit 0; fi
+          echo "::error title=validation label::This pull request changes $n file(s) of the physiology engine (packages/engine-core/src/, listed in the log) and does not carry the run-validation label. Add the label run-validation to this pull request: the validation workflow then runs on its head, and this check re-runs by itself and passes. There is no opt-out label; the label stays on for every later push."
+          exit 1

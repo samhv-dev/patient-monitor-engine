@@ -66,6 +66,10 @@
                "shunt", "tempCore", "contractility", "svr", "k", "qtc", "volumeStatus", "paceThresholdMa",
                "map", "ph", "lactate", "mhActivity", "mhExcess", "dantroleneE", "setMinuteVentilationLMin"]
     },
+    "ruleVar": {
+      "description": "What a phase rule's value, slope or unchanged leaf reads on engine truth (rank 3): a truthVar, or (DC1, BQ11 = B) the patient's plasma (`cp:<drugId>`) or effect-site (`ce:<drugId>`) concentration of a drug the engine carries in a compartment model, in the drug panel row's own unit (propofol, sugammadex, magnesium and the local anaesthetics µg/mL; the opioids, the NMB agents and succinylcholine ng/mL; the vasoactives and esmolol µg/kg/min rate-equivalents). The validator refuses an unknown drug and a row with no compartment (the effect-curve rows such as midazolam, ketamine and dexmedetomidine, the inhaled agents, the blood-model rows), with the reason. It is always the patient's value, never a pump's target or prediction.",
+      "anyOf": [{ "$ref": "#/definitions/truthVar" }, { "type": "string", "pattern": "^(cp|ce):[A-Za-z][A-Za-z0-9_.-]{0,63}$" }]
+    },
     "route": { "enum": ["iv", "io", "im", "inh", "neb", "sc", "perineural", "central"] },
     "amount": {
       "description": "A prescribed value and what is accepted: `value` (with an optional `tolerance` either side), and/or a `min`/`max` range.",
@@ -91,16 +95,16 @@
       "properties": {
         "value": {
           "type": "object", "required": ["var", "op", "value"], "additionalProperties": false,
-          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "op": { "$ref": "#/definitions/op" }, "value": { "type": "number" }, "forS": { "type": "number", "minimum": 0 } }
+          "properties": { "var": { "$ref": "#/definitions/ruleVar" }, "op": { "$ref": "#/definitions/op" }, "value": { "type": "number" }, "forS": { "type": "number", "minimum": 0 } }
         },
         "slope": {
           "type": "object", "required": ["var", "op", "perMin", "overS"], "additionalProperties": false,
-          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "op": { "enum": ["<", "<=", ">", ">="] }, "perMin": { "type": "number" }, "overS": { "type": "number", "exclusiveMinimum": 0 } }
+          "properties": { "var": { "$ref": "#/definitions/ruleVar" }, "op": { "enum": ["<", "<=", ">", ">="] }, "perMin": { "type": "number" }, "overS": { "type": "number", "exclusiveMinimum": 0 } }
         },
         "unchanged": {
           "description": "Every sample of the last `overS` seconds within ± `withinPct` % of the newest; or, with `since: \"phaseStart\"`, the value within ± `withinPct` % of its value at the current phase's entry (the owner's \"unchanged set ventilation\", 31 October).",
           "type": "object", "required": ["var", "withinPct"], "additionalProperties": false,
-          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "withinPct": { "type": "number", "exclusiveMinimum": 0 }, "overS": { "type": "number", "exclusiveMinimum": 0 }, "since": { "const": "phaseStart" } },
+          "properties": { "var": { "$ref": "#/definitions/ruleVar" }, "withinPct": { "type": "number", "exclusiveMinimum": 0 }, "overS": { "type": "number", "exclusiveMinimum": 0 }, "since": { "const": "phaseStart" } },
           "oneOf": [{ "properties": { "overS": { "type": "number" } }, "required": ["overS"] }, { "properties": { "since": { "const": "phaseStart" } }, "required": ["since"] }]
         },
         "visited": { "$ref": "#/definitions/id" },
@@ -159,6 +163,7 @@
         "enter": { "$ref": "#/definitions/phaseRule" },
         "holdS": { "type": "number", "minimum": 0, "description": "The entry rule must hold without a break for this many seconds before the phase changes (the owner's 60-s boundary hold, 31 October)." },
         "cue": { "type": "string", "minLength": 1, "description": "What the learners see at this phase, shown beside its rule." },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the phase's numbers (its rule's thresholds and windows, its holdS): the source's own words quoted and cited (document, section or page); a number no source states is named as a PLACEHOLDER for the owner. Read by people; never interpreted (as an action's src; plan F-10)." },
         "next": { "$ref": "#/definitions/ids" }
       },
       "if": { "properties": { "initial": { "const": true } }, "required": ["initial"] },
@@ -203,6 +208,11 @@
             "overS": { "$ref": "#/definitions/amount" },
             "infusion": { "$ref": "#/definitions/dose" }
           }
+        },
+        "diluent": {
+          "description": "The diluents the card accepts, as formulary diluent ids (plan learner-action-remote.md §6): a give from a preparation in another, with none, or with no preparation on record is a deviation line. No shipped card has it (LQ14).",
+          "type": "object", "required": ["set"], "additionalProperties": false,
+          "properties": { "set": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } }
         }
       },
       "oneOf": [{ "properties": { "id": { "type": "string" } }, "required": ["id"] }, { "properties": { "cls": { "type": "string" } }, "required": ["cls"] }, { "properties": { "alternatives": { "type": "array" } }, "required": ["alternatives"] }]
@@ -252,6 +262,11 @@
         "recognition": { "const": true, "description": "The card's recognition (Debrief 2, D5; the owner's ruling of 5 November): the team announcing the diagnosis, as a timed action the instructor presses. The Debrief's recognition tile and key moment read this action's window, press and grade. At most one action per card." },
         "give": { "type": "array", "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" }, "description": "The commands an A press sends (/1 command definitions)." },
         "drug": { "$ref": "#/definitions/drugCriteria" },
+        "sample": {
+          "description": "A sample action's panels (plan learner-action-remote.md §6): a lab sample of a listed panel, the learner's or the instructor's, satisfies the action in its window. Absent: the action is recorded by its taking. Only on a sample action.",
+          "type": "object", "required": ["panel"], "additionalProperties": false,
+          "properties": { "panel": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } }
+        },
         "device": {
           "type": "object", "required": ["kind", "settings"], "additionalProperties": false,
           "properties": { "kind": { "$ref": "#/definitions/deviceKind" }, "settings": { "$ref": "#/definitions/settings" } }
@@ -303,7 +318,8 @@
         "$comment": { "type": "string" },
         "rule": { "$ref": "#/definitions/phaseRule" },
         "anchor": { "$ref": "#/definitions/anchor" },
-        "withinS": { "type": "number", "exclusiveMinimum": 0 }
+        "withinS": { "type": "number", "exclusiveMinimum": 0 },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the outcome's numbers: the source's own words quoted and cited (document, section or page); a number no source states is named as a PLACEHOLDER for the owner. Read by people; never interpreted (as an action's src; plan F-10)." }
       }
     },
     "scriptEntry": {
@@ -313,6 +329,7 @@
       "properties": {
         "id": { "$ref": "#/definitions/id" },
         "$comment": { "type": "string" },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the entry's commands' numbers: the source's own words quoted and cited (document, section or page); a number no source states is named as a PLACEHOLDER for the owner. Read by people; never interpreted (as an action's src; plan F-10)." },
         "on": {
           "description": "`phase:<id>` (its entry), `action:<id>#<n>` (the nth taking), or { atScenarioS }.",
           "anyOf": [

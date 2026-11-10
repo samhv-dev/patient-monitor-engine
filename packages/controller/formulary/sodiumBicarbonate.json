@@ -1,0 +1,227 @@
+{
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Strength 1 mmol/mL from the label (1 mmol/kg = 1 mL/kg of 8.4 %).",
+  "drugId": "sodiumBicarbonate",
+  "products": [
+    {
+      "id": "sodium-bicarbonate-84mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 1,
+        "unit": "mmol",
+        "perVial": false,
+        "src": "emc-3697"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "emc-3697",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Stabilis: 0.336 mg/mL in 0.9 % NaCl, polyolefin, 25 °C: stable 48 h. Trissel nearest: 3.75 g/L, physically compatible.",
+        "src": "stabilis-sodiumbicarbonate-4383",
+        "crossCheck": {
+          "trissel": "not listed",
+          "src": "trissel-sodiumbicarbonate-p1856"
+        }
+      }
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-3697"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-3697",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Stabilis: 4 mg/mL in water for injection, polyolefin, 21-24 °C: stable 48 h.",
+        "src": "stabilis-sodiumbicarbonate-3116",
+        "crossCheck": {
+          "trissel": "not listed",
+          "src": "trissel-sodiumbicarbonate-p1856"
+        }
+      }
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-3697"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-3697"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-3697"
+    }
+  ],
+  "admixtures": [
+    {
+      "with": "epinephrine",
+      "verdict": "incompatible",
+      "statement": "Stabilis (epinephrine monograph): NaHCO3 as solvent degrades epinephrine.",
+      "src": "stabilis-epinephrine-3642",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-sodiumbicarbonate-p1859"
+      }
+    },
+    {
+      "with": "midazolam",
+      "verdict": "incompatible",
+      "statement": "Stabilis (midazolam monograph): NaHCO3 as solvent degrades midazolam.",
+      "src": "stabilis-midazolam-3466",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-sodiumbicarbonate-p1861"
+      }
+    },
+    {
+      "with": "propofol",
+      "verdict": "incompatible",
+      "statement": "Stabilis (propofol monograph): NaHCO3 as solvent degrades propofol.",
+      "src": "stabilis-propofol-660",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    }
+  ],
+  "stability": [
+    {
+      "diluent": "water",
+      "container": "bag-polyolefin",
+      "tempC": 24,
+      "points": [
+        [
+          48,
+          0.95
+        ]
+      ],
+      "statement": "4 mg/mL in water for injection, polyolefin, 21-24 °C, in light: stable 48 h. Stabilis level A.",
+      "src": "stabilis-sodiumbicarbonate-3116",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    },
+    {
+      "diluent": "water",
+      "container": "bag-polyolefin",
+      "tempC": 24,
+      "points": [
+        [
+          30,
+          0.95
+        ]
+      ],
+      "statement": "7.6 mg/mL (rising to 11.45 mg/mL as Stabilis gives it) in water, polyolefin, 21-24 °C: stable 30 h. Stabilis level A.",
+      "src": "stabilis-sodiumbicarbonate-3116",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "bag-polyolefin",
+      "tempC": 25,
+      "points": [
+        [
+          48,
+          0.9
+        ]
+      ],
+      "statement": "0.336 mg/mL in 0.9 % NaCl, polyolefin, 25 °C: stable 48 h.",
+      "src": "stabilis-sodiumbicarbonate-4383",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-polyolefin",
+      "tempC": 25,
+      "points": [
+        [
+          168,
+          0.95
+        ]
+      ],
+      "statement": "12.6 mg/mL in 5 % glucose, polyolefin, 23-25 °C, in light: stable 7 days. Stabilis level A+.",
+      "src": "stabilis-sodiumbicarbonate-3329",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-polyolefin",
+      "tempC": 25,
+      "points": [
+        [
+          168,
+          0.95
+        ]
+      ],
+      "statement": "8.4 mg/mL in 5 % glucose, polyolefin, 23-25 °C, in light: stable 7 days. Stabilis level A+.",
+      "src": "stabilis-sodiumbicarbonate-3329",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-polyolefin",
+      "tempC": 24,
+      "points": [
+        [
+          48,
+          0.95
+        ]
+      ],
+      "statement": "4 mg/mL in 5 % glucose, polyolefin, 21-24 °C: stable 48 h. Stabilis level A. Trissel nearest: 50 mEq/L (4.2 mg/mL), 7 d.",
+      "src": "stabilis-sodiumbicarbonate-3116",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-polyolefin",
+      "tempC": 24,
+      "points": [
+        [
+          30,
+          0.95
+        ]
+      ],
+      "statement": "7.6 mg/mL (rising to 11.45 mg/mL as Stabilis gives it) in 5 % glucose, polyolefin, 21-24 °C: stable 30 h. Stabilis level A. Trissel nearest: 100 mEq/L, 7 d.",
+      "src": "stabilis-sodiumbicarbonate-3116",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-sodiumbicarbonate-p1856"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}

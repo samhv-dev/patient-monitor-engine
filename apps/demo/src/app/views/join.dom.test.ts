@@ -48,7 +48,7 @@ const WORDS = {
     { show: 'monitor', title: 'Patient monitor', chip: 'Ready', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style.", foot: 'Sideways, the whole screen', action: true },
     // R8d: the ventilator on a tablet, signed in with the instructor's PIN (m5's card; its chip and foot say how)
     { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
-    { show: 'depth', title: 'Depth of anaesthesia', chip: 'Not available yet', text: 'Needs a simulated EEG: planned as an engine stage of its own.', foot: '—', action: false },
+    { show: 'depth', title: 'Depth of anaesthesia', chip: 'Coming later', text: 'The engine simulates the EEG and reads it as a processed-EEG monitor; its screen in the room is still to come.', foot: 'Not in this release', action: false },
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
   ],
 };

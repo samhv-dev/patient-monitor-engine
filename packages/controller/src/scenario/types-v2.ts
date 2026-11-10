@@ -3,6 +3,7 @@
 // `script` commands are /1's DocCommand. The phase runner (phase-runner.ts) is F2's; the administration record and
 // grade() are F3's. The shared types at the end are fixed here so F2 and F3 can be built in parallel.
 import type { PkRoute } from '@pme/engine-core';
+import type { Finding } from '../formulary/findings.ts';
 import type { RunnerInput } from './runner.ts';
 import type { DebriefHints, DocCommand, Op, ScenarioDoc, VitalVar } from './types.ts';
 
@@ -15,14 +16,18 @@ export type TruthVar =
   | 'shunt' | 'tempCore' | 'contractility' | 'svr' | 'k' | 'qtc' | 'volumeStatus' | 'paceThresholdMa'
   | 'map' | 'ph' | 'lactate' | 'mhActivity' | 'mhExcess' | 'dantroleneE' | 'setMinuteVentilationLMin';
 
+/** What a value, slope or unchanged leaf of a phase rule reads: a TruthVar, or (DC1) the patient's plasma or effect-site
+ *  concentration of a drug, `cp:<drugId>` / `ce:<drugId>` (concentration.ts; the validator refuses a drug with none). */
+export type RuleVar = TruthVar | `cp:${string}` | `ce:${string}`;
+
 /** `pulseLoss`, `rosc`, or `rhythm:<id>` (the rhythm id the engine draws). */
 export type PhaseSignal = 'pulseLoss' | 'rosc' | `rhythm:${string}`;
 
 /** A rule on engine truth (§4): one leaf or combinator. No manual, event or afterS leaf (the schema refuses them). */
 export type PhaseRule =
-  | { value: { var: TruthVar; op: Op; value: number; forS?: number } }
-  | { slope: { var: TruthVar; op: '<' | '<=' | '>' | '>='; perMin: number; overS: number } }
-  | { unchanged: { var: TruthVar; withinPct: number; overS: number; since?: never } | { var: TruthVar; withinPct: number; since: 'phaseStart'; overS?: never } }
+  | { value: { var: RuleVar; op: Op; value: number; forS?: number } }
+  | { slope: { var: RuleVar; op: '<' | '<=' | '>' | '>='; perMin: number; overS: number } }
+  | { unchanged: { var: RuleVar; withinPct: number; overS: number; since?: never } | { var: RuleVar; withinPct: number; since: 'phaseStart'; overS?: never } }
   | { visited: string }
   | { signal: PhaseSignal }
   | { all: PhaseRule[] }
@@ -66,6 +71,9 @@ export interface DrugCriteria {
   cumulative?: { min?: number; max?: number; unit: string; windowS?: number };
   route?: { set: PkRoute[]; preferred?: PkRoute };
   rate?: { bolus: true } | { overS: Amount } | { infusion: Dose };
+  /** The diluents the card accepts (formulary diluent ids; plan learner-action-remote.md §6): a give from a preparation
+   *  in another, or with none, or with no preparation on record, is a deviation line. No shipped card has it (LQ14). */
+  diluent?: { set: string[] };
 }
 
 export type DeviceKind = 'ventilation' | 'cpr' | 'defib' | 'vaporiser' | 'airway';
@@ -101,6 +109,9 @@ export interface Action extends C {
   /** Provenance of the action's numbers: the source quoted and cited; never interpreted (plan F9). */
   src?: string;
   drug?: DrugCriteria;
+  /** A sample action's panels (plan learner-action-remote.md §6): a lab sample of a listed panel, the learner's or the
+   *  instructor's, satisfies the action in its window as a drug satisfies a drug action. Absent: recorded by its taking. */
+  sample?: { panel: string[] };
   device?: { kind: DeviceKind; settings: Settings };
   fluid?: { type?: string[]; volumeMl?: Amount; rateMlMin?: Amount };
   physical?: { measure: string; settings?: Settings };
@@ -130,15 +141,23 @@ export interface Phase extends C {
   holdS?: number;
   /** What the learners see at this phase, shown beside its rule. */
   cue?: string;
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
   next?: string[];
 }
 
-export interface Outcome extends C { id: string; text: string; rule: PhaseRule; anchor: Anchor; withinS: number }
+export interface Outcome extends C {
+  id: string; text: string; rule: PhaseRule; anchor: Anchor; withinS: number;
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
+}
 export interface ScriptEntry extends C {
   id: string;
   /** `phase:<id>` (its entry), `action:<id>#<n>` (the nth taking), or a scenario time. */
   on: `phase:${string}` | `action:${string}#${number}` | { atScenarioS: number };
   commands: DocCommand[];
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
 }
 
 /** The /1 header, whole (§3 and the plan's Q32). */
@@ -165,12 +184,39 @@ export interface PhaseEntry { id: string; t: number; exitT?: number; rule: strin
 /** A true/false edge of a named rule (a phase rule, an anchor, a precondition, a conditional repeat, an outcome): grade() reads these instead of the values' history. */
 export interface RuleEdge { rule: string; t: number; value: boolean }
 
+/** The preparation a learner's give came from, as the host made it and at the give (plan learner-action-remote.md §6,
+ *  §4 D3, §7.1): the drug and stocked product, the diluent (absent: drawn as it is), its concentration and volume, the
+ *  formulary's findings, whether the instructor had shown the incompatibility notice before the give and when (LQ3),
+ *  and the fraction still intact at the give with the active amount it delivered. */
+export interface PrepRecord {
+  id: string;
+  drugId: string;
+  productId: string;
+  diluent?: string;
+  concentration: { amount: number; unit: string; perMl: number };
+  volumeMl: number;
+  findings: Finding[];
+  notice: { shownAt: number } | null;
+  remaining: number;
+  activeAmount: number;
+  unit: string;
+}
+/** A preparation as staged (`prep stage`, §4 D3): its record without a give's own figures, with the device that staged it
+ *  (`by`, whose own id space `id` is in) and the sim time. Graded whether or not it is ever delivered. */
+export interface StagedPrep extends Omit<PrepRecord, 'remaining' | 'activeAmount' | 'unit'> {
+  by: string;
+  t: number;
+}
+
 /** One clinical act as the driver saw it, accepted or refused (plan F3). F3 may only ADD fields. */
 export interface Administration {
   seq: number;
   /** The applied tick × 0.02 s (a staged batch: its own tick). */
   t: number;
-  source: 'action' | 'sheet' | 'cache' | 'remote' | 'panel' | 'script';
+  /** `learner`: a learner's device (a remote or the defibrillator window), its device key in `by`. */
+  source: 'action' | 'sheet' | 'cache' | 'remote' | 'panel' | 'script' | 'learner';
+  /** The learner's device key (plan learner-action-remote.md §6). */
+  by?: string;
   /** An A press (F6 stamps it on the command). */
   actionId?: string;
   kind: 'drug' | 'infusion' | 'tci' | 'vaporiser' | 'fluid' | 'ventilation' | 'cpr' | 'defib' | 'airway' | 'procedure' | 'sample' | 'communication' | 'physical';
@@ -183,7 +229,11 @@ export interface Administration {
   overS?: number;
   rate?: number;
   rateUnit?: string;
-  /** Ventilator rr, vtMl, fio2, peep; defib energyJ; cpr rate; vaporiser dialPct, fgfLpm. */
+  /** A learner's infusion change (LQ4): the rate it replaced and who had set it (a device key, or the record's source). */
+  replaced?: { rate: number; rateUnit: string; by: string };
+  /** The preparation the give came from (§6). */
+  prep?: PrepRecord;
+  /** Ventilator rr, vtMl, fio2, peep; defib energyJ; cpr rate; vaporiser dialPct, fgfLpm; a sample's panel. */
   settings?: Record<string, number | string>;
   fluid?: { type: string; volumeMl: number; rateMlMin: number };
   result: { accepted: true } | { accepted: false; reason: string; routeNotModelled: boolean };
@@ -260,4 +310,7 @@ export interface PhaseRunnerState {
   phaseRef?: Record<string, number>;
   /** How many times each action has been taken (an `action:<id>#<n>` script anchor). */
   takings: Record<string, number>;
+  /** The preparations staged on the course (plan learner-action-remote.md §6), one per device and id; absent until the
+   *  first, so a state written before L5, or by a run that stages nothing, is the same. */
+  preps?: StagedPrep[];
 }
