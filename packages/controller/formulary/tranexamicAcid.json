@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. No Trissel 2013 monograph. Listed diluents read from the label phrase electrolyte and carbohydrate solutions.",
+  "$comment": "FS batch; no Trissel 2013 monograph. FQ5 (owner, 2026-11-10): the label names a class (electrolyte, carbohydrate solutions), not a product; every filed diluent of the class listed.",
   "drugId": "tranexamicAcid",
   "products": [
     {
@@ -13,19 +13,27 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "tempC": 25,
+          "condition": "Chemical and physical in-use stability (the label names no diluent for it).",
+          "src": "emc-1077"
+        }
+      ]
     }
   ],
   "diluents": [
     {
       "id": "saline",
       "listed": true,
-      "src": "emc-1077"
+      "src": "emc-1077-class"
     },
     {
       "id": "dextrose5",
       "listed": true,
-      "src": "emc-1077"
+      "src": "emc-1077-class"
     },
     {
       "id": "water",
@@ -35,23 +43,29 @@
     {
       "id": "ringerLactate",
       "listed": true,
-      "src": "emc-1077"
+      "src": "emc-1077-class"
     },
     {
       "id": "dextrose5Saline",
       "listed": true,
-      "src": "emc-1077"
+      "src": "emc-1077-class"
     },
     {
       "id": "dextrose4Saline018",
       "listed": true,
-      "src": "emc-1077"
+      "src": "emc-1077-class"
     }
   ],
   "admixtures": [],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 15,
+        "unit": "mg/mL",
+        "src": "stabilis-tranexamicacid-3756"
+      },
       "container": "bag-polyolefin",
       "tempC": 25,
       "points": [

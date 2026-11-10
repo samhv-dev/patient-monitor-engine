@@ -13,7 +13,20 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 72,
+          "tempC": 30,
+          "condition": "After dilution with infusion fluids (label 6.3): chemical and physical in-use stability.",
+          "src": "emc-1345"
+        },
+        {
+          "h": 24,
+          "condition": "Label 6.6: start at once after mixing and complete within 24 h (its compatibility study used 0.5 and 2.0 mg/mL).",
+          "src": "emc-1345"
+        }
+      ]
     }
   ],
   "diluents": [

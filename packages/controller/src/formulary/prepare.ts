@@ -1,11 +1,12 @@
 // Plan learner-action-remote.md L2 and §4 D3: the host's pure preparation step. From the components a learner chose
 // (a drug, its stocked product, how much of it), the diluent and the simulation time, it computes what is in the
-// syringe or bag: each drug's amount and concentration in the total volume, the findings (findings.ts) and the time
-// the preparation is ready. A powder is reconstituted with the label's own volume (`reconstitute.volumeMl`) in the
+// syringe or bag: each drug's amount and concentration in the total volume, the findings (findings.ts), the time
+// the preparation is ready, and the stability rows that describe each drug at its concentration. A powder is reconstituted with the label's own volume (`reconstitute.volumeMl`) in the
 // chosen diluent; the diluent's `volumeMl` is what is added on top. Nothing the device sends is trusted beyond the
 // choice: every number comes from the formulary. A field the bench needs that the entry does not give (a
 // concentration) is refused; a missing preparation time is not (LQ7: ready at once, the gap named).
 import { findings, type Finding } from './findings.ts';
+import { stabilityRows } from './remaining.ts';
 import type { Formulary, Stability } from './types.ts';
 
 /** One thing drawn: `amount` vials (`unit: 'vial'`), mL (`'mL'`), or of the drug in the strength's own unit (`'mg'`, …). */
@@ -33,6 +34,10 @@ export interface Active {
   unit: string;
   /** `amount` per mL of the whole preparation. */
   perMl: number;
+  /** Indexes of the drug's stability rows that describe it here: the chosen diluent and container, and a row
+   *  concentration that covers `perMl` or none stated (any temperature; remaining() picks by temperature). Empty
+   *  without a diluent or a container. */
+  rows: number[];
 }
 
 export interface Preparation {
@@ -103,7 +108,11 @@ export function prepare(
   const items = [...drugs].map(([drugId, d]) => ({ drugId, productIds: d.productIds }));
   return {
     ok: true,
-    actives: [...drugs].map(([drugId, d]) => ({ drugId, amount: d.amount, unit: d.unit, perMl: d.amount / volumeMl })),
+    actives: [...drugs].map(([drugId, d]) => {
+      const perMl = d.amount / volumeMl;
+      const rows = diluent && container ? stabilityRows(formulary.drugs[drugId]!, diluent.id, container, { perMl, unit: d.unit }) : [];
+      return { drugId, amount: d.amount, unit: d.unit, perMl, rows };
+    }),
     volumeMl,
     diluent: diluent ? { id: diluent.id, volumeMl: diluent.volumeMl } : null,
     container: container ?? null,
