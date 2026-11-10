@@ -17,7 +17,10 @@ import { measure, mhV2Fit, send, serveApp, tileFindings, type W } from './teach2
 const srv = serveApp();
 
 for (const [card, target] of [['showcase-mh', 'normoventilated'], ['showcase-mh', 'treating'], ['showcase-haemorrhage', 'pea']] as const) {
-  test(`Instructor v2 fits 1440 × 900 at ${card.replace('showcase-', '')} ${target}: no scroll, every open step a row, no row disabled; the monitor pane measured`, async ({ page, browserName }, info) => {
+  // @known-flaky, class crash (outside our code; brief 118): a first attempt lost its page ("Target page, context or browser
+  // has been closed") in 13 of the 99 ci runs of 9 Nov with gating WebKit jobs (4 of the 25 carrying PR #369); one more first attempt was a 30-s phase wait (42645906101). Linux WebKit's web process, as pass 3's crash rows; no Chromium sighting. Local runs were
+  // not made: the crash is CI's Linux WebKit and macOS has never reproduced one (pass 3); the quarantine keeps measuring it.
+  test(`Instructor v2 fits 1440 × 900 at ${card.replace('showcase-', '')} ${target}: no scroll, every open step a row, no row disabled; the monitor pane measured`, { tag: '@known-flaky' }, async ({ page, browserName }, info) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 1440, height: 900 });
     await openApp(page, srv.base, `?scenario=${card}#/teach2`, { warmMs: 2000 });
