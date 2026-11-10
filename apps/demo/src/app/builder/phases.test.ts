@@ -102,7 +102,7 @@ describe('the tree\'s edits', () => {
     const text = JSON.stringify(MH);
     const { d, p } = early();
     expect(tree.wrap(p, '/all/1', 'all')).toBe(true);
-    expect(nodeAt(p.enter, '/all/1')).toEqual({ all: [MH.phases[EARLY]!.enter!.all![1]] });
+    expect(nodeAt(p.enter, '/all/1')).toEqual({ all: [(MH.phases[EARLY]!.enter as { all: unknown[] }).all[1]] });
     expect(clean(d).ok).toBe(true);
     expect(tree.ungroup(p, '/all/1')).toBe(true);
     expect(JSON.stringify(d)).toBe(text);

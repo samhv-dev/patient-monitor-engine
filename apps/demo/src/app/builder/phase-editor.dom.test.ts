@@ -17,7 +17,7 @@ import { builderPage, SAVE_DELAY_MS } from './page.ts';
 type Rec = Record<string, unknown>;
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const settled = () => wait(Math.max(CHECK_DELAY_MS, SAVE_DELAY_MS) + 60);
-const MH = { ...(mhCard as unknown as Rec), id: 'mh-mine' };
+const MH: Rec = { ...(mhCard as unknown as Rec), id: 'mh-mine' };
 const copy = (): Rec => JSON.parse(JSON.stringify(MH)) as Rec;
 const ph = (d: Rec, id: string) => (d.phases as Rec[]).find((p) => p.id === id)!;
 
