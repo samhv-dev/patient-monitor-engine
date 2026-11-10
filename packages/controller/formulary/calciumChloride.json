@@ -1,0 +1,156 @@
+{
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. The label names no diluent, so every diluent is unlisted (LQ11).",
+  "drugId": "calciumChloride",
+  "products": [
+    {
+      "id": "calcium-chloride-10pct-pfs",
+      "form": "solution",
+      "strength": {
+        "amount": 100,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-4126"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "emc-4126",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Stabilis: 9.3 and 11.5 mg/mL in 0.9 % NaCl, PVC, 25 °C: stable 7 days.",
+        "src": "stabilis-calciumchloride-3307",
+        "crossCheck": {
+          "trissel": "not listed",
+          "src": "trissel-calciumchloride-p349"
+        }
+      }
+    },
+    {
+      "id": "dextrose5",
+      "listed": false,
+      "src": "emc-4126",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Stabilis: 8.9 and 11.5 mg/mL in 5 % glucose, PVC, 25 °C: stable 7 days.",
+        "src": "stabilis-calciumchloride-3307",
+        "crossCheck": {
+          "trissel": "not listed",
+          "src": "trissel-calciumchloride-p349"
+        }
+      }
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-4126"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-4126"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-4126"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-4126"
+    }
+  ],
+  "admixtures": [
+    {
+      "with": "epinephrine",
+      "verdict": "compatible",
+      "statement": "Stabilis: calcium chloride 4 mg/mL with epinephrine 32 µg/mL in 0.9 % NaCl, 25 °C, stable 26 h (container not stated).",
+      "src": "stabilis-calciumchloride-3622",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-calciumchloride-p350"
+      }
+    }
+  ],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          168,
+          0.9
+        ]
+      ],
+      "statement": "11.5 mg/mL in 0.9 % NaCl, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
+      "src": "stabilis-calciumchloride-3307",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-calciumchloride-p349"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          168,
+          0.9
+        ]
+      ],
+      "statement": "9.3 mg/mL in 0.9 % NaCl, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
+      "src": "stabilis-calciumchloride-3307",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-calciumchloride-p349"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          168,
+          0.9
+        ]
+      ],
+      "statement": "11.5 mg/mL in 5 % glucose, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
+      "src": "stabilis-calciumchloride-3307",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-calciumchloride-p349"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          168,
+          0.9
+        ]
+      ],
+      "statement": "8.9 mg/mL in 5 % glucose, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
+      "src": "stabilis-calciumchloride-3307",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-calciumchloride-p349"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}
