@@ -33,11 +33,26 @@
 // circulation: cbfRel in the metabolic row, and the drugs' flow and clearance coupling. The sampled MAP/HR move more
 // (≤ 1.44 mmHg, 0.2 bpm) because the 1 Hz sample lands at a slightly different beat phase. One discrete change: in
 // propofolRocIncision, awarenessRisk is 1 at 956 s where it was 0 (diRaw sits at the 60 edge under full block).
+// Re-recorded (research/44 L2-27, PR fix-hypothermic-clearance): only sevoKetamine moves, only from 676 s (ketamine
+// starts at 600 s; 1–675 s equal). Cause: ketamine's hepatic share is CYP450 (elim.cyp) and now takes Hostler's
+// −11.1 %/°C below 36.5 °C on the liver function, where it took the organ model's tempF (−10 %/°C below 37 °C). The
+// rig cools 36.42 °C (600 s) → 36.03 °C (1500 s); ketamine's clearance factor goes 0.95 → 0.99 at 601 s and 0.91 → 0.95
+// at 1500 s, so ketamine clears slightly FASTER: Ce 0.3898 → 0.3895 at 900 s, 0.2313 → 0.2307 at 1500 s; diRaw
+// 46.709 → 46.707 and 42.799 → 42.792 (max |Δ| 0.008). Control: with ketamine's cyp flag removed on the same tree
+// the six runs equal the old fixture exactly. Sampled MAP/HR move ≤ 1.11 mmHg / 0.2 bpm (beat phase).
 // Re-recorded on the re-merge of 9 Nov (brief 112: main into PR #352): both causes above together, nothing new. Against
 // main's fixture the two runs without a ventilator (awake, propofolTci) are bit-identical and only the four ventilated runs
 // move, by the mechanism-G sizes stated above (diRaw ≤ 0.647, MAP ≤ 4.02, awarenessRisk on 10 samples, all in
 // propofolRocIncision's case); against the branch's fixture every run moves only by Bowman-18 sizes (diRaw ≤ 0.004, MAP
 // ≤ 1.43 at the 1 Hz beat phase, HR ≤ 0.24). No number fitted.
+// Re-recorded on the second re-merge of 9 Nov (brief 117: main e90c25f3, which carries PR #352 mechanism G, into
+// PR fix-hypothermic-clearance): the CYP450 term and mechanism G together, nothing new. Against main's fixture only
+// sevoKetamine moves (from 686 s; diRaw ≤ 0.007, MAP ≤ 1.47 / HR ≤ 0.21 at the beat phase) and the five other runs are
+// bit-identical; control: with ketamine's cyp flag removed on the merge, all six runs equal main's fixture exactly.
+// Against the branch's fixture awake and propofolTci are bit-identical and only the four ventilated runs move, by the
+// mechanism-G sizes above (diRaw ≤ 0.647, MAP ≤ 4.02, awarenessRisk on 10 samples in propofolRocIncision); control:
+// with main's five mechanism-G sources (l2/neuro/drive, nmb, spont; l2/resp/driver, pipeline) at the merge base, all
+// six runs equal the branch's fixture exactly. No number fitted.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type EngineEvent, type MonitorEngine } from '../../src/index.ts';

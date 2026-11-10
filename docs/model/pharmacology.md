@@ -77,15 +77,15 @@ library rows and the outputs other modules consume.
 | [`pd.ts:10`](../../packages/engine-core/src/l2/pk/pd.ts#L10) | Competitive antagonism: EC50·(1 + Cant/Ki), written with receptor occupancy o = Cant/(Cant + Ki) (capped 0.95). |
 | [`pd.ts:22`](../../packages/engine-core/src/l2/pk/pd.ts#L22) | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). |
 | [`pd.ts:39`](../../packages/engine-core/src/l2/pk/pd.ts#L39) | Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). |
-| [`pipeline.ts:200`](../../packages/engine-core/src/l2/pk/pipeline.ts#L200) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
-| [`pipeline.ts:614`](../../packages/engine-core/src/l2/pk/pipeline.ts#L614) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
+| [`pipeline.ts:219`](../../packages/engine-core/src/l2/pk/pipeline.ts#L219) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
+| [`pipeline.ts:633`](../../packages/engine-core/src/l2/pk/pipeline.ts#L633) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
 | [`row.ts:41`](../../packages/engine-core/src/l2/pk/row.ts#L41) | E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±\|emax\|·3 |
 | [`tci.ts:5`](../../packages/engine-core/src/l2/pk/tci.ts#L5) | Ce(k) = Ce_free(k) + r·Ce_unit(k), so r = min_k (target − Ce_free(k)) / Ce_unit(k) over k with Ce_unit(k) > 0 — |
 | [`volatile.ts:5`](../../packages/engine-core/src/l2/pk/volatile.ts#L5) | alveoli : VL·dFA/dt = VA·(FI − FA) − U,  U = Q·λb/g·(FA − Fv),  Fv = Σ q_i·F_i |
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 18 rows; SOURCED 6, FIT 9, ENG 0, UNTAGGED 3, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 19 rows; SOURCED 6, FIT 9, ENG 0, UNTAGGED 4, ABSENT 0.
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -104,6 +104,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `pharmacology.phenylephrine.svr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.svr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | α1 vasoconstriction, Emax +100 % at the rate-equivalent EC50; a catecholamine row (× acidosis factor × responsiveness). |
 | `pharmacology.phenylephrine.pvr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.pvr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | PVR Emax +15 %. |
 | `pharmacology.phenylephrine.venous` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.v0Frac` | − · term | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | Venoconstriction −4.5 % of blood volume at Emax. |
+| `pharmacology.cyp.hypothermia` | `resp.temp.tc` (Tcore), `organs.liver.liverFn` → `pk.bus.cns.hypByClass` | − · gain | UNTAGGED | `CYP_TEMP_PER_C` = 0.111, `CYP_TEMP_REF_C` = 36.5 | — | The clearance factor of a CYP450-cleared row (elim.cyp: midazolam, ketamine, fentanyl, sufentanil, the amides) × (1 − 0.111 per °C below 36.5 °C), on hepatic flow or on the organ model's liver function without its own temperature term (research/44 L2-27; Hostler 2010 inside Tortorici 2007). The node is the hypnotic units by class, which these rows' concentrations feed (warmer: faster clearance, fewer units). |
 | `pharmacology.catecholamine.acidosis` | `blood.core.ab.ph` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × acidosisFactor(pH) = max(0.4, 1 − 2.5·(7.4 − pH)); the numbers are inline in l2/pk/pd.ts. |
 | `pharmacology.catecholamine.responsiveness` | `cond.vasoResp` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × vasoResp (the endocrine model's cortisol permissive effect). |
 | `pharmacology.esmolol.occupancy` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.betaBlockAdd` | + · state | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | β-receptor occupancy Emax 0.9, EC50 100 (rate-equivalent); combined competitively with the profile's own. |
@@ -211,6 +212,8 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|---|---|
 | `PK_DT_S` | `0.1` | s | — | — |
 | `NEVER` | `1e12` | — | — | "Never" / "long ago" as finite numbers: snapshots travel as JSON, which turns ±Infinity into null. |
+| `CYP_TEMP_PER_C` | `0.111` | — | Med 2007; Dispos 2010 | Hypothermic CYP450 clearance. Tortorici MA et al., Crit Care Med 2007;35:2196 (review of 21 studies): mild to moderate hypothermia lowers the systemic clearance of CYP450-metabolised drugs by about 7–22 % per °C below 37 °C during cooling. Within that range, the human measurement: Hostler D et al., Drug Metab Dispos 2010;38:781 (midazolam, the CYP3A4/5 probe, volunteers cooled to 35.4–35.8 °C; population PK): clearance −11.1 % per °C below 36.5 °C. Applied to every row whose hepatic share is CYP oxidation (elim.cyp). Below Hostler's 35.4 °C it is an extrapolation of the same slope. |
+| `CYP_TEMP_REF_C` | `36.5` | — | — | — |
 | `LIPID_SINK_CARDIAC` | `0.177` | — | research/44 X; Miller 10e ch. 25 p. 762; Anesthesiology 2013; Litonius 2012; ASRA 2020; M10 p. 762 −11 % cardiac at 3 min; M10 ch. 25 p. 762]. It replaces one sink of up to 50 %; [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 % cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762] | The lipid sink (research/44 X-06). Miller 10e ch. 25 p. 762, from Kuo & Akpa's PBPK model (Anesthesiology 2013;118: 1350): Intralipid lowers CARDIAC bupivacaine by 11 % within 3 minutes and CEREBRAL bupivacaine by 18 % within 15 minutes ("theoretical"; Litonius 2012 found no significant sink in human volunteers). The sink is a Hill on the emulsion's concentration (ec50 1 = the ASRA regimen's reference). Each emax is sized so the ASRA 2020 regimen (1.5 mL/kg, then 0.25 mL/kg/min) gives the cited fall at the cited time: lipid concentration 1.64 at 3 min → 0.11 ÷ (1.64/2.64) = 0.177; 1.33 at 15 min → 0.18 ÷ (1.33/2.33) = 0.315 [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 % cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762]. It replaces one sink of up to 50 %, an engineered value that contradicted the row's own citation. The time course is the emulsion's, not the PBPK's (that mechanism is the audit's later step). |
 | `LIPID_SINK_CEREBRAL` | `0.315` | — | — | — |
 | `ARM_BRAIN_S` | `12` | s | Guyton & Hall [TXT]; Guyton & Hall's 10–15 s; [TXT] | Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg), quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall [TXT]) (a point in Guyton & Hall's 10–15 s; value); the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). |
@@ -456,6 +459,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`l2/pk/pipeline.test.ts`](../../packages/engine-core/test/l2/pk/pipeline.test.ts) | 0 | 0 |
 | [`l2/pk/potency-outputs.test.ts`](../../packages/engine-core/test/l2/pk/potency-outputs.test.ts) | 0 | 0 |
 | [`l2/pk/propofol.test.ts`](../../packages/engine-core/test/l2/pk/propofol.test.ts) | 0 | 0 |
+| [`l2/pk/pump-baseline.test.ts`](../../packages/engine-core/test/l2/pk/pump-baseline.test.ts) | 0 | 0 |
 | [`l2/pk/route-honoured.test.ts`](../../packages/engine-core/test/l2/pk/route-honoured.test.ts) | 0 | 0 |
 | [`l2/pk/route-models.test.ts`](../../packages/engine-core/test/l2/pk/route-models.test.ts) | 0 | 4 |
 | [`l2/pk/sux-repeat.test.ts`](../../packages/engine-core/test/l2/pk/sux-repeat.test.ts) | 0 | 0 |
