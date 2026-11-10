@@ -186,8 +186,11 @@ transports (`src/protocol.ts`).
 | `lanAddresses` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | This machine's IPv4 addresses another device can reach, best first (no loopback, no link-local 169.254/16). |
 | `isLocalAddress` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | A socket from this machine itself (loopback, or one of its own interface addresses): |
 | `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir`, or null when there is none or the file is not ours. |
+| `findings` | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Every finding for these drugs (each with a file in `formulary`) in this diluent (null: |
 | `checkFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | §5's six rules over the layer's files (path relative to the formulary folder → parsed JSON): |
 | `loadFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | The typed layer, when every rule holds; |
+| `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
+| `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match; |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
 | `assertWireSafe` | [`guard.ts`](../../packages/controller/src/guard.ts) | Throws WireSafetyError when `m` carries samples. |
@@ -248,7 +251,10 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`packages/controller/relay/bin.ts`](../../packages/controller/relay/bin.ts) | — |
 | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | Stage 12 (the classroom): the relay's HTTP side on the WebSocket's own port. |
 | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | @pme/controller relay (brief §3.7): rooms keyed by 6-character session code, host authority, a snapshot cache for late joiners, heartbeat and room expiry. |
+| [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Plan learner-action-remote.md L2 (§4 D5, LQ11, LQ12): what the bench finds in a preparation, from the formulary alone. |
 | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | Plan learner-action-remote.md §5, L1: the formulary loader and the source check. |
+| [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | Plan learner-action-remote.md L2 and §4 D3: the host's pure preparation step. |
+| [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Plan learner-action-remote.md L2 and §7: how much of the drug is still intact at a preparation's age, r(age), read from the source's own stability points for that drug, diluent, container and temperature. |
 | [`formulary/types.ts`](../../packages/controller/src/formulary/types.ts) | Plan learner-action-remote.md §5, L1: the formulary layer's types. |
 | [`guard.ts`](../../packages/controller/src/guard.ts) | Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel). |
 | [`index.ts`](../../packages/controller/src/index.ts) | @pme/controller public API (brief §7.5; R7). |
@@ -301,6 +307,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
