@@ -1,10 +1,10 @@
 Patient monitor simulator - offline showcase kit
-Commit:   128917d67fe179a3438a1d9a475d0f1f87c0ae89
+Commit:   218c7d5bf28cf91933220e154272757777971189
 Branch:   HEAD
-Subject:  Merge pull request #373 from samhv-dev/source-t17b-hr-band
-Built:    2026-11-09T23:49:53.356Z
-Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kit-j-release/kit" (node v26.13.0, vite build --base ./ in apps/demo)
-App size: 4.3 MB
+Subject:  Merge pull request #400 from samhv-dev/kit-store-debriefs
+Built:    2026-11-10T22:49:31.236Z
+Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kit-k-release/kit" (node v26.13.0, vite build --base ./ in apps/demo)
+App size: 4.7 MB
 Runtime:  runtime/ has no macOS node: /opt/homebrew/Cellar/node/26.13.0_2/bin/node (v26.13.0) is not an official signed Node.js build (ad-hoc signature (not an official Node.js build)). The launcher uses ruby, then perl.
 Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).
 Classroom: server/relay.mjs (pme-relay + ws 8.21.3, MIT) on runtime/node-* or an installed Node.js >= 22.

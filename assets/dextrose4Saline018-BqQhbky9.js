@@ -1,0 +1,1 @@
+const e="dextrose4Saline018",s="Glucose 4 % in sodium chloride 0.18 %",t={amount:40,unit:"mg/mL glucose",src:"emc-1867"},o={stabilis:!1,trissel:!1,monograph:!0},n={diluentId:e,name:s,content:t,has:o};export{t as content,n as default,e as diluentId,o as has,s as name};

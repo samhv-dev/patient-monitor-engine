@@ -1,0 +1,1 @@
+const s="saline",t="Sodium chloride 0.9 %",e={amount:9,unit:"mg/mL sodium chloride",src:"emc-1871"},n={stabilis:!1,trissel:!1,monograph:!0},o={diluentId:s,name:t,content:e,has:n};export{e as content,o as default,s as diluentId,n as has,t as name};

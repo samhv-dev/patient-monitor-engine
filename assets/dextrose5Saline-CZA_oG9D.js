@@ -1,0 +1,1 @@
+const e="dextrose5Saline",s="Glucose 5 % in sodium chloride 0.9 %",t={amount:50,unit:"mg/mL glucose",src:"emc-1870"},o={stabilis:!1,trissel:!1,monograph:!0},n={diluentId:e,name:s,content:t,has:o};export{t as content,n as default,e as diluentId,o as has,s as name};

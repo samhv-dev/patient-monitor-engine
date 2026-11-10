@@ -1,0 +1,1 @@
+const s="dextrose5",e="Glucose (dextrose) 5 %",t={amount:50,unit:"mg/mL glucose",src:"emc-1825"},o={stabilis:!1,trissel:!1,monograph:!0},n={diluentId:s,name:e,content:t,has:o};export{t as content,n as default,s as diluentId,o as has,e as name};
