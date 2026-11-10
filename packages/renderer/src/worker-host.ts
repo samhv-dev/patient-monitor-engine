@@ -12,10 +12,18 @@ export type RenderPath = 'worker-raf' | 'worker-pump' | 'main';
 export type EventsHandler = (anchor: ClockAnchor, events: EngineEvent[]) => void;
 export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' | 'plan' | 'ibpScales' }>;
 
-/** The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on
- *  the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the
- *  worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). */
-export const READY_TIMEOUT_MS = 2000;
+/**
+ * N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`;
+ * `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it: a late worker is still loading, not lost. Until
+ * brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by
+ * a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at
+ * 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at
+ * 2.2–6.0 s. A built page's worker is one inline bundle and
+ * is ready well inside it; the Vite dev server loads it one module per request (278–1875 ms on an idle Mac). A worker
+ * that fails (an error before 'ready') still hands the monitor to the main thread, and the page says that too
+ * (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control].
+ */
+export const READY_LATE_MS = 2000;
 const HIDDEN_PUMP_MS = 1000;
 /**
  * A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its
@@ -60,9 +68,60 @@ export function canUseWorker(): boolean {
 
 const epochNow = (t: number = performance.now()): number => performance.timeOrigin + t;
 
+/**
+ * The page's turn (N47): a macrotask (a MessageChannel message: no 4 ms clamp on nested timers, no hidden-tab timer
+ * throttling). `frame`: first a drawn frame — the next animation frame, then the macrotask after it, by which the frame
+ * has been painted — unless the page is hidden (no frame comes; nothing is shown) or becomes hidden meanwhile. After
+ * `close` every waiting and later turn rejects: the monitor was destroyed.
+ */
+function taskYield(): { next: (frame?: boolean) => Promise<void>; close: () => void } {
+  const ch = new MessageChannel();
+  const waiting: Array<() => void> = [];
+  const frames = new Set<() => void>();
+  let closed = false;
+  const gone = () => new Error('the monitor was destroyed');
+  ch.port1.onmessage = () => waiting.shift()?.();
+  const task = () =>
+    new Promise<void>((resolve, reject) => {
+      if (closed) return reject(gone());
+      waiting.push(() => (closed ? reject(gone()) : resolve()));
+      ch.port2.postMessage(0);
+    });
+  const drawn = () =>
+    new Promise<void>((resolve) => {
+      if (document.visibilityState !== 'visible') return resolve();
+      const done = () => {
+        frames.delete(done);
+        document.removeEventListener('visibilitychange', done);
+        resolve();
+      };
+      frames.add(done); // a close ends the wait too
+      document.addEventListener('visibilitychange', done);
+      requestAnimationFrame(done);
+    });
+  return {
+    next: async (frame = false) => {
+      if (frame && !closed) await drawn();
+      return task();
+    },
+    close: () => {
+      closed = true;
+      for (const w of waiting.splice(0)) w();
+      for (const f of [...frames]) f();
+      ch.port1.close();
+    },
+  };
+}
+
 function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEvents: EventsHandler): Host {
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }) as unknown as Ctx2D;
   const core = new MonitorCore(canvas, ctx, size, opts, onEvents);
+  // N47 (brief 126): a fast-forward step yields to the page between slices (MonitorCore.advanceInSlices), as the worker
+  // path does by waiting on the worker. A command, snapshot, restore or capture asked for meanwhile runs when the step
+  // has ended, as the worker answers its messages in order: never inside a step.
+  const yields = taskYield();
+  let busy: Promise<unknown> | null = null;
+  const after = <T>(f: () => T): Promise<T> => (busy ? busy.then(f, f) : Promise.resolve(f()));
   let raf = 0;
   let hiddenTimer: ReturnType<typeof setInterval> | null = null;
   const loop = (t: number) => {
@@ -85,10 +144,10 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
     canvas,
     core,
     path: Promise.resolve('main'),
-    command: (cmd) => Promise.resolve(core.command(cmd)),
-    commands: (cmds) => Promise.resolve(cmds.map((c) => core.command(c))),
-    snapshot: () => Promise.resolve(core.engine.snapshot()),
-    restore: async (s) => core.restore(s), // The lanes restart with the engine
+    command: (cmd) => after(() => core.command(cmd)),
+    commands: (cmds) => after(() => cmds.map((c) => core.command(c))),
+    snapshot: () => after(() => core.engine.snapshot()),
+    restore: (s) => (busy ? busy.then(() => core.restore(s), () => core.restore(s)) : (async () => core.restore(s))()), // The lanes restart with the engine
     control: (m) => {
       if (m.type === 'resize') core.resize(m.size);
       else if (m.type === 'timeScale') core.clock.timeScale = m.k;
@@ -99,9 +158,17 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
       else if (m.type === 'ibpScales') core.setIbpScales(m.scales);
       else core.calibrate(m.pxPerMm);
     },
-    capture12: () => Promise.resolve().then(() => core.capture12()),
-    advance: (ticks, last) => Promise.resolve().then(() => core.advance(ticks, last)),
+    capture12: () => (busy ? after(() => core.capture12()) : Promise.resolve().then(() => core.capture12())),
+    advance: (ticks, last) => {
+      const run = () => core.advanceInSlices(ticks, last, yields.next);
+      const p = busy ? busy.then(run, run) : run();
+      busy = p;
+      const done = () => void (busy === p && (busy = null));
+      p.then(done, done);
+      return p;
+    },
     destroy: () => {
+      yields.close();
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
       document.removeEventListener('visibilitychange', onVis);
@@ -230,8 +297,14 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
       post(make(id));
     });
   };
+  let timer: ReturnType<typeof setTimeout> | undefined; // READY_LATE_MS: cleared at 'ready', a failure or destroy
   const path = new Promise<RenderPath>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('worker did not become ready')), READY_TIMEOUT_MS);
+    const t0 = performance.now();
+    let late = false;
+    timer = setTimeout(() => {
+      late = true; // N48: said, and waited for
+      canvas.dispatchEvent(new CustomEvent('pme-monitor-worker-late', { bubbles: true, detail: { waitedMs: Math.round(performance.now() - t0) } }));
+    }, READY_LATE_MS);
     worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       heard();
       const m = ev.data;
@@ -239,6 +312,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         clearTimeout(timer);
         ready = true;
         pumping = m.path === 'worker-pump';
+        if (late) canvas.dispatchEvent(new CustomEvent('pme-monitor-worker-ready', { bubbles: true, detail: { readyMs: Math.round(performance.now() - t0), path: m.path } }));
         resolve(m.path);
       } else if (m.type === 'framed') inFlight = false;
       else if (m.type === 'events') {
@@ -313,6 +387,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         r.resolve(r.refused() as never);
       }
       fail(new Error('the monitor was destroyed'), false);
+      clearTimeout(timer);
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
       document.removeEventListener('visibilitychange', onVis);
@@ -322,8 +397,9 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
 }
 
 /**
- * Create the host. With worker 'auto' it tries the OffscreenCanvas worker; if that fails before
- * 'ready', the transferred canvas is replaced by a fresh one and the main-thread path takes over.
+ * Create the host. With worker 'auto' it tries the OffscreenCanvas worker and waits for its 'ready' (a late one is said,
+ * READY_LATE_MS); if the worker fails before 'ready', the transferred canvas is replaced by a fresh one, the main-thread
+ * path takes over and the fresh canvas fires `pme-monitor-main-thread` (detail { reason }): the page says so.
  */
 export function createHost(
   canvas: HTMLCanvasElement,
@@ -331,21 +407,37 @@ export function createHost(
   opts: CoreOptions,
   worker: 'auto' | 'off',
   onEvents: EventsHandler,
+  signal?: AbortSignal,
 ): Promise<Host> {
   if (worker === 'off' || !canUseWorker()) return Promise.resolve(mainHost(canvas, size, opts, onEvents));
+  const onMain = (c: HTMLCanvasElement, err: unknown) => {
+    const m = mainHost(c, size, opts, onEvents);
+    const reason = err instanceof Error ? err.message : String(err);
+    queueMicrotask(() => c.dispatchEvent(new CustomEvent('pme-monitor-main-thread', { bubbles: true, detail: { reason } })));
+    return m;
+  };
   let h: Host;
   try {
     h = workerHost(canvas, size, opts, onEvents);
-  } catch {
-    return Promise.resolve(mainHost(canvas, size, opts, onEvents));
+  } catch (err) {
+    return Promise.resolve(onMain(canvas, err));
   }
-  return h.path.then(
-    () => h,
-    () => {
-      h.destroy();
-      const fresh = canvas.cloneNode(false) as HTMLCanvasElement;
-      canvas.replaceWith(fresh);
-      return mainHost(fresh, size, opts, onEvents);
-    },
-  );
+  // destroyed before 'ready' (the page replaced this monitor while its worker loaded): the load ends now, and nothing
+  // takes over on the main thread
+  const w = h;
+  return new Promise<Host>((resolve) => {
+    const abort = () => (w.destroy(), resolve(w));
+    signal?.addEventListener('abort', abort, { once: true });
+    w.path.then(
+      () => (signal?.removeEventListener('abort', abort), resolve(w)),
+      (err: unknown) => {
+        signal?.removeEventListener('abort', abort);
+        if (signal?.aborted) return;
+        w.destroy();
+        const fresh = canvas.cloneNode(false) as HTMLCanvasElement;
+        canvas.replaceWith(fresh);
+        resolve(onMain(fresh, err));
+      },
+    );
+  });
 }
