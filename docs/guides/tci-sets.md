@@ -6,9 +6,14 @@ the age, weight, height and sex typed into it, so its Cp and Ce are predictions.
 its source: a pure function of the typed patient and a metadata row saying where every number comes from. The sets
 live in `packages/engine-core/src/l2/pk/tci-sets/`. The plan is `docs/plans/pump-rack-tci.md`, §6.
 
-**The registry ships empty.** The engine's six models (Eleveld, Schnider and Marsh for propofol, Minto for
-remifentanil, Shafer for fentanyl, Gepts for sufentanil) move into it in piece T2, each read against its paper. Until
-then the engine reads none of it, and its TCI behaves exactly as before.
+**Seven sets are registered** (piece T2, 10 November 2026):
+- propofol: Eleveld, Schnider, Marsh and modified Marsh;
+- remifentanil: Minto;
+- fentanyl: Shafer;
+- sufentanil: Gepts.
+
+Each set was read against its paper by two readers. The engine's patient models and the TCI command read their
+parameters and ids from the registry. Nothing is pending.
 
 The CI check (`packages/engine-core/test/l2/pk/tci-sets.test.ts`) runs in the unit job on every pull request. It
 refuses a set that breaks any of the rules below, and each rule also has a fixture made to break it, which shows the
@@ -20,6 +25,7 @@ rule really checks something.
 |---|---|
 | `types.ts` | The shape: `TciSet` (`meta` + `params(patient, opts) → PkParams`), `TciSetMeta`, `TciPaper`, `TciPopulation`, `TciKe0`, `TciWorked`, `TciCovariate` |
 | `index.ts` | `TCI_SETS` (the registry, in the order a pump lists the sets), `PENDING_TCI_MODEL_IDS`, `tciSet(id)`, `tciModeRefusal(set, mode)` and its text `NO_KE0_REFUSAL` |
+| `common.ts` | The units strings and the T2 readers shared by the five set modules |
 | `<id>.ts` | One set: its function and its metadata, exported together as one `TciSet`. The file name is the set's id (`schnider.ts`) |
 
 To add a set: write `<id>.ts`, add it to `TCI_SETS` in `index.ts`, and remove its id from `PENDING_TCI_MODEL_IDS` if
@@ -62,11 +68,22 @@ it is there. Run the check, then have a second reader read the set against its p
    function returns. A ke0 that is not the PK paper's own names its source, with a DOI or PMID, and the PK model it
    was fitted with (a ke0 belongs to the PK it was estimated with). A ke0 fitted to a published time to peak effect is
    `method: 'ttpe'`. It names the paper that gives the time and states `ttpeMin`, and with this set's PK it must peak
-   within 0.02 min of that time. The engine's fentanyl 0.117 /min and sufentanil 0.176 /min are ke0s of this kind.
+   within 0.02 min of that time. The engine's fentanyl 0.117 /min, sufentanil 0.176 /min and modified Marsh 1.21 /min
+   are ke0s of this kind. A third kind, `method: 'device'`, was added by the owner's ruling TQ2 (10 November 2026). It
+   is for **a device's value whose derivation was never published**. It may be used only for a value that a named
+   device ran and that a peer-reviewed paper reports as never published. It names:
+   - that reporting paper, with a DOI or PMID (`src`), and the page (`page`);
+   - the device (`device`);
+   - the PK it ran with (`usedWith`);
+   - `derivation: 'unpublished'`, with the paper's statement paraphrased (`derivationNote`);
+   - the words a pump face shows beside the set (`label`, e.g. "device value; derivation unpublished").
+
+   It has no `fittedWith` and no `ttpeMin`, and it is never a worked value. Nothing about it can be reproduced, so
+   rules 4 and 6 check its fields, not its number. Marsh's 0.26 /min, the Diprifusor's, is the one ke0 of this kind.
 7. **The TCI command and the registry agree.** The engine's TCI command must accept every registered id (with its
    drug) and every id in `PENDING_TCI_MODEL_IDS`, and refuse the published set names not registered. A registered id
-   must not also be pending. `PENDING_TCI_MODEL_IDS` holds the six ids the command accepts today from its own list in
-   `pipeline.ts`. The list only shrinks. When it is empty, T2 replaces the command's list with the registry's ids.
+   must not also be pending. Since T2 the command's list is built from the registry's ids and
+   `PENDING_TCI_MODEL_IDS` (`TCI_MODEL_IDS` in `pipeline.ts`). The pending list only shrinks; since T2 it is empty.
 
 ## What the check cannot prove
 
@@ -74,3 +91,48 @@ The check cannot prove that a coefficient is the paper's. Every set is read agai
 before its batch merges, as the formulary is. The pull request lists each set with "agrees", or with the difference
 found. If a set's numbers differ from what the engine used before, the pull request states the difference and runs
 the validation workflow.
+
+## The T2 reading (10 November 2026)
+
+A set registers only when every constant it uses has been read in the paper itself, from the papers in the workspace
+library (`library/sources/papers/tci/`, read in place). Two readers took part:
+- the T2 executor;
+- an independent agent that rendered and read the same pages without seeing the first reader's values.
+
+Most of the papers are page photographs. Each table was read twice, first whole and then row by row at a higher zoom.
+A constant registers only when both readers read the same digits. They agreed on every constant below, and neither
+found an illegible digit.
+
+| Set | Paper, table, page | What both readers read | Against the engine | Worked values (rule 4) | Status |
+|---|---|---|---|---|---|
+| `eleveld` | Eleveld 2018, Table 2 p. 950 (θ1–θ18); equations p. 948; FFM p. 946; ke0 p. 948 and Table 3 p. 952; corrigendum Br J Anaesth 2018;121:519 | θ1–θ18 as the code has them (θ15 printed 2.10). Q2 carries 1 + θ16·(1 − f_Q3mat) and is **not** normalised to the reference. The opioid factor is exp(θ·AGE), as printed | Agrees. The abstract's reference Q2 of 1.75 L/min was corrected to **1.83** by the corrigendum, which the engine already gives (1.830) | The abstract's values with the corrigendum's Q2 | registered |
+| `schnider` | Schnider 1998, Table 2 p. 1176; James LBM p. 1173; ke0 from Schnider 1999, p. 1510 | θ1–θ11, centred at 53 y, 77 kg, LBM 59 kg, 177 cm; arterial sampling (p. 1171) | Agrees. The ke0 is printed as 0.456 in the 1999 abstract and text, "with the pharmacokinetic model from our companion study", but as 0.459 in that paper's Table 4. The engine keeps 0.456, and the difference is recorded in the metadata | The paper prints none (both readers checked the coefficients line by line). t½ke0 1.5 min (1999 Table 4) is reproduced | registered |
+| `minto` | Minto 1997 I, Table 3 p. 17 (PK) and Table 5 p. 19 (ke0); James LBM p. 12 | Every coefficient, centred at 40 y and LBM 55 kg; ke0 0.595 − 0.007·(Age − 40) | Agrees | Minto 1997 II, Tables 1–2 p. 28, at 20 y with LBM 55 kg: V1 5.5, Cl1 2.9. t½ke0 and tpeak at 20, 50 and 80 y are reproduced. That table's V1 of 5.1 L at 50 y is not: paper I's Table 3 gives 4.9 | registered |
+| `shafer` | Shafer 1990, Table 2 p. 1098, "Current Study" column; ke0 from the 3.6 min of Shafer & Varvel 1991, p. 55 | V1 6.09; k10 0.0827, k12 0.471, k13 0.225, k21 0.102, k31 0.00600 | Agrees. The `[VERIFY]` mark is resolved | V1–V3, Cl1–Cl3 and the microconstants; t½ 0.82 and 17.2 min are reproduced, and the terminal comes out 465.7 against the printed 465 | registered |
+| `gepts` | Gepts 1995, Table 3 p. 1201, two-stage column; ke0 from the 5.6 min of Shafer & Varvel 1991, p. 55 | Estimated V1 14.3, V2 63.1, V3 261.6 L; Cl1 0.92, Cl2 1.55, Cl3 0.33 L/min. Derived k10 0.0645, k12 0.1086, k13 0.0229, k21 0.0245, k31 0.0013 | **Changed.** The engine used the derived, rounded microconstants. They give V2 63.4 and V3 251.9 L, and Vss 330 L, against the printed 63.1, 261.6 and 339. The set now uses the estimated parameters, which reproduce Vss 339 and t½α 3.3. The ke0 refitted to 5.6 min stays 0.176 (0.1757) | The six estimated parameters and k31 | registered |
+| `marsh` | Marsh 1991, Table I p. 42; Gepts 1987 Table 3 p. 1261 (its stated origin); Absalom 2009 p. 30 and Table 1 (the ke0) | Vc 228 ml/kg (from the authors' pilot studies). k10 0.119, k12 0.112, k13 0.0419, k21 0.055, k31 0.0033, attributed to Gepts 1987. Gepts 1987's "Mean (n = 17)" column gives k10 0.1190, k13 0.0419, k21 0.0550 and k31 0.0033, which match, **but k12 0.1140**, which does not match 0.112 (no infusion-rate group gives 0.112 either: 0.0961, 0.0696, 0.1733) | The PK agrees with Marsh's Table I as printed. **ke0 0.26:** Absalom 2009 reports that it "came to be used with this model in first generation TCI pumps", and that "the data on which this keo value was based were never published in the peer-reviewed literature". Absalom's Table 1 pairs 0.26 with a time to peak of 4.5 min, but with Marsh's PK 0.26 peaks at 3.92 min; 4.5 min is the peak for ke0 0.20 (Struys 2000, p. 400). The modified ke0 of 1.2/1.21 is Struys 2000 (Absalom p. 30 agrees) | Table I's five microconstants | **registered** as `marsh` (ke0 0.26, kind `device`) and `marsh-modified` (ke0 1.21, `ttpe`, Struys 2000 p. 404), by the owner's ruling TQ2 |
+
+The registered sets compute bit-identical parameters to the code before T2 for every patient. The exception is Gepts,
+whose change is attributed in the pull request. Times to peak, half-lives and Vss are checked by
+`test/l2/pk/tci-sets-papers.test.ts`.
+
+**Schnider's ke0, the owner's ruling TQ1 (10 November 2026, "A for TQ1").** The ke0 stays 0.456 /min, as the abstract
+and the text of Schnider 1999 (p. 1510) state it for use with the companion PK. Table 4's 0.459 is recorded beside it
+in the set's metadata.
+
+**Marsh and modified Marsh, the owner's ruling TQ2 (10 November 2026, "A for TQ2").** The two sets share Marsh's
+Table I PK.
+- **`marsh`** carries 0.26 /min exactly as the first-generation pumps (the Diprifusor) ran it. It is labelled "device
+  value; derivation unpublished" (kind `device`). Absalom 2009 (p. 30) reports that the value came to be used with the
+  Marsh model in those pumps, and that the data behind it never appeared in the peer-reviewed literature.
+- **`marsh-modified`** carries Struys 2000's 1.21 /min (p. 404: a 1.6 min time to peak with the Marsh PK). With the
+  engine's PK it peaks at 1.608 min. Absalom rounds it to 1.2; Struys prints 1.21, the engine's value.
+
+Neither value changed.
+
+**The papers' own inconsistencies, recorded and not acted on:**
+- Marsh's k12 is 0.112, but Gepts 1987's mean is 0.1140. The engine follows Marsh's Table I, the model as the devices
+  ran it, and Absalom's Table 1 prints 0.112 too.
+- Absalom's Table 1 prints a time to peak of 4.5 min beside ke0 0.26. With Marsh's PK, 0.26 peaks at 3.92 min; 4.5 min
+  is the time for ke0 0.20 (Struys 2000, p. 400).
+

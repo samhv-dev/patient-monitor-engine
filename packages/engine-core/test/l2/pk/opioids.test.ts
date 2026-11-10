@@ -23,7 +23,7 @@ describe('opioid models', () => {
     expect(ttpeMin(shaferFentanyl())).toBeLessThan(3.71);
     expect(ttpeMin({ ...shaferFentanyl(), ke0: [0.147] })).toBeCloseTo(3.17, 1);
   });
-  it('sufentanil (Gepts PK [VERIFY], derived ke0 0.176) peaks at 5.6 min ±3 %', () => {
+  it('sufentanil (Gepts 1995 Table 3 PK, derived ke0 0.176) peaks at 5.6 min ±3 %', () => {
     expect(ttpeMin(geptsSufentanil())).toBeGreaterThan(5.43);
     expect(ttpeMin(geptsSufentanil())).toBeLessThan(5.77);
   });

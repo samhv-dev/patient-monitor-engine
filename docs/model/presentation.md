@@ -85,6 +85,12 @@ renderer, audio and skin contracts.
 |---|---|---|---|---|
 | `BRIEFING_FADE_MS` | `600` | ms | — | The fade into the monitor, ms (the board: about 600 ms). |
 
+### [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `CHECK_DELAY_MS` | `300` | ms | [ENG: ui] | The pause after the last change before the card is validated: the plan's 300 ms (§5.1). [ENG: ui] |
+
 ### [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -365,6 +371,11 @@ renderer, audio and skin contracts.
 | `briefingLayer` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The briefing layer over a learners' monitor (the shell's stage: |
 | `followBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | A follower's side: |
 | `mountHostBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The host's side: |
+| `place` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Every line of a validation result on its field, errors first, each list in the validator's order. |
+| `checker` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Validation on every change: |
+| `fieldOf` | [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The field a validator path lands on. |
+| `formOf` | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The form of a card: |
+| `docOf` | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The document the form writes: |
 | `byItself` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Whether `w` can hold without a press: |
 | `stagesOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | The stages of the card: |
 | `stageOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | The stage `stateId` belongs to (a hop: |
@@ -713,6 +724,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/alarms.ts`](../../apps/demo/src/app/alarms.ts) | The instructor's alarm mirror in glossary words (research/11 §5.16 rules 1 and 2). |
 | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The Debrief archive (the owner's board "Finish 2", approved 30 October): every debrief "Finish the case" saves, kept in THIS browser (the debriefs in IndexedDB, their index in localStorage) until the instructor clears it |
 | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The Case briefing (the owner's board Orientation 7b and its phone and Persian twins, 30 October): when a card with a `briefing` loads, every learners' screen — the host's Monitor view, a second-screen learner monitor and |
+| [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | The builder's validation (docs/plans/scenario-builder.md §5.1, §5.5; piece B1): the controller's own validator, run on the document the form would write, so the author sees exactly what a load would see; debounced, so ty |
+| [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The path → field map (docs/plans/scenario-builder.md §5.1, piece B1): the validator reports `<json path>: <what is wrong>` (validate.ts), and the builder shows each line at the field the path names, found by prefix: `/ph |
+| [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The scenario builder's model (docs/plans/scenario-builder.md §5.1, piece B1): a card as the form the editor shows, and back. |
 | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Reading a scenario card for Instructor v2 (E127, docs/plans/instructor-panel-redesign.md §3.2, §3.4, §7): the stages of the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, ju |
 | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | The scenario card (research/13 brief §7 "Scenario card"; TrainingMonitor's catalogue, CAE/REALITi objectives): title, draft flag, the learner-facing story, category, patient, duration and objectives. |
 | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Learners' phones follow the instructor's session over the relay (`pme-relay --static`), which serves this app on the laptop's network address (the classroom). |
@@ -1039,6 +1053,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/about.test.ts`](../../apps/demo/src/app/about.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/alarms.test.ts`](../../apps/demo/src/app/alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/archive.test.ts`](../../apps/demo/src/app/archive.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/checks.test.ts`](../../apps/demo/src/app/builder/checks.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/fields.test.ts`](../../apps/demo/src/app/builder/fields.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/form.test.ts`](../../apps/demo/src/app/builder/form.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-read.test.ts`](../../apps/demo/src/app/card-read.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-seed.dom.test.ts`](../../apps/demo/src/app/card-seed.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/case-briefing.dom.test.ts`](../../apps/demo/src/app/case-briefing.dom.test.ts) | 0 | 0 |

@@ -54,3 +54,5 @@ export const transports = {
 // no ajv: the bench is handed the parsed files; the schema and the folder checks run in CI)
 export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT } from './formulary/load.ts';
 export type * from './formulary/types.ts';
+// Plan learner-action-remote.md L5: the bench's Finding, which the /2 administration record's `prep` carries
+export type { Finding, FindingKind } from './formulary/findings.ts';

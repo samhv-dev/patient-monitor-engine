@@ -12,7 +12,8 @@ import { DEFAULT_PK_PATIENT, type PkPatient } from './covariates.ts';
 import { DRUGS } from './data/drugs.ts';
 import { LAST_THRESHOLDS } from './data/rows-other.ts';
 import { gammaConc, gammaN, onsetChain, ONSET_N_MIN, type GammaDose } from './gamma.ts';
-import { eleveldPropofol, geptsSufentanil, marshPropofol, mintoRemifentanil, schniderPropofol, shaferFentanyl } from './models.ts';
+import { GEPTS } from './tci-sets/gepts.ts';
+import { PENDING_TCI_MODEL_IDS, TCI_SETS, tciSet } from './tci-sets/index.ts';
 import { bindSugammadex, bindSugammadexSites, CISATRACURIUM, MW, PCHE_CL_MULT, perKg, ROCURONIUM, SUCCINYLCHOLINE, SUGAMMADEX, VECURONIUM } from './nmb.ts';
 import { hill, tachy } from './pd.ts';
 import type { DrugRow, PdTarget } from './row.ts';
@@ -161,18 +162,19 @@ function mgPerKgOf(row: DrugRow, amount: number, w: number): number | null {
 
 const NMB_PK = { rocuronium: ROCURONIUM, vecuronium: VECURONIUM, cisatracurium: CISATRACURIUM, succinylcholine: SUCCINYLCHOLINE, sugammadex: SUGAMMADEX } as const;
 
+/** The patient's PK model: a registered TCI set (tci-sets/); an unknown id falls back to Gepts, as before T2. Eleveld
+ * reads whether an opioid has been given. */
 function modelParams(pk: PkState, m: string): PkParams {
   const p = pk.patient;
-  if (m === 'schnider') return schniderPropofol(p);
-  if (m === 'marsh') return marshPropofol(p);
   if (m === 'eleveld') {
     const opioids = Object.values(pk.drugs).some((d) => DRUGS[d.id]?.cls === 'opioid' && d.total > 0);
-    return eleveldPropofol(p, { opioids });
+    return tciSet('eleveld')!.params(p, { opioids });
   }
-  if (m === 'minto') return mintoRemifentanil(p);
-  if (m === 'shafer') return shaferFentanyl();
-  return geptsSufentanil();
+  return (tciSet(m) ?? GEPTS).params(p);
 }
+
+/** The model ids the TCI command accepts: the registry's, and those still pending (rule 7 of the TCI-set check). */
+const TCI_MODEL_IDS: ReadonlySet<string> = new Set([...TCI_SETS.map((s) => s.meta.id), ...Object.keys(PENDING_TCI_MODEL_IDS)]);
 
 function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null {
   const p = pk.patient;
@@ -279,7 +281,7 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   if (ev.kind === 'tci') {
     const c = ev as Extract<PkClinicalEvent, { kind: 'tci' }>;
     if (row.pk.kind !== 'model') return `${row.id} has no TCI model`;
-    if (c.model !== undefined && !['eleveld', 'schnider', 'marsh', 'minto', 'shafer', 'gepts'].includes(c.model)) return `unknown TCI model ${c.model}`;
+    if (c.model !== undefined && !TCI_MODEL_IDS.has(c.model)) return `unknown TCI model ${c.model}`;
     return c.target >= 0 && c.target <= 100 && (c.mode === 'plasma' || c.mode === 'effect') ? undefined : 'target must be 0–100 with mode plasma or effect';
   }
   // A volatile row has no compartment model: an IV bolus was accepted and then threw in pkSystem on the next tick
