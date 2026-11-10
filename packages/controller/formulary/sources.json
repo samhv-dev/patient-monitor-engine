@@ -1,1 +1,606 @@
-{}
+{
+  "dailymed-adrenalin-par": {
+    "kind": "monograph",
+    "product": "Adrenalin (epinephrine injection) 1 mg/mL vial",
+    "holder": "Par Health USA, LLC",
+    "version": "SPL setid 3b7a4364-668d-4eb2-a20c-04adc35aabe4, version 24, effective 2026-07-01",
+    "issuer": "DailyMed"
+  },
+  "dailymed-akovaz": {
+    "kind": "monograph",
+    "product": "Akovaz (ephedrine sulfate injection) 50 mg/mL vial and 5 mg/mL prefilled syringe",
+    "holder": "Exela Pharma Sciences, LLC",
+    "version": "SPL setid e92f3eda-33eb-4b34-9e8b-db8d32a5dbd9, version 4, effective 2020-11-27",
+    "issuer": "DailyMed"
+  },
+  "emc-1077": {
+    "kind": "monograph",
+    "product": "Cyklokapron 100 mg/mL solution for injection/infusion",
+    "holder": "Pfizer Limited",
+    "version": "SmPC revised 08/2025; emc product 1077",
+    "issuer": "EMC"
+  },
+  "emc-10818": {
+    "kind": "monograph",
+    "product": "Phenylephrine Unimedic 10 mg/ml, concentrate for solution for injection/infusion",
+    "holder": "Unimedic Pharma AB",
+    "version": "SmPC revised 09/04/2025; emc product 10818",
+    "issuer": "EMC"
+  },
+  "emc-10948": {
+    "kind": "monograph",
+    "product": "Hypnovel 10mg/2ml solution for injection",
+    "holder": "Neon Healthcare Ltd",
+    "version": "SmPC revised 01/09/2023; emc product 10948",
+    "issuer": "EMC"
+  },
+  "emc-1097": {
+    "kind": "monograph",
+    "product": "Dantrium IV 20 mg powder for solution for injection",
+    "holder": "Norgine Pharmaceuticals Limited",
+    "version": "SmPC revised 11 March 2025; emc product 1097",
+    "issuer": "EMC"
+  },
+  "emc-12563": {
+    "kind": "monograph",
+    "product": "Phenylephrine 100 micrograms/ml solution for injection or infusion",
+    "holder": "Laboratoire Aguettant",
+    "version": "SmPC revised 27/06/2024; emc product 12563",
+    "issuer": "EMC"
+  },
+  "emc-1345": {
+    "kind": "monograph",
+    "product": "Esmeron 10 mg/ml solution for injection",
+    "holder": "Merck Sharp & Dohme (UK) Limited",
+    "version": "SmPC revised 26 February 2026; emc product 1345",
+    "issuer": "EMC"
+  },
+  "emc-15912": {
+    "kind": "monograph",
+    "product": "Agilus 120 mg powder for solution for injection",
+    "holder": "Norgine Pharmaceuticals Limited",
+    "version": "SmPC revised 11 March 2025; emc product 15912",
+    "issuer": "EMC"
+  },
+  "emc-1812": {
+    "kind": "monograph",
+    "product": "Compound Sodium Lactate Solution for Infusion BP",
+    "holder": "Baxter Healthcare Ltd",
+    "version": "SmPC revised June 2023; emc product 1812",
+    "issuer": "EMC"
+  },
+  "emc-1825": {
+    "kind": "monograph",
+    "product": "Glucose 5% Intravenous Infusion BP",
+    "holder": "Baxter Healthcare Ltd",
+    "version": "SmPC revised June 2023; emc product 1825",
+    "issuer": "EMC"
+  },
+  "emc-1826": {
+    "kind": "monograph",
+    "product": "Glucose 50% w/v Concentrate for solution for infusion",
+    "holder": "Baxter Healthcare Ltd",
+    "version": "SmPC revised 06 July 2021; emc product 1826",
+    "issuer": "EMC"
+  },
+  "emc-1867": {
+    "kind": "monograph",
+    "product": "Sodium Chloride 0.18% and Glucose 4 % Solution for Infusion BP",
+    "holder": "Baxter Healthcare Ltd",
+    "version": "SmPC revised December 2023; emc product 1867",
+    "issuer": "EMC"
+  },
+  "emc-1870": {
+    "kind": "monograph",
+    "product": "Sodium Chloride 0.9 % w/v and Glucose 5% w/v Solution for Infusion BP",
+    "holder": "Baxter Healthcare Ltd",
+    "version": "SmPC revised June 2023; emc product 1870",
+    "issuer": "EMC"
+  },
+  "emc-1871": {
+    "kind": "monograph",
+    "product": "Sodium Chloride 0.9% Intravenous Infusion BP",
+    "holder": "Baxter Healthcare Ltd",
+    "version": "SmPC revised October 2026; emc product 1871",
+    "issuer": "EMC"
+  },
+  "emc-2192": {
+    "kind": "monograph",
+    "product": "Ventolin Injection 500 micrograms (0.5mg) in 1ml",
+    "holder": "Glaxo Wellcome UK Ltd",
+    "version": "SmPC revised 10 April 2026; emc product 2192",
+    "issuer": "EMC"
+  },
+  "emc-3401": {
+    "kind": "monograph",
+    "product": "Suxamethonium Chloride 50mg/ml Solution for Injection/Infusion",
+    "holder": "Martindale Pharmaceuticals Ltd",
+    "version": "SmPC revised 06/05/2025; emc product 3401",
+    "issuer": "EMC"
+  },
+  "emc-3448": {
+    "kind": "monograph",
+    "product": "Adrenaline (Epinephrine) Injection 1:10,000 prefilled syringe",
+    "holder": "Aurum Pharmaceuticals Ltd",
+    "version": "SmPC revised 08/07/2026; emc product 3448",
+    "issuer": "EMC"
+  },
+  "emc-3697": {
+    "kind": "monograph",
+    "product": "Sodium Bicarbonate 8.4% w/v Solution for Injection",
+    "holder": "Macarthys Laboratories Ltd t/a Martindale Pharma",
+    "version": "SmPC revised 19/09/2018; emc product 3697",
+    "issuer": "EMC"
+  },
+  "emc-3849": {
+    "kind": "monograph",
+    "product": "Actrapid 100 international units/ml, Solution for Injection in a vial",
+    "holder": "Novo Nordisk A/S",
+    "version": "SmPC revised 01/2021; emc product 3849",
+    "issuer": "EMC"
+  },
+  "emc-4126": {
+    "kind": "monograph",
+    "product": "Calcium Chloride 10% w/v Intravenous Infusion pre-filled syringe",
+    "holder": "Aurum Pharmaceuticals Ltd",
+    "version": "SmPC revised 30/01/2025; emc product 4126",
+    "issuer": "EMC"
+  },
+  "emc-5492": {
+    "kind": "monograph",
+    "product": "Propofol 10 mg/ml (1%) emulsion for injection or infusion",
+    "holder": "Aspen Pharma Trading Limited",
+    "version": "SmPC revised August 2025; emc product 5492",
+    "issuer": "EMC"
+  },
+  "emc-6617": {
+    "kind": "monograph",
+    "product": "Fentanyl 50 micrograms/ml Solution for Injection/Infusion",
+    "holder": "Mercury Pharmaceuticals Limited",
+    "version": "SmPC revised 19/04/2024; emc product 6617",
+    "issuer": "EMC"
+  },
+  "emc-853": {
+    "kind": "monograph",
+    "product": "Ventolin Solution for Intravenous Infusion 5mg in 5ml (1mg/ml)",
+    "holder": "Glaxo Wellcome UK Limited",
+    "version": "SmPC revised 13 April 2026; emc product 853",
+    "issuer": "EMC"
+  },
+  "stabilis-calciumchloride-3307": {
+    "kind": "stabilis",
+    "id": "Calcium chloride (Monographie.php?IdMolecule=532)",
+    "retrieved": "2026-11-10",
+    "cites": "Kiser TH et al. Hosp Pharm 2012;47(1):27-30"
+  },
+  "stabilis-calciumchloride-3622": {
+    "kind": "stabilis",
+    "id": "Calcium chloride (Monographie.php?IdMolecule=532)",
+    "retrieved": "2026-11-10",
+    "cites": "Weeks PA et al. Int J Pharm Compound 2014;18(2):152-8"
+  },
+  "stabilis-dantrolene-1509": {
+    "kind": "stabilis",
+    "id": "Dantrolene sodium (Monographie.php?IdMolecule=307)",
+    "retrieved": "2026-11-10",
+    "cites": "Dantrium SmPC, Norgine 2014 (manufacturer stability data)"
+  },
+  "stabilis-ephedrine-1720": {
+    "kind": "stabilis",
+    "id": "Ephedrine sulfate (Monographie.php?IdMolecule=438)",
+    "retrieved": "2026-11-10",
+    "cites": "Storms ML et al. Int J Pharm Compound 2001;5:394-6"
+  },
+  "stabilis-epinephrine-192": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Peddicord TE et al. Am J Health-Syst Pharm 1997;54:1417-9"
+  },
+  "stabilis-epinephrine-3622": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Weeks PA et al. Int J Pharm Compound 2014;18(2):152-8"
+  },
+  "stabilis-epinephrine-3642": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Epinephrine SmPC, International Medication Systems (UK) 2013 (factor: NaHCO3 solvent degrades)"
+  },
+  "stabilis-epinephrine-3712": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Ghanayem NS et al. Pediatr Crit Care Med 2001;2(4):315-7"
+  },
+  "stabilis-epinephrine-4026": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Van Matre ET et al. Hosp Pharm 2017;52(8):570-3"
+  },
+  "stabilis-epinephrine-4393": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Hook R et al. poster, Sunnybrook Health Sciences Centre 2020"
+  },
+  "stabilis-epinephrine-4778": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Hook R et al. Int J Pharm Compound 2023;27(4):347-51"
+  },
+  "stabilis-epinephrine-659": {
+    "kind": "stabilis",
+    "id": "Epinephrine hydrochloride (Monographie.php?IdMolecule=106)",
+    "retrieved": "2026-11-10",
+    "cites": "Donnelly RF, Yen M. Can J Hosp Pharm 1996;49:62-5"
+  },
+  "stabilis-fentanyl-222": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "Allen LV et al. Am J Hosp Pharm 1990;47:1572-4"
+  },
+  "stabilis-fentanyl-223": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "Kowalski SR, Gourlay GK. Am J Hosp Pharm 1990;47:1584-7"
+  },
+  "stabilis-fentanyl-2334": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "McCluskey SV et al. Am J Health-Syst Pharm 2009;66(9):860-3"
+  },
+  "stabilis-fentanyl-3916": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "Donnelly RF. Int J Pharm Compound 2016;20(6):514-6"
+  },
+  "stabilis-fentanyl-4223": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "Riss V et al. poster, CSHP Professional Practice Conference 2019"
+  },
+  "stabilis-fentanyl-4228": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "Law S et al. poster, CSHP Professional Practice Conference"
+  },
+  "stabilis-fentanyl-4303": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "Anderson C, MacKay M. Pharmacy 2015;3:379-85"
+  },
+  "stabilis-fentanyl-929": {
+    "kind": "stabilis",
+    "id": "Fentanyl citrate (Monographie.php?IdMolecule=182)",
+    "retrieved": "2026-11-10",
+    "cites": "Wilson KM et al. J Pain Symptom Manage 1998;16:52-8"
+  },
+  "stabilis-guide-level-of-evidence": {
+    "kind": "stabilis",
+    "id": "Stabilis user guide 9, Level of evidence (sourcesPDF/Fichier.10793.3.pdf, p. 3)",
+    "retrieved": "2026-11-10",
+    "cites": "No single criterion: A, C need >95 %, B, D >90 % of initial concentration; 0.9 is the floor for every row, 0.95 for A/A+"
+  },
+  "stabilis-insulin-3224": {
+    "kind": "stabilis",
+    "id": "Insulin (Monographie.php?IdMolecule=363)",
+    "retrieved": "2026-11-10",
+    "cites": "Fleury-Souverain S et al. EJHP Science 2011;1:3-6"
+  },
+  "stabilis-insulin-4635": {
+    "kind": "stabilis",
+    "id": "Insulin (Monographie.php?IdMolecule=363)",
+    "retrieved": "2026-11-10",
+    "cites": "Mohr A et al. Pharm Technol Hosp Pharm 2021;6(1):20210005"
+  },
+  "stabilis-midazolam-185": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "McMullin ST et al. Am J Health-Syst Pharm 1995;52:2018-20"
+  },
+  "stabilis-midazolam-231": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Hagan RL et al. Am J Hosp Pharm 1993;50:2379-81"
+  },
+  "stabilis-midazolam-3222": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Karlage K et al. Am J Health-Syst Pharm 2011;68:1537-40"
+  },
+  "stabilis-midazolam-3466": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Ribas Nicolau B et al. Enferm Intensiva 2011;22:78-82 (factor: NaHCO3 solvent degrades; also refs 150, 176, 3823)"
+  },
+  "stabilis-midazolam-350": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Martens HJ et al. Am J Hosp Pharm 1990;47:369-73"
+  },
+  "stabilis-midazolam-399": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Bleasel MD et al. Aust J Hosp Pharm 1993;23:260-2"
+  },
+  "stabilis-midazolam-401": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Peterson GM et al. Aust J Hosp Pharm 1991;21:115-8"
+  },
+  "stabilis-midazolam-4201": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Gilliot S et al. Am J Health-Syst Pharm 2020;77(9):681-9"
+  },
+  "stabilis-midazolam-4303": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Anderson C, MacKay M. Pharmacy 2015;3:379-85"
+  },
+  "stabilis-midazolam-929": {
+    "kind": "stabilis",
+    "id": "Midazolam hydrochloride (Monographie.php?IdMolecule=36)",
+    "retrieved": "2026-11-10",
+    "cites": "Wilson KM et al. J Pain Symptom Manage 1998;16:52-8"
+  },
+  "stabilis-phenylephrine-1891": {
+    "kind": "stabilis",
+    "id": "Phenylephrine hydrochloride (Monographie.php?IdMolecule=297)",
+    "retrieved": "2026-11-10",
+    "cites": "Gupta VD. Int J Pharm Compound 2004;8(2):153-5"
+  },
+  "stabilis-phenylephrine-2194": {
+    "kind": "stabilis",
+    "id": "Phenylephrine hydrochloride (Monographie.php?IdMolecule=297)",
+    "retrieved": "2026-11-10",
+    "cites": "Kiser TH et al. Am J Health-Syst Pharm 2007;64(10):1092-5"
+  },
+  "stabilis-propofol-3659": {
+    "kind": "stabilis",
+    "id": "Propofol (Monographie.php?IdMolecule=222)",
+    "retrieved": "2026-11-10",
+    "cites": "Diprivan SmPC, AstraZeneca 2016 (manufacturer stability data)"
+  },
+  "stabilis-propofol-660": {
+    "kind": "stabilis",
+    "id": "Propofol (Monographie.php?IdMolecule=222)",
+    "retrieved": "2026-11-10",
+    "cites": "Michaels MR et al. Ann Pharmacother 1996;30:228-32 (factor: NaHCO3 solvent degrades)"
+  },
+  "stabilis-sodiumbicarbonate-3116": {
+    "kind": "stabilis",
+    "id": "Sodium bicarbonate (Monographie.php?IdMolecule=497)",
+    "retrieved": "2026-11-10",
+    "cites": "Wear J et al. Am J Health-Syst Pharm 2010;67:1026-9"
+  },
+  "stabilis-sodiumbicarbonate-3329": {
+    "kind": "stabilis",
+    "id": "Sodium bicarbonate (Monographie.php?IdMolecule=497)",
+    "retrieved": "2026-11-10",
+    "cites": "Sayre BE et al. Hosp Pharm 2012;47(7):538-43"
+  },
+  "stabilis-sodiumbicarbonate-4383": {
+    "kind": "stabilis",
+    "id": "Sodium bicarbonate (Monographie.php?IdMolecule=497)",
+    "retrieved": "2026-11-10",
+    "cites": "Naorungroj T et al. Crit Care Resusc 2020;22(1):83-5"
+  },
+  "stabilis-succinylcholine-667": {
+    "kind": "stabilis",
+    "id": "Suxamethonium chloride (Monographie.php?IdMolecule=298)",
+    "retrieved": "2026-11-10",
+    "cites": "Pramar YV et al. J Clin Pharm Ther 1994;19:195-8"
+  },
+  "stabilis-tranexamicacid-3756": {
+    "kind": "stabilis",
+    "id": "Tranexamic acid (Monographie.php?IdMolecule=1039)",
+    "retrieved": "2026-11-10",
+    "cites": "McCluskey SV et al. Int J Pharm Compound 2014"
+  },
+  "trissel-calciumchloride-p349": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Calcium Chloride: additive compatibility (no solution table)",
+    "page": "PDF p. 349 (page stamp 349)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-calciumchloride-p350": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Calcium Chloride: additive compatibility, continued",
+    "page": "PDF p. 350 (page stamp 350)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-ephedrine-p799": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Ephedrine Sulfate: syringes; solution compatibility",
+    "page": "PDF p. 799 (page stamp 799)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-epinephrine-p803": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Epinephrine Hydrochloride: syringes (sterile water dilutions); solution table start",
+    "page": "PDF p. 803 (page stamp 803)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-epinephrine-p804": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Epinephrine Hydrochloride: solution compatibility (dextrose 5 %, sodium chloride 0.9 %)",
+    "page": "PDF p. 804 (page stamp 804)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-epinephrine-p805": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Epinephrine Hydrochloride: additive compatibility (sodium bicarbonate)",
+    "page": "PDF p. 805 (page stamp 805)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-fentanyl-p903": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Fentanyl Citrate: syringes",
+    "page": "PDF p. 903 (page stamp 903)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-fentanyl-p904": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Fentanyl Citrate: sorption; solution compatibility",
+    "page": "PDF p. 904 (page stamp 904)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-insulin-p1210": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Insulin: syringes (soluble insulin in 0.9 % NaCl)",
+    "page": "PDF p. 1210 (page stamp 1210)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-midazolam-p1438": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Midazolam Hydrochloride: syringes",
+    "page": "PDF p. 1438 (page stamp 1438)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-midazolam-p1439": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Midazolam Hydrochloride: solution compatibility",
+    "page": "PDF p. 1439 (page stamp 1439)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-midazolam-p1441": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Midazolam Hydrochloride: additive compatibility (sodium bicarbonate)",
+    "page": "PDF p. 1441 (page stamp 1441)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-midazolam-p1442": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Midazolam Hydrochloride: drugs in syringe (fentanyl citrate)",
+    "page": "PDF p. 1442 (page stamp 1442)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-phenylephrine-p1691": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Phenylephrine Hydrochloride: syringes",
+    "page": "PDF p. 1691 (page stamp 1691)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-phenylephrine-p1692": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Phenylephrine Hydrochloride: solution compatibility (sodium chloride 0.9 %)",
+    "page": "PDF p. 1692 (page stamp 1692)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-propofol-p1779": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Propofol: stability: use within 6 h once transferred; plastic containers",
+    "page": "PDF p. 1779 (page stamp 1779)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-propofol-p1780": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Propofol: solution and drugs-in-syringe compatibility",
+    "page": "PDF p. 1780 (page stamp 1780)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-rocuronium-p1832": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Rocuronium Bromide: solution compatibility",
+    "page": "PDF p. 1832 (page stamp 1812)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-salbutamol-p1837": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Salbutamol: administration; solution compatibility",
+    "page": "PDF p. 1837 (page stamp 1817)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-sodiumbicarbonate-p1856": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Sodium Bicarbonate: solution compatibility",
+    "page": "PDF p. 1856 (page stamp 1836)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-sodiumbicarbonate-p1859": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Sodium Bicarbonate: additive compatibility (epinephrine)",
+    "page": "PDF p. 1859 (page stamp 1839)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-sodiumbicarbonate-p1861": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Sodium Bicarbonate: additive compatibility (midazolam)",
+    "page": "PDF p. 1861 (page stamp 1841)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-succinylcholine-p1906": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Succinylcholine Chloride: syringes; solution compatibility",
+    "page": "PDF p. 1906 (page stamp 1886)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  }
+}

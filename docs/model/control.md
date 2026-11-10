@@ -108,6 +108,7 @@ transports (`src/protocol.ts`).
 | `latched` | `Record<string, true>` | A phase whose running hold an `unchanged` leaf's break latched (the team's change answered the rise: the hold runs on to its end whatever the rule reads), by phase id; cleared at every phase entry. |
 | `phaseRef` | `Record<string, number>` | The value of each `since: 'phaseStart'` variable at the current phase's entry (the first value after it). |
 | `takings` | `Record<string, number>` | How many times each action has been taken (an `action:<id>#<n>` script anchor). |
+| `preps` | `StagedPrep[]` | The preparations staged on the course (plan learner-action-remote.md §6), one per device and id; absent until the first, so a state written before L5, or by a run that stages nothing, is the same. |
 
 ### `ScenarioState` ([`scenario/types.ts`](../../packages/controller/src/scenario/types.ts))
 
@@ -191,7 +192,9 @@ transports (`src/protocol.ts`).
 | `checkFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | §5's six rules over the layer's files (path relative to the formulary folder → parsed JSON): |
 | `loadFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | The typed layer, when every rule holds; |
 | `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
-| `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match; |
+| `covers` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. |
+| `stabilityRows` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Indexes of `entry`'s stability rows for `diluent` and `container` (any temperature) that state `concentration` or state none; |
+| `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match). |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
 | `assertWireSafe` | [`guard.ts`](../../packages/controller/src/guard.ts) | Throws WireSafetyError when `m` carries samples. |
@@ -351,6 +354,7 @@ None recorded.
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |
 | [`scenario/host-scenario.test.ts`](../../packages/controller/test/scenario/host-scenario.test.ts) | 0 | 0 |
 | [`scenario/labeller.test.ts`](../../packages/controller/test/scenario/labeller.test.ts) | 0 | 0 |
+| [`scenario/learner-format.test.ts`](../../packages/controller/test/scenario/learner-format.test.ts) | 0 | 0 |
 | [`scenario/neuro-scenarios.test.ts`](../../packages/controller/test/scenario/neuro-scenarios.test.ts) | 0 | 0 |
 | [`scenario/phase-runner-mh-trace.test.ts`](../../packages/controller/test/scenario/phase-runner-mh-trace.test.ts) | 0 | 0 |
 | [`scenario/phase-runner.test.ts`](../../packages/controller/test/scenario/phase-runner.test.ts) | 0 | 0 |
