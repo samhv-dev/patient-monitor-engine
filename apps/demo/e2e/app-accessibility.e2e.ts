@@ -6,7 +6,8 @@
 // of its sheets at 1280 × 800 where it audited today's eight tabs. A tablet instructor uses the Remote (Q5): the iPad
 // portrait run pairs a Remote to the host by code and audits each of its tabs, with the 44-px touch targets. The
 // connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there. The scenario
-// builder (B2) is audited with a draft open, at each of its three sections, and walked by keyboard.
+// builder (B2) is audited with a draft open, at each of its three sections, and walked by keyboard; B3 adds its Phases
+// section with a phase open (and its add form), before the walk.
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { audit, closeSheets, EXPLORE, focusWalk, go, openApp, sheet, type SheetId, startVite, TABS, tab, TEACH2 } from './app-support.ts';
@@ -66,6 +67,14 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
       await page.getByRole('button', { name: s }).click();
       await run(page, `#/scenarios/builder/<draft> ${s}`);
     }
+    // B3: the Phases section with Early signs open (its rule tree, its next list, Instructor v2's words), then its
+    // add-a-condition form open
+    await page.getByRole('button', { name: /^Phases/ }).click();
+    await page.locator('.sb-phases .sb-out', { hasText: 'Early signs' }).click();
+    await expect(page.locator('.sb-rule')).toBeVisible();
+    await run(page, '#/scenarios/builder/<draft> Phases, Early signs');
+    await page.getByRole('button', { name: 'Add a condition to the rule' }).click();
+    await run(page, '#/scenarios/builder/<draft> Phases, Early signs, a condition being added');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
     if (remote) {
       await remote.bringToFront();

@@ -68,6 +68,51 @@
 .sb-root .sb-errs { margin: 6px 0 0; padding-left: 20px; font-size: 13px; color: var(--text); }
 .sb-root .sb-errs code { color: var(--text-strong); }
 .sb-root .sb-store-refuse { border-radius: 6px; }
+/* B3, the phase editor (mock-up 02-phase-editor): the phase list, the flow line, the rule tree, the `next` list and the
+   preview of Instructor v2's words; the mock-up's classes on the app's tokens, hints on --text-muted (4.5:1). */
+.sb-root .sb-phases { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.sb-root .sb-phases > li { display: grid; gap: 4px; }
+.sb-root .sb-phases .sb-out { width: auto; min-height: 32px; border: 1px solid var(--line); background: var(--surface); }
+.sb-root .sb-phases .sb-out small { font-size: 12px; color: var(--text-muted); }
+.sb-root .sb-phase { display: grid; gap: 16px; padding-top: 4px; border-top: 1px solid var(--line); }
+.sb-root .sb-phase-head { display: grid; gap: 8px; padding-top: 12px; }
+.sb-root .sb-phase-head h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-strong); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sb-root .sb-phase-head h3 small { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.sb-root .sb-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; }
+.sb-root .sb-flow .sb-ph { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 99px; background: transparent; color: var(--text); font-size: 13px; }
+.sb-root .sb-flow .sb-ph[aria-current] { border-color: var(--go); color: var(--text-strong); background: var(--go-soft); }
+.sb-root .sb-flow .sb-ar { color: var(--text-muted); }
+.sb-root .sb-warntext { color: var(--text-strong); }
+.sb-root .sb-rule, .sb-root .sb-kids { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.sb-root .sb-rule { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bezel-0); }
+.sb-root .sb-kids { padding-left: 14px; border-left: 2px solid var(--line-strong); }
+.sb-root .sb-node { display: grid; gap: 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13.5px; min-width: 0; }
+.sb-root .sb-node:focus-within { border-color: var(--line-strong); }
+.sb-root .sb-node-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sb-root .sb-node-head > select { width: auto; font: 600 12.5px/1 var(--font-plex-mono); letter-spacing: .04em; color: var(--go); }
+.sb-root .sb-op { font: 600 12.5px/1 var(--font-plex-mono); letter-spacing: .06em; color: var(--go); }
+.sb-root .sb-kind { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+.sb-root .sb-node-acts { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.sb-root .sb-leafrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.sb-root .sb-leafrow select.input { width: auto; max-width: min(100%, 24em); min-height: 34px; }
+.sb-root .sb-edit .sb-leafrow .input { min-height: 34px; }
+.sb-root .sb-num { width: 7.5em; }
+.sb-root .sb-leafrow code, .sb-root .sb-nextrow code, .sb-root .sb-says code, .sb-root .sb-preview code { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.sb-root .sb-numwhy { flex-basis: 100%; font-size: 12.5px; color: var(--text-strong); }
+.sb-root .sb-numwhy:empty { display: none; }
+.sb-root .sb-says { margin: 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.4; }
+.sb-root .sb-says-l { font-weight: 600; }
+.sb-root .sb-adder { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--line-strong); border-radius: 8px; background: var(--bezel-0); }
+.sb-root .sb-next { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.sb-root .sb-nextrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.sb-root .sb-nextrow select.input { width: auto; min-height: 34px; }
+.sb-root .sb-n { font: 600 12.5px/1 var(--font-plex-mono); color: var(--text-muted); min-width: 18px; }
+.sb-root .sb-preview { display: grid; gap: 8px; padding: 12px; border: 1px dashed var(--line-strong); border-radius: 10px; }
+.sb-root .sb-preview-l { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.sb-root .sb-preview-row { display: grid; gap: 2px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13.5px; color: var(--text); }
+.sb-root .sb-preview-row b { color: var(--text-strong); font-weight: 600; }
+.sb-root .sb-preview-row small { font-size: 12px; color: var(--text-muted); }
+.sb-root .sb-idwhy:empty { display: none; }
 /* narrower windows: the checks under the editor, then the outline on top (no sideways scroll at 820 px) */
 @media (max-width: 1240px) {
   .sb-root .sb-grid { grid-template-columns: 220px minmax(0, 1fr); }
