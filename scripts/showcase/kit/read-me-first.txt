@@ -10,17 +10,20 @@ PATIENT MONITOR SIMULATOR - how to start it (no internet needed)
 7. If nothing works, use the rescue card; the recorded cases are in the "videos" folder.
 
 YOUR WORK: THE "user-data" FOLDER (inside this kit's folder)
-   Scenario cards you make in the builder are kept in this browser AND as plain files in the folder "user-data"
-   beside this file, so a cleared browser, or another browser on this computer, loses nothing (Builder > the list
-   "In this kit's user-data folder, not in this browser" opens them). The folder appears at the first save
-   (Ctrl+S, Export, or every 2 minutes of editing); each saved version is a file of its own, never overwritten.
+   Scenario cards you make in the builder, and every debrief "Finish the case" saves, are kept in this browser AND as
+   plain files in the folder "user-data" beside this file, so a cleared browser, or another browser on this computer,
+   loses nothing (Builder > the list "In this kit's user-data folder, not in this browser" opens the cards; the
+   Debrief page reads the debriefs back by itself). The folder appears at the first save (Ctrl+S, Export, every 2
+   minutes of editing, or a saved debrief); each card version is a file of its own, never overwritten. "Clear the
+   archive" deletes the debriefs' files too, for good (there is no recycle bin): export them first to keep them.
+   Debriefs name residents: only this computer can list or read them; phones on the room network cannot.
    It is written only when the kit runs on Node.js ("Start Classroom", or "Start Simulator" on the kit's own node),
    and only by this computer. On ruby, perl or python, or on a read-only disk or locked USB stick, nothing is kept
    there: the builder says so; export a file to keep your work.
    The room code is kept there too, in a hidden file (.room.json; never the PIN).
    TWO THINGS TO KNOW:
    - A NEW KIT STARTS EMPTY unless you copy the "user-data" folder into it from the old kit.
-   - A copy of this kit folder handed to a colleague CARRIES YOUR DRAFTS unless you leave the
+   - A copy of this kit folder handed to a colleague CARRIES YOUR DRAFTS AND DEBRIEFS unless you leave the
      "user-data" folder out of the copy.
    Back it up by copying the folder.
 

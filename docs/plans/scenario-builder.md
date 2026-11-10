@@ -375,7 +375,15 @@ request (one piece of work per PR).
   else and it says to export a file: the kit was started without Node.js (ruby, perl or python, the launchers'
   fallbacks: they answer no `/pme-store/`, and the kit's `app/pme-kit.json` tells a kit from another site), the folder
   cannot be written (a read-only disk or a locked USB stick: the system's reason is named), the page is on another
-  device, or the app is not running from a kit. Debriefs join the folder in `user-data/debriefs/` (brief 139, PR 2).
+  device, or the app is not running from a kit.
+- **Debriefs in the same folder** (brief 139 PR 2): every debrief the archive saves is also `user-data/debriefs/<entry
+  id>.json` (the entry as Download writes it, `pme-archive-entry/1`), even when the browser refused it (the file is then
+  the only copy, and the instructor is told so); a re-save of the same run replaces its file, as it replaces the entry.
+  A debrief names a resident: the folder's debriefs are listed, read, written and deleted from this computer only, never
+  from a phone on the room network. On opening, the archive reads back every debrief the folder holds that this browser
+  lacks. "Clear the archive" deletes the files too, for good, and its dialog says so: the folder has no recycle bin, and a
+  file left there would come back at the next open. The Debrief page's archive line says where they are kept in the
+  builder's words, or why the folder does not keep them. A debrief file is at most 16 MiB.
 - **Two consequences the owner accepted with the ruling** (the kit's READ ME FIRST says both): a new kit starts EMPTY
   unless the `user-data` folder is copied into it from the old one; and a kit folder copied for a colleague carries its
   drafts (and, with PR 2, its debriefs) unless `user-data` is left out of the copy.

@@ -20,6 +20,7 @@
 // owner, "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed page (DQ10).
 import { asV1, type MarkKind } from '@pme/controller';
 import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
+import { kitOffLine } from '../kit-store.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
@@ -673,20 +674,29 @@ export function debriefView(session: AppSession, link: Link): View {
   };
   // the archive (board "Finish 2"): every saved debrief, export all, and a quiet clear behind a confirm (screen only)
   const arcCount = h('p', { class: 'db-arc-count' });
+  // brief 139 PR 2: why the kit's user-data folder does not keep the debriefs too, in the builder's words (none when it does)
+  const arcKit = h('p', { class: 'db-arc-kit', hidden: true });
   const arcList = archiveList({ p: 'db-arc', current: () => viewing?.meta.id ?? null });
   const drawArchive = () => {
     const all = archive.list().length;
     const today = archive.savedToday();
-    arcCount.textContent = all ? `${archive.holdsLine()}, ${today} today · ${archive.whereLine()}` : 'Nothing saved in this browser. “Finish the case” in Instructor v2 saves each run here.';
+    arcCount.textContent = all ? `${archive.holdsLine()}, ${today} today · ${archive.whereLine()}` : `Nothing saved in this browser${archive.inKit ? ' or in this kit’s user-data folder' : ''}. “Finish the case” in Instructor v2 saves each run here.`;
+    const last = archive.lastKit;
+    const off = archive.kit?.state ? kitOffLine(archive.kit.state) || (last && !last.ok ? `The last debrief was not kept in this kit’s user-data folder: ${last.why}. Export it to keep a copy.` : '') : '';
+    arcKit.hidden = !off;
+    arcKit.textContent = off;
     arcList.draw();
   };
   const clearArchive = async () => {
-    if (!(await confirmDialog('Clear the archive?', 'Every saved debrief in this browser is deleted, for good. Export them first to keep them.', 'Clear', true, 'Keep them'))) return;
+    const words = archive.inKit
+      ? 'Every saved debrief in this browser, and its file in this kit’s user-data folder, is deleted, for good (the folder has no recycle bin). Export them first to keep them.'
+      : 'Every saved debrief in this browser is deleted, for good. Export them first to keep them.';
+    if (!(await confirmDialog('Clear the archive?', words, 'Clear', true, 'Keep them'))) return;
     await archive.clear();
     if (viewing) location.hash = hrefOf('debrief');
     render();
   };
-  const archiveSec = section('archive', 'Archive', arcCount, arcList.el,
+  const archiveSec = section('archive', 'Archive', arcCount, arcKit, arcList.el,
     h('div', { class: 'db-arc-tools' }, button('Export all (one JSON file)', () => void exportAll(), 'ghost small'), button('Clear the archive', () => void clearArchive(), 'ghost small db-arc-clear')));
 
   const el = h('section', { class: 'debrief', 'aria-labelledby': 'db-h' },
@@ -761,7 +771,9 @@ export function debriefView(session: AppSession, link: Link): View {
         }
       };
       // the archive's place known (IndexedDB, or localStorage where it is unavailable) and an earlier build's bodies moved
-      void archive.ready().then(() => go === entered && drawArchive());
+      // and the debriefs the kit's user-data folder holds that this browser lacks, read back (brief 139 PR 2); drawn again
+      // then: the store's state (where the debriefs are kept) is known by now
+      void archive.ready().then(() => go === entered && drawArchive()).then(() => archive.syncFromKit()).then(() => go === entered && drawArchive());
       if (!m?.[1]) return show();
       const id = m[1];
       // a saved debrief's body is read asynchronously (IndexedDB): the view draws it once it is here, unless left meanwhile

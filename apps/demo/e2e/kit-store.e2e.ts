@@ -5,10 +5,13 @@
 // listed as one this browser lacks, opens at its newest version with the edit in place, and another browser context
 // (another browser of the laptop) finds it too. The store line says where the work is kept, in words, and the pages
 // pass the accessibility audit. From another device (this machine's own network address, not loopback) the relay
-// refuses a write and its status says why; a page from another site cannot write either. Ports 9810–9819.
+// refuses a write and its status says why; a page from another site cannot write either. PR 2, the debriefs: a debrief
+// the archive saves is a file in user-data/debriefs/; this browser's storage cleared, the Debrief page reads it back and
+// opens it; another browser finds it; Clear deletes the file for good; from another device the relay neither lists nor
+// reads a debrief. Ports 9810–9819.
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { lanAddresses } from '../../../packages/controller/relay/http.ts';
@@ -121,4 +124,102 @@ test('kit store: no write from another device or another site; the status says w
   expect(w.status()).toBe(403);
   expect(await w.json()).toMatchObject({ refused: 'not-this-computer' });
   expect(versions('from-elsewhere')).toEqual([]);
+});
+
+// a committed kit-round export of the 25-minute mh-early-call run: its record is a real run the archive saves
+const RECORD = (JSON.parse(readFileSync(resolve(import.meta.dirname, '../src/app/__fixtures__/debrief-2/mh-early-call-a4-v2.json'), 'utf8')) as { record: { startedAt: number } }).record;
+type Arc = { save(d: unknown, who: string, build: string): Promise<{ id: string } | { refused: string }>; kitDone: Promise<unknown> };
+const debriefFiles = () => (existsSync(join(dir, 'debriefs')) ? readdirSync(join(dir, 'debriefs')).sort() : []);
+const arcCount = (p: Page) => p.locator('#db-archive .db-arc-count');
+
+test('kit store, debriefs: a saved debrief is a file in user-data; a cleared browser reads it back and opens it; Clear deletes the file', async ({ page, browser, browserName }) => {
+  test.setTimeout(150_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const resident = `Dr Kit ${browserName}`;
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/debrief`);
+  const saved = await page.evaluate(async ([rec, who]) => {
+    const a = (window as unknown as { __pmeApp: { archive: Arc } }).__pmeApp.archive;
+    const e = await a.save(rec, who as string, 'e2e');
+    await a.kitDone;
+    return e;
+  }, [{ ...RECORD, startedAt: RECORD.startedAt + (browserName === 'webkit' ? 1 : 0) }, resident] as const);
+  if ('refused' in saved) throw new Error(`refused: ${saved.refused}`);
+  expect(debriefFiles()).toContain(`${saved.id}.json`);
+  const file = JSON.parse(readFileSync(join(dir, 'debriefs', `${saved.id}.json`), 'utf8')) as Record<string, unknown>;
+  expect(file).toMatchObject({ schema: 'pme-archive-entry/1', id: saved.id, resident, debrief: { schema: 'pme-debrief/2' } });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/debrief`);
+  await page.reload();
+  await page.waitForFunction(() => '__pmeApp' in window);
+  await expect(arcCount(page)).toHaveText(/ · kept in this browser and in this kit’s user-data folder$/);
+  await expect(page.locator('#db-archive .db-arc-kit')).toBeHidden();
+
+  // this browser's storage cleared: the Debrief page reads the folder's debriefs back and opens one
+  await page.evaluate(() => new Promise<void>((ok) => {
+    localStorage.clear();
+    const r = indexedDB.deleteDatabase('pme-archive');
+    r.onsuccess = r.onerror = r.onblocked = () => ok();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => '__pmeApp' in window);
+  const row = page.locator(`#db-archive .db-arc-row[data-id="${saved.id}"]`);
+  await expect(row).toContainText(resident, { timeout: 15_000 });
+  // the audit of what this PR changed, the archive section (the page's h1 and main landmark kept): the rest of the page
+  // (the live report, the shell's monitor strip) is set aside for the audit (hidden, then shown again); its own
+  // findings are not this PR's (the PR body names them)
+  const others = await page.evaluate(() => {
+    const keep = document.getElementById('db-archive')!;
+    const hid: Element[] = [];
+    for (let el: Element | null = keep; el && el !== document.body; el = el.parentElement) {
+      for (const sib of [...(el.parentElement?.children ?? [])]) if (sib !== el && !sib.querySelector('h1') && !sib.matches('h1') && !sib.hasAttribute('hidden')) (sib.setAttribute('hidden', ''), hid.push(sib));
+    }
+    (window as unknown as { __hid: Element[] }).__hid = hid;
+    return hid.length;
+  });
+  expect(others).toBeGreaterThan(0);
+  expect((await audit(page, { touchPanel: false })).map((f) => `${f.rule}: ${f.what}`)).toEqual([]);
+  await page.evaluate(() => (window as unknown as { __hid: Element[] }).__hid.forEach((e) => e.removeAttribute('hidden')));
+  await row.getByRole('button', { name: /^Open debrief \d+$/ }).click();
+  await expect(page.locator('.db-viewing')).toContainText(`Saved debrief`);
+  await expect(page.locator('.db-viewing')).toContainText(resident);
+
+  // another browser of the laptop finds it too (this page, which hosts the room, closed first)
+  await page.goto('about:blank');
+  const other = await (await browser.newContext()).newPage();
+  await openApp(other, base, `?relay=${encodeURIComponent(ws())}#/debrief`);
+  await expect(other.locator(`#db-archive .db-arc-row[data-id="${saved.id}"]`)).toContainText(resident, { timeout: 15_000 });
+
+  // Clear: the dialog says the files go too, for good; then the folder holds none of them
+  await other.getByRole('button', { name: 'Clear the archive' }).click();
+  await expect(other.getByRole('dialog', { name: 'Clear the archive?' })).toContainText('and its file in this kit’s user-data folder, is deleted, for good (the folder has no recycle bin)');
+  await other.getByRole('dialog', { name: 'Clear the archive?' }).getByRole('button', { name: 'Clear', exact: true }).click();
+  await expect(arcCount(other)).toHaveText('Nothing saved in this browser or in this kit’s user-data folder. “Finish the case” in Instructor v2 saves each run here.');
+  expect(debriefFiles()).not.toContain(`${saved.id}.json`);
+  await other.context().close();
+});
+
+test('kit store, debriefs: another device can neither list nor read one', async ({ request }) => {
+  const entry = JSON.stringify({ schema: 'pme-archive-entry/1', id: 'phonecheck', resident: 'Dr Private', runStartedAt: 1, debrief: {} });
+  expect((await request.put(`http://127.0.0.1:${relay.port}/pme-store/debriefs/phonecheck`, { headers: { 'Content-Type': 'application/json' }, data: entry })).status()).toBe(200);
+  // a page of another site in this laptop's browser: no
+  expect((await request.get(`http://127.0.0.1:${relay.port}/pme-store/debriefs/`, { headers: { Origin: 'https://example.org' } })).status()).toBe(403);
+  const lan = lanAddresses()[0];
+  let reachable = false;
+  if (lan) {
+    try {
+      reachable = (await request.get(`http://${lan}:${relay.port}/pme-relay.json`, { timeout: 3000 })).ok();
+    } catch {
+      reachable = false;
+    }
+  }
+  if (reachable) {
+    for (const path of ['', 'phonecheck']) {
+      const r = await request.get(`http://${lan}:${relay.port}/pme-store/debriefs/${path}`);
+      expect(r.status(), path).toBe(403);
+      expect(await r.text(), path).not.toContain('Dr Private');
+    }
+    expect((await request.delete(`http://${lan}:${relay.port}/pme-store/debriefs/phonecheck`)).status()).toBe(403);
+  }
+  expect(debriefFiles()).toContain('phonecheck.json');
+  expect((await request.delete(`http://127.0.0.1:${relay.port}/pme-store/debriefs/phonecheck`)).status()).toBe(200);
+  test.skip(!reachable, 'this machine has no network address it can reach itself on (CI has one): the Origin refusal ran');
 });

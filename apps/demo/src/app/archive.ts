@@ -15,9 +15,19 @@
 // reads it fresh. A body is written before the index names it, and taken back if the index cannot be written. Bodies a
 // build before this one left in localStorage move to IndexedDB once, on first use (written, then removed). Where
 // IndexedDB cannot be opened the bodies stay in localStorage, as before, and the archive says so.
+//
+// The kit's user-data folder (docs/plans/scenario-builder.md §8; the owner's ruling of 10 November 2026; brief 139 PR 2):
+// when the app runs from a kit on Node.js, every debrief the archive saves is also written as one file,
+// `user-data/debriefs/<entry id>.json` (the entry as "Download" writes it, `pme-archive-entry/1`: the list's fields and
+// the debrief), even when this browser refused it (a full storage: the file is then the only copy, and the instructor
+// is told so). A re-save of the same run replaces its file, as it replaces the entry here. `syncFromKit` reads back
+// every file whose entry this browser lacks (another browser of the laptop, or this one after its data was cleared).
+// Clear deletes the files too, for good: the folder has no recycle bin, and a file left there would come back at the
+// next open. The kit's server answers the debriefs' paths to this computer only (a debrief names a resident).
 import { endOf, marks, objectives } from './debrief.ts';
 import { debriefJson } from './debrief-export.ts';
 import type { RunData } from './record.ts';
+import { KitDebriefs, kitStore, kitWhere, type KitStore, type KitWrite } from './kit-store.ts';
 import { cardOf } from './scenarios.ts';
 
 export interface ObjectiveCounts {
@@ -167,10 +177,80 @@ export class Archive {
   private opened: { f: IDBFactory | null; db: Promise<IDBDatabase | null> } | null = null;
   /** Saves and clears one after another: each reads the index the one before it wrote. */
   private queue: Promise<unknown> = Promise.resolve();
+  /** The kit's folder (null: none, as in a unit test of this browser's side alone). */
+  readonly kit: KitStore | null;
+  private readonly files: KitDebriefs | null;
+  /** What the last save did in the kit's folder: null when the store is off (or nothing was saved yet). */
+  lastKit: KitWrite | null = null;
+  /** The last save's file in the kit's folder, written right after this browser's save (in the archive's own queue, so
+   *  a Clear or a read-back comes after it): resolves with `lastKit`. A save does not wait for it. */
+  kitDone: Promise<KitWrite | null> = Promise.resolve(null);
 
-  constructor(storage: () => Storage | null = localStore, idb: () => IDBFactory | null = idbFactory) {
+  constructor(storage: () => Storage | null = localStore, idb: () => IDBFactory | null = idbFactory, kit: KitStore | null = null) {
     this.storage = storage;
     this.idb = idb;
+    this.kit = kit;
+    this.files = kit ? new KitDebriefs(kit) : null;
+  }
+
+  /** Whether the debriefs are also kept in the kit's folder (known once the store was asked). */
+  get inKit(): boolean {
+    return !!this.kit?.state?.on;
+  }
+
+  /** The entry's file queued for the kit's folder (when the store is on); `kitDone` and then `lastKit` say how it went. */
+  private toKit(meta: ArchiveMeta, body: string): void {
+    if (!this.files) return;
+    this.kitDone = this.inTurn(async () => {
+      this.lastKit = (await this.kit!.ready()).on ? await this.files!.write(meta.id, JSON.stringify(this.entryOf(meta, body), null, 1)) : null;
+      return this.lastKit;
+    });
+  }
+
+  /**
+   * The debriefs the kit's folder holds that this browser lacks, read back into the archive (their bodies, then the
+   * index, sorted by when each was saved). Returns how many came back; 0 when the store is off.
+   */
+  syncFromKit(): Promise<number> {
+    return this.inTurn(async () => {
+      if (!this.files || !(await this.kit!.ready()).on) return 0;
+      const there = await this.files.list();
+      const s = this.storage();
+      if (!there || !s) return 0;
+      const db = await this.ready();
+      const have = new Set(this.list().map((e) => e.id));
+      const runs = new Set(this.list().map((e) => e.runStartedAt));
+      const back: ArchiveMeta[] = [];
+      for (const f of there) {
+        if (have.has(f.id)) continue;
+        const text = await this.files.read(f.id);
+        let entry: (ArchiveMeta & { schema?: unknown; debrief?: unknown }) | null = null;
+        try {
+          entry = text === null ? null : (JSON.parse(text) as ArchiveMeta & { schema?: unknown; debrief?: unknown });
+        } catch {
+          /* not an entry: left where it is */
+        }
+        if (!entry || entry.schema !== 'pme-archive-entry/1' || entry.id !== f.id || typeof entry.runStartedAt !== 'number' || runs.has(entry.runStartedAt) || entry.debrief === undefined) continue;
+        const { schema: _s, debrief, ...meta } = entry;
+        const body = JSON.stringify(debrief);
+        try {
+          await this.put(db, s, meta.id, body);
+        } catch {
+          continue; // this browser refused it: it stays in the folder, and the next open tries again
+        }
+        back.push({ ...meta, bytes: utf8Bytes(body) });
+        runs.add(meta.runStartedAt);
+      }
+      if (!back.length) return 0;
+      try {
+        s.setItem(INDEX, JSON.stringify([...this.list(), ...back].sort((a, b) => a.savedAt - b.savedAt)));
+      } catch {
+        await this.remove(db, s, back.map((e) => e.id)).catch(() => undefined);
+        return 0;
+      }
+      this.version++;
+      return back.length;
+    });
   }
 
   /** The database, opened once (and the move of an earlier build's bodies done), or null: the localStorage path. A
@@ -219,8 +299,9 @@ export class Archive {
     return list.some((e) => e.bytes === undefined) ? `${list.length} saved` : `${list.length} saved · ${sizeText(list.reduce((n, e) => n + (e.bytes ?? 0), 0))}`;
   }
 
-  /** Where it is kept, for the archive's summary line. */
+  /** Where it is kept, for the archive's summary line (the builder's words when the kit's folder keeps it too). */
   whereLine(): string {
+    if (this.inKit) return `kept ${kitWhere(this.kit!.state)}`;
     return this.backend === 'localStorage'
       ? 'kept in this browser’s localStorage (IndexedDB is unavailable here, so about 5 MB in all)'
       : 'kept in this browser until you clear it';
@@ -240,7 +321,10 @@ export class Archive {
     };
     return this.inTurn(async () => {
       const s = this.storage();
-      if (!s) return BLOCKED;
+      if (!s) {
+        this.toKit({ id: `${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`, ...fields }, body);
+        return BLOCKED;
+      }
       const db = await this.ready();
       const list = this.list();
       const was = list.find((e) => e.runStartedAt === d.startedAt);
@@ -249,6 +333,7 @@ export class Archive {
       try {
         await this.put(db, s, meta.id, body);
       } catch (e) {
+        this.toKit(meta, body); // this browser refused it: the kit's file is then its only copy
         return refusalOf(e);
       }
       try {
@@ -261,9 +346,11 @@ export class Archive {
         } catch {
           /* nothing more to undo */
         }
+        this.toKit(meta, body);
         return refusalOf(e);
       }
       this.version++;
+      this.toKit(meta, body);
       return meta;
     });
   }
@@ -291,11 +378,16 @@ export class Archive {
     return JSON.stringify({ schema: 'pme-archive/1', exportedAt: now, entries }, null, 1);
   }
 
-  /** Every saved debrief deleted from this browser. */
+  /** Every saved debrief deleted from this browser, and its file from the kit's folder (for good: no recycle bin). */
   clear(): Promise<void> {
     return this.inTurn(async () => {
       const s = this.storage();
       const db = await this.ready();
+      if (this.files && (await this.kit!.ready()).on) {
+        // every file the folder holds, and every entry listed here: a file left there would come back at the next open
+        const ids = new Set([...this.list().map((e) => e.id), ...((await this.files.list()) ?? []).map((f) => f.id)]);
+        for (const id of ids) await this.files.drop(id);
+      }
       try {
         if (db) {
           const tx = db.transaction(STORE, 'readwrite');
@@ -388,5 +480,5 @@ export class Archive {
   }
 }
 
-/** The app's one archive (this browser's IndexedDB, the index in its localStorage). */
-export const archive = new Archive();
+/** The app's one archive (this browser's IndexedDB, the index in its localStorage; the kit's folder when there is one). */
+export const archive = new Archive(localStore, idbFactory, kitStore);

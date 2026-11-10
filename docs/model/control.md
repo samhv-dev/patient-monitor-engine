@@ -128,6 +128,7 @@ transports (`src/protocol.ts`).
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `CARD_MAX_BYTES` | `512 * 1024` | — | November 2026; [ENG: scenario; BQ13] | The largest card file the store takes: the owner's limit for a card document (BQ13, 9 November 2026: "a card document ≤ 512 KB, text only"), here 512 KiB of UTF-8. The largest library card today is under 40 kB. [ENG: scenario; BQ13] |
+| `DEBRIEF_MAX_BYTES` | `16 * 1024 * 1024` | — | [ENG: network] | The largest debrief file: a debrief carries the whole run record, about 10 kB of UTF-8 per simulated minute (archive.ts, N39), so 16 MiB is about 26 simulated hours, far above any teaching run; it bounds what one request may put on the laptop's disk. [ENG: network] |
 | `NAME_MAX` | `64` | — | [ENG: scenario] | The longest name: the card id's own limit (`^[A-Za-z][A-Za-z0-9_.-]{0,63}$`, 64 characters). [ENG: scenario] |
 
 ### [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts)
@@ -203,6 +204,10 @@ transports (`src/protocol.ts`).
 | `fromThisComputer` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A request from this computer's own browser to this computer: |
 | `listCards` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Every card the folder holds (a folder with a safe name and at least one version file), by id. |
 | `keepCard` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A new version of card `id`, `text` its card file. |
+| `listDebriefs` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Every debrief file the folder holds (`debriefs/<id>.json`, a safe id), by id. |
+| `readDebrief` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | One debrief's file, or null. |
+| `keepDebrief` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The archive's entry `text` written as `debriefs/<id>.json` (whole: |
+| `dropDebrief` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A debrief's file deleted, for good (no recycle bin): |
 | `readCard` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | One version's card file, or null. |
 | `storeRoutes` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The store's HTTP side: |
 | `findings` | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Every finding for these drugs (each with a file in `formulary`) in this diluent (null: |

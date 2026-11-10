@@ -1137,6 +1137,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/e2e/vent-window.e2e.ts`](../../apps/demo/e2e/vent-window.e2e.ts) | 0 | 0 |
 | [`apps/demo/src/app/about.test.ts`](../../apps/demo/src/app/about.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/alarms.test.ts`](../../apps/demo/src/app/alarms.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/archive-kit.test.ts`](../../apps/demo/src/app/archive-kit.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/archive.test.ts`](../../apps/demo/src/app/archive.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/action-editor.dom.test.ts`](../../apps/demo/src/app/builder/action-editor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/actions.test.ts`](../../apps/demo/src/app/builder/actions.test.ts) | 0 | 0 |
