@@ -6,11 +6,10 @@ the age, weight, height and sex typed into it, so its Cp and Ce are predictions.
 its source: a pure function of the typed patient and a metadata row saying where every number comes from. The sets
 live in `packages/engine-core/src/l2/pk/tci-sets/`. The plan is `docs/plans/pump-rack-tci.md`, §6.
 
-**The registry is empty.** The engine's six models (Eleveld, Schnider and Marsh for propofol, Minto for
-remifentanil, Shafer for fentanyl, Gepts for sufentanil) move into it once each has been read against its paper. The
-T2 reading (below) could read none of the six full texts, so all six stay pending, each with its reason and the table
-it needs in `PENDING_TCI_REASONS`. Until a set registers, the engine reads none of the registry, and its TCI behaves
-exactly as before.
+**Five sets are registered** (piece T2, 10 November 2026): Eleveld and Schnider for propofol, Minto for remifentanil,
+Shafer for fentanyl, Gepts for sufentanil. Each was read against its paper by two readers. The engine's patient models
+and the TCI command read their parameters and ids from the registry. **Marsh stays pending.** Its PK is confirmed, but
+its ke0 of 0.26 /min has no source; the reason is recorded in `PENDING_TCI_REASONS`.
 
 The CI check (`packages/engine-core/test/l2/pk/tci-sets.test.ts`) runs in the unit job on every pull request. It
 refuses a set that breaks any of the rules below, and each rule also has a fixture made to break it, which shows the
@@ -22,6 +21,7 @@ rule really checks something.
 |---|---|
 | `types.ts` | The shape: `TciSet` (`meta` + `params(patient, opts) → PkParams`), `TciSetMeta`, `TciPaper`, `TciPopulation`, `TciKe0`, `TciWorked`, `TciCovariate` |
 | `index.ts` | `TCI_SETS` (the registry, in the order a pump lists the sets), `PENDING_TCI_MODEL_IDS`, `tciSet(id)`, `tciModeRefusal(set, mode)` and its text `NO_KE0_REFUSAL` |
+| `common.ts` | The units strings and the T2 readers shared by the five set modules |
 | `<id>.ts` | One set: its function and its metadata, exported together as one `TciSet`. The file name is the set's id (`schnider.ts`) |
 
 To add a set: write `<id>.ts`, add it to `TCI_SETS` in `index.ts`, and remove its id from `PENDING_TCI_MODEL_IDS` if
@@ -67,8 +67,8 @@ it is there. Run the check, then have a second reader read the set against its p
    within 0.02 min of that time. The engine's fentanyl 0.117 /min and sufentanil 0.176 /min are ke0s of this kind.
 7. **The TCI command and the registry agree.** The engine's TCI command must accept every registered id (with its
    drug) and every id in `PENDING_TCI_MODEL_IDS`, and refuse the published set names not registered. A registered id
-   must not also be pending. `PENDING_TCI_MODEL_IDS` holds the six ids the command accepts today from its own list in
-   `pipeline.ts`. The list only shrinks. When it is empty, T2 replaces the command's list with the registry's ids.
+   must not also be pending. Since T2 the command's list is built from the registry's ids and
+   `PENDING_TCI_MODEL_IDS` (`TCI_MODEL_IDS` in `pipeline.ts`). The pending list only shrinks; today it holds `marsh`.
 
 ## What the check cannot prove
 
@@ -77,29 +77,26 @@ before its batch merges, as the formulary is. The pull request lists each set wi
 found. If a set's numbers differ from what the engine used before, the pull request states the difference and runs
 the validation workflow.
 
-## The T2 reading (10 November 2026): why the six sets are still pending
+## The T2 reading (10 November 2026)
 
-A set registers only when every constant it uses has been read in the paper itself, never from memory, a textbook or
-a secondary site. Two readers worked separately: the T2 executor and a second agent that read the papers without
-seeing the first reader's notes. Both found the same availability and the same two differences.
+A set registers only when every constant it uses has been read in the paper itself, from the papers in the workspace
+library (`library/sources/papers/tci/`, read in place). Two readers took part:
+- the T2 executor;
+- an independent agent that rendered and read the same pages without seeing the first reader's values.
 
-**What could be read.** Neither reader could read a full text. The workspace library holds none of the papers.
-Anesthesiology (journals.lww.com) answered 402, or showed a human-verification page, which neither reader answers. The
-BJA site (bjanaesthesia.org) and ScienceDirect answered 403 or showed the same page. Eleveld 2018 and Minto 1997 are
-offered only as PDF files: research.rug.nl and pubs.asahq.org respectively. Neither reader downloaded them. The
-abstracts were read through Europe PMC.
+Most of the papers are page photographs. Each table was read twice, first whole and then row by row at a higher zoom.
+A constant registers only when both readers read the same digits. They agreed on every constant below, and neither
+found an illegible digit.
 
-| Set | Paper (PMID) | What the abstract confirms | What the abstract contradicts | The table registration needs |
-|---|---|---|---|---|
-| `eleveld` | Eleveld 2018, BJA 120:942 (29661412) | Reference patient (35 y, 170 cm, 70 kg, male, no opioids): V1 6.28, V2 25.5, V3 273 L; CL 1.79, Q3 1.11 L/min; ke0 0.146 /min | **Q2: the abstract gives 1.75 L/min, the engine 1.830.** The engine's Q2 maturation factor, 1 + 1.3·(1 − fQ3mat(35 y)), is 1.0459 at the reference age | Table 2 (θ1–θ18) and the model equations |
-| `schnider` | Schnider 1998, Anesthesiology 88:1170 (9605675); 1999, 90:1502 (10360845) | ke0 0.456 /min (1999). Age acts on V2 and CL2; weight, height and LBM act on CL1 (1998, qualitative) | none | The final covariate model table (1998) |
-| `marsh` | Marsh 1991, BJA 67:41 (1859758); Struys 2000, Anesthesiology 92:399 (10691226) | No number. The modified ke0 1.21 /min gives t½ 34.4 s and, with the engine's Marsh PK, a time to peak of 1.608 min. Struys's abstract prints 34 s and 1.6 min, but not 1.21 | none | The table of the adult model the device ran; the source of ke0 0.26 /min |
-| `minto` | Minto 1997, Anesthesiology 86:10 (9009935) | Only the simple model, which the engine does not use: V1 4.98, V2 9.01, V3 6.54 L; Cl1 2.46, Cl2 1.69, Cl3 0.065 L/min; ke0 0.516 /min | none decidable. Second reader: across 20–85 y the engine's ke0 falls 62%, against the abstract's "approximately 50%" | The complex (covariate) model table and the ke0 age model |
-| `shafer` | Shafer 1990, Anesthesiology 73:1091 (2248388) | No number | none | The population parameter table. Also Shafer & Varvel 1991 (1824743) for the 3.6 min time to peak behind ke0 0.117 |
-| `gepts` | Gepts 1995, Anesthesiology 83:1194 (8533912) | V1 14.3 L; CL 0.92, Q2 1.55, Q3 0.33 L/min (the engine's 14.3, 0.922, 1.553, 0.327) | **The engine's microconstants imply V2 63.4 and V3 251.9 L; the abstract prints 63.1 and 261.6 L.** k31 0.0013 accounts for most of the V3 gap: the printed values give 0.00126 | The parameter table, and whether it prints k21 0.0245 and k31 0.0013. Also Shafer & Varvel 1991 for the 5.6 min behind ke0 0.176 |
+| Set | Paper, table, page | What both readers read | Against the engine | Worked values (rule 4) | Status |
+|---|---|---|---|---|---|
+| `eleveld` | Eleveld 2018, Table 2 p. 950 (θ1–θ18); equations p. 948; FFM p. 946; ke0 p. 948 and Table 3 p. 952; corrigendum Br J Anaesth 2018;121:519 | θ1–θ18 as the code has them (θ15 printed 2.10). Q2 carries 1 + θ16·(1 − f_Q3mat) and is **not** normalised to the reference. The opioid factor is exp(θ·AGE), as printed | Agrees. The abstract's reference Q2 of 1.75 L/min was corrected to **1.83** by the corrigendum, which the engine already gives (1.830) | The abstract's values with the corrigendum's Q2 | registered |
+| `schnider` | Schnider 1998, Table 2 p. 1176; James LBM p. 1173; ke0 from Schnider 1999, p. 1510 | θ1–θ11, centred at 53 y, 77 kg, LBM 59 kg, 177 cm; arterial sampling (p. 1171) | Agrees. The ke0 is printed as 0.456 in the 1999 abstract and text, "with the pharmacokinetic model from our companion study", but as 0.459 in that paper's Table 4. The engine keeps 0.456, and the difference is recorded in the metadata | The paper prints none (both readers checked the coefficients line by line). t½ke0 1.5 min (1999 Table 4) is reproduced | registered |
+| `minto` | Minto 1997 I, Table 3 p. 17 (PK) and Table 5 p. 19 (ke0); James LBM p. 12 | Every coefficient, centred at 40 y and LBM 55 kg; ke0 0.595 − 0.007·(Age − 40) | Agrees | Minto 1997 II, Tables 1–2 p. 28, at 20 y with LBM 55 kg: V1 5.5, Cl1 2.9. t½ke0 and tpeak at 20, 50 and 80 y are reproduced. That table's V1 of 5.1 L at 50 y is not: paper I's Table 3 gives 4.9 | registered |
+| `shafer` | Shafer 1990, Table 2 p. 1098, "Current Study" column; ke0 from the 3.6 min of Shafer & Varvel 1991, p. 55 | V1 6.09; k10 0.0827, k12 0.471, k13 0.225, k21 0.102, k31 0.00600 | Agrees. The `[VERIFY]` mark is resolved | V1–V3, Cl1–Cl3 and the microconstants; t½ 0.82 and 17.2 min are reproduced, and the terminal comes out 465.7 against the printed 465 | registered |
+| `gepts` | Gepts 1995, Table 3 p. 1201, two-stage column; ke0 from the 5.6 min of Shafer & Varvel 1991, p. 55 | Estimated V1 14.3, V2 63.1, V3 261.6 L; Cl1 0.92, Cl2 1.55, Cl3 0.33 L/min. Derived k10 0.0645, k12 0.1086, k13 0.0229, k21 0.0245, k31 0.0013 | **Changed.** The engine used the derived, rounded microconstants. They give V2 63.4 and V3 251.9 L, and Vss 330 L, against the printed 63.1, 261.6 and 339. The set now uses the estimated parameters, which reproduce Vss 339 and t½α 3.3. The ke0 refitted to 5.6 min stays 0.176 (0.1757) | The six estimated parameters and k31 | registered |
+| `marsh` | Marsh 1991, Table I p. 42 | Vc 228 ml/kg (the authors' pilot studies); k10 0.119, k12 0.112, k13 0.0419, k21 0.055, k31 0.0033. The table attributes these to its ref. 9 (Gepts 1987, Anesth Analg 66:1256, not in the library) | The PK agrees. Marsh prints no ke0. Struys 2000 gives 0.20 (Billard 1997) and 1.21 (a time to peak of 1.6 min with Marsh PK, p. 404). **The engine's 0.26 has no source** | — | **pending**: needs the source of 0.26 |
 
-**No value was changed.** Neither difference can be settled from the abstract alone. For Eleveld, the reference Q2
-depends on how Table 2 and the equations define the Q2 maturation term. For Gepts, the paper may print the
-microconstants the engine uses, rounded. In both cases the table must decide. A later T2 run that can read the tables,
-for example from copies placed in the workspace library, registers each set, removes its id from
-`PENDING_TCI_MODEL_IDS` and `PENDING_TCI_REASONS`, and runs the validation workflow if a value changes.
+The registered sets compute bit-identical parameters to the code before T2 for every patient. The exception is Gepts,
+whose change is attributed in the pull request. Times to peak, half-lives and Vss are checked by
+`test/l2/pk/tci-sets-papers.test.ts`.

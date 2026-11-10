@@ -1,11 +1,20 @@
 ### Changed
 
-- **Engine: the six TCI model sets stay pending, each with its reason (pump-rack plan, T2).** Two readers tried
-  to read the engine's six TCI sets against their papers: Eleveld, Schnider and Marsh for propofol, Minto for
-  remifentanil, Shafer for fentanyl, Gepts for sufentanil. Neither could read a full text. The publishers' pages
-  refused automated reading or offered only a PDF file, and the workspace library holds none of the papers. So no set
-  registers, and no value changes. `PENDING_TCI_REASONS` now records, for each pending id, why it is pending and the
-  table its registration needs, and a test requires a reason for every pending id. The abstracts confirm part of each
-  set and show two differences that only the tables can settle: Eleveld's Q2 at the reference patient (abstract
-  1.75 L/min, engine 1.830) and Gepts's V2 and V3 implied by the engine's microconstants (63.4 and 251.9 L, against
-  63.1 and 261.6 L). Details: `docs/guides/tci-sets.md`, "The T2 reading".
+- **Engine: five TCI model sets registered from their papers; sufentanil's PK follows Gepts 1995's estimated
+  parameters (pump-rack plan, T2).** Two readers read each set against its paper in the workspace library, mostly from
+  page photographs, and agreed digit for digit.
+  - **Registered:** Eleveld and Schnider for propofol, Minto for remifentanil, Shafer for fentanyl and Gepts for
+    sufentanil. Each is a module in `tci-sets/` with its paper, table, page, population, ke0 source, worked values and
+    both readers.
+  - **The engine reads them:** its patient models and the TCI command's accepted ids now come from the registry, and
+    `models.ts` keeps only Marsh and the time-to-peak tools.
+  - **Values:** four sets are bit-identical to before. **Gepts changed:** the engine used the paper's rounded derived
+    microconstants. These gave V3 251.9 L and Vss 330 L, against the 261.6 L and 339 L the paper estimates (Table 3,
+    p. 1201). It now uses the estimated volumes and clearances. Its ke0, refitted to Shafer & Varvel's 5.6 min time to
+    peak, stays 0.176 /min.
+  - **Marsh stays pending:** Table I confirms its PK, but its ke0 of 0.26 /min has no source.
+  - **Paper discrepancies recorded:**
+    - Eleveld's corrigendum puts the reference Q2 at 1.83 L/min, as the engine computes.
+    - Schnider 1999 prints its ke0 as both 0.456 and 0.459.
+
+  Details: `docs/guides/tci-sets.md`, "The T2 reading".
