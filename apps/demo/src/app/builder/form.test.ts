@@ -43,6 +43,14 @@ describe('docOf(formOf(doc)) is the card, for every card of the library', () => 
     for (const c of canonical) expect(`${JSON.stringify(docOf(formOf(c.doc)), null, 2)}\n`).toBe(fileOf(c.id));
   });
 
+  it("every src line of the /2 cards survives (V1: on actions, phases, outcomes and script entries)", () => {
+    for (const card of LIBRARY.filter((c) => (c.doc as { schema: string }).schema === 'pme-scenario/2')) {
+      const srcs = (t: unknown) => JSON.stringify(t).match(/"src":"(?:[^"\\]|\\.)*"/g) ?? [];
+      expect(srcs(docOf(formOf(card.doc)))).toEqual(srcs(card.doc));
+      expect(srcs(card.doc).length).toBeGreaterThan(10);
+    }
+  });
+
   it('every $comment of the /2 cards survives (each phase, action, script entry that carries one)', () => {
     for (const card of LIBRARY.filter((c) => (c.doc as { schema: string }).schema === 'pme-scenario/2')) {
       const count = (t: string) => (t.match(/"\$comment"/g) ?? []).length;

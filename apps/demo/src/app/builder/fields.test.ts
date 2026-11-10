@@ -7,8 +7,9 @@ import { routeHonoured } from '@pme/engine-core';
 import { SCENARIO_SCHEMA_V2, validateScenario } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { LIBRARY } from '../scenarios.ts';
+import { place } from './checks.ts';
 import { fieldOf, type FieldRef } from './fields.ts';
-import { DOC_KEYS } from './form.ts';
+import { DOC_KEYS, docOf, formOf } from './form.ts';
 
 type Doc = Record<string, any>; // a card under test, mutated freely
 const card = (id: string): Doc => JSON.parse(JSON.stringify(LIBRARY.find((c) => c.id === id)!.doc)) as Doc;
@@ -178,5 +179,31 @@ describe("every check of validateV2 lands on its field (each elicited from a lib
   });
   it('the two library /2 cards pass as they are (the table changes them, never the library)', () => {
     for (const id of [MH, HAEM]) expect(validateScenario(card(id)).ok).toBe(true);
+  });
+});
+
+describe("DC1's concentration leaves (cp:<drugId>, ce:<drugId>): no code here, they round-trip and their messages land", () => {
+  const withLeaves = (first: string): Doc => {
+    const d = card(MH);
+    d.phases[4].enter = { all: [{ value: { var: first, op: '>', value: 2, forS: 10 } }, { slope: { var: 'ce:propofol', op: '>', perMin: 0.1, overS: 60 } }] };
+    d.actions[9].precondition = { not: { unchanged: { var: 'cp:rocuronium', withinPct: 5, overS: 120 } } };
+    return d;
+  };
+  it('a /2 card with a cp: and a ce: leaf is valid and comes back from formOf/docOf deep-equal, in the same JSON text', () => {
+    const d = withLeaves('cp:propofol');
+    const r = validateScenario(d);
+    expect(r.ok, r.ok ? '' : r.errors.join('\n')).toBe(true);
+    const back = docOf(formOf(d));
+    expect(back).toStrictEqual(d);
+    expect(JSON.stringify(back)).toBe(JSON.stringify(d));
+  });
+  it("the validator's refusal of an effect-curve drug (cp:midazolam) lands on its leaf's node, part var", () => {
+    const r = validateScenario(withLeaves('cp:midazolam'));
+    expect(r.ok).toBe(false);
+    const line = (r.ok ? [] : r.errors).find((l) => l.startsWith('/phases/4/enter/all/0/value/var: '));
+    expect(line, r.ok ? '' : r.errors.join('\n')).toBeDefined();
+    expect(place(r)[0]!.at).toMatchObject({
+      section: 'phases', entry: 4, field: 'enter', rule: { root: '/phases/4/enter', node: '/all/0', leaf: 'value' }, part: 'var', path: '/phases/4/enter/all/0',
+    });
   });
 });
