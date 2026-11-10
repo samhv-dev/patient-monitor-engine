@@ -304,6 +304,7 @@ describe('pump-rack E1: pump channels in the drug layer, both kinds', () => {
     const cmd = (event: Record<string, unknown>) => {
       const r = e.dispatch({ id: `c${++n}`, issuedBy: 'test', type: 'applyEvent', event } as never);
       expect(r.reason).toBeUndefined();
+      e.advanceTo(n * 0.04); // a command applies on the next 20 ms tick; the next one is validated against it
     };
     cmd({ kind: 'pump', action: 'load', ch: 3, channel: 'syringe', syringeMl: 10, contents: { drugId: 'propofol', concentration: PROPOFOL_10, volumeMl: 2 } });
     cmd({ kind: 'pump', action: 'program', ch: 3, drugId: 'propofol', concentration: PROPOFOL_10 });
@@ -323,7 +324,7 @@ describe('pump-rack E1: pump channels in the drug layer, both kinds', () => {
     const seenR: string[] = [];
     r.on((x: EngineEvent) => { if (x.type === 'pumpAlarm') seenR.push(`${x.ch}:${x.alarm}@${x.t.toFixed(1)}`); }, ['pumpAlarm']);
     r.advanceTo(150);
-    expect(seen).toEqual(['3:end@120.0']);
+    expect(seen).toEqual(['3:end@120.1']); // started at the 0.16 s tick: its first 0.1 s step ends at 0.2 s, 2 mL later is 120.1 s
     expect(seenR).toEqual(seen);
     expect(pkOf(r).pumps).toEqual(end.pumps);
     expect(pkOf(r).drugs.propofol!.x).toEqual(end.drugs.propofol!.x);
@@ -338,6 +339,18 @@ describe('pump-rack E1: pump channels in the drug layer, both kinds', () => {
     r.restore(snap);
     const res = r.dispatch({ id: 'p1', issuedBy: 'test', type: 'applyEvent', event: { kind: 'pump', action: 'load', ch: 1, channel: 'drip', contents: { drugId: 'norepinephrine', concentration: { amount: 8, unit: 'mcg', perMl: 1 }, volumeMl: 250 } } } as never);
     expect(res.accepted).toBe(true);
+  });
+
+  it('a command validated at dispatch but no longer allowed when it applies is not applied, and is said', () => {
+    const e = createEngine({ seed: 5 } as never);
+    const out: EngineEvent[] = [];
+    e.on((x: EngineEvent) => { out.push(x); }, ['pumpRefused']);
+    const load = { kind: 'pump', action: 'load', ch: 1, channel: 'syringe', syringeMl: 10, contents: { drugId: 'propofol', concentration: PROPOFOL_10, volumeMl: 10 } };
+    // two loads in one tick: both validate against the empty channel; the second finds it loaded
+    expect(e.dispatch({ id: 'a', issuedBy: 'test', type: 'applyEvent', event: load } as never).accepted).toBe(true);
+    expect(e.dispatch({ id: 'b', issuedBy: 'test', type: 'applyEvent', event: load } as never).accepted).toBe(true);
+    e.advanceTo(1);
+    expect(out).toEqual([{ type: 'pumpRefused', t: expect.any(Number), ch: 1, action: 'load', reason: 'channel 1 is loaded: unload it first' }]);
   });
 
   it('refuses what a channel cannot do, with words', () => {

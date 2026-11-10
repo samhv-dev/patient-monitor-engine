@@ -32,7 +32,7 @@ type Bus = {
   metabolic?: { dantroleneE?: number };
 };
 /** The drug model's PkState as the endocrine model reads it. */
-export type PkLike = { bus?: Bus; betaBlockAdd?: number; drugs?: Record<string, { rate?: number } | undefined> };
+export type PkLike = { bus?: Bus; betaBlockAdd?: number; drugs?: Record<string, { rate?: number; pumpRate?: number } | undefined> };
 type Circ = {
   beats?: { map: number }[];
   ext?: Record<string, unknown>;
@@ -136,13 +136,16 @@ export function observeDoses(es: EndoState, pk: PkLike | undefined): void {
   }
 }
 
+/** A drug's running rate: the channel-less rate plus its pump channels' (pump-rack D5). */
+const running = (d: { rate?: number; pumpRate?: number } | undefined) => (d?.pumpRate ? (d.rate ?? 0) + d.pumpRate : (d?.rate ?? 0));
+
 /**
  * The drug model's running infusions (`ps.pk.drugs.<id>.rate`, amount/min in the row's unit: dextrose mg, insulin
- * units).
+ * units), plus what its pump channels deliver (`pumpRate`, pump-rack D5).
  */
 export function readInfusions(es: EndoState, pk: PkLike | undefined): void {
-  dextroseInfusion(es.core.glucose, ((pk?.drugs?.dextrose?.rate ?? 0) * 60) / 1000);
-  insulinInfusion(es.core.glucose, (pk?.drugs?.insulin?.rate ?? 0) * 60);
+  dextroseInfusion(es.core.glucose, (running(pk?.drugs?.dextrose) * 60) / 1000);
+  insulinInfusion(es.core.glucose, running(pk?.drugs?.insulin) * 60);
 }
 
 /**

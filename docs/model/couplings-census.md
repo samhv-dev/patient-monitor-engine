@@ -39,14 +39,14 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
 | neuro | 189 | 93 |
-| pharmacology | 31 | 14 |
+| pharmacology | 33 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
 | engine-runtime | 11 | 2 |
-| **All** | 1138 | 431 |
+| **All** | 1140 | 431 |
 
-## The ten effector expressions with the most factors (of 1630)
+## The ten effector expressions with the most factors (of 1635)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 898 products)
+## The ten products with the most factors (of 901 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

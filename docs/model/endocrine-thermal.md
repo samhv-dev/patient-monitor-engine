@@ -136,8 +136,8 @@ embedding developer can see which commands (`stimulus`, `meal`, the thermal and 
 
 | Where | Relation |
 |---|---|
-| [`adapters.ts:158`](../../packages/engine-core/src/l2/endo/adapters.ts#L158) | HR factor = the β-mediated part blunted by drug β-blockade × the temperature term (not a β effect). MODELED: the |
-| [`adapters.ts:238`](../../packages/engine-core/src/l2/endo/adapters.ts#L238) | endocrine model's grade = 4 × mediator, relieved by β2 bronchodilation). Re-resolved only when the severity moves by |
+| [`adapters.ts:161`](../../packages/engine-core/src/l2/endo/adapters.ts#L161) | HR factor = the β-mediated part blunted by drug β-blockade × the temperature term (not a β effect). MODELED: the |
+| [`adapters.ts:241`](../../packages/engine-core/src/l2/endo/adapters.ts#L241) | endocrine model's grade = 4 × mediator, relieved by β2 bronchodilation). Re-resolved only when the severity moves by |
 | [`effects.ts:40`](../../packages/engine-core/src/l2/endo/effects.ts#L40) | The surge's circulating noradrenaline and adrenaline as drug-model RATE-EQUIVALENTS (µg/kg/min, Css = rate/CL), |
 | [`glucose.ts:13`](../../packages/engine-core/src/l2/endo/glucose.ts#L13) | sec(G) = sec0·(5.357·G − 328.56)/(5.357·Gb − 328.56) for G ≥ 80 mg/dL (Pulse), else 0; sec0 = n·VI·Ib |
 | [`hormones.ts:13`](../../packages/engine-core/src/l2/endo/hormones.ts#L13) | epi   ENDOGENOUS plasma epinephrine (pg/mL): C_ss = basal × (1 + 3·adrenal drive); first-order with Pulse's |

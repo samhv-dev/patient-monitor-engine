@@ -2,7 +2,7 @@
 // the PD combination. Outputs: pk.fx (the circulation's DrugEffect), pk.betaBlockAdd, pk.bus (DrugBus — per-agent Ce,
 // volatiles, the dose log), pk.out (1 Hz `drugs`). The drug model consumes EVERY library drug event.
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
-import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute, type RateUnit } from '../../types-pk.ts';
+import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute, type PumpAlarmEvent, type PumpChannel, type PumpEvent, type RateUnit } from '../../types-pk.ts';
 import type { DrugEffect } from '../circ/drugs.ts';
 import { STATE_SCHEMA } from '../../l1/state.ts';
 import { combine, NEUTRAL_FX, type Active } from './combine.ts';
@@ -14,6 +14,7 @@ import { LAST_THRESHOLDS } from './data/rows-other.ts';
 import { gammaConc, gammaN, onsetChain, ONSET_N_MIN, type GammaDose } from './gamma.ts';
 import { GEPTS } from './tci-sets/gepts.ts';
 import { PENDING_TCI_MODEL_IDS, TCI_SETS, tciSet } from './tci-sets/index.ts';
+import { applyPump, pumpPanel, stepPumps, validatePump } from './pump.ts';
 import { bindSugammadex, bindSugammadexSites, CISATRACURIUM, MW, PCHE_CL_MULT, perKg, ROCURONIUM, SUCCINYLCHOLINE, SUGAMMADEX, VECURONIUM } from './nmb.ts';
 import { hill, tachy } from './pd.ts';
 import type { DrugRow, PdTarget } from './row.ts';
@@ -54,7 +55,9 @@ export interface DrugInst {
   x: number[]; // compartment state (pk/nmb rows); [] for gamma/volatile/blood rows
   factor: number; // clearance factor the params were built with (quantised)
   dist?: number; // Cardiac-output ratio the distribution was built with (quantised; rows with flowDist)
-  rate: number; // amount/min
+  rate: number; // amount/min, the channel-less rate (`drug` infusion, `infusion`, `tci`)
+  /** amount/min the pump channels delivered over the last step (D5: added to `rate`; absent before any channel ran) */
+  pumpRate?: number;
   rateUntil: number; // s (NEVER = until changed)
   tci: { mode: 'plasma' | 'effect'; target: number; maxRate: number; next: number } | null;
   doses: GammaDose[];
@@ -87,6 +90,9 @@ export interface PkState {
   pinDistQ?: number;
   panelNext: number;
   dec: Record<string, number>; // decrement-from-now per running drug, min (Task 19)
+  /** The pump channels (pump.ts, piece E1), made by the first `pump` event: absent in a run without pumps and in an
+   * older snapshot, so both are unchanged. */
+  pumps?: PumpChannel[];
   out: EngineEvent[];
 }
 
@@ -247,7 +253,7 @@ function params(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null {
 
 // --- commands ---------------------------------------------------------------------------------------------------
 
-const PK_KINDS = ['drug', 'infusion', 'tci', 'vaporiser'];
+const PK_KINDS = ['drug', 'infusion', 'tci', 'vaporiser', 'pump'];
 
 function inst(pk: PkState, id: string): DrugInst {
   let d = pk.drugs[id];
@@ -266,6 +272,7 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   if (cmd.type !== 'applyEvent') return null;
   const ev = cmd.event as { kind: string };
   if (!PK_KINDS.includes(ev.kind)) return null;
+  if (ev.kind === 'pump') return validatePump(ev as PumpEvent, _pk.pumps);
   if (ev.kind === 'vaporiser') {
     const v = ev as Extract<PkClinicalEvent, { kind: 'vaporiser' }>;
     if (!['sevoflurane', 'isoflurane', 'desflurane'].includes(v.agent)) return 'agent must be sevoflurane, isoflurane or desflurane';
@@ -327,11 +334,19 @@ export function routeHonoured(drugId: string, route: PkRoute): boolean {
   return !!row && row.pk.kind !== 'volatile' && honouredRoutes(row).includes(route);
 }
 
-/** Apply a validated command. True for every drug/infusion/tci/vaporiser command (the drug model consumes them all). */
+/** Apply a validated command. True for every drug/infusion/tci/vaporiser/pump command (the drug model consumes them all). */
 export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   if (cmd.type !== 'applyEvent') return false;
   const ev = cmd.event as PkClinicalEvent;
   if (!PK_KINDS.includes(ev.kind)) return false;
+  if (ev.kind === 'pump') {
+    // Validated at dispatch, applied a tick (or an atTick) later: the channel is checked again, and a command its
+    // channel no longer allows is not applied and is said
+    const why = validatePump(ev, pk.pumps);
+    if (why !== undefined) pk.out.push({ type: 'pumpRefused', t, ch: ev.ch, action: ev.action, reason: why });
+    else applyPump((pk.pumps ??= []), ev);
+    return true;
+  }
   if (ev.kind === 'vaporiser') {
     pk.vap ??= { agent: ev.agent, s: createVolatile(ev.agent), n2o: createVolatile('n2o'), dialPct: 0, n2oFrac: 0 };
     if (pk.vap.agent !== ev.agent) pk.vap = { ...pk.vap, agent: ev.agent, s: createVolatile(ev.agent) }; // agent change: a new vaporiser; the old agent's residual is dropped in v1 (gate note)
@@ -467,11 +482,19 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
 function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   // The surge's circulating catecholamines join the adrenergic rows' PD (never `agents`/`doses`)
   const actives: Active[] = endoCatActives(ctx.endoCat);
+  if (pk.pumps) {
+    // The channels move their volume first; each CONTENTS drug receives the sum of its channels (D5), beside `rate`
+    const perMin = stepPumps(pk.pumps, PK_DT_S, t, pk.out as PumpAlarmEvent[]);
+    for (const id of Object.keys(perMin)) inst(pk, id);
+    for (const d of Object.values(pk.drugs)) if (d.pumpRate !== undefined || perMin[d.id] !== undefined) d.pumpRate = perMin[d.id] ?? 0;
+  }
   for (const d of Object.values(pk.drugs)) {
     const row = DRUGS[d.id] as DrugRow;
     if (row.pk.kind === 'gamma') {
-      const tau = (d.infTarget > d.infC ? row.pk.tauOnS : row.pk.tauOffS) ?? 300;
-      d.infC += (d.infTarget - d.infC) * (1 - Math.exp(-PK_DT_S / tau));
+      // A pumped gamma row's channels join its infusion target in the same reference units (setRate's conversion)
+      const target = d.pumpRate && row.pk.refRate ? d.infTarget + d.pumpRate / (row.pk.refRate * ((row.pk.refRatePerKg ?? row.pk.perKg) ? pk.patient.weightKg : 1)) : d.infTarget;
+      const tau = (target > d.infC ? row.pk.tauOnS : row.pk.tauOffS) ?? 300;
+      d.infC += (target - d.infC) * (1 - Math.exp(-PK_DT_S / tau));
       const tpS = row.pk.tpS;
       const n = gammaN(tpS, row.pk.t10S);
       d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG: numerics; bound]
@@ -486,8 +509,9 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
         d.rate = 0;
         d.rateUntil = NEVER;
       }
-      if (d.rate > 0) {
-        const amt = (d.rate * PK_DT_S) / 60;
+      const r = d.pumpRate ? d.rate + d.pumpRate : d.rate; // D5
+      if (r > 0) {
+        const amt = (r * PK_DT_S) / 60;
         d.acc = (d.acc ?? 0) + amt;
         d.total += amt;
       }
@@ -504,8 +528,9 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
         d.rate = 0;
         d.rateUntil = NEVER;
       }
-      d.x = pkStep(pkSystem(p, PK_DT_S), d.x, d.rate);
-      d.total += (d.rate * PK_DT_S) / 60;
+      const r = d.pumpRate ? d.rate + d.pumpRate : d.rate; // D5: the channel-less rate plus the channels'
+      d.x = pkStep(pkSystem(p, PK_DT_S), d.x, r);
+      d.total += (r * PK_DT_S) / 60;
     }
   }
   // Sugammadex: instant 1:1 molar binding in plasma AND at both effect sites
@@ -610,13 +635,13 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       const row = DRUGS[d.id] as DrugRow;
       const p = d.x.length ? params(pk, row, d) : null;
       const unit = concUnit(row); // the same unit as bus.agents (Task 15)
-      const running = d.rate > 0 || d.infTarget > 0 || d.tci !== null;
+      const running = d.rate > 0 || d.infTarget > 0 || d.tci !== null || (d.pumpRate ?? 0) > 0;
       if (p && running && Math.round(t) % DECREMENT_EVERY_S === 0) pk.dec[d.id] = decrementFromNowMin(p, d.x);
       rows.push({
         id: d.id, name: row.name, unit,
         cp: p ? cp(p, d.x) : pk.lastC[d.id] ?? 0,
         ce: pk.lastC[d.id] ?? 0,
-        rate: running ? d.rate : null, rateUnit: running ? `${row.amountUnit}/min` : null,
+        rate: running ? (d.pumpRate ? d.rate + d.pumpRate : d.rate) : null, rateUnit: running ? `${row.amountUnit}/min` : null,
         tci: d.tci ? { mode: d.tci.mode, target: d.tci.target, model: d.model ?? (row.pk.kind === 'model' ? row.pk.model : '') } : null,
         totalAmount: d.total, amountUnit: row.amountUnit,
         decrement50Min: running && p ? (pk.dec[d.id] ?? decrementFromNowMin(p, d.x)) : null,
@@ -627,6 +652,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       type: 'drugs', t, drugs: rows,
       volatile: v ? { agent: v.agent, dialPct: v.dialPct, fgfLpm: v.s.fgf, fi: 100 * v.s.fi, fa: 100 * v.s.fa, brain: 100 * v.s.vrg, macAge: macForAge(v.agent, pk.patient.ageY), macFrac: macBrain, n2oFrac: v.n2oFrac } : null,
       macTotal: macBrain,
+      ...(pk.pumps ? { pumps: pumpPanel(pk.pumps) } : {}),
     });
   }
 }
