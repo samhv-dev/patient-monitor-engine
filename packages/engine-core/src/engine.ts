@@ -483,9 +483,9 @@ class Engine implements MonitorEngine {
     if (this.timer !== null && !this.clock.paused) return;
     this.runTicks(Math.max(0, Math.floor(ticks)));
   }
-  advanceTo(simT: SimSeconds): void {
+  advanceTo(simT: SimSeconds, lookAhead = true): void {
     const target = Math.floor(simT * (1000 / TICK_MS) + 1e-6);
-    this.runTicks(target - this.tick);
+    this.runTicks(target - this.tick, lookAhead);
   }
   now(): { tick: number; simT: SimSeconds } {
     return { tick: this.tick, simT: (this.tick * TICK_MS) / 1000 };
@@ -602,8 +602,10 @@ class Engine implements MonitorEngine {
     return f;
   }
 
-  private runTicks(n: number): void {
-    for (let i = 0; i < n; i++) this.tickOnce(i === n - 1);
+  /** `lookAhead` false: the run's last tick does not run the look-ahead either, so a run cut in pieces of which only the
+   *  last looks ahead is the uncut run, operation for operation (brief 126: the main thread's fast-forward slices). */
+  private runTicks(n: number, lookAhead = true): void {
+    for (let i = 0; i < n; i++) this.tickOnce(lookAhead && i === n - 1);
   }
 
   private tickOnce(speculate: boolean): void {

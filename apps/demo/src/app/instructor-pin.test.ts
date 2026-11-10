@@ -133,3 +133,34 @@ describe("a learner's frames never carry the PIN", () => {
     for (const f of raw) expect(f).not.toMatch(/"pin"\s*:|"grant"|instructorView/);
   });
 });
+
+// Plan learner-action-remote.md L4 (§4 D9): the learner PIN is kept as the instructor's is, under pme.learnerPin, and the
+// two are never equal (a stored learner PIN equal to the instructor's is drawn again; neither change draws the other).
+describe('the learner PIN', () => {
+  it('drawn once and kept; never the instructor\'s, at the draw, at a reload, or at either change', async () => {
+    const { learnerPin, LEARNER_PIN_KEY } = await import('./instructor-pin.ts');
+    expect(LEARNER_PIN_KEY).toBe('learnerPin');
+    const si = memory();
+    const sl = memory();
+    let lp: ReturnType<typeof learnerPin> | null = null;
+    const seqI = [4729];
+    const ip = instructorPin(si, () => seqI.shift() ?? 1234, () => lp?.get() ?? null);
+    const seqL = [4729, 4729, 5555];
+    lp = learnerPin(() => ip.get(), sl, () => seqL.shift() ?? 6666);
+    expect(lp.get()).toBe('5555'); // the instructor's 4729 skipped twice
+    expect(sl.m.get('k')).toBe('5555');
+    expect(learnerPin(() => ip.get(), sl, () => 1).get()).toBe('5555'); // a reload keeps it
+    sl.set('4729'); // a store damaged into the instructor's PIN: drawn again
+    expect(learnerPin(() => ip.get(), sl, () => 3333).get()).toBe('3333');
+    const seqC = [5555, 4729, 7777];
+    const lp2 = learnerPin(() => ip.get(), memory(), () => seqC.shift() ?? 8888);
+    expect(lp2.get()).toBe('5555');
+    const heard: string[] = [];
+    lp2.onChange((v) => heard.push(v));
+    expect(lp2.change()).toBe('7777'); // not itself, not the instructor's
+    expect(heard).toEqual(['7777']);
+    const seqI2 = [5555, 2222];
+    const ip2 = instructorPin(memory(), () => seqI2.shift() ?? 9999, () => '5555');
+    expect(ip2.get()).toBe('2222'); // the instructor's draw skips the learner PIN too
+  });
+});

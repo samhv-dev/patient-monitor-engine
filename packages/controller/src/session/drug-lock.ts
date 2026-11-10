@@ -5,13 +5,14 @@
 // device reads the same table from the `commandApplied` events it already receives (ControllerSession.gives), so the
 // laptop's rows and the phone's show the lock the host enforces.
 
-import type { WireCommand } from '../protocol.ts';
+import { LEARNER_ISSUED_BY, type WireCommand } from '../protocol.ts';
 
 /** How long a drug given as a bolus stays locked, s of simulated time: the owner's clinical choice (ruled 2026-11-05). */
 export const SAME_DRUG_LOCK_S = 10;
 
-/** Who gave it: the laptop's own views, the phone (a remote or the instructor phone), or the card's own script. */
-export type GivenBy = 'laptop' | 'phone' | 'card';
+/** Who gave it: the laptop's own views, the phone (a remote or the instructor phone), the card's own script, or a learner's
+ *  device (the learner action remote, L4: `issuedBy` LEARNER_ISSUED_BY). */
+export type GivenBy = 'laptop' | 'phone' | 'card' | 'learner';
 
 /** One drug's lock: how long ago it was given, how long the lock has left (s), and by whom. */
 export interface DrugLock {
@@ -34,10 +35,11 @@ export function bolusDrugOf(c: WireCommand | { type?: unknown; event?: unknown }
 /** `issuedBy` as a device, read as the scenario driver reads it (driver.ts `administrationOf`). */
 export function givenByOf(issuedBy: string): GivenBy {
   if (issuedBy === 'scenario') return 'card';
+  if (issuedBy === LEARNER_ISSUED_BY) return 'learner';
   return issuedBy === 'remote' || issuedBy.startsWith('controller:') ? 'phone' : 'laptop';
 }
 
-const FROM: Readonly<Record<GivenBy, string>> = { laptop: 'from the laptop', phone: 'from the phone', card: 'by the card' };
+const FROM: Readonly<Record<GivenBy, string>> = { laptop: 'from the laptop', phone: 'from the phone', card: 'by the card', learner: "from a learner's remote" };
 
 /** The refused ack's words: "given 4 s ago from the laptop". */
 export function lockReason(l: DrugLock): string {

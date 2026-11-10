@@ -51,6 +51,7 @@ transports (`src/protocol.ts`).
 |---|---|
 | [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
 | [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
+| [`preparations.ts:130`](../../packages/controller/src/session/preparations.ts#L130) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
 
 ## State
 
@@ -180,6 +181,13 @@ transports (`src/protocol.ts`).
 | `FF_STEP_TICKS` | `25` | — | [ENG: network] | A fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and its commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG: network]. |
 | `FF_MAX_S` | `600` | s | [ENG: network] | The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG: network]. |
 
+### [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `PREP_TEMP_C` | `25` | — | [ENG: scenario; the case is set in an air-conditioned theatre at controlled room temperature, and 25 °C is the condition the formulary's room-temperature rows were measured at (USP <659>, 20–25 °C)] | The temperature the room keeps a preparation at, °C: which of the source's stability rows applies (remaining.ts matches the row's temperature exactly) [ENG: scenario; the case is set in an air-conditioned theatre at controlled room temperature, and 25 °C is the condition the formulary's room-temperature rows were measured at (USP <659>, 20–25 °C)]. |
+| `PREPS_PER_DEVICE` | `32` | — | [ENG: network; a bound on the host's memory against a looping device: a tray of 4 (§4 D2) eight times over] | The most preparations one remote keeps at a time; one more is refused until it discards one [ENG: network; a bound on the host's memory against a looping device: a tray of 4 (§4 D2) eight times over]. |
+
 ## Functions
 
 | Function | File | Doc |
@@ -192,7 +200,9 @@ transports (`src/protocol.ts`).
 | `checkFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | §5's six rules over the layer's files (path relative to the formulary folder → parsed JSON): |
 | `loadFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | The typed layer, when every rule holds; |
 | `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
-| `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match; |
+| `covers` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. |
+| `stabilityRows` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Indexes of `entry`'s stability rows for `diluent` and `container` (any temperature) that state `concentration` or state none; |
+| `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match). |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
 | `assertWireSafe` | [`guard.ts`](../../packages/controller/src/guard.ts) | Throws WireSafetyError when `m` carries samples. |
@@ -238,6 +248,15 @@ transports (`src/protocol.ts`).
 | `givenByOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | `issuedBy` as a device, read as the scenario driver reads it (driver.ts `administrationOf`). |
 | `lockReason` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The refused ack's words: |
 | `samePin` | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The PIN comparison: |
+| `stagePrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Make the preparation a remote asked for (`prep stage`), or say why not. |
+| `remainingOf` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | r for one drug of a preparation at sim time `simT` (§7.1): |
+| `deliverPrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration × its r at `simT`, through the instructor's own path (the drug lock, staged del |
+| `infusePrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `prep infuse` → one `applyEvent infusion` per drug at the pump's mL/h, with that drug's concentration × its r at the start (§7.1: |
+| `setInfusion` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `infusion set` (LQ4, option B): |
+| `prepRecord` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | The scenario driver's record of a preparation for one of its drugs at its last give (types-v2.ts PrepRecord), or undefined. |
+| `stagedOf` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | The preparation as staged, for the scenario driver's record (driver.ts recordPreparation): |
+| `learnerView` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | What the remote that staged it is told (§4 D7): |
+| `instructorView` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | What the instructor's screens are told (§4 D7): |
 | `backoffDelay` | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Delay before reconnect attempt `attempt` (0-based): |
 | `windowEndpoint` | [`transport/post-message.ts`](../../packages/controller/src/transport/post-message.ts) | Endpoint for talking to another window (an iframe's contentWindow, or window.parent from inside the iframe). |
 | `createRelaySignaling` | [`transport/webrtc.ts`](../../packages/controller/src/transport/webrtc.ts) | Signalling over the relay's /signal endpoint (url is the relay base, e.g. |
@@ -292,6 +311,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | The controller end (same-screen panel over in-process, or a remote over BroadcastChannel/WebSocket/WebRTC). |
 | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The same drug is not given twice within SAME_DRUG_LOCK_S of simulated time, from any device (the owner's ruling of 5 November 2026). |
 | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The host end of every transport (brief §3.7, R7): it owns the engine. |
+| [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Plan learner-action-remote.md L4 (§4 D3, D7, D8; §7.1; LQ3, LQ4, LQ7–LQ9): the host's table of the preparations its learner remotes staged, and the translation of a remote's `prep deliver`, `prep infuse` and `infusion se |
 | [`session/viewer-sync.ts`](../../packages/controller/src/session/viewer-sync.ts) | Viewer role (brief §3.7): a second monitor that runs its OWN engine and never receives samples. |
 | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Reconnect delays: exponential with jitter, capped [ENG: network]. |
 | [`transport/base.ts`](../../packages/controller/src/transport/base.ts) | Shared plumbing for every transport: listener sets, status replay on subscribe, send-side sample guard, receive-side validation. |
@@ -379,6 +399,7 @@ None recorded.
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-instructor.test.ts`](../../packages/controller/test/session/host-instructor.test.ts) | 0 | 0 |
 | [`session/host-learner-defib.test.ts`](../../packages/controller/test/session/host-learner-defib.test.ts) | 0 | 0 |
+| [`session/host-learner.test.ts`](../../packages/controller/test/session/host-learner.test.ts) | 0 | 0 |
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |

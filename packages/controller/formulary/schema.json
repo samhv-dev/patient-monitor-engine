@@ -25,6 +25,26 @@
       }
     },
     "verdict": { "enum": ["incompatible", "compatible", "conditional", "not tested"] },
+    "concentration": {
+      "description": "The concentration a stability row was measured at, as its source states it: amount, or amount to max for a stated range; per mL or per L.",
+      "type": "object", "additionalProperties": false, "required": ["amount", "unit", "src"],
+      "properties": {
+        "amount": { "type": "number", "exclusiveMinimum": 0 },
+        "max": { "type": "number", "exclusiveMinimum": 0 },
+        "unit": { "type": "string", "pattern": "^(g|mg|mcg|µg|ng|IU|units|mmol|mEq)/(mL|L)$" },
+        "src": { "$ref": "#/definitions/src" }
+      }
+    },
+    "inUse": {
+      "description": "A label's in-use time: how long the label allows the prepared product, the temperature it names (the upper end of a range; absent when the label names none) and the label's own condition in our words.",
+      "type": "object", "additionalProperties": false, "required": ["h", "condition", "src"],
+      "properties": {
+        "h": { "type": "number", "exclusiveMinimum": 0 },
+        "tempC": { "type": "number" },
+        "condition": { "$ref": "#/definitions/text" },
+        "src": { "$ref": "#/definitions/src" }
+      }
+    },
     "compat": {
       "type": "object", "additionalProperties": false, "required": ["verdict", "statement", "src", "crossCheck"],
       "properties": { "verdict": { "$ref": "#/definitions/verdict" }, "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" }, "crossCheck": { "$ref": "#/definitions/crossCheck" } }
@@ -47,7 +67,8 @@
             { "type": "object", "additionalProperties": false, "required": ["s", "src"], "properties": { "s": { "type": "number", "minimum": 0 }, "src": { "$ref": "#/definitions/src" } } },
             { "type": "object", "additionalProperties": false, "required": ["gap"], "properties": { "gap": { "$ref": "#/definitions/gap" } } }
           ]
-        }
+        },
+        "inUse": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/inUse" } }
       }
     },
     "drug": {
@@ -75,7 +96,9 @@
           "items": {
             "type": "object", "additionalProperties": false, "required": ["diluent", "container", "tempC", "points", "statement", "src", "crossCheck"],
             "properties": {
+              "kind": { "description": "'stable': the source states 'stable for T' (points [[T, x]]: at least x retained up to T h); absent or 'measured': measured fractions.", "enum": ["measured", "stable"] },
               "diluent": { "$ref": "#/definitions/id" },
+              "concentration": { "$ref": "#/definitions/concentration" },
               "container": { "enum": ["vial", "syringe-pp", "bag-pvc", "bag-polyolefin"] },
               "tempC": { "type": "number" },
               "points": { "type": "array", "minItems": 1, "items": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": 0 } } },

@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Human soluble insulin plus glucose 50 %; diluents are the insulin label's. Stabilis PVC row ref 2091 (insulin aspart) not entered.",
+  "$comment": "FS batch. FQ6 (owner, 2026-11-10): the Stabilis PVC row (insulin aspart) stays out; Trissel's PVC adsorption fact is the saline statement, with no curve.",
   "drugId": "insulinDextrose",
   "products": [
     {
@@ -13,7 +13,14 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "0.05-1.0 IU/mL in NaCl 0.9 %, dextrose 5 %, or dextrose 10 % with KCl 40 mmol/L, polypropylene bags, room temperature; some insulin adsorbs to the bag at first.",
+          "src": "emc-3849"
+        }
+      ]
     },
     {
       "id": "glucose-50pct",
@@ -33,7 +40,16 @@
     {
       "id": "saline",
       "listed": true,
-      "src": "emc-3849"
+      "src": "emc-3849",
+      "compat": {
+        "verdict": "incompatible",
+        "statement": "Trissel: regular insulin 1 unit/mL in NaCl 0.9 % in PVC bags lost 10 % by adsorption in 1 h (50-mL bag) and 4 h (250-mL bag); no temperature. A sorption loss, not degradation.",
+        "src": "trissel-insulin-p1213",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-insulin-p1213"
+        }
+      }
     },
     {
       "id": "dextrose5",
@@ -64,7 +80,13 @@
   "admixtures": [],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 1,
+        "unit": "IU/mL",
+        "src": "stabilis-insulin-4635"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -81,7 +103,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 1,
+        "unit": "IU/mL",
+        "src": "stabilis-insulin-3224"
+      },
       "container": "syringe-pp",
       "tempC": 27,
       "points": [

@@ -308,12 +308,15 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const simNow = () => anchor.simT + ((performance.now() - anchor.perfMs) / 1000) * anchor.timeScale;
   let behind = 0; // the engine's clock behind real time, sim s (the last anchor's)
   let worstBehind = 0; // the most it was behind since it went behind (0: it is not)
+  // the canvas on the page: a worker that failed before 'ready' leaves a fresh one to the main thread (createHost), and
+  // an event on the old one would reach no listener
+  let shown = canvas;
   const onBehind = (b: number) => {
     behind = b;
-    if (b > BEHIND_REPORT_S && worstBehind === 0) canvas.dispatchEvent(new CustomEvent('pme-monitor-behind', { bubbles: true, detail: { behindS: b } }));
+    if (b > BEHIND_REPORT_S && worstBehind === 0) shown.dispatchEvent(new CustomEvent('pme-monitor-behind', { bubbles: true, detail: { behindS: b } }));
     if (b > BEHIND_REPORT_S) worstBehind = Math.max(worstBehind, b);
     else if (worstBehind > 0) {
-      canvas.dispatchEvent(new CustomEvent('pme-monitor-caught-up', { bubbles: true, detail: { worstS: worstBehind } }));
+      shown.dispatchEvent(new CustomEvent('pme-monitor-caught-up', { bubbles: true, detail: { worstS: worstBehind } }));
       worstBehind = 0;
     }
   };
@@ -421,7 +424,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   /** The lanes the canvas draws, as data for tests and embedders (the labels themselves are canvas pixels). */
   const markLanes = (lanes: ReadonlyArray<{ id: string }>) => void (canvas.dataset.lanes = lanes.map((l) => l.id).join(' '));
   if (coreOpts.plan) markLanes(coreOpts.plan.lanes);
-  const hostP: Promise<Host> = createHost(canvas, sizeOf(), coreOpts, opts.worker ?? 'auto', onEvents);
+  const unmounted = new AbortController(); // a monitor destroyed while its worker still loads ends the load (brief 126)
+  const hostP: Promise<Host> = createHost(canvas, sizeOf(), coreOpts, opts.worker ?? 'auto', onEvents, unmounted.signal);
+  void hostP.then((h) => (shown = h.canvas));
   const skinCmd = (body: Record<string, unknown>) => ({ id: `skin-${Math.random().toString(36).slice(2)}`, issuedBy: 'renderer', ...body }) as Command;
   if (r) void hostP.then((h) => h.command(skinCmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: filterModeFor(r!.render.ecgFilter.band) } })));
 
@@ -592,6 +597,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       scheduler?.stop();
       audio?.close();
       ui?.destroy();
+      unmounted.abort();
       void hostP.then((h) => h.destroy());
       frame.remove();
     },

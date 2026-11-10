@@ -127,12 +127,21 @@ export function checkFormulary(files: FormularyFiles, injectable: readonly strin
         no(3, file, path, 'a statement is an object');
         continue;
       }
+      // Per statement (§5: "where Stabilis has no statement and Trissel has one, Trissel's is used"): each statement
+      // cites Stabilis, or Trissel for a fact Stabilis does not state, whatever the file's other statements cite.
+      // Which source has the fact is read per statement, not from the file's `has.stabilis`.
       const k = kindOf(o.src);
-      const want = isObj(has) && has.stabilis === false ? ['stabilis', 'trissel'] : ['stabilis'];
-      if (!k || !want.includes(k)) no(3, file, `${path}/src`, isObj(has) && has.stabilis === false ? 'a statement cites Stabilis, or Trissel when Stabilis has none' : 'a statement cites Stabilis, the source of record (Trissel only when has.stabilis is false)');
+      if (k !== 'stabilis' && k !== 'trissel') no(3, file, `${path}/src`, 'a statement cites Stabilis, the source of record, or Trissel where Stabilis has no statement for it');
       const cc = o.crossCheck;
       if (!isObj(cc) || !['agrees', 'differs', 'not listed'].includes(String(cc.trissel))) {
         no(3, file, `${path}/crossCheck`, 'a statement has crossCheck.trissel: agrees, differs or not listed');
+        continue;
+      }
+      if (k === 'trissel') {
+        // A Trissel-only statement carries its own Trissel source and page: the page it paraphrases, cross-checked
+        // as itself. Its words stay a paraphrase (rule 6), never Trissel's text.
+        if (!filled(sources[o.src as string]!.page)) no(3, file, `${path}/src`, `a statement taken from Trissel cites a Trissel page; "${String(o.src)}" has none`);
+        if (cc.trissel !== 'agrees' || cc.src !== o.src) no(3, file, `${path}/crossCheck`, 'a statement taken from Trissel (Stabilis has none for it) carries its own Trissel source and page: crossCheck { trissel: "agrees", src: the statement\'s own Trissel key }');
         continue;
       }
       if (cc.trissel !== 'not listed' && kindOf(cc.src) !== 'trissel') no(3, file, `${path}/crossCheck/src`, "Trissel's reading cites a trissel source (edition and page)");
