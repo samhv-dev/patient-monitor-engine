@@ -6,7 +6,7 @@ import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
 import { instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
-import { instructorPin } from './instructor-pin.ts';
+import { instructorPin, learnerPin, type InstructorPin } from './instructor-pin.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
@@ -125,8 +125,13 @@ if (follow && shows === 'pick') {
   if (!base) throw new Error('no patient presets');
   // The instructor phone's PIN (plan instructor-peer-role.md P7): this computer's store only; the host reads it at every
   // instructor hello. Never in an address, a QR code or the tab's state (instructor-pin.ts)
-  const pin = instructorPin();
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get() });
+  // L4 (learner-action-remote.md §4 D9): the learner PIN beside it, the same keeping, never equal to it; a new learner PIN
+  // revokes every learner remote (Room setup's button for it is L6's)
+  let lpin: InstructorPin | null = null;
+  const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
+  const learner = (lpin = learnerPin(() => pin.get()));
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales, defib: session.defibModel }), (f) => {
@@ -161,6 +166,24 @@ if (follow && shows === 'pick') {
     const s = (e as CustomEvent<{ behindS: number }>).detail.behindS;
     toast(`The simulation is ${s.toFixed(1)} s behind real time: the computer is busy. It catches up by itself.`);
     link.note(`The engine fell behind real time by ${s.toFixed(1)} s: the computer is busy`, 'system');
+  });
+  // Brief 126 (N48): a worker slow to load is waited for, and said; a worker that failed leaves the engine on the page's
+  // main thread, and that is said too — the monitor never changes how it runs in silence
+  shell.monitorHost.addEventListener('pme-monitor-worker-late', (e) => {
+    const ms = (e as CustomEvent<{ waitedMs: number }>).detail.waitedMs;
+    toast('The monitor is still starting: the computer is busy.');
+    link.note(`The monitor was slow to start: its engine worker was not ready after ${(ms / 1000).toFixed(1)} s`, 'system');
+  });
+  shell.monitorHost.addEventListener('pme-monitor-worker-ready', (e) => {
+    const ms = (e as CustomEvent<{ readyMs: number }>).detail.readyMs;
+    toast('The monitor has started');
+    link.note(`The monitor started: its engine worker was ready after ${(ms / 1000).toFixed(1)} s`, 'system');
+  });
+  shell.monitorHost.addEventListener('pme-monitor-main-thread', (e) => {
+    const reason = (e as CustomEvent<{ reason: string }>).detail.reason;
+    console.error('monitor on the main thread:', reason);
+    toast('The monitor runs without its worker: on a busy computer it is slower');
+    link.note(`The monitor runs on the page's main thread: its engine worker failed (${reason})`, 'system');
   });
   shell.monitorHost.addEventListener('pme-monitor-caught-up', (e) => {
     link.note(`The engine caught up with real time (it was up to ${(e as CustomEvent<{ worstS: number }>).detail.worstS.toFixed(1)} s behind)`, 'system');

@@ -59,7 +59,7 @@ renderer, audio and skin contracts.
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:891`](../../packages/renderer/src/device-ui.ts#L891) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
 | [`mount.ts:196`](../../packages/renderer/src/mount.ts#L196) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:428`](../../packages/renderer/src/mount.ts#L428) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`mount.ts:433`](../../packages/renderer/src/mount.ts#L433) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -376,7 +376,7 @@ renderer, audio and skin contracts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `READY_TIMEOUT_MS` | `2000` | ms | — | The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). |
+| `READY_LATE_MS` | `2000` | ms | [ENG: control] | N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`; `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it: a late worker is still loading, not lost. Until brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at 2.2–6.0 s. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads it one module per request (278–1875 ms on an idle Mac). A worker that fails (an error before 'ready') still hands the monitor to the main thread, and the page says that too (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control]. |
 | `WORKER_SILENT_MS` | `3000` | ms | [ENG: display] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG: display]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
@@ -502,6 +502,7 @@ renderer, audio and skin contracts.
 | `conditionCommand` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | The engine command that starts (severity > 0) or stops (0) an acute event. |
 | `activeText` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | "Cardiac tamponade (severe)", for the session bar and the Patient tab. |
 | `fastForwardDoneLines` | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | The two lines of the banner after a fast-forward, worded here only: |
+| `loadShippedFormulary` | [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | L4 (learner-action-remote.md §4 D3, D4): |
 | `entry` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The glossary entry by its research/11 number. |
 | `shortLabel` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The label a screen shows. |
 | `lookup` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | Glossary entry for a truth path, or null (then the path is a model internal and stays out of clinical views). |
@@ -523,6 +524,8 @@ renderer, audio and skin contracts.
 | `faText` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian of `en`, or null (counted as missing). |
 | `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
 | `drawPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | Four random digits from the platform's cryptographic source. |
+| `instructorPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | `avoid`: the other role's PIN, never drawn (L4: |
+| `learnerPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | L4: the learner PIN — the same keeping as the instructor's (four digits drawn at first use [ENG: |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `defibWords` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | R5d: a refusal of the window's press, in the device's words. |
 | `storeBase` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Where the store is: |
@@ -785,7 +788,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -820,6 +823,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/engine-bench.worker.ts`](../../apps/demo/src/app/engine-bench.worker.ts) | Home's "Engine · ms per tick" tile (E125). |
 | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | Acute events (showcase additions): the engine's systemic conditions an instructor starts and stops during a case — tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the re |
 | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | While the host fast-forwards, the window dims and blurs behind one centred panel — a double chevron in a ring of its colour, the two blinking together, "FAST FORWARD · 5 MIN" in amber in the monitor's typeface, a thin pr |
+| [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | Plan learner-action-remote.md L4: the laptop's copy of the formulary layer, for the host's learner preparations. |
 | [`apps/demo/src/app/glossary-data.ts`](../../apps/demo/src/app/glossary-data.ts) | The clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-and-glossary.md §5, 294 entries, generated 2026-09-28 from the workspace research file; edits go H |
 | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. |
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
@@ -1069,6 +1073,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/fast-forward-main-thread.e2e.ts`](../../apps/demo/e2e/fast-forward-main-thread.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/finish-restart-v2.e2e.ts`](../../apps/demo/e2e/finish-restart-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx14-pause-while-hidden.e2e.ts`](../../apps/demo/e2e/fx14-pause-while-hidden.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx16-follower-beep-gate.e2e.ts`](../../apps/demo/e2e/fx16-follower-beep-gate.e2e.ts) | 0 | 0 |
@@ -1169,6 +1174,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-panel.dom.test.ts`](../../apps/demo/src/app/fast-forward-panel.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-beep-gate.test.ts`](../../apps/demo/src/app/follower-beep-gate.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/formulary.test.ts`](../../apps/demo/src/app/formulary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/hidden-tab.test.ts`](../../apps/demo/src/app/hidden-tab.test.ts) | 0 | 0 |
@@ -1356,6 +1362,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`views.test.ts`](../../packages/renderer/test/views.test.ts) | 0 | 0 |
 | [`worker-event-backpressure.test.ts`](../../packages/renderer/test/worker-event-backpressure.test.ts) | 0 | 0 |
 | [`worker-pump-backpressure.test.ts`](../../packages/renderer/test/worker-pump-backpressure.test.ts) | 0 | 0 |
+| [`worker-ready-and-main-yield.test.ts`](../../packages/renderer/test/worker-ready-and-main-yield.test.ts) | 0 | 0 |
 | [`alarm-wording.test.ts`](../../packages/skins/test/alarm-wording.test.ts) | 0 | 0 |
 | [`co2-sampling.test.ts`](../../packages/skins/test/co2-sampling.test.ts) | 0 | 0 |
 | [`color.test.ts`](../../packages/skins/test/color.test.ts) | 0 | 0 |

@@ -58,7 +58,7 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
   reflex-collapse model; there is no sepsis model fit for teaching. The full list is in the [CHANGELOG](CHANGELOG.md) under "Known limitations".
 - **Tested browsers:** desktop Chromium and WebKit by automated tests (Playwright); real Safari, phones and
   tablets only by hand checks that are still open at this release candidate; Firefox is not tested.
-- **Not affiliated with any monitor or ventilator manufacturer (the ventilator's Hamilton-style look included).** The `-like` skins evoke a general look; no logos or trade dress.
+- **Not affiliated with any monitor or ventilator manufacturer.** The `-like` skins and the ventilator's Hamilton-style look evoke a general look. The planned EDP-TS ventilator face ([plan](docs/plans/vent-skin-edp-ts.md)) is named after the device at the clinical owner's ruling, to match the machine his residents use; no maker's logo or mark is drawn, and no logos or trade dress elsewhere.
   Alarms are "IEC-style"; no IEC 60601-1-8 compliance is claimed.
 
 ## Embed it

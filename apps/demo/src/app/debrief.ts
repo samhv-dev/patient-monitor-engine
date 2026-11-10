@@ -41,8 +41,10 @@ export const mmss = (t: number): string => `${String(Math.floor(t / 60)).padStar
  */
 export function learnerWho(rows: readonly Row[], r: Row, names: (key: string) => string | null): string {
   const name = (r.by !== undefined ? names(r.by) : null) ?? r.name ?? null;
-  const keys = [...new Set(rows.filter((x) => x.kind === 'learner').map((x) => x.by ?? ''))];
-  const who = name ? `Defibrillator (${name})` : `Defibrillator window ${keys.indexOf(r.by ?? '') + 1}`;
+  // L4: a learner remote's row is named as the remote it came from, numbered among the remotes (the window's among windows)
+  const keys = [...new Set(rows.filter((x) => x.kind === 'learner' && !!x.remote === !!r.remote).map((x) => x.by ?? ''))];
+  const kind = r.remote ? ['Learner remote', 'Learner remote'] : ['Defibrillator', 'Defibrillator window'];
+  const who = name ? `${kind[0]} (${name})` : `${kind[1]} ${keys.indexOf(r.by ?? '') + 1}`;
   return `${r.text} at ${mmss(r.t)}, by ${who}`;
 }
 /** A span: "40 s", "2 min 05 s". Rounded to whole seconds before the split, so 119.7 s is "2 min 00 s", never "1 min 60 s" (FX-13). */

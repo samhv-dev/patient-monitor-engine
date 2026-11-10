@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EDP-TS face: alarm limits</title><link rel="stylesheet" href="../../../../apps/demo/src/app/app.css"><link rel="stylesheet" href="face.css"><script src="face.js"></script></head><body><script>
+face({ mode: "VCV", peak: 41, alarm: "High pressure", high: true, note: "m3 — a high-priority alarm (red box, High lamp lit) and the Alarm Limits key pressed. ETCO2 limits greyed until the capnogram reaches the ventilator (plan §3, row GA13). The PEEP row holds the High PEEP limit under the high-limit symbol: the owner&#39;s rule that a yellow tag shows high, low or both as its symbol says (VQ7; the manual&#39;s window prints &quot;Low PEEP&quot;, p. 37). ETCO2 is version 2 (V14).",
+  extra: [(s, H) => {
+    const w = H("div", { class: "win", style: "left:560px;top:150px;width:326px;height:480px" });
+    w.append(H("div", { class: "wt", html: "Alarm settings" }));
+    [["Inspiratory pressure", "hi", "", "40 / 5 ▸"], ["Tidal volume", "", "", "▸"], ["Minute volume", "", "", "▸"], ["Oxygen concentration", "", "", "▸"], ["Respiratory rate", "", "", "▸"], ["High PEEP", "", "", "▸"], ["ETCO2", "na", "version 2"]]
+      .forEach(([t, c, why, r]) => w.append(H("div", { class: "row " + c, html: t + (r ? `<span class="r">${r}</span>` : "") + (why ? `<span class="why">${why}</span>` : "") })));
+    w.append(H("div", { class: "foot", html: "Press [Knob] Select - [Esc] Exit" }));
+    s.append(w);
+  }] });
+</script></body></html>
