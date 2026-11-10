@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. Diluents listed are those of the 10 mg/mL concentrate; the 100 µg/mL vial is ready to use and names none.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Diluents listed are those of the 10 mg/mL concentrate; the 100 µg/mL vial is ready to use and names none.",
   "drugId": "phenylephrine",
   "products": [
     {
@@ -70,10 +70,10 @@
       "points": [
         [
           336,
-          0.9
+          0.95
         ]
       ],
-      "statement": "0.1 and 0.2 mg/mL in 0.9 % NaCl, PVC, 25 °C: stable 14 days.",
+      "statement": "0.1 and 0.2 mg/mL in 0.9 % NaCl, PVC, 25 °C: stable 14 days. Stabilis level A.",
       "src": "stabilis-phenylephrine-1891",
       "crossCheck": {
         "trissel": "agrees",
@@ -87,10 +87,10 @@
       "points": [
         [
           720,
-          0.9
+          0.95
         ]
       ],
-      "statement": "0.1 mg/mL in 0.9 % NaCl, PP syringe, 23-25 °C, in light: stable 30 days.",
+      "statement": "0.1 mg/mL in 0.9 % NaCl, PP syringe, 23-25 °C, in light: stable 30 days. Stabilis level A.",
       "src": "stabilis-phenylephrine-2194",
       "crossCheck": {
         "trissel": "agrees",

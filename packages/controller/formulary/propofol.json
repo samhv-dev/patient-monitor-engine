@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. Product: Aspen propofol 1 %, which lists 5 % dextrose only (other generics list more). Stabilis gives no concentration for its 6 h rows.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Aspen propofol 1 % lists 5 % dextrose only. Stabilis gives no concentration for its 6 h rows.",
   "drugId": "propofol",
   "products": [
     {
@@ -71,10 +71,10 @@
           0.9
         ]
       ],
-      "statement": "Diluted in 5 % glucose, PVC, 25 °C: stable 6 h (manufacturer data; concentration not stated by Stabilis).",
+      "statement": "Diluted in 5 % glucose, PVC, 25 °C: stable 6 h (concentration not stated by Stabilis). Manufacturer data (no Stabilis level). Trissel nearest: 6 h rule for undiluted emulsion.",
       "src": "stabilis-propofol-3659",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-propofol-p1779"
       }
     },
@@ -88,10 +88,10 @@
           0.9
         ]
       ],
-      "statement": "Diluted in 5 % glucose, PP syringe, 25 °C: stable 6 h (manufacturer data; concentration not stated by Stabilis).",
+      "statement": "Diluted in 5 % glucose, PP syringe, 25 °C: stable 6 h (concentration not stated by Stabilis). Manufacturer data (no Stabilis level). Trissel nearest: 6 h rule for undiluted emulsion.",
       "src": "stabilis-propofol-3659",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-propofol-p1779"
       }
     }

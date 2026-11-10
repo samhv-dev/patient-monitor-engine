@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. The label names no diluent, so every diluent is unlisted (LQ11).",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. The label names no diluent, so every diluent is unlisted (LQ11).",
   "drugId": "calciumChloride",
   "products": [
     {
@@ -89,7 +89,7 @@
           0.9
         ]
       ],
-      "statement": "11.5 mg/mL in 0.9 % NaCl, PVC, 25 °C, in light: stable 7 days.",
+      "statement": "11.5 mg/mL in 0.9 % NaCl, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
       "src": "stabilis-calciumchloride-3307",
       "crossCheck": {
         "trissel": "not listed",
@@ -106,7 +106,7 @@
           0.9
         ]
       ],
-      "statement": "9.3 mg/mL in 0.9 % NaCl, PVC, 25 °C, in light: stable 7 days.",
+      "statement": "9.3 mg/mL in 0.9 % NaCl, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
       "src": "stabilis-calciumchloride-3307",
       "crossCheck": {
         "trissel": "not listed",
@@ -123,7 +123,7 @@
           0.9
         ]
       ],
-      "statement": "11.5 mg/mL in 5 % glucose, PVC, 25 °C, in light: stable 7 days.",
+      "statement": "11.5 mg/mL in 5 % glucose, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
       "src": "stabilis-calciumchloride-3307",
       "crossCheck": {
         "trissel": "not listed",
@@ -140,7 +140,7 @@
           0.9
         ]
       ],
-      "statement": "8.9 mg/mL in 5 % glucose, PVC, 25 °C, in light: stable 7 days.",
+      "statement": "8.9 mg/mL in 5 % glucose, PVC, 25 °C, in light: stable 7 days. Stabilis level B.",
       "src": "stabilis-calciumchloride-3307",
       "crossCheck": {
         "trissel": "not listed",

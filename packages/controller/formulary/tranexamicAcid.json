@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. Trissel 2013 has no tranexamic acid monograph. Listed diluents read from the label phrase: electrolyte and carbohydrate solutions.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. No Trissel 2013 monograph. Listed diluents read from the label phrase electrolyte and carbohydrate solutions.",
   "drugId": "tranexamicAcid",
   "products": [
     {

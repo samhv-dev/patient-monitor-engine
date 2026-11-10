@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. Trissel 2013 has no dantrolene monograph. Agilus prepTime: the label states a mean reconstitution time of 50 s in its study; Dantrium IV label states none.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. No Trissel 2013 monograph. Agilus prepTime: the measured mean on its label (50 s); the Dantrium IV label states none.",
   "drugId": "dantrolene",
   "products": [
     {
@@ -88,7 +88,7 @@
           0.9
         ]
       ],
-      "statement": "Dantrium IV 20 mg in 60 mL water (0.33 mg/mL), in its vial, 25 °C, protected from light: use within 6 h.",
+      "statement": "Dantrium IV 20 mg in 60 mL water (0.33 mg/mL), in its vial, 25 °C, protected from light: use within 6 h. Manufacturer data (no Stabilis level).",
       "src": "stabilis-dantrolene-1509",
       "crossCheck": {
         "trissel": "not listed"

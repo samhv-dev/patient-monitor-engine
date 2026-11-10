@@ -287,6 +287,12 @@
     "retrieved": "2026-11-10",
     "cites": "Wilson KM et al. J Pain Symptom Manage 1998;16:52-8"
   },
+  "stabilis-guide-level-of-evidence": {
+    "kind": "stabilis",
+    "id": "Stabilis user guide 9, Level of evidence (sourcesPDF/Fichier.10793.3.pdf, p. 3)",
+    "retrieved": "2026-11-10",
+    "cites": "No single criterion: A, C need >95 %, B, D >90 % of initial concentration; 0.9 is the floor for every row, 0.95 for A/A+"
+  },
   "stabilis-insulin-3224": {
     "kind": "stabilis",
     "id": "Insulin (Monographie.php?IdMolecule=363)",

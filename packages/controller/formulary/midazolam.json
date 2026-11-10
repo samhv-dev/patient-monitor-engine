@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. Two rows carry crossCheck differs WITHOUT a ruling: awaiting the owner or orchestrator (brief 122: record both, choose neither).",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Rows 3 and 6: Stabilis and Trissel differ; the owner ruled 2026-11-10 to follow Stabilis.",
   "drugId": "midazolam",
   "products": [
     {
@@ -52,10 +52,10 @@
     {
       "with": "fentanyl",
       "verdict": "compatible",
-      "statement": "Stabilis: midazolam 0.66-0.9 mg/mL with fentanyl 13-38 µg/mL in 0.9 % NaCl, PP syringe, 22 °C: stable 7 days.",
+      "statement": "Stabilis: midazolam 0.66-0.9 mg/mL with fentanyl 13-38 µg/mL in NaCl 0.9 %, PP syringe, 22 °C: 7 d. Trissel nearest: 0.625-0.938 mg/mL with 12.5-37.5 µg/mL.",
       "src": "stabilis-midazolam-929",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-midazolam-p1442"
       }
     },
@@ -81,10 +81,10 @@
           0.9
         ]
       ],
-      "statement": "0.036 mg/mL in 0.9 % NaCl, PVC, 21 °C, protected from light: stable 24 h.",
+      "statement": "0.036 mg/mL in 0.9 % NaCl, PVC, 21 °C, protected from light: stable 24 h. Trissel nearest: 40 mg/L, no loss 24 h at 21 °C.",
       "src": "stabilis-midazolam-350",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-midazolam-p1439"
       }
     },
@@ -98,7 +98,7 @@
           0.9
         ]
       ],
-      "statement": "1 mg/mL in 0.9 % NaCl, PVC, 20-25 °C: stable 30 days.",
+      "statement": "1 mg/mL in 0.9 % NaCl, PVC, 20-25 °C: stable 30 days. Stabilis level D.",
       "src": "stabilis-midazolam-399",
       "crossCheck": {
         "trissel": "agrees",
@@ -115,7 +115,7 @@
           0.9
         ]
       ],
-      "statement": "1 mg/mL in 0.9 % NaCl, PVC, 22-24 °C: stable 10 days.",
+      "statement": "1 mg/mL in 0.9 % NaCl, PVC, 22-24 °C: stable 10 days. Stabilis level D.",
       "src": "stabilis-midazolam-185",
       "crossCheck": {
         "trissel": "agrees",
@@ -132,11 +132,16 @@
           0.9
         ]
       ],
-      "statement": "Stabilis: 1 mg/mL in 5 % glucose, PVC, 20-25 °C, stable 27 d. Trissel (ref 1868, container not stated): 1 g/L in D5W, 10 % loss calculated at 63-112 h.",
+      "statement": "Stabilis: 1 mg/mL in 5 % glucose, PVC, 20-25 °C, stable 27 d. Trissel (ref 1868, container not stated): 1 g/L in D5W, 10 % loss calculated at 63-112 h. Stabilis level B.",
       "src": "stabilis-midazolam-3222",
       "crossCheck": {
         "trissel": "differs",
-        "src": "trissel-midazolam-p1439"
+        "src": "trissel-midazolam-p1439",
+        "ruling": {
+          "by": "owner",
+          "date": "2026-11-10",
+          "follows": "stabilis"
+        }
       }
     },
     {
@@ -146,10 +151,10 @@
       "points": [
         [
           720,
-          0.9
+          0.95
         ]
       ],
-      "statement": "0.5 mg/mL in 0.9 % NaCl, polyolefin, 22-24 °C, protected from light: stable 30 days.",
+      "statement": "0.5 mg/mL in 0.9 % NaCl, polyolefin, 22-24 °C, protected from light: stable 30 days. Stabilis level A.",
       "src": "stabilis-midazolam-231",
       "crossCheck": {
         "trissel": "agrees",
@@ -163,10 +168,10 @@
       "points": [
         [
           720,
-          0.9
+          0.95
         ]
       ],
-      "statement": "0.5 mg/mL in 5 % glucose, polyolefin, 22-24 °C, protected from light: stable 30 days.",
+      "statement": "0.5 mg/mL in 5 % glucose, polyolefin, 22-24 °C, protected from light: stable 30 days. Stabilis level A.",
       "src": "stabilis-midazolam-231",
       "crossCheck": {
         "trissel": "agrees",
@@ -183,11 +188,16 @@
           0.9
         ]
       ],
-      "statement": "Stabilis: 1 mg/mL in 5 % glucose, polyolefin, 20-25 °C, stable 27 d. Trissel (ref 1868, container not stated): 1 g/L in D5W, 10 % loss calculated at 63-112 h.",
+      "statement": "Stabilis: 1 mg/mL in 5 % glucose, polyolefin, 20-25 °C, stable 27 d. Trissel (ref 1868, container not stated): 1 g/L in D5W, 10 % loss calculated at 63-112 h. Stabilis level B.",
       "src": "stabilis-midazolam-3222",
       "crossCheck": {
         "trissel": "differs",
-        "src": "trissel-midazolam-p1439"
+        "src": "trissel-midazolam-p1439",
+        "ruling": {
+          "by": "owner",
+          "date": "2026-11-10",
+          "follows": "stabilis"
+        }
       }
     },
     {
@@ -197,10 +207,10 @@
       "points": [
         [
           2160,
-          0.9
+          0.95
         ]
       ],
-      "statement": "1 mg/mL in 0.9 % NaCl, PP syringe, 23-25 °C: stable 90 days.",
+      "statement": "1 mg/mL in 0.9 % NaCl, PP syringe, 23-25 °C: stable 90 days. Stabilis level A+.",
       "src": "stabilis-midazolam-4201",
       "crossCheck": {
         "trissel": "agrees",
@@ -217,7 +227,7 @@
           0.9
         ]
       ],
-      "statement": "3 mg/mL in 0.9 % NaCl, PP syringe, 20 °C: stable 7 days.",
+      "statement": "3 mg/mL in 0.9 % NaCl, PP syringe, 20 °C: stable 7 days. Stabilis level D.",
       "src": "stabilis-midazolam-401",
       "crossCheck": {
         "trissel": "agrees",
@@ -231,10 +241,10 @@
       "points": [
         [
           2400,
-          0.9
+          0.95
         ]
       ],
-      "statement": "0.4 mg/mL in 5 % glucose, PP syringe, 25 °C: stable 100 days.",
+      "statement": "0.4 mg/mL in 5 % glucose, PP syringe, 25 °C: stable 100 days. Stabilis level A.",
       "src": "stabilis-midazolam-4303",
       "crossCheck": {
         "trissel": "not listed",

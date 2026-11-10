@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence.",
   "drugId": "fentanyl",
   "products": [
     {
@@ -52,10 +52,10 @@
     {
       "with": "midazolam",
       "verdict": "compatible",
-      "statement": "Stabilis: fentanyl 13-38 µg/mL with midazolam 0.66-0.9 mg/mL in 0.9 % NaCl, PP syringe, 22 °C: stable 7 days.",
+      "statement": "Stabilis: fentanyl 13-38 µg/mL with midazolam 0.66-0.9 mg/mL in NaCl 0.9 %, PP syringe, 22 °C: 7 d. Trissel nearest: 12.5-37.5 µg/mL with 0.625-0.938 mg/mL.",
       "src": "stabilis-fentanyl-929",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-midazolam-p1442"
       }
     }
@@ -71,10 +71,10 @@
           0.9
         ]
       ],
-      "statement": "10 and 50 µg/mL in 0.9 % NaCl, PVC, 23 °C: stable 90 days.",
+      "statement": "10 and 50 µg/mL in 0.9 % NaCl, PVC, 23 °C: stable 90 days. Stabilis level B. Trissel nearest: 20 mg/L PVC, 30 d.",
       "src": "stabilis-fentanyl-4228",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-fentanyl-p904"
       }
     },
@@ -85,10 +85,10 @@
       "points": [
         [
           720,
-          0.9
+          0.95
         ]
       ],
-      "statement": "20 µg/mL in 0.9 % NaCl, PVC, 23 °C: stable 30 days.",
+      "statement": "20 µg/mL in 0.9 % NaCl, PVC, 23 °C: stable 30 days. Stabilis level A.",
       "src": "stabilis-fentanyl-222",
       "crossCheck": {
         "trissel": "agrees",
@@ -105,10 +105,10 @@
           0.9
         ]
       ],
-      "statement": "4.55 µg/mL in 0.9 % NaCl, PVC, 22 °C, in light: stable 48 h.",
+      "statement": "4.55 µg/mL in 0.9 % NaCl, PVC, 22 °C, in light: stable 48 h. Stabilis level B. Trissel nearest: 5 mg/L, no loss 48 h.",
       "src": "stabilis-fentanyl-223",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-fentanyl-p904"
       }
     },
@@ -122,10 +122,10 @@
           0.9
         ]
       ],
-      "statement": "4.55 µg/mL in 5 % glucose, PVC, 22 °C, in light: stable 48 h.",
+      "statement": "4.55 µg/mL in 5 % glucose, PVC, 22 °C, in light: stable 48 h. Stabilis level B. Trissel nearest: 5 mg/L, no loss 48 h.",
       "src": "stabilis-fentanyl-223",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-fentanyl-p904"
       }
     },
@@ -136,10 +136,10 @@
       "points": [
         [
           2232,
-          0.9
+          0.95
         ]
       ],
-      "statement": "10 µg/mL in 0.9 % NaCl, polyolefin, 22 °C, in light: stable 93 days.",
+      "statement": "10 µg/mL in 0.9 % NaCl, polyolefin, 22 °C, in light: stable 93 days. Stabilis level A.",
       "src": "stabilis-fentanyl-3916",
       "crossCheck": {
         "trissel": "not listed",
@@ -156,7 +156,7 @@
           0.9
         ]
       ],
-      "statement": "10 and 50 µg/mL in 0.9 % NaCl, polyolefin, 23 °C: stable 90 days.",
+      "statement": "10 and 50 µg/mL in 0.9 % NaCl, polyolefin, 23 °C: stable 90 days. Stabilis level B.",
       "src": "stabilis-fentanyl-4228",
       "crossCheck": {
         "trissel": "not listed",
@@ -170,13 +170,13 @@
       "points": [
         [
           2400,
-          0.9
+          0.95
         ]
       ],
-      "statement": "10 µg/mL in 0.9 % NaCl, PP syringe, 25 °C: stable 100 days.",
+      "statement": "10 µg/mL in 0.9 % NaCl, PP syringe, 25 °C: stable 100 days. Stabilis level A. Trissel nearest: 12.5 µg/mL, 7 d.",
       "src": "stabilis-fentanyl-4303",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-fentanyl-p903"
       }
     },
@@ -190,10 +190,10 @@
           0.9
         ]
       ],
-      "statement": "13 and 34 µg/mL in 0.9 % NaCl, PP syringe, 22 °C: stable 7 days.",
+      "statement": "13 and 34 µg/mL in 0.9 % NaCl, PP syringe, 22 °C: stable 7 days. Stabilis level B. Trissel nearest: 12.5 and 33.3 µg/mL, no loss 7 d.",
       "src": "stabilis-fentanyl-929",
       "crossCheck": {
-        "trissel": "agrees",
+        "trissel": "not listed",
         "src": "trissel-fentanyl-p903"
       }
     },
@@ -204,10 +204,10 @@
       "points": [
         [
           2160,
-          0.9
+          0.95
         ]
       ],
-      "statement": "20 and 40 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days.",
+      "statement": "20 and 40 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days. Stabilis level A. Trissel nearest: 33.3 µg/mL, no loss 7 d.",
       "src": "stabilis-fentanyl-4223",
       "crossCheck": {
         "trissel": "not listed",
@@ -221,10 +221,10 @@
       "points": [
         [
           2160,
-          0.9
+          0.95
         ]
       ],
-      "statement": "5 µg/mL in 0.9 % NaCl, PP syringe, 23-27 °C, protected from light: stable 90 days.",
+      "statement": "5 µg/mL in 0.9 % NaCl, PP syringe, 23-27 °C, protected from light: stable 90 days. Stabilis level A.",
       "src": "stabilis-fentanyl-2334",
       "crossCheck": {
         "trissel": "agrees",
@@ -238,10 +238,10 @@
       "points": [
         [
           2160,
-          0.9
+          0.95
         ]
       ],
-      "statement": "50 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days.",
+      "statement": "50 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days. Stabilis level A.",
       "src": "stabilis-fentanyl-4223",
       "crossCheck": {
         "trissel": "not listed",
@@ -255,10 +255,10 @@
       "points": [
         [
           2400,
-          0.9
+          0.95
         ]
       ],
-      "statement": "10 µg/mL in 5 % glucose, PP syringe, 25 °C: stable 100 days.",
+      "statement": "10 µg/mL in 5 % glucose, PP syringe, 25 °C: stable 100 days. Stabilis level A.",
       "src": "stabilis-fentanyl-4303",
       "crossCheck": {
         "trissel": "not listed",

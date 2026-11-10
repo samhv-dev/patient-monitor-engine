@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. Stabilis holds only an undiluted PP-syringe row (10 mg/mL, 25 C, 10 days), which has no diluent, so has.stabilis is false and statements come from Trissel.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Stabilis has only an undiluted row, so has.stabilis is false and statements come from Trissel.",
   "drugId": "rocuronium",
   "products": [
     {

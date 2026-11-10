@@ -8,6 +8,4 @@
   0.18 % sodium chloride. Products, strengths, reconstitution and listed diluents come from public labels (EMC
   SmPCs; DailyMed for Adrenalin and Akovaz); stability and admixture statements from Stabilis (retrieved
   2026-11-10), rows at 20–27 °C in PVC or polyolefin bags and polypropylene syringes, each cross-checked against
-  Trissel's Handbook, 17th edition (2013), by PDF page. `pending.json` shrinks from 61 to 47 ids. Two midazolam rows
-  carry `differs` (Stabilis and Trissel disagree on 1 mg/mL in 5 % glucose) and await a ruling; the source check
-  fails on them until one is written. Every entry had a second, independent reading.
+  Trissel's Handbook, 17th edition (2013), by PDF page. `pending.json` shrinks from 61 to 47 ids. Two midazolam rows where Stabilis and Trissel differ follow Stabilis by the owner's ruling (10 November). Each stability point is the Stabilis level-of-evidence floor (0.9), or 0.95 at level A/A+. Every entry had a second, independent reading.

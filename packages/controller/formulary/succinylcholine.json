@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence.",
   "drugId": "succinylcholine",
   "products": [
     {
@@ -60,7 +60,7 @@
           0.9
         ]
       ],
-      "statement": "20 mg/mL in 0.9 % NaCl, PP syringe, 25 °C, protected from light: stable 100 days.",
+      "statement": "20 mg/mL in 0.9 % NaCl, PP syringe, 25 °C, protected from light: stable 100 days. Stabilis level B.",
       "src": "stabilis-succinylcholine-667",
       "crossCheck": {
         "trissel": "agrees",
@@ -77,7 +77,7 @@
           0.9
         ]
       ],
-      "statement": "20 mg/mL in 5 % glucose, PP syringe, 25 °C, protected from light: stable 100 days.",
+      "statement": "20 mg/mL in 5 % glucose, PP syringe, 25 °C, protected from light: stable 100 days. Stabilis level B.",
       "src": "stabilis-succinylcholine-667",
       "crossCheck": {
         "trissel": "agrees",

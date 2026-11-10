@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, 2026-11-10. Stabilis row is 2-8 C only, so has.stabilis false. Label lists \"sodium chloride and dextrose injection BP\" with no strengths: both mixed diluents marked listed (to rule).",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Stabilis row is 2-8 C only: has.stabilis false. Label: \"sodium chloride and dextrose\" with no strengths; both mixed diluents listed.",
   "drugId": "salbutamol",
   "products": [
     {

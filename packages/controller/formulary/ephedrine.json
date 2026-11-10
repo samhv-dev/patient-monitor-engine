@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch, first reading 2026-11-10. Product chosen as ephedrine SULFATE so that the label, Stabilis (sulfate monograph) and Trissel (sulfate) describe the same salt.",
+  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Product chosen as ephedrine SULFATE so that the label, Stabilis (sulfate monograph) and Trissel (sulfate) describe the same salt.",
   "drugId": "ephedrine",
   "products": [
     {
@@ -73,7 +73,7 @@
           0.9
         ]
       ],
-      "statement": "5 mg/mL in 0.9 % NaCl, PP syringe, 25 °C, in light: stable 60 days.",
+      "statement": "5 mg/mL in 0.9 % NaCl, PP syringe, 25 °C, in light: stable 60 days. Stabilis level B.",
       "src": "stabilis-ephedrine-1720",
       "crossCheck": {
         "trissel": "agrees",
