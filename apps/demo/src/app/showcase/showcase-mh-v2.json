@@ -53,6 +53,7 @@
       "label": "Latent",
       "cue": "the monitor looks normal",
       "$comment": "[ENG: scenario] activity above zero = mhActivity > 0.01; signs below threshold = EtCO₂ ≤ 45.",
+      "src": "mhActivity > 0.01: PLACEHOLDER for the owner ([ENG: scenario], the orchestrator's reading of 'activity above zero'; design scenario-format-v2.md §4.1 gives 'MH activity > 0.01†', † a proposal to measure and rule, its §12 Q1 still open). EtCO₂ ≤ 45 mmHg: the /1 card's early-signs threshold (showcase-mh.json (/1) objective 2: 'EtCO₂ past 45 mmHg at unchanged ventilation'; its surgery state's rule etco2 > 45 for 20 s) and design §4.1 ('EtCO₂ ≤ 45'). Hold 60 s: the owner's 60-s boundary hold (31 October; schema pme-scenario-2 holdS: 'the owner's 60-s boundary hold, 31 October'; PR #243: 'Every other hold stays 60 s').",
       "notes": "Say it: the jaw is hard to open after the succinylcholine (masseter rigidity). The monitor cannot show it. In practice a rigid jaw after succinylcholine means a non-triggering anaesthetic from now on and close watch of the EtCO₂; today the volatile stays to show the crisis. Masseter rigidity with a rising EtCO₂ makes two signs.",
       "enter": {
         "all": [
@@ -84,6 +85,7 @@
       "label": "Early signs",
       "cue": "EtCO₂ climbing, HR up",
       "$comment": "[ENG: scenario] rising = least-squares slope over 120 s: EtCO₂ > 0.2 mmHg/min (design §4's example), HR > 0/min; unchanged set ventilation = within 5 % over the same 120 s (design §4's leaf, decision D1: the ventilation in place when the rise began; it re-arms 120 s after a change). Held 20 s, not 60 (the owner's ruling of 1 November): 20 s is the /1 card's own settle for its early signs, its state machine's confirmation (EtCO₂ above 45 for 20 s before 'earlySigns'), not a number fitted to this run. With 60 s the strip read Early signs a minute after the rise began (08:43 on the demo path, 08:50 in the kit round) while the /1 card shows its early signs at 08:03; a team that waits for the strip then called about 40 s late, and the ventilation-back precondition (EtCO₂ under 40 for 120 s) sat on its edge (#242). With 20 s Early signs is entered at the /1 card's second. Every other hold stays 60 s; Arrest and ROSC keep none (D4). A call inside the hold changes the ventilation: the runner latches the hold (D1), so a prompt call does not keep the case out of the phase.",
+      "src": "EtCO₂ > 45 mmHg: the /1 card's early-signs threshold (showcase-mh.json (/1) objective 2: 'EtCO₂ past 45 mmHg at unchanged ventilation'). Rising > 0.2 mmHg/min over 120 s: design scenario-format-v2.md §4, the slope leaf's example ('EtCO₂ rising: > 0.2 mmHg/min over 120 s'; its §12 Q1, the windows for rising, still open). Set minute ventilation unchanged within 5 % over 120 s: design §4, the unchanged leaf's example ('set minute ventilation within ±5 % over 120 s'; decision D1, PR #239). HR rising, slope > 0/min over 120 s: PLACEHOLDER for the owner, both numbers ([ENG: scenario] reading of 'HR rising'; design §4.1 gives no number). Hold 20 s: the owner's ruling of 1 November (PR #243: 'holds its Early signs phase for 20 s instead of 60 s'; the /1 card's own 20-s confirmation, etco2 > 45 for 20 s).",
       "notes": "The EtCO₂ is rising at unchanged ventilation when it should be falling, with a rising heart rate: think of MH early.",
       "enter": {
         "all": [
@@ -131,6 +133,7 @@
       "label": "Established",
       "cue": "fever, EtCO₂ above 60",
       "$comment": "[ENG: scenario] activity high = mhActivity > 0.8; acidosis = pH < 7.25.",
+      "src": "Core > 38.5 °C: the /1 card's established rule (showcase-mh.json (/1), earlySigns → established: tempCore > 38.5 for 10 s) and design scenario-format-v2.md §4.1 ('core > 38.5 °C for 10 s'). MH activity > 0.8: PLACEHOLDER for the owner ([ENG: scenario] reading of 'activity high'; design §4.1 proposes a different number, 'activity > 0.5†', its §12 Q1 still open). pH < 7.25: design §4.1 ('activity > 0.5† with pH < 7.25'). Hold 60 s: the owner's 60-s boundary hold (31 October; schema pme-scenario-2 holdS: 'the owner's 60-s boundary hold, 31 October'; PR #243: 'Every other hold stays 60 s').",
       "enter": {
         "any": [
           {
@@ -171,6 +174,7 @@
       "label": "Treated",
       "cue": "EtCO₂ falling with the ventilation held",
       "$comment": "[ENG: scenario] Treated = a dose coming in (proposal of 1 November, for the owner's ruling): the dantrolene effect dantroleneE rising, its least-squares slope over 60 s above 0.02/min (two hundredths of the 0–1 effect per minute); false while the drug only decays, so the second Treated needs the second dose. The signal is the engine's unrounded effect, so its resolution sets no floor; 0.02/min is set by the drug's course, with a margin on both sides: the second 2.5 mg/kg dose, on top of the first, raises the effect at most 0.049/min (2.5 times 0.02), and the first dose's rise, near its peak, tapers through 0.007/min one hold after Recrudescence is entered (14:59 + 60 s on the demo path; 0.02 is 2.9 times that). It replaces D2's dantroleneE > 0.2 with mhExcess falling, which held from 09:58 without a break, through the recrudescence.",
+      "src": "Dantrolene effect rising, slope > 0.02/min over 60 s: PLACEHOLDER for the owner, both numbers (a proposal of 1 November for his ruling: PR #242, 'A proposal for the owner's ruling'; [ENG: scenario]). Hold 60 s: the owner's 60-s boundary hold (31 October; schema pme-scenario-2 holdS: 'the owner's 60-s boundary hold, 31 October'; PR #243: 'Every other hold stays 60 s').",
       "enter": {
         "slope": {
           "var": "dantroleneE",
@@ -190,6 +194,7 @@
       "label": "Recovering",
       "cue": "EtCO₂ steady at normal ventilation",
       "$comment": "The owner's ruling of 1 November: entered after Treated, when EtCO₂ is under 45 mmHg at the ventilation the team has set and is not rising over 120 s; no condition on MH activity and no unchanged-ventilation guard (the rule reads EtCO₂ under whatever ventilation is set). [ENG: scenario] rising = the least-squares slope of the EtCO₂ truth over 120 s at least 1 mmHg/min, i.e. a rise of 2 mmHg over the 120 s, two units of the monitor's 1-mmHg EtCO₂ number (a rise of one unit is inside the display's rounding); not rising = the negation of rising (slope below 1 mmHg/min), so every course is either rising or not rising and no dead band is left between the owner's two words.",
+      "src": "EtCO₂ < 45 mmHg and not rising over 120 s: the owner's ruling of 1 November (PR #239: 'entered after Treated when EtCO₂ is under 45 mmHg and not rising over 120 s'). Rising = a slope of at least 1 mmHg/min (not rising: below it): PLACEHOLDER for the owner (the executor's reading, PR #239: '\"Rising\" and \"not rising\" (my choice, as the brief asked)'; [ENG: scenario]). Hold 60 s: the owner's 60-s boundary hold (31 October; schema pme-scenario-2 holdS: 'the owner's 60-s boundary hold, 31 October'; PR #243: 'Every other hold stays 60 s').",
       "enter": {
         "all": [
           {
@@ -220,6 +225,7 @@
       "label": "Recrudescence",
       "cue": "EtCO₂ climbing back",
       "$comment": "The owner's ruling of 1 November: entered after Recovering (Treated no longer leads here: the only way in is Recovering, or ROSC on the arrest branch), when EtCO₂ is above 45 mmHg and rising over 120 s at the ventilation the team has set; no unchanged-ventilation guard, so the climb after the team turns the ventilation back to 12 × 500 is the recrudescence (the /1 card's objective 4). Its entry opens the second-dose window (dantroleneAgain, and dantrolene's repeat, 300 s: decision D3). [ENG: scenario] rising = the least-squares slope of the EtCO₂ truth over 120 s at least 1 mmHg/min (2 mmHg over the 120 s), as Recovering's.",
+      "src": "EtCO₂ > 45 mmHg and rising over 120 s: the owner's ruling of 1 November (PR #239: 'entered after Recovering when EtCO₂ is above 45 mmHg and rising over 120 s'). Rising = a slope of at least 1 mmHg/min: PLACEHOLDER for the owner (the executor's reading, PR #239; [ENG: scenario]). Hold 60 s: the owner's 60-s boundary hold (31 October; schema pme-scenario-2 holdS: 'the owner's 60-s boundary hold, 31 October'; PR #243: 'Every other hold stays 60 s').",
       "enter": {
         "all": [
           {
@@ -283,6 +289,7 @@
         "baseline"
       ],
       "notes": "Preoxygenate first, then premedicate: the opioid blunts the breathing, so a preoxygenation after it would be less effective (the owner's ruling of 1 November). The mask stays on, 100 % O₂, through the premedication until the tube is in (Intubate).",
+      "src": "FiO₂ 1.0 for up to 3600 s: the /1 card's preoxygenated state (showcase-mh.json (/1): preoxygenate fio2 1, durationS 3600; its label 'Preoxygenate: 100 % O₂ by face mask'); 3600 s is the event's maximum, held until Intubate (stage-11-scenarios.md D-4: 'holds FiO2 1.0 for up to 3600 s (the event's maximum)').",
       "give": [
         {
           "type": "applyEvent",
@@ -303,6 +310,7 @@
         "baseline"
       ],
       "notes": "Given on the face mask, which stays on until the tube is in (Intubate). If you premedicate and induce without Preoxygenate, the apnoea before the tube desaturates sooner: that is the point of the step.",
+      "src": "Midazolam 2 mg and fentanyl 100 µg IV: the /1 card's premedicated state (showcase-mh.json (/1); its label 'Premedicate: midazolam 2 mg, fentanyl 100 µg').",
       "give": [
         {
           "type": "applyEvent",
@@ -335,6 +343,7 @@
         "baseline"
       ],
       "notes": "Say it: the jaw is hard to open after the succinylcholine (masseter rigidity). The monitor cannot show it. In practice a rigid jaw after succinylcholine means a non-triggering anaesthetic from now on and close watch of the EtCO₂; today the volatile stays to show the crisis. Masseter rigidity with a rising EtCO₂ makes two signs.",
+      "src": "Propofol 2 mg/kg and succinylcholine 1.5 mg/kg IV: the /1 card's induced state (showcase-mh.json (/1); its label 'Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg').",
       "give": [
         {
           "type": "applyEvent",
@@ -404,7 +413,8 @@
             "fgfLpm": 2
           }
         }
-      ]
+      ],
+      "src": "The /1 card's intubated state (showcase-mh.json (/1); its label 'Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %'): the face mask's FiO₂ 0.21 for 1 s (it ends the mask oxygen), the ventilator 12/min × 500 mL, PEEP 5, FiO₂ 0.5, sevoflurane dial 2 % at 2 L/min fresh gas."
     },
     {
       "id": "startSurgery",
@@ -426,13 +436,15 @@
             "route": "iv"
           }
         }
-      ]
+      ],
+      "src": "Rocuronium 0.6 mg/kg IV: the /1 card's surgery state (showcase-mh.json (/1); its label 'Start surgery: rocuronium 0.6 mg/kg')."
     },
     {
       "id": "callCrisis",
       "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate",
       "kind": "decision",
       "$comment": "The call (the /1 card's objective 2: within 120 s of the early signs, EtCO₂ past 45 mmHg held 20 s, the /1 objective's own anchor, read on truth), graded on its engine-visible effect: the vaporiser at 0 % with fresh gas ≥ 10 L/min. The anchor is that value crossing, not the Early-signs phase: with Early signs' hold and 'unchanged set ventilation' the call itself (it doubles the ventilation) keeps the phase from being entered when the team calls inside the hold. The charcoal filters are not modelled.",
+      "src": "Within 120 s of EtCO₂ above 45 mmHg held 20 s: the /1 card's objective 2 (showcase-mh.json (/1): 'within 120 s of the early signs (EtCO₂ past 45 mmHg at unchanged ventilation)') and its surgery state's rule (etco2 > 45 for 20 s). Graded effect, vaporiser 0 % with fresh gas ≥ 10 L/min, and the press (sevoflurane 0 % at 10 L/min, propofol 100 µg/kg/min, ventilator 20/min × 600 mL, PEEP 5, FiO₂ 1.0): the /1 card's triggerOff state (showcase-mh.json (/1)) and its label ('stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate').",
       "phases": [
         "latent",
         "earlySigns",
@@ -502,6 +514,7 @@
       "label": "Hyperventilate: ventilator 20 × 600, FiO₂ 1.0",
       "kind": "device",
       "$comment": "Part of the call's press; graded on the ventilator's settings whatever sent them.",
+      "src": "20/min × 600 mL, FiO₂ 1.0 (PEEP 5 in the press): the /1 card's triggerOff state (showcase-mh.json (/1)) and design scenario-format-v2.md §11 ('device \"hyperventilate 20 × 600, FiO₂ 1.0\"'). Window: the call's, within 120 s of EtCO₂ above 45 mmHg held 20 s (the /1 card's objective 2).",
       "phases": [
         "latent",
         "earlySigns",
@@ -599,13 +612,15 @@
           }
         },
         "withinS": 120
-      }
+      },
+      "src": "The press, 100 µg/kg/min: the /1 card's triggerOff state (showcase-mh.json (/1): infusion propofol 100 mcg/kg/min). Accepted 100–150 µg/kg/min: plan F8's correspondence table (scenario-format-v2-plan.md §F8: 'propofol 100–150 µg/kg/min') and design scenario-format-v2.md §11 ('drug \"propofol 100–150 µg/kg/min\"'). Window: the call's, within 120 s of EtCO₂ above 45 mmHg held 20 s (the /1 card's objective 2, whose call names the propofol infusion)."
     },
     {
       "id": "dantrolene",
       "label": "Dantrolene 2.5 mg/kg",
       "kind": "drug",
       "$comment": "The /1 card's objectives 3 and 4: within 300 s of the call; again once the case is in Recrudescence (decision D3: the repeat's window opens at Recrudescence's entry, the condition's rise, and spans 300 s = intervalS max − min, the /1 card's own dantrolene window, objective 3, the one dantrolene window the owner approved; /1's objective 4 sets no deadline), and never sooner than 5 min after the previous dose (intervalS.min). IM is contraindicated (no effect, tissue injury: owner, 29 October).",
+      "src": "2.5 mg/kg within 300 s of the call: the /1 card's objective 3 (showcase-mh.json (/1): 'Give dantrolene 2.5 mg/kg within 300 s of calling the crisis') and its dantrolene state (2.5 mg/kg IV). Repeat interval 300–600 s, due from Recrudescence's entry: decision D3 (PR #239, commit f68ac791: 'intervalS 300–600 s as before'; its 300 s is 'the /1 card's own dantrolene window', objective 3). Accepted 2–3 mg/kg and the 10 mg/kg cumulative ceiling: PLACEHOLDER for the owner, all three (no source this card names states them; the design's worked example, scenario-format-v2.md §5, reads '2.5 mg/kg (2–3 accepted), to 10 mg/kg cumulative').",
       "phases": [
         "latent",
         "earlySigns",
@@ -677,6 +692,7 @@
       "label": "Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)",
       "kind": "device",
       "$comment": "The /1 card's second-dose button (owner, 28 October: the second dose comes with the crisis ventilation again). Its dose is graded as dantrolene's repeat; this row grades the ventilation it puts back, in the repeat's window (D3: from Recrudescence's entry, 300 s), so the call's 20 × 600 is not it.",
+      "src": "Dantrolene 2.5 mg/kg and the crisis ventilation 20/min × 600 mL, FiO₂ 1.0 (PEEP 5 in the press): the /1 card's dantroleneAgain state (showcase-mh.json (/1)) and its objective 4 ('second dose of dantrolene 2.5 mg/kg and hyperventilate again (20 × 600, O₂ 100 %)'; the /1 card's notes: '20 × 600 at 100 % O₂: owner, 2026-10-28'). Window 300 s from Recrudescence's entry: decision D3 (commit f68ac791). Precondition EtCO₂ > 45 mmHg and rising > 0.2 mmHg/min over 120 s: Early signs' own threshold and slope (the /1 card's 45 mmHg, objective 2; design scenario-format-v2.md §4's slope example, its §12 Q1 still open).",
       "phases": [
         "latent",
         "earlySigns",
@@ -750,6 +766,7 @@
       "label": "EtCO₂ normal: ventilation back to 12 × 500",
       "kind": "device",
       "$comment": "The /1 card's objective 6: only after the EtCO₂ has stayed below 40 for 2 min (never on a timer).",
+      "src": "12/min × 500 mL (PEEP 5, FiO₂ 1.0 in the press) once EtCO₂ has stayed below 40 mmHg for 120 s: the /1 card's objective 6 (showcase-mh.json (/1): 'Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)') and its normoventilated state (ventilator 12, 500, PEEP 5, FiO₂ 1).",
       "phases": [
         "latent",
         "treated",
@@ -796,6 +813,7 @@
       "label": "Potassium: calcium chloride 10 mg/kg",
       "kind": "drug",
       "$comment": "The /1 card's objective 5: within 300 s of K⁺ rising above 5.5 mmol/L.",
+      "src": "Calcium chloride 10 mg/kg IV within 300 s of K⁺ above 5.5 mmol/L: the /1 card's potassium state (showcase-mh.json (/1): calciumChloride 10 mg/kg) and its objective 5 ('Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L').",
       "phases": [
         "latent",
         "earlySigns",
@@ -892,7 +910,8 @@
           }
         },
         "withinS": 300
-      }
+      },
+      "src": "Insulin 10 units with dextrose IV within 300 s of K⁺ above 5.5 mmol/L: the /1 card's potassium state (showcase-mh.json (/1): insulinDextrose 10 units) and its objective 5 ('Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L')."
     },
     {
       "id": "cool",
@@ -900,6 +919,7 @@
       "kind": "physical",
       "graded": false,
       "$comment": "Offered only above 38.5 °C core (the precondition; the panel offers the press only while it holds). Not graded: the rulings give no window. The saline is the /1 card's (#216's 4 °C and its stop at 38 °C need engine fields not on this base).",
+      "src": "Saline 1600 mL over 900 s (20 mL/kg for 80 kg): the /1 card's cooling state (showcase-mh.json (/1): volumeMl 1600, overS 900; its label 'Cool: refrigerated saline 20 mL/kg (1.6 L)'). Offered above 38.5 °C core: the /1 card's Cool transition (tempCore > 38.5) and its notes ('Cool is offered only while the core is above 38.5 °C (cool the hyperthermic patient: EMHG 2024, Rosenberg 2015)').",
       "phases": [
         "established",
         "treated",
@@ -934,6 +954,7 @@
       "kind": "drug",
       "graded": false,
       "$comment": "Offered and recorded; not graded: the rulings give it no criterion (the plan's Q31).",
+      "src": "1 mmol/kg IV: the /1 card's bicarbonate state (showcase-mh.json (/1); its label 'Sodium bicarbonate 1 mmol/kg').",
       "phases": [
         "latent",
         "earlySigns",
@@ -963,6 +984,7 @@
       "label": "Start CPR",
       "kind": "device",
       "$comment": "CPR 100–120/min within 30 s of the model's pulse loss (the haemorrhage card's objective). Open in every phase (D4): its window runs from the pulse loss, whatever the phase; before one the row is not applicable.",
+      "src": "Compressions 100–120/min within 30 s of the model's pulse loss: the haemorrhage card's objective (showcase-haemorrhage.json (/1) objective 2: 'CPR within 30 s of the pulse loss'; showcase-haemorrhage-v2's CPR rate 100–120/min from design scenario-format-v2.md §11: 'CPR (100–120/min, within 30 s of pulseLoss)'). The press, rate 110 at quality 0.8: the /1 card's cpr state (showcase-mh.json (/1)).",
       "phases": [
         "baseline",
         "latent",
@@ -1024,6 +1046,7 @@
       "id": "mhAtInduce",
       "on": "action:induce#1",
       "$comment": "The /1 card's condition at Induce (F8 step a): card-set, in the press's stage group.",
+      "src": "Condition mh, severity 1, at Induce: the /1 card's induced state (showcase-mh.json (/1): condition mh severity 1, with propofol and succinylcholine).",
       "commands": [
         {
           "type": "applyEvent",

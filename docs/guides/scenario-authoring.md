@@ -601,6 +601,7 @@ violation and an outcome. It is not a reviewed teaching case. The numbers marked
   phase's `next`.
 - Every team act is an action. A team act with nothing for the engine is a record action (no `give`).
 - Every number in an action has its source in `src`, quoted with its page. Otherwise it is marked as a placeholder
-  for the owner.
+  for the owner. A phase (its rule's thresholds and windows, its `holdS`), an outcome and a script entry carry their
+  numbers' source the same way, in their own `src`.
 - A card with a bleed names its source and says when the bleed is controlled. It anchors CPR on the operating-room
   trigger only if the bleed is controlled before the trigger can fire.
