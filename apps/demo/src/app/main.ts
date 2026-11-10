@@ -34,6 +34,7 @@ import { mountFastForward } from './fast-forward.ts';
 import { watchHiddenTab } from './hidden-tab.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { deviceKey, pickerView } from './views/join.ts';
+import { learnerRemoteView } from './views/learner-remote.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
 import { settingsView } from './views/settings.ts';
@@ -62,6 +63,7 @@ const moved = normalizeSessionCode(q.get('moved') ?? '');
 const shows = follow ? instrumentOf(location.hash) : null;
 const defibWindow = shows === 'defib';
 if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
+if (follow && shows === 'remote') document.documentElement.dataset.learner = 'remote'; // L6: the monitor strip over the tabs (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -84,7 +86,29 @@ if (follow && shows === 'pick') {
   document.body.replaceChildren(); // a page of its own, as `?moved=` below: no shell, no monitor, no session
   pickerView({ code: follow, parent: document.body });
   document.title = 'Choose an instrument: patient monitor simulator';
-} else if (follow && shows && shows !== 'pick') {
+} else if (follow && shows === 'remote') {
+  // L6 (plan learner-action-remote.md §4 D1): the learner action remote. Its learner-PIN form first; at sign-in the
+  // follower, whose every hello says `{role: 'learner', show: 'learner', device, pin}` (the PIN from the page's memory);
+  // granted, the monitor strip, the three tabs and the connection line. The hash stays `#/remote/learner`, so a reload
+  // opens the form again (the PIN is typed again: it is kept nowhere)
+  let current: ReturnType<typeof mountFollower> | null = null;
+  const line = simLine(shell.stage, !!join);
+  const remote = learnerRemoteView({
+    code: follow,
+    stage: shell.stage,
+    follow: (code, bar, pin) => {
+      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), pin });
+      line.set(f.monitor, f.style, true);
+      f.onStyle = (st) => line.set(f.monitor, st, true);
+      return (current = f);
+    },
+  });
+  shell.add(remote);
+  mountFastForward(shell.root, { get fastForward() { return current?.sync?.fastForward ?? null; }, get lastFastForward() { return current?.sync?.lastFastForward ?? null; } }, { simT: () => current?.sync?.fastForwardAt ?? null, font: () => current?.monitor.skin?.render.fontStack, latch: (a) => current?.monitor.latchAlarms(a) });
+  shell.start();
+  document.title = 'Learner remote: patient monitor simulator';
+  Object.assign(window, { __pmeLearnerRemote: remote, __pmeApp: { shell, frames, site } });
+} else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
   const what = defibWindow ? 'Defibrillator' : 'Learner monitor';
@@ -126,7 +150,7 @@ if (follow && shows === 'pick') {
   // The instructor phone's PIN (plan instructor-peer-role.md P7): this computer's store only; the host reads it at every
   // instructor hello. Never in an address, a QR code or the tab's state (instructor-pin.ts)
   // L4 (learner-action-remote.md §4 D9): the learner PIN beside it, the same keeping, never equal to it; a new learner PIN
-  // revokes every learner remote (Room setup's button for it is L6's)
+  // revokes every learner remote (Room setup's "New learner PIN", views/room.ts learnerPinCard)
   let lpin: InstructorPin | null = null;
   const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
   const learner = (lpin = learnerPin(() => pin.get()));
@@ -203,6 +227,7 @@ if (follow && shows === 'pick') {
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
+    learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario }));

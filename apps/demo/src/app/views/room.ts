@@ -8,7 +8,8 @@
 // component: the openers for this computer ("New window" per instrument; the Ventilator in this window), which window
 // shows each, the room code with "New room code" (Q3: the code lives until that press), "Forget the room", and the
 // remembered layout ("Last time in this room: … Reopen that layout"). `#room-instructor` is P7's slot (its PIN panel),
-// left empty here.
+// left empty here. L6 (plan learner-action-remote.md §4 D9): `#room-learner` beside it, the learner PIN's panel
+// (learnerPinCard: the learner remotes signed in, the PIN behind P7's press-and-hold, "New learner PIN").
 // R8d: the Ventilator card opens the cockpit in a window of its own too ("New window": `vent-hamilton.html?link=<code>`,
 // over BroadcastChannel, no PIN, §4 D9), beside "Open here"; the table lists the ventilator's screens — that window and a
 // tablet signed in with the PIN — as "Ventilator · driving" or "handed over" (the desk's own state, views/vent.ts).
@@ -28,7 +29,8 @@ import { DEFIB_CHOICES, defibDefaults, pacerDefaults } from '../site.ts';
 import { store as appStore } from '../store.ts';
 import { button, h, select, setText } from '../ui.ts';
 import { instrumentCard, PICKER_WORDS, type CardShow } from './join.ts';
-import type { InstructorRoomCard } from './room-instructor.ts';
+import type { InstructorPin } from '../instructor-pin.ts';
+import { pinHold, type InstructorRoomCard } from './room-instructor.ts';
 
 type Store = { get(k: string): string | null; set(k: string, v: string): void };
 
@@ -65,6 +67,65 @@ export interface RoomDeps {
   defib?: { model(): string | null; choose(model: string | null): void };
   /** R8d: the ventilator's own screens and whether each drives (views/vent.ts `ventScreens`). Absent: no rows. */
   vent?: () => VentScreens;
+  /** L6: the learner PIN and the host's count of learner remotes, for the panel beside the instructor's card. Absent: no panel. */
+  learner?: LearnerPinDeps;
+}
+
+/** L6 (plan learner-action-remote.md §4 D9, LQ1 ruled 9 November): the learner PIN's panel's words. */
+export const LEARNER_PIN_WORDS = {
+  heading: 'Learner remotes',
+  none: 'No learner remote signed in',
+  some: (n: number) => `${n} learner remote${n === 1 ? '' : 's'} signed in`,
+  denials: (n: number) => `${n} wrong learner PIN${n === 1 ? '' : 's'} in the last minute`,
+  label: 'Learner PIN',
+  change: 'New learner PIN',
+  hint: "A learner picks Learner remote on the room's QR page and types this PIN. It is not the instructor's PIN and opens the learner remote only. A new learner PIN signs every learner remote out.",
+  noRelay: 'No relay: a learner remote signs in through the classroom (Start Classroom).',
+} as const;
+
+export interface LearnerPinDeps {
+  /** The learner PIN (instructor-pin.ts learnerPin): its `change()` draws a new one; main.ts tells the host, which revokes every learner remote. */
+  pin: InstructorPin;
+  /** The host's half (L4): wrong learner PINs in the last minute, and the learner remotes granted now. */
+  host: { learnerDenials(): number; learnerRemotes(): number };
+  /** The relay address, or null: no learner remote can sign in. */
+  relay: string | null;
+}
+
+/**
+ * L6: the learner PIN beside the instructor's (§4 D9): how many learner remotes are signed in, the wrong learner PINs in
+ * the last minute, the PIN behind P7's press-and-hold (not in the page until held) and "New learner PIN".
+ */
+export function learnerPinCard(d: LearnerPinDeps): { el: HTMLElement; draw(): void; leave(): void } {
+  const W = LEARNER_PIN_WORDS;
+  const dot = h('i', { class: 'room-dot', role: 'img' });
+  const state = h('span', { class: 'ip-peer-state' });
+  const denials = h('p', { class: 'hint ip-peer-denials', role: 'status' });
+  const { value, hold, reveal, held } = pinHold({ get: () => d.pin.get(), what: 'learner PIN' });
+  const change = button(W.change, () => {
+    d.pin.change();
+    if (held()) reveal(true);
+    draw();
+  }, 'ip-peer-change lr-pin-change');
+  const pinBox = h('div', { class: 'ip-peer-pinbox' }, h('span', { class: 'ip-peer-pin-label' }, W.label), value, hold, change);
+  const noRelay = h('p', { class: 'hint ip-peer-norelay' }, W.noRelay);
+  const el = h('section', { class: 'room-card ip-peer-room lr-pin-room', 'aria-labelledby': 'lr-pin-h' },
+    h('h2', { id: 'lr-pin-h' }, W.heading),
+    h('div', { class: 'ip-peer-row', role: 'status', 'aria-live': 'polite' }, dot, h('b', {}, W.heading), state),
+    denials, pinBox, h('p', { class: 'hint' }, W.hint), noRelay);
+  function draw(): void {
+    const n = d.host.learnerRemotes();
+    dot.className = `room-dot ${n ? 'stable' : 'weak'}`;
+    dot.setAttribute('aria-label', n ? 'signed in' : 'not signed in');
+    setText(state, n ? W.some(n) : W.none);
+    const k = d.host.learnerDenials();
+    setText(denials, k ? W.denials(k) : '');
+    denials.hidden = !k;
+    noRelay.hidden = !!d.relay;
+    pinBox.hidden = !d.relay;
+  }
+  draw();
+  return { el, draw, leave: () => reveal(false) };
 }
 
 export interface RoomView extends View {
@@ -94,6 +155,7 @@ export const windowUrl = (learnerUrl: string, show: 'learner' | 'monitor' | 'def
 
 export function roomView(d: RoomDeps): RoomView {
   const now = d.now ?? Date.now;
+  const learner = d.learner ? learnerPinCard(d.learner) : null;
   const kept = d.store ?? appStore;
   const log = new PeerLog();
   const listen = (t: ManagedTransport, via: PeerSeen['via']) => t.onMessage((m: WireMessage) => {
@@ -225,7 +287,9 @@ export function roomView(d: RoomDeps): RoomView {
     h('p', { class: 'hint room-rule' }, ROOM_LEGEND),
     h('p', { class: 'hint' }, "Last heard: the device's last answer to the relay's ping, which the relay reports at each heartbeat. Type a name over a device to keep it for the next time in this room. A window closed on this computer stays listed until this page reloads."),
     // P7's card (room-instructor.ts: the instructor phone's row, its PIN behind press-and-hold, its QR fold), unchanged
-    h('div', { id: 'room-instructor' }, ...(d.instructor ? [d.instructor.el] : [])));
+    h('div', { id: 'room-instructor' }, ...(d.instructor ? [d.instructor.el] : [])),
+    // L6: the learner PIN's panel, beside the instructor's
+    ...(learner ? [h('div', { id: 'room-learner' }, learner.el)] : []));
 
   // ---------------------------------------------------------------------------------------------- on this computer
   const cards = h('div', { class: 'join-grid room-openers' });
@@ -311,6 +375,7 @@ export function roomView(d: RoomDeps): RoomView {
 
   function draw(): void {
     d.instructor?.draw();
+    learner?.draw();
     const t = now();
     const relay = relayState();
     const peers = log.list();
@@ -374,6 +439,7 @@ export function roomView(d: RoomDeps): RoomView {
     },
     leave() {
       d.instructor?.leave();
+      learner?.leave();
       document.removeEventListener('keydown', onKey);
       if (big.open) big.close();
       if (ask.open) ask.close();

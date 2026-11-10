@@ -47,11 +47,12 @@ export interface PinForm {
  * The form: `onSignIn` gets the code and the PIN once both are well formed; the PIN goes from the field into the caller's
  * closure and the field is emptied first.
  */
-export function pinForm(o: { title: string; lede: string; code: string; onSignIn(code: string, pin: string): void }): PinForm {
+export function pinForm(o: { title: string; lede: string; code: string; onSignIn(code: string, pin: string): void; pinLabel?: string; badPin?: string }): PinForm {
   const codeIn = input('Session code', { maxlength: 8, autocapitalize: 'characters', autocomplete: 'off', inputmode: 'text', placeholder: 'For example AGD5YJ', class: 'input ip-peer-code' });
   codeIn.inp.value = o.code;
   // No `name`: the form never submits, and a browser that did submit it could not put the PIN in the address
-  const pinIn = input('PIN', { type: 'password', inputmode: 'numeric', pattern: '[0-9]*', maxlength: 8, autocomplete: 'off', enterkeyhint: 'go', class: 'input ip-peer-pin' });
+  // L6: the learner remote's form names its PIN "Learner PIN" (learner-remote.ts), P7's says "PIN"
+  const pinIn = input(o.pinLabel ?? 'PIN', { type: 'password', inputmode: 'numeric', pattern: '[0-9]*', maxlength: 8, autocomplete: 'off', enterkeyhint: 'go', class: 'input ip-peer-pin' });
   const err = h('p', { class: 'error ip-peer-error', role: 'alert' });
   const type = (d: string) => {
     if (pinIn.inp.value.length < 8) pinIn.inp.value += d;
@@ -66,7 +67,7 @@ export function pinForm(o: { title: string; lede: string; code: string; onSignIn
     const pin = pinIn.inp.value;
     pinIn.inp.value = ''; // the PIN is in the caller's closure from here on, nowhere else
     if (!code) return void (setText(err, PHONE_WORDS.badCode), codeIn.inp.focus());
-    if (!PIN_RE.test(pin)) return void (setText(err, PHONE_WORDS.badPin), pinIn.inp.focus());
+    if (!PIN_RE.test(pin)) return void (setText(err, o.badPin ?? PHONE_WORDS.badPin), pinIn.inp.focus());
     o.onSignIn(code, pin);
   };
   const form = h('form', { class: 'setup narrow ip-peer-form', autocomplete: 'off', onsubmit: (e: Event) => (e.preventDefault(), submit()) },

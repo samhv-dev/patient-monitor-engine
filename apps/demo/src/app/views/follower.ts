@@ -103,6 +103,11 @@ export interface NetFollow {
 export interface FollowerInstrument {
   show: Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
   device: string;
+  /**
+   * L6 (plan learner-action-remote.md §4 D1): the learner remote's page. Each hello then says the `learner` role with
+   * this learner PIN (read at each hello from the page's memory, never kept), and the host grants it on that PIN (L4).
+   */
+  pin?: () => string;
 }
 
 /**
@@ -110,7 +115,7 @@ export interface FollowerInstrument {
  * adds them (viewer-sync.ts, which says the hello, is not changed: §4 D1).
  */
 export function withInstrument(t: ManagedTransport, i: FollowerInstrument): ManagedTransport {
-  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, show: i.show, device: i.device } : m);
+  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, ...(i.pin ? { role: 'learner' as const, pin: i.pin() } : {}), show: i.show, device: i.device } : m);
   return new Proxy(t, {
     get(target, key) {
       if (key === 'send') return send;
@@ -153,7 +158,7 @@ export interface FollowerOptions {
  * `defib` (R5). `show: 'defib'` is the defibrillator window too.
  */
 export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow, o: Partial<FollowerInstrument> & FollowerOptions = {}): Follower {
-  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device } : undefined;
+  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device, ...(o.pin ? { pin: o.pin } : {}) } : undefined;
   const defib = o.defib === true || o.show === 'defib';
   applySkinAlarmColours(site.skin, site.theme);
   // This window's alarm SOUND is its own (its Sound and Silence buttons); the alarms are the patient's
