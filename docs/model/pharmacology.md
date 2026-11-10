@@ -344,6 +344,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `applyPkCommand` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Apply a validated command. |
 | `concOf` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | --- step ------------------------------------------------------------------------------------------------------- |
 | `advancePk` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. |
+| `tciModeRefusal` | [`l2/pk/tci-sets/index.ts`](../../packages/engine-core/src/l2/pk/tci-sets/index.ts) | The refusal for a TCI mode the set cannot run, or undefined when it can. |
 | `tciRate` | [`l2/pk/tci.ts`](../../packages/engine-core/src/l2/pk/tci.ts) | The infusion rate (amount/min) for the next TCI_DT_S seconds. |
 | `toAmount` | [`l2/pk/units.ts`](../../packages/engine-core/src/l2/pk/units.ts) | Bolus dose → amount in `amountUnit`, or an error string. |
 | `toRate` | [`l2/pk/units.ts`](../../packages/engine-core/src/l2/pk/units.ts) | Rate → amount/min in `amountUnit`, or an error string. |
@@ -371,6 +372,8 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`l2/pk/pd.ts`](../../packages/engine-core/src/l2/pk/pd.ts) | PD primitives. Pure functions; every constant is cited where it is used. |
 | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Drug-model pipeline: plain-data drug state stepped at 10 Hz on the absolute grid, commands, clearance factors and the PD combination. |
 | [`l2/pk/row.ts`](../../packages/engine-core/src/l2/pk/row.ts) | The drug-library row. |
+| [`l2/pk/tci-sets/index.ts`](../../packages/engine-core/src/l2/pk/tci-sets/index.ts) | The TCI-set registry (docs/plans/pump-rack-tci.md §6.1, piece T1). |
+| [`l2/pk/tci-sets/types.ts`](../../packages/engine-core/src/l2/pk/tci-sets/types.ts) | The shape of a TCI model set: a published pharmacokinetic set (and its ke0) as data with its source, so that a pump predicts from the set it names and every number can be traced to its paper (docs/plans/pump-rack-tci.md |
 | [`l2/pk/tci.ts`](../../packages/engine-core/src/l2/pk/tci.ts) | Target-controlled infusion. |
 | [`l2/pk/units.ts`](../../packages/engine-core/src/l2/pk/units.ts) | Dose and rate normalisation. |
 | [`l2/pk/volatile.ts`](../../packages/engine-core/src/l2/pk/volatile.ts) | Volatile/N2O uptake and distribution (tables §5d/§6.1): a breathing-circuit volume, the alveolar gas (FRC), and three tissue groups in parallel on the cardiac output — vessel-rich group (VRG, whose tension is the brain's |
@@ -460,6 +463,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`l2/pk/route-honoured.test.ts`](../../packages/engine-core/test/l2/pk/route-honoured.test.ts) | 0 | 0 |
 | [`l2/pk/route-models.test.ts`](../../packages/engine-core/test/l2/pk/route-models.test.ts) | 0 | 4 |
 | [`l2/pk/sux-repeat.test.ts`](../../packages/engine-core/test/l2/pk/sux-repeat.test.ts) | 0 | 0 |
+| [`l2/pk/tci-sets.test.ts`](../../packages/engine-core/test/l2/pk/tci-sets.test.ts) | 0 | 0 |
 | [`l2/pk/tci.test.ts`](../../packages/engine-core/test/l2/pk/tci.test.ts) | 0 | 0 |
 | [`l2/pk/units-gamma.test.ts`](../../packages/engine-core/test/l2/pk/units-gamma.test.ts) | 0 | 0 |
 | [`l2/pk/volatile-cbf.test.ts`](../../packages/engine-core/test/l2/pk/volatile-cbf.test.ts) | 0 | 0 |
