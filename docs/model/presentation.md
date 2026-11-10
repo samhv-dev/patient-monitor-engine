@@ -396,6 +396,24 @@ renderer, audio and skin contracts.
 | `briefingLayer` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The briefing layer over a learners' monitor (the shell's stage: |
 | `followBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | A follower's side: |
 | `mountHostBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The host's side: |
+| `actionSection` | [`apps/demo/src/app/builder/action-editor.ts`](../../apps/demo/src/app/builder/action-editor.ts) | The Actions section over `form`; |
+| `routeState` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | How the engine takes a dose of `drugId` by `route`: |
+| `amountProblem` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Why `a` is not a block the schema accepts, or null. |
+| `setAmount` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | `a` with field `k` set to `n` (undefined: |
+| `amountWords` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | An amount in words, as the grader asks for it ("2–3", "≥ 10", "20 ± 2"). |
+| `amountAll` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Every number of an amount in words, for "the card keeps …" ("2.5 mg/kg, accepted 2–3"). |
+| `amountWarning` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | A builder warning (§5.5, never a block) about an amount no number can satisfy: |
+| `actionIdProblem` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Why `id` cannot be action `i`'s id, or null. |
+| `actionIdFromLabel` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | An id for a new action from its label, unique among the card's actions. |
+| `renameAction` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Action `i` renamed to `to`, and every mention with it (in place, each string where it was). |
+| `reachablePhases` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The phases the case can reach from its start, by the phases' `next` lists. |
+| `draftBlock` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | ------------------------------------------------------------------------------------------- a new action, a kind The criteria block a kind starts with, complete enough for the validator once the autho |
+| `blockMissing` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | A draft block made complete: |
+| `setKind` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Write `block` as kind `kind`'s criteria on `a` (decision: |
+| `instructorRow` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | --------------------------------------------------------------------------------------------- Instructor v2's row The ACTION row Instructor v2 draws for action `i` in its first phase (`phaseRowsOf`, i |
+| `recordOf` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | A press's command as the driver records it (administrationOf's shapes, for the commands a card's `give` sends). |
+| `gradeExamples` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The examples of how grade() grades action `i` of `doc` (§5.4, mock-up 3 "How it grades"). |
+| `actionWarnings` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The builder's warnings about the actions (§5.5), as validator-shaped lines (`<path>: |
 | `readCardFile` | [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A file's text as a card the builder can open. |
 | `place` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Every line of a validation result on its field, errors first, each list in the validator's order. |
 | `checker` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Validation on every change: |
@@ -403,6 +421,10 @@ renderer, audio and skin contracts.
 | `fieldOf` | [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The field a validator path lands on. |
 | `formOf` | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The form of a card: |
 | `docOf` | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The document the form writes: |
+| `coded` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | Text with the format's own names (a variable `phaseRuleWords` prints by name, a rhythm id) in `<code>`. |
+| `select` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | A select over `groups` of [value, text]; |
+| `numInput` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | A number field over `o[k]`: |
+| `ruleEditor` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | A truth rule as a tree an author reads and changes (§5.3: |
 | `phaseSection` | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | The Phases section over `form`; |
 | `numProblem` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Why a typed number is not written, or null when it is one the schema accepts. |
 | `leafComplete` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | A leaf being written in the "add a condition" form: |
@@ -753,7 +775,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -764,6 +786,8 @@ Exported without a doc comment: `builderPage`, `editsAt`, `rawNames`, `bookmark`
 | [`apps/demo/src/app/alarms.ts`](../../apps/demo/src/app/alarms.ts) | The instructor's alarm mirror in glossary words (research/11 §5.16 rules 1 and 2). |
 | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The Debrief archive (the owner's board "Finish 2", approved 30 October): every debrief "Finish the case" saves, kept in THIS browser (the debriefs in IndexedDB, their index in localStorage) until the instructor clears it |
 | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The Case briefing (the owner's board Orientation 7b and its phone and Persian twins, 30 October): when a card with a `briefing` loads, every learners' screen — the host's Monitor view, a second-screen learner monitor and |
+| [`apps/demo/src/app/builder/action-editor.ts`](../../apps/demo/src/app/builder/action-editor.ts) | The builder's Actions section (docs/plans/scenario-builder.md §5.4, mock-up 03-action-editor; piece B4): what the team is expected to do, and how each act is graded, one action open at a time. |
+| [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The action editor's model (docs/plans/scenario-builder.md §5.4, piece B4): what an action may say and how it is graded. |
 | [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A card as a file (docs/plans/scenario-builder.md §8, "Export and import as files"; piece B2): a draft leaves the browser as its card JSON, `<id>.json`, the format a library card has (`JSON.stringify(card, null, 2)` and a |
 | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | The builder's validation (docs/plans/scenario-builder.md §5.1, §5.5; piece B1): the controller's own validator, run on the document the form would write, so the author sees exactly what a load would see; debounced, so ty |
 | [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts) | The builder's layer 1 (docs/plans/scenario-builder.md §8; piece B2): every draft card kept in THIS browser, with its local snapshots, in the pattern the Debrief archive uses since #370 (archive.ts): each body (the card's |
@@ -1017,6 +1041,7 @@ Exported without a doc comment: `builderPage`, `editsAt`, `rawNames`, `bookmark`
 | [`apps/demo/e2e/audit-snapshot.e2e.ts`](../../apps/demo/e2e/audit-snapshot.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/audit-timeline.e2e.ts`](../../apps/demo/e2e/audit-timeline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/audit-worker.e2e.ts`](../../apps/demo/e2e/audit-worker.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/builder-action-editor.e2e.ts`](../../apps/demo/e2e/builder-action-editor.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-local-store.e2e.ts`](../../apps/demo/e2e/builder-local-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-phase-editor.e2e.ts`](../../apps/demo/e2e/builder-phase-editor.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/case-briefing.e2e.ts`](../../apps/demo/e2e/case-briefing.e2e.ts) | 0 | 0 |
@@ -1101,6 +1126,8 @@ Exported without a doc comment: `builderPage`, `editsAt`, `rawNames`, `bookmark`
 | [`apps/demo/src/app/about.test.ts`](../../apps/demo/src/app/about.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/alarms.test.ts`](../../apps/demo/src/app/alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/archive.test.ts`](../../apps/demo/src/app/archive.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/action-editor.dom.test.ts`](../../apps/demo/src/app/builder/action-editor.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/actions.test.ts`](../../apps/demo/src/app/builder/actions.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/card-file.test.ts`](../../apps/demo/src/app/builder/card-file.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/checks.test.ts`](../../apps/demo/src/app/builder/checks.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/drafts.test.ts`](../../apps/demo/src/app/builder/drafts.test.ts) | 0 | 0 |

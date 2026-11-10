@@ -622,7 +622,7 @@ export function actionSection(form: CardForm, changed: () => void, redrawn: () =
     const rkey = `repeat:${i}`;
     const mode = a.repeat ? 'repeat' : a.repeatWhile ? 'repeatWhile' : '';
     const ms = select(String(forms[rkey] ?? mode), [[null, [['', 'no repeat'], ['repeat', 'again every interval, while its phases hold'], ['repeatWhile', 'again while a rule holds']]]], 'Repeat: how');
-    const rParts: Array<HTMLElement | string> = [h('div', { class: 'sb-leafrow' }, h('span', { class: 'sb-hint' }, 'Again'), ms)];
+    const rParts: Array<HTMLElement | string> = [h('div', { class: 'sb-leafrow' }, h('span', { class: 'sb-hint' }, 'Repeat'), ms)];
     const rCtl: HTMLElement[] = [ms];
     const needMin = (x: Rec) => (x.min === undefined && x.value === undefined ? 'a repeat needs its shortest interval (the lowest or the value)' : null);
     if (forms[rkey]) {

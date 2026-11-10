@@ -118,12 +118,14 @@
    violations and the press as lists, and "How it grades" as grade()'s rows; the app's tokens only, hints on
    --text-muted (4.5:1). */
 .sb-root .sb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.sb-root .sb-cols > .field, .sb-root .sb-crits, .sb-root .sb-crit > * { min-width: 0; }
+/* WebKit counts a narrowed select's own long option text as overflow of the page (it scrolled sideways at 1280 px): clipped */
+.sb-root .sb-edit select.input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .sb-root .sb-crits { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bezel-0); }
 .sb-root .sb-crit { display: grid; gap: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; font-size: 13.5px; }
 .sb-root .sb-crit .sb-num { width: 6em; }
 .sb-root .sb-crit-k { font: 600 11.5px/1.2 var(--font-plex-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
 .sb-root .sb-check { display: inline-flex; align-items: center; gap: 8px; min-height: 28px; font-size: 13.5px; color: var(--text); cursor: pointer; }
-.sb-root .sb-check input[type='checkbox'] { width: 18px; height: 18px; }
 .sb-root .sb-routes { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .sb-root .sb-route { display: grid; gap: 0; }
 .sb-root .sb-route .sb-hint { padding-left: 26px; font-size: 12px; }
@@ -135,7 +137,7 @@
 .sb-root .sb-rulewrap > .sb-rule { justify-self: stretch; }
 .sb-root .sb-viols { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
 .sb-root .sb-viol { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--bad); border-radius: 8px; background: var(--bezel-0); }
-.sb-root .sb-viol > .btn { justify-self: start; }
+.sb-root .sb-viol > .btn, .sb-root .sb-edit .field > .btn, .sb-root .sb-crit > .btn, .sb-root .sb-crit .sb-setting > .btn { justify-self: start; }
 .sb-root .sb-actions .sb-out small { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-root .sb-actions .sb-pl { max-width: 26em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-root .btn.sb-inline { min-height: 24px; padding: 0 6px; }
