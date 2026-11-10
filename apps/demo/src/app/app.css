@@ -390,7 +390,7 @@ body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .ip-peer-go { font-size: 17px; }
 .ip-peer-error:not(:empty) { margin: 0; }
 .ip-peer-notice { margin: 0 var(--s-3) var(--s-2); }
-.ip-peer-room { grid-column: 1; }
+.ip-peer-room, .lr-pin-room { grid-column: 1; }
 .ip-peer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
 .ip-peer-row b { font-weight: 500; color: var(--text-strong); }
 .ip-peer-when { color: var(--text-muted); }
@@ -406,7 +406,7 @@ body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .ip-peer-qr .room-qr { margin: 8px 0; }
 .ip-peer-qr .room-qr svg { width: 160px; height: 160px; }
 .ip-peer-url { display: block; word-break: break-all; color: var(--text-strong); }
-.ip-peer-room .hint { margin: 10px 0 0; }
+.ip-peer-room .hint, .lr-pin-room .hint { margin: 10px 0 0; }
 .page.narrow { max-width: 760px; }
 .page.wide { max-width: none; }
 .framed iframe { height: calc(100dvh - 220px); min-height: 480px; border: 1px solid var(--line); border-radius: var(--r-card); }

@@ -109,7 +109,7 @@ export function learnerPinCard(d: LearnerPinDeps): { el: HTMLElement; draw(): vo
   }, 'ip-peer-change lr-pin-change');
   const pinBox = h('div', { class: 'ip-peer-pinbox' }, h('span', { class: 'ip-peer-pin-label' }, W.label), value, hold, change);
   const noRelay = h('p', { class: 'hint ip-peer-norelay' }, W.noRelay);
-  const el = h('section', { class: 'room-card ip-peer-room lr-pin-room', 'aria-labelledby': 'lr-pin-h' },
+  const el = h('section', { class: 'room-card lr-pin-room', 'aria-labelledby': 'lr-pin-h' },
     h('h2', { id: 'lr-pin-h' }, W.heading),
     h('div', { class: 'ip-peer-row', role: 'status', 'aria-live': 'polite' }, dot, h('b', {}, W.heading), state),
     denials, pinBox, h('p', { class: 'hint' }, W.hint), noRelay);
