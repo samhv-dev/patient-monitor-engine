@@ -54,7 +54,8 @@ export function benchFiles(): FormularyFiles {
     'benchsolution.json': {
       drugId: 'benchsolution',
       products: [
-        { id: 'fixture-solution', form: 'solution', strength: { amount: 5, unit: 'mg', perVial: false, src: 'fixture-label' }, prepTime: { gap: 'LQ7' } },
+        { id: 'fixture-solution', form: 'solution', strength: { amount: 5, unit: 'mg', perVial: false, src: 'fixture-label' }, prepTime: { gap: 'LQ7' },
+          inUse: [{ h: 24, tempC: 25, condition: 'Fixture: once diluted, at room temperature.', src: 'fixture-label' }] },
         // The same drug in micrograms per mL: may not be mixed with the mg product in one preparation.
         { id: 'fixture-solution-mcg', form: 'solution', strength: { amount: 500, unit: 'mcg', perVial: false, src: 'fixture-label' } },
       ],
@@ -68,7 +69,17 @@ export function benchFiles(): FormularyFiles {
       admixtures: [
         { with: 'benchpowder', verdict: 'conditional', statement: 'Fixture: clear when diluted first.', src: 'fixture-stabilis', crossCheck: cc },
       ],
-      stability: [],
+      // Rows that share diluent, container and temperature and differ only in the concentration they were measured at
+      // (brief 127): the bench picks the row by the preparation's concentration, never one row for another.
+      stability: [
+        { diluent: 'saline', container: 'syringe-pp', tempC: 25, concentration: { amount: 1, unit: 'mg/mL', src: 'fixture-stabilis' }, points: [[4, 0.8]], statement: 'Fixture: 1 mg/mL, 80 % at 4 h.', src: 'fixture-stabilis', crossCheck: cc },
+        { kind: 'stable', diluent: 'saline', container: 'syringe-pp', tempC: 25, concentration: { amount: 2, max: 3, unit: 'mg/mL', src: 'fixture-stabilis' }, points: [[24, 0.95]], statement: 'Fixture: 2-3 mg/mL, stable 24 h.', src: 'fixture-stabilis', crossCheck: cc },
+        { diluent: 'saline', container: 'syringe-pp', tempC: 25, concentration: { amount: 500, unit: 'mcg/mL', src: 'fixture-stabilis' }, points: [[2, 0.6]], statement: 'Fixture: 500 µg/mL, 60 % at 2 h.', src: 'fixture-stabilis', crossCheck: cc },
+        { diluent: 'saline', container: 'syringe-pp', tempC: 25, concentration: { amount: 4000, unit: 'mg/L', src: 'fixture-stabilis' }, points: [[1, 0.7]], statement: 'Fixture: 4 g/L, 70 % at 1 h.', src: 'fixture-stabilis', crossCheck: cc },
+        // A row whose source states no concentration: it answers for any concentration no stated row covers.
+        { diluent: 'saline', container: 'bag-pvc', tempC: 25, points: [[6, 0.5]], statement: 'Fixture: concentration not stated, 50 % at 6 h.', src: 'fixture-stabilis', crossCheck: cc },
+        { diluent: 'saline', container: 'bag-pvc', tempC: 25, concentration: { amount: 5, unit: 'mg/mL', src: 'fixture-stabilis' }, points: [[6, 0.9]], statement: 'Fixture: 5 mg/mL, 90 % at 6 h.', src: 'fixture-stabilis', crossCheck: cc },
+      ],
       has: { stabilis: true, trissel: true, monograph: true },
     },
     // An ampoule whose label gives the whole content but not the volume: it cannot be drawn by mL nor by the ampoule.

@@ -120,6 +120,48 @@ describe('a fixture that keeps every rule passes', () => {
   });
 });
 
+describe('the three fields the FS batch needed (brief 127): a row\'s concentration, a "stable" marker, a label\'s in-use time', () => {
+  const withFields = () => {
+    const f = fixture();
+    f['fixturedrug.json'].products[0].inUse = [{ h: 24, tempC: 25, condition: 'Fixture: diluted, below 25 °C.', src: 'fixture-label' }, { h: 72, condition: 'Fixture: refrigerated.', src: 'fixture-label' }];
+    f['fixturedrug.json'].stability[0].concentration = { amount: 1, unit: 'mg/mL', src: 'fixture-stabilis' };
+    f['fixturedrug.json'].stability.push({ kind: 'stable', concentration: { amount: 0.5, max: 2, unit: 'mg/mL', src: 'fixture-stabilis' }, diluent: 'water', container: 'syringe-pp', tempC: 25, points: [[24, 0.9]], statement: 'Fixture: stable 24 h.', src: 'fixture-stabilis', crossCheck: { trissel: 'not listed' } });
+    return f;
+  };
+  it('are admitted by the schema and the source check, and the loader returns them typed', () => {
+    expect(shapeErrors(withFields())).toEqual([]);
+    expect(why(check(withFields()))).toEqual([]);
+    const r = loadFormulary(withFields(), FIXTURE_IDS);
+    expect(r.ok && r.formulary.drugs.fixturedrug?.stability[1]?.concentration).toEqual({ amount: 0.5, max: 2, unit: 'mg/mL', src: 'fixture-stabilis' });
+    expect(r.ok && r.formulary.drugs.fixturedrug?.stability[1]?.kind).toBe('stable');
+    expect(r.ok && r.formulary.drugs.fixturedrug?.products[0]?.inUse?.[0]?.h).toBe(24);
+  });
+  it('each is a sourced number (rule 1): a concentration or an in-use time without its src is refused', () => {
+    const c = withFields();
+    delete c['fixturedrug.json'].stability[0].concentration.src;
+    expect(why(check(c))).toEqual(['fixturedrug.json/stability/0/concentration/amount: a number with no src beside it (nor a gap)']);
+    const u = withFields();
+    delete u['fixturedrug.json'].products[0].inUse[0].src;
+    expect(why(check(u))).toEqual([
+      'fixturedrug.json/products/0/inUse/0/h: a number with no src beside it (nor a gap)',
+      'fixturedrug.json/products/0/inUse/0/tempC: a number with no src beside it (nor a gap)',
+    ]);
+  });
+  it('the schema refuses their wrong shapes', () => {
+    const bad = (edit: (d: any) => void) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      const f = withFields();
+      edit(f['fixturedrug.json']);
+      return shapeErrors(f);
+    };
+    expect(bad((d) => (d.stability[1].kind = 'curve'))).toEqual(['fixturedrug.json/stability/1/kind: must be equal to one of the allowed values']);
+    expect(bad((d) => (d.stability[0].concentration.unit = 'mg'))).toEqual(['fixturedrug.json/stability/0/concentration/unit: must match pattern "^(g|mg|mcg|µg|ng|IU|units|mmol|mEq)/(mL|L)$"']);
+    expect(bad((d) => delete d.stability[0].concentration.amount)).toEqual(["fixturedrug.json/stability/0/concentration: must have required property 'amount'"]);
+    expect(bad((d) => (d.stability[0].concentration.amount = 0))).toEqual(['fixturedrug.json/stability/0/concentration/amount: must be > 0']);
+    expect(bad((d) => delete d.products[0].inUse[0].condition)).toEqual(["fixturedrug.json/products/0/inUse/0: must have required property 'condition'"]);
+    expect(bad((d) => (d.products[0].inUse = []))).toEqual(['fixturedrug.json/products/0/inUse: must NOT have fewer than 1 items']);
+  });
+});
+
 describe("each of §5's rules fails on a fixture built to break it", () => {
   it('rule 1: a bare number (no src beside it, no gap)', () => {
     const f = fixture();
@@ -163,16 +205,58 @@ describe("each of §5's rules fails on a fixture built to break it", () => {
     delete f['fixturedrug.json'].stability[0].crossCheck.ruling;
     expect(why(check(f))).toEqual(['fixturedrug.json/stability/0/crossCheck/ruling: `differs` needs a ruling: by, date (YYYY-MM-DD), and which source the entry follows']);
   });
-  it('rule 3: a statement on Trissel while Stabilis is the record; `has` that does not match the sources cited; no `has`', () => {
+  it('rule 3: a statement on a label or an unknown kind; `has` that does not match the sources cited; no `has`', () => {
     const t = fixture();
-    t['fixturedrug.json'].admixtures[0].src = 'fixture-trissel';
-    expect(why(check(t))).toEqual(['fixturedrug.json/admixtures/0/src: a statement cites Stabilis, the source of record (Trissel only when has.stabilis is false)']);
+    t['fixturedrug.json'].admixtures[0].src = 'fixture-label';
+    expect(rules(check(t))).toEqual([3]);
+    expect(why(check(t))).toEqual(['fixturedrug.json/admixtures/0/src: a statement cites Stabilis, the source of record, or Trissel where Stabilis has no statement for it']);
     const h = fixture();
     h['fixturedrug.json'].has.trissel = false;
     expect(why(check(h))).toEqual(['fixturedrug.json/has/trissel: has.trissel is false but the file cites a trissel source']);
     const n = fixture();
     delete n['diluents/water.json'].has;
     expect(why(check(n))).toEqual(['diluents/water.json/has: every file has `has` with stabilis, trissel and monograph, each true or false']);
+  });
+  it('rule 3, per statement: a Trissel-only statement carrying its own Trissel source and page is accepted in a file Stabilis covers', () => {
+    // The fixture file has has.stabilis true (its other statements cite Stabilis); this one statement is Trissel's alone.
+    const f = fixture();
+    f['fixturedrug.json'].admixtures[0] = { ...f['fixturedrug.json'].admixtures[0], verdict: 'incompatible', statement: 'Fixture, Trissel only: a haze forms.', src: 'fixture-trissel', crossCheck: { trissel: 'agrees', src: 'fixture-trissel' } };
+    expect(f['fixturedrug.json'].has.stabilis).toBe(true);
+    expect(why(check(f))).toEqual([]);
+    expect(shapeErrors(f)).toEqual([]);
+    // and the same in a stability row and a diluent statement; with every statement Trissel's, the file cites no
+    // Stabilis source and its flag says so (the rocuronium case: has.stabilis false, statements from Trissel)
+    f['fixturedrug.json'].stability[0] = { ...f['fixturedrug.json'].stability[0], src: 'fixture-trissel', crossCheck: { trissel: 'agrees', src: 'fixture-trissel' } };
+    f['fixturedrug.json'].diluents[1].compat = { ...f['fixturedrug.json'].diluents[1].compat, src: 'fixture-trissel', crossCheck: { trissel: 'agrees', src: 'fixture-trissel' } };
+    expect(why(check(f))).toEqual(['fixturedrug.json/has/stabilis: has.stabilis is true but the file does not cite a stabilis source']);
+    f['fixturedrug.json'].has.stabilis = false;
+    expect(why(check(f))).toEqual([]);
+  });
+  it('rule 3, per statement: a Trissel-only statement is refused when it does not carry its own Trissel source and page', () => {
+    const trisselOnly = (crossCheck: unknown) => {
+      const f = fixture();
+      f['fixturedrug.json'].admixtures[0] = { ...f['fixturedrug.json'].admixtures[0], src: 'fixture-trissel', crossCheck };
+      return f;
+    };
+    const own = 'fixturedrug.json/admixtures/0/crossCheck: a statement taken from Trissel (Stabilis has none for it) carries its own Trissel source and page: crossCheck { trissel: "agrees", src: the statement\'s own Trissel key }';
+    // its cross-check says Trissel does not list it, or differs from it: not Trissel's statement
+    expect(why(check(trisselOnly({ trissel: 'not listed' })))).toEqual([own]);
+    expect(rules(check(trisselOnly({ trissel: 'not listed' })))).toEqual([3]);
+    expect(why(check(trisselOnly({ trissel: 'differs', src: 'fixture-trissel', ruling: { by: 'fixture orchestrator', date: '2026-11-10', follows: 'trissel' } })))).toEqual([own]);
+    // its cross-check names another Trissel page than the one the statement cites
+    const other = trisselOnly({ trissel: 'agrees', src: 'fixture-trissel-2' });
+    other['sources.json']['fixture-trissel-2'] = { ...other['sources.json']['fixture-trissel'], page: 2 };
+    expect(why(check(other))).toEqual([own]);
+    // its Trissel source has no page: rule 2 for the source, rule 3 for the statement that leans on it
+    const nopage = trisselOnly({ trissel: 'agrees', src: 'fixture-trissel' });
+    delete nopage['sources.json']['fixture-trissel'].page;
+    expect(rules(check(nopage)).sort()).toEqual([2, 3]);
+    expect(why(check(nopage))).toContain('fixturedrug.json/admixtures/0/src: a statement taken from Trissel cites a Trissel page; "fixture-trissel" has none');
+  });
+  it('rule 3, per statement: a statement whose src resolves nowhere is refused once, by rule 1 and rule 3', () => {
+    const f = fixture();
+    f['fixturedrug.json'].admixtures[0].src = 'nowhere';
+    expect(rules(check(f)).sort()).toEqual([1, 3]);
   });
   it('rule 4: a gap without an LQ id; an id not in §10; a gap where the bench needs the number; a gap holding a number', () => {
     const f = fixture();
