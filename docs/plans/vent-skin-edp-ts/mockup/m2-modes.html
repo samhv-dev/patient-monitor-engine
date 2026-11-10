@@ -1,0 +1,16 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EDP-TS-style face: operative modes</title><link rel="stylesheet" href="../../../../apps/demo/src/app/app.css"><link rel="stylesheet" href="face.css"><script src="face.js"></script></head><body><script>
+face({ mode: "VCV", wave: "▭", note: "m2 — the Mode key pressed: the device&#39;s two mode windows side by side (in the device the second opens from the last row). Dashed rows: present and visibly unavailable until their piece is built, with the reason under the name (plan §3, §7).",
+  extra: [(s, H) => {
+    const w1 = H("div", { class: "win", style: "left:300px;top:150px;width:300px;height:480px" });
+    w1.append(H("div", { class: "wt", html: "Operative Modes" }));
+    [["VCV", "hi"], ["PCV", ""], ["PSV/CPAP", "na", "needs piece V2"], ["SIMV(PCV)+PSV", "na", "needs piece V6"], ["SIMV(VCV)+PSV", "na", "needs piece V6"], ["Noninvasive (NIV)", "na", "needs piece V8"], ["Other Operative modes", "", "", "▸"]]
+      .forEach(([t, c, why, r]) => w1.append(H("div", { class: "row " + c, html: t + (r ? `<span class="r">${r}</span>` : "") + (why ? `<span class="why">${why}</span>` : "") })));
+    w1.append(H("div", { class: "foot", html: "Press [Knob] Select - [Esc] Exit" }));
+    const w2 = H("div", { class: "win", style: "left:610px;top:150px;width:276px;height:480px" });
+    w2.append(H("div", { class: "wt", html: "Other Operative modes" }));
+    [["MMV+PSV", "na", "needs piece V9"], ["PSV+VT Assured", "na", "needs piece V9"], ["APRV", "na", "needs piece V10"], ["PRVC", ""]]
+      .forEach(([t, c, why]) => w2.append(H("div", { class: "row " + c, html: t + (why ? `<span class="why">${why}</span>` : "") })));
+    w2.append(H("div", { class: "foot", html: "Press [Knob] Select - [Esc] Exit" }));
+    s.append(w1, w2);
+  }] });
+</script></body></html>

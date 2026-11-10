@@ -1,0 +1,98 @@
+/* Mock-up stylesheet for the EDP-TS-style ventilator face (plan docs/plans/vent-skin-edp-ts.md, §4 and §5).
+   Drawn from plain shapes. Fonts come from the app's own tokens (app.css, --font-ui / --font-num); every colour below is a
+   PROPOSED token of the face's stylesheet, read from the owner's photographs (assets/ventilators/edp-ts/, not in the
+   repository; uncorrected white balance, 7 x 7 px patch means, plan §2.13). No photograph, frame or manual page is used. */
+:root {
+  --edp-screen-hdr: #c9ced2;      /* header and left column, light grey        IMG_1542, IMG_1546 */
+  --edp-value-ink: #111418;       /* numbers and labels on the light areas     IMG_1542 */
+  --edp-cat-ink: #1f4fb0;         /* the patient category word ("ADL")         IMG_1542 */
+  --edp-msgbar: #8db4e0;          /* the message bar under the header          IMG_1542, IMG_1546 */
+  --edp-axis: #aed6ef;            /* the axis strips of the waveform panels    IMG_1542, IMG_1546 */
+  --edp-wave-bg: #0d1240;         /* waveform and loop panels, dark navy       IMG_1542, IMG_1546 */
+  --edp-wave-ink: #e9eef7;        /* panel titles and scale numbers            IMG_1542 */
+  --edp-insp: #96ef3f;            /* inspiration trace, green                  IMG_1546 (saturated-pixel median) */
+  --edp-exp: #df5e4e;             /* expiration trace, red                     IMG_1546 (saturated-pixel median) */
+  --edp-tag: #d8c874;             /* alarm-limit tags, yellow                  IMG_1542, IMG_1546 */
+  --edp-key: #d4d6cd;             /* parameter keys and menu rows              IMG_1544, IMG_1546 */
+  --edp-key-lab: #6f8390;         /* the key's label strip                     IMG_1546 */
+  --edp-key-sel: #3e77c8;         /* a selected key / highlighted menu row     IMG_1544, IMG_1546 */
+  --edp-menu-bg: #c0c5c7;         /* window background                         IMG_1544 */
+  --edp-menu-title: #5d6f90;      /* window title bar                          IMG_1544 */
+  --edp-bezel: #e7e3da;           /* the device's light bezel (drawn flat)     IMG_1542 */
+  --edp-hwkey: #b9c8de;           /* hardware keys, pale blue-grey             IMG_1542 */
+  --edp-lamp-high: #fa223f;       /* High lamp lit                             IMG_1542 */
+  --edp-lamp-med: #f7a663;        /* Med/Low lamp lit                          IMG_1542 */
+  --edp-lamp-off: #d3cdc1;        /* a lamp that is off                        IMG_1547 */
+  --edp-unavail: #8d9196;         /* ILLUSTRATIVE (plan §3): a control the model does not honour, greyed */
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #2a2d31; }
+body { font-family: var(--font-ui, system-ui, sans-serif); color: var(--edp-value-ink); }
+.device { position: relative; width: 1180px; height: 870px; margin: 0; background: var(--edp-bezel); border-radius: 18px; }
+.screen { position: absolute; left: 30px; top: 30px; width: 960px; height: 720px; background: var(--edp-screen-hdr); overflow: hidden; border: 3px solid #555a60; }
+/* header */
+.hdr { position: absolute; left: 0; top: 0; width: 960px; height: 96px; }
+.hdr .who { position: absolute; left: 10px; top: 6px; width: 230px; }
+.hdr .cat { font-size: 36px; font-weight: 700; color: var(--edp-cat-ink); line-height: 1; }
+.hdr .mode { font-size: 27px; font-weight: 600; line-height: 1.15; }
+.hdr .backup { font-size: 15px; font-weight: 600; }
+.hdr .clock { position: absolute; left: 175px; top: 8px; font-size: 13px; font-weight: 600; text-align: center; line-height: 1.1; }
+.hdr .vals { position: absolute; left: 246px; top: 0; right: 0; height: 74px; display: grid; grid-template-columns: repeat(8, 1fr); }
+.hdr .cell { border-left: 2px solid #9aa3aa; text-align: center; padding-top: 4px; }
+.hdr .cell b { display: block; font-size: 30px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.hdr .cell i { display: block; font-style: normal; font-size: 12px; line-height: 1.2; }
+.hdr .cell span { display: block; font-size: 14px; font-weight: 600; }
+.tags { position: absolute; left: 246px; top: 74px; right: 0; height: 22px; display: grid; grid-template-columns: repeat(8, 1fr); }
+.tag { margin: 0 3px; background: var(--edp-tag); border: 1px solid #8f8540; font-size: 11px; line-height: 10px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding-right: 6px; font-variant-numeric: tabular-nums; }
+.tag::before { content: ''; width: 18px; height: 14px; margin-right: auto; margin-left: 4px; border-left: 2px solid #333; border-bottom: 2px solid #333; transform: skewX(-25deg); }
+/* message bar */
+.msg { position: absolute; left: 0; top: 98px; width: 960px; height: 34px; background: var(--edp-msgbar); font-size: 17px; font-weight: 600; padding: 6px 0 0 300px; }
+.msg .icons { position: absolute; left: 76px; top: 4px; display: flex; gap: 4px; }
+.msg .icons i { width: 24px; height: 24px; border: 2px solid #2a3c5a; border-radius: 3px; background: #dfe8f3; opacity: .35; }
+.msg .icons i.on { opacity: 1; }
+.msg .alarm { position: absolute; right: 70px; top: 3px; height: 28px; padding: 3px 14px; background: #d92b2b; color: #fff; border: 2px solid #7a1010; font-size: 16px; }
+/* left column */
+.left { position: absolute; left: 0; top: 134px; width: 74px; height: 504px; text-align: center; font-weight: 600; }
+.left .bat { width: 44px; height: 16px; margin: 6px auto 4px; background: #4fbf3a; border: 2px solid #2a6a20; border-radius: 3px; }
+.left .lung { width: 40px; height: 30px; margin: 0 auto; border-radius: 24px 24px 8px 8px; background: #8f9aa5; }
+.left .lab { font-size: 14px; margin-top: 3px; border-top: 2px solid #9aa3aa; }
+.left .v { font-size: 23px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.left .key { width: 62px; height: 44px; margin: 3px auto; background: var(--edp-tag); border: 1px solid #8f8540; font-size: 22px; padding-top: 12px; position: relative; }
+.left .key.small { height: 26px; font-size: 12px; padding-top: 6px; }
+/* waveform panels */
+.waves { position: absolute; left: 76px; top: 134px; width: 500px; height: 504px; }
+.loops { position: absolute; left: 578px; top: 134px; width: 312px; height: 504px; }
+.panel { position: absolute; background: var(--edp-wave-bg); color: var(--edp-wave-ink); }
+.panel .ttl { position: absolute; left: 34px; top: 4px; font-size: 14px; font-weight: 600; }
+.axis { position: absolute; background: var(--edp-axis); color: #10233e; font-size: 11px; }
+.panel svg { position: absolute; }
+/* right column of icon keys */
+.right { position: absolute; left: 892px; top: 134px; width: 66px; height: 504px; display: grid; grid-template-rows: repeat(7, 1fr); gap: 6px; padding: 4px 0; }
+.ikey { background: #c7d3e3; border: 2px solid #6d84a6; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #26364f; text-align: center; line-height: 1.05; }
+.ikey.grey { opacity: .45; }
+/* bottom row of set parameters */
+.params { position: absolute; left: 0; top: 640px; width: 960px; height: 80px; display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; padding: 2px 4px; }
+.pk { background: var(--edp-key); border: 2px solid #8c9396; border-radius: 4px; text-align: center; position: relative; font-weight: 600; }
+.pk b { display: block; font-size: 27px; line-height: 1.05; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.pk i { display: block; font-style: normal; font-size: 12px; }
+.pk span { position: absolute; left: 0; right: 0; bottom: 0; background: var(--edp-key-lab); color: #fff; font-size: 12px; line-height: 16px; }
+.pk.sel { background: var(--edp-key-sel); color: #fff; }
+.pk.ghost { opacity: .5; }
+/* windows (menus) */
+.win { position: absolute; background: var(--edp-menu-bg); border: 2px solid #59606a; box-shadow: 0 2px 0 #59606a; }
+.win .wt { background: var(--edp-menu-title); color: #fff; font-size: 20px; font-weight: 600; padding: 6px 10px; }
+.win .row { margin: 10px 12px; height: 38px; background: var(--edp-key); border: 2px solid #8c9396; border-radius: 3px; font-size: 20px; padding: 5px 10px; position: relative; }
+.win .row.hi { background: var(--edp-key-sel); color: #fff; }
+.win .row .r { position: absolute; right: 10px; top: 6px; font-size: 16px; }
+.win .row.na { color: var(--edp-unavail); background: #cfd1cc; border-style: dashed; }
+.win .row .why { position: absolute; left: 12px; bottom: -15px; font-size: 11px; color: #3b3f45; font-weight: 600; }
+.win .foot { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 13px; font-weight: 600; }
+/* hardware: lamps, keys, knob */
+.hw { position: absolute; font-weight: 700; font-size: 14px; color: #3a3f48; text-align: center; }
+.lamp { width: 42px; height: 36px; clip-path: polygon(50% 0, 100% 100%, 0 100%); background: var(--edp-lamp-off); margin: 2px auto; border: 0; }
+.lamp.round { clip-path: none; border-radius: 50%; width: 40px; height: 40px; }
+.lamp.high.on { background: var(--edp-lamp-high); }
+.lamp.med.on { background: var(--edp-lamp-med); }
+.hk { width: 74px; height: 50px; background: var(--edp-hwkey); border: 2px solid #8296b5; border-radius: 6px; font-size: 13px; line-height: 1.1; display: flex; align-items: center; justify-content: center; color: #2b3a52; }
+.knob { position: absolute; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle at 45% 40%, #f4efe3 0 55%, #d9d2c2 56% 70%, #6f63d8 71% 76%, #cfc8b8 77%); }
+.note { position: absolute; left: 30px; right: 30px; bottom: 6px; font-size: 12px; color: #4a4d52; font-weight: 600; }
