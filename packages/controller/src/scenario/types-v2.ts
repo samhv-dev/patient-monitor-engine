@@ -16,14 +16,18 @@ export type TruthVar =
   | 'shunt' | 'tempCore' | 'contractility' | 'svr' | 'k' | 'qtc' | 'volumeStatus' | 'paceThresholdMa'
   | 'map' | 'ph' | 'lactate' | 'mhActivity' | 'mhExcess' | 'dantroleneE' | 'setMinuteVentilationLMin';
 
+/** What a value, slope or unchanged leaf of a phase rule reads: a TruthVar, or (DC1) the patient's plasma or effect-site
+ *  concentration of a drug, `cp:<drugId>` / `ce:<drugId>` (concentration.ts; the validator refuses a drug with none). */
+export type RuleVar = TruthVar | `cp:${string}` | `ce:${string}`;
+
 /** `pulseLoss`, `rosc`, or `rhythm:<id>` (the rhythm id the engine draws). */
 export type PhaseSignal = 'pulseLoss' | 'rosc' | `rhythm:${string}`;
 
 /** A rule on engine truth (§4): one leaf or combinator. No manual, event or afterS leaf (the schema refuses them). */
 export type PhaseRule =
-  | { value: { var: TruthVar; op: Op; value: number; forS?: number } }
-  | { slope: { var: TruthVar; op: '<' | '<=' | '>' | '>='; perMin: number; overS: number } }
-  | { unchanged: { var: TruthVar; withinPct: number; overS: number; since?: never } | { var: TruthVar; withinPct: number; since: 'phaseStart'; overS?: never } }
+  | { value: { var: RuleVar; op: Op; value: number; forS?: number } }
+  | { slope: { var: RuleVar; op: '<' | '<=' | '>' | '>='; perMin: number; overS: number } }
+  | { unchanged: { var: RuleVar; withinPct: number; overS: number; since?: never } | { var: RuleVar; withinPct: number; since: 'phaseStart'; overS?: never } }
   | { visited: string }
   | { signal: PhaseSignal }
   | { all: PhaseRule[] }
@@ -137,15 +141,23 @@ export interface Phase extends C {
   holdS?: number;
   /** What the learners see at this phase, shown beside its rule. */
   cue?: string;
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
   next?: string[];
 }
 
-export interface Outcome extends C { id: string; text: string; rule: PhaseRule; anchor: Anchor; withinS: number }
+export interface Outcome extends C {
+  id: string; text: string; rule: PhaseRule; anchor: Anchor; withinS: number;
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
+}
 export interface ScriptEntry extends C {
   id: string;
   /** `phase:<id>` (its entry), `action:<id>#<n>` (the nth taking), or a scenario time. */
   on: `phase:${string}` | `action:${string}#${number}` | { atScenarioS: number };
   commands: DocCommand[];
+  /** Provenance of its numbers, quoted and cited; never interpreted (as an action's src, plan F-10). */
+  src?: string;
 }
 
 /** The /1 header, whole (§3 and the plan's Q32). */

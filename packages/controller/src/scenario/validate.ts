@@ -11,6 +11,7 @@ import schemaV2 from '../../scenarios/pme-scenario-2.schema.json';
 import { LEARNER_LAB_PANELS } from '../protocol.ts';
 import type { AnyScenarioDoc, DocCommand, ScenarioDoc, When } from './types.ts';
 import type { Anchor, DisplayRule, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
+import { concentrationVar } from './concentration.ts';
 
 export const SCENARIO_SCHEMA: object = schema;
 export const SCENARIO_SCHEMA_V2: object = schemaV2;
@@ -194,7 +195,12 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
   const cls = (c: string | undefined, path: string) => c === undefined || classes.has(c) || errors.push(`${path}: no drug class "${c}" in the engine`);
   const rule = (r: PhaseRule | undefined, path: string): void => {
     if (!r) return;
-    if ('visited' in r) phase(r.visited, `${path}/visited`);
+    const leaf = 'value' in r ? 'value' : 'slope' in r ? 'slope' : 'unchanged' in r ? 'unchanged' : null;
+    if (leaf) {
+      // DC1: a concentration leaf names a drug the engine carries in a compartment model
+      const c = concentrationVar((r as Record<string, { var: string }>)[leaf]!.var);
+      if (c && !c.ok) errors.push(`${path}/${leaf}/var: ${c.reason}`);
+    } else if ('visited' in r) phase(r.visited, `${path}/visited`);
     else if ('signal' in r) {
       const id = r.signal.startsWith('rhythm:') ? r.signal.slice(7) : null;
       if (id !== null && rhythms && !rhythms.has(id)) warnings.push(`${path}/signal: "${id}" is not in this engine`);

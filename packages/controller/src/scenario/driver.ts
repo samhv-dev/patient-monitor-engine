@@ -553,7 +553,17 @@ export class ScenarioDriver {
       // the rhythm id the state event already carries, for a PhaseRunner only (truthInputs adds F4's truths below)
       if (this.cur instanceof PhaseRunner && w.rhythm?.id) this.pending.push({ kind: 'rhythm', id: w.rhythm.id });
     }
-    if (this.cur instanceof PhaseRunner) this.pending.push(...truthInputs(w)); // F4: a /2 runner only
+    if (this.cur instanceof PhaseRunner) {
+      this.pending.push(...truthInputs(w)); // F4: a /2 runner only
+      // DC1: the patient's cp/ce of the drugs the card's rules read (none read: nothing fed, the run as before), from the
+      // panel row; a drug with no row has not been given: 0
+      const conc = this.cur.concentrations;
+      if (w.type === 'drugs' && conc.length) {
+        const values: Record<string, number> = {};
+        for (const c of conc) values[c.name] = w.drugs.find((r) => r.id === c.drugId)?.[c.site] ?? 0;
+        this.pending.push({ kind: 'values', rank: 3, values });
+      }
+    }
   }
 }
 

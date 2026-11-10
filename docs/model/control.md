@@ -49,6 +49,7 @@ transports (`src/protocol.ts`).
 
 | Where | Relation |
 |---|---|
+| [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
 | [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
 
 ## State
@@ -211,6 +212,8 @@ transports (`src/protocol.ts`).
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
 | `createStamper` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Adds {v, session, from, seq, sentAt}. |
 | `briefingOf` | [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts) | The card's briefing with its defaults (60 s, English), or null when it has none. |
+| `concentrationVar` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | A rule variable as a concentration: |
+| `ruleConcentrations` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | The concentration variables a card's rules read, once each, in the order first met: |
 | `manualLabel` | [`scenario/describe.ts`](../../packages/controller/src/scenario/describe.ts) | The manual label of a transition, or null when it has no manual trigger. |
 | `ruleWords` | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | A rule in words ("k > 5.5", "etco2 > 45 for 20 s"). |
 | `grade` | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | Grade the run at sim time `t`: |
@@ -271,6 +274,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`remote/remote-app.ts`](../../packages/controller/src/remote/remote-app.ts) | Remote controller (R7): a phone/tablet page that joins a session code, shows the generated controls and a live 1 Hz readout, and never renders waveforms (samples never reach it anyway). |
 | [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts) | A card's Case briefing with its defaults (pme-scenario/1 `briefing`; owner's board Orientation 7b): what the host sends the learners' screens when the card loads. |
 | [`scenario/builtins.ts`](../../packages/controller/src/scenario/builtins.ts) | Built-in scenarios (JSON under packages/controller/scenarios/). |
+| [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and effect-site concentration in the PATIENT as a pme-scenario/2 phase-rule variable, `cp:<drugId>` and `ce: |
 | [`scenario/describe.ts`](../../packages/controller/src/scenario/describe.ts) | Human-readable trigger text for the panel and the remote ("EtCO2 ≥ 20 for 30 s", …). |
 | [`scenario/driver.ts`](../../packages/controller/src/scenario/driver.ts) | The host-side glue between a ScenarioRunner and the monitor the host owns (brief §3.7: the host owns the simulation, so the scenario runs there). |
 | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | The one grading function of a pme-scenario/2 run (docs/plans/scenario-format-v2.md §6–§8.3; plan F3). |
@@ -342,6 +346,7 @@ None recorded.
 | [`scenario/briefing.test.ts`](../../packages/controller/test/scenario/briefing.test.ts) | 0 | 0 |
 | [`scenario/builtins.test.ts`](../../packages/controller/test/scenario/builtins.test.ts) | 0 | 0 |
 | [`scenario/clock-step-back.test.ts`](../../packages/controller/test/scenario/clock-step-back.test.ts) | 0 | 0 |
+| [`scenario/concentration-vars.test.ts`](../../packages/controller/test/scenario/concentration-vars.test.ts) | 0 | 0 |
 | [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |
