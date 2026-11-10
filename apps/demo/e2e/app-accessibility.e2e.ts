@@ -162,3 +162,57 @@ test("accessibility: the learner remote's PIN form and signed-in page, and the R
   }
   expect(found).toEqual([]);
 });
+
+// Plan learner-action-remote.md L7: the learner remote's Drugs tab on a phone, dark and light: the bench open on a
+// product (the vial, the diluent with its groups, the volume, the container, the preview and the time), then a tray of
+// two (a ready syringe and a preparing one). 44 px targets on touch, names, contrast, one h1, no sideways scroll, and a
+// focus walk through the bench and the tray.
+test("accessibility: the learner remote's Drugs tab with the bench open and a tray of two", async ({ browser }) => {
+  test.setTimeout(150_000);
+  const dir = mkdtempSync(join(tmpdir(), 'l7-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  const relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
+  const found: string[] = [];
+  try {
+    const host = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+    await openApp(host, base, `?relay=${ws}&scenario=showcase-mh-v2#/teach2`, { warmMs: 1500 });
+    const code = await host.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
+    const pin = (await host.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+    for (const theme of ['dark', 'light'] as const) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+      if (theme === 'light') await phone.addInitScript(() => localStorage.setItem('pme.site', JSON.stringify({ schema: 'pme-site/1', theme: 'projector-light' })));
+      const p = await phone.newPage();
+      await p.goto(`${base}/?join=${code}&relay=${ws}#/remote/learner`);
+      for (const d of pin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+      await p.locator('.ip-peer-go').click();
+      await expect(p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`);
+      await expect(p.locator('.lr-bench')).toBeVisible({ timeout: 15_000 });
+      // the bench open: Agilus, one vial, water
+      await p.locator('.lr-search').fill('dantrolene');
+      await p.locator('.lr-pick[data-drug="dantrolene"]').click();
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `drugs products ${theme} ${f.rule}: ${f.what}`));
+      await p.locator('.lr-product[data-product="agilus-120mg"]').click();
+      await expect(p.locator('.lr-time')).toHaveText('Takes 0:50 to prepare');
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `drugs bench ${theme} ${f.rule}: ${f.what}`));
+      if (theme === 'dark') found.push(...(await focusWalk(p, 20)).map((f) => `drugs bench focus: ${f}`));
+      await p.locator('.lr-stage').click();
+      // a second: fentanyl 2 mL with no sourced time, ready at once (LQ7)
+      await p.locator('.lr-search').fill('fentanyl');
+      await p.locator('.lr-pick[data-drug="fentanyl"]').click();
+      await p.locator('.lr-product[data-product="fentanyl-50mcg-ml"]').click();
+      await p.locator('.lr-stage').click();
+      await expect(p.locator('.lr-item')).toHaveCount(2);
+      await expect(p.locator('.lr-item .lr-state[data-state="preparing"]')).toHaveCount(1, { timeout: 10_000 });
+      await expect(p.locator('.lr-item .lr-state[data-state="ready"]')).toHaveCount(1);
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `drugs tray ${theme} ${f.rule}: ${f.what}`));
+      if (theme === 'dark') found.push(...(await focusWalk(p, 30)).map((f) => `drugs tray focus: ${f}`));
+      await phone.close();
+    }
+    await host.context().close();
+  } finally {
+    await relay.close();
+  }
+  expect(found).toEqual([]);
+});

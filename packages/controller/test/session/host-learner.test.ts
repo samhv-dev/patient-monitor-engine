@@ -519,3 +519,42 @@ describe("a preparation's prep event reaches the instructor and its own device o
     for (const s of [other, viewer, defib]) expect(prepsOf(s)).toEqual([]);
   });
 });
+
+// Plan learner-action-remote.md L7 (§4 D7, LQ3 ruled): the host's half of the incompatibility notice, which the remote's
+// tray sounds and shows. Until the instructor shows it, the remote's news carries no finding; `showPrepNotice` records
+// when (the record's `notice`) and sends that remote its preparation WITH the findings, once; a Give before the notice
+// is given all the same, and the record says the notice had not been shown. L9 adds the card and its `prep notice`
+// command that call it.
+describe('L7: the incompatibility notice reaches the remote that staged the preparation, once, with its findings', () => {
+  it('no finding before the notice; after it, a `notice` news to that remote only, with the findings and the time; the record keeps the time', async () => {
+    const x = setup();
+    const lr = await signIn(x);
+    x.tg.at(60);
+    expect((await lr.send(stage('p0000020', { diluent: { id: 'saline', volumeMl: 10 }, container: 'bag-pvc' }))).accepted).toBe(true);
+    expect(x.host.preparation(KEY, 'p0000020')?.notice).toBeNull();
+    x.tg.at(75);
+    expect(x.host.showPrepNotice(KEY, 'p0000020')).toBe(true);
+    await waitFor(() => preps(x.got).some((e) => (e.body as { news: string }).news === 'notice' && e.to === 'lr.1'));
+    const mine = preps(x.got).filter((e) => e.to === 'lr.1');
+    expect(JSON.stringify(mine.filter((e) => (e.body as { news: string }).news !== 'notice'))).not.toContain('findings');
+    const n = mine.find((e) => (e.body as { news: string }).news === 'notice')!;
+    expect(n.body).toMatchObject({ news: 'notice', prep: { id: 'p0000020', notice: { shownAt: 75, findings: [expect.objectContaining({ kind: 'wrongDiluent' }), expect.objectContaining({ kind: 'incompatible', statement: 'Fixture: a haze forms.' })] } } });
+    expect(preps(x.got).find((e) => e.to === x.host.peerId && (e.body as { news: string }).news === 'notice')?.body).toMatchObject({ prep: { notice: { shownAt: 75 } } });
+    expect(x.host.preparation(KEY, 'p0000020')?.notice).toEqual({ shownAt: 75 });
+    expect(x.host.showPrepNotice(KEY, 'p0000020')).toBe(false); // once
+    expect(x.host.showPrepNotice(KEY, 'nope0000')).toBe(false);
+    expect(x.host.showPrepNotice(KEY2, 'p0000020')).toBe(false); // another device's id space
+  });
+
+  it('a Give before the notice is given (LQ3), and the record says no notice had been shown', async () => {
+    const x = setup();
+    const lr = await signIn(x);
+    x.tg.at(60);
+    expect((await lr.send(stage('p0000021', { diluent: { id: 'saline', volumeMl: 10 }, container: 'bag-pvc' }))).accepted).toBe(true);
+    x.tg.at(60 + 130); // the fixture powder's 120 s
+    const id = lr.command(deliver('p0000021', 5));
+    expect((await ack(x.got, id)).accepted).toBe(true);
+    expect(x.tg.got).toHaveLength(1);
+    expect(x.host.preparation(KEY, 'p0000021')?.notice).toBeNull();
+  });
+});

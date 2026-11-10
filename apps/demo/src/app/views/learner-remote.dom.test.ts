@@ -200,6 +200,68 @@ describe("the learner remote's page (L6)", () => {
   });
 });
 
+// L7: the two things L6 left for the drugs menu. The send path: a command from the remote goes out on the follower's
+// socket under the id its learner hello said, with the one sequence (the relay drops a message whose `from` is not the
+// socket's hello id; the host's sequence filter drops an older seq). The sign-in hook: the menus are handed each granted
+// follower once, and told when it goes.
+describe('L7: the learner remote sends under its hello\'s id, and hands each granted follower to the menus', () => {
+  beforeEach(() => {
+    net.links.length = 0;
+    document.body.replaceChildren();
+  });
+
+  it("a command goes out under the hello's `from`, with `issuedBy: learner`, and the sequence keeps rising after the hello", async () => {
+    const m = mount();
+    await m.signIn();
+    host().grant(true);
+    const f = m.v.follower()!;
+    const id = f.command!({ type: 'prep', action: 'discard', prepId: 'abcd1234' });
+    const id2 = f.command!({ type: 'prep', action: 'discard', prepId: 'abcd1235' });
+    const sent = link().sent;
+    const hello = sent.find((x) => x.kind === 'hello')!;
+    const cmds = sent.filter((x) => x.kind === 'command');
+    expect(cmds.map((x) => (x as { body: { id: string } }).body.id)).toEqual([id, id2]);
+    expect(cmds[0]).toMatchObject({ from: hello.from, session: CODE, body: { id, issuedBy: 'learner', type: 'prep', action: 'discard', prepId: 'abcd1234' } });
+    for (const x of sent) expect(x.from).toBe(hello.from);
+    expect(f.peerId).toBe(hello.from);
+    const seqs = sent.map((x) => x.seq);
+    expect(seqs).toEqual([...seqs].sort((a, b) => a - b));
+    expect(new Set(seqs).size).toBe(seqs.length);
+    f.destroy();
+  });
+
+  it('onSignedIn: called once per granted follower (not again on a re-grant), and its return when that follower goes', async () => {
+    const m = mount();
+    const got: unknown[] = [];
+    const gone = vi.fn();
+    m.v.onSignedIn((f) => (got.push(f), gone));
+    await m.signIn();
+    expect(got).toHaveLength(0); // not before the host grants it
+    host().grant(true);
+    host().grant(true); // a re-grant after a reconnect: the same follower
+    expect(got).toEqual([m.v.follower()]);
+    host().grant(false, LEARNER_REASONS.pinChanged);
+    expect(gone).toHaveBeenCalledOnce();
+    await m.signIn();
+    host().grant(true);
+    expect(got).toHaveLength(2);
+    expect(got[1]).toBe(m.v.follower());
+    expect(got[1]).not.toBe(got[0]);
+    m.v.follower()?.destroy();
+  });
+
+  it("the Drugs tab holds the drugs menu it is given; Infusions and Labs keep their one line", () => {
+    history.replaceState(null, '', `/?join=${CODE}#/remote/learner`);
+    const menu = document.createElement('div');
+    menu.className = 'menu';
+    const v = learnerRemoteView({ code: CODE, drugs: menu, follow: () => { throw new Error('not signed in'); } });
+    expect(v.panels.drugs.firstElementChild).toBe(menu);
+    expect(v.panels.infusions.textContent).toBe(LEARNER_WORDS.empty.infusions);
+    expect(v.panels.labs.textContent).toBe(LEARNER_WORDS.empty.labs);
+    expect(Object.keys(LEARNER_WORDS.empty)).toEqual(['infusions', 'labs']);
+  });
+});
+
 describe("Room setup's learner PIN (L6, §4 D9)", () => {
   const pin = (first = '2468') => {
     let v = first;
