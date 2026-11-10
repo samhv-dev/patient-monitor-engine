@@ -1,11 +1,11 @@
 // The scenario builder's page (docs/plans/scenario-builder.md §5, §8, mock-up 01-builder-main; piece B2), in place of
 // the stub that explained the /1 format. `#/scenarios/builder` lists this browser's drafts, opens a /2 library card as a
 // copy and imports a card file; `#/scenarios/builder/<draft>` is the editor: the card's outline, one section (Header and
-// story, Patient and sensors, Case briefing; and B3's Phases, phase-editor.ts), and the checks with the draft's local history. Every change is written
+// story, Patient and sensors, Case briefing; B3's Phases, phase-editor.ts; B4's Actions, action-editor.ts), and the checks with the draft's local history. Every change is written
 // through `docOf`, checked by the controller's validator 300 ms after the last keystroke (`checker`), each line shown on
 // its field (`fieldOf`), and saved in this browser 300 ms after the last change (layer 1, drafts.ts). Export writes
 // the card file (Export waits while the validator refuses, unless this browser could not save the draft: then a file is
-// the only copy). The blocks the next pieces edit (script, actions, outcomes, debrief) are kept as the card has
+// the only copy). The blocks the next pieces edit (script, outcomes, debrief) are kept as the card has
 // them and counted in the outline.
 import { HOME_VERSION, REPO } from '../about.ts';
 import { hhmm } from '../archive.ts';
@@ -17,6 +17,8 @@ import { checker, type Placed } from './checks.ts';
 import { drafts as defaultDrafts, draftRefusalText, type Body, type DraftMeta, type Drafts, type SnapshotMeta } from './drafts.ts';
 import { fieldOf } from './fields.ts';
 import { docOf, formOf, type CardForm } from './form.ts';
+import { actionSection } from './action-editor.ts';
+import { actionWarnings } from './actions.ts';
 import { phaseSection, phaseWarnings, type PhaseSectionView } from './phase-editor.ts';
 import { sections, type SectionId, type SectionView, type Slot } from './sections.ts';
 import './builder.css';
@@ -36,10 +38,10 @@ const when = (ms: number, now = Date.now()): string =>
 const whyWords = (s: SnapshotMeta, m: DraftMeta): string =>
   s.why === 'opened' ? m.from : s.why === 'editing' ? 'after 2 min of editing' : s.why === 'export' ? 'exported' : s.why.replace(/^before restoring (\d+)$/, 'before snapshot $1 was restored');
 const LIBRARY_V2 = () => LIBRARY.filter((c) => (c.doc as { schema?: string }).schema === 'pme-scenario/2');
-const BLOCK_WORDS: ReadonlyArray<[key: string, label: string]> = [['script', 'Script (card-set)'], ['actions', 'Actions'], ['outcomes', 'Outcomes'], ['debriefHints', 'Debrief hints']];
-const SECTION_OF_SLOT: Record<string, SectionId> = { header: 'header', patient: 'patient', briefing: 'briefing', phases: 'phases' };
+const BLOCK_WORDS: ReadonlyArray<[key: string, label: string]> = [['script', 'Script (card-set)'], ['outcomes', 'Outcomes'], ['debriefHints', 'Debrief hints']];
+const SECTION_OF_SLOT: Record<string, SectionId> = { header: 'header', patient: 'patient', briefing: 'briefing', phases: 'phases', actions: 'actions' };
 /** The outline's groups (mock-up 01): the card's own sections, then its course. */
-const OUTLINE: ReadonlyArray<[heading: string, ids: readonly SectionId[]]> = [['Card', ['header', 'patient', 'briefing']], ['Course', ['phases']]];
+const OUTLINE: ReadonlyArray<[heading: string, ids: readonly SectionId[]]> = [['Card', ['header', 'patient', 'briefing']], ['Course', ['phases']], ['The team', ['actions']]];
 const hasSlotFor = (s: SectionView): s is PhaseSectionView => 'slotFor' in s;
 
 export interface BuilderPage {
@@ -142,7 +144,7 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
   };
   const sectionOfLine = (l: Line): SectionId | null => {
     const s = l.at.section;
-    return s === 'header' || s === 'patient' || s === 'briefing' || s === 'phases' ? SECTION_OF_SLOT[s] ?? null : null;
+    return s === 'header' || s === 'patient' || s === 'briefing' || s === 'phases' || s === 'actions' ? SECTION_OF_SLOT[s] ?? null : null;
   };
   const slotOf = (sec: SectionView, l: Line): Slot => {
     if (hasSlotFor(sec)) return sec.slotFor(l.at);
@@ -169,7 +171,7 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
       ...OUTLINE.flatMap(([heading, ids]) => [h('h2', {}, heading), ...o.secs.filter((s) => ids.includes(s.id)).map((s) => {
         const d = dot(s.id);
         return h('button', { type: 'button', class: 'sb-out', 'aria-current': o.cur === s.id ? 'true' : undefined, onclick: () => show(s.id) },
-          h('span', { class: `sb-dot ${d}`, 'aria-hidden': 'true' }), s.title, s.id === 'phases' ? h('small', {}, count('phases')) : null,
+          h('span', { class: `sb-dot ${d}`, 'aria-hidden': 'true' }), s.title, s.id === 'phases' || s.id === 'actions' ? h('small', {}, count(s.id)) : null,
           d ? h('span', { class: 'sr-only' }, d === 'bad' ? ' (refused)' : ' (warning)') : null);
       })]),
       h('h2', {}, 'Kept as the card has them'),
@@ -279,14 +281,16 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
     drawExport();
   };
 
-  const check = checker((placed) => {
+  const check = checker((placed, result) => {
     if (!open) return;
     const F = open.form.fields as Record<string, unknown>;
     const builder: Line[] = typeof F.id === 'string' && LIBRARY.some((c) => c.id === F.id)
       ? [{ kind: 'refusal', by: 'builder', line: `/id: a library card has the id "${F.id}"; a copy needs an id of its own (Instructor v2 does not open a card file with a library card’s id)`, text: '', at: fieldOf('/id') }]
       : [];
     // the builder's own warnings about the course (§5.3, §5.5): a phase nothing leads to; never a block
-    for (const line of phaseWarnings(open.form)) builder.push({ kind: 'warning', by: 'builder', line, text: line.slice(line.indexOf(': ') + 2), at: fieldOf(line.slice(0, line.indexOf(': '))) });
+    // B4: an amount no number satisfies, a press grade() does not grade as met, an action open in no reachable phase
+    // (on a card the validator accepts: grade() reads only such a card)
+    for (const line of [...phaseWarnings(open.form), ...(result.ok ? actionWarnings(docOf(open.form), F) : [])]) builder.push({ kind: 'warning', by: 'builder', line, text: line.slice(line.indexOf(': ') + 2), at: fieldOf(line.slice(0, line.indexOf(': '))) });
     place([...builder, ...placed.map((p) => ({ ...p, by: 'validator' as const }))]);
   });
   const saveNow = async () => {
@@ -312,9 +316,10 @@ export function builderPage(store: Drafts = defaultDrafts): BuilderPage {
     const form = formOf(doc);
     dirty = false;
     open = { meta, form, secs: [], cur, lines: [], refused: null };
-    open.secs = [...sections(form, changed), phaseSection(form, changed, () => {
+    const placeAgain = () => {
       if (open?.form === form) place(open.lines);
-    })];
+    };
+    open.secs = [...sections(form, changed), phaseSection(form, changed, placeAgain), actionSection(form, changed, placeAgain)];
     drawTop();
     show(cur);
     drawSaved(meta);

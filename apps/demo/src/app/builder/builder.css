@@ -113,6 +113,42 @@
 .sb-root .sb-preview-row b { color: var(--text-strong); font-weight: 600; }
 .sb-root .sb-preview-row small { font-size: 12px; color: var(--text-muted); }
 .sb-root .sb-idwhy:empty { display: none; }
+/* B4, the action editor (mock-up 03-action-editor): the criteria and the window side by side, each criterion a small
+   framed group with its key in the mock-up's mono caps, routes as wrapped checkboxes with their modelled state, the
+   violations and the press as lists, and "How it grades" as grade()'s rows; the app's tokens only, hints on
+   --text-muted (4.5:1). */
+.sb-root .sb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.sb-root .sb-crits { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bezel-0); }
+.sb-root .sb-crit { display: grid; gap: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; font-size: 13.5px; }
+.sb-root .sb-crit .sb-num { width: 6em; }
+.sb-root .sb-crit-k { font: 600 11.5px/1.2 var(--font-plex-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.sb-root .sb-check { display: inline-flex; align-items: center; gap: 8px; min-height: 28px; font-size: 13.5px; color: var(--text); cursor: pointer; }
+.sb-root .sb-check input[type='checkbox'] { width: 18px; height: 18px; }
+.sb-root .sb-routes { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.sb-root .sb-route { display: grid; gap: 0; }
+.sb-root .sb-route .sb-hint { padding-left: 26px; font-size: 12px; }
+.sb-root .sb-switches { display: grid; gap: 4px; }
+.sb-root .sb-setting { display: grid; gap: 4px; padding-top: 4px; border-top: 1px dashed var(--line); }
+.sb-root .sb-setting:first-child { border-top: 0; padding-top: 0; }
+.sb-root .sb-settings { display: grid; gap: 8px; }
+.sb-root .sb-rulewrap { display: grid; gap: 6px; justify-items: start; }
+.sb-root .sb-rulewrap > .sb-rule { justify-self: stretch; }
+.sb-root .sb-viols { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.sb-root .sb-viol { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--bad); border-radius: 8px; background: var(--bezel-0); }
+.sb-root .sb-viol > .btn { justify-self: start; }
+.sb-root .sb-actions .sb-out small { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-root .sb-actions .sb-pl { max-width: 26em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-root .btn.sb-inline { min-height: 24px; padding: 0 6px; }
+.sb-root .sb-examples { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.sb-root .sb-ex { position: relative; display: grid; gap: 2px; padding: 6px 8px 6px 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px; color: var(--text); }
+.sb-root .sb-ex::before { content: ''; position: absolute; left: 8px; top: 11px; width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
+.sb-root .sb-ex.ok::before { background: var(--ok); }
+.sb-root .sb-ex.warn::before { background: var(--warn); }
+.sb-root .sb-ex.bad::before { background: var(--bad); }
+.sb-root .sb-ex-give { color: var(--text-strong); }
+.sb-root .sb-ex small, .sb-root .sb-ex-line { color: var(--text-muted); font-size: 12.5px; }
+.sb-root .sb-ex-viol { color: var(--text-strong); font-size: 12.5px; border-left: 3px solid var(--bad); padding-left: 6px; }
+.sb-root .sb-ex code { font-size: 12px; color: var(--text-muted); }
 /* narrower windows: the checks under the editor, then the outline on top (no sideways scroll at 820 px) */
 @media (max-width: 1240px) {
   .sb-root .sb-grid { grid-template-columns: 220px minmax(0, 1fr); }
@@ -124,4 +160,5 @@
   .sb-root .sb-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sb-root .sb-sensors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sb-root .sb-topr { justify-items: start; }
+  .sb-root .sb-cols { grid-template-columns: minmax(0, 1fr); }
 }

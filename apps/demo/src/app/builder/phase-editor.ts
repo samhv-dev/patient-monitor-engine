@@ -23,15 +23,17 @@ type Rec = Record<string, unknown>;
 type Phase = Rec;
 
 let seq = 0;
-const uid = (p: string) => `${p}-${(++seq).toString(36)}`;
-const slot = (el: HTMLElement, controls: HTMLElement[] = []): Slot => {
+/** A page-unique id for a control or a message box. */
+export const uid = (p: string) => `${p}-${(++seq).toString(36)}`;
+/** A slot on `el`: its message box appended, its controls. */
+export const slot = (el: HTMLElement, controls: HTMLElement[] = []): Slot => {
   const msgs = h('div', { class: 'sb-msgs', id: uid('sbm') });
   el.append(msgs);
   return { el, msgs, controls };
 };
 
 /** Text with the format's own names (a variable `phaseRuleWords` prints by name, a rhythm id) in `<code>`. */
-function coded(text: string, names: readonly string[]): Array<string | HTMLElement> {
+export function coded(text: string, names: readonly string[]): Array<string | HTMLElement> {
   if (!names.length) return [text];
   const esc = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).sort((a, b) => b.length - a.length);
   const re = new RegExp(`(?<![A-Za-z0-9_.:-])(${esc.join('|')})(?![A-Za-z0-9_.-])`, 'g');
@@ -47,7 +49,7 @@ function coded(text: string, names: readonly string[]): Array<string | HTMLEleme
 }
 
 /** A select over `groups` of [value, text]; the card's own value is kept (and named) when no list has it. */
-function select(value: string, groups: Array<[label: string | null, Array<[string, string]>]>, label: string, unknown = 'not in this list'): HTMLSelectElement {
+export function select(value: string, groups: Array<[label: string | null, Array<[string, string]>]>, label: string, unknown = 'not in this list'): HTMLSelectElement {
   const s = h('select', { class: 'input', 'aria-label': label });
   const all = groups.flatMap(([, xs]) => xs.map(([v]) => v));
   for (const [g, xs] of all.includes(value) ? groups : [...groups, [null, [[value, unknown]]] as [null, Array<[string, string]>]]) {
@@ -57,6 +59,36 @@ function select(value: string, groups: Array<[label: string | null, Array<[strin
   }
   s.value = value;
   return s;
+}
+
+/** A number field over `o[k]`: a number the schema accepts is written; another is not (with `keep`, the card keeps its
+ *  number and the field says so; without, the field is left out, as an add form's leaf stays incomplete). `extra`: a
+ *  check across fields the spec cannot state (B4: a fail-after time greater than the window). */
+export function numInput(o: Rec, k: string, spec: NumSpec, label: string, write: () => void, keep: boolean, attrs: Record<string, string> = {}, extra?: (n: number | undefined) => string | null): { input: HTMLInputElement; why: HTMLElement } {
+  const i = h('input', { type: 'number', inputmode: 'decimal', class: 'input sb-num', 'aria-label': label, step: 'any', ...attrs });
+  const why = h('span', { class: 'sb-numwhy', id: uid('sbw'), 'aria-live': 'polite' });
+  i.value = typeof o[k] === 'number' ? String(o[k]) : '';
+  // the page's placing of the validator's lines resets aria-*; these data-* tell it what the field itself says
+  i.dataset.describedby = why.id;
+  i.setAttribute('aria-describedby', why.id);
+  i.addEventListener('input', () => {
+    const n = i.value.trim() === '' ? undefined : Number(i.value);
+    const p = numProblem(spec, n) ?? extra?.(n) ?? null;
+    if (p === null) {
+      if (n === undefined) delete o[k];
+      else o[k] = n;
+      why.textContent = '';
+      i.removeAttribute('aria-invalid');
+      delete i.dataset.invalid;
+    } else {
+      if (!keep) delete o[k];
+      why.textContent = keep && typeof o[k] === 'number' ? `${p}: not written, the card keeps ${o[k]}` : p;
+      i.setAttribute('aria-invalid', 'true');
+      i.dataset.invalid = 'true';
+    }
+    write();
+  });
+  return { input: i, why };
 }
 
 /** The variable picker: RULE_VARS' groups, then the concentrations, each "words (unit)". [ENG: ui] */
@@ -74,6 +106,232 @@ const SIGNALS = (): Array<[string, Array<[string, string]>]> => [
   ['The pulse', [['pulseLoss', 'No pulse (the model’s pulse loss)'], ['rosc', 'A pulse again (return of circulation)']]],
   ...rhythmGroups().map(([g, ids]) => [`Rhythm: ${g}`, ids.map((id) => [`rhythm:${id}`, rhythmLabel(id)] as [string, string])] as [string, Array<[string, string]>]),
 ];
+
+/** A truth rule's place in the card: an object and its key (a phase's `enter`, an action's `precondition`, a window's
+ *  `anchor.rule`). The tree's edits (phases.ts `tree`) read and write it as `enter`. */
+export type RuleHolder = Rec & { enter?: unknown };
+/** The holder of `o[k]`, for the tree's edits: its `enter` is `o[k]`, read and written in place (the key keeps its place). */
+export const holderOf = (o: Rec, k: string): RuleHolder => ({
+  get enter() { return o[k]; },
+  set enter(v: unknown) { o[k] = v; },
+});
+
+/** What a rule tree's view needs from the section it is drawn in. */
+export interface RuleEditCtx {
+  phases(): Phase[];
+  doc(): ScenarioDocV2;
+  /** Every node's slot is put here, keyed by its validator path (`root` + the node's path). */
+  slots: Map<string, Slot>;
+  /** A leaf's field changed: written in place; the words beside the rule follow. */
+  leafChanged(): void;
+  /** The tree changed shape: written, then drawn again with the focus on node `focus` of rule `root`. */
+  restructure(root: string, focus: NodePath): void;
+  /** Drawn again, nothing written (an add form opened or closed). */
+  redraw(): void;
+}
+
+/** A truth rule as a tree an author reads and changes (§5.3: ALL OF / ANY OF / NOT and the five leaves), for any rule of
+ *  the card: B3's phase entry rules, and B4's action preconditions, conditional repeats, rule anchors and violations'
+ *  `when`. Each node is a slot keyed by its validator path, so a line `fieldOf` places shows on the node it names. */
+export function ruleEditor(ctx: RuleEditCtx) {
+  /** The add form open: its rule's root and node, as one key. */
+  let openAdder: string | null = null;
+
+  /** The fields of leaf `r` (edited in place); `write()` after each change; `keep`: see numInput. */
+  const leafFields = (r: Rec, write: () => void, keep: boolean, n: string): { el: HTMLElement; controls: HTMLElement[] } => {
+    const k = kindOf(r) as LeafKind;
+    const controls: HTMLElement[] = [];
+    const parts: Array<HTMLElement | string> = [];
+    const c = <T extends HTMLElement>(x: T) => (controls.push(x), x);
+    const hint = (t: string) => h('span', { class: 'sb-hint' }, t);
+    if (k === 'value' || k === 'slope' || k === 'unchanged') {
+      const x = r[k] as Rec;
+      const unit = h('span', { class: 'sb-hint' });
+      const code = h('code', {});
+      const showVar = () => {
+        const v = varChoice(String(x.var));
+        unit.textContent = k === 'slope' ? `${v.unit === 'no unit' ? '' : `${v.unit} `}per min` : v.unit;
+        code.textContent = String(x.var);
+      };
+      const vs = c(select(String(x.var), VAR_GROUPS(), `${n}: what it reads`));
+      vs.addEventListener('change', () => {
+        x.var = vs.value;
+        showVar();
+        write();
+      });
+      showVar();
+      parts.push(vs, code);
+      if (k === 'value') {
+        const op = c(select(String(x.op), [[null, OPS.map(([o, w]) => [o, `${o} ${w}`])]], `${n}: compared how`));
+        op.addEventListener('change', () => ((x.op = op.value), write()));
+        const v = numInput(x, 'value', NUM['value/value']!, `${n}: threshold`, write, keep);
+        const f = numInput(x, 'forS', NUM['value/forS']!, `${n}: for how many seconds (optional)`, write, keep, { min: '0' });
+        parts.push(op, c(v.input), unit, hint('for'), c(f.input), hint('s (optional)'), v.why, f.why);
+      } else if (k === 'slope') {
+        const op = c(select(String(x.op), [[null, SLOPE_OPS.map(([o, w]) => [o, `${o} ${w}`])]], `${n}: compared how`));
+        op.addEventListener('change', () => ((x.op = op.value), write()));
+        const v = numInput(x, 'perMin', NUM['slope/perMin']!, `${n}: rate per minute`, write, keep);
+        const o = numInput(x, 'overS', NUM['slope/overS']!, `${n}: over how many seconds`, write, keep, { min: '0' });
+        parts.push(hint('changing by'), op, c(v.input), unit, hint('over the last'), c(o.input), hint('s'), v.why, o.why);
+      } else {
+        const w = numInput(x, 'withinPct', NUM['unchanged/withinPct']!, `${n}: within how many per cent`, write, keep, { min: '0' });
+        const mode = c(select(x.since === 'phaseStart' ? 'since' : 'over', [[null, [['since', 'since the phase began'], ['over', 'over the last…']]]], `${n}: unchanged since when`));
+        const o = c(h('input', { type: 'number', inputmode: 'decimal', class: 'input sb-num', 'aria-label': `${n}: over how many seconds`, step: 'any', min: '0' }));
+        const why = h('span', { class: 'sb-numwhy', 'aria-live': 'polite', id: uid('sbw') });
+        o.dataset.describedby = why.id;
+        o.setAttribute('aria-describedby', why.id);
+        const sUnit = hint('s');
+        o.value = typeof x.overS === 'number' ? String(x.overS) : '';
+        // the schema's oneOf: exactly one of `since` and `overS`; a switch writes only a complete one
+        const apply = () => {
+          why.textContent = '';
+          o.removeAttribute('aria-invalid');
+          delete o.dataset.invalid;
+          if (mode.value === 'since') {
+            if (x.since !== 'phaseStart' || 'overS' in x) {
+              delete x.overS;
+              x.since = 'phaseStart';
+            }
+          } else {
+            const v = o.value.trim() === '' ? undefined : Number(o.value);
+            const p = numProblem(NUM['unchanged/overS']!, v);
+            if (p === null) {
+              delete x.since;
+              x.overS = v;
+            } else {
+              if (!keep) {
+                delete x.since;
+                delete x.overS;
+              }
+              why.textContent = keep ? `${p}: not written, the card keeps ${x.since === 'phaseStart' ? '“since the phase began”' : `${x.overS} s`}` : p;
+              o.setAttribute('aria-invalid', 'true');
+              o.dataset.invalid = 'true';
+            }
+          }
+          o.hidden = sUnit.hidden = mode.value !== 'over';
+          write();
+        };
+        mode.addEventListener('change', apply);
+        o.addEventListener('input', apply);
+        o.hidden = sUnit.hidden = mode.value !== 'over';
+        parts.push(hint('within ±'), c(w.input), hint('%'), mode, o, sUnit, w.why, why);
+      }
+    } else if (k === 'visited') {
+      const ps = ctx.phases().map((p) => [String(p.id), labelOf(p)] as [string, string]);
+      const s = c(select(String(r.visited), [[null, ps]], `${n}: which phase`, 'not a phase of this card'));
+      const code = h('code', {}, String(r.visited));
+      s.addEventListener('change', () => ((r.visited = s.value), (code.textContent = s.value), write()));
+      parts.push(hint('after the case has been in'), s, code);
+    } else {
+      const s = c(select(String(r.signal), SIGNALS(), `${n}: which signal`, 'not in this engine'));
+      const code = h('code', {}, String(r.signal));
+      s.addEventListener('change', () => ((r.signal = s.value), (code.textContent = s.value), write()));
+      parts.push(s, code);
+    }
+    return { el: h('div', { class: 'sb-leafrow' }, ...parts), controls };
+  };
+
+  /** "Instructor v2 reads: …" for node `r`. */
+  const says = (r: Rec): HTMLElement => {
+    const d = ctx.doc();
+    const w = nodeWords(r, d);
+    return h('p', { class: 'sb-says' }, h('span', { class: 'sb-says-l' }, 'Instructor v2 reads: '), ...coded(w, rawNames(r, d, w)));
+  };
+  /** The "add a condition" form inside node `p` of the rule at `root`. */
+  const adder = (holder: RuleHolder, root: string, p: NodePath, n: string): HTMLElement => {
+    const first = String(ctx.phases()[0]?.id ?? '');
+    let leaf = draftLeaf('value', first);
+    const kind = select('value', [[null, LEAF_KINDS.map(([k, w]) => [k, w])]], `New condition in ${n}: its kind`);
+    const fields = h('div', {});
+    const add = button('Add the condition', () => {
+      if (!tree.add(holder, p, leaf)) return;
+      openAdder = null;
+      ctx.restructure(root, `${p}/new`);
+    }, 'small primary');
+    const ready = () => (add.disabled = !leafComplete(leaf));
+    const drawFields = () => fields.replaceChildren(leafFields(leaf, ready, false, `New condition in ${n}`).el);
+    kind.addEventListener('change', () => {
+      leaf = draftLeaf(kind.value as LeafKind, first);
+      drawFields();
+      ready();
+    });
+    drawFields();
+    ready();
+    const f = h('div', { class: 'sb-adder', role: 'group', 'aria-label': `New condition in ${n}` },
+      h('div', { class: 'sb-leafrow' }, h('span', { class: 'sb-hint' }, 'New condition:'), kind), fields,
+      h('div', { class: 'sb-acts' }, add, button('Cancel', () => ((openAdder = null), ctx.redraw()), 'small ghost')),
+      h('p', { class: 'sb-hint' }, 'Add waits until every number the format needs is typed.'));
+    queueMicrotask(() => kind.focus());
+    return f;
+  };
+
+  /** Node `p` of the rule held by `holder`, whose validator path is `root`; `n` names it for the controls' labels. */
+  const node = (holder: RuleHolder, root: string, p: NodePath, n: string): HTMLElement => {
+    const r = nodeAt(holder.enter, p)!;
+    const k = kindOf(r);
+    const edits = editsAt(holder.enter, p);
+    const msgs = h('div', { class: 'sb-msgs', id: uid('sbm') });
+    const acts: HTMLElement[] = [];
+    const act = (label: string, aria: string, go: () => boolean | void, focus?: string) =>
+      acts.push(button(label, () => {
+        if (go() === false) return;
+        ctx.restructure(root, focus ?? p);
+      }, 'small ghost', { 'aria-label': aria }));
+    const isGroup = k === 'all' || k === 'any';
+    const here = root + p;
+    const adding = () => (openAdder === here ? adder(holder, root, p, n) : '');
+    if (isGroup || p === '') act('Add a condition', `Add a condition to ${n}`, () => {
+      openAdder = here;
+      ctx.redraw();
+      return false;
+    });
+    if (k !== 'not') act('Not', `Negate ${n}: wrap it in NOT`, () => tree.wrap(holder, p, 'not'));
+    if (!isGroup && k !== 'not') act('Group', `Put ${n} in a group of its own (ALL OF)`, () => tree.wrap(holder, p, 'all'));
+    if (edits.ungroup) act(k === 'not' ? 'Remove NOT' : 'Ungroup', k === 'not' ? `Remove the NOT around ${n}` : `Ungroup ${n}: its one condition in its place`, () => tree.ungroup(holder, p));
+    if (edits.remove) act('Remove', `Remove ${n}`, () => tree.remove(holder, p), p.replace(/\/\d+$/, (m) => `/${Math.max(0, Number(m.slice(1)) - 1)}`));
+    const bar = h('div', { class: 'sb-node-acts' }, ...acts);
+    let li: HTMLElement;
+    let controls: HTMLElement[] = [];
+    if (isGroup) {
+      const kids = r[k] as Rec[];
+      const ks = select(k, [[null, [['all', 'ALL OF'], ['any', 'ANY OF']]]], `${n}: all or any`);
+      ks.addEventListener('change', () => {
+        tree.setGroup(holder, p, ks.value as 'all' | 'any');
+        ctx.restructure(root, p);
+      });
+      controls = [ks];
+      li = h('li', { class: 'sb-node sb-group', role: 'group', 'aria-label': `${n}: ${GROUP_WORDS[k]} ${kids.length} ${kids.length === 1 ? 'condition' : 'conditions'}` },
+        h('div', { class: 'sb-node-head' }, ks, h('span', { class: 'sb-hint' }, k === 'all' ? 'every condition holds' : 'at least one condition holds'), bar), msgs, says(r),
+        h('ol', { class: 'sb-kids' }, ...kids.map((_, j) => node(holder, root, `${p}/${k}/${j}`, `condition ${p === '' ? '' : `${n.replace(/^condition /, '')}.`}${j + 1}`))),
+        adding());
+    } else if (k === 'not') {
+      li = h('li', { class: 'sb-node sb-group sb-not', role: 'group', 'aria-label': `${n}: NOT` },
+        h('div', { class: 'sb-node-head' }, h('span', { class: 'sb-op' }, 'NOT'), h('span', { class: 'sb-hint' }, 'the condition inside does not hold'), bar), msgs, says(r),
+        h('ol', { class: 'sb-kids' }, node(holder, root, `${p}/not`, `${n} (inside NOT)`)),
+        adding());
+    } else {
+      const f = leafFields(r, ctx.leafChanged, true, n);
+      controls = f.controls;
+      const kindWords = LEAF_KINDS.find(([x]) => x === k)?.[1] ?? '';
+      li = h('li', { class: 'sb-node sb-leaf', role: 'group', 'aria-label': `${n}: ${kindWords}` },
+        h('div', { class: 'sb-node-head' }, h('span', { class: 'sb-kind' }, kindWords), bar), f.el, msgs, says(r),
+        adding());
+    }
+    li.dataset.node = p;
+    li.dataset.rule = root;
+    ctx.slots.set(here, { el: li, msgs, controls });
+    return li;
+  };
+
+  return {
+    leafFields,
+    says,
+    /** The whole rule held by `holder` (its validator path `root`), as the tree's list; `n` names its root node. */
+    tree: (holder: RuleHolder, root: string, n: string, labelledBy?: string) =>
+      h('ol', { class: 'sb-rule', ...(labelledBy ? { 'aria-labelledby': labelledBy } : { 'aria-label': n }) }, node(holder, root, '', n)),
+    closeAdder: () => void (openAdder = null),
+  };
+}
 
 export interface PhaseSectionView extends SectionView {
   /** The slot a placed line shows in: a rule node, a field, a `next` row, the phase's heading, or its entry in the list. */
@@ -134,228 +392,14 @@ export function phaseSection(form: CardForm, changed: () => void, redrawn: () =>
     draw();
     redrawn();
   };
-
-  // ------------------------------------------------------------------------------------------------ number fields
-  /** A number field over `o[k]`: a number the schema accepts is written; another is not (with `keep`, the card keeps
-   *  its number and the field says so; without, the field is left out, as the add form's leaf stays incomplete). */
-  const numIn = (o: Rec, k: string, spec: NumSpec, label: string, write: () => void, keep: boolean, attrs: Record<string, string> = {}) => {
-    const i = h('input', { type: 'number', inputmode: 'decimal', class: 'input sb-num', 'aria-label': label, step: 'any', ...attrs });
-    const why = h('span', { class: 'sb-numwhy', id: uid('sbw'), 'aria-live': 'polite' });
-    i.value = typeof o[k] === 'number' ? String(o[k]) : '';
-    // the page's placing of the validator's lines resets aria-*; these data-* tell it what the field itself says
-    i.dataset.describedby = why.id;
-    i.setAttribute('aria-describedby', why.id);
-    i.addEventListener('input', () => {
-      const n = i.value.trim() === '' ? undefined : Number(i.value);
-      const p = numProblem(spec, n);
-      if (p === null) {
-        if (n === undefined) delete o[k];
-        else o[k] = n;
-        why.textContent = '';
-        i.removeAttribute('aria-invalid');
-        delete i.dataset.invalid;
-      } else {
-        if (!keep) delete o[k];
-        why.textContent = keep && typeof o[k] === 'number' ? `${p}: not written, the card keeps ${o[k]}` : p;
-        i.setAttribute('aria-invalid', 'true');
-        i.dataset.invalid = 'true';
-      }
-      write();
-    });
-    return { input: i, why };
-  };
-
-  // ---------------------------------------------------------------------------------------------- a leaf's fields
-  /** The fields of leaf `r` (edited in place); `write()` after each change; `keep`: see numIn. */
-  const leafFields = (r: Rec, write: () => void, keep: boolean, n: string): { el: HTMLElement; controls: HTMLElement[] } => {
-    const k = kindOf(r) as LeafKind;
-    const controls: HTMLElement[] = [];
-    const parts: Array<HTMLElement | string> = [];
-    const c = <T extends HTMLElement>(x: T) => (controls.push(x), x);
-    const hint = (t: string) => h('span', { class: 'sb-hint' }, t);
-    if (k === 'value' || k === 'slope' || k === 'unchanged') {
-      const x = r[k] as Rec;
-      const unit = h('span', { class: 'sb-hint' });
-      const code = h('code', {});
-      const showVar = () => {
-        const v = varChoice(String(x.var));
-        unit.textContent = k === 'slope' ? `${v.unit === 'no unit' ? '' : `${v.unit} `}per min` : v.unit;
-        code.textContent = String(x.var);
-      };
-      const vs = c(select(String(x.var), VAR_GROUPS(), `${n}: what it reads`));
-      vs.addEventListener('change', () => {
-        x.var = vs.value;
-        showVar();
-        write();
-      });
-      showVar();
-      parts.push(vs, code);
-      if (k === 'value') {
-        const op = c(select(String(x.op), [[null, OPS.map(([o, w]) => [o, `${o} ${w}`])]], `${n}: compared how`));
-        op.addEventListener('change', () => ((x.op = op.value), write()));
-        const v = numIn(x, 'value', NUM['value/value']!, `${n}: threshold`, write, keep);
-        const f = numIn(x, 'forS', NUM['value/forS']!, `${n}: for how many seconds (optional)`, write, keep, { min: '0' });
-        parts.push(op, c(v.input), unit, hint('for'), c(f.input), hint('s (optional)'), v.why, f.why);
-      } else if (k === 'slope') {
-        const op = c(select(String(x.op), [[null, SLOPE_OPS.map(([o, w]) => [o, `${o} ${w}`])]], `${n}: compared how`));
-        op.addEventListener('change', () => ((x.op = op.value), write()));
-        const v = numIn(x, 'perMin', NUM['slope/perMin']!, `${n}: rate per minute`, write, keep);
-        const o = numIn(x, 'overS', NUM['slope/overS']!, `${n}: over how many seconds`, write, keep, { min: '0' });
-        parts.push(hint('changing by'), op, c(v.input), unit, hint('over the last'), c(o.input), hint('s'), v.why, o.why);
-      } else {
-        const w = numIn(x, 'withinPct', NUM['unchanged/withinPct']!, `${n}: within how many per cent`, write, keep, { min: '0' });
-        const mode = c(select(x.since === 'phaseStart' ? 'since' : 'over', [[null, [['since', 'since the phase began'], ['over', 'over the last…']]]], `${n}: unchanged since when`));
-        const o = c(h('input', { type: 'number', inputmode: 'decimal', class: 'input sb-num', 'aria-label': `${n}: over how many seconds`, step: 'any', min: '0' }));
-        const why = h('span', { class: 'sb-numwhy', 'aria-live': 'polite', id: uid('sbw') });
-        o.dataset.describedby = why.id;
-        o.setAttribute('aria-describedby', why.id);
-        const sUnit = hint('s');
-        o.value = typeof x.overS === 'number' ? String(x.overS) : '';
-        // the schema's oneOf: exactly one of `since` and `overS`; a switch writes only a complete one
-        const apply = () => {
-          why.textContent = '';
-          o.removeAttribute('aria-invalid');
-          delete o.dataset.invalid;
-          if (mode.value === 'since') {
-            if (x.since !== 'phaseStart' || 'overS' in x) {
-              delete x.overS;
-              x.since = 'phaseStart';
-            }
-          } else {
-            const v = o.value.trim() === '' ? undefined : Number(o.value);
-            const p = numProblem(NUM['unchanged/overS']!, v);
-            if (p === null) {
-              delete x.since;
-              x.overS = v;
-            } else {
-              if (!keep) {
-                delete x.since;
-                delete x.overS;
-              }
-              why.textContent = keep ? `${p}: not written, the card keeps ${x.since === 'phaseStart' ? '“since the phase began”' : `${x.overS} s`}` : p;
-              o.setAttribute('aria-invalid', 'true');
-              o.dataset.invalid = 'true';
-            }
-          }
-          o.hidden = sUnit.hidden = mode.value !== 'over';
-          write();
-        };
-        mode.addEventListener('change', apply);
-        o.addEventListener('input', apply);
-        o.hidden = sUnit.hidden = mode.value !== 'over';
-        parts.push(hint('within ±'), c(w.input), hint('%'), mode, o, sUnit, w.why, why);
-      }
-    } else if (k === 'visited') {
-      const ps = phases().map((p) => [String(p.id), labelOf(p)] as [string, string]);
-      const s = c(select(String(r.visited), [[null, ps]], `${n}: which phase`, 'not a phase of this card'));
-      const code = h('code', {}, String(r.visited));
-      s.addEventListener('change', () => ((r.visited = s.value), (code.textContent = s.value), write()));
-      parts.push(hint('after the case has been in'), s, code);
-    } else {
-      const s = c(select(String(r.signal), SIGNALS(), `${n}: which signal`, 'not in this engine'));
-      const code = h('code', {}, String(r.signal));
-      s.addEventListener('change', () => ((r.signal = s.value), (code.textContent = s.value), write()));
-      parts.push(s, code);
-    }
-    return { el: h('div', { class: 'sb-leafrow' }, ...parts), controls };
-  };
-
-  // -------------------------------------------------------------------------------------------- the rule as a tree
-  const says = (r: Rec): HTMLElement => {
-    const d = doc();
-    const w = nodeWords(r, d);
-    return h('p', { class: 'sb-says' }, h('span', { class: 'sb-says-l' }, 'Instructor v2 reads: '), ...coded(w, rawNames(r, d, w)));
-  };
-  /** The "add a condition" form inside node `p`. */
-  const adder = (phase: Phase, p: NodePath, n: string, close: () => void): HTMLElement => {
-    const first = String(phases()[0]?.id ?? '');
-    let leaf = draftLeaf('value', first);
-    const kind = select('value', [[null, LEAF_KINDS.map(([k, w]) => [k, w])]], `New condition in ${n}: its kind`);
-    const fields = h('div', {});
-    const add = button('Add the condition', () => {
-      if (!tree.add(phase, p, leaf)) return;
-      close();
-      restructure(`${p}/new`);
-    }, 'small primary');
-    const ready = () => (add.disabled = !leafComplete(leaf));
-    const drawFields = () => fields.replaceChildren(leafFields(leaf, ready, false, `New condition in ${n}`).el);
-    kind.addEventListener('change', () => {
-      leaf = draftLeaf(kind.value as LeafKind, first);
-      drawFields();
-      ready();
-    });
-    drawFields();
-    ready();
-    const f = h('div', { class: 'sb-adder', role: 'group', 'aria-label': `New condition in ${n}` },
-      h('div', { class: 'sb-leafrow' }, h('span', { class: 'sb-hint' }, 'New condition:'), kind), fields,
-      h('div', { class: 'sb-acts' }, add, button('Cancel', () => (close(), draw(), redrawn()), 'small ghost')),
-      h('p', { class: 'sb-hint' }, 'Add waits until every number the format needs is typed.'));
-    queueMicrotask(() => kind.focus());
-    return f;
-  };
-  let openAdder: NodePath | null = null;
-
-  const node = (phase: Phase, i: number, p: NodePath, n: string): HTMLElement => {
-    const r = nodeAt(phase.enter, p)!;
-    const k = kindOf(r);
-    const root = `/phases/${i}/enter`;
-    const edits = editsAt(phase.enter, p);
-    const msgs = h('div', { class: 'sb-msgs', id: uid('sbm') });
-    const acts: HTMLElement[] = [];
-    const act = (label: string, aria: string, go: () => boolean | void, focus?: string) =>
-      acts.push(button(label, () => {
-        if (go() === false) return;
-        restructure(focus ?? p);
-      }, 'small ghost', { 'aria-label': aria }));
-    const isGroup = k === 'all' || k === 'any';
-    if (isGroup || p === '') act('Add a condition', `Add a condition to ${n}`, () => {
-      openAdder = p;
-      draw();
-      redrawn();
-      return false;
-    });
-    if (k !== 'not') act('Not', `Negate ${n}: wrap it in NOT`, () => tree.wrap(phase, p, 'not'));
-    if (!isGroup && k !== 'not') act('Group', `Put ${n} in a group of its own (ALL OF)`, () => tree.wrap(phase, p, 'all'));
-    if (edits.ungroup) act(k === 'not' ? 'Remove NOT' : 'Ungroup', k === 'not' ? `Remove the NOT around ${n}` : `Ungroup ${n}: its one condition in its place`, () => tree.ungroup(phase, p));
-    if (edits.remove) act('Remove', `Remove ${n}`, () => tree.remove(phase, p), p.replace(/\/\d+$/, (m) => `/${Math.max(0, Number(m.slice(1)) - 1)}`));
-    const bar = h('div', { class: 'sb-node-acts' }, ...acts);
-    let li: HTMLElement;
-    let controls: HTMLElement[] = [];
-    if (isGroup) {
-      const kids = r[k] as Rec[];
-      const ks = select(k, [[null, [['all', 'ALL OF'], ['any', 'ANY OF']]]], `${n}: all or any`);
-      ks.addEventListener('change', () => {
-        tree.setGroup(phase, p, ks.value as 'all' | 'any');
-        restructure(p);
-      });
-      controls = [ks];
-      li = h('li', { class: 'sb-node sb-group', role: 'group', 'aria-label': `${n}: ${GROUP_WORDS[k]} ${kids.length} ${kids.length === 1 ? 'condition' : 'conditions'}` },
-        h('div', { class: 'sb-node-head' }, ks, h('span', { class: 'sb-hint' }, k === 'all' ? 'every condition holds' : 'at least one condition holds'), bar), msgs, says(r),
-        h('ol', { class: 'sb-kids' }, ...kids.map((_, j) => node(phase, i, `${p}/${k}/${j}`, `condition ${n === 'the rule' ? '' : `${n.replace(/^condition /, '')}.`}${j + 1}`))),
-        openAdder === p ? adder(phase, p, n, () => (openAdder = null)) : '');
-    } else if (k === 'not') {
-      li = h('li', { class: 'sb-node sb-group sb-not', role: 'group', 'aria-label': `${n}: NOT` },
-        h('div', { class: 'sb-node-head' }, h('span', { class: 'sb-op' }, 'NOT'), h('span', { class: 'sb-hint' }, 'the condition inside does not hold'), bar), msgs, says(r),
-        h('ol', { class: 'sb-kids' }, node(phase, i, `${p}/not`, `${n} (inside NOT)`)),
-        openAdder === p ? adder(phase, p, n, () => (openAdder = null)) : '');
-    } else {
-      const f = leafFields(r, leafChanged, true, n);
-      controls = f.controls;
-      const kindWords = LEAF_KINDS.find(([x]) => x === k)?.[1] ?? '';
-      li = h('li', { class: 'sb-node sb-leaf', role: 'group', 'aria-label': `${n}: ${kindWords}` },
-        h('div', { class: 'sb-node-head' }, h('span', { class: 'sb-kind' }, kindWords), bar), f.el, msgs, says(r),
-        openAdder === p ? adder(phase, p, n, () => (openAdder = null)) : '');
-    }
-    li.dataset.node = p;
-    slots.set(root + p, { el: li, msgs, controls });
-    return li;
-  };
   let refreshWords = (): void => undefined;
   /** A leaf's field changed: written; the words beside it and the phase's preview follow. */
   const leafChanged = () => {
     changed();
     refreshWords();
   };
+  const rules = ruleEditor({ phases, doc, slots, leafChanged, restructure: (_root, f) => restructure(f), redraw: () => (draw(), redrawn()) });
+
 
   // ------------------------------------------------------------------------------------------------ one phase
   const field = (label: string, ctl: HTMLElement, hint?: string) => {
@@ -428,7 +472,7 @@ export function phaseSection(form: CardForm, changed: () => void, redrawn: () =>
     idField.append(idWhy);
     const row1: HTMLElement[] = [add(`${at}/label`, field('Label (the strip and ACTION)', label), label), add(`${at}/id`, idField, idIn)];
     if (p.enter !== undefined) {
-      const hold = numIn(p, 'holdS', NUM.holdS!, 'Hold, seconds', () => changed(), true, { min: '0', step: '1' });
+      const hold = numInput(p, 'holdS', NUM.holdS!, 'Hold, seconds', () => changed(), true, { min: '0', step: '1' });
       hold.input.id = uid('sbf');
       const hf = field('Hold, seconds (optional)', hold.input, 'The rule must hold this long without a break before the phase changes.');
       hf.append(hold.why);
@@ -441,7 +485,7 @@ export function phaseSection(form: CardForm, changed: () => void, redrawn: () =>
     // the rule
     const ruleBox = h('div', { class: 'field sb-rulefield' }, h('span', { id: 'sb-rule-l' }, 'Entered when'));
     if (p.enter !== undefined && p.enter !== null && typeof p.enter === 'object') {
-      ruleBox.append(h('ol', { class: 'sb-rule', 'aria-labelledby': 'sb-rule-l' }, node(p, i, '', 'the rule')));
+      ruleBox.append(rules.tree(p, `${at}/enter`, 'the rule', 'sb-rule-l'));
     } else {
       ruleBox.append(h('p', { class: 'sb-fixed' }, 'The case starts in this phase: the starting phase has no entry rule.'));
       slots.set(`${at}/enter`, slot(ruleBox));
@@ -511,7 +555,7 @@ export function phaseSection(form: CardForm, changed: () => void, redrawn: () =>
       for (const [path, s] of slots) {
         const n = path.startsWith(`${at}/enter`) ? nodeAt(p.enter, path.slice(`${at}/enter`.length)) : undefined;
         const old = s.el.querySelector(':scope > .sb-says');
-        if (n && old) old.replaceWith(says(n));
+        if (n && old) old.replaceWith(rules.says(n));
       }
     };
     refreshWords();
@@ -577,7 +621,7 @@ export function phaseSection(form: CardForm, changed: () => void, redrawn: () =>
       ready();
     });
     from.addEventListener('change', () => (a.from = from.value));
-    const drawFields = () => fields.replaceChildren(leafFields(a.leaf, ready, false, 'The new phase’s first condition').el);
+    const drawFields = () => fields.replaceChildren(rules.leafFields(a.leaf, ready, false, 'The new phase’s first condition').el);
     kind.addEventListener('change', () => {
       a.leaf = draftLeaf(kind.value as LeafKind, String(ps[0]?.id ?? ''));
       drawFields();
@@ -650,7 +694,7 @@ export function phaseSection(form: CardForm, changed: () => void, redrawn: () =>
 
   function open(i: number) {
     adding = null;
-    openAdder = null;
+    rules.closeAdder();
     cur = i;
     draw();
     redrawn();
