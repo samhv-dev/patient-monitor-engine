@@ -48,10 +48,27 @@
       "src": "emc-3401"
     }
   ],
-  "admixtures": [],
+  "admixtures": [
+    {
+      "with": "sodiumBicarbonate",
+      "verdict": "incompatible",
+      "statement": "Trissel: succinylcholine 1 g/L with NaHCO3 2.4 mEq/L in D5W decomposes (ref 772). Stabilis lists the pair only in its Y-site screen, not for mixtures.",
+      "src": "trissel-succinylcholine-p1908",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-succinylcholine-p1908"
+      }
+    }
+  ],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 20,
+        "unit": "mg/mL",
+        "src": "stabilis-succinylcholine-667"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
@@ -68,7 +85,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 20,
+        "unit": "mg/mL",
+        "src": "stabilis-succinylcholine-667"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [

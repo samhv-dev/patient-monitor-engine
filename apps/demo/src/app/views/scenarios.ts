@@ -2,19 +2,19 @@
 // three cases loaded last. `#/scenarios/library` is the grouped list (the E123 start page's, #131): the two
 // demonstrations pinned first, then each category; one sentence per case, "Case details" opening in place, no badges.
 // The cards carry a heading, one paragraph and a full-width button (owner's correction, 26 October).
-// `#/scenarios/builder` is, for rc.4, the card format explained, "Import a scenario file" and the card documentation:
-// a visual builder comes later. Load replaces the patient (asked first while a case runs) and opens the Instructor view
-// chosen in Settings.
+// `#/scenarios/builder` is the scenario builder (builder/page.ts, plan docs/plans/scenario-builder.md piece B2): this
+// browser's drafts, a /2 library card opened as a copy, a card file imported; `#/scenarios/builder/<draft>` edits one.
+// Load replaces the patient (asked first while a case runs) and opens the Instructor view chosen in Settings.
 import { drugWords } from '../glossary.ts';
 import { onRecent, recentCards } from '../recent.ts';
 import { hrefOf } from '../router.ts';
-import { cardOf, LIBRARY, type ScenarioCard } from '../scenarios.ts';
+import { LIBRARY, type ScenarioCard } from '../scenarios.ts';
 import { CATEGORIES } from '../scenario-meta.ts';
 import type { AppSession } from '../session.ts';
 import type { View } from '../shell.ts';
 import { REPO } from '../about.ts';
 import { button, confirmDialog, h, toast } from '../ui.ts';
-import { isV2, validateScenario } from '@pme/controller/scenario';
+import { builderPage } from '../builder/page.ts';
 
 /** The 3 November demonstration's two cases, pinned first (owner, 24 October). */
 export const DEMO_CARDS: readonly string[] = ['showcase-mh', 'showcase-haemorrhage'];
@@ -99,53 +99,18 @@ export function scenariosView(d: ScenariosDeps): View {
     ...groups.map(([cat, cs], i) => h('section', { class: 'scen-group', 'aria-labelledby': `scen-g${i}` }, h('h2', { id: `scen-g${i}`, class: 'scen-h3' }, cat), h('div', { class: 'scen-list' }, ...cs.map(item)))));
 
   // ---------------------------------------------------------------------------------------------------------- builder
-  const err = h('p', { class: 'error', role: 'alert' });
-  const file = h('input', { type: 'file', accept: 'application/json,.json', class: 'sr-only', id: 'scen-import', onchange: async () => {
-    const f = file.files?.[0];
-    file.value = '';
-    if (!f) return;
-    err.textContent = '';
-    let raw: unknown;
-    try {
-      raw = JSON.parse(await f.text());
-    } catch {
-      err.textContent = `Error: ${f.name} is not a JSON file.`;
-      return;
-    }
-    const v = validateScenario(raw);
-    if (!v.ok) {
-      err.textContent = `Error: ${f.name} is not a scenario card: ${v.errors.slice(0, 3).join('; ')}`;
-      return;
-    }
-    if (isV2(v.doc)) {
-      err.textContent = `Error: ${f.name} is a pme-scenario/2 card; importing a pme-scenario/2 card is not built yet; the library's /2 card loads from Scenarios.`;
-      return;
-    }
-    void load(cardOf(v.doc));
-  } });
-  const builder = h('div', { class: 'console-page narrow' },
-    h('a', { class: 'console-back', href: hrefOf('scenarios') }, '← Scenarios'),
-    h('h1', { id: 'scen-build-h' }, 'Scenario builder'),
-    h('p', { class: 'console-sub' }, 'Preview: edits the card file; a visual builder comes later.'),
-    h('div', { class: 'scen-card' },
-      h('p', {}, 'A scenario is one card file in JSON (', h('code', {}, 'pme-scenario/1'), '). It holds:'),
-      h('ul', { class: 'scen-format' },
-        h('li', {}, h('b', {}, 'The patient'), ': age, sex, weight, the starting values and the sensors attached.'),
-        h('li', {}, h('b', {}, 'The states'), ': each one says what the engine does when the case enters it (drugs, bleeding, a rhythm, a ventilator setting).'),
-        h('li', {}, h('b', {}, 'The moves between states'), ': after a time, at a value on the monitor, on a learner action, or on a button the instructor presses.'),
-        h('li', {}, h('b', {}, 'The objectives'), ': what the Debrief marks as observed or not, and the take-home lines of the learner handout.')),
-      h('p', {}, 'Write the card in a text editor, starting from a card of the library, then load it here. The app checks it before it runs.'),
-      h('div', { class: 'scen-row' },
-        h('label', { class: 'btn primary', for: 'scen-import' }, 'Import a scenario file'), file,
-        h('a', { class: 'btn', href: CARD_DOCS, target: '_blank', rel: 'noopener' }, 'Card documentation')),
-      err));
+  // B2 (docs/plans/scenario-builder.md): the builder's page, in place of the stub that explained the /1 format
+  const builder = builderPage();
 
-  const el = h('section', { class: 'console scenarios', 'aria-labelledby': 'scen-h' }, main, library, builder);
+  const el = h('section', { class: 'console scenarios', 'aria-labelledby': 'scen-h' }, main, library, builder.el);
   const show = (sub: string) => {
-    main.hidden = sub === 'library' || sub === 'builder';
+    const build = sub === 'builder' || sub.startsWith('builder/');
+    main.hidden = sub === 'library' || build;
     library.hidden = sub !== 'library';
-    builder.hidden = sub !== 'builder';
-    el.setAttribute('aria-labelledby', sub === 'library' ? 'scen-lib-h' : sub === 'builder' ? 'scen-build-h' : 'scen-h');
+    builder.el.hidden = !build;
+    if (build) void builder.enter(sub.slice('builder/'.length)).then(() => el.setAttribute('aria-labelledby', builder.headingId()));
+    else builder.leave();
+    el.setAttribute('aria-labelledby', sub === 'library' ? 'scen-lib-h' : build ? builder.headingId() : 'scen-h');
     el.scrollTop = 0;
   };
   show('');
@@ -155,6 +120,9 @@ export function scenariosView(d: ScenariosDeps): View {
     enter(sub) {
       show(sub);
       drawRecent();
+    },
+    leave() {
+      builder.leave();
     },
   };
 }
