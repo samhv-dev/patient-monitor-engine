@@ -207,7 +207,7 @@ transports (`src/protocol.ts`).
 | `listDebriefs` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Every debrief file the folder holds (`debriefs/<id>.json`, a safe id), by id. |
 | `readDebrief` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | One debrief's file, or null. |
 | `keepDebrief` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The archive's entry `text` written as `debriefs/<id>.json` (whole: |
-| `dropDebrief` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A debrief's file deleted, for good (no recycle bin): |
+| `setAsideDebrief` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | What "Clear the archive" does to a debrief's file. |
 | `readCard` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | One version's card file, or null. |
 | `storeRoutes` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The store's HTTP side: |
 | `findings` | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Every finding for these drugs (each with a file in `formulary`) in this diluent (null: |

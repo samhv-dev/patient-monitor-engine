@@ -1,8 +1,8 @@
 // The Debrief archive and the kit's user-data folder (brief 139 PR 2; the owner's ruling of 10 November 2026): with the
 // kit store on, every debrief the archive saves is also a file, `debriefs/<id>.json` (the entry as Download writes it),
 // even when this browser refused it; a re-save of the run replaces it; another browser (or this one, cleared) reads back
-// the debriefs it lacks; Clear deletes the files for good (no recycle bin: a file left there would come back at the next
-// open). With the store off, nothing is sent. The server's side is packages/controller/test/relay/kit-store.test.ts.
+// the debriefs it lacks; Clear moves the files into debriefs/removed/ (the owner's ruling of 10 November 2026, "B for
+// now": nothing destroyed, never read back). With the store off, nothing is sent. The server's side is packages/controller/test/relay/kit-store.test.ts.
 import type { WireEvent } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
 import { Archive } from './archive.ts';
@@ -21,6 +21,8 @@ const at = () => {
 /** The kit's server, in memory: the debriefs' files by id; `on` whether the store is there. */
 function kitServer(on = true) {
   const files = new Map<string, string>();
+  /** What the server set aside under removed/ (it never lists or reads it back). */
+  const removed = new Map<string, string>();
   const calls: string[] = [];
   const f = (async (url: string | URL | Request, init?: RequestInit) => {
     const u = String(url);
@@ -32,10 +34,15 @@ function kitServer(on = true) {
     if (u === `${BASE}debriefs/`) return json({ debriefs: [...files].map(([id, t]) => ({ id, bytes: t.length, at: 0 })) });
     const id = decodeURIComponent(u.slice(`${BASE}debriefs/`.length));
     if (method === 'PUT') return (files.set(id, String(init!.body)), json({ id, bytes: 1, at: 0 }));
-    if (method === 'DELETE') return files.delete(id) ? json({ deleted: id }) : json({}, 404);
+    if (method === 'DELETE') {
+      if (!files.has(id)) return json({}, 404);
+      removed.set(id, files.get(id)!);
+      files.delete(id);
+      return json({ removed: id, file: `removed/${id}.json` });
+    }
     return files.has(id) ? new Response(files.get(id)!, { status: 200 }) : json({}, 404);
   }) as typeof fetch;
-  return { files, calls, kit: () => new KitStore(at, () => f) };
+  return { files, removed, calls, kit: () => new KitStore(at, () => f) };
 }
 const applied = (tick: number, command: Record<string, unknown>): WireEvent =>
   ({ type: 'commandApplied', commandId: `c${tick}`, tick, resolved: { command: { id: `c${tick}`, issuedBy: 'instructor', ...command } } }) as WireEvent;
@@ -92,16 +99,24 @@ describe('the archive keeps each debrief in the kit’s user-data folder too', (
     expect(srv.calls.filter((c) => c.startsWith('PUT'))).toHaveLength(2); // reading back writes nothing
   });
 
-  it('Clear deletes every file of the folder, for good: no copy is kept aside, and nothing comes back at the next open', async () => {
+  it('Clear moves every file of the folder into removed/ (nothing destroyed); nothing comes back at the next open; a re-save writes anew', async () => {
     const srv = kitServer();
     const b = browser();
     const a = archiveOf(b, srv.kit());
-    await a.save(run(Date.UTC(2026, 10, 10, 9)), 'Dr One', 'b');
+    const one = await a.save(run(Date.UTC(2026, 10, 10, 9)), 'Dr One', 'b');
+    if ('refused' in one) throw new Error('refused');
     srv.files.set('fromelsewhere', '{"schema":"pme-archive-entry/1","id":"fromelsewhere"}'); // not (yet) in this browser
+    const kept = srv.files.get('fromelsewhere');
     await a.clear();
     expect(srv.files.size).toBe(0);
+    expect([...srv.removed.keys()].sort()).toEqual(['fromelsewhere', one.id].sort());
+    expect(srv.removed.get('fromelsewhere')).toBe(kept); // the bytes kept
     expect(a.list()).toEqual([]);
     expect(await archiveOf(b, srv.kit()).syncFromKit()).toBe(0);
+    const again = await a.save(run(Date.UTC(2026, 10, 10, 11)), 'Dr Two', 'b');
+    await a.kitDone;
+    if ('refused' in again) throw new Error('refused');
+    expect([...srv.files.keys()]).toEqual([again.id]);
   });
 
   it('the store off (not a kit, a kit without Node.js): nothing is sent past the probe, lastKit stays null', async () => {

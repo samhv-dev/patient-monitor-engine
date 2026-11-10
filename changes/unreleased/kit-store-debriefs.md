@@ -8,5 +8,6 @@
   cleared, finds them. The Debrief page's archive line says "kept in this browser and in this kit's user-data folder",
   or, in the builder's words, why the folder does not keep them. A debrief names a resident: the kit's server lists,
   reads, writes and deletes debriefs for this computer only, never for a phone on the room network. "Clear the
-  archive" deletes the files too, for good (there is no recycle bin), and its dialog says so; the kit's READ ME FIRST
+  archive" moves their files into `user-data/debriefs/removed/` (the owner's ruling, "B for now": nothing is destroyed,
+  the app never reads them back, a person empties that folder by hand), and its dialog says so; the kit's READ ME FIRST
   says a kit folder handed to a colleague carries its debriefs unless `user-data` is left out.

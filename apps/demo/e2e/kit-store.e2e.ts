@@ -7,8 +7,9 @@
 // pass the accessibility audit. From another device (this machine's own network address, not loopback) the relay
 // refuses a write and its status says why; a page from another site cannot write either. PR 2, the debriefs: a debrief
 // the archive saves is a file in user-data/debriefs/; this browser's storage cleared, the Debrief page reads it back and
-// opens it; another browser finds it; Clear deletes the file for good; from another device the relay neither lists nor
-// reads a debrief. Ports 9810–9819.
+// opens it; another browser finds it; Clear moves the file into user-data/debriefs/removed/ (the owner's ruling of 10
+// November 2026, "B for now": nothing destroyed, never read back); from another device the relay neither lists nor
+// reads a debrief, nor anything under removed/. Ports 9810–9819.
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -132,7 +133,7 @@ type Arc = { save(d: unknown, who: string, build: string): Promise<{ id: string 
 const debriefFiles = () => (existsSync(join(dir, 'debriefs')) ? readdirSync(join(dir, 'debriefs')).sort() : []);
 const arcCount = (p: Page) => p.locator('#db-archive .db-arc-count');
 
-test('kit store, debriefs: a saved debrief is a file in user-data; a cleared browser reads it back and opens it; Clear deletes the file', async ({ page, browser, browserName }) => {
+test('kit store, debriefs: a saved debrief is a file in user-data; a cleared browser reads it back and opens it; Clear moves the file to removed', async ({ page, browser, browserName }) => {
   test.setTimeout(150_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const resident = `Dr Kit ${browserName}`;
@@ -188,12 +189,18 @@ test('kit store, debriefs: a saved debrief is a file in user-data; a cleared bro
   await openApp(other, base, `?relay=${encodeURIComponent(ws())}#/debrief`);
   await expect(other.locator(`#db-archive .db-arc-row[data-id="${saved.id}"]`)).toContainText(resident, { timeout: 15_000 });
 
-  // Clear: the dialog says the files go too, for good; then the folder holds none of them
+  // Clear: the dialog says where the files go; then debriefs/ holds none of them and removed/ holds this one, as it was
+  const before = readFileSync(join(dir, 'debriefs', `${saved.id}.json`), 'utf8');
   await other.getByRole('button', { name: 'Clear the archive' }).click();
-  await expect(other.getByRole('dialog', { name: 'Clear the archive?' })).toContainText('and its file in this kit’s user-data folder, is deleted, for good (the folder has no recycle bin)');
+  await expect(other.getByRole('dialog', { name: 'Clear the archive?' })).toContainText('Their files are moved to this kit’s user-data/debriefs/removed folder, where they can be deleted by hand; the archive never reads them back.');
   await other.getByRole('dialog', { name: 'Clear the archive?' }).getByRole('button', { name: 'Clear', exact: true }).click();
   await expect(arcCount(other)).toHaveText('Nothing saved in this browser or in this kit’s user-data folder. “Finish the case” in Instructor v2 saves each run here.');
   expect(debriefFiles()).not.toContain(`${saved.id}.json`);
+  expect(readFileSync(join(dir, 'debriefs', 'removed', `${saved.id}.json`), 'utf8')).toBe(before);
+  // and the next open does not bring it back
+  await other.reload();
+  await other.waitForFunction(() => '__pmeApp' in window);
+  await expect(arcCount(other)).toHaveText(/^Nothing saved in this browser or in this kit’s user-data folder\./);
   await other.context().close();
 });
 
@@ -212,7 +219,7 @@ test('kit store, debriefs: another device can neither list nor read one', async 
     }
   }
   if (reachable) {
-    for (const path of ['', 'phonecheck']) {
+    for (const path of ['', 'phonecheck', 'removed', `removed/${'phonecheck'}.json`]) {
       const r = await request.get(`http://${lan}:${relay.port}/pme-store/debriefs/${path}`);
       expect(r.status(), path).toBe(403);
       expect(await r.text(), path).not.toContain('Dr Private');

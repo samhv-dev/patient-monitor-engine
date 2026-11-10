@@ -40,7 +40,7 @@ the same paths from the bundled `server/store.mjs`.
 | `GET /pme-store/debriefs/` | `{debriefs:[{id, bytes, at}]}` | this computer only (a debrief names a resident: 403 to a phone) |
 | `GET /pme-store/debriefs/<id>` | the archive entry's file (`pme-archive-entry/1`) | this computer only |
 | `PUT /pme-store/debriefs/<id>` (`application/json`) | 200 `{id, bytes, at}`: `DIR/debriefs/<id>.json`, written whole; a re-save of the same run replaces it; 400 / 413 (16 MiB) / 507 as above | this computer only |
-| `DELETE /pme-store/debriefs/<id>` | 200: the file deleted for good (no recycle bin); 404 when there was none | this computer only |
+| `DELETE /pme-store/debriefs/<id>` | the archive's Clear: 200 `{removed, file}`, the file MOVED to `DIR/debriefs/removed/` (its name, or `<id>-2.json` … when taken there; never overwritten, never destroyed; the owner's ruling of 10 November 2026, "B for now"); 404 when there was none. Nothing under `removed/` is listed or read | this computer only |
 
 A card version is never overwritten (each is created where no file was). A preflight (`OPTIONS`) is answered for a page of this
 computer (a loopback origin) only.

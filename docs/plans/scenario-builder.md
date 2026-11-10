@@ -381,8 +381,10 @@ request (one piece of work per PR).
   the only copy, and the instructor is told so); a re-save of the same run replaces its file, as it replaces the entry.
   A debrief names a resident: the folder's debriefs are listed, read, written and deleted from this computer only, never
   from a phone on the room network. On opening, the archive reads back every debrief the folder holds that this browser
-  lacks. "Clear the archive" deletes the files too, for good, and its dialog says so: the folder has no recycle bin, and a
-  file left there would come back at the next open. The Debrief page's archive line says where they are kept in the
+  lacks. "Clear the archive" moves the files into `user-data/debriefs/removed/` (the owner's ruling of 10 November 2026,
+  "B for now": work is never lost; nothing is destroyed; a person empties that folder by hand), keeping each name or
+  adding a suffix, never overwriting; the app never lists or reads anything there, and its dialog says so. One function,
+  `setAsideDebrief` in `relay/store.ts`, decides what a clear does to a file, so a later ruling changes that alone. The Debrief page's archive line says where they are kept in the
   builder's words, or why the folder does not keep them. A debrief file is at most 16 MiB.
 - **Two consequences the owner accepted with the ruling** (the kit's READ ME FIRST says both): a new kit starts EMPTY
   unless the `user-data` folder is copied into it from the old one; and a kit folder copied for a colleague carries its

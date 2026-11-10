@@ -22,8 +22,9 @@
 // the debrief), even when this browser refused it (a full storage: the file is then the only copy, and the instructor
 // is told so). A re-save of the same run replaces its file, as it replaces the entry here. `syncFromKit` reads back
 // every file whose entry this browser lacks (another browser of the laptop, or this one after its data was cleared).
-// Clear deletes the files too, for good: the folder has no recycle bin, and a file left there would come back at the
-// next open. The kit's server answers the debriefs' paths to this computer only (a debrief names a resident).
+// Clear takes the files out of the archive too: the kit's server MOVES each into `user-data/debriefs/removed/` (the
+// owner's ruling of 10 November 2026, "B for now": work is never lost; nothing is destroyed, a person empties that folder
+// by hand), where the app never reads it back; a file left in debriefs/ would come back at the next open. The kit's server answers the debriefs' paths to this computer only (a debrief names a resident).
 import { endOf, marks, objectives } from './debrief.ts';
 import { debriefJson } from './debrief-export.ts';
 import type { RunData } from './record.ts';
@@ -378,15 +379,16 @@ export class Archive {
     return JSON.stringify({ schema: 'pme-archive/1', exportedAt: now, entries }, null, 1);
   }
 
-  /** Every saved debrief deleted from this browser, and its file from the kit's folder (for good: no recycle bin). */
+  /** Every saved debrief deleted from this browser; its file in the kit's folder moved into debriefs/removed/ (what the
+   *  server's `setAsideDebrief` decides). */
   clear(): Promise<void> {
     return this.inTurn(async () => {
       const s = this.storage();
       const db = await this.ready();
       if (this.files && (await this.kit!.ready()).on) {
-        // every file the folder holds, and every entry listed here: a file left there would come back at the next open
+        // every file the folder holds, and every entry listed here: a file left in debriefs/ would come back at the next open
         const ids = new Set([...this.list().map((e) => e.id), ...((await this.files.list()) ?? []).map((f) => f.id)]);
-        for (const id of ids) await this.files.drop(id);
+        for (const id of ids) await this.files.setAside(id);
       }
       try {
         if (db) {

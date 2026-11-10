@@ -13,7 +13,8 @@
 //   GET  /pme-store/debriefs/<id>        one debrief's file (`pme-archive-entry/1`)               } a debrief names a
 //   PUT  /pme-store/debriefs/<id>        the archive's entry as a file (a re-save of the run      } resident; no phone
 //                                        replaces it, as the browser's archive does)              } lists or reads one
-//   DELETE /pme-store/debriefs/<id>      the file deleted, for good (the archive's Clear; there is no recycle bin)
+//   DELETE /pme-store/debriefs/<id>      the archive's Clear: the file leaves the archive, MOVED into debriefs/removed/
+//                                        (`setAsideDebrief`: never destroyed; nothing under removed/ is listed or read)
 //
 // The rules (§8): a version is never overwritten (each is a file of its own, created only if its name is free); writes
 // come from THIS computer only (the loopback address, a loopback Host, and a loopback Origin or none: a page from the
@@ -304,15 +305,40 @@ export function keepDebrief(dir: string, id: string, text: string): Wrote {
   }
 }
 
-/** A debrief's file deleted, for good (no recycle bin): true when there was one. */
-export function dropDebrief(dir: string, id: string): boolean {
+/** The folder a cleared debrief's file is moved to, inside debriefs/: the app never lists or reads anything there. */
+export const REMOVED_DIR = 'removed';
+
+/**
+ * What "Clear the archive" does to a debrief's file. The owner's ruling of 10 November 2026, "B for now" (work is never
+ * lost): the file is MOVED to `debriefs/removed/`, under its own name, or with a suffix (`<id>-2.json`, `-3` …) when
+ * that name is taken there: nothing is overwritten and nothing is destroyed; a person empties that folder by hand.
+ * The one place that decides it: a later ruling changes this function alone. Returns the file's name under removed/,
+ * or null when there was no file (or the id is not a safe name). The move is a hard link then an unlink (a link fails
+ * on a taken name instead of replacing it); on a file system without links, a rename to a name checked free in the
+ * same turn.
+ */
+export function setAsideDebrief(dir: string, id: string): string | null {
   const name = safeName(id);
-  if (!name) return false;
-  try {
-    unlinkSync(join(dir, 'debriefs', `${name}.json`));
-    return true;
-  } catch {
-    return false;
+  if (!name) return null;
+  const from = join(dir, 'debriefs', `${name}.json`);
+  if (!existsSync(from)) return null;
+  const to = join(dir, 'debriefs', REMOVED_DIR);
+  mkdirSync(to, { recursive: true });
+  for (let n = 1; ; n++) {
+    const file = n === 1 ? `${name}.json` : `${name}-${n}.json`;
+    const target = join(to, file);
+    try {
+      linkSync(from, target);
+      unlinkSync(from);
+      return file;
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === 'EEXIST') continue;
+      if (code !== 'EPERM' && code !== 'ENOTSUP' && code !== 'EXDEV' && code !== 'ENOSYS') throw err;
+      if (existsSync(target)) continue;
+      renameSync(from, target); // FAT and exFAT sticks have no hard links
+      return file;
+    }
   }
 }
 
@@ -423,8 +449,15 @@ export function storeRoutes(o: StoreOptions): (req: IncomingMessage, res: Server
           else refuse(r.status, r.why);
         });
       } else if (req.method === 'DELETE' && segs.length === 2) {
-        if (dropDebrief(o.dir, id)) send(200, { deleted: id });
-        else refuse(404, 'no such debrief');
+        try {
+          const file = setAsideDebrief(o.dir, id);
+          if (file) send(200, { removed: id, file: `${REMOVED_DIR}/${file}` });
+          else refuse(404, 'no such debrief');
+        } catch (err) {
+          refuse(507, refusalWords(err));
+        }
+      } else if (get) {
+        refuse(404, 'no such debrief'); // removed/ and anything deeper: never read
       } else {
         refuse(405, 'not a method this path takes');
         req.resume();

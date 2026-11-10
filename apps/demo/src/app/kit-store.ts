@@ -181,8 +181,9 @@ export class KitDebriefs {
     if (r.ok) return { ok: true };
     return { ok: false, why: ((await r.json().catch(() => ({}))) as { why?: string }).why ?? `the kit’s server answered ${r.status}` };
   }
-  /** The file deleted, for good: true when it was there and is gone. */
-  async drop(id: string): Promise<boolean> {
+  /** The archive's Clear for one debrief: the server moves its file into user-data/debriefs/removed/ (store.ts
+   *  `setAsideDebrief`, the owner's ruling of 10 November 2026, "B for now"); true when it was there and is moved. */
+  async setAside(id: string): Promise<boolean> {
     const r = await this.call(encodeURIComponent(id), { method: 'DELETE' });
     return !('why' in r) && r.ok;
   }

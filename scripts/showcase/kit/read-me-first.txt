@@ -15,7 +15,8 @@ YOUR WORK: THE "user-data" FOLDER (inside this kit's folder)
    loses nothing (Builder > the list "In this kit's user-data folder, not in this browser" opens the cards; the
    Debrief page reads the debriefs back by itself). The folder appears at the first save (Ctrl+S, Export, every 2
    minutes of editing, or a saved debrief); each card version is a file of its own, never overwritten. "Clear the
-   archive" deletes the debriefs' files too, for good (there is no recycle bin): export them first to keep them.
+   archive" takes the debriefs out of the archive and MOVES their files to user-data/debriefs/removed: nothing is
+   destroyed and the app never reads them back. Delete that folder's files by hand when you no longer need them.
    Debriefs name residents: only this computer can list or read them; phones on the room network cannot.
    It is written only when the kit runs on Node.js ("Start Classroom", or "Start Simulator" on the kit's own node),
    and only by this computer. On ruby, perl or python, or on a read-only disk or locked USB stick, nothing is kept

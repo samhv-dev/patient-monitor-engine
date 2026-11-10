@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 // The Debrief page's archive and the kit's user-data folder (brief 139 PR 2): with the kit store on, the archive line
 // says the debriefs are kept "in this browser and in this kit’s user-data folder" (the builder's words), the debriefs
-// the folder holds that this browser lacks are read back and listed, and "Clear the archive" says the files go too, for
-// good, then deletes them; with the store off, a line under it says why, in the builder's words, and to export. The
+// the folder holds that this browser lacks are read back and listed, and "Clear the archive" says their files are moved
+// to the kit's user-data/debriefs/removed folder (the owner's ruling of 10 November 2026, "B for now"), then moves them; with the store off, a line under it says why, in the builder's words, and to export. The
 // kit's server is faked here through the page's fetch (its own paths are tested in packages/controller).
 import type { WireEvent } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,6 +26,7 @@ function record(startedAt: number): RunRecord {
 /** The kit's server behind the page's fetch: the debriefs' files by id. */
 function kitServer(on: boolean) {
   const files = new Map<string, string>();
+  const removed = new Map<string, string>();
   const base = new URL('pme-store/', location.href).href;
   vi.stubGlobal('fetch', (async (url: string | URL | Request, init?: RequestInit) => {
     const u = String(url);
@@ -35,10 +36,15 @@ function kitServer(on: boolean) {
     if (u === `${base}debriefs/`) return json({ debriefs: [...files.keys()].map((id) => ({ id, bytes: 1, at: 0 })) });
     const id = decodeURIComponent(u.slice(`${base}debriefs/`.length));
     if (init?.method === 'PUT') return (files.set(id, String(init.body)), json({ id }));
-    if (init?.method === 'DELETE') return files.delete(id) ? json({ deleted: id }) : json({}, 404);
+    if (init?.method === 'DELETE') {
+      if (!files.has(id)) return json({}, 404);
+      removed.set(id, files.get(id)!);
+      files.delete(id);
+      return json({ removed: id, file: `removed/${id}.json` });
+    }
     return files.has(id) ? new Response(files.get(id)!, { status: 200 }) : json({}, 404);
   }) as typeof fetch);
-  return files;
+  return Object.assign(files, { removed });
 }
 
 describe('the Debrief page’s archive and the kit’s user-data folder', () => {
@@ -66,7 +72,7 @@ describe('the Debrief page’s archive and the kit’s user-data folder', () => 
     return { el: view.el, text: (s: string) => view.el.querySelector(s)?.textContent?.replace(/\s+/g, ' ').trim() ?? null };
   };
 
-  it('on: kept in both; what the folder holds is read back and listed; Clear says the files go, for good, and deletes them', async () => {
+  it('on: kept in both; what the folder holds is read back and listed; Clear says the files are moved to removed, and moves them', async () => {
     const files = kitServer(true);
     const { archive } = await import('../archive.ts');
     const live = record(Date.UTC(2026, 10, 10, 9));
@@ -84,10 +90,12 @@ describe('the Debrief page’s archive and the kit’s user-data folder', () => 
     ([...r.el.querySelectorAll<HTMLElement>('#db-archive button')].find((x) => x.textContent === 'Clear the archive') as HTMLElement).click();
     await settle();
     const d = document.querySelector('dialog[open]') as HTMLDialogElement;
-    expect(d.textContent).toContain('Every saved debrief in this browser, and its file in this kit’s user-data folder, is deleted, for good (the folder has no recycle bin). Export them first to keep them.');
+    expect(d.textContent).toContain('Every saved debrief leaves this browser’s archive. Their files are moved to this kit’s user-data/debriefs/removed folder, where they can be deleted by hand; the archive never reads them back.');
+    expect(d.textContent).not.toMatch(/for good|deleted, /);
     ([...d.querySelectorAll('button')].find((x) => x.textContent === 'Clear') as HTMLElement).click();
     for (let i = 0; i < 10; i++) await settle(5);
     expect(files.size).toBe(0);
+    expect([...files.removed.keys()].sort()).toEqual(['elsewhere1', e.id].sort());
     expect(r.text('#db-archive .db-arc-count')).toBe('Nothing saved in this browser or in this kit’s user-data folder. “Finish the case” in Instructor v2 saves each run here.');
   });
 

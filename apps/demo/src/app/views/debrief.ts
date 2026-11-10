@@ -689,7 +689,7 @@ export function debriefView(session: AppSession, link: Link): View {
   };
   const clearArchive = async () => {
     const words = archive.inKit
-      ? 'Every saved debrief in this browser, and its file in this kit’s user-data folder, is deleted, for good (the folder has no recycle bin). Export them first to keep them.'
+      ? 'Every saved debrief leaves this browser’s archive. Their files are moved to this kit’s user-data/debriefs/removed folder, where they can be deleted by hand; the archive never reads them back.'
       : 'Every saved debrief in this browser is deleted, for good. Export them first to keep them.';
     if (!(await confirmDialog('Clear the archive?', words, 'Clear', true, 'Keep them'))) return;
     await archive.clear();
