@@ -85,7 +85,7 @@ const OPENERS: Array<{ show: CardShow; title?: string; text: string; foot: strin
   { show: 'monitor', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style, the whole screen.", foot: 'A second screen or the projector' },
   { show: 'defib', title: 'Defibrillator', text: "The room's defibrillator: energy, charge, shock and sync, with the patient's rhythm.", foot: 'A second screen or a tablet' },
   { show: 'vent', text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'The Ventilator view, or a window of its own' },
-  { show: 'depth', text: 'Needs a simulated EEG: planned as an engine stage of its own.', foot: '—' },
+  { show: 'depth', text: 'The engine simulates the EEG and reads it as a processed-EEG monitor; its window is still to come.', foot: 'Not in this release' },
   { show: 'iabp', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release' },
 ];
 

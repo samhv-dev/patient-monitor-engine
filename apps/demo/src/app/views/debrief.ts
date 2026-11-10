@@ -643,7 +643,9 @@ export function debriefView(session: AppSession, link: Link): View {
     // the learner handout (E51): what happened and when, no verdict, no objective, no value
     const learnerCourse = h('div', { class: 'db-course' });
     learnerCourse.innerHTML = courseSvg(d, ms, { trends: TRENDS4, learner: true });
-    handout.classList.toggle('db-long', ms.length > HANDOUT_ROWS);
+    // N13: in Persian always compact: Vazirmatn's leading (1.55, debrief.css) leaves the full-size handout no room on the
+    // MH card's twelve rows (12.7 mm over one A4 page); the compact sizes are the print's own (E132)
+    handout.classList.toggle('db-long', ms.length > HANDOUT_ROWS || hostLang() === 'fa');
     handout.replaceChildren(...kids(
       h('header', { class: 'db-band' },
         h('div', { class: 'db-kicker' }, 'Learner handout · Your case · No marks'),
