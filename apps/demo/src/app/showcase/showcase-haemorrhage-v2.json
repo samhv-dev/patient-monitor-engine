@@ -55,6 +55,7 @@
         }
       },
       "$comment": "The /1 card's rule from its ventilated state (systolic below 60 for 10 s), read on truth. The /1 card also let a button force the junctional rhythm; a phase is never entered by a button (design §4, plan Q5), so that press is gone.",
+      "src": "Systolic below 60 mmHg for 10 s: the /1 card's rule from its ventilated state (showcase-haemorrhage.json (/1): sbp < 60 for 10 s) and design scenario-format-v2.md §4.2 ('SBP < 60 for 10 s').",
       "notes": "The card sets the rhythm: a junctional rhythm at 50/min (an instructor rhythm event, not the physiology). The pulse loss that follows is the model's.",
       "next": [
         "arrestPea",
@@ -127,6 +128,7 @@
       },
       "holdS": 120,
       "$comment": "ROSC held 120 s (design §4.2): the rule is the return of circulation, held without a break for 120 s from ROSC's entry.",
+      "src": "ROSC held 120 s: design scenario-format-v2.md §4.2 ('post-resuscitation | ROSC held 120 s') and plan F9 (scenario-format-v2-plan.md §F9: 'post-resuscitation (ROSC held 120 s)').",
       "next": [
         "arrestPea",
         "arrestAsystole"
@@ -178,7 +180,7 @@
           }
         }
       ],
-      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) and ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753) read). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating."
+      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) and ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753) read). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating. The press: FiO₂ 1.0 for up to 3600 s, the /1 card's bleedingO2 state (showcase-haemorrhage.json (/1): preoxygenate fio2 1, durationS 3600)."
     },
     {
       "id": "intubate",
@@ -228,7 +230,7 @@
           }
         }
       ],
-      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) read; p.3 states only that 'only rescuers with a high success rate should use tracheal intubation'). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating."
+      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) read; p.3 states only that 'only rescuers with a high success rate should use tracheal intubation'). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating. The press: rocuronium 1.2 mg/kg IV (Miller's Anesthesia, 10th ed., Ch40, printed p.1237, PDF p.11: 'RSI can be accomplished using nondepolarizing NMBDs (rocuronium 1.0 to 1.2 mg/kg or vecuronium 0.3 mg/kg)'); the face mask's FiO₂ 0.21 for 1 s and the ventilator 12/min × 500 mL, PEEP 5, FiO₂ 1.0: the /1 card's ventilated state (showcase-haemorrhage.json (/1))."
     },
     {
       "id": "callForHelp",
@@ -346,7 +348,7 @@
         "withinS": 30,
         "failAfterS": 120
       },
-      "src": "Window from the EARLIER of the model's pulse loss (the /1 card's objective 2) and the operating-room trigger, read on the DISPLAYED monitor: ERC Guidelines 2025 Special Circumstances (Resuscitation 2025;215:110753), p.11: 'Start chest compressions if the systolic blood pressure suddenly decreases below 50 mmHg, in association with fall in ETCO2, despite appropriate interventions.' Threshold: the cuff (NIBP) systolic below 50 mmHg when only a cuff is displayed, the arterial systolic below 40 mmHg when an arterial line is displayed (this card), by Harper NJN, Nolan JP, Soar J, Cook TM, Br J Anaesth 2020;124:234-238, p.236: 'the proposed NIBP systolic pressure threshold of 50 mm Hg'; p.237: 'when NIBP is less than 50 mm Hg the actual systolic arterial pressure is likely to be ~10 mm Hg lower'. Duration 30 s: the owner's number (5 November); the sources give none (NAP7, Nolan et al., Anaesthesia 2024;79:914-923, p.919: 'decreases and remains < 50 mmHg despite interventions'; Harper p.235: 'decreases to less than 50 mm Hg'). EtCO2 below 25 mmHg at the moment the pressure condition is met: the owner's clinical number (5 November); Hinkelbein et al., ESAIC/ESTES, Eur J Anaesthesiol 2023;40:724-736, p.728, reports only an association of '<20 mmHg' with severe anaphylaxis and nonsurvival, and Harper p.236 states that further work is needed 'before one is able to propose a threshold value of PECO2'. 'Despite appropriate interventions' is not computed; Harper p.235 names them: 'Primary interventions include haemostasis, intravenous fluids, and vasoactive drugs'. Scope: Harper p.235 excludes 'haemorrhagic shock with uncontrolled bleeding, in which chest compressions might accelerate blood loss'; Hinkelbein p.733: in hypovolaemic pseudo-PEA 'CCC should be withheld and resuscitation should focus on haemorrhage control and replacement of fluids and blood products'. The trigger applies to this card because the bleed is controlled at 10:00, before it can fire (the owner's ruling, 5 November). Within 30 s: the /1 card's objective 2; fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. Resuming after a rhythm check (the CPR press again) is also the Resume CPR row's."
+      "src": "Window from the EARLIER of the model's pulse loss (the /1 card's objective 2) and the operating-room trigger, read on the DISPLAYED monitor: ERC Guidelines 2025 Special Circumstances (Resuscitation 2025;215:110753), p.11: 'Start chest compressions if the systolic blood pressure suddenly decreases below 50 mmHg, in association with fall in ETCO2, despite appropriate interventions.' Threshold: the cuff (NIBP) systolic below 50 mmHg when only a cuff is displayed, the arterial systolic below 40 mmHg when an arterial line is displayed (this card), by Harper NJN, Nolan JP, Soar J, Cook TM, Br J Anaesth 2020;124:234-238, p.236: 'the proposed NIBP systolic pressure threshold of 50 mm Hg'; p.237: 'when NIBP is less than 50 mm Hg the actual systolic arterial pressure is likely to be ~10 mm Hg lower'. Duration 30 s: the owner's number (5 November); the sources give none (NAP7, Nolan et al., Anaesthesia 2024;79:914-923, p.919: 'decreases and remains < 50 mmHg despite interventions'; Harper p.235: 'decreases to less than 50 mm Hg'). EtCO2 below 25 mmHg at the moment the pressure condition is met: the owner's clinical number (5 November); Hinkelbein et al., ESAIC/ESTES, Eur J Anaesthesiol 2023;40:724-736, p.728, reports only an association of '<20 mmHg' with severe anaphylaxis and nonsurvival, and Harper p.236 states that further work is needed 'before one is able to propose a threshold value of PECO2'. 'Despite appropriate interventions' is not computed; Harper p.235 names them: 'Primary interventions include haemostasis, intravenous fluids, and vasoactive drugs'. Scope: Harper p.235 excludes 'haemorrhagic shock with uncontrolled bleeding, in which chest compressions might accelerate blood loss'; Hinkelbein p.733: in hypovolaemic pseudo-PEA 'CCC should be withheld and resuscitation should focus on haemorrhage control and replacement of fluids and blood products'. The trigger applies to this card because the bleed is controlled at 10:00, before it can fire (the owner's ruling, 5 November). Within 30 s: the /1 card's objective 2; fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. Resuming after a rhythm check (the CPR press again) is also the Resume CPR row's. The press: compressions 110/min at quality 0.8 and the bag via the tube 10/min × 500 mL, PEEP 5, FiO₂ 1.0, the /1 card's cpr state (showcase-haemorrhage.json (/1)). The -1 in 'not abpSys > -1' is not a clinical number: the rule reads 'no arterial systolic displayed', the cuff branch."
     },
     {
       "id": "bag",
@@ -382,7 +384,7 @@
           }
         }
       },
-      "src": "10/min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.8: 'Once a tracheal tube or a SGA has been inserted, ventilate the lungs at a rate of 10 min-1 and continue chest compressions without pausing during ventilations.' No window (recorded, not timed: no window is stated in the sources read)."
+      "src": "10/min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.8: 'Once a tracheal tube or a SGA has been inserted, ventilate the lungs at a rate of 10 min-1 and continue chest compressions without pausing during ventilations.' No window (recorded, not timed: no window is stated in the sources read). The press's 500 mL, PEEP 5 and FiO₂ 1.0 (FiO₂ 1.0 also graded): the /1 card's cpr state (showcase-haemorrhage.json (/1): bvm rr 10, vtMl 500, peep 5, fio2 1) and its label ('bag via the tube 10/min, FiO₂ 1.0')."
     },
     {
       "id": "epinephrine",
@@ -465,7 +467,7 @@
           }
         }
       ],
-      "src": "No window: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'The main principle is to achieve immediate haemostasis.' (no time stated). recorded, not timed: no window is stated in the sources read; offered in the arrest phases, as on the /1 card."
+      "src": "No window: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'The main principle is to achieve immediate haemostasis.' (no time stated). recorded, not timed: no window is stated in the sources read; offered in the arrest phases, as on the /1 card. The press: a bleed rate of 0 mL/min, the /1 card's cprVolume state (showcase-haemorrhage.json (/1); its notes: 'the bleeding stopped (a bleed rate of 0 ...)')."
     },
     {
       "id": "massiveTransfusion",
@@ -504,7 +506,7 @@
           "min": 300
         }
       },
-      "src": "Blood at ≥ 300 mL/min: the plan's criterion (scenario-format-v2-plan.md §F9). No source read states a massive-transfusion volume or rate: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31, only 'enabling the hospital to activate the massive transfusion protocol'; Miller's Anesthesia, 10th ed., Ch45, Ch46 and Ch62 define none (nearest: Ch45 Fig. 45.7, PDF p.23, printed p.1420, 'BP <90 mm Hg after 2 PRBC' and 'Blood loss = circulating blood volume'; Ch62 Fig. 62.9, PDF p.21, printed p.2020, 'EBL > 150 mL/min'). No window (recorded, not timed: no window is stated in the sources read)."
+      "src": "Blood at ≥ 300 mL/min: the plan's criterion (scenario-format-v2-plan.md §F9). No source read states a massive-transfusion volume or rate: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31, only 'enabling the hospital to activate the massive transfusion protocol'; Miller's Anesthesia, 10th ed., Ch45, Ch46 and Ch62 define none (nearest: Ch45 Fig. 45.7, PDF p.23, printed p.1420, 'BP <90 mm Hg after 2 PRBC' and 'Blood loss = circulating blood volume'; Ch62 Fig. 62.9, PDF p.21, printed p.2020, 'EBL > 150 mL/min'). No window (recorded, not timed: no window is stated in the sources read). The press: 1000 mL balanced crystalloid over 90 s and 1200 mL blood over 144 s (500 mL/min), the /1 card's cprVolume state (showcase-haemorrhage.json (/1); its notes: '1000 mL balanced crystalloid at the card's earlier rate and 1200 mL of blood (the engine's whole blood: red cells and plasma together) at a rapid infuser's 500 mL/min')."
     },
     {
       "id": "txa",
@@ -605,7 +607,7 @@
         "anchor": "each:action:rhythmCheck",
         "withinS": 10
       },
-      "src": "Within 10 s of each rhythm check: AHA 2025 Guidelines Part 7 Adult Basic Life Support (Kleinman et al., Circulation 2025;152(suppl 2):S448–S478), S462 (class 1): '...minimize the time taken to check for a pulse (no more than 10 s), and if the rescuer does not definitely feel a pulse, chest compressions should be restarted immediately.' The 10 s is AHA's pulse-check cap and the owner's number (5 November). The card's rhythm check is one instant press (compressions stop), so the window runs 10 s from that press. A check that finds a pulse (ROSC within the window) asks for no resumption."
+      "src": "Within 10 s of each rhythm check: AHA 2025 Guidelines Part 7 Adult Basic Life Support (Kleinman et al., Circulation 2025;152(suppl 2):S448–S478), S462 (class 1): '...minimize the time taken to check for a pulse (no more than 10 s), and if the rescuer does not definitely feel a pulse, chest compressions should be restarted immediately.' The 10 s is AHA's pulse-check cap and the owner's number (5 November). The card's rhythm check is one instant press (compressions stop), so the window runs 10 s from that press. A check that finds a pulse (ROSC within the window) asks for no resumption. The press: compressions 110/min at quality 0.8, the /1 card's cpr and postShock states (showcase-haemorrhage.json (/1): cpr rate 110, quality 0.8); accepted 100–120/min: design scenario-format-v2.md §11 ('CPR (100–120/min, within 30 s of pulseLoss)')."
     },
     {
       "id": "stopCpr",
@@ -640,7 +642,7 @@
         "anchor": "rosc",
         "withinS": 120
       },
-      "src": "Within 120 s of ROSC: the /1 card's objective 3."
+      "src": "Within 120 s of ROSC: the /1 card's objective 3. The press: compressions off and the ventilator 12/min × 500 mL, PEEP 5, FiO₂ 1.0, the /1 card's rosc state (showcase-haemorrhage.json (/1))."
     },
     {
       "id": "recogniseRosc",
@@ -664,6 +666,7 @@
       "id": "bleed",
       "on": "phase:bleeding",
       "$comment": "The /1 card's bleeding state: 2.5 L over 10 min from the start.",
+      "src": "2500 mL over 600 s from the start: the /1 card's bleeding state (showcase-haemorrhage.json (/1): bleed volumeMl 2500, overS 600) and design scenario-format-v2.md §4.2 ('the 2.5 L bleed over 10 min at 0 s').",
       "commands": [
         {
           "type": "applyEvent",
@@ -679,6 +682,7 @@
       "id": "junctional",
       "on": "phase:decompensating",
       "$comment": "The /1 card's junctional state: the card sets a junctional rhythm at 50/min (an instructor rhythm event, not the physiology). The pulse loss that follows is the model's.",
+      "src": "Junctional escape at 50/min: the /1 card's junctional state (showcase-haemorrhage.json (/1): rateBpm 50) and design scenario-format-v2.md §4.2 ('junctional rhythm 50/min on entry').",
       "commands": [
         {
           "type": "setRhythm",
