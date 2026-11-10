@@ -10,7 +10,7 @@ import type { PkPatient } from '../../../src/l2/pk/covariates.ts';
 import { DRUGS } from '../../../src/l2/pk/data/drugs.ts';
 import { ttpeMin } from '../../../src/l2/pk/models.ts';
 import { createPkState, validatePkCommand } from '../../../src/l2/pk/pipeline.ts';
-import { NO_KE0_REFUSAL, PENDING_TCI_MODEL_IDS, TCI_SETS, tciModeRefusal, type TciCovariate, type TciPaper, type TciQuantity, type TciSet, type TciSetMeta, type TciSetOpts } from '../../../src/l2/pk/tci-sets/index.ts';
+import { NO_KE0_REFUSAL, PENDING_TCI_MODEL_IDS, PENDING_TCI_REASONS, TCI_SETS, tciModeRefusal, type TciCovariate, type TciPaper, type TciQuantity, type TciSet, type TciSetMeta, type TciSetOpts } from '../../../src/l2/pk/tci-sets/index.ts';
 import type { Command } from '../../../src/types.ts';
 
 const SETS_DIR = resolve(import.meta.dirname, '../../../src/l2/pk/tci-sets');
@@ -208,6 +208,13 @@ describe('TCI-set registry: every registered set meets rules 1–7', () => {
   it('rule 5: no [VERIFY] mark remains', () => expect(TCI_SETS.flatMap((s) => rule5(s, moduleText(s.meta.id)))).toEqual([]));
   it('rule 6: every ke0 names its source, and the PK it was fitted with when not the PK paper\'s', () => expect(TCI_SETS.flatMap(rule6)).toEqual([]));
   it('rule 7: the TCI command accepts the registered and pending ids and nothing else', () => expect(rule7(TCI_SETS, PENDING_TCI_MODEL_IDS, engineAccepts)).toEqual([]));
+  it('every pending id says why it is not registered and names the table its registration needs (T2)', () => {
+    expect(Object.keys(PENDING_TCI_REASONS).sort()).toEqual(Object.keys(PENDING_TCI_MODEL_IDS).sort());
+    for (const [id, why] of Object.entries(PENDING_TCI_REASONS)) {
+      expect(why, id).toMatch(/needs (the |Table )/);
+      expect(why, id).toMatch(/PMID \d+/);
+    }
+  });
 });
 
 // --- fixtures: one valid set, then one change per rule that the rule must refuse ----------------------------------
