@@ -124,6 +124,13 @@ transports (`src/protocol.ts`).
 
 ## Parameters
 
+### [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `CARD_MAX_BYTES` | `512 * 1024` | — | November 2026; [ENG: scenario; BQ13] | The largest card file the store takes: the owner's limit for a card document (BQ13, 9 November 2026: "a card document ≤ 512 KB, text only"), here 512 KiB of UTF-8. The largest library card today is under 40 kB. [ENG: scenario; BQ13] |
+| `NAME_MAX` | `64` | — | [ENG: scenario] | The longest name: the card id's own limit (`^[A-Za-z][A-Za-z0-9_.-]{0,63}$`, 64 characters). [ENG: scenario] |
+
 ### [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -195,7 +202,17 @@ transports (`src/protocol.ts`).
 | `isInside` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | `file` lies inside the folder `root` (both real paths). |
 | `lanAddresses` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | This machine's IPv4 addresses another device can reach, best first (no loopback, no link-local 169.254/16). |
 | `isLocalAddress` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | A socket from this machine itself (loopback, or one of its own interface addresses): |
-| `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir`, or null when there is none or the file is not ours. |
+| `httpHandler` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | `store`: the kit store's paths (store.ts `storeRoutes`), answered first: |
+| `writeHidden` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | `text` written whole to `file` (a hidden temporary file, then a rename) and the file hidden. |
+| `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir` (in `file`: |
+| `safeName` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | `s` as a file name the store may use, or null: |
+| `parseVersionFile` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A version file's number and time, or null when the name is not one. |
+| `writeRefusal` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Why the folder cannot be written, in words for the page, or null when it can. |
+| `fromThisComputer` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A request from this computer's own browser to this computer: |
+| `listCards` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Every card the folder holds (a folder with a safe name and at least one version file), by id. |
+| `keepCard` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A new version of card `id`, `text` its card file. |
+| `readCard` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | One version's card file, or null. |
+| `storeRoutes` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The store's HTTP side: |
 | `findings` | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Every finding for these drugs (each with a file in `formulary`) in this diluent (null: |
 | `checkFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | §5's six rules over the layer's files (path relative to the formulary folder → parsed JSON): |
 | `loadFormulary` | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | The typed layer, when every rule holds; |
@@ -265,7 +282,7 @@ transports (`src/protocol.ts`).
 | `stage1Vocabulary` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | What the base engine accepts (engine.ts validate()). |
 | `vocabularyOf` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | The engine's own vocabulary when it has one, else the base-engine description. |
 
-Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `formatAjvError`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
+Exported without a doc comment: `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `formatAjvError`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
 
 ## Source files
 
@@ -274,6 +291,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`packages/controller/relay/bin.ts`](../../packages/controller/relay/bin.ts) | — |
 | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | Stage 12 (the classroom): the relay's HTTP side on the WebSocket's own port. |
 | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | @pme/controller relay (brief §3.7): rooms keyed by 6-character session code, host authority, a snapshot cache for late joiners, heartbeat and room expiry. |
+| [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | The kit store (docs/plans/scenario-builder.md §8 layer 2, piece B8; the owner's ruling of 10 November 2026): what the clinicians make in the app is kept as plain files in the kit's own `user-data` folder, beside the brow |
 | [`formulary/findings.ts`](../../packages/controller/src/formulary/findings.ts) | Plan learner-action-remote.md L2 (§4 D5, LQ11, LQ12): what the bench finds in a preparation, from the formulary alone. |
 | [`formulary/load.ts`](../../packages/controller/src/formulary/load.ts) | Plan learner-action-remote.md §5, L1: the formulary loader and the source check. |
 | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | Plan learner-action-remote.md L2 and §4 D3: the host's pure preparation step. |
@@ -348,6 +366,7 @@ None recorded.
 | [`panel/scenario-tab.dom.test.ts`](../../packages/controller/test/panel/scenario-tab.dom.test.ts) | 0 | 0 |
 | [`panel/staging.test.ts`](../../packages/controller/test/panel/staging.test.ts) | 0 | 0 |
 | [`protocol.test.ts`](../../packages/controller/test/protocol.test.ts) | 0 | 0 |
+| [`relay/kit-store.test.ts`](../../packages/controller/test/relay/kit-store.test.ts) | 0 | 0 |
 | [`relay/kit-windows.test.ts`](../../packages/controller/test/relay/kit-windows.test.ts) | 0 | 0 |
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
 | [`relay/peer-left.test.ts`](../../packages/controller/test/relay/peer-left.test.ts) | 0 | 0 |

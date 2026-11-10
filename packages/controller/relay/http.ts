@@ -3,6 +3,7 @@
 // classroom the relay also serves the BUILT app (`--static DIR`) over plain http on the venue network: the phone opens
 // one address, and the page's relay is that same address. `/pme-relay.json` tells the instructor's page the laptop's
 // network addresses for the QR code (the page itself may run on 127.0.0.1). GET and HEAD only; path traversal refused.
+// With a state folder the kit store's `/pme-store/` paths come first (store.ts: they also take POST, from this computer).
 import { createReadStream, realpathSync, statSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { networkInterfaces } from 'node:os';
@@ -56,13 +57,15 @@ export interface RelayInfo {
   lastRoom?: string;
 }
 
-export function httpHandler(o: { staticDir?: string; info: () => RelayInfo }): (req: IncomingMessage, res: ServerResponse) => void {
+/** `store`: the kit store's paths (store.ts `storeRoutes`), answered first: it returns true for a path of its own. */
+export function httpHandler(o: { staticDir?: string; info: () => RelayInfo; store?: (req: IncomingMessage, res: ServerResponse) => boolean }): (req: IncomingMessage, res: ServerResponse) => void {
   const root = o.staticDir ? realpathSync(o.staticDir) : null;
   const text = (res: ServerResponse, code: number, body: string, head: boolean) => {
     res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8', 'Content-Length': Buffer.byteLength(body), 'Cache-Control': 'no-cache' });
     res.end(head ? undefined : body);
   };
   return (req, res) => {
+    if (o.store?.(req, res)) return;
     const head = req.method === 'HEAD';
     if (req.method !== 'GET' && !head) return text(res, 405, 'Only GET and HEAD\n', false);
     let path: string;

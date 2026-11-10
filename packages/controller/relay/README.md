@@ -18,9 +18,27 @@ Options: `--port` (default 8787), `--host` (default `0.0.0.0`, i.e. reachable on
 (default 10; an empty room is forgotten after this long), `--quiet`; Stage 12: `--static DIR` (also serve the built
 app on the same port), `--max-peers N` (default 60 per session), `--remote-roles viewer|all` (what another device may
 be; default `viewer`, with or without `--static`: `all` lets any device that knows the session code command);
-`--state-dir DIR` (room plan R1b: the code of the last room a host opened is kept in `DIR/room.json`, the code only, and
-`/pme-relay.json` answers it as `lastRoom`, so the classroom kit's room code survives a restart on another port; without
-it nothing is written).
+`--state-dir DIR` (room plan R1b, and the kit store: the classroom kit passes its own `user-data` folder, the owner's
+ruling of 10 November 2026: the code of the last room a host opened is kept in `DIR/.room.json`, a hidden file, the code
+only, and `/pme-relay.json` answers it as `lastRoom`, so the classroom kit's room code survives a restart on another
+port; and the kit store's `/pme-store/` paths keep scenario cards under `DIR/scenarios/`, below; without it nothing is
+written), `--old-state-dir DIR` (where kits before that ruling kept the code, `DIR/room.json`: read once when the state
+folder has none, never written).
+
+### The kit store (`/pme-store/`, with `--state-dir`)
+
+`relay/store.ts` (docs/plans/scenario-builder.md §8 layer 2). The kit's Node.js simulator server (`serve.mjs`) answers
+the same paths from the bundled `server/store.mjs`.
+
+| Request | Answer | Who |
+|---|---|---|
+| `GET /pme-store/` | `{store:'pme', folder, writable, refused?, why?}` (`refused`: `not-this-computer`, or `not-writable` with the system's reason, e.g. a read-only disk) | anyone |
+| `GET /pme-store/scenarios/` | `{cards:[{id, title, versions:[{v, at, bytes}]}]}`, the newest version's title | anyone (the plan: reads are open to the room) |
+| `GET /pme-store/scenarios/<id>/<v>` | version `v`'s card file, as written | anyone |
+| `POST /pme-store/scenarios/<id>` (`application/json`, the card file) | 201 `{v, at, bytes, same:false}`: a new file `DIR/scenarios/<id>/v0001-<UTC time>.json`; 200 `same:true` when the bytes are the newest version's (nothing written); 400 an id that is not a safe file name (letters, digits, `_`, `.`, `-`, at most 64, no Windows device name) or a body that is not a card with that id; 413 over 512 KiB; 507 the folder cannot be written | this computer only: the loopback peer, a loopback `Host`, a loopback `Origin` or none (403 otherwise) |
+
+A version is never overwritten (each is created where no file was). A preflight (`OPTIONS`) is answered for a page of this
+computer (a loopback origin) only.
 
 Then open the host monitor with the relay URL, e.g. `http://<laptop-ip>:5173/dev/controller-host.html?relay=ws://<laptop-ip>:8787/`,
 and use **Open remote** / **Open viewer**, or type the session code on a phone at `/dev/controller-remote.html`

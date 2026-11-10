@@ -18,13 +18,21 @@
 // grants it, reaches the host byte for byte, while its `applyEvent drug` with a forged `by` and an instructor's
 // `time pause` are `forbidden` and never reach the host (its next `prep deliver` is the host's next command) (learner
 // remote L3); the relay is still running; then the relay is stopped and the port is free again.
-// Room plan R1b: each run gets a state directory of its own (relay.mjs --state-dir; the launchers' PME_STATE_DIR, which
-// stands in for the application-data folder they use): after the host hello /pme-relay.json answers lastRoom and
-// room.json in that directory holds the room code only. After every run the kit's own folder is as it was.
+// Room plan R1b and the kit store (docs/plans/scenario-builder.md §8 layer 2; the owner's ruling of 10 November 2026):
+// each run gets a state directory of its own (relay.mjs --state-dir; the launchers' PME_STATE_DIR, which stands in for
+// the kit's user-data folder): after the host hello /pme-relay.json answers lastRoom and the hidden .room.json in that
+// directory holds the room code only; a card POSTed to /pme-store/scenarios/<id> is kept as version 1, the same bytes
+// again write nothing, a changed card is version 2 (version 1 unchanged), the list and both versions read back, a card
+// id that would leave the folder is refused, and the folder holds those files only. After every run the kit's own
+// folder is as it was. Before the runs: the fresh build has no user-data folder, and server/store.mjs and
+// app/pme-kit.json are there. A fourth run starts "Start Classroom.command" with NO PME_STATE_DIR and a HOME whose
+// application-data folder holds a room code an older kit kept: the relay answers that code, the host's hello writes
+// <kit>/user-data/.room.json, the old file is as it was and nothing else appears in HOME; the run's user-data folder is
+// then removed, so the kit is as it was.
 //   node scripts/showcase/check-relay.mjs [KIT_DIR] [--port 8690] [--json OUT.json]
 // Needs Node.js >= 22 (its built-in WebSocket client). Port 8690 (and the next 9) keeps clear of a classroom on 8650.
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -41,6 +49,7 @@ const RELAY = join(kit, 'server/relay.mjs');
 const LAUNCHER = join(kit, 'Start Classroom.command');
 const WIN_LAUNCH = join(kit, 'server/launch.mjs');
 for (const f of [RELAY, LAUNCHER, WIN_LAUNCH, join(kit, 'app/index.html')]) if (!existsSync(f)) throw new Error(`not a classroom kit: no ${f}`);
+const USER_DATA = join(kit, 'user-data');
 if (typeof WebSocket !== 'function') throw new Error(`Node.js ${process.version} has no built-in WebSocket (needs >= 22)`);
 
 const T = 8000;
@@ -154,9 +163,10 @@ async function frames(port, proc, steps, state) {
   step(`/pme-relay.json still answers: ${JSON.stringify(info)}`);
   // R1b: the host's hello is the last room; kept in the state directory, the room code only
   if (info.lastRoom !== SESSION) throw new Error(`/pme-relay.json lastRoom ${JSON.stringify(info.lastRoom)}, not ${SESSION}`);
-  const kept = readFileSync(join(state, 'room.json'), 'utf8');
-  if (JSON.stringify(JSON.parse(kept)) !== JSON.stringify({ lastRoom: SESSION }) || readdirSync(state).join() !== 'room.json') throw new Error(`state directory: ${readdirSync(state).join()} ${kept}`);
-  step(`the last room kept in the state directory: room.json ${kept.trim()} (the room code only)`);
+  const kept = readFileSync(join(state, '.room.json'), 'utf8');
+  if (JSON.stringify(JSON.parse(kept)) !== JSON.stringify({ lastRoom: SESSION }) || readdirSync(state).join() !== '.room.json') throw new Error(`state directory: ${readdirSync(state).join()} ${kept}`);
+  step(`the last room kept in the state directory: the hidden .room.json ${kept.trim()} (the room code only)`);
+  await storeSteps(port, state, step);
 
   // R2: the sweep pings every socket (the kit's heartbeat is 10 s); the controller's socket answers, and the host's next
   // peers frame (here: a viewer joining) lists it with that round trip
@@ -274,6 +284,28 @@ async function frames(port, proc, steps, state) {
   step('the relay is still running after the frames');
 }
 
+/** The kit store's paths on this server (relay.mjs, or serve.mjs with store.mjs): cards kept as versions, from here. */
+async function storeSteps(port, state, step) {
+  const at = `http://127.0.0.1:${port}/pme-store/`;
+  const status = await withTimeout(fetch(at).then((r) => r.json()), '/pme-store/');
+  if (status.store !== 'pme' || status.writable !== true) throw new Error(`/pme-store/: ${JSON.stringify(status)}`);
+  const cardText = (title) => `${JSON.stringify({ schema: 'pme-scenario/2', id: 'kit-check-card', title }, null, 2)}\n`;
+  const post = (id, body) => withTimeout(fetch(`${at}scenarios/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }), 'a store POST');
+  const one = await post('kit-check-card', cardText('first'));
+  const again = await post('kit-check-card', cardText('first'));
+  const two = await post('kit-check-card', cardText('second'));
+  if (one.status !== 201 || again.status !== 200 || two.status !== 201 || (await two.json()).v !== 2) throw new Error(`store writes answered ${one.status} ${again.status} ${two.status}`);
+  const list = await (await fetch(`${at}scenarios/`)).json();
+  const v1 = await (await fetch(`${at}scenarios/kit-check-card/1`)).text();
+  const v2 = await (await fetch(`${at}scenarios/kit-check-card/2`)).text();
+  if (list.cards?.length !== 1 || list.cards[0].versions.length !== 2 || list.cards[0].title !== 'second' || v1 !== cardText('first') || v2 !== cardText('second')) throw new Error(`store reads: ${JSON.stringify(list)}`);
+  const out = await post('..%2F..%2Fescape', JSON.stringify({ id: '../../escape' }));
+  if (out.status !== 400) throw new Error(`a card id that leaves the folder answered ${out.status}`);
+  const files = readdirSync(join(state, 'scenarios', 'kit-check-card')).sort();
+  if (readdirSync(join(state, 'scenarios')).join() !== 'kit-check-card' || files.length !== 2 || !files.every((f) => /^v000[12]-\d{4}-\d\d-\d\dT\d\d-\d\d-\d\dZ\.json$/.test(f))) throw new Error(`store folder: ${files.join()}`);
+  step(`kit store: a card kept as version 1, the same bytes wrote nothing, a change is version 2 (${files.join(', ')}); the list and both versions read back; an id that leaves the folder refused (400)`);
+}
+
 async function stop(proc, port, steps) {
   if (!proc.exitInfo) {
     const gone = new Promise((r) => proc.once('exit', r));
@@ -304,8 +336,14 @@ const runs = [
 ];
 /** Every file of the kit (path and size): a run must leave its own folder as it was. */
 const listing = (dir, at = '') => readdirSync(join(dir, at), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? listing(dir, join(at, e.name)) : [join(at, e.name)])).sort().join('\n');
-const kitBefore = listing(kit);
 const results = [];
+{
+  console.log('\n== the kit as built: no user-data folder; the store and the kit marker are there');
+  const why = existsSync(USER_DATA) ? `${USER_DATA} exists: a kit must ship without the clinicians' data folder` : !existsSync(join(kit, 'server/store.mjs')) ? 'no server/store.mjs' : !existsSync(join(kit, 'app/pme-kit.json')) ? 'no app/pme-kit.json' : null;
+  console.log(`  ${why ? 'FAIL' : 'ok '}  ${why ?? 'no user-data/; server/store.mjs and app/pme-kit.json present'}`);
+  results.push({ run: 'the kit as built', pass: !why, steps: why ? [] : ['no user-data/', 'server/store.mjs', 'app/pme-kit.json'], ...(why ? { error: why } : {}) });
+}
+const kitBefore = listing(kit);
 {
   // the Windows launchers: cmd.exe needs CRLF (an LF-only batch file loses its goto labels) and reads them in the OEM code page
   console.log('\n== Windows launchers (.cmd): CRLF line endings, ASCII only');
@@ -351,6 +389,58 @@ for (const run of runs) {
     results.push({ run: run.name, pass: false, steps, error: err.message, output: r?.log().split('\n').slice(-16) });
   }
   rmSync(join(state, '..'), { recursive: true, force: true });
+}
+{
+  // the launcher as a presenter starts it: no PME_STATE_DIR. The kit's own user-data folder is used; the old
+  // application-data folder (in a HOME made here) is read once and left as it is
+  const name = `Start Classroom.command, no PME_STATE_DIR: <kit>/user-data, the old application-data code read once`;
+  console.log(`\n== ${name}`);
+  const steps = [];
+  const home = mkdtempSync(join(tmpdir(), 'pme-check-home-'));
+  const oldDir = join(home, 'Library', 'Application Support', 'PME Classroom');
+  const OLD_CODE = 'QQBAWA';
+  const oldText = `${JSON.stringify({ lastRoom: OLD_CODE })}\n`;
+  let r = null;
+  const theirs = existsSync(USER_DATA); // a used kit's own data: never touched, and this run is not made
+  try {
+    if (theirs) throw new Error(`${USER_DATA} exists before the run (a used kit: check a fresh build)`);
+    mkdirSync(oldDir, { recursive: true });
+    writeFileSync(join(oldDir, 'room.json'), oldText);
+    r = await start('/usr/bin/env', ['-i', 'PATH=/usr/bin:/bin', `HOME=${home}`, 'PME_NO_OPEN=1', `PME_PORT=${launcherPort}`, `PME_NODE=${process.execPath}`, '/bin/bash', LAUNCHER], undefined, /ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//);
+    const step = (x) => (steps.push(x), console.log(`  ok  ${x}`));
+    const info = await withTimeout(fetch(`http://127.0.0.1:${r.port}/pme-relay.json`).then((x) => x.json()), '/pme-relay.json');
+    if (info.lastRoom !== OLD_CODE) throw new Error(`lastRoom ${info.lastRoom}, not the old folder's ${OLD_CODE}`);
+    if (existsSync(USER_DATA)) throw new Error('user-data was made before anything was kept');
+    step(`the room code an older kit kept (${OLD_CODE}) is answered; no user-data folder yet`);
+    const host = socket(r.port, r.proc);
+    await host.opened;
+    host.ws.send(JSON.stringify({ v: 1, session: OLD_CODE, from: 'kit-check-host-0123456789abcdef', seq: 1, sentAt: Date.now(), kind: 'hello', role: 'host' }));
+    await host.next('the peers frame after the host hello');
+    for (let i = 0; i < 40 && !existsSync(join(USER_DATA, '.room.json')); i++) await new Promise((w) => setTimeout(w, 50));
+    const kept = readFileSync(join(USER_DATA, '.room.json'), 'utf8');
+    if (kept !== oldText || readdirSync(USER_DATA).join() !== '.room.json') throw new Error(`user-data: ${readdirSync(USER_DATA).join()} ${kept}`);
+    step(`the host's hello wrote <kit>/user-data/.room.json ${kept.trim()} (hidden, the code only)`);
+    host.ws.close();
+    await stop(r.proc, r.port, steps);
+    const homeFiles = listing(home);
+    if (readFileSync(join(oldDir, 'room.json'), 'utf8') !== oldText || homeFiles !== join('Library', 'Application Support', 'PME Classroom', 'room.json')) throw new Error(`HOME after the run: ${homeFiles}`);
+    step('the old application-data file is as it was, and nothing else was written in HOME');
+    results.push({ run: name, pass: true, steps });
+  } catch (err) {
+    console.log(`  FAIL ${err.message}`);
+    if (r) {
+      console.log(`  --- launcher output (last lines) ---\n${r.log().trim().split('\n').slice(-16).map((l) => `  | ${l}`).join('\n')}`);
+      try {
+        await stop(r.proc, r.port, steps);
+      } catch (e) {
+        console.log(`  (stop: ${e.message})`);
+      }
+    }
+    results.push({ run: name, pass: false, steps, error: err.message });
+  }
+  if (!theirs) rmSync(USER_DATA, { recursive: true, force: true }); // this run's own folder: the kit is then as it was
+  rmSync(home, { recursive: true, force: true });
+  if (listing(kit) !== kitBefore) results.push({ run: `${name}: the kit's own folder afterwards`, pass: false, steps: [], error: 'the kit is not as it was' });
 }
 const pass = results.every((r) => r.pass);
 console.log(`\nclassroom relay smoke test: ${pass ? 'PASS' : 'FAIL'} (${results.filter((r) => r.pass).length} of ${results.length} runs; node ${process.version}; kit ${kit})`);
