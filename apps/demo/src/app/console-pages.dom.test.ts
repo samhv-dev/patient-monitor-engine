@@ -207,6 +207,12 @@ describe('Room', () => {
     expect(st(five, 'down')).toMatchObject({ level: 'down', title: 'Disconnected', sub: '2 devices · the relay does not answer' });
   });
 
+  it('L6: a learner action remote reads "Learner remote", signing in until the host grants its learner PIN', () => {
+    const devices = [dev('q1', { role: 'learner', show: 'learner', device: 'learnkey0001', granted: false, rttMs: 14, sinceMs: 1000 }), dev('q2', { role: 'learner', show: 'learner', device: 'learnkey0002', granted: true, rttMs: 16, sinceMs: 1000 })];
+    const rows = deviceRows({ relay: 'open', phones: 2, peers: [], now: 60_000, devices, known: {} });
+    expect(rows.slice(1).map((r) => [r.showing, r.state, r.device])).toEqual([['Learner remote', 'signing in', 'learnkey0001'], ['Learner remote', 'granted', 'learnkey0002']]);
+  });
+
   it("R7 the table: one row per device the relay lists, with what it shows, its ping and when it was last heard; this computer's windows; remembered names; the absent grey", () => {
     const log = new PeerLog();
     log.heard('w2', 'local', 'viewer', 58_000, 'monitor');

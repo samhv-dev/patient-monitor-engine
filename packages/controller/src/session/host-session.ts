@@ -365,6 +365,22 @@ export class HostSession {
     return h ? prepRecord(h, drugId) : undefined;
   }
 
+  /**
+   * L7 (§4 D7, LQ3 ruled): the instructor shows the incompatibility notice of the preparation `prepId` of the device `by`:
+   * the host records when (the scenario driver's record of the preparation carries it: prepRecord's `notice`) and tells
+   * that remote, whose `prep` news now carries the findings; the remote sounds the notice once and shows them. A second
+   * call changes nothing. Nothing is removed or blocked: a Give is given whether or not the notice was shown. L9's card
+   * (an instructor-only `prep notice` command, on the laptop and the instructor's phone) is what calls it; until then
+   * it is this method alone. False: no such preparation (or already shown).
+   */
+  showPrepNotice(by: string, prepId: string): boolean {
+    const h = this.preps.get(by)?.get(prepId);
+    if (!h || h.notice) return false;
+    h.notice = { shownAt: this.o.target.now().simT };
+    this.prepNews('notice', h);
+    return true;
+  }
+
   /** R8c: the granted remote ventilator's peer id (null: none). */
   get ventilator(): string | null {
     return this.signedIn.ventilator?.from ?? null;

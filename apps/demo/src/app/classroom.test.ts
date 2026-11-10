@@ -172,5 +172,11 @@ describe('the follower\'s instrument hashes (R4, §4 D7)', () => {
     expect(hashOf('learner')).toBe('#/monitor');
     expect(hashOf('monitor')).toBe('#/monitor/wide');
     expect(hashOf('defib')).toBe('#/defib');
+    // L6: the learner action remote's page, and back
+    expect(instrumentOf('#/remote/learner')).toBe('remote');
+    expect(instrumentOf('#/remote/learner/')).toBe('remote');
+    expect(hashOf('remote')).toBe('#/remote/learner');
+    expect(instrumentOf(hashOf('remote'))).toBe('remote');
+    for (const h of ['#/remote', '#/remote/learnerx', '#/remote/instructor']) expect(instrumentOf(h), h).toBe('learner');
   });
 });

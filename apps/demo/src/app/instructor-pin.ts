@@ -4,7 +4,7 @@
 // tab's sessionStorage (position.ts, the items host-guard.ts hands to another tab) or the record: nothing here writes
 // anywhere else.
 // Plan learner-action-remote.md L4 (§4 D9, LQ1 ruled 9 November): the LEARNER PIN is kept the same way, under
-// `pme.learnerPin`, drawn once and changed on request (Room setup's button is L6's); it is never the instructor's PIN,
+// `pme.learnerPin`, drawn once and changed on request (Room setup's "New learner PIN", L6); it is never the instructor's PIN,
 // and the instructor's PIN is never drawn equal to it, so neither ever opens the other's role (the host refuses both
 // while they are equal: host-session.ts LEARNER_REASONS.samePins).
 import { PIN_RE } from '@pme/controller';
