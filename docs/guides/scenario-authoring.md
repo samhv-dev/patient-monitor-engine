@@ -261,7 +261,17 @@ on the document and on every entry, and nothing reads it.
   - `signal`: `"pulseLoss"`, `"rosc"` or `"rhythm:<id>"`.
 
   `var` is one of the schema's `truthVar` names: the state variables, `map` (the beat MAP), `ph`, `lactate`,
-  `mhActivity`, `mhExcess`, `dantroleneE` and `setMinuteVentilationLMin`. A rhythm is named by the id the engine
+  `mhActivity`, `mhExcess`, `dantroleneE` and `setMinuteVentilationLMin`, or a drug's concentration in the patient:
+  `cp:<drugId>` (plasma) or `ce:<drugId>` (effect site), e.g. `{ "value": { "var": "ce:propofol", "op": "<", "value":
+  1.5 } }`. The value is the patient's own, the drug panel row's `cp`/`ce` from the engine's 1 Hz `drugs` event, never
+  a TCI pump's target or prediction; a drug not given reads 0. Its unit is the panel's: propofol, sugammadex,
+  magnesium, lidocaine, bupivacaine and ropivacaine µg/mL; fentanyl, remifentanil, sufentanil, the NMB agents and
+  succinylcholine ng/mL; the vasoactives and esmolol µg/kg/min rate-equivalents (`µg/kg/min eq`). Only a drug the
+  engine carries in a compartment model has one: the validator refuses an unknown drug, a drug modelled only as an
+  effect curve (midazolam, ketamine, dexmedetomidine, morphine and the other "× ref dose" rows; the infusion-pump
+  plan's E3a–E3c give the first three a compartment), an inhaled agent and a blood-model row (calcium, potassium,
+  bicarbonate, mannitol, hypertonic saline), each with the reason. The threshold is the card's own, sourced as every
+  number on the card. A rhythm is named by the id the engine
   draws, so VF is told from VT, and asystole from PEA, by id. There is no `manual`, `event` or `afterS` leaf. The
   scenario `goto` and `trigger` commands are refused on a `/2` card ("a pme-scenario/2 phase is entered by its own
   rule, never by goto").
