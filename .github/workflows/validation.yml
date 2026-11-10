@@ -38,12 +38,6 @@ jobs:
           name: validation-report
           path: docs/validation/
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: soak-and-perf
-          path: docs/validation/perf/
-          if-no-files-found: ignore
       # The soak runs inside the official Playwright image (the lockfile's version; Chromium and its system libraries
       # baked in): no `playwright install --with-deps`, whose apt step stalled up to 40 min on the runner's Ubuntu
       # mirror. Same workspace path, the runner's user; PME_SOAK_MIN passes through when set.
@@ -54,3 +48,11 @@ jobs:
           docker run --rm --ipc=host --user "$(id -u):$(id -g)" -e CI -e PME_SOAK_MIN -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD" \
             "mcr.microsoft.com/playwright:v$v-noble" \
             node_modules/.bin/playwright test -c playwright.validation.config.ts
+      # After the soak, so the artifact carries the soak's own numbers (it ran before the soak until N15); `always()` keeps
+      # them when the soak fails, as the report's upload does.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: soak-and-perf
+          path: docs/validation/perf/
+          if-no-files-found: ignore
