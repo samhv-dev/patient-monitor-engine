@@ -76,11 +76,27 @@
         "trissel": "not listed",
         "src": "trissel-calciumchloride-p350"
       }
+    },
+    {
+      "with": "sodiumBicarbonate",
+      "verdict": "conditional",
+      "statement": "Trissel, D5W: conditionally compatible depending on concentrations (ref 15); NaHCO3 2.4 mEq/L with CaCl2 1 g/L physically compatible 24 h (ref 772). Y-site rows not used. Stabilis has none.",
+      "src": "trissel-calciumchloride-p350",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-calciumchloride-p350"
+      }
     }
   ],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 11.5,
+        "unit": "mg/mL",
+        "src": "stabilis-calciumchloride-3307"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -97,7 +113,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 9.3,
+        "unit": "mg/mL",
+        "src": "stabilis-calciumchloride-3307"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -114,7 +136,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 11.5,
+        "unit": "mg/mL",
+        "src": "stabilis-calciumchloride-3307"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -131,7 +159,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 8.9,
+        "unit": "mg/mL",
+        "src": "stabilis-calciumchloride-3307"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [

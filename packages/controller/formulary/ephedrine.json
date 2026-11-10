@@ -64,7 +64,13 @@
   "admixtures": [],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 5,
+        "unit": "mg/mL",
+        "src": "stabilis-ephedrine-1720"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [

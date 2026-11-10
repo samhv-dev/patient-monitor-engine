@@ -602,5 +602,83 @@
     "page": "PDF p. 1906 (page stamp 1886)",
     "reader": "first reader: executor (Claude Opus 5.5)",
     "date": "2026-11-10"
+  },
+  "trissel-sodiumbicarbonate-p1857": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Sodium Bicarbonate: additive compatibility (calcium chloride, ref 15)",
+    "page": "PDF p. 1857 (page stamp 1837)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-sodiumbicarbonate-p1862": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Sodium Bicarbonate: additive compatibility (succinylcholine)",
+    "page": "PDF p. 1862 (page stamp 1842)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-succinylcholine-p1908": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Succinylcholine Chloride: additive compatibility (sodium bicarbonate)",
+    "page": "PDF p. 1908 (page stamp 1888)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "trissel-insulin-p1213": {
+    "kind": "trissel",
+    "edition": "17 (2013)",
+    "monograph": "Insulin: solution compatibility (regular insulin, sodium chloride 0.9 %, PVC)",
+    "page": "PDF p. 1213 (page stamp 1213)",
+    "reader": "first reader: executor (Claude Opus 5.5)",
+    "date": "2026-11-10"
+  },
+  "emc-15912-dantrolene-20mg-comparison": {
+    "kind": "monograph",
+    "product": "Agilus 120 mg label, section 5.1: mean 90 s to reconstitute one 20 mg IV dantrolene vial. A comparison from another product's label; the 20 mg product is not named",
+    "holder": "Norgine Pharmaceuticals Limited",
+    "version": "SmPC revised 11 March 2025; emc product 15912",
+    "issuer": "EMC"
+  },
+  "study-baker-2007-dantrolene": {
+    "kind": "study",
+    "citation": "Baker KR et al. The Icarus effect. AANA J 2007;75(2):101-6. 16 vials: mean 93.87 s at 22 °C, 58.88 s at 41 °C diluent, to a particulate-free solution (abstract read)",
+    "pmid": "17471879"
+  },
+  "study-quraishi-2006-dantrolene": {
+    "kind": "study",
+    "citation": "Quraishi SA et al. Dantrolene reconstitution: can warmed diluent make a difference? J Clin Anesth 2006;18:339-42. 90-130 s at 22-23 °C, under 30 s at 41 °C, 5 vials each (abstract)",
+    "doi": "10.1016/j.jclinane.2006.04.001",
+    "pmid": "16905078"
+  },
+  "dailymed-lactated-ringers-baxter": {
+    "kind": "monograph",
+    "product": "Lactated Ringer's Injection USP: Na 130, K 4, Ca 2.7, Cl 109, lactate 28 mEq/L",
+    "holder": "Baxter Healthcare",
+    "version": "SPL setid dad7735c-709b-40ea-ab7a-15577e24a966, version 16, published 2026-07-27",
+    "issuer": "DailyMed"
+  },
+  "emc-2192-bp-family": {
+    "kind": "monograph",
+    "product": "Ventolin Injection: names 'sodium chloride and dextrose injection BP' with no strength; each filed member listed (ruled FQ4, owner, 2026-11-10)",
+    "holder": "Glaxo Wellcome UK Ltd",
+    "version": "SmPC revised 10 April 2026; emc product 2192",
+    "issuer": "EMC"
+  },
+  "emc-853-bp-family": {
+    "kind": "monograph",
+    "product": "Ventolin Solution for Intravenous Infusion: names 'sodium chloride and dextrose injection BP' with no strength; each filed member listed (ruled FQ4, owner, 2026-11-10)",
+    "holder": "Glaxo Wellcome UK Limited",
+    "version": "SmPC revised 13 April 2026; emc product 853",
+    "issuer": "EMC"
+  },
+  "emc-1077-class": {
+    "kind": "monograph",
+    "product": "Cyklokapron: names the class 'electrolyte solutions, carbohydrate solutions', not a product; each filed diluent of the class listed (ruled FQ5, owner, 2026-11-10)",
+    "holder": "Pfizer Limited",
+    "version": "SmPC revised 08/2025; emc product 1077",
+    "issuer": "EMC"
   }
 }

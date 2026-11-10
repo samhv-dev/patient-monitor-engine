@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Stabilis row is 2-8 C only: has.stabilis false. Label: \"sodium chloride and dextrose\" with no strengths; both mixed diluents listed.",
+  "$comment": "FS batch; Stabilis row is 2-8 °C only: has.stabilis false. FQ4 (owner, 2026-11-10): the label's 'sodium chloride and dextrose injection BP' gives no strength; every member on file listed.",
   "drugId": "salbutamol",
   "products": [
     {
@@ -13,7 +13,14 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "Admixtures with infusion fluids; no temperature given.",
+          "src": "emc-2192"
+        }
+      ]
     },
     {
       "id": "ventolin-infusion-1mg-ml",
@@ -26,7 +33,14 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "After mixing with infusion fluids; no temperature given.",
+          "src": "emc-853"
+        }
+      ]
     }
   ],
   "diluents": [
@@ -71,12 +85,12 @@
     {
       "id": "dextrose5Saline",
       "listed": true,
-      "src": "emc-2192"
+      "src": "emc-2192-bp-family"
     },
     {
       "id": "dextrose4Saline018",
       "listed": true,
-      "src": "emc-2192"
+      "src": "emc-2192-bp-family"
     }
   ],
   "admixtures": [],
