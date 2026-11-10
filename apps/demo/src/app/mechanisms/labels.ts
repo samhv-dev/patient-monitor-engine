@@ -148,6 +148,7 @@ const R: readonly Row[] = [
   ['organs.brain.cpp', 'Cerebral perfusion pressure', 'mmHg', 'Mean arterial pressure at head height minus the intracranial (or cerebral venous) pressure.'],
   ['organs.brain.cush.drive', 'Cushing response drive', '0–1', 'The brainstem\'s pressor drive when cerebral perfusion pressure stays low.'],
   ['organs.brain.icp', 'Intracranial pressure', 'mmHg', 'Intracranial pressure.'],
+  ['organs.liver.liverFn', 'Liver function (relative to normal)', '×', 'The liver\'s working share of its normal metabolic capacity, without the temperature term: 1 is a healthy liver, less is a failing one; it scales the clearance of drugs the liver metabolises.'],
   ['eeg.cortex', 'Cortical state (EEG)', '', 'The cortical state the EEG shows: hyperpolarisation, loss of responsiveness, burst suppression.'],
   ['eeg.ctx.device', 'Mains and ECG pickup for the EEG', '', 'The mains frequency and the heart\'s voltage the EEG electrodes pick up.'],
   ['eeg.signal', 'EEG trace', 'µV', 'The frontal EEG as the monitor draws it: brain signal, muscle activity and artefacts.'],

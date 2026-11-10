@@ -10,7 +10,6 @@ export const UNREGISTERED: readonly string[] = [
   'rhythms-ecg ctx ecgGenInputs.breath',
   'pharmacology ctx pkCtx.vaLpm',
   'pharmacology ctx pkCtx.frcL',
-  'pharmacology ctx pkCtx.tempC',
   'pharmacology ctx pkCtx.hepFlow',
   'pharmacology ctx pkCtx.hepFn',
   'pharmacology ctx pkCtx.hepFnTemp',

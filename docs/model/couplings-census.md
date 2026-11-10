@@ -6,9 +6,9 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 154; sites: 195.
+Seams (de-duplicated on module, kind and field): 155; sites: 196.
 
-Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 57; unregistered: 97
+Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 59; unregistered: 96
 (the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
 
 | Module | ctx | ext | endo-write | bus-read | All |
@@ -20,10 +20,10 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | lungs | 0 | 3 | 0 | 0 | 3 |
 | neuro | 23 | 0 | 0 | 18 | 41 |
 | organs | 10 | 2 | 0 | 4 | 16 |
-| pharmacology | 18 | 0 | 0 | 0 | 18 |
+| pharmacology | 19 | 0 | 0 | 0 | 19 |
 | pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
 | rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 90 | 22 | 9 | 33 | 154 |
+| **All** | 91 | 22 | 9 | 33 | 155 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
@@ -39,14 +39,14 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
 | neuro | 189 | 93 |
-| pharmacology | 29 | 14 |
+| pharmacology | 31 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
 | engine-runtime | 11 | 2 |
-| **All** | 1136 | 431 |
+| **All** | 1138 | 431 |
 
-## The ten effector expressions with the most factors (of 1629)
+## The ten effector expressions with the most factors (of 1630)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 897 products)
+## The ten products with the most factors (of 898 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -76,7 +76,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/blood/solutes.ts#stepSolutes` | `jk` | product | 5 |
 | `l2/brain/params.ts#(top level)` | `OSM_WATER_ML_PER_MOSM` | product | 5 |
 
-## Unregistered seams (97)
+## Unregistered seams (96)
 
 The seams no coupling-registry row carries yet (piece R2 registers the rest); the list may shrink and never grow.
 
@@ -88,7 +88,6 @@ The seams no coupling-registry row carries yet (piece R2 registers the rest); th
 - `rhythms-ecg ctx ecgGenInputs.breath`
 - `pharmacology ctx pkCtx.vaLpm`
 - `pharmacology ctx pkCtx.frcL`
-- `pharmacology ctx pkCtx.tempC`
 - `pharmacology ctx pkCtx.hepFlow`
 - `pharmacology ctx pkCtx.hepFn`
 - `pharmacology ctx pkCtx.hepFnTemp`
@@ -198,6 +197,7 @@ The seams no coupling-registry row carries yet (piece R2 registers the rest); th
 | pharmacology | ctx | `pkCtx.hepFlow` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.hepFn` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.hepFnTemp` | `engine.ts#pkCtx` | 1 |
+| pharmacology | ctx | `pkCtx.liverFn` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.renal` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.betaBlockC` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.betaOcc` | `engine.ts#pkCtx` | 1 |
