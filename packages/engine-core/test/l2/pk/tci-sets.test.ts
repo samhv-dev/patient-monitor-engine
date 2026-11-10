@@ -208,10 +208,10 @@ describe('TCI-set registry: every registered set meets rules 1–7', () => {
   it('rule 5: no [VERIFY] mark remains', () => expect(TCI_SETS.flatMap((s) => rule5(s, moduleText(s.meta.id)))).toEqual([]));
   it('rule 6: every ke0 names its source, and the PK it was fitted with when not the PK paper\'s', () => expect(TCI_SETS.flatMap(rule6)).toEqual([]));
   it('rule 7: the TCI command accepts the registered and pending ids and nothing else', () => expect(rule7(TCI_SETS, PENDING_TCI_MODEL_IDS, engineAccepts)).toEqual([]));
-  it('every pending id says why it is not registered and names the table its registration needs (T2)', () => {
+  it('every pending id says why it is not registered and what its registration needs (T2)', () => {
     expect(Object.keys(PENDING_TCI_REASONS).sort()).toEqual(Object.keys(PENDING_TCI_MODEL_IDS).sort());
     for (const [id, why] of Object.entries(PENDING_TCI_REASONS)) {
-      expect(why, id).toMatch(/needs (the |Table )/);
+      expect(why, id).toMatch(/needs /);
       expect(why, id).toMatch(/PMID \d+/);
     }
   });

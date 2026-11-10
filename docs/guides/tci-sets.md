@@ -95,8 +95,28 @@ found an illegible digit.
 | `minto` | Minto 1997 I, Table 3 p. 17 (PK) and Table 5 p. 19 (ke0); James LBM p. 12 | Every coefficient, centred at 40 y and LBM 55 kg; ke0 0.595 − 0.007·(Age − 40) | Agrees | Minto 1997 II, Tables 1–2 p. 28, at 20 y with LBM 55 kg: V1 5.5, Cl1 2.9. t½ke0 and tpeak at 20, 50 and 80 y are reproduced. That table's V1 of 5.1 L at 50 y is not: paper I's Table 3 gives 4.9 | registered |
 | `shafer` | Shafer 1990, Table 2 p. 1098, "Current Study" column; ke0 from the 3.6 min of Shafer & Varvel 1991, p. 55 | V1 6.09; k10 0.0827, k12 0.471, k13 0.225, k21 0.102, k31 0.00600 | Agrees. The `[VERIFY]` mark is resolved | V1–V3, Cl1–Cl3 and the microconstants; t½ 0.82 and 17.2 min are reproduced, and the terminal comes out 465.7 against the printed 465 | registered |
 | `gepts` | Gepts 1995, Table 3 p. 1201, two-stage column; ke0 from the 5.6 min of Shafer & Varvel 1991, p. 55 | Estimated V1 14.3, V2 63.1, V3 261.6 L; Cl1 0.92, Cl2 1.55, Cl3 0.33 L/min. Derived k10 0.0645, k12 0.1086, k13 0.0229, k21 0.0245, k31 0.0013 | **Changed.** The engine used the derived, rounded microconstants. They give V2 63.4 and V3 251.9 L, and Vss 330 L, against the printed 63.1, 261.6 and 339. The set now uses the estimated parameters, which reproduce Vss 339 and t½α 3.3. The ke0 refitted to 5.6 min stays 0.176 (0.1757) | The six estimated parameters and k31 | registered |
-| `marsh` | Marsh 1991, Table I p. 42 | Vc 228 ml/kg (the authors' pilot studies); k10 0.119, k12 0.112, k13 0.0419, k21 0.055, k31 0.0033. The table attributes these to its ref. 9 (Gepts 1987, Anesth Analg 66:1256, not in the library) | The PK agrees. Marsh prints no ke0. Struys 2000 gives 0.20 (Billard 1997) and 1.21 (a time to peak of 1.6 min with Marsh PK, p. 404). **The engine's 0.26 has no source** | — | **pending**: needs the source of 0.26 |
+| `marsh` | Marsh 1991, Table I p. 42; Gepts 1987 Table 3 p. 1261 (its stated origin); Absalom 2009 p. 30 and Table 1 (the ke0) | Vc 228 ml/kg (from the authors' pilot studies). k10 0.119, k12 0.112, k13 0.0419, k21 0.055, k31 0.0033, attributed to Gepts 1987. Gepts 1987's "Mean (n = 17)" column gives k10 0.1190, k13 0.0419, k21 0.0550 and k31 0.0033, which match, **but k12 0.1140**, which does not match 0.112 (no infusion-rate group gives 0.112 either: 0.0961, 0.0696, 0.1733) | The PK agrees with Marsh's Table I as printed. **ke0 0.26:** Absalom 2009 reports that it "came to be used with this model in first generation TCI pumps", and that "the data on which this keo value was based were never published in the peer-reviewed literature". Absalom's Table 1 pairs 0.26 with a time to peak of 4.5 min, but with Marsh's PK 0.26 peaks at 3.92 min; 4.5 min is the peak for ke0 0.20 (Struys 2000, p. 400). The modified ke0 of 1.2/1.21 is Struys 2000 (Absalom p. 30 agrees) | — | **pending**: rule 6 cannot state a ke0 of unpublished derivation truthfully (see below) |
 
 The registered sets compute bit-identical parameters to the code before T2 for every patient. The exception is Gepts,
 whose change is attributed in the pull request. Times to peak, half-lives and Vss are checked by
 `test/l2/pk/tci-sets-papers.test.ts`.
+
+**Schnider's ke0, the owner's ruling TQ1 (10 November 2026, "A for TQ1").** The ke0 stays 0.456 /min, as the abstract
+and the text of Schnider 1999 (p. 1510) state it for use with the companion PK. Table 4's 0.459 is recorded beside it
+in the set's metadata.
+
+**Why Marsh stays pending.** Rule 6 lets a ke0 be one of two things:
+- **`pkpd`**: estimated with a PK-PD model, naming the PK it was estimated with (`fittedWith`);
+- **`ttpe`**: fitted to a published time to peak with this set's PK.
+
+Marsh's 0.26 is neither. Absalom 2009 reports that it was the value first-generation pumps used, and that its
+derivation was never published. No PK it was fitted with is known. Registering Marsh with 0.26 would therefore need
+one of two things:
+- a published derivation of 0.26;
+- a third kind of ke0 in rule 6, meaning a device's value of unpublished derivation. It would carry the reporting
+  paper with a DOI (Absalom 2009), the device (the Diprifusor), the PK it was used with (Marsh) and no `fittedWith`.
+  It would also need the check to decide what to do with Absalom's printed time to peak of 4.5 min, which 0.26 does
+  not reproduce with this PK (3.92 min).
+
+The rule was not changed in T2.
+

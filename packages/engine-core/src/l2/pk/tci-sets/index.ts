@@ -32,9 +32,16 @@ export const PENDING_TCI_REASONS: Readonly<Record<string, string>> = {
   marsh:
     'Marsh 1991 (doi 10.1093/bja/67.1.41, PMID 1859758): the PK is confirmed by both readers in Table I, p. 42 (Vc ' +
     '228 ml/kg from the authors\' pilot studies; k10 0.119, k12 0.112, k13 0.0419, k21 0.055, k31 0.0033 /min, which ' +
-    'the table attributes to its ref. 9, Gepts 1987, Anesth Analg 66:1256, not in the library). The ke0 0.26 /min ' +
-    'has no source: Marsh prints no ke0, and Struys 2000 (PMID 10691226) gives 0.20 (Billard 1997, group II) and 1.21 ' +
-    '(time to peak 1.6 min with Marsh PK, p. 404). Registration needs the source of 0.26 (the table it is printed in).',
+    'the table attributes to Gepts 1987, Anesth Analg 66:1256, doi 10.1213/00000539-198712000-00010: its Table 3, ' +
+    'p. 1261, "Mean (n = 17)" column gives k10 0.1190, k13 0.0419, k21 0.0550, k31 0.0033, but k12 0.1140, not ' +
+    '0.112). The ke0 0.26 /min cannot be sourced as rule 6 requires: Absalom 2009 (Br J Anaesth 103:26, doi ' +
+    '10.1093/bja/aep143, p. 30) reports that it "came to be used with this model in first generation TCI pumps" and ' +
+    'that "the data on which this keo value was based were never published in the peer-reviewed literature". It was ' +
+    'neither estimated by PK-PD nor fitted to a time to peak, and no PK it was fitted with is known, so neither ' +
+    'method (pkpd, ttpe) nor fittedWith can be stated truthfully. Registration needs either a published derivation ' +
+    'of 0.26, or a rule-6 kind for a device\'s value of unpublished derivation (the reporting paper, the device, the ' +
+    'PK it was used with). Note: Absalom\'s Table 1 pairs 0.26 with a time to peak of 4.5 min, which with Marsh PK ' +
+    'is the time of ke0 0.20 (Struys 2000, p. 400); 0.26 peaks at 3.92 min.',
 };
 
 export const tciSet = (id: string): TciSet | undefined => TCI_SETS.find((s) => s.meta.id === id);

@@ -16,8 +16,9 @@ export type ModelOpts = TciSetOpts;
 
 /**
  * Marsh 1991 propofol (Br J Anaesth 67:41), Table I p. 42: weight-proportional V1 228 ml/kg, microconstants as printed
- * there (attributed to Gepts 1987). ke0 0.26 (Diprifusor) [TXT: no source read; tci-sets PENDING_TCI_REASONS] or
- * 1.21 (modified: Struys 2000 p. 404, time to peak 1.6 min with this PK).
+ * there (attributed to Gepts 1987, whose mean k12 is 0.1140). ke0 0.26: the first-generation pumps' (Diprifusor) value,
+ * whose derivation was never published (Absalom 2009 p. 30) [TXT: tci-sets PENDING_TCI_REASONS]; or 1.21 (modified:
+ * Struys 2000 p. 404, time to peak 1.6 min with this PK).
  */
 export function marshPropofol(p: PkPatient, modified = false): PkParams {
   return { v1: 0.228 * p.weightKg, k10: 0.119, k12: 0.112, k21: 0.055, k13: 0.0419, k31: 0.0033, ke0: [modified ? 1.21 : 0.26] };
