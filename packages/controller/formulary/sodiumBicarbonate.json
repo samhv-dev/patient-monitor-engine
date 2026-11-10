@@ -96,11 +96,37 @@
         "trissel": "not listed",
         "src": "trissel-sodiumbicarbonate-p1856"
       }
+    },
+    {
+      "with": "succinylcholine",
+      "verdict": "incompatible",
+      "statement": "Trissel: succinylcholine 1 g/L with NaHCO3 2.4 mEq/L in D5W decomposes (ref 772). Stabilis lists the pair only in its Y-site screen, not for mixtures.",
+      "src": "trissel-sodiumbicarbonate-p1862",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-sodiumbicarbonate-p1862"
+      }
+    },
+    {
+      "with": "calciumChloride",
+      "verdict": "conditional",
+      "statement": "Trissel, D5W: conditionally compatible depending on concentrations (ref 15); CaCl2 1 g/L with NaHCO3 2.4 mEq/L physically compatible 24 h (ref 772, p. 1858). Y-site rows not used. Stabilis has none.",
+      "src": "trissel-sodiumbicarbonate-p1857",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-sodiumbicarbonate-p1857"
+      }
     }
   ],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "water",
+      "concentration": {
+        "amount": 4,
+        "unit": "mg/mL",
+        "src": "stabilis-sodiumbicarbonate-3116"
+      },
       "container": "bag-polyolefin",
       "tempC": 24,
       "points": [
@@ -117,7 +143,14 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "water",
+      "concentration": {
+        "amount": 7.6,
+        "max": 11.45,
+        "unit": "mg/mL",
+        "src": "stabilis-sodiumbicarbonate-3116"
+      },
       "container": "bag-polyolefin",
       "tempC": 24,
       "points": [
@@ -126,7 +159,7 @@
           0.95
         ]
       ],
-      "statement": "7.6 mg/mL (rising to 11.45 mg/mL as Stabilis gives it) in water, polyolefin, 21-24 °C: stable 30 h. Stabilis level A.",
+      "statement": "7.6-11.45 mg/mL (a range in Stabilis) in water, polyolefin, 21-24 °C: stable 30 h. Stabilis level A.",
       "src": "stabilis-sodiumbicarbonate-3116",
       "crossCheck": {
         "trissel": "not listed",
@@ -134,7 +167,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 0.336,
+        "unit": "mg/mL",
+        "src": "stabilis-sodiumbicarbonate-4383"
+      },
       "container": "bag-polyolefin",
       "tempC": 25,
       "points": [
@@ -151,7 +190,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 12.6,
+        "unit": "mg/mL",
+        "src": "stabilis-sodiumbicarbonate-3329"
+      },
       "container": "bag-polyolefin",
       "tempC": 25,
       "points": [
@@ -168,7 +213,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 8.4,
+        "unit": "mg/mL",
+        "src": "stabilis-sodiumbicarbonate-3329"
+      },
       "container": "bag-polyolefin",
       "tempC": 25,
       "points": [
@@ -185,7 +236,13 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 4,
+        "unit": "mg/mL",
+        "src": "stabilis-sodiumbicarbonate-3116"
+      },
       "container": "bag-polyolefin",
       "tempC": 24,
       "points": [
@@ -202,7 +259,14 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "dextrose5",
+      "concentration": {
+        "amount": 7.6,
+        "max": 11.45,
+        "unit": "mg/mL",
+        "src": "stabilis-sodiumbicarbonate-3116"
+      },
       "container": "bag-polyolefin",
       "tempC": 24,
       "points": [
@@ -211,7 +275,7 @@
           0.95
         ]
       ],
-      "statement": "7.6 mg/mL (rising to 11.45 mg/mL as Stabilis gives it) in 5 % glucose, polyolefin, 21-24 °C: stable 30 h. Stabilis level A. Trissel nearest: 100 mEq/L, 7 d.",
+      "statement": "7.6-11.45 mg/mL (a range in Stabilis) in 5 % glucose, polyolefin, 21-24 °C: stable 30 h. Stabilis level A. Trissel nearest: 100 mEq/L, 7 d.",
       "src": "stabilis-sodiumbicarbonate-3116",
       "crossCheck": {
         "trissel": "not listed",

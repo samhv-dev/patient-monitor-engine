@@ -1,6 +1,7 @@
 {
+  "$comment": "FQ3 (owner, 2026-11-10). Hartmann's, emc-1812: Na 131, K 5, Ca 2, Cl 111, lactate 29 mmol/L. Lactated Ringer's USP, dailymed-lactated-ringers-baxter: Na 130, K 4, Ca 2.7, Cl 109, lactate 28 mEq/L.",
   "diluentId": "ringerLactate",
-  "name": "Ringer's lactate (compound sodium lactate, Hartmann's)",
+  "name": "Hartmann's solution (compound sodium lactate) and lactated Ringer's injection: one diluent for both",
   "content": {
     "amount": 29,
     "unit": "mmol/L lactate",

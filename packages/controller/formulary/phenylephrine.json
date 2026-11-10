@@ -13,7 +13,15 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 168,
+          "tempC": 25,
+          "condition": "After opening and dilution, room temperature 20-25 °C: chemical and physical in-use stability.",
+          "src": "emc-10818"
+        }
+      ]
     },
     {
       "id": "phenylephrine-100mcg-ml",
@@ -64,7 +72,13 @@
   "admixtures": [],
   "stability": [
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 0.1,
+        "unit": "mg/mL",
+        "src": "stabilis-phenylephrine-1891"
+      },
       "container": "bag-pvc",
       "tempC": 25,
       "points": [
@@ -81,7 +95,36 @@
       }
     },
     {
+      "kind": "stable",
       "diluent": "saline",
+      "concentration": {
+        "amount": 0.2,
+        "unit": "mg/mL",
+        "src": "stabilis-phenylephrine-1891"
+      },
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          336,
+          0.95
+        ]
+      ],
+      "statement": "0.1 and 0.2 mg/mL in 0.9 % NaCl, PVC, 25 °C: stable 14 days. Stabilis level A.",
+      "src": "stabilis-phenylephrine-1891",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-phenylephrine-p1692"
+      }
+    },
+    {
+      "kind": "stable",
+      "diluent": "saline",
+      "concentration": {
+        "amount": 0.1,
+        "unit": "mg/mL",
+        "src": "stabilis-phenylephrine-2194"
+      },
       "container": "syringe-pp",
       "tempC": 25,
       "points": [
