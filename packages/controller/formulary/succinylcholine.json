@@ -1,0 +1,93 @@
+{
+  "$comment": "FS batch, first reading 2026-11-10.",
+  "drugId": "succinylcholine",
+  "products": [
+    {
+      "id": "suxamethonium-50mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 50,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-3401"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "emc-3401"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-3401"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-3401"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-3401"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-3401"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-3401"
+    }
+  ],
+  "admixtures": [],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          2400,
+          0.9
+        ]
+      ],
+      "statement": "20 mg/mL in 0.9 % NaCl, PP syringe, 25 °C, protected from light: stable 100 days.",
+      "src": "stabilis-succinylcholine-667",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-succinylcholine-p1906"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          2400,
+          0.9
+        ]
+      ],
+      "statement": "20 mg/mL in 5 % glucose, PP syringe, 25 °C, protected from light: stable 100 days.",
+      "src": "stabilis-succinylcholine-667",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-succinylcholine-p1906"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "$comment": "FS batch, 2026-11-10. Stabilis row is 2-8 C only, so has.stabilis false. Label lists \"sodium chloride and dextrose injection BP\" with no strengths: both mixed diluents marked listed (to rule).",
+  "drugId": "salbutamol",
+  "products": [
+    {
+      "id": "ventolin-injection-500mcg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 500,
+        "unit": "mcg",
+        "perVial": false,
+        "src": "emc-2192"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "ventolin-infusion-1mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 1,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-853"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "emc-2192",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Trissel: salbutamol in 0.9 % sodium chloride stable 24 h (no container or temperature given). Stabilis has only a 2-8 °C row.",
+        "src": "trissel-salbutamol-p1837",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-salbutamol-p1837"
+        }
+      }
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-2192",
+      "compat": {
+        "verdict": "compatible",
+        "statement": "Trissel: salbutamol in 5 % dextrose stable 24 h (no container or temperature given). Stabilis has only a 2-8 °C row.",
+        "src": "trissel-salbutamol-p1837",
+        "crossCheck": {
+          "trissel": "agrees",
+          "src": "trissel-salbutamol-p1837"
+        }
+      }
+    },
+    {
+      "id": "water",
+      "listed": true,
+      "src": "emc-2192"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-2192"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "emc-2192"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": true,
+      "src": "emc-2192"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": true,
+    "monograph": true
+  }
+}

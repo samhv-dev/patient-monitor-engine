@@ -1,0 +1,14 @@
+{
+  "diluentId": "dextrose5Saline",
+  "name": "Glucose 5 % in sodium chloride 0.9 %",
+  "content": {
+    "amount": 50,
+    "unit": "mg/mL glucose",
+    "src": "emc-1870"
+  },
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

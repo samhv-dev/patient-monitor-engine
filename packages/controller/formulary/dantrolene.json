@@ -1,0 +1,103 @@
+{
+  "$comment": "FS batch, first reading 2026-11-10. Trissel 2013 has no dantrolene monograph. Agilus prepTime: the label states a mean reconstitution time of 50 s in its study; Dantrium IV label states none.",
+  "drugId": "dantrolene",
+  "products": [
+    {
+      "id": "dantrium-iv-20mg",
+      "form": "powder",
+      "strength": {
+        "amount": 20,
+        "unit": "mg",
+        "perVial": true,
+        "src": "emc-1097"
+      },
+      "reconstitute": {
+        "diluents": [
+          "water"
+        ],
+        "volumeMl": 60,
+        "src": "emc-1097"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "agilus-120mg",
+      "form": "powder",
+      "strength": {
+        "amount": 120,
+        "unit": "mg",
+        "perVial": true,
+        "src": "emc-15912"
+      },
+      "reconstitute": {
+        "diluents": [
+          "water"
+        ],
+        "volumeMl": 20,
+        "src": "emc-15912"
+      },
+      "prepTime": {
+        "s": 50,
+        "src": "emc-15912"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "emc-1097"
+    },
+    {
+      "id": "dextrose5",
+      "listed": false,
+      "src": "emc-1097"
+    },
+    {
+      "id": "water",
+      "listed": true,
+      "src": "emc-1097"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-1097"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-1097"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-1097"
+    }
+  ],
+  "admixtures": [],
+  "stability": [
+    {
+      "diluent": "water",
+      "container": "vial",
+      "tempC": 25,
+      "points": [
+        [
+          6,
+          0.9
+        ]
+      ],
+      "statement": "Dantrium IV 20 mg in 60 mL water (0.33 mg/mL), in its vial, 25 °C, protected from light: use within 6 h.",
+      "src": "stabilis-dantrolene-1509",
+      "crossCheck": {
+        "trissel": "not listed"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": false,
+    "monograph": true
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "diluentId": "saline",
+  "name": "Sodium chloride 0.9 %",
+  "content": {
+    "amount": 9,
+    "unit": "mg/mL sodium chloride",
+    "src": "emc-1871"
+  },
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

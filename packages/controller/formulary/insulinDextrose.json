@@ -1,0 +1,106 @@
+{
+  "$comment": "FS batch, first reading 2026-11-10. Human soluble insulin plus glucose 50 %; diluents are the insulin label's. Stabilis PVC row ref 2091 (insulin aspart) not entered.",
+  "drugId": "insulinDextrose",
+  "products": [
+    {
+      "id": "actrapid-100iu-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 100,
+        "unit": "units",
+        "perVial": false,
+        "src": "emc-3849"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "glucose-50pct",
+      "form": "solution",
+      "strength": {
+        "amount": 0.5,
+        "unit": "g",
+        "perVial": false,
+        "src": "emc-1826"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "emc-3849"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-3849"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-3849"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-3849"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-3849"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-3849"
+    }
+  ],
+  "admixtures": [],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          48,
+          0.9
+        ]
+      ],
+      "statement": "Insulin 1 IU/mL in 0.9 % NaCl, PP syringe, 20-25 °C, in light: stable 48 h.",
+      "src": "stabilis-insulin-4635",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-insulin-p1210"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 27,
+      "points": [
+        [
+          720,
+          0.9
+        ]
+      ],
+      "statement": "Insulin 1 IU/mL in 0.9 % NaCl, PP syringe, 23-27 °C: stable 30 days.",
+      "src": "stabilis-insulin-3224",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-insulin-p1210"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}

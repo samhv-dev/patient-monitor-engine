@@ -1,0 +1,104 @@
+{
+  "$comment": "FS batch, first reading 2026-11-10. Product: Aspen propofol 1 %, which lists 5 % dextrose only (other generics list more). Stabilis gives no concentration for its 6 h rows.",
+  "drugId": "propofol",
+  "products": [
+    {
+      "id": "propofol-1pct-aspen",
+      "form": "emulsion",
+      "strength": {
+        "amount": 10,
+        "unit": "mg",
+        "perVial": false,
+        "src": "emc-5492"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "emc-5492"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-5492"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-5492"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-5492"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-5492"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-5492"
+    }
+  ],
+  "admixtures": [
+    {
+      "with": "sodiumBicarbonate",
+      "verdict": "incompatible",
+      "statement": "Stabilis: NaHCO3 as solvent degrades propofol.",
+      "src": "stabilis-propofol-660",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-propofol-p1780"
+      }
+    }
+  ],
+  "stability": [
+    {
+      "diluent": "dextrose5",
+      "container": "bag-pvc",
+      "tempC": 25,
+      "points": [
+        [
+          6,
+          0.9
+        ]
+      ],
+      "statement": "Diluted in 5 % glucose, PVC, 25 °C: stable 6 h (manufacturer data; concentration not stated by Stabilis).",
+      "src": "stabilis-propofol-3659",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-propofol-p1779"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          6,
+          0.9
+        ]
+      ],
+      "statement": "Diluted in 5 % glucose, PP syringe, 25 °C: stable 6 h (manufacturer data; concentration not stated by Stabilis).",
+      "src": "stabilis-propofol-3659",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-propofol-p1779"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}

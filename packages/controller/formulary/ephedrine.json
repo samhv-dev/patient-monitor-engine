@@ -1,0 +1,89 @@
+{
+  "$comment": "FS batch, first reading 2026-11-10. Product chosen as ephedrine SULFATE so that the label, Stabilis (sulfate monograph) and Trissel (sulfate) describe the same salt.",
+  "drugId": "ephedrine",
+  "products": [
+    {
+      "id": "akovaz-50mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 50,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-akovaz"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "akovaz-5mg-ml-pfs",
+      "form": "solution",
+      "strength": {
+        "amount": 5,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-akovaz"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "dailymed-akovaz"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-akovaz"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-akovaz"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-akovaz"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-akovaz"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-akovaz"
+    }
+  ],
+  "admixtures": [],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          1440,
+          0.9
+        ]
+      ],
+      "statement": "5 mg/mL in 0.9 % NaCl, PP syringe, 25 °C, in light: stable 60 days.",
+      "src": "stabilis-ephedrine-1720",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-ephedrine-p799"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}

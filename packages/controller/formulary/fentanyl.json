@@ -1,0 +1,274 @@
+{
+  "$comment": "FS batch, first reading 2026-11-10.",
+  "drugId": "fentanyl",
+  "products": [
+    {
+      "id": "fentanyl-50mcg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 50,
+        "unit": "mcg",
+        "perVial": false,
+        "src": "emc-6617"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "emc-6617"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "emc-6617"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "emc-6617"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "emc-6617"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "emc-6617"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "emc-6617"
+    }
+  ],
+  "admixtures": [
+    {
+      "with": "midazolam",
+      "verdict": "compatible",
+      "statement": "Stabilis: fentanyl 13-38 µg/mL with midazolam 0.66-0.9 mg/mL in 0.9 % NaCl, PP syringe, 22 °C: stable 7 days.",
+      "src": "stabilis-fentanyl-929",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-midazolam-p1442"
+      }
+    }
+  ],
+  "stability": [
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 23,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "10 and 50 µg/mL in 0.9 % NaCl, PVC, 23 °C: stable 90 days.",
+      "src": "stabilis-fentanyl-4228",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 23,
+      "points": [
+        [
+          720,
+          0.9
+        ]
+      ],
+      "statement": "20 µg/mL in 0.9 % NaCl, PVC, 23 °C: stable 30 days.",
+      "src": "stabilis-fentanyl-222",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "bag-pvc",
+      "tempC": 22,
+      "points": [
+        [
+          48,
+          0.9
+        ]
+      ],
+      "statement": "4.55 µg/mL in 0.9 % NaCl, PVC, 22 °C, in light: stable 48 h.",
+      "src": "stabilis-fentanyl-223",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "bag-pvc",
+      "tempC": 22,
+      "points": [
+        [
+          48,
+          0.9
+        ]
+      ],
+      "statement": "4.55 µg/mL in 5 % glucose, PVC, 22 °C, in light: stable 48 h.",
+      "src": "stabilis-fentanyl-223",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "bag-polyolefin",
+      "tempC": 22,
+      "points": [
+        [
+          2232,
+          0.9
+        ]
+      ],
+      "statement": "10 µg/mL in 0.9 % NaCl, polyolefin, 22 °C, in light: stable 93 days.",
+      "src": "stabilis-fentanyl-3916",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "bag-polyolefin",
+      "tempC": 23,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "10 and 50 µg/mL in 0.9 % NaCl, polyolefin, 23 °C: stable 90 days.",
+      "src": "stabilis-fentanyl-4228",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p904"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          2400,
+          0.9
+        ]
+      ],
+      "statement": "10 µg/mL in 0.9 % NaCl, PP syringe, 25 °C: stable 100 days.",
+      "src": "stabilis-fentanyl-4303",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p903"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 22,
+      "points": [
+        [
+          168,
+          0.9
+        ]
+      ],
+      "statement": "13 and 34 µg/mL in 0.9 % NaCl, PP syringe, 22 °C: stable 7 days.",
+      "src": "stabilis-fentanyl-929",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p903"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "20 and 40 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days.",
+      "src": "stabilis-fentanyl-4223",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p903"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 27,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "5 µg/mL in 0.9 % NaCl, PP syringe, 23-27 °C, protected from light: stable 90 days.",
+      "src": "stabilis-fentanyl-2334",
+      "crossCheck": {
+        "trissel": "agrees",
+        "src": "trissel-fentanyl-p903"
+      }
+    },
+    {
+      "diluent": "saline",
+      "container": "syringe-pp",
+      "tempC": 23,
+      "points": [
+        [
+          2160,
+          0.9
+        ]
+      ],
+      "statement": "50 µg/mL in 0.9 % NaCl, PP syringe, 23 °C: stable 90 days.",
+      "src": "stabilis-fentanyl-4223",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p903"
+      }
+    },
+    {
+      "diluent": "dextrose5",
+      "container": "syringe-pp",
+      "tempC": 25,
+      "points": [
+        [
+          2400,
+          0.9
+        ]
+      ],
+      "statement": "10 µg/mL in 5 % glucose, PP syringe, 25 °C: stable 100 days.",
+      "src": "stabilis-fentanyl-4303",
+      "crossCheck": {
+        "trissel": "not listed",
+        "src": "trissel-fentanyl-p903"
+      }
+    }
+  ],
+  "has": {
+    "stabilis": true,
+    "trissel": true,
+    "monograph": true
+  }
+}
