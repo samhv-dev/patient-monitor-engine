@@ -6,6 +6,7 @@ import {
   instructorMay,
   LEARNER_ISSUED_BY,
   learnerDefibMay,
+  learnerMay,
   newPeerId,
   SeqFilter,
   type AppliedResolution,
@@ -24,7 +25,13 @@ import {
   type WireEvent,
   type WireMessage,
 } from '../protocol.ts';
-import { bolusDrugOf, type DrugLock, lockReason, RecentGives } from './drug-lock.ts';
+import { bolusDrugOf, givenByOf, type DrugLock, lockReason, RecentGives } from './drug-lock.ts';
+import type { Formulary } from '../formulary/types.ts';
+import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
+import {
+  deliverPrep, infusePrep, instructorView, learnerView, prepRecord, PREPS_PER_DEVICE, setInfusion, stagePrep, stagedOf,
+  type HostPrep, type InstructorPrepNews, type LearnerPrepNews, type PrepNewsKind, type Running, type Translated,
+} from './preparations.ts';
 
 /** What a host needs from the monitor it owns. Sync or async (a worker-backed monitor returns promises). */
 export interface HostTarget {
@@ -99,6 +106,16 @@ export interface HostSessionOptions {
   /** The drugs a scenario command would give as a bolus (ScenarioDriver.triggerGives: a /1 step press's onEnter); a press
    *  while one is locked is refused `recent`, as a bolus is (drug-lock.ts). Absent: a scenario command gives none. */
   scenarioGives?: (cmd: ScenarioCommand) => string[];
+  /**
+   * The LEARNER PIN (plan learner-action-remote.md §4 D9, LQ1 ruled 9 November), read at every learner hello and every
+   * learner command, so a change applies at once. It grants the `learner` role only; the instructor's PIN never grants it,
+   * nor it the instructor's. Absent or null: every learner remote is denied. Never logged, never sent.
+   */
+  learnerPin?: () => string | null;
+  /** L4: the formulary layer every preparation is made from (null while it loads). Absent or null: a `prep stage` is refused. */
+  formulary?: () => Formulary | null;
+  /** L4 (§6): a preparation as staged, for the scenario driver's record (ScenarioDriver.recordPreparation). */
+  onPreparation?: (p: StagedPrep) => void;
 }
 
 /** What the host answers an instructor (the grant's reason, or the refused command's ack). */
@@ -109,6 +126,17 @@ export const INSTRUCTOR_REASONS = {
   pinChanged: 'the PIN was changed',
   notSignedIn: 'the instructor phone is not signed in',
   noNotes: 'this computer does not take notes from a remote',
+} as const;
+/** L4: what the host answers a learner remote (the grant's reason, or the refused command's ack). */
+export const LEARNER_REASONS = {
+  noRemote: 'this computer does not take a learner remote',
+  noDevice: 'the learner remote names its device',
+  /** Both PINs equal (the app keeps them apart; the host refuses rather than let one open the other's role). */
+  samePins: "the learner PIN is the instructor's PIN: draw a new learner PIN",
+  pinChanged: 'the learner PIN was changed',
+  notSignedIn: 'the learner remote is not signed in',
+  noFormulary: 'this computer has no formulary loaded yet',
+  full: `this remote holds ${PREPS_PER_DEVICE} preparations: discard one first`,
 } as const;
 /** R8c: what the host answers a remote ventilator (with INSTRUCTOR_REASONS' wrong PIN, taken over, PIN changed). */
 export const VENTILATOR_REASONS = {
@@ -214,6 +242,15 @@ export class HostSession {
    * R8c: the one granted remote ventilator has its own single place beside it, option B within its own role only.
    */
   private readonly signedIn: Record<SignsIn, Holder | null> = { instructor: null, ventilator: null };
+  /** L4: the granted learner remotes, each by (transport, from), with the learner PIN it proved and its device key. */
+  private readonly learners = new Map<ManagedTransport, Map<string, { pin: string; device: string }>>();
+  private learnerDenied: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong learner PINs (no lockout)
+  /** L4 (§4 D3): the preparations the learner remotes staged, by device key and the device's own id. */
+  private readonly preps = new Map<string, Map<string, HostPrep>>();
+  /** L4: a learner's delivery waiting for its ack: the preparation and the volume it takes once applied. */
+  private readonly pushing = new Map<string, { h: HostPrep; volumeMl: number; news: Extract<PrepNewsKind, 'delivered' | 'infusing'> }>();
+  /** L4 (LQ4): the infusion running of each drug, as applied (any device's): its rate, its syringe, who set it. */
+  private readonly infusions = new Map<string, Running>();
   /** The ventilator ids revoked for their silence, and their transports: their late `vent` is answered again, never heard. */
   private readonly silentVents = new Map<string, ManagedTransport>();
   private denials: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong PINs within DENIAL_WINDOW_MS (no lockout)
@@ -297,6 +334,35 @@ export class HostSession {
   instructorPinChanged(): void {
     this.revoke('instructor', INSTRUCTOR_REASONS.pinChanged);
     this.revoke('ventilator', INSTRUCTOR_REASONS.pinChanged);
+  }
+
+  /** Wrong learner PINs in the last DENIAL_WINDOW_MS, at most DENIAL_RECORD_MAX (no host lockout; the relay limits tries). */
+  learnerDenials(): number {
+    const since = this.now() - DENIAL_WINDOW_MS;
+    this.learnerDenied = this.learnerDenied.filter((at) => at > since);
+    return this.learnerDenied.length;
+  }
+
+  /** L4 (§4 D9): the learner PIN changed: every granted learner remote is revoked at once (each signs in again). */
+  learnerPinChanged(): void {
+    for (const [t, m] of this.learners) for (const from of m.keys()) this.grant(t, from, false, LEARNER_REASONS.pinChanged);
+    this.learners.clear();
+  }
+
+  /** How many learner remotes are granted now. */
+  learnerRemotes(): number {
+    let n = 0;
+    for (const m of this.learners.values()) n += m.size;
+    return n;
+  }
+
+  /**
+   * L4 (§6): the record of the preparation `prepId` of the device `by` for one of its drugs (absent: its first), at its
+   * last give — the scenario driver's `preparation` lookup (ScenarioDriverOptions.preparation). Undefined: none.
+   */
+  preparation(by: string, prepId: string, drugId?: string): PrepRecord | undefined {
+    const h = this.preps.get(by)?.get(prepId);
+    return h ? prepRecord(h, drugId) : undefined;
   }
 
   /** R8c: the granted remote ventilator's peer id (null: none). */
@@ -445,6 +511,10 @@ export class HostSession {
     this.groups.clear();
     this.targets.clear();
     this.gives.clear(); // the lock's clock is the old engine's
+    // L4: a preparation's age and ready time, and what the pumps run, are the old engine's clock and patient
+    this.preps.clear();
+    this.pushing.clear();
+    this.infusions.clear();
     if (cause === 'restart') {
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
@@ -483,6 +553,7 @@ export class HostSession {
     this.transports.get(t)?.();
     this.transports.delete(t);
     this.peers.delete(t);
+    this.learners.delete(t);
     for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t) this.setHolder(r, null);
   }
 
@@ -515,6 +586,11 @@ export class HostSession {
     const want = role === 'ventilator' && !this.o.onVent ? null : (this.o.instructorPin?.() ?? null);
     const h = this.signedIn[role];
     const isHolder = h?.t === t && h.from === from;
+    const learnerPin = this.o.learnerPin?.() ?? null;
+    if (want !== null && learnerPin !== null && samePin(want, learnerPin)) {
+      if (isHolder) this.setHolder(role, null);
+      return this.grant(t, from, false, LEARNER_REASONS.samePins); // L4: the learner PIN never opens this role
+    }
     if (want === null || pin === undefined || !samePin(pin, want)) {
       if (want !== null) this.denials.push(this.now());
       if (this.denials.length > DENIAL_RECORD_MAX) this.denials.splice(0, this.denials.length - DENIAL_RECORD_MAX);
@@ -527,6 +603,42 @@ export class HostSession {
     if (!isHolder && h) this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
     this.grant(t, from, true);
     this.setHolder(role, { t, from, pin: want });
+  }
+
+  /**
+   * L4 (§4 D9): a learner hello: grant it on the LEARNER PIN, and only that (the instructor's PIN is a wrong PIN here).
+   * Many remotes may be granted at once; each is (transport, from), with the device key its gives are filed under. A
+   * hello under the host's own peer id is refused: the instructor's copy of a preparation's news is addressed to it.
+   */
+  private verifyLearner(t: ManagedTransport, from: string, pin: string | undefined, device: string | undefined): void {
+    const want = this.o.learnerPin?.() ?? null;
+    const instructor = this.o.instructorPin?.() ?? null;
+    this.learners.get(t)?.delete(from); // its own hello proves the PIN again, or it is no longer granted
+    const deny = (reason: string) => this.grant(t, from, false, reason);
+    if (want === null) return deny(LEARNER_REASONS.noRemote);
+    if (instructor !== null && samePin(want, instructor)) return deny(LEARNER_REASONS.samePins);
+    if (pin === undefined || !samePin(pin, want) || from === this.peerId) {
+      this.learnerDenied.push(this.now());
+      if (this.learnerDenied.length > DENIAL_RECORD_MAX) this.learnerDenied.splice(0, this.learnerDenied.length - DENIAL_RECORD_MAX);
+      this.learnerDenials(); // prunes the window
+      return deny(INSTRUCTOR_REASONS.wrongPin);
+    }
+    if (device === undefined) return deny(LEARNER_REASONS.noDevice);
+    let m = this.learners.get(t);
+    if (!m) this.learners.set(t, (m = new Map()));
+    m.set(from, { pin: want, device });
+    this.grant(t, from, true);
+  }
+
+  /** The device key of (t, from) if it is a granted learner remote with the learner PIN as it is now; a PIN changed unannounced revokes it here. */
+  private learnerDevice(t: ManagedTransport, from: string): string | null {
+    const g = this.learners.get(t)?.get(from);
+    if (!g) return null;
+    const pin = this.o.learnerPin?.() ?? null;
+    if (pin !== null && samePin(pin, g.pin)) return g.device;
+    this.learners.get(t)?.delete(from);
+    this.grant(t, from, false, LEARNER_REASONS.pinChanged);
+    return null;
   }
 
   /** Whether (t, from) holds `role` with the PIN as it is now; a PIN changed unannounced revokes it here. */
@@ -554,6 +666,7 @@ export class HostSession {
     p?.roles.delete(from);
     p?.devices.delete(from);
     p?.left.add(from);
+    this.learners.get(t)?.delete(from); // L4: a socket under its id signs in again
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
     if (this.silentVents.get(from) === t) this.silentVents.delete(from); // its socket is gone: nothing more can come from it
@@ -584,12 +697,13 @@ export class HostSession {
     if (m.kind === 'hello') {
       p.roles.set(m.from, m.role);
       p.left.delete(m.from);
-      if (m.role === 'defib' && m.device !== undefined) p.devices.set(m.from, m.device);
+      if ((m.role === 'defib' || m.role === 'learner') && m.device !== undefined) p.devices.set(m.from, m.device);
       else p.devices.delete(m.from);
     }
     // R5d: the defibrillator window follows as a viewer does (a second screen of this computer gets the cockpit's frames)
-    if (m.kind === 'hello' && (m.role === 'viewer' || m.role === 'defib')) this.viewerSeenAt = this.now();
+    if (m.kind === 'hello' && (m.role === 'viewer' || m.role === 'defib' || m.role === 'learner')) this.viewerSeenAt = this.now();
     if (m.kind === 'hello' && (m.role === 'instructor' || m.role === 'ventilator')) this.verify(t, m.from, m.pin, m.role);
+    if (m.kind === 'hello' && m.role === 'learner') this.verifyLearner(t, m.from, m.pin, m.device);
     if (m.kind === 'hello' && m.role === 'ventilator') return; // R8c: it follows nothing (no welcome, no snapshot)
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
     // R8c: only the granted ventilator's link messages reach the app, while its PIN holds
@@ -613,11 +727,101 @@ export class HostSession {
       const by = p.devices.get(m.from);
       return this.command(t, { ...m.body, issuedBy: LEARNER_ISSUED_BY, ...(by !== undefined ? { by } : {}) }, m.from);
     }
+    // L4: the learner action remote — granted on the learner PIN, its shapes checked here again (learnerMay; a same-browser
+    // page has no relay), then turned into the instructor's own commands, filed as the learner's with its device key
+    if (role === 'learner') {
+      const by = this.learnerDevice(t, m.from);
+      if (by === null) return refuse(LEARNER_REASONS.notSignedIn);
+      const no = learnerMay(m.body);
+      if (no !== null) return refuse(no);
+      return this.learnerCommand(t, m.from, by, m.body, refuse);
+    }
+    // §4 D3: a preparation and an infusion's mL/h are the learner remote's shapes only, and never reach the engine as sent
+    if (m.body.type === 'prep' || m.body.type === 'infusion') return refuse(LEARNER_REASONS.notSignedIn);
     if (role !== 'instructor') return this.command(t, m.body, m.from);
     // An instructor phone: granted, on the allow-list, and filed as the Remote's rows whatever it wrote (record.ts)
     const why = this.instructorRefusal(t, m.from, m.body);
     if (why !== null) return refuse(why);
     return this.command(t, { ...m.body, issuedBy: 'remote' }, m.from);
+  }
+
+  /**
+   * L4 (§4 D3): a granted learner remote's command. A sample goes to the engine as it is. A `prep` stage or discard is
+   * the host's own table (acked, never dispatched: no commandApplied, so no follower applies it). A delivery, an infusion
+   * from a preparation and an infusion change become the instructor's `applyEvent drug` / `infusion`, with every
+   * quantity computed here from the formulary, and go through `command()`: the drug lock, staged delivery, the engine's
+   * validation and the record are the laptop's own. Each is filed `issuedBy: 'learner'`, `by` = the device key, `prepId`.
+   */
+  private async learnerCommand(t: ManagedTransport, from: string, by: string, c: WireCommand, refuse: (reason: string) => void): Promise<void> {
+    const prior = this.seen.get(c.id);
+    if (prior) {
+      this.stats.duplicates++;
+      return t.send(this.stamp(prior)); // idempotent: a resend changes nothing
+    }
+    if (this.ff) return refuse(FF_REFUSAL);
+    const base = { id: c.id, issuedBy: LEARNER_ISSUED_BY, by, ...(c.stageGroup !== undefined ? { stageGroup: c.stageGroup } : {}), ...(c.batch !== undefined ? { batch: c.batch } : {}) } as WireCommand;
+    if (c.type === 'applyEvent') return this.command(t, { ...c, issuedBy: LEARNER_ISSUED_BY, by }, from);
+    const { simT } = this.o.target.now();
+    if (c.type === 'infusion') return this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
+    if (c.type !== 'prep') return refuse('not a learner command'); // learnerMay admitted none other
+    const f = this.o.formulary?.() ?? null;
+    const mine = this.preps.get(by);
+    for (const h of mine?.values() ?? []) h.from = from; // a remote that signed in again on a new socket: its news follows it
+    if (c.action === 'stage') {
+      if (!f) return refuse(LEARNER_REASONS.noFormulary);
+      if (mine?.has(c.prep.id)) return refuse(`this remote already has a preparation ${c.prep.id}`);
+      if ((mine?.size ?? 0) >= PREPS_PER_DEVICE) return refuse(LEARNER_REASONS.full);
+      const made = stagePrep(f, c, by, from, simT);
+      if (!made.ok) return refuse(made.why);
+      if (mine) mine.set(c.prep.id, made.prep);
+      else this.preps.set(by, new Map([[c.prep.id, made.prep]]));
+      this.acked(t, c.id);
+      this.prepNews('made', made.prep);
+      return this.o.onPreparation?.(stagedOf(made.prep));
+    }
+    const h = mine?.get(c.prepId);
+    if (!h) return refuse(`this remote has no preparation ${c.prepId}`);
+    if (c.action === 'discard') {
+      mine?.delete(c.prepId);
+      this.acked(t, c.id);
+      return this.prepNews('discarded', h);
+    }
+    if (!f) return refuse(LEARNER_REASONS.noFormulary);
+    const withPrep = { ...base, prepId: h.id } as WireCommand;
+    if (c.action === 'deliver') return this.learnerApply(t, from, deliverPrep(f, h, c, withPrep, simT), h, refuse);
+    return this.learnerApply(t, from, infusePrep(f, h, c, withPrep, simT, this.infusions), h, refuse);
+  }
+
+  /** Apply a learner command's translation: refused as a whole, or every command through `command()` (one stage group). */
+  private async learnerApply(t: ManagedTransport, from: string, out: Translated, h: HostPrep | null, refuse: (reason: string) => void): Promise<void> {
+    if (!out.ok) return refuse(out.why);
+    // a preparation of two drugs is given whole or not at all: a locked drug refuses the delivery before any dose goes
+    const now = this.o.target.now();
+    const first = out.cmds[0] as WireCommand;
+    const locked = out.cmds.length > 1 && !this.ff ? (out.cmds.map((x) => this.lockOf(x, now.simT, this.gives)).find((l) => l !== null) ?? null) : null;
+    if (locked) return this.answer(t, first, from, this.now(), { result: { accepted: false, tick: now.tick, reason: lockReason(locked) }, applied: first }, locked);
+    if (h) this.pushing.set(first.id, { h, volumeMl: out.volumeMl, news: out.volumeMl > 0 ? 'delivered' : 'infusing' });
+    for (const x of out.cmds) await this.command(t, x, from);
+  }
+
+  /** An accepted ack for a command the host handled itself (a preparation staged or discarded): no commandApplied. */
+  private acked(t: ManagedTransport, id: string): void {
+    const ack: AckBody = { kind: 'ack', commandId: id, accepted: true, tick: this.o.target.now().tick };
+    if (this.seen.size >= SEEN_MAX) this.seen.delete(this.seen.keys().next().value as string);
+    this.seen.set(id, ack);
+    t.send(this.stamp(ack));
+  }
+
+  /**
+   * §4 D7: a preparation's news, twice: to the remote that staged it (`to` its peer id; never the findings, which the
+   * instructor decides to show, LQ3), and to the host's own screens and granted instructors (`to` the host's own id, which
+   * no learner may sign in under: verifyLearner), with the findings and the device. The relay routes the first to that one
+   * learner socket and both to granted instructors; no other learner, viewer or defibrillator window gets either.
+   */
+  private prepNews(news: PrepNewsKind, h: HostPrep): void {
+    const t = this.o.target.now().simT;
+    this.queue({ type: 'prep', t, to: h.from, body: { news, prep: learnerView(h) } satisfies LearnerPrepNews });
+    this.queue({ type: 'prep', t, to: this.peerId, body: { news, prep: instructorView(h) } satisfies InstructorPrepNews });
   }
 
   /** A peer said hello: replay sticky commands, then a fresh snapshot (brief §3.7 late join). */
@@ -732,6 +936,12 @@ export class HostSession {
     this.seen.set(cmd.id, ack);
     t.send(this.stamp(ack));
     this.o.onCommand?.({ commandId: cmd.id, from, receivedAt, tick: result.tick, accepted: result.accepted });
+    const push = this.pushing.get(cmd.id); // L4: a learner's delivery takes its volume once applied, and its remote is told
+    if (push) {
+      this.pushing.delete(cmd.id);
+      if (result.accepted) push.h.leftMl = Math.max(0, push.h.leftMl - push.volumeMl);
+      if (result.accepted) this.prepNews(push.news, push.h);
+    }
     if (!result.accepted) {
       this.stats.rejected++;
       return;
@@ -809,6 +1019,7 @@ export class HostSession {
     const applied: Command = { ...c, atTick: result.tick };
     if (result.accepted) {
       this.gives.note(c, result.tick * TICK_S); // every device's bolus, and the card's own (a press after it is locked)
+      this.noteInfusion(c as WireCommand);
       if (c.type === 'setTarget') {
         const r = c.ramp;
         const untilT = result.tick * TICK_S + (r ? (r.delayS ?? 0) + r.durationS : 0);
@@ -819,6 +1030,19 @@ export class HostSession {
     }
     this.pruneGroups();
     return applied;
+  }
+
+  /** L4 (LQ4): the infusion each drug runs at, as applied by any device: what a learner's `infusion set` changes and replaces. */
+  private noteInfusion(c: WireCommand): void {
+    if (c.type !== 'applyEvent') return;
+    const e = c.event as { kind: string; drugId?: unknown; rate?: unknown; dose?: unknown; unit?: unknown; infusion?: unknown; concentration?: Running['concentration'] };
+    if (typeof e.drugId !== 'string') return;
+    const by = (c as { by?: string }).by ?? givenByOf(c.issuedBy);
+    if (e.kind === 'tci') return void this.infusions.delete(e.drugId); // a TCI pump drives it now, not a rate
+    const rate = e.kind === 'infusion' ? e.rate : e.kind === 'drug' && (e.infusion === true || /\/(min|h)$/.test(String(e.unit))) ? e.dose : undefined;
+    if (typeof rate !== 'number') return;
+    if (rate === 0) return void this.infusions.delete(e.drugId);
+    this.infusions.set(e.drugId, { rate, unit: String(e.unit), ...(e.kind === 'infusion' && e.concentration ? { concentration: e.concentration } : {}), by });
   }
 
   private time(cmd: TimeCommand): { result: DispatchResult; applied: WireCommand } {

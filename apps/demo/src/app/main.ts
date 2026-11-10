@@ -6,7 +6,7 @@ import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
 import { instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
-import { instructorPin } from './instructor-pin.ts';
+import { instructorPin, learnerPin, type InstructorPin } from './instructor-pin.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
@@ -125,8 +125,13 @@ if (follow && shows === 'pick') {
   if (!base) throw new Error('no patient presets');
   // The instructor phone's PIN (plan instructor-peer-role.md P7): this computer's store only; the host reads it at every
   // instructor hello. Never in an address, a QR code or the tab's state (instructor-pin.ts)
-  const pin = instructorPin();
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get() });
+  // L4 (learner-action-remote.md §4 D9): the learner PIN beside it, the same keeping, never equal to it; a new learner PIN
+  // revokes every learner remote (Room setup's button for it is L6's)
+  let lpin: InstructorPin | null = null;
+  const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
+  const learner = (lpin = learnerPin(() => pin.get()));
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales, defib: session.defibModel }), (f) => {

@@ -9,7 +9,8 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { ManagedTransport, NoteEvent, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, RelayDevice } from '@pme/controller';
+import { loadShippedFormulary } from './formulary.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -168,10 +169,12 @@ export class AppSession {
   /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
+  /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
+  private formulary: Formulary | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; defibModel?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null }) {
     this.el = el;
     this.defibModel = o.defibModel ?? null;
     this.perf8 = o.load === 'perf8';
@@ -230,7 +233,8 @@ export class AppSession {
       },
     };
     let hs: HostSession | null = null;
-    this.driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e) });
+    // L4 (learner-action-remote.md §6): a learner's give carries the host's record of its preparation (the driver's lookup)
+    this.driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e), preparation: (by, id, drugId) => hs?.preparation(by, id, drugId) });
     hs = new HostSession({
       session: this.code, target: this.driver.host, scenario: this.driver.hook,
       scenarioGives: (c) => this.driver.triggerGives(c), // a step press is locked as its drug is (drug-lock.ts)
@@ -244,6 +248,11 @@ export class AppSession {
       // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
       // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
+      // L4: the learner remote — its PIN (read at every learner hello and command), the formulary every preparation is
+      // made from (loaded once, below; null until then), and each staged preparation into the /2 record
+      ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
+      formulary: () => this.formulary,
+      onPreparation: (p) => this.driver.recordPreparation(p),
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
       // R8c: the granted remote cockpit's link messages and its grant, for the Ventilator desk (views/vent.ts)
@@ -255,6 +264,7 @@ export class AppSession {
       },
     });
     this.host = hs;
+    if (o.learnerPin) void loadShippedFormulary().then((f) => void (this.formulary = f));
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
     this.bc = createBroadcastChannelTransport(this.code);

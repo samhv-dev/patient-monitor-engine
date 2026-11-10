@@ -45,8 +45,9 @@ export interface ScenarioDriverOptions {
    *  Default off, so a run that no view reads them for takes no extra snapshots; `markStages(true)` turns them on. */
   stageMarks?: boolean;
   /** The host's preparations table (plan learner-action-remote.md §4 D3, §6; L4): the record of the preparation a
-   *  learner's give names (`prepId`, in the device `by`'s own id space), at the give. Absent: a give carries no `prep`. */
-  preparation?: (by: string, prepId: string) => PrepRecord | undefined;
+   *  learner's give names (`prepId`, in the device `by`'s own id space), at the give, for the drug the give is of (a
+   *  preparation of two drugs is one give of each; HostSession.preparation). Absent: a give carries no `prep`. */
+  preparation?: (by: string, prepId: string, drugId?: string) => PrepRecord | undefined;
 }
 
 interface Mark {
@@ -606,7 +607,7 @@ function administrationOf(
   const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: e.kind === 'drug' && e.route !== undefined && e.drugId in DRUGS && !routeHonoured(e.drugId, e.route) };
   const device = source === 'learner' && typeof c.by === 'string' ? c.by : undefined;
   const prepId = (c as { prepId?: unknown }).prepId;
-  const prep = device !== undefined && typeof prepId === 'string' ? preparation?.(device, prepId) : undefined;
+  const prep = device !== undefined && typeof prepId === 'string' ? preparation?.(device, prepId, typeof e.drugId === 'string' ? e.drugId : undefined) : undefined;
   const base = { t, source, ...(source === 'action' ? { actionId: c.actionId as string } : {}), ...(device !== undefined ? { by: device } : {}) };
   const tail = { ...(prep ? { prep: structuredClone(prep) } : {}), result, ...(source === 'script' ? { cardSet: true as const } : {}) };
   /** LQ4: the running rate of this drug a learner's infusion replaces, and who had set it. */
