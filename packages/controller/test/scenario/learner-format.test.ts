@@ -238,8 +238,11 @@ describe('§6: the schema and the validator (pme-scenario-2.schema.json, validat
     expect(r.ok ? [] : r.errors).toContain('/actions/1/sample: only a sample action has "sample"');
   });
   it('warns of a panel the engine does not draw (the card stays valid; no sample can ever satisfy it)', () => {
-    const r = validateScenario(withAction({ id: 'chem', label: 'Chemistry', kind: 'sample', phases: ['early'], sample: { panel: ['chem'] } }));
+    const r = validateScenario(withAction({ id: 'csf', label: 'CSF', kind: 'sample', phases: ['early'], sample: { panel: ['csf'] } }));
     expect(r.ok).toBe(true);
-    expect(r.warnings).toContain('/actions/1/sample/panel/0: "chem" is not a panel the engine draws (abg, vbg)');
+    expect(r.warnings).toContain('/actions/1/sample/panel/0: "csf" is not a panel the engine draws (abg, vbg, chem, coag)');
+    // L10a: the laboratory's chemistry and coagulation panels are the engine's now
+    const c = validateScenario(withAction({ id: 'chem', label: 'Chemistry', kind: 'sample', phases: ['early'], sample: { panel: ['chem', 'coag'] } }));
+    expect(c.warnings.filter((w) => w.includes('/sample/panel/'))).toEqual([]);
   });
 });

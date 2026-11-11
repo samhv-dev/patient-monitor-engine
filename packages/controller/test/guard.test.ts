@@ -1,3 +1,4 @@
+import { LAB_PANELS } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
 import { createStamper, INSTRUMENTS, LEARNER_COMMANDS, LEARNER_DEFIB_COMMANDS, LEARNER_LAB_PANELS, learnerDefibMay, learnerMay, NOTE_EVENTS, PUMP_COMMANDS, pumpMay, type CommandInput, type WireMessage } from '../src/protocol.ts';
@@ -234,10 +235,13 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     ['infusion set 0 (stop)', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 0 })],
     ['applyEvent lab abg', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } })],
     ['applyEvent lab vbg', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'vbg' } })],
+    ['applyEvent lab chem', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'chem' } })],
+    ['applyEvent lab coag', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'coag' } })],
   ];
   it('LEARNER_COMMANDS is exactly §4 D2; learnerMay passes each shape, and the guard parses each', () => {
     expect([...LEARNER_COMMANDS].sort()).toEqual(['applyEvent lab', 'infusion set', 'prep deliver', 'prep discard', 'prep infuse', 'prep stage']);
-    expect([...LEARNER_LAB_PANELS].sort()).toEqual(['abg', 'vbg']);
+    expect([...LEARNER_LAB_PANELS].sort()).toEqual(['abg', 'chem', 'coag', 'vbg']);
+    expect([...LEARNER_LAB_PANELS].sort()).toEqual([...LAB_PANELS].sort()); // the engine's panels (analysers.ts)
     for (const [what, c] of SHAPES) {
       expect(learnerMay(c), what).toBeNull();
       expect(parseWireMessage({ ...stamp({ kind: 'command', body: c as never }) }), what).not.toBeNull();
@@ -280,7 +284,8 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     ['infusion set with a unit', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4, unit: 'mcg/kg/min' })],
     ['infusion start', cmd({ type: 'infusion', action: 'start', drugId: 'norepinephrine', rateMlH: 4 })],
     ['applyEvent lab with a turnaroundS', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg', turnaroundS: 30 } })],
-    ['applyEvent lab of a panel the engine has not', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'chem' } })],
+    ['applyEvent lab of a panel the engine has not', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'csf' } })],
+    ['applyEvent lab with an analyser', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg', analyser: 'abl825' } })],
     ['applyEvent lab with atTick', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' }, atTick: 100 })],
     ['applyEvent without an event', cmd({ type: 'applyEvent' })],
   ];
