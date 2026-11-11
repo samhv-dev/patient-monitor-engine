@@ -938,7 +938,7 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 /* L7 (plan learner-action-remote.md): the Drugs tab: the bench over the tray, one column for a phone held upright with
    one thumb. Every control a 44 px target [ENG: ui; WCAG 2.1 SC 2.5.5 and the app's --target], full width where a thumb
    reaches across; long product names wrap rather than clip. The app's own tokens only. */
-.lr-drugs { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-3) var(--s-4); }
+.lr-drugs, .lr-infusions { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-3) var(--s-4); }
 .lr-h2 { margin: 0 0 var(--s-2); font-size: var(--t-18); color: var(--text-strong); }
 .lr-step, .lr-fill, .lr-diluent, .lr-result, .lr-give { display: grid; gap: var(--s-2); }
 .lr-step[hidden], .lr-give[hidden], .lr-finding[hidden] { display: none; }
@@ -953,8 +953,13 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .lr-drawn-row { display: grid; gap: var(--s-1); padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-card); }
 .lr-drawn-row p { margin: 0; }
 .lr-drawn-row .hint { margin: 0; }
-.lr-drugs .stepper { width: 100%; }
+.lr-drugs .stepper, .lr-infusions .stepper { width: 100%; }
 .lr-drugs .btn.small { min-height: 44px; min-width: 44px; }
+/* L8: the Infusions tab, on the tray's cards (.lr-item): the rate and the dose rate in the tray's figures */
+.lr-inf-section { display: grid; gap: var(--s-2); }
+.lr-dose { margin: 0; font-family: var(--font-num); font-variant-numeric: tabular-nums; color: var(--text-strong); }
+.lr-setby, .lr-replaces, .lr-dose-preview { margin: 0; }
+.lr-replaces:empty, .lr-dose-preview:empty, .lr-inf-said:empty { display: none; }
 .lr-actions { display: grid; gap: var(--s-2); }
 .lr-holds, .lr-conc { margin: 0; font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: var(--t-18); color: var(--text-strong); }
 .lr-holds:empty, .lr-conc:empty, .lr-said:empty, .lr-cannot:empty, .lr-time:empty, .lr-state:empty, .lr-ontop:empty, .lr-tray-cleared:empty { display: none; }

@@ -22,6 +22,7 @@ export { resolveLung } from './l2/lung/conditions.ts';
 export { ventReference, type VentReference } from './l2/lung/vent-reference.ts';
 export * from './types-vent-link.ts'; // Stage V
 export * from './types-blood.ts';
+export { ANALYSER_IDS, ANALYSERS, DEFAULT_ANALYSER, LAB_PANELS, LABORATORY, panelValues, sectionFor, turnaroundFor, type AnalyserId } from './l2/blood/analysers.ts'; // the analyser rows (L10a): the lab views' expected time
 export { spo2PitchHz } from './l3/spo2/spo2.ts';
 export type * from './types-circ.ts';
 export type * from './types-pk.ts';

@@ -367,7 +367,9 @@ test('L6: the Learner remote card opens the learner-PIN form; the learner PIN fr
   }
   await tabs.nth(1).click();
   await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
-  await expect(p.getByRole('tabpanel')).toHaveText('Starting and changing infusions from this phone: not in this release yet.');
+  // L8: the Infusions tab holds the infusions menu (learner-remote.e2e.ts drives it): nothing running, nothing ready yet
+  await expect(p.getByRole('tabpanel').locator('.lr-inf-running-empty')).toHaveText('No infusion is running.');
+  await expect(p.getByRole('tabpanel').locator('.lr-inf-start-empty')).toHaveText('No syringe on the tray is ready. Prepare one in the Drugs tab, then start it here.');
   const stage = (await p.locator('.stage').boundingBox())!;
   expect(stage.height).toBeLessThan((p.viewportSize()?.height ?? 0) * 0.5); // a strip, not the whole screen
   expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

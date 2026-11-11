@@ -155,6 +155,36 @@ describe('hostile relay input', () => {
     expect(h.got.some((m) => m.includes('"bad"') || m.includes('"forged"') || m.includes('"kind":"ack"') || m.includes('"type":"prep"'))).toBe(false);
     await healthy('HPB234');
   });
+  // C1 (plan pump-rack-tci.md §7, D2): the tablet is never trusted either. A pump's forged frames are dropped; a mistyped
+  // pump command is dropped by the guard; a forged field on a well-typed one is `forbidden`
+  it("a `pump` socket's forged grant, ack, event and snapshot are dropped; forged pump commands never reach the host", async () => {
+    const h = await open();
+    const p = await open();
+    const hs = createStamper('HPU234', 'h');
+    const ps = createStamper('HPU234', 'pmp-p.1');
+    h.ws.send(JSON.stringify(hs({ kind: 'hello', role: 'host' })));
+    p.ws.send(JSON.stringify(ps({ kind: 'hello', role: 'pump', pin: '582913' } as never)));
+    await waitFor(() => h.got.some((m) => m.includes('"pmp-p.1"')), 3000, 'pump hello at the host');
+    h.ws.send(JSON.stringify(hs({ kind: 'grant', to: 'pmp-p.1', granted: true })));
+    await waitFor(() => p.got.some((m) => m.includes('"grant"')), 3000, 'granted');
+    const before = relay.stats().dropped;
+    p.ws.send(JSON.stringify(ps({ kind: 'grant', to: 'pmp-p.1', granted: true })));
+    p.ws.send(JSON.stringify(ps({ kind: 'ack', commandId: 'x', accepted: true, tick: 1 })));
+    p.ws.send(JSON.stringify(ps({ kind: 'event', body: [{ type: 'prep', t: 1, to: 'pmp-p.1', body: { label: 'x' } }] } as never)));
+    p.ws.send(JSON.stringify(ps({ kind: 'snapshot', body: { schema: 'pme-snapshot/1', tick: 0 } } as never)));
+    for (const c of [{ action: 'start', ch: 99 }, { action: 'load', ch: 1, syringe: 'propofol' }, { action: 'rate', ch: 1, rate: -5, unit: 'mL/h' }])
+      p.ws.send(JSON.stringify(ps({ kind: 'command', body: { id: 'bad', issuedBy: 'x', type: 'pump', ...c } } as never)));
+    await waitFor(() => relay.stats().dropped - before === 7, 3000, 'seven frames dropped');
+    for (const body of [
+      { type: 'pump', action: 'load', ch: 1, syringe: { stock: 'propofol1pct50ml' }, concentration: { amount: 10, unit: 'mg', perMl: 1 } },
+      { type: 'pump', action: 'start', ch: 1, by: 'tablet0002' },
+      { type: 'applyEvent', event: { kind: 'pump', action: 'start', ch: 1 } },
+    ])
+      p.ws.send(JSON.stringify(ps({ kind: 'command', body: { id: 'forged', issuedBy: 'x', ...body } } as never)));
+    await waitFor(() => p.got.filter((m) => m.includes('"forbidden"')).length === 3, 3000, 'three forbidden');
+    expect(h.got.some((m) => m.includes('"bad"') || m.includes('"forged"') || m.includes('"kind":"ack"') || m.includes('"type":"prep"'))).toBe(false);
+    await healthy('HPV234');
+  });
 });
 
 // PR #306, CI run 42350190627: room-qr-tab-guard's afterEach waited 90 s in relay.close(). close() waited for every

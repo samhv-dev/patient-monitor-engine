@@ -198,12 +198,6 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|---|---|
 | `SIGMA_LEAK_FLOOR` | `0.3` | — | Rippe & Haraldsson 1994; research/44 L2; [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39] | The protein reflection coefficient of a leaky endothelium. Inflammation opens LARGE pores, which carry most of the extra hydraulic conductance and most of the protein flux (two-pore theory, the DIRECTION: Rippe & Haraldsson 1994 Physiol Rev 74:163). That the non-reflected share (1 − σ) grows with the same factor as the whole Kf is an assumption [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39]: σ = 1 − (1 − σ0)·kfMult, floor SIGMA_LEAK_FLOOR [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6) → 0.74; kfMult 3 → 0.7. It applies to every writer of `fl.kfMult` — the endocrine model's sepsis, anaphylaxis and burns alike. |
 
-### [`l2/blood/labs.ts`](../../packages/engine-core/src/l2/blood/labs.ts)
-
-| Name | Value | Unit | Source / tag | Comment |
-|---|---|---|---|---|
-| `LAB_TURNAROUND_S` | `120` | s | [ENG: device] | point-of-care analyser ≈ 60–90 s + the walk [ENG: device] |
-
 ### [`l2/blood/params.ts`](../../packages/engine-core/src/l2/blood/params.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -288,6 +282,15 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `d5w` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `glycine` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 200 | 0 | 0 |
 
+### Analyser rows (`packages/engine-core/src/l2/blood/analysers.ts`; the room's default `abl825`; a panel returns the analytes listed that the engine computes)
+
+| Row | Name | Panels | Analytes named | Turnaround (s) | Turnaround source | Analytes source |
+|---|---|---|---|---|---|---|
+| `abl825` | Radiometer ABL825 FLEX | abg, vbg | ph, pco2, po2, hco3, be, so2, cohb, methb, hhb, lactate, na, k, cl, iCa, hb, glucose, ag, osm | 80 | Radiometer Medical ApS, "ABL800 FLEX analyzer Specifications", 928-544, 201104M (2011), "Sample volume" table: ABL825, all parameters, 195 µL, measuring time 80 s (cycle time 150 s) | Radiometer Medical ApS, "ABL800 FLEX analyzer Specifications", 928-544, 201104M (2011): "Parameters" table (the model columns) and "Derived parameters" |
+| `abl837` | Radiometer ABL837 FLEX | abg, vbg | ph, pco2, po2, hco3, be, so2, cohb, methb, hhb, lactate, na, k, cl, iCa, hb, glucose, ag, osm, creatinine, tbil, hbf | 100 | Radiometer Medical ApS, "ABL800 FLEX analyzer Specifications", 928-544, 201104M (2011), "Sample volume" table: ABL837, all parameters, 250 µL, measuring time 100 s (cycle time 170 s) | Radiometer Medical ApS, "ABL800 FLEX analyzer Specifications", 928-544, 201104M (2011): "Parameters" table (the model columns) and "Derived parameters"; the ABL837 also measures cCrea, ctBil and FHbF |
+| `laboratory` | Hospital laboratory | chem | na, k, cl, caTotal, mg, glucose, creatinine, ck | 2766 | Hawkins RC, Laboratory turnaround time, Clin Biochem Rev 2007;28(4):179–94 (PMC2282400), Table 6: urgent K, 2001 cycle, mean intra-laboratory TAT 46.1 min (receipt to report) = 2766 s | the owner's ruling LQ2 (docs/plans/learner-action-remote.md §0) on the department's results page (research/49 §3) |
+| `laboratory` | Hospital laboratory | coag | inr, pt, aptt, fibrinogen, platelets | 2730 | Hawkins RC, Laboratory turnaround time, Clin Biochem Rev 2007;28(4):179–94 (PMC2282400), Table 6: urgent prothrombin time, 2001 cycle, mean intra-laboratory TAT 45.5 min (receipt to report) = 2730 s | the owner's ruling LQ2 (docs/plans/learner-action-remote.md §0) on the department's results page (research/49 §3) |
+
 ## Functions
 
 | Function | File | Doc |
@@ -296,6 +299,8 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `baseExcess` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | Standard base excess, Van Slyke (tables §5b.1): |
 | `solvePh` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | Bounded bisection on pH ∈ [6.5, 7.9]; |
 | `anionGap` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | Anion gap without K (the blood-gas analyser convention): |
+| `sectionFor` | [`l2/blood/analysers.ts`](../../packages/engine-core/src/l2/blood/analysers.ts) | The row and section a panel runs on: |
+| `panelValues` | [`l2/blood/analysers.ts`](../../packages/engine-core/src/l2/blood/analysers.ts) | The section's analytes that the sample holds (the engine computes), in the row's order; |
 | `pushCircVolume` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The circulation model present: |
 | `setCircChemistry` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The circulation model present: |
 | `volumeCoFactor` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The circulation model ABSENT (unit rigs): |
@@ -306,6 +311,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `landis` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | Landis–Pappenheimer colloid osmotic pressure (mmHg) of total protein TP (g/dL): |
 | `starling` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | Plasma ↔ interstitium exchange J (mL/min, positive = filtration out of plasma) and extra lymph (mL/min). |
 | `stepFluids` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | One step of dtS seconds (Euler; |
+| `labSample` | [`l2/blood/labs.ts`](../../packages/engine-core/src/l2/blood/labs.ts) | Every analyte the engine computes for a sample drawn now, at the site (`abg` arterial, `vbg` venous; |
 | `p50` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | P50 (mmHg) for the given state. |
 | `hillN` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | Hill coefficient: |
 | `satDB` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | Functional HbO2 saturation 0–1. |
@@ -339,10 +345,11 @@ Exported without a doc comment: `hco3Of`, `circOf`, `setCircViscosity`, `cohbWas
 | File | Header |
 |---|---|
 | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | Electroneutrality (tables §5b.1, annex B1, audit #5/A13), all mEq/L: f(pH) = SID − HCO3(pH, PCO2) − Alb·(0.123·pH − 0.631) − Pi·(0.309·pH − 0.469) − βHb·(pH − 7.4) = 0 HCO3 = 0.0307·PCO2·10^(pH − 6.1) (plasma CO2 solubil |
+| [`l2/blood/analysers.ts`](../../packages/engine-core/src/l2/blood/analysers.ts) | The analyser rows (plan docs/plans/learner-action-remote.md §L10a; the owner's ruling LQ2): one data row per blood-gas analyser and one for the laboratory, each with the analytes it reports and its own turnaround, read f |
 | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The blood's contacts with the circulation and the lungs. |
 | [`l2/blood/core.ts`](../../packages/engine-core/src/l2/blood/core.ts) | The blood model core step (the part of pipeline.ts that does not touch the engine): fluids → solutes → oxygen/lactate → pH. |
 | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | Compartments (tables §5b.4): plasma Vp, interstitium Visf, cells Vicf (mL); red cells as Hb mass (g, MCHC 1/3 g/mL). |
-| [`l2/blood/labs.ts`](../../packages/engine-core/src/l2/blood/labs.ts) | The lab panel (plan decision 13): a 1 Hz `labs` truth event and the instructor's "send ABG/VBG" with a turnaround. |
+| [`l2/blood/labs.ts`](../../packages/engine-core/src/l2/blood/labs.ts) | The lab panel (plan decision 13): a 1 Hz `labs` truth event, and a drawn sample (`labSample`) that analysers.ts turns into a panel and returns after its row's sourced turnaround (plan learner-action-remote.md L10a). |
 | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | Oxygen dissociation (tables §5b.3 P50 row; audit #6, A14): SHbO2 = x^n/(1 + x^n), x = PO2/P50, with n = 2.7 − 1.1·S_CO (CO flattens the curve) P50 = (26.8 − 20·S_CO) · Π_k (P50_k / 26.8) (independent shifts, multiplicati |
 | [`l2/blood/oxygen.ts`](../../packages/engine-core/src/l2/blood/oxygen.ts) | Oxygen delivery and lactate (tables §5b.3 caO2/do2/svo2 rows; §5.3 lactate, critical DO2, erMax, kAnaer rows). |
 | [`l2/blood/params.ts`](../../packages/engine-core/src/l2/blood/params.ts) | Blood constants and patient scaling (tables §1.1–1.5, §5.3, §5b.1–5b.4; annex §5b). |
@@ -378,6 +385,7 @@ Exported without a doc comment: `hco3Of`, `circOf`, `setCircViscosity`, `cohbWas
 | [`engine/blood-fluid-kinetics.test.ts`](../../packages/engine-core/test/engine/blood-fluid-kinetics.test.ts) | 1 | 0 |
 | [`engine/blood-hyperk.test.ts`](../../packages/engine-core/test/engine/blood-hyperk.test.ts) | 0 | 0 |
 | [`engine/blood-k-rhythm.test.ts`](../../packages/engine-core/test/engine/blood-k-rhythm.test.ts) | 0 | 0 |
+| [`engine/blood-lab-panels.test.ts`](../../packages/engine-core/test/engine/blood-lab-panels.test.ts) | 0 | 0 |
 | [`engine/blood-mannitol.test.ts`](../../packages/engine-core/test/engine/blood-mannitol.test.ts) | 1 | 0 |
 | [`engine/blood-massive-transfusion.test.ts`](../../packages/engine-core/test/engine/blood-massive-transfusion.test.ts) | 1 | 0 |
 | [`engine/blood-o2-extraction.test.ts`](../../packages/engine-core/test/engine/blood-o2-extraction.test.ts) | 0 | 0 |
@@ -389,6 +397,7 @@ Exported without a doc comment: `hco3Of`, `circOf`, `setCircViscosity`, `cohbWas
 | [`l2/blood/acid-base.test.ts`](../../packages/engine-core/test/l2/blood/acid-base.test.ts) | 1 | 0 |
 | [`l2/blood/addendum15.test.ts`](../../packages/engine-core/test/l2/blood/addendum15.test.ts) | 0 | 0 |
 | [`l2/blood/albumin.test.ts`](../../packages/engine-core/test/l2/blood/albumin.test.ts) | 0 | 0 |
+| [`l2/blood/analysers.test.ts`](../../packages/engine-core/test/l2/blood/analysers.test.ts) | 0 | 0 |
 | [`l2/blood/body-size.test.ts`](../../packages/engine-core/test/l2/blood/body-size.test.ts) | 0 | 0 |
 | [`l2/blood/capillary-leak.test.ts`](../../packages/engine-core/test/l2/blood/capillary-leak.test.ts) | 0 | 0 |
 | [`l2/blood/chronic-hypercapnia.test.ts`](../../packages/engine-core/test/l2/blood/chronic-hypercapnia.test.ts) | 0 | 0 |
