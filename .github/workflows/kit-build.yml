@@ -1,7 +1,7 @@
 name: kit-build
 
 # The classroom kit and the site tree, built once and checked; nothing is published here. Called by kit-and-site.yml
-# (every merge to main: the site and the rolling `kit-latest` pre-release) and by release.yml (a `v*` tag: the kit zips
+# (after ci passes on a merge to main: the site and the rolling `kit-latest` pre-release) and by release.yml (a `v*` tag: the kit zips
 # on that release). Uploads two workflow artifacts:
 #   kit-zips   pme-classroom-kit<S>.zip (macOS/Linux) and pme-classroom-kit-windows<S>.zip (the same kit with the
 #              official Windows Node.js in runtime/), each exactly what scripts/showcase/make-bundle.mjs writes, zipped
@@ -15,6 +15,10 @@ on:
     inputs:
       naming:
         description: '"latest" (stable asset names, for kit-latest) or "release" (names carry the version, as release.yml''s do)'
+        type: string
+        required: true
+      ref:
+        description: 'the commit to build (kit-and-site: the head SHA of the ci run that passed; release: the tag commit)'
         type: string
         required: true
 
@@ -36,6 +40,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -104,6 +110,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.ref }}
           sparse-checkout: scripts/showcase
       - uses: actions/setup-node@v4
         with:

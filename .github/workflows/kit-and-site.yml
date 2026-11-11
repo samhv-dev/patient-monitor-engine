@@ -1,16 +1,26 @@
 name: kit-and-site
 
-# Every merge to main: build and check the classroom kit and the site once (kit-build.yml), then
-#   pages       push the site tree to the gh-pages branch (the repository's Pages setting: deploy from branch gh-pages)
-#   prerelease  move the `kit-latest` tag to this commit and refresh the ONE rolling pre-release with the two kit zips
+# Publishes the site and the rolling kit ONLY AFTER ci has passed on main for that merge (the owner's ruling of
+# 12 Nov 2026). When a `ci` run of a push to main completes with success, this workflow builds and checks the classroom
+# kit and the site of EXACTLY the commit that ci run tested (its head SHA, never a newer one) through kit-build.yml, then
+#   pages       pushes the site tree to the gh-pages branch (the repository's Pages setting: deploy from branch gh-pages)
+#   prerelease  moves the `kit-latest` tag to that commit and refreshes the ONE rolling pre-release with the two kit zips
+# Both publish only when that commit is newer than the one already published (scripts/showcase/publish-order.mjs): ci's
+# runs on main are never cancelled and can finish out of order, and an older merge is never published over a newer one.
 # A version tag's kit is attached by release.yml, not here. Nobody publishes the kit or the site by hand any more
 # (RELEASE.md, "The classroom kit and the site").
+#
+# workflow_run always runs THIS FILE AS IT IS ON THE DEFAULT BRANCH (main), whatever commit ci tested: a change to this
+# file takes effect for the ci run of the merge that brings it, and cannot be tried through workflow_run on a branch.
+# Try a change on its branch with the hand dispatch below (dry run).
 on:
-  push:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
     branches: [main]
-  # Dry run on any branch (`gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true`): build and check
-  # everything, upload the kit zips and the site tree as workflow artifacts, publish nothing. Publishing needs main and
-  # dry_run false (a maintainer's manual republish of main's head).
+  # Dry run on any branch (`gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true`): build and check the
+  # branch's head, upload the kit zips and the site tree as workflow artifacts, publish nothing. With dry_run false on
+  # main it republishes main's head, and only if ci has passed on that commit (the same checks as an automatic run).
   workflow_dispatch:
     inputs:
       dry_run:
@@ -21,29 +31,46 @@ on:
 # Every job states its own; only the two publishing jobs can write, and only to this repository's contents.
 permissions: {}
 
-# Runs of one ref never overlap, and none is cancelled half-way through a publish: while one runs, a newer push waits,
-# and a still newer one replaces the waiting one, so the latest commit is always published last.
+# Runs never overlap and none is cancelled half-way through a publish: while one runs, the next waits, and a still newer
+# one replaces the waiting one. (A workflow_run run's ref is main, as is a dispatch on main: one group.)
 concurrency:
   group: kit-and-site-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   kit:
+    # a dispatch, or a ci run that PASSED on a PUSH to main of THIS repository (ci also runs on pull requests, whose
+    # head branch may be called main in a fork: those never get here)
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository) }}
     uses: ./.github/workflows/kit-build.yml
     permissions:
       contents: read
     with:
       naming: latest
+      ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
   pages:
     needs: kit
-    # never from a fork, never off main, never on a dry run (a push event has no inputs: it publishes)
-    if: ${{ github.repository == 'samhv-dev/patient-monitor-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || !inputs.dry_run) }}
+    # this repository only; an automatic run (kit ran, so ci passed on main), or a dispatch on main that is not a dry run
+    if: ${{ github.repository == 'samhv-dev/patient-monitor-engine' && (github.event_name == 'workflow_run' || (github.ref == 'refs/heads/main' && !inputs.dry_run)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
+      actions: read
+    env:
+      SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      GH_TOKEN: ${{ github.token }}
     steps:
+      - name: ci passed on this commit (a push to main)
+        run: |
+          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&status=success" --jq .total_count)
+          [ "$n" -gt 0 ] || { echo "::error::no successful ci run of a push to main for $SHA: nothing is published"; exit 1; }
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+          path: src
+          sparse-checkout: scripts/showcase
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -53,46 +80,65 @@ jobs:
         with:
           name: site
           path: ${{ runner.temp }}/site
-      - name: Replace the gh-pages tree with this commit's site and push it
+      - name: Replace the gh-pages tree with this commit's site and push it (only if newer than the published one)
         run: |
           set -euo pipefail
           cd pages
+          PUBLISHED="$(sed -n 's/^Commit: *\([0-9a-f]\{40\}\).*/\1/p' VERSION.txt 2>/dev/null || true)"
+          ORDER="$(node ../src/scripts/showcase/publish-order.mjs "$GITHUB_REPOSITORY" "$PUBLISHED" "$SHA")"
+          if [ "$ORDER" != publish ]; then echo "gh-pages left at $PUBLISHED: $ORDER" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
           find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           tar -xf "$RUNNER_TEMP/site/site.tar" -C .
           test ! -e pme-kit.json   # the app would take the site for a kit (site-tree.mjs)
-          grep -q "$GITHUB_SHA" README.md
+          grep -q "$SHA" README.md && grep -q "^Commit: *$SHA" VERSION.txt
           git add -A
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-            commit -q -m "GitHub Pages: main ${GITHUB_SHA::8}, static app (kit-and-site run $GITHUB_RUN_ID)"
+            commit -q -m "GitHub Pages: main ${SHA::8}, static app (kit-and-site run $GITHUB_RUN_ID)"
           git push origin HEAD:gh-pages   # a fast-forward on top of the branch's history, never a force-push
-          echo "gh-pages is now $(git rev-parse HEAD) (main $GITHUB_SHA)" >> "$GITHUB_STEP_SUMMARY"
+          echo "gh-pages is now $(git rev-parse HEAD) (main $SHA)" >> "$GITHUB_STEP_SUMMARY"
 
   prerelease:
     needs: kit
-    if: ${{ github.repository == 'samhv-dev/patient-monitor-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || !inputs.dry_run) }}
+    if: ${{ github.repository == 'samhv-dev/patient-monitor-engine' && (github.event_name == 'workflow_run' || (github.ref == 'refs/heads/main' && !inputs.dry_run)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
+      actions: read
+    env:
+      SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      GH_TOKEN: ${{ github.token }}
     steps:
+      - name: ci passed on this commit (a push to main)
+        run: |
+          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&status=success" --jq .total_count)
+          [ "$n" -gt 0 ] || { echo "::error::no successful ci run of a push to main for $SHA: nothing is published"; exit 1; }
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+          path: src
+          sparse-checkout: scripts/showcase
       - uses: actions/download-artifact@v4
         with:
           name: kit-zips
           path: ${{ runner.temp }}/kit
-      - name: Move kit-latest to this commit and refresh its pre-release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Move kit-latest to this commit and refresh its pre-release (only if newer than the published one)
         run: |
           set -euo pipefail
-          cd "$RUNNER_TEMP/kit"
           R="$GITHUB_REPOSITORY"; T=kit-latest
+          PUBLISHED="$(gh api "repos/$R/git/ref/tags/$T" --jq .object.sha 2>/dev/null || true)"
+          [[ "$PUBLISHED" =~ ^[0-9a-f]{40}$ ]] || PUBLISHED=""   # no kit-latest tag yet
+          ORDER="$(node src/scripts/showcase/publish-order.mjs "$R" "$PUBLISHED" "$SHA")"
+          if [ "$ORDER" != publish ]; then echo "kit-latest left at $PUBLISHED: $ORDER" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          cd "$RUNNER_TEMP/kit"
           A=(pme-classroom-kit.zip pme-classroom-kit-windows.zip)
           sha256sum "${A[@]}" > SHA256SUMS.txt
+          unzip -p pme-classroom-kit.zip pme-classroom-kit/VERSION.txt | grep -q "^Commit: *$SHA"
           WIN_NODE="$(unzip -p pme-classroom-kit-windows.zip pme-classroom-kit-windows/runtime/NODE-VERSION.txt | tr -d '\r' | sed -n 's/^Version: *//p')"
           test -n "$WIN_NODE"
-          SUBJECT="$(gh api "repos/$R/commits/$GITHUB_SHA" --jq '.commit.message | split("\n")[0]')"
+          SUBJECT="$(gh api "repos/$R/commits/$SHA" --jq '.commit.message | split("\n")[0]')"
           {
-            echo "**Not a numbered release.** The classroom kit of \`main\` at [\`${GITHUB_SHA::8}\`](https://github.com/$R/commit/$GITHUB_SHA) ($SUBJECT), rebuilt by the \`kit-and-site\` workflow ([run $GITHUB_RUN_ID](https://github.com/$R/actions/runs/$GITHUB_RUN_ID)) on every merge to \`main\`; this page and its files are replaced at the next merge. Numbered releases are the \`v*\` releases."
+            echo "**Not a numbered release.** The classroom kit of \`main\` at [\`${SHA::8}\`](https://github.com/$R/commit/$SHA) ($SUBJECT), rebuilt by the \`kit-and-site\` workflow ([run $GITHUB_RUN_ID](https://github.com/$R/actions/runs/$GITHUB_RUN_ID)) after \`ci\` passed on that merge to \`main\`; this page and its files are replaced at the next merge. Numbered releases are the \`v*\` releases."
             echo
             echo "- \`pme-classroom-kit.zip\`: the kit for macOS and Linux (double-click \`Start Simulator.command\` or \`Start Classroom.command\`; the classroom needs Node.js 22 or later on the laptop)."
             echo "- \`pme-classroom-kit-windows.zip\`: the same kit with the official Node.js $WIN_NODE for Windows x64 in \`runtime\\node.exe\` (\`Start Simulator.cmd\`, \`Start Classroom.cmd\`). Windows launchers (\`.cmd\`): untested on Windows."
@@ -100,16 +146,16 @@ jobs:
             echo
             echo "A teaching simulator: not a medical device and not clinically validated."
           } > NOTES.md
-          if gh api "repos/$R/git/ref/tags/$T" > /dev/null 2>&1; then
-            gh api -X PATCH "repos/$R/git/refs/tags/$T" -f sha="$GITHUB_SHA" -F force=true > /dev/null
+          if [ -n "$PUBLISHED" ]; then
+            gh api -X PATCH "repos/$R/git/refs/tags/$T" -f sha="$SHA" -F force=true > /dev/null   # moved forward only (publish-order.mjs)
           else
-            gh api -X POST "repos/$R/git/refs" -f ref="refs/tags/$T" -f sha="$GITHUB_SHA" > /dev/null
+            gh api -X POST "repos/$R/git/refs" -f ref="refs/tags/$T" -f sha="$SHA" > /dev/null
           fi
-          TITLE="Classroom kit, main ${GITHUB_SHA::8} (rolling pre-release)"
+          TITLE="Classroom kit, main ${SHA::8} (rolling pre-release)"
           if gh release view "$T" -R "$R" > /dev/null 2>&1; then
             gh release edit "$T" -R "$R" --prerelease --latest=false --title "$TITLE" --notes-file NOTES.md
             gh release upload "$T" -R "$R" --clobber "${A[@]}" SHA256SUMS.txt
           else
             gh release create "$T" -R "$R" --verify-tag --prerelease --latest=false --title "$TITLE" --notes-file NOTES.md "${A[@]}" SHA256SUMS.txt
           fi
-          echo "kit-latest is main $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "kit-latest is main $SHA" >> "$GITHUB_STEP_SUMMARY"

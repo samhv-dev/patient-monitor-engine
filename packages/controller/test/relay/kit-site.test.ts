@@ -1,5 +1,5 @@
 // The kit-and-site workflow (brief 169): the classroom kit and the GitHub Pages site are built and published by
-// .github/workflows/kit-and-site.yml (every merge to main) and release.yml (a v* tag), both through kit-build.yml.
+// .github/workflows/kit-and-site.yml (after ci has passed on a merge to main) and release.yml (a v* tag), both through kit-build.yml.
 // These tests pin the rules learned while the site was published by hand, and the workflows' safety rules:
 //  - pme-kit.json is never on the site (the app reads it to tell a kit from the site: apps/demo/src/app/kit-store.ts);
 //  - the site's README names the commit; the site tree is LICENSE, LICENSES/, NOTICES.md, VERSION.txt, .nojekyll,
@@ -16,6 +16,9 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(import.meta.dirname, '../../../..');
 const showcase = join(root, 'scripts/showcase');
 const workflows = join(root, '.github/workflows');
+const order = (await import(pathToFileURL(join(showcase, 'publish-order.mjs')).href)) as {
+  decide: (status: string | null) => { publish: boolean; why: string };
+};
 const site = (await import(pathToFileURL(join(showcase, 'site-tree.mjs')).href)) as {
   siteTree: (kit: string, out: string) => string[];
   siteReadme: (template: string, version: string) => string;
@@ -87,7 +90,7 @@ describe('the kit and site workflows', () => {
     for (const f of files) expect(readFileSync(f, 'utf8'), f).not.toMatch(/worktree\s+prune/);
   });
 
-  it('kit-and-site.yml: write permission only in the pages and prerelease jobs, which publish only from main, never on a dry run', () => {
+  it('kit-and-site.yml: write permission only in the pages and prerelease jobs, which publish only in this repository, from main, never on a dry run', () => {
     const w = read('kit-and-site.yml');
     expect(w).toMatch(/\npermissions: \{\}\n/);
     const j = jobs(w);
@@ -95,18 +98,62 @@ describe('the kit and site workflows', () => {
     expect(j.kit).toMatch(/permissions:\n\s+contents: read/);
     expect(j.kit).not.toMatch(/write/);
     for (const name of ['pages', 'prerelease']) {
-      expect(j[name]).toMatch(/permissions:\n\s+contents: write\n/);
-      expect(j[name]).toContain("github.repository == 'samhv-dev/patient-monitor-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || !inputs.dry_run)");
+      expect(j[name]).toMatch(/permissions:\n\s+contents: write\n\s+actions: read\n/);
+      expect(j[name]).toMatch(/needs: kit\n/);
+      expect(j[name]).toContain("github.repository == 'samhv-dev/patient-monitor-engine' && (github.event_name == 'workflow_run' || (github.ref == 'refs/heads/main' && !inputs.dry_run))");
     }
   });
 
-  it('kit-and-site.yml: runs on push to main and by hand only (no pull_request), one run per ref at a time, none cancelled', () => {
+  it('kit-and-site.yml: publishes only after ci passed on a push to main of this repository (workflow_run), or by hand; no pull_request; one run at a time, none cancelled', () => {
     const w = read('kit-and-site.yml');
     const on = w.slice(w.indexOf('\non:\n'), w.indexOf('\npermissions:'));
-    expect(on).toMatch(/push:\n\s+branches: \[main\]/);
-    expect(on).toMatch(/workflow_dispatch:/);
-    expect(on).not.toMatch(/pull_request/);
+    expect(on).toMatch(/workflow_run:\n\s+workflows: \[ci\]\n\s+types: \[completed\]\n\s+branches: \[main\]/);
+    expect(on).toMatch(/workflow_dispatch:\n\s+inputs:\n\s+dry_run:[\s\S]*default: true/);
+    expect(on).not.toMatch(/\n {2}push:|pull_request/);
     expect(w).toMatch(/concurrency:\n\s+group: kit-and-site-\$\{\{ github\.ref \}\}\n\s+cancel-in-progress: false/);
+    const j = jobs(w);
+    // the build runs only for a ci run that PASSED, of a PUSH to main, in this repository (a fork's PR branch may be called main)
+    for (const cond of ["github.event.workflow_run.conclusion == 'success'", "github.event.workflow_run.event == 'push'", "github.event.workflow_run.head_branch == 'main'", 'github.event.workflow_run.head_repository.full_name == github.repository']) {
+      expect(j.kit).toContain(cond);
+    }
+    // each publishing job checks again, through the API, that ci passed on the very commit it publishes
+    for (const name of ['pages', 'prerelease']) expect(j[name]).toContain('actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&status=success');
+  });
+
+  it('kit-and-site.yml: builds and publishes exactly the commit ci tested (its head SHA), never a newer one', () => {
+    const j = jobs(read('kit-and-site.yml'));
+    const tested = "github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha";
+    expect(j.kit).toContain(`ref: \${{ ${tested} }}`);
+    for (const name of ['pages', 'prerelease']) {
+      expect(j[name]).toContain(`SHA: \${{ ${tested} }}`);
+      expect(j[name], `${name} never names GITHUB_SHA (main's newest commit in a workflow_run run)`).not.toContain('GITHUB_SHA');
+    }
+    expect(j.pages).toContain('grep -q "^Commit: *$SHA" VERSION.txt');
+    expect(j.prerelease).toContain('pme-classroom-kit/VERSION.txt | grep -q "^Commit: *$SHA"');
+    const build = read('kit-build.yml');
+    expect(build.match(/uses: actions\/checkout@v4\n\s+with:\n\s+ref: \$\{\{ inputs\.ref \}\}/g)).toHaveLength(2);
+  });
+
+  it('an older commit is never published over a newer one (publish-order.mjs, asked before gh-pages is pushed and before kit-latest moves)', () => {
+    expect(order.decide(null)).toMatchObject({ publish: true });
+    expect(order.decide('ahead')).toMatchObject({ publish: true });
+    expect(order.decide('behind')).toMatchObject({ publish: false });
+    expect(order.decide('identical')).toMatchObject({ publish: false });
+    expect(order.decide('diverged')).toMatchObject({ publish: false });
+    expect(() => order.decide('something else')).toThrow(/unknown compare status/);
+    const j = jobs(read('kit-and-site.yml'));
+    const guard = (text: string, act: string) => {
+      const at = text.indexOf('publish-order.mjs');
+      expect(at, 'the order check').toBeGreaterThan(0);
+      expect(text.slice(at, at + 400)).toContain('if [ "$ORDER" != publish ]; then');
+      expect(text.indexOf(act), `${act} comes after the order check`).toBeGreaterThan(at);
+    };
+    guard(j.pages!, 'git push origin HEAD:gh-pages');
+    guard(j.prerelease!, 'git/refs/tags/$T" -f sha="$SHA" -F force=true');
+    guard(j.prerelease!, 'gh release upload');
+    // the candidate is compared against what is ON gh-pages (its VERSION.txt) and what kit-latest points at
+    expect(j.pages).toContain("PUBLISHED=\"$(sed -n 's/^Commit: *\\([0-9a-f]\\{40\\}\\).*/\\1/p' VERSION.txt");
+    expect(j.prerelease).toContain('PUBLISHED="$(gh api "repos/$R/git/ref/tags/$T" --jq .object.sha');
   });
 
   it('gh-pages is pushed as a fast-forward with the built-in token; kit-latest is a pre-release that is never "latest"', () => {

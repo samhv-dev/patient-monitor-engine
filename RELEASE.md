@@ -4,10 +4,13 @@ Who does what: the stage executor prepares the release in a pull request and sto
 merges the PR and pushes the tag.** Pushing a `v*` tag runs `.github/workflows/release.yml`, which rebuilds the tagged
 commit and creates the GitHub release with its assets, the classroom kit zips among them.
 
-## The classroom kit and the site (every merge to `main`, no hand step)
+## The classroom kit and the site (after `ci` passes on each merge to `main`, no hand step)
 
-`.github/workflows/kit-and-site.yml` runs on every push to `main`. It builds the kit once through
-`.github/workflows/kit-build.yml` (also used by `release.yml`):
+`.github/workflows/kit-and-site.yml` runs when a `ci` run on `main` completes (`workflow_run`, the owner's ruling of
+12 Nov 2026: publish only after the tests have passed for that merge). It goes on only if that run concluded
+`success`, was a push to `main` and belongs to this repository; it then builds and publishes EXACTLY the commit that ci
+run tested (the run's head SHA), never a newer one. It builds the kit once through `.github/workflows/kit-build.yml`
+(also used by `release.yml`):
 
 - `node scripts/showcase/make-bundle.mjs` twice: the macOS/Linux kit, and the Windows kit with `--win-node` (the
   official Node.js for Windows x64, version and SHA-256 pinned in `kit-build.yml`'s `WIN_NODE_*` lines; the download
@@ -18,18 +21,38 @@ commit and creates the GitHub release with its assets, the classroom kit zips am
   (`scripts/showcase/site-tree.mjs`: the kit's app without `pme-kit.json`, `LICENSE`, `LICENSES/`, `NOTICES.md`,
   `VERSION.txt`, `.nojekyll`, and `scripts/showcase/site/README.md` with the commit filled in) with `check-subpath.mjs`.
 
-Then, only on `main` of this repository: the `pages` job pushes the site tree to `gh-pages` as a new commit on top of
-the branch (the Pages setting stays "deploy from branch gh-pages"), and the `prerelease` job moves the `kit-latest` tag
-to the commit and replaces the files of the ONE rolling pre-release "kit-latest" (marked pre-release, never "latest";
-its notes name the commit and say it is not a numbered release): the two kit zips and their `SHA256SUMS.txt`. Runs never
-overlap and none is cancelled half-way: the latest merge is published last.
+Then, in this repository only: the `pages` job pushes the site tree to `gh-pages` as a new commit on top of the branch
+(the Pages setting stays "deploy from branch gh-pages"; never a force-push), and the `prerelease` job moves the
+`kit-latest` tag to the commit and replaces the files of the ONE rolling pre-release "kit-latest" (marked pre-release,
+never "latest"; its notes name the commit and say it is not a numbered release): the two kit zips and their
+`SHA256SUMS.txt`. Each publishing job first asks the API again that ci passed on that commit, then
+`scripts/showcase/publish-order.mjs`, which compares the commit with the one already published (the `Commit:` line
+of `gh-pages`'s `VERSION.txt`; the commit `kit-latest` points at) and publishes only when it is strictly newer.
 
-A maintainer does nothing by hand for either. To republish `main`'s head (say after a failed run): Actions →
-kit-and-site → Run workflow on `main` with "publish nothing" unticked. A dry run on any branch
-(`gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true`, or `release.yml` with `-f dry_run=true`) builds and
-checks everything and leaves the kit zips and the site tree as the run's artifacts `kit-zips` and `site` (`site.tar`).
-What stays by hand: the Windows checklist of the kit's `READ ME FIRST.txt` (step 10 below) and moving the Windows
-Node.js pin when a newer 22.x is wanted.
+Two merges close together, A then B: ci runs for both (main's ci runs are never cancelled) and either may finish
+first. If A's finishes first, A is published, then B. If B's finishes first, B is published; A's run comes later,
+finds B already published, and leaves the site and kit-latest as they are ("a newer commit is already published").
+The kit-and-site runs never overlap and none is cancelled half-way (one concurrency group, no cancelling; a waiting
+run is replaced by a newer one). Either way the newest passed merge is what is published, and an older one never
+replaces it. A merge whose ci fails publishes nothing; the site stays at the last merge that passed.
+
+**`workflow_run` runs the workflow file as it is on the default branch.** Whatever commit ci tested, the
+`kit-and-site.yml` that runs is `main`'s, and the `kit-build.yml` it calls is `main`'s too (the scripts it runs,
+`make-bundle.mjs` and the checks, come from the tested commit, which it checks out). So:
+- the first merge that brings this workflow publishes: its own ci run's completion starts the `kit-and-site.yml` that
+  merge put on `main`;
+- a pull request that changes `kit-and-site.yml` or `kit-build.yml` is NOT run through `workflow_run` on its branch:
+  the change takes effect at the ci completion of its own merge. Before merging such a change, a maintainer tries it
+  on its branch by hand: `gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true` (Actions → kit-and-site →
+  Run workflow), which runs the BRANCH's file on the branch's head and builds and checks everything (`pages` and
+  `prerelease` are skipped: not `main`, and a dry run), and reads the artifacts `kit-zips` and `site` (`site.tar`);
+  `release.yml` with `-f dry_run=true` does the same for the release path. The workflow_run conditions themselves
+  (the passed-ci gate) can only be seen working on `main`: read the first kit-and-site run after the merge.
+
+A maintainer does nothing by hand for either. To republish `main`'s head (say after a failed publish): Actions →
+kit-and-site → Run workflow on `main` with "publish nothing" unticked; it publishes only if ci passed on that commit
+and it is newer than what is published. What stays by hand: the Windows checklist of the kit's `READ ME FIRST.txt`
+(step 10 below) and moving the Windows Node.js pin when a newer 22.x is wanted.
 
 ## Before the tag (on the merged `main`)
 
@@ -88,8 +111,8 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
    source". If a later release publishes, it is `pnpm -r publish --access public` from the tagged commit by the owner
    of the npm scope (decide the scope first) — pnpm applies each package's `publishConfig`.
 4. Update `docs/RESUME.md` and the rulings file.
-5. GitHub Pages: nothing to do. The merge to `main` before the tag already published the site of that commit
-   (`kit-and-site.yml`, above); check that Home shows "Version 1.0.0-rc.‹n› · pre-release · build …" and the footer line
+5. GitHub Pages: nothing to do. The merge to `main` before the tag published the site of that commit once its ci
+   passed (`kit-and-site.yml`, above); check that Home shows "Version 1.0.0-rc.‹n› · pre-release · build …" and the footer line
    "For educational use only; Not to be used in patient care.". The Pages site cannot pair learners' phones: they
    need the classroom relay of the local kit (README). (Until brief 169 this step was a hand build pushed with a
    force-push; the workflow now adds a commit on top of `gh-pages` instead.)

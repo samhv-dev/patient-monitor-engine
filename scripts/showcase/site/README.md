@@ -7,7 +7,7 @@ This is a teaching simulator: not a medical device and not clinically validated.
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
 and `docs/validation/README.md` — the validation gate reports every physiological miss by name).
 
-This site is published by the repository's `kit-and-site` workflow on every merge to `main`; nobody edits this branch
+This site is published by the repository's `kit-and-site` workflow once the tests have passed on a merge to `main`; nobody edits this branch
 by hand. The same commit's classroom kit (the offline folder with the double-click launchers) is the `kit-latest`
 pre-release: https://github.com/samhv-dev/patient-monitor-engine/releases/tag/kit-latest
 

@@ -28,6 +28,7 @@ jobs:
       contents: read
     with:
       naming: release
+      ref: ${{ github.sha }}
 
   release:
     needs: kit
