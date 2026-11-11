@@ -61,6 +61,9 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | [`ecg-filter.ts:10`](../../packages/engine-core/src/l3/ecg-filter.ts#L10) | Normalised biquad (a0 = 1): y = b0·x + b1·x₋₁ + b2·x₋₂ − a1·y₋₁ − a2·y₋₂. |
 | [`bis-type.ts:335`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts#L335) | The bispectrum B (Eq 6) and the bicoherence BIC = B/√RTP (Eqs 7, 8) at the bins (k1, k2), over the epochs given (RAM98 |
 | [`bis-type.ts:337`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts#L337) | BEFORE its magnitude is taken, and RTP = mean \|X(f1)\|²·\|X(f2)\|²·\|X(f1 + f2)\|²: the reading under which BIC measures |
+| [`entropy.ts:11`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts#L11) | RE = S[R_low+high] / log N[R_low+high] (Eq 8); SE = S[R_low] / log N[R_low+high] (Eq 7), so RE = SE when R_high holds no |
+| [`entropy.ts:164`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts#L164) | The components on the 1.92-s grid (fs, the epoch's N samples): R_low is k = lo … mid − 1, R_high k = mid … hi; SE's |
+| [`entropy.ts:172`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts#L172) | Eqs 7 and 8 on the original scale: SE = S[R_low] / log N[R_low+high] from SE's spectrum, RE = S[R_low+high] / |
 | [`generic.ts:8`](../../packages/engine-core/src/l3/eeg-devices/generic.ts#L8) | SR = 100 × (time with \|x\| < 5 µV for ≥ 0.5 s) ÷ (valid time) over the last 60 s |
 | [`spectral.ts:5`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts#L5) | PSD_k = c·\|Σ w_i·(x_i − x̄)·e^(−2πik/N)\|² / (fs·Σ w_i²), c = 2 except at 0 Hz and fs/2; Hann window w |
 | [`spectral.ts:23`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts#L23) | One-sided power spectral density of one epoch, µV²/Hz, at k·fs/N for k = 0 … ⌊N/2⌋ (Hann window, mean removed). |
@@ -124,6 +127,17 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `fresh` | `number[]` | The samples since the last reading (the raw display). |
 | `bsr` | `boolean[]` | One flag per stride: its second was suppressed (the last 63 s). |
 | `rows` | `Array<number[] \| null>` | One spectrum per stride, 0–47 Hz, µV²/Hz; null when excluded (suppression) (the last 30 s). |
+
+### `EntropyState` ([`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fs` | `number` | — |
+| `n` | `number` | Samples read since switch-on. |
+| `k` | `number` | Readings made (updates closed). |
+| `raw` | `number[]` | The last epoch, oldest first. |
+| `fresh` | `number[]` | The samples since the last reading (the raw display). |
+| `rows` | `number[][]` | One periodogram per update over the components lo … hi (Eq 2: \|X\|², µV²), newest last; SE's longest window of them. |
 
 ### `GenericState` ([`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts))
 
@@ -449,6 +463,36 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `bisType` | BIS-type index, computed from published components | `bicLoHz` | 0.5 | Hz | [RAM98 Table 2: B0.5–47.0 Hz] | the bispectral area, lower edge |
 | `bisType` | BIS-type index, computed from published components | `bicHiHz` | 47 | Hz | [RAM98 Table 2] | the bispectral area, upper edge (f1 + f2 ≤ fs/2: p. 994) |
 | `bisType` | BIS-type index, computed from published components | `dsaFloor` | 0.0001 | µV²/Hz | [ENG: display; the generic reader's floor for the spectrogram's dB (generic.ts)] | the least power the spectrogram column draws |
+| `entropy` | Entropy-type SE and RE, computed from published components | `updateS` | 0.64 | s | [ENG: device; VO04 gives no update interval: its artefact epoch of 0.64 s (p. 160), of which every window it names is a whole number] | a reading every update; each adds one 1.92-s periodogram |
+| `entropy` | Entropy-type SE and RE, computed from published components | `epochS` | 1.92 | s | [VO04 p. 155: "the shortest time window is equal to 1.92 s", used for 32–47 Hz; p. 158] [ENG: device; its bins are the components, see the file head] | the epoch of each periodogram (Eqs 1–2); 1/1.92 s = 0.52-Hz components |
+| `entropy` | Entropy-type SE and RE, computed from published components | `sourceFsHz` | 400 | Hz | [VO04 p. 155: "a sampling frequency of 400 Hz is used"] — the engine's channel is 125 Hz (P-6); see the file head | the module's rate (not used: recorded) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `seLongS` | 60.16 | s | [VO04 p. 155: the longest window, 60.16 s, "used only for frequencies below 2 Hz"; p. 158: SE's windows from 60 s] | SE's window below longBelowHz |
+| `entropy` | Entropy-type SE and RE, computed from published components | `longBelowHz` | 2 | Hz | [VO04 p. 155] | below it SE reads the longest window |
+| `entropy` | Entropy-type SE and RE, computed from published components | `midS` | 15.36 | s | [VO04 p. 158: RE's longest window 15.36 s; SE's "from 60 s to 15 s"; p. 160: 24 × 0.64 = 15.36 s] [ENG: device; the paper does not give the window between its ends: SE 2–32 Hz and RE 0.8–32 Hz use this one] | SE's window for 2–32 Hz and RE's for 0.8–32 Hz |
+| `entropy` | Entropy-type SE and RE, computed from published components | `shortS` | 1.92 | s | [VO04 p. 158: RE's shortest window, "applied for frequencies between 32 Hz and 47 Hz, equal to 1.92 s"] | RE's window for 32–47 Hz |
+| `entropy` | Entropy-type SE and RE, computed from published components | `loHz` | 0.8 | Hz | [VO04 p. 158: SE "from 0.8 Hz to 32 Hz", RE "from 0.8 Hz to 47 Hz"] | the lower edge of R_low |
+| `entropy` | Entropy-type SE and RE, computed from published components | `midHz` | 32 | Hz | [VO04 p. 158: R_low 0.8–32 Hz, R_high 32–47 Hz] [ENG: device; a component at 32 Hz or above is R_high's] | R_low's upper and R_high's lower edge |
+| `entropy` | Entropy-type SE and RE, computed from published components | `hiHz` | 47 | Hz | [VO04 p. 158: RE to 47 Hz; R_high "from 32 Hz to 47 Hz"] | the upper edge of R_high |
+| `entropy` | Entropy-type SE and RE, computed from published components | `shownMax` | 100 | — | [VO04 p. 159: "a scale of full integers between 0 and 100"; F maps [0 … 1] to [0 … 100]] | F(1) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `seTopShown` | 91 | — | [VO04 p. 159: "SE varies between 0 and 91"] | the module's SE top on screen (recorded; the test compares) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `knotX0` | 0.05 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] [ENG: display; midway between the grid lines, clear of their dashes] | the first interior knot of F |
+| `entropy` | Entropy-type SE and RE, computed from published components | `knotDx` | 0.1 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] [ENG: display; one knot per grid cell] | the spacing of F's interior knots |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f05` | 1.4 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.05) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f15` | 5.3 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.15) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f25` | 10.6 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.25) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f35` | 17.7 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.35) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f45` | 25.9 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.45) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f55` | 37.8 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.55) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f65` | 54.6 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.65) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f75` | 71.7 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.75) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f85` | 87.6 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.85) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `f95` | 97.2 | — | [VO04 Fig. 7, p. 159: the curve read off a 600-dpi render of the page, between its grid lines (± 0.3)] | F(0.95) |
+| `entropy` | Entropy-type SE and RE, computed from published components | `rawWindowS` | 8 | s | [TXT Ch36 p. 1137: the raw EEG over 5–10 s] [ENG: display; 8 inside it] | the raw trace the display keeps |
+| `entropy` | Entropy-type SE and RE, computed from published components | `dsaHistoryS` | 3600 | s | [TXT Ch36 pp. 1138–1139: the spectrogram of about the last hour] | the spectrogram the display keeps |
+| `entropy` | Entropy-type SE and RE, computed from published components | `dsaMaxHz` | 50 | Hz | [TXT Ch36 p. 1139, Fig. 36.3: 0–50 Hz] | the spectrogram's top frequency |
+| `entropy` | Entropy-type SE and RE, computed from published components | `impedanceLimitKOhm` | 5 | kΩ | [P-13, the plan default: Ch36 p. 1145 gives 5 or 8 kΩ] | above it the signal is questionable |
+| `entropy` | Entropy-type SE and RE, computed from published components | `impedanceUnequalKOhm` | 2.5 | kΩ | [ENG: device; half the limit, Ch36 p. 1145 names inequality without a number] | electrodes differing by more are unequal: questionable |
+| `entropy` | Entropy-type SE and RE, computed from published components | `dsaFloor` | 0.0001 | µV²/Hz | [ENG: display; the generic reader's floor for the spectrogram's dB (generic.ts)] | the least power the spectrogram column draws |
 
 ## Functions
 
@@ -473,6 +517,12 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `epochSpectrum` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | ── The bispectral term (RAM98 pp. |
 | `bispectrumAt` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | The bispectrum B (Eq 6) and the bicoherence BIC = B/√RTP (Eqs 7, 8) at the bins (k1, k2), over the epochs given (RAM98 p. |
 | `meanBicoherence` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | The mean bicoherence over RAM98's area 0.5–47 Hz on both axes (f2 ≤ f1, the symmetric half; |
+| `presented` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | F (p. 159, Fig. |
+| `shannon` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | Eqs 3–4: the Shannon entropy Σ Pn·log(1/Pn) of the powers p, normalised to sum 1 over them (natural log, as the figures' axes "P·ln(1/P)"); |
+| `componentBins` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | The components on the 1.92-s grid (fs, the epoch's N samples): |
+| `stateResponse` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | Eqs 7 and 8 on the original scale: |
+| `windowSpectra` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | SE's and RE's spectra from the periodograms held (rows over the components b.lo … b.hi, newest last): |
+| `entropyRead` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
 | `genericRead` | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
 | `psdOf` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | One-sided power spectral density of one epoch, µV²/Hz, at k·fs/N for k = 0 … ⌊N/2⌋ (Hann window, mean removed). |
 | `bandPower` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | Power in [lo, hi) Hz, µV² (bins of width dfHz from 0 Hz). |
@@ -507,7 +557,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `deviceBias` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | Device bias: |
 | `spo2PitchHz` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): |
 
-Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createBisType`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
+Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createBisType`, `createEntropy`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
 
 ## Source files
 
@@ -518,6 +568,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | The device layer (brief §3.2 L3 "alarm engine, pacer and defibrillator"): one JSON-safe state object the engine keeps beside its pipeline state. |
 | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Monitor ECG filters (brief §4.1 "Measurement chain"; research 03 §1.11, Philips MP2 datasheet): Monitor 0.5–40 Hz + automatic mains notch (50 Hz default, brief §5 / the owner's decision) Diagnostic 0.05–150 Hz, no notch |
 | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | EEG E7 (plan §7 E7; Q8; P-16): the BIS-type reader, built from the two papers the owner supplied, and only from them: [CON22] Connor CW. |
+| [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | EEG E8 (plan §7 E8; Q8; P-17): the Entropy reader, State Entropy (SE) and Response Entropy (RE), built from the maker's published description, and only from it: [VO04] Viertiö-Oja H, Maja V, Särkelä M, et al. |
 | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | EEG E5 (plan §7 E5; D8): the generic processed-EEG reader — everything Miller says a monitor shows, computed from the samples, the sample rate and the electrode impedance only (the device boundary, plan §5). |
 | [`l3/eeg-devices/registry.ts`](../../packages/engine-core/src/l3/eeg-devices/registry.ts) | EEG plan D8: the registry of EEG devices, one spec row each (like the room's defibrillator models): the device's label, update interval and every constant with its tag (docs/model/monitor.md lists them), and its reader — |
 | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | EEG devices (plan §7 E5): the spectral analysis every reader shares — the periodogram of one epoch, band power and the edge frequency below which a fraction of the power lies (the spectral edge and the median frequency). |
@@ -540,12 +591,17 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3) | 85.6 vs 83.5 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
 | C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149) | 85.6 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
 | C28: at the cortex's own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) | 89.31 vs 88.78 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
+| awake reads high (toward 100: full book p. 2169): SE above 80 | 69 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
+| C27 for Entropy: surgical depth (propofol + fentanyl, no stimulus) lies in "adequate hypnosis" — original SE ≥ 0.5 (p. 159) — and below awake | 0.482 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
+| C28: at the cortex's own loss of responsiveness SE is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145: "entropy measures … tend to be higher in the elderly") | 50.5 vs 63.9 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
+| C31: the stimulus raises SE and RE at the same sevoflurane (the direction of a C50 shifted up) | SE 35.7 → 34.2, RE 39.3 → 39.0 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
 | CVP limit chatter on a stable ventilated patient: CVP_M_HIGH raised ≤ 2 times in the 11-min MANUAL rhythm tour (the audit's chatter criterion) | 4 on philips-like and 4 on mindray-like | — | MIS-SPECIFIED ([audit row 179](../../docs/validation/target-audit/30-target-audit.md#row-179)) | Split: (a) no CVP_M_HIGH raise/clear cycle < 5 s (chatter, already tested); (b) no CVP_M_HIGH in the sinus/AF/sinus-tachy segments once baseline CVP is corrected; (c) a raise is ALLOWED (or expected) during VT, CHB, junctional and VVI segments | [`fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) |
 | philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats | 6 | — | MIS-SPECIFIED ([audit row 180](../../docs/validation/target-audit/30-target-audit.md#row-180)) | State the PEA kind. True PEA: spread ≤ 5 with no HR-synchronous component. Pseudo-PEA: PP 3-10 mmHg at the electrical rate, MAP 15-40, and NON-PULSATILE need not show | [`fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) |
 | saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) | 9 s | research/06 §4.1 | MIS-SPECIFIED ([audit row 182](../../docs/validation/target-audit/30-target-audit.md#row-182)) | Either keep ≤ 8 s but use the manual's end point (first displayed HR ≥ 110, expected ~6 s) or keep the 5 % end point with ≤ 10 s (8 s window + detection + update); the IEC ≤ 11 s row already passes | [`fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) |
 | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 | 1.49 | — | UNSUPPORTED ([audit row 184](../../docs/validation/target-audit/30-target-audit.md#row-184)) | PI 1.0-3.0 for a normal ventilated adult; PI(PPV) ≤ PI(spontaneous) and ≥ 0.75 × it (the SV ratio) | [`fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) |
 | MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor's 77/67 | 80/56 | — | MIS-SPECIFIED ([audit row 185](../../docs/validation/target-audit/30-target-audit.md#row-185)) | Reference = the arterial line at the reading (already passing, ± 8); add cuff PP ≤ line PP + 3 (no widening); the tracker's reach of 77/67 is a separate MANUAL-tracker test | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
 | MANUAL AF 150, 11 cycles: \|SBP bias\| ≤ 6 mmHg against the TRUE radial pressure (the audit's AF criterion) | +10.8 | — | MIS-SPECIFIED ([audit row 186](../../docs/validation/target-audit/30-target-audit.md#row-186)) | \|mean bias\| ≤ 5 mmHg vs the displayed arterial line (beat-detected), SD ≤ 8, with the first reading after AF onset excluded or 3-reading averages | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
+| SE's top on screen is 91 (p. 159) | F(log 60 / log 89 | — | not audited | — | [`entropy.test.ts`](../../packages/engine-core/test/l3/eeg-devices/entropy.test.ts) |
 | AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | — | — | not audited | — | [`shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) |
 
 ## Tests
@@ -555,6 +611,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`engine/device-determinism.test.ts`](../../packages/engine-core/test/engine/device-determinism.test.ts) | 0 | 0 |
 | [`engine/eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) | 3 | 0 |
 | [`engine/eeg-device.test.ts`](../../packages/engine-core/test/engine/eeg-device.test.ts) | 0 | 0 |
+| [`engine/eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) | 4 | 0 |
 | [`engine/fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) | 1 | 0 |
 | [`engine/fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) | 1 | 0 |
 | [`engine/fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) | 1 | 0 |
@@ -572,6 +629,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/ecg-filter.test.ts`](../../packages/engine-core/test/l3/ecg-filter.test.ts) | 0 | 0 |
 | [`l3/eeg-devices/bis-type.test.ts`](../../packages/engine-core/test/l3/eeg-devices/bis-type.test.ts) | 0 | 0 |
 | [`l3/eeg-devices/boundary.test.ts`](../../packages/engine-core/test/l3/eeg-devices/boundary.test.ts) | 0 | 0 |
+| [`l3/eeg-devices/entropy.test.ts`](../../packages/engine-core/test/l3/eeg-devices/entropy.test.ts) | 1 | 0 |
 | [`l3/eeg-devices/generic.test.ts`](../../packages/engine-core/test/l3/eeg-devices/generic.test.ts) | 0 | 0 |
 | [`l3/hr-averaging.test.ts`](../../packages/engine-core/test/l3/hr-averaging.test.ts) | 0 | 0 |
 | [`l3/hr.test.ts`](../../packages/engine-core/test/l3/hr.test.ts) | 0 | 0 |
