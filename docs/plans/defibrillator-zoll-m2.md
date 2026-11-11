@@ -662,8 +662,8 @@ choice marked `eng`, and re-checked when pictures come.
 | G-TTI | measured transthoracic impedance with self-adhesive pads in adults and children | WANTED |
 | G-PADS | the pads lead's vector for the two placements | WANTED |
 | G-THR | transcutaneous pacing thresholds by placement | WANTED; Cummins 1993 (NEJM 328:1377, DOI 10.1056/NEJM199305133281902, from Wigginton 2025's references) for outcome, not threshold |
-| G-CPR | depth–pressure and depth–flow relations | WANTED; Edelson 2006 (Resuscitation 71:137, listed in ERC BLS 2025's references) for depth and shock success |
-| G-FAT | rescuer fatigue over 2 minutes | WANTED |
+| G-CPR | depth–pressure and depth–flow relations | M0c: 27 rows of measured relations in `docs/research/defib-zoll-m2-cpr.md` §1 (abstracts unless marked). The only stated form is threshold-linear, in dogs (Babbs 1983, DOI 10.1016/s0196-0644(83)80290-x: CO = a(x − x0), x0 mean 2.3 cm); human depth data are outcome and EtCO2 slopes only (Sheak 2015, DOI 10.1016/j.resuscitation.2015.01.026: +1.4 mmHg per 10 mm); no adult human depth–CPP relation found. Edelson 2006 VERIFIED: Resuscitation 71:137–145, DOI 10.1016/j.resuscitation.2006.04.008, shock success aOR 1.99 per 5 mm (abstract) — outcome, not pressure. Still WANTED: Babbs 1983, Ryu 2016, Ristagno 2007, Sheak 2015 full texts (research note §4, W1–W4) |
+| G-FAT | rescuer fatigue over 2 minutes | M0c: research note §2. Clinical with feedback: Sugerman 2009 (DOI 10.1016/j.resuscitation.2009.06.002, Table 3, full text): rate ≈ 105 /min unchanged; depth 48.3 mm flat to 90 s, 46.0 at 91–120 s, 43.7 at 151–180 s. Manikin without feedback: correct compressions fall from minute 2 (Hightower 1995, Ochoa 1998, Ashton 2002, McDonald 2013); decay within 2 min rare in paramedics (Bjørshol 2011). No clinical time course without feedback found |
 | G-CFG | ZOLL M2 Configuration Guide | not found (§4.6) |
 
 ### 7.3 Pages that could not be read
