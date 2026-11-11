@@ -112,6 +112,7 @@ const CONNECTIONS = record('connect', {
   paddles: record('paddles', { pediPlates: bool('pediPlates'), shockButtons: bool('shockButtons'), contact: CONTACT }, true),
   internal: record('internal', { dischargeButton: bool('dischargeButton'), contact: CONTACT }, true),
   ecgCable: oneOf('ecgCable', ['none', '3', '5', '12']),
+  ecgLeadsOff: bool('ecgLeadsOff'),
   spo2: bool('spo2'), nibp: bool('nibp'), co2: bool('co2'), temp1: bool('temp1'), temp2: bool('temp2'),
 } satisfies Record<keyof M2Connections, Check>, false);
 
@@ -137,6 +138,7 @@ const CONFIG = record('config', {
   metronome: record('metronome', { mode: oneOf('mode', ['always', 'compressions']), ratePerMin: whole('ratePerMin', 50, 150) }, true), // rate: the sensor's rate range [G A-10] [ENG: device; placeholder bounds]
   aedPassword: (v) => (v === null ? undefined : text('aedPassword', 1, 16)(v)), // [ENG: device; placeholder length]
   checkPatientPause: bool('checkPatientPause'),
+  nibpIntervalMin: oneOf('nibpIntervalMin', M2_NIBP_INTERVALS_MIN), // [G 8-9]
   trendIntervalS: whole('trendIntervalS', 30, 1800), // 30 s to 30 min [G 4-1]
   accessories: record('accessories', { pads: bool('pads'), externalPaddles: bool('externalPaddles'), internalHandles: bool('internalHandles') }, true),
 } satisfies Record<keyof M2Config, Check>, false);
@@ -152,12 +154,13 @@ export const M2_COMMANDS: Readonly<Record<string, { piece: string; shape: string
   defibMode: { piece: 'E5', shape: "{ mode: 'manual' | 'aed', password?: string }", validate: (v) => record('defibMode', { mode: oneOf('mode', ['manual', 'aed']), password: text('password', 1, 16) }, false)(v) ?? (Object.hasOwn(v as object, 'mode') ? undefined : 'defibMode: mode is missing') },
   shockButton: { piece: 'E1 (panel), E2a (paddles, internal)', shape: "{ phase: 'down' | 'up', button: 'panel' | 'apex' | 'sternum' | 'internal' }", validate: record('shockButton', { phase: PHASE, button: oneOf('button', ['panel', 'apex', 'sternum', 'internal']) }, true) },
   analyze: { piece: 'E4, E5', shape: '(no value)', validate: (v) => (v === undefined ? undefined : 'analyze takes no value') },
-  fourToOne: { piece: 'E6', shape: "'down' | 'up'", validate: PHASE },
-  alarmControl: { piece: 'E7b', shape: "'down' | 'up'", validate: PHASE },
+  fourToOne: { piece: 'E6', shape: "{ phase: 'down' | 'up' }", validate: record('fourToOne', { phase: PHASE }, true) },
+  // heldMs: on release, the wall-clock hold (the sim clock can pause or be scaled while the key is held)
+  alarmControl: { piece: 'E7b', shape: "{ phase: 'down' | 'up', heldMs?: number }", validate: (v) => record('alarmControl', { phase: PHASE, heldMs: within('heldMs', 0, 3_600_000) }, false)(v) ?? (Object.hasOwn(v as object, 'phase') ? undefined : 'alarmControl: phase is missing') },
   alarmLimit: { piece: 'E7b', shape: '{ param: M2_LIMIT_KEYS, low?: number | null, high?: number | null, enabled?: boolean }', validate: alarmLimit },
   nibp: { piece: 'E8b', shape: "'press'", validate: oneOf('nibp', ['press']) },
   co2: { piece: 'E8b', shape: "'on' | 'off' | 'zero'", validate: oneOf('co2', ['on', 'off', 'zero']) },
-  codeMarker: { piece: 'E9a', shape: 'string (1–64)', validate: text('codeMarker', 1, 64) }, // [ENG: device; placeholder length]
+  codeMarker: { piece: 'E9a', shape: '{ label: string (1–64) }', validate: record('codeMarker', { label: text('label', 1, 64) }, true) }, // [ENG: device; placeholder length]
   print: { piece: 'E9a', shape: "'press'", validate: oneOf('print', ['press']) },
   connect: { piece: 'E2a (E7b: channels)', shape: 'Partial<M2Connections>', validate: CONNECTIONS },
   setting: { piece: 'E8a, E8b', shape: 'Partial<M2Settings>', validate: SETTINGS },
@@ -180,12 +183,13 @@ const IDLE_CONFIG: M2Config = {
   readyTimeoutS: 60, // [ENG: device; placeholder until DQ17]
   escalation: { on: true, adult: [120, 150, 200], pediatric: [50, 70, 85] }, // levels [G 14-4]; on [ENG: device; placeholder until DQ18]
   aedEnergies: { adult: [120, 150, 200], pediatric: [50, 70, 85] }, // [G 12-6]
-  cprAtStart: false, // the default starts with analysis [G 12-5] (DQ19)
+  cprAtStart: false, // the default starts with analysis [G 12-6] (DQ19)
   cprPeriodS: 120, // [G 12-9]
   cprTargetDepthCm: 5, // [G 12-9]
   metronome: { mode: 'always', ratePerMin: 105 }, // [G 12-9], [G A-10] (DQ26)
   aedPassword: null, // [ENG: device; placeholder until DQ20]
   checkPatientPause: false, // [ENG: device; placeholder until DQ24]
+  nibpIntervalMin: 30, // [G 8-9]
   trendIntervalS: 30, // [G 4-1]
   accessories: { pads: true, externalPaddles: true, internalHandles: false }, // DQ11 = A (owner, 12 November)
 };
@@ -215,7 +219,7 @@ const IDLE: M2State = {
     pads: { type: 'adult', placement: 'apexSternum', contact: 'good' },
     paddles: { pediPlates: false, shockButtons: true, contact: 'off' },
     internal: { dischargeButton: true, contact: 'off' },
-    ecgCable: 'none', spo2: false, nibp: false, co2: false, temp1: false, temp2: false, // [ENG: device; placeholder until E2a, E7b]
+    ecgCable: 'none', ecgLeadsOff: false, spo2: false, nibp: false, co2: false, temp1: false, temp2: false, // [ENG: device; placeholder until E2a, E7b]
   },
   settings: {
     nibpMode: 'manual', // [ENG: device; placeholder until E8b]

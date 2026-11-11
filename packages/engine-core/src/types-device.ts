@@ -61,10 +61,10 @@ export type DefibDeviceAction = { device: 'defib'; action: 'model'; value: strin
 
 /** The rotary mode selector [G 2-4]. */
 export type M2Selector = 'off' | 'monitor' | 'defib' | 'pacer';
-/** The device's patient type, chosen at the top of the screen [G 14-2]. */
+/** The device's patient type, chosen at the top of the screen [G 14-3]. */
 export type M2PatientType = 'adult' | 'pediatric';
 /** A held key: pressed and released (Shock is press-and-hold [G 14-12]; 4:1 while held [G 16-6]; Alarm Control by
- * hold time [G 5-5]). */
+ * hold time [G 5-6]). */
 export type M2Phase = 'down' | 'up';
 /** The SHOCK buttons: the front panel [G 2-4], each external paddle [G 14-7], the internal handle's Discharge
  * button [G 14-19]. */
@@ -86,6 +86,8 @@ export interface M2Connections {
   internal: { dischargeButton: boolean; contact: M2Contact };
   /** The ECG patient cable [G A-2]. */
   ecgCable: 'none' | '3' | '5' | '12';
+  /** The cable's electrodes are off the patient (plan §3.1 C2: sync and demand pacing read it, [G 14-16], [G 16-6]). */
+  ecgLeadsOff: boolean;
   /** The other sensors at the rear connectors [G 2-7]. */
   spo2: boolean;
   nibp: boolean;
@@ -96,7 +98,7 @@ export interface M2Connections {
 
 /** The operator's settings the menus change (only those whose values the guide lists). */
 export interface M2Settings {
-  /** Manual, Auto, STAT [G 8-8]. */
+  /** Manual, Auto, STAT [G 8-4]. */
   nibpMode: 'manual' | 'auto' | 'stat';
   /** 2.5, 5, 10, 15, 20, 30, 45, 60, 90 or 120 min [G 8-9]. */
   nibpIntervalMin: number;
@@ -112,7 +114,7 @@ export interface M2Settings {
 
 /** The Supervisor configuration (plan §5.4), set in Room setup and sent as one command so followers replay it. */
 export interface M2Config {
-  /** Manual or AED at power-up [G 12-2], [G 14-2] (DQ4). */
+  /** Manual or AED at power-up [G 14-3] (DQ4). */
   startMode: 'manual' | 'aed';
   /** Ready time-out, 15–60 s [G 14-13] (DQ17). */
   readyTimeoutS: number;
@@ -120,7 +122,7 @@ export interface M2Config {
   escalation: { on: boolean; adult: [number, number, number]; pediatric: [number, number, number] };
   /** The AED's three energies per patient type [G 12-6]. */
   aedEnergies: { adult: [number, number, number]; pediatric: [number, number, number] };
-  /** A CPR period before the first analysis [G 12-5] (DQ19). */
+  /** A CPR period before the first analysis [G 12-6] (DQ19). */
   cprAtStart: boolean;
   /** The CPR period, default 2.0 min [G 12-9]. */
   cprPeriodS: number;
@@ -132,6 +134,8 @@ export interface M2Config {
   aedPassword: string | null;
   /** Pause after each CPR period and wait for Analyze [G 12-11] (DQ24). */
   checkPatientPause: boolean;
+  /** The NIBP Auto interval at power-up, one of M2Settings' intervals [G 8-9] (plan §5.4). */
+  nibpIntervalMin: number;
   /** Trend logging interval, 30 s to 30 min [G 4-1]. */
   trendIntervalS: number;
   /** The accessories the room has (DQ11 = A: pads and external paddles by default; internal handles exist, not present). */
@@ -147,9 +151,13 @@ export type M2DeviceAction =
   /** The Analyze key (AED mode) [G 2-14]. */
   | { device: 'defib'; action: 'analyze'; value?: never; lane?: never }
   /** The pacer's 4:1 key, held [G 16-6]. */
-  | { device: 'defib'; action: 'fourToOne'; value: M2Phase; lane?: never }
-  /** The M2's own Alarm Control button [G 5-5] (DQ3 = A: never the bedside monitor's alarms). */
-  | { device: 'defib'; action: 'alarmControl'; value: M2Phase; lane?: never }
+  | { device: 'defib'; action: 'fourToOne'; value: { phase: M2Phase }; lane?: never }
+  /**
+   * The M2's own Alarm Control button [G 5-6] (DQ3 = A: never the bedside monitor's alarms). Its effect depends on how
+   * long it is held (< 1 s, 1–3 s, > 3 s); the simulation clock can pause or run scaled while a key is held, so the
+   * release may carry the hold the operator gave it in wall-clock milliseconds.
+   */
+  | { device: 'defib'; action: 'alarmControl'; value: { phase: M2Phase; heldMs?: number }; lane?: never }
   /** One of the M2's own limits [G 5-7]; `param` is an M2_LIMIT_KEYS key; null = that side unset. */
   | { device: 'defib'; action: 'alarmLimit'; value: { param: string; low?: number | null; high?: number | null; enabled?: boolean }; lane?: never }
   /** The NIBP button: starts or stops a measurement [G 2-4]. */
@@ -157,7 +165,7 @@ export type M2DeviceAction =
   /** The CO2 key: enable, disable, zero [G 2-13], [G 2-14]. */
   | { device: 'defib'; action: 'co2'; value: 'on' | 'off' | 'zero'; lane?: never }
   /** A code marker from the configured list [G 2-16]. */
-  | { device: 'defib'; action: 'codeMarker'; value: string; lane?: never }
+  | { device: 'defib'; action: 'codeMarker'; value: { label: string }; lane?: never }
   /** The Print button: starts or stops the strip [G 2-4]. */
   | { device: 'defib'; action: 'print'; value: 'press'; lane?: never }
   /** A change to what is connected (a patch of M2Connections; each part given whole). */

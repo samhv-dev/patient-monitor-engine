@@ -74,7 +74,7 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | [`qrs.ts:98`](../../packages/engine-core/src/l3/qrs.ts#L98) | R = the largest \|x − window mean\| inside the hump window (robust to a sloping baseline or an |
 | [`qrs.ts:178`](../../packages/engine-core/src/l3/qrs.ts#L178) | Learning phase (Pan–Tompkins): SPK = 1/3 of the max, NPK = 1/2 of the mean. |
 | [`spo2.ts:100`](../../packages/engine-core/src/l3/spo2/spo2.ts#L100) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): f = BEEP_BASE_HZ·2^(−(100 − SpO2)·s/12) with |
-| [`types-device.ts:198`](../../packages/engine-core/src/types-device.ts#L198) | Real CPR Help [G 15-2], [G 15-3] (E3, E5): null = "- - -". |
+| [`types-device.ts:206`](../../packages/engine-core/src/types-device.ts#L206) | Real CPR Help [G 15-2], [G 15-3] (E3, E5): null = "- - -". |
 
 ## Couplings
 
