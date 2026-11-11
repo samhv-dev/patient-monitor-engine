@@ -224,6 +224,7 @@ transports (`src/protocol.ts`).
 | `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
 | `covers` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. |
 | `stabilityRows` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Indexes of `entry`'s stability rows for `diluent` and `container` (any temperature) that state `concentration` or state none; |
+| `whyNoRow` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Why no stability row describes the preparation (N61: |
 | `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match). |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
@@ -356,6 +357,7 @@ None recorded.
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
 | [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
+| [`formulary/shipped-rows.test.ts`](../../packages/controller/test/formulary/shipped-rows.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
