@@ -163,17 +163,38 @@ export type SourceKind = Source['kind'];
 /** The layer as files: path (relative to the formulary folder) → parsed JSON. */
 export type FormularyFiles = Record<string, unknown>;
 
+/** A syringe or bag a pump channel takes from stock (plan pump-rack-tci.md S1, PQ7 = B): a formulary product used at its
+ *  labelled strength (its concentration is the product's `strength`), the volume it holds, and the label's use at that
+ *  strength in our words; both from the product's own monograph. Diluted concentrations are made on the bench. */
+export interface StockItem {
+  id: string;
+  /** The drug file (`<drugId>.json`) the product belongs to. */
+  drugId: string;
+  /** A product id of that drug file: a solution or emulsion with a strength per mL, not reconstituted. */
+  product: string;
+  volumeMl: Sourced & { ml: number };
+  use: Sourced & { statement: string };
+}
+
+/** `stock-syringes.json`: what the pump rack can load without the bench (empty lists when the file is absent). */
+export interface Stock {
+  syringes: StockItem[];
+  bags: StockItem[];
+}
+
 export interface Formulary {
   drugs: Record<string, DrugEntry>;
   diluents: Record<string, DiluentEntry>;
   sources: Record<string, Source>;
   /** The injectable drug ids with no file yet: may only shrink (§5 rule 5). */
   pending: string[];
+  /** The pump rack's stock syringes and bags (rule 7). */
+  stock: Stock;
 }
 
-/** One broken rule: which of §5's six, the file, the JSON path inside it, and why. */
+/** One broken rule: which of §5's six (or 7, the pump rack's stock list), the file, the JSON path inside it, and why. */
 export interface FormularyProblem {
-  rule: 1 | 2 | 3 | 4 | 5 | 6;
+  rule: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   file: string;
   path: string;
   why: string;

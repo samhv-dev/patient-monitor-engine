@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DRUGS, DRUG_IDS } from '@pme/engine-core';
-import { checkFormulary, injectableDrugIds, loadFormulary, type FormularyFiles, type FormularyProblem } from '../../src/index.ts';
+import { checkFormulary, checkPumpDevices, injectableDrugIds, loadFormulary, loadPumpDevices, PUMP_DEVICE_IDS, type FormularyFiles, type FormularyProblem, type PumpDeviceFiles } from '../../src/index.ts';
 
 const pkg = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const FOLDER = join(pkg, 'formulary');
@@ -48,7 +48,7 @@ const pdfsUnder = (dir: string) => walk(dir).filter((f) => /\.pdf$/i.test(f) || 
 // ---- the JSON Schema (the files' shape; the rules beyond shape are checkFormulary's) ----
 const schema = JSON.parse(readFileSync(join(FOLDER, 'schema.json'), 'utf8')) as { $id: string };
 const ajv = new Ajv({ allErrors: true, strict: true, allowUnionTypes: true }).addSchema(schema);
-const shapeOf = (file: string) => (file === 'sources.json' ? 'sources' : file === 'pending.json' ? 'pending' : file.startsWith('diluents/') ? 'diluent' : 'drug');
+const shapeOf = (file: string) => (file === 'sources.json' ? 'sources' : file === 'pending.json' ? 'pending' : file === 'stock-syringes.json' ? 'stock' : file.startsWith('diluents/') ? 'diluent' : 'drug');
 function shapeErrors(files: FormularyFiles): string[] {
   return Object.entries(files).filter(([f]) => f !== 'schema.json').flatMap(([f, data]) => {
     const v = ajv.getSchema(`${schema.$id}#/definitions/${shapeOf(f)}`)!;
@@ -101,7 +101,7 @@ describe('the shipped formulary layer', () => {
   it('covers the 61 injectable ids of the library, the four volatiles excluded', () => {
     expect(injectableDrugIds()).toHaveLength(61);
     expect(DRUG_IDS.filter((id) => !injectableDrugIds().includes(id)).every((id) => DRUGS[id]?.cls === 'volatile')).toBe(true);
-    const filed = Object.keys(layer).filter((f) => !f.includes('/') && !['sources.json', 'pending.json', 'schema.json'].includes(f)).map((f) => f.replace(/\.json$/, ''));
+    const filed = Object.keys(layer).filter((f) => !f.includes('/') && !['sources.json', 'pending.json', 'schema.json', 'stock-syringes.json'].includes(f)).map((f) => f.replace(/\.json$/, ''));
     expect([...filed, ...(layer['pending.json'] as string[])].sort()).toEqual([...injectableDrugIds()].sort());
   });
   it('holds JSON entries only, none oversized, no PDF; and no PDF anywhere under packages/ (rule 6)', () => {
@@ -354,5 +354,226 @@ describe('rule 6: the Trissel PDF, or text extracted from it, is refused in the 
       'trissel-p1.txt: only JSON entries live in the formulary (no PDF, no extracted text)',
     ]);
     expect(pdfsUnder(dir).sort()).toEqual(['Handbook of Injectable Drugs (Trissel) 2013.pdf', 'fixtureother.json']);
+  });
+});
+
+// ---- Plan pump-rack-tci.md S1: the stock syringes and bags (rule 7) and the reference pumps' device profiles ----
+// The stock list (formulary/stock-syringes.json, PQ7 = B) holds only a product used at its labelled strength, from its
+// own monograph; the device profiles (pump-devices/*.json, D12) hold every number with a row of research/50 (the
+// catalogue and its page) or a gap. Fixtures below are TEST DATA ONLY, as above.
+const REPO = resolve(pkg, '../..');
+const DEVICES = join(pkg, 'pump-devices');
+const RESEARCH_50 = join(REPO, 'research', '50-pump-reference-devices.md');
+const readDevices = (dir: string): PumpDeviceFiles =>
+  Object.fromEntries(readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'schema.json').map((f) => [f, JSON.parse(readFileSync(join(dir, f), 'utf8')) as unknown]));
+const deviceSchema = JSON.parse(readFileSync(join(DEVICES, 'schema.json'), 'utf8')) as { $id: string };
+const deviceAjv = new Ajv({ allErrors: true, strict: true, allowUnionTypes: true }).addSchema(deviceSchema);
+function deviceShapeErrors(files: PumpDeviceFiles): string[] {
+  return Object.entries(files).flatMap(([f, data]) => {
+    const v = deviceAjv.getSchema(`${deviceSchema.$id}#/definitions/${f.replace(/\.json$/, '')}`);
+    if (!v) return [`${f}: no schema definition`];
+    return v(data) ? [] : (v.errors ?? []).map((e) => `${f}${e.instancePath}: ${e.message}`);
+  });
+}
+/** research/50's table rows: id → { source, tag } (the note's columns: Id, Fact, As printed, Source, Tag). */
+function research50Rows(): Map<string, { source: string; tag: string }> {
+  const rows = new Map<string, { source: string; tag: string }>();
+  for (const line of readFileSync(RESEARCH_50, 'utf8').split('\n')) {
+    const m = /^\| ((?:SP|OT|TC)-\d{2}) \|/.exec(line);
+    if (!m) continue;
+    const cells = line.split(' | ').map((c) => c.replace(/^\| ?| ?\|$/g, '').trim());
+    rows.set(m[1]!, { source: cells[3] ?? '', tag: cells[4] ?? '' });
+  }
+  return rows;
+}
+/** Every { src } and { gap } in a profile, with its path. */
+function* cited(v: unknown, path = ''): Generator<{ path: string; src?: string; gap?: string }> {
+  if (Array.isArray(v)) for (let i = 0; i < v.length; i++) yield* cited(v[i], `${path}/${i}`);
+  else if (typeof v === 'object' && v !== null) {
+    const o = v as Record<string, unknown>;
+    if (typeof o.src === 'string') yield { path, src: o.src };
+    if (typeof o.gap === 'string') yield { path, gap: o.gap };
+    for (const [k, x] of Object.entries(o)) yield* cited(x, `${path}/${k}`);
+  }
+}
+
+/** A formulary fixture with a stock list that keeps every rule: a solution product at its strength, from its label. */
+function withStock() {
+  const f = fixture();
+  f['fixturedrug.json'].products.push({ id: 'fixture-solution', form: 'solution', strength: { amount: 1, unit: 'mg', perVial: false, src: 'fixture-label' } });
+  f['stock-syringes.json'] = {
+    syringes: [{ id: 'fixture-1mg-ml-20ml', drugId: 'fixturedrug', product: 'fixture-solution', volumeMl: { ml: 20, src: 'fixture-label' }, use: { statement: 'Fixture: given undiluted by syringe pump.', src: 'fixture-label' } }],
+    bags: [],
+  };
+  return f;
+}
+
+describe('rule 7: the stock syringes and bags (S1, PQ7 = B)', () => {
+  it('the shipped stock list passes, has the schema\'s shape, and loads typed: only labelled-strength products, no bag', () => {
+    const layer = readLayer(FOLDER);
+    expect(layer['stock-syringes.json']).toBeDefined();
+    expect(why(checkFormulary(layer))).toEqual([]);
+    expect(shapeErrors(layer)).toEqual([]);
+    const r = loadFormulary(layer);
+    expect(r.ok && r.formulary.stock.syringes.map((s) => s.id)).toEqual(['propofol-10mg-ml-50ml', 'propofol-10mg-ml-20ml', 'phenylephrine-100mcg-ml-20ml']);
+    expect(r.ok && r.formulary.stock.bags).toEqual([]);
+    // the stock is not a drug file: the coverage rule (5) is untouched by it
+    expect(r.ok && Object.keys(r.formulary.drugs)).not.toContain('stock-syringes');
+  });
+  it('each shipped stock syringe fits a syringe size of the SP-500 profile', () => {
+    const sp500 = JSON.parse(readFileSync(join(DEVICES, 'sp-500.json'), 'utf8')) as { syringes: Array<{ ml: number }> };
+    const largest = Math.max(...sp500.syringes.map((s) => s.ml));
+    const r = loadFormulary(readLayer(FOLDER));
+    expect(r.ok).toBe(true);
+    for (const s of r.ok ? r.formulary.stock.syringes : []) expect(s.volumeMl.ml, s.id).toBeLessThanOrEqual(largest);
+  });
+  it('a fixture stock list that keeps every rule passes; without the file the stock is empty', () => {
+    expect(why(check(withStock()))).toEqual([]);
+    expect(shapeErrors(withStock())).toEqual([]);
+    const r = loadFormulary(withStock(), FIXTURE_IDS);
+    expect(r.ok && r.formulary.stock.syringes[0]?.volumeMl.ml).toBe(20);
+    const none = loadFormulary(fixture(), FIXTURE_IDS);
+    expect(none.ok && none.formulary.stock).toEqual({ syringes: [], bags: [] });
+  });
+  it('a stock volume without its src (rule 1), or a bare number, is refused', () => {
+    const f = withStock();
+    delete f['stock-syringes.json'].syringes[0].volumeMl.src;
+    expect(why(check(f))).toEqual(['stock-syringes.json/syringes/0/volumeMl/ml: a number with no src beside it (nor a gap)']);
+    const b = withStock();
+    b['stock-syringes.json'].syringes[0].count = 2;
+    expect(rules(check(b))).toEqual([1]);
+  });
+  it('a stock item that is not a product at its labelled strength from its own monograph is refused (rule 7)', () => {
+    const edit = (e: (f: any) => void) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      const f = withStock();
+      e(f);
+      return check(f);
+    };
+    const one = (e: (f: any) => void) => why(edit(e)); // eslint-disable-line @typescript-eslint/no-explicit-any
+    expect(rules(edit((f) => (f['stock-syringes.json'].syringes[0].drugId = 'fixtureother')))).toEqual([7]);
+    expect(one((f) => (f['stock-syringes.json'].syringes[0].drugId = 'fixtureother'))).toEqual(['stock-syringes.json/syringes/0/drugId: "fixtureother" has no drug file']);
+    expect(one((f) => (f['stock-syringes.json'].syringes[0].product = 'nowhere'))).toEqual(['stock-syringes.json/syringes/0/product: "nowhere" is not a product of fixturedrug.json']);
+    // a powder (reconstituted on the bench) is not stock
+    expect(one((f) => (f['stock-syringes.json'].syringes[0].product = 'fixture-vial'))).toEqual([
+      'stock-syringes.json/syringes/0/product: "fixture-vial" is not used at its labelled strength (a solution or emulsion per mL, not reconstituted): it is made on the bench',
+    ]);
+    // a strength per vial is not a concentration the syringe holds as it is
+    expect(one((f) => (f['fixturedrug.json'].products[1].strength.perVial = true))).toEqual([
+      'stock-syringes.json/syringes/0/product: "fixture-solution" is not used at its labelled strength (a solution or emulsion per mL, not reconstituted): it is made on the bench',
+    ]);
+    // the volume and the use come from the product's own monograph, not another source
+    const other = withStock();
+    other['sources.json']['fixture-label-2'] = { ...other['sources.json']['fixture-label'], product: 'Another fixture product' };
+    other['stock-syringes.json'].syringes[0].use.src = 'fixture-label-2';
+    expect(why(check(other))).toEqual(['stock-syringes.json/syringes/0/use/src: the stock item cites its product\'s own monograph, "fixture-label" (the product\'s strength source)']);
+    other['stock-syringes.json'].syringes[0].use.src = 'fixture-stabilis';
+    expect(why(check(other))).toEqual(['stock-syringes.json/syringes/0/use/src: the stock item cites its product\'s own monograph, "fixture-label" (the product\'s strength source)']);
+    // ids are unique across syringes and bags
+    expect(one((f) => f['stock-syringes.json'].bags.push({ ...f['stock-syringes.json'].syringes[0] }))).toEqual(['stock-syringes.json/bags/0/id: "fixture-1mg-ml-20ml" is listed twice']);
+    // the file's shape: two lists
+    expect(one((f) => delete f['stock-syringes.json'].bags)).toEqual(['stock-syringes.json/: the stock file holds two lists, syringes and bags']);
+  });
+  it('a stock statement over 200 characters is refused (rule 6)', () => {
+    const f = withStock();
+    f['stock-syringes.json'].syringes[0].use.statement = 'x'.repeat(201);
+    expect(why(check(f))).toEqual(['stock-syringes.json/syringes/0/use/statement: 201 characters: a statement is at most 200, in our words']);
+  });
+});
+
+describe('the reference pumps\' device profiles (S1, D12): every number with its catalogue row, or a gap', () => {
+  const shipped = readDevices(DEVICES);
+  const rows = research50Rows();
+  it('the three shipped profiles pass the source check and the schema, and load typed', () => {
+    expect(Object.keys(shipped).sort()).toEqual([...PUMP_DEVICE_IDS].map((d) => `${d}.json`).sort());
+    expect(checkPumpDevices(shipped).map((p) => `${p.file}${p.path}: ${p.why}`)).toEqual([]);
+    expect(deviceShapeErrors(shipped)).toEqual([]);
+    const r = loadPumpDevices(shipped);
+    expect(r.ok && r.devices['sp-500'].kind).toBe('syringe');
+    expect(r.ok && r.devices['ot-701'].kind).toBe('drip');
+  });
+  it('every src is a row of research/50 that names its document and page; no number cites an inference or a gap row', () => {
+    expect(rows.size).toBeGreaterThan(50);
+    for (const [file, data] of Object.entries(shipped)) {
+      for (const c of cited(data)) {
+        if (!c.src) continue;
+        const row = rows.get(c.src);
+        expect(row, `${file}${c.path}: ${c.src} is not a row of research/50`).toBeDefined();
+        expect(row!.source, `${file}${c.path}: ${c.src}`).toMatch(/\b(J1|J2) pp?\. \d|\bW1\b/);
+        expect(['C', 'W', 'I'], `${file}${c.path}: ${c.src}`).toContain(row!.tag);
+      }
+    }
+    // a number never leans on an inference row: only a fact (a C or W row) sources a number
+    const numberSrcs = Object.values(shipped).flatMap((d) => [...cited(d)]).filter((c) => c.src);
+    const inferred = numberSrcs.filter((c) => rows.get(c.src!)?.tag === 'I').map((c) => c.src);
+    expect([...new Set(inferred)].sort()).toEqual(['OT-21', 'SP-20']); // "rapid" as bolus and purge rate, and "no bolus, no TCI": words, not numbers
+  });
+  it('every gap names a GAP row of research/50, and every GAP row of research/50 is a gap in a profile', () => {
+    const gapRows = [...rows].filter(([, r]) => r.tag === 'GAP').map(([id]) => id);
+    const named = new Set<string>();
+    for (const [file, data] of Object.entries(shipped)) {
+      for (const c of cited(data)) {
+        if (!c.gap) continue;
+        const ids = [...c.gap.matchAll(/research\/50 ((?:SP|OT|TC)-\d{2})/g)].map((m) => m[1]!);
+        expect(ids.length, `${file}${c.path}: a gap names its research/50 row`).toBeGreaterThan(0);
+        for (const id of ids) {
+          expect(rows.get(id)?.tag, `${file}${c.path}: ${id}`).toBe('GAP');
+          named.add(id);
+        }
+      }
+    }
+    expect(gapRows.filter((id) => !named.has(id))).toEqual([]);
+  });
+  it('the SP-500\'s flow range depends on the syringe size, as the catalogue prints it (not flattened)', () => {
+    const r = loadPumpDevices(shipped);
+    if (!r.ok) throw new Error('profiles do not load');
+    const sp = r.devices['sp-500'];
+    expect(sp.syringes.map((s) => [s.ml, s.rate.min, s.rate.max, s.rapid.rate])).toEqual([[10, 0.1, 200, 200], [20, 0.1, 300, 350], [30, 0.1, 300, 450], [50, 0.1, 300, 800]]);
+    expect(sp.rateStep.step).toBe(0.1);
+    const ot = r.devices['ot-701'];
+    expect(ot.sets.map((s) => [s.dropsPerMl, s.standard.mlH.max, s.narrow.mlH.max, s.standard.dropsMin.max])).toEqual([[15, 450, 100, 100], [20, 450, 100, 100], [60, 100, 100, 100]]);
+    expect([ot.rateStep.step, ot.purge.rateMoreThan, ot.kvo.rate, ot.volumeLimit.max]).toEqual([1, 450, 1, 9999]);
+    // the SP5 TCI: the maker's page gives no mechanical number; each is a gap
+    const tc = r.devices['sp5-tci'];
+    for (const k of ['syringes', 'rate', 'bolus', 'purge', 'kvo', 'occlusion', 'alarms'] as const) expect(tc[k], k).toHaveProperty('gap');
+  });
+  const fixtureDevices = (): Record<string, any> => JSON.parse(JSON.stringify(shipped)) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const pwhy = (f: PumpDeviceFiles) => checkPumpDevices(f).map((p) => `${p.file}${p.path}: ${p.why}`);
+  it('a bare number, a number in a gap, a src of another device or no row id, an empty gap: each refused', () => {
+    const bare = fixtureDevices();
+    bare['sp-500.json'].weightKg = 2.6;
+    expect(pwhy(bare)).toEqual(['sp-500.json/weightKg: a number with no src beside it (a gap holds none)']);
+    const nosrc = fixtureDevices();
+    delete nosrc['ot-701.json'].kvo.src;
+    expect(pwhy(nosrc)).toEqual(['ot-701.json/kvo/rate: a number with no src beside it (a gap holds none)']);
+    const ingap = fixtureDevices();
+    ingap['sp5-tci.json'].kvo = { gap: 'the KVO rate: SP5 TCI operator manual', rate: 1 };
+    expect(pwhy(ingap)).toEqual(['sp5-tci.json/kvo: a gap holds no number and no src: a number needs its row']);
+    const other = fixtureDevices();
+    other['sp-500.json'].rateStep.src = 'OT-09';
+    expect(pwhy(other)).toEqual(['sp-500.json/rateStep/src: "OT-09" is not a row of this device in research/50 (SP-nn)']);
+    const free = fixtureDevices();
+    free['ot-701.json'].kvo.src = 'JMS OT-701 catalogue, p. 2';
+    expect(pwhy(free)).toEqual(['ot-701.json/kvo/src: "JMS OT-701 catalogue, p. 2" is not a row of this device in research/50 (OT-nn)']);
+    const empty = fixtureDevices();
+    empty['sp-500.json'].nearEnd = { gap: '' };
+    expect(pwhy(empty)).toEqual(['sp-500.json/nearEnd/gap: a gap names what the manual must give (1–200 characters)']);
+  });
+  it('a profile not named after its id, a missing profile, an unknown one, a long string: each refused', () => {
+    const named = fixtureDevices();
+    named['ot-701.json'].deviceId = 'ot-702';
+    expect(pwhy(named)).toContain('ot-701.json/deviceId: the file\'s id "ot-702" is not its name "ot-701"');
+    const missing = fixtureDevices();
+    delete missing['sp5-tci.json'];
+    expect(pwhy(missing)).toEqual(['sp5-tci.json/: the profile of a reference device is missing']);
+    const unknown = fixtureDevices();
+    unknown['sp-600.json'] = { ...unknown['sp-500.json'], deviceId: 'sp-600' };
+    expect(pwhy(unknown)).toEqual(['sp-600.json/: not a reference device (sp-500, ot-701, sp5-tci)']);
+    const long = fixtureDevices();
+    long['sp-500.json'].alarms.names.push('x'.repeat(201));
+    expect(pwhy(long)).toEqual(['sp-500.json/alarms/names/6: 201 characters: at most 200, our words or a few printed ones']);
+    expect(loadPumpDevices(long).ok).toBe(false);
+  });
+  it('the folder holds JSON only, none oversized, no PDF or extracted text of a catalogue', () => {
+    expect(folderProblems(DEVICES)).toEqual([]);
   });
 });

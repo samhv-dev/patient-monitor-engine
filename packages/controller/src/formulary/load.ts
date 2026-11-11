@@ -5,7 +5,7 @@
 // the JSON Schema (`formulary/schema.json`) and the folder's file types and sizes (rule 6). What no check can prove is
 // that an entry says what its source says: that is the second reading, before a batch merges.
 import { DRUGS, DRUG_IDS } from '@pme/engine-core';
-import type { DiluentEntry, DrugEntry, Formulary, FormularyFiles, FormularyProblem, Has, Source, SourceKind } from './types.ts';
+import type { DiluentEntry, DrugEntry, Formulary, FormularyFiles, FormularyProblem, Has, Source, SourceKind, Stock } from './types.ts';
 
 /** The drug ids the formulary covers: every row of the library that is not a volatile (61 on 8344539d). */
 export const injectableDrugIds = (): string[] => DRUG_IDS.filter((id) => DRUGS[id]?.cls !== 'volatile');
@@ -51,7 +51,9 @@ function* strings(v: unknown, path = ''): Generator<{ path: string; s: string }>
   else if (isObj(v)) for (const [k, x] of Object.entries(v)) yield* strings(x, `${path}/${k}`);
 }
 
-const isDataFile = (f: string) => f.endsWith('.json') && f !== 'sources.json' && f !== 'pending.json' && f !== 'schema.json';
+/** The pump rack's stock list (plan pump-rack-tci.md S1): not a drug file; rule 7, with rules 1 and 6. */
+export const STOCK_FILE = 'stock-syringes.json';
+const isDataFile = (f: string) => f.endsWith('.json') && f !== 'sources.json' && f !== 'pending.json' && f !== 'schema.json' && f !== STOCK_FILE;
 const isDiluentFile = (f: string) => f.startsWith('diluents/');
 const stem = (f: string) => f.replace(/^.*\//, '').replace(/\.json$/, '');
 
@@ -170,7 +172,47 @@ export function checkFormulary(files: FormularyFiles, injectable: readonly strin
   }
   for (const f of filed) if (!want.has(f)) no(5, `${f}.json`, '/', `"${f}" is not an injectable drug of the library`);
   for (const id of injectable) if (!filed.has(id) && !seen.has(id)) no(5, 'pending.json', '/', `"${id}" has no file and is not pending`);
+  if (STOCK_FILE in files) checkStock(files, sources, no);
   return out;
+}
+
+/**
+ * Rule 7 (plan pump-rack-tci.md S1, PQ7 = B): a stock syringe or bag is a product of a drug file used at its labelled
+ * strength (a solution or emulsion whose strength is per mL, not reconstituted), its volume and its use from that
+ * product's own monograph (the source of the product's strength); ids unique. Rules 1 and 6 hold as in a drug file.
+ */
+function checkStock(files: FormularyFiles, sources: Record<string, Obj>, no: (rule: FormularyProblem['rule'], file: string, path: string, why: string) => void): void {
+  const f = STOCK_FILE;
+  const data = files[f];
+  if (!isObj(data) || !Array.isArray(data.syringes) || !Array.isArray(data.bags)) return no(7, f, '/', 'the stock file holds two lists, syringes and bags');
+  for (const n of numbers(data)) if (!n.owner || !('src' in n.owner)) no(1, f, n.path, 'a number with no src beside it (nor a gap)');
+  for (const { o, path } of objects(data)) if ('src' in o && !isObj(sources[o.src as string])) no(1, f, `${path}/src`, `src "${String(o.src)}" is not in sources.json`);
+  for (const { path, s } of strings(data)) if (s.length > MAX_STATEMENT) no(6, f, path, `${s.length} characters: a statement is at most ${MAX_STATEMENT}, in our words`);
+  const seen = new Set<string>();
+  for (const list of ['syringes', 'bags'] as const) {
+    (data[list] as unknown[]).forEach((item, i) => {
+      const at = `/${list}/${i}`;
+      if (!isObj(item)) return no(7, f, at, 'a stock item is an object');
+      const id = String(item.id);
+      if (seen.has(id)) no(7, f, `${at}/id`, `"${id}" is listed twice`);
+      seen.add(id);
+      const drug = files[`${String(item.drugId)}.json`];
+      if (!isObj(drug) || !Array.isArray(drug.products)) return no(7, f, `${at}/drugId`, `"${String(item.drugId)}" has no drug file`);
+      const p = (drug.products as unknown[]).find((x) => isObj(x) && x.id === item.product) as Obj | undefined;
+      if (!p) return no(7, f, `${at}/product`, `"${String(item.product)}" is not a product of ${String(item.drugId)}.json`);
+      const strength = isObj(p.strength) ? p.strength : {};
+      if (!['solution', 'emulsion'].includes(String(p.form)) || strength.perVial !== false || 'reconstitute' in p) {
+        no(7, f, `${at}/product`, `"${String(item.product)}" is not used at its labelled strength (a solution or emulsion per mL, not reconstituted): it is made on the bench`);
+      }
+      const label = strength.src;
+      for (const k of ['volumeMl', 'use'] as const) {
+        const v = item[k];
+        if (isObj(v) && 'src' in v && isObj(sources[v.src as string]) && (v.src !== label || sources[v.src as string]!.kind !== 'monograph')) {
+          no(7, f, `${at}/${k}/src`, `the stock item cites its product's own monograph, "${String(label)}" (the product's strength source)`);
+        }
+      }
+    });
+  }
 }
 
 /** The typed layer, when every rule holds; else the broken rules. */
@@ -184,5 +226,6 @@ export function loadFormulary(files: FormularyFiles, injectable?: readonly strin
     if (isDiluentFile(file)) diluents[stem(file)] = data as DiluentEntry;
     else drugs[stem(file)] = data as DrugEntry;
   }
-  return { ok: true, formulary: { drugs, diluents, sources: files['sources.json'] as Record<string, Source>, pending: files['pending.json'] as string[] } };
+  const stock = (files[STOCK_FILE] as Stock | undefined) ?? { syringes: [], bags: [] };
+  return { ok: true, formulary: { drugs, diluents, sources: files['sources.json'] as Record<string, Source>, pending: files['pending.json'] as string[], stock } };
 }
