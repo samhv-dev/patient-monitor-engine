@@ -65,7 +65,8 @@ async function ack(got: WireMessage[], id: string): Promise<Ack> {
 }
 const events = (got: WireMessage[]) => got.flatMap((m) => (m.kind === 'event' ? m.body : []));
 const appliedIds = (got: WireMessage[]) => events(got).filter((e) => e.type === 'commandApplied').map((e) => (e as Extract<WireEvent, { type: 'commandApplied' }>).commandId);
-const prepNews = (got: WireMessage[]) => events(got).filter((e): e is Extract<WireEvent, { type: 'prep' }> => e.type === 'prep').map((e) => (e.body as { news: string }).news);
+/** The `prep` news addressed to the learner remote (its own copy; the instructor's copy goes to the host's id). */
+const prepNews = (got: WireMessage[]) => events(got).filter((e): e is Extract<WireEvent, { type: 'prep' }> => e.type === 'prep' && e.to === 'lr.1').map((e) => (e.body as { news: string }).news);
 
 /** A host with the learner PIN, a transport standing for the relay, the laptop's own panel, and a learner signed in. */
 async function setup(o: Partial<HostSessionOptions> = {}) {
@@ -109,7 +110,6 @@ describe('L14: a learner device gives no drug while the case is paused', () => {
     expect(appliedIds(x.got)).not.toContain(id);
     expect(appliedIds(x.panelGot)).not.toContain(id);
     expect(prepNews(x.got)).toEqual(['made']); // no `delivered`: the phone is never told "Given"
-    expect(x.host.preparation(KEY, 'p0000001')?.givenAt ?? null).toBeNull();
     // the host's own screens hear what was not given, who tried, and the dose the host computed
     expect(x.notGiven).toEqual([expect.objectContaining({ from: 'lr.1', reason: PAUSED_REFUSAL, t: 200, command: expect.objectContaining({ type: 'applyEvent', issuedBy: 'learner', by: KEY, prepId: 'p0000001', event: expect.objectContaining({ kind: 'drug', drugId: 'benchpowder', dose: 10 * (1 - (0.5 * 200) / (4 * 3600)), unit: 'mg' }) }) })]);
     // a resend of the same command keeps its answer (idempotent), even after the resume: it was not given

@@ -3,7 +3,7 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type NotGiven, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
@@ -205,6 +205,15 @@ export class Link {
     const name = typeof c.by === 'string' ? this.host.deviceName(c.by) : null;
     const device = c.event?.kind === 'defib' ? 'defibrillator window' : 'learner remote';
     this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${device}${name ? `: ${name}` : ''})` });
+  }
+
+  /** L14: on the host, a learner remote's give the host refused because the case was paused (AppSession.onNotGiven):
+   *  a Log line naming the drug and dose, the phone as Room setup named it, and the reason in the line itself (not in
+   *  `refused`, which the Log sheet prints as "the reason is in the exported log": here it is on screen). */
+  notGiven(n: NotGiven): void {
+    const c = n.command as unknown as Record<string, unknown>;
+    const name = typeof c.by === 'string' ? this.host?.deviceName(c.by) : null;
+    this.add({ simT: n.t, kind: 'learner', text: `${describeCommand(c)} (learner remote${name ? `: ${name}` : ''}) not given: ${n.reason}` });
   }
 
   private add(x: ClinicalLogEntry): void {

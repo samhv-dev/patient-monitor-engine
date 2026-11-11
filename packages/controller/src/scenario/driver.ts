@@ -517,6 +517,16 @@ export class ScenarioDriver {
     if (this.cur instanceof PhaseRunner) this.cur.stage(p);
   }
 
+  /**
+   * L14: a learner's give the host refused before dispatch (the case was paused): into the administration record as an
+   * act NOT accepted, with the host's reason, as an engine refusal is (so grade() and the Debrief never count it given).
+   */
+  recordNotGiven(cmd: WireCommand, reason: string): void {
+    if (cmd.type !== 'applyEvent' || !(this.cur instanceof PhaseRunner)) return;
+    const a = administrationOf(cmd, { accepted: false, tick: this.o.target.now().tick, reason }, this.o.target.now().simT, this.cur.doc.patient?.weightKg, this.cur.admin, this.o.preparation);
+    if (a) this.cur.record(a);
+  }
+
   private taking(c: Command): void {
     const actionId = (c as { actionId?: unknown }).actionId;
     const r = this.cur;

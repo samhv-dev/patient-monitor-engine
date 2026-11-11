@@ -39,7 +39,7 @@ describe('L14: a learner give refused while paused, on the host', () => {
     const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(fentanyl);
-    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (learner remote: bed 2 remote) not given: the case was paused', refused: PAUSED_REFUSAL }]);
+    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (learner remote: bed 2 remote) not given: the case was paused' }]);
     link.close();
   });
 });

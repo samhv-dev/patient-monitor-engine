@@ -38,7 +38,8 @@ const fentanyl = (o: Partial<LearnerPrepView> = {}): LearnerPrepView => ({
 describe('L14: the tray while the case is paused', () => {
   it('Give and "Deliver the tray" cannot be used and the tray says why; preparing stays open; after the resume they work', () => {
     const w = wire();
-    const t = trayView({ formulary: f, now: () => 100, tone: vi.fn(), newId: () => 'fent0001' });
+    const ids = ['fent0001', 'fent0002'];
+    const t = trayView({ formulary: f, now: () => 100, tone: vi.fn(), newId: () => ids.shift() as string });
     document.body.replaceChildren(t.el);
     t.attach(w.link);
     t.stage({ components: [{ productId: 'fentanyl-50mcg-ml', amount: 2, unit: 'mL' }], container: 'syringe-pp' });

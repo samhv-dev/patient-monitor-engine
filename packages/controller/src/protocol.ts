@@ -398,10 +398,11 @@ export type WireMessage = { v: 1; session: string; from: string; seq: number; se
   | { kind: 'command'; body: WireCommand }
   /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
   | { kind: 'grant'; to: string; granted: boolean; reason?: string }
-  /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`. */
+  /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`.
+   *  `code: 'paused'` (L14): a learner device's drug was not given because the case was paused (PAUSED_REFUSAL). */
   | {
       kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
-      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' | 'learner' };
+      code?: AckCode; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' | 'learner' };
     }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }
@@ -441,8 +442,13 @@ export interface ManagedTransport extends Transport {
   onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
-/** `code`: the host's refusal code when it gave one (`recent`: the same-drug lock, drug-lock.ts). */
-export type AckResult = DispatchResult & { commandId: string; rttMs: number; code?: 'recent' };
+/** The host's refusal codes: `recent` the same-drug lock (drug-lock.ts); `paused` (learner remote L14, the owner's ruling
+ *  on N117) a learner device's drug while the case is paused: not given, nothing queued for the engine. */
+export type AckCode = 'recent' | 'paused';
+/** The words of the `paused` refusal: the phone shows "Not given: the case was paused"; the host's Log and record the same. */
+export const PAUSED_REFUSAL = 'the case was paused';
+/** `code`: the host's refusal code when it gave one (AckCode). */
+export type AckResult = DispatchResult & { commandId: string; rttMs: number; code?: AckCode };
 export type MeasuredMap = Partial<Record<NumericId, import('@pme/engine-core').Measured>>;
 
 // --- what an instructor may send (plan instructor-peer-role.md §2) -------------------------------------------------
