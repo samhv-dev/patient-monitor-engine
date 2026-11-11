@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
-import { createStamper, INSTRUMENTS, LEARNER_COMMANDS, LEARNER_DEFIB_COMMANDS, LEARNER_LAB_PANELS, learnerDefibMay, learnerMay, NOTE_EVENTS, type CommandInput, type WireMessage } from '../src/protocol.ts';
+import { createStamper, INSTRUMENTS, LEARNER_COMMANDS, LEARNER_DEFIB_COMMANDS, LEARNER_LAB_PANELS, learnerDefibMay, learnerMay, NOTE_EVENTS, PUMP_COMMANDS, pumpMay, type CommandInput, type WireMessage } from '../src/protocol.ts';
 import { createEngine } from '@pme/engine-core';
 
 const stamp = createStamper('ABC234', 'host-1');
@@ -311,6 +311,164 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
       ['an infusion set at -1 mL/h', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: -1 })],
       ['an unknown prep action', cmd({ type: 'prep', action: 'mix', prepId: 'p0000001' })],
       ['a discard without its preparation', cmd({ type: 'prep', action: 'discard' })],
+    ];
+    for (const [what, c] of BAD) expect(parseWireMessage(body(c)), what).toBeNull();
+  });
+});
+
+// Plan pump-rack-tci.md C1 (§4 D1, D2, §7): the infusion-pump rack joins as `pump` with the LEARNER PIN, as the learner
+// action remote does, and once granted may send exactly D2's shapes on its own channels; the guard types their values,
+// pumpMay their fields. Everything else (D2's complement) is refused, shape by shape.
+describe('the pump role (plan pump-rack-tci.md C1)', () => {
+  const hello = (role: string, extra: Record<string, unknown> = {}) => ({ ...stamp({ kind: 'hello', role: 'viewer' }), role, ...extra });
+  it('a `pump` hello must carry a PIN of 4 to 8 digits; it may name its device key', () => {
+    expect(parseWireMessage(hello('pump', { pin: '582913' }))).toMatchObject({ kind: 'hello', role: 'pump', pin: '582913' });
+    expect(parseWireMessage(hello('pump', { pin: '582913', device: 'k3x9q2m7' }))).toMatchObject({ role: 'pump', device: 'k3x9q2m7' });
+    expect(parseWireMessage(hello('pump'))).toBeNull(); // no PIN: refused
+    expect(parseWireMessage(hello('pump', { device: 'k3x9q2m7' }))).toBeNull();
+    for (const pin of ['472', '472912345', '47a9', 4729, null, '']) expect(parseWireMessage(hello('pump', { pin })), JSON.stringify(pin)).toBeNull();
+    expect(parseWireMessage(hello('pump', { pin: '4729', device: 'K3X9' }))).toBeNull();
+  });
+  it('a pump hello names no instrument: `pump` is not in INSTRUMENTS until the app lists it (A1), and no other is the pump\'s', () => {
+    expect([...INSTRUMENTS]).not.toContain('pump');
+    for (const show of ['pump', 'learner', 'monitor', 'defib']) expect(parseWireMessage(hello('pump', { pin: '4729', show })), show).toBeNull();
+  });
+
+  const cmd = (c: object) => ({ id: 'k1', issuedBy: 'pump', ...c }) as unknown as CommandInput;
+  const pump = (action: string, c: object = {}) => cmd({ type: 'pump', action, ch: 1, ...c });
+  const conc = { amount: 10, unit: 'mg', perMl: 1 };
+  const patient = { ageY: 45, weightKg: 70, heightCm: 170, sex: 'f' };
+  /** D2's shapes, each in its forms (the engine's E1 actions, pump.ts, are what they carry). */
+  const SHAPES: Array<[string, CommandInput]> = [
+    ['pump load a preparation in a syringe', pump('load', { syringe: { prep: { device: 'remote0001', id: 'p0000001' } } })],
+    ['pump load a stock syringe', pump('load', { syringe: { stock: 'propofol1pct50ml' } })],
+    ['pump load a stock bag on a drip channel', pump('load', { ch: 2, bag: { stock: 'sodiumChloride09bag500' } })],
+    ['pump load a prepared bag', pump('load', { ch: 8, bag: { prep: { device: 'remote0001', id: 'p0000002' } } })],
+    ['pump program', pump('program', { drugId: 'propofol', concentration: conc })],
+    ['pump program a drip channel with its set', pump('program', { ch: 2, drugId: 'oxytocin', concentration: { amount: 10, unit: 'units', perMl: 500 }, set: 20 })],
+    ['pump rate in mL/h', pump('rate', { rate: 12.5, unit: 'mL/h' })],
+    ['pump rate 0', pump('rate', { rate: 0, unit: 'mL/h' })],
+    ['pump rate as a dose rate with the weight typed into the pump', pump('rate', { rate: 0.1, unit: 'mcg/kg/min', weightKg: 70 })],
+    ['pump rate in drops/min with a volume limit', pump('rate', { ch: 2, rate: 40, unit: 'drops/min', limitMl: 500 })],
+    ['pump rate with no volume limit', pump('rate', { ch: 2, rate: 100, unit: 'mL/h', limitMl: null })],
+    ['pump tci', pump('tci', { setId: 'eleveld', mode: 'effect', target: 3, patient })],
+    ['pump tci with what the set asks', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient: { ...patient, pmaWeeks: 2400, opioids: true } })],
+    ['pump tci target 0 (stop)', pump('tci', { setId: 'minto', mode: 'plasma', target: 0, patient })],
+    ['pump bolus by volume', pump('bolus', { volumeMl: 2 })],
+    ['pump bolus by dose', pump('bolus', { dose: { amount: 0.5, unit: 'mg/kg' }, weightKg: 70 })],
+    ['pump start', pump('start')],
+    ['pump stop', pump('stop')],
+    ['pump purge', pump('purge', { volumeMl: 1 })],
+    ['pump unload', pump('unload')],
+  ];
+  it('PUMP_COMMANDS is exactly D2; pumpMay passes each shape, and the guard parses each', () => {
+    expect([...PUMP_COMMANDS].sort()).toEqual(['pump bolus', 'pump load', 'pump program', 'pump purge', 'pump rate', 'pump start', 'pump stop', 'pump tci', 'pump unload']);
+    for (const [what, c] of SHAPES) {
+      expect(pumpMay(c), what).toBeNull();
+      expect(parseWireMessage({ ...stamp({ kind: 'command', body: c as never }) }), what).not.toBeNull();
+    }
+  });
+
+  // D2's complement, as the plan's C1 lists it (one test each), then every other shape and forged field a tablet might try
+  const COMPLEMENT: Array<[string, CommandInput]> = [
+    ['a raw applyEvent pump', cmd({ type: 'applyEvent', event: { kind: 'pump', action: 'load', ch: 1, channel: 'syringe', contents: { drugId: 'propofol', concentration: conc, volumeMl: 50 }, syringeMl: 50 } })],
+    ['applyEvent drug', cmd({ type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 200, unit: 'mg', route: 'iv' } })],
+    ['prep stage', cmd({ type: 'prep', action: 'stage', prep: { id: 'p0000001', components: [{ productId: 'propofol1pct20ml', amount: 20, unit: 'mL' }] } })],
+    ['time', cmd({ type: 'time', action: 'pause' })],
+    ['scenario', cmd({ type: 'scenario', action: 'goto', target: 's2' })],
+    ['atTick on a pump command', pump('start', { atTick: 5000 })],
+    ['a pump load that carries a concentration field', pump('load', { syringe: { stock: 'propofol1pct50ml' }, concentration: conc })],
+  ];
+  for (const [what, c] of COMPLEMENT) it(`D2's complement: ${what} is refused`, () => expect(pumpMay(c)).toEqual(expect.any(String)));
+
+  const REFUSED: Array<[string, CommandInput]> = [
+    ['a concentration inside the syringe', pump('load', { syringe: { stock: 'propofol1pct50ml', concentration: conc } })],
+    ['a concentration inside the preparation', pump('load', { syringe: { prep: { device: 'remote0001', id: 'p0000001', concentration: conc } } })],
+    ['contents (the true syringe is the host\'s)', pump('load', { syringe: { stock: 'propofol1pct50ml' }, contents: { drugId: 'propofol', concentration: conc, volumeMl: 50 } })],
+    ['a volume on the load', pump('load', { syringe: { stock: 'propofol1pct50ml' }, volumeMl: 50 })],
+    ['a syringe size on the load (the profile\'s)', pump('load', { syringe: { stock: 'propofol1pct50ml' }, syringeMl: 50 })],
+    ['a channel kind on the load (the room\'s)', pump('load', { syringe: { stock: 'propofol1pct50ml' }, channel: 'syringe' })],
+    ['a load with both a syringe and a bag', pump('load', { syringe: { stock: 'a1' }, bag: { stock: 'b1' } })],
+    ['a load with neither', pump('load')],
+    ['a source with both a preparation and a stock item', pump('load', { syringe: { stock: 'a1', prep: { device: 'remote0001', id: 'p0000001' } } })],
+    ['a bolus rate (the profile\'s)', pump('bolus', { volumeMl: 2, rateMlH: 1200 })],
+    ['a purge rate (the profile\'s)', pump('purge', { volumeMl: 1, rateMlH: 450 })],
+    ['a bolus by both volume and dose', pump('bolus', { volumeMl: 2, dose: { amount: 20, unit: 'mg' } })],
+    ['a bolus by neither', pump('bolus')],
+    ['a TCI with a forged rate ceiling', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient, maxRateMlH: 2000 })],
+    ['a TCI with a model (the instructor\'s event)', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient, model: 'schnider' })],
+    ['a TCI patient with a field no set reads', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient: { ...patient, pche: 'hom' } })],
+    ['a TCI without its patient', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3 })],
+    ['a programme with a stray concentration field', pump('program', { drugId: 'propofol', concentration: { ...conc, volumeMl: 50 } })],
+    ['a dose with a stray field', pump('bolus', { dose: { amount: 20, unit: 'mg', overS: 10 } })],
+    ['a pump command without a channel', cmd({ type: 'pump', action: 'start' })],
+    ['a pump command with a forged by', pump('start', { by: 'someoneelse1' })],
+    ['a pump command with a forged replaced', pump('rate', { rate: 5, unit: 'mL/h', replaced: { rateMlH: 1 } })],
+    ['a pump action D2 does not name', pump('occlude')],
+    ['pump alarm (the instructor\'s, O1/AL1)', pump('alarm', { alarm: 'airInLine' })],
+    ['applyEvent tci (channel-less, the instructor\'s)', cmd({ type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', mode: 'plasma', target: 3 } })],
+    ['applyEvent infusion', cmd({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'propofol', rate: 10, unit: 'mL/h' } })],
+    ['applyEvent lab', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } })],
+    ['applyEvent defib charge', cmd({ type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })],
+    ['infusion set (the learner remote\'s)', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4 })],
+    ['prep deliver', cmd({ type: 'prep', action: 'deliver', prepId: 'p0000001', volumeMl: 5, route: 'iv' })],
+    ['time jump', cmd({ type: 'time', action: 'jump', value: 60 })],
+    ['scenario load', cmd({ type: 'scenario', action: 'load', scenario: {} })],
+    ['setRhythm', cmd({ type: 'setRhythm', rhythm: 'vf' })],
+    ['device', cmd({ type: 'device', action: { device: 'alarm', action: 'ack' } })],
+    ['note', cmd({ type: 'note', kind: 'note', text: 'set it' })],
+    ['pin', cmd({ type: 'pin', variable: 'hr', value: 30 })],
+  ];
+  it('pumpMay refuses every other shape and any extra field on D2\'s', () => {
+    for (const [what, c] of REFUSED) expect(pumpMay(c), what).toEqual(expect.any(String));
+  });
+  it("the learner remote's and the defibrillator window's allow-lists are unchanged: each refuses every pump shape", () => {
+    for (const [what, c] of SHAPES) {
+      expect(learnerMay(c), what).toEqual(expect.any(String));
+      expect(learnerDefibMay(c), what).toEqual(expect.any(String));
+    }
+  });
+
+  it('the guard drops a pump command whose values are not their types, from anyone', () => {
+    const body = (c: CommandInput) => ({ ...stamp({ kind: 'command', body: c as never }) });
+    const BAD: Array<[string, CommandInput]> = [
+      ['channel 0', pump('start', { ch: 0 })],
+      ['channel 9 (the rack holds 1 to 8, PQ1)', pump('start', { ch: 9 })],
+      ['channel 1.5', pump('start', { ch: 1.5 })],
+      ['a channel as a string', pump('start', { ch: '1' })],
+      ['an unknown action', pump('occlude')],
+      ['a preparation id not [a-z0-9]{8}', pump('load', { syringe: { prep: { device: 'remote0001', id: 'P1' } } })],
+      ['a preparation device not a device key', pump('load', { syringe: { prep: { device: 'R1', id: 'p0000001' } } })],
+      ['a stock id with spaces', pump('load', { bag: { stock: 'saline bag' } })],
+      ['a source that is a string', pump('load', { syringe: 'propofol1pct50ml' })],
+      ['a load with both a syringe and a bag', pump('load', { syringe: { stock: 'a1' }, bag: { stock: 'b1' } })],
+      ['a load with neither', pump('load')],
+      ['a drug id with spaces', pump('program', { drugId: 'pro pofol', concentration: conc })],
+      ['a concentration of 0', pump('program', { drugId: 'propofol', concentration: { ...conc, amount: 0 } })],
+      ['a concentration in mL', pump('program', { drugId: 'propofol', concentration: { ...conc, unit: 'mL' } })],
+      ['a concentration per 0 mL', pump('program', { drugId: 'propofol', concentration: { ...conc, perMl: 0 } })],
+      ['a set of 0 drops/mL', pump('program', { drugId: 'propofol', concentration: conc, set: 0 })],
+      ['a set of 20.5 drops/mL', pump('program', { drugId: 'propofol', concentration: conc, set: 20.5 })],
+      ['a rate of -1', pump('rate', { rate: -1, unit: 'mL/h' })],
+      ['an infinite rate', pump('rate', { rate: Number.POSITIVE_INFINITY, unit: 'mL/h' })],
+      ['a rate in a unit that is no rate', pump('rate', { rate: 5, unit: 'mg' })],
+      ['a rate without a unit', pump('rate', { rate: 5 })],
+      ['a volume limit of 0', pump('rate', { rate: 5, unit: 'mL/h', limitMl: 0 })],
+      ['a weight of 0', pump('rate', { rate: 0.1, unit: 'mcg/kg/min', weightKg: 0 })],
+      ['a TCI set id with spaces', pump('tci', { setId: 'eleveld 2018', mode: 'plasma', target: 3, patient })],
+      ['a TCI mode not plasma or effect', pump('tci', { setId: 'eleveld', mode: 'site', target: 3, patient })],
+      ['a TCI target of -1', pump('tci', { setId: 'eleveld', mode: 'plasma', target: -1, patient })],
+      ['a TCI patient without a sex', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient: { ageY: 45, weightKg: 70, heightCm: 170 } })],
+      ['a TCI patient of sex x', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient: { ...patient, sex: 'x' } })],
+      ['a TCI patient of -1 years', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient: { ...patient, ageY: -1 } })],
+      ['a TCI patient of 0 kg', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient: { ...patient, weightKg: 0 } })],
+      ['opioids as a string', pump('tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient: { ...patient, opioids: 'yes' } })],
+      ['a bolus of -2 mL', pump('bolus', { volumeMl: -2 })],
+      ['a bolus by both', pump('bolus', { volumeMl: 2, dose: { amount: 20, unit: 'mg' } })],
+      ['a bolus by neither', pump('bolus')],
+      ['a bolus dose in a rate unit', pump('bolus', { dose: { amount: 20, unit: 'mg/h' } })],
+      ['a purge of 0 mL', pump('purge', { volumeMl: 0 })],
+      ['a purge without a volume', pump('purge')],
     ];
     for (const [what, c] of BAD) expect(parseWireMessage(body(c)), what).toBeNull();
   });

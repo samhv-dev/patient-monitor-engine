@@ -69,7 +69,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 
 | Frame from | `hello` | `command` | `ack` | `event` | `snapshot` | `grant` | `vent` |
 |---|---|---|---|---|---|---|---|
-| host | fanned out to every peer (they re-hello and resend pending commands) | dropped | to the peer that sent that command | to every peer but the ventilator (a controller or a granted instructor: the frame as sent; a viewer, a pending instructor or a learner remote, granted or not: the lean copy, below, plus for a granted learner remote the host's `prep` events that name it; a hello's replays: only to peers awaiting a snapshot; `mirror` frames: dropped) | cached; sent to peers that said hello since their last snapshot (never the ventilator) | consumed: applied to the instructor, ventilator or learner socket of that id and told to it alone (below) | to the GRANTED ventilator its `to` names, alone; otherwise dropped |
+| host | fanned out to every peer (they re-hello and resend pending commands) | dropped | to the peer that sent that command | to every peer but the ventilator (a controller or a granted instructor: the frame as sent; a viewer, a pending instructor, a learner remote or a pump, granted or not: the lean copy, below, plus for a granted learner remote or pump the host's `prep` events that name it; a hello's replays: only to peers awaiting a snapshot; `mirror` frames: dropped) | cached; sent to peers that said hello since their last snapshot (never the ventilator) | consumed: applied to the instructor, ventilator, learner or pump socket of that id and told to it alone (below) | to the GRANTED ventilator its `to` names, alone; otherwise dropped |
 | controller | forwarded to the host; marks the peer as awaiting a snapshot | to the host | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | instructor, granted | same as controller | to the host | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | instructor, pending | same as controller (its PIN reaches the host alone) | refused (`{relay:'error', code:'forbidden'}`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
@@ -79,6 +79,8 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 | defib | same as controller | Charge or Shock, bare (`LEARNER_DEFIB_COMMANDS`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | learner, granted | same as controller (its learner PIN reaches the host alone) | `LEARNER_COMMANDS` with their own fields only (`learnerMay`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | learner, pending | same as granted | refused (`forbidden`: "the learner remote is not signed in") | dropped | dropped | dropped | dropped | refused (`forbidden`) |
+| pump, granted | same as controller (its learner PIN reaches the host alone) | `PUMP_COMMANDS` with their own fields only (`pumpMay`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
+| pump, pending | same as granted | refused (`forbidden`: "the pump is not signed in") | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 
 - **The lean copy** (a learner's phone, a pending instructor): `VIEWER_EVENTS` only, and no `commandApplied` of a
   `scenario` or `note` command (a mark's kind and note, a judged objective: plan instructor-peer-role.md §7). The
@@ -145,6 +147,29 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   close 4028). The host's `grant {granted:false}` to a granted learner socket revokes it (`denied`, close 4013): the
   host sends it to every granted learner remote when the learner PIN changes (L4). A new host socket makes each granted
   learner remote sign in again, as an instructor does. The host checks the learner PIN, and the allow-list again (L4).
+- **The infusion-pump rack** (`hello {role:'pump', device, pin}`, plan pump-rack-tci.md C1, §4 D1, D2, §7): the tablet
+  beside the patient that runs the syringe and drip channels. It is admitted exactly as the learner action remote is,
+  on the same learner PIN (which grants `learner` and `pump`, never `instructor`): from any device, in a learner's place
+  under `--max-peers`, counted in `peers`, PENDING until the host's `grant`, under the same per-address limits (below);
+  a hello without a PIN is refused by the guard. It names its device key and no `show` (the app lists `pump` as an
+  instrument with its pump page, A1). It RECEIVES what a viewer receives, granted or not, plus the host's `prep` events
+  whose `to` is its own id (a loaded preparation's label, §7). Of what it SENDS, a pending socket's every `command` is
+  `forbidden`; a granted one's goes to the host only if `pumpMay` passes it: `type: 'pump'` on one channel `ch` (1 to
+  8, PQ1), with `action` `load` (`syringe` or `bag`, each `{prep: {device, id}}` or `{stock}`), `program` (`drugId`,
+  `concentration {amount, unit, perMl}`, `set?`, a drip channel's drops/mL), `rate` (`rate`, `unit`: a rate unit, `mL/h`
+  or `drops/min`; `limitMl?`, a number or null; `weightKg?`), `tci` (`setId`, `mode` `plasma` or `effect`, `target`,
+  `patient {ageY, weightKg, heightCm, sex, pmaWeeks?, opioids?}`), `bolus` (`volumeMl` or `dose {amount, unit}`, one of
+  them; `weightKg?`), `start`, `stop`, `purge` (`volumeMl`) or `unload`, with no other field anywhere. `weightKg` (on
+  `rate` and `bolus`, for a per-kg dose) is the weight typed into the pump, never the patient's. Refused
+  (`forbidden`), so never at the host: a raw `applyEvent pump` (the host builds it with the syringe's true contents),
+  `applyEvent drug` or any other event, `prep` (the learner remote's), `infusion set`, `time`, `scenario`, `atTick`, `by`,
+  and a `load` that carries a `concentration` or `contents` (a tablet never says what a syringe holds) or a bolus or
+  purge rate (the device profile's, D12). The guard drops a `pump` command whose values are not their types (a channel
+  outside 1 to 8, an unknown action, a negative rate, a unit that is no rate), from anyone. At most 6 commands a second
+  through one `pump` socket, pending or granted, refused ones included [ENG: network; L3's figure: four channels changed
+  in one press sequence plus a margin for double taps]; the 7th within a sliding second closes it (`too-many-tries`, close
+  4028). A `grant {granted:false}` revokes it, as a learner remote's; a new host socket makes it sign in again. The host
+  checks the learner PIN, the allow-list again, and each command against the channel's kind and device profile (C2).
 - **One role per socket:** a non-host socket that says `hello` again as another role than its first is answered
   `forbidden`; that hello never reaches the host, and the socket keeps its first role.
 - **`vent` flood:** at most 120 `vent` a second through one socket each way — from a socket, and from the host to the
@@ -155,8 +180,8 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   measured 5 a second at ×1 and 38 at ×8 (the engine advanced every 20 ms of wall time).
 - **Wrong PINs:** 5 denials of pending sockets from one address within 60 s, and that address may not say
   `instructor` for 60 s (`too-many-tries`, close 4028); it may still follow. A revoked grant is not a wrong PIN.
-  The ventilator's and the learner remote's hellos and denials count with the instructor's, one count per address
-  whichever PIN was tried (`instructor` above reads `instructor`, `ventilator` or `learner`).
+  The ventilator's, the learner remote's and the pump's hellos and denials count with the instructor's, one count per
+  address whichever PIN was tried (`instructor` above reads `instructor`, `ventilator`, `learner` or `pump`).
   Whatever the host answers, one address may send 20 instructor hellos (first or re-said) in 60 s; the next gets
   `too-many-tries` and close 4028, and never reaches the host, so one socket cannot flood the host with PIN checks.
   Each phone has its own address, so learners cannot lock the real instructor out. The limits key on the socket's
@@ -169,7 +194,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 - Stage 12: a session takes `--max-peers` non-host peers; the next is refused `full` (close code 4029, no retry).
   Instructor sockets do not count against it: they have two places of their own (the phone, and one taking over), so
   a full room of learners never shuts the instructor out. With `--remote-roles viewer`, a socket from another device
-  saying `host` or `controller` is refused `forbidden` (close code 4003); it may say `viewer`, `defib`, `learner`, `instructor` or `ventilator`; this
+  saying `host` or `controller` is refused `forbidden` (close code 4003); it may say `viewer`, `defib`, `learner`, `pump`, `instructor` or `ventilator`; this
   machine (loopback or one of its own addresses) may still host and command. The host gets a `{relay:'peers'}` frame
   whenever a peer comes or goes or an instructor is granted (the QR sheet counts the phones; `instructors`: the granted
   instructor phones, in the host's frame only). `peers` counts the peers that are not instructors, so learners are not
@@ -188,7 +213,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   |---|---|
   | `id`, `role` | the socket's peer id and role, from its hello |
   | `show`, `device` | what its LAST hello said it shows (`learner`, `monitor`, `defib`, `depth`) and its device key; `null` when the hello had none (an older build, a controller) |
-  | `granted` | it may command (a controller, or an instructor the host granted); for a `ventilator`: the host granted it, and it may exchange `vent`; a `defib` window is never granted (it sends its two commands without); a `learner` remote: the host granted its learner PIN, and it may send `LEARNER_COMMANDS` |
+  | `granted` | it may command (a controller, or an instructor the host granted); for a `ventilator`: the host granted it, and it may exchange `vent`; a `defib` window is never granted (it sends its two commands without); a `learner` remote: the host granted its learner PIN, and it may send `LEARNER_COMMANDS`; a `pump`: the same, and it may send `PUMP_COMMANDS` |
   | `rttMs` | the round trip of its answer to the last sweep's ping, ms; `null` while that ping is unanswered or before its first ping |
   | `sinceMs` | ms since its last pong (any ping), or since it joined before its first |
 
