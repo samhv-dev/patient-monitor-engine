@@ -40,18 +40,18 @@ describe('analyser rows (L10a)', () => {
     expect(turnaroundFor('coag')).toBe(2730);
     expect(turnaroundFor('abg')).toBe(turnaroundFor('abg', DEFAULT_ANALYSER));
   });
-  it('every row and section names its source; no [ENG] marker remains on a turnaround', () => {
+  it('every row and section names its source; no `[ENG]` marker remains on a turnaround', () => {
     for (const row of [...ANALYSER_IDS.map((id) => ANALYSERS[id]), LABORATORY]) {
       expect(row.src.length, row.id).toBeGreaterThan(20);
       expect(row.analytesSrc.length, row.id).toBeGreaterThan(20);
       for (const s of row.sections) {
         expect(s.turnaroundSrc, row.id).toMatch(/928-544|Hawkins/);
-        expect(s.turnaroundSrc).not.toMatch(/\[ENG/);
+        expect(s.turnaroundSrc).not.toMatch(/\[E(NG)/);
       }
     }
     for (const f of ['analysers.ts', 'labs.ts']) {
       const text = readFileSync(new URL(`../../../src/l2/blood/${f}`, import.meta.url), 'utf8');
-      for (const line of text.split('\n')) if (/turnaround/i.test(line)) expect(line, `${f}: ${line}`).not.toMatch(/\[ENG/);
+      for (const line of text.split('\n')) if (/turnaround/i.test(line)) expect(line, `${f}: ${line}`).not.toMatch(/\[E(NG)/);
       expect(text, f).not.toMatch(/LAB_TURNAROUND_S/);
     }
   });
@@ -107,13 +107,14 @@ describe('the lab event on the blood pipeline (L10a)', () => {
   it('refuses a panel no row serves', () => {
     expect(validateBloodCommand(ev({ kind: 'lab', panel: 'csf' }))).toMatch(/panel/);
   });
-  it('the room\'s analyser is the blood state\'s setting (absent: the default); a pending sample keeps the row it was drawn on', () => {
+  it('the room\'s analyser arrives on the event (absent: the default row); an unknown id is refused; a pending sample keeps its row', () => {
     const { bs, rs } = bloodCtx();
-    expect(createBloodState(MAN)).not.toHaveProperty('analyser'); // a fresh state (and so a snapshot) is unchanged
-    bs.analyser = 'abl825';
-    applyBloodCommand(bs, ev({ kind: 'lab', panel: 'abg' }), 0, rs);
-    bs.analyser = 'abl837';
-    expect(bs.labs[0]?.analyser).toBe('abl825');
-    expect(bs.labs[0]?.due).toBe(80);
+    expect(validateBloodCommand(ev({ kind: 'lab', panel: 'abg', analyser: 'abl837' }))).toBeUndefined();
+    expect(validateBloodCommand(ev({ kind: 'lab', panel: 'abg', analyser: 'i-stat' }))).toMatch(/analyser/);
+    expect(validateBloodCommand(ev({ kind: 'lab', panel: 'chem', analyser: 'abl837' }))).toMatch(/analyser/); // the laboratory runs chem
+    applyBloodCommand(bs, ev({ kind: 'lab', panel: 'abg', analyser: 'abl837' }), 0, rs);
+    applyBloodCommand(bs, ev({ kind: 'lab', panel: 'vbg' }), 0, rs);
+    expect(bs.labs.map((p) => [p.analyser, p.due])).toEqual([['abl837', 100], [DEFAULT_ANALYSER, turnaroundFor('vbg')]]);
+    expect(createBloodState(MAN)).not.toHaveProperty('analyser'); // the engine keeps no room setting: a snapshot is unchanged
   });
 });

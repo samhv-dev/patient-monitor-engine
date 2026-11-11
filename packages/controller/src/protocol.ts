@@ -7,6 +7,7 @@ import type {
   DispatchResult,
   DoseUnit,
   EngineEvent,
+  LabPanelId,
   NumericId,
   PatientSnapshot,
   PkClinicalEvent,
@@ -18,6 +19,7 @@ import type {
   StateVar,
   Tick,
 } from '@pme/engine-core';
+import { LAB_PANELS } from '@pme/engine-core';
 import type { RelayFrame } from './transport/relay-frames.ts';
 
 /**
@@ -88,7 +90,9 @@ export type ClinicalEvent =
       action: 'flush' | 'zero' | 'sample' | 'disconnect' | 'reconnect' | 'damp' | 'level' | 'wedge'; value?: number;
     }
   | { kind: 'surgical'; action: 'diathermy' | 'shiver' | 'motion'; on: boolean; durationS?: number }
-  | { kind: 'condition'; id: 'anaphylaxis' | 'mh' | 'last' | 'tamponade' | 'tensionPtx' | 'pe'; severity: number };
+  | { kind: 'condition'; id: 'anaphylaxis' | 'mh' | 'last' | 'tamponade' | 'tensionPtx' | 'pe'; severity: number }
+  /** A blood sample (engine-core types-blood.ts): `analyser` is the room's row, set by the host, never by a learner (LAB_EVENT_KEYS). */
+  | { kind: 'lab'; panel: LabPanelId; turnaroundS?: number; analyser?: string };
 export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp';
 
 /**
@@ -475,10 +479,11 @@ export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
  */
 export const LEARNER_COMMANDS: ReadonlySet<string> = new Set(['prep stage', 'prep discard', 'prep deliver', 'prep infuse', 'infusion set', 'applyEvent lab']);
 /**
- * The panels a learner may draw (§4 D2 item 5): the engine's panels today (engine-core types-blood.ts `lab`). L10a adds the
- * laboratory panels LQ2 ruled when the engine computes them, so a learner never asks for a panel the engine refuses.
+ * The panels a learner may draw (§4 D2 item 5): the engine's panels (engine-core analysers.ts `LAB_PANELS`): the gas
+ * panels on the room's analyser and, since L10a, the laboratory's chemistry and coagulation panels (LQ2), so a learner
+ * never asks for a panel the engine refuses. The analyser and the turnaround are not the learner's (LAB_EVENT_KEYS).
  */
-export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set(['abg', 'vbg']);
+export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set(LAB_PANELS);
 /** Every field each learner shape may carry, on the command (`cmd`) and inside it; any other field is refused (§4 D2). */
 const LEARNER_KEYS: Readonly<Record<string, { cmd: readonly string[]; need: readonly string[] }>> = {
   'prep stage': { cmd: ['prep'], need: ['prep'] },

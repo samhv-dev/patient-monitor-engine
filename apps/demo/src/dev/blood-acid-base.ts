@@ -1,6 +1,6 @@
 // Blood and acid–base page: blood, acid–base, electrolytes and O2 delivery. Monitor + a live lab panel (`labs`, 1 Hz
-// truth) and a "send ABG" result panel (`labResult`, 120 s turnaround); four scripted teaching stories.
-import type { Command, EngineEvent } from '@pme/engine-core';
+// truth) and a "send ABG" result panel (`labResult`, after the analyser row's turnaround, engine-core analysers.ts); four scripted teaching stories.
+import { turnaroundFor, type Command, type EngineEvent } from '@pme/engine-core';
 import { mountLabPanel, mountMonitor } from '@pme/renderer';
 
 type CommandBody = Command extends infer C ? (C extends Command ? Omit<C, 'id' | 'issuedBy'> : never) : never;
@@ -50,7 +50,7 @@ const at = (delayS: number, fn: () => void) => {
 };
 
 // always-available actions
-$('sendAbg').addEventListener('click', () => void ev({ kind: 'lab', panel: 'abg' }).then(() => note('ABG sent (result in 2 min)')));
+$('sendAbg').addEventListener('click', () => void ev({ kind: 'lab', panel: 'abg' }).then(() => note(`ABG sent (result in ${turnaroundFor('abg')} s, analyser time only)`)));
 $('speed').addEventListener('change', () => pm.setTimeScale(Number($<HTMLSelectElement>('speed').value)));
 const vent = () => ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 });
 void ev({ kind: 'thermal', anaesthesia: 'general' });

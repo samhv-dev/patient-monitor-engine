@@ -20,7 +20,7 @@ describe('lab panels on the analyser rows (L10a)', { timeout: 300_000 }, () => {
     e.advanceTo(5);
     for (const panel of ['abg', 'vbg']) expect(e.dispatch(evB({ kind: 'lab', panel })).accepted).toBe(true);
     expect(e.dispatch(evB({ kind: 'lab', panel: 'chem', turnaroundS: 60 })).accepted).toBe(true); // a card's override
-    expect(e.dispatch(evB({ kind: 'lab', panel: 'coag', turnaroundS: 90 })).accepted).toBe(true);
+    expect(e.dispatch(evB({ kind: 'lab', panel: 'coag', turnaroundS: 70 })).accepted).toBe(true);
     e.advanceTo(5 + turnaroundFor('abg') + 1);
     const by = (p: string) => got.find((r) => r.panel === p);
     expect(by('abg')?.t).toBeCloseTo(by('abg')!.drawnAt + turnaroundFor('abg'), 6);

@@ -19,7 +19,7 @@ describe('blood commands and labs', { timeout: 300_000 }, () => {
     expect(e.dispatch(evB({ kind: 'lab', panel: 'coag' })).accepted).toBe(true);
     expect(e.dispatch(evB({ kind: 'lab', panel: 'csf' })).accepted).toBe(false);
   });
-  it('emits `labs` once per second and the ABG after the analyser row's turnaround, frozen at the draw', async () => {
+  it('emits `labs` once per second and the ABG after the analyser row’s turnaround, frozen at the draw', async () => {
     const { e, ev } = rigB();
     await runTo(e, 30);
     expect(ev.filter((x) => x.type === 'labs' && x.t > 20 && x.t <= 30)).toHaveLength(10);
