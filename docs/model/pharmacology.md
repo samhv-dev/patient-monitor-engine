@@ -84,9 +84,9 @@ library rows and the outputs other modules consume.
 | [`pd.ts:10`](../../packages/engine-core/src/l2/pk/pd.ts#L10) | Competitive antagonism: EC50·(1 + Cant/Ki), written with receptor occupancy o = Cant/(Cant + Ki) (capped 0.95). |
 | [`pd.ts:22`](../../packages/engine-core/src/l2/pk/pd.ts#L22) | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). |
 | [`pd.ts:39`](../../packages/engine-core/src/l2/pk/pd.ts#L39) | Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). |
-| [`pipeline.ts:227`](../../packages/engine-core/src/l2/pk/pipeline.ts#L227) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
-| [`pipeline.ts:661`](../../packages/engine-core/src/l2/pk/pipeline.ts#L661) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
-| [`pump.ts:13`](../../packages/engine-core/src/l2/pk/pump.ts#L13) | The rack's largest channel number: the owner's ruling PQ1 = C, "1–8, default 4" (research/00-orchestrator-rulings.md, 9 November 16:00; docs/plans/pump-rack-tci.md §11). |
+| [`pipeline.ts:252`](../../packages/engine-core/src/l2/pk/pipeline.ts#L252) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
+| [`pipeline.ts:717`](../../packages/engine-core/src/l2/pk/pipeline.ts#L717) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
+| [`pump.ts:18`](../../packages/engine-core/src/l2/pk/pump.ts#L18) | The rack's largest channel number: the owner's ruling PQ1 = C, "1–8, default 4" (research/00-orchestrator-rulings.md, 9 November 16:00; docs/plans/pump-rack-tci.md §11). |
 | [`row.ts:41`](../../packages/engine-core/src/l2/pk/row.ts#L41) | E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±\|emax\|·3 |
 | [`shafer.ts:8`](../../packages/engine-core/src/l2/pk/tci-sets/shafer.ts#L8) | Fentanyl ke0 = ke0ForTtpe(Shafer PK, 3.6 min) — decision 2 / D2 (tables 0.147 was fitted with another PK). |
 | [`tci.ts:5`](../../packages/engine-core/src/l2/pk/tci.ts#L5) | Ce(k) = Ce_free(k) + r·Ce_unit(k), so r = min_k (target − Ce_free(k)) / Ce_unit(k) over k with Ce_unit(k) > 0 — |
@@ -151,6 +151,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `macPrev` | `number[]` | desflurane MAC over the last 60 s at 1 Hz |
 | `distQ` | `number` | The cardiac-output ratio distFactor gave at the last advance (1 before any). |
 | `pinDistQ` | `number` | TEST-ONLY seam — pins the cardiac-output ratio (as `pinCoreTemp`/`pinHbfRel` do) so a rig can assert PK equality under pinned conditions. Never set by the engine. |
+| `pinClFactor` | `number` | TEST-ONLY seam — pins every compartment row's clearance factor (as `pinDistQ` pins the distribution), so a rig can show that the patient equals the pump's prediction when only the patient's physiology differs. Never set by the engine. |
 | `panelNext` | `number` | — |
 | `dec` | `Record<string, number>` | decrement-from-now per running drug, min (Task 19) |
 | `pumps` | `PumpChannel[]` | The pump channels (pump.ts, piece E1), made by the first `pump` event: absent in a run without pumps and in an older snapshot, so both are unchanged. |
@@ -245,6 +246,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `TCI_DT_S` | `10` | s | — | — |
+| `TCI_MAX_RATE_ML_H` | `1200` | — | [ENG: device; the plan's D2 item 5 keeps it until the Mindray SP5 manual re-sources it] | A TCI pump's rate ceiling when the event carries none (the host supplies the device's, D4): 1200 mL/h, the published pumps' (above) [ENG: device; the plan's D2 item 5 keeps it until the Mindray SP5 manual re-sources it]. |
 | `TCI_HORIZON_STEPS` | `90` | — | — | 15 min: > 4× the slowest TTPE among TCI drugs (fentanyl 3.6 min) |
 
 ### [`l2/pk/volatile.ts`](../../packages/engine-core/src/l2/pk/volatile.ts)
@@ -358,11 +360,15 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `gammaDeclineRate` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | The decline-rate multiplier of a gamma row, 1 − φ·(1 − f), φ = min(1, (ln 2/t½β)/ke) — the clearance-governed share of the chain's decline (ke); |
 | `routeHonoured` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | True when the engine models a dose of this drug by this route (validatePkCommand's route rule; |
 | `applyPkCommand` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Apply a validated command. |
-| `concOf` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | --- step ------------------------------------------------------------------------------------------------------- |
 | `advancePk` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. |
+| `tciSetRefusal` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | --- the pump's own prediction (E2, D3) ------------------------------------------------------------------------- Why a set cannot run this drug in this mode, or undefined: |
+| `newPrediction` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | A fresh prediction: |
+| `samePrediction` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | True when a prediction was made with this set and exactly these typed data (a new target keeps it). |
+| `stepPrediction` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | Step a prediction by `dtS` with what the pump believes it gave (amount/min). |
 | `validatePump` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | The engine's refusal of a `pump` event, or undefined when it is accepted. |
 | `applyPump` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | Apply a validated `pump` event. |
 | `stepPumps` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | One PK step of every channel: |
+| `predictionRow` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | A prediction's row in the `drugs` event (the pump face's Cp and Ce). |
 | `pumpPanel` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | The `drugs` event's channel rows (1 Hz). |
 | `eleveldPropofol` | [`l2/pk/tci-sets/eleveld.ts`](../../packages/engine-core/src/l2/pk/tci-sets/eleveld.ts) | Eleveld 2018 propofol (Br J Anaesth 120:942–959), ARTERIAL PK, Table 2 θ1–θ18, reference 35 y, 70 kg, 170 cm, male, no opioids. |
 | `geptsSufentanil` | [`l2/pk/tci-sets/gepts.ts`](../../packages/engine-core/src/l2/pk/tci-sets/gepts.ts) | Gepts 1995 sufentanil (Anesthesiology 83:1194), Table 3 p. |
@@ -376,7 +382,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `toRate` | [`l2/pk/units.ts`](../../packages/engine-core/src/l2/pk/units.ts) | Rate → amount/min in `amountUnit`, or an error string. |
 | `uptakeLpm` | [`l2/pk/volatile.ts`](../../packages/engine-core/src/l2/pk/volatile.ts) | The agent's alveolar UPTAKE, L/min of gas — Q̇·λb/g·(FA − Fv) with Fv the flow-weighted mixed-venous tension of the three tissue groups. |
 
-Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTimeMin`, `gammaShape`, `gammaConc`, `onsetChain`, `chainShape`, `rhythmRequest`, `perKg`, `pkPatientOf`, `createPkState`, `distFactor`, `validatePkCommand`, `stepVolatile`.
+Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTimeMin`, `gammaShape`, `gammaConc`, `onsetChain`, `chainShape`, `rhythmRequest`, `perKg`, `pkPatientOf`, `createPkState`, `distFactor`, `validatePkCommand`, `concOf`, `stepVolatile`.
 
 ## Source files
 
@@ -470,6 +476,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`engine/pk-bus.test.ts`](../../packages/engine-core/test/engine/pk-bus.test.ts) | 0 | 0 |
 | [`engine/pk-longrun.test.ts`](../../packages/engine-core/test/engine/pk-longrun.test.ts) | 0 | 0 |
 | [`engine/pk-propofol-co-reference.test.ts`](../../packages/engine-core/test/engine/pk-propofol-co-reference.test.ts) | 0 | 0 |
+| [`engine/pk-tci-pump-control.test.ts`](../../packages/engine-core/test/engine/pk-tci-pump-control.test.ts) | 0 | 0 |
 | [`engine/pk-wiring.test.ts`](../../packages/engine-core/test/engine/pk-wiring.test.ts) | 0 | 0 |
 | [`l2/pk/antiarrhythmic.test.ts`](../../packages/engine-core/test/l2/pk/antiarrhythmic.test.ts) | 1 | 0 |
 | [`l2/pk/av-node.test.ts`](../../packages/engine-core/test/l2/pk/av-node.test.ts) | 0 | 0 |
@@ -496,6 +503,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`l2/pk/propofol.test.ts`](../../packages/engine-core/test/l2/pk/propofol.test.ts) | 0 | 0 |
 | [`l2/pk/pump-baseline.test.ts`](../../packages/engine-core/test/l2/pk/pump-baseline.test.ts) | 0 | 0 |
 | [`l2/pk/pump-channels.test.ts`](../../packages/engine-core/test/l2/pk/pump-channels.test.ts) | 0 | 0 |
+| [`l2/pk/pump-tci.test.ts`](../../packages/engine-core/test/l2/pk/pump-tci.test.ts) | 0 | 0 |
 | [`l2/pk/route-honoured.test.ts`](../../packages/engine-core/test/l2/pk/route-honoured.test.ts) | 0 | 0 |
 | [`l2/pk/route-models.test.ts`](../../packages/engine-core/test/l2/pk/route-models.test.ts) | 0 | 4 |
 | [`l2/pk/sux-repeat.test.ts`](../../packages/engine-core/test/l2/pk/sux-repeat.test.ts) | 0 | 0 |
