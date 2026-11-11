@@ -71,11 +71,23 @@ describe('the bench (L7)', () => {
     expect(m.diluent().value).toBe('water');
     expect(m.text('.lr-ontop')).toBe(BENCH_WORDS.onTop(20));
     expect(m.text('.lr-result .lr-sub')).toBe(BENCH_WORDS.holds);
-    expect(m.text('.lr-holds')).toBe('Dantrolene 6 mg/mL · 20 mL'); // 120 mg in the label's 20 mL
+    // N73: the label states 22.6 mL after the 20 mL added (emc-15912), so 120 mg is 5.31 mg/mL, not 6
+    expect(m.text('.lr-holds')).toBe('Dantrolene 5.31 mg/mL · 22.6 mL');
+    expect(m.q('.lr-powder').hidden).toBe(true);
     expect(m.text('.lr-preview')).toBe(BENCH_WORDS.preview);
     expect(m.text('.lr-time')).toBe(BENCH_WORDS.takes(50)); // emc-15912: 50 s
     expect(m.text('.lr-time')).toBe('Takes 0:50 to prepare');
     expect(m.text('.lr-stage')).toBe(BENCH_WORDS.stage);
+  });
+
+  it('N73: a powder whose label states no volume after reconstitution: the added volume only, and the bench says so', () => {
+    const m = mount();
+    m.search('dantrolene');
+    m.pick('dantrolene');
+    m.product('dantrium-iv-20mg');
+    expect(m.text('.lr-holds')).toBe('Dantrolene 0.33 mg/mL · 60 mL'); // 20 mg in the 60 mL added (emc-1097 states no final volume)
+    expect(m.q('.lr-powder').hidden).toBe(false);
+    expect(m.text('.lr-powder')).toBe(BENCH_WORDS.powderIgnored);
   });
 
   it('a solution with no sourced preparation time says "no source" (LQ7); "none" is offered, and the volume added changes the preview', () => {

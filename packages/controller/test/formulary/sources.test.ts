@@ -71,7 +71,7 @@ function fixture() {
       products: [{
         id: 'fixture-vial', form: 'powder',
         strength: { amount: 10, unit: 'mg', perVial: true, src: 'fixture-label' },
-        reconstitute: { diluents: ['water'], volumeMl: 10, src: 'fixture-label' },
+        reconstitute: { diluents: ['water'], volumeMl: 10, final: { volumeMl: 10.5, src: 'fixture-label' }, src: 'fixture-label' },
         prepTime: { gap: 'LQ7' },
       }],
       diluents: [
@@ -159,6 +159,41 @@ describe('the three fields the FS batch needed (brief 127): a row\'s concentrati
     expect(bad((d) => (d.stability[0].concentration.amount = 0))).toEqual(['fixturedrug.json/stability/0/concentration/amount: must be > 0']);
     expect(bad((d) => delete d.products[0].inUse[0].condition)).toEqual(["fixturedrug.json/products/0/inUse/0: must have required property 'condition'"]);
     expect(bad((d) => (d.products[0].inUse = []))).toEqual(['fixturedrug.json/products/0/inUse: must NOT have fewer than 1 items']);
+  });
+});
+
+describe('the three fields of brief 152: a statement\'s containers (N60), a molar mass (N61), a powder\'s final volume (N73)', () => {
+  const bad = (edit: (d: any) => void) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const f = fixture();
+    edit(f['fixturedrug.json']);
+    return [...shapeErrors(f), ...why(check(f))];
+  };
+  it('are admitted with their sources', () => {
+    expect(bad((d) => {
+      d.diluents[1].compat.containers = ['bag-pvc'];
+      d.admixtures[0].containers = ['syringe-pp', 'bag-polyolefin'];
+      d.molarMass = { mgPerMmol: 84, src: 'fixture-label' };
+    })).toEqual([]);
+    expect(bad((d) => (d.products[0].reconstitute.final = { perMl: 0.95, src: 'fixture-label' }))).toEqual([]);
+    expect(bad((d) => (d.products[0].reconstitute.final = { stated: false, src: 'fixture-label' }))).toEqual([]);
+  });
+  it('a container the formulary does not name, or an empty list, is refused', () => {
+    expect(bad((d) => (d.diluents[1].compat.containers = ['glass']))).toEqual(['fixturedrug.json/diluents/1/compat/containers/0: must be equal to one of the allowed values']);
+    expect(bad((d) => (d.admixtures[0].containers = []))).toEqual(['fixturedrug.json/admixtures/0/containers: must NOT have fewer than 1 items']);
+  });
+  it('a molar mass without its source is refused (rule 1 and the schema)', () => {
+    expect(bad((d) => (d.molarMass = { mgPerMmol: 84 }))).toEqual([
+      "fixturedrug.json/molarMass: must have required property 'src'",
+      'fixturedrug.json/molarMass/mgPerMmol: a number with no src beside it (nor a gap)',
+    ]);
+  });
+  it('a reconstituted product says what its label states after reconstitution: a final volume, a concentration, or that it states neither', () => {
+    expect(bad((d) => delete d.products[0].reconstitute.final)).toEqual(["fixturedrug.json/products/0/reconstitute: must have required property 'final'"]);
+    // (ajv also names each branch of the oneOf it tried; the oneOf line is the verdict)
+    expect(bad((d) => (d.products[0].reconstitute.final = { stated: true, src: 'fixture-label' }))).toContain('fixturedrug.json/products/0/reconstitute/final: must match exactly one schema in oneOf');
+    const unsourced = bad((d) => (d.products[0].reconstitute.final = { volumeMl: 10.5 }));
+    expect(unsourced).toContain('fixturedrug.json/products/0/reconstitute/final: must match exactly one schema in oneOf');
+    expect(unsourced).toContain('fixturedrug.json/products/0/reconstitute/final/volumeMl: a number with no src beside it (nor a gap)');
   });
 });
 
