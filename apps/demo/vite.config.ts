@@ -14,11 +14,12 @@ const devPages = Object.fromEntries(readdirSync(resolve(import.meta.dirname, 'de
 const SHOWCASE_SLOW = 'src/app/showcase/*.slow.test.ts';
 // CI splits the showcase set in two jobs, balanced on the per-file durations of main run 42046932502 (s): a = 568
 // (malignant-hyperthermia 313, healthy-induction 139, haemorrhage-anaphylaxis 116), b = 580 (haemorrhage-v2 228,
-// mh-v1-v2-table 122, malignant-hyperthermia-v2 107, stab-wound-tamponade 84, induction-after-premedication 39). The build
+// mh-v1-v2-table 122, malignant-hyperthermia-v2 107, stab-wound-tamponade 84, induction-after-premedication 39; ports, the
+// twin runs of piece B7, added to the lighter half while its manifest holds no port). The build
 // job checks that the halves are disjoint and together are the showcase set, so a new card file fails CI until it is
 // put in one of them.
 const SHOWCASE_A = ['malignant-hyperthermia', 'healthy-induction', 'haemorrhage-anaphylaxis'].map((f) => `src/app/showcase/${f}.slow.test.ts`);
-const SHOWCASE_B = ['haemorrhage-v2', 'mh-v1-v2-table', 'malignant-hyperthermia-v2', 'stab-wound-tamponade', 'induction-after-premedication'].map((f) => `src/app/showcase/${f}.slow.test.ts`);
+const SHOWCASE_B = ['haemorrhage-v2', 'mh-v1-v2-table', 'malignant-hyperthermia-v2', 'stab-wound-tamponade', 'induction-after-premedication', 'ports'].map((f) => `src/app/showcase/${f}.slow.test.ts`);
 const set = process.env.PME_TEST_SET;
 const showcase = { showcase: [SHOWCASE_SLOW], 'showcase-a': SHOWCASE_A, 'showcase-b': SHOWCASE_B }[set ?? ''];
 
