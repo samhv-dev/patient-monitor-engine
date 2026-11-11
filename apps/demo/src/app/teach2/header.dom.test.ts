@@ -158,8 +158,8 @@ describe('Instructor v2 header: the same commands as the session bar', () => {
     expect(room.getAttribute('href')).toBe('#/room');
     expect(room.getAttribute('aria-label')).toBe('Room code Q F B A W A, 3 phones: Room setup');
     expect(f.sent).toEqual([]);
-    // the order of option G: patient line, MODELED, title, gap, pill, speed, divider, Sound, Room
-    expect([...v2.el.children].map((c) => c.className.split(' ')[0])).toEqual(['ip2-who', 'ip2-mode', 'ip2-title', 'ip2-spacer', 'ip2-pill', 'ip2-fanwrap', 'ip2-head-div', 'ip2-topctl', 'ip2-topctl']);
+    // the order of option G: patient line, MODELED, title, (L9: the learner preparations' count, hidden at 0), gap, pill, speed, divider, Sound, Room
+    expect([...v2.el.children].map((c) => c.className.split(' ')[0])).toEqual(['ip2-who', 'ip2-mode', 'ip2-title', 'ip2-preps-count', 'ip2-spacer', 'ip2-pill', 'ip2-fanwrap', 'ip2-head-div', 'ip2-topctl', 'ip2-topctl']);
   });
 
   it('the pill and the speed box follow the host (a pause or speed set elsewhere)', () => {
@@ -192,5 +192,31 @@ describe('Instructor v2 header: the same commands as the session bar', () => {
     const names = [...r.v2.el.querySelectorAll('button')].map((b) => b.getAttribute('aria-label') ?? b.textContent);
     expect(names).not.toContain('Pause');
     expect(names.filter((n) => /^Fast-forward /.test(n ?? ''))).toEqual([]);
+  });
+});
+
+// Plan learner-action-remote.md L9: the header counts the learner preparations with a finding whose notice the instructor
+// has not shown (the dock's card holds them and their control); none: no count.
+describe('Instructor v2 header: the learner preparations count (L9)', () => {
+  it('hidden at 0; "1 preparation to look at" for a finding not yet shown; gone once its notice is shown', async () => {
+    const { PrepBoard } = await import('./learner-preps.ts');
+    const f = fakeLink();
+    const preps = new PrepBoard();
+    (f.link as unknown as { preps: InstanceType<typeof PrepBoard> }).preps = preps;
+    const hd = mountHeader(f.link);
+    const count = hd.el.querySelector('.ip2-preps-count') as HTMLElement;
+    expect(count.hidden).toBe(true);
+    const prep = {
+      id: 'bicepi01', by: 'bed2remote01', t: 60, actives: [], volumeMl: 11, leftMl: 11, diluent: null, container: 'syringe-pp' as const, notice: null as null | { shownAt: number }, givenAt: null,
+      ready: { atS: 60, src: [], gap: null }, findings: [{ kind: 'incompatible' as const, drugId: 'sodiumBicarbonate', against: 'admixture' as const, other: 'epinephrine', statement: 'x', src: null }],
+    };
+    preps.apply({ news: 'made', prep }, 60);
+    hd.refresh();
+    expect(count.hidden).toBe(false);
+    expect(count.textContent).toBe('1 preparation to look at');
+    expect(count.getAttribute('aria-label')).toBe('1 learner preparation with a finding, notice not shown');
+    preps.apply({ news: 'notice', prep: { ...prep, notice: { shownAt: 75 } } }, 75);
+    hd.refresh();
+    expect(count.hidden).toBe(true);
   });
 });

@@ -91,6 +91,7 @@ export const BENCH_WORDS = {
   remove: 'Remove',
   change: 'Choose another drug',
   holds: 'The syringe then holds',
+  powderIgnored: 'The label states no volume after reconstitution: this counts the diluent added only and ignores the powder’s own volume.',
   preview: 'Preview on this phone. The instructor’s computer gives the concentration when it is on the tray.',
   takes: (s: number) => `Takes ${mmss(s)} to prepare`,
   noSource: 'Preparation time: no source',
@@ -138,6 +139,7 @@ export function benchView(o: BenchOptions): Bench {
   const onTop = h('p', { class: 'hint lr-ontop' });
   const box = select(BENCH_WORDS.container, Object.entries(CONTAINER_WORDS) as Array<[string, string]>, 'syringe-pp', () => draw());
   const holds = h('p', { class: 'lr-holds', role: 'status', 'aria-live': 'polite' });
+  const powderNote = h('p', { class: 'hint lr-powder' }, BENCH_WORDS.powderIgnored);
   const time = h('p', { class: 'lr-time' });
   const said = h('p', { class: 'lr-cannot', role: 'alert' });
   const stageBtn = button(BENCH_WORDS.stage, () => stage(), 'primary lr-stage');
@@ -146,7 +148,7 @@ export function benchView(o: BenchOptions): Bench {
     drawnList, products,
     h('div', { class: 'lr-diluent' }, dil.el, h('div', { class: 'field' }, h('span', { class: 'lr-label' }, `${BENCH_WORDS.volume} (mL)`), vol.el), onTop),
     box.el,
-    h('div', { class: 'lr-result' }, h('p', { class: 'lr-sub' }, BENCH_WORDS.holds), holds, h('p', { class: 'hint lr-preview' }, BENCH_WORDS.preview), time, said),
+    h('div', { class: 'lr-result' }, h('p', { class: 'lr-sub' }, BENCH_WORDS.holds), holds, powderNote, h('p', { class: 'hint lr-preview' }, BENCH_WORDS.preview), time, said),
     h('div', { class: 'lr-actions' }, stageBtn, another));
   const el = h('section', { class: 'lr-bench', 'aria-label': BENCH_WORDS.title }, h('h2', { class: 'lr-h2' }, BENCH_WORDS.title), search, fill);
 
@@ -251,6 +253,11 @@ export function benchView(o: BenchOptions): Bench {
     const powder = drawn.find((x) => x.unit === 'vial');
     const rc = powder ? f.drugs[powder.drugId]!.products.find((p) => p.id === powder.productId)?.reconstitute : undefined;
     setText(onTop, rc ? BENCH_WORDS.onTop(rc.volumeMl) : '');
+    // N73: where a drawn powder's label states no final volume, the concentration shown ignores the powder's volume
+    powderNote.hidden = !drawn.some((x) => {
+      const fin = f.drugs[x.drugId]!.products.find((p) => p.id === x.productId)?.reconstitute?.final;
+      return fin !== undefined && 'stated' in fin;
+    });
     another.hidden = drawn.length === 0 || picking !== null;
     stageBtn.hidden = picking !== null;
     if (drawn.length === 0) {
