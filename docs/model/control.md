@@ -51,7 +51,7 @@ transports (`src/protocol.ts`).
 |---|---|
 | [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
 | [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
-| [`preparations.ts:130`](../../packages/controller/src/session/preparations.ts#L130) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
+| [`preparations.ts:132`](../../packages/controller/src/session/preparations.ts#L132) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
 
 ## State
 
@@ -105,6 +105,7 @@ transports (`src/protocol.ts`).
 | `admin` | `Administration[]` | The administration record: every clinical act, accepted or refused (the driver fills it through record(), F3). |
 | `edges` | `RuleEdge[]` | The true/false edges of every named rule (at most PhaseRunner.EDGES_PER_RULE per rule; its first edge is kept). |
 | `fired` | `string[]` | The script entries fired (ids): each fires once. |
+| `firedT` | `Record<string, number>` | The sim time each script entry fired, by id (B6's log); absent until the first, so an older state is the same. |
 | `holdFor` | `Record<string, number>` | Seconds each phase's entry rule has held without a break (its `holdS`), by phase id. |
 | `latched` | `Record<string, true>` | A phase whose running hold an `unchanged` leaf's break latched (the team's change answered the rise: the hold runs on to its end whatever the rule reads), by phase id; cleared at every phase entry. |
 | `phaseRef` | `Record<string, number>` | The value of each `since: 'phaseStart'` variable at the current phase's entry (the first value after it). |
@@ -194,6 +195,7 @@ transports (`src/protocol.ts`).
 | `COCKPIT_EVENT_MS` | `1000` | ms | [ENG: network] | While the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG: network]. |
 | `FF_STEP_TICKS` | `25` | — | [ENG: network] | A fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and its commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG: network]. |
 | `FF_MAX_S` | `600` | s | [ENG: network] | The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG: network]. |
+| `FF_PHASE_MAX_S` | `1800` | s | [ENG: ui] | The longest "To the next phase" (`fastForwardToNextPhase`), s: the plan's 30 min (scenario-builder.md §6) [ENG: ui]. |
 
 ### [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts)
 
@@ -230,6 +232,7 @@ transports (`src/protocol.ts`).
 | `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
 | `covers` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. |
 | `stabilityRows` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Indexes of `entry`'s stability rows for `diluent` and `container` (any temperature) that state `concentration` or state none; |
+| `whyNoRow` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Why no stability row describes the preparation (N61: |
 | `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match). |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
@@ -379,6 +382,7 @@ None recorded.
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
 | [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
+| [`formulary/shipped-rows.test.ts`](../../packages/controller/test/formulary/shipped-rows.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
@@ -416,6 +420,7 @@ None recorded.
 | [`scenario/clock-step-back.test.ts`](../../packages/controller/test/scenario/clock-step-back.test.ts) | 0 | 0 |
 | [`scenario/concentration-vars.test.ts`](../../packages/controller/test/scenario/concentration-vars.test.ts) | 0 | 0 |
 | [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 0 | 0 |
+| [`scenario/entry-reads.test.ts`](../../packages/controller/test/scenario/entry-reads.test.ts) | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |
 | [`scenario/host-scenario.test.ts`](../../packages/controller/test/scenario/host-scenario.test.ts) | 0 | 0 |
@@ -446,6 +451,7 @@ None recorded.
 | [`session/host-drug-lock.test.ts`](../../packages/controller/test/session/host-drug-lock.test.ts) | 0 | 0 |
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
+| [`session/host-ff-next-phase.test.ts`](../../packages/controller/test/session/host-ff-next-phase.test.ts) | 0 | 0 |
 | [`session/host-instructor.test.ts`](../../packages/controller/test/session/host-instructor.test.ts) | 0 | 0 |
 | [`session/host-learner-defib.test.ts`](../../packages/controller/test/session/host-learner-defib.test.ts) | 0 | 0 |
 | [`session/host-learner.test.ts`](../../packages/controller/test/session/host-learner.test.ts) | 0 | 0 |

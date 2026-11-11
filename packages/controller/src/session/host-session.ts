@@ -40,7 +40,7 @@ import {
 import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
 import {
   deliverPrep, infusePrep, instructorView, learnerView, prepRecord, PREPS_PER_DEVICE, setInfusion, stagePrep, stagedOf,
-  type HostPrep, type InstructorPrepNews, type LearnerPrepNews, type PrepNewsKind, type Running, type Translated,
+  type HostPrep, type InstructorPrepNews, type InstructorPrepView, type LearnerPrepNews, type PrepNewsKind, type Running, type Translated,
 } from './preparations.ts';
 
 /** C2: the LABELS of the room's preparations a pump may load (§8): never their findings. */
@@ -166,6 +166,14 @@ export interface HostSessionOptions {
   /** C2 (D12): the reference pumps' device profiles (S1, pump-devices/), every range a pump command is checked against.
    *  Absent or null: every pump command is refused. */
   pumpDevices?: () => PumpDevices | null;
+  /**
+   * B6 (plan scenario-builder.md §6, "To the next phase"): a token of the running /2 card's last phase entry (its id and
+   * entry time, so two entries inside one step still differ), or null while no /2 card runs. Absent or null:
+   * `fastForwardToNextPhase` is refused.
+   */
+  phaseMark?: () => string | null;
+  /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
+  deviceName?: (key: string) => string | null;
 }
 
 /** What the host answers an instructor (the grant's reason, or the refused command's ack). */
@@ -202,6 +210,8 @@ export const UNKNOWN_ROLE = 'this computer takes no commands from that role';
 /** §8 (PQ8 = A): the words the pump shows and sounds once the instructor shows the mismatch notice. */
 export const MISMATCH_WORDS: Readonly<Record<ChannelKind, string>> = { syringe: 'syringe and programme differ', drip: 'bag and programme differ' };
 
+/** "01:15" for 75 s: the case clock as the app's screens write it (apps/demo ui.ts clock). */
+const caseClock = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 /** R8c: what the host answers a remote ventilator (with INSTRUCTOR_REASONS' wrong PIN, taken over, PIN changed). */
 export const VENTILATOR_REASONS = {
   noVentilator: 'this computer does not take a remote ventilator',
@@ -278,6 +288,10 @@ export const COCKPIT_EVENT_MS = 1000;
 export const FF_STEP_TICKS = 25;
 /** The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG: network]. */
 export const FF_MAX_S = 600;
+/** The longest "To the next phase" (`fastForwardToNextPhase`), s: the plan's 30 min (scenario-builder.md §6) [ENG: ui]. */
+export const FF_PHASE_MAX_S = 1800;
+/** The end's `stopped` when "To the next phase" met its phase change. */
+export const FF_PHASE_STOP = 'the next phase began';
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
 /** The roles that sign in with the instructor's PIN, each in its own single place (P3; R8c). */
@@ -287,6 +301,7 @@ type Holder = { t: ManagedTransport; from: string; pin: string };
 const FF_REFUSAL = 'the simulation is fast-forwarding; try again when it ends';
 
 export class HostSession {
+  private nextPhaseN = 0;
   readonly peerId: string;
   private readonly o: HostSessionOptions;
   private readonly stamp: (b: WireBody) => WireMessage;
@@ -475,6 +490,7 @@ export class HostSession {
     if (!h || h.notice) return false;
     h.notice = { shownAt: this.o.target.now().simT };
     this.prepNews('notice', h);
+    this.o.onPreparation?.(stagedOf(h)); // L9: the /2 record's copy of the preparation now carries the notice's time
     return true;
   }
 
@@ -717,6 +733,7 @@ export class HostSession {
     if (!isHolder && h) this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
     this.grant(t, from, true);
     this.setHolder(role, { t, from, pin: want });
+    if (role === 'instructor') this.instructorPreps(); // L9: a phone that signs in (or again) sees what was already staged
   }
 
   /**
@@ -873,6 +890,12 @@ export class HostSession {
       case undefined: {
         // forgotten by a peer-left (R29) and no hello since: not the controller path (the relay refuses it too)
         if (role === undefined && p.left.has(m.from)) return refuse(NO_HELLO);
+        // L9 (LQ3): the incompatibility notice is the instructor's, from the laptop or the granted phone (instructorMay), and
+        // the host's own table's: acked here, never dispatched
+        if (m.body.type === 'prep' && m.body.action === 'notice') {
+          const why = role === 'instructor' ? this.instructorRefusal(t, m.from, m.body) : null;
+          return why !== null ? refuse(why) : this.prepNotice(t, m.body, refuse);
+        }
         // §4 D3: a preparation and an infusion's mL/h are the learner remote's shapes only, and never reach the engine as
         // sent; C2: a channel's shapes are the pump tablet's (D10)
         if (m.body.type === 'prep' || m.body.type === 'infusion') return refuse(LEARNER_REASONS.notSignedIn);
@@ -970,7 +993,7 @@ export class HostSession {
     if (c.type === 'applyEvent') return this.command(t, { ...c, issuedBy: LEARNER_ISSUED_BY, by }, from);
     const { simT } = this.o.target.now();
     if (c.type === 'infusion') return this.toChannel(t, from, base, c.drugId, c.rateMlH, 'mL/h', refuse) ?? this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
-    if (c.type !== 'prep') return refuse('not a learner command'); // learnerMay admitted none other
+    if (c.type !== 'prep' || c.action === 'notice') return refuse('not a learner command'); // learnerMay admitted none other
     const f = this.o.formulary?.() ?? null;
     const mine = this.preps.get(by);
     for (const h of mine?.values() ?? []) h.from = from; // a remote that signed in again on a new socket: its news follows it
@@ -1011,6 +1034,24 @@ export class HostSession {
     for (const x of out.cmds) await this.command(t, x, from);
   }
 
+  /**
+   * L9 (§4 D7, LQ3): an instructor's press of the card's one control: the notice of the preparation `prepId` of the device
+   * `by` is shown (showPrepNotice), once. A second press, from the other screen, is refused with the time it was shown;
+   * a resend of the same press gets its first answer. Nothing is removed or blocked.
+   */
+  private prepNotice(t: ManagedTransport, c: Extract<WireCommand, { type: 'prep'; action: 'notice' }>, refuse: (reason: string) => void): void {
+    const prior = this.seen.get(c.id);
+    if (prior) {
+      this.stats.duplicates++;
+      return t.send(this.stamp(prior));
+    }
+    const h = this.preps.get(c.by)?.get(c.prepId);
+    if (!h) return refuse(`no preparation ${c.prepId} on that remote`);
+    if (h.notice) return refuse(`the notice was shown at ${caseClock(h.notice.shownAt)}`);
+    this.acked(t, c.id);
+    this.showPrepNotice(c.by, c.prepId);
+  }
+
   /** An accepted ack for a command the host handled itself (a preparation staged or discarded): no commandApplied. */
   private acked(t: ManagedTransport, id: string): void {
     const ack: AckBody = { kind: 'ack', commandId: id, accepted: true, tick: this.o.target.now().tick };
@@ -1025,10 +1066,22 @@ export class HostSession {
    * no learner may sign in under: verifyLearner), with the findings and the device. The relay routes the first to that one
    * learner socket and both to granted instructors; no other learner, viewer or defibrillator window gets either.
    */
+  /** L9: the instructor's copy of every preparation on the table, again (a phone granted after the staging, or after a
+   *  reload of its page), as `made` news: the card takes each as it stands (its notice, its given time). */
+  private instructorPreps(): void {
+    const t = this.o.target.now().simT;
+    for (const m of this.preps.values()) for (const h of m.values()) this.queue({ type: 'prep', t, to: this.peerId, body: { news: 'made', prep: this.instructorCopy(h) } satisfies InstructorPrepNews });
+  }
+
+  private instructorCopy(h: HostPrep): InstructorPrepView {
+    const name = this.o.deviceName?.(h.by) ?? null; // L9: the card says "Bed 2 remote staged", on the laptop and the phone
+    return { ...instructorView(h), ...(name ? { name } : {}) };
+  }
+
   private prepNews(news: PrepNewsKind, h: HostPrep): void {
     const t = this.o.target.now().simT;
     this.queue({ type: 'prep', t, to: h.from, body: { news, prep: learnerView(h) } satisfies LearnerPrepNews });
-    this.queue({ type: 'prep', t, to: this.peerId, body: { news, prep: instructorView(h) } satisfies InstructorPrepNews });
+    this.queue({ type: 'prep', t, to: this.peerId, body: { news, prep: this.instructorCopy(h) } satisfies InstructorPrepNews });
     if (news !== 'notice' && this.granted('pump').length) this.pumpNews(this.labels()); // C2 (§8): what the pumps may load changed
   }
 
@@ -1216,6 +1269,7 @@ export class HostSession {
     if (push) {
       this.pushing.delete(cmd.id);
       if (result.accepted) push.h.leftMl = Math.max(0, push.h.leftMl - push.volumeMl);
+      if (result.accepted) push.h.givenAt ??= this.o.target.now().simT; // L9: the card's "given at"
       if (result.accepted) this.prepNews(push.news, push.h);
     }
     if (!result.accepted) {
@@ -1342,21 +1396,23 @@ export class HostSession {
    * order and gives the patient a run polled every 0.5 s would. Every peer sees a `fastForward` start and end (the end
    * lists the alarms raised during it); a late joiner gets the jump as a sticky replay.
    */
-  private fastForward(cmd: TimeCommand): { result: DispatchResult; applied: WireCommand } {
+  private fastForward(cmd: TimeCommand, until = false): { result: DispatchResult; applied: WireCommand } {
     const { tick } = this.o.target.now();
     const no = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     const target = this.o.target;
     if (!target.fastForwardStep) return no('this monitor cannot fast-forward');
-    if (!(typeof cmd.value === 'number' && cmd.value > 0 && cmd.value <= FF_MAX_S)) return no(`fast-forward must be 0–${FF_MAX_S} s`);
+    const max = until ? FF_PHASE_MAX_S : FF_MAX_S;
+    if (!(typeof cmd.value === 'number' && cmd.value > 0 && cmd.value <= max)) return no(`fast-forward${until ? ' to the next phase' : ''} must be 0–${max} s`);
+    if (until && !this.o.phaseMark?.()) return no('no phase to wait for: no pme-scenario/2 card is running');
     if (this.ff) return no('a fast-forward is already running');
     const ff = { fromTick: tick, toTick: tick + Math.round(cmd.value / TICK_S), alarms: [] };
     this.ff = ff;
     const applied: TimeCommand = { ...cmd, atTick: tick };
-    void this.runFastForward(ff, applied, (n, last) => (target.fastForwardStep as NonNullable<HostTarget['fastForwardStep']>)(n, last));
+    void this.runFastForward(ff, applied, (n, last) => (target.fastForwardStep as NonNullable<HostTarget['fastForwardStep']>)(n, last), until);
     return { result: { accepted: true, tick }, applied };
   }
 
-  private async runFastForward(ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] }, cmd: TimeCommand, advance: NonNullable<HostTarget['fastForwardStep']>): Promise<void> {
+  private async runFastForward(ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] }, cmd: TimeCommand, advance: NonNullable<HostTarget['fastForwardStep']>, until = false): Promise<void> {
     const timeline = this.timelines;
     const span = ff.toTick - ff.fromTick;
     const wallMs = this.o.fastForwardWallMs ?? 0;
@@ -1367,6 +1423,7 @@ export class HostSession {
       Object.assign(ff, { fromTick: tick, toTick: tick + span });
       this.sticky.set('time.jump', { ...cmd, atTick: tick });
       this.queue({ type: 'fastForward', t: tick * TICK_S, tick, phase: 'start', fromT: tick * TICK_S, toT: ff.toTick * TICK_S, wallMs });
+      const mark0 = until ? this.o.phaseMark?.() : undefined; // B6: the phase entry the span started in
       const w0 = this.now();
       while (tick < ff.toTick) {
         if (this.timelines !== timeline) {
@@ -1376,6 +1433,12 @@ export class HostSession {
         const n = Math.min(FF_STEP_TICKS, ff.toTick - tick);
         tick = (await advance(n, tick + n >= ff.toTick)).tick;
         await this.chain; // the scenario's commands of this step are applied before the next step
+        // B6: the first phase change ends "To the next phase" here, after the new phase's own entry script landed
+        if (until && tick < ff.toTick && this.o.phaseMark?.() !== mark0) {
+          stopped = FF_PHASE_STOP;
+          tick = (await advance(0, true)).tick; // the monitor's clock back (a full span gives it back on its last step)
+          break;
+        }
         const wait = w0 + (wallMs * (tick - ff.fromTick)) / span - this.now(); // the pace: ahead of it, wait
         if (wait > 0 && tick < ff.toTick) await (this.o.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms))))(wait);
       }
@@ -1395,6 +1458,30 @@ export class HostSession {
     const end = this.timelines === timeline ? { t: tick * TICK_S, tick } : this.o.target.now(); // a new timeline's clock
     const alarms = ff.alarms.map((a) => ({ ...a, ended: !this.activeAlarms.has(a.id) }));
     this.queue({ type: 'fastForward', t: 't' in end ? end.t : end.simT, tick: end.tick, phase: 'end', fromT: ff.fromTick * TICK_S, toT: ff.toTick * TICK_S, ...(stopped ? { stopped } : {}), alarms });
+  }
+
+  /**
+   * B6 (plan scenario-builder.md §6), "To the next phase": a fast-forward of at most `maxS` (≤ FF_PHASE_MAX_S, the
+   * plan's 30 min) that also stops at the running /2 card's first phase change (`phaseMark`), with the end's `stopped`
+   * FF_PHASE_STOP. Host-local: the builder's run panel on the laptop that hosts calls it; no wire command asks for it
+   * (the orchestrator's ruling, 11 November 2026). It runs in the command chain as the host's own commands do, and the
+   * peers see a plain `time jump` of the span applied, then the fast-forward's start and end as for any jump.
+   */
+  fastForwardToNextPhase(maxS: number = FF_PHASE_MAX_S): Promise<DispatchResult> {
+    const cmd: TimeCommand = { id: `next-phase-${++this.nextPhaseN}`, issuedBy: 'host', type: 'time', action: 'jump', value: maxS };
+    const run = this.chain.then(() => {
+      const { result, applied } = this.fastForward(cmd, true);
+      if (!result.accepted) {
+        this.stats.rejected++;
+        return result;
+      }
+      this.stats.applied++;
+      this.queue({ type: 'commandApplied', commandId: cmd.id, tick: result.tick, resolved: { command: applied } satisfies AppliedResolution });
+      this.emitState();
+      return result;
+    });
+    this.chain = run.then(() => undefined, (err) => console.error('[pme host]', err));
+    return run;
   }
 
   private async scenario(cmd: ScenarioCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {

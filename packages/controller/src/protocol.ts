@@ -147,7 +147,11 @@ export type PrepCommand =
   | { type: 'prep'; action: 'stage'; prep: { id: string; components: PrepComponent[]; diluent?: { id: string; volumeMl: number }; container?: string } }
   | { type: 'prep'; action: 'discard'; prepId: string }
   | { type: 'prep'; action: 'deliver'; prepId: string; volumeMl: number | 'all'; route: PkRoute; overS?: number }
-  | { type: 'prep'; action: 'infuse'; prepId: string; rateMlH: number };
+  | { type: 'prep'; action: 'infuse'; prepId: string; rateMlH: number }
+  /** L9 (§4 D7, LQ3): the INSTRUCTOR's one control on a learner's preparation, from the laptop's dock card or the phone's:
+   *  show the incompatibility notice of the preparation `prepId` of the device `by` (its device key; D2 wrote `{by, id}`,
+   *  and `id` is the command's own). Instructor-only: in INSTRUCTOR_COMMANDS, never in LEARNER_COMMANDS. */
+  | { type: 'prep'; action: 'notice'; by: string; prepId: string };
 /** One product drawn into a preparation: the formulary's product id, and how much of it, in that product's unit. */
 export interface PrepComponent {
   productId: string;
@@ -491,6 +495,9 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   // measured by the census once it crawled the pme-scenario/2 cards (P6): Instructor v2's A presses on the MH card in
   // phases send its actions' `give`, which holds these two (the induction's airway device and preoxygenation)
   'applyEvent airwayDevice', 'applyEvent preoxygenate',
+  // plan learner-action-remote.md L9 (LQ3): the staging card's one control, on the laptop's dock and the phone (the census
+  // measures the laptop's press on a card it is shown)
+  'prep notice',
 ]);
 
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */

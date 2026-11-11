@@ -1,6 +1,10 @@
 {
   "$comment": "FS batch 2026-11-10; points per stabilis-guide-level-of-evidence. Strength 1 mmol/mL from the label (1 mmol/kg = 1 mL/kg of 8.4 %).",
   "drugId": "sodiumBicarbonate",
+  "molarMass": {
+    "mgPerMmol": 84,
+    "src": "dailymed-sodiumbicarbonate-hospira"
+  },
   "products": [
     {
       "id": "sodium-bicarbonate-84mg-ml",

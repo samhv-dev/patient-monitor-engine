@@ -284,6 +284,28 @@ export class ScenarioDriver {
   }
 
   /**
+   * B6 (plan scenario-builder.md §6, "Apply from this phase's mark"): every mark of the card running holds `doc` from now
+   * on, its runner state passed through `fit` (the edited card's holds started again). The caller restores one through
+   * `restoreBookmark` (the wire path: the timeline, the viewers' resync and the applied doc as every restore), and the
+   * run goes on with the edited card from there. Nothing changes unless `doc` passes the validator and has the running
+   * card's id (the caller has checked that the edit keeps the phases, actions and leaves the state names); returns how
+   * many marks now hold it.
+   */
+  reviseMarks(doc: unknown, fit: (s: PhaseRunnerState) => PhaseRunnerState): number {
+    const id = this.cur?.doc.id;
+    const v = validateScenario(doc, { rhythms: [...this.known] });
+    if (!v.ok || !isV2(v.doc) || id === undefined || v.doc.id !== id) return 0;
+    let n = 0;
+    for (const m of this.marks.values()) {
+      if (m.doc?.id !== id || !m.runner || (m.runner as { schema?: string }).schema !== 'pme-scenario-runner/2') continue;
+      m.doc = v.doc;
+      m.runner = fit(m.runner as PhaseRunnerState);
+      n++;
+    }
+    return n;
+  }
+
+  /**
    * Host side, read-only: the stage marks of this run, oldest first — `bookmark` commands of kind `stage` whose note is
    * the state id and whose target is the label `restoreBookmark` takes (the mark at the start of a stage is the last one
    * with its note).
