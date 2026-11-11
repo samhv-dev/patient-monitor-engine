@@ -177,7 +177,7 @@ describe('the states and their words', () => {
     const { f, r, h } = signIn();
     h.hello();
     h.grant(true);
-    const card = f.q<HTMLElement>('.lp');
+    const card = f.q<HTMLElement>('.ip2-lp');
     expect(card.parentElement?.nextElementSibling?.classList.contains('panel')).toBe(true); // above the panel
     expect(card.hidden).toBe(true);
     const prep = {
@@ -190,9 +190,9 @@ describe('the states and their words', () => {
     expect(card.hidden).toBe(true);
     ev('host-h1');
     expect(card.hidden).toBe(false);
-    expect(card.querySelector('.lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate/);
-    expect(card.querySelector('.lp-finding')?.textContent).toBe('Incompatible: A haze forms. (no source speaks)');
-    card.querySelector<HTMLButtonElement>('.lp-show')!.click();
+    expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate/);
+    expect(card.querySelector('.ip2-lp-finding')?.textContent).toBe('Incompatible: A haze forms. (no source speaks)');
+    card.querySelector<HTMLButtonElement>('.ip2-lp-show')!.click();
     await new Promise((x) => setTimeout(x, 0));
     const cmds = r.sent.filter((m): m is Extract<WireMessage, { kind: 'command' }> => m.kind === 'command');
     expect(cmds.at(-1)?.body).toMatchObject({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'bicepi01' });

@@ -8,11 +8,12 @@
 // (remote/tray.ts, L7), and the card reads "Notice shown at mm:ss". There is no remove and no let-stand: the preparation
 // stays the learner's; a Give before the press is given, and the card says "given at mm:ss, notice not shown". Clean
 // preparations are listed collapsed ("3 preparations, no finding"). Nothing here warns the learner (LQ3).
-import type { Finding, Formulary, InstructorPrepNews, InstructorPrepView, Source } from '@pme/controller';
+import type { Finding, Formulary, InstructorPrepView, Source } from '@pme/controller';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { sourceText } from '../remote/bench.ts';
 import { FINDING_WORDS } from '../remote/tray.ts';
+import type { BoardEntry } from './prep-board.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import './learner-preps.css';
 
@@ -37,42 +38,10 @@ export const PREPS_WORDS = {
   countAria: (n: number) => `${n} learner ${n === 1 ? 'preparation' : 'preparations'} with a finding, notice not shown`,
 } as const;
 
-/** Where a preparation is: on the tray, given (a bolus or an infusion from it), or discarded; with the time. */
-export interface BoardEntry {
-  prep: InstructorPrepView;
-  /** Case time of the first delivery or infusion from it (null: not given). */
-  givenAt: number | null;
-  discardedAt: number | null;
-}
-
-/** The instructor's copy of every learner preparation of this timeline, from the host's `prep` news, in staging order. */
-export class PrepBoard {
-  private readonly m = new Map<string, BoardEntry>();
-  /** Take one InstructorPrepNews at case time `t`. */
-  apply(n: InstructorPrepNews, t: number): void {
-    const key = `${n.prep.by}|${n.prep.id}`;
-    const was = this.m.get(key);
-    // the host's own given time (a phone that signed in late gets it too), else the delivery news' time
-    const e: BoardEntry = { prep: n.prep, givenAt: n.prep.givenAt ?? was?.givenAt ?? null, discardedAt: was?.discardedAt ?? null };
-    if ((n.news === 'delivered' || n.news === 'infusing') && e.givenAt === null) e.givenAt = t;
-    if (n.news === 'discarded') e.discardedAt = t;
-    this.m.set(key, e);
-  }
-  /** A restart or a bookmark restore: the host's table went with the old engine (host-session newTimeline). */
-  clear(): void {
-    this.m.clear();
-  }
-  get entries(): BoardEntry[] {
-    return [...this.m.values()];
-  }
-  /** Preparations with a finding, on the tray, whose notice has not been shown: the header's count. */
-  get waiting(): number {
-    return this.entries.filter((e) => e.prep.findings.length > 0 && !e.prep.notice && e.discardedAt === null).length;
-  }
-}
+export { PrepBoard, type BoardEntry } from './prep-board.ts';
 
 const fmt = (x: number): string => String(+x.toPrecision(3));
-/** "Sodium bicarbonate 8.4 mmol + Epinephrine 1 mg, one syringe, 11 mL" (the host's figures). */
+/** What was staged, in the host's figures: "Sodium bicarbonate 8.4 % 10 mmol + Epinephrine 1 mg, one syringe, 11 mL". */
 export function whatText(p: InstructorPrepView, f: Formulary | null): string {
   const drugs = p.actives.map((a) => `${drugName(a.drugId)} ${fmt(a.amount)} ${a.unit === 'mcg' ? 'µg' : a.unit}`).join(' + ');
   const diluent = p.diluent ? ` in ${f?.diluents[p.diluent.id]?.name ?? p.diluent.id}` : '';
@@ -95,7 +64,7 @@ function crossText(x: Finding, f: Formulary): string | null {
   return `Trissel 2013${page} ${c.trissel}${c.trissel === 'differs' && c.ruling ? `; the entry follows ${c.ruling.follows}` : ''}`;
 }
 
-/** "(Stabilis 3642; Trissel 2013 p. 1859 agrees)" for a finding; its source key alone while the formulary is not loaded. */
+/** A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). */
 export function sourcesText(x: Finding, f: Formulary | null): string {
   if (x.src === null) return `(${PREPS_WORDS.noSource})`;
   if (!f) return `(${x.src})`;
@@ -107,7 +76,7 @@ export function sourcesText(x: Finding, f: Formulary | null): string {
 
 /** One finding: "Incompatible: <statement> (<sources>)". */
 function findingRow(x: Finding, f: Formulary | null): HTMLElement {
-  return h('li', { class: 'lp-finding', 'data-kind': x.kind },
+  return h('li', { class: 'ip2-lp-finding', 'data-kind': x.kind },
     h('strong', {}, FINDING_WORDS[x.kind]), `: ${x.statement ?? PREPS_WORDS.noStatement} ${sourcesText(x, f)}`);
 }
 
@@ -123,11 +92,11 @@ export interface LearnerPreps {
  * the host tick that sent it. `inline`: the phone's panel (in the page's flow) rather than over the dock.
  */
 export function mountLearnerPreps(link: Link, o: { formulary(): Formulary | null; inline?: boolean }): LearnerPreps {
-  const list = h('ul', { class: 'lp-list' });
-  const cleanSum = h('summary', { class: 'lp-clean-sum' });
-  const cleanList = h('ul', { class: 'lp-clean-list' });
-  const clean = h('details', { class: 'lp-clean' }, cleanSum, cleanList);
-  const el = h('section', { class: `lp${o.inline ? ' lp-inline' : ''}`, 'aria-label': PREPS_WORDS.title, hidden: true }, list, clean);
+  const list = h('ul', { class: 'ip2-lp-list' });
+  const cleanSum = h('summary', { class: 'ip2-lp-clean-sum' });
+  const cleanList = h('ul', { class: 'ip2-lp-clean-list' });
+  const clean = h('details', { class: 'ip2-lp-clean' }, cleanSum, cleanList);
+  const el = h('section', { class: `ip2-lp${o.inline ? ' ip2-lp-inline' : ''}`, 'aria-label': PREPS_WORDS.title, hidden: true }, list, clean);
   const pending = new Set<string>(); // presses sent and not answered
   let drawn = '';
 
@@ -151,12 +120,12 @@ export function mountLearnerPreps(link: Link, o: { formulary(): Formulary | null
     const fate = e.discardedAt !== null ? PREPS_WORDS.discardedAt(e.discardedAt)
       : e.givenAt !== null ? PREPS_WORDS.givenAt(e.givenAt, p.notice && p.notice.shownAt <= e.givenAt ? PREPS_WORDS.shownAt(p.notice.shownAt).toLowerCase() : PREPS_WORDS.notShown) : null;
     const control = p.notice
-      ? h('p', { class: 'lp-shown', role: 'status' }, PREPS_WORDS.shownAt(p.notice.shownAt))
-      : h('button', { type: 'button', class: 'lp-show', 'data-prep': p.id, disabled: pending.has(key), onclick: () => void press(e) }, pending.has(key) ? PREPS_WORDS.showing : PREPS_WORDS.show);
-    return h('li', { class: 'lp-card', 'data-prep': p.id, 'data-by': p.by },
-      h('p', { class: 'lp-what' }, h('strong', {}, PREPS_WORDS.staged(p.name ?? PREPS_WORDS.unnamed)), ` ${whatText(p, f)}`),
-      h('ul', { class: 'lp-findings' }, ...p.findings.map((x) => findingRow(x, f))),
-      fate ? h('p', { class: 'lp-fate' }, fate) : null,
+      ? h('p', { class: 'ip2-lp-shown', role: 'status' }, PREPS_WORDS.shownAt(p.notice.shownAt))
+      : h('button', { type: 'button', class: 'ip2-lp-show', 'data-prep': p.id, disabled: pending.has(key), onclick: () => void press(e) }, pending.has(key) ? PREPS_WORDS.showing : PREPS_WORDS.show);
+    return h('li', { class: 'ip2-lp-card', 'data-prep': p.id, 'data-by': p.by },
+      h('p', { class: 'ip2-lp-what' }, h('strong', {}, PREPS_WORDS.staged(p.name ?? PREPS_WORDS.unnamed)), ` ${whatText(p, f)}`),
+      h('ul', { class: 'ip2-lp-findings' }, ...p.findings.map((x) => findingRow(x, f))),
+      fate ? h('p', { class: 'ip2-lp-fate' }, fate) : null,
       control);
   };
 
@@ -173,7 +142,7 @@ export function mountLearnerPreps(link: Link, o: { formulary(): Formulary | null
     list.replaceChildren(...flagged.map((e) => card(e, f)));
     clean.hidden = plain.length === 0;
     setText(cleanSum, PREPS_WORDS.clean(plain.length));
-    cleanList.replaceChildren(...plain.map((e) => h('li', { class: 'lp-clean-row', 'data-prep': e.prep.id },
+    cleanList.replaceChildren(...plain.map((e) => h('li', { class: 'ip2-lp-clean-row', 'data-prep': e.prep.id },
       h('strong', {}, PREPS_WORDS.staged(e.prep.name ?? PREPS_WORDS.unnamed)), ` ${whatText(e.prep, f)}`,
       e.givenAt !== null ? ` · ${PREPS_WORDS.given(e.givenAt)}` : '')));
   };

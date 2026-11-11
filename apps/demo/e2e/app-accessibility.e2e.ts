@@ -290,7 +290,7 @@ test('accessibility: the learner preparations card on the laptop dock and on the
     await lp.locator('.lr-diluent select').selectOption('');
     await lp.locator('.lr-stage').click();
     // the laptop: the card over the dock
-    await expect(host.locator('.ip2-dock .lp-card .lp-show')).toBeVisible({ timeout: 15_000 });
+    await expect(host.locator('.ip2-dock .ip2-lp-card .ip2-lp-show')).toBeVisible({ timeout: 15_000 });
     found.push(...(await audit(host, { touchPanel: false })).map((f) => `card laptop ${f.rule}: ${f.what}`));
     // the instructor's phone, dark then light: the card above the panel
     for (const theme of ['dark', 'light'] as const) {
@@ -300,7 +300,10 @@ test('accessibility: the learner preparations card on the laptop dock and on the
       await ip.goto(`${base}/?relay=${ws}#/remote?code=${code}`);
       for (const d of instructorPin) await ip.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
       await ip.locator('.ip-peer-go').click();
-      await expect(ip.locator('.lp-inline .lp-card .lp-show')).toBeVisible({ timeout: 20_000 });
+      await expect(ip.locator('.ip2-lp-inline .ip2-lp-card .ip2-lp-show')).toBeVisible({ timeout: 20_000 });
+      // the session bar's mode badge is empty (a button with no name) until the host's first state reaches the phone: a
+      // gap that predates this card (sessionbar.ts), so the audit runs once the state has arrived
+      await expect(ip.locator('.mode-badge')).not.toHaveText('', { timeout: 10_000 });
       found.push(...(await audit(ip, { touchPanel: true })).map((f) => `card phone ${theme} ${f.rule}: ${f.what}`));
       if (theme === 'dark') found.push(...(await focusWalk(ip, 12)).map((f) => `card phone focus: ${f}`));
       await ictx.close();

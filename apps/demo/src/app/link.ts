@@ -7,7 +7,7 @@ import { asV1, isV2, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
-import { PrepBoard } from './teach2/learner-preps.ts';
+import { PrepBoard } from './teach2/prep-board.ts';
 
 export type AlarmStatusEvent = Extract<EngineEvent, { type: 'alarmStatus' }>;
 export type DeviceStatusEvent = Extract<EngineEvent, { type: 'deviceStatus' }>;

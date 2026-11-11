@@ -206,11 +206,11 @@ test('L9: the instructor sees the staging on the laptop dock and the phone, and 
   const item = p.locator('.lr-item').first();
   await expect(item.locator('.lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
   const [id] = await trayIds(p);
-  const onLaptop = page.locator(`.ip2-dock .lp-card[data-prep="${id}"]`);
-  const onPhone = ip.locator(`.lp-inline .lp-card[data-prep="${id}"]`);
+  const onLaptop = page.locator(`.ip2-dock .ip2-lp-card[data-prep="${id}"]`);
+  const onPhone = ip.locator(`.ip2-lp-inline .ip2-lp-card[data-prep="${id}"]`);
   for (const c of [onLaptop, onPhone]) {
-    await expect(c.locator('.lp-what')).toHaveText(/^Bed 2 remote staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/, { timeout: 5_000 });
-    await expect(c.locator('.lp-finding[data-kind="incompatible"]').first()).toContainText(/^Incompatible: .+\(Stabilis .+; Trissel 2013 .+ agrees\)$/);
+    await expect(c.locator('.ip2-lp-what')).toHaveText(/^Bed 2 remote staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/, { timeout: 5_000 });
+    await expect(c.locator('.ip2-lp-finding[data-kind="incompatible"]').first()).toContainText(/^Incompatible: .+\(Stabilis .+; Trissel 2013 .+ agrees\)$/);
     await expect(c.getByRole('button', { name: 'Show the incompatibility notice to the learner' })).toBeVisible();
   }
   await expect(page.locator('.ip2-preps-count')).toHaveText('1 preparation to look at');
@@ -221,20 +221,20 @@ test('L9: the instructor sees the staging on the laptop dock and the phone, and 
   await item.locator('.lr-give .stepper input').first().dispatchEvent('change');
   await item.locator('.lr-give-btn').click();
   await expect(item.locator('.lr-said')).toHaveText(/^Given 2 mL at \d\d:\d\d$/, { timeout: 10_000 });
-  for (const c of [onLaptop, onPhone]) await expect(c.locator('.lp-fate')).toHaveText(/^given at \d\d:\d\d, notice not shown$/, { timeout: 10_000 });
+  for (const c of [onLaptop, onPhone]) await expect(c.locator('.ip2-lp-fate')).toHaveText(/^given at \d\d:\d\d, notice not shown$/, { timeout: 10_000 });
   expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(0);
   // the instructor presses on the phone
   await onPhone.getByRole('button', { name: 'Show the incompatibility notice to the learner' }).click();
   await expect(item.locator('.lr-finding')).toBeVisible({ timeout: 10_000 });
   await expect.poll(() => p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1);
   for (const c of [onLaptop, onPhone]) {
-    await expect(c.locator('.lp-shown')).toHaveText(/^Notice shown at \d\d:\d\d$/, { timeout: 10_000 });
-    await expect(c.locator('.lp-show')).toHaveCount(0);
+    await expect(c.locator('.ip2-lp-shown')).toHaveText(/^Notice shown at \d\d:\d\d$/, { timeout: 10_000 });
+    await expect(c.locator('.ip2-lp-show')).toHaveCount(0);
   }
   await expect(page.locator('.ip2-preps-count')).toBeHidden();
   const rec = await page.evaluate(({ k, i }) => (window as unknown as HostW).__pmeApp.session.host.preparation(k, i)?.notice ?? null, { k: KEY, i: id as string });
   expect(rec?.shownAt).toEqual(expect.any(Number));
-  await expect(onLaptop.locator('.lp-shown')).toHaveText(`Notice shown at ${String(Math.floor(rec!.shownAt / 60)).padStart(2, '0')}:${String(Math.floor(rec!.shownAt % 60)).padStart(2, '0')}`);
+  await expect(onLaptop.locator('.ip2-lp-shown')).toHaveText(`Notice shown at ${String(Math.floor(rec!.shownAt / 60)).padStart(2, '0')}:${String(Math.floor(rec!.shownAt % 60)).padStart(2, '0')}`);
   await p.waitForTimeout(1000);
   expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1); // once
   await ctx.close();

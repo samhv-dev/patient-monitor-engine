@@ -102,9 +102,9 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     await until(() => !c.laptop.hidden && !c.phone.hidden, 'both cards');
     expect(r.tick()).toBe(t0); // the host's clock has not moved: shown within the tick that staged it
     for (const el of [c.laptop, c.phone]) {
-      const card = el.querySelector('.lp-card[data-prep="bicepi01"]') as HTMLElement;
-      expect(card.querySelector('.lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/);
-      const row = card.querySelector('.lp-finding[data-kind="incompatible"]') as HTMLElement;
+      const card = el.querySelector('.ip2-lp-card[data-prep="bicepi01"]') as HTMLElement;
+      expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/);
+      const row = card.querySelector('.ip2-lp-finding[data-kind="incompatible"]') as HTMLElement;
       expect(row.textContent).toBe('Incompatible: Stabilis (epinephrine monograph): NaHCO3 as solvent degrades epinephrine. (Stabilis Epinephrine hydrochloride (Monographie.php?IdMolecule=106); Trissel 2013 PDF p. 1859 (page stamp 1839) agrees)');
       expect([...card.querySelectorAll('button')].map((b) => b.textContent)).toEqual([PREPS_WORDS.show]);
     }
@@ -119,12 +119,12 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     await r.send(BICARB_EPI);
     await until(() => !c.laptop.hidden && !c.phone.hidden, 'both cards');
     r.at(75);
-    (c.laptop.querySelector('.lp-show') as HTMLButtonElement).click();
+    (c.laptop.querySelector('.ip2-lp-show') as HTMLButtonElement).click();
     await until(() => r.notices().length === 1, 'the notice at the remote');
-    await until(() => c.phone.querySelector('.lp-shown') !== null, 'the phone card updated');
+    await until(() => c.phone.querySelector('.ip2-lp-shown') !== null, 'the phone card updated');
     for (const el of [c.laptop, c.phone]) {
-      expect(el.querySelector('.lp-shown')?.textContent).toBe('Notice shown at 01:15');
-      expect(el.querySelector('.lp-show')).toBeNull();
+      expect(el.querySelector('.ip2-lp-shown')?.textContent).toBe('Notice shown at 01:15');
+      expect(el.querySelector('.ip2-lp-show')).toBeNull();
     }
     expect(r.host.preparation(KEY, 'bicepi01')?.notice).toEqual({ shownAt: 75 });
     const again = await r.phone.send({ type: 'prep', action: 'notice', by: KEY, prepId: 'bicepi01' });
@@ -139,9 +139,9 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     await r.send(BICARB_EPI);
     await until(() => !c.phone.hidden, 'the phone card');
     r.at(42);
-    (c.phone.querySelector('.lp-show') as HTMLButtonElement).click();
-    await until(() => c.laptop.querySelector('.lp-shown') !== null, 'the laptop card updated');
-    expect(c.laptop.querySelector('.lp-shown')?.textContent).toBe('Notice shown at 00:42');
+    (c.phone.querySelector('.ip2-lp-show') as HTMLButtonElement).click();
+    await until(() => c.laptop.querySelector('.ip2-lp-shown') !== null, 'the laptop card updated');
+    expect(c.laptop.querySelector('.ip2-lp-shown')?.textContent).toBe('Notice shown at 00:42');
     expect(r.notices()).toHaveLength(1);
   });
 
@@ -152,9 +152,9 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     await r.send(BICARB_EPI);
     r.at(200);
     expect((await r.send({ type: 'prep', action: 'deliver', prepId: 'bicepi01', volumeMl: 2, route: 'iv' })).accepted).toBe(true);
-    await until(() => c.laptop.querySelector('.lp-fate') !== null && c.phone.querySelector('.lp-fate') !== null, 'the fate line');
-    for (const el of [c.laptop, c.phone]) expect(el.querySelector('.lp-fate')?.textContent).toBe('given at 03:20, notice not shown');
-    expect(c.laptop.querySelector('.lp-show')).not.toBeNull();
+    await until(() => c.laptop.querySelector('.ip2-lp-fate') !== null && c.phone.querySelector('.ip2-lp-fate') !== null, 'the fate line');
+    for (const el of [c.laptop, c.phone]) expect(el.querySelector('.ip2-lp-fate')?.textContent).toBe('given at 03:20, notice not shown');
+    expect(c.laptop.querySelector('.ip2-lp-show')).not.toBeNull();
     expect(r.host.preparation(KEY, 'bicepi01')?.notice).toBeNull();
   });
 
@@ -164,16 +164,16 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     r.at(10);
     await r.send(FENTANYL('fent0001'));
     await r.send(FENTANYL('fent0002'));
-    await until(() => !c.laptop.hidden && (c.laptop.querySelector('.lp-clean-sum')?.textContent ?? '').startsWith('2'), 'the clean line');
+    await until(() => !c.laptop.hidden && (c.laptop.querySelector('.ip2-lp-clean-sum')?.textContent ?? '').startsWith('2'), 'the clean line');
     for (const el of [c.laptop, c.phone]) {
-      expect(el.querySelector('.lp-clean-sum')?.textContent).toBe('2 preparations, no finding');
-      expect((el.querySelector('.lp-clean') as HTMLDetailsElement).open).toBe(false);
-      expect(el.querySelectorAll('.lp-clean-row')).toHaveLength(2);
-      expect(el.querySelectorAll('.lp-card, button')).toHaveLength(0);
+      expect(el.querySelector('.ip2-lp-clean-sum')?.textContent).toBe('2 preparations, no finding');
+      expect((el.querySelector('.ip2-lp-clean') as HTMLDetailsElement).open).toBe(false);
+      expect(el.querySelectorAll('.ip2-lp-clean-row')).toHaveLength(2);
+      expect(el.querySelectorAll('.ip2-lp-card, button')).toHaveLength(0);
     }
     await r.send(BICARB_EPI);
-    await until(() => c.laptop.querySelector('.lp-card') !== null, 'the finding card');
-    expect(c.laptop.querySelector('.lp-clean-sum')?.textContent).toBe('2 preparations, no finding');
+    await until(() => c.laptop.querySelector('.ip2-lp-card') !== null, 'the finding card');
+    expect(c.laptop.querySelector('.ip2-lp-clean-sum')?.textContent).toBe('2 preparations, no finding');
   });
 
   it("the Link takes the instructor's copy only, and a new timeline empties the board", async () => {
