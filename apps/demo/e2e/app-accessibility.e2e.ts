@@ -249,3 +249,25 @@ test("accessibility: the learner remote's Drugs tab with the bench open and a tr
   }
   expect(found).toEqual([]);
 });
+
+// Plan vent-skin-edp-ts.md V1: the EDP-TS ventilator face (vent-hamilton.html?face=edp-ts) at the laptop size and at
+// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast (the
+// greyed words of an unavailable control included: they stay 4.5:1), one h1, a main landmark, no sideways scroll.
+test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const found: string[] = [];
+  for (const vp of [{ width: 1280, height: 800 }, { width: 1920, height: 1080 }]) {
+    const ctx = await browser.newContext({ viewport: vp });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
+    await page.waitForSelector('main.edp .edp-key');
+    const at = `${vp.width}×${vp.height}`;
+    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
+    await page.click('[data-ctl="side:mode"]');
+    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
+    await page.click('[data-ctl="side:alarmLimits"]');
+    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
+    await ctx.close();
+  }
+  expect(found).toEqual([]);
+});
