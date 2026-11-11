@@ -1190,6 +1190,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-labs.e2e.ts`](../../apps/demo/e2e/learner-labs.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/learner-paused.e2e.ts`](../../apps/demo/e2e/learner-paused.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-remote.e2e.ts`](../../apps/demo/e2e/learner-remote.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mechanism-tree.e2e.ts`](../../apps/demo/e2e/mechanism-tree.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mobile-learner.e2e.ts`](../../apps/demo/e2e/mobile-learner.e2e.ts) | 0 | 0 |
@@ -1296,6 +1297,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/instrument-sync.dom.test.ts`](../../apps/demo/src/app/instrument-sync.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/kit-store.test.ts`](../../apps/demo/src/app/kit-store.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/learner-paused.test.ts`](../../apps/demo/src/app/learner-paused.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-others.test.ts`](../../apps/demo/src/app/link-others.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/graph.test.ts`](../../apps/demo/src/app/mechanisms/graph.test.ts) | 0 | 0 |
@@ -1320,6 +1322,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/remote/bench.dom.test.ts`](../../apps/demo/src/app/remote/bench.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/infusions.dom.test.ts`](../../apps/demo/src/app/remote/infusions.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/labs.dom.test.ts`](../../apps/demo/src/app/remote/labs.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/remote/paused.dom.test.ts`](../../apps/demo/src/app/remote/paused.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/tray.dom.test.ts`](../../apps/demo/src/app/remote/tray.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |
