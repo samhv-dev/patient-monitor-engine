@@ -3,7 +3,7 @@
 // page 2, after the violations, from the record (debrief.ts preparationsOf); the timeline and the drugs table name the
 // remote through the session's one name source (AppSession.deviceName, PR 423), never a copy of their own; a run with no
 // learner remote prints no such section and no such words.
-import type { Administration, StagedPrep } from '@pme/controller';
+import type { Administration, StagedPrep } from '@pme/controller/scenario';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Link } from '../link.ts';
 import { emptyRun, type RunData } from '../record.ts';

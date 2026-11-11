@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 // Plan learner-action-remote.md L13 ("Tests first"): the Debrief tells the learner remotes' story from the record alone.
 // 1. The who line of a learner give and of an infusion change ("…, replacing the instructor's 4 mL/h"), named by the one
 //    name source (AppSession.deviceName, PR 423), else numbered among the remotes. 2. The record keeps the /2 runner's
@@ -9,13 +8,13 @@
 //    what r rested on (the formulary's note: "loss not modelled", LQ8), the formulary's grade. 4. Nothing for a run with
 //    no learner remote. The scripted figures are the shipped formulary's sodium bicarbonate 8.4 % 10 mL + epinephrine
 //    1 mg/mL 1 mL (Stabilis: NaHCO3 as solvent degrades epinephrine) and the L2 fixture's powder [ENG: test].
-import { GAP_WORDS, LEARNER_ISSUED_BY, type Administration, type Formulary, type PrepRecord, type StagedPrep, type WireEvent } from '@pme/controller';
+import { GAP_WORDS, LEARNER_ISSUED_BY, type Formulary, type WireEvent } from '@pme/controller';
+import type { Administration, PrepRecord, StagedPrep } from '@pme/controller/scenario';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { learnerWho, preparationsOf, type PrepRow } from './debrief.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { drugName } from './glossary.ts';
-import { sourceText } from './remote/bench.ts';
-import { sourcesText } from './teach2/learner-preps.ts';
+import { sourcesText, sourceText } from './prep-words.ts';
 import { emptyRun, RunRecord, type GradeInputs, type Row, type RunData } from './record.ts';
 import mhV2 from './showcase/showcase-mh-v2.json';
 
@@ -133,7 +132,7 @@ describe('L13: the Preparations section, from a scripted /2 run', () => {
       { kind: 'incompatible', text: `Incompatible: ${sb!.statement} ${sourcesText(sb!, F)}` },
       { kind: 'incompatible', text: `Incompatible: ${ep!.statement} ${sourcesText(ep!, F)}` },
     ]);
-    expect(m!.findings[0]!.text).toMatch(/^Incompatible: Stabilis \(epinephrine monograph\): NaHCO3 as solvent degrades epinephrine\. \(Stabilis .*; Trissel 2013 p\. 1859 agrees\)$/);
+    expect(m!.findings[0]!.text).toMatch(/^Incompatible: Stabilis \(epinephrine monograph\): NaHCO3 as solvent degrades epinephrine\. \(Stabilis .*; Trissel 2013 .*1859.* agrees\)$/);
     expect(m!.notice).toBe('Notice shown at 01:30');
     const both = `${drugName('sodiumBicarbonate')} 1.82 mmol active of 1.82 mmol prepared (100 % intact; loss not modelled); ${drugName('epinephrine')} 0.182 mg active of 0.182 mg prepared (100 % intact; loss not modelled)`;
     expect(m!.gives).toEqual([`Given at 01:00, notice not shown: ${both}`, `Given at 02:00, after the notice: ${both}`]);

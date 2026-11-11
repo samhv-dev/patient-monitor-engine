@@ -7,12 +7,13 @@
 // of the controller on the inputs the record copied (the panel's function), as actions, outcomes and violations
 // (`pme-debrief/3`; a team act the instructor observes is a record action among the actions: judged rows are retired,
 // the owner's ruling of 5 November). No DOM.
-import { asV1, isV2, manualLabel, type MarkKind } from '@pme/controller';
-import { grade, ruleWords, type Anchor, type Grade, type Grades, type HintAnchor, type ObjectiveRule, type PhaseEntry, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { asV1, BEYOND_DATA_WORDS, GAP_WORDS, isV2, manualLabel, type Finding, type Formulary, type MarkKind } from '@pme/controller';
+import { grade, ruleWords, type Administration, type Anchor, type Grade, type Grades, type HintAnchor, type ObjectiveRule, type PhaseEntry, type PrepRecord, type RunEventId, type ScenarioDocV2, type StagedPrep } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
-import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
+import { drugName, drugWords, labelOf, lookup, unitOf, unitText } from './glossary.ts';
+import { FINDING_WORDS, NO_STATEMENT, sourcesText, sourceText } from './prep-words.ts';
 import { LAB_KEYS, LABS, PRESSURES, TREND, TREND_KEYS, type LabKey, type PressureKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 
 /** The pressures a record of Debrief 2 keeps (record.ts `PRESSURES`). */
@@ -34,17 +35,37 @@ export type ObjectiveVerdict = Verdict & { tickedT?: number };
 
 /** mm:ss of simulated time (the session bar's clock). */
 export const mmss = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+/** Who set a rate a learner's infusion change replaced, when it was not a learner remote (record.ts `Row.replaced.by`). */
+const REPLACED_WHO: Readonly<Record<string, string>> = { laptop: "the instructor's", phone: "the instructor's", card: "the card's" };
+/** The learner remotes' device keys in the order the run first names them (a give's, then the remote whose rate it
+ *  replaced), then `more` (L13: the devices that staged a preparation): "Learner remote n" is the n-th. */
+export function remoteKeys(rows: readonly Row[], more: readonly string[] = []): string[] {
+  const ks = rows.filter((x) => x.kind === 'learner' && x.remote).flatMap((x) => [x.by ?? '', ...(x.replaced && !(x.replaced.by in REPLACED_WHO) ? [x.replaced.by] : [])]);
+  return [...new Set([...ks, ...more])];
+}
+/** A learner remote by its device key: "Learner remote (bed 2)" by the name Room setup keeps for it now (`names`, the
+ *  session's one name source), else the name a row kept, else "Learner remote n" (`keys`, remoteKeys). */
+export function remoteWho(by: string, keys: readonly string[], names: (key: string) => string | null, kept?: string): string {
+  const name = names(by) ?? kept ?? null;
+  return name ? `Learner remote (${name})` : `Learner remote ${keys.indexOf(by) + 1}`;
+}
 /**
  * The who line of a learner defibrillator press (Room plan R5d): "Shock 200 J at 04:12, by Defibrillator (bed 2)". The
  * device's name is the one Room setup keeps for its key now (R7's remembered layout, `names`), else the one the row kept
- * when it pressed, else "Defibrillator window n": the n-th device key to press in this run.
+ * when it pressed, else "Defibrillator window n": the n-th device key to press in this run. A learner remote's give
+ * (L4) reads "…, by Learner remote (bed 2)"; its infusion change (L13, LQ4) also says whose rate it replaced:
+ * "…, replacing the instructor's 4 mL/h" (the laptop or the instructor's phone), "the card's", or another remote's.
  */
 export function learnerWho(rows: readonly Row[], r: Row, names: (key: string) => string | null): string {
+  if (r.remote) {
+    const keys = remoteKeys(rows);
+    const rep = r.replaced;
+    const whose = rep ? (REPLACED_WHO[rep.by] ?? `${remoteWho(rep.by, keys, names)}'s`) : null;
+    return `${r.text} at ${mmss(r.t)}, by ${remoteWho(r.by ?? '', keys, names, r.name)}${rep ? `, replacing ${whose} ${+rep.rate.toPrecision(3)} ${rep.rateUnit}` : ''}`;
+  }
   const name = (r.by !== undefined ? names(r.by) : null) ?? r.name ?? null;
-  // L4: a learner remote's row is named as the remote it came from, numbered among the remotes (the window's among windows)
-  const keys = [...new Set(rows.filter((x) => x.kind === 'learner' && !!x.remote === !!r.remote).map((x) => x.by ?? ''))];
-  const kind = r.remote ? ['Learner remote', 'Learner remote'] : ['Defibrillator', 'Defibrillator window'];
-  const who = name ? `${kind[0]} (${name})` : `${kind[1]} ${keys.indexOf(r.by ?? '') + 1}`;
+  const keys = [...new Set(rows.filter((x) => x.kind === 'learner' && !x.remote).map((x) => x.by ?? ''))];
+  const who = name ? `Defibrillator (${name})` : `Defibrillator window ${keys.indexOf(r.by ?? '') + 1}`;
   return `${r.text} at ${mmss(r.t)}, by ${who}`;
 }
 /** A span: "40 s", "2 min 05 s". Rounded to whole seconds before the split, so 119.7 s is "2 min 00 s", never "1 min 60 s" (FX-13). */
@@ -331,7 +352,7 @@ export function runEnded(d: RunData): boolean {
  *  window as open, "due" or "overdue"). Null for a /1 run, and for a /2 record made before the record copied them. */
 export function gradesOf(d: RunData): Grades | null {
   if (!d.doc || !isV2(d.doc) || d.format !== 2) return null;
-  return grade(d.doc, d.phases ?? [], d.admin ?? [], d.edges ?? [], endOf(d), { final: runEnded(d) });
+  return grade(d.doc, d.phases ?? [], d.admin ?? [], d.edges ?? [], endOf(d), { final: runEnded(d), ...(d.preps ? { preparations: d.preps } : {}) });
 }
 
 /** A /2 run's sections of the report and of `pme-debrief/3` (absent times are null). */
@@ -391,6 +412,119 @@ export function report3(d: RunData): Report3 | null {
     }),
     violations: g.violations.map((v) => ({ t: v.t, seq: v.seq, text: v.text, harm: v.harm })),
   };
+}
+
+// ---- L13 (learner-action-remote.md): the learner remotes' preparations ------------------------------------------------
+
+/** The Preparations section's words (English; each waits for its Persian in fa-debrief.json's templates). The clinical
+ *  words inside them (the statements, the sources, the gap words, the formulary's notes) are the formulary's. */
+export const PREP_WORDS = {
+  title: 'Preparations',
+  sub: 'What the record shows: each preparation a learner remote made, the formulary’s findings, the notice and each give; it does not grade the person',
+  staged: (t: number, who: string, what: string) => `${mmss(t)} · ${who} staged ${what}`,
+  readyGap: (words: string) => `Ready at once: ${words}`,
+  readyAt: (t: number, src: string) => `Ready at ${mmss(t)}${src ? ` (${src})` : ''}`,
+  noticeShown: (t: number) => `Notice shown at ${mmss(t)}`,
+  noticeNot: 'Notice not shown',
+  given: (t: number, notice: string, what: string) => `Given at ${mmss(t)}${notice}: ${what}`,
+  infused: (t: number, rate: string, notice: string, what: string) => `Infusion started at ${mmss(t)} at ${rate}${notice}: ${what}`,
+  beforeNotice: ', notice not shown',
+  afterNotice: ', after the notice',
+  notGiven: 'Not given',
+  amount: (drug: string, active: string, prepared: string | null, basis: string) => `${drug} ${active} active${prepared === null ? '' : ` of ${prepared} prepared`} (${basis})`,
+  intact: (pct: number) => `${pct} % intact`,
+  grade: { deviation: 'deviation: staged with a finding, not given', violation: 'violation: given with a finding' },
+  unrecorded: 'This run kept no record of its preparations (a pme-scenario/2 card keeps it); the remotes’ gives are in the timeline.',
+} as const;
+
+/** One preparation of the section: its head line, ready line, findings, notice line, gives and the formulary's grade. */
+export interface PrepRow {
+  id: string;
+  by: string;
+  t: number;
+  head: string;
+  ready: string | null;
+  findings: Array<{ kind: Finding['kind']; text: string }>;
+  /** Null: no finding and no notice (nothing to say). */
+  notice: string | null;
+  gives: string[];
+  /** The formulary's grade (grade.ts `preparations`); null on a run the controller does not grade. */
+  grade: 'ok' | 'deviation' | 'violation' | null;
+}
+
+/** A figure as the instructor's card prints it (three significant figures). */
+const fig = (x: number): string => String(+x.toPrecision(3));
+/** "Dantrolene 120 mg (5.31 mg/mL) in Water for injections, 22.6 mL": the HOST's figures, as the record holds them. */
+function prepWhat(p: StagedPrep, f: Formulary | null): string {
+  const actives = p.actives ?? [{ drugId: p.drugId, amount: p.concentration.amount, unit: p.concentration.unit, perMl: p.concentration.perMl }];
+  const drugs = actives.map((a) => `${drugName(a.drugId)} ${fig(a.amount)} ${unitText(a.unit)} (${fig(a.perMl)} ${unitText(a.unit)}/mL)`).join(' + ');
+  const diluent = p.diluent ? ` in ${f?.diluents[p.diluent]?.name ?? p.diluent}` : '';
+  return `${drugs}${diluent}, ${fig(p.volumeMl)} mL`;
+}
+/** What r rested on at a give: "100 % intact; loss not modelled", "75 % intact; <source>, beyond the source's data". The
+ *  formulary's note is printed where a finding makes it matter, or where it names a loss the engine does not model. */
+function basisText(rec: PrepRecord, findings: number, f: Formulary | null): string {
+  const b = rec.basis;
+  const parts: string[] = [];
+  if (b?.note && (findings > 0 || b.note === 'loss not modelled')) parts.push(b.note);
+  if (b?.src) parts.push(`${sourceText(f?.sources[b.src], b.src)}${b.beyondData ? `, ${BEYOND_DATA_WORDS}` : ''}`);
+  return [PREP_WORDS.intact(Math.round(rec.remaining * 100)), ...parts].join('; ');
+}
+/** One drug of a give: the engine's dose (a bolus) or the syringe's active concentration (an infusion), and the prepared. */
+function amountText(a: Administration, rec: PrepRecord, findings: number, f: Formulary | null): string {
+  const active = a.kind === 'drug' && a.dose !== undefined ? a.dose : rec.activeAmount;
+  const unit = unitText(a.kind === 'drug' && a.unit ? a.unit : rec.unit);
+  return PREP_WORDS.amount(drugName(rec.drugId), `${fig(active)} ${unit}`, rec.remaining > 0 ? `${fig(active / rec.remaining)} ${unit}` : null, basisText(rec, findings, f));
+}
+
+/**
+ * L13: the learner remotes' preparations, from the record alone (the /2 runner's staged preparations and its
+ * administrations, each give's `prep` the host's record of it): who staged what (the HOST's figures), when it was ready
+ * (the formulary's sourced time, or the LQ7 gap's words), each finding with the formulary's statement and sources (as the
+ * instructor's card names them), whether the incompatibility notice was shown and when, each give before or after it
+ * with the engine's dose and the prepared amount and what r rested on (the formulary's note: "loss not modelled"), and
+ * the formulary's grade. Null: no learner remote gave from or staged a preparation in this run. `unrecorded`: a remote
+ * gave from a preparation but the run kept no record of it (not a pme-scenario/2 card: its runner keeps it).
+ */
+export function preparationsOf(d: RunData, names: (key: string) => string | null, f: Formulary | null): { rows: PrepRow[]; unrecorded: boolean } | null {
+  const gives = (d.admin ?? []).filter((a) => a.source === 'learner' && a.prep && a.result.accepted);
+  const key = (by: string, id: string) => `${by}\u0000${id}`;
+  const staged = new Map<string, StagedPrep>();
+  for (const p of d.preps ?? []) staged.set(key(p.by, p.id), p);
+  for (const a of gives) {
+    const k = key(a.by ?? '', a.prep!.id);
+    if (!staged.has(k)) staged.set(k, { ...a.prep!, by: a.by ?? '', t: a.t }); // a give the runner's staged list lost (a restore)
+  }
+  if (!staged.size) return d.rows.some((r) => r.kind === 'learner' && r.remote && r.prepId) ? { rows: [], unrecorded: true } : null;
+  const list = [...staged.values()].sort((x, y) => x.t - y.t);
+  const keys = remoteKeys(d.rows, list.map((p) => p.by));
+  const grades = new Map((gradesOf(d)?.preparations ?? []).map((g) => [key(g.by, g.prepId), g.grade]));
+  const rows = list.map((p): PrepRow => {
+    const k = key(p.by, p.id);
+    const mine = gives.filter((a) => key(a.by ?? '', a.prep!.id) === k);
+    const kept = d.rows.find((r) => r.kind === 'learner' && r.remote && r.by === p.by && r.name)?.name;
+    const notice = p.notice ?? mine.at(-1)?.prep?.notice ?? null;
+    const n = p.findings.length;
+    const ticks = [...new Set(mine.map((a) => a.t))];
+    const giveLines = ticks.map((t) => {
+      const at = mine.filter((a) => a.t === t);
+      const shown = at[0]!.prep!.notice;
+      const note = n === 0 ? '' : shown && shown.shownAt <= t ? PREP_WORDS.afterNotice : PREP_WORDS.beforeNotice;
+      const what = at.map((a) => amountText(a, a.prep!, n, f)).join('; ');
+      const a0 = at[0]!;
+      return a0.kind === 'infusion' ? PREP_WORDS.infused(t, `${fig(a0.rate ?? 0)} ${a0.rateUnit ?? ''}`.trim(), note, what) : PREP_WORDS.given(t, note, what);
+    });
+    return {
+      id: p.id, by: p.by, t: p.t,
+      head: PREP_WORDS.staged(p.t, remoteWho(p.by, keys, names, kept), prepWhat(p, f)),
+      ready: !p.ready ? null : p.ready.gap ? PREP_WORDS.readyGap(GAP_WORDS[p.ready.gap]) : PREP_WORDS.readyAt(p.ready.atS, p.ready.src.map((s) => sourceText(f?.sources[s], s)).join('; ')),
+      findings: p.findings.map((x) => ({ kind: x.kind, text: `${FINDING_WORDS[x.kind]}: ${x.statement ?? NO_STATEMENT} ${sourcesText(x, f)}` })),
+      notice: notice ? PREP_WORDS.noticeShown(notice.shownAt) : n ? PREP_WORDS.noticeNot : null,
+      gives: giveLines.length ? giveLines : [PREP_WORDS.notGiven],
+      grade: grades.get(k) ?? null,
+    };
+  });
+  return { rows, unrecorded: false };
 }
 
 /** Every mark (bookmark) of the run in order, with its kind and note when it has them; an undone one says so. */
