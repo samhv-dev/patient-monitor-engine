@@ -273,6 +273,12 @@ renderer, audio and skin contracts.
 |---|---|---|---|---|
 | `SPARK_N` | `60` | — | — | 60 s sparklines — a bounded history per numeric path (one sample per truth event, 1 Hz) and a tiny canvas plot, newest sample at the right edge, auto-scaled to the window's min–max and the baseline (drawn as a faint line). |
 
+### [`apps/demo/src/vent/core/pending.ts`](../../apps/demo/src/vent/core/pending.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `REVERT_MS` | `15000` | ms | — | §2.4 [M p. 35] |
+
 ### [`apps/demo/src/vent/device-link.ts`](../../apps/demo/src/vent/device-link.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -735,6 +741,8 @@ renderer, audio and skin contracts.
 | `sparkRange` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | [lo, hi] over the finite samples and the baseline; |
 | `sparkY` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | y of `v` in an h-tall box (1 px inset); |
 | `sparkPoints` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | Canvas points for `values` in a w×h box, the newest at the right edge; |
+| `faceFromLocation` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | `?face=<id>`; |
+| `mountFace` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The cockpit on the driver, the simulator's tools, and the face on both; |
 | `levelSound` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | The level's sound with skin overrides applied (repeat time; |
 | `burstDurationS` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | First onset to last offset (s). |
 | `volumeGain` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | Linear gain for a volume step: |
@@ -833,7 +841,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createCockpit`, `createPending`, `signInVentilator`, `el`, `mountEmbed`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -1015,12 +1023,18 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/validation/bedside.ts`](../../apps/demo/src/validation/bedside.ts) | Saadat bedside checklist page (research/06 §7). |
 | [`apps/demo/src/validation/perf.ts`](../../apps/demo/src/validation/perf.ts) | Performance gate page: an 8-lane monitor (ECG II, V5, aVR, ABP, pleth, CVP, CO2, resp) with a ventilated patient. |
 | [`apps/demo/src/validation/review.ts`](../../apps/demo/src/validation/review.ts) | Blind realism review page (brief §9 steps 2–3, 6). |
+| [`apps/demo/src/vent/core/cockpit.ts`](../../apps/demo/src/vent/core/cockpit.ts) | The ventilator cockpit's core (plan vent-skin-edp-ts.md §4.3, piece V0): the logic every face needs, moved out of the Hamilton front end, knowing nothing of any look. |
+| [`apps/demo/src/vent/core/pending.ts`](../../apps/demo/src/vent/core/pending.ts) | Select-turn-press (plan vent-skin-edp-ts.md §2.4, §4.3; built in V0 for the EDP-TS face of V1, which the Hamilton face never uses): touch a setting's key, turn the knob, press it to apply. |
+| [`apps/demo/src/vent/core/types.ts`](../../apps/demo/src/vent/core/types.ts) | The ventilator cockpit's core types (plan vent-skin-edp-ts.md §4.3, piece V0). |
 | [`apps/demo/src/vent/demos.ts`](../../apps/demo/src/vent/demos.ts) | The ventilator-link demonstrations as data: a profile (lung-pathology row), starting settings, and the step applied after `settleS` sim seconds — ventilator settings and, for the vascular events the ventilator cannot cau |
 | [`apps/demo/src/vent/device-link.ts`](../../apps/demo/src/vent/device-link.ts) | R8d (plan room-and-instruments.md §7): the ventilator's own page signs in over the relay as the `ventilator` role (R8a), granted by the host's PIN check (R8c) and carried by the relay to the host only (R8b). |
+| [`apps/demo/src/vent/dom.ts`](../../apps/demo/src/vent/dom.ts) | The two DOM helpers of the v1.9 Hamilton front end, shared by its face and the simulator's tools. |
 | [`apps/demo/src/vent/embed.ts`](../../apps/demo/src/vent/embed.ts) | The ventilator-simulator embed: the Hamilton ventilator and the patient monitor in ONE page that opens from file:// with no server. |
+| [`apps/demo/src/vent/faces/hamilton/face.ts`](../../apps/demo/src/vent/faces/hamilton/face.ts) | The Hamilton-style face: the v1.9 Hamilton-style front end (ventilator-sim-hamilton.html "UI" block), ported to TypeScript and rendering from @pme/ventilator instead of page globals. |
+| [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The ventilator's faces (plan vent-skin-edp-ts.md §4.3, §4.5): the registry, the choice from the address, and the mount every page uses (vent-hamilton.html in its three link modes, and the embed). |
 | [`apps/demo/src/vent/hamilton-page.ts`](../../apps/demo/src/vent/hamilton-page.ts) | vent-hamilton.html: the ventilator alone (no ?link) or linked to a monitor in another window/iframe (?link=<session>[&profile=<id>]) over BroadcastChannel `pme-vent/<session>`, or over a direct frame port with its parent |
-| [`apps/demo/src/vent/hamilton-ui.ts`](../../apps/demo/src/vent/hamilton-ui.ts) | The v1.9 Hamilton-style front end (ventilator-sim-hamilton.html "UI" block), ported to TypeScript and rendering from @pme/ventilator instead of page globals. |
 | [`apps/demo/src/vent/link-page.ts`](../../apps/demo/src/vent/link-page.ts) | vent-link.html: the Hamilton ventilator (iframe, its own window context) and the patient monitor side by side, linked over BroadcastChannel `pme-vent/<session>` (both ways). |
+| [`apps/demo/src/vent/sim-tools.ts`](../../apps/demo/src/vent/sim-tools.ts) | The simulator's own tools (plan vent-skin-edp-ts.md §4.3): the patient drawer (presets, the lung, the patient's effort) and the asynchrony examples. |
 | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | Pure burst geometry (no Web Audio): where each pulse of one burst starts, for a profile level with the skin's overrides applied, and the volume-step → gain curve. |
 | [`alarm-sounder.ts`](../../packages/audio/src/alarm-sounder.ts) | AlarmSounder: turns "alarm X of level L is active" into pulse tones on the existing look-ahead ToneScheduler (brief §3.6, §6.4, §6.4.1). |
 | [`alarm-voice.ts`](../../packages/audio/src/alarm-voice.ts) | Web Audio voices for alarm pulses and device tones (brief §6.4: PeriodicWave with harmonics 1–5 at 0/−3/−6/−9/−12 dB, 15 ms linear rise and fall). |
@@ -1367,7 +1381,10 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/physiology-console/organs.test.ts`](../../apps/demo/src/physiology-console/organs.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/sparkline.test.ts`](../../apps/demo/src/physiology-console/sparkline.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/view.dom.test.ts`](../../apps/demo/src/physiology-console/view.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/core/cockpit.test.ts`](../../apps/demo/src/vent/core/cockpit.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/core/pending.test.ts`](../../apps/demo/src/vent/core/pending.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/device-link.dom.test.ts`](../../apps/demo/src/vent/device-link.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/hamilton/face.dom.test.ts`](../../apps/demo/src/vent/faces/hamilton/face.dom.test.ts) | 0 | 0 |
 | [`alarm-bursts.test.ts`](../../packages/audio/test/alarm-bursts.test.ts) | 0 | 0 |
 | [`alarm-sounder.test.ts`](../../packages/audio/test/alarm-sounder.test.ts) | 0 | 0 |
 | [`alarm-voice.test.ts`](../../packages/audio/test/alarm-voice.test.ts) | 0 | 0 |

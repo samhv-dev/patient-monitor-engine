@@ -4,8 +4,8 @@
 // monitor talk over an in-page LinkPort pair: the same link messages vent-link.html sends over BroadcastChannel
 // (frames in, lungState out, the engine as master clock).
 import type { MonitorHandle, MountOptions } from '@pme/renderer';
-import { attachMonitorToLink, createLocalPortPair, createVentDriver, monitorMatchedFlow, PROFILES, type ProfileId, type VentConfig, type VentDriver } from '@pme/ventilator';
-import { mountHamiltonUi } from './hamilton-ui.ts';
+import { attachMonitorToLink, createLocalPortPair, createVentDriver, PROFILES, type ProfileId, type VentConfig, type VentDriver } from '@pme/ventilator';
+import { DEFAULT_FACE, mountFace } from './faces/index.ts';
 
 /** The part of window.PatientMonitor the embed needs (structural, so the IIFE is not bundled twice). */
 export interface PatientMonitorGlobal {
@@ -52,20 +52,9 @@ export function mountEmbed(o: EmbedOptions): Embed {
   void monitor.dispatch({ id: 'embed-ga', issuedBy: 'vent-embed', type: 'applyEvent', event: { kind: 'thermal', anaesthesia: 'general' } });
   const detach = attachMonitorToLink(monitor, monitorSide, (c, r) => console.warn('link command rejected', c.type, r));
   const vent = createVentDriver(ventSide, id);
-  // As vent-hamilton.html does when linked: VC runs at the monitor ventilator's flow for the set VT and rate until the
-  // user sets Flow or Pause here, so the same settings deliver the same volume.
-  let matched = true;
-  const onInput = (e: Event) => {
-    const k = (e.target as HTMLElement | null)?.dataset?.key;
-    if (k === 'vcFlow' || k === 'pause') matched = false;
-  };
-  addEventListener('input', onInput, true);
-  const frame = vent.frame;
-  vent.frame = (ms) => {
-    if (matched && vent.vs.cfg.mode === 'VC') Object.assign(vent.vs.cfg, monitorMatchedFlow(vent.vs.cfg));
-    frame(ms);
-  };
-  const ui = mountHamiltonUi(vent);
+  // As vent-hamilton.html does when linked: the Hamilton face runs VC at the monitor ventilator's flow for the set VT and
+  // rate until the user sets Flow or Pause here, so the same settings deliver the same volume (the cockpit core's option).
+  const ui = mountFace(vent, DEFAULT_FACE, { linked: true });
   const last: Record<string, number> = {};
   let t = 0;
   const off = monitor.on((e) => {
@@ -83,7 +72,6 @@ export function mountEmbed(o: EmbedOptions): Embed {
     },
     destroy() {
       off();
-      removeEventListener('input', onInput, true);
       ui.stop();
       detach();
       vent.dispose();
