@@ -288,6 +288,72 @@ test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
   expect(found).toEqual([]);
 });
 
+// Plan learner-action-remote.md L9: the learner preparations card on the laptop's dock (Instructor v2 at 1280 × 800)
+// and on the instructor's phone (390 × 844, touch: 44 px targets), with a finding and its one control, in the dark and
+// the light theme on the phone; names, contrast, no sideways scroll, one h1, and a focus walk that reaches the control.
+test('accessibility: the learner preparations card on the laptop dock and on the instructor phone', async ({ browser }) => {
+  test.setTimeout(180_000);
+  const dir = mkdtempSync(join(tmpdir(), 'l9-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  const relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
+  const found: string[] = [];
+  try {
+    const hostCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    await hostCtx.addInitScript(() => localStorage.setItem('pme.roomLayout', JSON.stringify({ bed2remote01: { name: 'Bed 2', show: 'remote', lastSeen: Date.now() } })));
+    const host = await hostCtx.newPage();
+    await openApp(host, base, `?relay=${ws}&scenario=showcase-mh-v2#/teach2`, { warmMs: 1500 });
+    const code = await host.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
+    const learnerPin = (await host.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+    const instructorPin = (await host.evaluate(() => localStorage.getItem('pme.instructorPin'))) as string;
+    // a learner phone stages sodium bicarbonate + epinephrine in one syringe (incompatible, Stabilis)
+    const lctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await lctx.addInitScript(() => localStorage.setItem('pme.device', 'bed2remote01'));
+    const lp = await lctx.newPage();
+    await lp.goto(`${base}/?join=${code}&relay=${ws}#/remote/learner`);
+    for (const d of learnerPin) await lp.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+    await lp.locator('.ip-peer-go').click();
+    await expect(lp.locator('.lr-bench')).toBeVisible({ timeout: 20_000 });
+    const parts = [['sodium bic', 'sodiumBicarbonate', 'sodium-bicarbonate-84mg-ml', 10], ['epinephrine', 'epinephrine', 'adrenalin-1mg-ml', 1]] as const;
+    for (const [n, [search, drug, product, amount]] of parts.entries()) {
+      if (n > 0) await lp.locator('.lr-another').click();
+      await lp.locator('.lr-search').fill(search);
+      await lp.locator(`.lr-pick[data-drug="${drug}"]`).click();
+      await lp.locator(`.lr-product[data-product="${product}"]`).click();
+      const field = lp.locator(`.lr-drawn-row[data-product="${product}"] .stepper input`);
+      await field.fill(String(amount));
+      await field.dispatchEvent('change');
+    }
+    await lp.locator('.lr-diluent select').selectOption('');
+    await lp.locator('.lr-stage').click();
+    // the laptop: the card over the dock
+    await expect(host.locator('.ip2-dock .ip2-lp-card .ip2-lp-show')).toBeVisible({ timeout: 15_000 });
+    found.push(...(await audit(host, { touchPanel: false })).map((f) => `card laptop ${f.rule}: ${f.what}`));
+    // the instructor's phone, dark then light: the card above the panel
+    for (const theme of ['dark', 'light'] as const) {
+      const ictx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+      if (theme === 'light') await ictx.addInitScript(() => localStorage.setItem('pme.site', JSON.stringify({ schema: 'pme-site/1', theme: 'projector-light' })));
+      const ip = await ictx.newPage();
+      await ip.goto(`${base}/?relay=${ws}#/remote?code=${code}`);
+      for (const d of instructorPin) await ip.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+      await ip.locator('.ip-peer-go').click();
+      await expect(ip.locator('.ip2-lp-inline .ip2-lp-card .ip2-lp-show')).toBeVisible({ timeout: 20_000 });
+      // the session bar's mode badge is empty (a button with no name) until the host's first state reaches the phone: a
+      // gap that predates this card (sessionbar.ts), so the audit runs once the state has arrived
+      await expect(ip.locator('.mode-badge')).not.toHaveText('', { timeout: 10_000 });
+      found.push(...(await audit(ip, { touchPanel: true })).map((f) => `card phone ${theme} ${f.rule}: ${f.what}`));
+      if (theme === 'dark') found.push(...(await focusWalk(ip, 12)).map((f) => `card phone focus: ${f}`));
+      await ictx.close();
+    }
+    await lctx.close();
+    await hostCtx.close();
+  } finally {
+    await relay.close();
+  }
+  expect(found).toEqual([]);
+});
+
 // Plan learner-action-remote.md L8: the learner remote's Infusions tab on a phone, dark and light: a ready syringe to
 // start (its mL/h and the dose rate beside it) over a running infusion this phone started (its rate, dose rate, "set by",
 // Change and Stop) and the instructor's, started before the phone signed in. 44 px targets on touch, names, contrast, one h1, no sideways scroll, a focus walk.

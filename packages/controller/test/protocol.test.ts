@@ -80,9 +80,11 @@ describe('what the instructor may send (plan instructor-peer-role.md §2; P2)', 
   // plan F9 (Q19): Instructor v2's A press of an action with no engine command (call for help) sends `scenario record`;
   // P6's census, crawling the pme-scenario/2 cards too, measured the MH card in phases' `give` shapes
   const V2_CARDS = ['scenario record', 'applyEvent airwayDevice', 'applyEvent preoxygenate'];
-  it('INSTRUCTOR_COMMANDS is the measured census plus note (the §2 table; only the phone sends note) plus the /2 cards\' shapes (F9, P6)', () => {
-    expect([...INSTRUCTOR_COMMANDS].sort()).toEqual([...CENSUS, 'note', ...V2_CARDS].sort());
-    expect([...INSTRUCTOR_COMMANDS].filter((s) => s !== 'note' && !V2_CARDS.includes(s)).sort()).toEqual(CENSUS);
+  // plan learner-action-remote.md L9 (LQ3): the incompatibility notice, which the laptop's dock card and the phone's card send
+  const L9 = ['prep notice'];
+  it('INSTRUCTOR_COMMANDS is the measured census plus note (the §2 table; only the phone sends note) plus the /2 cards\' shapes (F9, P6) plus L9\'s notice', () => {
+    expect([...INSTRUCTOR_COMMANDS].sort()).toEqual([...CENSUS, 'note', ...V2_CARDS, ...L9].sort());
+    expect([...INSTRUCTOR_COMMANDS].filter((s) => s !== 'note' && !V2_CARDS.includes(s) && !L9.includes(s)).sort()).toEqual(CENSUS);
     expect(commandShape({ id: 'c', issuedBy: 'remote', type: 'note', kind: 'note', text: 'x' })).toBe('note');
   });
 
@@ -111,6 +113,9 @@ describe('what the instructor may send (plan instructor-peer-role.md §2; P2)', 
     // the MH card in phases' induction actions (measured by P6's census of the /2 cards)
     expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'preoxygenate', fio2: 1, durationS: 180 } }))).toBeNull();
     expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } } as unknown as CommandInput))).toBeNull();
+    expect(instructorMay(cmd({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'p0000001' }))).toBeNull(); // L9
+    // the learner's own preparation shapes stay the learner's (§4 D2): no Instructor view sends them
+    expect(instructorMay(cmd({ type: 'prep', action: 'discard', prepId: 'p0000001' }))).toBe('No Instructor view sends this command.');
   });
 
   it("instructorMay answers §2's refusal reasons", () => {

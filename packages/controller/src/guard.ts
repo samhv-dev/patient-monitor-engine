@@ -192,6 +192,8 @@ function prepBodyOk(b: Record<string, unknown>): boolean {
       return (b.volumeMl === 'all' || isPos(b.volumeMl)) && PREP_ROUTES.has(b.route) && (b.overS === undefined || (isNum(b.overS) && (b.overS as number) >= 0));
     case 'infuse':
       return isPos(b.rateMlH);
+    case 'notice': // L9: the instructor's notice names the learner's device key
+      return typeof b.by === 'string' && DEVICE_RE.test(b.by);
     default:
       return false;
   }

@@ -48,6 +48,8 @@ export interface HostPrep {
   leftMl: number;
   /** LQ3: when the instructor showed the incompatibility notice (L9 sets it; null until then). */
   notice: { shownAt: number } | null;
+  /** L9: sim time of the first delivery or infusion from it (null: not given), for the instructor's card. */
+  givenAt: number | null;
   /** The figures of each drug's last give from it, read by the scenario driver's record (driver.ts `preparation`). */
   gives: Record<string, { remaining: number; activeAmount: number; unit: string }>;
 }
@@ -95,7 +97,7 @@ export function stagePrep(
   }
   const made = prepare(components, p.diluent, f, simT, p.container as Stability['container'] | undefined);
   if (!made.ok) return no(made.why);
-  return { ok: true, prep: { id: p.id, by, from, t: simT, products, prep: made, leftMl: made.volumeMl, notice: null, gives: {} } };
+  return { ok: true, prep: { id: p.id, by, from, t: simT, products, prep: made, leftMl: made.volumeMl, notice: null, givenAt: null, gives: {} } };
 }
 
 /** r for one drug of a preparation at sim time `simT` (§7.1): the source's points, LQ8 where it is incompatible with no figure. */
@@ -228,9 +230,13 @@ export interface LearnerPrepView {
 }
 export interface InstructorPrepView extends Omit<LearnerPrepView, 'ready' | 'notice'> {
   by: string;
+  /** L9: the name Room setup gave the device (absent: none given), for the instructor's card. */
+  name?: string;
   t: number;
   findings: Finding[];
   notice: HostPrep['notice'];
+  /** L9: when it was first given from (null: not yet): "given at mm:ss, notice not shown" on the card. */
+  givenAt: number | null;
   ready: Preparation['ready'];
 }
 
@@ -245,5 +251,5 @@ export function learnerView(h: HostPrep): LearnerPrepView {
 /** What the instructor's screens are told (§4 D7): the whole preparation, its findings and the device that staged it. */
 export function instructorView(h: HostPrep): InstructorPrepView {
   const { notice: _n, ...view } = learnerView(h);
-  return { ...view, by: h.by, t: h.t, findings: h.prep.findings, notice: h.notice, ready: h.prep.ready };
+  return { ...view, by: h.by, t: h.t, findings: h.prep.findings, notice: h.notice, givenAt: h.givenAt, ready: h.prep.ready };
 }

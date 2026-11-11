@@ -1,13 +1,20 @@
 // Plan learner-action-remote.md L2 and §4 D3: the host's pure preparation step. From the components a learner chose
 // (a drug, its stocked product, how much of it), the diluent and the simulation time, it computes what is in the
 // syringe or bag: each drug's amount and concentration in the total volume, the findings (findings.ts), the time
-// the preparation is ready, and the stability rows that describe each drug at its concentration. A powder is reconstituted with the label's own volume (`reconstitute.volumeMl`) in the
-// chosen diluent; the diluent's `volumeMl` is what is added on top. Nothing the device sends is trusted beyond the
+// the preparation is ready, and the stability rows that describe each drug at its concentration. A powder is
+// reconstituted with the label's own volume (`reconstitute.volumeMl`) in the chosen diluent, and a vial then holds the
+// volume its label states after reconstitution (N73: the powder adds volume; `reconstitute.final`), or the added volume
+// where the label states none; the diluent's `volumeMl` is added on top. Nothing the device sends is trusted beyond the
 // choice: every number comes from the formulary. A field the bench needs that the entry does not give (a
 // concentration) is refused; a missing preparation time is not (LQ7: ready at once, the gap named).
 import { findings, type Finding } from './findings.ts';
 import { stabilityRows } from './remaining.ts';
-import type { Formulary, Stability } from './types.ts';
+import type { Formulary, Reconstitution, Stability } from './types.ts';
+
+/** The volume of one reconstituted vial of `amount` (the strength per vial): the label's final volume or concentration,
+ *  else the volume added (the powder's own volume then ignored, as the bench says). */
+const vialMl = (rc: Reconstitution, amount: number): number =>
+  'volumeMl' in rc.final ? rc.final.volumeMl : 'perMl' in rc.final ? amount / rc.final.perMl : rc.volumeMl;
 
 /** One thing drawn: `amount` vials (`unit: 'vial'`), mL (`'mL'`), or of the drug in the strength's own unit (`'mg'`, …). */
 export interface PrepComponent {
@@ -80,13 +87,14 @@ export function prepare(
     const rc = product.reconstitute;
     if (rc && !diluent) return no('no-diluent', `${c.productId} is reconstituted: it needs a diluent`);
     if (c.unit !== 'vial' && c.unit !== 'mL' && c.unit !== s.unit) return no('bad-unit', `${c.productId} is drawn by vial, mL or ${s.unit}, not "${c.unit}"`);
-    const perMl = s.perVial ? (rc ? s.amount / rc.volumeMl : null) : s.amount;
+    const perVialMl = rc ? vialMl(rc, s.amount) : null;
+    const perMl = s.perVial ? (perVialMl !== null ? s.amount / perVialMl : null) : s.amount;
     let amount: number;
     let vol: number;
     if (c.unit === 'vial') {
-      if (!s.perVial || !rc) return no('no-concentration', `${c.productId}'s label gives no volume per vial`);
+      if (!s.perVial || perVialMl === null) return no('no-concentration', `${c.productId}'s label gives no volume per vial`);
       amount = c.amount * s.amount;
-      vol = c.amount * rc.volumeMl;
+      vol = c.amount * perVialMl;
     } else {
       if (perMl === null) return no('no-concentration', `${c.productId}'s label gives no concentration`);
       amount = c.unit === 'mL' ? c.amount * perMl : c.amount;
@@ -116,7 +124,7 @@ export function prepare(
     volumeMl,
     diluent: diluent ? { id: diluent.id, volumeMl: diluent.volumeMl } : null,
     container: container ?? null,
-    findings: findings(items, diluent ? diluent.id : null, formulary),
+    findings: findings(items, diluent ? diluent.id : null, formulary, container),
     ready: { atS: simT + prepS, src: [...src], gap: gap ? 'LQ7' : null },
   };
 }

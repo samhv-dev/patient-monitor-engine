@@ -558,3 +558,128 @@ describe('L7: the incompatibility notice reaches the remote that staged the prep
     expect(x.host.preparation(KEY, 'p0000021')?.notice).toBeNull();
   });
 });
+
+// Plan learner-action-remote.md L9 (§4 D2, D7; LQ3 ruled): the instructor's ONE control on a learner's preparation, the
+// instructor-only `prep notice {by, prepId}`, sent by the laptop's dock card and by the instructor phone's card. The host
+// shows the notice once (showPrepNotice: the record keeps its time), whichever screen pressed first; the second press is
+// refused with the time it was shown; a learner can never send it; nothing is removed or blocked.
+describe('L9: the instructor-only `prep notice`, from the laptop or the granted instructor phone', () => {
+  const notice = (by: string, prepId: string) => ({ type: 'prep', action: 'notice', by, prepId });
+  const noticesTo = (got: WireMessage[], to: string) => preps(got).filter((e) => e.to === to && (e.body as { news: string }).news === 'notice');
+  /** A host with the driver's record hook and Room setup's names, a learner remote with a preparation that has findings. */
+  async function flagged(o: Partial<HostSessionOptions> = {}) {
+    const staged: StagedPrep[] = [];
+    const x = setup({ onPreparation: (p) => void staged.push(p), deviceName: (k) => (k === KEY ? 'Bed 2' : null), ...o });
+    const lr = await signIn(x);
+    x.tg.at(60);
+    expect((await lr.send(stage('p0000030', { diluent: { id: 'saline', volumeMl: 10 }, container: 'bag-pvc' }))).accepted).toBe(true);
+    return { x, lr, staged };
+  }
+  async function phone(x: ReturnType<typeof setup>, from = 'ph.1') {
+    const ph = peer(x.relay, from, 'instructor', 'remote');
+    ph.hello({ pin: INSTRUCTOR_PIN });
+    await waitFor(() => grants(x.got, from).some((g) => g.granted));
+    return ph;
+  }
+
+  it("the instructor's copy names the device as Room setup named it, with the findings, at once; the learner's carries neither", async () => {
+    const { x } = await flagged();
+    await waitFor(() => preps(x.got).length >= 2);
+    const mine = preps(x.got).find((e) => e.to === 'lr.1')!;
+    const theirs = preps(x.got).find((e) => e.to === x.host.peerId)!;
+    expect(theirs.body).toMatchObject({ news: 'made', prep: { id: 'p0000030', by: KEY, name: 'Bed 2', notice: null, findings: [expect.objectContaining({ kind: 'wrongDiluent' }), expect.objectContaining({ kind: 'incompatible' })] } });
+    expect(JSON.stringify(mine.body)).not.toMatch(/findings|Bed 2/);
+    // the laptop's own panel transport gets the same instructor copy (the host's screens)
+    await waitFor(() => preps(x.panelGot).some((e) => e.to === x.host.peerId));
+  });
+
+  it('from the laptop: accepted, the learner gets the notice once with its findings, and the record keeps the time (the driver sees the preparation again)', async () => {
+    const { x, staged } = await flagged();
+    x.tg.at(90);
+    const id = x.laptop.command(notice(KEY, 'p0000030'));
+    expect((await ack(x.panelGot, id)).accepted).toBe(true);
+    await waitFor(() => noticesTo(x.got, 'lr.1').length === 1);
+    expect(noticesTo(x.got, 'lr.1')[0]!.body).toMatchObject({ prep: { notice: { shownAt: 90, findings: [expect.anything(), expect.anything()] } } });
+    expect(x.host.preparation(KEY, 'p0000030')?.notice).toEqual({ shownAt: 90 });
+    expect(staged.map((p) => p.notice)).toEqual([null, { shownAt: 90 }]);
+    expect(x.tg.got).toHaveLength(0); // the host's own table: nothing reaches the engine
+  });
+
+  it('from the granted phone, then the laptop: the press reaches the remote once; the second is refused with the time it was shown; a resend is the same answer', async () => {
+    const { x } = await flagged();
+    const ph = await phone(x);
+    x.tg.at(75);
+    const a = ph.command(notice(KEY, 'p0000030'));
+    expect((await ack(x.got, a)).accepted).toBe(true);
+    x.tg.at(80);
+    const b = x.laptop.command(notice(KEY, 'p0000030'));
+    expect(await ack(x.panelGot, b)).toMatchObject({ accepted: false, reason: 'the notice was shown at 01:15' });
+    await sleep(50);
+    expect(noticesTo(x.got, 'lr.1')).toHaveLength(1);
+    expect(x.host.preparation(KEY, 'p0000030')?.notice).toEqual({ shownAt: 75 });
+    ph.command(notice(KEY, 'p0000030'), a); // the phone's resend of its own press
+    await sleep(50);
+    expect(x.got.filter((m) => m.kind === 'ack' && m.commandId === a).map((m) => (m as Ack).accepted)).toEqual([true, true]);
+    expect(noticesTo(x.got, 'lr.1')).toHaveLength(1);
+  });
+
+  it('a phone not signed in, an unknown preparation, another device\'s id space: refused, nothing shown', async () => {
+    const { x } = await flagged();
+    const stranger = peer(x.relay, 'ph.9', 'instructor', 'remote');
+    stranger.hello({ pin: '0000' });
+    await waitFor(() => grants(x.got, 'ph.9').length > 0);
+    expect((await ack(x.got, stranger.command(notice(KEY, 'p0000030')))).accepted).toBe(false);
+    expect((await ack(x.panelGot, x.laptop.command(notice(KEY, 'nope0000')))).accepted).toBe(false);
+    expect((await ack(x.panelGot, x.laptop.command(notice(KEY2, 'p0000030')))).accepted).toBe(false);
+    expect(noticesTo(x.got, 'lr.1')).toHaveLength(0);
+    expect(x.host.preparation(KEY, 'p0000030')?.notice).toBeNull();
+  });
+
+  it('a phone that signs in after the staging (or again, after its page reloaded) gets the instructor copy of what stands, with its given time', async () => {
+    const { x, lr } = await flagged();
+    x.tg.at(200); // past the fixture powder's 120 s
+    expect((await lr.send(deliver('p0000030', 1))).accepted).toBe(true);
+    await phone(x, 'ph.late');
+    await waitFor(() => preps(x.got).filter((e) => e.to === x.host.peerId).length >= 3);
+    const last = preps(x.got).filter((e) => e.to === x.host.peerId).at(-1)!;
+    expect(last.body).toMatchObject({ news: 'made', prep: { id: 'p0000030', by: KEY, name: 'Bed 2', givenAt: 200, notice: null } });
+  });
+
+  it('a learner remote can never send it: refused on the host (no relay in between), for its own preparation too', async () => {
+    const { x, lr } = await flagged();
+    const r = await lr.send(notice(KEY, 'p0000030'));
+    expect(r.accepted).toBe(false);
+    expect(noticesTo(x.got, 'lr.1')).toHaveLength(0);
+    expect(x.host.preparation(KEY, 'p0000030')?.notice).toBeNull();
+  });
+
+  it("a Give before the notice is given; the give's record says no notice; a notice pressed after it is still shown and recorded", async () => {
+    const tg = fakeTarget();
+    let hs: HostSession | null = null;
+    const driver = new ScenarioDriver({ target: tg.t, submit: (c) => (hs as HostSession).submit(c), publish: () => undefined, preparation: (by, id, drugId) => hs?.preparation(by, id, drugId) });
+    hs = new HostSession({ session: S, target: driver.host, scenario: driver.hook, stateIntervalMs: 0, learnerPin: () => LEARNER_PIN, formulary: () => BENCH, onPreparation: (p) => driver.recordPreparation(p) });
+    hosts.push(hs);
+    const hub = createInProcessHub();
+    hs.addTransport(hub.connect());
+    const relay = hub.connect();
+    const got = collect(relay);
+    const lr = peer(relay, 'lr.1', 'learner');
+    lr.hello({ show: 'learner', device: KEY, pin: LEARNER_PIN });
+    await waitFor(() => grants(got, 'lr.1').some((g) => g.granted));
+    tg.at(60);
+    expect((await ack(got, lr.command(stage('p0000031', { diluent: { id: 'saline', volumeMl: 10 }, container: 'bag-pvc' })))).accepted).toBe(true);
+    tg.at(200);
+    expect((await ack(got, lr.command(deliver('p0000031', 1)))).accepted).toBe(true);
+    const given = hs.preparation(KEY, 'p0000031');
+    expect(given?.notice).toBeNull();
+    const panelHub = createInProcessHub();
+    hs.addTransport(panelHub.connect());
+    const panelT = panelHub.connect();
+    const panelGot = collect(panelT);
+    const laptop = peer(panelT, 'panel-1', 'controller', 'instructor');
+    laptop.hello();
+    tg.at(230);
+    expect((await ack(panelGot, laptop.command(notice(KEY, 'p0000031')))).accepted).toBe(true);
+    expect(hs.preparation(KEY, 'p0000031')?.notice).toEqual({ shownAt: 230 });
+  });
+});

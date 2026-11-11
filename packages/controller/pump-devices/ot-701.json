@@ -1,0 +1,35 @@
+{
+  "$comment": "JMS OT-701 drip-rate peristaltic pump, the 'serum pump' (PQ2 = B). Each number cites a row of research/50 (catalogue BRO/701-E/001 and its page) or is a gap for the manual.",
+  "deviceId": "ot-701",
+  "maker": "JMS",
+  "model": "OT-701",
+  "kind": "drip",
+  "sets": [
+    { "dropsPerMl": 15, "src": "OT-03",
+      "standard": { "mlH": { "min": 1, "max": 450, "src": "OT-05" }, "dropsMin": { "min": 1, "max": 100, "src": "OT-05" } },
+      "narrow": { "mlH": { "min": 1, "max": 100, "src": "OT-05" }, "dropsMin": { "min": 1, "max": 100, "src": "OT-05" } } },
+    { "dropsPerMl": 20, "src": "OT-03",
+      "standard": { "mlH": { "min": 1, "max": 450, "src": "OT-06" }, "dropsMin": { "min": 1, "max": 100, "src": "OT-06" } },
+      "narrow": { "mlH": { "min": 1, "max": 100, "src": "OT-06" }, "dropsMin": { "min": 1, "max": 100, "src": "OT-06" } } },
+    { "dropsPerMl": 60, "src": "OT-03",
+      "standard": { "mlH": { "min": 1, "max": 100, "src": "OT-07" }, "dropsMin": { "min": 1, "max": 100, "src": "OT-07" } },
+      "narrow": { "mlH": { "min": 1, "max": 100, "src": "OT-07" }, "dropsMin": { "min": 1, "max": 100, "src": "OT-07" } } }
+  ],
+  "factory": { "unit": "mL/h", "range": "standard", "src": "OT-08" },
+  "narrowRange": { "gap": "when the narrow range applies and how it is chosen: OT-701 operator manual (research/50 OT-23)" },
+  "rateStep": { "step": 1, "unit": "mL/h", "src": "OT-09" },
+  "dropsStep": { "gap": "the drops/min step: OT-701 operator manual (research/50 OT-22)" },
+  "accuracy": { "flow": { "pct": 10, "src": "OT-10" }, "drip": { "pct": 2, "afterDrops": 500, "src": "OT-11" } },
+  "volumeDisplay": { "min": 0, "max": 9999, "unit": "mL", "src": "OT-12" },
+  "volumeLimit": { "min": 1, "max": 9999, "unit": "mL", "none": true, "src": "OT-13" },
+  "purge": { "rateMoreThan": 450, "unit": "mL/h", "src": "OT-14", "volume": { "gap": "the purge volume limit: OT-701 operator manual (research/50 OT-25)" } },
+  "bolus": { "available": false, "src": "OT-21" },
+  "tci": { "available": false, "src": "OT-21" },
+  "kvo": { "rate": 1, "unit": "mL/h", "src": "OT-15", "after": { "gap": "whether and when the pump enters KVO after Infusion Complete: OT-701 operator manual (research/50 OT-24)" } },
+  "occlusion": {
+    "pressure": { "kgfCm2": 1, "plusMinus": 0.4, "src": "OT-16" },
+    "alarmTime": { "gap": "the time or volume to the occlusion alarm: OT-701 operator manual (research/50 OT-26)" }
+  },
+  "airInLine": { "method": "ultrasonic", "src": "OT-18", "threshold": { "gap": "the air-in-line detection threshold: OT-701 operator manual (research/50 OT-27)" } },
+  "alarms": { "names": ["Door Open", "Low Battery", "Internal Malfunction", "Air in Line", "Infusion Complete", "Empty Container", "Reminder", "Abnormal Drips"], "src": "OT-17" }
+}
