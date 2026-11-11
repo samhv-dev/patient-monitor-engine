@@ -470,6 +470,11 @@ renderer, audio and skin contracts.
 | `renamePhase` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Phase `i` renamed to `to`, and every mention of its old id with it (the `next` lists, `visited`, `phaseEntered`, `phases`, `inPhases`, the `phase:<id>` anchors): |
 | `idFromLabel` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | An id for a new phase from its label ("Late signs" → "lateSigns"), made unique with a number. |
 | `instructorWords` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | ------------------------------------------------------------------------------------------- Instructor v2's words What Instructor v2 will show for phase `i`, produced by its own functions: |
+| `sheetFields` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The fields of a sheet kind, null for a kind that is not one. |
+| `sheetBuild` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The command a sheet kind builds from its fields, null while a field is outside the sheet's limits or the item is not the sheet's. |
+| `sameCommand` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | Two commands with the same content, in any key order. |
+| `seedOf` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | What the form starts on to edit a card's command, or null: |
+| `edited` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The command an edit writes: |
 | `sections` | [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The three sections over `form`; |
 | `byItself` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Whether `w` can hold without a press: |
 | `stagesOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | The stages of the card: |
@@ -853,6 +858,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/page.ts`](../../apps/demo/src/app/builder/page.ts) | The scenario builder's page (docs/plans/scenario-builder.md §5, §8, mock-up 01-builder-main; piece B2), in place of the stub that explained the /1 format. |
 | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | The builder's Phases section (docs/plans/scenario-builder.md §5.3, mock-up 02-phase-editor; piece B3): the course of the case, one phase open at a time. |
 | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The phase editor's model (docs/plans/scenario-builder.md §5.3, piece B3): what a phase rule may read and how it reads in words, the rule tree's edits, where a phase sits in the card's course, and a phase id's rename. |
+| [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The Script section's commands from the Airway, Defib · CPR and Devices sheets (docs/plans/scenario-builder.md §5.2; piece 162, finding N83 of B5): an airway state, who breathes with the bag's or the ventilator's settings |
 | [`apps/demo/src/app/builder/script-editor.ts`](../../apps/demo/src/app/builder/script-editor.ts) | The builder's Script section (docs/plans/scenario-builder.md §5.2; piece B5): what the card does itself, card-set and never graded. |
 | [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The builder's first three sections (docs/plans/scenario-builder.md §5.2; piece B2): Header and story, Patient and sensors, Case briefing. |
 | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Reading a scenario card for Instructor v2 (E127, docs/plans/instructor-panel-redesign.md §3.2, §3.4, §7): the stages of the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, ju |
@@ -1209,6 +1215,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/page.dom.test.ts`](../../apps/demo/src/app/builder/page.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/phase-editor.dom.test.ts`](../../apps/demo/src/app/builder/phase-editor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/phases.test.ts`](../../apps/demo/src/app/builder/phases.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/script-commands.dom.test.ts`](../../apps/demo/src/app/builder/script-commands.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-read.test.ts`](../../apps/demo/src/app/card-read.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-seed.dom.test.ts`](../../apps/demo/src/app/card-seed.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/case-briefing.dom.test.ts`](../../apps/demo/src/app/case-briefing.dom.test.ts) | 0 | 0 |
