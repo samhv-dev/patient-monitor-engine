@@ -48,7 +48,8 @@ code by the function name given, because lines move.
   newer revisions in other languages: French 9650-000873-02 Rev. D, dated December 2024, and Indonesian -56 Rev. C. The
   owner's unit may run newer software than Rev. C describes (DQ2). The French Rev. D is now on disk and its differences
   from Rev. C are listed in `docs/research/defib-zoll-m2-rev-d-differences.md` (cited **[D n-m]**); ZOLL's host also
-  answers for an English **Rev. E** (`9650-000873-01-SF_E.pdf`, 12 475 735 bytes by HTTP header, not downloaded, §4.6).
+  answers for an English **Rev. E** (`9650-000873-01-SF_E.pdf`, August 2023), now on disk under the owner's yes and
+  compared with Rev. C in `docs/research/defib-zoll-m2-rev-e-differences.md` (cited **[E n-m]**).
 - **The pictures.** A distributor's three-page product brochure (source ph.getzhealthcare.com; printed "MCN IP 1807
   0232-05", copyright 2018), in `assets/defibrillators/zoll-m2/pictures/`. It is cited as **[B p]**, by its PDF page.
 - **The guidelines.** The library's AHA 2025 and ERC 2025 documents, read as text with their page numbers (§7.1).
@@ -511,7 +512,7 @@ English). The drawer and the Debrief follow the app's language.
 | Name | URL | Size | Why |
 |---|---|---|---|
 | ZOLL M2 Operator's Guide, French, 9650-000873-02 Rev. D (Dec 2024) | https://info.zoll.com/hubfs/Products/M2/Manuals/9650-000873-02-SF_D.pdf | 15 341 332 bytes (HTTP header) | FETCHED (on disk, `rev-d-fr/`); it has no changes list; differences in `docs/research/defib-zoll-m2-rev-d-differences.md` |
-| ZOLL M2 Operator's Guide, English, 9650-000873-01 **Rev. E** | https://info.zoll.com/hubfs/Products/M2/Manuals/9650-000873-01-SF_E.pdf | 12 475 735 bytes (HTTP header, last modified 9 January 2026) | found by M0d; newer than Rev. C and Rev. D, and in English, so it gives the device's words for any change; proposed for download under the owner's yes (DQ2) |
+| ZOLL M2 Operator's Guide, English, 9650-000873-01 **Rev. E** | https://info.zoll.com/hubfs/Products/M2/Manuals/9650-000873-01-SF_E.pdf | 12 475 735 bytes (HTTP header, last modified 9 January 2026) | FETCHED under the owner's yes (on disk, `rev-e-en/`; issue date August 2023, so between Rev. C and the French Rev. D); compared in full: `docs/research/defib-zoll-m2-rev-e-differences.md` |
 | ZOLL M2 Configuration Guide | searched again in M0d: not found on the web or on ZOLL's file host | — | G-CFG: factory defaults |
 | A picture of the full Sync screen, the Manual Defib second level, the System and Supervisor windows, the internal paddles, the rear panel | none seen; three YouTube videos found by title (M0d §3) could not be opened from this machine | — | §4.1's unshown views |
 
@@ -665,6 +666,7 @@ from the guide's text, with every visual choice marked `eng`, and re-checked whe
 |---|---|---|---|
 | ZOLL M2 Operator's Guide, REF 9650-000873-01 Rev. C, December 2021 | — | read from the local file, page by page | §2, §3, §4 |
 | ZOLL M2 brochure, MCN IP 1807 0232-05 (2018), 3 pages | — | read from the local file | §4.1 |
+| ZOLL M2 Operator's Guide (English), REF 9650-000873-01 Rev. E, August 2023, 294 pages | — | local file `rev-e-en/`, compared with Rev. C page by page (text) and image by image (brief 178 follow-up) | DQ2, `docs/research/defib-zoll-m2-rev-e-differences.md` |
 | ZOLL M2 Operator's Guide (French), REF 9650-000873-02 Rev. D, December 2024, 312 pages | — | local file `rev-d-fr/`, compared with Rev. C by contents, page counts, numbers, figures and selected sections (brief 178) | DQ2, `docs/research/defib-zoll-m2-rev-d-differences.md` |
 | Kleinman et al. Part 7: Adult Basic Life Support. 2025 AHA Guidelines. Circulation 2025;152(suppl 2):S448–S478 | DOI 10.1161/CIR.0000000000001369 | read in the library copy: rate 100–120/min and depth at least 5 cm, avoiding more than 6 cm (p. 16–17 of the PDF); audiovisual feedback 2a (p. 16) | CPR targets, E3, F2 |
 | Wigginton et al. Part 9: Adult Advanced Life Support. 2025 AHA Guidelines. Circulation 2025;152(suppl 2):S538–S577 | DOI 10.1161/CIR.0000000000001376 | read in the library copy: escalating vs fixed energy "based on the specific manufacturer's instructions" (p. 3 of the PDF); transcutaneous pacing for atropine-refractory bradycardia (p. 36) | DQ13, E6 |
@@ -699,15 +701,27 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Options:* A, "ZOLL M2", no logo; B, "Zoll-style", no name.
 - *Proposal:* A, as for the ventilator.
 
-**DQ2. Which revision.**
-- *Explanation:* The plan is built on the English guide Rev. C (December 2021). A French Rev. D (December 2024)
-  exists, and your unit may run newer software.
-- *Options:* A, build to Rev. C now and check Rev. D's changes list (fetch it, §4.6); B, wait for your unit's
-  software version.
-- *Proposal:* A.
-- *What the choice changes (brief 178):* choosing Rev. D adds a date-and-time window, colour-coded CPR depth and rate
-  (green, yellow outside 5–6 cm and 100–120 cpm) and a configurable switch for CPR voice prompts, and changes nothing
-  else the plan uses (`docs/research/defib-zoll-m2-rev-d-differences.md`; an English Rev. E also exists, §4.6).
+**DQ2. Which revision of the Operator's Guide should the simulator follow: Rev. C, Rev. E, or the one your unit's
+software matches?**
+- *Explanation:* Three revisions are on disk. Rev. C (English, December 2021) is what the plan is built on. Rev. E
+  (English, August 2023) differs from it in five device behaviours only: patient alarms are silent for 10 s after each
+  shock; a Supervisor alarm log of 1 000 entries; the SFTP port can be set; one equipment message ("Pads/Paddles ECG
+  Disabled") is Medium instead of Low in some configurations; "Check RESP Electrodes" gets a priority (Medium). The
+  French Rev. D (December 2024) has all of that plus three more: a date-and-time window, CPR depth and rate shown green
+  or yellow (outside 5–6 cm, 100–120 /min), and a switch for the CPR voice prompts; no English text of those three was
+  found. Energies, the pacer, the AED, the alarm defaults and every picture are the same in all three. None settles
+  DQ15 (10 s against 6 s). Details: `docs/research/defib-zoll-m2-rev-e-differences.md`,
+  `docs/research/defib-zoll-m2-rev-d-differences.md`.
+- *Options:*
+  - A, **Rev. C** as now. Cost: none. The simulator lacks the post-shock alarm silence your unit may have.
+  - B, **Rev. E.** Cost: five rows of §2 amended (L4, L8, M18, R2 or a new R10, R6) and one rule or table row in each of
+    E7b, E7c and E9a; about 2 hours of plan work (an estimate) and no change to the face.
+  - C, **whatever your unit runs.** You tell me the guide revision that came with it or its software version. If it is
+    Rev. E's software, as B. If it is newer (Rev. D's content), B plus the three Rev. D additions: the CPR colours in F2
+    and E3, a date-and-time window in F6, a voice-prompt switch in §5.4 — with their English words still to be found
+    (an English revision with them, or your photographs), so until then they would be marked choices.
+- *Proposal:* C. Until you answer, A, with Rev. E's five amendments listed and ready (they are small and do not touch
+  any piece before E7b).
 
 **DQ3. The M2 as a second monitor (answer first).**
 - *Explanation:* Today the defibrillator shares the bedside monitor's alarms. On the real M2, its own Alarm Control,
