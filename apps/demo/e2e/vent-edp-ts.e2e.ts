@@ -53,7 +53,13 @@ test('EDP-TS face: PCV chosen with the knob, PEEP changed, the monitor\'s airway
   const vent = () => page.evaluate(() => { const c = (document.getElementById('vent') as Any).contentWindow.__vent.vs.cfg; return { mode: c.mode as string, peep: c.peep as number, modeLabel: c.modeLabel as string }; });
   expect(await vent()).toMatchObject({ mode: 'PC', modeLabel: 'PCV' });
 
-  // the airway before: the monitor's engine follows the set PEEP
+  // the airway before: the monitor's engine follows the set PEEP. Its mean airway pressure is the mean over the last
+  // breath cycle (engine-core resp/driver.ts), so it is read once two PCV breaths have been delivered since the mode
+  // started: read at once, the window still holds the last VCV breath, whose mean pressure is not PCV's (since piece V2
+  // the EDP-TS VCV starts with the descending ramp, research/57 T-26, and its mean is the higher one)
+  const breaths = () => page.evaluate(() => (document.getElementById('vent') as Any).contentWindow.__vent.vs.p.breathCount as number);
+  const n0 = await breaths();
+  await expect.poll(breaths, { timeout: 15_000 }).toBeGreaterThanOrEqual(n0 + 2);
   await expect.poll(async () => (await engineAirway(page))?.peep, { timeout: 15_000 }).toBe(await vent().then((c) => c.peep));
   const before = (await engineAirway(page))!;
   const peep0 = (await vent()).peep;
