@@ -90,14 +90,14 @@ test('L7: on the MH card a learner prepares dantrolene in water on the phone, se
   const KEY = 'bed2remote01';
   const { code, pin } = await laptop(page, 'showcase-mh-v2', { [KEY]: 'bed 2 remote' });
   const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
-  // the bench: Agilus 120 mg, one vial, reconstituted with the label's 20 mL of water, listed first
+  // the bench: Agilus 120 mg, one vial, reconstituted with the label's 20 mL of water, listed first; 22.6 mL after (N73)
   await p.locator('.lr-search').fill('dantrolene');
   await p.locator('.lr-pick[data-drug="dantrolene"]').click();
   await expect(p.locator('.lr-product .lr-pname')).toHaveText(['Dantrium IV 20 mg powder for solution for injection', /Agilus/]);
   await p.locator('.lr-product[data-product="agilus-120mg"]').click();
   await expect(p.locator('.lr-diluent select optgroup').first()).toHaveAttribute('label', 'Listed in the label');
   await expect(p.locator('.lr-diluent select')).toHaveValue('water');
-  await expect(p.locator('.lr-holds')).toHaveText('Dantrolene 6 mg/mL · 20 mL');
+  await expect(p.locator('.lr-holds')).toHaveText('Dantrolene 5.31 mg/mL · 22.6 mL');
   await expect(p.locator('.lr-time')).toHaveText('Takes 0:50 to prepare');
   for (const b of await p.locator('.lr-bench button:visible, .lr-bench select:visible, .lr-bench input:visible').all()) {
     const r = (await b.boundingBox())!;
@@ -107,7 +107,7 @@ test('L7: on the MH card a learner prepares dantrolene in water on the phone, se
   // the tray: the HOST's answer, then the countdown on the case clock
   const item = p.locator('.lr-item').first();
   await expect(item.locator('.lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
-  await expect(item.locator('.lr-conc')).toHaveText('Dantrolene 6 mg/mL · 20 mL');
+  await expect(item.locator('.lr-conc')).toHaveText('Dantrolene 5.31 mg/mL · 22.6 mL');
   await expect(item.locator('.lr-state')).toHaveText(/^Preparing · ready in 0:[0-5]\d$/);
   const [id] = await trayIds(p);
   // given before it is ready: the host refuses, in its words
@@ -115,15 +115,15 @@ test('L7: on the MH card a learner prepares dantrolene in water on the phone, se
   await expect(item.locator('.lr-said')).toHaveText(/^Not given: not ready yet \(0:[0-5]\d\)$/);
   // ×8 on the laptop: 50 s of the case pass in a few seconds
   expect((await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'time', action: 'scale', value: 8 }))).accepted).toBe(true);
-  await expect(item.locator('.lr-state')).toHaveText('Ready · 20 mL left', { timeout: 30_000 });
+  await expect(item.locator('.lr-state')).toHaveText('Ready · 22.6 mL left', { timeout: 30_000 });
   await item.locator('.lr-give-btn').click();
-  await expect(item.locator('.lr-said')).toHaveText(/^Given 20 mL at \d\d:\d\d$/, { timeout: 10_000 });
+  await expect(item.locator('.lr-said')).toHaveText(/^Given 22.6 mL at \d\d:\d\d$/, { timeout: 10_000 });
   await expect(item.locator('.lr-state')).toHaveText('Empty');
   await expect.poll(async () => (await rows(page)).filter((r) => r.ev === 'drug:dantrolene' && r.kind === 'learner').length, { timeout: 10_000 }).toBe(1);
   const row = (await rows(page)).find((r) => r.ev === 'drug:dantrolene' && r.kind === 'learner')!;
   expect(row).toMatchObject({ by: KEY, name: 'bed 2 remote', prepId: id, dose: { drugId: 'dantrolene', unit: 'mg' } });
   expect(row.dose!.dose).toBeGreaterThan(0);
-  expect(row.dose!.dose).toBeLessThanOrEqual(120); // 20 mL × 6 mg/mL × r, r ≤ 1 (§7.1)
+  expect(row.dose!.dose).toBeLessThanOrEqual(120); // 22.6 mL × 120/22.6 mg/mL × r, r ≤ 1 (§7.1)
   expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await ctx.close();
 });
