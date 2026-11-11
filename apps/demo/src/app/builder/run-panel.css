@@ -1,0 +1,30 @@
+/* B6 run in place (scenario-builder.md §6, mock-up 04): the run panel is a column of the app's own grid on #/teach2,
+   between the rail and Instructor v2, so Instructor v2's grid is not touched; it narrows Instructor v2 by its width.
+   Open: 360 px, 440 px from 1800 px of window (mock-up 4's width); a strip of 44 px (its one button) otherwise.
+   Below RUN_PANEL_OPEN_MIN_PX (run-panel.ts) it starts as the strip: Instructor v2 crowds below about 1000 px of its
+   own (finding 5), decided on the screenshots at 1280, 1440 and 1920 px. */
+.app { --run-w: 360px; }
+@media (min-width: 1800px) { .app { --run-w: 440px; } }
+.app[data-run='strip'] { --run-w: 44px; }
+.app.has-rail[data-route='teach2'][data-run] { grid-template: 'rail run main' minmax(0, 1fr) / var(--rail-w) var(--run-w) minmax(0, 1fr); }
+.app[data-route='teach2'][data-run]:not(.has-rail) { grid-template: 'run main' minmax(0, 1fr) / var(--run-w) minmax(0, 1fr); }
+.app[data-route='teach2'][data-run] > .main { grid-area: main; }
+.sb-run { grid-area: run; display: flex; flex-direction: column; min-height: 0; overflow: auto; border-right: 1px solid var(--ip2-line); background: var(--ip2-page); color: var(--ip2-text); color-scheme: dark; font: 400 13px/1.45 var(--font-plex); }
+.sb-run[hidden] { display: none; }
+.sb-run-fold { align-self: flex-end; margin: 6px 6px 0; }
+.app[data-run='strip'] .sb-run-fold { align-self: center; writing-mode: vertical-rl; min-height: 140px; padding: 8px 0; }
+.sb-run-body { display: grid; gap: 12px; padding: 4px 16px 16px; }
+.sb-run-body h2 { margin: 0; font-size: 20px; }
+.sb-run-body h3 { margin: 4px 0 0; font-size: 13px; font-weight: 600; }
+.sb-run-sub, .sb-run .sb-hint { margin: 0; color: var(--ip2-muted); font-size: 12px; }
+.sb-run .console-back { color: var(--ip2-muted); }
+.sb-run-box { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--ip2-line); border-radius: 8px; }
+.sb-run-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sb-run-row select { min-height: 36px; max-width: 100%; background: var(--ip2-bar); color: var(--ip2-text); border: 1px solid var(--ip2-control); border-radius: 6px; }
+.sb-run-why { min-height: 1.4em; }
+.sb-run-log { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.sb-run-line { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px; padding: 8px; border: 1px solid var(--ip2-line); border-radius: 6px; }
+.sb-run-line.entered { border-color: #3fae6a; }
+.sb-run-line.due, .sb-run-line.missed { border-color: #d0a03a; }
+.sb-run-t { font: 500 12px/1.4 var(--font-plex-mono); color: var(--ip2-muted); font-variant-numeric: tabular-nums; }
+.sb-run-line ul { margin: 4px 0 0; padding-left: 16px; }

@@ -11,6 +11,8 @@ import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
 import { restartSameCard } from './teach2/finish.ts';
+import { draftRun } from './builder/run-panel.ts';
+import { drafts } from './builder/drafts.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
 import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
@@ -183,6 +185,8 @@ if (follow && shows === 'pick') {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
+  // B6 (scenario-builder.md §6): the builder's run in place, a draft on this computer's session beside Instructor v2
+  const draft = draftRun({ link, root: shell.root, drafts });
   // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed
   // is read from this Link by Instructor v2's functions
   session.serveInstructors({ note: (text, kind, t, ev) => link.note(text, kind, t, ev), feed: () => feedOf(link) });
@@ -230,6 +234,7 @@ if (follow && shows === 'pick') {
       toast(`The scenario could not load: ${c.title}`, 'alert');
       return false;
     }
+    draft.end(); // a library or imported card runs now, not a draft
     link.note(`Scenario loaded: ${c.title}`, 'scenario');
     session.setLearner(SCENARIO_META[c.id]?.learnerControls ?? false); // Off unless the case asks
     noteRecent(c.id); // The Scenarios page's Recent
@@ -259,7 +264,7 @@ if (follow && shows === 'pick') {
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
   shell.add(room);
-  shell.add(scenariosView({ session, loadScenario }));
+  shell.add(scenariosView({ session, loadScenario, runDraft: (id, doc) => draft.run(id, doc) }));
   shell.add(patientView({ session, site }));
   shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
@@ -267,7 +272,8 @@ if (follow && shows === 'pick') {
   // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
   // a reload shows no case either
   const finish = {
-    restart: (): boolean => restartSameCard(session.driver, loadScenario, () => session.roomKeep()),
+    // B6: a draft running in place restarts as the draft (never through the library's load, its Recent or its card)
+    restart: (): boolean => (draft.current() ? draft.restart(session.roomKeep()) : restartSameCard(session.driver, loadScenario, () => session.roomKeep())),
     close: (): void => {
       session.endCase();
       const u = new URL(location.href);
