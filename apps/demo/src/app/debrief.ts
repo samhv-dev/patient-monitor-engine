@@ -505,9 +505,16 @@ export function preparationsOf(d: RunData, names: (key: string) => string | null
     const kept = d.rows.find((r) => r.kind === 'learner' && r.remote && r.by === p.by && r.name)?.name;
     const notice = p.notice ?? mine.at(-1)?.prep?.notice ?? null;
     const n = p.findings.length;
-    const ticks = [...new Set(mine.map((a) => a.t))];
-    const giveLines = ticks.map((t) => {
-      const at = mine.filter((a) => a.t === t);
+    // one push of a preparation of several drugs is one give of each drug (the host's stage group; each item its own
+    // tick): a give starts again where a drug repeats
+    const pushes: Administration[][] = [];
+    for (const a of mine) {
+      const cur = pushes.at(-1);
+      if (cur && !cur.some((x) => x.drugId === a.drugId)) cur.push(a);
+      else pushes.push([a]);
+    }
+    const giveLines = pushes.map((at) => {
+      const t = at[0]!.t;
       const shown = at[0]!.prep!.notice;
       const note = n === 0 ? '' : shown && shown.shownAt <= t ? PREP_WORDS.afterNotice : PREP_WORDS.beforeNotice;
       const what = at.map((a) => amountText(a, a.prep!, n, f)).join('; ');

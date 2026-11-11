@@ -99,9 +99,10 @@ function scripted(): RunData {
   d.format = 2;
   d.phases = [{ id: (mhV2 as { phases: Array<{ id: string }> }).phases[0]!.id, t: 0, rule: 'initial' }];
   d.edges = [];
-  // the mix given 2 mL at 01:00 BEFORE the notice; the notice shown at 01:30; a second 2 mL at 02:00 after it
+  // the mix given 2 mL at 01:00 BEFORE the notice; the notice shown at 01:30; a second 2 mL at 02:00 after it. Each
+  // drug of one push on its own tick, as the host stage group applies them (the e2e found the two ticks apart)
   const [sb, ep] = MIX_ACTIVES as [(typeof MIX_ACTIVES)[number], (typeof MIX_ACTIVES)[number]];
-  d.admin = [give(1, 60, sb, null), give(2, 60, ep, null), POWDER_GIVE, give(4, 120, sb, { shownAt: 90 }), give(5, 120, ep, { shownAt: 90 })];
+  d.admin = [give(1, 60, sb, null), give(2, 60.02, ep, null), POWDER_GIVE, give(4, 120, sb, { shownAt: 90 }), give(5, 120.02, ep, { shownAt: 90 })];
   d.preps = [mix({ shownAt: 90 }), POWDER, NEVER];
   for (const a of d.admin) d.rows.push({ t: a.t, kind: 'learner', remote: true, by: a.by!, text: `${a.drugId} ${a.dose} ${a.unit} IV`, ev: `drug:${a.drugId}`, prepId: a.prep!.id, dose: { drugId: a.drugId!, dose: a.dose!, unit: a.unit! } });
   d.samples.push({ t: 300 } as never);
