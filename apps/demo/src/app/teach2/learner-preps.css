@@ -1,0 +1,27 @@
+/* Plan learner-action-remote.md L9: the learner preparations card. Over the dock on the laptop (Instructor v2), in the
+   page's flow on the instructor's phone (.ip2-lp-inline). The colours are Instructor v2's tokens (teach2.css :root), with the
+   app's own as the fallback where the phone's panel has no .ip2 scope. */
+.ip2-dock { position: relative; }
+.ip2-lp { box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--ip2-pause-line, #7a5a0e); border-radius: 10px; background: var(--ip2-card, #1c2127); color: var(--ip2-text, #e8ecef); font-size: 13px; line-height: 1.4; }
+.ip2-lp[hidden] { display: none; }
+.ip2-dock > .ip2-lp { position: absolute; right: 16px; bottom: calc(100% + 8px); z-index: 5; width: min(520px, calc(100% - 32px)); max-height: 50vh; overflow: auto; box-shadow: 0 8px 24px rgb(0 0 0 / 0.45); }
+.ip2-lp-inline { margin: 0 var(--s-3, 12px) var(--s-2, 8px); max-height: 40vh; overflow: auto; }
+.ip2-lp-list, .ip2-lp-findings, .ip2-lp-clean-list { margin: 0; padding: 0; list-style: none; }
+.ip2-lp-list { display: flex; flex-direction: column; gap: 10px; }
+.ip2-lp-card { display: flex; flex-direction: column; gap: 6px; }
+.ip2-lp-card + .ip2-lp-card { padding-top: 10px; border-top: 1px solid var(--ip2-line, #2b323a); }
+.ip2-lp-what, .ip2-lp-fate, .ip2-lp-shown { margin: 0; }
+.ip2-lp-finding { color: var(--ip2-soft, #c6ced6); }
+.ip2-lp-finding strong { color: var(--ip2-text, #e8ecef); }
+.ip2-lp-fate { color: var(--ip2-muted, #9aa4ad); }
+.ip2-lp-shown { font-weight: 600; }
+.ip2-lp-show { align-self: flex-start; min-height: 36px; padding: 0 14px; border: 1px solid var(--ip2-pause-line, #7a5a0e); border-radius: 6px; background: var(--ip2-pause-bg, #3b2f12); color: var(--ip2-text, #e8ecef); font: inherit; font-weight: 600; cursor: pointer; }
+.ip2-lp-show:disabled { opacity: 0.6; cursor: progress; }
+.ip2-lp-inline .ip2-lp-show { min-height: 44px; }
+.ip2-lp-clean[hidden] { display: none; }
+.ip2-lp-clean-sum { cursor: pointer; color: var(--ip2-muted, #9aa4ad); }
+.ip2-lp-inline .ip2-lp-clean-sum { min-height: 44px; display: flex; align-items: center; }
+.ip2-lp-clean-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.ip2-lp-list:empty { display: none; }
+.ip2-preps-count { flex: none; padding: 5px 8px; border: 1px solid var(--ip2-pause-line); border-radius: 4px; background: var(--ip2-pause-bg); color: var(--ip2-text); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.ip2-preps-count[hidden] { display: none; }
