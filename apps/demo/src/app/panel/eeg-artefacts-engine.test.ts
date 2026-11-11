@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 // EEG plan E12, Q9, on the engine: each of the instructor's EEG artefact switches (panel/eeg.ts) sends a command that
 // changes the engine's EEG the way the plan specifies (§7 E4, cells C21, C22), and the reader's quality output responds
 // where the plan says it does (E5: `questionable` while an electrode is over the limit or they are unequal; the plan

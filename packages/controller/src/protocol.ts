@@ -236,6 +236,8 @@ export type ExtraEvent =
       rhythm?: { id: RhythmId; rateBpm: number }; // The engine's running rhythm (absent from a host-synthesised state)
       /** Who breathes and through what (E121b; the engine's own state, absent from a host-synthesised one). */
       breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
+      /** While an EEG device is on (EEG plan E12, Q9; the engine's own state, absent from a host-synthesised one). */
+      eeg?: { model: string; impedanceKOhm: number[]; ecgPickup: boolean };
     }
   /**
    * The scenario entered `stateId` at `t`, by `transitionId` (`<id>:else` for a failed probability roll). `by` (additive,

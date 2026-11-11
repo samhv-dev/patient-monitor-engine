@@ -24,9 +24,9 @@ function rig(eeg: Partial<EegView> | null, ack: AckResult = OK) {
     ctl: { state: { type: 'state', t: 100, ...(eeg ? { eeg: { ...ON_STATE, ...eeg } } : {}) } },
     send: async (c: CommandInput) => (sent.push(c), ack),
     onChange: () => () => undefined,
-  } as unknown as Link & { ctl: { state: Record<string, unknown> } };
+  } as { simT: number; ctl: { state: Record<string, unknown> } };
   let refresh = () => undefined as void;
-  const ctx = { link, staging: { submit: () => undefined }, site: DEFAULT_SITE, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx;
+  const ctx = { link: link as unknown as Link, staging: { submit: () => undefined }, site: DEFAULT_SITE, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx;
   const el = eegTab(ctx);
   document.body.replaceChildren(el);
   refresh();

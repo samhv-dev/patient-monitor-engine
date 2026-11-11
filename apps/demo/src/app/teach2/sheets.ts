@@ -1,6 +1,6 @@
 // Instructor v2, the sheets slot (design §3.6, §4; board "Proposal v11"; plan IP7; answers 11, 13–16). It fills the
 // dock's Tools (one button per sheet, the open one lit, and "Staged · n") and its note field, and slides the sheets up
-// over ACTION, one at a time. The Drug sheet is drug-sheet.ts; Airway, Vitals, Defib · CPR, Devices, Patient and Log
+// over ACTION, one at a time. The Drug sheet is drug-sheet.ts; Airway, Vitals, Defib · CPR, Devices, EEG, Patient and Log
 // mount today's tab bodies unmodified (panel/*.ts), each with its own PanelCtx whose staging is the view's one cache
 // (answer 14), so their Stage buttons fill the same cache the Drug sheet does. Gas is not built; there is no CPR
 // takeover (answer 15). A sheet is built the first time it opens (so today's view's locators never meet a second copy
@@ -15,6 +15,7 @@ import { airwayTab } from '../panel/airway.ts';
 import type { PanelCtx } from '../panel/ctx.ts';
 import { defibTab } from '../panel/defib.ts';
 import { devicesTab } from '../panel/devices.ts';
+import { eegTab } from '../panel/eeg.ts';
 import { logTab } from '../panel/log.ts';
 import { patientTab } from '../panel/patient.ts';
 import { vitalsTab } from '../panel/vitals.ts';
@@ -32,13 +33,14 @@ export const SHEETS: ReadonlyArray<{ id: string; name: string; letter: string; g
   { id: 'defib', name: 'Defib · CPR', letter: 'f', group: 'Defib, pacing & CPR', body: defibTab },
   { id: 'vitals', name: 'Vitals', letter: 'v', group: 'Vitals & rhythm', body: vitalsTab },
   { id: 'devices', name: 'Devices', letter: '', group: 'Devices & alarms', body: devicesTab },
+  { id: 'eeg', name: 'EEG', letter: '', group: 'EEG artefacts', body: eegTab }, // EEG plan E12, Q9: not in Devices (two plans reshape it)
   { id: 'patient', name: 'Patient', letter: '', group: 'Patient', body: patientTab },
   { id: 'log', name: 'Log', letter: '', group: 'Log', body: logTab },
 ];
 /** The onsets of a staged delivery, as today's staged-changes footer offers them (panel/panel.ts). */
 const ONSETS: Array<[string, string]> = [['0', 'Now'], ['30', 'Over 30 s'], ['60', 'Over 1 min'], ['120', 'Over 2 min'], ['300', 'Over 5 min']];
 /** Today's tab ids (a tab body's `goTab`) to the sheet that holds them; the Scenario tab is ACTION (the sheet closes). */
-const OF_TAB: Readonly<Record<string, string>> = { drugs: 'drug', airway: 'airway', defib: 'defib', vitals: 'vitals', devices: 'devices', patient: 'patient', log: 'log' };
+const OF_TAB: Readonly<Record<string, string>> = { drugs: 'drug', airway: 'airway', defib: 'defib', vitals: 'vitals', devices: 'devices', eeg: 'eeg', patient: 'patient', log: 'log' };
 
 interface Built {
   frame: SheetFrame;

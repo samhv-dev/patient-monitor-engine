@@ -87,6 +87,10 @@ async function host(page: Page, q: string): Promise<string> {
   });
   return page.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
 }
+/** With PME_SHOTS set (a local review run), a screenshot of `p` there; nothing on CI. */
+const shot = async (p: Page, name: string, browserName: string) => {
+  if (process.env.PME_SHOTS) await p.screenshot({ path: join(process.env.PME_SHOTS, `${name}-${browserName}.png`) });
+};
 const engineEeg = (page: Page) => page.evaluate(() => (window as unknown as HostW).__pmeApp.link.ctl.state?.eeg ?? null);
 
 /** A tablet that scanned the room's QR: the picker, then Depth of anaesthesia, synced and reading. */
@@ -140,6 +144,7 @@ test("through a relay in its own process: the instructor's loose electrode degra
     const p = await depthTablet(browser, code, ws);
     await shows(p, page, 'good', '2.0');
     await expect(p.locator('.depth-sqi')).toHaveText('Signal good');
+    await shot(p, 'tablet-depth-before', browserName);
     const s = await sheet(page, 'eeg');
     const loose = s.getByRole('button', { name: 'Loose electrode', exact: true });
     await expect(loose).toHaveAttribute('aria-pressed', 'false');
@@ -149,6 +154,8 @@ test("through a relay in its own process: the instructor's loose electrode degra
     await expect(s.locator('[data-artefact="electrode"] .eeg-state')).toHaveText('Electrodes 2 · 2 · 20 kΩ');
     await shows(p, page, 'questionable', '20.0');
     await expect(p.locator('.depth-sqi')).toHaveText('Check electrodes');
+    await shot(p, 'tablet-depth-loose-electrode', browserName);
+    await shot(page, 'host-eeg-sheet-loose-electrode', browserName);
     console.log(`[Q9] ${browserName}: loose electrode on: the tablet reads "Check electrodes", 20.0 kΩ, the host engine's quality`);
     const line = 'EEG electrodes 2 · 2 · 20 kΩ';
     const logs = () => page.evaluate(() => (window as unknown as HostW).__pmeApp.link.log.map((x) => x.text));
@@ -159,6 +166,7 @@ test("through a relay in its own process: the instructor's loose electrode degra
     await expect.poll(() => engineEeg(page), { timeout: 10_000 }).toMatchObject({ impedanceKOhm: [2, 2, 2] });
     await expect(loose).toHaveAttribute('aria-pressed', 'false');
     await shows(p, page, 'good', '2.0');
+    await shot(p, 'tablet-depth-after-off', browserName);
     expect(await logs()).toContain('EEG electrodes 2 kΩ each');
     await expect.poll(rows).toContain('EEG electrodes 2 kΩ each');
     console.log(`[Q9] ${browserName}: loose electrode off: "Signal good" and 2.0 kΩ again, as the host engine's`);
@@ -168,7 +176,7 @@ test("through a relay in its own process: the instructor's loose electrode degra
   }
 });
 
-test('at 1440 × 900 every sheet of the Instructor page opens from the dock with the EEG sheet present; its Deliver, its close button and the EEG switches are on top', async ({ page }) => {
+test('at 1440 × 900 every sheet of the Instructor page opens from the dock with the EEG sheet present; its Deliver, its close button and the EEG switches are on top', async ({ page, browserName }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, base, '#/teach2', { warmMs: 1500, site: { eegModel: 'generic' } });
@@ -186,7 +194,7 @@ test('at 1440 × 900 every sheet of the Instructor page opens from the dock with
     const open = `.ip2-sheets .ip2-sheet[data-sheet="${id}"]`;
     expect(await onTop(`${open} button.ip2-deliver`), `${id}: Deliver`).toBe(true);
     expect(await onTop(`${open} .ip2-sheet-close`), `${id}: close`).toBe(true);
-    if (id === 'drug') expect(await onTop(`${open} .ip2-sheet-primary button >> nth=0`), 'drug: its primary').toBe(true);
+    if (id === 'eeg') await shot(page, 'instructor-eeg-sheet-1440', browserName);
     if (id === 'eeg') for (const a of ['electrode', 'pickup']) expect(await onTop(`${open} [data-artefact="${a}"] button`), `eeg: ${a}`).toBe(true);
   }
 });

@@ -37,4 +37,5 @@ export type * from './types-truth.ts';
 export type * from './types-neuro.ts';
 export type * from './types-eeg.ts';
 export { EEG_DEVICES, EEG_MODEL_IDS, type EegModelId } from './l3/eeg-devices/registry.ts'; // the EEG devices' spec rows (the developer page, the renderer's strip)
+export { EEG_ELECTRODES, EEG_IMPEDANCE_DEFAULT_KOHM } from './l2/eeg/pipeline.ts'; // E12 (Q9): the instructor's electrode switch sends them back
 export { pruneTruth, TRUTH_LIMITS } from './truth.ts';
