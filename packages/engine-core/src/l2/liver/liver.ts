@@ -41,7 +41,7 @@ export interface LiverState {
   glucoseF: number; // Published for the endocrine model (`organs.liver.glucoseF`): hepatic glucose output factor = liver function
   kLacPerH: number; // whole-body lactate clearance rate constant
   lactate: number; // mmol/L — the FALLBACK pool (the blood model's pool is authoritative when present)
-  inr: number; // coagulopathy placeholder (not used by any model in 7d)
+  inr: number; // coagulopathy placeholder; the coag lab panel returns it (L10a)
 }
 
 export function createLiver(weightKg: number, inp: LiverInputs, failure = 0): LiverState {
@@ -73,7 +73,7 @@ function update(s: LiverState, inp: LiverInputs): void {
   s.tempF = Math.max(0.3, 1 - CLEAR_TEMP_PER_C * Math.max(0, 37 - inp.tempC));
   const liverPart = LAC_SPLIT.liver * Math.min(1.5, s.hbfRel) * s.liverFn * s.tempF;
   s.kLacPerH = K_LAC0_PER_H * (liverPart + LAC_SPLIT.kidney * Math.min(1.5, inp.gfrRel) + LAC_SPLIT.other);
-  s.inr = 1 + 2 * s.failure;
+  s.inr = 1 + 2 * s.failure; // [FIT: INR of a failing liver, a stand-in with no source; returned by the coag panel since L10a; brief docs/plans/learner-action-remote.md (L10c replaces it)]
 }
 
 /** Basal lactate production, mmol/h. */

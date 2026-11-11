@@ -417,6 +417,7 @@ renderer, audio and skin contracts.
 | `followBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | A follower's side: |
 | `mountHostBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The host's side: |
 | `actionSection` | [`apps/demo/src/app/builder/action-editor.ts`](../../apps/demo/src/app/builder/action-editor.ts) | The Actions section over `form`; |
+| `commandForm` | [`apps/demo/src/app/builder/action-editor.ts`](../../apps/demo/src/app/builder/action-editor.ts) | The Drug sheet's form for a new command: |
 | `routeState` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | How the engine takes a dose of `drugId` by `route`: |
 | `amountProblem` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | Why `a` is not a block the schema accepts, or null. |
 | `setAmount` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | `a` with field `k` set to `n` (undefined: |
@@ -434,9 +435,21 @@ renderer, audio and skin contracts.
 | `recordOf` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | A press's command as the driver records it (administrationOf's shapes, for the commands a card's `give` sends). |
 | `gradeExamples` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The examples of how grade() grades action `i` of `doc` (§5.4, mock-up 3 "How it grades"). |
 | `actionWarnings` | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The builder's warnings about the actions (§5.5), as validator-shaped lines (`<path>: |
+| `endSection` | [`apps/demo/src/app/builder/anchor-picker.ts`](../../apps/demo/src/app/builder/anchor-picker.ts) | The frame: a heading slot, a body drawn by `draw()` (all slots made anew each time), and slot lookup by path. |
+| `textField` | [`apps/demo/src/app/builder/anchor-picker.ts`](../../apps/demo/src/app/builder/anchor-picker.ts) | A text field over `o[k]`; |
+| `anchorPicker` | [`apps/demo/src/app/builder/anchor-picker.ts`](../../apps/demo/src/app/builder/anchor-picker.ts) | The picker over `o[k]` for `use`: |
+| `writeAnchor` | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | The anchor a form writes (a rule anchor is written by its own form: |
+| `anchorTargets` | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | The targets a form names: |
+| `anchorPicks` | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | The forms this place can offer on this card: |
+| `firstAnchor` | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | The anchor a form starts with when the author picks it: |
+| `anchorWords` | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | An anchor in words ("Early signs entered", "the 2nd taking of Dantrolene", "3:00 after the start"). |
+| `entryIdProblem` | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | Why `id` cannot be entry `i`'s id in `list` (the script's or the outcomes'), or null. |
+| `entryIdFrom` | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | An id from words ("Temperature down" → "temperatureDown"), unique in `xs` with a number. |
 | `readCardFile` | [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A file's text as a card the builder can open. |
 | `place` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Every line of a validation result on its field, errors first, each list in the validator's order. |
 | `checker` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Validation on every change: |
+| `debriefSection` | [`apps/demo/src/app/builder/debrief-editor.ts`](../../apps/demo/src/app/builder/debrief-editor.ts) | The Debrief hints section: |
+| `handoutSection` | [`apps/demo/src/app/builder/debrief-editor.ts`](../../apps/demo/src/app/builder/debrief-editor.ts) | The Handout questions section: |
 | `draftRefusalText` | [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts) | What the author reads when a write was refused (the draft is then as it was before that write). |
 | `fieldOf` | [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The field a validator path lands on. |
 | `formOf` | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The form of a card: |
@@ -582,6 +595,11 @@ renderer, audio and skin contracts.
 | `productWords` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A product as the bench names it: |
 | `benchView` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | The bench: the search, then the product and its amount, the diluent and volume, the container, the preview, "Put on the tray". |
 | `drugsMenu` | [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | The Drugs tab: |
+| `infusionsLink` | [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | The link of a granted learner follower. |
+| `weightOfSnapshot` | [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | The patient's weight, kg, as an engine snapshot holds it (the drug model's patient, which every per-kg dose uses), or null. |
+| `doseUnitOf` | [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | The unit a dose rate of `drugId` is read in on the phone: |
+| `doseRateText` | [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | The dose-rate line: |
+| `infusionsView` | [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | The Infusions tab: |
 | `trayView` | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | The tray: its preparations, each with its state and Give, and "Deliver the tray". |
 | `rhythmGroups` | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | Groups with every library id placed once ("Other" collects ids the map does not name). |
 | `startCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | The code a starting instructor's page runs under, or null when it has none and draws a new one. |
@@ -813,7 +831,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawNames`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `signInVentilator`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -826,14 +844,19 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The Case briefing (the owner's board Orientation 7b and its phone and Persian twins, 30 October): when a card with a `briefing` loads, every learners' screen — the host's Monitor view, a second-screen learner monitor and |
 | [`apps/demo/src/app/builder/action-editor.ts`](../../apps/demo/src/app/builder/action-editor.ts) | The builder's Actions section (docs/plans/scenario-builder.md §5.4, mock-up 03-action-editor; piece B4): what the team is expected to do, and how each act is graded, one action open at a time. |
 | [`apps/demo/src/app/builder/actions.ts`](../../apps/demo/src/app/builder/actions.ts) | The action editor's model (docs/plans/scenario-builder.md §5.4, piece B4): what an action may say and how it is graded. |
+| [`apps/demo/src/app/builder/anchor-picker.ts`](../../apps/demo/src/app/builder/anchor-picker.ts) | The anchor picker and the frame of the builder's last sections (docs/plans/scenario-builder.md §5.2; piece B5). |
+| [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | The anchors of the builder's last sections (docs/plans/scenario-builder.md §5.2; piece B5): where a script entry fires (`on`), where an outcome's window opens (`anchor`), and the run event a debrief opener or a handout q |
 | [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A card as a file (docs/plans/scenario-builder.md §8, "Export and import as files"; piece B2): a draft leaves the browser as its card JSON, `<id>.json`, the format a library card has (`JSON.stringify(card, null, 2)` and a |
 | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | The builder's validation (docs/plans/scenario-builder.md §5.1, §5.5; piece B1): the controller's own validator, run on the document the form would write, so the author sees exactly what a load would see; debounced, so ty |
+| [`apps/demo/src/app/builder/debrief-editor.ts`](../../apps/demo/src/app/builder/debrief-editor.ts) | The builder's Debrief hints and Handout questions sections (docs/plans/scenario-builder.md §5.2; piece B5): the card author's words for the instructor's Debrief page 2 (`debriefHints.show`, `.openers`) and the questions |
 | [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts) | The builder's layer 1 (docs/plans/scenario-builder.md §8; piece B2): every draft card kept in THIS browser, with its local snapshots, in the pattern the Debrief archive uses since #370 (archive.ts): each body (the card's |
 | [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The path → field map (docs/plans/scenario-builder.md §5.1, piece B1): the validator reports `<json path>: <what is wrong>` (validate.ts), and the builder shows each line at the field the path names, found by prefix: `/ph |
 | [`apps/demo/src/app/builder/form.ts`](../../apps/demo/src/app/builder/form.ts) | The scenario builder's model (docs/plans/scenario-builder.md §5.1, piece B1): a card as the form the editor shows, and back. |
+| [`apps/demo/src/app/builder/outcome-editor.ts`](../../apps/demo/src/app/builder/outcome-editor.ts) | The builder's Outcomes section (docs/plans/scenario-builder.md §5.2; piece B5): what the physiology should reach, reported reached or not reached in the debrief and never an action's grade. |
 | [`apps/demo/src/app/builder/page.ts`](../../apps/demo/src/app/builder/page.ts) | The scenario builder's page (docs/plans/scenario-builder.md §5, §8, mock-up 01-builder-main; piece B2), in place of the stub that explained the /1 format. |
 | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | The builder's Phases section (docs/plans/scenario-builder.md §5.3, mock-up 02-phase-editor; piece B3): the course of the case, one phase open at a time. |
 | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The phase editor's model (docs/plans/scenario-builder.md §5.3, piece B3): what a phase rule may read and how it reads in words, the rule tree's edits, where a phase sits in the card's course, and a phase id's rename. |
+| [`apps/demo/src/app/builder/script-editor.ts`](../../apps/demo/src/app/builder/script-editor.ts) | The builder's Script section (docs/plans/scenario-builder.md §5.2; piece B5): what the card does itself, card-set and never graded. |
 | [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The builder's first three sections (docs/plans/scenario-builder.md §5.2; piece B2): Header and story, Patient and sensors, Case briefing. |
 | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Reading a scenario card for Instructor v2 (E127, docs/plans/instructor-panel-redesign.md §3.2, §3.4, §7): the stages of the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, ju |
 | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | The scenario card (research/13 brief §7 "Scenario card"; TrainingMonitor's catalogue, CAE/REALITi objectives): title, draft flag, the learner-facing story, category, patient, duration and objectives. |
@@ -893,6 +916,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with w |
 | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | Plan learner-action-remote.md L7 (§4 D2, D3; LQ3, LQ7, LQ11): the preparation bench on the learner remote's Drugs tab. |
 | [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | Plan learner-action-remote.md L7: the learner remote's Drugs tab: the preparation bench (bench.ts) over the tray (tray.ts). |
+| [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | Plan learner-action-remote.md L8 (§4 D2, D3, D8; LQ4 ruled 9 November): the learner remote's Infusions tab. |
 | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | Plan learner-action-remote.md L7 (§4 D2, D3, D7; LQ3, LQ7): the tray on the learner remote's Drugs tab. |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Room plan R1 (docs/plans/room-and-instruments.md §7; Q3 ruled 5 November = A): the room code lives until the instructor asks for a new one, through reloads, restarts and the next day. |
@@ -1088,6 +1112,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/e2e/audit-timeline.e2e.ts`](../../apps/demo/e2e/audit-timeline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/audit-worker.e2e.ts`](../../apps/demo/e2e/audit-worker.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-action-editor.e2e.ts`](../../apps/demo/e2e/builder-action-editor.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/builder-end-sections.e2e.ts`](../../apps/demo/e2e/builder-end-sections.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-local-store.e2e.ts`](../../apps/demo/e2e/builder-local-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-phase-editor.e2e.ts`](../../apps/demo/e2e/builder-phase-editor.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/case-briefing.e2e.ts`](../../apps/demo/e2e/case-briefing.e2e.ts) | 0 | 0 |
@@ -1178,9 +1203,11 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/archive.test.ts`](../../apps/demo/src/app/archive.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/action-editor.dom.test.ts`](../../apps/demo/src/app/builder/action-editor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/actions.test.ts`](../../apps/demo/src/app/builder/actions.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/anchors.test.ts`](../../apps/demo/src/app/builder/anchors.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/card-file.test.ts`](../../apps/demo/src/app/builder/card-file.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/checks.test.ts`](../../apps/demo/src/app/builder/checks.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/drafts.test.ts`](../../apps/demo/src/app/builder/drafts.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/end-sections.dom.test.ts`](../../apps/demo/src/app/builder/end-sections.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/fields.test.ts`](../../apps/demo/src/app/builder/fields.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/form.test.ts`](../../apps/demo/src/app/builder/form.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/kit.dom.test.ts`](../../apps/demo/src/app/builder/kit.dom.test.ts) | 0 | 0 |
@@ -1239,6 +1266,7 @@ Exported without a doc comment: `anchorKind`, `builderPage`, `editsAt`, `rawName
 | [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/bench.dom.test.ts`](../../apps/demo/src/app/remote/bench.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/remote/infusions.dom.test.ts`](../../apps/demo/src/app/remote/infusions.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/tray.dom.test.ts`](../../apps/demo/src/app/remote/tray.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |

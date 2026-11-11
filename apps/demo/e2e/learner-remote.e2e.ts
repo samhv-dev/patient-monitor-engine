@@ -6,7 +6,12 @@
 //    incompatible admixture (sodium bicarbonate with epinephrine, Stabilis): nothing warns and no sound plays before
 //    the instructor shows the notice; a Give before it is given; at the instructor's press (the host's showPrepNotice,
 //    which L9's card calls) the phone sounds once and shows the finding with its source.
-// 4. L9: the laptop, the instructor phone and the learner phone together: the staging card on the dock and the phone at
+// L8 (the Infusions tab, its "Tests first" e2e): 4. A learner starts propofol from a ready syringe at 12 mL/h; the
+//    dose-rate line shown before Start equals the running infusion's line, and both equal the HOST's arithmetic (the
+//    laptop engine's amount per minute, per kg of the laptop's patient). 5. LQ4: a phone changes and stops the
+//    instructor's infusion and changes another remote's; each row says who set it; the laptop's record rows name the
+//    device and the rate each replaced.
+// 6. L9: the laptop, the instructor phone and the learner phone together: the staging card on the dock and the phone at
 //    once, a Give before the press, the phone's press reaching the learner once, the record keeping its time.
 // PME_E2E_PORT and PME_E2E_RELAY_PORT (+ the worker's index) keep Vite and the relay inside a machine's port range.
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -25,7 +30,8 @@ test.afterAll(async () => vite?.close());
 test.afterEach(async () => relay?.close());
 
 type Row = { kind: string; text: string; ev?: string; by?: string; name?: string; prepId?: string; dose?: { drugId: string; dose: number; unit: string } };
-type HostW = { __pmeApp: { session: { code: string; simNow(): number; record: { data: { rows: Row[] } }; host: { showPrepNotice(by: string, id: string): boolean; preparation(by: string, id: string): { notice: { shownAt: number } | null } | undefined } }; link: { send(c: unknown): Promise<{ accepted: boolean; reason?: string }> } } };
+type Row8 = Row & { replaced?: { rate: number; rateUnit: string; by: string } };
+type HostW = { __pmeApp: { session: { code: string; simNow(): number; spec: { weightKg: number }; onEvent(fn: (e: { type: string; drugs?: Array<{ id: string; rate: number | null }> }) => void): () => void; record: { data: { rows: Row[] } }; host: { showPrepNotice(by: string, id: string): boolean; preparation(by: string, id: string): { notice: { shownAt: number } | null } | undefined } }; link: { send(c: unknown): Promise<{ accepted: boolean; reason?: string }> } } };
 type PhoneW = { __pmeLearnerDrugs: { tray: { ids: string[]; sounded: number } | null } };
 
 const ws = () => `ws://127.0.0.1:${relay!.port}/`;
@@ -239,4 +245,123 @@ test('L9: the instructor sees the staging on the laptop dock and the phone, and 
   expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1); // once
   await ctx.close();
   await ictx.close();
+});
+
+/** The laptop's own engine: the last `drugs` panel row of `drugId` (amount per minute, null: not running). */
+async function hostRate(page: Page, drugId: string): Promise<number | null> {
+  return page.evaluate((d) => (window as unknown as { __l8Drugs?: Record<string, number | null> }).__l8Drugs?.[d] ?? null, drugId);
+}
+async function watchHostDrugs(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const w = window as unknown as HostW & { __l8Drugs?: Record<string, number | null> };
+    w.__l8Drugs = {};
+    w.__pmeApp.session.onEvent((e) => {
+      if (e.type === 'drugs') for (const d of e.drugs ?? []) (w.__l8Drugs as Record<string, number | null>)[d.id] = d.rate;
+    });
+  });
+}
+/** Propofol 1 % drawn neat, 20 mL, put on the tray and ready (×8 on the laptop if it has a preparation time). */
+async function propofolReady(p: Page): Promise<void> {
+  await prepareOn(p, [{ search: 'propofol', drug: 'propofol', product: 'propofol-1pct-aspen', amount: 20 }], null);
+  await expect(p.locator('.lr-item .lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
+  await expect(p.locator('.lr-item .lr-state')).toHaveText(/^Ready/, { timeout: 30_000 });
+}
+const infusionsTab = async (p: Page) => {
+  await p.getByRole('tab', { name: 'Infusions' }).click();
+  await expect(p.locator('.lr-infusions')).toBeVisible();
+};
+/** "26 µg/kg/min for 64 kg" from mg/min, as the phone prints a propofol rate (three significant figures). */
+const propofolLine = (mgPerMin: number, kg: number) => `${String(+((mgPerMin * 1000) / kg).toPrecision(3))} µg/kg/min for ${+kg.toFixed(1)} kg`;
+
+test("L8: a learner starts propofol from a ready syringe; the dose-rate line before Start and the running one are the host's arithmetic", async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const KEY = 'bed4remote01';
+  const { code, pin } = await laptop(page, 'showcase-mh-v2', { [KEY]: 'bed 4 remote' });
+  await watchHostDrugs(page);
+  const kg = await page.evaluate(() => (window as unknown as HostW).__pmeApp.session.spec.weightKg);
+  const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
+  await propofolReady(p);
+  await infusionsTab(p);
+  const prep = p.locator('.lr-inf-prep').first();
+  await expect(prep.locator('.lr-item-title')).toHaveText('Propofol 10 mg/mL · 20 mL');
+  await prep.locator('.stepper input').fill('12');
+  await prep.locator('.stepper input').dispatchEvent('change');
+  // 12 mL/h × the host's 10 mg/mL ÷ 60 = 2 mg/min, per kg of the patient
+  await expect(prep.locator('.lr-dose')).toHaveText(`Dose rate at this rate: ${propofolLine(2, kg)}`, { timeout: 10_000 });
+  const before = ((await prep.locator('.lr-dose').textContent()) ?? '').split(': ')[1];
+  for (const b of await p.locator('.lr-infusions button:visible, .lr-infusions input:visible').all()) {
+    const r = (await b.boundingBox())!;
+    expect(r.height, await b.evaluate((e) => e.outerHTML.slice(0, 80))).toBeGreaterThanOrEqual(44); // [ENG: ui] 44 px targets
+  }
+  await prep.locator('.lr-start').click();
+  await expect(prep.locator('.lr-said')).toHaveText('Started at 12 mL/h', { timeout: 10_000 });
+  const run = p.locator('.lr-inf[data-drug="propofol"]');
+  await expect(run.locator('.lr-rate')).toHaveText('12 mL/h', { timeout: 10_000 });
+  await expect(run.locator('.lr-setby')).toHaveText(/^set by this phone at \d\d:\d\d$/);
+  // the host's arithmetic: the laptop engine's own amount per minute, per kg of the laptop's patient
+  await expect.poll(() => hostRate(page, 'propofol'), { timeout: 10_000 }).not.toBeNull();
+  const host = propofolLine((await hostRate(page, 'propofol')) as number, kg);
+  await expect(run.locator('.lr-dose')).toHaveText(`Dose rate: ${host}`, { timeout: 10_000 });
+  expect(before).toBe(host);
+  await expect.poll(async () => (await rows(page)).filter((r) => r.kind === 'learner' && r.ev === 'drug:propofol').length, { timeout: 10_000 }).toBe(1);
+  expect((await rows(page)).find((r) => r.kind === 'learner' && r.ev === 'drug:propofol')).toMatchObject({ by: KEY, name: 'bed 4 remote' });
+  expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await ctx.close();
+});
+
+test("L8 (LQ4): a phone changes and stops the instructor's infusion and changes another remote's; the record names the device and the rate replaced", async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const A = 'phoneaaaa101';
+  const B = 'phonebbbb202';
+  const { code, pin } = await laptop(page, 'showcase-mh-v2', { [A]: 'bed 5 remote', [B]: 'bed 6 remote' });
+  const a = await phone(browser, browserName, code, pin, A);
+  const b = await phone(browser, browserName, code, pin, B);
+  // the instructor's remifentanil, in µg/kg/min from the laptop
+  expect(await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'remifentanil', rate: 0.1, unit: 'mcg/kg/min' } }))).toMatchObject({ accepted: true });
+  // the second phone's propofol at 10 mL/h
+  await propofolReady(b.p);
+  await infusionsTab(b.p);
+  await b.p.locator('.lr-inf-prep .stepper input').first().fill('10');
+  await b.p.locator('.lr-inf-prep .stepper input').first().dispatchEvent('change');
+  await b.p.locator('.lr-inf-prep .lr-start').first().click();
+  await expect(b.p.locator('.lr-inf-prep .lr-said')).toHaveText('Started at 10 mL/h', { timeout: 10_000 });
+  // the first phone lists both, with who set each
+  await infusionsTab(a.p);
+  const remi = a.p.locator('.lr-inf[data-drug="remifentanil"]');
+  const prop = a.p.locator('.lr-inf[data-drug="propofol"]');
+  await expect(remi.locator('.lr-setby')).toHaveText(/^set by the instructor at \d\d:\d\d$/, { timeout: 15_000 });
+  await expect(prop.locator('.lr-setby')).toHaveText(/^set by another learner remote \(phon\) at \d\d:\d\d$/, { timeout: 15_000 });
+  await expect(prop.locator('.lr-rate')).toHaveText('10 mL/h');
+  await expect(b.p.locator('.lr-inf[data-drug="propofol"] .lr-setby')).toHaveText(/^set by this phone at /);
+  // change the instructor's: 6 mL/h through the engine row's own syringe, the host keeps
+  await remi.locator('.stepper input').fill('6');
+  await remi.locator('.stepper input').dispatchEvent('change');
+  await remi.locator('.lr-change-btn').click();
+  await expect(a.p.locator('.lr-inf-said')).toHaveText('Remifentanil: changed to 6 mL/h', { timeout: 10_000 });
+  await expect(remi.locator('.lr-setby')).toHaveText(/^set by this phone at /, { timeout: 10_000 });
+  await expect(remi.locator('.lr-rate')).toHaveText('6 mL/h');
+  // change the other remote's: 5 mL/h
+  await prop.locator('.stepper input').fill('5');
+  await prop.locator('.stepper input').dispatchEvent('change');
+  await prop.locator('.lr-change-btn').click();
+  await expect(a.p.locator('.lr-inf-said')).toHaveText('Propofol: changed to 5 mL/h', { timeout: 10_000 });
+  await expect(b.p.locator('.lr-inf[data-drug="propofol"] .lr-setby')).toHaveText(/^set by another learner remote \(phon\) at /, { timeout: 10_000 });
+  await expect(b.p.locator('.lr-inf[data-drug="propofol"] .lr-rate')).toHaveText('5 mL/h');
+  // stop the instructor's (it was this phone's rate by then)
+  await remi.locator('.lr-stop').click();
+  await expect(a.p.locator('.lr-inf-said')).toHaveText('Remifentanil: stopped', { timeout: 10_000 });
+  await expect(remi).toHaveCount(0, { timeout: 10_000 });
+  await expect(b.p.locator('.lr-inf[data-drug="remifentanil"]')).toHaveCount(0, { timeout: 10_000 });
+  // the laptop's record: each change under the device, with the rate it replaced and who had set that
+  const mine = async () => ((await rows(page)) as Row8[]).filter((r) => r.kind === 'learner' && r.by === A);
+  await expect.poll(async () => (await mine()).length, { timeout: 10_000 }).toBe(3);
+  const [r1, r2, r3] = await mine();
+  expect(r1).toMatchObject({ ev: 'drug:remifentanil', name: 'bed 5 remote', replaced: { rate: 0.1, rateUnit: 'mcg/kg/min', by: 'laptop' } });
+  expect(r2).toMatchObject({ ev: 'drug:propofol', name: 'bed 5 remote', replaced: { rate: 10, rateUnit: 'mL/h', by: B } });
+  expect(r3).toMatchObject({ ev: 'drug:remifentanil', name: 'bed 5 remote', replaced: { rate: 6, rateUnit: 'mL/h', by: A } });
+  expect(await a.p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await a.ctx.close();
+  await b.ctx.close();
 });

@@ -7,8 +7,8 @@
 // portrait run pairs a Remote to the host by code and audits each of its tabs, with the 44-px touch targets. The
 // connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there. The scenario
 // builder (B2) is audited with a draft open, at each of its three sections, and walked by keyboard; B3 adds its Phases
-// section with a phase open (and its add form), and B4 its Actions section with an action open (and two add forms), before
-// the walk.
+// section with a phase open (and its add form), B4 its Actions section with an action open (and two add forms), and B5
+// its Script, Outcomes, Debrief hints and Handout questions sections (each with an entry being added), before the walk.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -89,6 +89,22 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.getByRole('button', { name: 'Add a violation' }).click();
     await page.getByRole('button', { name: 'Add from the Drug sheet' }).click();
     await run(page, '#/scenarios/builder/<draft> Actions, Dantrolene, a violation and a command being added');
+    // B5: the Script (its entry, and a new entry's form with the command form), Outcomes (a new outcome's form), Debrief
+    // hints (a line to show and an opener added) and Handout questions (a question added and counted)
+    await page.getByRole('button', { name: /^Script/ }).click();
+    await page.getByRole('button', { name: 'Add a script entry' }).click();
+    await run(page, '#/scenarios/builder/<draft> Script, a new entry being added');
+    await page.getByRole('button', { name: /^Outcomes/ }).click();
+    await page.getByRole('button', { name: 'Add an outcome' }).click();
+    await run(page, '#/scenarios/builder/<draft> Outcomes, a new outcome being added');
+    await page.getByRole('button', { name: /^Debrief hints/ }).click();
+    await page.getByRole('button', { name: 'Add a built-to-show line' }).click();
+    await page.getByRole('button', { name: 'Add an opener' }).click();
+    await run(page, '#/scenarios/builder/<draft> Debrief hints, a line and an opener');
+    await page.getByRole('button', { name: /^Handout questions/ }).click();
+    await page.getByRole('button', { name: 'Add a question' }).click();
+    await page.locator('[aria-label="Question 1: its words"]').fill('What told you this was MH?');
+    await run(page, '#/scenarios/builder/<draft> Handout questions, a question');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
     if (remote) {
       await remote.bringToFront();
@@ -310,6 +326,58 @@ test('accessibility: the learner preparations card on the laptop dock and on the
     }
     await lctx.close();
     await hostCtx.close();
+  } finally {
+    await relay.close();
+  }
+  expect(found).toEqual([]);
+});
+
+// Plan learner-action-remote.md L8: the learner remote's Infusions tab on a phone, dark and light: a ready syringe to
+// start (its mL/h and the dose rate beside it) over a running infusion this phone started (its rate, dose rate, "set by",
+// Change and Stop) and the instructor's, started before the phone signed in. 44 px targets on touch, names, contrast, one h1, no sideways scroll, a focus walk.
+test("accessibility: the learner remote's Infusions tab with a syringe to start and two running infusions", async ({ browser }) => {
+  test.setTimeout(150_000);
+  const dir = mkdtempSync(join(tmpdir(), 'l8-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  const relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
+  const found: string[] = [];
+  try {
+    const host = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+    await openApp(host, base, `?relay=${ws}&scenario=showcase-mh-v2#/teach2`, { warmMs: 1500 });
+    const code = await host.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
+    const pin = (await host.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+    const sent = await host.evaluate(() => (window as unknown as { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }> } } }).__pmeApp.link.send({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'remifentanil', rate: 0.1, unit: 'mcg/kg/min' } }));
+    expect(sent.accepted).toBe(true);
+    for (const theme of ['dark', 'light'] as const) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+      if (theme === 'light') await phone.addInitScript(() => localStorage.setItem('pme.site', JSON.stringify({ schema: 'pme-site/1', theme: 'projector-light' })));
+      const p = await phone.newPage();
+      await p.goto(`${base}/?join=${code}&relay=${ws}#/remote/learner`);
+      for (const d of pin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+      await p.locator('.ip-peer-go').click();
+      await expect(p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`);
+      await expect(p.locator('.lr-bench')).toBeVisible({ timeout: 15_000 });
+      // two fentanyl syringes, ready at once (LQ7): one started, one left to start
+      for (let i = 0; i < 2; i++) {
+        await p.locator('.lr-search').fill('fentanyl');
+        await p.locator('.lr-pick[data-drug="fentanyl"]').click();
+        await p.locator('.lr-product[data-product="fentanyl-50mcg-ml"]').click();
+        await p.locator('.lr-stage').click();
+      }
+      await expect(p.locator('.lr-item .lr-state[data-state="ready"]')).toHaveCount(2, { timeout: 10_000 });
+      await p.getByRole('tab', { name: 'Infusions' }).click();
+      await expect(p.locator('.lr-inf-prep .lr-start')).toHaveCount(2);
+      await p.locator('.lr-inf-prep .lr-start').first().click();
+      await expect(p.locator('.lr-inf[data-drug="fentanyl"] .lr-setby')).toHaveText(/^set by this phone at /, { timeout: 15_000 });
+      // the instructor's started before this phone signed in: the phone says so instead of naming anyone
+      await expect(p.locator('.lr-inf[data-drug="remifentanil"] .lr-setby')).toHaveText('set before this phone signed in');
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `infusions ${theme} ${f.rule}: ${f.what}`));
+      if (theme === 'dark') found.push(...(await focusWalk(p, 30)).map((f) => `infusions focus: ${f}`));
+      await phone.close();
+    }
+    await host.context().close();
   } finally {
     await relay.close();
   }
