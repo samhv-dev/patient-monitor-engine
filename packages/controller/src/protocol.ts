@@ -195,8 +195,8 @@ export interface PumpPatient {
  * syringe's or bag's origin and the label it was made or stocked at; `gives`, the drug a bolus gives the patient (the
  * drug lock reads it, drug-lock.ts); `bolus`, a bolus's volume, true dose and seconds at the device's rapid rate (PQ3 = A:
  * filed as a bolus, its seconds kept for the Debrief); `infusion`, the rate an action starts, changes or stops delivery
- * at; `replaced`, the values it replaced and who had set them; `mismatch`, set when the action gives the patient the
- * contents of a channel whose contents and programme differ (§8). A device's own `pump` field is refused (pumpMay).
+ * at; `replaced`, the values it replaced and who had set them; `mismatch`, the programme, set when the action gives the
+ * patient the contents of a channel whose contents and programme differ (§8). A device's own `pump` field is refused (pumpMay).
  */
 export interface PumpMeta {
   ch: number;
@@ -207,7 +207,7 @@ export interface PumpMeta {
   bolus?: { volumeMl: number; dose: number; unit: string; seconds: number };
   infusion?: { rate: number; unit: string };
   replaced?: PumpReplaced[];
-  mismatch?: true;
+  mismatch?: { programmed: { drugId: string; concentration: PumpConcentration } };
 }
 /** One value a pump action replaced (§7), and who had set it: a device key, or drug-lock.ts GivenBy. */
 export type PumpReplaced =

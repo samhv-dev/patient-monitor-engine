@@ -182,7 +182,7 @@ export function translatePump(cmd: PumpCommand, x: PumpContext): PumpTranslated 
   /** An action that gives the patient the contents: the record and grade() read the mismatch on it (§8 "Grading"). */
   const gives = (infusion?: { rate: number; unit: string }): void => {
     if (infusion) meta.infusion = infusion;
-    if (c && mismatched(c)) meta.mismatch = true;
+    if (c?.programmed && mismatched(c)) meta.mismatch = { programmed: c.programmed };
   };
   const prev = (what: PumpReplaced['what']): void => {
     const r = replacedOf(what, c);

@@ -415,6 +415,17 @@ delivered, and "not modelled" otherwise. A preparation with none of these findin
 contraindications have no `source`. A run that staged nothing has no `preparations`. The author writes nothing for any
 of this.
 
+**Pump channels: who pressed, and a syringe that differs from its programme** (plan pump-rack-tci.md C2, §7, §8). A
+press of the pump tablet is recorded with `source: "pump"`, the tablet's device key as `by` and its `channel`; a
+remote's or the Drug sheet's change that the host routed to a channel keeps its own source, with the `channel`. The drug
+is what the syringe or bag truly holds. A pump bolus is graded as a bolus (PQ3 = A): it satisfies `rate: { "bolus": true }`
+with no "over N s" line, and its seconds at the pump's rapid rate are kept as `bolusS` for the Debrief. A rate, a start
+and a stop are the channel's infusion at that rate (0 when stopped); a TCI target is a `tci`; a load, a programme, a purge
+and an unload give no administration. A channel whose contents and programme differ (another drug, or the same drug at
+another concentration than its label) is a **violation** with `source: "pump"` for every act that gave its contents (an
+infusion above 0, a start, a bolus, a TCI target), with harm "modelled": the engine delivered the true contents. The
+author writes nothing for any of this.
+
 **Other fields.**
 
 - `precondition`: a truth rule that must hold at some time before the press. If it never held from the action's

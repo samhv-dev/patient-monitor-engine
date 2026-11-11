@@ -213,10 +213,19 @@ export interface Administration {
   seq: number;
   /** The applied tick × 0.02 s (a staged batch: its own tick). */
   t: number;
-  /** `learner`: a learner's device (a remote or the defibrillator window), its device key in `by`. */
-  source: 'action' | 'sheet' | 'cache' | 'remote' | 'panel' | 'script' | 'learner';
-  /** The learner's device key (plan learner-action-remote.md §6). */
+  /** `learner`: a learner's device (a remote or the defibrillator window), its device key in `by`. `pump`: the pump
+   *  tablet (plan pump-rack-tci.md C2), its device key in `by`. */
+  source: 'action' | 'sheet' | 'cache' | 'remote' | 'panel' | 'script' | 'learner' | 'pump';
+  /** The learner's device key (plan learner-action-remote.md §6), or the pump tablet's. */
   by?: string;
+  /** A pump channel's act (pump-rack-tci.md C2, §7): its channel, whoever pressed (the tablet, or a remote's or the Drug
+   *  sheet's change routed to it, D9). Its drug is the channel's TRUE contents (what the patient received). */
+  channel?: number;
+  /** A pump bolus's seconds at the device's rapid rate (PQ3 = A): kept for the Debrief, never `overS`, so the bolus is
+   *  graded as a bolus with no "over N s" line. */
+  bolusS?: number;
+  /** §8: the act gave the contents of a channel whose contents and programme differ (grade(): a `pump` violation). */
+  mismatch?: { contents: string; programmed: string };
   /** An A press (F6 stamps it on the command). */
   actionId?: string;
   kind: 'drug' | 'infusion' | 'tci' | 'vaporiser' | 'fluid' | 'ventilation' | 'cpr' | 'defib' | 'airway' | 'procedure' | 'sample' | 'communication' | 'physical';

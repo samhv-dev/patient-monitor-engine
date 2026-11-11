@@ -422,7 +422,7 @@ describe('C2, §8 and PQ8 = A: the mismatch finding reaches the instructor, and 
     expect((await p.send({ action: 'rate', ch: 2, rate: 5, unit: 'mL/h' })).accepted).toBe(true);
     const start = p.command({ type: 'pump', action: 'start', ch: 2 });
     expect(await ack(x.got, start)).toMatchObject({ accepted: true });
-    expect(applied(x.panelGot, start)).toMatchObject({ pump: { mismatch: true } });
+    expect(applied(x.panelGot, start)).toMatchObject({ pump: { mismatch: { programmed: { drugId: 'phenylephrine' } } } });
   });
 
   it('a concentration that differs from the label (20 mg/mL programmed for a 10 mg/mL syringe) is a mismatch; the same strength in other units is not', async () => {
