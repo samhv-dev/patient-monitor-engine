@@ -7,8 +7,8 @@
 // portrait run pairs a Remote to the host by code and audits each of its tabs, with the 44-px touch targets. The
 // connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there. The scenario
 // builder (B2) is audited with a draft open, at each of its three sections, and walked by keyboard; B3 adds its Phases
-// section with a phase open (and its add form), and B4 its Actions section with an action open (and two add forms), before
-// the walk.
+// section with a phase open (and its add form), B4 its Actions section with an action open (and two add forms), and B5
+// its Script, Outcomes, Debrief hints and Handout questions sections (each with an entry being added), before the walk.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -89,6 +89,22 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.getByRole('button', { name: 'Add a violation' }).click();
     await page.getByRole('button', { name: 'Add from the Drug sheet' }).click();
     await run(page, '#/scenarios/builder/<draft> Actions, Dantrolene, a violation and a command being added');
+    // B5: the Script (its entry, and a new entry's form with the command form), Outcomes (a new outcome's form), Debrief
+    // hints (a line to show and an opener added) and Handout questions (a question added and counted)
+    await page.getByRole('button', { name: /^Script/ }).click();
+    await page.getByRole('button', { name: 'Add a script entry' }).click();
+    await run(page, '#/scenarios/builder/<draft> Script, a new entry being added');
+    await page.getByRole('button', { name: /^Outcomes/ }).click();
+    await page.getByRole('button', { name: 'Add an outcome' }).click();
+    await run(page, '#/scenarios/builder/<draft> Outcomes, a new outcome being added');
+    await page.getByRole('button', { name: /^Debrief hints/ }).click();
+    await page.getByRole('button', { name: 'Add a built-to-show line' }).click();
+    await page.getByRole('button', { name: 'Add an opener' }).click();
+    await run(page, '#/scenarios/builder/<draft> Debrief hints, a line and an opener');
+    await page.getByRole('button', { name: /^Handout questions/ }).click();
+    await page.getByRole('button', { name: 'Add a question' }).click();
+    await page.locator('[aria-label="Question 1: its words"]').fill('What told you this was MH?');
+    await run(page, '#/scenarios/builder/<draft> Handout questions, a question');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
     if (remote) {
       await remote.bringToFront();
