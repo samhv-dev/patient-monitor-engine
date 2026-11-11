@@ -1,6 +1,7 @@
 // The neuro model's NMT (train-of-four) and BFA (BIS-like depth index) tiles. Pure formatters (Node has no DOM) from
 // the engine's `measurement` values: tofCount/tofRatio (every train), ptc (23 s after a PTC) and di/sr (1 Hz while the
-// depth monitor is on) or an EEG device's own ids (sef/eegSr at 1 Hz, bis/bisSr at 2 Hz while it is on; EEG plan E6, E7), as the neuro demo
+// depth monitor is on) or an EEG device's own ids (sef/eegSr at 1 Hz, bis/bisSr at 2 Hz, se/re every 0.64 s while it is on;
+// EEG plan E6, E7, E8), as the neuro demo
 // draws them. Like a plug-in module, a tile is shown only while its device
 // publishes (MODULE_TILES); the other tiles are always drawn.
 import type { Measured, NumericId } from '@pme/engine-core';
@@ -16,7 +17,7 @@ const ok = (x: Measured | undefined): x is Measured & { value: number } => !!x &
  */
 export const MODULE_TILES: Partial<Record<TileParam, { numerics: NumericId[]; staleS: number }>> = {
   NMT: { numerics: ['tofCount', 'ptc'], staleS: 120 },
-  BFA: { numerics: ['di', 'sr', 'sef', 'eegSr', 'bis', 'bisSr'], staleS: 5 }, // the present index or an EEG device (E6, E7): 1 Hz, 2 Hz
+  BFA: { numerics: ['di', 'sr', 'sef', 'eegSr', 'bis', 'bisSr', 'se', 're'], staleS: 5 }, // the present index or an EEG device (E6, E7, E8): 1 Hz, 2 Hz, 0.64 s
   AGENTS: { numerics: ['etAa', 'mac'], staleS: 5 }, // The neuro model publishes both at 1 Hz while an agent is present
 };
 
@@ -48,12 +49,15 @@ export function formatAgents(v: Values, noValue: string): { main: string; sub: s
 }
 
 /**
- * The EEG readers the BFA tile can show, one row each (EEG plan E6, E7; the next readers add a row): the numeric ids of
- * the reader's index and suppression ratio, the digits and the label the tile wears for it. The BIS-type label carries
- * Q8's point in its wording: a type, not the maker's monitor.
+ * The EEG readers the BFA tile can show, one row each (EEG plan E6, E7, E8; the next readers add a row): the numeric ids of
+ * the reader's index and suppression ratio, the digits and the label the tile wears for it. The BIS-type and Entropy
+ * labels carry Q8's point in their wording: a type, not the maker's monitor. The Entropy reader computes no suppression
+ * ratio (its source does not publish the detector's threshold): no `sr`, and its sub-line is its second number, RE
+ * (`second`), so a skin's BS% part stays blank for it.
  */
-export const BFA_READERS: ReadonlyArray<{ index: NumericId; sr: NumericId; digits: number; label: string }> = [
+export const BFA_READERS: ReadonlyArray<{ index: NumericId; sr?: NumericId; second?: { id: NumericId; label: string }; digits: number; label: string }> = [
   { index: 'bis', sr: 'bisSr', digits: 0, label: 'BIS-type' },
+  { index: 'se', second: { id: 're', label: 'RE' }, digits: 0, label: 'Entropy-type SE' },
   { index: 'sef', sr: 'eegSr', digits: 1, label: 'SEF' },
 ];
 
@@ -64,15 +68,16 @@ export const BFA_READERS: ReadonlyArray<{ index: NumericId; sr: NumericId; digit
  * whole stale window (5 s) newer, i.e. the EEG device has stopped. This mapping lives here, never in a skin's JSON;
  * parts the reader does not compute (Saadat's SQI%, EMG%) stay blank.
  */
-export function bfaReading(v: Values): { index: Measured | undefined; sr: Measured | undefined; digits: number; label?: string } {
+export function bfaReading(v: Values): { index: Measured | undefined; sr: Measured | undefined; second?: { value: Measured | undefined; label: string }; digits: number; label?: string } {
   let best: { r: (typeof BFA_READERS)[number]; at: number } | null = null;
   for (const r of BFA_READERS) {
-    const x = v[r.sr] ?? v[r.index];
+    const x = (r.sr ? v[r.sr] : undefined) ?? v[r.index];
     if (x && (!best || x.at > best.at)) best = { r, at: x.at };
   }
   const depth = v.sr ?? v.di;
   if (best && (!depth || best.at >= depth.at - (MODULE_TILES.BFA?.staleS ?? 5))) {
-    return { index: v[best.r.index], sr: v[best.r.sr], digits: best.r.digits, label: best.r.label };
+    const { r } = best;
+    return { index: v[r.index], sr: r.sr ? v[r.sr] : undefined, ...(r.second ? { second: { value: v[r.second.id], label: r.second.label } } : {}), digits: r.digits, label: r.label };
   }
   return { index: v.di, sr: v.sr, digits: 0 };
 }
@@ -82,6 +87,8 @@ export function bfaReading(v: Values): { index: Measured | undefined; sr: Measur
 export function formatBfa(v: Values, srLabel: string, noValue: string): { main: string; sub: string; label?: string } {
   const r = bfaReading(v);
   const main = ok(r.index) ? r.index.value.toFixed(r.digits) : noValue;
-  const sub = `${srLabel} ${ok(r.sr) ? Math.round(r.sr.value) : noValue}`;
+  const sub = r.second
+    ? `${r.second.label} ${ok(r.second.value) ? Math.round(r.second.value.value) : noValue}` // E8: the reader's second number in place of an SR it does not compute
+    : `${srLabel} ${ok(r.sr) ? Math.round(r.sr.value) : noValue}`;
   return r.label ? { main, sub, label: r.label } : { main, sub };
 }
