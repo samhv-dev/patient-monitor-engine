@@ -59,6 +59,8 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | Where | Relation |
 |---|---|
 | [`ecg-filter.ts:10`](../../packages/engine-core/src/l3/ecg-filter.ts#L10) | Normalised biquad (a0 = 1): y = b0·x + b1·x₋₁ + b2·x₋₂ − a1·y₋₁ − a2·y₋₂. |
+| [`bis-type.ts:335`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts#L335) | The bispectrum B (Eq 6) and the bicoherence BIC = B/√RTP (Eqs 7, 8) at the bins (k1, k2), over the epochs given (RAM98 |
+| [`bis-type.ts:337`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts#L337) | BEFORE its magnitude is taken, and RTP = mean \|X(f1)\|²·\|X(f2)\|²·\|X(f1 + f2)\|²: the reading under which BIC measures |
 | [`generic.ts:8`](../../packages/engine-core/src/l3/eeg-devices/generic.ts#L8) | SR = 100 × (time with \|x\| < 5 µV for ≥ 0.5 s) ÷ (valid time) over the last 60 s |
 | [`spectral.ts:5`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts#L5) | PSD_k = c·\|Σ w_i·(x_i − x̄)·e^(−2πik/N)\|² / (fs·Σ w_i²), c = 2 except at 0 Hz and fs/2; Hann window w |
 | [`spectral.ts:23`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts#L23) | One-sided power spectral density of one epoch, µV²/Hz, at k·fs/N for k = 0 … ⌊N/2⌋ (Hann window, mean removed). |
@@ -107,6 +109,21 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `tcpKey` | `string` | — |
 | `statusLast` | `Array<number \| string \| boolean \| null>` | defib/pacer fields of the last deviceStatus (JSON-safe), compared field by field. |
 | `lastStatusT` | `number` | — |
+
+### `BisTypeState` ([`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fs` | `number` | — |
+| `n` | `number` | Samples read since switch-on; readings made (strides closed). |
+| `k` | `number` | — |
+| `z1` | `number` | The high-pass filter's two delays (transposed direct form II). |
+| `z2` | `number` | — |
+| `raw` | `number[]` | The last epoch, raw and high-passed, oldest first. |
+| `hp` | `number[]` | — |
+| `fresh` | `number[]` | The samples since the last reading (the raw display). |
+| `bsr` | `boolean[]` | One flag per stride: its second was suppressed (the last 63 s). |
+| `rows` | `Array<number[] \| null>` | One spectrum per stride, 0–47 Hz, µV²/Hz; null when excluded (suppression) (the last 30 s). |
 
 ### `GenericState` ([`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts))
 
@@ -375,6 +392,63 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `generic` | Processed EEG (generic) | `betaHiHz` | 30 | Hz | [TXT Ch36 Table 36.1] | beta, upper edge |
 | `generic` | Processed EEG (generic) | `gammaLoHz` | 30 | Hz | [TXT Ch36 Table 36.1: gamma > 30 Hz] | gamma, lower edge |
 | `generic` | Processed EEG (generic) | `gammaHiHz` | 45 | Hz | [ENG: device; below the 50 Hz mains line] | gamma, upper edge |
+| `bisType` | BIS-type index, computed from published components | `updateS` | 0.5 | s | [CON22 Table 1 l. 2: stride 0.5 s; p. 4: "recalculates … after every half-second"] | a reading every stride |
+| `bisType` | BIS-type index, computed from published components | `epochS` | 2 | s | [CON22 Table 1 l. 21: 2-s epochs, 4 strides; RAM98 p. 1000: epochs of 2-s duration] | the epoch each spectrum is computed from |
+| `bisType` | BIS-type index, computed from published components | `binHz` | 0.5 | Hz | [CON22 Table 1 l. 18: 0.5-Hz bins] | the spectral resolution (1 / epoch) |
+| `bisType` | BIS-type index, computed from published components | `sourceFsHz` | 128 | Hz | [CON22 Table 1 l. 2: "must be 128 Hz"] — the engine's channel is 125 Hz (P-6); see the file head | the rate openibis is written for (not used: recorded) |
+| `bisType` | BIS-type index, computed from published components | `rawWindowS` | 8 | s | [TXT Ch36 p. 1137: the raw EEG over 5–10 s] [ENG: display; 8 inside it] | the raw trace the display keeps |
+| `bisType` | BIS-type index, computed from published components | `dsaHistoryS` | 3600 | s | [TXT Ch36 pp. 1138–1139: the spectrogram of about the last hour] | the spectrogram the display keeps |
+| `bisType` | BIS-type index, computed from published components | `dsaMaxHz` | 50 | Hz | [TXT Ch36 p. 1139, Fig. 36.3: 0–50 Hz] | the spectrogram's top frequency |
+| `bisType` | BIS-type index, computed from published components | `hpHz` | 0.65 | Hz | [CON22 Table 1 l. 16: second-order high-pass Butterworth at 0.65 Hz] | the high-pass before the spectra |
+| `bisType` | BIS-type index, computed from published components | `suppressSegS` | 1 | s | [CON22 Table 1 l. 10: "two half-second strides (1 second)"] | the segment tested for suppression |
+| `bisType` | BIS-type index, computed from published components | `suppressUv` | 5 | µV | [CON22 Table 1 l. 11: "all samples are within 5 uV of baseline"; p. 6] | the suppression threshold about the segment's own line |
+| `bisType` | BIS-type index, computed from published components | `bsrWindowS` | 63 | s | [CON22 Table 1 l. 13: "the previous 63 sec"] | the burst suppression rate's window |
+| `bisType` | BIS-type index, computed from published components | `bsLookbackS` | 2 | s | [CON22 Table 1 l. 22, l. 60: an epoch (4 strides) with any suppressed stride is excluded] | how far back a suppressed stride excludes the spectrum |
+| `bisType` | BIS-type index, computed from published components | `componentS` | 30 | s | [CON22 Table 1 l. 28: "the most recent thirty seconds"] | the components' window |
+| `bisType` | BIS-type index, computed from published components | `sawLenS` | 0.5 | s | [CON22 Table 1 l. 40: a template of nStride samples] [ENG: device; 62.5 → 63 samples at 125 Hz] | the sawtooth template's length |
+| `bisType` | BIS-type index, computed from published components | `sawRampN` | 5 | samples | [CON22 Table 1 l. 40: zeros then 1:5] | the template's ramp |
+| `bisType` | BIS-type index, computed from published components | `sawVarUv2` | 10 | µV² | [CON22 Table 1 l. 44: v > 10] | the least variance a sawtooth match counts at |
+| `bisType` | BIS-type index, computed from published components | `sawMatch` | 0.63 | fraction | [CON22 Table 1 l. 44: > 0.63] | the normalised match that detects a K-complex |
+| `bisType` | BIS-type index, computed from published components | `sawF1Hz` | 3 | Hz | [CON22 Table 1 l. 19: piecewise(f, [0,3,6], [0,0.25,1]).^2] | the K-complex filter's middle point |
+| `bisType` | BIS-type index, computed from published components | `sawG1` | 0.25 | fraction | [CON22 Table 1 l. 19] | its amplitude there (squared on use) |
+| `bisType` | BIS-type index, computed from published components | `sawF2Hz` | 6 | Hz | [CON22 Table 1 l. 19] | above it the filter passes all |
+| `bisType` | BIS-type index, computed from published components | `vhighLoHz` | 40 | Hz | [CON22 Table 1 l. 29: bandRange(39.5,46.5) × bandRange(40,47), P(n − 1)·P(n) for n from 40 Hz; Fig. 3: very high band 40–47 Hz] | the very high band's power concentration: its lowest n |
+| `bisType` | BIS-type index, computed from published components | `topHz` | 47 | Hz | [CON22 Table 1 l. 29, 30, 32; RAM98 Table 2: 47 Hz] | the top of the high, very high and whole bands |
+| `bisType` | BIS-type index, computed from published components | `wholeLoHz` | 1 | Hz | [CON22 Table 1 l. 30: bandRange(0.5,46.5) × bandRange(1,47), P(n − 1)·P(n) for n from 1 Hz (the 0.5–47 Hz spectrum)] | the whole spectrum's power concentration: its lowest n |
+| `bisType` | BIS-type index, computed from published components | `midLoHz` | 11 | Hz | [CON22 Table 1 l. 31; RAM98 Table 2: P11–20] | the mid band, lower edge |
+| `bisType` | BIS-type index, computed from published components | `midHiHz` | 20 | Hz | [CON22 Table 1 l. 31; RAM98 Table 2] | the mid band, upper edge |
+| `bisType` | BIS-type index, computed from published components | `midPrct` | 50 | % | [CON22 Table 1 l. 31: prctmean(…, 50, 100)] | the mid band's bins averaged from this percentile up |
+| `bisType` | BIS-type index, computed from published components | `highLoHz` | 30 | Hz | [CON22 Table 1 l. 32; Eq 1; RAM98 Table 2: P30–47] | the high band, lower edge |
+| `bisType` | BIS-type index, computed from published components | `lowLoHz` | 0.5 | Hz | [CON22 Table 1 l. 34] | the low band, lower edge |
+| `bisType` | BIS-type index, computed from published components | `lowHiHz` | 4 | Hz | [CON22 Table 1 l. 34] | the low band, upper edge |
+| `bisType` | BIS-type index, computed from published components | `trimPct` | 50 | % | [CON22 Table 1 l. 33: trimmean(…, 50)] | the general component's trimmed mean |
+| `bisType` | BIS-type index, computed from published components | `sedE0` | 104.4 | — | [CON22 Table 1 l. 46: scurve(c1, 104.4, 49.4, −13.9, 5.29)] | sedation score: Eo |
+| `bisType` | BIS-type index, computed from published components | `sedEmax` | 49.4 | — | [CON22 Table 1 l. 46] | sedation score: Emax |
+| `bisType` | BIS-type index, computed from published components | `sedX50` | -13.9 | dB | [CON22 Table 1 l. 46] | sedation score: x50 |
+| `bisType` | BIS-type index, computed from published components | `sedW` | 5.29 | dB | [CON22 Table 1 l. 46] | sedation score: width |
+| `bisType` | BIS-type index, computed from published components | `genX0` | -60.89 | dB | [CON22 Table 1 l. 47: piecewise(c2, [−60.89, −30], [−40, 43.1])] | general score, linear region: from |
+| `bisType` | BIS-type index, computed from published components | `genX1` | -30 | dB | [CON22 Table 1 l. 47, 48] | general score, linear region: to; the S-curve adds from here |
+| `bisType` | BIS-type index, computed from published components | `genY0` | -40 | — | [CON22 Table 1 l. 47] | general score at genX0 |
+| `bisType` | BIS-type index, computed from published components | `genY1` | 43.1 | — | [CON22 Table 1 l. 47] | general score at genX1 |
+| `bisType` | BIS-type index, computed from published components | `genE0` | 61.3 | — | [CON22 Table 1 l. 48: scurve(c2, 61.3, 72.6, −24.0, 3.55)] | general S-curve: Eo |
+| `bisType` | BIS-type index, computed from published components | `genEmax` | 72.6 | — | [CON22 Table 1 l. 48] | general S-curve: Emax |
+| `bisType` | BIS-type index, computed from published components | `genX50` | -24 | dB | [CON22 Table 1 l. 48] | general S-curve: x50 |
+| `bisType` | BIS-type index, computed from published components | `genW` | 3.55 | dB | [CON22 Table 1 l. 48] | general S-curve: width |
+| `bisType` | BIS-type index, computed from published components | `bsrScore0` | 50 | — | [CON22 Table 1 l. 49: piecewise(BSR, [0,100], [50,0]); p. 6: "exactly 50 – BSR/2"] | the BSR score at no suppression |
+| `bisType` | BIS-type index, computed from published components | `gwHiDb` | 5 | dB | [CON22 Table 1 l. 50: piecewise(c3, [0,5], [0.5,1]); Fig. 3E: "≤ 5 dBμV"] | low − mid at which the general score takes all the weight |
+| `bisType` | BIS-type index, computed from published components | `gwLo` | 0.5 | fraction | [CON22 Table 1 l. 50] | the general weight at low − mid ≤ 0 |
+| `bisType` | BIS-type index, computed from published components | `bwLoPct` | 10 | % | [CON22 Table 1 l. 51: piecewise(BSR, [10,50], [0,1])] | the BSR from which its score takes weight |
+| `bisType` | BIS-type index, computed from published components | `bwHiPct` | 50 | % | [CON22 Table 1 l. 51; p. 6: "when the BSR is at least 50%"] | the BSR at which its score is the output |
+| `bisType` | BIS-type index, computed from published components | `outX0` | -40 | — | [CON22 Table 1 l. 53: piecewise(x, [−40,10,97,110], [0,10,97,100]); Fig. 3F] | the compression's lowest input (→ 0) |
+| `bisType` | BIS-type index, computed from published components | `outLo` | 10 | — | [CON22 Table 1 l. 53] | below it the output is compressed |
+| `bisType` | BIS-type index, computed from published components | `outHi` | 97 | — | [CON22 Table 1 l. 53] | above it the output is compressed |
+| `bisType` | BIS-type index, computed from published components | `outX3` | 110 | — | [CON22 Table 1 l. 53] | the compression's highest input (→ 100) |
+| `bisType` | BIS-type index, computed from published components | `impedanceLimitKOhm` | 5 | kΩ | [P-13, the plan default: Ch36 p. 1145 gives 5 or 8 kΩ] | above it the signal is questionable |
+| `bisType` | BIS-type index, computed from published components | `impedanceUnequalKOhm` | 2.5 | kΩ | [ENG: device; half the limit, Ch36 p. 1145 names inequality without a number] | electrodes differing by more are unequal: questionable |
+| `bisType` | BIS-type index, computed from published components | `bicAvgS` | 60 | s | [RAM98 p. 1000: "a running average against those calculated in the previous minute"; p. 1001] | the bispectrum's average |
+| `bisType` | BIS-type index, computed from published components | `bicLoHz` | 0.5 | Hz | [RAM98 Table 2: B0.5–47.0 Hz] | the bispectral area, lower edge |
+| `bisType` | BIS-type index, computed from published components | `bicHiHz` | 47 | Hz | [RAM98 Table 2] | the bispectral area, upper edge (f1 + f2 ≤ fs/2: p. 994) |
+| `bisType` | BIS-type index, computed from published components | `dsaFloor` | 0.0001 | µV²/Hz | [ENG: display; the generic reader's floor for the spectrogram's dB (generic.ts)] | the least power the spectrogram column draws |
 
 ## Functions
 
@@ -391,10 +465,22 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `createFilterState` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Plain-data filter state: |
 | `filterSample` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Filter one sample through the cascade, updating `state` in place. |
 | `magnitudeAt` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | \|H(e^{jω})\| of the cascade at frequency f (Hz). |
+| `piecewise` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | Linear interpolation on a piecewise-linear curve, clamped to its ends (MATLAB interp1 of `piecewise`, l. |
+| `sawtoothDetector` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | l. 39–44: whether the epoch holds a strong sawtooth-shaped K-complex (either direction). |
+| `components` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | The components of l. |
+| `mixer` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | l. 45–53, the mixer; |
+| `bisTypeRead` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
+| `epochSpectrum` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | ── The bispectral term (RAM98 pp. |
+| `bispectrumAt` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | The bispectrum B (Eq 6) and the bicoherence BIC = B/√RTP (Eqs 7, 8) at the bins (k1, k2), over the epochs given (RAM98 p. |
+| `meanBicoherence` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | The mean bicoherence over RAM98's area 0.5–47 Hz on both axes (f2 ≤ f1, the symmetric half; |
 | `genericRead` | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
 | `psdOf` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | One-sided power spectral density of one epoch, µV²/Hz, at k·fs/N for k = 0 … ⌊N/2⌋ (Hann window, mean removed). |
 | `bandPower` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | Power in [lo, hi) Hz, µV² (bins of width dfHz from 0 Hz). |
 | `edgeFrequency` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | The frequency below which a fraction q of the power in [lo, hi) Hz lies, Hz: |
+| `blackman` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | ── Shared by the named readers (EEG plan E7–E11) ───────────────────────────────────────────────────────────────── Functions a source NAMES without defining (Connor 2022 Table 1 calls MATLAB's `blackm |
+| `detrend` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | x minus its least-squares straight line (Connor 2022 Table 1 l. |
+| `butterHighpass2` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | The second-order Butterworth high-pass at fcHz for a sample rate fs (MATLAB `butter(2, fc/(fs/2), 'high')`, the bilinear transform with the cut-off pre-warped: |
+| `dftOf` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | The DFT of v (already windowed) at bins 0 … kMax: |
 | `hrAveragingOf` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | The skin's HR averaging option, or undefined (the default method). |
 | `hrOnQrs` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | Feed one detected R time (sim seconds). |
 | `hrMeasure` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | The HR numeric at time t (call once per second); |
@@ -421,7 +507,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `deviceBias` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | Device bias: |
 | `spo2PitchHz` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): |
 
-Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
+Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createBisType`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
 
 ## Source files
 
@@ -431,6 +517,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts) | CO2 numerics (brief §4.4 "Numerics (L3)"; research 03 §4.5) measured from the DISPLAYED capnogram: breath detection on a rising edge above 50 % of the recent peak with hysteresis, EtCO2 = maximum breath peak of the last |
 | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | The device layer (brief §3.2 L3 "alarm engine, pacer and defibrillator"): one JSON-safe state object the engine keeps beside its pipeline state. |
 | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Monitor ECG filters (brief §4.1 "Measurement chain"; research 03 §1.11, Philips MP2 datasheet): Monitor 0.5–40 Hz + automatic mains notch (50 Hz default, brief §5 / the owner's decision) Diagnostic 0.05–150 Hz, no notch |
+| [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | EEG E7 (plan §7 E7; Q8; P-16): the BIS-type reader, built from the two papers the owner supplied, and only from them: [CON22] Connor CW. |
 | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | EEG E5 (plan §7 E5; D8): the generic processed-EEG reader — everything Miller says a monitor shows, computed from the samples, the sample rate and the electrode impedance only (the device boundary, plan §5). |
 | [`l3/eeg-devices/registry.ts`](../../packages/engine-core/src/l3/eeg-devices/registry.ts) | EEG plan D8: the registry of EEG devices, one spec row each (like the room's defibrillator models): the device's label, update interval and every constant with its tag (docs/model/monitor.md lists them), and its reader — |
 | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | EEG devices (plan §7 E5): the spectral analysis every reader shares — the periodogram of one epoch, band power and the edge frequency below which a fraction of the power lies (the spectral edge and the median frequency). |
@@ -450,6 +537,9 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3) | 85.4 vs 83.7 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
+| C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149) | 85.4 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
+| C28: at the cortex's own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) | 89.13 vs 89.13 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
 | CVP limit chatter on a stable ventilated patient: CVP_M_HIGH raised ≤ 2 times in the 11-min MANUAL rhythm tour (the audit's chatter criterion) | 4 on philips-like and 4 on mindray-like | — | MIS-SPECIFIED ([audit row 179](../../docs/validation/target-audit/30-target-audit.md#row-179)) | Split: (a) no CVP_M_HIGH raise/clear cycle < 5 s (chatter, already tested); (b) no CVP_M_HIGH in the sinus/AF/sinus-tachy segments once baseline CVP is corrected; (c) a raise is ALLOWED (or expected) during VT, CHB, junctional and VVI segments | [`fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) |
 | philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats | 6 | — | MIS-SPECIFIED ([audit row 180](../../docs/validation/target-audit/30-target-audit.md#row-180)) | State the PEA kind. True PEA: spread ≤ 5 with no HR-synchronous component. Pseudo-PEA: PP 3-10 mmHg at the electrical rate, MAP 15-40, and NON-PULSATILE need not show | [`fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) |
 | saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) | 9 s | research/06 §4.1 | MIS-SPECIFIED ([audit row 182](../../docs/validation/target-audit/30-target-audit.md#row-182)) | Either keep ≤ 8 s but use the manual's end point (first displayed HR ≥ 110, expected ~6 s) or keep the 5 % end point with ≤ 10 s (8 s window + detection + update); the IEC ≤ 11 s row already passes | [`fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) |
@@ -463,6 +553,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`engine/device-determinism.test.ts`](../../packages/engine-core/test/engine/device-determinism.test.ts) | 0 | 0 |
+| [`engine/eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) | 3 | 0 |
 | [`engine/eeg-device.test.ts`](../../packages/engine-core/test/engine/eeg-device.test.ts) | 0 | 0 |
 | [`engine/fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) | 1 | 0 |
 | [`engine/fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) | 1 | 0 |
@@ -479,6 +570,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/co2-numerics/co2-numerics.test.ts`](../../packages/engine-core/test/l3/co2-numerics/co2-numerics.test.ts) | 0 | 0 |
 | [`l3/ecg-filter-bands.test.ts`](../../packages/engine-core/test/l3/ecg-filter-bands.test.ts) | 0 | 0 |
 | [`l3/ecg-filter.test.ts`](../../packages/engine-core/test/l3/ecg-filter.test.ts) | 0 | 0 |
+| [`l3/eeg-devices/bis-type.test.ts`](../../packages/engine-core/test/l3/eeg-devices/bis-type.test.ts) | 0 | 0 |
 | [`l3/eeg-devices/boundary.test.ts`](../../packages/engine-core/test/l3/eeg-devices/boundary.test.ts) | 0 | 0 |
 | [`l3/eeg-devices/generic.test.ts`](../../packages/engine-core/test/l3/eeg-devices/generic.test.ts) | 0 | 0 |
 | [`l3/hr-averaging.test.ts`](../../packages/engine-core/test/l3/hr-averaging.test.ts) | 0 | 0 |
