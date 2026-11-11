@@ -172,6 +172,11 @@ describe('the follower\'s instrument hashes (R4, §4 D7)', () => {
     expect(hashOf('learner')).toBe('#/monitor');
     expect(hashOf('monitor')).toBe('#/monitor/wide');
     expect(hashOf('defib')).toBe('#/defib');
+    // E12: the depth-of-anaesthesia window, and back
+    expect(instrumentOf('#/depth')).toBe('depth');
+    expect(instrumentOf('#/depth/')).toBe('depth');
+    expect(hashOf('depth')).toBe('#/depth');
+    for (const h of ['#/depth/x', '#/depths']) expect(instrumentOf(h), h).toBe('learner');
     // L6: the learner action remote's page, and back
     expect(instrumentOf('#/remote/learner')).toBe('remote');
     expect(instrumentOf('#/remote/learner/')).toBe('remote');
