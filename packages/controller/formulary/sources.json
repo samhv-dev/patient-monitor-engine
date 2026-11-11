@@ -680,5 +680,12 @@
     "holder": "Pfizer Limited",
     "version": "SmPC revised 08/2025; emc product 1077",
     "issuer": "EMC"
+  },
+  "dailymed-sodiumbicarbonate-hospira": {
+    "kind": "monograph",
+    "product": "Sodium Bicarbonate Injection USP 8.4 %, 50 mL single-dose vial: 84 mg is one mEq each of Na+ and HCO3- (HCO3- is univalent: 1 mEq = 1 mmol)",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 8664c7ce-707b-4c6c-9ce4-7160b5f877f8, version 6, published 2026-04-08",
+    "issuer": "DailyMed"
   }
 }

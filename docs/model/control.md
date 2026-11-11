@@ -230,6 +230,7 @@ transports (`src/protocol.ts`).
 | `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
 | `covers` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. |
 | `stabilityRows` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Indexes of `entry`'s stability rows for `diluent` and `container` (any temperature) that state `concentration` or state none; |
+| `whyNoRow` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Why no stability row describes the preparation (N61: |
 | `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match). |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
@@ -245,6 +246,7 @@ transports (`src/protocol.ts`).
 | `instructorMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). |
 | `learnerDefibMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, bare), else the reason it is refused (R5c). |
 | `learnerMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted `learner` peer may send `c` (one of LEARNER_COMMANDS, with its own fields only), else the reason it is refused (§4 D2). |
+| `pumpMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted `pump` peer may send `c` (one of PUMP_COMMANDS on a channel, with its own fields only), else the reason it is refused (§4 D2). |
 | `newSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random 6-character session code (31^6 ≈ 8.9e8 codes). |
 | `normalizeSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Upper-cases and strips spaces/dashes; |
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
@@ -365,6 +367,7 @@ None recorded.
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
 | [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
+| [`formulary/shipped-rows.test.ts`](../../packages/controller/test/formulary/shipped-rows.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
@@ -390,6 +393,7 @@ None recorded.
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 0 | 0 |
 | [`relay/relay-instructor.test.ts`](../../packages/controller/test/relay/relay-instructor.test.ts) | 0 | 0 |
 | [`relay/relay-learner.test.ts`](../../packages/controller/test/relay/relay-learner.test.ts) | 0 | 0 |
+| [`relay/relay-pump.test.ts`](../../packages/controller/test/relay/relay-pump.test.ts) | 0 | 0 |
 | [`relay/relay-refuses-mirror.test.ts`](../../packages/controller/test/relay/relay-refuses-mirror.test.ts) | 0 | 0 |
 | [`relay/relay-state.test.ts`](../../packages/controller/test/relay/relay-state.test.ts) | 0 | 0 |
 | [`relay/relay-vent.test.ts`](../../packages/controller/test/relay/relay-vent.test.ts) | 0 | 0 |

@@ -6,6 +6,7 @@
 // Rows that differ only in the concentration they were measured at are told apart by their `concentration` (brief 127):
 // the row whose stated concentration covers the preparation's, else a row stating none; never the nearest row
 // (a row at another concentration is not the same statement: ruling C1, 10 November).
+import { holdsIn } from './findings.ts';
 import type { Concentration, DrugEntry, Stability } from './types.ts';
 
 export interface Rulings {
@@ -47,12 +48,22 @@ const REL_TOL = 1e-9;
 /** A drug amount's unit as [dimension, size]: mass in mg, a count, or any other unit (mmol, mEq) only as itself. */
 const dim = (unit: string): [string, number] => (unit in MASS_MG ? ['mass', MASS_MG[unit]!] : COUNT.has(unit) ? ['count', 1] : [unit, 1]);
 
-/** True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. */
-export function covers(c: Concentration, perMl: number, unit: string): boolean {
+/** `unit`'s [dimension, size], read as the row's dimension `to` where the drug's molar mass joins mmol and mass (N61). */
+function asDim(unit: string, to: string, mgPerMmol?: number): [string, number] {
+  const [d, size] = dim(unit);
+  if (d === to || mgPerMmol === undefined) return [d, size];
+  if (d === 'mmol' && to === 'mass') return ['mass', size * mgPerMmol];
+  if (d === 'mass' && to === 'mmol') return ['mmol', size / mgPerMmol];
+  return [d, size];
+}
+
+/** True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range.
+ *  `mgPerMmol`: the drug's molar mass, where the formulary holds one (N61), so mmol and a mass per mL can be compared. */
+export function covers(c: Concentration, perMl: number, unit: string, mgPerMmol?: number): boolean {
   const m = /^(.+)\/(mL|L)$/.exec(c.unit);
   if (!m) return false;
   const [d, size] = dim(m[1]!);
-  const [pd, psize] = dim(unit);
+  const [pd, psize] = asDim(unit, d, mgPerMmol);
   if (d !== pd) return false;
   const k = size / PER_ML[m[2]!]! / psize;
   const lo = c.amount * k;
@@ -70,7 +81,23 @@ export interface AtConcentration {
  *  state none; every row for the pair when no concentration is given. */
 export function stabilityRows(entry: DrugEntry, diluent: string, container: Stability['container'], concentration?: AtConcentration): number[] {
   return entry.stability.flatMap((s, i) =>
-    s.diluent === diluent && s.container === container && (!concentration || !s.concentration || covers(s.concentration, concentration.perMl, concentration.unit)) ? [i] : []);
+    s.diluent === diluent && s.container === container && (!concentration || !s.concentration || covers(s.concentration, concentration.perMl, concentration.unit, entry.molarMass?.mgPerMmol)) ? [i] : []);
+}
+
+/** Why no stability row describes the preparation (N61: units that cannot meet are named), or null when one does. */
+export function whyNoRow(entry: DrugEntry, diluent: string, container: Stability['container'], at: AtConcentration): string | null {
+  if (stabilityRows(entry, diluent, container, at).length) return null;
+  const pair = entry.stability.filter((s) => s.diluent === diluent && s.container === container);
+  if (!pair.length) return `no stability row for ${entry.drugId} in ${diluent}, ${container}`;
+  const mm = entry.molarMass?.mgPerMmol;
+  const apartRows = pair.filter((s) => {
+    const m = s.concentration && /^(.+)\/(mL|L)$/.exec(s.concentration.unit);
+    return !!m && asDim(at.unit, dim(m[1]!)[0], mm)[0] !== dim(m[1]!)[0];
+  });
+  const apart = [...new Set(apartRows.map((s) => s.concentration!.unit))];
+  if (apartRows.length === pair.length && mm === undefined) return `${entry.drugId} is in ${at.unit}/mL and its stability rows here in ${apart.join(', ')}: the formulary holds no molar mass for ${entry.drugId}`;
+  const states = `no stability row here states ${+at.perMl.toPrecision(6)} ${at.unit}/mL`;
+  return apart.length ? `${states} (rows in ${apart.join(', ')} cannot be compared: no conversion the formulary holds)` : states;
 }
 
 /**
@@ -89,7 +116,7 @@ export function remaining(
   const rows = stabilityRows(entry, diluent, container, opts.concentration).map((i) => entry.stability[i]!).filter((s) => s.tempC === tempC);
   const row = rows.find((s) => opts.concentration && s.concentration) ?? rows[0];
   if (!row) {
-    const incompatible = opts.incompatible ?? entry.diluents.some((d) => d.id === diluent && d.compat?.verdict === 'incompatible');
+    const incompatible = opts.incompatible ?? entry.diluents.some((d) => d.id === diluent && d.compat?.verdict === 'incompatible' && holdsIn(d.compat, container));
     const none = { basis: 'none' as const, beyondData: false, src: null };
     if (!incompatible) return { r: 1, note: 'loss not known', deliverable: true, ...none };
     if (rulings.LQ8 === 'B') return { r: 0, note: 'all lost', deliverable: true, ...none };
