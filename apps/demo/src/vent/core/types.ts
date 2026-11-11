@@ -40,14 +40,21 @@ export interface Target {
 }
 
 /**
- * V3 fills this: which of the model's alarm ids a face shows, their priority and delay, which latch (the device's
- * alarm chapter). V0 has no profile: the model's alarms pass through unchanged.
+ * A face's alarm scheme (plan §4.3; V0 has none: the model's alarms pass through unchanged). Which of the model's alarm
+ * ids the face shows, in its order (between two active alarms of one priority, the earlier in `show` is the message);
+ * each one's priority; how long its condition must hold without a break before the face signals it (`delayS`, s of sim
+ * time; absent: at once); which latch (the lamp stays lit, steady, after the cause ends until Esc); when a row applies
+ * at all (`enabled`: the device's "not in CPAP" rows); and what each press of the silence key gives (`silenceS`: the
+ * first press the first entry from now, a further press while that silence runs the next entry from the first press).
+ * The cockpit's alarm view (alarms-view.ts) applies it.
  */
 export interface AlarmProfile {
   show?: ReadonlyArray<VentAlarm['id']>;
   priority?: Partial<Record<VentAlarm['id'], VentAlarm['priority']>>;
   delayS?: Partial<Record<VentAlarm['id'], number>>;
   latch?: ReadonlyArray<VentAlarm['id']>;
+  enabled?: Partial<Record<VentAlarm['id'], (cfg: Readonly<VentConfig>) => boolean>>;
+  silenceS?: readonly number[];
 }
 
 /**
@@ -83,7 +90,7 @@ export interface FaceSpec {
    * Pause on this face. A property of the Hamilton face (its VC sets flow); off for EDP-TS (§4.3 coupling 2, GM1).
    */
   matchMonitorFlow: boolean;
-  /** V3 fills delays and latching; V1 applies `show` and `priority`. Absent: the model's alarms as they are. */
+  /** The face's alarm scheme (V3). Absent: the model's alarms as they are, with v1.9's banner and 120 s silence. */
   alarmProfile?: AlarmProfile;
   /** V1: the device's own starting settings, written once when the cockpit is created (before any link patch). */
   init?: Partial<VentConfig>;
