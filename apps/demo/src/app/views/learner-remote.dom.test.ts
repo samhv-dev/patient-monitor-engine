@@ -269,6 +269,14 @@ describe('L7: the learner remote sends under its hello\'s id, and hands each gra
     expect(v.panels.infusions.childElementCount).toBe(1);
     expect(v.panels.labs.textContent).toBe(LEARNER_WORDS.empty.labs);
   });
+
+  it('L11: the Labs tab holds the labs view it is given', () => {
+    history.replaceState(null, '', `/?join=${CODE}#/remote/learner`);
+    const view = document.createElement('div');
+    const v = learnerRemoteView({ code: CODE, labs: view, follow: () => { throw new Error('not signed in'); } });
+    expect(v.panels.labs.firstElementChild).toBe(view);
+    expect(v.panels.labs.childElementCount).toBe(1);
+  });
 });
 
 describe("Room setup's learner PIN (L6, §4 D9)", () => {
