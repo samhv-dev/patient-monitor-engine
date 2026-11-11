@@ -5,9 +5,8 @@
 // them, the simulator's reasons in English. The maker and the device are named in face.json's provenance and the docs,
 // never drawn: the bezel is plain. The "Simulator" handle outside the bezel opens the instructor's tools (an app string).
 import { modeName, type VentConfig } from '@pme/ventilator';
-import { hostLang } from '../../../app/i18n/lang.ts';
 import type { Cockpit } from '../../core/cockpit.ts';
-import type { FaceModule } from '../../core/types.ts';
+import type { FaceEnv, FaceModule } from '../../core/types.ts';
 import { $, el } from '../../dom.ts';
 import type { SimTools } from '../../sim-tools.ts';
 import { CONTROLS, formatIe, LIMITS, ROWS, SETTINGS, settingState, WINDOWS, type Ctl, type FaceMode, type Row, type WindowId } from './controls.ts';
@@ -19,20 +18,13 @@ import { alarmText, EDP_SPEC } from './modes.ts';
 type Cfg = Readonly<VentConfig>;
 const DEV_W = 1000;
 const DEV_H = 724;
-const SIM_WORD = 'Simulator'; // an app string outside the device (plan §6): Persian only through the app's table
-
-/** The handle's word through the app's translation table when the app is in Persian (no Persian written here). */
-function simWord(set: (s: string) => void): void {
-  set(SIM_WORD);
-  if (hostLang() !== 'fa') return;
-  void import('../../../app/i18n/fa-dom.ts').then((m) => { const t = m.faText(SIM_WORD, m.faPass()); if (t) set(t); }).catch(() => {});
-}
+const SIM_WORD = 'Simulator'; // an app string outside the device (plan §6): Persian only through the app's table (env.translate)
 
 const ctl = (id: string): Ctl => CONTROLS.find((x) => x.id === id) as Ctl;
 const reasonEl = (r: ReasonId) => el('span', { class: 'r' }, reason(r));
 const W = (id: WordId) => word(id);
 
-function mountEdp(c: Cockpit, tools: SimTools): { draw(ts: number): void; stop(): void } {
+function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: number): void; stop(): void } {
   const knob: Knob = createKnob(c);
   const body = document.body;
   const style = el('style', { 'data-face': 'edp-ts' }, css);
@@ -193,7 +185,8 @@ function mountEdp(c: Cockpit, tools: SimTools): { draw(ts: number): void; stop()
 
   screenHost.replaceChildren(root);
   const handle = el('button', { class: 'edp-simhandle', type: 'button' }) as HTMLButtonElement;
-  simWord((s) => { handle.textContent = s; });
+  handle.textContent = SIM_WORD;
+  void env.translate?.(SIM_WORD).then((t) => { if (t) handle.textContent = t; }).catch(() => {});
   handle.onclick = () => tools.open();
   body.append(handle);
 

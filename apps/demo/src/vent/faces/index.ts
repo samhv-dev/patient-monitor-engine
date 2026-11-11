@@ -3,7 +3,7 @@
 // The default is 'hamilton-style' until piece VD.
 import type { VentDriver } from '@pme/ventilator';
 import { createCockpit, type Cockpit } from '../core/cockpit.ts';
-import type { FaceModule } from '../core/types.ts';
+import type { FaceEnv, FaceModule } from '../core/types.ts';
 import { mountSimTools } from '../sim-tools.ts';
 import { edpFace } from './edp-ts/face.ts';
 import { hamiltonFace } from './hamilton/face.ts';
@@ -19,11 +19,11 @@ export function faceFromLocation(loc: { search: string }): FaceId {
 }
 
 /** The cockpit on the driver, the simulator's tools, and the face on both; `stop` takes them all down. */
-export function mountFace(d: VentDriver, id: FaceId, o: { linked: boolean }): { cockpit: Cockpit; stop(): void } {
+export function mountFace(d: VentDriver, id: FaceId, o: { linked: boolean } & FaceEnv): { cockpit: Cockpit; stop(): void } {
   const face = FACES[id];
   const cockpit = createCockpit(d, face.spec, o);
   const tools = mountSimTools(cockpit);
-  const ui = face.mount(cockpit, tools);
+  const ui = face.mount(cockpit, tools, o);
   cockpit.start(ui.draw);
   return { cockpit, stop: () => { ui.stop(); tools.stop(); cockpit.stop(); } };
 }

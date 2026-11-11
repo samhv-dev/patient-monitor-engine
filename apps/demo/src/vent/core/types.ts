@@ -109,7 +109,13 @@ export interface Change {
 /** A face: its spec, and the module that builds its DOM on a cockpit and draws each frame. */
 export interface FaceModule {
   spec: FaceSpec;
-  mount(c: Cockpit, tools: SimTools): { draw(ts: number): void; stop(): void };
+  mount(c: Cockpit, tools: SimTools, env?: FaceEnv): { draw(ts: number): void; stop(): void };
+}
+
+/** What the page gives a face (V1): the app's translation of an app string OUTSIDE the device (the "Simulator" handle,
+ *  plan §6), or null to keep the English; absent (the embed), the English stays. */
+export interface FaceEnv {
+  translate?: (en: string) => Promise<string | null>;
 }
 
 export type { PresetId };
