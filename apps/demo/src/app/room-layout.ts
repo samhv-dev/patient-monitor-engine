@@ -102,7 +102,7 @@ export function forgetRoom(s: Store): void {
 }
 
 const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const SHOW_WORD: Record<Instrument, string> = { learner: 'learner monitor', monitor: 'monitor', defib: 'defibrillator', depth: 'depth of anaesthesia' };
+const SHOW_WORD: Record<Instrument, string> = { learner: 'learner monitor', monitor: 'monitor', defib: 'defibrillator', depth: 'depth of anaesthesia', pump: 'pump tablet' };
 
 /**
  * m5's foot line, from what was kept: "Last time in this room: 1 monitor window and 2 learner monitor windows on this

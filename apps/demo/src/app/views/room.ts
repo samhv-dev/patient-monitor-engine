@@ -17,7 +17,7 @@
 // screen, with the code, the address and the live count beneath, for a hall to scan from the back; Escape or the same
 // control returns. At 1920×1080 the card's QR is 220 px (a fifth of the height): scannable from the front rows only.
 import { isTyping } from '@pme/controller';
-import { newSessionCode, type ManagedTransport, type RelayDevice, type WireMessage } from '@pme/controller';
+import { newSessionCode, PUMP_KINDS, PUMP_LIMITS, type ManagedTransport, type PumpKind, type RelayDevice, type WireMessage } from '@pme/controller';
 import { hashOf, qrTarget, relayInfo, ventWindowUrl, type RelayInfo } from '../classroom.ts';
 import { qrSvg } from '../qr.ts';
 import { keepRoomCode } from '../room-code.ts';
@@ -65,6 +65,9 @@ export interface RoomDeps {
   /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
    *  sends it to the patient's engine). Absent: no card. */
   defib?: { model(): string | null; choose(model: string | null): void };
+  /** A1 (plan pump-rack-tci.md §5, PQ1 = C): the room's pump rack, each channel's kind, and the session's hand-over of a
+   *  new setting (it saves it and sends it to the pump tablet). Absent: no card. */
+  pumps?: { kinds(): PumpKind[]; choose(kinds: PumpKind[]): void };
   /** R8d: the ventilator's own screens and whether each drives (views/vent.ts `ventScreens`). Absent: no rows. */
   vent?: () => VentScreens;
   /** L6: the learner PIN and the host's count of learner remotes, for the panel beside the instructor's card. Absent: no panel. */
@@ -72,6 +75,15 @@ export interface RoomDeps {
 }
 
 /** L6 (plan learner-action-remote.md §4 D9, LQ1 ruled 9 November): the learner PIN's panel's words. */
+/** Room setup's pump card's words (A1; the app's chrome, English). */
+export const PUMP_ROOM_WORDS = {
+  title: 'Pumps in this room',
+  count: 'Channels on the pump tablet',
+  channel: (ch: number) => `Channel ${ch}`,
+  kind: { syringe: 'Syringe', drip: 'Drip' } satisfies Record<PumpKind, string>,
+  hint: 'Each channel is a syringe pump or a drip pump. A change reaches a signed-in pump tablet at once.',
+};
+
 export const LEARNER_PIN_WORDS = {
   heading: 'Learner remotes',
   none: 'No learner remote signed in',
@@ -409,6 +421,37 @@ export function roomView(d: RoomDeps): RoomView {
       h('p', { class: 'hint' }, "A model applies to the patient at once and to every new patient; 'Not chosen' applies from the next patient start."));
   })() : null;
 
+  // --------------------------------------------------------------------------------------------- pumps in this room
+  // A1 (plan pump-rack-tci.md §5; PQ1 = C, "1–8, default 4"; PQ2 = B): how many channels the pump tablet shows and each
+  // channel's kind, syringe or drip; a new channel is a syringe channel (§5: a TIVA tower is syringes)
+  const pumpCard = d.pumps ? (() => {
+    const choice = d.pumps;
+    const kindsBox = h('div', { class: 'room-pump-kinds' });
+    const counts = Array.from({ length: PUMP_LIMITS.channels }, (_, i): [string, string] => [String(i + 1), String(i + 1)]);
+    const count = select(PUMP_ROOM_WORDS.count, counts, String(choice.kinds().length), (v) => {
+      const n = Number(v);
+      const now = choice.kinds();
+      choice.choose(Array.from({ length: n }, (_, i) => now[i] ?? 'syringe'));
+      drawKinds();
+    });
+    count.sel.dataset.pumps = 'count';
+    const drawKinds = () => kindsBox.replaceChildren(...choice.kinds().map((k, i) => {
+      const s = select(PUMP_ROOM_WORDS.channel(i + 1), PUMP_KINDS.map((x): [string, string] => [x, PUMP_ROOM_WORDS.kind[x]]), k, (v) => {
+        const next = [...choice.kinds()];
+        next[i] = v as PumpKind;
+        choice.choose(next);
+      });
+      s.sel.dataset.pumps = 'kind';
+      return s.el;
+    }));
+    drawKinds();
+    return h('section', { class: 'room-card room-pumps', 'aria-labelledby': 'room-pumps-h' },
+      h('h2', { id: 'room-pumps-h' }, PUMP_ROOM_WORDS.title),
+      count.el,
+      kindsBox,
+      h('p', { class: 'hint' }, PUMP_ROOM_WORDS.hint));
+  })() : null;
+
   let timer: ReturnType<typeof setInterval> | null = null;
   const el = h('section', { class: 'console room', 'aria-labelledby': 'room-h' },
     h('div', { class: 'console-page' },
@@ -416,7 +459,7 @@ export function roomView(d: RoomDeps): RoomView {
         h('div', {}, h('h1', { id: 'room-h' }, 'Room setup'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
       h('div', { class: 'room-cols' }, join, connected),
-      computer, ...(defibCard ? [defibCard] : []), roomCard), big, ask);
+      computer, ...(defibCard ? [defibCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');

@@ -51,16 +51,19 @@ export function learnerUrl(code: string, origin: string, pathname: string, relay
  * The follower page's hashes (plan room-and-instruments.md §4 D7): `#/pick` the instrument picker (the QR's address),
  * `#/monitor` today's learner monitor (upright on a phone), `#/monitor/wide` the patient monitor (landscape), `#/defib`
  * the defibrillator window (Room plan R5), `#/remote/learner` the learner action remote (plan learner-action-remote.md
- * L6: its learner-PIN form, then the monitor strip and its tabs; its hello says `show: 'learner'`). Any other hash is
- * today's learner monitor.
+ * L6: its learner-PIN form, then the monitor strip and its tabs; its hello says `show: 'learner'`), `#/pump` the pump
+ * tablet (plan pump-rack-tci.md A1: its learner-PIN form, then the rack; its hello says `role: 'pump', show: 'pump'`).
+ * Any other hash is today's learner monitor.
  */
-export type FollowerHash = 'pick' | 'remote' | Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
+export type FollowerHash = 'pick' | 'remote' | Extract<Instrument, 'learner' | 'monitor' | 'defib' | 'pump'>;
 /** What a follower page at `hash` shows (the picker, the learner remote, or an instrument); any hash it does not know is the learner monitor. */
 export function instrumentOf(hash: string): FollowerHash {
   const path = hash.replace(/^#\/?/, '').replace(/\/$/, '');
-  return path === 'pick' ? 'pick' : path === 'monitor/wide' ? 'monitor' : path === 'defib' ? 'defib' : path === 'remote/learner' ? 'remote' : 'learner';
+  return path === 'pick' ? 'pick' : path === 'monitor/wide' ? 'monitor' : path === 'defib' ? 'defib' : path === 'remote/learner' ? 'remote' : path === 'pump' ? 'pump' : 'learner';
 }
-export const hashOf = (show: Exclude<FollowerHash, 'pick'>): string => (show === 'monitor' ? '#/monitor/wide' : show === 'defib' ? '#/defib' : show === 'remote' ? LEARNER_REMOTE_HASH : '#/monitor');
+export const hashOf = (show: Exclude<FollowerHash, 'pick'>): string => (show === 'monitor' ? '#/monitor/wide' : show === 'defib' ? '#/defib' : show === 'remote' ? LEARNER_REMOTE_HASH : show === 'pump' ? PUMP_HASH : '#/monitor');
+/** A1: the pump tablet's page on a follower (`?join=CODE#/pump`). */
+export const PUMP_HASH = '#/pump';
 /** L6: the learner action remote's page on a follower (`?join=CODE#/remote/learner`). */
 export const LEARNER_REMOTE_HASH = '#/remote/learner';
 /** The QR's address ends here: the device that scans it opens the picker (Q1 ruled 5 November). */

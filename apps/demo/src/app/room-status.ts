@@ -98,6 +98,7 @@ export function showingOf(role: Role, show: Instrument | null): string {
   if (role === 'ventilator') return 'Ventilator'; // R8b: the remote cockpit, granted with the PIN as the instructor is
   if (role === 'defib') return 'Defibrillator'; // R5c: the learner defibrillator window, admitted by the room code
   if (role === 'learner') return 'Learner remote'; // L6: the learner action remote, granted on the learner PIN
+  if (role === 'pump' || show === 'pump') return 'Infusion pumps'; // A1: the pump tablet, on the learner PIN too
   if (role === 'controller') return 'Remote';
   return show === 'monitor' ? 'Monitor' : show === 'defib' ? 'Defibrillator' : show === 'depth' ? 'Depth of anaesthesia' : 'Learner monitor';
 }
@@ -162,7 +163,7 @@ export function deviceRows(o: { relay: RelayState; phones: number; peers: readon
       const lvl = deviceLevel(d);
       const depth = d.role === 'viewer' && d.show === 'depth';
       // R8d: a granted ventilator says whether it drives the patient or has handed it over
-      const state = d.role === 'ventilator' && d.granted && o.vent?.device ? o.vent.device : d.role === 'instructor' || d.role === 'ventilator' || d.role === 'learner' ? (d.granted ? 'granted' : 'signing in') : depth ? 'Not available yet' : missed(d) ? 'missed a heartbeat' : lvl === 'weak' ? 'slow' : 'connected';
+      const state = d.role === 'ventilator' && d.granted && o.vent?.device ? o.vent.device : d.role === 'instructor' || d.role === 'ventilator' || d.role === 'learner' || d.role === 'pump' ? (d.granted ? 'granted' : 'signing in') : depth ? 'Not available yet' : missed(d) ? 'missed a heartbeat' : lvl === 'weak' ? 'slow' : 'connected';
       rows.push({ level: lvl, id: d.id, device: d.device, show: d.role === 'viewer' ? d.show : null, name: phone(d.device), named: !!d.device, where: '', showing: showingOf(d.role, d.role === 'viewer' ? d.show : null), state, ping: d.rttMs === null ? '—' : `${d.rttMs} ms`, heard: ago(d.sinceMs + (o.ageMs ?? 0)) });
     }
     for (const [key, k] of Object.entries(known)) {

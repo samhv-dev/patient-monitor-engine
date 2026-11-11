@@ -1,6 +1,7 @@
 // The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and
 // alarm defaults, and the shell's units and speed. It belongs to the room, not to a case, so loading a scenario never
 // changes it. Stored per browser (a convenience, research/13 brief §5) and exportable as one JSON file.
+import { PUMP_KINDS, PUMP_LIMITS, type PumpKind } from '@pme/controller';
 import { resolveSkin, type Skin } from '@pme/skins';
 import { store } from './store.ts';
 
@@ -23,6 +24,9 @@ export interface SiteProfile {
    *  `DEFIB_CHOICES` id, which the host sends to the engine at every patient mount, or null (not chosen: the monitor
    *  style's own defibrillator values, as before). */
   defibModel: string | null;
+  /** The room's pump rack (plan pump-rack-tci.md A1, §5; PQ1 = C, PQ2 = B): each channel's kind, in channel order, 1 to
+   *  PUMP_LIMITS.channels channels. The host sends it to the pump tablet on its `style` event; C2 checks commands against it. */
+  pumpRack: PumpKind[];
 }
 
 /** Monitor choices, in the words the Settings and Start screens use. */
@@ -60,7 +64,14 @@ export function pacerDefaults(model: string | null): { ratePpm: number; pausePct
 export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];
 export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark'], ['projector-light', 'Projector (light)'], ['ecg-grid', 'ECG paper grid']];
 
-export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null };
+/** PQ1 = C, the owner's ruling (research/00-orchestrator-rulings.md, 9 November 16:00): "1–8, default 4". All syringe
+ *  channels by default, a plan decision (§5, ENG: ui): a TIVA tower is syringes; Room setup turns any channel into drip. */
+export const DEFAULT_PUMP_CHANNELS = 4;
+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, pumpRack: Array<PumpKind>(DEFAULT_PUMP_CHANNELS).fill('syringe') };
+
+/** A stored rack (1 to PUMP_LIMITS.channels channels of the two kinds), or null. */
+export const pumpRackOf = (v: unknown): PumpKind[] | null =>
+  Array.isArray(v) && v.length >= 1 && v.length <= PUMP_LIMITS.channels && v.every((k) => (PUMP_KINDS as readonly unknown[]).includes(k)) ? [...(v as PumpKind[])] : null;
 
 /** A stored or imported profile; the keys the profile no longer has (`instructor` and `panel`, the two-view choices
  *  retired on 6 November 2026) are ignored, so an older site file still imports. */
@@ -76,6 +87,7 @@ export function parseSite(raw: unknown): SiteProfile {
     sensorsOff: o.sensorsOff === true,
     drugNames: o.drugNames === 'uk' ? 'uk' : 'us',
     defibModel: DEFIB_CHOICES.some((c) => c.id === o.defibModel) ? (o.defibModel as string) : d.defibModel,
+    pumpRack: pumpRackOf(o.pumpRack) ?? [...d.pumpRack],
   };
 }
 

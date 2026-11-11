@@ -145,14 +145,13 @@ const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant', 
 const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator', 'defib', 'learner', 'pump']);
 /**
  * The roles a hello may name an instrument and a device key with: a learner's follower, the defibrillator window (R5c) and
- * the learner action remote (learner-action-remote.md §4 D1: its device key is its `by`).
+ * the learner action remote (learner-action-remote.md §4 D1: its device key is its `by`), and the pump tablet.
  */
-const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib', 'learner']);
-/**
- * The roles a hello may name a device key with: those, and the pump (pump-rack-tci.md C1: its key is its `by`). A pump names
- * no instrument yet: `pump` joins INSTRUMENTS with the app's words for it (A1).
- */
-const DEVICE_WITH: ReadonlySet<unknown> = new Set([...SHOWS_WITH, 'pump']);
+const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib', 'learner', 'pump']);
+/** The roles a hello may name a device key with: those (the pump's, pump-rack-tci.md C1: its key is its `by`). */
+const DEVICE_WITH: ReadonlySet<unknown> = SHOWS_WITH;
+/** Whether a hello's `show` fits its role (A1): the pump rack is shown by a `pump` only, and a `pump` shows nothing else. */
+const showFits = (role: unknown, show: unknown): boolean => (role === 'pump') === (show === 'pump');
 /** The roles whose hello proves a PIN (the instructor's, or for `learner` and `pump` the learner PIN); all but the first must carry one. */
 const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump']);
 
@@ -288,7 +287,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       // R8a: a device that drives the patient proves the PIN; L3 (LQ1): the learner remote proves the learner PIN, and C1
       // the pump the same
       if ((m.role === 'ventilator' || m.role === 'learner' || m.role === 'pump') && m.pin === undefined) return null;
-      if (m.show !== undefined && (!SHOWS_WITH.has(m.role) || !SHOWS.has(m.show))) return null;
+      if (m.show !== undefined && (!SHOWS_WITH.has(m.role) || !SHOWS.has(m.show) || !showFits(m.role, m.show))) return null;
       if (m.device !== undefined && (!DEVICE_WITH.has(m.role) || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
     case 'command': {
