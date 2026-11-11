@@ -16,6 +16,10 @@
           "water"
         ],
         "volumeMl": 60,
+        "final": {
+          "stated": false,
+          "src": "emc-1097"
+        },
         "src": "emc-1097"
       },
       "prepTime": {
@@ -45,6 +49,10 @@
           "water"
         ],
         "volumeMl": 20,
+        "final": {
+          "volumeMl": 22.6,
+          "src": "emc-15912"
+        },
         "src": "emc-15912"
       },
       "prepTime": {

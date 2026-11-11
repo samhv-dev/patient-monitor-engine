@@ -1,0 +1,31 @@
+{
+  "$comment": "JMS SP-500 syringe pump (PQ2 = B). Each number cites a row of research/50 (catalogue BRO/500-E/001 and its page) or is a gap naming what the operator manual must give.",
+  "deviceId": "sp-500",
+  "maker": "JMS",
+  "model": "SP-500",
+  "kind": "syringe",
+  "syringes": [
+    { "ml": 10, "src": "SP-03", "rate": { "min": 0.1, "max": 200, "unit": "mL/h", "src": "SP-04" }, "rapid": { "rate": 200, "unit": "mL/h", "approx": true, "src": "SP-07" } },
+    { "ml": 20, "src": "SP-03", "rate": { "min": 0.1, "max": 300, "unit": "mL/h", "src": "SP-05" }, "rapid": { "rate": 350, "unit": "mL/h", "approx": true, "src": "SP-08" } },
+    { "ml": 30, "src": "SP-03", "rate": { "min": 0.1, "max": 300, "unit": "mL/h", "src": "SP-05" }, "rapid": { "rate": 450, "unit": "mL/h", "approx": true, "src": "SP-09" } },
+    { "ml": 50, "src": "SP-03", "rate": { "min": 0.1, "max": 300, "unit": "mL/h", "src": "SP-05" }, "rapid": { "rate": 800, "unit": "mL/h", "approx": true, "src": "SP-10" } }
+  ],
+  "rateStep": { "step": 0.1, "unit": "mL/h", "src": "SP-06" },
+  "bolus": { "rate": "rapid", "src": "SP-20", "volume": { "gap": "the bolus volume limits and how a bolus is programmed: SP-500 operator manual (research/50 SP-22)" } },
+  "purge": { "rate": "rapid", "src": "SP-20", "volume": { "gap": "the purge volume limit: SP-500 operator manual (research/50 SP-23)" } },
+  "kvo": { "gap": "whether the pump keeps the vein open after End or Almost Empty, and at what rate: SP-500 operator manual (research/50 SP-26)" },
+  "accuracy": { "drivePct": 1, "withMakerSyringesPct": 3, "afterH": 1, "atLeastMlH": 1, "src": "SP-11" },
+  "volumeDisplay": { "min": 0.1, "max": 999.9, "unit": "mL", "src": "SP-12" },
+  "occlusion": {
+    "levels": [
+      { "level": "L", "kgfCm2": [0.2, 0.6], "mmHg": [150, 440], "kPa": [20, 60], "src": "SP-13" },
+      { "level": "M", "kgfCm2": [0.5, 0.9], "mmHg": [370, 660], "kPa": [50, 90], "src": "SP-14" },
+      { "level": "H", "kgfCm2": [0.8, 1.4], "mmHg": [590, 1000], "kPa": [80, 140], "src": "SP-15" }
+    ],
+    "alarmTime": { "gap": "the time or volume to the occlusion alarm at each level: SP-500 operator manual (research/50 SP-24)" }
+  },
+  "nearEnd": { "gap": "the near-end time at which Almost Empty is raised: SP-500 operator manual (research/50 SP-21)" },
+  "syringeBrands": { "gap": "the syringe brands and models the pump is calibrated for: SP-500 operator manual (research/50 SP-25)" },
+  "doseRate": { "gap": "whether the pump takes a dose rate (mg/kg/h and similar) or mL/h only: SP-500 operator manual (research/50 SP-27)" },
+  "alarms": { "names": ["Occlusion", "Low Battery", "Almost Empty", "End", "Syringe Disengaged", "Reminder"], "src": "SP-17" }
+}
