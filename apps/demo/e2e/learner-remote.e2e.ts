@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, sheet, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -39,10 +39,10 @@ async function classroom(): Promise<void> {
   const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
   relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
 }
-/** The laptop on a card, with Room setup's names for the phones' device keys. */
-async function laptop(page: Page, scenario: string, names: Record<string, string>): Promise<{ code: string; pin: string }> {
+/** The laptop on a card (null: free roam, the default patient), with Room setup's names for the phones' device keys. */
+async function laptop(page: Page, scenario: string | null, names: Record<string, string>): Promise<{ code: string; pin: string }> {
   await page.addInitScript((n) => localStorage.setItem('pme.roomLayout', JSON.stringify(Object.fromEntries(Object.entries(n).map(([k, name]) => [k, { name, show: 'remote', lastSeen: Date.now() }])))), names);
-  await openApp(page, base, `?relay=${encodeURIComponent(ws())}&scenario=${scenario}#/teach2`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}${scenario ? `&scenario=${scenario}` : ''}#/teach2`, { warmMs: 1500 });
   const code = await page.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
   const pin = (await page.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
   return { code, pin };
@@ -300,3 +300,70 @@ test("L8 (LQ4): a phone changes and stops the instructor's infusion and changes 
   await a.ctx.close();
   await b.ctx.close();
 });
+
+// Brief 164 (the owner's phone test, 11 Nov): a phone's Give was acknowledged ("Given 1 mL at 02:57") yet the laptop's Log
+// had no line for it, and a laptop give after it was reported lost. These follow his steps on the laptop's own screens:
+// the dose is in the ENGINE's drugs (not only an ack), the record row and the Log sheet's line name the phone, a give
+// from the laptop's Drug sheet after it is applied and logged, and both again when the Give arrives while the laptop's
+// tab is hidden (the session pauses itself then: hidden-tab.ts). Free roam (no card) and on a card.
+type DrugsW = { __drugs: string[] };
+/** Every drug the laptop's engine reports, from its own events (not the acks). */
+const engineDrugs = (page: Page) => page.evaluate(() => (window as unknown as DrugsW).__drugs);
+const logLines = async (page: Page, kind: 'learner' | 'instructor') => (await sheet(page, 'log')).locator(`.log li[data-kind=${kind}] > span:not(.k)`).allInnerTexts();
+/** The laptop's Drug sheet: find `search`, press its first preset, then "Give … now". */
+async function laptopGive(page: Page, search: string): Promise<void> {
+  const d = await sheet(page, 'drug');
+  await d.locator('input.ip2-drug-search').fill(search);
+  await page.keyboard.press('Enter');
+  await d.locator('.ip2-presets button.ip2-preset').first().click();
+  await d.locator('button.ip2-give', { hasText: /^Give .* now$/ }).click();
+}
+/** The laptop's tab hidden or shown again, as the browser says it (the page's own visibility handlers run). */
+const tabHidden = (page: Page, hidden: boolean) => page.evaluate((h) => {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') });
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+  document.dispatchEvent(new Event('visibilitychange'));
+}, hidden);
+for (const card of [null, 'showcase-mh-v2']) {
+  test(`brief 164 (${card ?? 'free roam'}): a phone's Give reaches the laptop's engine, record and Log; a laptop give after it and a Give while the laptop's tab is hidden too`, async ({ page, browser, browserName }) => {
+    test.setTimeout(240_000);
+    await classroom();
+    const KEY = 'bed3remote01';
+    const { code, pin } = await laptop(page, card, { [KEY]: 'bed 3 remote' });
+    await page.evaluate(() => {
+      const w = window as unknown as HostW & DrugsW;
+      w.__drugs = [];
+      w.__pmeApp.session.onEvent((e) => void (e.drugs && (w.__drugs = e.drugs.map((d) => d.id))));
+    });
+    const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
+    // (a) the phone's Give
+    await prepareOn(p, [{ search: 'ephedrine', drug: 'ephedrine', product: 'akovaz-50mg-ml', amount: 1 }], null);
+    const item = p.locator('.lr-item').first();
+    await expect(item.locator('.lr-state')).toHaveText(/^Ready/, { timeout: 15_000 });
+    await item.locator('.lr-give-btn').click();
+    await expect(item.locator('.lr-said')).toHaveText(/^Given 1 mL at \d\d:\d\d$/, { timeout: 10_000 });
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('ephedrine');
+    await expect.poll(async () => (await rows(page)).filter((r) => r.ev === 'drug:ephedrine' && r.kind === 'learner' && r.by === KEY && r.name === 'bed 3 remote').length, { timeout: 10_000 }).toBe(1);
+    await expect.poll(() => logLines(page, 'learner'), { timeout: 10_000 }).toEqual(['Ephedrine 50 mg IV (learner remote: bed 3 remote)']);
+    // (b) the laptop's own Drug sheet after it
+    await laptopGive(page, 'epineph');
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('epinephrine');
+    await expect.poll(() => logLines(page, 'instructor'), { timeout: 10_000 }).toContain('Epinephrine 10 µg IV');
+    // (c) the laptop's tab hidden: the session pauses; the phone's Give is applied on the paused clock, and logged
+    // (a preparation's time runs on the case clock, which stands still while paused: it is made ready before the hide)
+    await prepareOn(p, [{ search: 'midazolam', drug: 'midazolam', product: 'hypnovel-5mg-ml', amount: 1 }], null);
+    const second = p.locator('.lr-item').nth(1);
+    await expect(second.locator('.lr-state')).toHaveText(/^Ready/, { timeout: 15_000 });
+    await tabHidden(page, true);
+    await expect.poll(() => page.evaluate(() => (window as unknown as HostW & { __pmeApp: { link: { ctl: { hostPaused: boolean } } } }).__pmeApp.link.ctl.hostPaused), { timeout: 10_000 }).toBe(true);
+    await second.locator('.lr-give-btn').click();
+    await expect(second.locator('.lr-said')).toHaveText(/^Given 1 mL at \d\d:\d\d$/, { timeout: 10_000 });
+    await tabHidden(page, false);
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('midazolam');
+    await expect.poll(() => logLines(page, 'learner'), { timeout: 10_000 }).toEqual(['Midazolam 5 mg IV (learner remote: bed 3 remote)', 'Ephedrine 50 mg IV (learner remote: bed 3 remote)']);
+    await laptopGive(page, 'phenyl');
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('phenylephrine');
+    await expect.poll(() => logLines(page, 'instructor'), { timeout: 10_000 }).toContain('Phenylephrine 50 µg IV');
+    await ctx.close();
+  });
+}
