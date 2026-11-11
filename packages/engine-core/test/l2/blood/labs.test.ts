@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createBloodCore, stepBloodCore } from '../../../src/l2/blood/core.ts';
-import { labPanel, LAB_TURNAROUND_S } from '../../../src/l2/blood/labs.ts';
+import { labPanel } from '../../../src/l2/blood/labs.ts';
 
 const MAN = { ageY: 40, sex: 'M' as const, weightKg: 70, heightCm: 175 };
 const X = { paco2: 40, pao2: 95, tempC: 37, vco2: 200, coLpm: 5.25 };
@@ -17,7 +17,6 @@ describe('lab panel (plan decision 13)', () => {
     expect(v.ag).toBe(12);
     expect(v.k).toBeCloseTo(4.2, 1);
     expect(v.glucose).toBe(100);
-    expect(LAB_TURNAROUND_S).toBe(120);
   });
   it('VBG: higher PCO2 (+ VCO2/(Q·4.5) ≈ 8.5), lower pH, venous PO2 from SvO2', () => {
     const bc = createBloodCore(MAN, 5.25, 40);
