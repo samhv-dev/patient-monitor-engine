@@ -565,7 +565,7 @@ edges; residuals 0 to 4.3 photo px). The same homography, extended, gives the wh
 LCD at (120, 55) (IMG_1542, IMG_1546). The rectified images are kept with the photographs, outside the repository
 (`assets/ventilators/edp-ts/reference/`). A box below is in LCD px (housing px for the front), read on those images at
 2× with a 10 px grid and checked by edge probes; a colour is the per-channel median of the patch named (x0, y0)-(x1, y1),
-uncorrected for white balance, away from glare.
+uncorrected for white balance on the screen (it is lit from within) and corrected by ONE white reference on the housing (P-36), away from glare.
 
 | Id | Fact | Value as the source gives it | Source | Tag |
 |---|---|---|---|---|
@@ -604,6 +604,7 @@ uncorrected for white balance, away from glare.
 | P-33 | Membrane keys | Alarm Limits [970, 266, 50, 34]; silence [970, 337, 50, 37]; Menu [970, 446, 50, 34]; Mode [969, 552, 51, 37]; "30-60 s" at y 392; under the screen at y 721, 35 high: padlock x 278, Suction %O2 425, Manual Insp. 497, Insp/Exp Pause 569, Ctrl 725, Esc 797 | IMG_1542 | meas |
 | P-34 | Knob | base disc centre (980, 735), radius 70; the cylinder's face radius 50, 38 px right and 25 px down | IMG_1542 | meas |
 | P-35 | Power legends | plug and "~ VAC" at (40, 715); battery and "Battery/Charge" at (40, 745) | IMG_1542 | meas |
+| P-36 | The housing's white reference (one correction for every housing colour) | the unlit Vent Inop lamp, off-white plastic (P-15), measured `#ad9280` (front 1005,92-1018,104), taken as a warm off-white `#f0ece4`; per-channel gain = taken / measured = 1.387, 1.616, 1.781 (von Kries), applied to P-51 to P-60, P-62, P-64, P-65, P-69; the photographs were exposed for the lit screen, so the housing is dark in them. The target `#f0ece4` is the one choice here (`eng`) | IMG_1542 | meas |
 | P-41 | "ADL" blue | `#2e468a` (darkest 12 % of the glyphs' pixels, IMG_1542 6,14-56,33) | IMG_1542 | meas |
 | P-42 | Screen ink | `#292829` (darkest 12 % of the glyph pixels: the mode name `#242223`, the left column's values `#2d2f2f`; their mean) | IMG_1542 | meas |
 | P-43 | Units, scale numbers | `#7c8083` (glyph pixels of "L/min", IMG_1542 288,32-312,41) | IMG_1542 | meas |
@@ -614,21 +615,26 @@ uncorrected for white balance, away from glare.
 | P-48 | Entry under the knob | `#466fbd` (IMG_1544 620,336-700,346: `#527ac3`; IMG_1547 600,177-700,190: `#3963b8`; their mean) | IMG_1544; IMG_1547 | meas |
 | P-49 | Battery green | `#68ac1c` (IMG_1542 22,98-40,104) | IMG_1542 | meas |
 | P-50 | Lungs grey | `#9c9ea2` (IMG_1542 28,130-34,140) | IMG_1542 | meas |
-| P-51 | Housing | `#6e5f50` (front of IMG_1542, 350,770-650,800, under the keys) | IMG_1542 | meas |
-| P-52 | Housing, lit (right) | `#796654` (front 1040,300-1060,400) | IMG_1542 | meas |
-| P-53 | Housing, shaded (upper left) | `#5d4d42` (front 150,20-400,35) | IMG_1542 | meas |
-| P-54 | Recessed frame | `#6c5d4f` (front 400,672-600,680) | IMG_1542 | meas |
-| P-55 | Membrane keys | `#736e78` (front, the top strip of Menu, 975,449-1015,453) | IMG_1542 | meas |
-| P-56 | Key lettering | `#302a2d` (glyph pixels of "Menu") | IMG_1542 | meas |
-| P-57 | Printed legends | `#362a22` (glyph pixels of "Alarm Signals", "Vent Inop") | IMG_1542 | meas |
-| P-58 | Unlit lamp | `#c7b09d` (IMG_1547 photo px 1265,65-1280,85; the three lamps agree within 2) | IMG_1547 | meas |
-| P-59 | Knob, the cylinder's face | `#a68c77` (front 1005,750-1035,775) | IMG_1542 | meas |
-| P-60 | Knob, shadow side | `#4d3c2e` (front 935,765-948,785) | IMG_1542 | meas |
+| P-51 | Housing, evenly lit | `#b7b7af` = `#847162` (front 930,400-960,530, right of the screen between the keys) × the white reference (P-36); before the correction (VF's first push) `#6e5f50` (350,770-650,800) | IMG_1542 | meas |
+| P-52 | Housing, right edge | `#b0afa6` = `#7f6c5d` (front 1030,450-1045,600) × P-36; was `#796654` | IMG_1542 | meas |
+| P-53 | Housing, shade under the screen | `#a09e96` = `#736254` (front 620,705-700,715) × P-36; was `#5d4d42` | IMG_1542 | meas |
+| P-54 | Recessed frame | face `#8f9082` = `#675949` (front 105,300-110,400) × P-36, about 12 px wide; outer edge, about 3 px, `#6b695b` = `#4d4133` (400,670-600,672) × P-36; was `#6c5d4f` | IMG_1542 | meas |
+| P-55 | Membrane keys (periwinkle) | `#a0b2d6` = `#736e78` (front, the top strip of Menu, 975,449-1015,453) × P-36; was `#736e78` uncorrected | IMG_1542 | meas |
+| P-56 | Key lettering (dark navy) | `#434452` = `#302a2e` (darkest 12 % of the pixels of Menu, front 972,452-1018,478) × P-36; was `#302a2d` | IMG_1542 | meas |
+| P-57 | Printed legends (dark, bold) | `#4b423d` = `#362922` (darkest 12 % of front 960,50-1050,110, "Alarm Signals", "Vent Inop") × P-36; was `#362a22` | IMG_1542 | meas |
+| P-58 | Unlit lamp | `#f0ece4`, the white reference itself (P-36); was `#c7b09d` (IMG_1547, uncorrected) | IMG_1542 | meas |
+| P-59 | Knob, the cylinder's lit face (off-white) | `#e6e2d4` = `#a68c77` (front 1005,750-1035,775) × P-36; was `#a68c77` | IMG_1542 | meas |
+| P-60 | Knob, side wall in shade | `#6b6152` = `#4d3c2e` (front 935,765-948,785) × P-36; was `#4d3c2e` | IMG_1542 | meas |
 | P-61 | Knob ring, lit | `#8671b5` (IMG_1546 photo px 1300,960-1306,985) | IMG_1546 | meas |
-| P-62 | Knob base's edge (ring dark) | `#77634e` (front 913,735-917,745) | IMG_1542 | meas |
+| P-62 | Knob base's edge (ring dark) | `#a5a08b` = `#77634e` (front 913,735-917,745) × P-36; was `#77634e` | IMG_1542 | meas |
 | P-63 | Flow Waveform's pictogram | `#cdba63` (the most saturated 5 % of IMG_1542 730,540-792,565, the yellow ramp) | IMG_1542 | meas |
-| P-64 | The gasket between frame and LCD | `#51463c` (front 400,660-600,664) | IMG_1542 | meas |
-| P-65 | Knob base disc | `#a78b6c` (front 960,690-990,700) | IMG_1542 | meas |
+| P-64 | The gasket between frame and LCD (near black, about 6 px) | `#353530` = `#26211b` (front 113,300-117,400) × P-36; was `#51463c` | IMG_1542 | meas |
+| P-65 | Knob base disc | `#e8e1c0` = `#a78b6c` (front 960,690-990,700) × P-36; was `#a78b6c` | IMG_1542 | meas |
+| P-66 | Limit tags' yellow, away from glare | `#cec073` (IMG_1546 rectified, the VT tag between its symbol and its values 627,67-634,86 `#cec073`; the fTotal tag 556,72-562,86 `#cfc372`); replaces C-08's `#dbcf7b` for the face (C-08 kept as the note's sample) | IMG_1546 | meas |
+| P-67 | The left column's yellow (PEEP tag, keys 40 and 5), paler than the top tags | `#d6cdaa` (IMG_1546 rectified, key 40 left of its symbol 5,440-12,478) | IMG_1546 | meas |
+| P-68 | Large numerals (dark grey, slightly cool; not black) | `#4c4e4d`, the per-channel median of the darkest 6 % of six numeral boxes (IMG_1546 "22" `#4e4b4c`, "44" `#5f5855`, tile 0.500 `#4b514f`, tile 12 `#616565`; IMG_1542 "42" `#424344`, tile 0.500 `#464a46`) | IMG_1542; IMG_1546 | meas |
+| P-69 | The plug, lit green (mains present) | `#a4cc78` = `#767e43` (photo px 91,1124-101,1132, the plug's fill) × P-36 | IMG_1542 | meas |
+| P-70 | Trace stroke | 2 to 3 px wide on flat segments of the rectified IMG_1542 and IMG_1546 (columns 320-360, Paw panel), i.e. about 2.1 % of the 120-px panel height; drawn 2.5 px (was 2 px) | IMG_1542; IMG_1546 | meas |
 
 ## Gaps that remain (not in the manual, the photographs or the video)
 

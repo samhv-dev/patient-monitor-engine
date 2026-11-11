@@ -47,7 +47,7 @@ export function drawTraces(d: Device, B: Cockpit['buf']): void {
   const paths = (g: CanvasRenderingContext2D, pts: Array<[number, number, boolean, boolean]>) => {
     for (const insp of [true, false]) {
       g.strokeStyle = ink(insp ? 'insp' : 'exp');
-      g.lineWidth = 4; // the photographs' trace is about two screen pixels (P-11)
+      g.lineWidth = 5; // 2.5 screen px (the canvas is drawn at 2x): the photographs' stroke, 2.1 % of a 120-px panel (P-70)
       g.lineJoin = 'round';
       g.beginPath();
       for (let i = 1; i < pts.length; i++) {

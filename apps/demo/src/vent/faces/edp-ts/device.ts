@@ -322,7 +322,7 @@ export function createDevice(h: DeviceHandlers): Device {
       const lt = (n: string): Box => [3, leftTagY(n), lw - 4, n === 'tag' ? 24 : n === 'keyHi' ? 46 : 44];
       tagEls = {
         fTotal: tagAt(tagBox(4), v.tags.fTotal, W('fTotal')), vt: tagAt(tagBox(5), v.tags.vt, W('vt')), ve: tagAt(tagBox(6), v.tags.ve, W('ve')), oxygen: tagAt(tagBox(7), v.tags.oxygen, W('oxygen')),
-        peep: tagAt(lt('tag'), v.tags.peep, W('peep')), pHi: tagAt(lt('keyHi'), v.tags.pHi, W('pressureLimits'), 'key hi'), pLo: tagAt(lt('keyLo'), v.tags.pLo, W('pressureLimits'), 'key lo'),
+        peep: tagAt(lt('tag'), v.tags.peep, W('peep'), 'pale'), pHi: tagAt(lt('keyHi'), v.tags.pHi, W('pressureLimits'), 'key hi'), pLo: tagAt(lt('keyLo'), v.tags.pLo, W('pressureLimits'), 'key lo'),
       };
     }
     for (const k of Object.keys(tagEls) as Array<keyof View['tags']>) paintTag(tagEls[k], v.tags[k]);

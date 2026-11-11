@@ -63,13 +63,13 @@ export const PICTO = {
   help: () => svg('0 0 30 30', [['path', { ...line, 'stroke-width': 3, d: 'M10 10 C10 5 20 5 20 10 C20 14 15 14 15 19' }], ['circle', { ...ink, cx: 15, cy: 25, r: 2 }]]),
   standby: () => svg('0 0 30 30', [...lungs(1), ['circle', { ...line, class: 'pw', 'stroke-width': 2.2, cx: 15, cy: 20, r: 6.5 }], ['path', { ...line, class: 'pw', 'stroke-width': 2.2, d: 'M15 11 V19' }]]),
   // settings row (P-13): Rise Time's slope in a dotted frame; Flow Waveform's shape (square or descending, research/57 T-23)
-  riseTime: () => svg('0 0 32 30', [['rect', { ...line, 'stroke-width': 1, 'stroke-dasharray': '1.5 2', x: 2, y: 2, width: 28, height: 26 }], ['path', { ...line, 'stroke-width': 1.8, d: 'M3 27 L11 27 C15 27 15 4 21 4 L29 4' }]]),
+  riseTime: () => svg('0 0 32 30', [['rect', { ...line, 'stroke-width': 1, 'stroke-dasharray': '1.5 2', x: 7, y: 2, width: 16, height: 26 }], ['path', { ...line, 'stroke-width': 2, d: 'M2 28 L9 28 L21 3 L30 3' }]]),
   flowWave: (o: 'square' | 'descending' = 'descending') => svg('0 0 32 24', [['path', { ...line, class: 'fw', 'stroke-width': 2.6, d: o === 'square' ? 'M3 21 V4 H29 V21' : 'M3 21 V4 L29 18' }]]),
   // the housing (P-14, P-16): the lock key's padlock, the silence key's crossed bell, Alarm Limits' small mark, power
   padlock: () => svg('0 0 24 28', [['path', { ...line, 'stroke-width': 3, d: 'M7 13 V8 C7 2 17 2 17 8 V13' }], ['rect', { ...ink, x: 3, y: 12, width: 18, height: 14, rx: 2 }], ['rect', { x: 10.5, y: 16, width: 3, height: 6, rx: 1, class: 'hole' }]]),
   bellX: () => svg('0 0 30 30', [['path', { ...ink, d: 'M15 4 C9 4 8 9 8 13 C8 18 5 20 5 22 H25 C25 20 22 18 22 13 C22 9 21 4 15 4 Z' }], ['circle', { ...ink, cx: 15, cy: 25, r: 2.5 }], ['path', { ...line, 'stroke-width': 1.6, d: 'M3 3 L27 27 M27 3 L3 27' }]]),
   alarmLim: () => svg('0 0 30 12', [['path', { ...line, 'stroke-width': 1.2, d: 'M1 11 H6 L10 3 H14 M16 11 H21 L25 3 H29' }], ['path', { ...ink, d: 'M3 2 L5 6 L7 2 Z M24 6 L26 2 L28 6 Z' }]]),
-  plug: () => svg('0 0 26 14', [['path', { ...line, 'stroke-width': 1.6, d: 'M1 4 H7 M1 10 H7 M7 1.5 V12.5 H13 C18 12.5 19 9 19 7 C19 5 18 1.5 13 1.5 Z M19 7 H25' }]]),
+  plug: () => svg('0 0 26 14', [['path', { class: 'plugfill', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linejoin': 'round', d: 'M7 1.5 V12.5 H13 C18 12.5 19 9 19 7 C19 5 18 1.5 13 1.5 Z' }], ['path', { ...line, 'stroke-width': 1.6, d: 'M1 4 H7 M1 10 H7 M19 7 H25' }]]),
   batteryOutline: () => svg('0 0 14 24', [['rect', { ...line, 'stroke-width': 1.6, x: 2, y: 4, width: 10, height: 19, rx: 1 }], ['path', { ...line, 'stroke-width': 1.6, d: 'M5 1.5 H9' }]]),
 } as const;
 export type PictoId = keyof typeof PICTO;

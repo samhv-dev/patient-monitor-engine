@@ -17,10 +17,13 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 
 /* ---- the housing (P-31): a cream-grey front, lit from the upper left; the recessed dark frame round the LCD ---- */
 .edp-dev { position: absolute; transform-origin: 50% 50%; background: var(--edp-housingLo); border-radius: 28px; }
-.edp-face { border-radius: 20px; background: linear-gradient(100deg, var(--edp-housingLo) 0%, var(--edp-housing) 35%, var(--edp-housing) 75%, var(--edp-housingHi) 100%);
+.edp-face { border-radius: 20px; background: linear-gradient(to bottom, transparent 62%, var(--edp-housingLo) 100%), linear-gradient(100deg, var(--edp-housingLo) 0%, var(--edp-housing) 40%, var(--edp-housing) 80%, var(--edp-housingHi) 100%);
   box-shadow: inset 2px 2px 3px var(--edp-housingHi), inset -2px -3px 4px var(--edp-housingLo); }
-.edp-frame { border-radius: 22px; background: var(--edp-frame); box-shadow: inset 0 0 0 2px var(--edp-gasket), inset 0 4px 6px var(--edp-housingLo), 0 1px 0 var(--edp-housingHi); }
-.edp-screen { border-radius: 8px; overflow: hidden; background: var(--edp-panel); box-shadow: 0 0 0 5px var(--edp-gasket), 0 0 0 7px var(--edp-hkeyInk); }
+/* the recessed frame (P-54, P-64): an outer dark edge, a grey face about 12 px wide shadowed from the top, then the
+   near-black gasket round the LCD */
+.edp-frame { border-radius: 22px; background: linear-gradient(to bottom, var(--edp-frameEdge), var(--edp-frame) 30%, var(--edp-frame));
+  box-shadow: 0 0 0 3px var(--edp-frameEdge), inset 0 8px 10px -2px var(--edp-gasket), inset 0 -2px 3px var(--edp-housing), 0 2px 1px var(--edp-housing); }
+.edp-screen { border-radius: 8px; overflow: hidden; background: var(--edp-panel); box-shadow: 0 0 0 6px var(--edp-gasket); }
 .edp-screen > * { position: absolute; }
 
 /* ---- the header (R-06, R-07; P-21, P-22) ---- */
@@ -33,7 +36,7 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-tl .tm { left: 199px; top: 19px; font-size: 10.5px; font-weight: 700; }
 .edp-cell { border-left: 2px solid var(--edp-divider); text-align: center; line-height: 1; height: 58px !important; top: 3px !important; }
 .edp-cell > span { position: absolute; left: 0; right: 0; white-space: nowrap; }
-.edp-cell .v { top: 5px; font-size: 23px; letter-spacing: -.8px; }
+.edp-cell .v { color: var(--edp-numeral); top: 5px; font-size: 23px; letter-spacing: -.8px; }
 .edp-cell .u { top: 30px; font-size: 10px; color: var(--edp-inkSoft); }
 .edp-cell .n { top: 45px; font-size: 11px; font-weight: 700; }
 .edp-cell .n.fTotal::first-letter { font-style: italic; font-family: Georgia, "Times New Roman", serif; font-size: 15px; }
@@ -44,7 +47,7 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 /* ---- the limit tags (R-12, L-17; P-09, P-23): one yellow tag, its step symbol at the left, high over low ---- */
 .edp-tag { background: var(--edp-tag); border-radius: 3px; box-shadow: inset -1px -1px 0 var(--edp-legend), inset 1px 1px 0 var(--edp-lampOff); color: var(--edp-ink); }
 .edp-tag > svg { position: absolute; left: 3px; top: 2px; width: 25px; height: 21px; }
-.edp-tag.key { border-radius: 5px; }
+.edp-tag.key, .edp-tag.pale { border-radius: 5px; background: var(--edp-tagKey); }
 .edp-tag.key > svg { left: 14px; width: 27px; height: 18px; }
 .edp-tag.key.hi > svg { top: 26px; }
 .edp-tag.key.lo > svg { top: 4px; }
@@ -70,7 +73,7 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-screen .lung:not(.on) { visibility: hidden; }
 .edp-screen .lab { text-align: center; font-size: 12.5px; line-height: 14px; white-space: nowrap; }
 .edp-screen .lab.plimits { font-weight: 700; font-size: 12px; line-height: 13px; white-space: normal; }
-.edp-screen .lv { text-align: center; font-size: 22px; line-height: 22px; }
+.edp-screen .lv { color: var(--edp-numeral); text-align: center; font-size: 22px; line-height: 22px; }
 .edp-screen .rule { border-top: 2px solid var(--edp-divider); margin: 0 6px; width: auto !important; left: 0; right: 0; }
 
 /* ---- the curves and loops (R-26 to R-31; P-11, P-12, P-26, P-27) ---- */
@@ -99,15 +102,16 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-tile { background: var(--edp-key) !important; border-radius: 7px; overflow: hidden; text-align: center; line-height: 1;
   box-shadow: inset 2px 2px 0 var(--edp-inkLight), inset -1px -1px 0 var(--edp-inkSoft), 0 1px 2px var(--edp-inkSoft); }
 .edp-tile > span { position: absolute; left: 0; right: 0; white-space: nowrap; }
-.edp-tile .v { top: 8px; font-size: 24px; letter-spacing: -.5px; }
+.edp-tile .v { color: var(--edp-numeral); top: 8px; font-size: 24px; letter-spacing: -.5px; }
 .edp-tile .v svg { width: 32px; height: 27px; }
 .edp-tile .v .fw { color: var(--edp-flowWave); }
 .edp-tile .u { top: 34px; font-size: 10px; color: var(--edp-inkSoft); }
-.edp-tile.pict .n { height: 27px; line-height: 12px; padding-top: 2px; white-space: normal; font-size: 10.5px; }
+.edp-tile.pict .n { height: 28px; line-height: 12px; padding: 2px 16px 0; white-space: normal; font-size: 11px; color: var(--edp-inkSoft); }
 .edp-tile.pict .v { top: 2px; }
 .edp-tile .n { bottom: 0; height: 18px; line-height: 18px; background: var(--edp-tileBand); font-size: 11px; font-weight: 700; }
 .edp-tile .n.f { font-style: italic; font-family: Georgia, "Times New Roman", serif; font-size: 13px; }
 .edp-tile.sel { background: var(--edp-selected) !important; color: var(--edp-inkLight); }
+.edp-tile.sel .v { color: var(--edp-inkLight); }
 .edp-tile.sel .u, .edp-tile.sel .n { background: var(--edp-selected); color: var(--edp-inkLight); }
 .edp-tile.dim > span { opacity: .4; }
 
@@ -137,10 +141,12 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-alarm.medium, .edp-alarm.low { background: var(--edp-alarmMed); }
 
 /* ---- the housing's printed words, lamps, membrane keys, knob (P-14 to P-17, P-32 to P-35) ---- */
-.edp-legend { color: var(--edp-legend); font-size: 11.5px; font-weight: 700; line-height: 12px; }
+.edp-legend { color: var(--edp-legend); font-size: 13px; font-weight: 700; line-height: 13px; }
 .edp-legend.r { text-align: right; } .edp-legend.c { text-align: center; }
-.edp-legend.pw { display: flex; align-items: center; gap: 5px; font-size: 11.5px; }
-.edp-legend.pw svg { height: 16px; width: auto; color: var(--edp-legend); }
+.edp-legend.pw { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+.edp-legend.pw svg { height: 17px; width: auto; color: var(--edp-legend); }
+/* the plug lit green: mains present (P-69; eng: the model has no power state, so mains is always present) */
+.edp-legend.pw .plugfill { fill: var(--edp-plugLit); }
 .edp-lamp { background: var(--edp-lampOff); box-shadow: inset 0 -3px 4px var(--edp-housing); }
 .edp-lamp.tri { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .edp-lamp.circ { border-radius: 50%; width: 38px !important; height: 38px !important; }
@@ -148,20 +154,25 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-lamp.on-med { background: radial-gradient(circle at 50% 50%, var(--edp-lampOff), var(--edp-lampMed) 50%); }
 .edp-hkey .cap { position: absolute; inset: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
   background: var(--edp-hkey); border-radius: 6px; color: var(--edp-hkeyInk);
-  box-shadow: 0 1px 3px var(--edp-knobShade); font-size: 12.5px; font-weight: 700; line-height: 12px; text-align: center; }
+  box-shadow: inset 0 1px 0 var(--edp-lampOff), 0 2px 3px var(--edp-knobShade); font-size: 13px; font-weight: 700; line-height: 13px; text-align: center; }
 .edp-hkey.outlined .cap { box-shadow: inset 0 0 0 2px var(--edp-hkeyInk), 0 1px 2px var(--edp-knobShade); }
 .edp-hkey.lit .cap { background: var(--edp-selected); }
 .edp-hkey .cap svg { height: 24px; width: auto; }
 .edp-hkey .kp svg { height: 9px; }
 .edp-knob { touch-action: none; border-radius: 50%; }
 .edp-knob .ring, .edp-knob .base, .edp-knob .cap { position: absolute; border-radius: 50%; }
+.edp-knob { filter: drop-shadow(5px 7px 5px var(--edp-knobShade)); }
 .edp-knob .ring { left: -2px; top: -2px; width: calc(var(--base) + 4px); height: calc(var(--base) + 4px); border: 3px solid var(--edp-ringDark); }
 .edp-knob.lit .ring { left: -5px; top: -5px; width: calc(var(--base) + 10px); height: calc(var(--base) + 10px); border: 6px solid var(--edp-ringLit); box-shadow: 0 0 14px 4px var(--edp-ringLit), inset 0 0 8px var(--edp-ringLit); }
-.edp-knob .base { left: 0; top: 0; width: var(--base); height: var(--base); background: radial-gradient(circle at 40% 30%, var(--edp-knobBase), var(--edp-knobBase) 60%, var(--edp-ringDark) 100%); }
+.edp-knob .base { left: 0; top: 0; width: var(--base); height: var(--base); background: radial-gradient(circle at 35% 30%, var(--edp-lampOff), var(--edp-knobBase) 55%, var(--edp-ringDark) 100%);
+  box-shadow: inset -3px -4px 6px var(--edp-ringDark); }
 /* the cylinder: the cap's face, offset toward the lower right, its side drawn as stacked shadows back to the base */
 .edp-knob .cap { width: var(--cap); height: var(--cap); left: calc(var(--base) / 2 - var(--cap) / 2 + 38px); top: calc(var(--base) / 2 - var(--cap) / 2 + 25px);
-  background: radial-gradient(circle at 40% 38%, var(--edp-knob), var(--edp-knob) 70%, var(--edp-knobBase));
-  box-shadow: -6px -4px 0 var(--edp-knob), -12px -8px 0 var(--edp-knob), -18px -12px 0 var(--edp-knobBase), -24px -16px 0 var(--edp-knobBase), -30px -20px 0 var(--edp-knobBase), -36px -24px 2px var(--edp-ringDark); }
+  background: radial-gradient(circle at 38% 34%, var(--edp-lampOff), var(--edp-knob) 55%, var(--edp-ringDark) 100%);
+  /* the side wall, back to the base: lit near the top face, in shade toward the base (P-17, P-60) */
+  box-shadow: 0 0 0 1px var(--edp-ringDark), -4px -3px 0 var(--edp-knobBase), -9px -6px 0 var(--edp-knobBase), -14px -9px 0 var(--edp-knobBase), -19px -12px 0 var(--edp-knobBase), -24px -16px 0 var(--edp-knobBase), -30px -20px 0 var(--edp-knobBase), -36px -24px 1px var(--edp-knobBase), -36px -24px 0 1px var(--edp-ringDark), 3px 4px 5px var(--edp-knobShade); }
+/* the side wall's shade: a darker band under the lit face, toward the lower left */
+.edp-knob .cap::before { content: ""; position: absolute; inset: 0; border-radius: 50%; transform: translate(-6px, -4px); z-index: -1; box-shadow: -2px 3px 6px 2px var(--edp-ringDark); }
 /* the turn's only cue (eng: the real knob carries no mark; a resident needs to see a detent register) */
 .edp-knob .mark { position: absolute; left: 50%; top: 8px; width: 3px; height: 16px; margin-left: -1.5px; border-radius: 2px; background: var(--edp-housing); opacity: .5; transform-origin: 1.5px calc(var(--cap) / 2 - 8px); }
 

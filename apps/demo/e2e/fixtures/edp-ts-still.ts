@@ -27,7 +27,7 @@ const win = (title: string, e: EntryView[]): WindowView => ({ id: 'modes', title
 const TILES = (sel = -1): TileView[] => [
   tile('key:vt', '0.500', 'uL', 'vt'), tile('key:ti', '1.40', 'uS', 'ti'), tile('key:ie', '1:2.5', null, 'ie'), tile('key:f', '12', 'uBpm', 'f'),
   tile('key:psv', '8', 'uCmH2O', 'psv'), tile('key:expSens', '25', 'uPct', 'expSens'), tile('key:peep', '5', 'uCmH2O', 'peep'), tile('key:sens', '3.0', 'uLmin', 'sens'),
-  tile('key:oxygen', '40', 'uPct', 'oxygen'), tile('key:riseTime', { picto: 'riseTime' }, null, 'riseTime'), tile('key:flowWaveform', { picto: 'flowWave', o: 'descending' }, null, 'flowWaveform', { dim: true }),
+  tile('key:oxygen', '40', 'uPct', 'oxygen'), tile('key:riseTime', { picto: 'riseTime' }, null, 'riseTime'), tile('key:flowWaveform', { picto: 'flowWave', o: 'descending' }, null, 'flowWaveform'),
 ].map((t, i) => (i === sel ? { ...t, sel: true } : t));
 const base = (o: Partial<View>): View => ({
   category: W('adl'), mode: W('SIMV(VCV)+PSV'), backup: W('backupOff'), date: '06/11/26', time: '12:08',
