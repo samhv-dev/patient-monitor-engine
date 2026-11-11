@@ -30,7 +30,7 @@ import type { Formulary } from '../formulary/types.ts';
 import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
 import {
   deliverPrep, infusePrep, instructorView, learnerView, prepRecord, PREPS_PER_DEVICE, setInfusion, stagePrep, stagedOf,
-  type HostPrep, type InstructorPrepNews, type LearnerPrepNews, type PrepNewsKind, type Running, type Translated,
+  type HostPrep, type InstructorPrepNews, type InstructorPrepView, type LearnerPrepNews, type PrepNewsKind, type Running, type Translated,
 } from './preparations.ts';
 
 /** What a host needs from the monitor it owns. Sync or async (a worker-backed monitor returns promises). */
@@ -116,6 +116,8 @@ export interface HostSessionOptions {
   formulary?: () => Formulary | null;
   /** L4 (§6): a preparation as staged, for the scenario driver's record (ScenarioDriver.recordPreparation). */
   onPreparation?: (p: StagedPrep) => void;
+  /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
+  deviceName?: (key: string) => string | null;
 }
 
 /** What the host answers an instructor (the grant's reason, or the refused command's ack). */
@@ -138,6 +140,8 @@ export const LEARNER_REASONS = {
   noFormulary: 'this computer has no formulary loaded yet',
   full: `this remote holds ${PREPS_PER_DEVICE} preparations: discard one first`,
 } as const;
+/** "01:15" for 75 s: the case clock as the app's screens write it (apps/demo ui.ts clock). */
+const caseClock = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 /** R8c: what the host answers a remote ventilator (with INSTRUCTOR_REASONS' wrong PIN, taken over, PIN changed). */
 export const VENTILATOR_REASONS = {
   noVentilator: 'this computer does not take a remote ventilator',
@@ -378,6 +382,7 @@ export class HostSession {
     if (!h || h.notice) return false;
     h.notice = { shownAt: this.o.target.now().simT };
     this.prepNews('notice', h);
+    this.o.onPreparation?.(stagedOf(h)); // L9: the /2 record's copy of the preparation now carries the notice's time
     return true;
   }
 
@@ -619,6 +624,7 @@ export class HostSession {
     if (!isHolder && h) this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
     this.grant(t, from, true);
     this.setHolder(role, { t, from, pin: want });
+    if (role === 'instructor') this.instructorPreps(); // L9: a phone that signs in (or again) sees what was already staged
   }
 
   /**
@@ -752,6 +758,12 @@ export class HostSession {
       if (no !== null) return refuse(no);
       return this.learnerCommand(t, m.from, by, m.body, refuse);
     }
+    // L9 (LQ3): the incompatibility notice is the instructor's, from the laptop or the granted phone (instructorMay), and
+    // the host's own table's: acked here, never dispatched
+    if (m.body.type === 'prep' && m.body.action === 'notice') {
+      const why = role === 'instructor' ? this.instructorRefusal(t, m.from, m.body) : null;
+      return why !== null ? refuse(why) : this.prepNotice(t, m.body, refuse);
+    }
     // §4 D3: a preparation and an infusion's mL/h are the learner remote's shapes only, and never reach the engine as sent
     if (m.body.type === 'prep' || m.body.type === 'infusion') return refuse(LEARNER_REASONS.notSignedIn);
     if (role !== 'instructor') return this.command(t, m.body, m.from);
@@ -779,7 +791,7 @@ export class HostSession {
     if (c.type === 'applyEvent') return this.command(t, { ...c, issuedBy: LEARNER_ISSUED_BY, by }, from);
     const { simT } = this.o.target.now();
     if (c.type === 'infusion') return this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
-    if (c.type !== 'prep') return refuse('not a learner command'); // learnerMay admitted none other
+    if (c.type !== 'prep' || c.action === 'notice') return refuse('not a learner command'); // learnerMay admitted none other
     const f = this.o.formulary?.() ?? null;
     const mine = this.preps.get(by);
     for (const h of mine?.values() ?? []) h.from = from; // a remote that signed in again on a new socket: its news follows it
@@ -820,6 +832,24 @@ export class HostSession {
     for (const x of out.cmds) await this.command(t, x, from);
   }
 
+  /**
+   * L9 (§4 D7, LQ3): an instructor's press of the card's one control: the notice of the preparation `prepId` of the device
+   * `by` is shown (showPrepNotice), once. A second press, from the other screen, is refused with the time it was shown;
+   * a resend of the same press gets its first answer. Nothing is removed or blocked.
+   */
+  private prepNotice(t: ManagedTransport, c: Extract<WireCommand, { type: 'prep'; action: 'notice' }>, refuse: (reason: string) => void): void {
+    const prior = this.seen.get(c.id);
+    if (prior) {
+      this.stats.duplicates++;
+      return t.send(this.stamp(prior));
+    }
+    const h = this.preps.get(c.by)?.get(c.prepId);
+    if (!h) return refuse(`no preparation ${c.prepId} on that remote`);
+    if (h.notice) return refuse(`the notice was shown at ${caseClock(h.notice.shownAt)}`);
+    this.acked(t, c.id);
+    this.showPrepNotice(c.by, c.prepId);
+  }
+
   /** An accepted ack for a command the host handled itself (a preparation staged or discarded): no commandApplied. */
   private acked(t: ManagedTransport, id: string): void {
     const ack: AckBody = { kind: 'ack', commandId: id, accepted: true, tick: this.o.target.now().tick };
@@ -834,10 +864,22 @@ export class HostSession {
    * no learner may sign in under: verifyLearner), with the findings and the device. The relay routes the first to that one
    * learner socket and both to granted instructors; no other learner, viewer or defibrillator window gets either.
    */
+  /** L9: the instructor's copy of every preparation on the table, again (a phone granted after the staging, or after a
+   *  reload of its page), as `made` news: the card takes each as it stands (its notice, its given time). */
+  private instructorPreps(): void {
+    const t = this.o.target.now().simT;
+    for (const m of this.preps.values()) for (const h of m.values()) this.queue({ type: 'prep', t, to: this.peerId, body: { news: 'made', prep: this.instructorCopy(h) } satisfies InstructorPrepNews });
+  }
+
+  private instructorCopy(h: HostPrep): InstructorPrepView {
+    const name = this.o.deviceName?.(h.by) ?? null; // L9: the card says "Bed 2 remote staged", on the laptop and the phone
+    return { ...instructorView(h), ...(name ? { name } : {}) };
+  }
+
   private prepNews(news: PrepNewsKind, h: HostPrep): void {
     const t = this.o.target.now().simT;
     this.queue({ type: 'prep', t, to: h.from, body: { news, prep: learnerView(h) } satisfies LearnerPrepNews });
-    this.queue({ type: 'prep', t, to: this.peerId, body: { news, prep: instructorView(h) } satisfies InstructorPrepNews });
+    this.queue({ type: 'prep', t, to: this.peerId, body: { news, prep: this.instructorCopy(h) } satisfies InstructorPrepNews });
   }
 
   /** A peer said hello: replay sticky commands, then a fresh snapshot (brief §3.7 late join). */
@@ -956,6 +998,7 @@ export class HostSession {
     if (push) {
       this.pushing.delete(cmd.id);
       if (result.accepted) push.h.leftMl = Math.max(0, push.h.leftMl - push.volumeMl);
+      if (result.accepted) push.h.givenAt ??= this.o.target.now().simT; // L9: the card's "given at"
       if (result.accepted) this.prepNews(push.news, push.h);
     }
     if (!result.accepted) {
