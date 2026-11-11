@@ -96,6 +96,9 @@ describe('pmaxAction cycle (manual p. 95; research/57 A-32)', () => {
     expect(cap.p.phase).toBe('insp');
     // and the cycling breath delivered less than VT (the capping one goes on to deliver it)
     expect(cyc.p.V - cyc.p.breathVstart).toBeLessThan(800);
+    // its PIP is the pressure that reached the limit, so the High Pressure alarm (the model's pmax) is raised
+    expect(cyc.p.measured.PIP).toBeGreaterThanOrEqual(cyc.cfg.pmax);
+    expect(ventAlarms(cyc).map((a) => a.id)).toContain('pmax');
   });
 
   it('a pressure-controlled breath set above the limit also ends at the limit', () => {

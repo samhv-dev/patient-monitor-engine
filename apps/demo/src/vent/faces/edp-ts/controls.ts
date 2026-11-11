@@ -8,7 +8,7 @@
 import type { VentConfig } from '@pme/ventilator';
 import { onStep } from '../../core/pending.ts';
 import type { Range, Setting } from '../../core/types.ts';
-import { dec, L, num, S, type ReasonId, type WordId } from './data.ts';
+import { dec, L, num, S, word, type ReasonId, type WordId } from './data.ts';
 
 type Cfg = Readonly<VentConfig>;
 /** What a control can do in a configuration: set, show without setting (I:E outside PCV, research/57 T-16), or nothing yet. */
@@ -20,9 +20,15 @@ const floorTo = (v: number, st: number) => onStep(Math.floor(v / st + 1e-9) * st
 const L2mL = (v: number) => Math.round(v * 1e6) / 1e3; // 0.41 L → 410 mL without a binary tail
 
 /** The face's mode name for the model's mode (the frame carries it, plan §4.3 coupling 1). */
-export type FaceMode = 'VCV' | 'PCV' | 'PRVC' | 'simPSV' | 'simPAV';
-export const faceMode = (c: Cfg): FaceMode => (c.mode === 'VC' ? 'VCV' : c.mode === 'PC' ? 'PCV' : c.mode === 'PRVC' ? 'PRVC' : c.mode === 'PSV' ? 'simPSV' : 'simPAV');
-const isSim = (c: Cfg) => c.mode === 'PSV' || c.mode === 'PAV';
+export type FaceMode = 'VCV' | 'PCV' | 'PRVC' | 'PSV/CPAP' | 'simPSV' | 'simPAV';
+/**
+ * The device's backup is armed: a backup kind chosen (piece V2, the model's `backupMode`; research/57 T-37). PSV with it
+ * is the device's PSV/CPAP (O-18: PSV/CPAP needs its backup); PSV without it is a scenario's PSV, the simulator's own.
+ */
+export const backupOn = (c: Cfg): boolean => c.backupMode === 'VC' || c.backupMode === 'PC';
+export const faceMode = (c: Cfg): FaceMode =>
+  c.mode === 'VC' ? 'VCV' : c.mode === 'PC' ? 'PCV' : c.mode === 'PRVC' ? 'PRVC' : c.mode === 'PSV' ? (backupOn(c) ? 'PSV/CPAP' : 'simPSV') : 'simPAV';
+const isSim = (c: Cfg) => faceMode(c) === 'simPSV' || faceMode(c) === 'simPAV';
 
 /** The set I:E on the knob's axis u: 1:E is u = 1 − E, I:1 is u = I − 1 (1:1 is 0; one step is 0.1 of either side). */
 export const ieOfU = (u: number): [number, number] => (u >= 0 ? [1 + u, 1] : [1, 1 - u]);
@@ -145,11 +151,12 @@ export const SETTINGS: Record<string, SettingCtl> = {
     format: () => null,
   },
   flowWaveform: {
-    // Constant only until V2 builds the device's ramp to zero (plan GP12, GP13); 0 = constant
-    id: 'flowWaveform', word: 'flowWaveform', gap: 'GP12', unit: () => null, ends: { hi: 'descending' },
-    range: () => [0, 0, 1],
-    read: () => 0,
-    write: () => ({ flowPattern: 'square' }),
+    // 0 = constant (rectangular), 1 = the descending ramp to zero at Ti, the model's `ramp0` (research/57 T-26; plan
+    // GP12, GP13, piece V2). The Hamilton face's `decel` is not this device's waveform: it reads as constant here.
+    id: 'flowWaveform', word: 'flowWaveform', gap: 'GP13', unit: () => null,
+    range: () => [0, 1, 1],
+    read: (c) => (c.flowPattern === 'ramp0' ? 1 : 0),
+    write: (v) => ({ flowPattern: v >= 1 ? 'ramp0' : 'square' }),
     format: () => null,
   },
   pause: {
@@ -160,19 +167,41 @@ export const SETTINGS: Record<string, SettingCtl> = {
     write: (v) => ({ pause: v }),
     format: (v) => (v > 0 ? v.toFixed(dec('pause')) : null),
   },
+  backupMode: {
+    // Menu → Backup ventilation → Ventilation Modes: VCV or PCV (research/57 T-37, T-40; plan GP17, piece V2). Its
+    // breaths run at the cfg's own VCV or PCV settings: the window sets only the kind and the apnoea time [ENG:
+    // backup-settings: the manual names no separate backup settings (T-37 to T-41)]
+    id: 'backupMode', word: 'backupModes', gap: 'GP17', unit: () => null,
+    range: () => [0, 1, 1],
+    read: (c) => (c.backupMode === 'PC' ? 1 : 0),
+    write: (v) => ({ backupMode: v >= 1 ? 'PC' : 'VC' }),
+    format: (v) => word(v >= 1 ? 'PCV' : 'VCV'),
+  },
+  apnea: {
+    // Menu → Backup ventilation → Apnea time, 5 to 60 s in steps of 5 (research/57 T-38, L-12; plan GP17)
+    id: 'apnea', word: 'apneaTime', gap: 'GP17', unit: () => 'uS',
+    range: () => r(S.apnea.min, S.apnea.max, S.apnea.step),
+    read: (c) => c.apneaTime,
+    write: (v) => ({ apneaTime: v }),
+    format: (v) => v.toFixed(0),
+  },
 };
+/** Settings edited only in a window, never a key of the bottom row. */
+const WINDOW_ONLY = new Set(['pause', 'backupMode', 'apnea']);
 
 /** The bottom row of each mode, left to right (research/57 D-01 VCV, D-02 PCV, D-12 PRVC; D-03 for a scenario's PSV). */
 export const ROWS: Record<FaceMode, string[]> = {
   VCV: ['vt', 'ti', 'ie', 'f', 'peep', 'sens', 'oxygen', 'flowWaveform'],
   PCV: ['pcv', 'ti', 'ie', 'f', 'peep', 'sens', 'oxygen', 'riseTime'],
   PRVC: ['vt', 'ti', 'ie', 'f', 'peep', 'sens', 'oxygen', 'riseTime'],
+  'PSV/CPAP': ['psv', 'expSens', 'peep', 'sens', 'oxygen', 'riseTime'],
   simPSV: ['psv', 'expSens', 'peep', 'sens', 'oxygen', 'riseTime'],
   simPAV: ['psv', 'expSens', 'peep', 'sens', 'oxygen', 'riseTime'],
 };
 
 /** A setting's state in a configuration: what the device's mode offers (research/57 D-01, D-02, D-12, T-16, T-28). */
 export function settingState(id: string, c: Cfg): CtlState {
+  if (id === 'backupMode' || id === 'apnea') return 'live'; // the backup's choice is kept across modes (manual p. 36; research/57 T-41)
   if (isSim(c)) return { reason: 'simMode' };
   if (id === 'pause') return c.mode === 'VC' ? 'live' : { reason: 'vcvOnly' };
   if (!ROWS[faceMode(c)].includes(id)) return { reason: 'psvKeys' }; // PSV and Exp. Sensitiv. belong to PSV/CPAP (GM3)
@@ -224,7 +253,7 @@ const un = (id: string, region: Region, word: WordId | undefined, reason: Reason
 
 /** Every control outside the windows. The bottom row's keys come from the mode (modes.ts); their settings are here. */
 export const CONTROLS: Ctl[] = [
-  ...Object.keys(SETTINGS).filter((k) => k !== 'pause').map((k): Ctl => ({ id: `key:${k}`, region: 'bottom', kind: 'setting', setting: k })),
+  ...Object.keys(SETTINGS).filter((k) => !WINDOW_ONLY.has(k)).map((k): Ctl => ({ id: `key:${k}`, region: 'bottom', kind: 'setting', setting: k })),
   // alarm-limit tags under the top row and in the left column (research/57 R-11, R-12, R-18, R-24)
   ...Object.keys(LIMITS).map((k): Ctl => ({ id: `tag:${k}`, region: 'tag', kind: 'limit', limit: k })),
   un('tag:pLo', 'tag', undefined, 'pLo', 'GA3'),
@@ -262,10 +291,13 @@ export type Row =
   | { kind: 'open'; word: WordId; window: WindowId; inferred?: true }
   | { kind: 'setting'; word: WordId; setting: string }
   | { kind: 'limits'; word: WordId; cells: string[]; off?: { reason: ReasonId; gap: string } }
-  | { kind: 'off'; word: WordId; reason: ReasonId; gap: string; value?: WordId; more?: true };
+  | { kind: 'off'; word: WordId; reason: ReasonId; gap: string; value?: WordId; more?: true }
+  /** Applies the window's draft (research/57 T-41); Esc instead returns to the previous values. */
+  | { kind: 'accept'; word: WordId };
 
-export type WindowId = 'modes' | 'otherModes' | 'menu' | 'adjuncts' | 'tools' | 'alarms';
-export interface WindowDef { title: WordId; rows: Row[]; footer: boolean }
+export type WindowId = 'modes' | 'otherModes' | 'menu' | 'adjuncts' | 'tools' | 'alarms' | 'backup';
+/** `draft`: the window's settings are edited into a draft that its Accept row applies (the Backup window, T-41). */
+export interface WindowDef { title: WordId; rows: Row[]; footer: boolean; draft?: true }
 
 /**
  * The windows the knob moves through (research/57 O-09, O-10, O-13, E-01, E-02, E-04, E-06, A-21). The mode windows are
@@ -277,7 +309,7 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
   modes: { title: 'ventModes', footer: true, rows: [
     { kind: 'mode', word: 'VCV', mode: 'VCV' },
     { kind: 'mode', word: 'PCV', mode: 'PCV' },
-    { kind: 'mode-off', word: 'PSV/CPAP', reason: 'psvMode', gap: 'GM3' },
+    { kind: 'mode', word: 'PSV/CPAP', mode: 'PSV/CPAP' },
     { kind: 'mode-off', word: 'SIMV(PCV)+PSV', reason: 'simvMode', gap: 'GM5' },
     { kind: 'mode-off', word: 'SIMV(VCV)+PSV', reason: 'simvMode', gap: 'GM4' },
     { kind: 'mode-off', word: 'Noninvasive (NIV)', reason: 'nivMode', gap: 'GM6' },
@@ -292,11 +324,19 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
   ] },
   menu: { title: 'menuTitle', footer: true, rows: [
     { kind: 'off', word: 'patientsData', reason: 'patientsData', gap: 'GD16' },
-    { kind: 'off', word: 'backupVent', reason: 'backupVent', gap: 'GX12', more: true },
+    { kind: 'open', word: 'backupVent', window: 'backup' },
     { kind: 'open', word: 'ventAdjuncts', window: 'adjuncts' },
     { kind: 'off', word: 'records', reason: 'records', gap: 'GD20', more: true },
     { kind: 'open', word: 'tools', window: 'tools' },
     { kind: 'off', word: 'transport', reason: 'gas', gap: 'GX18', value: 'no' },
+  ] },
+  // research/57 T-40 as drawn: Ventilation Modes, Apnea time, Backup in SIMV/APRV, Accept (T-41: Accept applies, Esc
+  // returns to the previous values). Backup in SIMV/APRV waits for SIMV and APRV (V6, V10): T-39, off by default.
+  backup: { title: 'backupVent', footer: true, draft: true, rows: [
+    { kind: 'setting', word: 'backupModes', setting: 'backupMode' },
+    { kind: 'setting', word: 'apneaTime', setting: 'apnea' },
+    { kind: 'off', word: 'backupSimv', reason: 'simvMode', gap: 'GM4', value: 'no' },
+    { kind: 'accept', word: 'accept' },
   ] },
   adjuncts: { title: 'ventAdjuncts', footer: true, rows: [
     { kind: 'setting', word: 'inspPause', setting: 'pause' },

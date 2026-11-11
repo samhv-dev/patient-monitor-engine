@@ -216,8 +216,12 @@ function startExpiration(vs: VentState): void {
   p.shown = { ...p.measured };
 }
 
-/** `pmaxHit`: plan V2, this step's pressure reached past `pmax` with `pmaxAction: 'cycle'`. */
-function advancePhase(vs: VentState, pmaxHit: boolean): void {
+/**
+ * `pmaxHit`: plan V2, this step's pressure reached past `pmax` with `pmaxAction: 'cycle'`; `stepPeak`, the highest
+ * airway pressure of this step's sub-steps (the breath's PIP includes the pressure that reached the limit, so the
+ * model's `pmax` alarm, High Pressure, is raised by the breath it ended: research/57 A-32).
+ */
+function advancePhase(vs: VentState, pmaxHit: boolean, stepPeak: number): void {
   const c = vs.cfg;
   const p = vs.p;
   p.phaseT += DT;
@@ -228,6 +232,7 @@ function advancePhase(vs: VentState, pmaxHit: boolean): void {
     // plan V2 (manual p. 95, research/57 A-32): the expiratory valve opens to bring the pressure down to PEEP: the
     // breath ends now, with no inspiratory pause and no inspiratory hold (an armed hold waits for the next breath)
     p.measured.PLAT = c.peep + recoilPressure(c, p.V);
+    p.pipCur = Math.max(p.pipCur || 0, stepPeak);
     startExpiration(vs);
   } else if (p.phase === 'insp') {
     let cyc = false;
@@ -335,6 +340,7 @@ export function stepVent(vs: VentState): void {
   p.Pmus = currentPmus(vs);
   let over = controller(vs);
   const kind = breathKind(vs);
+  let stepPeak = -Infinity; // plan V2: read only when a breath is ended at pmax
   for (let s = 0; s < SUBSTEPS; s++) {
     const dt = DT / SUBSTEPS;
     const recoil = recoilPressure(c, p.V);
@@ -371,6 +377,7 @@ export function stepVent(vs: VentState): void {
     p.Q = Q;
     p.Palv = Palv;
     p.t += dt;
+    if (p.Paw > stepPeak) stepPeak = p.Paw;
   }
   if (c.cardiac) {
     const osc = Math.sin(2 * Math.PI * (c.hr / 60) * p.t);
@@ -378,7 +385,7 @@ export function stepVent(vs: VentState): void {
     p.Paw += osc * 0.15;
   }
   if (p.phase === 'insp') p.vtDelivered = p.V;
-  if (!vs.hold) advancePhase(vs, over && c.pmaxAction === 'cycle');
+  if (!vs.hold) advancePhase(vs, over && c.pmaxAction === 'cycle', stepPeak);
   updateMeasurements(vs);
   displaySample(vs);
   vs.n++;
