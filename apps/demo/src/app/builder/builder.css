@@ -25,9 +25,6 @@
 .sb-root .sb-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: transparent; }
 .sb-root .sb-dot.bad { background: var(--bad); }
 .sb-root .sb-dot.warn { background: var(--warn); }
-.sb-root .sb-kept { margin: 0; padding: 0 10px; list-style: none; display: grid; gap: 2px; font-size: 14px; color: var(--text-muted); }
-.sb-root .sb-kept li { display: flex; padding: 4px 0; }
-.sb-root .sb-kept small { margin-left: auto; font-size: 12px; }
 .sb-root .sb-outline .sb-hint { margin: 6px 10px 4px; }
 .sb-root .sb-edit { padding: 18px 20px 22px; display: grid; gap: 16px; align-content: start; }
 .sb-root .sb-edit h2 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-strong); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -165,3 +162,13 @@
   .sb-root .sb-topr { justify-items: start; }
   .sb-root .sb-cols { grid-template-columns: minmax(0, 1fr); }
 }
+/* B5: the script, outcomes, debrief hints and handout questions, each a list of entries drawn whole */
+.sb-root .sb-endbody { display: grid; gap: 12px; }
+.sb-root .sb-endlist { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.sb-root .sb-endrow { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); min-width: 0; }
+.sb-root .sb-endrow h3 { margin: 0; font-size: 15px; }
+.sb-root .sb-endrow .sb-acts { justify-content: flex-start; }
+.sb-root .sb-anchor { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.sb-root .sb-anchor select.input { width: auto; min-height: 34px; }
+.sb-root .sb-anchor .sb-num { width: 6em; }
+.sb-root .sb-anchor code { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
