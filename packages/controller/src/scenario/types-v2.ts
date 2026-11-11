@@ -180,7 +180,31 @@ export interface ScenarioDocV2 extends Header {
 
 /** One entry of the phase timeline: the phase, when it was entered and left, and the rule that fired ('initial' for the
  *  initial phase). */
-export interface PhaseEntry { id: string; t: number; exitT?: number; rule: string }
+export interface PhaseEntry {
+  id: string; t: number; exitT?: number; rule: string;
+  /** Plan scenario-builder.md §6 (B6): each leaf of the rule that fired as it read on that tick (absent on the initial
+   *  entry and in a state written before B6), so "What fired, and why" reads the runner's record, recomputing nothing. */
+  why?: LeafRead[];
+}
+
+/** One leaf of an entry rule as the runner read it at the entry (B6). `value`: the variable's truth, a slope's mmHg/min
+ *  (or unit/min) from the ring, an unchanged leaf's spread in %, a phase hold's seconds held; absent while none was
+ *  read. `met`: the leaf's own truth (under a `not`, `not: true`, the leaf before the negation). */
+export interface LeafRead {
+  key: string;
+  leaf: 'value' | 'slope' | 'unchanged' | 'visited' | 'signal' | 'phaseEntered' | 'hold';
+  variable: string;
+  op?: string;
+  threshold?: number;
+  value?: number;
+  /** A value leaf's hold, a slope or unchanged leaf's window, s; with the seconds held (a window: the seconds the ring spans). */
+  forS?: number;
+  heldS?: number;
+  met: boolean;
+  not?: true;
+  /** A phase hold kept running by D1's latch (the team's change answered the rise) though its rule read false. */
+  latched?: true;
+}
 
 /** A true/false edge of a named rule (a phase rule, an anchor, a precondition, a conditional repeat, an outcome): grade() reads these instead of the values' history. */
 export interface RuleEdge { rule: string; t: number; value: boolean }
@@ -312,6 +336,8 @@ export interface PhaseRunnerState {
   edges: RuleEdge[];
   /** The script entries fired (ids): each fires once. */
   fired: string[];
+  /** The sim time each script entry fired, by id (B6's log); absent until the first, so an older state is the same. */
+  firedT?: Record<string, number>;
   /** Seconds each phase's entry rule has held without a break (its `holdS`), by phase id. */
   holdFor?: Record<string, number>;
   /** A phase whose running hold an `unchanged` leaf's break latched (the team's change answered the rise: the hold runs
