@@ -222,6 +222,13 @@ renderer, audio and skin contracts.
 |---|---|---|---|---|
 | `SWIM_W` | `728` | — | — | The swimlane's drawing units: 4 per mm of the 182 mm content width (as the course strip), so 360 units are 90 mm. |
 
+### [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `EEG_FS_HZ` | `125` | Hz | — | The engine's EEG sample rate (EEG plan D2: one frontal channel at 125 Hz; engine-core does not export EEG_RATE). |
+| `DEPTH_STALE_S` | `5` | s | [ENG: display] | No reading for this long (sim seconds) and the window says no device is on: the generic reader publishes every 1 s, and the monitor's BFA tile goes after the same 5 missed seconds (renderer numerics-neuro.ts MODULE_TILES) [ENG: display]. |
+
 ### [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -705,6 +712,8 @@ renderer, audio and skin contracts.
 | `swimlaneSvg` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The swimlane of a run as an SVG string: |
 | `handoutQuestions` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | The handout's "Questions to think about" (D16, Decision 14): |
 | `hintsSection` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | "From the card's author" (D9; |
+| `genericFace` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The generic processed-EEG face (EEG plan E5's "Processed EEG (generic)"): |
+| `mountDepthWindow` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The window in `parent` (the follower's stage, over its monitor): |
 | `sectionRows` | [`apps/demo/src/app/views/explore.ts`](../../apps/demo/src/app/views/explore.ts) | The rows of one Explore section for the model's current state: |
 | `phoneStyle` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | The style a PHONE wears — the instructor's (it comes in the follow stream), upright. |
 | `hostPause` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | Whether the host is paused, as a follower learns it from the host's messages (FX-22): |
@@ -962,6 +971,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The Debrief's course strip: the run on one time axis as an SVG string (no DOM state). |
 | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The Debrief's swimlane, "The run, lane by lane" (Debrief 2, D7a): the run on one time axis as an SVG string (no DOM state), lanes top to bottom, each named in words at its left: Patient (the patient's key moments, ● verm |
 | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | Debrief: the report of the run, read from the session's run record — the case, the objectives judged by their rules, the measured facts, trend charts drawn as inline SVG, drugs and fluids, the timeline (the discarded cou |
+| [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | EEG plan E12 (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E12): the depth-of-anaesthesia window, `#/depth` on a follower page (a phone, a tablet or a second screen that opened the picker's "Depth of anaesthesia" card |
 | [`apps/demo/src/app/views/dev.ts`](../../apps/demo/src/app/views/dev.ts) | Developer (research/13 §4.5, brief Q3): the only place the build-stage pages, the physiology console with its engine keys and the evidence pages are listed. |
 | [`apps/demo/src/app/views/explore.ts`](../../apps/demo/src/app/views/explore.ts) | Explore physiology (research/13 §4.5): the physiology console's data, re-presented for residents in the light bench theme. |
 | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | What a learner monitor says and does, from what it knows — one pure function, so every state a phone can be in (a relay it cannot reach, a full session, a lost socket, a silent instructor, the Ventilator view driving the |
@@ -1131,6 +1141,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/controller-pages.e2e.ts`](../../apps/demo/e2e/controller-pages.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/controller-screens.e2e.ts`](../../apps/demo/e2e/controller-screens.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/debrief.e2e.ts`](../../apps/demo/e2e/debrief.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/depth-window.e2e.ts`](../../apps/demo/e2e/depth-window.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/device-layer-page.e2e.ts`](../../apps/demo/e2e/device-layer-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/drug-evidence-page.e2e.ts`](../../apps/demo/e2e/drug-evidence-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/drug-pkpd-page.e2e.ts`](../../apps/demo/e2e/drug-pkpd-page.e2e.ts) | 0 | 0 |
@@ -1238,6 +1249,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/defib-model-sync.test.ts`](../../apps/demo/src/app/defib-model-sync.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-ventilation.test.ts`](../../apps/demo/src/app/describe-ventilation.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/drugs.test.ts`](../../apps/demo/src/app/drugs.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/eeg-model-session.dom.test.ts`](../../apps/demo/src/app/eeg-model-session.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/events.test.ts`](../../apps/demo/src/app/events.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-cockpit.test.ts`](../../apps/demo/src/app/fast-forward-cockpit.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
@@ -1344,6 +1356,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/debrief-swimlane.test.ts`](../../apps/demo/src/app/views/debrief-swimlane.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/defib-window-press.dom.test.ts`](../../apps/demo/src/app/views/defib-window-press.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/defib-window.dom.test.ts`](../../apps/demo/src/app/views/defib-window.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/depth-window.dom.test.ts`](../../apps/demo/src/app/views/depth-window.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore-drugs.dom.test.ts`](../../apps/demo/src/app/views/explore-drugs.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore.dom.test.ts`](../../apps/demo/src/app/views/explore.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-pause.test.ts`](../../apps/demo/src/app/views/follower-pause.test.ts) | 0 | 0 |
@@ -1357,6 +1370,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/remote-pin.dom.test.ts`](../../apps/demo/src/app/views/remote-pin.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-defib.dom.test.ts`](../../apps/demo/src/app/views/room-defib.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/room-depth.dom.test.ts`](../../apps/demo/src/app/views/room-depth.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-instructor.dom.test.ts`](../../apps/demo/src/app/views/room-instructor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-vent.dom.test.ts`](../../apps/demo/src/app/views/room-vent.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/teach2.dom.test.ts`](../../apps/demo/src/app/views/teach2.dom.test.ts) | 0 | 0 |
