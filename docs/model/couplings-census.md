@@ -39,14 +39,14 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
 | neuro | 189 | 93 |
-| pharmacology | 33 | 14 |
+| pharmacology | 34 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
 | engine-runtime | 11 | 2 |
-| **All** | 1139 | 431 |
+| **All** | 1140 | 431 |
 
-## The ten effector expressions with the most factors (of 1635)
+## The ten effector expressions with the most factors (of 1636)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
