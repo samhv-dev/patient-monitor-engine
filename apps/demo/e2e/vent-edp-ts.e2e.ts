@@ -50,7 +50,7 @@ test('EDP-TS face: PCV chosen with the knob, PEEP changed, the monitor\'s airway
   await expect(f.locator('.edp-win.conf')).toContainText('Mode PCV');
   await knobPress(f);
   await expect(f.locator('.edp-hdr .mn')).toHaveText('PCV');
-  const vent = () => page.evaluate(() => (document.getElementById('vent') as HTMLIFrameElement).contentWindow && ((document.getElementById('vent') as Any).contentWindow.__vent.vs.cfg as { mode: string; peep: number; modeLabel: string }));
+  const vent = () => page.evaluate(() => { const c = (document.getElementById('vent') as Any).contentWindow.__vent.vs.cfg; return { mode: c.mode as string, peep: c.peep as number, modeLabel: c.modeLabel as string }; });
   expect(await vent()).toMatchObject({ mode: 'PC', modeLabel: 'PCV' });
 
   // the airway before: the monitor's engine follows the set PEEP
