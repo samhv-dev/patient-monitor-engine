@@ -31,7 +31,9 @@ const PHASES: Array<[string, number, Command[], [number, number]]> = [
   ['burst suppression', 810, [TCI(8)], [1080, 1110]],
   // C29: the same burst suppression with noisy electrodes (25 kΩ: the generator's electrode noise, artefacts.ts)
   ['noisy burst suppression', 1110, [eeg('impedance', 25)], [1140, 1170]],
-  ['emergence', 1170, [eeg('impedance', 2), TCI(0)], [1830, 1860]],
+  // emergence: read over the 30 s after the cortex's own responsiveness returns (`lor` below 1 again), not at a fixed
+  // time: how long that takes is the drug model's (the read window below is replaced at run time)
+  ['emergence', 1170, [eeg('impedance', 2), TCI(0)], [NaN, NaN]],
 ];
 type Row = Record<Id, number | null> & { bic: number };
 const R: Record<string, Row> = {};
@@ -57,10 +59,17 @@ async function course(ageY = 40, untilS = Infinity): Promise<void> {
       if (t % 60 === 0) await new Promise((r) => setImmediate(r));
     }
   };
-  for (const [name, start, cmds, [from, to]] of PHASES) {
-    if (to > untilS) break;
+  for (const [name, start, cmds, win] of PHASES) {
+    let [from, to] = win;
+    if (Number.isNaN(to) ? start > untilS : to > untilS) break;
     await run(e, start);
     for (const c of cmds) expect(e.dispatch(c).accepted, JSON.stringify(c)).toBe(true);
+    if (Number.isNaN(to)) {
+      let t = start;
+      while (st(e).eeg.cortex.lor >= 1 && t < start + 3600) await run(e, ++t);
+      [from, to] = [t, t + 30];
+      if (ageY === 40) console.log(`emergence: the cortex's lor below 1 at ${t} s (TCI 0 at ${start} s)`);
+    }
     await run(e, to);
     const w = got.filter((g) => g.t > from && g.t <= to);
     const avg = (id: Id) => {
@@ -97,7 +106,7 @@ describe('the BIS-type reader on the engine\'s course (C26–C30)', { timeout: 9
     expect(v('surgical depth', 'bis')).toBeGreaterThan(v('burst suppression', 'bis'));
     expect(v('emergence', 'bis')).toBeGreaterThan(v('surgical depth', 'bis'));
   });
-  it.fails('C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3) — measured 85.4 vs 83.7: the β ratio (sedation component) is −11.4 dB vs −12.2 dB and the general score never wins (40–47 Hz concentration −19.4 dB)', () => {
+  it.fails('C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3) — measured 85.6 vs 83.5: the β ratio (sedation component) is −10.9 dB vs −12.3 dB and the general score never wins (40–47 Hz concentration −20.1 dB)', () => {
     expect(v('loss of responsiveness', 'bis')).toBeGreaterThan(v('surgical depth', 'bis'));
   });
   it('awake reads high (toward 100: full book p. 2169; RAM98 Fig. 16A: 93.8)', () => {
@@ -115,9 +124,9 @@ describe('the BIS-type reader on the engine\'s course (C26–C30)', { timeout: 9
   });
   // The cause, from Table 1's mixer: the sedation score cannot fall below Eo − Emax = 104.4 − 49.4 = 55 (l. 46), so
   // 40–60 needs the general score, which lies in 40–60 only for a 40–47 Hz power concentration of ≈ −31.2 to −25.7 dB
-  // (l. 47–48); the engine's signal at surgical depth gives −19.4 dB (−5.1 awake): its 40–47 Hz power stays too high
-  // against the whole spectrum, and the sedation score (β ratio −11.4 dB → 85.4) is the lower one.
-  it.fails('C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149) — measured 85.4: the 40–47 Hz power concentration −19.4 dB, not the ≈ −31 to −26 dB the general score needs (Connor 2022 Table 1 l. 47–48)', () => {
+  // (l. 47–48); the engine's signal at surgical depth gives −20.1 dB (−5.1 awake): its 40–47 Hz power stays too high
+  // against the whole spectrum, and the sedation score (β ratio −10.9 dB → 85.6) is the lower one.
+  it.fails('C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149) — measured 85.6: the 40–47 Hz power concentration −20.1 dB, not the ≈ −31 to −26 dB the general score needs (Connor 2022 Table 1 l. 47–48)', () => {
     expect(v('surgical depth', 'bis')).toBeGreaterThanOrEqual(40);
     expect(v('surgical depth', 'bis')).toBeLessThanOrEqual(60);
   });
@@ -127,8 +136,8 @@ describe('the BIS-type reader on the engine\'s course (C26–C30)', { timeout: 9
   });
   // Higher means by at least the one point the index is shown in [ENG: display]. The cause: every component is a ratio
   // of powers (dB differences), so the generator's lower amplitude at 80 y cancels, and its flatter slope moves the
-  // ratios by less than 0.01 point here.
-  it.fails('C28: at the cortex\'s own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) — measured 89.13 vs 89.13', () => {
+  // ratios by about half a point here.
+  it.fails('C28: at the cortex\'s own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) — measured 89.31 vs 88.78', () => {
     expect((AT_LOR[80] as number) - (AT_LOR[40] as number)).toBeGreaterThanOrEqual(1);
   });
   it('the bispectral term is measured (RAM98 Eq 8): the mean bicoherence is a number at every depth (recorded, in no index)', () => {
