@@ -251,7 +251,7 @@ test("R4: the QR's address opens the instrument picker; one tap gives today's le
   const pick = p.locator('.join-pick');
   await expect(pick.getByRole('heading', { level: 1 })).toHaveText('Choose what this screen shows');
   await expect(pick.locator('.join-code .code')).toHaveText(code);
-  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Learner remote', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
+  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Learner remote', 'Infusion pumps', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
   const learnerBtn = pick.locator('.join-card[data-show="learner"] button');
   await expect(learnerBtn).toBeFocused(); // preselected: one tap
   expect(hellos).toEqual([]); // the picker follows nothing until the tap

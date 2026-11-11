@@ -14,7 +14,7 @@
   the face's words ("near-end time not set", "KVO not set from the manual"); the generic face names no maker or model
   and is English only. The tablet shows no monitor and carries none of its sound.
 
-### Not yet
+### Known limitations
 
 - The host grants a pump tablet in C2: until then the tablet says after 10 s that the instructor's computer did not sign
   it in. The device profiles (S1) and the channel flows (A2) join when they merge.
