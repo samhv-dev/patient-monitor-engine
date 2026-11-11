@@ -17,6 +17,26 @@ export interface ModeEntry {
   patch?: Partial<VentConfig>;
   /** Written to `cfg.modeLabel`, so the link's frame (`modeName(cfg)`) carries the device's own name (§4.3 coupling 1). */
   label: string;
+  /** V1: settings computed from the current ones when the mode starts (a face that carries VT and Ti across modes). */
+  carry?: (cfg: Readonly<VentConfig>) => Partial<VentConfig>;
+}
+
+/**
+ * V1: a setting in the DEVICE's units, which need not be one cfg key (the EDP-TS's Ti in VC is a flow; its I:E is an
+ * inspiratory time). Pure: it reads a configuration and returns the patch a value means, so the same setting edits the
+ * live cfg or a draft (a mode's settings before its start, plan §2.4).
+ */
+export interface Setting {
+  /** [min, max, step] for this configuration (a range can depend on another setting: PCV + PEEP ≤ 100). */
+  range(cfg: Readonly<VentConfig>): Range;
+  read(cfg: Readonly<VentConfig>): number;
+  write(v: number, cfg: Readonly<VentConfig>): Partial<VentConfig>;
+}
+
+/** Where a confirmed value goes: the live cfg (through the cockpit) or a draft. */
+export interface Target {
+  cfg(): Readonly<VentConfig>;
+  apply(patch: Partial<VentConfig>): void;
 }
 
 /**
@@ -35,14 +55,20 @@ export interface AlarmProfile {
  * spontaneous, Ti/Ttot (§3.3 GD16–GD17). Not built in V0: the Hamilton face reads the model's measured view only.
  */
 export interface BreathRecord {
+  /** Sim time the breath (its inspiration) started, s. */
+  t0: number;
   peakFlowLpm: number;
+  /** Inspiration including a pause or a hold (as a ventilator reports Ti), s. */
   ti: number;
   te: number;
+  /** Ti / Te. */
   ie: number;
+  /** Mean airway pressure over the last 50 ms of expiration, cmH2O. */
   peepEnd: number;
-  veMandLpm: number;
-  veSpontLpm: number;
   tiTtot: number;
+  /** V4. */
+  veMandLpm?: number;
+  veSpontLpm?: number;
 }
 
 export interface FaceSpec {
@@ -57,8 +83,15 @@ export interface FaceSpec {
    * Pause on this face. A property of the Hamilton face (its VC sets flow); off for EDP-TS (§4.3 coupling 2, GM1).
    */
   matchMonitorFlow: boolean;
-  /** V3. Absent: the model's alarms as they are. */
+  /** V3 fills delays and latching; V1 applies `show` and `priority`. Absent: the model's alarms as they are. */
   alarmProfile?: AlarmProfile;
+  /** V1: the device's own starting settings, written once when the cockpit is created (before any link patch). */
+  init?: Partial<VentConfig>;
+  /**
+   * V1: run after every change, whoever made it, on the live cfg; returns the settings that restore the face's
+   * invariants (a device mode label after a remote patch or a scenario; VC's flow from the set Ti after a VT change).
+   */
+  settle?: (cfg: Readonly<VentConfig>) => Partial<VentConfig>;
 }
 
 /**

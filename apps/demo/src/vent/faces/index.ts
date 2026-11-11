@@ -1,13 +1,14 @@
 // The ventilator's faces (plan vent-skin-edp-ts.md §4.3, §4.5): the registry, the choice from the address, and the
-// mount every page uses (vent-hamilton.html in its three link modes, and the embed). V0 has one face; V1 adds 'edp-ts'.
+// mount every page uses (vent-hamilton.html in its three link modes, and the embed). V1 adds 'edp-ts' (`?face=edp-ts`).
 // The default is 'hamilton-style' until piece VD.
 import type { VentDriver } from '@pme/ventilator';
 import { createCockpit, type Cockpit } from '../core/cockpit.ts';
 import type { FaceModule } from '../core/types.ts';
 import { mountSimTools } from '../sim-tools.ts';
+import { edpFace } from './edp-ts/face.ts';
 import { hamiltonFace } from './hamilton/face.ts';
 
-export const FACES = { 'hamilton-style': hamiltonFace } as const satisfies Record<string, FaceModule>;
+export const FACES = { 'hamilton-style': hamiltonFace, 'edp-ts': edpFace } as const satisfies Record<string, FaceModule>;
 export type FaceId = keyof typeof FACES;
 export const DEFAULT_FACE: FaceId = 'hamilton-style';
 
