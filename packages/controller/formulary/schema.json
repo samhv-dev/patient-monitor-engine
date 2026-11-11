@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "pme-formulary/1",
   "title": "The formulary layer (plan learner-action-remote.md §5)",
-  "description": "One file per drug (<drugId>.json) and per diluent (diluents/<id>.json), sources.json and pending.json. Every number sits in an object with a src (a key into sources.json) or is a gap naming an owner question. The source rules beyond shape are in packages/controller/src/formulary/load.ts (checkFormulary).",
+  "description": "One file per drug (<drugId>.json) and per diluent (diluents/<id>.json), sources.json, pending.json and stock-syringes.json (the pump rack's stock, plan pump-rack-tci.md S1). Every number sits in an object with a src (a key into sources.json) or is a gap naming an owner question. The source rules beyond shape are in packages/controller/src/formulary/load.ts (checkFormulary).",
   "definitions": {
     "id": { "type": "string", "pattern": "^[a-z][A-Za-z0-9-]*$" },
     "src": { "type": "string", "minLength": 1 },
@@ -136,6 +136,32 @@
         ]
       }
     },
-    "pending": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+    "pending": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "stockItem": {
+      "description": "A product at its labelled strength, ready to load on a pump channel (plan pump-rack-tci.md S1, PQ7 = B): the drug file and product it is, the volume it holds and the label's use at that strength, both from the product's own monograph.",
+      "type": "object", "additionalProperties": false, "required": ["id", "drugId", "product", "volumeMl", "use"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "drugId": { "$ref": "#/definitions/id" },
+        "product": { "$ref": "#/definitions/id" },
+        "volumeMl": {
+          "type": "object", "additionalProperties": false, "required": ["ml", "src"],
+          "properties": { "ml": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } }
+        },
+        "use": {
+          "type": "object", "additionalProperties": false, "required": ["statement", "src"],
+          "properties": { "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" } }
+        }
+      }
+    },
+    "stock": {
+      "description": "stock-syringes.json: the syringes and the bags a pump channel can take from stock.",
+      "type": "object", "additionalProperties": false, "required": ["syringes", "bags"],
+      "properties": {
+        "$comment": { "type": "string" },
+        "syringes": { "type": "array", "items": { "$ref": "#/definitions/stockItem" } },
+        "bags": { "type": "array", "items": { "$ref": "#/definitions/stockItem" } }
+      }
+    }
   }
 }
