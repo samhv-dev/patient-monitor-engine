@@ -1,0 +1,129 @@
+/* The EDP-TS face (plan vent-skin-edp-ts.md §2.2, §5, mock-up m1; piece V1): plain shapes, no image, no mark.
+   Colours come ONLY from face.json through the --edp-* custom properties face.ts sets (provenance.test.ts forbids a
+   colour literal here). Sizes are the device's 800 x 600 screen (research/57 R-03) in CSS px and a plain bezel around
+   it; region proportions after the photograph (face.json layout.proportions, eng: not measured in pixels). */
+body.edp-ts { background: var(--edp-bezel); overflow: hidden; }
+body.edp-ts #screen { position: fixed; inset: 0; display: block; background: var(--edp-bezel); overflow: hidden; }
+body.edp-ts .credit { color: var(--edp-ink); }
+/* the instructor's drawer, closed, is out of reach (no tab stop, no screen-reader text behind the device) */
+body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; }
+.edp { position: absolute; inset: 0; font-family: var(--font, system-ui, sans-serif); color: var(--edp-ink); }
+.edp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
+.edp-dev { position: absolute; left: 50%; top: 50%; width: 1000px; height: 724px; transform-origin: 50% 50%;
+  background: var(--edp-bezel); border-radius: 14px; }
+.edp button { font-family: inherit; color: inherit; cursor: pointer; }
+.edp button:focus-visible { outline: 3px solid var(--edp-selected); outline-offset: 1px; }
+
+/* the screen */
+.edp-screen { position: absolute; left: 14px; top: 14px; width: 800px; height: 600px; background: var(--edp-panel);
+  display: grid; grid-template-columns: 82px 1fr 210px 74px; grid-template-rows: 70px 28px 24px 1fr 88px;
+  grid-template-areas: "head head head head" "tags tags tags tags" "msg msg msg msg" "left curves loops right" "bottom bottom bottom bottom";
+  overflow: hidden; border: 2px solid var(--edp-strip); }
+.edp-head { grid-area: head; display: grid; grid-template-columns: 150px repeat(8, 1fr); }
+.edp-hdr { padding: 2px 4px; line-height: 1.05; min-width: 0; }
+.edp-hdr .cat { color: var(--edp-category); font-weight: 700; font-size: 22px; }
+.edp-hdr .mn { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.edp-hdr .bk, .edp-hdr .dt { font-size: 10px; }
+.edp-hdr .dt span + span { margin-left: 4px; }
+.edp-cell { border-left: 1px solid var(--edp-strip); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
+.edp-cell .v { font-size: 22px; font-weight: 700; }
+.edp-cell .u, .edp-cell .c { font-size: 10px; }
+.edp-cell .n { font-size: 12px; font-weight: 700; }
+.edp-tags { grid-area: tags; display: grid; grid-template-columns: 150px repeat(8, 1fr); align-items: stretch; }
+.edp-tagpair { display: flex; gap: 2px; padding: 1px 3px; }
+.edp-tag { flex: 1; min-width: 0; min-height: 24px; background: var(--edp-tag); border: 1px solid var(--edp-strip); border-radius: 3px;
+  display: flex; align-items: center; justify-content: center; gap: 3px; padding: 0 2px; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; }
+.edp-tag .sym { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; }
+.edp-tag .sym.hi { border-bottom: 7px solid var(--edp-ink); }
+.edp-tag .sym.lo { border-top: 7px solid var(--edp-ink); }
+.edp-tag.sel { background: var(--edp-selected); }
+.edp-tag.off { border-style: dashed; color: var(--edp-inkDim); }
+.edp-msg { grid-area: msg; background: var(--edp-msgBar); display: flex; align-items: center; gap: 4px; padding: 0 8px; font-size: 13px; font-weight: 700; }
+.edp-msg .ico { width: 18px; height: 16px; border: 1px solid var(--edp-strip); background: var(--edp-axis); }
+.edp-msg .ico.on { background: var(--edp-panel); }
+.edp-msg .txt { flex: 1; text-align: center; }
+.edp-msg .txt.why { font-weight: 400; font-style: italic; }
+
+.edp-left { grid-area: left; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px 3px; font-size: 11px; text-align: center; border-right: 1px solid var(--edp-strip); }
+.edp-left .bat { width: 30px; height: 11px; border: 1px solid var(--edp-ink); background: var(--edp-insp); }
+.edp-left .lung { width: 26px; height: 18px; border-radius: 13px 13px 3px 3px; background: var(--edp-lampOff); }
+.edp-left .lung.on { background: var(--edp-strip); }
+.edp-left .lv { font-size: 17px; font-weight: 700; }
+.edp-left .lab { font-weight: 700; }
+.edp-left .edp-tag { width: 70px; flex: 0 0 auto; }
+.edp-curves { grid-area: curves; display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 3px; padding: 3px 3px 3px 0; min-height: 0; }
+.edp-lane { position: relative; display: grid; grid-template-columns: 28px 1fr; background: var(--edp-wave); min-height: 0; }
+.edp-lane .ax { background: var(--edp-axis); position: relative; font-size: 9px; }
+.edp-lane .ax span { position: absolute; right: 2px; transform: translateY(-50%); }
+.edp-lane .ax span:first-child { transform: none; }
+.edp-lane .ax span:last-child { transform: translateY(-100%); }
+.edp-lane .lt { position: absolute; left: 34px; top: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
+.edp-lane .s { position: absolute; right: 4px; bottom: 2px; color: var(--edp-inkLight); font-size: 10px; }
+.edp-lane canvas, .edp-loop canvas { width: 100%; height: 100%; display: block; }
+.edp-loops { grid-area: loops; display: grid; grid-template-rows: 1fr 1fr; gap: 3px; padding: 3px 3px 3px 0; min-height: 0; position: relative; }
+.edp-loop { position: relative; background: var(--edp-wave); min-height: 0; }
+.edp-loop .lt { position: absolute; left: 4px; top: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
+.edp-loop .lx { position: absolute; right: 4px; bottom: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
+.edp-right { grid-area: right; display: flex; flex-direction: column; gap: 3px; padding: 3px; }
+.edp-rkey { flex: 1; min-width: 0; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 4px; font-size: 10px; font-weight: 700; line-height: 1.1; padding: 1px; overflow: hidden; }
+.edp-bottom { grid-area: bottom; display: flex; gap: 3px; padding: 3px; border-top: 1px solid var(--edp-strip); }
+.edp-key { flex: 1; min-width: 0; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 4px; padding: 0;
+  display: grid; grid-template-rows: 1fr auto auto; overflow: hidden; }
+.edp-key .v { font-size: 22px; font-weight: 700; align-self: end; line-height: 1; }
+.edp-key .u { font-size: 10px; min-height: 12px; }
+.edp-key .n { background: var(--edp-strip); color: var(--edp-inkLight); font-size: 11px; font-weight: 700; padding: 1px 0; }
+.edp-key svg { width: 34px; height: 26px; align-self: end; justify-self: center; }
+.edp-key svg * { stroke: var(--edp-ink); fill: none; stroke-width: 2.5; }
+.edp-key.sel { background: var(--edp-selected); }
+.edp-key.shown { color: var(--edp-inkDim); cursor: default; }
+.edp-key.off, .edp-rkey.off, .edp-hkey.off { border-style: dashed; color: var(--edp-inkDim); }
+.edp .r { display: block; font-size: 9px; font-weight: 400; font-style: italic; color: var(--edp-inkDim); line-height: 1.1; }
+.edp-key.sel .r { color: var(--edp-ink); }
+
+/* the alarm message box: on the right of the screen, red or yellow by priority (research/57 R-16, R-17) */
+.edp-alarm { position: absolute; right: 80px; top: 126px; min-width: 190px; padding: 6px 10px; font-weight: 700; font-size: 14px; text-align: center; border: 1px solid var(--edp-ink); z-index: 3; }
+.edp-alarm.high { background: var(--edp-alarmHigh); }
+.edp-alarm.medium, .edp-alarm.low { background: var(--edp-alarmMed); }
+
+/* windows (research/57 O-09 to O-14, E-01, E-02, E-06, A-21) */
+.edp-wins { position: absolute; left: 96px; top: 130px; display: flex; gap: 8px; z-index: 4; }
+.edp-win { width: 262px; background: var(--edp-panel); border: 2px solid var(--edp-strip); display: flex; flex-direction: column; }
+.edp-win .t { background: var(--edp-title); color: var(--edp-ink); font-size: 15px; font-weight: 700; padding: 6px 8px; }
+.edp-win .rows { display: flex; flex-direction: column; gap: 3px; padding: 6px; }
+.edp-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: 28px; padding: 2px 8px; text-align: left;
+  background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 2px; font-size: 13px; }
+.edp-row.focus { background: var(--edp-selected); }
+.edp-row.off { border-style: dashed; color: var(--edp-inkDim); flex-wrap: wrap; }
+.edp-row.off .r { flex-basis: 100%; }
+.edp-row .cells { display: flex; gap: 3px; }
+.edp-row .edp-tag { min-width: 58px; }
+.edp-win .ft { font-size: 11px; font-weight: 700; text-align: center; padding: 4px 4px 6px; }
+.edp-win.conf { width: 300px; }
+.edp-win.conf p { margin: 10px 12px; font-size: 13px; }
+
+/* Words on the measured blue (C-10) and slate (C-11) are dark: white on them measures under 4.5:1 (WCAG AA); the
+   photographs show white. A difference for the owner's eye, said in the pull request. */
+
+/* the hardware beside and under the screen (research/57 H-01 to H-31); the bezel plain */
+.edp-side { position: absolute; left: 830px; top: 14px; width: 156px; height: 600px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.edp-lamps { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; }
+.edp-lamp { width: 30px; height: 26px; background: var(--edp-lampOff); }
+.edp-lamp.tri { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.edp-lamp.circ { border-radius: 50%; }
+.edp-lamp.on-high { background: var(--edp-lampHigh); }
+.edp-lamp.on-med { background: var(--edp-lampMed); }
+.edp-hkey { min-width: 72px; min-height: 40px; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 5px; font-size: 12px; font-weight: 700; padding: 2px 6px; line-height: 1.15; }
+.edp-hkey.lit { background: var(--edp-selected); }
+.edp-knob { width: 116px; height: 116px; border-radius: 50%; margin-top: auto; background: var(--edp-panel); border: 6px solid var(--edp-selected);
+  touch-action: none; position: relative; }
+.edp-knob .mark { position: absolute; left: 50%; top: 6px; width: 4px; height: 22px; margin-left: -2px; background: var(--edp-strip); border-radius: 2px; transform-origin: 2px 47px; }
+.edp-under { position: absolute; left: 14px; top: 628px; width: 800px; height: 84px; display: flex; align-items: center; gap: 14px; padding-left: 20px; }
+.edp-lock { width: 22px; height: 16px; border: 3px solid currentColor; border-radius: 3px; display: inline-block; margin-top: 8px; position: relative; }
+.edp-lock::before { content: ""; position: absolute; left: 2px; top: -12px; width: 12px; height: 10px; border: 3px solid currentColor; border-bottom: 0; border-radius: 7px 7px 0 0; }
+.edp-power { margin-left: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; }
+.edp-power span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; background: var(--edp-lampOff); }
+.edp-power span.on::before { background: var(--edp-insp); }
+
+/* the simulator's own handle, OUTSIDE the bezel (plan §4.3): the instructor's tools, not the device's */
+.edp-simhandle { position: fixed; right: 8px; bottom: 8px; z-index: 30; min-height: 32px; padding: 4px 12px; border-radius: 6px;
+  background: var(--edp-strip); color: var(--edp-inkLight); border: 1px solid var(--edp-ink); font: 600 13px var(--font, system-ui, sans-serif); cursor: pointer; }
