@@ -6,34 +6,17 @@
 // A window of the instructor's computer (`?link=` without `&via=parent`: Room setup's "New window") says the cockpit's
 // settings once a second and on every change, and whether its page is hidden — as a device's relay port does — so the
 // host hands the patient over with them when the window closes or hides (views/vent.ts serveWindowCockpit).
-import { createBroadcastPort, createFramePort, createRelayPort, createVentDriver, monitorMatchedFlow, PROFILES, SETTINGS_MS, type CockpitSettings, type LinkPort, type ProfileId, type RelayPort, type VentDriver, type VentWire, type VentWireBody } from '@pme/ventilator';
+import { createBroadcastPort, createFramePort, createRelayPort, createVentDriver, PROFILES, SETTINGS_MS, type CockpitSettings, type LinkPort, type ProfileId, type RelayPort, type VentDriver, type VentWire, type VentWireBody } from '@pme/ventilator';
 import { joinCode, relayOf, VENT_HASH } from '../app/classroom.ts';
 import { h, setText } from '../app/ui.ts';
 import { PHONE_WORDS, pinForm, refusalWords } from '../app/views/pin-form.ts';
 import { signInVentilator, type VentDevice } from './device-link.ts';
-import { mountHamiltonUi } from './hamilton-ui.ts';
+import { faceFromLocation, mountFace } from './faces/index.ts';
 
 const q = new URLSearchParams(location.search);
 const pid = q.get('profile');
 const profile: ProfileId = pid && pid in PROFILES ? (pid as ProfileId) : 'normal';
 const settingsOf = (d: VentDriver): CockpitSettings => ({ cfg: { ...d.vs.cfg }, measured: { RR: d.vs.p.measured.RR, VTE: d.vs.p.measured.VTE } });
-
-/**
- * Linked to the monitor, VC runs at the monitor ventilator's flow for the set VT and rate (I:E 1:2, no pause) — the
- * same settings deliver the same volume — until the instructor sets Flow or Pause here.
- */
-function matchMonitorFlow(driver: VentDriver): void {
-  let matched = true;
-  addEventListener('input', (e) => {
-    const k = (e.target as HTMLElement | null)?.dataset?.key;
-    if (k === 'vcFlow' || k === 'pause') matched = false;
-  }, true);
-  const frame = driver.frame;
-  driver.frame = (ms) => {
-    if (matched && driver.vs.cfg.mode === 'VC') Object.assign(driver.vs.cfg, monitorMatchedFlow(driver.vs.cfg));
-    frame(ms);
-  };
-}
 
 /** R8d: a window's cockpit says its settings (and whether it is hidden) on every change and once a second. */
 function sayWindowSettings(port: LinkPort, driver: VentDriver): void {
@@ -118,8 +101,7 @@ function devicePage(code: string, relay: string): void {
         port = createRelayPort(wire, { settings: () => (drv ? settingsOf(drv) : null) });
         drv = createVentDriver(port, profile);
         driver = drv;
-        matchMonitorFlow(drv);
-        mountHamiltonUi(drv);
+        mountFace(drv, faceFromLocation(location), { linked: true });
         (window as unknown as { __vent: VentDriver }).__vent = drv; // e2e hook
       }
       port?.setHidden(document.visibilityState === 'hidden'); // its settings at once: the host knows what it would hand over
@@ -158,8 +140,8 @@ else {
   // FX-1: embedded by the app's Ventilator view (`&via=parent`), the link is a direct frame port with the parent page
   const port = session ? (embedded ? createFramePort(session, () => parent) : createBroadcastPort(session)) : null;
   const driver = createVentDriver(port, profile);
-  if (port) matchMonitorFlow(driver);
   if (port && !embedded) sayWindowSettings(port, driver);
-  mountHamiltonUi(driver);
+  // the face (`?face=`, plan vent-skin-edp-ts.md §4.5); linked, the Hamilton face matches the monitor ventilator's flow in VC
+  mountFace(driver, faceFromLocation(location), { linked: port !== null });
   (window as unknown as { __vent: typeof driver }).__vent = driver; // e2e hook
 }
