@@ -1,0 +1,115 @@
+name: kit-and-site
+
+# Every merge to main: build and check the classroom kit and the site once (kit-build.yml), then
+#   pages       push the site tree to the gh-pages branch (the repository's Pages setting: deploy from branch gh-pages)
+#   prerelease  move the `kit-latest` tag to this commit and refresh the ONE rolling pre-release with the two kit zips
+# A version tag's kit is attached by release.yml, not here. Nobody publishes the kit or the site by hand any more
+# (RELEASE.md, "The classroom kit and the site").
+on:
+  push:
+    branches: [main]
+  # Dry run on any branch (`gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true`): build and check
+  # everything, upload the kit zips and the site tree as workflow artifacts, publish nothing. Publishing needs main and
+  # dry_run false (a maintainer's manual republish of main's head).
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'build and check everything, publish nothing'
+        type: boolean
+        default: true
+
+# Every job states its own; only the two publishing jobs can write, and only to this repository's contents.
+permissions: {}
+
+# Runs of one ref never overlap, and none is cancelled half-way through a publish: while one runs, a newer push waits,
+# and a still newer one replaces the waiting one, so the latest commit is always published last.
+concurrency:
+  group: kit-and-site-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  kit:
+    uses: ./.github/workflows/kit-build.yml
+    permissions:
+      contents: read
+    with:
+      naming: latest
+
+  pages:
+    needs: kit
+    # never from a fork, never off main, never on a dry run (a push event has no inputs: it publishes)
+    if: ${{ github.repository == 'samhv-dev/patient-monitor-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || !inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: pages
+          fetch-depth: 1
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: ${{ runner.temp }}/site
+      - name: Replace the gh-pages tree with this commit's site and push it
+        run: |
+          set -euo pipefail
+          cd pages
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          tar -xf "$RUNNER_TEMP/site/site.tar" -C .
+          test ! -e pme-kit.json   # the app would take the site for a kit (site-tree.mjs)
+          grep -q "$GITHUB_SHA" README.md
+          git add -A
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -q -m "GitHub Pages: main ${GITHUB_SHA::8}, static app (kit-and-site run $GITHUB_RUN_ID)"
+          git push origin HEAD:gh-pages   # a fast-forward on top of the branch's history, never a force-push
+          echo "gh-pages is now $(git rev-parse HEAD) (main $GITHUB_SHA)" >> "$GITHUB_STEP_SUMMARY"
+
+  prerelease:
+    needs: kit
+    if: ${{ github.repository == 'samhv-dev/patient-monitor-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || !inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: kit-zips
+          path: ${{ runner.temp }}/kit
+      - name: Move kit-latest to this commit and refresh its pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/kit"
+          R="$GITHUB_REPOSITORY"; T=kit-latest
+          A=(pme-classroom-kit.zip pme-classroom-kit-windows.zip)
+          sha256sum "${A[@]}" > SHA256SUMS.txt
+          WIN_NODE="$(unzip -p pme-classroom-kit-windows.zip pme-classroom-kit-windows/runtime/NODE-VERSION.txt | tr -d '\r' | sed -n 's/^Version: *//p')"
+          test -n "$WIN_NODE"
+          SUBJECT="$(gh api "repos/$R/commits/$GITHUB_SHA" --jq '.commit.message | split("\n")[0]')"
+          {
+            echo "**Not a numbered release.** The classroom kit of \`main\` at [\`${GITHUB_SHA::8}\`](https://github.com/$R/commit/$GITHUB_SHA) ($SUBJECT), rebuilt by the \`kit-and-site\` workflow ([run $GITHUB_RUN_ID](https://github.com/$R/actions/runs/$GITHUB_RUN_ID)) on every merge to \`main\`; this page and its files are replaced at the next merge. Numbered releases are the \`v*\` releases."
+            echo
+            echo "- \`pme-classroom-kit.zip\`: the kit for macOS and Linux (double-click \`Start Simulator.command\` or \`Start Classroom.command\`; the classroom needs Node.js 22 or later on the laptop)."
+            echo "- \`pme-classroom-kit-windows.zip\`: the same kit with the official Node.js $WIN_NODE for Windows x64 in \`runtime\\node.exe\` (\`Start Simulator.cmd\`, \`Start Classroom.cmd\`). Windows launchers (\`.cmd\`): untested on Windows."
+            echo "- \`SHA256SUMS.txt\`: the SHA-256 of both zips. Each kit's \`VERSION.txt\` names the commit and how it was built."
+            echo
+            echo "A teaching simulator: not a medical device and not clinically validated."
+          } > NOTES.md
+          if gh api "repos/$R/git/ref/tags/$T" > /dev/null 2>&1; then
+            gh api -X PATCH "repos/$R/git/refs/tags/$T" -f sha="$GITHUB_SHA" -F force=true > /dev/null
+          else
+            gh api -X POST "repos/$R/git/refs" -f ref="refs/tags/$T" -f sha="$GITHUB_SHA" > /dev/null
+          fi
+          TITLE="Classroom kit, main ${GITHUB_SHA::8} (rolling pre-release)"
+          if gh release view "$T" -R "$R" > /dev/null 2>&1; then
+            gh release edit "$T" -R "$R" --prerelease --latest=false --title "$TITLE" --notes-file NOTES.md
+            gh release upload "$T" -R "$R" --clobber "${A[@]}" SHA256SUMS.txt
+          else
+            gh release create "$T" -R "$R" --verify-tag --prerelease --latest=false --title "$TITLE" --notes-file NOTES.md "${A[@]}" SHA256SUMS.txt
+          fi
+          echo "kit-latest is main $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

@@ -59,6 +59,15 @@ every shard of a set reads that one plan, so the shards never split a set two wa
    is added or removed, and it does not run on main. Add the label from the first push and read the validation run's
    conclusion as well as ci's. There is no opt-out label: a workflow is never relabelled away.
 
+10. **The classroom kit and the site are built by the workflows, never by hand.** Every merge to `main` runs
+   `.github/workflows/kit-and-site.yml`: it builds the kit with `scripts/showcase/make-bundle.mjs` (a macOS/Linux kit
+   and a Windows kit with a pinned, checksum-verified Node.js), checks the unzipped kits (`check-relay.mjs`,
+   `check-servers.mjs` on macOS), publishes the site tree (`scripts/showcase/site-tree.mjs`) to the `gh-pages`
+   branch and refreshes the rolling `kit-latest` pre-release; a `v*` tag attaches the same kit zips to its release
+   (`release.yml`). Do not push `gh-pages` or edit `kit-latest` yourself. A change to the kit or the site can be tried
+   on its branch with `gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true` (artifacts `kit-zips` and
+   `site`; nothing is published). RELEASE.md, "The classroom kit and the site", has the details.
+
 ## Reporting realism problems
 
 Use the "Clinical realism" issue template: the scenario, the mode (MANUAL or MODELED), what a clinician expects with a

@@ -2,7 +2,34 @@
 
 Who does what: the stage executor prepares the release in a pull request and stops. **The orchestrator (or samhv-dev)
 merges the PR and pushes the tag.** Pushing a `v*` tag runs `.github/workflows/release.yml`, which rebuilds the tagged
-commit and creates the GitHub release with its assets.
+commit and creates the GitHub release with its assets, the classroom kit zips among them.
+
+## The classroom kit and the site (every merge to `main`, no hand step)
+
+`.github/workflows/kit-and-site.yml` runs on every push to `main`. It builds the kit once through
+`.github/workflows/kit-build.yml` (also used by `release.yml`):
+
+- `node scripts/showcase/make-bundle.mjs` twice: the macOS/Linux kit, and the Windows kit with `--win-node` (the
+  official Node.js for Windows x64, version and SHA-256 pinned in `kit-build.yml`'s `WIN_NODE_*` lines; the download
+  must match the pin, and make-bundle checks it against nodejs.org's `SHASUMS256.txt` again). Each is zipped with its
+  file modes: `pme-classroom-kit.zip`, `pme-classroom-kit-windows.zip`.
+- on the UNZIPPED zips: `check-relay.mjs` on both kits (Linux), `check-servers.mjs` on the macOS/Linux kit (a macOS
+  runner: it starts ruby, perl and node through the launcher and mounts a read-only disk image), and the site tree
+  (`scripts/showcase/site-tree.mjs`: the kit's app without `pme-kit.json`, `LICENSE`, `LICENSES/`, `NOTICES.md`,
+  `VERSION.txt`, `.nojekyll`, and `scripts/showcase/site/README.md` with the commit filled in) with `check-subpath.mjs`.
+
+Then, only on `main` of this repository: the `pages` job pushes the site tree to `gh-pages` as a new commit on top of
+the branch (the Pages setting stays "deploy from branch gh-pages"), and the `prerelease` job moves the `kit-latest` tag
+to the commit and replaces the files of the ONE rolling pre-release "kit-latest" (marked pre-release, never "latest";
+its notes name the commit and say it is not a numbered release): the two kit zips and their `SHA256SUMS.txt`. Runs never
+overlap and none is cancelled half-way: the latest merge is published last.
+
+A maintainer does nothing by hand for either. To republish `main`'s head (say after a failed run): Actions →
+kit-and-site → Run workflow on `main` with "publish nothing" unticked. A dry run on any branch
+(`gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true`, or `release.yml` with `-f dry_run=true`) builds and
+checks everything and leaves the kit zips and the site tree as the run's artifacts `kit-zips` and `site` (`site.tar`).
+What stays by hand: the Windows checklist of the kit's `READ ME FIRST.txt` (step 10 below) and moving the Windows
+Node.js pin when a newer 22.x is wanted.
 
 ## Before the tag (on the merged `main`)
 
@@ -51,7 +78,8 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
 ## After the workflow
 
 1. The release page lists `patient-monitor.iife.js` (+ `.map`), `ventilator-monitor-embed-v1.0.0-rc.1.zip` (with
-   `LICENSE`, `NOTICES.md` and `LICENSES/` inside), `api-reference-v1.0.0-rc.1.zip` (with `NOTICES.md` and the TypeDoc and
+   `LICENSE`, `NOTICES.md` and `LICENSES/` inside), `pme-classroom-kit-v1.0.0-rc.1.zip` and
+   `pme-classroom-kit-windows-v1.0.0-rc.1.zip` (the kit as `kit-build.yml` built and checked it), `api-reference-v1.0.0-rc.1.zip` (with `NOTICES.md` and the TypeDoc and
    lunr licence texts inside), `LICENSES.zip`, `SHA256SUMS.txt` (covering every other asset), `LICENSE`, `NOTICES.md`,
    with the CHANGELOG section as notes.
 2. Download the embed zip, unzip, open `ventilator-monitor.html` by double-click in Chrome and Safari: the ventilator
@@ -60,14 +88,11 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
    source". If a later release publishes, it is `pnpm -r publish --access public` from the tagged commit by the owner
    of the npm scope (decide the scope first) — pnpm applies each package's `publishConfig`.
 4. Update `docs/RESUME.md` and the rulings file.
-5. Publish the rc.1 static build to GitHub Pages (the owner's go-ahead, relayed 2026-10-18: "the update after rc1 is
-   acceptable"; it supersedes the Stage 8b plan's Q3 for this release). Once, after the tag, from the tagged commit:
-   `node scripts/showcase/make-bundle.mjs <scratch>/kit` (the kit's relative-base build of the app, with its
-   `VERSION.txt`); copy `<scratch>/kit/app/` into a clean gh-pages tree with an empty `.nojekyll`, the kit's
-   `VERSION.txt`, `LICENSE`, `NOTICES.md` and `LICENSES/`; check that Home shows "Version 1.0.0-rc.‹n› ·
-   pre-release · build …" and the footer line "For educational use only; Not to be used in patient care."; commit and
-   force-push the `gh-pages` branch ONLY (never `main`); record the gh-pages commit in the gate note or the rulings
-   file. The Pages site cannot pair learners' phones: they need the classroom relay of the local kit (README).
+5. GitHub Pages: nothing to do. The merge to `main` before the tag already published the site of that commit
+   (`kit-and-site.yml`, above); check that Home shows "Version 1.0.0-rc.‹n› · pre-release · build …" and the footer line
+   "For educational use only; Not to be used in patient care.". The Pages site cannot pair learners' phones: they
+   need the classroom relay of the local kit (README). (Until brief 169 this step was a hand build pushed with a
+   force-push; the workflow now adds a commit on top of `gh-pages` instead.)
 
 ## Later: 1.0.0 (not at the release candidate)
 
