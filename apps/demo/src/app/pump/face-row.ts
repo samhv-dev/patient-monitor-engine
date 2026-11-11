@@ -28,6 +28,8 @@ export function faceRow(r: PumpPanelRow): FaceRow {
     infusedMl: r.infusedMl,
     timeToEmptyMin: r.timeToEmptyMin,
     alarms: [...r.alarms],
+    // E2: the pump's OWN prediction (its typed-in patient and set), never the patient's concentrations
+    tci: r.tci ? { setId: r.tci.setId, mode: r.tci.mode, target: r.tci.target, cp: r.tci.cp, ce: r.tci.ce, unit: r.tci.unit } : null,
   };
   return out as unknown as FaceRow;
 }

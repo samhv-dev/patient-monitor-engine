@@ -75,14 +75,14 @@ const ROWS: PumpPanelRow[] = [
     programmed: { drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
     contents: { drugId: 'remifentanil', concentration: { amount: 50, unit: 'mcg', perMl: 1 } },
     syringeMl: 50, set: null, mode: 'rate', rate: { rate: 20, unit: 'mL/h' }, rateMlH: 20, limitMl: null,
-    volumeMl: 38, infusedMl: 12, wasteMl: 0, timeToEmptyMin: 114, alarms: [],
+    volumeMl: 38, infusedMl: 12, wasteMl: 0, timeToEmptyMin: 114, alarms: [], tci: null,
   },
   {
     ch: 2, kind: 'drip', state: 'loaded',
     programmed: null,
     contents: { drugId: 'magnesiumSulfate', concentration: { amount: 2, unit: 'g', perMl: 100 } },
     syringeMl: null, set: 20, mode: 'rate', rate: null, rateMlH: 0, limitMl: null,
-    volumeMl: 100, infusedMl: 0, wasteMl: 0, timeToEmptyMin: null, alarms: [],
+    volumeMl: 100, infusedMl: 0, wasteMl: 0, timeToEmptyMin: null, alarms: [], tci: null,
   },
 ];
 

@@ -17,7 +17,7 @@ const syringe = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => ({
   contents: { drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
   syringeMl: 50, set: null, mode: 'rate',
   rate: { rate: 20, unit: 'mL/h' }, rateMlH: 20, limitMl: null,
-  volumeMl: 38, infusedMl: 12, wasteMl: 0, timeToEmptyMin: 114, alarms: [],
+  volumeMl: 38, infusedMl: 12, wasteMl: 0, timeToEmptyMin: 114, alarms: [], tci: null,
   ...o,
 });
 /** A drip channel: norepinephrine 4 mg in 250 mL on a 20 drops/mL set at 30 drops/min (90 mL/h), a 100 mL limit. */
@@ -27,7 +27,7 @@ const drip = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => ({
   contents: { drugId: 'norepinephrine', concentration: { amount: 4, unit: 'mg', perMl: 250 } },
   syringeMl: null, set: 20, mode: 'rate',
   rate: { rate: 30, unit: 'drops/min' }, rateMlH: 90, limitMl: 100,
-  volumeMl: 220, infusedMl: 30, wasteMl: 0, timeToEmptyMin: 146.67, alarms: [],
+  volumeMl: 220, infusedMl: 30, wasteMl: 0, timeToEmptyMin: 146.67, alarms: [], tci: null,
   ...o,
 });
 
@@ -35,7 +35,15 @@ const drip = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => ({
 const PROFILES: FaceProfiles = {
   syringe: { nearEnd: { gap: 'the near-end time at which Almost Empty is raised: SP-500 operator manual (research/50 SP-21)' } },
   drip: { kvo: { rate: 1, unit: 'mL/h', src: 'OT-15', after: { gap: 'whether and when the pump enters KVO after Infusion Complete: OT-701 operator manual (research/50 OT-24)' } } },
+  // sp5-tci.json (S1, on main): the TCI mode's highest rate is a gap until the SP5 TCI manual
+  tci: { tci: { maxRate: { gap: "the highest rate the pump runs in TCI: SP5 TCI operator's manual (research/50 TC-09)" } } },
 };
+/** E2: a syringe channel in TCI, Eleveld effect-site target 3 µg/mL; the pump's own Cp 3.4 and Ce 2.9, at 35 mL/h now. */
+const tciRow = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => syringe({
+  mode: 'tci', rate: { rate: 35, unit: 'mL/h' }, rateMlH: 35,
+  tci: { setId: 'eleveld', mode: 'effect', target: 3, cp: 3.4, ce: 2.9, unit: 'mcg/mL' },
+  ...o,
+});
 
 const field = (el: HTMLElement, key: string) => el.querySelector(`[data-field="${key}"] dd`)?.textContent ?? null;
 const keys = (el: HTMLElement) => [...el.querySelectorAll<HTMLElement>('[data-field]')].map((e) => e.dataset.field);
@@ -120,6 +128,36 @@ describe('the face, per channel kind (§5)', () => {
     const d = faceView(2, 'drip', PROFILES);
     d.update(faceRow(drip({ state: 'alarm', alarms: ['infusionComplete'] })));
     expect(field(d.el, 'alarms')).toBe('Infusion Complete');
+  });
+});
+
+describe('E2: a syringe channel in TCI shows the mode\'s read-only rows (§5; the flows to set a target are A2\'s)', () => {
+  it("the set, Cp or Ce, the target, the pump's own predicted Cp and Ce, the current rate, the volumes, and the profile's TCI gap", () => {
+    const f = faceView(1, 'syringe', PROFILES);
+    f.update(faceRow(tciRow()));
+    expect(f.el.dataset.mode).toBe('tci');
+    expect(keys(f.el)).toEqual(['syringe', 'tciSet', 'tciMode', 'target', 'cp', 'ce', 'rate', 'infused', 'remaining', 'toEmpty', 'alarms', 'tciMaxRate']);
+    expect(field(f.el, 'tciSet')).toBe('eleveld');
+    expect(field(f.el, 'tciMode')).toBe('Ce');
+    expect(field(f.el, 'target')).toBe('3 µg/mL');
+    expect(field(f.el, 'cp')).toBe('3.4 µg/mL');
+    expect(field(f.el, 'ce')).toBe('2.9 µg/mL');
+    expect(field(f.el, 'rate')).toBe('35 mL/h');
+    expect(field(f.el, 'tciMaxRate')).toBe('maximum TCI rate not set');
+    expect(f.el.outerHTML).not.toMatch(/Mindray|SP5|operator manual|TC-09/);
+  });
+  it('a stopped TCI says so, with no target; the prediction still shows; time to empty is a dash at rate 0 (§5)', () => {
+    const f = faceView(1, 'syringe', null);
+    f.update(faceRow(tciRow({ rate: { rate: 0, unit: 'mL/h' }, rateMlH: 0, timeToEmptyMin: null, tci: { setId: 'eleveld', mode: null, target: null, cp: 1.2, ce: 1.8, unit: 'mcg/mL' } })));
+    expect(field(f.el, 'tciMode')).toBe('Stopped');
+    expect(field(f.el, 'target')).toBe('—');
+    expect(field(f.el, 'ce')).toBe('1.8 µg/mL');
+    expect(field(f.el, 'toEmpty')).toBe('—');
+    expect(field(f.el, 'tciMaxRate')).toBe('device profile not loaded');
+  });
+  it('the patient\'s own concentrations are never on the pump: the face shows the row\'s prediction only', () => {
+    const r = faceRow(tciRow());
+    expect(Object.keys(r.tci ?? {}).sort()).toEqual(['ce', 'cp', 'mode', 'setId', 'target', 'unit']);
   });
 });
 

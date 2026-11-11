@@ -30,6 +30,8 @@ export type ProfileValue = { gap: string } | ({ src: string } & Record<string, u
 export interface FaceProfiles {
   syringe: { nearEnd: ProfileValue };
   drip: { kvo: { after: ProfileValue } & Record<string, unknown> };
+  /** sp5-tci.json (S1): the TCI mode of a syringe channel; its highest TCI rate is a gap until the SP5 TCI manual. */
+  tci: { tci: { maxRate: ProfileValue } & Record<string, unknown> };
 }
 
 /** The face's words, every one (SK1 replaces this object with a skin's labels file, each label with its provenance). */
@@ -51,7 +53,16 @@ export const FACE_LABELS = {
     alarms: 'Alarms',
     almostEmpty: 'Almost Empty',
     kvo: 'KVO',
+    // E2, a syringe channel in TCI (§5): the set, the mode (Cp or Ce), the target, the pump's own predicted Cp and Ce
+    tciSet: 'TCI model',
+    tciMode: 'Target',
+    target: 'Target value',
+    cp: 'Predicted Cp',
+    ce: 'Predicted Ce',
+    tciMaxRate: 'TCI rate limit',
   },
+  // "Cp" and "Ce" are displayed tokens (§5): they stay as they are
+  tciMode: { plasma: 'Cp', effect: 'Ce', stopped: 'Stopped' },
   // The catalogues' alarm names (D8; research/50 SP-17, OT-17)
   alarm: { end: 'End', emptyContainer: 'Empty Container', infusionComplete: 'Infusion Complete' } satisfies Record<FaceRow['alarms'][number], string>,
   none: 'None',
@@ -59,7 +70,7 @@ export const FACE_LABELS = {
   inMl: (amount: string, unit: string, ml: string) => `${amount} ${unit} in ${ml} mL`,
   perMl: (amount: string, unit: string) => `${amount} ${unit}/mL`,
   // A device profile's gap, in the face's words (D8: the plan's words for each)
-  gap: { nearEnd: 'near-end time not set', kvoAfter: 'KVO not set from the manual' },
+  gap: { nearEnd: 'near-end time not set', kvoAfter: 'KVO not set from the manual', tciMaxRate: 'maximum TCI rate not set' },
   noProfile: 'device profile not loaded',
   history: 'History',
   historyEmpty: "This channel's history: not in this release yet.",
@@ -68,11 +79,28 @@ export const FACE_LABELS = {
 export type FaceLabels = typeof FACE_LABELS;
 
 export type FieldKey = keyof FaceLabels['field'];
-/** The fields each kind of channel shows, in order (§5), by kind and mode: the two kinds differ here only. */
-export const FACE_FIELDS: Record<`${ChannelKind}:${Mode}`, readonly FieldKey[]> = {
+/** The faces a channel can show: each kind in rate mode, and a syringe channel in TCI (E2; a drip pump has no TCI, D2). */
+export type FaceLayout = 'syringe:rate' | 'drip:rate' | 'syringe:tci';
+/** The fields each layout shows, in order (§5): the kinds and modes differ here only. */
+export const FACE_FIELDS: Record<FaceLayout, readonly FieldKey[]> = {
   'syringe:rate': ['syringe', 'rate', 'dose', 'infused', 'remaining', 'toEmpty', 'alarms', 'almostEmpty'],
   'drip:rate': ['set', 'rate', 'rateOther', 'limit', 'infused', 'remaining', 'toEmpty', 'alarms', 'kvo'],
+  'syringe:tci': ['syringe', 'tciSet', 'tciMode', 'target', 'cp', 'ce', 'rate', 'infused', 'remaining', 'toEmpty', 'alarms', 'tciMaxRate'],
 };
+/** A channel's layout. The engine refuses TCI on a drip channel (E2), so a drip row is drawn in rate mode; a new mode
+ *  is a compile error here (the `never` below) until its layout is written. */
+export function faceLayout(kind: ChannelKind, mode: Mode): FaceLayout {
+  switch (mode) {
+    case 'rate':
+      return kind === 'syringe' ? 'syringe:rate' : 'drip:rate';
+    case 'tci':
+      return kind === 'syringe' ? 'syringe:tci' : 'drip:rate';
+    default: {
+      const none: never = mode;
+      return none;
+    }
+  }
+}
 
 export interface FaceField {
   key: FieldKey;
@@ -110,16 +138,18 @@ export function faceModel(row: FaceRow | null, kind: ChannelKind, profiles: Face
   const k: ChannelKind = row && row.state !== 'notLoaded' ? row.kind : kind;
   const mode: Mode = row?.mode ?? 'rate';
   const p = row?.programmed ?? null;
+  const tci = row?.tci ?? null;
   const c = p?.concentration ?? null;
   const unit = c ? unitText(c.unit) : '';
   const perMl = c ? c.amount / c.perMl : null; // the programme's amount per mL: what the pump believes it gives
   const programmed = p && c ? `${drugName(p.drugId)} ${c.perMl === 1 ? L.perMl(faceNum(c.amount), unit) : L.inMl(faceNum(c.amount), unit, faceNum(c.perMl))}` : L.notProgrammed;
   const ml = (x: number | null | undefined) => (x === null || x === undefined ? L.dash : `${faceNum(x)} mL`);
-  const flowing = row !== null && row.rate !== null;
+  const flowing = row !== null && (row.rate !== null || mode === 'tci'); // in TCI the pump sets its own rate
   const value: Record<FieldKey, () => string | null> = {
     syringe: () => ml(row?.syringeMl),
     set: () => (row?.set ? `${faceNum(row.set)} drops/mL` : L.dash),
     rate: () => {
+      if (row && mode === 'tci') return `${faceNum(row.rateMlH)} mL/h`; // the rate the TCI controller runs now
       if (!row || !row.rate) return L.dash;
       return k === 'drip' && row.rate.unit === 'drops/min' ? `${faceNum(row.rate.rate)} drops/min` : `${faceNum(row.rateMlH)} mL/h`;
     },
@@ -142,9 +172,16 @@ export function faceModel(row: FaceRow | null, kind: ChannelKind, profiles: Face
     // raises none in E1), so the line goes
     almostEmpty: () => (!profiles ? L.noProfile : isGap(profiles.syringe.nearEnd) ? L.gap.nearEnd : null),
     kvo: () => (!profiles ? L.noProfile : isGap(profiles.drip.kvo.after) ? L.gap.kvoAfter : null),
+    // E2: the pump's own prediction and its target, read only (setting a target is A2's flow)
+    tciSet: () => tci?.setId ?? L.dash,
+    tciMode: () => (!tci ? L.dash : tci.mode === null ? L.tciMode.stopped : L.tciMode[tci.mode]),
+    target: () => (tci && tci.target !== null && tci.mode !== null ? `${faceNum(tci.target)} ${unitText(tci.unit)}` : L.dash),
+    cp: () => (tci ? `${faceNum(tci.cp)} ${unitText(tci.unit)}` : L.dash),
+    ce: () => (tci ? `${faceNum(tci.ce)} ${unitText(tci.unit)}` : L.dash),
+    tciMaxRate: () => (!profiles ? L.noProfile : isGap(profiles.tci.tci.maxRate) ? L.gap.tciMaxRate : null),
   };
   const fields: FaceField[] = [];
-  for (const key of FACE_FIELDS[`${k}:${mode}`]) {
+  for (const key of FACE_FIELDS[faceLayout(k, mode)]) {
     const v = value[key]();
     if (v !== null) fields.push({ key, label: L.field[key], value: v });
   }

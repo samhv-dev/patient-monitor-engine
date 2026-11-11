@@ -603,6 +603,7 @@ renderer, audio and skin contracts.
 | `keepPositions` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Take the running case's position every `every` ms while a library card runs (not while a fast-forward runs, a restore is under way or the tab is hidden — a hidden tab pauses itself, and that pause is |
 | `restorePosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | After a reload: |
 | `faceRow` | [`apps/demo/src/app/pump/face-row.ts`](../../apps/demo/src/app/pump/face-row.ts) | The channel's face fields of an engine row: |
+| `faceLayout` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | A channel's layout. |
 | `faceNum` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | A number for the face: |
 | `faceModel` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | The face's model of one channel (no DOM): |
 | `faceView` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | One channel's face. |
