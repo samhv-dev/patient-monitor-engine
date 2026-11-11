@@ -274,6 +274,7 @@ transports (`src/protocol.ts`).
 | `holds` | [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts) | Does the rule hold now? `rank` is the store its value leaves read (3 truth, 2 displayed). |
 | `matches` | [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | Does a clinical event satisfy an `event` trigger? kind equal, min* filters as lower bounds, the rest exact. |
 | `resolveRhythm` | [`scenario/standins.ts`](../../packages/controller/src/scenario/standins.ts) | The rhythm to send for `id` on an engine that knows `known`: |
+| `eventRefusal` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | The engine's reason for refusing a card's event of one of ENGINE_CHECKED_KINDS, in its own words; |
 | `validateScenario` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | Validate an unknown value as a scenario document: |
 | `describe` | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | One-line human description of a command, for logs. |
 | `bolusDrugOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The drug a command gives as a bolus, else null. |
@@ -405,6 +406,7 @@ None recorded.
 | [`scenario/clock-step-back.test.ts`](../../packages/controller/test/scenario/clock-step-back.test.ts) | 0 | 0 |
 | [`scenario/concentration-vars.test.ts`](../../packages/controller/test/scenario/concentration-vars.test.ts) | 0 | 0 |
 | [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 0 | 0 |
+| [`scenario/event-kinds.test.ts`](../../packages/controller/test/scenario/event-kinds.test.ts) | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |
 | [`scenario/host-scenario.test.ts`](../../packages/controller/test/scenario/host-scenario.test.ts) | 0 | 0 |

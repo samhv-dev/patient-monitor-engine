@@ -8,6 +8,7 @@ import type {
   DoseUnit,
   EngineEvent,
   LabPanelId,
+  LungClinicalEvent,
   NumericId,
   PatientSnapshot,
   PkClinicalEvent,
@@ -61,9 +62,11 @@ type CommandBase = {
 /**
  * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`
  * only): the drug model's units, routes (`PkRoute`), `overS` and `concentrationPct`, and its kinds `infusion`, `tci` and
- * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`).
+ * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`); the lung
+ * model's `lungCondition`, `mainstem` and `recruit` (types-lung.ts, brief 174).
  */
 export type ClinicalEvent =
+  | LungClinicalEvent
   | {
       kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit;
       route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number;
