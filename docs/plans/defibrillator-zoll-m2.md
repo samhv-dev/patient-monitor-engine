@@ -674,6 +674,10 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 
 ## 8. Questions for the owner
 
+**Ruled by the owner on 12 November 2026** (written here in E0, brief 179): DQ3 = A, DQ5 = A, DQ6 = A, DQ11 = A, each
+recorded under its question below. The other questions stay open; E0's defaults for the configuration they govern are
+marked placeholders (`m2-vocabulary.ts`).
+
 **DQ1. The name on the face.**
 - *Explanation:* The ventilator was named after the device (EDP-TS), with no logo drawn.
 - *Options:* A, "ZOLL M2", no logo; B, "Zoll-style", no name.
@@ -692,6 +696,8 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Options:* A, its own alarm instance and its own channels, live only when their sensor is connected; B, mirror the
   bedside monitor's numbers and alarms.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A.** The M2 is its own monitor: its own alarm instance and its own channels, each live
+  only when its sensor is connected; silencing it does not silence the bedside monitor.
 
 **DQ4. Start mode (answer early: it is the first thing a resident sees).**
 - *Explanation:* At DEFIB the M2 starts in Manual or in AED mode, by configuration [G 12-2], [G 14-2].
@@ -703,12 +709,17 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Options:* A, the learner does it in a drawer beside the device, and the instructor can override; B, the
   instructor only.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A.** The learner connects the patient (pads with type, placement and contact; paddles;
+  the ECG cable; the sensors) in a drawer beside the device; the instructor can override (the same `device defib
+  connect` command, E0).
 
 **DQ6. Admission of the defibrillator screen (answer first).**
 - *Explanation:* It was admitted without a PIN because it could only Charge and Shock. As the M2 it can do everything
   in §5.1.
 - *Options:* A, the learner PIN, as the learner remote has; B, no PIN, as now.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A.** The learner's defibrillator screen is admitted with the learner PIN, the same as the
+  learner remote's (the Room plan's D6 is amended; R1 builds it).
 
 **DQ7. Impedance and the shock's success.**
 - *Explanation:* The guide reports that this waveform kept its efficacy in high-impedance patients [G A-28].
@@ -734,6 +745,9 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Explanation:* The guide covers external paddles and internal handles.
 - *Options:* A, all three accessories (pads, paddles, internal); B, pads only.
 - *Proposal:* A; tell me whether your unit has paddles.
+- **Ruled 12 November 2026: A.** All three accessories are built: adhesive pads, external paddles, internal handles.
+  The owner's unit has external paddles and pads, so a room's default accessories are pads and external paddles;
+  internal handles exist but are not present by default (`config.accessories`, E0).
 
 **DQ12. Data transfer.**
 - *Explanation:* The M2 exports by USB and WiFi and e-mails 12-leads.

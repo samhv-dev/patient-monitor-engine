@@ -117,7 +117,8 @@ describe('E0: per-model energy validation', () => {
     for (const bad of [{ ratePpm: 71 }, { ratePpm: 28 }, { ratePpm: 182 }, { mA: 5 }, { mA: 6 }, { mA: 9 }, { mA: 141 }, { mA: 142 }]) {
       const r = z.e.dispatch(pacer(bad));
       expect(r.accepted, JSON.stringify(bad)).toBe(false);
-      expect(r.reason).toMatch(/ZOLL M2/);
+      // off the grid: the M2's words; out of the range: the range's words, as for every model
+      expect(r.reason).toMatch('ratePpm' in bad ? (bad.ratePpm! < 30 || bad.ratePpm! > 180 ? /^ratePpm must be 30–180$/ : /steps of 2 on the ZOLL M2/) : bad.mA! > 140 ? /^mA must be 0–140$/ : /steps of 2 on the ZOLL M2/);
     }
     for (const ok of [{ ratePpm: 71 }, { mA: 5 }, { mA: 9 }]) expect(g.e.dispatch(pacer(ok)).accepted).toBe(true);
   });
@@ -197,9 +198,12 @@ describe('E0: deviceStatus.m2', () => {
   });
 
   it('the snapshot round trip keeps it, and a follower replaying the commands holds the same state', () => {
-    const script: Command[] = [model('zoll-m2'), m2('patientType', 'pediatric'), m2('connect', { pads: PADS }), m2('config', { readyTimeoutS: 30 }), defib('selectEnergy', { energyJ: 150 }), m2('shockButton', { phase: 'down', button: 'panel' })];
+    // the model first: a command is validated against the state at dispatch (engine.ts dispatch)
+    const script: Command[] = [m2('patientType', 'pediatric'), m2('connect', { pads: PADS }), m2('config', { readyTimeoutS: 30 }), defib('selectEnergy', { energyJ: 150 }), m2('shockButton', { phase: 'down', button: 'panel' })];
     const run = () => {
       const r = devRig('saadat-like');
+      expect(r.e.dispatch(model('zoll-m2')).accepted).toBe(true);
+      r.e.advanceTo(0.5);
       for (const c of script) expect(r.e.dispatch(c).accepted).toBe(true);
       r.e.advanceTo(3);
       return r;

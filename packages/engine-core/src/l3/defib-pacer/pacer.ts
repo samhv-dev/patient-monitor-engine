@@ -4,6 +4,7 @@
 import type { PacerEvent } from '../../types-device.ts';
 import type { TcpSpec } from '../../types.ts';
 import type { DeviceProfile } from '../alarms/profile.ts';
+import { pacerGridReason } from './m2-vocabulary.ts';
 
 export type PacerSpec = NonNullable<DeviceProfile['pacer']>;
 /** Skins without a pacer take ZOLL-like values (research/05 §2.6) [ENG: device; choice]. */
@@ -23,14 +24,15 @@ export function createPacer(spec: PacerSpec): PacerState {
   return { mode: 'off', ratePpm: spec.rateDefault, mA: spec.mADefault, paused: false, fault: 'none' };
 }
 
-export function validatePacer(ev: PacerEvent, spec: PacerSpec): string | undefined {
+/** `grid`: the room's model's rate and output steps (plan E0: the ZOLL M2's [G 16-4], [G 16-5]); absent = the range only. */
+export function validatePacer(ev: PacerEvent, spec: PacerSpec, grid?: { ratePpm: number; mA: number; mAMin: number; name: string }): string | undefined {
   if (!['off', 'demand', 'fixed'].includes(ev.mode)) return 'pacer mode must be off, demand or fixed';
   const [r0, r1] = spec.rateRange;
   if (ev.ratePpm !== undefined && !(Number.isFinite(ev.ratePpm) && ev.ratePpm >= r0 && ev.ratePpm <= r1)) return `ratePpm must be ${r0}–${r1}`;
   const [m0, m1] = spec.mARange;
   if (ev.mA !== undefined && !(Number.isFinite(ev.mA) && ev.mA >= m0 && ev.mA <= m1)) return `mA must be ${m0}–${m1}`;
   if (ev.fault !== undefined && !['none', 'failureToSense', 'failureToCapture'].includes(ev.fault)) return 'fault must be none, failureToSense or failureToCapture';
-  return undefined;
+  return grid ? pacerGridReason(ev, grid, spec, grid.name) : undefined;
 }
 
 export function applyPacer(p: PacerState, ev: PacerEvent): void {
