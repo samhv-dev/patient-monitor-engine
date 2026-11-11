@@ -1,3 +1,4 @@
+import { LAB_PANELS } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
 import { createStamper, INSTRUMENTS, LEARNER_COMMANDS, LEARNER_DEFIB_COMMANDS, LEARNER_LAB_PANELS, learnerDefibMay, learnerMay, NOTE_EVENTS, type CommandInput, type WireMessage } from '../src/protocol.ts';
@@ -239,6 +240,7 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
   it('LEARNER_COMMANDS is exactly §4 D2; learnerMay passes each shape, and the guard parses each', () => {
     expect([...LEARNER_COMMANDS].sort()).toEqual(['applyEvent lab', 'infusion set', 'prep deliver', 'prep discard', 'prep infuse', 'prep stage']);
     expect([...LEARNER_LAB_PANELS].sort()).toEqual(['abg', 'chem', 'coag', 'vbg']);
+    expect([...LEARNER_LAB_PANELS].sort()).toEqual([...LAB_PANELS].sort()); // the engine's panels (analysers.ts)
     for (const [what, c] of SHAPES) {
       expect(learnerMay(c), what).toBeNull();
       expect(parseWireMessage({ ...stamp({ kind: 'command', body: c as never }) }), what).not.toBeNull();

@@ -19,7 +19,6 @@ import type {
   StateVar,
   Tick,
 } from '@pme/engine-core';
-import { LAB_PANELS } from '@pme/engine-core';
 import type { RelayFrame } from './transport/relay-frames.ts';
 
 /**
@@ -479,11 +478,12 @@ export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
  */
 export const LEARNER_COMMANDS: ReadonlySet<string> = new Set(['prep stage', 'prep discard', 'prep deliver', 'prep infuse', 'infusion set', 'applyEvent lab']);
 /**
- * The panels a learner may draw (§4 D2 item 5): the engine's panels (engine-core analysers.ts `LAB_PANELS`): the gas
+ * The panels a learner may draw (§4 D2 item 5): the engine's panels (engine-core analysers.ts `LAB_PANELS`, equal by
+ * guard.test.ts; a literal here, because the e2e side loads this file in Node, where engine-core's runtime must not load): the gas
  * panels on the room's analyser and, since L10a, the laboratory's chemistry and coagulation panels (LQ2), so a learner
  * never asks for a panel the engine refuses. The analyser and the turnaround are not the learner's (LAB_EVENT_KEYS).
  */
-export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set(LAB_PANELS);
+export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set<LabPanelId>(['abg', 'vbg', 'chem', 'coag']);
 /** Every field each learner shape may carry, on the command (`cmd`) and inside it; any other field is refused (§4 D2). */
 const LEARNER_KEYS: Readonly<Record<string, { cmd: readonly string[]; need: readonly string[] }>> = {
   'prep stage': { cmd: ['prep'], need: ['prep'] },
