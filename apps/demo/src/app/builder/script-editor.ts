@@ -3,9 +3,11 @@
 // an action, a time after the start; only this card's phases and actions) and sends its commands. A new command comes
 // from B4's command form (action-editor.ts `commandForm`: the Drug sheet's drugs, fluids and vaporisers) with the
 // card-set events the library's scripts use (a condition, the Drug sheet's blood loss, a rhythm; the console's own
-// builders), so the builder writes the commands the app itself sends. A command of another kind is kept as the card
-// has it, read in the app's words, and can be reordered or removed. Every control edits the form in place and calls
-// `changed()`; an entry is written only complete (an id, an anchor, a command), and its last command stays.
+// builders), so the builder writes the commands the app itself sends. Piece 162 adds the Airway, Defib · CPR and Devices
+// sheets' commands (script-commands.ts) and an Edit for every command the form builds back exactly (`seedOf`); a command
+// of another kind is kept as the card has it, read in the app's words, and can be reordered or removed. Every control
+// edits the form in place and calls `changed()`; an entry is written only complete (an id, an anchor, a command), and its
+// last command stays.
 import { describeCommand, CONDITIONS } from '../describe.ts';
 import { bleed, condition, CONDITION_IDS, rhythm } from '../../physiology-console/actions.ts';
 import { rhythmGroups, rhythmLabel } from '../rhythms.ts';
@@ -14,11 +16,12 @@ import { commandForm, type CommandFormOpts } from './action-editor.ts';
 import { anchorPicker, endSection, hint, textField, type EndSectionView } from './anchor-picker.ts';
 import { anchorWords, entryIdFrom, entryIdProblem, firstAnchor, writeAnchor } from './anchors.ts';
 import type { CardForm } from './form.ts';
+import { edited, seedOf, sheetBuild, sheetFields, SHEET_GROUPS } from './script-commands.ts';
 
 type Rec = Record<string, unknown>;
 
 /** The card-set events the script adds besides the Drug sheet's items. [ENG: ui] the groups' words are the builder's. */
-const CARD_SET: NonNullable<CommandFormOpts['more']> = {
+const CARD_EVENTS: NonNullable<CommandFormOpts['more']> = {
   groups: [
     ['Conditions', CONDITION_IDS.map((c) => [`cond:${c}`, CONDITIONS[c] ?? c] as [string, string])],
     ['Blood loss', [['bleed:', 'Blood loss (the Drug sheet’s)']]],
@@ -26,12 +29,12 @@ const CARD_SET: NonNullable<CommandFormOpts['more']> = {
   ],
   fields(kind, _id, st, numIn) {
     if (kind === 'cond') {
-      st.sev = 1;
+      st.sev ??= 1;
       return [h('span', { class: 'sb-hint' }, 'Severity'), numIn('sev', 'severity, from 0 (removed) to 1'), h('span', { class: 'sb-hint' }, 'from 0 (removed) to 1')];
     }
     if (kind === 'bleed') {
-      st.vol = 500;
-      st.min = 10;
+      st.vol ??= 500;
+      st.min ??= 10;
       return [numIn('vol', 'blood lost, mL'), h('span', { class: 'sb-hint' }, 'mL over'), numIn('min', 'over how many minutes'), h('span', { class: 'sb-hint' }, 'min')];
     }
     return kind === 'rhythm' ? [] : null;
@@ -44,6 +47,13 @@ const CARD_SET: NonNullable<CommandFormOpts['more']> = {
     return null;
   },
 };
+/** Everything the script's form offers after the Drug sheet's: the card-set events, then the other sheets' commands
+ *  (exported for the tests that read the library's commands back, script-commands.dom.test.ts). */
+export const CARD_SET: NonNullable<CommandFormOpts['more']> = {
+  groups: [...CARD_EVENTS.groups, ...SHEET_GROUPS],
+  fields: (kind, id, st, numIn, ready, who) => CARD_EVENTS.fields(kind, id, st, numIn, ready, who) ?? sheetFields(kind, id, st, ready, who),
+  build: (kind, id, st) => CARD_EVENTS.build(kind, id, st) ?? sheetBuild(kind, id, st),
+};
 
 export function scriptSection(form: CardForm, changed: () => void, redrawn: () => void): EndSectionView {
   const F = form.fields as Rec;
@@ -52,6 +62,8 @@ export function scriptSection(form: CardForm, changed: () => void, redrawn: () =
   /** The command form open: an entry's index, or 'new'. */
   let adding: number | 'new' | null = null;
   let draft: Rec | null = null;
+  /** The command open in the form to edit: [entry, command]. One form is open at a time. */
+  let editing: [number, number] | null = null;
 
   const commands = (s: Rec, at: string, i: number): HTMLElement => {
     const cs = s.commands as Rec[];
@@ -61,14 +73,24 @@ export function scriptSection(form: CardForm, changed: () => void, redrawn: () =
         changed();
         draw(`[data-f="cmd:${i}:${k + d}:${d < 0 ? 'up' : 'down'}"]`);
       };
+      const seed = seedOf(c, CARD_SET.build);
+      const who = `Entry ${i + 1}, command ${k + 1}`;
+      if (editing?.[0] === i && editing[1] === k && seed) {
+        return put(`${at}/commands/${k}`, h('li', { class: 'sb-nextrow' }, h('span', { class: 'sb-n', 'aria-hidden': 'true' }, String(k + 1)),
+          commandForm({ edit: seed, who, more: CARD_SET, addWords: 'Save the command', sends: 'The entry will send',
+            add: (n) => ((cs[k] = edited(c, n)), (editing = null), changed(), draw(`[data-f="cmd:${i}:${k}:edit"]`)),
+            cancel: () => ((editing = null), draw(`[data-f="cmd:${i}:${k}:edit"]`)) })));
+      }
       return put(`${at}/commands/${k}`, h('li', { class: 'sb-nextrow' }, h('span', { class: 'sb-n', 'aria-hidden': 'true' }, String(k + 1)), h('span', {}, describeCommand(c)),
+        seed ? button('Edit', () => ((editing = [i, k]), (adding = null), (draft = null), draw(`[aria-label="${who}: what"]`)), 'small ghost', { 'aria-label': `Entry ${i + 1}: edit command ${k + 1}`, 'data-f': `cmd:${i}:${k}:edit` })
+          : h('span', { class: 'sb-hint' }, 'kept as the card has it'),
         button('Up', () => move(-1), 'small ghost', { 'aria-label': `Entry ${i + 1}: move command ${k + 1} up`, disabled: k === 0, 'data-f': `cmd:${i}:${k}:up` }),
         button('Down', () => move(1), 'small ghost', { 'aria-label': `Entry ${i + 1}: move command ${k + 1} down`, disabled: k === cs.length - 1, 'data-f': `cmd:${i}:${k}:down` }),
         button('Remove', () => (cs.splice(k, 1), changed(), draw()), 'small ghost', { 'aria-label': `Entry ${i + 1}: remove command ${k + 1}`, disabled: cs.length === 1 })));
     });
     const add = adding === i
       ? commandForm({ add: (c) => (cs.push(c), (adding = null), changed(), draw()), cancel: () => ((adding = null), draw()), addWords: 'Add to the entry', sends: 'The entry will send', more: CARD_SET })
-      : button('Add a command', () => ((adding = i), draw('[aria-label="New command: what"]')), 'small', { 'aria-label': `Entry ${i + 1}: add a command` });
+      : button('Add a command', () => ((adding = i), (editing = null), draw('[aria-label="New command: what"]')), 'small', { 'aria-label': `Entry ${i + 1}: add a command` });
     return put(`${at}/commands`, h('div', { class: 'field' }, h('span', {}, 'Sends'), h('ol', { class: 'sb-next' }, ...rows), add,
       cs.length === 1 ? hint('An entry sends at least one command: its last one stays (remove the entry instead).') : ''));
   };
@@ -139,6 +161,7 @@ export function scriptSection(form: CardForm, changed: () => void, redrawn: () =
       xs.length ? h('ol', { class: 'sb-endlist' }, ...xs.map(entry)) : hint('This card has no script.'),
       adding === 'new' ? newEntry() : button('Add a script entry', () => {
         adding = 'new';
+        editing = null;
         draft = { id: entryIdFrom(xs, 'entry', 'entry'), on: writeAnchor(firstAnchor(F, Array.isArray(F.phases) && (F.phases as unknown[]).length ? 'phase' : 'atScenarioS')) };
         draw('[aria-label="New entry: id"]');
       }, 'small', { 'data-add': 'script' }),
@@ -150,6 +173,7 @@ export function scriptSection(form: CardForm, changed: () => void, redrawn: () =
   view.shown = () => {
     adding = null;
     draft = null;
+    editing = null;
     draw();
   };
   return view;
