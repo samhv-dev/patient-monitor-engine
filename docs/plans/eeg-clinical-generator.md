@@ -134,9 +134,9 @@ cause which ones it misses (§4.3).
 - **Rhythmic and periodic patterns.** Generalised, lateralised, bilateral independent and multifocal periodic
   discharges; rhythmic delta activity; spike-and-wave. Also their modifiers ("plus", frequency, prevalence) and what
   "evolution" means in numbers (frequency, morphology, location) `[WANTED: Hirsch 2021]`.
-- **Onset, evolution, termination, the post-ictal state.** Low-voltage fast activity at onset, rising amplitude and
-  falling frequency, spread of the field, abrupt or gradual termination, and post-ictal suppression or slowing
-  `[WANTED: Hirsch 2021 for terms; Jirsa 2014 full text for the onset and offset dynamics]`.
+- **Onset, evolution, termination, the post-ictal state.** How a seizure starts, how its frequency, amplitude and
+  field change, how it ends, and what follows it. None of these is described in the pages read, so no pattern is named
+  here `[WANTED: Hirsch 2021 for terms; Jirsa 2014 full text for the onset and offset dynamics]`.
   - The Jirsa abstract `[ABS]` claims a saddle-node onset and a homoclinic offset, with a baseline (DC) shift at onset
     and a logarithmic lengthening of the interval between spikes towards offset. This is a model's prediction, quoted as
     a capability, not as a property.
@@ -179,7 +179,7 @@ How each drug changes a seizure's frequency, duration and spread on the EEG is `
 | α band | 7.5–11 Hz in the text `[Ch09 p. 153]` | 8–13 Hz in Table 9.3 `[Ch09 p. 160]`; 8–12 Hz in Ch36 Table 36.1 (depth plan Q6) |
 | θ band | 4.5–7.5 Hz `[Ch09 p. 153]` | 4–7 Hz `[Ch09 p. 160]`; 4–8 Hz `[Ch36 Table 36.1]` |
 | Where spindles belong | slower frequencies of "deep natural sleep with sleep spindles" `[Ch35 p. 1104]` | N2 `[Ch09 p. 154, p. 160]` |
-| N3 criterion | "20 %–50 %" slow-wave activity, as printed `[Ch09 p. 160]` | an upper bound of 50 % is the old two-stage split (stages 3 and 4), not a rule the plan has read in the current manual: to check `[WANTED: AASM manual; Silber 2007]` |
+| N3 criterion | "20 %–50 %" slow-wave activity, as printed `[Ch09 p. 160]` | whether the current manual has an upper bound at all is not read; the plan's guess that 50 % is a remnant of an older two-stage split is recall, not a source: to check `[WANTED: AASM manual; Silber 2007]` |
 
 The engine should not choose among these. A sleep scorer uses the AASM manual's own edges once that manual is read
 (EQ8). The generator is not tuned to any band edge.
@@ -217,9 +217,17 @@ The engine should not choose among these. A sleep scorer uses the AASM manual's 
 
 ## 2. Audit: today's generator against those properties
 
-What was read: `packages/engine-core/src/l2/eeg/state.ts`, `spectra.ts`, `synth.ts`, `artefacts.ts` and `pipeline.ts`;
-`l3/eeg-devices/generic.ts`, `spectral.ts` and `registry.ts`; `types-eeg.ts`; the tests under `test/engine/eeg-*.test.ts`.
-Also the step-time measurement in PR #320's description.
+What was read, and how far:
+- **In full:** `packages/engine-core/src/l2/eeg/synth.ts`.
+- **Header and constants:** `spectra.ts`, `artefacts.ts`, `l3/eeg-devices/generic.ts`, `spectral.ts`.
+- **Header and the suppression lines:** `state.ts` (`cortexStep`, lines 161–172).
+- **Header:** `pipeline.ts`.
+- **By search:** `types-eeg.ts`.
+- **Titles only:** the tests under `test/engine/eeg-*.test.ts`.
+- **Also:** the step-time measurement in PR #320's description.
+
+A verdict below rests only on what these parts show. Function bodies of `spectra.ts` and `artefacts.ts` were not read
+line by line.
 
 **How it works, in plain words.**
 - **The cortical state.** Every half-block, `state.ts` maps the drug bus and the physiology to a handful of cortical
@@ -244,7 +252,7 @@ Also the step-time measurement in PR #320's description.
 | Property | Verdict | Why (from the code) |
 |---|---|---|
 | P1 depth cells | **Meets** (at the spectrum and signal level; the readers' cells as their readers merge) | `spectrumOf` holds each sourced feature; `eeg-signal.test.ts` checks C18, C20–C22 on the engine. But many magnitudes between the anchors are `[FIT]` or `[ENG]` in `synth.ts` and `spectra.ts` (for example `OSC_DUTY_MIN`, `FF_DROP_MAX`, `FF_FLOOR`): the shapes are set, not produced by a mechanism |
-| P2 several channels, montage, symmetry | **Extension, but only by construction** | One channel (`EEG_RATE`, one buffer). Copying it to 19 electrodes with chosen correlations gives "channels", but a field and its symmetry would be stated, not arise |
+| P2 several channels, montage, symmetry | **Extension, but only by construction** | One channel (`EEG_RATE`, one buffer). Copying it to many electrodes with chosen correlations gives "channels", but a field and its symmetry would be stated, not arise. Nor is there an eyes-open/eyes-closed state: no such input appears in `state.ts` or `spectra.ts` (by search), so posterior alpha's reactivity (Ch35 Fig. 35.4) has no place to come from |
 | P3 rate and bandwidth | **Extension** | The generator is rate-agnostic (`createSynth(rng, fs, …)`); the engine offers 500, 125 and 62.5 Hz (`types.ts:197`). Which rate a clinical channel needs is WANTED |
 | P4 spikes, spike-and-slow-wave | **Cannot in principle** | A spike is a phase-coherent transient: many frequencies aligned for an instant. Random-phase synthesis gives every frequency an independent random phase in every block, so it never produces a phase-coherent shape. A spike could be added only as a drawn template, which is the fitted shape the owner's rule forbids |
 | P5 onset, evolution, termination, post-ictal | **Cannot in principle as dynamics; scriptable as a spectral sequence** | The spectrum could be stepped through a scripted course, but the course would be a script. Nothing in the model makes a seizure start, change frequency, spread or stop. Termination by a drug would be a hand rule per drug, the "hand correction" the depth plan's anti-goals reject |
@@ -253,7 +261,7 @@ Also the step-time measurement in PR #320's description.
 | P8 drugs on seizures | **Cannot by mechanism** | Only as per-drug rules on a scripted spectrum |
 | P9 convulsive or not, masked by paralysis | **Partly meets the path** | The EMG artefact already reads scalp muscle × arousal and goes to 0 as T1 → 0 (C18, `artefacts.ts`). A convulsion would need its own muscle drive |
 | P10 sleep stages | **Extension, by construction** | A sleep state could select spectra (alpha for W, theta for N1, delta for N3). The stage would be an input chosen per stage, not an outcome |
-| P11 graphoelements | **Spindles: partly (a bursty narrowband peak, `spindle`, already exists). K-complexes, vertex sharp waves, sawtooth waves: cannot in principle** | A K-complex or a vertex wave is a single large phase-coherent transient (as P4). The spindle peak waxes and wanes through an envelope gate, but nothing ties it to slow-wave phase or to the thalamus |
+| P11 graphoelements | **Sleep spindles: extension only by construction. K-complexes, vertex sharp waves, sawtooth waves: cannot in principle** | The existing `spindle` peak is dexmedetomidine's anaesthetic spindle (`spectra.ts` `SPINDLE_HZ` 13 Hz, Akeju 2014; `SPINDLE_BURSTINESS` 0.8 [FIT]), not a sleep spindle; a sleep spindle could reuse its bursty-peak machinery, but nothing would tie it to N2, to slow-wave phase or to the thalamus. A K-complex or a vertex wave is a single large phase-coherent transient (as P4) |
 | P12 night architecture | **Not a generator property** | Needs a sleep state that evolves through the night; no such state exists anywhere in the engine |
 | P13 REM | **Extension** | EEG spectral; rapid eye movements and chin EMG would need eye and chin channels (blinks exist, `artefacts.ts`) |
 | P14 determinism, cost | **Meets** | `eeg-signal.test.ts` "deterministic (D3)": two engines, same seed and commands, identical samples; cost as above |
@@ -261,10 +269,12 @@ Also the step-time measurement in PR #320's description.
 **One finding that matters to the readers now.**
 - `synth.ts` draws every frequency's phase independently. The only shared time structure is that the gates multiply
   several slots at once: burst suppression multiplies all of them, and the forme fruste multiplies everything above 2 Hz.
-- So today's signal has **amplitude co-modulation but no phase coupling between frequencies**. A *bispectral* term is a
-  measure of phase coupling between frequency pairs; it reads near zero on such a signal except through those gates. The
-  BIS-type reader's published sub-parameters include such a term (`research/58`: "SynchFastSlow").
-- Any generator with real nonlinear dynamics (the recommendation below) will give that term different values on the
+- So by construction today's signal has **amplitude co-modulation but no designed phase coupling between
+  frequencies**. A *bispectral* measure is a measure of phase coupling between frequency pairs. Miller names
+  "coherence/bispectral" terms among the components BIS combines (Ch36 p. 1147, as the depth plan reads it). What such a
+  measure reads on today's signal is **not measured**; the plan predicts low values except through the gates, and G1
+  measures it.
+- Any generator with real nonlinear dynamics (the recommendation below) may give that measure different values on the
   same clinical state. This is the reason for the split of reader tests in §4.1.
 
 **Summary.** Today's generator meets the depth use and could stretch to a spectrally scripted sleep. It cannot produce,
@@ -281,8 +291,9 @@ The owner's rule is mechanisms first: a behaviour comes from a modelled mechanis
 generator for clinical EEG needs four things:
 - **(a) nonlinear population dynamics**, so that phase-coherent events (spikes, K-complexes) and rhythms arise from the
   same equations;
-- **(b) a thalamocortical loop**, because spindles, alpha and generalised spike-and-wave are, in the sources Miller
-  cites, thalamocortical phenomena (Ch08 p. 137 via the depth plan; Ch36 p. 1142);
+- **(b) a thalamocortical loop.** Miller ties the anaesthetic alpha and the hypnotics' action to the thalamocortical
+  system (Ch36 p. 1142; Ch08 p. 137, via the depth plan). That spindles and generalised spike-and-wave also arise there
+  is what the corticothalamic papers' abstracts claim [ABS Robinson 2001, 2002], not a statement read in Miller;
 - **(c) several coupled regions**, so that focal onset, spread and symmetry arise;
 - **(d) slow variables** that move the fast dynamics across states. A slow variable is a quantity that changes over
   seconds to hours and shifts the fast system's behaviour. Three are needed: sleep pressure and arousal, seizure
@@ -295,10 +306,10 @@ generator for clinical EEG needs four things:
 | **Lumped cortical column (neural mass)** | Jansen 1995 | "a wide range of EEG-like waveforms and rhythms"; coupled columns replicate the spatial distribution of alpha and beta; evoked potentials | thalamus, sleep, seizures | no | not in this abstract | lowest: a few ordinary differential equations per region |
 | **Neural mass with fast inhibition, for focal seizures** | Wendling 2002 | interictal-to-fast-ictal transition explained by impaired dendritic GABA inhibition, compared with intracerebral recordings in human focal epilepsy | thalamus, sleep, scalp EEG | no | GABA mechanisms are its subject; anaesthetics not stated | low |
 | **Corticothalamic mean-field (Robinson type)** | Robinson 2001; Robinson 2002 | 2001: EEG spectra from neurophysiology, including filtering by CSF, skull and scalp; alpha and beta peaks from thalamic feedback; sleep spectra and spindles. 2002: instabilities at the clinical rhythms' peaks evolving into limit cycles (self-sustaining oscillations) that it maps to petit mal and grand mal seizure EEGs; parameters inferred from observed EEGs | focal seizures, burst suppression | **yes** | Hindriks 2012 (propofol: increased local cortical inhibition explains delta, theta and frontal alpha changes) uses "a meanfield model of the thalamo-cortical system"; whether it is the same equations is unread | low as lumped regions; high as a field on a cortical grid |
-| **Cortical mean-field with anaesthetic receptor action (Bojak type)** | Bojak 2005 | anaesthetic action on ligand-gated channels; eight nonlinear two-dimensional partial differential equations on a whole-cortex grid; > 70 000 parameter sets; isoflurane's biphasic power rise | thalamus, sleep, seizures | no | **yes** (isoflurane) | high on a grid (its published form); lumped form unknown |
+| **Cortical mean-field with anaesthetic receptor action (Bojak type)** | Bojak 2005 | anaesthetic action on ligand-gated channels; a whole-cortex grid of partial differential equations; many plausible parameter sets; isoflurane's biphasic power rise | thalamus, sleep, seizures | no | **yes** (isoflurane) | high on a grid (its published form); lumped form unknown |
 | **Conductance-based thalamocortical network** | Ching 2010 | propofol changes thalamocortical loop dynamics to give persistent, synchronous frontal alpha | — (mechanism stated, details not in the abstract) | yes | yes (propofol) | highest: individual model neurons; a mechanism reference, not a browser generator |
 | **Metabolic burst suppression** | Ching 2012 | burst suppression from a fall in cerebral metabolic rate with ATP-gated potassium channels; links to deep anaesthesia, hypothermia, coma | — | — | via metabolism | a slow variable to add to any family |
-| **Phenomenological seizure dynamics (Epileptor)** | Jirsa 2014 | five state variables on three time scales; saddle-node onset, homoclinic offset; predicted baseline shift and logarithmic interval scaling; checked on mouse hippocampus in vitro, human and zebrafish seizures | which cells or synapses are which variables | no | no | very low |
+| **Phenomenological seizure dynamics (Epileptor)** | Jirsa 2014 | a few state variables on separate fast and slow time scales; saddle-node onset, homoclinic offset; predicted baseline shift and logarithmic interval scaling; checked on mouse hippocampus in vitro, human and zebrafish seizures | which cells or synapses are which variables | no | no | very low |
 | **Sleep–wake switch (ascending arousal system)** | Phillips 2007 | brainstem and hypothalamic populations, with circadian and homeostatic drives entering through the VLPO; a flip-flop with hysteresis; "parameters are not free since they correspond to physiological observables" | any EEG | — | — | very low (a slow drive) |
 
 Notes on the table:
@@ -308,8 +319,8 @@ Notes on the table:
 - **Is the Epileptor a mechanism?** Its abstract describes a dynamical model whose variables are not named as cells or
   channels. Whether such a model meets the owner's rule is his call (EQ2).
 - **Lumped versus grid.** Several regions with a few equations each are "lumped". A field on a grid of cortex (Bojak
-  2005's published form) costs orders of magnitude more `[EST]`. For a scalp montage of 19–21 electrodes, the plan sees
-  no gain in a fine grid that the montage then averages away. That is an inference, to be checked in G0.
+  2005's published form) costs orders of magnitude more `[EST]`. For a scalp montage on the 10–20 set, the plan sees
+  no gain in a fine grid that the montage then averages away. That is an inference, to be checked in G0a.
 
 ### 3.3 How several channels arise
 
@@ -388,7 +399,8 @@ different trace within seconds.
 
 **Two remedies** (G1 measures first, EQ10 rules):
 - **(A)** the model uses only correctly rounded arithmetic (+, −, ×, ÷, √, which IEEE 754 fixes), with its own sigmoid
-  and exponential built from those;
+  and exponential built from those, and so does its noise input: the Gaussian draw (`rng/sfc32.ts` `normal`) is checked
+  for `Math.log`, `Math.cos` or `Math.sin` and replaced by an exactly rounded method if it uses them;
 - **(B)** the follower accepts drift and resyncs by snapshot at a fixed interval.
 
 The plan proposes (A), because (B) would make a follower's strip jump.
@@ -412,7 +424,7 @@ anaesthetic mapping. The alternatives:
 - **Ching 2012** adds burst suppression as a metabolic slow variable.
 - **Phillips 2007** drives sleep.
 
-**What would change the recommendation** (the kill criteria G0 applies when the papers are read):
+**What would change the recommendation** (the kill criteria G0a applies when the papers are read):
 1. **No human parameter set.** If the corticothalamic family's full texts give no published human parameter set, or give
    one that does not reproduce the awake eyes-closed alpha and its loss at propofol LOR without a fitted constant, choose
    the next family.
@@ -435,7 +447,7 @@ In five sentences:
    the fast dynamics across sleep stages, into and out of seizures, and into burst suppression.
 4. A fixed head model turns regions into the 10–20 electrodes, montages are differences of electrodes, and today's
    frontal `eeg` channel becomes one derived channel, so every depth reader keeps its input.
-5. The equation family is chosen by a sources review once the full papers are read (G0), against stated kill criteria;
+5. The equation family is chosen by a sources review once the full papers are read (G0a), against stated kill criteria;
    until then this is the leading candidate, not a ruling.
 
 ---
@@ -445,8 +457,10 @@ In five sentences:
 ### 4.1 What stays behind the present interface
 
 - **The channel.** The `eeg` channel keeps its meaning: one frontal derivation, µV, at `EEG_RATE` (`pipeline.ts`). With
-  the new renderer it is computed as an electrode difference over the forehead (the derivation is `[WANTED: each depth
-  device's sensor sites]`; until then the plan uses Fp1–Fp2 [ENG]).
+  the new renderer it is computed as an electrode difference over the forehead. The sites are `[WANTED: each depth
+  device's sensor sites]`, with one constraint stated now: **not a difference between homologous left and right sites**
+  (such as Fp1–Fp2), because a symmetric, widely synchronous alpha (Ch36 p. 1143, via the depth plan) would cancel in it
+  and C3 and C4 would fail for that reason alone.
   - If EQ4 raises the clinical rate, the `eeg` channel can stay at 125 Hz, decimated from the internal rate. A
     *decimator* is a filter that removes frequencies above the new Nyquist limit and then keeps every n-th sample.
 - **The device layer.** Readers keep the signature `reader(samples, fsHz, impedanceKOhm, state)` and the import-boundary
@@ -465,14 +479,14 @@ In five sentences:
 ### 4.2 The always-on brain state moves physiology, and how that is proven
 
 **The second advisor point, adopted.** Sleep stage, a seizure and brain metabolism must exist whether or not an EEG
-device is on. Switching the EEG on at hour 4 of a night must show the right stage, and a convulsion must raise heart
-rate and lactate with or without an EEG. They therefore live in a brain state that is always on, outside D4's device
+device is on. Switching the EEG on at hour 4 of a night must show the right stage, and a convulsion's effects on the body must not depend on
+whether an EEG is shown. They therefore live in a brain state that is always on, outside D4's device
 gate.
 - **At its defaults it changes nothing:** awake, no focus, metabolism normal. E0's baseline
   (`test/engine/fixtures/eeg-baseline.json`) stays byte-identical. That is G2's acceptance.
-- **The pieces that couple it to physiology move numbers.** These are a convulsion's muscle drive (oxygen use, CO2
-  production, lactate, temperature), the sympathetic surge of a seizure, and sleep's breathing and heart rate (Ch09
-  p. 153–154). Each needs the validation workflow, and each is EQ6 (in scope now, later, or out). The depth plan's Q4
+- **The pieces that couple it to physiology move numbers.** These are a convulsion's muscle drive (its effects on oxygen
+  use, CO2, lactate and temperature are `[WANTED]`; Miller lists hypoxic respiratory failure, acid–base disturbance and
+  rhabdomyolysis among SE's complications, NCC p. 2587), and sleep's breathing and heart rate (Ch09 pp. 153–154). Each needs the validation workflow, and each is EQ6 (in scope now, later, or out). The depth plan's Q4
   (physiology reading the cortical state instead of today's index) is the same question for anaesthesia. The plan
   proposes that both be ruled together.
 
@@ -500,8 +514,8 @@ gate.
 | C28 age | — | — | — | — | WANTED |
 | C18–C23 artefacts | unchanged: `artefacts.ts` adds them to any brain signal | | | | — |
 
-The plan therefore does **not** promise parity on C1–C35. It promises the table above, filled in by G0 and measured in
-G3–G4.
+The plan therefore does **not** promise parity on C1–C35. It promises the table above, filled in by G0a and measured in
+G3a–G4.
 
 ### 4.4 The present generator: fallback, and for how long
 
@@ -550,37 +564,49 @@ the common gate of the depth plan §5.
 generator.
 - Its generator-independent tests (§4.1) are its acceptance now.
 - Its course tests run on the spectral generator now, and on both at G11.
-- None of G0–G11 touches `l3/eeg-devices/`, except G11's re-run.
+- No piece here changes a reader's algorithm. Two pieces add a file under `l3/eeg-devices/`: G5 adds `montage.ts`
+  (electrode differences only), and G11 re-runs the course tests.
 
 ```
-G0 sources review ─┐
-G1 seam, harness, measures ─► G2 brain state (inert) ─┐
-                    └──────► G3 one-region renderer ──┼─► G4 burst suppression (parallel with G5)
-                                                      └─► G5 regions, head, montage ─┬─► G6 sleep   ┐  order: EQ1
-                                                                                     └─► G7 seizures ┘
-                                                          G5 ─► G8 EEG monitoring window ─► G9 sleep view (EQ8)
-                                                          G6/G7 ─► G10 scenario events ─► G11 default switch (EQ5)
+G0a sources: equation family ─┐          G0b sources: clinical definitions (ACNS, Salzburg, Trinka, AASM)
+G1 seam, harness, measures ───┼─► G2 brain-state container (empty)        │
+                              └─► G3a one region, propofol ─► G3b other drug actions
+                                        │
+                                        ├─► G4 burst suppression (parallel with G5; drug part waits on Q4/EQ6)
+                                        └─► G5 regions, head, montage ─┬─► G6a sleep stages ─► G6b the night   ┐ order: EQ1
+                                                                       └─► G7a focal ─► G7b generalised ─►     ┘
+                                                                            G7c drug termination ─► G7d periodic + convulsive
+                                            G5 ─► G8 EEG monitoring window ─► G9 sleep view (EQ8)
+                                            G6/G7 pieces ─► G10 scenario events ─► G11 default switch (EQ5)
 ```
 
-### G0: Sources review for the equation family (plan 8 h · 1.0–1.3 executor-h; no code)
+G0b feeds G6 and G7 only, so a late manual blocks neither G3 nor G5.
 
-**Purpose:** read in full the papers of §7 groups 1–3 once the owner supplies them, and settle §3.7's choice against its
-kill criteria. **Depends on:** the papers. **Files:** `research/<n>-eeg-generator-sources.md` (new).
+### G0a: Sources review — the equation family (plan 16 h · 2.0–2.7 executor-h; no code)
+
+**Purpose:** read in full the papers of §7 group 1 and Ching 2012 (group 4) once the owner supplies them, and settle
+§3.7's choice against its kill criteria. **Depends on:** those papers. **Files:** `research/<n>-eeg-generator-sources.md`
+(new).
 
 **Output:**
-- the equations of the chosen family in words;
-- its human parameter set, with pages;
+- the equations in words;
+- the human parameter set, with pages;
 - each drug class's published action;
 - the joints that are published and those that are not;
-- §4.3's table filled in;
-- §1's WANTED rows answered from ACNS, Salzburg, Trinka and AASM.
+- §4.3's table filled in.
 
-**Must not touch:** code. **Gate:** docs test. **Validation:** no.
+**Gate:** docs test. **Validation:** no.
+
+### G0b: Sources review — the clinical definitions (plan 12 h · 1.5–2.0 executor-h; no code)
+
+**Purpose:** answer §1's WANTED rows from the ACNS terminology, the Salzburg criteria, Trinka 2015, the AASM manual and
+Silber 2007, and the technical standard for P3. **Depends on:** group 2 and 3 papers. It can run section by section as
+papers arrive. **Files:** the same research note, its own section. **Validation:** no.
 
 ### G1: The generator seam, the dual-run harness, the measurements (plan 12 h · 1.5–2.0 executor-h)
 
-**Purpose:** let two generators sit behind one interface, run any cell on both, and measure cost and identity before the
-model is built. **Depends on:** nothing (it can start before G0). **Files:**
+**Purpose:** let two generators sit behind one interface, run any cell on both, and measure cost, identity and the
+bispectral prediction of §2 before the model is built. **Depends on:** nothing (it can start now). **Files:**
 - `l2/eeg/generator.ts` (new interface; `synth.ts` wrapped as `spectral`, unchanged);
 - `pipeline.ts` (choose by setting);
 - `test/helpers/eeg-dual.ts` (new);
@@ -588,115 +614,162 @@ model is built. **Depends on:** nothing (it can start before G0). **Files:**
 - an e2e probe `apps/demo/e2e/eeg-identity.e2e.ts`.
 
 **Tests first:**
-1. With `spectral` chosen, every existing EEG test is byte-identical (the seam changes nothing).
+1. With `spectral` chosen, every existing EEG test is byte-identical.
 2. The harness runs C1 to C25 on a named generator and reports per cell.
-3. Cross-browser identity: the same 60 s on chromium and webkit gives equal sample hashes on the present generator, or
-   the probe reports the first differing sample (§3.6).
-4. Snapshot and clone time and size, recorded.
-5. Step time recorded by the PR #320 method.
+3. Cross-browser identity: the same 60 s on chromium and webkit gives equal sample hashes, or the probe reports the first
+   differing sample (§3.6).
+4. Snapshot and clone time and size recorded; step time by the PR #320 method.
+5. A bicoherence measure (normalised bispectrum) of today's signal recorded for the awake, alpha–delta and burst
+   suppression states, as a measurement, not a pass/fail.
 
-**Must not touch:** `synth.ts`'s arithmetic, `l3/eeg-devices/`. **Gate:** common + the e2e at 2 workers. **Validation:**
-yes (engine source; expected unchanged).
+**Must not touch:** `synth.ts`'s arithmetic, the readers. **Gate:** common + the e2e at 2 workers. **Validation:** yes
+(engine source; expected unchanged).
 
-### G2: The always-on brain state, inert at its defaults (plan 10 h · 1.3–1.7 executor-h)
+### G2: The always-on brain-state container, empty (plan 6 h · 0.8–1.0 executor-h)
 
-**Purpose:** a low-rate state outside D4's device gate, holding these slow variables:
-- sleep pressure and arousal (the Phillips type once G0 confirms it);
-- seizure excitability per focus;
-- metabolism for burst suppression.
-
-At its defaults it moves nothing. **Depends on:** G0 for the equations, G1. **Files:** `l2/brain-state/` (new),
-`types-brain-state.ts`, the engine step after the neuro and organ steps.
+**Purpose:** a low-rate state outside D4's device gate, holding no variable yet. Each slow variable arrives with its
+piece: metabolism with G4, sleep drive with G6a, seizure excitability with G7a. **Depends on:** G1. **Files:**
+`l2/brain-state/` (new), `types-brain-state.ts`, the engine step after the neuro and organ steps.
 
 **Tests first:**
 1. `eeg-baseline.json` byte-identical.
 2. Snapshot round trip.
-3. The state advances with the EEG device off; switching the device on at any time reads the current state.
+3. The state advances with the EEG device off, and switching the device on at any time reads the current state.
 
 **Must not touch:** physiology couplings (EQ6). **Gate:** common. **Validation:** yes.
 
-### G3: One-region corticothalamic renderer: awake and anaesthetic (plan 24 h · 3.0–4.0 executor-h)
+### G3a: One-region renderer: the numerics, and propofol (plan 24 h · 3.0–4.0 executor-h)
 
-**Purpose:** the chosen family's region, driven by the inputs of §3.4. It renders the frontal `eeg` channel with the new
-generator selectable. **Depends on:** G0, G1. **Files:** `l2/eeg/renderer/region.ts`, `drug-actions.ts`, tests.
+**Purpose:** the hardest piece. It holds:
+- the chosen family's region, with its integration step, conduction delay buffers and snapshot;
+- one drug action, propofol's published one (Hindriks 2012 or Ching 2010, as G0a settles);
+- rendering of the frontal `eeg` channel, with the new generator selectable.
 
-**Tests first**, with their numbers from the depth plan §7.2 and the family's own published spectra (G0 pages):
+**Depends on:** G0a, G1. **Files:** `l2/eeg/renderer/region.ts`, `drug-actions.ts`, tests.
+
+**Tests first:**
 - C1 (RMS 5–10 µV, Ch36 p. 1138);
 - C3 (frontal alpha 8–12 Hz at LOR, Ch36 p. 1138);
 - C4 (alpha–delta, peaks ≈ 40 µV, Ch36 pp. 1139, 1145);
 - C2, C5, C7 (Ch36 pp. 1138–1139, 1143);
 - each as "met / missed by cause", per §4.3.
 - An import test: `region.ts` reads none of `state.ts`'s fitted variables (§3.4).
+- Cost against EQ9; snapshot size.
 
-**Must not touch:** `synth.ts`, `spectra.ts`, the readers. **Gate:** common; cost against EQ9. **Validation:** yes.
+**Must not touch:** `synth.ts`, `spectra.ts`, the readers. **Gate:** common. **Validation:** yes.
+
+### G3b: The other drug classes on the region (plan 16 h · 2.0–2.7 executor-h)
+
+**Purpose:** the classes whose actions G0a found published on the family: volatiles, barbiturate, etomidate,
+benzodiazepine, and any of ketamine, N2O, opioids and dexmedetomidine. A class with no published action stays on the
+spectral generator (EQ5 C). **Depends on:** G3a. **Tests first:** C6, C11–C17 per §4.3, met or missed by cause.
+**Validation:** yes.
 
 ### G4: Burst suppression by the metabolic mechanism (plan 14 h · 1.8–2.3 executor-h; parallel with G5)
 
-**Purpose:** suppression arises from the metabolic slow variable (Ching 2012 [ABS]) acting on the region.
-**Depends on:** G2, G3. **Files:** `l2/eeg/renderer/metabolic.ts`, tests.
+**Purpose:** suppression arises from a metabolic slow variable (Ching 2012 [ABS]) acting on the region. **What it
+reads:**
+- the brain's relative oxygen delivery and the core temperature, the inputs today's `state.ts` already uses
+  (`metabolic` from `do2Rel`, `cold` from `tempC`, `cortexStep` lines 161–172);
+- for drugs, a drug-to-metabolism action, which needs its own source.
+
+The engine's present CMRO2 multiplier comes from the old index (depth plan §3.1), and reading it would rest the
+mechanism on a display-like number. So the drug half is **blocked on the depth plan's Q4 and EQ6**. The hypoxic and
+hypothermic halves can go first.
+
+**Depends on:** G2, G3a. **Files:** `l2/eeg/renderer/metabolic.ts`, tests.
 
 **Tests first:**
-- C8 (propofol ≈ 5 mcg/mL onset, Ch36 p. 1141);
-- C9 (P-1 as ruled; research/43);
-- C10 (< 5 µV, lengthening, forme fruste, Ch36 pp. 1139–1141);
 - C34 (CBF 20 → 12 mL/100 g/min, Ch35 pp. 1105, 1122);
 - C35 (15–18 °C, Ch35 p. 1127);
-- C25 (SR 50–80 % when targeted, Ch36 p. 1140).
+- C10 (< 5 µV, lengthening, forme fruste, Ch36 pp. 1139–1141);
+- after Q4/EQ6: C8 (propofol ≈ 5 mcg/mL onset, Ch36 p. 1141), C9 (P-1 as ruled; research/43), C25 (SR 50–80 % when
+  targeted, Ch36 p. 1140).
 
-**Must not touch:** CMRO2 physiology (depth plan Q4 / EQ6). **Gate:** common. **Validation:** yes.
+**Must not touch:** CMRO2 physiology. **Gate:** common. **Validation:** yes.
 
 ### G5: Regions, the head mixing, the 10–20 electrodes and montages (plan 20 h · 2.5–3.3 executor-h)
 
 **Purpose:** several coupled regions; a fixed mixing to the 10–20 electrodes; montage derivation; `eeg` becomes the
-frontal derivation. **Depends on:** G3; the head-model reference (§7 group 4). **Files:** `l2/eeg/renderer/regions.ts`,
-`head.ts`, `l3/eeg-devices/montage.ts` (derivation only), `types.ts` (new electrode channel ids or one multichannel
-buffer, decided in the PR with the orchestrator), tests.
+frontal derivation (§4.1's constraint on its sites). **Depends on:** G3a; the head-model reference (§7 group 4); EQ3.
+**Files:**
+- `l2/eeg/renderer/regions.ts`, `head.ts`;
+- `l3/eeg-devices/montage.ts` (electrode differences only: the one new file under the readers' folder);
+- `types.ts` (electrode channel ids or one multichannel buffer, decided in the PR with the orchestrator);
+- tests.
 
 **Tests first:**
 1. Symmetry of homologous channels in the normal EEG (Ch35 p. 1104).
-2. Posterior alpha with eyes closed, lost when the eyes open (Ch35 Fig. 35.4).
+2. Posterior alpha with eyes closed, lost when the eyes open (Ch35 Fig. 35.4). This needs an eyes-open input, which the
+   engine lacks (§2, P2), and adds it to the brain state.
 3. C32 anteriorisation (Ch36 p. 1138).
 4. Blinks largest in the frontal channels (Ch35 Fig. 35.4).
-5. The `eeg` channel's depth reader tests pass on both generators, or differ by cause (§4.1).
+5. The depth readers' tests on the `eeg` channel pass on both generators, or differ by cause (§4.1).
 
-It replaces the depth plan's E10 (§4.6, EQ3). **Must not touch:** the readers' algorithms. **Gate:** common; cost.
-**Validation:** yes.
+It replaces the depth plan's E10 (§4.6, EQ3). **Gate:** common; cost. **Validation:** yes.
 
-### G6: Sleep (plan 28 h · 3.5–4.7 executor-h; BLOCKED on the AASM manual and Silber 2007)
+### G6a: Sleep stages and their graphoelements (plan 24 h · 3.0–4.0 executor-h; BLOCKED on G0b's sleep section)
 
-**Purpose:** the arousal drive of G2 moves the regions through W, N1, N2, N3 and R, and graphoelements arise. A sound
-evokes a K-complex (Ch09 p. 154). **Depends on:** G2, G5; group 2 papers. **Files:** `l2/eeg/renderer/sleep.ts`,
-`test/engine/eeg-sleep.test.ts`, a scorer helper in tests only (the AASM rules as read).
+**Purpose:** a sleep drive in the brain state (the Phillips type, once G0a confirms it) moves the regions through W, N1,
+N2, N3 and R, and graphoelements arise. A sound evokes a K-complex (Ch09 p. 154). **Depends on:** G2, G5, G0b. **Files:**
+`l2/brain-state/sleep.ts`, `l2/eeg/renderer/sleep.ts`, `test/engine/eeg-sleep.test.ts`, and a scorer helper in the tests
+only (the AASM rules as read).
 
 **Tests first:**
 - Table 9.3's criteria per stage (Ch09 p. 160);
 - the α → θ transition at sleep onset (Ch09 p. 153);
-- spindles and K-complexes in N2 only, not in REM (Ch09 pp. 154–155);
-- N3 dominated by delta power on the spectrogram (Fig. 9.4);
+- spindles and K-complexes in N2, not in REM (Ch09 pp. 154–155);
+- N3 dominated by delta power (Fig. 9.4);
 - REM with low chin EMG and eye movements (Ch09 p. 160; channels per EQ8);
-- graphoelement numbers from the AASM manual once read.
+- graphoelement numbers from the manual once read.
 
-**Must not touch:** breathing and heart rate (EQ6). **Gate:** common. **Validation:** yes.
+**Must not touch:** breathing and heart rate (EQ6). **Validation:** yes.
 
-### G7: Seizures and status epilepticus (plan 32 h · 4.0–5.3 executor-h; BLOCKED on Hirsch 2021, Beniczky 2013, Trinka 2015 and the family's seizure papers)
+### G6b: The night (plan 12 h · 1.5–2.0 executor-h; BLOCKED on an architecture source)
 
-**Purpose:** a focus's excitability (G2) takes a region into seizure. Onset, frequency evolution, spread to coupled
-regions, termination and post-ictal suppression arise from the dynamics. Generalised spike-and-wave arises from the
-thalamic loop (Robinson 2002 [ABS]). **Depends on:** G2, G5; EQ2. **Files:** `l2/eeg/renderer/seizure.ts`, tests.
+**Purpose:** the sleep drive's course over a night gives the NREM–REM cycles, with the hypnogram (the plot of stage
+against time) read by the G6a scorer. **Tests first:** P12's numbers once sourced. Until then, only that Fig. 9.4's
+qualitative picture is met (strong alpha awake, delta-dominated N3, REM with alpha and theta). **Validation:** yes.
+
+### G7a: Focal seizure: onset, evolution, spread, end, post-ictal state (plan 24 h · 3.0–4.0 executor-h; BLOCKED on G0b's ACNS section and the seizure papers; EQ2)
+
+**Purpose:** a focus's excitability (a slow variable in the brain state) takes one region into seizure. Onset, frequency
+evolution, spread to coupled regions, termination and the post-ictal state come from the dynamics (Wendling 2002 [ABS]
+for focal onset; the slow variable per EQ2). **Depends on:** G2, G5. **Files:** `l2/brain-state/seizure.ts`,
+`l2/eeg/renderer/seizure.ts`, tests.
 
 **Tests first:**
 1. High-voltage spike and slow waves on the EEG (Ch35 p. 1105).
 2. Focal onset is asymmetric (Ch35 p. 1105).
 3. Hypocapnia raises excitability (Ch35 p. 1127).
-4. Benzodiazepine, propofol and barbiturate terminate a seizure, each through its class's published action (Ch35
-   p. 1116; NCC p. 2587).
-5. A seizure past 5 min does not stop by itself (NCC p. 2587; the model's own course, a direction test).
-6. Convulsive seizures drive scalp EMG, masked under paralysis (NCC p. 2587; the EMG path of C18).
-7. Burst suppression under the refractory treatment (G4).
-8. ACNS definitions (electrographic seizure, ESE, periodic discharges, evolution) once read; until then the PR stops at
-   the tests that need no ACNS value.
+4. A seizure past 5 min is "unlikely to stop spontaneously" (NCC p. 2587): over many seeds most seizures that pass 5 min
+   continue. This is a direction test; the share is not a source number.
+5. The ACNS definitions of electrographic seizure and evolution, once read; until then the PR stops at the tests above.
 
-**Must not touch:** physiology couplings (EQ6). **Gate:** common. **Validation:** yes.
+**Validation:** yes.
+
+### G7b: Generalised spike-and-wave from the thalamic loop (plan 14 h · 1.8–2.3 executor-h)
+
+**Purpose:** the family's own generalised limit cycles (Robinson 2002 [ABS]). **Depends on:** G7a. **Tests first:**
+bilateral synchrony; the ACNS spike-and-wave definition once read. **Validation:** yes.
+
+### G7c: Termination by drugs, and burst suppression under treatment (plan 14 h · 1.8–2.3 executor-h)
+
+**Purpose:** benzodiazepine, propofol and barbiturate end a seizure through each class's published action on the region
+(G3b), not a per-drug rule. Third-line treatment gives burst suppression (G4). **Depends on:** G7a, G3b, G4.
+
+**Tests first:**
+- stimulation seizures stopped by barbiturate or propofol (Ch35 p. 1116);
+- the treatment ladder ends seizures in the order NCC p. 2587 describes (direction);
+- burst suppression under refractory treatment.
+
+**Validation:** yes.
+
+### G7d: Periodic and rhythmic patterns, and the convulsion's muscle (plan 16 h · 2.0–2.7 executor-h; BLOCKED on ACNS)
+
+**Purpose:** periodic discharges and rhythmic delta, if the family produces them (G0a). Convulsive seizures drive scalp
+EMG through the existing path, masked under paralysis (NCC p. 2587; C18's path). **Tests first:** the ACNS definitions;
+EMG → 0 as T1 → 0 during a convulsive seizure. **Must not touch:** physiology couplings (EQ6). **Validation:** yes.
 
 ### G8: The EEG monitoring window (plan 16 h · 2.0–2.7 executor-h)
 
@@ -707,45 +780,51 @@ spectrogram. It is a follower that computes the host's samples (§4.5). **Depend
 **Tests first:**
 - Ch35 Figs 35.4–35.5's two montages drawn at 1 s and 50 µV;
 - the follower's samples equal the host's;
-- the filter and sensitivity defaults `[WANTED: the ACNS technical standard]`.
+- the filter and sensitivity defaults `[WANTED: the technical standard, G0b]`.
 
 **Must not touch:** the engine. **Gate:** common + the touched e2e at 2 workers. **Validation:** no.
 
 ### G9: The sleep-study view (plan 12 h · 1.5–2.0 executor-h; only if EQ8 says so)
 
-**Purpose:** 30 s epochs, a hypnogram from the scorer of G6, and EOG and chin EMG channels. **Depends on:** G6, G8.
-**Tests first:** the epoch length and the channel set from the AASM manual. **Validation:** no.
+**Purpose:** 30 s epochs, a hypnogram from G6a's scorer, and EOG and chin EMG channels. **Depends on:** G6a, G8. **Tests
+first:** the epoch length and the channel set from the AASM manual. **Validation:** no.
 
 ### G10: Scenario event kinds (plan 10 h · 1.3–1.7 executor-h)
 
-**Purpose:** cards can script a seizure or a night (§6.2). **Depends on:** G6 or G7 (each event kind with its piece).
+**Purpose:** cards can script a seizure or a night (§6.2). **Depends on:** G6a or G7a (each event kind with its piece).
 **Files:** the scenario format's event list, the controller, `docs/model/` regenerated. **Tests first:**
 - each event kind validated;
 - a card with a focus at t = 60 s shows a seizure on the strip;
-- a card "lights off" moves the brain state's sleep drive.
+- a card "lights off" moves the sleep drive.
 
-**Must not touch:** existing cards. **Validation:** yes (scenario format reaching the engine).
+**Must not touch:** existing cards. **Validation:** yes.
 
 ### G11: Default switch, re-run of the readers' courses (plan 6 h · 0.8–1.0 executor-h)
 
-**Purpose:** run §4.2's table on both generators and apply EQ5's ruling. **Depends on:** G3–G5, the readers merged.
+**Purpose:** run §4.2's table on both generators and apply EQ5's ruling. **Depends on:** G3a–G5, the readers merged.
 **Tests first:** the dual-run report committed; every difference by cause. **Validation:** yes.
 
 | Piece | Plan h | Executor-h [EST] | Validation | Blocked on |
 |---|---|---|---|---|
-| G0 | 8 | 1.0–1.3 | no | papers §7 groups 1–3 |
+| G0a | 16 | 2.0–2.7 | no | §7 group 1, Ching 2012 |
+| G0b | 12 | 1.5–2.0 | no | §7 groups 2–3 |
 | G1 | 12 | 1.5–2.0 | yes | — |
-| G2 | 10 | 1.3–1.7 | yes | G0 (equations) |
-| G3 | 24 | 3.0–4.0 | yes | G0 |
-| G4 | 14 | 1.8–2.3 | yes | G0 (Ching 2012) |
+| G2 | 6 | 0.8–1.0 | yes | — |
+| G3a | 24 | 3.0–4.0 | yes | G0a |
+| G3b | 16 | 2.0–2.7 | yes | G0a (drug actions) |
+| G4 | 14 | 1.8–2.3 | yes | G0a; drug half on Q4/EQ6 |
 | G5 | 20 | 2.5–3.3 | yes | head-model reference; EQ3 |
-| G6 | 28 | 3.5–4.7 | yes | AASM, Silber 2007; EQ1 |
-| G7 | 32 | 4.0–5.3 | yes | ACNS, Salzburg, Trinka, seizure papers; EQ1, EQ2 |
-| G8 | 16 | 2.0–2.7 | no | EQ7; ACNS technical standard |
+| G6a | 24 | 3.0–4.0 | yes | G0b (AASM, Silber); EQ1 |
+| G6b | 12 | 1.5–2.0 | yes | an architecture source |
+| G7a | 24 | 3.0–4.0 | yes | G0b (ACNS, Salzburg, Trinka); seizure papers; EQ1, EQ2 |
+| G7b | 14 | 1.8–2.3 | yes | G7a |
+| G7c | 14 | 1.8–2.3 | yes | G7a, G3b, G4 |
+| G7d | 16 | 2.0–2.7 | yes | ACNS |
+| G8 | 16 | 2.0–2.7 | no | EQ7; the technical standard |
 | G9 | 12 | 1.5–2.0 | no | EQ8 |
-| G10 | 10 | 1.3–1.7 | yes | G6/G7 |
+| G10 | 10 | 1.3–1.7 | yes | G6a/G7a |
 | G11 | 6 | 0.8–1.0 | yes | EQ5 |
-| **All** | **192** | **≈ 24–32** | | |
+| **All** | **268** | **≈ 34–45** | | |
 
 ---
 
@@ -757,7 +836,8 @@ spectrogram. It is a follower that computes the host's samples (§4.5). **Depend
   the room plan rules. The depth window (`views/depth.ts`, depth plan E12) is not built yet.
 - **What both windows share:**
   - `packages/renderer/src/eeg-strip.ts` (the strip renderer; G8 makes it multichannel);
-  - the spectrogram (density spectral array) of the generic reader (`l3/eeg-devices/spectral.ts`);
+  - the spectrogram (density spectral array): the generic reader publishes one column, the epoch's own PSD over 0–50 Hz
+    in dB, every 2 s (`l3/eeg-devices/generic.ts` header), from the periodogram of `spectral.ts`;
   - the follower rule (§4.5);
   - the impedance display (Ch36 p. 1145).
 - **What only the clinical window has:**
@@ -788,7 +868,7 @@ abstract was read through the same service where §3.2 says [ABS]. The DOI
 The correct DOI below was returned by a title search. Group 0 (the BIS-type, Entropy, Narcotrend and PSI readers) is
 `research/58-papers-wanted-eeg-2026-11-11.md` and is not repeated.
 
-**Group 1: the equation family (unblocks G0, G2, G3, G5)**
+**Group 1: the equation family (unblocks G0a, G3a, G3b, G5)**
 
 | Paper | Why | DOI | Verified |
 |---|---|---|---|
@@ -800,7 +880,7 @@ The correct DOI below was returned by a title search. Group 0 (the BIS-type, Ent
 | Jansen BH, et al. Electroencephalogram and visual evoked potential generation in a mathematical model of coupled cortical columns. Biol Cybern 1995;73(4):357–366 | the alternative family (lumped column) | 10.1007/BF00199471 | Europe PMC, DOI query |
 | Drug actions for ketamine, N2O, opioids and dexmedetomidine on the chosen family | §4.3's empty rows | — | not identified |
 
-**Group 2: sleep (unblocks G6, G9)**
+**Group 2: sleep (unblocks G0b, G6a, G6b, G9)**
 
 | Paper | Why | DOI | Verified |
 |---|---|---|---|
@@ -810,7 +890,7 @@ The correct DOI below was returned by a title search. Group 0 (the BIS-type, Ent
 | A paper joining the arousal model to the corticothalamic EEG model (if published) | the joint of §3.2 | — | not identified |
 | A source on the night's architecture (cycle length and number, the distribution of N3 and REM) | P12 | — | not identified |
 
-**Group 3: status epilepticus (unblocks G7, G8, G10)**
+**Group 3: status epilepticus (unblocks G0b, G7a–G7d, G8, G10)**
 
 | Paper | Why | DOI | Verified |
 |---|---|---|---|
@@ -823,7 +903,7 @@ The correct DOI below was returned by a title search. Group 0 (the BIS-type, Ent
 | Claassen J, Taccone FS, Horn P, et al. Recommendations on the use of EEG monitoring in critically ill patients. Intensive Care Med 2013;39:1337–1351 | cEEG indications and technique; Miller's ref. 110 (NCC p. 2578) | not verified | citation from Miller's reference list |
 | The ACNS guideline on minimum technical standards for EEG recording (sampling rate, filters, electrodes) | P3, G8 | not identified | — |
 
-**Group 4: burst suppression and the head (unblocks G4, G5)**
+**Group 4: burst suppression and the head (unblocks G0a, G4, G5)**
 
 | Paper | Why | DOI | Verified |
 |---|---|---|---|
@@ -835,8 +915,9 @@ The correct DOI below was returned by a title search. Group 0 (the BIS-type, Ent
 ## 8. Questions for the owner
 
 **EQ1. Which comes first after the common base: sleep or status epilepticus?**
-*Explanation:* both need G0–G5 first. Then sleep (G6) and seizures (G7) are each about four executor-hours, and each is
-blocked on different papers (AASM, or ACNS).
+*Explanation:* both need G0a–G5 first. Then sleep (G6a–G6b, about 4.5–6 executor-hours) and seizures (G7a–G7d, about
+9–12 executor-hours) follow, and each is blocked on different papers (AASM,
+or ACNS).
 *Options:*
 - A: status epilepticus first;
 - B: sleep first;
@@ -851,7 +932,7 @@ named cells or channels. The alternative is to use only the seizures the cortico
 *Options:*
 - A: allowed for the slow seizure variable;
 - B: not allowed; only cell- or synapse-named mechanisms;
-- C: decide after G0 reads the full texts.
+- C: decide after G0a reads the full texts.
 
 *Proposal:* C.
 
@@ -880,6 +961,8 @@ named cells or channels. The alternative is to use only the seizures the cortico
 - C: a new 250 Hz engine rate.
 
 *Proposal:* B until the ACNS standard is read. It uses an existing rate and leaves the depth readers' input unchanged.
+One interaction: the depth plan's P-6 may move the `eeg` channel itself to 500 Hz if the BIS source needs an EMG band
+above 62.5 Hz. If P-6 is so ruled, `eeg` is decimated to 500 Hz instead, and option B still holds.
 
 **EQ5. What happens to the present generator?**
 *Explanation:* the new model has no published mechanism yet for several drug classes (§4.3).
@@ -891,11 +974,11 @@ named cells or channels. The alternative is to use only the seizures the cortico
 *Proposal:* C, then A.
 
 **EQ6. Does the always-on brain state couple to physiology now?**
-*Explanation:* a convulsion raises oxygen use, CO2, lactate and temperature, and needs the airway and the circulation
-(NCC p. 2587). Sleep changes breathing and heart rate (Ch09 pp. 153–154). Each such coupling moves physiology numbers
+*Explanation:* status epilepticus brings hypoxic respiratory failure, acid–base disturbance, myocardial depression from
+treatment and rhabdomyolysis (NCC p. 2587); how much a convulsion raises oxygen use or lactate is `[WANTED]`. Sleep changes breathing and heart rate (Ch09 pp. 153–154). Each such coupling moves physiology numbers
 and needs the validation workflow. It is the same question as the depth plan's Q4 for anaesthesia.
 *Options:*
-- A: couple now, in G6 and G7;
+- A: couple now, in G6a and the G7 pieces;
 - B: EEG only now, couplings as later pieces;
 - C: never.
 
@@ -948,6 +1031,9 @@ regions will cost more. The engine runs at 361× real time, so the limit is fast
 | `'eeg'` channel id; sample rates 500, 125, 62.5 | `packages/engine-core/src/types.ts:23`, `:197` |
 | Random-phase synthesis, 2 s blocks, sine-window overlap-add, six peaks, BS gate 3.58 s, forme fruste above 2 Hz | `l2/eeg/synth.ts` (`BLOCK_S`, `FF_SPLIT_HZ`, `BS_BURST_S`, `renderBlock`, `synthNext`) |
 | Independent phase per frequency; shared gates only | `synth.ts` `renderBlock` (independent `normal()` draws per bin and slot), `synthNext` (gBS × (low + gFF × (bg + Σ e_p · peak_p))) |
+| The `spindle` peak is dexmedetomidine's (13 Hz, Akeju 2014), not a sleep spindle | `l2/eeg/spectra.ts` `SPINDLE_HZ`, `SPINDLE_BURSTINESS`, `DEX_SPINDLE_BELOW_PROP_DB` |
+| `metabolic` from brain DO2 and `cold` from core temperature feed `suppress` | `l2/eeg/state.ts` `cortexStep`, lines 161–172 |
+| Generic reader: SEF95/MF over 0.5–30 Hz, SR over 60 s, a spectrogram column every 2 s | `l3/eeg-devices/generic.ts` header |
 | Fitted constants in the generator | `synth.ts` `OSC_BURST_S`, `OSC_DUTY_MIN`, `OSC_RAMP_S`, `FF_DROP_MAX`, `FF_DROP_S`, `FF_FLOOR` tagged `[FIT]` |
 | Cortical variables `hyper`, `lor`, `deep`, `suppress`, `ketDepol`, `arousal`, `ageSlope`, `metabolic`, `cold` | `packages/engine-core/src/types-eeg.ts:38–68`; `l2/eeg/state.ts` header |
 | EEG device actions on/off/impedance/ecgPickup/model; numerics `sef`, `mf`, `eegSr`, `eegImp` | `types-eeg.ts:107–118` |
@@ -963,6 +1049,8 @@ regions will cost more. The engine runs at 361× real time, so the limit is fast
 | Miller pages | Ch09 pp. 153, 154, 155, 160; Ch35 pp. 1104, 1105, 1107, 1116, 1127; Ch36 as the depth plan; NCC pp. 2578, 2587 (the full PDF's pages 204–206, 211; 1332–1333, 1335, 1344, 1355; 3088, 3097) |
 
 **What could not be verified:**
+0. Of the code, only `synth.ts` was read in full. `spectra.ts`, `artefacts.ts`, `generic.ts` and `spectral.ts` were read
+   by header and constants, `state.ts` by header and the suppression lines, and the tests by title (§2).
 1. No model paper was read in full. Every capability in §3.2 is an abstract's claim.
 2. The ACNS, Salzburg, Trinka and AASM documents were not read. No value of theirs is used.
 3. The chapter number of Miller's "Neurocritical Care" chapter was not found on the pages read.
