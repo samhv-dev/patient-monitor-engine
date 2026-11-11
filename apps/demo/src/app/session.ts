@@ -249,6 +249,11 @@ export class AppSession {
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
+      // B6 "To the next phase": the /2 card's last phase entry (its id and time), the stop the host's fast-forward reads
+      phaseMark: () => {
+        const e = this.driver.phaseRunner?.phases.at(-1);
+        return e ? `${e.id}@${e.t}` : null;
+      },
       // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
       // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),

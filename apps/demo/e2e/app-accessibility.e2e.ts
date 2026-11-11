@@ -113,6 +113,23 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.locator('[aria-label="Question 1: its words"]').fill('What told you this was MH?');
     await run(page, '#/scenarios/builder/<draft> Handout questions, a question');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
+    // B6: a draft run in place, Instructor v2 with the run panel beside it. The draft audited above is left mid-edit on
+    // purpose (an emptied title, and B5's built-to-show line and opener added empty: refusals Run must wait for), so the run
+    // starts from a fresh copy of the MH card, which the validator accepts
+    await go(page, '#/scenarios/builder');
+    await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();
+    await page.waitForSelector('.sb-page .sb-edit');
+    await expect(page.getByRole('button', { name: 'Run in place' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Run in place' }).click();
+    const runIt = page.getByRole('button', { name: 'Run the draft' });
+    if (await runIt.isVisible({ timeout: 1000 }).catch(() => false)) await runIt.click();
+    await expect(page.locator('aside.sb-run')).toBeVisible();
+    // the route has settled: Instructor v2's own view shown with its heading, and the Scenarios view gone (WebKit once
+    // audited the page mid-switch and measured the Scenarios view's width under the run panel's column)
+    await expect(page.locator('.main[data-route="teach2"] > .view[data-view="teach2"]')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Instructor v2' })).toBeAttached();
+    await expect(page.locator('.view[data-view="scenarios"]')).toBeHidden();
+    await run(page, '#/teach2 with the run panel (B6)');
     if (remote) {
       await remote.bringToFront();
       found.push(...(await focusWalk(remote)).map((f) => `focus (remote): ${f}`));
