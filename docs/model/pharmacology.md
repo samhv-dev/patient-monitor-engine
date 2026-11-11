@@ -45,6 +45,14 @@ library rows and the outputs other modules consume.
 - Target-controlled infusion picks one rate per interval: the rate that puts plasma concentration on target (Jacobs
   1990) or the largest rate whose predicted effect-site concentration never overshoots (Shafer & Gregg 1992)
   (`l2/pk/tci.ts`); the context-sensitive half-time follows Hughes, Glass & Jacobs 1992 (`l2/pk/csht.ts`).
+- A TCI pump predicts with its OWN model, never the patient's (pump-rack E2, decision D3; the owner's PQ5 = A): the
+  chosen set's parameters computed once from the patient data typed into the pump (for the channel-less `tci` event,
+  the case patient and the typed `opioids` flag), and its own compartment state stepped with what the pump believes
+  it gave (on a channel: the volume moved × the PROGRAMMED concentration). The controller targets that state; the
+  patient receives the delivered drug through its own row model with its clearance and distribution factors, so a
+  wrong weight, another set, a failing liver or a low output separates the pump's displayed Cp/Ce from the patient's
+  (`l2/pk/pump.ts`, `l2/pk/pipeline.ts`). One exception: a snapshot from before E2 with a TCI running has no pump
+  state, and it is seeded once from the patient's state — the old oracle, for that one instant.
 - Hepatic, renal and temperature factors scale each drug's clearance (research/13; `l2/pk/pipeline.ts`).
 <!-- /hand:equations -->
 
