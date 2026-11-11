@@ -37,6 +37,7 @@ import { deviceKey, pickerView } from './views/join.ts';
 import { learnerRemoteView } from './views/learner-remote.ts';
 import { drugsMenu } from './remote/drugs.ts';
 import { infusionsLink, infusionsView } from './remote/infusions.ts';
+import { labsLink, labsView } from './remote/labs.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
@@ -102,11 +103,14 @@ if (follow && shows === 'pick') {
   void loadShippedFormulary().then((f) => drugs.ready(f));
   // L8: the Infusions tab: start a ready syringe at a rate, change or stop any running infusion (LQ4)
   const infusions = infusionsView({ now: () => caseClock?.renderT() ?? null });
+  // L11: the Labs tab: send a sample, wait the analyser's time, read this phone's own results (LQ13)
+  const labs = labsView();
   const remote = learnerRemoteView({
     code: follow,
     stage: shell.stage,
     drugs: drugs.el,
     infusions: infusions.el,
+    labs: labs.el,
     follow: (code, bar, pin) => {
       const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), pin });
       line.set(f.monitor, f.style, true);
@@ -119,13 +123,15 @@ if (follow && shows === 'pick') {
     const offDrugs = drugs.attach(f);
     const l = infusionsLink(f, deviceKey());
     const offInfusions = l ? infusions.attach(l) : () => undefined;
-    return () => (offDrugs(), offInfusions());
+    const ll = labsLink(f, deviceKey());
+    const offLabs = ll ? labs.attach(ll) : () => undefined;
+    return () => (offDrugs(), offInfusions(), offLabs());
   });
   shell.add(remote);
   mountFastForward(shell.root, { get fastForward() { return current?.sync?.fastForward ?? null; }, get lastFastForward() { return current?.sync?.lastFastForward ?? null; } }, { simT: () => current?.sync?.fastForwardAt ?? null, font: () => current?.monitor.skin?.render.fontStack, latch: (a) => current?.monitor.latchAlarms(a) });
   shell.start();
   document.title = 'Learner remote: patient monitor simulator';
-  Object.assign(window, { __pmeLearnerRemote: remote, __pmeLearnerDrugs: drugs, __pmeLearnerInfusions: infusions, __pmeApp: { shell, frames, site } });
+  Object.assign(window, { __pmeLearnerRemote: remote, __pmeLearnerDrugs: drugs, __pmeLearnerInfusions: infusions, __pmeLearnerLabs: labs, __pmeApp: { shell, frames, site } });
 } else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
