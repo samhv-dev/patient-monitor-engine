@@ -91,8 +91,9 @@ export interface EegPeak {
 
 /** The spectral description of one cortical state (E2): what the generator (E3) turns into microvolts. */
 export interface EegSpectrum {
-  /** Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz. */
-  aperiodic: { offsetDb: number; slope: number };
+  /** Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz; above `hfCornerHz`
+   * it falls with the exponent `hfSlope` instead (continuous at the corner). Absent, or `hfSlope` ≤ `slope`: no corner. */
+  aperiodic: { offsetDb: number; slope: number; hfCornerHz?: number; hfSlope?: number };
   peaks: EegPeak[];
   /** Burst suppression: fraction of time suppressed, burst amplitude and the suppressed level (µV). */
   suppression: { p: number; burstUv: number; suppressedUv: number };

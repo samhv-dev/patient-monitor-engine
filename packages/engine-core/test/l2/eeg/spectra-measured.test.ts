@@ -84,7 +84,7 @@ describe('the propofol GA spectrum above the alpha band against the measured spe
   // The beta range below the corner: the measured spectra keep more power on the alpha's upper flank than the engine's
   // narrow alpha and its fallen 20 Hz beta give. [AKE14] / [PUR15]: 15 Hz −7.5 / −6.1 and 20 Hz −11.9 / −12.0 dB below
   // the alpha peak; 12–25 Hz share −10.5 / −9.8 dB. Not corrected here (see the PR: the travelled peak, PUR13 p. E1144).
-  it.fails('12–25 Hz (beta): 15 and 20 Hz below the alpha peak and the 12–25 Hz share (AKE14 Fig. 3C; PUR15 Fig. 3A) — measured 15 Hz −12.1, 20 Hz −13.4, share −12.3 dB: the engine\'s alpha is a narrow peak and its beta (20 Hz) falls at depth, so the alpha\'s upper flank the papers show is missing', () => {
+  it.fails('12–25 Hz (beta): 15 and 20 Hz below the alpha peak and the 12–25 Hz share (AKE14 Fig. 3C; PUR15 Fig. 3A) — measured 15 Hz −12.2, 20 Hz −13.4, share −12.3 dB (the same before brief 172): the engine\'s alpha is a narrow peak and its beta (20 Hz) falls at depth, so the alpha\'s upper flank the papers show is missing', () => {
     const pk = alphaPeak(GA);
     within(seen(GA, 15) - pk, [-7.5, -6.1], TOL_DB, '15 Hz below the alpha peak');
     within(seen(GA, 20) - pk, [-11.9, -12.0], TOL_DB, '20 Hz below the alpha peak');
@@ -110,13 +110,13 @@ describe('the course of 25–35 Hz power through loss of consciousness (PUR13 Fi
   const AWAKE = prop(0);
   const LOC = locPropofol(40) / 1000;
   const p2535 = (s: EegSpectrum) => band(s, 25, 35);
-  it.fails('sedation: 25–35 Hz power rises ≈ 3.6 dB over awake before LOC (PUR13 Fig. 2C) — measured +0.5 dB at propofol 1.5 µg/mL: the sedation beta (20 Hz, σ 4 Hz) does not reach 25–35 Hz and the steepening slope (κ 0.6 → 0.75, pivot at 1 Hz) lowers it', () => {
+  it.fails('sedation: 25–35 Hz power rises ≈ 3.6 dB over awake before LOC (PUR13 Fig. 2C) — measured +0.9 dB at propofol 1.5 µg/mL (unchanged by brief 172): the sedation beta (20 Hz, σ 4 Hz) does not reach 25–35 Hz and the steepening slope (κ 0.6 → 0.75, pivot at 1 Hz) lowers it', () => {
     within(db(p2535(prop(1.5)) / p2535(AWAKE)), [2.3, 4.8], 0, '25–35 Hz, sedation over awake');
   });
-  it.fails('unconscious: 25–35 Hz power stays ≈ 3.7 dB over awake 15 min after LOC (PUR13 Fig. 2C) — measured −9 dB at propofol 3.0 µg/mL: the engine\'s awake 25–35 Hz is far above what a measured GA spectrum and this ratio imply, and the slope steepens about a 1 Hz pivot', () => {
+  it.fails('unconscious: 25–35 Hz power stays ≈ 3.7 dB over awake 15 min after LOC (PUR13 Fig. 2C) — measured −6.7 dB at LOC + 1 µg/mL (−4.9 before brief 172): the engine\'s awake 25–35 Hz is far above what a measured GA spectrum and this ratio imply, and the slope steepens about a 1 Hz pivot', () => {
     within(db(p2535(prop(LOC + 1)) / p2535(AWAKE)), [2.8, 4.7], 0, '25–35 Hz, LOC + 15 min over awake');
   });
-  it.fails('LOC → unconscious: 25–35 Hz power changes by only −0.7 dB (15 min) and −1.6 dB (29 min) after LOC (PUR13 Fig. 2C) — measured −4.7 and −6.4 dB: the slope steepens about a 1 Hz pivot and the high-frequency corner comes on through loss of responsiveness', () => {
+  it.fails('LOC → unconscious: 25–35 Hz power changes by only −0.7 dB (15 min) and −1.6 dB (29 min) after LOC (PUR13 Fig. 2C) — measured −3.6 and −5.5 dB (−2.6 and −4.4 before brief 172): the slope steepens about a 1 Hz pivot and the high-frequency corner comes on through loss of responsiveness', () => {
     within(db(p2535(prop(LOC + 1)) / p2535(prop(LOC))), [-1.8, 0.6], 0, '25–35 Hz, LOC + 15 min over LOC');
     within(db(p2535(prop(LOC + 2)) / p2535(prop(LOC))), [-2.1, -0.9], 0, '25–35 Hz, LOC + 29 min over LOC');
   });
