@@ -18,6 +18,7 @@ import { PRESETS, unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import { button, clock, h, setText, stepper, type Stepper } from '../ui.ts';
 import type { Follower, FollowerCommand } from '../views/follower.ts';
+import { hostPause } from '../views/follower-status.ts';
 import { mmss, perMlText } from './bench.ts';
 
 /** The pump's mL/h range on the phone [ENG: ui; 0.1 mL/h, a syringe pump's finest step, to 1200 mL/h, the published pumps' limit (engine-core l2/pk/tci.ts)]. */
@@ -54,6 +55,8 @@ export const INFUSION_WORDS = {
   notStarted: (why: string) => `Not started: ${why}`,
   notChanged: (drug: string, why: string) => `${drug}: not changed: ${why}`,
   notStopped: (drug: string, why: string) => `${drug}: not stopped: ${why}`,
+  /** L14 (N117 ruled B): the host starts, changes or stops no learner's infusion while the case is paused. */
+  paused: 'The case is paused: no infusion can be started, changed or stopped until it resumes.',
 } as const;
 
 /** A number as the phone prints a rate: three significant figures, no trailing zeros. */
@@ -181,13 +184,15 @@ export function infusionsView(o: { now(): number | null }): Infusions {
   let last: DrugsEvent | null = null;
   let weightKg: number | null = null;
   let link: InfusionsLink | null = null;
+  let pause = hostPause(); // L14: the host's pause as this phone follows it
 
   const startList = h('ul', { class: 'lr-tray-list lr-inf-start', 'aria-label': INFUSION_WORDS.startTitle });
   const startEmpty = h('p', { class: 'hint lr-inf-start-empty' }, INFUSION_WORDS.startEmpty);
   const runList = h('ul', { class: 'lr-tray-list lr-inf-running', 'aria-label': INFUSION_WORDS.runningTitle });
   const runEmpty = h('p', { class: 'hint lr-inf-running-empty' }, INFUSION_WORDS.runningEmpty);
   const runSaid = h('p', { class: 'lr-said lr-inf-said', role: 'status' });
-  const el = h('div', { class: 'lr-infusions' },
+  const pausedNote = h('p', { class: 'lr-paused', role: 'status', hidden: true }, INFUSION_WORDS.paused);
+  const el = h('div', { class: 'lr-infusions' }, pausedNote,
     h('section', { class: 'lr-inf-section', 'aria-label': INFUSION_WORDS.runningTitle }, h('h2', { class: 'lr-h2' }, INFUSION_WORDS.runningTitle), runSaid, runEmpty, runList),
     h('section', { class: 'lr-inf-section', 'aria-label': INFUSION_WORDS.startTitle }, h('h2', { class: 'lr-h2' }, INFUSION_WORDS.startTitle), startEmpty, startList));
 
@@ -212,7 +217,7 @@ export function infusionsView(o: { now(): number | null }): Infusions {
   };
 
   function send(what: 'start' | 'change' | 'stop', body: FollowerCommand, drug: string, ml: number, said: HTMLElement): void {
-    if (!link) return;
+    if (!link || pause.paused) return;
     pending.set(link.command(body), { what, drug, ml, said });
     setText(said, INFUSION_WORDS.sending);
   }
@@ -299,6 +304,9 @@ export function infusionsView(o: { now(): number | null }): Infusions {
     for (const [id, r] of runs) if (!live.has(id)) (r.el.remove(), runs.delete(id));
     for (const id of live) drawRun(runs.get(id) ?? addRun(id));
     startEmpty.hidden = [...preps.values()].some((r) => isReady(r.view));
+    pausedNote.hidden = !pause.paused;
+    for (const r of preps.values()) r.btn.disabled = pause.paused;
+    for (const r of runs.values()) r.change.disabled = r.stop.disabled = pause.paused;
     runEmpty.hidden = runs.size > 0;
   }
 
@@ -360,8 +368,10 @@ export function infusionsView(o: { now(): number | null }): Infusions {
 
   function attach(l: InfusionsLink): () => void {
     link = l;
+    pause = hostPause();
     readWeight(l);
     const offMsg = l.onMessage((m) => {
+      pause.onMessage(m);
       if (m.kind === 'ack') return onAck(m.commandId, m.accepted, m.reason);
       // a new timeline's snapshot: the patient (and so the weight) may be another
       if (m.kind === 'snapshot') weightKg = weightOfSnapshot(m.body) ?? weightKg;

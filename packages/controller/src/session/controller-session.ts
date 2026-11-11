@@ -14,6 +14,7 @@ import {
   newPeerId,
   fastForwardDone,
   SeqFilter,
+  type AckCode,
   type AckResult,
   type AppliedResolution,
   type CommandInput,
@@ -236,7 +237,7 @@ export class ControllerSession {
     this.retryTimer = null;
   }
 
-  private answer(id: string, p: Pending, a: { accepted: boolean; tick: number; reason?: string; code?: 'recent' }): void {
+  private answer(id: string, p: Pending, a: { accepted: boolean; tick: number; reason?: string; code?: AckCode }): void {
     this.pending.delete(id);
     const r: AckResult = { commandId: id, accepted: a.accepted, tick: a.tick, rttMs: this.now() - p.sentAt, ...(a.reason !== undefined ? { reason: a.reason } : {}), ...(a.code !== undefined ? { code: a.code } : {}) };
     if (p.cmd.batch) this.batchAnswered(p.cmd.batch.id, id, a);

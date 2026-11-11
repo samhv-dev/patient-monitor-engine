@@ -198,6 +198,7 @@ if (follow && shows === 'pick') {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
+  session.onNotGiven((n) => link.notGiven(n)); // L14: a learner's give refused while paused is a Log line
   // B6 (scenario-builder.md §6): the builder's run in place, a draft on this computer's session beside Instructor v2
   const draft = draftRun({ link, root: shell.root, drafts });
   // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed

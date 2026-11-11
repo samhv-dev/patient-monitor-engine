@@ -17,8 +17,8 @@
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type WireEvent } from '@pme/controller';
-import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
+import { asV1, isV2, LEARNER_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type NotGiven, type WireEvent } from '@pme/controller';
+import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
 
@@ -58,6 +58,9 @@ export interface Row {
   /** A `learner` row (L4, LQ4): an infusion change's replaced rate, and who had set it (a device key or the laptop,
    *  phone or card), as the host wrote it on the command. */
   replaced?: { rate: number; rateUnit: string; by: string };
+  /** A `learner` row (L14): an attempt the host refused before dispatch, with its reason (PAUSED_REFUSAL): not a dose,
+   *  so it carries no `dose`, no `ev` and no `prepId` (the Debrief's totals, rules and preparations never count it). */
+  notGiven?: string;
   /** A bookmark row (Instructor v2 marks): the mark's kind, and the note the instructor wrote with it. */
   markKind?: Exclude<MarkKind, 'stage'>;
   note?: string;
@@ -131,12 +134,17 @@ export interface RunData {
   phases?: PhaseEntry[];
   admin?: Administration[];
   edges?: RuleEdge[];
+  /** A pme-scenario/2 run (learner-action-remote.md L13): the preparations the learner remotes staged, given or not, as
+   *  the runner keeps them (absent: none staged, or a record made before L13). */
+  preps?: StagedPrep[];
 }
 /** What the record copies from the host's phase runner (`ScenarioDriver.phaseRunner`). */
 export interface GradeInputs {
   readonly phases: readonly PhaseEntry[];
   readonly admin: readonly Administration[];
   readonly edges: readonly RuleEdge[];
+  /** L13: the staged preparations (the phase runner's `preps`). */
+  readonly preps?: readonly StagedPrep[];
 }
 
 /** Ventilated breaths "begin" after this long without one [ENG: ui; longer than any set rate's interval, 6/min = 10 s]. */
@@ -279,6 +287,18 @@ export class RunRecord {
     this.add(row);
   }
 
+  /** L14: a learner's give the host refused because the case was paused (host-session.ts onNotGiven): the attempt, who
+   *  made it and why, at the case time it arrived. */
+  notGiven(n: NotGiven): void {
+    const c = n.command as unknown as Record<string, unknown>;
+    const by = typeof c.by === 'string' ? c.by : undefined;
+    const name = by !== undefined ? this.deviceName(by) : null;
+    this.add({ t: n.t, kind: 'learner', text: `${describeCommand(c)} not given: ${n.reason}`, remote: true, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), notGiven: n.reason });
+    // the runner's administrations now hold the attempt (AppSession records it there first); a paused clock sends no
+    // sample, so the once-a-second copy would not carry it until the case resumed
+    this.copy();
+  }
+
   /**
    * R5d: a press of the learner defibrillator window (the host applied only Charge and Shock, bare: host-session.ts) —
    * its words with the device's energy, the device key the host carried and the name the instructor gave it.
@@ -395,6 +415,8 @@ export class RunRecord {
     const r = this.runner();
     if (!r || !this.data.doc || !isV2(this.data.doc)) return;
     Object.assign(this.data, { format: 2, phases: r.phases.map((p) => ({ ...p })), admin: structuredClone([...r.admin]), edges: [...r.edges] });
+    if (r.preps?.length) this.data.preps = structuredClone([...r.preps]); // L13: absent until the first, as in the runner
+    else delete this.data.preps;
   }
 
   /** The record and its trackers as plain JSON (kept with the run's position across a reload of the page). */

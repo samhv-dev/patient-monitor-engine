@@ -8,6 +8,7 @@ import {
   learnerDefibMay,
   learnerMay,
   newPeerId,
+  PAUSED_REFUSAL,
   SeqFilter,
   type AppliedResolution,
   type ControlFlag,
@@ -124,6 +125,18 @@ export interface HostSessionOptions {
   phaseMark?: () => string | null;
   /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
   deviceName?: (key: string) => string | null;
+  /** L14: a learner device's drug the host did NOT give because the case was paused, one call per drug (the host's Log
+   *  and record show the attempt; nothing reached the engine). */
+  onNotGiven?: (n: NotGiven) => void;
+}
+
+/** L14: what the host refused to give (as it built it for the engine: the drug, the dose, `by` and `prepId`), who sent it,
+ *  why (PAUSED_REFUSAL) and the case time it arrived at. */
+export interface NotGiven {
+  command: WireCommand;
+  from: string;
+  reason: string;
+  t: SimSeconds;
 }
 
 /** What the host answers an instructor (the grant's reason, or the refused command's ack). */
@@ -293,6 +306,8 @@ export class HostSession {
   private timelines = 0; // newTimeline() count — a fast-forward stops when its timeline ends
   /** The last bolus of each drug (drug-lock.ts): a device's second one within SAME_DRUG_LOCK_S is refused. */
   private readonly gives = new RecentGives();
+  /** L14: the case is paused (the last accepted `time pause`/`resume`: the one place the patient's clock stops). */
+  private pausedNow = false;
   readonly stats = { applied: 0, rejected: 0, duplicates: 0, snapshotsSent: 0 };
 
   constructor(o: HostSessionOptions) {
@@ -422,6 +437,11 @@ export class HostSession {
     if (!h) return false;
     h.t.send(this.stamp({ kind: 'vent', to: h.from, body }));
     return true;
+  }
+
+  /** L14: the case is paused (a learner device's drug is refused until it resumes). */
+  get paused(): boolean {
+    return this.pausedNow;
   }
 
   /** A fast-forward is running (controllers' commands are refused until it ends). */
@@ -834,6 +854,7 @@ export class HostSession {
   /** Apply a learner command's translation: refused as a whole, or every command through `command()` (one stage group). */
   private async learnerApply(t: ManagedTransport, from: string, out: Translated, h: HostPrep | null, refuse: (reason: string) => void): Promise<void> {
     if (!out.ok) return refuse(out.why);
+    if (this.pausedNow) return this.notGiven(t, from, out.cmds); // L14 (N117 ruled B): no drug while the case is paused
     // a preparation of two drugs is given whole or not at all: a locked drug refuses the delivery before any dose goes
     const now = this.o.target.now();
     const first = out.cmds[0] as WireCommand;
@@ -841,6 +862,23 @@ export class HostSession {
     if (locked) return this.answer(t, first, from, this.now(), { result: { accepted: false, tick: now.tick, reason: lockReason(locked) }, applied: first }, locked);
     if (h) this.pushing.set(first.id, { h, volumeMl: out.volumeMl, news: out.volumeMl > 0 ? 'delivered' : 'infusing' });
     for (const x of out.cmds) await this.command(t, x, from);
+  }
+
+  /**
+   * L14: refuse a learner's give because the case is paused — one ack (`code: 'paused'`), kept for a resend, nothing
+   * dispatched (the engine's queue, the drug lock, the preparation's volume and the record of gives are untouched), and
+   * each drug it would have given to the host's own screens (onNotGiven), as the attempt it was.
+   */
+  private notGiven(t: ManagedTransport, from: string, cmds: WireCommand[]): void {
+    const now = this.o.target.now();
+    const id = (cmds[0] as WireCommand).id;
+    const ack: AckBody = { kind: 'ack', commandId: id, accepted: false, tick: now.tick, reason: PAUSED_REFUSAL, code: 'paused' };
+    if (this.seen.size >= SEEN_MAX) this.seen.delete(this.seen.keys().next().value as string);
+    this.seen.set(id, ack);
+    t.send(this.stamp(ack));
+    this.stats.rejected++;
+    this.o.onCommand?.({ commandId: id, from, receivedAt: this.now(), tick: now.tick, accepted: false });
+    for (const command of cmds) this.o.onNotGiven?.({ command, from, reason: PAUSED_REFUSAL, t: now.simT });
   }
 
   /**
@@ -1123,6 +1161,7 @@ export class HostSession {
       return { result: { accepted: false, tick, reason: `scale must be ${MIN_TIME_SCALE}–${MAX_TIME_SCALE}` }, applied: cmd }; // The clock's own range (×8)
     }
     this.o.target.time(cmd.action, cmd.value);
+    if (cmd.action !== 'scale') this.pausedNow = cmd.action === 'pause';
     this.sticky.set(cmd.action === 'scale' ? 'time.scale' : 'time.run', cmd);
     return { result: { accepted: true, tick }, applied: cmd };
   }

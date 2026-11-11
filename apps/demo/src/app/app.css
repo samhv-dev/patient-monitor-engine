@@ -965,6 +965,9 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .lr-holds:empty, .lr-conc:empty, .lr-said:empty, .lr-cannot:empty, .lr-time:empty, .lr-state:empty, .lr-ontop:empty, .lr-tray-cleared:empty { display: none; }
 .lr-time, .lr-state, .lr-said, .lr-cannot { margin: 0; }
 .lr-cannot, .lr-said { color: var(--warn); font-weight: 600; }
+/* L14: the case is paused: the phone's drug controls say why they cannot be used */
+.lr-paused { margin: 0; padding: var(--s-2) var(--s-3); border-left: 4px solid var(--warn); border-radius: var(--r-control); background: var(--bezel-3); font-weight: 600; }
+.lr-paused[hidden] { display: none; }
 .lr-tray-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
 .lr-item { display: grid; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-card); background: var(--bezel-2); }
 .lr-item-title { margin: 0; font-weight: 600; color: var(--text-strong); }
