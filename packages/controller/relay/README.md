@@ -159,7 +159,8 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   `concentration {amount, unit, perMl}`, `set?`, a drip channel's drops/mL), `rate` (`rate`, `unit`: a rate unit, `mL/h`
   or `drops/min`; `limitMl?`, a number or null; `weightKg?`), `tci` (`setId`, `mode` `plasma` or `effect`, `target`,
   `patient {ageY, weightKg, heightCm, sex, pmaWeeks?, opioids?}`), `bolus` (`volumeMl` or `dose {amount, unit}`, one of
-  them; `weightKg?`), `start`, `stop`, `purge` (`volumeMl`) or `unload`, with no other field anywhere. Refused
+  them; `weightKg?`), `start`, `stop`, `purge` (`volumeMl`) or `unload`, with no other field anywhere. `weightKg` (on
+  `rate` and `bolus`, for a per-kg dose) is the weight typed into the pump, never the patient's. Refused
   (`forbidden`), so never at the host: a raw `applyEvent pump` (the host builds it with the syringe's true contents),
   `applyEvent drug` or any other event, `prep` (the learner remote's), `infusion set`, `time`, `scenario`, `atTick`, `by`,
   and a `load` that carries a `concentration` or `contents` (a tablet never says what a syringe holds) or a bolus or
