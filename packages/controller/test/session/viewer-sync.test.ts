@@ -9,14 +9,19 @@ import { createStamper } from '../../src/protocol.ts';
 import { manualHost, type ManualHost } from '../fakes/manual-host.ts';
 import { manualViewer, type ManualViewer } from '../fakes/manual-viewer.ts';
 import { waitFor } from '../helpers.ts';
+import type { EngineEvent } from '@pme/engine-core';
 
 const flushIo = () => new Promise((r) => setTimeout(r, 0));
 
 /** Host + in-process hub + controller + viewer, stepping wall time in 20 ms frames. */
-async function rig() {
+async function rig(o: { hostKeeps?: EngineEvent['type'][] } = {}) {
   const clock = { wall: 1_000_000 };
   const wallNow = () => clock.wall;
   const host = manualHost();
+  if (o.hostKeeps) {
+    const keep = new Set(o.hostKeeps);
+    host.on = (fn) => host.engine.on((e) => void (keep.has(e.type) || fn(e)));
+  }
   const hub = createInProcessHub();
   const hs = new HostSession({ session: 'VWS234', target: host, wallNow, stateIntervalMs: 0 });
   hs.addTransport(hub.connect());
@@ -72,7 +77,11 @@ describe('ViewerSync', () => {
   });
 
   it('N109: an EEG switched on after the viewer synced draws the host’s samples, though the viewer was made under another seed', async () => {
-    const r = await rig(); // host seed 7, viewer seed 99 (the fakes' defaults)
+    // host seed 7, viewer seed 99 (the fakes' defaults). The host keeps its `eegReading` events (the EEG device's raw
+    // samples): on main HostSession still forwards them and the wire guard refuses the flush they are in (WireSafetyError,
+    // "message.body[1].display.raw: numeric array of 250 > 64"); PR 424 (eeg-e12-depth-window) makes them local-only in
+    // HostSession itself. Every follower draws them from its own engine, which is what this test compares.
+    const r = await rig({ hostKeeps: ['eegReading'] });
     await waitFor(() => r.sync.status === 'synced');
     await r.run(2);
     await r.ctl.send({ type: 'device', action: { device: 'eeg', action: 'on' } });
