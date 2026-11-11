@@ -33,8 +33,8 @@ async function run(e: MonitorEngine, toS: number): Promise<void> {
 const EEG_IDS = ['sef', 'mf', 'eegSr', 'eegImp'];
 
 describe('device eeg model', () => {
-  it('the registry has the generic reader; `model` takes a registry id only, while the EEG is on, and says why not', () => {
-    expect(Object.keys(EEG_DEVICES)).toEqual(['generic']);
+  it('the registry has the generic and the BIS-type readers (E7); `model` takes a registry id only, while the EEG is on, and says why not', () => {
+    expect(Object.keys(EEG_DEVICES)).toEqual(['generic', 'bisType']);
     const e = mk();
     const off = e.dispatch(eeg('model', 'generic'));
     expect(off.accepted).toBe(false);
@@ -42,6 +42,7 @@ describe('device eeg model', () => {
     ok(e, eeg('on'));
     e.step(1);
     ok(e, eeg('model', 'generic'));
+    ok(e, eeg('model', 'bisType'));
     for (const [bad, why] of [['bis', /generic/], [3, /generic/], [undefined, /generic/], ['', /generic/]] as const) {
       const r = e.dispatch(eeg('model', bad));
       expect(r.accepted, String(bad)).toBe(false);
@@ -145,5 +146,35 @@ describe('the generic device on the engine', () => {
     ok(c, eeg('off'));
     await run(c, 75);
     expect(cr.meas.filter((x) => 'sef' in x.values && x.t > 71).length).toBe(0);
+  }, 120_000);
+
+  it('the BIS-type reader (E7) is deterministic too: a follower stepping differently and a restored snapshot publish its readings (bis, every 0.5 s)', async () => {
+    const script = async (e: MonitorEngine, stepwise: boolean, toS: number) => {
+      ok(e, eeg('on'));
+      e.advanceTo(3);
+      ok(e, eeg('model', 'bisType'));
+      ok(e, ev({ kind: 'tci', drugId: 'propofol', mode: 'effect', target: 5 }));
+      if (stepwise) for (let i = 0; i < (toS - 3) * 50; i++) e.step(1);
+      else await run(e, toS);
+    };
+    const host = mk(7);
+    const h = record(host);
+    await script(host, true, 70);
+    const bis = h.meas.filter((x) => 'bis' in x.values);
+    expect(bis.length).toBeGreaterThan(120); // two a second from the first full epoch
+    expect(bis[1]!.t - bis[0]!.t).toBeCloseTo(0.5, 1);
+    const follower = mk(7);
+    const f = record(follower);
+    await script(follower, false, 70);
+    const sig = (r: { meas: Meas[]; reads: Reading[] }) => JSON.stringify([r.meas.filter((x) => 'bis' in x.values), r.reads]);
+    expect(sig(f)).toBe(sig(h));
+    const b = mk(7);
+    await script(b, false, 35);
+    const c = mk(7);
+    c.restore(JSON.parse(JSON.stringify(b.snapshot())));
+    const cr = record(c);
+    await run(c, 70);
+    const after = (r: { meas: Meas[]; reads: Reading[] }) => JSON.stringify([r.meas.filter((x) => 'bis' in x.values && x.t > 35.5), r.reads.filter((x) => x.t > 35.5)]);
+    expect(after(cr)).toBe(after(h));
   }, 120_000);
 });
