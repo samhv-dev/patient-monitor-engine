@@ -52,6 +52,19 @@ describe('device eeg model', () => {
   });
 });
 
+describe('device eeg on, then model, in one breath (Room setup, session.ts sendEegModel)', () => {
+  it('the model sent right after `on` is accepted and read with: the queued `on` decides, not the state of the moment', async () => {
+    const e = mk();
+    const { reads } = record(e);
+    ok(e, eeg('on'));
+    ok(e, eeg('model', 'bisType'));
+    await run(e, 5);
+    expect(reads.at(-1)?.model).toBe('bisType');
+    ok(e, eeg('off'));
+    expect(e.dispatch(eeg('model', 'generic')).reason).toMatch(/off/); // an `off` queued before it decides too
+  });
+});
+
 describe('the generic device on the engine', () => {
   it('publishes sef, mf, eegSr and eegImp once a second from the first full epoch, and an eegReading with its display', async () => {
     const e = mk(43);
