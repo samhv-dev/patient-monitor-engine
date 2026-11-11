@@ -1104,13 +1104,18 @@ export interface CommandFormOpts {
   addWords: string;
   /** "<sends>: <the command in words>". */
   sends: string;
-  /** More groups of items after the Drug sheet's (the script's card-set events), each value `<kind>:<id>`, with the
-   *  fields of their kinds and the command they build. */
+  /** More groups of items after the Drug sheet's (the script's card-set events and the other sheets' commands, B5 and
+   *  piece 162), each value `<kind>:<id>`, with the fields of their kinds and the command they build. `fields` gets the
+   *  form's number field, its `ready` (a field of its own calls it on each change) and the controls' name. */
   more?: {
     groups: Array<[string, Array<[string, string]>]>;
-    fields(kind: string, id: string, st: Rec, numIn: (k: string, label: string) => HTMLInputElement): Array<HTMLElement | string> | null;
+    fields(kind: string, id: string, st: Rec, numIn: (k: string, label: string) => HTMLInputElement, ready: () => void, who: string): Array<HTMLElement | string> | null;
     build(kind: string, id: string, st: Rec): Rec | null;
   };
+  /** A command being edited (piece 162): the item and the fields' values it starts on, as `more`'s kinds read them. */
+  edit?: { what: string; st: Rec };
+  /** The controls' name ("<who>: what"), 'New command' unless told. */
+  who?: string;
 }
 
 /** The Drug sheet's form for a new command: its items (drugs by name, the fluids, the vaporisers), a bolus or an infusion,
@@ -1118,8 +1123,10 @@ export interface CommandFormOpts {
  *  `infusion`, `fluid`, `vaporiser`, which the sheet sends). B4's press and B5's script entries use it. */
 export function commandForm(o: CommandFormOpts): HTMLElement {
   const drugId = o.first ?? '';
-  const what = select(drugId ? `drug:${drugId}` : '', [[null, [['', 'choose']]], ['Drugs', DRUG_CHOICES.map((d) => [`drug:${d.id}`, d.name] as [string, string])],
-    ['Fluids', FLUID_IDS.map((f) => [`fluid:${f}`, f] as [string, string])], ['Vaporiser', ['sevoflurane', 'isoflurane', 'desflurane'].map((x) => [`vap:${x}`, x] as [string, string])], ...(o.more?.groups ?? [])], 'New command: what');
+  const who = o.who ?? 'New command';
+  let seed = o.edit ? { ...o.edit.st } : null;
+  const what = select(o.edit?.what ?? (drugId ? `drug:${drugId}` : ''), [[null, [['', 'choose']]], ['Drugs', DRUG_CHOICES.map((d) => [`drug:${d.id}`, d.name] as [string, string])],
+    ['Fluids', FLUID_IDS.map((f) => [`fluid:${f}`, f] as [string, string])], ['Vaporiser', ['sevoflurane', 'isoflurane', 'desflurane'].map((x) => [`vap:${x}`, x] as [string, string])], ...(o.more?.groups ?? [])], `${who}: what`);
   const form = h('div', { class: 'sb-leafrow' });
   const ok = button(o.addWords, () => {
     const c = build();
@@ -1127,7 +1134,7 @@ export function commandForm(o: CommandFormOpts): HTMLElement {
   }, 'small primary');
   const st: Rec = { route: 'bolus' };
   const numIn = (k: string, label: string) => {
-    const i = h('input', { type: 'number', step: 'any', inputmode: 'decimal', class: 'input sb-num', 'aria-label': `New command: ${label}` });
+    const i = h('input', { type: 'number', step: 'any', inputmode: 'decimal', class: 'input sb-num', 'aria-label': `${who}: ${label}` });
     i.value = typeof st[k] === 'number' ? String(st[k]) : '';
     i.addEventListener('input', () => ((st[k] = i.value.trim() === '' ? undefined : Number(i.value)), ready()));
     return i;
@@ -1149,15 +1156,16 @@ export function commandForm(o: CommandFormOpts): HTMLElement {
   const drawForm = () => {
     const [kind, id] = what.value.split(':') as [string, string];
     for (const k of Object.keys(st)) if (k !== 'route') delete st[k];
+    if (seed) (Object.assign(st, seed), (seed = null)); // an edited command's values, once
     if (kind === 'drug') {
       const units = () => unitsFor(id, st.route === 'infusion');
       const p = PRESETS[id] ?? {};
       if (!(st.route === 'bolus' ? p.bolus : p.infusion) && (st.route === 'bolus' ? p.infusion : p.bolus)) st.route = st.route === 'bolus' ? 'infusion' : 'bolus';
-      const rs = select(String(st.route), [[null, [['bolus', 'IV bolus'], ['infusion', 'Infusion']]]], 'New command: given as');
+      const rs = select(String(st.route), [[null, [['bolus', 'IV bolus'], ['infusion', 'Infusion']]]], `${who}: given as`);
       const first = (st.route === 'bolus' ? p.bolus : p.infusion)?.[0];
       st.unit = first?.[1] ?? units()[0];
       if (first) st.dose = first[0];
-      const us = select(String(st.unit), [[null, units().map((u) => [u, unitText(u)] as [string, string])]], 'New command: unit');
+      const us = select(String(st.unit), [[null, units().map((u) => [u, unitText(u)] as [string, string])]], `${who}: unit`);
       us.addEventListener('change', () => ((st.unit = us.value), ready()));
       const dose = numIn('dose', st.route === 'bolus' ? 'the dose' : 'the rate');
       const presets = ((st.route === 'bolus' ? p.bolus : p.infusion) ?? []).map(([v, u]) => button(`${v} ${unitText(u)}`, () => {
@@ -1177,11 +1185,11 @@ export function commandForm(o: CommandFormOpts): HTMLElement {
       st.dial = 2;
       st.fgf = 2;
       form.replaceChildren(h('span', { class: 'sb-hint' }, 'Dial'), numIn('dial', 'dial, %'), h('span', { class: 'sb-hint' }, '% at'), numIn('fgf', 'fresh gas, L/min'), h('span', { class: 'sb-hint' }, 'L/min'));
-    } else form.replaceChildren(...(o.more?.fields(kind, id, st, numIn) ?? []));
+    } else form.replaceChildren(...(o.more?.fields(kind, id, st, numIn, ready, who) ?? []));
     ready();
   };
   what.addEventListener('change', drawForm);
   drawForm();
-  return h('div', { class: 'sb-adder', role: 'group', 'aria-label': 'New command, from the Drug sheet’s form' }, h('div', { class: 'sb-leafrow' }, what), form, preview,
+  return h('div', { class: 'sb-adder', role: 'group', 'aria-label': o.more ? `${who}, from the instructor sheets’ forms` : 'New command, from the Drug sheet’s form' }, h('div', { class: 'sb-leafrow' }, what), form, preview,
     h('div', { class: 'sb-acts' }, ok, button('Cancel', o.cancel, 'small ghost')));
 }

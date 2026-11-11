@@ -29,17 +29,36 @@ describe('drug bus', () => {
     e.advanceTo(60);
     expect(stOf(e).resp.vaLpm).toBeGreaterThan(3);
   }, 300_000);
-  it('TCI propofol + remifentanil: per-agent brain Ce on target, a separate remifentanil vent site, the surface exceeds the sum (no drive values: the neuro model)', () => {
+  // Pump-rack E2 (decision D3, PQ5 = A): this row asserted the PATIENT's propofol brain Ce at 2 ± 0.05 under the oracle
+  // TCI. The pumps now predict with their own models, blind to the patient: in this unventilated rig the patient's
+  // propofol clearance factor is 0.56 and its cardiac-output ratio 0.35 at 10 min (measured), so its brain Ce is 2.61
+  // while the pump shows 2.00; remifentanil (factor 0.97) stays at 2.03. The control beside it: the same rig with both
+  // factors pinned at 1 (the TEST-ONLY seams) puts the patient back on the pumps' 2. The propofol pump is typed "with
+  // opioids" (Eleveld), as the rig co-administers remifentanil from t = 0.
+  const busRig = (pin: boolean) => {
     const e = createEngine({ seed: 3, mode: 'modeled' });
-    e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 2 } }));
+    if (pin) Object.assign((e as unknown as { st: { pk: object } }).st.pk, { pinClFactor: 1, pinDistQ: 1 });
+    e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 2, opioids: true } }));
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'tci', drugId: 'remifentanil', mode: 'effect', target: 2 } }));
     e.advanceTo(600);
-    const b = stOf(e).pk.bus;
-    expect(b.agents.propofol!.brain).toBeCloseTo(2, 1);
+    const st = (e.snapshot().state as { st: { pk: { bus: DrugBus; drugs: Record<string, { pred?: { x: number[] } }> } } }).st.pk;
+    return { b: st.bus, pump: (id: string) => st.drugs[id]!.pred!.x[3] as number };
+  };
+  it('TCI propofol + remifentanil: the pumps\' own Ce on target; the bus carries the PATIENT\'s per-agent brain Ce, a separate remifentanil vent site, the surface exceeds the sum (no drive values: the neuro model)', () => {
+    const { b, pump } = busRig(false);
+    expect(pump('propofol')).toBeCloseTo(2, 1);
+    expect(pump('remifentanil')).toBeCloseTo(2, 1);
+    expect(b.agents.propofol!.brain).toBeGreaterThan(2.3); // the patient's lower clearance and output, which the pump does not see
     expect(b.agents.remifentanil!.brain).toBeCloseTo(2, 1);
     expect(b.agents.remifentanil!.vent).toBeCloseTo(2, 1); // at steady state both sites equal the plasma
-    expect(b.cns.opioidCeRemiEq).toBeCloseTo(2, 1);
+    expect(b.cns.opioidCeRemiEq).toBeCloseTo(b.agents.remifentanil!.brain, 9);
     expect(b.cns.uSurface).toBeGreaterThan(2 / 3.08 + 2 / 1.2);
     expect('resp' in b).toBe(false); // R51 §2
+  }, 300_000);
+  it('control: the same rig with the clearance and distribution factors pinned at 1 — the patient is back on the pumps\' 2 ± 0.05', () => {
+    const { b, pump } = busRig(true);
+    expect(b.agents.propofol!.brain).toBeCloseTo(2, 1);
+    expect(b.agents.remifentanil!.brain).toBeCloseTo(2, 1);
+    expect(Math.abs(b.agents.propofol!.brain - pump('propofol'))).toBeLessThan(0.05);
   }, 300_000);
 });

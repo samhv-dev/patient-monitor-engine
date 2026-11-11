@@ -1,0 +1,362 @@
+{
+  "$about": "The EDP-TS face's words, colours, layout numbers, ranges and steps (plan docs/plans/vent-skin-edp-ts.md §5, piece V1). Every leaf {v, p, src[, why]}: p is documented, measured, inferred, eng (a gap the face must fill; why says how) or sim (the simulator's own words, citing the plan's gap table). The maker, Ehya Darman Pishrafteh, is named here and in research/57, never drawn. Checked by provenance.test.ts.",
+  "words": {
+    "adl": {"v": "ADL", "p": "documented", "src": "research/57 R-06"},
+    "backupOff": {"v": "Backup: OFF", "p": "documented", "src": "research/57 R-06"},
+    "peakFlow": {"v": "Peak Flow", "p": "documented", "src": "research/57 W-01"},
+    "ti": {"v": "Ti", "p": "documented", "src": "research/57 W-01"},
+    "te": {"v": "Te", "p": "documented", "src": "research/57 W-01"},
+    "ie": {"v": "I:E", "p": "documented", "src": "research/57 W-01"},
+    "current": {"v": "Current", "p": "documented", "src": "research/57 W-01"},
+    "fTotal": {"v": "fTotal", "p": "documented", "src": "research/57 W-01"},
+    "vt": {"v": "VT", "p": "documented", "src": "research/57 W-01"},
+    "ve": {"v": "V̇E", "p": "documented", "src": "research/57 W-01"},
+    "oxygen": {"v": "Oxygen", "p": "documented", "src": "research/57 W-01"},
+    "uLmin": {"v": "L/min", "p": "documented", "src": "research/57 W-01"},
+    "uS": {"v": "s", "p": "documented", "src": "research/57 W-01"},
+    "uBpm": {"v": "bpm", "p": "documented", "src": "research/57 W-01"},
+    "uL": {"v": "L", "p": "documented", "src": "research/57 W-01"},
+    "uPct": {"v": "%", "p": "documented", "src": "research/57 W-01"},
+    "uCmH2O": {"v": "cmH2O", "p": "documented", "src": "research/57 W-05"},
+    "volComp": {"v": "Volume compensation", "p": "documented", "src": "research/57 W-02"},
+    "peak": {"v": "Peak", "p": "documented", "src": "research/57 W-03"},
+    "trach": {"v": "Trach.", "p": "documented", "src": "research/57 W-03"},
+    "plateau": {"v": "Plateau", "p": "documented", "src": "research/57 W-03"},
+    "mean": {"v": "Mean", "p": "documented", "src": "research/57 W-03"},
+    "peep": {"v": "PEEP", "p": "documented", "src": "research/57 W-03"},
+    "pressureLimits": {"v": "Pressure Limits", "p": "documented", "src": "research/57 W-03"},
+    "dashes": {"v": "---", "p": "documented", "src": "research/57 N-03"},
+    "paw": {"v": "Paw(cmH2O)", "p": "documented", "src": "research/57 W-04"},
+    "vtL": {"v": "VT(L)", "p": "documented", "src": "research/57 W-04"},
+    "flowL": {"v": "V̇(L/min)", "p": "documented", "src": "research/57 W-04"},
+    "secs": {"v": "(s)", "p": "documented", "src": "research/57 W-04"},
+    "f": {"v": "f", "p": "documented", "src": "research/57 W-05"},
+    "psv": {"v": "PSV", "p": "documented", "src": "research/57 W-05"},
+    "pcv": {"v": "PCV", "p": "documented", "src": "research/57 W-06"},
+    "expSens": {"v": "Exp. Sensitiv.", "p": "documented", "src": "research/57 W-05"},
+    "sens": {"v": "Sens", "p": "documented", "src": "research/57 W-05"},
+    "riseTime": {"v": "Rise Time", "p": "documented", "src": "research/57 W-05"},
+    "flowWaveform": {"v": "Flow Waveform", "p": "documented", "src": "research/57 W-05"},
+    "alarmSignals": {"v": "Alarm Signals", "p": "documented", "src": "research/57 W-09"},
+    "ventInop": {"v": "Vent Inop", "p": "documented", "src": "research/57 W-09"},
+    "high": {"v": "High", "p": "documented", "src": "research/57 W-09"},
+    "medLow": {"v": "Med Low", "p": "documented", "src": "research/57 W-09"},
+    "alarmLimits": {"v": "Alarm Limits", "p": "documented", "src": "research/57 W-09"},
+    "silence": {"v": "30-60 s", "p": "documented", "src": "research/57 W-09"},
+    "menu": {"v": "Menu", "p": "documented", "src": "research/57 W-09"},
+    "mode": {"v": "Mode", "p": "documented", "src": "research/57 W-09"},
+    "suction": {"v": "Suction %O2", "p": "documented", "src": "research/57 W-09"},
+    "manualInsp": {"v": "Manual Insp.", "p": "documented", "src": "research/57 W-09"},
+    "inspExpPause": {"v": "Insp/Exp Pause", "p": "documented", "src": "research/57 W-09"},
+    "ctrl": {"v": "Ctrl", "p": "documented", "src": "research/57 W-09"},
+    "esc": {"v": "Esc", "p": "documented", "src": "research/57 W-09"},
+    "vac": {"v": "VAC", "p": "documented", "src": "research/57 W-09"},
+    "battery": {"v": "Battery/Charge", "p": "documented", "src": "research/57 W-09"},
+    "graphics": {"v": "Graphics", "p": "documented", "src": "research/57 R-33"},
+    "freeze": {"v": "Freeze", "p": "documented", "src": "research/57 R-33"},
+    "respMech": {"v": "Respiratory mechanics", "p": "documented", "src": "research/57 R-33"},
+    "saveLoop": {"v": "Save loop", "p": "documented", "src": "research/57 R-33"},
+    "nebulizer": {"v": "Nebulizer", "p": "documented", "src": "research/57 R-33"},
+    "help": {"v": "?", "p": "documented", "src": "research/57 R-33"},
+    "standby": {"v": "Standby", "p": "documented", "src": "research/57 R-33"},
+    "ventModes": {"v": "Ventilation Modes", "p": "documented", "src": "research/57 O-09"},
+    "otherModes": {"v": "Other ventilation Modes", "p": "documented", "src": "research/57 O-10"},
+    "more": {"v": "▸", "p": "documented", "src": "research/57 O-09"},
+    "footer": {"v": "Press [Knob] Select - [Esc] Exit", "p": "documented", "src": "research/57 O-13"},
+    "modeWord": {"v": "Mode", "p": "documented", "src": "research/57 O-14"},
+    "pressKnob": {"v": "Press control knob to start", "p": "documented", "src": "research/57 O-14"},
+    "pressEsc": {"v": "Press Esc to exit", "p": "documented", "src": "research/57 O-14"},
+    "VCV": {"v": "VCV", "p": "documented", "src": "research/57 O-09"},
+    "PCV": {"v": "PCV", "p": "documented", "src": "research/57 O-09"},
+    "PSV/CPAP": {"v": "PSV/CPAP", "p": "documented", "src": "research/57 O-09"},
+    "SIMV(PCV)+PSV": {"v": "SIMV(PCV)+PSV", "p": "documented", "src": "research/57 O-09"},
+    "Noninvasive (NIV)": {"v": "Noninvasive (NIV)", "p": "documented", "src": "research/57 O-09"},
+    "SIMV(VCV)+PSV": {"v": "SIMV(VCV)+PSV", "p": "documented", "src": "research/57 O-10"},
+    "MMV+PSV": {"v": "MMV+PSV", "p": "documented", "src": "research/57 O-10"},
+    "PSV+VT Assured": {"v": "PSV+VT Assured", "p": "documented", "src": "research/57 O-10"},
+    "APRV": {"v": "APRV", "p": "documented", "src": "research/57 O-10"},
+    "PRVC": {"v": "PRVC", "p": "documented", "src": "research/57 O-10"},
+    "menuTitle": {"v": "Menu", "p": "documented", "src": "research/57 E-01"},
+    "patientsData": {"v": "Patient's Data", "p": "documented", "src": "research/57 E-01"},
+    "backupVent": {"v": "Backup ventilation", "p": "documented", "src": "research/57 E-01"},
+    "ventAdjuncts": {"v": "Ventilatory adjuncts", "p": "documented", "src": "research/57 E-01"},
+    "records": {"v": "Records", "p": "documented", "src": "research/57 E-01"},
+    "tools": {"v": "Tools", "p": "documented", "src": "research/57 E-01"},
+    "transport": {"v": "Intrahospital transport", "p": "documented", "src": "research/57 E-01"},
+    "no": {"v": "No", "p": "documented", "src": "research/57 E-01"},
+    "inspPause": {"v": "Inspiratory pause", "p": "documented", "src": "research/57 E-02"},
+    "off": {"v": "Off", "p": "documented", "src": "research/57 E-02"},
+    "sighs": {"v": "Sighs", "p": "documented", "src": "research/57 E-02"},
+    "tubeComp": {"v": "Tube compensation", "p": "documented", "src": "research/57 E-02"},
+    "volumeComp": {"v": "Volume compensation", "p": "documented", "src": "research/57 E-02"},
+    "yes": {"v": "Yes", "p": "documented", "src": "research/57 E-04"},
+    "humidifier": {"v": "Humidifier", "p": "documented", "src": "research/57 E-02"},
+    "leakComp": {"v": "Leak compensation", "p": "documented", "src": "research/57 E-02"},
+    "toolsTitle": {"v": "Tools", "p": "documented", "src": "research/57 E-06"},
+    "autoscale": {"v": "Autoscale", "p": "documented", "src": "research/57 E-06"},
+    "suctionConfig": {"v": "Suction configuration", "p": "documented", "src": "research/57 E-06"},
+    "calibration": {"v": "Calibration", "p": "documented", "src": "research/57 E-06"},
+    "settings": {"v": "Settings", "p": "documented", "src": "research/57 E-06"},
+    "timeOfUse": {"v": "Time of use and soft version", "p": "documented", "src": "research/57 E-06"},
+    "alarmSettings": {"v": "Alarm settings", "p": "documented", "src": "research/57 A-21"},
+    "inspPressure": {"v": "Inspiratory pressure", "p": "documented", "src": "research/57 A-21"},
+    "tidalVolume": {"v": "Tidal volume", "p": "documented", "src": "research/57 A-21"},
+    "minuteVolume": {"v": "Minute volume", "p": "documented", "src": "research/57 A-21"},
+    "o2Conc": {"v": "Oxygen concentration", "p": "documented", "src": "research/57 A-21"},
+    "respRate": {"v": "Respiratory rate", "p": "documented", "src": "research/57 A-21"},
+    "lowPeep": {"v": "Low PEEP", "p": "documented", "src": "research/57 A-21"},
+    "etco2": {"v": "ETCO2", "p": "documented", "src": "research/57 A-21"},
+    "faceName": {"v": "EDP-TS", "p": "sim", "src": "plan §5"},
+    "knob": {"v": "control knob", "p": "inferred", "src": "research/57 O-14", "why": "the knob's name as the confirmation window prints it (\"Press control knob to start\"); the knob carries no word"},
+    "simPSV": {"v": "PSV (simulator scenario)", "p": "sim", "src": "plan GM3"},
+    "simPAV": {"v": "PAV (simulator scenario)", "p": "sim", "src": "plan §3.1"}
+  },
+  "alarms": {
+    "pmax": {
+      "text": {"v": "High Pressure", "p": "documented", "src": "research/57 A-32"},
+      "priority": {"v": "high", "p": "documented", "src": "research/57 A-32"}
+    },
+    "disconnection": {
+      "text": {"v": "Disconnection", "p": "documented", "src": "research/57 A-34"},
+      "priority": {"v": "high", "p": "documented", "src": "research/57 A-34"}
+    },
+    "mvHigh": {
+      "text": {"v": "High minute volume", "p": "documented", "src": "research/57 A-40"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-40"}
+    },
+    "mvLow": {
+      "text": {"v": "Low minute volume", "p": "documented", "src": "research/57 A-40"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-40"}
+    },
+    "vtHigh": {
+      "text": {"v": "High tidal volume", "p": "documented", "src": "research/57 A-41"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-41"}
+    },
+    "vtLow": {
+      "text": {"v": "Low tidal volume", "p": "documented", "src": "research/57 A-42"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-42"}
+    },
+    "apnea": {
+      "text": {"v": "Apnea condition", "p": "documented", "src": "research/57 A-45"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-45"}
+    },
+    "fHigh": {
+      "text": {"v": "High rate", "p": "documented", "src": "research/57 A-50"},
+      "priority": {"v": "low", "p": "documented", "src": "research/57 A-50"}
+    }
+  },
+  "reasons": {
+    "v2": {"v": "needs piece V2", "p": "sim", "src": "plan GM3, GP13, GP17, GA2, GX12"},
+    "v3": {"v": "needs piece V3", "p": "sim", "src": "plan GA3, GA10, GA11, GA16, GP25"},
+    "v4": {"v": "needs piece V4", "p": "sim", "src": "plan GD12, GD13, GD14, GD15, GD16, GX1, GX3, GX7, GX8, GX13"},
+    "v5": {"v": "needs piece V5", "p": "sim", "src": "plan GX4, GX5"},
+    "v6": {"v": "needs piece V6", "p": "sim", "src": "plan GM4, GM5"},
+    "v7": {"v": "needs piece V7", "p": "sim", "src": "plan GP18"},
+    "v8": {"v": "needs piece V8", "p": "sim", "src": "plan GM6"},
+    "v9": {"v": "needs piece V9", "p": "sim", "src": "plan GM7, GM8"},
+    "v10": {"v": "needs piece V10", "p": "sim", "src": "plan GM9"},
+    "v13": {"v": "needs piece V13", "p": "sim", "src": "plan GD20, GA19"},
+    "v14": {"v": "needs piece V14 (version 2)", "p": "sim", "src": "plan GD18, GA13"},
+    "v12": {"v": "version 2: the start-up sequence is not built yet", "p": "sim", "src": "plan GX19"},
+    "tube": {"v": "version 2: tube compensation is not modelled yet", "p": "sim", "src": "plan GP19"},
+    "nebul": {"v": "nebulised gas not modelled", "p": "sim", "src": "plan GX6"},
+    "humid": {"v": "not modelled", "p": "sim", "src": "plan GP21"},
+    "leak": {"v": "no leak modelled", "p": "sim", "src": "plan GP22"},
+    "volFixed": {"v": "fixed: the model has no circuit compliance", "p": "sim", "src": "plan GP20"},
+    "gas": {"v": "no gas model", "p": "sim", "src": "plan GX18"},
+    "notModelled": {"v": "not modelled", "p": "sim", "src": "plan GP25"},
+    "rate4": {"v": "4 bpm is the model's lowest rate: needs piece V6", "p": "sim", "src": "plan GP4"},
+    "ctrlGap": {"v": "Ctrl's step for this setting is not in the manual", "p": "sim", "src": "plan GX10"},
+    "vcvOnly": {"v": "VCV only", "p": "sim", "src": "plan GP14"},
+    "descending": {"v": "Descending: needs piece V2", "p": "sim", "src": "plan GP13"},
+    "simMode": {"v": "a simulator scenario's mode: choose a mode with Mode", "p": "sim", "src": "plan GM3"}
+  },
+  "colours": {
+    "panel": {"v": "#d0d5da", "p": "measured", "src": "research/57 C-01"},
+    "msgBar": {"v": "#8db8e4", "p": "measured", "src": "research/57 C-03"},
+    "axis": {"v": "#b3dfee", "p": "measured", "src": "research/57 C-04"},
+    "wave": {"v": "#101646", "p": "measured", "src": "research/57 C-05"},
+    "insp": {"v": "#96ef3f", "p": "measured", "src": "research/57 C-06"},
+    "exp": {"v": "#df5e4e", "p": "measured", "src": "research/57 C-07"},
+    "tag": {"v": "#dbcf7b", "p": "measured", "src": "research/57 C-08"},
+    "key": {"v": "#d4d5cd", "p": "measured", "src": "research/57 C-09"},
+    "selected": {"v": "#5695d6", "p": "measured", "src": "research/57 C-10"},
+    "title": {"v": "#6e87b0", "p": "measured", "src": "research/57 C-11"},
+    "lampHigh": {"v": "#f9203f", "p": "measured", "src": "research/57 C-12"},
+    "lampMed": {"v": "#faa763", "p": "measured", "src": "research/57 C-13"},
+    "alarmHigh": {"v": "#f9203f", "p": "measured", "src": "research/57 C-12"},
+    "alarmMed": {"v": "#faa763", "p": "measured", "src": "research/57 C-13"},
+    "category": {"v": "#2f5fa8", "p": "inferred", "src": "research/57 C-02", "why": "the photograph shows the word blue with no sample; a darker shade of C-10's blue, for text contrast on C-01"},
+    "ink": {"v": "#111111", "p": "eng", "src": "research/57 C-17", "why": "text: black on the photographs' grey keys; not sampled"},
+    "inkDim": {"v": "#4f4f4f", "p": "eng", "src": "research/57 C-09", "why": "an unavailable control's words: greyed, still 4.5:1 on C-09 (WCAG AA)"},
+    "inkLight": {"v": "#ffffff", "p": "eng", "src": "research/57 C-05", "why": "words on the navy curves and on the blue of a selection"},
+    "bezel": {"v": "#e4e1da", "p": "eng", "src": "research/57 C-17", "why": "the bezel is plain (no mark); its colour is outside every photograph (plan §9)"},
+    "strip": {"v": "#5c6675", "p": "eng", "src": "research/57 C-09", "why": "the darker label strip of a key (plan §2.12), not sampled"},
+    "lampOff": {"v": "#b9b6af", "p": "eng", "src": "research/57 H-02", "why": "an unlit lamp"},
+    "grid": {"v": "#56609a", "p": "eng", "src": "research/57 C-05", "why": "the dotted zero line on the curves"}
+  },
+  "layout": {
+    "screenW": {"v": 800, "p": "documented", "src": "research/57 R-03"},
+    "screenH": {"v": 600, "p": "documented", "src": "research/57 R-03"},
+    "sweepS": {"v": 12, "p": "documented", "src": "research/57 R-26"},
+    "pawMin": {"v": -7, "p": "documented", "src": "research/57 R-27"},
+    "pawMax": {"v": 35, "p": "documented", "src": "research/57 R-27"},
+    "pawLabels": {"v": [35, 28, 21, 14, 7, 0, -7], "p": "documented", "src": "research/57 R-27"},
+    "vtMin": {"v": -0.2, "p": "documented", "src": "research/57 R-28"},
+    "vtMax": {"v": 1.0, "p": "documented", "src": "research/57 R-28"},
+    "flowMin": {"v": -60, "p": "documented", "src": "research/57 R-29"},
+    "flowMax": {"v": 60, "p": "documented", "src": "research/57 R-29"},
+    "proportions": {"v": "plain shapes after m1", "p": "eng", "src": "research/57 C-17", "why": "region sizes after the photograph's proportions (plan mock-up m1); not measured in pixels"},
+    "lungIconS": {"v": 0.4, "p": "sim", "src": "plan GD8"},
+    "reasonMs": {"v": 4000, "p": "eng", "src": "research/57 V-16", "why": "how long a reason stays in the message bar when an unavailable control is pressed (a simulator choice)"},
+    "knobDetentDeg": {"v": 15, "p": "eng", "src": "research/57 H-26", "why": "a drag on the drawn knob turns one step per 15 degrees (the device's detent is not in the manual)"},
+    "dec": {
+      "vt": {"v": 3, "p": "documented", "src": "research/57 R-35"},
+      "ti": {"v": 2, "p": "documented", "src": "research/57 R-35"},
+      "ie": {"v": 1, "p": "documented", "src": "research/57 R-35"},
+      "f": {"v": 0, "p": "documented", "src": "research/57 R-35"},
+      "pcv": {"v": 0, "p": "documented", "src": "research/57 D-02"},
+      "psv": {"v": 0, "p": "documented", "src": "research/57 R-35"},
+      "expSens": {"v": 0, "p": "documented", "src": "research/57 R-35"},
+      "peep": {"v": 0, "p": "documented", "src": "research/57 R-35"},
+      "sensFlow": {"v": 1, "p": "documented", "src": "research/57 R-35"},
+      "sensPres": {"v": 1, "p": "documented", "src": "research/57 D-13"},
+      "oxygen": {"v": 0, "p": "documented", "src": "research/57 R-35"},
+      "pause": {"v": 2, "p": "inferred", "src": "research/57 T-28", "why": "the step 0.25 needs two decimals"},
+      "mPeakFlow": {"v": 1, "p": "documented", "src": "research/57 V-12"},
+      "mTi": {"v": 2, "p": "documented", "src": "research/57 V-12"},
+      "mTe": {"v": 2, "p": "documented", "src": "research/57 V-12"},
+      "mIe": {"v": 1, "p": "documented", "src": "research/57 V-12"},
+      "mF": {"v": 0, "p": "documented", "src": "research/57 R-36"},
+      "mVt": {"v": 3, "p": "documented", "src": "research/57 V-10"},
+      "mVe": {"v": 2, "p": "inferred", "src": "research/57 R-12", "why": "as the V̇E limit tag prints (8.50); the monitored value is not legible in the sources"},
+      "mOxygen": {"v": 0, "p": "documented", "src": "research/57 V-03"},
+      "mPeak": {"v": 0, "p": "documented", "src": "research/57 V-11"},
+      "mPlateau": {"v": 0, "p": "inferred", "src": "research/57 V-11", "why": "as Peak"},
+      "mMean": {"v": 0, "p": "inferred", "src": "research/57 V-11", "why": "as Peak"},
+      "mPeep": {"v": 1, "p": "documented", "src": "research/57 V-10"},
+      "lPmax": {"v": 0, "p": "documented", "src": "research/57 R-18"},
+      "lVt": {"v": 3, "p": "documented", "src": "research/57 R-12"},
+      "lVe": {"v": 2, "p": "documented", "src": "research/57 R-12"},
+      "lF": {"v": 0, "p": "documented", "src": "research/57 R-12"}
+    }
+  },
+  "settings": {
+    "vt": {
+      "min": {"v": 0.05, "p": "documented", "src": "research/57 T-01"},
+      "max": {"v": 2.5, "p": "documented", "src": "research/57 T-01"},
+      "step": {"v": 0.01, "p": "documented", "src": "research/57 T-02"},
+      "init": {"v": 0.402, "p": "documented", "src": "research/57 T-03"}
+    },
+    "ti": {
+      "min": {"v": 0.1, "p": "documented", "src": "research/57 T-09"},
+      "max": {"v": 3.0, "p": "documented", "src": "research/57 T-09"},
+      "step": {"v": 0.01, "p": "documented", "src": "research/57 T-09"},
+      "init": {"v": 1.0, "p": "documented", "src": "research/57 D-01"}
+    },
+    "ie": {
+      "min": {"v": -58.9, "p": "inferred", "src": "research/57 T-12", "why": "the printed 1:599 read as 1:59.9 (T-13), on the knob's axis u = 1 - E for 1:E"},
+      "max": {"v": 4, "p": "documented", "src": "research/57 T-12"},
+      "step": {"v": 0.1, "p": "documented", "src": "research/57 T-14"}
+    },
+    "f": {
+      "min": {"v": 1, "p": "documented", "src": "research/57 T-17"},
+      "max": {"v": 100, "p": "documented", "src": "research/57 T-17"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 T-17"},
+      "init": {"v": 12, "p": "documented", "src": "research/57 T-17"}
+    },
+    "pcv": {
+      "sumMin": {"v": 2, "p": "documented", "src": "research/57 T-05"},
+      "sumMax": {"v": 100, "p": "documented", "src": "research/57 T-05"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 T-05"},
+      "init": {"v": 15, "p": "documented", "src": "research/57 T-05"},
+      "min": {"v": 0, "p": "inferred", "src": "research/57 T-06", "why": "PCV is a pressure above PEEP (Peak = PCV + PEEP, T-06): not below 0"}
+    },
+    "psv": {
+      "sumMin": {"v": 0, "p": "documented", "src": "research/57 T-07"},
+      "sumMax": {"v": 100, "p": "documented", "src": "research/57 T-07"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 T-07"},
+      "init": {"v": 5, "p": "documented", "src": "research/57 T-07"}
+    },
+    "peep": {
+      "min": {"v": 0, "p": "documented", "src": "research/57 T-08"},
+      "max": {"v": 50, "p": "documented", "src": "research/57 T-08"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 T-08"},
+      "init": {"v": 5, "p": "documented", "src": "research/57 T-08"}
+    },
+    "sensFlow": {
+      "min": {"v": 0.2, "p": "documented", "src": "research/57 T-19"},
+      "max": {"v": 15, "p": "documented", "src": "research/57 T-19"},
+      "step": {"v": 0.1, "p": "documented", "src": "research/57 T-19"},
+      "init": {"v": 3, "p": "documented", "src": "research/57 T-21"}
+    },
+    "sensPres": {
+      "min": {"v": -20, "p": "documented", "src": "research/57 T-20"},
+      "max": {"v": -0.5, "p": "documented", "src": "research/57 T-20"},
+      "step": {"v": 0.5, "p": "documented", "src": "research/57 T-20"},
+      "init": {"v": -1.5, "p": "documented", "src": "research/57 T-21"}
+    },
+    "oxygen": {
+      "min": {"v": 21, "p": "documented", "src": "research/57 T-18"},
+      "max": {"v": 100, "p": "documented", "src": "research/57 T-18"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 T-18"},
+      "ctrlStep": {"v": 10, "p": "documented", "src": "research/57 H-22"},
+      "init": {"v": 50, "p": "documented", "src": "research/57 T-18"}
+    },
+    "expSens": {
+      "min": {"v": 5, "p": "documented", "src": "research/57 T-22"},
+      "max": {"v": 80, "p": "documented", "src": "research/57 T-22"},
+      "step": {"v": 5, "p": "documented", "src": "research/57 T-22"},
+      "init": {"v": 25, "p": "documented", "src": "research/57 T-22"}
+    },
+    "riseTime": {
+      "min": {"v": 0.05, "p": "eng", "src": "research/57 T-24", "why": "five steps 0.05-0.25 s until the owner's video (plan GP11)"},
+      "max": {"v": 0.25, "p": "eng", "src": "research/57 T-24", "why": "as min"},
+      "step": {"v": 0.05, "p": "eng", "src": "research/57 T-24", "why": "as min"},
+      "init": {"v": 0.15, "p": "eng", "src": "research/57 T-24", "why": "the middle step"}
+    },
+    "pause": {
+      "min": {"v": 0, "p": "documented", "src": "research/57 T-28"},
+      "max": {"v": 2, "p": "documented", "src": "research/57 T-28"},
+      "step": {"v": 0.25, "p": "documented", "src": "research/57 T-28"},
+      "init": {"v": 0, "p": "documented", "src": "research/57 T-28"}
+    },
+    "apnea": {
+      "init": {"v": 15, "p": "documented", "src": "research/57 L-12"}
+    }
+  },
+  "limits": {
+    "pmax": {
+      "min": {"v": 10, "p": "documented", "src": "research/57 L-01"},
+      "max": {"v": 120, "p": "documented", "src": "research/57 L-01"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 L-01"},
+      "init": {"v": 40, "p": "documented", "src": "research/57 L-01"}
+    },
+    "vtHi": {
+      "max": {"v": 3, "p": "documented", "src": "research/57 L-03"},
+      "step": {"v": 0.01, "p": "documented", "src": "research/57 L-03"},
+      "init": {"v": 0.6, "p": "documented", "src": "research/57 L-03"}
+    },
+    "vtLo": {
+      "min": {"v": 0, "p": "documented", "src": "research/57 L-05"},
+      "step": {"v": 0.01, "p": "documented", "src": "research/57 L-05"},
+      "init": {"v": 0.15, "p": "documented", "src": "research/57 L-05"}
+    },
+    "mvHi": {
+      "max": {"v": 55, "p": "documented", "src": "research/57 L-06"},
+      "step": {"v": 0.01, "p": "inferred", "src": "research/57 L-06", "why": "one of 1/0.5/0.1/0.05/0.01 by range, the ranges not given; 0.01 as the device's 8.50 / 2.41 (R-12)"},
+      "init": {"v": 7.23, "p": "documented", "src": "research/57 L-06"}
+    },
+    "mvLo": {
+      "min": {"v": 0, "p": "documented", "src": "research/57 L-07"},
+      "step": {"v": 0.01, "p": "inferred", "src": "research/57 L-07", "why": "as mvHi"},
+      "init": {"v": 2.41, "p": "documented", "src": "research/57 L-07"}
+    },
+    "fHi": {
+      "min": {"v": 3, "p": "documented", "src": "research/57 L-14"},
+      "max": {"v": 160, "p": "documented", "src": "research/57 L-14"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 L-14"},
+      "init": {"v": 30, "p": "documented", "src": "research/57 L-14"}
+    }
+  }
+}
