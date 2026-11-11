@@ -117,6 +117,11 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     const runIt = page.getByRole('button', { name: 'Run the draft' });
     if (await runIt.isVisible({ timeout: 1000 }).catch(() => false)) await runIt.click();
     await expect(page.locator('aside.sb-run')).toBeVisible();
+    // the route has settled: Instructor v2's own view shown with its heading, and the Scenarios view gone (WebKit once
+    // audited the page mid-switch and measured the Scenarios view's width under the run panel's column)
+    await expect(page.locator('.main[data-route="teach2"] > .view[data-view="teach2"]')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Instructor v2' })).toBeAttached();
+    await expect(page.locator('.view[data-view="scenarios"]')).toBeHidden();
     await run(page, '#/teach2 with the run panel (B6)');
     if (remote) {
       await remote.bringToFront();
