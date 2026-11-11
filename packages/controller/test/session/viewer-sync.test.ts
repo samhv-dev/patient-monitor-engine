@@ -71,6 +71,23 @@ describe('ViewerSync', () => {
     r.close();
   });
 
+  it('N109: an EEG switched on after the viewer synced draws the host’s samples, though the viewer was made under another seed', async () => {
+    const r = await rig(); // host seed 7, viewer seed 99 (the fakes' defaults)
+    await waitFor(() => r.sync.status === 'synced');
+    await r.run(2);
+    await r.ctl.send({ type: 'device', action: { device: 'eeg', action: 'on' } });
+    await r.run(6);
+    expect(r.sync.resyncs).toBe(0);
+    const end = r.v.engine.latestSampleIndex('eeg') - 15;
+    expect(end).toBeGreaterThan(500);
+    const a = new Float32Array(500);
+    const b = new Float32Array(500);
+    expect(r.host.engine.readSamples('eeg', end - 500, a)).toBe(500);
+    expect(r.v.engine.readSamples('eeg', end - 500, b)).toBe(500);
+    expect([...b]).toEqual([...a]);
+    r.close();
+  });
+
   it('resyncs (hello → new snapshot) when a mirrored command arrives after its tick', async () => {
     const r = await rig();
     await waitFor(() => r.sync.status === 'synced');
