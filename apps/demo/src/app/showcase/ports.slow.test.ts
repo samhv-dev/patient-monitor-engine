@@ -57,8 +57,8 @@ describe('the twin run’s machinery, on a constructed pair', () => {
     expect(r.trace.differing).toBeGreaterThan(0);
     expect(r.trace.first!.t).toBeGreaterThan(90);
     expect(r.trace.first!.t).toBeLessThan(UNTIL_S);
-    expect(r.trace.first!.keys).toContain('hr');
-    expect(portCheckWords(r, 0)).toMatch(/^Port check: command stream differs \(1 of \d+ commands, first at tick \d+\); trace differs in \d+ of 150 s \(first at 01:\d\d: [^)]*hr[^)]*\); 0 beats changed by design$/);
+    expect(r.trace.keys).toContain('hr'); // the monitor's number, after the truth it follows (SaO₂, the coronary pressure)
+    expect(portCheckWords(r, 0)).toMatch(/^Port check: command stream differs \(1 of \d+ commands, first at tick \d+\); trace differs in \d+ of 150 s \(first at 01:\d\d: [^)]+\); 0 beats changed by design$/);
   }, 300_000);
 });
 

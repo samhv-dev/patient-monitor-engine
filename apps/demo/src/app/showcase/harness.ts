@@ -46,6 +46,9 @@ export interface Run {
   pvcs: number[];
   /** A pme-scenario/2 card (plan F3): the phase runner's timeline, administration record and rule edges at the end. */
   v2?: { phases: PhaseEntry[]; admin: Administration[]; edges: RuleEdge[] };
+  /** Every command the engine was sent (plan scenario-builder.md §7.3, the twin run): the tick it applied at, its stage
+   *  group, and the command without its stamps (id, issuedBy, stageGroup, actionId, atTick, by), in order. */
+  commands: Array<{ tick: number; group?: string; c: Record<string, unknown> }>;
 }
 
 const DOCS = import.meta.glob<{ default: ScenarioDoc }>('./*.json', { eager: true });
@@ -79,7 +82,7 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
   let labs: Record<string, number> = {};
   let tree: Tree | null = null;
   let rhythm = doc.patient?.rhythm?.id ?? 'sinus';
-  const run: Run = { rows: [], alarms: [], states: [], pressed: acts.map(() => Number.NaN), refused: [], spont: [], pvcs: [] };
+  const run: Run = { rows: [], alarms: [], states: [], pressed: acts.map(() => Number.NaN), refused: [], spont: [], pvcs: [], commands: [] };
   engine.on((e) => {
     if (e.type === 'measurement') for (const [k, m] of Object.entries(e.values)) mon[k] = m && m.flag !== 'invalid' ? m.value : null;
     else if (e.type === 'labs') labs = e.values as unknown as Record<string, number>;
@@ -94,6 +97,8 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
     target: {
       dispatch: (c) => {
         const r = engine.dispatch(c);
+        const { id: _i, issuedBy: _b, stageGroup, actionId: _a, atTick: _t, by: _y, ...rest } = c as unknown as Record<string, unknown>;
+        run.commands.push({ tick: r.tick, ...(typeof stageGroup === 'string' ? { group: stageGroup } : {}), c: rest });
         if (!r.accepted) run.refused.push(`${engine.now().simT.toFixed(1)} ${JSON.stringify(c).slice(0, 160)}: ${r.reason ?? ''}`);
         return r;
       },
