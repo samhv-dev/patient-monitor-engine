@@ -2,12 +2,17 @@
 // holds a syringe or a bag of TRUE contents (drug, concentration, volume), carries the PROGRAMMED drug and concentration
 // the learner chose, and empties at its rate. The pump moves VOLUME: the patient receives volume × the contents'
 // concentration, while a dose rate is converted to mL/h with the programme, as a real pump does (§8: a remifentanil
-// syringe programmed as propofol delivers remifentanil). Rate mode only; TCI on a channel is piece E2. This module holds
+// syringe programmed as propofol delivers remifentanil). TCI on a channel (piece E2, decision D3): the pump predicts
+// with its own model — the set, computed once from the patient data typed into it, stepped with the volume it moved
+// times the PROGRAMMED concentration, which is all a pump knows — and doses to reach the target in THAT model. This module holds
 // no device number: the syringe size, the IV set's drops/mL, the volume limit and the bolus and purge rates arrive on the
 // event, resolved by the host from the device profile (D4, D12), and the device ranges are the host's to check (C2).
-import type { PumpAlarmEvent, PumpAlarmId, PumpChannel, PumpConcentration, PumpEvent, PumpPanelRow, RateUnit } from '../../types-pk.ts';
+import type { PumpAlarmEvent, PumpAlarmId, PumpChannel, PumpConcentration, PumpEvent, PumpPanelRow, RateUnit, TciPrediction, TciPredictionRow, TciTypedPatient } from '../../types-pk.ts';
+import { pkStep, pkSystem, zeroState } from './compartment.ts';
 import { DRUGS } from './data/drugs.ts';
 import type { DrugRow } from './row.ts';
+import { tciModeRefusal, tciSet, type TciSet } from './tci-sets/index.ts';
+import { TCI_DT_S, TCI_MAX_RATE_ML_H, tciRate } from './tci.ts';
 import { toAmount, toRate } from './units.ts';
 
 /** The rack's largest channel number: the owner's ruling PQ1 = C, "1–8, default 4" (research/00-orchestrator-rulings.md, 9 November 16:00; docs/plans/pump-rack-tci.md §11). */
@@ -25,6 +30,7 @@ const ACTIONS: Record<PumpEvent['action'], readonly string[]> = {
   unload: [],
   purge: ['volumeMl', 'rateMlH'],
   bolus: ['volumeMl', 'dose', 'weightKg', 'rateMlH'],
+  tci: ['setId', 'mode', 'target', 'patient', 'opioids', 'maxRateMlH'],
 };
 const CONC_UNITS = ['mg', 'mcg', 'g', 'units', 'mmol'];
 const pos = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x) && x > 0;
@@ -43,6 +49,50 @@ function perMlOf(row: DrugRow, c: PumpConcentration | undefined): number | strin
   const a = toAmount(c.amount, c.unit, row.amountUnit, 1);
   return typeof a === 'string' ? `${row.id}: ${a}` : a / c.perMl;
 }
+
+// --- the pump's own prediction (E2, D3) -------------------------------------------------------------------------
+
+/** Why a set cannot run this drug in this mode, or undefined: the set must be the drug's, and effect mode needs a ke0
+ * (the registry's rule 3 words). Shared by the channel's `tci` action and the channel-less `tci` event. */
+export function tciSetRefusal(set: TciSet, drugId: string, mode: 'plasma' | 'effect'): string | undefined {
+  if (set.meta.drugId !== drugId) return `${set.meta.id} is a ${set.meta.drugId} set, not ${drugId}`;
+  return tciModeRefusal(set, mode);
+}
+
+const PATIENT_KEYS = ['ageY', 'weightKg', 'heightCm', 'sex', 'pmaWeeks'];
+/** Why typed patient data cannot be used, or undefined. Values outside the set's studied population are allowed (D6). */
+function typedPatientRefusal(p: unknown): string | undefined {
+  const q = p as Partial<TciTypedPatient> | undefined;
+  const bad = 'TCI needs the patient typed into the pump: {ageY ≥ 0, weightKg > 0, heightCm > 0, sex m|f, pmaWeeks?}';
+  if (!q || typeof q !== 'object' || Object.keys(q).some((k) => !PATIENT_KEYS.includes(k))) return bad;
+  if (!(typeof q.ageY === 'number' && Number.isFinite(q.ageY) && q.ageY >= 0) || !pos(q.weightKg) || !pos(q.heightCm) || (q.sex !== 'm' && q.sex !== 'f')) return bad;
+  if (q.pmaWeeks !== undefined && !pos(q.pmaWeeks)) return bad;
+  return undefined;
+}
+
+/** The co-administered-opioid flag as the set reads it: only a set that lists the covariate (Eleveld) carries it. When
+ * the event does not say, false [ENG: device; a real pump asks the user, and no source fixes a default — an open
+ * question for the owner]. */
+export const opioidsFor = (set: TciSet, typed: boolean | undefined): boolean => set.meta.covariates.includes('opioids') && typed === true;
+
+/** A fresh prediction: the set's parameters computed ONCE from the typed patient, the pump's state at zero. */
+export function newPrediction(set: TciSet, patient: TciTypedPatient, opioids: boolean): TciPrediction {
+  const params = set.params(patient, { opioids });
+  return { setId: set.meta.id, patient: { ...patient }, opioids, params, x: zeroState(params) };
+}
+
+/** True when a prediction was made with this set and exactly these typed data (a new target keeps it). */
+export function samePrediction(p: TciPrediction, setId: string, patient: TciTypedPatient, opioids: boolean): boolean {
+  return p.setId === setId && p.opioids === opioids && PATIENT_KEYS.every((k) => p.patient[k as keyof TciTypedPatient] === patient[k as keyof TciTypedPatient]);
+}
+
+/** Step a prediction by `dtS` with what the pump believes it gave (amount/min). */
+export function stepPrediction(p: TciPrediction, dtS: number, perMin: number): void {
+  p.x = pkStep(pkSystem(p.params, dtS), p.x, perMin);
+}
+
+/** The words for a set or patient change while a TCI runs: a real pump locks them (D6). */
+export const TCI_LOCKED = 'stop the TCI (target 0) before changing the set or the patient data';
 
 const channelOf = (pumps: PumpChannel[] | undefined, ch: number) => pumps?.find((c) => c.ch === ch);
 
@@ -97,6 +147,7 @@ export function validatePump(ev: PumpEvent, pumps: PumpChannel[] | undefined): s
       if (typeof perMl === 'string') return perMl;
       if (c.kind === 'drip' && !pos(ev.set)) return 'a drip channel is programmed with its IV set (set, drops/mL)';
       if (c.kind === 'syringe' && ev.set !== undefined) return 'an IV set (drops/mL) belongs to a drip channel';
+      if (c.mode === 'tci' && ev.drugId !== c.programmed?.drugId) return `channel ${ev.ch} runs TCI of ${c.programmed?.drugId}: stop the TCI (target 0) before programming another drug`;
       return undefined;
     }
     case 'rate': {
@@ -109,12 +160,26 @@ export function validatePump(ev: PumpEvent, pumps: PumpChannel[] | undefined): s
     case 'start':
       if (!c.contents) return `channel ${ev.ch}: load a syringe or a bag first`;
       if (!c.programmed) return `channel ${ev.ch}: program the drug and concentration first`;
-      if (!c.rate) return `channel ${ev.ch}: set a rate first`;
+      if (!c.rate && c.mode !== 'tci') return `channel ${ev.ch}: set a rate first`;
       if (c.volumeMl <= PUMP_EMPTY_ML) return `channel ${ev.ch} is empty: ${c.kind === 'syringe' ? 'End' : 'Empty Container'}`;
       if (c.limitMl !== null && c.infusedMl >= c.limitMl - PUMP_EMPTY_ML) return `channel ${ev.ch} reached its volume limit: set a new limit`;
       return undefined;
     case 'stop':
       return undefined;
+    case 'tci': {
+      if (c.kind !== 'syringe') return 'TCI runs on a syringe channel';
+      if (!c.programmed) return `channel ${ev.ch}: program the drug and concentration first`;
+      if (!(typeof ev.target === 'number' && Number.isFinite(ev.target) && ev.target >= 0 && ev.target <= 100)) return 'target must be 0–100';
+      if (ev.mode !== 'plasma' && ev.mode !== 'effect') return 'mode must be plasma or effect';
+      const set = tciSet(ev.setId);
+      if (!set) return `unknown TCI set ${ev.setId}`;
+      const why = tciSetRefusal(set, c.programmed.drugId, ev.mode) ?? typedPatientRefusal(ev.patient);
+      if (why) return why;
+      if (ev.opioids !== undefined && typeof ev.opioids !== 'boolean') return 'opioids must be true or false';
+      if (ev.maxRateMlH !== undefined && !pos(ev.maxRateMlH)) return 'maxRateMlH must be > 0';
+      if (ev.target > 0 && c.mode === 'tci' && c.pred && !samePrediction(c.pred, set.meta.id, ev.patient, opioidsFor(set, ev.opioids))) return TCI_LOCKED;
+      return undefined;
+    }
     case 'unload':
       return c.contents ? undefined : `channel ${ev.ch} holds nothing to unload`;
     case 'purge':
@@ -149,7 +214,7 @@ export function applyPump(pumps: PumpChannel[], ev: PumpEvent): void {
   if (!c) {
     c = {
       ch: ev.ch, kind: (ev as Extract<PumpEvent, { action: 'load' }>).channel, contents: null, syringeMl: null, programmed: null, set: null,
-      mode: 'rate', rate: null, rateMlH: 0, limitMl: null, volumeMl: 0, infusedMl: 0, wasteMl: 0, paused: true, rapid: null, alarms: [],
+      mode: 'rate', rate: null, rateMlH: 0, limitMl: null, volumeMl: 0, infusedMl: 0, wasteMl: 0, paused: true, rapid: null, alarms: [], tci: null, pred: null,
     };
     pumps.push(c);
     pumps.sort((a, b) => a.ch - b.ch);
@@ -178,8 +243,12 @@ export function applyPump(pumps: PumpChannel[], ev: PumpEvent): void {
         c.rateMlH = 0;
         c.paused = true;
       } else reconvert();
+      if (c.tci) c.tci.next = 0; // a TCI channel's rate is re-chosen with the new concentration at the next step
       return;
     case 'rate':
+      // A rate on a TCI channel leaves TCI; the prediction is kept and goes on with what the channel gives
+      c.mode = 'rate';
+      c.tci = null;
       c.rate = { rate: ev.rate, unit: ev.unit, ...(ev.weightKg !== undefined ? { weightKg: ev.weightKg } : {}) };
       if (ev.limitMl !== undefined) c.limitMl = ev.limitMl;
       reconvert();
@@ -191,7 +260,29 @@ export function applyPump(pumps: PumpChannel[], ev: PumpEvent): void {
     case 'stop':
       c.paused = true;
       return;
+    case 'tci': {
+      if (ev.target === 0) {
+        // TCI stopped: the channel stops; its prediction is kept and goes on falling
+        c.mode = 'rate';
+        c.tci = null;
+        c.rate = null;
+        c.rateMlH = 0;
+        c.paused = true;
+        return;
+      }
+      const set = tciSet(ev.setId) as TciSet;
+      const opioids = opioidsFor(set, ev.opioids);
+      // A new set or new typed data starts a fresh prediction at zero — what a real pump does: it knows nothing of the
+      // drug already given (validated: never while a TCI runs)
+      if (!c.pred || !samePrediction(c.pred, set.meta.id, ev.patient, opioids)) c.pred = newPrediction(set, ev.patient, opioids);
+      c.mode = 'tci';
+      c.rate = null;
+      c.tci = { mode: ev.mode, target: ev.target, maxRateMlH: ev.maxRateMlH ?? TCI_MAX_RATE_ML_H, next: 0 }; // next 0: chosen at the next step
+      return;
+    }
     case 'unload':
+      // The syringe off: the volumes reset, the programme, TCI and the prediction stay (a syringe change mid-TCI
+      // [ENG: device; how the SP5 handles a syringe change in TCI is a gap until its manual])
       c.contents = null;
       c.syringeMl = null;
       c.volumeMl = 0;
@@ -222,41 +313,63 @@ export function applyPump(pumps: PumpChannel[], ev: PumpEvent): void {
 export function stepPumps(pumps: PumpChannel[], dtS: number, t: number, out: PumpAlarmEvent[]): Record<string, number> {
   const perMin: Record<string, number> = {};
   for (const c of pumps) {
-    if (!c.contents) continue;
-    const rapid = c.rapid;
-    const flow = rapid ? rapid.rateMlH : c.paused ? 0 : c.rateMlH;
-    if (!(flow > 0)) continue;
-    let dv = Math.min((flow * dtS) / 3600, c.volumeMl);
-    if (rapid) dv = Math.min(dv, rapid.leftMl);
-    else if (c.limitMl !== null) dv = Math.min(dv, Math.max(0, c.limitMl - c.infusedMl));
-    c.volumeMl -= dv;
-    if (c.volumeMl <= PUMP_EMPTY_ML) c.volumeMl = 0;
-    if (rapid && !rapid.toPatient) c.wasteMl += dv;
-    else {
-      c.infusedMl += dv;
-      const row = DRUGS[c.contents.drugId] as DrugRow;
-      const amt = dv * (perMlOf(row, c.contents.concentration) as number);
-      perMin[row.id] = (perMin[row.id] ?? 0) + (amt / dtS) * 60;
+    const row = c.programmed ? (DRUGS[c.programmed.drugId] as DrugRow) : null;
+    const progPerMl = row && c.programmed ? (perMlOf(row, c.programmed.concentration) as number) : 0;
+    // TCI (E2): every TCI_DT_S the controller chooses the rate that reaches the target IN THE PUMP'S MODEL, clamped to
+    // the channel's ceiling in mL/h × the programmed concentration
+    if (c.mode === 'tci' && c.tci && c.pred && t >= c.tci.next - 1e-9) {
+      const amt = tciRate(c.pred.params, c.pred.x, c.tci.mode, c.tci.target, (c.tci.maxRateMlH * progPerMl) / 60);
+      c.rateMlH = progPerMl > 0 ? (amt * 60) / progPerMl : 0;
+      c.tci.next = t + TCI_DT_S;
     }
-    if (rapid) {
-      rapid.leftMl -= dv;
-      if (rapid.leftMl <= PUMP_EMPTY_ML) c.rapid = null;
-    }
-    let alarm: PumpAlarmId | null = null;
-    if (c.volumeMl === 0) alarm = c.kind === 'syringe' ? 'end' : 'emptyContainer';
-    else if (!rapid && c.limitMl !== null && c.infusedMl >= c.limitMl - PUMP_EMPTY_ML) alarm = 'infusionComplete';
-    if (alarm && !c.alarms.includes(alarm)) {
-      c.alarms.push(alarm);
-      c.paused = true;
-      c.rapid = null;
-      out.push({ type: 'pumpAlarm', t, ch: c.ch, channel: c.kind, alarm, programmed: c.programmed?.drugId ?? null });
-    }
+    const intoPatientMl = moveChannel(c, dtS, t, perMin, out);
+    // The prediction is fed what the pump believes it gave: the volume it moved into the line × its programme
+    if (c.pred) stepPrediction(c.pred, dtS, ((intoPatientMl * progPerMl) / dtS) * 60);
   }
   return perMin;
 }
 
+/** One channel's volume for one step (E1): the mL it moved into the patient (0 when nothing flowed or it went to waste). */
+function moveChannel(c: PumpChannel, dtS: number, t: number, perMin: Record<string, number>, out: PumpAlarmEvent[]): number {
+  if (!c.contents) return 0;
+  const rapid = c.rapid;
+  const flow = rapid ? rapid.rateMlH : c.paused ? 0 : c.rateMlH;
+  if (!(flow > 0)) return 0;
+  let dv = Math.min((flow * dtS) / 3600, c.volumeMl);
+  if (rapid) dv = Math.min(dv, rapid.leftMl);
+  else if (c.limitMl !== null) dv = Math.min(dv, Math.max(0, c.limitMl - c.infusedMl));
+  c.volumeMl -= dv;
+  if (c.volumeMl <= PUMP_EMPTY_ML) c.volumeMl = 0;
+  if (rapid && !rapid.toPatient) c.wasteMl += dv;
+  else {
+    c.infusedMl += dv;
+    const row = DRUGS[c.contents.drugId] as DrugRow;
+    const amt = dv * (perMlOf(row, c.contents.concentration) as number);
+    perMin[row.id] = (perMin[row.id] ?? 0) + (amt / dtS) * 60;
+  }
+  if (rapid) {
+    rapid.leftMl -= dv;
+    if (rapid.leftMl <= PUMP_EMPTY_ML) c.rapid = null;
+  }
+  let alarm: PumpAlarmId | null = null;
+  if (c.volumeMl === 0) alarm = c.kind === 'syringe' ? 'end' : 'emptyContainer';
+  else if (!rapid && c.limitMl !== null && c.infusedMl >= c.limitMl - PUMP_EMPTY_ML) alarm = 'infusionComplete';
+  if (alarm && !c.alarms.includes(alarm)) {
+    c.alarms.push(alarm);
+    c.paused = true;
+    c.rapid = null;
+    out.push({ type: 'pumpAlarm', t, ch: c.ch, channel: c.kind, alarm, programmed: c.programmed?.drugId ?? null });
+  }
+  return rapid && !rapid.toPatient ? 0 : dv;
+}
+
+/** A prediction's row in the `drugs` event (the pump face's Cp and Ce). */
+export function predictionRow(p: TciPrediction, ctl: { mode: 'plasma' | 'effect'; target: number } | null | undefined, unit: string): TciPredictionRow {
+  return { setId: p.setId, mode: ctl ? ctl.mode : null, target: ctl ? ctl.target : null, cp: (p.x[0] as number) / p.params.v1, ce: p.x[3] as number, unit };
+}
+
 /** The `drugs` event's channel rows (1 Hz). */
-export function pumpPanel(pumps: PumpChannel[]): PumpPanelRow[] {
+export function pumpPanel(pumps: PumpChannel[], unitOf: (drugId: string) => string): PumpPanelRow[] {
   return pumps.map((c) => {
     const flow = c.contents && !c.paused ? c.rateMlH : 0;
     return {
@@ -269,6 +382,7 @@ export function pumpPanel(pumps: PumpChannel[]): PumpPanelRow[] {
       volumeMl: c.volumeMl, infusedMl: c.infusedMl, wasteMl: c.wasteMl,
       timeToEmptyMin: flow > 0 ? (c.volumeMl / flow) * 60 : null,
       alarms: [...c.alarms],
+      tci: c.pred ? predictionRow(c.pred, c.mode === 'tci' ? c.tci : null, unitOf(tciSet(c.pred.setId)?.meta.drugId ?? '')) : null,
     };
   });
 }
