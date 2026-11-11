@@ -365,6 +365,8 @@ export function manualBreath(vs: VentState): void {
 export function setCircuit(vs: VentState, state: 'connected' | 'disconnected'): void {
   vs.circuit = state;
 }
-export const silenceAlarms = (vs: VentState): void => {
-  vs.silenceUntil = vs.p.t + 120;
+/** Silence the alarms' audio for `seconds` of sim time from now: v1.9's 120 s by default (the Hamilton-style face); a face
+ *  passes its own (the EDP-TS: 30 s for one press, 60 s for two, research/57 A-20). */
+export const silenceAlarms = (vs: VentState, seconds = 120): void => {
+  vs.silenceUntil = vs.p.t + seconds;
 };
