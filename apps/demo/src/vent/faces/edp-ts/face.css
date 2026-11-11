@@ -11,7 +11,7 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
 .edp-dev { position: absolute; left: 50%; top: 50%; width: 1000px; height: 724px; transform-origin: 50% 50%;
   background: var(--edp-bezel); border-radius: 14px; }
-.edp button { font: inherit; color: inherit; cursor: pointer; }
+.edp button { font-family: inherit; color: inherit; cursor: pointer; }
 .edp button:focus-visible { outline: 3px solid var(--edp-selected); outline-offset: 1px; }
 
 /* the screen */
@@ -65,7 +65,7 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-loop .lt { position: absolute; left: 4px; top: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
 .edp-loop .lx { position: absolute; right: 4px; bottom: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
 .edp-right { grid-area: right; display: flex; flex-direction: column; gap: 3px; padding: 3px; }
-.edp-rkey { flex: 1; min-width: 0; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 4px; font-size: 9px; font-weight: 700; line-height: 1.1; padding: 1px; overflow: hidden; overflow-wrap: break-word; }
+.edp-rkey { flex: 1; min-width: 0; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 4px; font-size: 10px; font-weight: 700; line-height: 1.1; padding: 1px; overflow: hidden; }
 .edp-bottom { grid-area: bottom; display: flex; gap: 3px; padding: 3px; border-top: 1px solid var(--edp-strip); }
 .edp-key { flex: 1; min-width: 0; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 4px; padding: 0;
   display: grid; grid-template-rows: 1fr auto auto; overflow: hidden; }
