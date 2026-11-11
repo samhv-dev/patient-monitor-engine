@@ -10,6 +10,8 @@ import { runCard, type Run } from './harness.ts';
 export interface Press { t: number; v1: string; v2: string }
 /** A row of ports.json. */
 export interface PortRow {
+  /** The /1 card's id (the builder finds a draft's row by it). */
+  card: string;
   v1: string;
   v2: string;
   presses: Press[];
@@ -36,6 +38,7 @@ export interface TwinReport {
 const mmss = (t: number) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 const key = (x: Run['commands'][number]) => JSON.stringify({ tick: x.tick, ...x.c });
 
+/** The /1 card and its /2 port run side by side on the press path to `untilS`, and their differences. */
 export async function twinRun(v1: ScenarioDoc, v2: ScenarioDocV2, presses: readonly Press[], untilS: number): Promise<TwinReport> {
   const a = await runCard(v1.id, presses.map((p) => ({ press: p.v1, t: p.t })), untilS, undefined, 0.1, v1);
   // the /2 port at the /1 run's absolute press times (a press /1 never took is not pressed in /2 either)

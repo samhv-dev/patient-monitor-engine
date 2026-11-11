@@ -113,7 +113,7 @@ function ruleOf(w: When): PhaseRule | null {
 const pure = (w: When): boolean => leaves(w, '').every((l) => 'vital' in l.w);
 const ruleish = (w: When): boolean => leaves(w, '').every((l) => !isPress(l.w));
 
-/** The draft and its flags. */
+/** A valid /1 card as a /2 draft, and a flag for each beat with no exact /2 form (nothing is put in a flagged place). */
 export function convertV1(doc: ScenarioDoc): Conversion {
   const flags: PortFlag[] = [];
   const flag = (kind: FlagKind, from: string, at: string, was: string, alsoAt?: string[]) => flags.push({ kind, from, at, was, decide: DECIDE[kind], ...(alsoAt?.length ? { alsoAt } : {}) });

@@ -51,7 +51,7 @@ export interface Run {
   commands: Array<{ tick: number; group?: string; c: Record<string, unknown> }>;
 }
 
-const DOCS = import.meta.glob<{ default: ScenarioDoc }>('./*.json', { eager: true });
+const DOCS = import.meta.glob<{ default: ScenarioDoc }>(['./*.json', '!./ports.json'], { eager: true }) // ports.json: the twin runs' manifest;
 /** A showcase card as /1 (every caller but the /2 card's own tests). */
 export const showcaseDoc = (id: string): ScenarioDoc => anyShowcaseDoc(id) as ScenarioDoc;
 /** A showcase card in either format. */

@@ -20,6 +20,8 @@ import { LIBRARY } from '../scenarios.ts';
 import { kitOffLine, kitStore as defaultKit, kitWhere, type KitCard, type KitStore } from '../kit-store.ts';
 import { button, confirmDialog, download, h, toast } from '../ui.ts';
 import { cardFileName, cardFileText, readCardFile } from './card-file.ts';
+import { convertV1 } from './convert.ts';
+import { flagLine, originFlags, portCheckLine, PORT_ROWS } from './port.ts';
 import { checker, type Placed } from './checks.ts';
 import { drafts as defaultDrafts, draftRefusalText, type Body, type DraftMeta, type Drafts, type SnapshotMeta } from './drafts.ts';
 import { fieldOf } from './fields.ts';
@@ -31,6 +33,7 @@ import { outcomeSection } from './outcome-editor.ts';
 import { phaseSection, phaseWarnings, type PhaseSectionView } from './phase-editor.ts';
 import { scriptSection } from './script-editor.ts';
 import { sections, type SectionId, type SectionView, type Slot } from './sections.ts';
+import type { ScenarioDoc } from '@pme/controller/scenario';
 import './builder.css';
 
 /** The pause after the last change before the draft is saved in this browser: the plan's 300 ms (§8). [ENG: ui] */
@@ -39,8 +42,9 @@ export const SAVE_DELAY_MS = 300;
  *  (§8). [ENG: ui] */
 export const KIT_EVERY_MS = 120_000;
 
-/** A line in the checks: the validator's, or the builder's own (a library card's id). */
-type Line = Placed & { by: 'validator' | 'builder' };
+/** A line in the checks: the validator's, the builder's own (a library card's id), or the converter's flag of a /1
+ *  card's place (B7: shown in the refusal style at its field, never counted as a refusal). */
+type Line = Omit<Placed, 'kind'> & { kind: Placed['kind'] | 'flag'; by: 'validator' | 'builder' | 'converter' };
 
 const hms = (ms: number): string => {
   const d = new Date(ms);
@@ -51,6 +55,8 @@ const when = (ms: number, now = Date.now()): string =>
 const whyWords = (s: SnapshotMeta, m: DraftMeta): string =>
   s.why === 'opened' ? m.from : s.why === 'editing' ? 'after 2 min of editing' : s.why === 'export' ? 'exported' : s.why.replace(/^before restoring (\d+)$/, 'before snapshot $1 was restored');
 const LIBRARY_V2 = () => LIBRARY.filter((c) => (c.doc as { schema?: string }).schema === 'pme-scenario/2');
+/** The /1 library cards to port (§7.2's sixteen): a /1 demo copy whose /2 version is in the library (`<id>-v2`) is not one. */
+const LIBRARY_V1 = () => LIBRARY.filter((c) => (c.doc as { schema?: string }).schema === 'pme-scenario/1' && !LIBRARY.some((x) => x.id === `${c.id}-v2`));
 const SECTION_OF_SLOT: Record<string, SectionId> = {
   header: 'header', patient: 'patient', briefing: 'briefing', phases: 'phases', actions: 'actions', script: 'script', outcomes: 'outcomes', debrief: 'debrief', handout: 'handout',
 };
@@ -103,7 +109,20 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
   const openCopy = async (id: string) => {
     const c = LIBRARY.find((x) => x.id === id);
     if (!c) return;
-    const m = await store.create({ ...(c.doc as unknown as Body), id: `${c.id}-copy` }, `a copy of the library card ${c.id}`);
+    const m = await store.create({ ...(c.doc as unknown as Body), id: `${c.id}-copy` }, `a copy of the library card ${c.id}`, Date.now(), { id: c.id, schema: 'pme-scenario/2' });
+    if ('refused' in m) {
+      startErr.hidden = false;
+      startErr.textContent = draftRefusalText(m);
+      return;
+    }
+    location.hash = hrefOf('scenarios', `builder/${m.id}`);
+  };
+  /** B7: a /1 library card converted (convert.ts), opened as a draft with an id of its own; its flags show in place. */
+  const openConverted = async (id: string) => {
+    const c = LIBRARY.find((x) => x.id === id);
+    if (!c) return;
+    const { draft } = convertV1(c.doc as ScenarioDoc);
+    const m = await store.create({ ...(draft as unknown as Body), id: `${c.id}-copy` }, `converted from the pme-scenario/1 library card ${c.id}`, Date.now(), { id: c.id, schema: 'pme-scenario/1' });
     if ('refused' in m) {
       startErr.hidden = false;
       startErr.textContent = draftRefusalText(m);
@@ -184,6 +203,15 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
         h('span', {}),
         button('Open a copy', () => void openCopy(c.id), '', { 'aria-label': `Open a copy of ${c.title}` })))),
       h('p', { class: 'sb-hint' }, 'The library’s pme-scenario/1 cards open here once each is ported to pme-scenario/2.')),
+    h('section', { class: 'sb-block sb-convert', 'aria-labelledby': 'sb-convert-h' }, h('h2', { id: 'sb-convert-h', class: 'scen-h3' }, 'Convert a pme-scenario/1 library card'),
+      h('p', { class: 'sb-hint' }, 'The converter carries what has an exact pme-scenario/2 form and flags the rest at its place, with nothing guessed in its place: a timer or a die becomes a truth rule only when a port proposes one with its sources and the owner signs it, or an instructor-pressed event. The library card is not changed.'),
+      h('div', { class: 'scen-list' }, ...LIBRARY_V1().map((c) => {
+        const n = convertV1(c.doc as ScenarioDoc).flags.length;
+        return h('div', { class: 'scen-item' },
+          h('div', {}, h('p', { class: 't' }, c.title, ' ', h('code', {}, c.id)), h('p', { class: 'd' }, n ? `${n} ${n === 1 ? 'place' : 'places'} flagged for a port to decide` : 'Nothing flagged: every beat has an exact pme-scenario/2 form')),
+          h('span', {}),
+          button('Convert', () => void openConverted(c.id), '', { 'aria-label': `Convert ${c.title} to a pme-scenario/2 draft` }));
+      }))),
     h('section', { class: 'sb-block', 'aria-labelledby': 'sb-import-h' }, h('h2', { id: 'sb-import-h', class: 'scen-h3' }, 'Import a card file'),
       h('p', { class: 'sb-hint' }, 'A pme-scenario/2 card file (an exported draft, a library card). The validator checks it first; a file it refuses is not opened.'),
       h('div', { class: 'scen-row' }, h('label', { class: 'btn', for: 'sb-import' }, 'Import a card file'), file,
@@ -192,7 +220,7 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
 
   // ---------------------------------------------------------------------------------------------------- the editor
   const editor = h('div', { class: 'console-page sb-page' });
-  let open: { meta: DraftMeta; form: CardForm; secs: SectionView[]; cur: SectionId; lines: Line[]; refused: string | null } | null = null;
+  let open: { meta: DraftMeta; form: CardForm; secs: SectionView[]; cur: SectionId; lines: Line[]; refused: string | null; flags: Line[] } | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   /** A change not written yet. */
   let dirty = false;
@@ -289,8 +317,8 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
       const sec = id && open.secs.find((s) => s.id === id);
       if (!sec) continue;
       const slot = slotOf(sec, l);
-      const words = `The ${l.by} ${l.kind === 'refusal' ? 'refuses' : 'warns'}: `;
-      slot.msgs.append(h('p', { class: l.kind === 'refusal' ? 'sb-refuse' : 'sb-warnline' }, h('span', {}, words, lineOf(l.line))));
+      const words = `The ${l.by} ${l.kind === 'refusal' ? 'refuses' : l.kind === 'flag' ? 'flags' : 'warns'}: `;
+      slot.msgs.append(h('p', { class: l.kind === 'warning' ? 'sb-warnline' : 'sb-refuse' }, h('span', {}, words, lineOf(l.line))));
       if (l.kind === 'refusal') slot.el.classList.add('bad');
       const ctls = l.at.row !== undefined && slot.controls[l.at.row] ? [slot.controls[l.at.row]!] : slot.controls;
       for (const c of ctls) {
@@ -298,10 +326,16 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
         c.setAttribute('aria-describedby', `${slot.msgs.id} ${c.dataset.describedby ?? ''}`.trim());
       }
     }
-    for (const s of open.secs) if (hasSlotFor(s)) s.placed(lines);
+    for (const s of open.secs) if (hasSlotFor(s)) s.placed(lines as Placed[]);
     // the checks column: the count, each line linked to its field, the facts
     const refusals = lines.filter((l) => l.kind === 'refusal');
     const warnings = lines.filter((l) => l.kind === 'warning');
+    const flagged = lines.filter((l) => l.kind === 'flag');
+    const origin = open.meta.origin;
+    const F0 = open.form.fields as Record<string, unknown>;
+    const ids = [typeof F0.id === 'string' ? F0.id : '', origin?.id ?? ''].filter(Boolean);
+    // §7.3: the port check's last result, read from ports.json, for a converted /1 card or a card with a row there
+    const port = origin?.schema === 'pme-scenario/1' || PORT_ROWS.some((r) => ids.includes(r.card)) ? portCheckLine(ids) : null;
     const item = (l: Line) => {
       const id = sectionOfLine(l);
       const go = id ? button('Show', () => {
@@ -313,13 +347,15 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
         const slot = slotOf(sec, l);
         show(id, (l.at.row !== undefined ? slot.controls[l.at.row] : slot.controls[0]) ?? undefined);
       }, 'small ghost', { 'aria-label': `Show ${l.line.split(':')[0]} at its field` }) : h('small', {}, 'Outside the format’s sections: fix it in the card file.');
-      return h('li', { class: l.kind === 'refusal' ? 'bad' : 'warn' }, l.by === 'builder' ? 'The builder: ' : '', lineOf(l.line), go);
+      return h('li', { class: l.kind === 'refusal' ? 'bad' : 'warn' }, l.by === 'builder' ? 'The builder: ' : l.by === 'converter' ? 'The converter: ' : '', lineOf(l.line), go);
     };
     checksList.replaceChildren(
       refusals.length
         ? h('li', { class: 'bad' }, `The validator refuses this draft: ${refusals.length} ${refusals.length === 1 ? 'refusal' : 'refusals'}`, h('small', {}, 'Each is shown at its field; Export waits for 0.'))
         : h('li', {}, 'The validator accepts this draft', h('small', {}, warnings.length ? `${warnings.length} ${warnings.length === 1 ? 'warning' : 'warnings'}: they do not block a draft.` : 'No warnings.')),
       ...refusals.map(item), ...warnings.map(item),
+      ...(flagged.length ? [h('li', { class: 'warn' }, `The converter flagged ${flagged.length} ${flagged.length === 1 ? 'place' : 'places'} of the pme-scenario/1 card: each is shown at its field.`, h('small', {}, ' A port decides each (a sourced truth rule the owner signs, or an instructor-pressed event); none is a refusal.')), ...flagged.map(item)] : []),
+      ...(port ? [h('li', { class: 'off sb-port' }, port)] : []),
       h('li', { class: 'off' }, 'Checked by the validator of this app', h('small', {}, HOME_VERSION)),
     );
     drawOutline();
@@ -400,7 +436,7 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
     // B4: an amount no number satisfies, a press grade() does not grade as met, an action open in no reachable phase
     // (on a card the validator accepts: grade() reads only such a card)
     for (const line of [...phaseWarnings(open.form), ...(result.ok ? actionWarnings(docOf(open.form), F) : [])]) builder.push({ kind: 'warning', by: 'builder', line, text: line.slice(line.indexOf(': ') + 2), at: fieldOf(line.slice(0, line.indexOf(': '))) });
-    place([...builder, ...placed.map((p) => ({ ...p, by: 'validator' as const }))]);
+    place([...builder, ...placed.map((p) => ({ ...p, by: 'validator' as const })), ...open.flags]);
   });
   const saveNow = async () => {
     if (saveTimer !== null) clearTimeout(saveTimer);
@@ -424,7 +460,9 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
   const mount = (meta: DraftMeta, doc: Body, cur: SectionId = 'header') => {
     const form = formOf(doc);
     dirty = false;
-    open = { meta, form, secs: [], cur, lines: [], refused: null };
+    // B7: the converter's flags of the /1 card this draft came from, each at the place it concerns
+    const flags: Line[] = originFlags(meta.origin).map((f) => ({ kind: 'flag', by: 'converter', line: flagLine(f), text: flagLine(f).slice(f.at.length + 2), at: fieldOf(f.at) }));
+    open = { meta, form, secs: [], cur, lines: [], refused: null, flags };
     const placeAgain = () => {
       if (open?.form === form) place(open.lines);
     };

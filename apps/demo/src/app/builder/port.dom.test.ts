@@ -28,7 +28,7 @@ describe('the port check’s words (pure)', () => {
   });
   it('a flag in words: its place, what the beat was, what a port must decide', () => {
     const f = convertV1(LIBRARY.find((c) => c.id === 'depth-awareness')!.doc as ScenarioDoc).flags.find((x) => x.kind === 'afterS')!;
-    expect(flagLine(f)).toBe(`${f.at}: ${f.was}. A port must ${f.decide}.`);
+    expect(flagLine(f)).toBe(`${f.at}: ${f.was}. To port it: ${f.decide}.`);
   });
 });
 
@@ -50,7 +50,7 @@ describe('a /1 card in the builder', () => {
     await p.enter('');
     const offers = [...p.el.querySelectorAll<HTMLButtonElement>('.sb-convert button')].map((x) => x.getAttribute('aria-label'));
     expect(offers.length).toBe(16);
-    expect(offers).toContain('Convert Unexpected awareness: TIVA line disconnected to a pme-scenario/2 draft');
+    expect(offers).toContain(`Convert ${LIBRARY.find((c) => c.id === 'depth-awareness')!.title} to a pme-scenario/2 draft`);
     const item = [...p.el.querySelectorAll('.sb-convert .scen-item')].find((x) => x.textContent?.includes('depth-awareness'))!;
     expect(item.textContent).toContain('2 places flagged for a port to decide');
     item.querySelector('button')!.click();

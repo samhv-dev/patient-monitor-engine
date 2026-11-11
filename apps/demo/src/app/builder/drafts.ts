@@ -41,6 +41,8 @@ export interface DraftMeta {
   bytes: number;
   /** Oldest first. */
   snapshots: SnapshotMeta[];
+  /** The library card it was opened from, and that card's format (plan §7.1, piece B7): kept here, not in the card. */
+  origin?: { id: string; schema: 'pme-scenario/1' | 'pme-scenario/2' };
 }
 
 /** A card body as the builder keeps it: a JSON object (the document `docOf` writes). */
@@ -153,7 +155,7 @@ export class Drafts {
   }
 
   /** A new draft of `doc`, with snapshot 1. */
-  create(doc: Body, from: string, now = Date.now()): Promise<DraftMeta | Refusal> {
+  create(doc: Body, from: string, now = Date.now(), origin?: DraftMeta['origin']): Promise<DraftMeta | Refusal> {
     const body = JSON.stringify(doc);
     return this.inTurn(async () => {
       const s = this.storage();
@@ -162,7 +164,7 @@ export class Drafts {
       const bytes = utf8Bytes(body);
       const meta: DraftMeta = {
         id: `d${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`, ...this.card(doc), from, createdAt: now, savedAt: now, bytes,
-        snapshots: [{ n: 1, at: now, why: 'opened', bytes }],
+        snapshots: [{ n: 1, at: now, why: 'opened', bytes }], ...(origin ? { origin } : {}),
       };
       const keys = [meta.id, snapKey(meta.id, 1)];
       try {

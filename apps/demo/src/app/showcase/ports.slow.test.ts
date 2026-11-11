@@ -33,6 +33,7 @@ describe('the twin run’s machinery, on a constructed pair', () => {
     const { draft, flags } = convertV1(V1);
     expect(flags).toEqual([]);
     const r = await twinRun(V1, draft, PRESSES, UNTIL_S);
+    console.log(`agrees: ${portCheckWords(r, 0)}\n${r.lines.join('\n')}`);
     expect(r.pressed).toEqual({ v1: [30, 90], v2: [30, 90] });
     expect(r.commands.diffs).toEqual([]);
     expect(r.commands.count).toBeGreaterThan(0);
@@ -51,6 +52,7 @@ describe('the twin run’s machinery, on a constructed pair', () => {
     const give = planted.actions.find((a) => a.id === 'calm')!.give!;
     (give[0] as { value: number }).value = 95; // /1 sends 80
     const r = await twinRun(V1, planted, PRESSES, UNTIL_S);
+    console.log(`planted: ${portCheckWords(r, 0)}\n${r.lines.join('\n')}`);
     expect(r.commands.diffs.length).toBe(1);
     expect(r.commands.diffs[0]).toContain('"value":80');
     expect(r.commands.diffs[0]).toContain('"value":95');
@@ -66,7 +68,7 @@ describe('the ports in ports.json', () => {
   const rows = (manifest as { ports: PortRow[] }).ports;
   it('the manifest is a list of rows (empty until the first port)', () => {
     expect(Array.isArray(rows)).toBe(true);
-    for (const r of rows) expect(Object.keys(r).sort()).toEqual(['accepted', 'presses', 'result', 'untilS', 'v1', 'v2']);
+    for (const r of rows) expect(Object.keys(r).sort()).toEqual(['accepted', 'card', 'presses', 'result', 'untilS', 'v1', 'v2']);
   });
   for (const row of rows) {
     it(`${row.v2}: the twin run reads as its row says`, async () => {
