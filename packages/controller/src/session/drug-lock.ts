@@ -5,14 +5,15 @@
 // device reads the same table from the `commandApplied` events it already receives (ControllerSession.gives), so the
 // laptop's rows and the phone's show the lock the host enforces.
 
-import { LEARNER_ISSUED_BY, type WireCommand } from '../protocol.ts';
+import { LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type WireCommand } from '../protocol.ts';
 
 /** How long a drug given as a bolus stays locked, s of simulated time: the owner's clinical choice (ruled 2026-11-05). */
 export const SAME_DRUG_LOCK_S = 10;
 
-/** Who gave it: the laptop's own views, the phone (a remote or the instructor phone), the card's own script, or a learner's
- *  device (the learner action remote, L4: `issuedBy` LEARNER_ISSUED_BY). */
-export type GivenBy = 'laptop' | 'phone' | 'card' | 'learner';
+/** Who gave it: the laptop's own views, the phone (a remote or the instructor phone), the card's own script, a learner's
+ *  device (the learner action remote, L4: `issuedBy` LEARNER_ISSUED_BY), or the pump tablet (pump-rack-tci.md C2:
+ *  `issuedBy` PUMP_ISSUED_BY). */
+export type GivenBy = 'laptop' | 'phone' | 'card' | 'learner' | 'pump';
 
 /** One drug's lock: how long ago it was given, how long the lock has left (s), and by whom. */
 export interface DrugLock {
@@ -23,12 +24,18 @@ export interface DrugLock {
 }
 
 /**
- * The drug a command gives as a bolus, else null. Only a `drug` event without `infusion` is a bolus: an infusion, a TCI
- * change, the vaporiser, fluids, CPR, defibrillation and the airway are never locked.
+ * The drug a command gives as a bolus, else null. Only a `drug` event without `infusion` is a bolus, and a pump
+ * channel's `bolus` (pump-rack-tci.md C2, PQ3 = A), of the drug its syringe truly holds, which the host wrote on the
+ * command (`pump.gives`): an infusion, a TCI change, the vaporiser, fluids, CPR, defibrillation and the airway are never
+ * locked.
  */
 export function bolusDrugOf(c: WireCommand | { type?: unknown; event?: unknown }): string | null {
   if (c.type !== 'applyEvent') return null;
-  const e = (c as { event?: { kind?: unknown; drugId?: unknown; infusion?: unknown } }).event;
+  const e = (c as { event?: { kind?: unknown; drugId?: unknown; infusion?: unknown; action?: unknown } }).event;
+  if (e?.kind === 'pump' && e.action === 'bolus') {
+    const g = (c as { pump?: { gives?: unknown } }).pump?.gives;
+    return typeof g === 'string' ? g : null;
+  }
   return e?.kind === 'drug' && typeof e.drugId === 'string' && e.infusion !== true ? e.drugId : null;
 }
 
@@ -36,10 +43,11 @@ export function bolusDrugOf(c: WireCommand | { type?: unknown; event?: unknown }
 export function givenByOf(issuedBy: string): GivenBy {
   if (issuedBy === 'scenario') return 'card';
   if (issuedBy === LEARNER_ISSUED_BY) return 'learner';
+  if (issuedBy === PUMP_ISSUED_BY) return 'pump';
   return issuedBy === 'remote' || issuedBy.startsWith('controller:') ? 'phone' : 'laptop';
 }
 
-const FROM: Readonly<Record<GivenBy, string>> = { laptop: 'from the laptop', phone: 'from the phone', card: 'by the card', learner: "from a learner's remote" };
+const FROM: Readonly<Record<GivenBy, string>> = { laptop: 'from the laptop', phone: 'from the phone', card: 'by the card', learner: "from a learner's remote", pump: 'from the pump tablet' };
 
 /** The refused ack's words: "given 4 s ago from the laptop". */
 export function lockReason(l: DrugLock): string {

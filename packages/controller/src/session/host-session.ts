@@ -8,6 +8,11 @@ import {
   learnerDefibMay,
   learnerMay,
   newPeerId,
+  PUMP_ISSUED_BY,
+  pumpMay,
+  type PumpCommand,
+  type PumpMeta,
+  type PumpSource,
   SeqFilter,
   type AppliedResolution,
   type ControlFlag,
@@ -27,11 +32,47 @@ import {
 } from '../protocol.ts';
 import { bolusDrugOf, givenByOf, type DrugLock, lockReason, RecentGives } from './drug-lock.ts';
 import type { Formulary } from '../formulary/types.ts';
+import type { PumpDevices } from '../pump-devices.ts';
+import {
+  channelsRunning, concText, mismatched, noteApplied, onPumpsWords, pumpWire, routedToChannel, translatePump,
+  type ChannelKind, type HostChannel, type PumpContext, type PumpTranslated,
+} from './pump-host.ts';
 import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
 import {
   deliverPrep, infusePrep, instructorView, learnerView, prepRecord, PREPS_PER_DEVICE, setInfusion, stagePrep, stagedOf,
   type HostPrep, type InstructorPrepNews, type LearnerPrepNews, type PrepNewsKind, type Running, type Translated,
 } from './preparations.ts';
+
+/** C2: the LABELS of the room's preparations a pump may load (§8): never their findings. */
+export interface PumpLabels {
+  news: 'labels';
+  labels: Array<{ device: string; id: string; container: string; drugId: string; actives: Array<{ drugId: string; amount: number; unit: string; perMl: number }>; volumeMl: number; madeAt: number; readyAt: number }>;
+}
+/** C2 (§8): the instructor's finding: a channel whose contents and programme differ, with whether its notice was shown. */
+export interface PumpMismatchNews {
+  news: 'pumpMismatch';
+  ch: number;
+  kind: ChannelKind;
+  device: string;
+  since: number;
+  notice: { shownAt: number } | null;
+  contents: { drugId: string; concentration: { amount: number; unit: string; perMl: number } };
+  label: { amount: number; unit: string; perMl: number };
+  origin: PumpSource | null;
+  programmed: { drugId: string; concentration: { amount: number; unit: string; perMl: number } };
+  text: string;
+}
+/**
+ * C2: the host-only `prep` events of the pump rack. To the pump tablets: `labels` (what they may load), `channel` (one
+ * history row of a channel: who changed what, and what it replaced, §5 "History"), `mismatch` (the notice the instructor
+ * showed, PQ8 = A). To the host's own screens and granted instructors: `pumpMismatch` and `pumpMismatchCleared`.
+ */
+export type PumpNews =
+  | PumpLabels
+  | { news: 'channel'; row: { t: number; ch: number; action: string; value: Record<string, unknown>; by: string; replaced?: PumpMeta['replaced'] } }
+  | { news: 'mismatch'; ch: number; words: string }
+  | PumpMismatchNews
+  | { news: 'pumpMismatchCleared'; ch: number };
 
 /** What a host needs from the monitor it owns. Sync or async (a worker-backed monitor returns promises). */
 export interface HostTarget {
@@ -116,6 +157,15 @@ export interface HostSessionOptions {
   formulary?: () => Formulary | null;
   /** L4 (§6): a preparation as staged, for the scenario driver's record (ScenarioDriver.recordPreparation). */
   onPreparation?: (p: StagedPrep) => void;
+  /**
+   * Plan pump-rack-tci.md C2 (§5, PQ1 = C): the room's pump rack, each channel's kind in channel order, as Room setup sets
+   * it (A1's AppSession.pumpRack), read at every pump hello and command. Absent or null: this computer takes no pump
+   * tablet (each is denied), and no remote's or Drug sheet's change is routed to a channel (D9).
+   */
+  pumpRack?: () => readonly ChannelKind[] | null;
+  /** C2 (D12): the reference pumps' device profiles (S1, pump-devices/), every range a pump command is checked against.
+   *  Absent or null: every pump command is refused. */
+  pumpDevices?: () => PumpDevices | null;
 }
 
 /** What the host answers an instructor (the grant's reason, or the refused command's ack). */
@@ -138,6 +188,20 @@ export const LEARNER_REASONS = {
   noFormulary: 'this computer has no formulary loaded yet',
   full: `this remote holds ${PREPS_PER_DEVICE} preparations: discard one first`,
 } as const;
+/** C2 (pump-rack-tci.md §7): what the host answers a pump tablet (with the learner remote's wrong PIN and PIN changed). */
+export const PUMP_REASONS = {
+  noPump: 'this computer does not take a pump tablet',
+  noDevice: 'the pump tablet names its device',
+  notSignedIn: 'the pump is not signed in',
+  noProfiles: 'this computer has no pump device profiles loaded yet',
+  /** A `pump` command from anything but a granted pump tablet: its channels are the tablet's (D10: one actor per pump). */
+  notPump: "a channel is set on the pump tablet; the instructor's computer changes an infusion through the Drug sheet",
+} as const;
+/** N99 (pump-rack-tci.md C2): the ack of a command from a peer whose hello named a role no branch of the host serves. */
+export const UNKNOWN_ROLE = 'this computer takes no commands from that role';
+/** §8 (PQ8 = A): the words the pump shows and sounds once the instructor shows the mismatch notice. */
+export const MISMATCH_WORDS: Readonly<Record<ChannelKind, string>> = { syringe: 'syringe and programme differ', drip: 'bag and programme differ' };
+
 /** R8c: what the host answers a remote ventilator (with INSTRUCTOR_REASONS' wrong PIN, taken over, PIN changed). */
 export const VENTILATOR_REASONS = {
   noVentilator: 'this computer does not take a remote ventilator',
@@ -242,8 +306,11 @@ export class HostSession {
    * R8c: the one granted remote ventilator has its own single place beside it, option B within its own role only.
    */
   private readonly signedIn: Record<SignsIn, Holder | null> = { instructor: null, ventilator: null };
-  /** L4: the granted learner remotes, each by (transport, from), with the learner PIN it proved and its device key. */
-  private readonly learners = new Map<ManagedTransport, Map<string, { pin: string; device: string }>>();
+  /** L4: the granted learner remotes, each by (transport, from), with the learner PIN it proved and its device key; C2:
+   *  the granted pump tablets beside them (`role`), on the same PIN. */
+  private readonly learners = new Map<ManagedTransport, Map<string, { pin: string; device: string; role: 'learner' | 'pump' }>>();
+  /** C2: what the host applied to each pump channel (pump-host.ts; never a volume, D4), by channel number. */
+  private readonly pumpChannels = new Map<number, HostChannel>();
   private learnerDenied: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong learner PINs (no lockout)
   /** L4 (§4 D3): the preparations the learner remotes staged, by device key and the device's own id. */
   private readonly preps = new Map<string, Map<string, HostPrep>>();
@@ -287,6 +354,11 @@ export class HostSession {
     this.stamp = createStamper(o.session, this.peerId, this.now);
     this.offEngine = o.target.on((e) => {
       if (e.type === ('state' as EngineEvent['type'])) this.engineState = true; // the engine emits its own (E1)
+      // C2 (D8): End, Empty Container or Infusion Complete stopped the channel: it no longer runs its drug (D9)
+      if ((e.type as string) === 'pumpAlarm') {
+        const c = this.pumpChannels.get((e as unknown as { ch: number }).ch);
+        if (c) c.running = false;
+      }
       if (e.type === 'alarmStatus') {
         // An alarm raised during a fast-forward did not sound — the end event lists it (banner, log, monitor)
         if (this.ff) for (const a of e.active) if (!this.activeAlarms.has(a.id) && !this.ff.alarms.some((x) => x.id === a.id)) this.ff.alarms.push({ ...a, ended: false });
@@ -351,9 +423,34 @@ export class HostSession {
 
   /** How many learner remotes are granted now. */
   learnerRemotes(): number {
-    let n = 0;
-    for (const m of this.learners.values()) n += m.size;
-    return n;
+    return this.granted('learner').length;
+  }
+
+  /** C2: how many pump tablets are granted now. */
+  pumpTablets(): number {
+    return this.granted('pump').length;
+  }
+
+  /** The granted learner remotes or pump tablets, each with its transport, peer id and device key. */
+  private granted(role: 'learner' | 'pump'): Array<{ t: ManagedTransport; from: string; device: string }> {
+    const out: Array<{ t: ManagedTransport; from: string; device: string }> = [];
+    for (const [t, m] of this.learners) for (const [from, g] of m) if (g.role === role) out.push({ t, from, device: g.device });
+    return out;
+  }
+
+  /**
+   * C2 (§8, PQ8 = A): the instructor shows the mismatch notice of channel `ch` (its card's one control, A3's): the host
+   * records when (the finding's event carries it again) and tells the pump tablets, which sound and show "syringe and
+   * programme differ" ("bag and programme differ" on a drip channel). Nothing is blocked: the channel delivers whether or
+   * not it was shown. False: no mismatch stands on that channel, or its notice was shown already.
+   */
+  showPumpNotice(ch: number): boolean {
+    const c = this.pumpChannels.get(ch);
+    if (!c?.mismatch || c.mismatch.notice) return false;
+    c.mismatch.notice = { shownAt: this.o.target.now().simT };
+    this.mismatchNews(c, c.by.programme ?? c.by.load ?? '');
+    this.pumpNews({ news: 'mismatch', ch, words: MISMATCH_WORDS[c.kind] });
+    return true;
   }
 
   /**
@@ -531,6 +628,7 @@ export class HostSession {
     this.preps.clear();
     this.pushing.clear();
     this.infusions.clear();
+    this.pumpChannels.clear(); // C2: the channels are the old engine's (D4)
     if (cause === 'restart') {
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
@@ -626,12 +724,14 @@ export class HostSession {
    * Many remotes may be granted at once; each is (transport, from), with the device key its gives are filed under. A
    * hello under the host's own peer id is refused: the instructor's copy of a preparation's news is addressed to it.
    */
-  private verifyLearner(t: ManagedTransport, from: string, pin: string | undefined, device: string | undefined): void {
+  private verifyLearner(t: ManagedTransport, from: string, pin: string | undefined, device: string | undefined, role: 'learner' | 'pump' = 'learner'): void {
     const want = this.o.learnerPin?.() ?? null;
     const instructor = this.o.instructorPin?.() ?? null;
     this.learners.get(t)?.delete(from); // its own hello proves the PIN again, or it is no longer granted
     const deny = (reason: string) => this.grant(t, from, false, reason);
-    if (want === null) return deny(LEARNER_REASONS.noRemote);
+    // C2 (§7): a pump tablet is admitted exactly as a learner remote, on the learner PIN, where the room has a rack
+    if (role === 'pump' && !this.o.pumpRack?.()) return deny(PUMP_REASONS.noPump);
+    if (want === null) return deny(role === 'pump' ? PUMP_REASONS.noPump : LEARNER_REASONS.noRemote);
     if (instructor !== null && samePin(want, instructor)) return deny(LEARNER_REASONS.samePins);
     if (pin === undefined || !samePin(pin, want) || from === this.peerId) {
       this.learnerDenied.push(this.now());
@@ -639,17 +739,18 @@ export class HostSession {
       this.learnerDenials(); // prunes the window
       return deny(INSTRUCTOR_REASONS.wrongPin);
     }
-    if (device === undefined) return deny(LEARNER_REASONS.noDevice);
+    if (device === undefined) return deny(role === 'pump' ? PUMP_REASONS.noDevice : LEARNER_REASONS.noDevice);
     let m = this.learners.get(t);
     if (!m) this.learners.set(t, (m = new Map()));
-    m.set(from, { pin: want, device });
+    m.set(from, { pin: want, device, role });
     this.grant(t, from, true);
+    if (role === 'pump') this.queue({ type: 'prep', t: this.o.target.now().simT, to: from, body: this.labels() }); // what it may load (§8)
   }
 
-  /** The device key of (t, from) if it is a granted learner remote with the learner PIN as it is now; a PIN changed unannounced revokes it here. */
-  private learnerDevice(t: ManagedTransport, from: string): string | null {
+  /** The device key of (t, from) if it is a granted learner remote (or, `role` 'pump', pump tablet) with the learner PIN as it is now; a PIN changed unannounced revokes it here. */
+  private learnerDevice(t: ManagedTransport, from: string, role: 'learner' | 'pump' = 'learner'): string | null {
     const g = this.learners.get(t)?.get(from);
-    if (!g) return null;
+    if (!g || g.role !== role) return null;
     const pin = this.o.learnerPin?.() ?? null;
     if (pin !== null && samePin(pin, g.pin)) return g.device;
     this.learners.get(t)?.delete(from);
@@ -717,9 +818,10 @@ export class HostSession {
       else p.devices.delete(m.from);
     }
     // R5d: the defibrillator window follows as a viewer does (a second screen of this computer gets the cockpit's frames)
-    if (m.kind === 'hello' && (m.role === 'viewer' || m.role === 'defib' || m.role === 'learner')) this.viewerSeenAt = this.now();
+    if (m.kind === 'hello' && (m.role === 'viewer' || m.role === 'defib' || m.role === 'learner' || m.role === 'pump')) this.viewerSeenAt = this.now();
     if (m.kind === 'hello' && (m.role === 'instructor' || m.role === 'ventilator')) this.verify(t, m.from, m.pin, m.role);
     if (m.kind === 'hello' && m.role === 'learner') this.verifyLearner(t, m.from, m.pin, m.device);
+    if (m.kind === 'hello' && m.role === 'pump') this.verifyLearner(t, m.from, m.pin, m.device, 'pump'); // C2 (§7)
     if (m.kind === 'hello' && m.role === 'ventilator') return; // R8c: it follows nothing (no welcome, no snapshot)
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
     // R8c: only the granted ventilator's link messages reach the app, while its PIN holds
@@ -731,34 +833,123 @@ export class HostSession {
     if (m.kind !== 'command') return;
     const role = p.roles.get(m.from);
     const refuse = (reason: string) => t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason }));
-    if (role === 'viewer') return refuse('a viewer cannot command');
-    if (role === 'ventilator') return refuse(VENTILATOR_REASONS.noCommands); // the relay refuses it too (R8b)
-    // forgotten by a peer-left (R29) and no hello since: not the controller path (the relay refuses it too)
-    if (role === undefined && p.left.has(m.from)) return refuse(NO_HELLO);
-    // R5d: the learner defibrillator window — Charge and Shock only, bare, checked here whatever the relay did (a
-    // same-browser window has no relay), then the instructor's own path; filed as the learner's, with its device key
-    if (role === 'defib') {
-      const no = learnerDefibMay(m.body);
-      if (no !== null) return refuse(no);
-      const by = p.devices.get(m.from);
-      return this.command(t, { ...m.body, issuedBy: LEARNER_ISSUED_BY, ...(by !== undefined ? { by } : {}) }, m.from);
+    // N99 (pump-rack-tci.md C2): every role the host serves has its own branch below, and nothing else reaches the
+    // engine. Before C2 the last line sent EVERY role that was not the instructor's down the controller path — a `pump`
+    // hello (C1's new role, which this host did not know) and a peer calling itself `host` were applied as the laptop's
+    // own panel. Only a peer with no hello on a transport that never forgot it (the laptop's own panels) is a controller.
+    switch (role) {
+      case 'viewer':
+        return refuse('a viewer cannot command');
+      case 'ventilator':
+        return refuse(VENTILATOR_REASONS.noCommands); // the relay refuses it too (R8b)
+      case 'defib': {
+        // R5d: the learner defibrillator window — Charge and Shock only, bare, checked here whatever the relay did (a
+        // same-browser window has no relay), then the instructor's own path; filed as the learner's, with its device key
+        const no = learnerDefibMay(m.body);
+        if (no !== null) return refuse(no);
+        const by = p.devices.get(m.from);
+        return this.command(t, { ...m.body, issuedBy: LEARNER_ISSUED_BY, ...(by !== undefined ? { by } : {}) }, m.from);
+      }
+      case 'learner': {
+        // L4: the learner action remote — granted on the learner PIN, its shapes checked here again (learnerMay; a
+        // same-browser page has no relay), then turned into the instructor's own commands, filed as the learner's
+        const by = this.learnerDevice(t, m.from);
+        if (by === null) return refuse(LEARNER_REASONS.notSignedIn);
+        const no = learnerMay(m.body);
+        if (no !== null) return refuse(no);
+        return this.learnerCommand(t, m.from, by, m.body, refuse);
+      }
+      case 'pump': {
+        // C2 (§7): the pump tablet — granted on the learner PIN, its shapes checked here again (pumpMay), then each one
+        // checked against its channel and device and applied as the engine's `pump` event, filed as the pump's
+        const by = this.learnerDevice(t, m.from, 'pump');
+        if (by === null) return refuse(PUMP_REASONS.notSignedIn);
+        const no = pumpMay(m.body);
+        if (no !== null) return refuse(no);
+        return this.pumpCommand(t, m.from, by, m.body as Extract<WireCommand, { type: 'pump' }>, refuse);
+      }
+      case 'instructor':
+      case 'controller':
+      case undefined: {
+        // forgotten by a peer-left (R29) and no hello since: not the controller path (the relay refuses it too)
+        if (role === undefined && p.left.has(m.from)) return refuse(NO_HELLO);
+        // §4 D3: a preparation and an infusion's mL/h are the learner remote's shapes only, and never reach the engine as
+        // sent; C2: a channel's shapes are the pump tablet's (D10)
+        if (m.body.type === 'prep' || m.body.type === 'infusion') return refuse(LEARNER_REASONS.notSignedIn);
+        if (m.body.type === 'pump') return refuse(PUMP_REASONS.notPump);
+        // An instructor phone: granted, on the allow-list, and filed as the Remote's rows whatever it wrote (record.ts)
+        const why = role === 'instructor' ? this.instructorRefusal(t, m.from, m.body) : null;
+        if (why !== null) return refuse(why);
+        const c = role === 'instructor' ? ({ ...m.body, issuedBy: 'remote' } as WireCommand) : m.body;
+        // C2 (D9): the Drug sheet's change of a drug that runs on a pump channel goes to that channel, or is refused
+        const routed = this.sheetToChannel(t, m.from, c, refuse);
+        if (routed) return routed;
+        return this.command(t, c, m.from);
+      }
+      default:
+        // a hello the guard admits (`host`), or one an in-process transport carried unchecked: logged, never applied
+        console.warn(`[pme host] a command from ${m.from}, role ${String(role)}, refused: no branch serves that role`);
+        return refuse(UNKNOWN_ROLE);
     }
-    // L4: the learner action remote — granted on the learner PIN, its shapes checked here again (learnerMay; a same-browser
-    // page has no relay), then turned into the instructor's own commands, filed as the learner's with its device key
-    if (role === 'learner') {
-      const by = this.learnerDevice(t, m.from);
-      if (by === null) return refuse(LEARNER_REASONS.notSignedIn);
-      const no = learnerMay(m.body);
-      if (no !== null) return refuse(no);
-      return this.learnerCommand(t, m.from, by, m.body, refuse);
+  }
+
+  /**
+   * C2 (§7, D2, D12): a granted pump tablet's command. The host resolves what it loads and checks the shape against the
+   * channel's kind and device profile (pump-host.ts), then applies the engine's `pump` event through `command()` — the
+   * drug lock, the engine's validation and the record are the laptop's own — filed `issuedBy: 'pump'`, `by` = the device
+   * key, with the channel and the values it replaced (`pump`, PumpMeta). A resend of an answered id changes nothing.
+   */
+  private async pumpCommand(t: ManagedTransport, from: string, by: string, c: Extract<WireCommand, { type: 'pump' }>, refuse: (reason: string) => void): Promise<void> {
+    const prior = this.seen.get(c.id);
+    if (prior) {
+      this.stats.duplicates++;
+      return t.send(this.stamp(prior));
     }
-    // §4 D3: a preparation and an infusion's mL/h are the learner remote's shapes only, and never reach the engine as sent
-    if (m.body.type === 'prep' || m.body.type === 'infusion') return refuse(LEARNER_REASONS.notSignedIn);
-    if (role !== 'instructor') return this.command(t, m.body, m.from);
-    // An instructor phone: granted, on the allow-list, and filed as the Remote's rows whatever it wrote (record.ts)
-    const why = this.instructorRefusal(t, m.from, m.body);
-    if (why !== null) return refuse(why);
-    return this.command(t, { ...m.body, issuedBy: 'remote' }, m.from);
+    if (this.ff) return refuse(FF_REFUSAL);
+    const x = this.pumpContext();
+    if (typeof x === 'string') return refuse(x);
+    const out = translatePump(c as unknown as PumpCommand, x);
+    if (!out.ok) return refuse(out.why);
+    return this.command(t, pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, by }, out), from);
+  }
+
+  /** C2: what translatePump reads, or why no pump command can be taken now. */
+  private pumpContext(): PumpContext | string {
+    const rack = this.o.pumpRack?.() ?? null;
+    if (!rack) return PUMP_REASONS.noPump;
+    const devices = this.o.pumpDevices?.() ?? null;
+    if (!devices) return PUMP_REASONS.noProfiles;
+    return { rack, devices, formulary: this.o.formulary?.() ?? null, channels: this.pumpChannels, prep: (d, id) => this.preps.get(d)?.get(id), simT: this.o.target.now().simT };
+  }
+
+  /**
+   * C2 (D9, LQ4 extended): a change of `drugId`'s rate from a remote (`infusion set`, mL/h) or the Drug sheet (`applyEvent
+   * infusion`, its unit). Running on no channel: null, and the caller's own path applies it. On exactly one channel and as
+   * no channel-less infusion: that channel's `pump rate` (`pump stop` at 0), checked against its device, filed as the
+   * sender's (`base`) with the channel and the value it replaced. Anywhere else (two channels, or a channel and an
+   * infusion): refused, so no change lands on a channel the sender did not see.
+   */
+  private toChannel(t: ManagedTransport, from: string, base: WireCommand, drugId: string, rate: number, unit: string, refuse: (reason: string) => void): Promise<void> | null {
+    const chs = channelsRunning(this.pumpChannels, drugId);
+    if (chs.length === 0) return null;
+    const alsoLine = this.infusions.has(drugId);
+    if (chs.length > 1 || alsoLine) return Promise.resolve(refuse(onPumpsWords(chs, alsoLine)));
+    if (this.ff) return Promise.resolve(refuse(FF_REFUSAL));
+    const x = this.pumpContext();
+    if (typeof x === 'string') return Promise.resolve(refuse(x));
+    const out = routedToChannel(this.pumpChannels.get(chs[0] as number) as HostChannel, rate, unit as never, x);
+    if (!out.ok) return Promise.resolve(refuse(out.why));
+    const { id, issuedBy, by, stageGroup, batch } = base as WireCommand & { by?: string };
+    return this.command(t, pumpWire({ id, issuedBy, ...(by !== undefined ? { by } : {}), ...(stageGroup !== undefined ? { stageGroup } : {}), ...(batch !== undefined ? { batch } : {}) }, out as Extract<PumpTranslated, { ok: true }>), from);
+  }
+
+  /** D9 for the laptop's Drug sheet and the instructor phone's: an `applyEvent infusion` of a drug on a pump channel. */
+  private sheetToChannel(t: ManagedTransport, from: string, c: WireCommand, refuse: (reason: string) => void): Promise<void> | null {
+    if (c.type !== 'applyEvent') return null;
+    const e = c.event as { kind?: unknown; drugId?: unknown; rate?: unknown; unit?: unknown };
+    if (e.kind !== 'infusion' || typeof e.drugId !== 'string' || typeof e.rate !== 'number' || typeof e.unit !== 'string') return null;
+    if (this.seen.has(c.id)) return null; // a resend: command() answers it with its first ack
+    return this.toChannel(t, from, c, e.drugId, e.rate, e.unit, refuse);
   }
 
   /**
@@ -778,7 +969,7 @@ export class HostSession {
     const base = { id: c.id, issuedBy: LEARNER_ISSUED_BY, by, ...(c.stageGroup !== undefined ? { stageGroup: c.stageGroup } : {}), ...(c.batch !== undefined ? { batch: c.batch } : {}) } as WireCommand;
     if (c.type === 'applyEvent') return this.command(t, { ...c, issuedBy: LEARNER_ISSUED_BY, by }, from);
     const { simT } = this.o.target.now();
-    if (c.type === 'infusion') return this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
+    if (c.type === 'infusion') return this.toChannel(t, from, base, c.drugId, c.rateMlH, 'mL/h', refuse) ?? this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
     if (c.type !== 'prep') return refuse('not a learner command'); // learnerMay admitted none other
     const f = this.o.formulary?.() ?? null;
     const mine = this.preps.get(by);
@@ -838,6 +1029,75 @@ export class HostSession {
     const t = this.o.target.now().simT;
     this.queue({ type: 'prep', t, to: h.from, body: { news, prep: learnerView(h) } satisfies LearnerPrepNews });
     this.queue({ type: 'prep', t, to: this.peerId, body: { news, prep: instructorView(h) } satisfies InstructorPrepNews });
+    if (news !== 'notice' && this.granted('pump').length) this.pumpNews(this.labels()); // C2 (§8): what the pumps may load changed
+  }
+
+  /**
+   * C2 (§8): the LABELS of the preparations a pump may load — every one in a syringe or a bag, of any remote of the room,
+   * with something left: drug, concentration, volume, the maker's device key and the time it was made, never its findings
+   * (the learner plan's D7 keeps those to the instructor and the maker).
+   */
+  private labels(): PumpLabels {
+    const labels: PumpLabels['labels'] = [];
+    for (const m of this.preps.values()) {
+      for (const h of m.values()) {
+        const k = h.prep.container;
+        if (h.leftMl <= 1e-9 || !(k === 'syringe-pp' || k === 'bag-pvc' || k === 'bag-polyolefin')) continue;
+        const a = h.prep.actives;
+        labels.push({ device: h.by, id: h.id, container: k, drugId: a[0]?.drugId ?? '', actives: a.map((x) => ({ drugId: x.drugId, amount: x.perMl, unit: x.unit, perMl: 1 })), volumeMl: h.leftMl, madeAt: h.t, readyAt: h.prep.ready.atS });
+      }
+    }
+    return { news: 'labels', labels };
+  }
+
+  /** C2: a host-only `prep` event to every granted pump tablet (`to` its peer id: the relay routes it to that socket only, C1). */
+  private pumpNews(body: PumpNews): void {
+    const t = this.o.target.now().simT;
+    for (const g of this.granted('pump')) this.queue({ type: 'prep', t, to: g.from, body });
+  }
+
+  /** C2 (§8, PQ8 = A): the mismatch finding of channel `c`, to the host's own screens and granted instructors only. */
+  private mismatchNews(c: HostChannel, device: string): void {
+    const k = c.contents as NonNullable<HostChannel['contents']>;
+    const body: PumpMismatchNews = {
+      news: 'pumpMismatch', ch: c.ch, kind: c.kind, device, since: c.mismatch?.since ?? 0, notice: c.mismatch?.notice ?? null,
+      contents: { drugId: k.drugId, concentration: k.concentration }, label: k.label, origin: k.origin,
+      programmed: c.programmed as NonNullable<HostChannel['programmed']>,
+      text: `${k.drugId} ${concText(k.label)} programmed as ${c.programmed?.drugId} ${c.programmed ? concText(c.programmed.concentration) : ''}`.trim(),
+    };
+    this.queue({ type: 'prep', t: this.o.target.now().simT, to: this.peerId, body });
+  }
+
+  /**
+   * C2: an applied `pump` event (any sender's: the tablet's, or a remote's or the Drug sheet's through D9) into the host's
+   * channel table; a preparation it loaded leaves its maker's tray; the pumps hear the channel's history row; a mismatch
+   * that starts or ends is the instructor's finding (§8).
+   */
+  private pumpApplied(c: WireCommand, by: string, simT: number): void {
+    const e = (c as { event: Record<string, unknown> }).event;
+    const meta = (c as { pump?: PumpMeta }).pump;
+    const was = this.pumpChannels.get(e.ch as number)?.mismatch ?? null;
+    const ch = noteApplied(this.pumpChannels, e, meta, by);
+    if (!ch) return;
+    const origin = e.action === 'load' ? meta?.origin : undefined;
+    if (origin && 'prep' in origin) {
+      const h = this.preps.get(origin.prep.device)?.get(origin.prep.id);
+      if (h) {
+        h.leftMl = 0;
+        this.preps.get(origin.prep.device)?.delete(origin.prep.id);
+        this.prepNews('loaded', h);
+      }
+    }
+    const { kind: _k, ch: _c, ...value } = e;
+    this.pumpNews({ news: 'channel', row: { t: simT, ch: ch.ch, action: String(e.action), value, by, ...(meta?.replaced ? { replaced: meta.replaced } : {}) } });
+    const now = mismatched(ch);
+    if (now && (!was || e.action === 'load' || e.action === 'program')) {
+      ch.mismatch = { since: simT, notice: was && e.action !== 'load' && e.action !== 'program' ? was.notice : null };
+      this.mismatchNews(ch, by);
+    } else if (!now && was) {
+      ch.mismatch = null;
+      this.queue({ type: 'prep', t: simT, to: this.peerId, body: { news: 'pumpMismatchCleared', ch: ch.ch } satisfies PumpNews });
+    }
   }
 
   /** A peer said hello: replay sticky commands, then a fresh snapshot (brief §3.7 late join). */
@@ -1036,6 +1296,7 @@ export class HostSession {
     if (result.accepted) {
       this.gives.note(c, result.tick * TICK_S); // every device's bolus, and the card's own (a press after it is locked)
       this.noteInfusion(c as WireCommand);
+      if (c.type === 'applyEvent' && (c.event as { kind?: unknown }).kind === 'pump') this.pumpApplied(c as WireCommand, (c as { by?: string }).by ?? givenByOf(c.issuedBy), result.tick * TICK_S);
       if (c.type === 'setTarget') {
         const r = c.ramp;
         const untilT = result.tick * TICK_S + (r ? (r.delayS ?? 0) + r.durationS : 0);
