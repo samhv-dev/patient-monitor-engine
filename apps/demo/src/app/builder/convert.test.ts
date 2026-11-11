@@ -243,7 +243,28 @@ const MECHANICAL = ['depth-opioid-apnoea', 'nmb-mh-trigger', 'nmb-sux-burn', 'sh
  * those exactly as the census counts them, and these besides. Filled from the converter's output and checked here, so a
  * change in either shows.
  */
-const FINDINGS: Record<string, Partial<Record<FlagKind, number>>> = {};
+const FINDINGS: Record<string, Partial<Record<FlagKind, number>>> = {
+  // event: §7.2 calls it mechanical; it is not (the `event:` row's test above): every event leaf, as the census counts it
+  // (pea's two events under one die are counted there, as event leaves, beside the die's own flag)
+  // pressIntoPhase: a press entered a state that a rule (or a flagged timer) also enters, so the state is a phase here
+  // pressScope: a rule /1 tries only after a press, or stops trying once a press leaves the state
+  // unreachable: a press offered only in a state reached through a flagged beat (brady's “Loss of capture”, after pacing)
+  // manual: vf's “ROSC after epinephrine” is all[event, manual]: no /2 form holds a press that waits on a learner's act
+  // bookmark: vf's two authored bookmarks
+  'showcase-induction': { pressScope: 4 },
+  'showcase-induction-premed': { pressIntoPhase: 1 },
+  'showcase-anaphylaxis': { event: 1, pressIntoPhase: 1 },
+  'showcase-tamponade': { pressScope: 4 },
+  'acls-pea-hypovolaemia': { event: 3, pressIntoPhase: 1 },
+  'acls-bradycardia-unstable': { event: 7, pressIntoPhase: 1, unreachable: 1 },
+  'acls-vf-witnessed': { bookmark: 2, event: 4, manual: 1, pressIntoPhase: 2 },
+  'or-induction-hypotension': { event: 5 },
+  'svt-adenosine': { event: 2, pressIntoPhase: 1 },
+  'depth-awareness': { event: 1 },
+  'depth-light-anaesthesia': { event: 1 },
+  'nmb-residual-block': { event: 1 },
+  'showcase-bronchospasm': { event: 1 },
+};
 
 const PORTED = LIBRARY.filter((c) => (c.doc as { schema: string }).schema === 'pme-scenario/1' && !['showcase-mh', 'showcase-haemorrhage'].includes(c.id));
 
