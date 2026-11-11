@@ -26,15 +26,19 @@ export function labFlag(r: Row, v: number): 'low' | 'high' | 'ok' {
   return v < r.lo ? 'low' : v > r.hi ? 'high' : 'ok';
 }
 
-/** Mount a panel into `el`; returns `update(values, title)`. */
-export function mountLabPanel(el: HTMLElement): (values: LabPanel, title: string) => void {
+/**
+ * Mount a panel into `el`; returns `update(values, title)`. A drawn sample's result (`labResult`) holds only its panel's
+ * analytes (engine-core analysers.ts, L10a): a row it does not hold is not drawn.
+ */
+export function mountLabPanel(el: HTMLElement): (values: Partial<LabPanel>, title: string) => void {
   el.classList.add('pme-lab-panel');
   return (values, title) => {
-    const rows = LAB_ROWS.map((r) => {
+    const rows = LAB_ROWS.flatMap((r) => {
       const v = values[r.key];
+      if (v === undefined) return [];
       const f = labFlag(r, v);
       const mark = f === 'high' ? ' ↑' : f === 'low' ? ' ↓' : '';
-      return `<tr class="${f}"><th>${r.label}</th><td>${v}${mark}</td><td>${r.unit}</td></tr>`;
+      return [`<tr class="${f}"><th>${r.label}</th><td>${v}${mark}</td><td>${r.unit}</td></tr>`];
     }).join('');
     el.innerHTML = `<table><caption>${title}</caption>${rows}</table>`;
   };
