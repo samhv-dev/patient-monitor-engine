@@ -7,7 +7,7 @@ name: kit-and-site
 # (RELEASE.md, "The classroom kit and the site").
 on:
   push:
-    branches: [main]
+    branches: [main, ci-kit-and-pages-workflow] # TEMPORARY (brief 169 proof): registers the workflow for a dispatch from this branch; removed before the PR
   # Dry run on any branch (`gh workflow run kit-and-site.yml --ref <branch> -f dry_run=true`): build and check
   # everything, upload the kit zips and the site tree as workflow artifacts, publish nothing. Publishing needs main and
   # dry_run false (a maintainer's manual republish of main's head).
