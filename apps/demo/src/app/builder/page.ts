@@ -10,8 +10,9 @@
 // the card is also kept as a version file in the kit's own user-data folder (kit-store.ts) on Ctrl+S, at Export, and
 // every 2 min of an open draft that changed; the drafts page lists the cards the folder holds that this browser lacks;
 // the store line says in words where the work is kept, or why the folder is not written. (B6's Run, not built yet, is
-// to call `keepInKit` too, as the plan says.) Since B5 every block of the format has its section; a top-level key the
-// format does not have is carried as the card has it.
+// to call `keepInKit` too, as the plan says; it does: B6.) Run in place (B6, run-panel.ts): enabled at 0 refusals, it
+// saves the draft, keeps it in the kit's folder, and runs it on this computer's session beside Instructor v2. Since B5
+// every block of the format has its section; a top-level key the format does not have is carried as the card has it.
 import { HOME_VERSION, REPO } from '../about.ts';
 import { hhmm } from '../archive.ts';
 import { hrefOf } from '../router.ts';
@@ -74,7 +75,10 @@ export interface BuilderPage {
   leave(): void;
 }
 
-export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defaultKit): BuilderPage {
+/** B6: run the draft `draftId` (its document as the form writes it) in place; the app's DraftRun.run. */
+export type RunDraft = (draftId: string, doc: unknown) => { ok: true } | { ok: false; reason: string };
+
+export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defaultKit, runner?: { run: RunDraft; live(): boolean }): BuilderPage {
   // ---------------------------------------------------------------------------------------------------- the drafts
   const draftList = h('div', { class: 'scen-list sb-drafts', 'aria-label': 'Your drafts' });
   const holds = h('p', { class: 'sb-hint sb-holds' });
@@ -202,6 +206,8 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
   let kitTimer: ReturnType<typeof setInterval> | null = null;
   const refusal = h('p', { class: 'sb-refuse sb-store-refuse', role: 'alert', hidden: true });
   const exportBtn = button('Export file', () => void doExport());
+  const runBtn = button('Run in place', () => void doRun(), 'primary');
+  runBtn.hidden = !runner;
   const cardLine = h('p', { class: 'sb-card' });
   const outline = h('nav', { class: 'sb-panel sb-outline', 'aria-label': 'Card outline' });
   const pane = h('div', { class: 'sb-pane' });
@@ -325,6 +331,8 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
     // the file is the way out when this browser could not keep the draft (§8), refusals or not
     exportBtn.disabled = n > 0 && !open.refused;
     exportBtn.title = exportBtn.disabled ? `Export waits while the validator refuses this draft (${n})` : '';
+    runBtn.disabled = n > 0; // §6: enabled at 0 refusals
+    runBtn.title = n > 0 ? `Run in place waits while the validator refuses this draft (${n})` : 'Runs this draft on this computer, beside Instructor v2; not in the library';
   };
   const drawHistory = () => {
     if (!open) return;
@@ -440,6 +448,16 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
     drawSaved(r);
     await keepInKit('export');
   };
+  const doRun = async () => {
+    if (!open || !runner) return;
+    check.flush();
+    if (runBtn.disabled) return;
+    await saveNow();
+    await keepInKit('run');
+    if (runner.live() && !(await confirmDialog('Run this draft in place?', 'The current patient is replaced by the draft’s patient. The draft runs on this computer only: it is not added to the library.', 'Run the draft', false, 'Keep the current case'))) return;
+    const r = runner.run(open.meta.id, docOf(open.form));
+    if (!r.ok) toast(`The draft could not run: ${r.reason}`, 'alert');
+  };
   const restore = async (n: number) => {
     if (!open) return;
     await saveNow();
@@ -452,7 +470,7 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
     h('div', { class: 'sb-top' },
       h('div', {}, h('a', { class: 'console-back', href: hrefOf('scenarios', 'builder') }, '← Your drafts'), h('h1', { id: 'scen-edit-h' }, 'Scenario builder'), cardLine),
       h('span', { class: 'sb-sp' }),
-      h('div', { class: 'sb-topr' }, h('div', { class: 'sb-saves', role: 'status', 'aria-label': 'Where this draft is saved' }, saveChip, kitChip), h('div', { class: 'sb-acts' }, exportBtn))),
+      h('div', { class: 'sb-topr' }, h('div', { class: 'sb-saves', role: 'status', 'aria-label': 'Where this draft is saved' }, saveChip, kitChip), h('div', { class: 'sb-acts' }, exportBtn, runBtn))),
     refusal,
     kitRefusal,
     h('div', { class: 'sb-grid' }, outline, pane, checks));
