@@ -22,6 +22,7 @@ import { mountFastForward } from '../teach2/ff.ts';
 import { mountFinish, type FinishHooks } from '../teach2/finish.ts';
 import { mountHeader, type TopControls } from '../teach2/header.ts';
 import { mountKeys } from '../teach2/keys.ts';
+import { mountLearnerPreps } from '../teach2/learner-preps.ts';
 import { mount as mountSheets } from '../teach2/sheets.ts';
 import { mount as mountStrip } from '../teach2/strip.ts';
 
@@ -50,6 +51,9 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   const actionHead = h('h2', { id: 'ip2-action-h', class: 'ip2-colhead' }, 'ACTION');
   const action = h('section', { class: 'ip2-action', 'aria-labelledby': 'ip2-action-h' }, actionHead, actionBody, finishEl);
   const sheets = h('div', { class: 'ip2-sheets' });
+  // L9 (LQ3): the learner remotes' preparations, over the dock: a card at once for a finding, with its one control
+  const preps = mountLearnerPreps(link, { formulary: () => link.host?.formulary ?? null });
+  dock.el.prepend(preps.el);
   const el = h('section', { class: 'ip2', 'aria-labelledby': 'ip2-h' },
     h('h1', { id: 'ip2-h', class: 'sr-only' }, 'Instructor v2'), header.el, strip, statePanel, state, ff.el, alarms.el, action, sheets, dock.el);
 
@@ -95,6 +99,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
       clearInterval(tick);
       keys.destroy();
       header.destroy();
+      preps.destroy();
       for (const s of slots) s.destroy();
       finish.destroy();
     },

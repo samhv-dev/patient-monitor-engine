@@ -14,6 +14,7 @@ import { cardOf } from '../scenarios.ts';
 import { SPEEDS } from '../sessionbar.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import { defaultPatient, NO_CASE } from './begin.ts';
+import { PREPS_WORDS } from './learner-preps.ts';
 
 /** The top bar's controls the header carries on this route (main.ts: the same toggle and the same room code). */
 export interface TopControls {
@@ -71,6 +72,8 @@ export function mountHeader(link: Link, top?: TopControls): Header {
   const who = h('span', { class: 'ip2-who' });
   const mode = h('span', { class: 'ip2-mode' });
   const title = h('span', { class: 'ip2-title' });
+  // L9: how many learner preparations with a finding wait for the instructor (the dock's card shows them)
+  const preps = h('span', { class: 'ip2-preps-count', role: 'status', hidden: true });
 
   // The clock pill: today's Pause / Resume button, copied (the press shows what was asked until the host answers)
   let paused = false;
@@ -139,6 +142,10 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     setText(mode, m === 'modeled' ? (n ? `MODELED, ${n} held` : 'MODELED') : 'MANUAL');
     const sv = link.ctl.scenario;
     setText(title, sv.doc ? cardOf(sv.doc).title : NO_CASE);
+    const waiting = link.preps?.waiting ?? 0; // a test's partial Link has no board
+    preps.hidden = waiting === 0;
+    setText(preps, waiting ? PREPS_WORDS.count(waiting) : '');
+    preps.setAttribute('aria-label', PREPS_WORDS.countAria(waiting));
     title.toggleAttribute('data-none', none);
     // The pause and speed the HOST runs at, wherever they were set
     if (!asking && paused !== link.ctl.hostPaused) paused = link.ctl.hostPaused;
@@ -150,7 +157,7 @@ export function mountHeader(link: Link, top?: TopControls): Header {
   };
 
   const el = h('header', { class: 'ip2-head', 'aria-label': 'Session' },
-    who, mode, title, h('span', { class: 'ip2-spacer' }), pill, speed.wrap,
+    who, mode, title, preps, h('span', { class: 'ip2-spacer' }), pill, speed.wrap,
     ...(top ? [h('span', { class: 'ip2-head-div', 'aria-hidden': 'true' }), sound, room] : []));
   refresh();
   return {

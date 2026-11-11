@@ -7,10 +7,12 @@ import type {
   DispatchResult,
   DoseUnit,
   EngineEvent,
+  LabPanelId,
   NumericId,
   PatientSnapshot,
   PkClinicalEvent,
   PkRoute,
+  PumpConcentration,
   Ramp,
   RateUnit,
   RhythmId,
@@ -28,9 +30,11 @@ import type { RelayFrame } from './transport/relay-frames.ts';
  * defibrillator window, which joins as a learner does (no PIN) and follows as a viewer, and may send only
  * LEARNER_DEFIB_COMMANDS. `learner` (plan learner-action-remote.md L3, §4 D9; LQ1 ruled 9 November): the learner action
  * remote, which proves the LEARNER PIN (never the instructor's) in its hello, is pending until the host grants it, follows
- * as a viewer, and may send only LEARNER_COMMANDS.
+ * as a viewer, and may send only LEARNER_COMMANDS. `pump` (plan pump-rack-tci.md C1, §4 D1, §7): the infusion-pump rack on
+ * a tablet, admitted exactly as `learner` is (the learner PIN, pending until the host grants it, following as a viewer),
+ * which may send only PUMP_COMMANDS.
  */
-export type Role = 'host' | 'controller' | 'viewer' | 'instructor' | 'ventilator' | 'defib' | 'learner';
+export type Role = 'host' | 'controller' | 'viewer' | 'instructor' | 'ventilator' | 'defib' | 'learner' | 'pump';
 export type TransportKind = 'in-process' | 'postMessage' | 'broadcastChannel' | 'websocket' | 'webrtc';
 export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
@@ -88,7 +92,9 @@ export type ClinicalEvent =
       action: 'flush' | 'zero' | 'sample' | 'disconnect' | 'reconnect' | 'damp' | 'level' | 'wedge'; value?: number;
     }
   | { kind: 'surgical'; action: 'diathermy' | 'shiver' | 'motion'; on: boolean; durationS?: number }
-  | { kind: 'condition'; id: 'anaphylaxis' | 'mh' | 'last' | 'tamponade' | 'tensionPtx' | 'pe'; severity: number };
+  | { kind: 'condition'; id: 'anaphylaxis' | 'mh' | 'last' | 'tamponade' | 'tensionPtx' | 'pe'; severity: number }
+  /** A blood sample (engine-core types-blood.ts): `analyser` is the room's row, set by the host, never by a learner (LAB_EVENT_KEYS). */
+  | { kind: 'lab'; panel: LabPanelId; turnaroundS?: number; analyser?: string };
 export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp';
 
 /**
@@ -125,6 +131,7 @@ export type ExtraCommand = CommandBase &
       }
     | PrepCommand
     | InfusionSetCommand
+    | PumpCommand
   );
 /**
  * Plan learner-action-remote.md §4 D2: a learner remote asks the HOST to make (`stage`), throw away (`discard`), give as a
@@ -138,7 +145,11 @@ export type PrepCommand =
   | { type: 'prep'; action: 'stage'; prep: { id: string; components: PrepComponent[]; diluent?: { id: string; volumeMl: number }; container?: string } }
   | { type: 'prep'; action: 'discard'; prepId: string }
   | { type: 'prep'; action: 'deliver'; prepId: string; volumeMl: number | 'all'; route: PkRoute; overS?: number }
-  | { type: 'prep'; action: 'infuse'; prepId: string; rateMlH: number };
+  | { type: 'prep'; action: 'infuse'; prepId: string; rateMlH: number }
+  /** L9 (§4 D7, LQ3): the INSTRUCTOR's one control on a learner's preparation, from the laptop's dock card or the phone's:
+   *  show the incompatibility notice of the preparation `prepId` of the device `by` (its device key; D2 wrote `{by, id}`,
+   *  and `id` is the command's own). Instructor-only: in INSTRUCTOR_COMMANDS, never in LEARNER_COMMANDS. */
+  | { type: 'prep'; action: 'notice'; by: string; prepId: string };
 /** One product drawn into a preparation: the formulary's product id, and how much of it, in that product's unit. */
 export interface PrepComponent {
   productId: string;
@@ -150,6 +161,36 @@ export interface PrepComponent {
  * that infusion's own concentration and records the rate it replaced (L4).
  */
 export type InfusionSetCommand = { type: 'infusion'; action: 'set'; drugId: string; rateMlH: number };
+/**
+ * Plan pump-rack-tci.md §4 D2: what the pump tablet asks of ONE of its channels, `ch` (1–8, PQ1; the host checks it against
+ * the rack's size and the channel's kind and device profile, D12, C2). The tablet names what it loads, never what it holds:
+ * the host resolves a preparation (by the device that made it and its id, the learner plan's D3) or a stock item (S1) to
+ * the syringe's or bag's TRUE contents, and the device numbers (syringe size, bolus and purge rates) from the profile, then
+ * applies the engine's `pump` event (E1, types-pk.ts PumpEvent). `weightKg` on `rate` and `bolus` is E1's: the weight typed
+ * into the pump for a per-kg dose. `set` is the drip channel's IV set, drops/mL. The host never forwards one as it is.
+ */
+export type PumpCommand = { type: 'pump'; ch: number } & (
+  | { action: 'load'; syringe: PumpSource }
+  | { action: 'load'; bag: PumpSource }
+  | { action: 'program'; drugId: string; concentration: PumpConcentration; set?: number }
+  | { action: 'rate'; rate: number; unit: RateUnit | 'drops/min'; limitMl?: number | null; weightKg?: number }
+  | { action: 'tci'; setId: string; mode: 'plasma' | 'effect'; target: number; patient: PumpPatient }
+  | { action: 'bolus'; volumeMl: number; weightKg?: number }
+  | { action: 'bolus'; dose: { amount: number; unit: DoseUnit }; weightKg?: number }
+  | { action: 'start' | 'stop' | 'unload' }
+  | { action: 'purge'; volumeMl: number }
+);
+/** A syringe or bag to load (D2 item 1): a preparation by the device that made it and its id, or a stock item's id. */
+export type PumpSource = { prep: { device: string; id: string } } | { stock: string };
+/** The patient typed into the pump for TCI (D6): what the TCI sets read (engine-core tci-sets TciCovariate). */
+export interface PumpPatient {
+  ageY: number;
+  weightKg: number;
+  heightCm: number;
+  sex: 'm' | 'f';
+  pmaWeeks?: number;
+  opioids?: boolean;
+}
 /** The run events a `note` command may carry (the guard refuses any other): 'recognised', the /1 Recognised press
  *  (the demo's record.ts KEEPS; brief 52). */
 export const NOTE_EVENTS = ['recognised'] as const;
@@ -344,9 +385,10 @@ export type VentLinkKind = VentLinkBody['kind'];
 
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  // `pin`: only with role 'instructor', 'ventilator' or 'learner' (the last two must carry one; a learner's is the LEARNER
-  // PIN), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role 'viewer', 'defib' or
-  // 'learner' (guard.ts; plan room-and-instruments.md §4 D1, R8a, R5c; learner-action-remote.md §4 D1, L3)
+  // `pin`: only with role 'instructor', 'ventilator', 'learner' or 'pump' (the last three must carry one; a learner's and a
+  // pump's is the LEARNER PIN), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role
+  // 'viewer', 'defib' or 'learner', and `device` alone with 'pump' (guard.ts; plan room-and-instruments.md §4 D1, R8a, R5c;
+  // learner-action-remote.md §4 D1, L3; pump-rack-tci.md C1)
   | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
   /**
    * R8a: a ventilator link message between the host and ONE granted ventilator (the relay routes it, R8b): from the
@@ -419,6 +461,9 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   // measured by the census once it crawled the pme-scenario/2 cards (P6): Instructor v2's A presses on the MH card in
   // phases send its actions' `give`, which holds these two (the induction's airway device and preoxygenation)
   'applyEvent airwayDevice', 'applyEvent preoxygenate',
+  // plan learner-action-remote.md L9 (LQ3): the staging card's one control, on the laptop's dock and the phone (the census
+  // measures the laptop's press on a card it is shown)
+  'prep notice',
 ]);
 
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */
@@ -475,10 +520,12 @@ export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
  */
 export const LEARNER_COMMANDS: ReadonlySet<string> = new Set(['prep stage', 'prep discard', 'prep deliver', 'prep infuse', 'infusion set', 'applyEvent lab']);
 /**
- * The panels a learner may draw (§4 D2 item 5): the engine's panels today (engine-core types-blood.ts `lab`). L10a adds the
- * laboratory panels LQ2 ruled when the engine computes them, so a learner never asks for a panel the engine refuses.
+ * The panels a learner may draw (§4 D2 item 5): the engine's panels (engine-core analysers.ts `LAB_PANELS`, equal by
+ * guard.test.ts; a literal here, because the e2e side loads this file in Node, where engine-core's runtime must not load): the gas
+ * panels on the room's analyser and, since L10a, the laboratory's chemistry and coagulation panels (LQ2), so a learner
+ * never asks for a panel the engine refuses. The analyser and the turnaround are not the learner's (LAB_EVENT_KEYS).
  */
-export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set(['abg', 'vbg']);
+export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set<LabPanelId>(['abg', 'vbg', 'chem', 'coag']);
 /** Every field each learner shape may carry, on the command (`cmd`) and inside it; any other field is refused (§4 D2). */
 const LEARNER_KEYS: Readonly<Record<string, { cmd: readonly string[]; need: readonly string[] }>> = {
   'prep stage': { cmd: ['prep'], need: ['prep'] },
@@ -524,6 +571,65 @@ export function learnerMay(c: WireCommand | CommandInput): string | null {
     if (!LEARNER_LAB_PANELS.has(String(ev.panel))) return `A learner draws ${[...LEARNER_LAB_PANELS].join(' or ')} only.`;
   }
   if (extra.length > 0) return `The instructor's computer sets the rest (${extra.join(', ')} is not the learner remote's).`;
+  return null;
+}
+
+// --- what the infusion-pump rack may send (plan pump-rack-tci.md C1, §4 D2) --------------------------------------
+/**
+ * The shapes a GRANTED `pump` peer may send (§4 D2), nothing else, each on one of its channels. Its complement is refused:
+ * no raw `applyEvent pump` (the host builds it with the true contents, D4), no `applyEvent drug`, no preparation of its own
+ * (`prep`: the learner remote's), no clock, scenario, device, note or pin, no `atTick`.
+ */
+export const PUMP_COMMANDS: ReadonlySet<string> = new Set(['pump load', 'pump program', 'pump rate', 'pump tci', 'pump bolus', 'pump stop', 'pump start', 'pump purge', 'pump unload']);
+/** Every field each pump shape may carry on the command beside `ch` (`cmd`), and the ones it must (`need`) (§4 D2). */
+const PUMP_KEYS: Readonly<Record<string, { cmd: readonly string[]; need: readonly string[] }>> = {
+  'pump load': { cmd: ['syringe', 'bag'], need: [] }, // exactly one of the two, below
+  'pump program': { cmd: ['drugId', 'concentration', 'set'], need: ['drugId', 'concentration'] },
+  'pump rate': { cmd: ['rate', 'unit', 'limitMl', 'weightKg'], need: ['rate', 'unit'] },
+  'pump tci': { cmd: ['setId', 'mode', 'target', 'patient'], need: ['setId', 'mode', 'target', 'patient'] },
+  'pump bolus': { cmd: ['volumeMl', 'dose', 'weightKg'], need: [] }, // exactly one of volumeMl and dose, below
+  'pump stop': { cmd: [], need: [] },
+  'pump start': { cmd: [], need: [] },
+  'pump purge': { cmd: ['volumeMl'], need: ['volumeMl'] },
+  'pump unload': { cmd: [], need: [] },
+};
+const SOURCE_KEYS: ReadonlySet<string> = new Set(['prep', 'stock']);
+const SOURCE_PREP_KEYS: ReadonlySet<string> = new Set(['device', 'id']);
+const CONCENTRATION_KEYS: ReadonlySet<string> = new Set(['amount', 'unit', 'perMl']);
+const DOSE_KEYS: ReadonlySet<string> = new Set(['amount', 'unit']);
+const PATIENT_KEYS: ReadonlySet<string> = new Set(['ageY', 'weightKg', 'heightCm', 'sex', 'pmaWeeks', 'opioids']);
+/** Exactly one of `a` and `b` is set on `x`. */
+const oneOf = (x: Record<string, unknown>, a: string, b: string) => (x[a] === undefined) !== (x[b] === undefined);
+
+/**
+ * Null when a granted `pump` peer may send `c` (one of PUMP_COMMANDS on a channel, with its own fields only), else the
+ * reason it is refused (§4 D2). The relay asks it of every pump command, and the host asks it again (C2). The values' types
+ * are the guard's (guard.ts); the channel's kind, the device profile's ranges and the contents are the host's (D12, C2).
+ */
+export function pumpMay(c: WireCommand | CommandInput): string | null {
+  const x = c as Record<string, unknown>;
+  const shape = commandShape(c);
+  const keys = PUMP_KEYS[shape];
+  if (!PUMP_COMMANDS.has(shape) || keys === undefined) return "The pump sends its channels' commands only.";
+  if (x.ch === undefined) return `A pump's ${shape} names its channel (ch).`;
+  const missing = keys.need.filter((k) => x[k] === undefined);
+  if (missing.length > 0) return `A pump's ${shape} needs ${missing.join(', ')}.`;
+  const extra = strays(x, new Set(['id', 'issuedBy', 'type', 'action', 'ch', ...keys.cmd]), '');
+  if (shape === 'pump load') {
+    if (!oneOf(x, 'syringe', 'bag')) return "A pump's load names a syringe or a bag, one of them.";
+    const at = x.syringe !== undefined ? 'syringe' : 'bag';
+    const src = x[at];
+    if (!isRecord(src) || !oneOf(src, 'prep', 'stock')) return `A pump's ${at} is a preparation or a stock item, one of them.`;
+    extra.push(...strays(src, SOURCE_KEYS, `${at}.`));
+    if (src.prep !== undefined) extra.push(...(isRecord(src.prep) ? strays(src.prep, SOURCE_PREP_KEYS, `${at}.prep.`) : [`${at}.prep`]));
+  }
+  if (shape === 'pump program' && isRecord(x.concentration)) extra.push(...strays(x.concentration, CONCENTRATION_KEYS, 'concentration.'));
+  if (shape === 'pump tci' && isRecord(x.patient)) extra.push(...strays(x.patient, PATIENT_KEYS, 'patient.'));
+  if (shape === 'pump bolus') {
+    if (!oneOf(x, 'volumeMl', 'dose')) return "A pump's bolus is a volume or a dose, one of them.";
+    if (isRecord(x.dose)) extra.push(...strays(x.dose, DOSE_KEYS, 'dose.'));
+  }
+  if (extra.length > 0) return `The instructor's computer sets the rest (${extra.join(', ')} is not the pump's).`;
   return null;
 }
 

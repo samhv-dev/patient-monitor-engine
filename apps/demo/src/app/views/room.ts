@@ -167,7 +167,7 @@ export function roomView(d: RoomDeps): RoomView {
     if (m.kind === 'hello' && m.role === 'defib') {
       if (via !== 'local') return;
       log.heard(m.from, via, 'viewer', now(), 'defib');
-    } else if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator' && m.role !== 'defib' && m.role !== 'learner') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
+    } else if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator' && m.role !== 'defib' && m.role !== 'learner' && m.role !== 'pump') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
     else if (m.kind === 'command') log.heard(m.from, via, 'controller', now());
     else return;
     if (via === 'local') writeWindows(kept, windowsOf(log.list()));

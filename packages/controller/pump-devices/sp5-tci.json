@@ -1,0 +1,23 @@
+{
+  "$comment": "Mindray BeneFusion SP5 TCI (PQ2 = B, model name only). The maker's page (research/50 W1) gives no mechanical number: each is a gap until the SP5 TCI manual (plan SK2).",
+  "deviceId": "sp5-tci",
+  "maker": "Mindray",
+  "model": "BeneFusion SP5 TCI",
+  "kind": "syringe",
+  "tci": {
+    "modes": { "names": ["TCI", "TIVA"], "src": "TC-02" },
+    "targets": { "names": ["plasma", "effect-site"], "src": "TC-04" },
+    "drugs": { "count": 4, "src": "TC-03", "which": { "gap": "which four anaesthetics the pump holds: SP5 TCI operator's manual (research/50 TC-06)" } },
+    "protocols": { "count": 7, "src": "TC-03", "which": { "gap": "which seven pharmacokinetic models the pump holds: SP5 TCI operator's manual (research/50 TC-06)" } },
+    "maxRate": { "gap": "the highest rate the pump runs in TCI: SP5 TCI operator's manual (research/50 TC-09)" },
+    "patient": { "gap": "the patient data the pump accepts (age, weight, height, sex) and the limits it refuses outside: SP5 TCI operator's manual (research/50 TC-14)" },
+    "targetRange": { "gap": "the target ranges and steps, plasma and effect-site: SP5 TCI operator's manual (research/50 TC-15)" }
+  },
+  "syringes": { "gap": "the syringe sizes: SP5 TCI operator's manual (research/50 TC-07)" },
+  "rate": { "gap": "the flow rate range and step per syringe size: SP5 TCI operator's manual (research/50 TC-08)" },
+  "bolus": { "gap": "the bolus rate: SP5 TCI operator's manual (research/50 TC-10)" },
+  "purge": { "gap": "the purge rate and volume limit: SP5 TCI operator's manual (research/50 TC-10)" },
+  "kvo": { "gap": "the KVO rate: SP5 TCI operator's manual (research/50 TC-11)" },
+  "occlusion": { "gap": "the occlusion levels or pressures: SP5 TCI operator's manual (research/50 TC-12)" },
+  "alarms": { "gap": "the alarm list: SP5 TCI operator's manual (research/50 TC-13)" }
+}

@@ -82,9 +82,11 @@ describe('the scenario builder page (B2)', () => {
     expect(e.q('.sb-card')?.textContent).toBe('Malignant hyperthermia (phases) · showcase-mh-v2-copy · a copy of the library card showcase-mh-v2 · draft, not signed');
     expect(e.control('Card id').value).toBe('showcase-mh-v2-copy');
     expect(e.q('.sb-save')?.textContent).toMatch(/^This browser · saved \d\d:\d\d:\d\d$/);
-    // B3 edits the phases: they left the kept blocks for the outline's Course group, with their count
+    // B3 edits the phases, B5 the script, outcomes, debrief hints and handout questions: each a section of the outline,
+    // a list with its count, and no block is left "kept as the card has it"
     expect(e.outline('Phases')?.textContent).toBe(`Phases${mh.phases.length}`);
-    expect([...e.p.el.querySelectorAll('.sb-kept li')].map((x) => x.textContent)).toEqual([`Script (card-set)${mh.script.length}`, 'Outcomes—', 'Debrief hints—']);
+    expect(['Script', 'Outcomes', 'Debrief hints', 'Handout questions'].map((n) => e.outline(n)?.textContent)).toEqual([`Script${mh.script.length}`, 'Outcomes0', 'Debrief hints', 'Handout questions0']);
+    expect([...e.p.el.querySelectorAll('.sb-outline h2')].map((x) => x.textContent)).toEqual(['Card', 'Course', 'The team', 'Debrief']);
     expect(e.q('.sb-checks li')?.textContent).toMatch(/^The validator accepts this draft/);
     expect((e.q<HTMLButtonElement>('.sb-acts button'))?.disabled).toBe(false);
   });

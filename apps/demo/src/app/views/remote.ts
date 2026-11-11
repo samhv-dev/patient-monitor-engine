@@ -9,9 +9,11 @@
 // too many tries, taken over by another phone, the PIN changed, the instructor's computer restarted, and a kit that
 // does not answer an instructor after 10 s. Signed in, it mounts today's panel, the placeholder the phone layout
 // replaces. The Remote never runs an engine: it sends commands and reads state, as the controller's remote page does.
-import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, newPeerId, normalizeSessionCode, type ManagedTransport, type WireMessage } from '@pme/controller';
+import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, newPeerId, normalizeSessionCode, type Formulary, type ManagedTransport, type WireMessage } from '@pme/controller';
 import { PHONE_WORDS, pinForm, refusalWords } from './pin-form.ts';
 import { relayOf } from '../classroom.ts';
+import { loadShippedFormulary } from '../formulary.ts';
+import { mountLearnerPreps } from '../teach2/learner-preps.ts';
 import { Link } from '../link.ts';
 import { mountPanel } from '../panel/panel.ts';
 import { pairingOf } from '../pairing.ts';
@@ -39,6 +41,8 @@ export interface RemoteOptions {
   code?: string;
   /** For tests: the instructor's link to the relay (default a WebSocket with the phone's liveness). */
   connect?: (relay: string) => ManagedTransport;
+  /** For tests: the formulary the staging card names its sources from (default the shipped one, loaded at sign-in). */
+  formulary?: () => Promise<Formulary | null>;
 }
 
 export function remoteView(o: RemoteOptions): View {
@@ -142,6 +146,9 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
   const el = h('section', { 'aria-label': 'Remote' }, form, holder);
 
   let live: { stop(): void } | null = null;
+  // L9: the learner preparations card names each finding's sources from the shipped formulary (loaded once, at sign-in)
+  let formulary: Formulary | null = null;
+  let loading: Promise<unknown> | null = null;
   const showForm = (why: string) => {
     live?.stop();
     live = null;
@@ -164,6 +171,7 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
     let hostSeen = false;
     let hostId: string | null = null;
     let mounted: { panel: ReturnType<typeof mountPanel>; offs: Array<() => void> } | null = null;
+    loading ??= (o.formulary ?? loadShippedFormulary)().then((f) => void (formulary = f), () => undefined);
     const offs: Array<() => void> = [
       transport.onStatus((s) => void (s === 'open' && (opened = true))),
       transport.onPresence?.((p) => void (p.hostOnline && (hostSeen = true))) ?? (() => undefined),
@@ -185,10 +193,14 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
     }, GIVE_UP_MS);
     const mount = () => {
       const panel = mountPanel(link, { site: o.site, weightKg: () => link.ctl.scenario.doc?.patient?.weightKg ?? 70 });
-      mounted = { panel, offs: [mountSessionBar(o.bar, link), mountFastForward(document.body, ctl, { simT: () => link.simT })] };
+      // L9 (LQ3): the same card as the laptop's dock, above the panel: what the learners staged, and the notice's control
+      const preps = mountLearnerPreps(link, { formulary: () => formulary, inline: true });
+      void loading?.then(() => preps.refresh());
+      mounted = { panel, offs: [mountSessionBar(o.bar, link), mountFastForward(document.body, ctl, { simT: () => link.simT }), preps.destroy] };
       o.bar.hidden = false;
       form.hidden = true;
-      holder.replaceChildren(connectedHead(status), notice, panel.el);
+      // the head, the notice and the card share the grid's first row (.remote-panel: auto, then the panel's 1fr)
+      holder.replaceChildren(h('div', { class: 'remote-top' }, connectedHead(status), notice, preps.el), panel.el);
       Object.assign(window, { __pmeRemote: { link, panel } }); // e2e hook
     };
     const draw = () => {
