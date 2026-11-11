@@ -12,9 +12,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createVentDriver, type VentDriver } from '@pme/ventilator';
 import { expect, it } from 'vitest';
-import { mountHamiltonUi } from '../../hamilton-ui.ts';
+import { faceFromLocation, mountFace } from '../index.ts';
 
-const mount = (d: VentDriver): { stop(): void } => mountHamiltonUi(d);
+const mount = (d: VentDriver): { stop(): void } => mountFace(d, faceFromLocation({ search: '' }), { linked: false });
 
 const here = import.meta.dirname;
 const FIXTURE = resolve(here, 'dom.fixture.json');
