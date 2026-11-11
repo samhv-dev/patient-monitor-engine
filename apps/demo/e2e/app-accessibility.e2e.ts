@@ -106,9 +106,12 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.locator('[aria-label="Question 1: its words"]').fill('What told you this was MH?');
     await run(page, '#/scenarios/builder/<draft> Handout questions, a question');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
-    // B6: the draft run in place (its refusal mended first: Run waits for 0), Instructor v2 with the run panel beside it
-    await page.getByRole('button', { name: /^Header/ }).click();
-    await page.locator('.sb-page .field').filter({ has: page.locator('label:text-is("Title")') }).locator('input').fill('MH draft');
+    // B6: a draft run in place, Instructor v2 with the run panel beside it. The draft audited above is left mid-edit on
+    // purpose (an emptied title, and B5's built-to-show line and opener added empty: refusals Run must wait for), so the run
+    // starts from a fresh copy of the MH card, which the validator accepts
+    await go(page, '#/scenarios/builder');
+    await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();
+    await page.waitForSelector('.sb-page .sb-edit');
     await expect(page.getByRole('button', { name: 'Run in place' })).toBeEnabled();
     await page.getByRole('button', { name: 'Run in place' }).click();
     const runIt = page.getByRole('button', { name: 'Run the draft' });
