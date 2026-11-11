@@ -7,8 +7,8 @@
 // `{role: 'learner', show: 'learner', device, pin}`; the laptop's host grants it on the learner PIN (L4). Granted, the
 // page shows the patient's monitor as a strip at the top, three tabs (Drugs, Infusions, Labs) and, under them, the
 // follower's connection line with its own Sound, Silence and "Change" (back to the picker). L7 puts the drugs menu (the
-// bench and the tray, remote/drugs.ts) in the Drugs tab (`drugs`); Infusions (L8) and Labs (L11) are still empty frames
-// that say so. Each sign-in mounts a new follower: `onSignedIn` hands it to the menus once the host grants it. A refusal (a wrong
+// bench and the tray, remote/drugs.ts) in the Drugs tab (`drugs`), L8 the infusions menu (remote/infusions.ts) in the
+// Infusions tab (`infusions`); Labs (L11) is still an empty frame that says so (as a tab given no menu does). Each sign-in mounts a new follower: `onSignedIn` hands it to the menus once the host grants it. A refusal (a wrong
 // learner PIN, too many tries, the learner PIN changed on the laptop) tears the follower down and shows the form again
 // with the reason in words.
 import { INSTRUCTOR_REASONS, LEARNER_REASONS, type RelayFrame, type WireMessage } from '@pme/controller';
@@ -80,6 +80,8 @@ export interface LearnerRemoteOptions {
   stage?: HTMLElement;
   /** L7: the Drugs tab's menu (remote/drugs.ts), mounted in its panel. */
   drugs?: HTMLElement;
+  /** L8: the Infusions tab's menu (remote/infusions.ts), mounted in its panel. */
+  infusions?: HTMLElement;
 }
 
 /** L7: what a menu does with a granted follower; its return is called when that follower goes (a refusal, a new sign-in). */
@@ -112,7 +114,8 @@ export function learnerRemoteView(o: LearnerRemoteOptions): LearnerRemote {
   // Before the sign-in the picker is one tap away too (the follower bar's "Change" replaces it once signed in)
   form.append(h('p', { class: 'lr-change' }, h('a', { class: 'btn small', href: '#/pick' }, LEARNER_WORDS.change)));
   const status = h('p', { class: 'status-pill lr-status', role: 'status' });
-  const panels = Object.fromEntries(LEARNER_TABS.map((t) => [t.id, h('div', { class: 'lr-panel', 'data-panel': t.id }, ...(t.id === 'drugs' ? (o.drugs ? [o.drugs] : []) : [h('p', { class: 'hint lr-empty' }, LEARNER_WORDS.empty[t.id])]))])) as unknown as Record<LearnerTab, HTMLElement>;
+  const menus: Partial<Record<LearnerTab, HTMLElement>> = { ...(o.drugs ? { drugs: o.drugs } : {}), ...(o.infusions ? { infusions: o.infusions } : {}) };
+  const panels = Object.fromEntries(LEARNER_TABS.map((t) => [t.id, h('div', { class: 'lr-panel', 'data-panel': t.id }, ...(menus[t.id] ? [menus[t.id] as HTMLElement] : t.id === 'drugs' ? [] : [h('p', { class: 'hint lr-empty' }, LEARNER_WORDS.empty[t.id])]))])) as unknown as Record<LearnerTab, HTMLElement>;
   const hooks = new Set<OnSignedIn>();
   const tabSet = tabs(LEARNER_WORDS.tabsLabel, LEARNER_TABS.map((t) => ({ id: t.id, label: t.label, render: () => panels[t.id] })), 'drugs', undefined, 'tabs lr-tabs');
   // The follower's line (its status, Sound, Silence here, Change), under the tabs

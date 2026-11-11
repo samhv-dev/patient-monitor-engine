@@ -149,7 +149,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `glucoseF` | `number` | Published for the endocrine model (`organs.liver.glucoseF`): hepatic glucose output factor = liver function |
 | `kLacPerH` | `number` | whole-body lactate clearance rate constant |
 | `lactate` | `number` | mmol/L — the FALLBACK pool (the blood model's pool is authoritative when present) |
-| `inr` | `number` | coagulopathy placeholder (not used by any model in 7d) |
+| `inr` | `number` | coagulopathy placeholder; the coag lab panel returns it (L10a) |
 
 ### `EffectsState` ([`l2/organs/effects.ts`](../../packages/engine-core/src/l2/organs/effects.ts))
 
