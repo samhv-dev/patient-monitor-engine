@@ -230,7 +230,7 @@ describe("of what a granted pump sends, only D2 reaches the host: D2's complemen
     ['contents on the load', pump('r7', 'load', { syringe: { stock: 'propofol1pct50ml' }, contents: { drugId: 'propofol', concentration: conc, volumeMl: 50 } })],
     ['a bolus rate', pump('r8', 'bolus', { volumeMl: 2, rateMlH: 1200 })],
     ['a pump start with a forged by', pump('r9', 'start', { by: 'tablet0002' })],
-    ['a pump action D2 does not name', pump('r10', 'alarm', { alarm: 'airInLine' })],
+    ['a TCI naming a model (the instructor\'s event)', pump('r10', 'tci', { setId: 'eleveld', mode: 'plasma', target: 3, patient, model: 'schnider' })],
     ['time jump', command('r11', { type: 'time', action: 'jump', value: 60 })],
     ['setRhythm', command('r12', { type: 'setRhythm', rhythm: 'vf' })],
     ['note', command('r13', { type: 'note', kind: 'note', text: 'set it' })],

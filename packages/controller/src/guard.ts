@@ -1,7 +1,7 @@
 // Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope
 // validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel).
 import { INSTRUMENTS, NOTE_EVENTS, type WireMessage } from './protocol.ts';
-import type { PkRoute } from '@pme/engine-core';
+import type { DoseUnit, PkRoute, PumpConcentration, RateUnit } from '@pme/engine-core';
 
 export const WIRE_LIMITS = {
   /** Largest serialised message accepted anywhere (an L1-only snapshot is ≈ 7 KB) [ENG: network]. */
@@ -40,6 +40,23 @@ const ITEM_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 const UNIT_RE = /^[A-Za-z%/.]{1,16}$/;
 /** The routes a preparation is given by: the drug model's (engine-core PkRoute) less `inh`, which is a vaporiser's. */
 const PREP_ROUTES: ReadonlySet<unknown> = new Set<PkRoute>(['iv', 'io', 'im', 'neb', 'sc', 'perineural', 'central']);
+
+/**
+ * A pump's commands (plan pump-rack-tci.md §4 D2, C1): `channels`, the rack's largest channel number, the owner's ruling
+ * PQ1 = C ("1–8, default 4", §11; engine-core pump.ts PUMP_MAX_CH, which refuses a ninth). The host checks `ch` against
+ * the room's own rack size (C2).
+ */
+export const PUMP_LIMITS = { channels: 8 } as const;
+// The engine's unit lists as values (types-pk.ts); a Record over the union makes the compiler name a unit added there
+const RATE_UNITS: Readonly<Record<RateUnit | 'drops/min', true>> = {
+  'mcg/min': true, 'mg/min': true, 'mcg/kg/min': true, 'mcg/kg/h': true, 'mg/kg/h': true, 'mg/h': true, 'units/min': true,
+  'units/h': true, 'mmol/h': true, 'mL/h': true, 'mL/kg/min': true, 'drops/min': true,
+};
+const DOSE_UNITS: Readonly<Record<DoseUnit, true>> = {
+  mcg: true, mg: true, g: true, 'mcg/kg': true, 'mg/kg': true, 'g/kg': true, mEq: true, mmol: true, 'mmol/kg': true,
+  units: true, 'units/kg': true, mL: true, 'mL/kg': true,
+};
+const CONCENTRATION_UNITS: Readonly<Record<PumpConcentration['unit'], true>> = { mg: true, mcg: true, g: true, units: true, mmol: true };
 
 /** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */
 export const PIN_RE = /^[0-9]{4,8}$/;
@@ -125,14 +142,19 @@ export function assertWireSafe(m: WireMessage): void {
 }
 
 const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant', 'vent']);
-const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator', 'defib', 'learner']);
+const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator', 'defib', 'learner', 'pump']);
 /**
  * The roles a hello may name an instrument and a device key with: a learner's follower, the defibrillator window (R5c) and
  * the learner action remote (learner-action-remote.md §4 D1: its device key is its `by`).
  */
 const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib', 'learner']);
-/** The roles whose hello proves a PIN (the instructor's, or for `learner` the learner PIN); the last two must carry one. */
-const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner']);
+/**
+ * The roles a hello may name a device key with: those, and the pump (pump-rack-tci.md C1: its key is its `by`). A pump names
+ * no instrument yet: `pump` joins INSTRUMENTS with the app's words for it (A1).
+ */
+const DEVICE_WITH: ReadonlySet<unknown> = new Set([...SHOWS_WITH, 'pump']);
+/** The roles whose hello proves a PIN (the instructor's, or for `learner` and `pump` the learner PIN); all but the first must carry one. */
+const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump']);
 
 const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
 const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);
@@ -170,6 +192,40 @@ function prepBodyOk(b: Record<string, unknown>): boolean {
       return (b.volumeMl === 'all' || isPos(b.volumeMl)) && PREP_ROUTES.has(b.route) && (b.overS === undefined || (isNum(b.overS) && (b.overS as number) >= 0));
     case 'infuse':
       return isPos(b.rateMlH);
+    default:
+      return false;
+  }
+}
+const isAtLeast0 = (x: unknown) => isNum(x) && (x as number) >= 0;
+const prepRefOk = (p: unknown) => isObj(p) && typeof p.device === 'string' && DEVICE_RE.test(p.device) && typeof p.id === 'string' && PREP_ID_RE.test(p.id);
+/** A syringe or bag to load: a preparation (its maker's device key and its id) or a stock item, exactly one. */
+const sourceOk = (s: unknown) => isObj(s) && (s.prep === undefined) !== (s.stock === undefined) && (s.prep === undefined ? isId(s.stock) : prepRefOk(s.prep));
+const concentrationOk = (c: unknown) => isObj(c) && isPos(c.amount) && Object.hasOwn(CONCENTRATION_UNITS, c.unit as string) && isPos(c.perMl);
+const patientOk = (p: unknown) =>
+  isObj(p) && isAtLeast0(p.ageY) && isPos(p.weightKg) && isPos(p.heightCm) && (p.sex === 'm' || p.sex === 'f') &&
+  (p.pmaWeeks === undefined || isPos(p.pmaWeeks)) && (p.opioids === undefined || typeof p.opioids === 'boolean');
+const weightOk = (w: unknown) => w === undefined || isPos(w);
+/** The value types of a `pump` command (pump-rack-tci.md §4 D2), whoever sends it; which fields a pump may send is pumpMay's. */
+function pumpBodyOk(b: Record<string, unknown>): boolean {
+  if (!(Number.isInteger(b.ch) && (b.ch as number) >= 1 && (b.ch as number) <= PUMP_LIMITS.channels)) return false;
+  switch (b.action) {
+    case 'load':
+      return (b.syringe === undefined) !== (b.bag === undefined) && sourceOk(b.syringe ?? b.bag);
+    case 'program':
+      return isId(b.drugId) && concentrationOk(b.concentration) && (b.set === undefined || (Number.isInteger(b.set) && (b.set as number) > 0));
+    case 'rate':
+      return isAtLeast0(b.rate) && Object.hasOwn(RATE_UNITS, b.unit as string) && (b.limitMl === undefined || b.limitMl === null || isPos(b.limitMl)) && weightOk(b.weightKg);
+    case 'tci':
+      return isId(b.setId) && (b.mode === 'plasma' || b.mode === 'effect') && isAtLeast0(b.target) && patientOk(b.patient);
+    case 'bolus':
+      if ((b.volumeMl === undefined) === (b.dose === undefined) || !weightOk(b.weightKg)) return false;
+      return b.dose === undefined ? isPos(b.volumeMl) : isObj(b.dose) && isPos(b.dose.amount) && Object.hasOwn(DOSE_UNITS, b.dose.unit as string);
+    case 'purge':
+      return isPos(b.volumeMl);
+    case 'start':
+    case 'stop':
+    case 'unload':
+      return true;
     default:
       return false;
   }
@@ -229,10 +285,11 @@ export function parseWireMessage(data: unknown): WireMessage | null {
     case 'hello':
       if (!ROLES.has(m.role as string)) return null;
       if (m.pin !== undefined && (!PIN_WITH.has(m.role) || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
-      // R8a: a device that drives the patient proves the PIN; L3 (LQ1): the learner remote proves the learner PIN
-      if ((m.role === 'ventilator' || m.role === 'learner') && m.pin === undefined) return null;
+      // R8a: a device that drives the patient proves the PIN; L3 (LQ1): the learner remote proves the learner PIN, and C1
+      // the pump the same
+      if ((m.role === 'ventilator' || m.role === 'learner' || m.role === 'pump') && m.pin === undefined) return null;
       if (m.show !== undefined && (!SHOWS_WITH.has(m.role) || !SHOWS.has(m.show))) return null;
-      if (m.device !== undefined && (!SHOWS_WITH.has(m.role) || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
+      if (m.device !== undefined && (!DEVICE_WITH.has(m.role) || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
     case 'command': {
       const b = m.body as Record<string, unknown> | null;
@@ -240,6 +297,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       if (b.type === 'note' && ((b.kind !== 'note' && b.kind !== 'marker') || typeof b.text !== 'string' || b.text.length > WIRE_LIMITS.noteChars)) return null;
       if (b.type === 'note' && b.ev !== undefined && !(NOTE_EVENTS as readonly unknown[]).includes(b.ev)) return null; // a known tag only
       if ((b.type === 'prep' || b.type === 'infusion') && !prepBodyOk(b)) return null; // L3: a learner's shapes, typed
+      if (b.type === 'pump' && !pumpBodyOk(b)) return null; // C1: a pump's shapes, typed
       break;
     }
     case 'ack':

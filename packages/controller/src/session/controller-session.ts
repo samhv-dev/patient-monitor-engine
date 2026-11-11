@@ -463,5 +463,7 @@ export function describe(c: WireCommand): string {
       return c.action === 'stage' ? `prep stage ${c.prep.id} ${c.prep.components.map((k) => k.productId).join(' + ')}` : `prep ${c.action} ${c.prepId}`;
     case 'infusion':
       return `infusion ${c.drugId} ${c.rateMlH} mL/h`;
+    case 'pump': // the pump tablet's channel commands (plan pump-rack-tci.md §4 D2)
+      return `pump ${c.ch} ${c.action}`;
   }
 }
