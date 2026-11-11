@@ -51,16 +51,33 @@ describe('drug acceptance — PK through the engine', () => {
     expect(live.ce).toBeGreaterThan(x[3]!);
     expect(live.ce).toBeLessThan(1.1 * x[3]!);
   }, 300_000);
-  it('TCI induction propofol Ce 4 (Eleveld) + remifentanil Ce 3 (Minto): targets reached in < 3 min and held', async () => {
-    const r = await runPk({ ageY: 45, weightKg: 80, heightCm: 178, sex: 'M' }, [
-      [10, { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 4 }],
-      [10, { kind: 'tci', drugId: 'remifentanil', mode: 'effect', target: 3 }],
-    ], 900);
-    const at = (t: number, id: string) => r.drugs.find((d) => Math.abs(d.t - t) < 1e-6)!.drugs.find((x) => x.id === id)!.ce;
-    expect(at(190, 'propofol')).toBeGreaterThan(3.8);
-    expect(at(190, 'remifentanil')).toBeGreaterThan(2.85);
-    expect(at(900, 'propofol')).toBeCloseTo(4, 1);
-    expect(at(900, 'remifentanil')).toBeCloseTo(3, 1);
+  // Pump-rack E2 (decision D3, PQ5 = A): the targets are the PUMPS' — each predicts with its own set and the typed data
+  // (the propofol pump typed "with opioids", as remifentanil runs from t = 10) and never sees the patient. Before E2 this
+  // row asserted the patient's Ce at 4 and 3 under the oracle controller. Measured at 900 s: the pumps 4.0000 / 3.00,
+  // the patient's propofol 4.32 (its clearance and cardiac-output factors under the induction, which the pump does not
+  // see; with the pump typed "without opioids" the patient reaches 5.17 — the flag is the learner's to type). The control
+  // below (both factors pinned at 1) returns the patient to 4.0000.
+  const induction = (pin: boolean) => runPk({ ageY: 45, weightKg: 80, heightCm: 178, sex: 'M' }, [
+    [10, { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 4, opioids: true }],
+    [10, { kind: 'tci', drugId: 'remifentanil', mode: 'effect', target: 3 }],
+  ], 900, 11, pin ? { setup: (e) => Object.assign((e as unknown as { st: { pk: object } }).st.pk, { pinClFactor: 1, pinDistQ: 1 }) } : {});
+  type Run = Awaited<ReturnType<typeof induction>>;
+  const ev = (r: Run, t: number) => r.drugs.find((d) => Math.abs(d.t - t) < 1e-6)!;
+  const pump = (r: Run, t: number, id: string) => ev(r, t).tciPumps!.find((x) => x.drugId === id)!.ce;
+  const patient = (r: Run, t: number, id: string) => ev(r, t).drugs.find((x) => x.id === id)!.ce;
+  it('TCI induction propofol Ce 4 (Eleveld) + remifentanil Ce 3 (Minto): the pumps reach their targets in < 3 min and hold them; the patient\'s propofol sits above (E2, D3)', async () => {
+    const r = await induction(false);
+    expect(pump(r, 190, 'propofol')).toBeGreaterThan(3.8);
+    expect(pump(r, 190, 'remifentanil')).toBeGreaterThan(2.85);
+    expect(pump(r, 900, 'propofol')).toBeCloseTo(4, 1);
+    expect(pump(r, 900, 'remifentanil')).toBeCloseTo(3, 1);
+    expect(patient(r, 190, 'propofol')).toBeGreaterThan(3.8);
+    expect(patient(r, 900, 'propofol')).toBeGreaterThan(4.1);
+  }, 300_000);
+  it('control: the same induction with the clearance and distribution factors pinned at 1 — the patient is on the pumps\' 4 and 3 ± 0.05', async () => {
+    const r = await induction(true);
+    expect(patient(r, 900, 'propofol')).toBeCloseTo(4, 1);
+    expect(patient(r, 900, 'remifentanil')).toBeCloseTo(3, 1);
   }, 300_000);
   it('Schnider vs Eleveld at the same effect target: Schnider front-loads less drug in minute 1 (53 vs 140 mg at 35 y)', () => {
     const pat = { ageY: 35, weightKg: 70, heightCm: 170, sex: 'm' as const };

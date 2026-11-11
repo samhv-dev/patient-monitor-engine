@@ -7,7 +7,7 @@ import { loadFormulary } from '../../src/formulary/load.ts';
 import type { DrugEntry, Formulary, Stability } from '../../src/formulary/types.ts';
 import { prepare, type PrepComponent } from '../../src/formulary/prepare.ts';
 import { findings } from '../../src/formulary/findings.ts';
-import { covers, remaining, RULINGS, stabilityRows } from '../../src/formulary/remaining.ts';
+import { covers, remaining, RULINGS, stabilityRows, whyNoRow } from '../../src/formulary/remaining.ts';
 import { BENCH_IDS, benchFiles } from './fixtures/bench.fixture.ts';
 
 const loaded = loadFormulary(benchFiles(), BENCH_IDS);
@@ -16,6 +16,7 @@ const F: Formulary = loaded.formulary;
 const powder = (amount: number, unit = 'vial'): PrepComponent => ({ drugId: 'benchpowder', productId: 'fixture-powder-vial', amount, unit });
 const solution = (amount: number, unit = 'mL'): PrepComponent => ({ drugId: 'benchsolution', productId: 'fixture-solution', amount, unit });
 const H = 3600;
+const salt = () => F.drugs.benchsalt as DrugEntry;
 
 describe('the fixture is a layer §5 admits', () => {
   it('loads with no problem', () => expect(loaded.ok).toBe(true));
@@ -54,6 +55,34 @@ describe('prepare: the concentration from strength, reconstitution and dilution 
       { drugId: 'benchpowder', amount: 20, unit: 'mg', perMl: 1, rows: [] },
       { drugId: 'benchsolution', amount: 50, unit: 'mg', perMl: 2.5, rows: [] },
     ]);
+  });
+});
+
+describe('N73: a powder\'s volume after reconstitution, as its label states it', () => {
+  const vial = (productId: string, amount = 1, unit = 'vial'): PrepComponent => ({ drugId: 'benchpowder', productId, amount, unit });
+  it('the label\'s final volume: 20 mg in 12.5 mL (1.6 mg/mL), not in the 10 mL added', () => {
+    const p = prepare([vial('fixture-powder-final')], { id: 'water', volumeMl: 0 }, F, 0);
+    expect(p.ok && p.volumeMl).toBe(12.5);
+    expect(p.ok && p.actives).toEqual([{ drugId: 'benchpowder', amount: 20, unit: 'mg', perMl: 1.6, rows: [] }]);
+    const diluted = prepare([vial('fixture-powder-final', 2)], { id: 'water', volumeMl: 15 }, F, 0);
+    expect(diluted.ok && diluted.volumeMl).toBe(40);
+    expect(diluted.ok && diluted.actives[0]?.perMl).toBe(1);
+  });
+  it('the label\'s concentration after reconstitution gives the same vial', () => {
+    const p = prepare([vial('fixture-powder-conc')], { id: 'water', volumeMl: 0 }, F, 0);
+    expect(p.ok && p.volumeMl).toBeCloseTo(12.5, 12);
+    expect(p.ok && p.actives[0]?.perMl).toBeCloseTo(1.6, 12);
+  });
+  it('mL drawn, or an amount in mg, from a vial whose label states its final volume', () => {
+    const byMl = prepare([vial('fixture-powder-final', 5, 'mL')], { id: 'water', volumeMl: 0 }, F, 0);
+    expect(byMl.ok && byMl.actives[0]).toEqual({ drugId: 'benchpowder', amount: 8, unit: 'mg', perMl: 1.6, rows: [] });
+    const byMg = prepare([vial('fixture-powder-final', 8, 'mg')], { id: 'water', volumeMl: 0 }, F, 0);
+    expect(byMg.ok && byMg.volumeMl).toBe(5);
+  });
+  it('a label that states neither: the added volume, as before (the bench says the powder\'s volume is ignored)', () => {
+    const p = prepare([vial('fixture-powder-vial')], { id: 'water', volumeMl: 0 }, F, 0);
+    expect(p.ok && p.volumeMl).toBe(10);
+    expect(F.drugs.benchpowder!.products[0]!.reconstitute!.final).toEqual({ stated: false, src: 'fixture-label' });
   });
 });
 
@@ -160,6 +189,39 @@ describe('findings: the wrong diluent (D5, LQ11), incompatible, conditional, not
       'wrongDiluent:benchpowder:diluent:saline', 'incompatible:benchpowder:diluent:saline',
       'incompatible:benchpowder:admixture:benchsolution', 'conditional:benchsolution:admixture:benchpowder',
     ]);
+  });
+});
+
+describe('N60: a statement tied to its container applies only to a preparation in that container', () => {
+  const sol = [{ drugId: 'benchsolution', productIds: ['fixture-solution'] }];
+  const pair = [{ drugId: 'benchsolution', productIds: [] }, { drugId: 'benchampoule', productIds: [] }];
+  it('a PVC statement fires on the PVC bag, and not on the syringe, the polyolefin bag or an unnamed container', () => {
+    expect(findings(sol, 'balanced', F, 'bag-pvc')).toEqual([
+      { kind: 'incompatible', drugId: 'benchsolution', against: 'diluent', other: 'balanced', statement: 'Fixture: adsorbs to a PVC bag.', src: 'fixture-stabilis' },
+    ]);
+    for (const c of ['syringe-pp', 'bag-polyolefin', undefined] as const) expect(findings(sol, 'balanced', F, c)).toEqual([]);
+  });
+  it('an admixture statement for a syringe: in a syringe it fires; elsewhere the pair has no statement (not tested)', () => {
+    expect(findings(pair, null, F, 'syringe-pp')).toEqual([
+      { kind: 'incompatible', drugId: 'benchampoule', against: 'admixture', other: 'benchsolution', statement: 'Fixture: clouds in a syringe.', src: 'fixture-stabilis' },
+    ]);
+    expect(findings(pair, null, F, 'bag-pvc')).toEqual([{ kind: 'notTested', drugId: 'benchsolution', against: 'admixture', other: 'benchampoule', statement: null, src: null }]);
+  });
+  it('a statement with no container applies in every container, as before', () => {
+    for (const c of ['syringe-pp', 'bag-pvc', 'bag-polyolefin', 'vial', undefined] as const) {
+      expect(findings([{ drugId: 'benchpowder', productIds: ['fixture-powder-vial'] }], 'saline', F, c).map((f) => f.kind)).toEqual(['wrongDiluent', 'incompatible']);
+    }
+  });
+  it('prepare reads the statements for its own container', () => {
+    const inBag = prepare([solution(1)], { id: 'balanced', volumeMl: 9 }, F, 0, 'bag-pvc');
+    expect(inBag.ok && inBag.findings.map((f) => f.kind)).toEqual(['incompatible']);
+    const inSyringe = prepare([solution(1)], { id: 'balanced', volumeMl: 9 }, F, 0, 'syringe-pp');
+    expect(inSyringe.ok && inSyringe.findings).toEqual([]);
+  });
+  it('remaining: an incompatible statement for another container does not make this one incompatible (LQ8)', () => {
+    const S = F.drugs.benchsolution as DrugEntry;
+    expect(remaining(S, 'balanced', 'bag-pvc', 25, H)).toMatchObject({ r: 1, note: 'loss not modelled' });
+    expect(remaining(S, 'balanced', 'syringe-pp', 25, H)).toMatchObject({ r: 1, note: 'loss not known' });
   });
 });
 
@@ -279,6 +341,34 @@ describe('a row\'s concentration (brief 127): the row is chosen by the preparati
     // no container or no diluent: no row describes the preparation
     expect(prepare([solution(3)], { id: 'saline', volumeMl: 12 }, F, 0)).toMatchObject({ actives: [{ rows: [] }] });
     expect(prepare([solution(3)], undefined, F, 0, 'syringe-pp')).toMatchObject({ actives: [{ rows: [] }] });
+  });
+  it('N61: a molar mass the formulary holds joins mmol and a mass per mL, both ways; without it, or for mEq, they do not meet', () => {
+    const c = (amount: number, unit: string) => ({ amount, unit, src: 'x' });
+    expect(covers(c(84, 'mg/mL'), 1, 'mmol', 84)).toBe(true);
+    expect(covers(c(8.4, 'g/L'), 0.1, 'mmol', 84)).toBe(true);
+    expect(covers(c(1, 'mmol/mL'), 84, 'mg', 84)).toBe(true);
+    expect(covers(c(84, 'mg/mL'), 1.01, 'mmol', 84)).toBe(false);
+    expect(covers(c(84, 'mg/mL'), 1, 'mmol')).toBe(false);
+    expect(covers(c(1, 'mEq/mL'), 84, 'mg', 84)).toBe(false);
+    expect(covers(c(1, 'IU/mL'), 1, 'mmol', 84)).toBe(false);
+  });
+  it('N61: a preparation in mmol finds its mg/mL row through the entry\'s molar mass, and remaining reads it', () => {
+    const p = prepare([{ drugId: 'benchsalt', productId: 'fixture-salt', amount: 1, unit: 'mL' }], { id: 'saline', volumeMl: 9 }, F, 0, 'syringe-pp'); // 0.1 mmol/mL = 5 mg/mL
+    expect(p.ok && p.actives).toEqual([{ drugId: 'benchsalt', amount: 1, unit: 'mmol', perMl: 0.1, rows: [0] }]);
+    const salt = F.drugs.benchsalt as DrugEntry;
+    expect(remaining(salt, 'saline', 'syringe-pp', 25, 12 * H, { concentration: { perMl: 0.1, unit: 'mmol' } })).toMatchObject({ r: 1, basis: 'stable', src: 'fixture-stabilis' });
+    expect(whyNoRow(salt, 'saline', 'syringe-pp', { perMl: 0.1, unit: 'mmol' })).toBeNull();
+  });
+  it('N61: without a molar mass the units do not meet: no row, and the reason says so', () => {
+    const f = structuredClone(F);
+    delete f.drugs.benchsalt!.molarMass;
+    const p = prepare([{ drugId: 'benchsalt', productId: 'fixture-salt', amount: 1, unit: 'mL' }], { id: 'saline', volumeMl: 9 }, f, 0, 'syringe-pp');
+    expect(p.ok && p.actives[0]?.rows).toEqual([]);
+    expect(whyNoRow(f.drugs.benchsalt!, 'saline', 'syringe-pp', { perMl: 0.1, unit: 'mmol' }))
+      .toBe('benchsalt is in mmol/mL and its stability rows here in mg/mL, mEq/mL: the formulary holds no molar mass for benchsalt');
+    // with it, a unit a molar mass cannot join (mEq) is still named when nothing covers the preparation
+    expect(whyNoRow(salt(), 'saline', 'syringe-pp', { perMl: 0.3, unit: 'mmol' })).toBe('no stability row here states 0.3 mmol/mL (rows in mEq/mL cannot be compared: no conversion the formulary holds)');
+    expect(whyNoRow(salt(), 'saline', 'bag-pvc', { perMl: 0.1, unit: 'mmol' })).toBe('no stability row for benchsalt in saline, bag-pvc');
   });
   it('a product\'s in-use time is carried as the label gives it', () => {
     expect(S.products[0]?.inUse).toEqual([{ h: 24, tempC: 25, condition: 'Fixture: once diluted, at room temperature.', src: 'fixture-label' }]);

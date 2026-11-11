@@ -5,7 +5,7 @@
 // (frames in, lungState out, the engine as master clock).
 import type { MonitorHandle, MountOptions } from '@pme/renderer';
 import { attachMonitorToLink, createLocalPortPair, createVentDriver, PROFILES, type ProfileId, type VentConfig, type VentDriver } from '@pme/ventilator';
-import { DEFAULT_FACE, mountFace } from './faces/index.ts';
+import { DEFAULT_FACE, FACES, mountFace, type FaceId } from './faces/index.ts';
 
 /** The part of window.PatientMonitor the embed needs (structural, so the IIFE is not bundled twice). */
 export interface PatientMonitorGlobal {
@@ -22,6 +22,8 @@ export interface EmbedOptions {
   skin?: string;
   /** Defaults to window.PatientMonitor. */
   pm?: PatientMonitorGlobal;
+  /** The ventilator's face (plan vent-skin-edp-ts.md §4.5): 'hamilton-style' (the default until piece VD) or 'edp-ts'. */
+  face?: FaceId;
 }
 
 export interface Embed {
@@ -53,8 +55,9 @@ export function mountEmbed(o: EmbedOptions): Embed {
   const detach = attachMonitorToLink(monitor, monitorSide, (c, r) => console.warn('link command rejected', c.type, r));
   const vent = createVentDriver(ventSide, id);
   // As vent-hamilton.html does when linked: the Hamilton face runs VC at the monitor ventilator's flow for the set VT and
-  // rate until the user sets Flow or Pause here, so the same settings deliver the same volume (the cockpit core's option).
-  const ui = mountFace(vent, DEFAULT_FACE, { linked: true });
+  // rate until the user sets Flow or Pause here, so the same settings deliver the same volume (the cockpit core's option);
+  // the EDP-TS face sets Ti instead (plan GM1).
+  const ui = mountFace(vent, o.face && o.face in FACES ? o.face : DEFAULT_FACE, { linked: true });
   const last: Record<string, number> = {};
   let t = 0;
   const off = monitor.on((e) => {

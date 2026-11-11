@@ -31,10 +31,16 @@ export interface Strength extends Sourced {
   perVial: boolean;
 }
 
+/** N73: what the label states of the vial once reconstituted (a powder adds volume): its final volume, its
+ *  concentration, or that it states neither (`stated: false`, with the label it was read in). */
+export type Reconstituted = (Sourced & { volumeMl: number }) | (Sourced & { perMl: number }) | (Sourced & { stated: false });
+
 export interface Reconstitution extends Sourced {
   /** Diluent ids (`diluents/<id>.json`) the monograph lists for reconstitution. */
   diluents: string[];
+  /** The volume of diluent the label says to add. */
   volumeMl: number;
+  final: Reconstituted;
 }
 
 /** The preparation time, or a gap (LQ7: ready at once, the Debrief says "no source for the preparation time"). */
@@ -70,6 +76,9 @@ export interface CrossCheck {
 
 export type Verdict = 'incompatible' | 'compatible' | 'conditional' | 'not tested';
 
+/** The containers a preparation is made in, as the formulary names them (a stability row's, a statement's). */
+export type Container = 'vial' | 'syringe-pp' | 'bag-pvc' | 'bag-polyolefin';
+
 /** A compatibility or stability statement: our words (≤ 200 characters, a paraphrase, never a copied monograph). */
 export interface Statement extends Sourced {
   statement: string;
@@ -78,6 +87,9 @@ export interface Statement extends Sourced {
 
 export interface Compat extends Statement {
   verdict: Verdict;
+  /** N60: the containers the statement's own source says it holds for (adsorption to PVC, say). Absent: every
+   *  container. A preparation in another container, or in none named, is not described by it. */
+  containers?: Container[];
 }
 
 export interface DiluentListing extends Sourced {
@@ -106,14 +118,21 @@ export interface Stability extends Statement {
   diluent: string;
   /** Absent when the source states none: the row then answers for any concentration no stated row covers. */
   concentration?: Concentration;
-  container: 'vial' | 'syringe-pp' | 'bag-pvc' | 'bag-polyolefin';
+  container: Container;
   tempC: number;
   /** [hours, fraction remaining] pairs as the source gives them. */
   points: Array<[number, number]>;
 }
 
+/** N61: the mass of one mmol of the drug, from a label or a pharmacopoeia: it joins a strength in mmol to stability rows
+ *  stated as a mass per mL (and back). Never a valence: an mEq is joined to nothing by it. */
+export interface MolarMass extends Sourced {
+  mgPerMmol: number;
+}
+
 export interface DrugEntry {
   drugId: string;
+  molarMass?: MolarMass;
   products: Product[];
   diluents: DiluentListing[];
   admixtures: Admixture[];
@@ -144,17 +163,38 @@ export type SourceKind = Source['kind'];
 /** The layer as files: path (relative to the formulary folder) → parsed JSON. */
 export type FormularyFiles = Record<string, unknown>;
 
+/** A syringe or bag a pump channel takes from stock (plan pump-rack-tci.md S1, PQ7 = B): a formulary product used at its
+ *  labelled strength (its concentration is the product's `strength`), the volume it holds, and the label's use at that
+ *  strength in our words; both from the product's own monograph. Diluted concentrations are made on the bench. */
+export interface StockItem {
+  id: string;
+  /** The drug file (`<drugId>.json`) the product belongs to. */
+  drugId: string;
+  /** A product id of that drug file: a solution or emulsion with a strength per mL, not reconstituted. */
+  product: string;
+  volumeMl: Sourced & { ml: number };
+  use: Sourced & { statement: string };
+}
+
+/** `stock-syringes.json`: what the pump rack can load without the bench (empty lists when the file is absent). */
+export interface Stock {
+  syringes: StockItem[];
+  bags: StockItem[];
+}
+
 export interface Formulary {
   drugs: Record<string, DrugEntry>;
   diluents: Record<string, DiluentEntry>;
   sources: Record<string, Source>;
   /** The injectable drug ids with no file yet: may only shrink (§5 rule 5). */
   pending: string[];
+  /** The pump rack's stock syringes and bags (rule 7). */
+  stock: Stock;
 }
 
-/** One broken rule: which of §5's six, the file, the JSON path inside it, and why. */
+/** One broken rule: which of §5's six (or 7, the pump rack's stock list), the file, the JSON path inside it, and why. */
 export interface FormularyProblem {
-  rule: 1 | 2 | 3 | 4 | 5 | 6;
+  rule: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   file: string;
   path: string;
   why: string;

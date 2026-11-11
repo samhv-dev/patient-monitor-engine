@@ -53,6 +53,23 @@
 // mechanism-G sizes above (diRaw ≤ 0.647, MAP ≤ 4.02, awarenessRisk on 10 samples in propofolRocIncision); control:
 // with main's five mechanism-G sources (l2/neuro/drive, nmb, spont; l2/resp/driver, pipeline) at the merge base, all
 // six runs equal the branch's fixture exactly. No number fitted.
+// Re-recorded (pump rack E2, PR #408; decision D3, the owner's PQ5 = A): only the two TCI runs move, propofolTci and
+// propofolRocIncision; the four runs without a TCI (awake, sevo1Mac, sevoKetamine, emergence) are bit-identical. Cause: the
+// TCI pump now predicts with its own model (Eleveld on the case patient, typed "without opioids", as neither rig gives an
+// opioid) and no longer sees the patient's clearance and distribution, which in these rigs move with the induction
+// (propofol clearance factor 0.84–1.04, cardiac-output ratio 0.75–1.05 in the old runs). The patient therefore receives
+// what the pump's model asks for, not what keeps the patient's own Ce on the target. Size, old → new:
+//   propofolTci          Ce 1.761 → 1.761 (120 s), 6.066 → 6.563 (300 s), 4.635 → 4.978 (600 s), 2.995 → 3.238 (900 s);
+//                        diRaw 67.934 → 67.934, 24.235 → 22.218, 31.949 → 29.789, 46.371 → 43.709; largest |ΔCe| 0.578
+//                        at 327 s, largest |ΔdiRaw| 2.778 at 888 s; MAP ≤ 1.51 mmHg, HR ≤ 0.28, SR ≤ 9.5 (326 s).
+//   propofolRocIncision  Ce 1.721 → 1.732 (120 s), 4.133 → 4.165 (300 s), 3.605 → 3.830 (600 s), 2.322 → 2.471 (900 s),
+//                        1.554 → 1.650 (1200 s); diRaw 68.709 → 68.505, 35.572 → 35.325, 40.074 → 38.060, 57.332 → 54.713,
+//                        72.050 → 70.154; largest |ΔCe| 0.227 at 564 s, |ΔdiRaw| 2.754 at 774 s; MAP ≤ 2.67, HR ≤ 0.57;
+//                        awarenessRisk 1 → 0 on 44 samples from 946 s (the deeper patient sits under the 60 edge).
+// Control: with the clearance and distribution factors pinned at 1 (`pinClFactor`, `pinDistQ`) the oracle (the merge base
+// 218c7d5b, with the same one-line test seam) and the blind pump (this tree) give bit-identical runs, every field and the
+// propofol Ce every second, so D3 is the only cause. The pinned runs do not reproduce the old fixture itself, because
+// pinning the factors also changes the patient; the old fixture was recorded with the factors live. No number fitted.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type EngineEvent, type MonitorEngine } from '../../src/index.ts';

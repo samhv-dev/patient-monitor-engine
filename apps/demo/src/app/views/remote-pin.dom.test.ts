@@ -170,6 +170,34 @@ describe('the states and their words', () => {
     expect(r.status).toBe('open');
   });
 
+  // L9 (LQ3): the learner preparations card, the laptop dock's own, mounted above the panel on the phone: the host's
+  // copy addressed to its own id shows at once with its finding; a learner's copy (to that remote) does not; the one
+  // control sends the instructor-only `prep notice {by, prepId}` on the phone's link
+  it('signed in: the staging card above the panel shows the host\'s copy with its finding, and its control sends prep notice', async () => {
+    const { f, r, h } = signIn();
+    h.hello();
+    h.grant(true);
+    const card = f.q<HTMLElement>('.ip2-lp');
+    expect(card.parentElement?.nextElementSibling?.classList.contains('panel')).toBe(true); // above the panel
+    expect(card.hidden).toBe(true);
+    const prep = {
+      id: 'bicepi01', by: 'bed2remote01', name: 'Bed 2', t: 60, actives: [{ drugId: 'sodiumBicarbonate', amount: 10, unit: 'mmol', perMl: 10 / 11, rows: [] }],
+      volumeMl: 11, leftMl: 11, diluent: null, container: 'syringe-pp', notice: null, givenAt: null, ready: { atS: 60, src: [], gap: null },
+      findings: [{ kind: 'incompatible', drugId: 'sodiumBicarbonate', against: 'admixture', other: 'epinephrine', statement: 'A haze forms.', src: null }],
+    };
+    const ev = (to: string) => r.deliver(createStamper(CODE, 'host-h1')({ kind: 'event', body: [{ type: 'prep', t: 60, to, body: { news: 'made', prep } } as never] }));
+    ev('lr.1'); // the learner's copy rides in an instructor's whole frames too: not this card's
+    expect(card.hidden).toBe(true);
+    ev('host-h1');
+    expect(card.hidden).toBe(false);
+    expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate/);
+    expect(card.querySelector('.ip2-lp-finding')?.textContent).toBe('Incompatible: A haze forms. (no source speaks)');
+    card.querySelector<HTMLButtonElement>('.ip2-lp-show')!.click();
+    await new Promise((x) => setTimeout(x, 0));
+    const cmds = r.sent.filter((m): m is Extract<WireMessage, { kind: 'command' }> => m.kind === 'command');
+    expect(cmds.at(-1)?.body).toMatchObject({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'bicepi01' });
+  });
+
   it('one visible h1 before and after sign-in: the heading stays when the form hides (research/41 row 62)', () => {
     const { f, h } = signIn();
     expect(visibleH1s(f.v.el)).toEqual(['Instructor remote']);

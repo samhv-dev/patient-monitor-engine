@@ -11,6 +11,8 @@
 //    laptop engine's amount per minute, per kg of the laptop's patient). 5. LQ4: a phone changes and stops the
 //    instructor's infusion and changes another remote's; each row says who set it; the laptop's record rows name the
 //    device and the rate each replaced.
+// 6. L9: the laptop, the instructor phone and the learner phone together: the staging card on the dock and the phone at
+//    once, a Give before the press, the phone's press reaching the learner once, the record keeping its time.
 // PME_E2E_PORT and PME_E2E_RELAY_PORT (+ the worker's index) keep Vite and the relay inside a machine's port range.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -18,7 +20,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, sheet, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -39,10 +41,10 @@ async function classroom(): Promise<void> {
   const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
   relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
 }
-/** The laptop on a card, with Room setup's names for the phones' device keys. */
-async function laptop(page: Page, scenario: string, names: Record<string, string>): Promise<{ code: string; pin: string }> {
+/** The laptop on a card (null: free roam, the default patient), with Room setup's names for the phones' device keys. */
+async function laptop(page: Page, scenario: string | null, names: Record<string, string>): Promise<{ code: string; pin: string }> {
   await page.addInitScript((n) => localStorage.setItem('pme.roomLayout', JSON.stringify(Object.fromEntries(Object.entries(n).map(([k, name]) => [k, { name, show: 'remote', lastSeen: Date.now() }])))), names);
-  await openApp(page, base, `?relay=${encodeURIComponent(ws())}&scenario=${scenario}#/teach2`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}${scenario ? `&scenario=${scenario}` : ''}#/teach2`, { warmMs: 1500 });
   const code = await page.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
   const pin = (await page.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
   return { code, pin };
@@ -88,14 +90,14 @@ test('L7: on the MH card a learner prepares dantrolene in water on the phone, se
   const KEY = 'bed2remote01';
   const { code, pin } = await laptop(page, 'showcase-mh-v2', { [KEY]: 'bed 2 remote' });
   const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
-  // the bench: Agilus 120 mg, one vial, reconstituted with the label's 20 mL of water, listed first
+  // the bench: Agilus 120 mg, one vial, reconstituted with the label's 20 mL of water, listed first; 22.6 mL after (N73)
   await p.locator('.lr-search').fill('dantrolene');
   await p.locator('.lr-pick[data-drug="dantrolene"]').click();
   await expect(p.locator('.lr-product .lr-pname')).toHaveText(['Dantrium IV 20 mg powder for solution for injection', /Agilus/]);
   await p.locator('.lr-product[data-product="agilus-120mg"]').click();
   await expect(p.locator('.lr-diluent select optgroup').first()).toHaveAttribute('label', 'Listed in the label');
   await expect(p.locator('.lr-diluent select')).toHaveValue('water');
-  await expect(p.locator('.lr-holds')).toHaveText('Dantrolene 6 mg/mL · 20 mL');
+  await expect(p.locator('.lr-holds')).toHaveText('Dantrolene 5.31 mg/mL · 22.6 mL');
   await expect(p.locator('.lr-time')).toHaveText('Takes 0:50 to prepare');
   for (const b of await p.locator('.lr-bench button:visible, .lr-bench select:visible, .lr-bench input:visible').all()) {
     const r = (await b.boundingBox())!;
@@ -105,7 +107,7 @@ test('L7: on the MH card a learner prepares dantrolene in water on the phone, se
   // the tray: the HOST's answer, then the countdown on the case clock
   const item = p.locator('.lr-item').first();
   await expect(item.locator('.lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
-  await expect(item.locator('.lr-conc')).toHaveText('Dantrolene 6 mg/mL · 20 mL');
+  await expect(item.locator('.lr-conc')).toHaveText('Dantrolene 5.31 mg/mL · 22.6 mL');
   await expect(item.locator('.lr-state')).toHaveText(/^Preparing · ready in 0:[0-5]\d$/);
   const [id] = await trayIds(p);
   // given before it is ready: the host refuses, in its words
@@ -113,15 +115,15 @@ test('L7: on the MH card a learner prepares dantrolene in water on the phone, se
   await expect(item.locator('.lr-said')).toHaveText(/^Not given: not ready yet \(0:[0-5]\d\)$/);
   // ×8 on the laptop: 50 s of the case pass in a few seconds
   expect((await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'time', action: 'scale', value: 8 }))).accepted).toBe(true);
-  await expect(item.locator('.lr-state')).toHaveText('Ready · 20 mL left', { timeout: 30_000 });
+  await expect(item.locator('.lr-state')).toHaveText('Ready · 22.6 mL left', { timeout: 30_000 });
   await item.locator('.lr-give-btn').click();
-  await expect(item.locator('.lr-said')).toHaveText(/^Given 20 mL at \d\d:\d\d$/, { timeout: 10_000 });
+  await expect(item.locator('.lr-said')).toHaveText(/^Given 22.6 mL at \d\d:\d\d$/, { timeout: 10_000 });
   await expect(item.locator('.lr-state')).toHaveText('Empty');
   await expect.poll(async () => (await rows(page)).filter((r) => r.ev === 'drug:dantrolene' && r.kind === 'learner').length, { timeout: 10_000 }).toBe(1);
   const row = (await rows(page)).find((r) => r.ev === 'drug:dantrolene' && r.kind === 'learner')!;
   expect(row).toMatchObject({ by: KEY, name: 'bed 2 remote', prepId: id, dose: { drugId: 'dantrolene', unit: 'mg' } });
   expect(row.dose!.dose).toBeGreaterThan(0);
-  expect(row.dose!.dose).toBeLessThanOrEqual(120); // 20 mL × 6 mg/mL × r, r ≤ 1 (§7.1)
+  expect(row.dose!.dose).toBeLessThanOrEqual(120); // 22.6 mL × 120/22.6 mg/mL × r, r ≤ 1 (§7.1)
   expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await ctx.close();
 });
@@ -180,6 +182,69 @@ test('L7: an incompatible admixture: no warning and no sound before the instruct
   await p.waitForTimeout(1000);
   expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1); // once
   await ctx.close();
+});
+
+// Plan learner-action-remote.md L9 (§4 D7, LQ3): the laptop, the instructor's phone and the learner's phone in one room.
+// The learner stages the incompatible mix; the card shows at once on the laptop's dock AND on the instructor's phone, with
+// the finding and its source; a Give before the press is given and both cards say "notice not shown"; the instructor
+// presses on the PHONE, the learner's phone sounds once and shows the finding, both cards read "Notice shown at mm:ss",
+// the laptop's control is gone, and the host's record keeps the time.
+test('L9: the instructor sees the staging on the laptop dock and the phone, and the phone\'s press shows the notice on the learner\'s phone once', async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const KEY = 'bed2remote01';
+  const { code, pin } = await laptop(page, 'showcase-mh-v2', { [KEY]: 'Bed 2' });
+  const instructorPin = (await page.evaluate(() => localStorage.getItem('pme.instructorPin'))) as string;
+  // the instructor's phone, signed in with the instructor PIN
+  const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  const ictx = await browser.newContext(dev);
+  const ip = await ictx.newPage();
+  await ip.goto(`${base}/?relay=${encodeURIComponent(ws())}#/remote?code=${code}`);
+  for (const d of instructorPin) await ip.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+  await ip.locator('.ip-peer-go').click();
+  await expect(ip.locator('.ip-peer-status')).toHaveText(`Signed in as the instructor's remote · ${code}`, { timeout: 20_000 });
+  // the learner's phone stages sodium bicarbonate 8.4 % 10 mL + epinephrine 1 mg/mL 1 mL in one syringe
+  const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
+  await prepareOn(p, [
+    { search: 'sodium bic', drug: 'sodiumBicarbonate', product: 'sodium-bicarbonate-84mg-ml', amount: 10 },
+    { search: 'epinephrine', drug: 'epinephrine', product: 'adrenalin-1mg-ml', amount: 1 },
+  ], null);
+  const item = p.locator('.lr-item').first();
+  await expect(item.locator('.lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
+  const [id] = await trayIds(p);
+  const onLaptop = page.locator(`.ip2-dock .ip2-lp-card[data-prep="${id}"]`);
+  const onPhone = ip.locator(`.ip2-lp-inline .ip2-lp-card[data-prep="${id}"]`);
+  for (const c of [onLaptop, onPhone]) {
+    await expect(c.locator('.ip2-lp-what')).toHaveText(/^Bed 2 remote staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/, { timeout: 5_000 });
+    await expect(c.locator('.ip2-lp-finding[data-kind="incompatible"]').first()).toContainText(/^Incompatible: .+\(Stabilis .+; Trissel 2013 .+ agrees\)$/);
+    await expect(c.getByRole('button', { name: 'Show the incompatibility notice to the learner' })).toBeVisible();
+  }
+  await expect(page.locator('.ip2-preps-count')).toHaveText('1 preparation to look at');
+  await expect(item.locator('.lr-finding')).toBeHidden(); // nothing on the learner's phone before the press
+  // a Give (2 mL) before the press: given, and both cards say the notice had not been shown
+  await item.locator('.seg button[data-v="part"]').click();
+  await item.locator('.lr-give .stepper input').first().fill('2');
+  await item.locator('.lr-give .stepper input').first().dispatchEvent('change');
+  await item.locator('.lr-give-btn').click();
+  await expect(item.locator('.lr-said')).toHaveText(/^Given 2 mL at \d\d:\d\d$/, { timeout: 10_000 });
+  for (const c of [onLaptop, onPhone]) await expect(c.locator('.ip2-lp-fate')).toHaveText(/^given at \d\d:\d\d, notice not shown$/, { timeout: 10_000 });
+  expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(0);
+  // the instructor presses on the phone
+  await onPhone.getByRole('button', { name: 'Show the incompatibility notice to the learner' }).click();
+  await expect(item.locator('.lr-finding')).toBeVisible({ timeout: 10_000 });
+  await expect.poll(() => p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1);
+  for (const c of [onLaptop, onPhone]) {
+    await expect(c.locator('.ip2-lp-shown')).toHaveText(/^Notice shown at \d\d:\d\d$/, { timeout: 10_000 });
+    await expect(c.locator('.ip2-lp-show')).toHaveCount(0);
+  }
+  await expect(page.locator('.ip2-preps-count')).toBeHidden();
+  const rec = await page.evaluate(({ k, i }) => (window as unknown as HostW).__pmeApp.session.host.preparation(k, i)?.notice ?? null, { k: KEY, i: id as string });
+  expect(rec?.shownAt).toEqual(expect.any(Number));
+  await expect(onLaptop.locator('.ip2-lp-shown')).toHaveText(`Notice shown at ${String(Math.floor(rec!.shownAt / 60)).padStart(2, '0')}:${String(Math.floor(rec!.shownAt % 60)).padStart(2, '0')}`);
+  await p.waitForTimeout(1000);
+  expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1); // once
+  await ctx.close();
+  await ictx.close();
 });
 
 /** The laptop's own engine: the last `drugs` panel row of `drugId` (amount per minute, null: not running). */
@@ -300,3 +365,137 @@ test("L8 (LQ4): a phone changes and stops the instructor's infusion and changes 
   await a.ctx.close();
   await b.ctx.close();
 });
+
+// Brief 164 (the owner's phone test, 11 Nov): a phone's Give was acknowledged ("Given 1 mL at 02:57") yet the laptop's Log
+// had no line for it, and a laptop give after it was reported lost. These follow his steps on the laptop's own screens:
+// the dose is in the ENGINE's drugs (not only an ack), the record row and the Log sheet's line name the phone, a give
+// from the laptop's Drug sheet after it is applied and logged, and both again when the Give arrives while the laptop's
+// tab is hidden (the session pauses itself then: hidden-tab.ts). Free roam (no card) and on a card.
+type DrugsW = { __drugs: string[] };
+/** Every drug the laptop's engine reports, from its own events (not the acks). */
+const engineDrugs = (page: Page) => page.evaluate(() => (window as unknown as DrugsW).__drugs);
+const logLines = async (page: Page, kind: 'learner' | 'instructor') => (await sheet(page, 'log')).locator(`.log li[data-kind=${kind}] > span:not(.k)`).allInnerTexts();
+/** The laptop's Drug sheet: find `search`, press its first preset, then "Give … now". */
+async function laptopGive(page: Page, search: string): Promise<void> {
+  const d = await sheet(page, 'drug');
+  await d.locator('input.ip2-drug-search').fill(search);
+  await page.keyboard.press('Enter');
+  await d.locator('.ip2-presets button.ip2-preset').first().click();
+  await d.locator('button.ip2-give', { hasText: /^Give .* now$/ }).click();
+}
+/** The laptop's tab hidden or shown again, as the browser says it (the page's own visibility handlers run). */
+const tabHidden = (page: Page, hidden: boolean) => page.evaluate((h) => {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') });
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+  document.dispatchEvent(new Event('visibilitychange'));
+}, hidden);
+for (const card of [null, 'showcase-mh-v2']) {
+  test(`brief 164 (${card ?? 'free roam'}): a phone's Give reaches the laptop's engine, record and Log; a laptop give after it and a Give while the laptop's tab is hidden too`, async ({ page, browser, browserName }) => {
+    test.setTimeout(240_000);
+    await classroom();
+    const KEY = 'bed3remote01';
+    const { code, pin } = await laptop(page, card, { [KEY]: 'bed 3 remote' });
+    await page.evaluate(() => {
+      const w = window as unknown as HostW & DrugsW;
+      w.__drugs = [];
+      w.__pmeApp.session.onEvent((e) => void (e.drugs && (w.__drugs = e.drugs.map((d) => d.id))));
+    });
+    const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
+    // (a) the phone's Give
+    await prepareOn(p, [{ search: 'ephedrine', drug: 'ephedrine', product: 'akovaz-50mg-ml', amount: 1 }], null);
+    const item = p.locator('.lr-item').first();
+    await expect(item.locator('.lr-state')).toHaveText(/^Ready/, { timeout: 15_000 });
+    await item.locator('.lr-give-btn').click();
+    await expect(item.locator('.lr-said')).toHaveText(/^Given 1 mL at \d\d:\d\d$/, { timeout: 10_000 });
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('ephedrine');
+    await expect.poll(async () => (await rows(page)).filter((r) => r.ev === 'drug:ephedrine' && r.kind === 'learner' && r.by === KEY && r.name === 'bed 3 remote').length, { timeout: 10_000 }).toBe(1);
+    await expect.poll(() => logLines(page, 'learner'), { timeout: 10_000 }).toEqual(['Ephedrine 50 mg IV (learner remote: bed 3 remote)']);
+    // (b) the laptop's own Drug sheet after it
+    await laptopGive(page, 'epineph');
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('epinephrine');
+    await expect.poll(() => logLines(page, 'instructor'), { timeout: 10_000 }).toContain('Epinephrine 10 µg IV');
+    // (c) the laptop's tab hidden: the session pauses; the phone's Give is applied on the paused clock, and logged
+    // (a preparation's time runs on the case clock, which stands still while paused: it is made ready before the hide)
+    await prepareOn(p, [{ search: 'midazolam', drug: 'midazolam', product: 'hypnovel-5mg-ml', amount: 1 }], null);
+    const second = p.locator('.lr-item').nth(1);
+    await expect(second.locator('.lr-state')).toHaveText(/^Ready/, { timeout: 15_000 });
+    await tabHidden(page, true);
+    await expect.poll(() => page.evaluate(() => (window as unknown as HostW & { __pmeApp: { link: { ctl: { hostPaused: boolean } } } }).__pmeApp.link.ctl.hostPaused), { timeout: 10_000 }).toBe(true);
+    await second.locator('.lr-give-btn').click();
+    await expect(second.locator('.lr-said')).toHaveText(/^Given 1 mL at \d\d:\d\d$/, { timeout: 10_000 });
+    await tabHidden(page, false);
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('midazolam');
+    await expect.poll(() => logLines(page, 'learner'), { timeout: 10_000 }).toEqual(['Midazolam 5 mg IV (learner remote: bed 3 remote)', 'Ephedrine 50 mg IV (learner remote: bed 3 remote)']);
+    await laptopGive(page, 'phenyl');
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('phenylephrine');
+    await expect.poll(() => logLines(page, 'instructor'), { timeout: 10_000 }).toContain('Phenylephrine 50 µg IV');
+    await ctx.close();
+  });
+}
+
+// Brief 164, second round (the owner's "even from the drugs menu on laptop the drug given does not register"): once a
+// phone has staged a preparation, L9's staging card in the dock lay over the bottom of the open sheet, so the Drug
+// sheet's "Give … now" was under it and the laptop's press never reached the button. Every control of the open sheet,
+// and the card's own, must be the element at its own centre, at the laptop sizes; and a real click on Give gives.
+const SIZES = [{ width: 1280, height: 720 }, { width: 1280, height: 800 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }];
+/** The controls in `scope` whose centre point is taken by an element inside `over` (that region lies over them). */
+const covered = (page: Page, scope: string, over: string) => page.evaluate(([sel, by]) => {
+  const out: string[] = [];
+  for (const root of document.querySelectorAll(sel)) {
+    for (const el of root.querySelectorAll<HTMLElement>('button, summary, input, select, a[href]')) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const box = root.getBoundingClientRect(); // scrolled out of the sheet's (or card's) own box: hidden by it, not covered
+      if (x < Math.max(0, box.left) || y < Math.max(0, box.top) || x > Math.min(innerWidth, box.right) || y > Math.min(innerHeight, box.bottom)) continue;
+      const hit = document.elementFromPoint(x, y);
+      if (hit && !(el === hit || el.contains(hit)) && hit.closest(by)) out.push(`${el.className || el.tagName} "${(el.textContent ?? '').trim().slice(0, 40)}" under ${hit instanceof HTMLElement ? hit.className || hit.tagName : 'nothing'}`);
+    }
+  }
+  return out;
+}, [scope, over] as const);
+for (const which of ['clean', 'incompatible'] as const) {
+  test(`brief 164 (the staging card, ${which}): no open sheet's control lies under the dock's card, at the laptop sizes; the Drug sheet's Give gives`, async ({ page, browser, browserName }) => {
+    test.setTimeout(240_000);
+    await classroom();
+    const KEY = 'bed4remote01';
+    const { code, pin } = await laptop(page, null, { [KEY]: 'bed 4 remote' });
+    await page.evaluate(() => {
+      const w = window as unknown as HostW & DrugsW;
+      w.__drugs = [];
+      w.__pmeApp.session.onEvent((e) => void (e.drugs && (w.__drugs = e.drugs.map((d) => d.id))));
+    });
+    const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
+    await prepareOn(p, which === 'clean'
+      ? [{ search: 'ephedrine', drug: 'ephedrine', product: 'akovaz-50mg-ml', amount: 1 }]
+      : [{ search: 'sodium bic', drug: 'sodiumBicarbonate', product: 'sodium-bicarbonate-84mg-ml', amount: 10 }, { search: 'epinephrine', drug: 'epinephrine', product: 'adrenalin-1mg-ml', amount: 1 }], null);
+    const card = page.locator('.ip2-dock .ip2-lp');
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    const control = which === 'clean' ? card.locator('.ip2-lp-clean-sum') : card.locator('.ip2-lp-show');
+    await expect(control).toBeVisible();
+    for (const size of SIZES) {
+      await page.setViewportSize(size);
+      for (const id of ['airway', 'defib', 'devices', 'drug'] as const) {
+        await sheet(page, id);
+        if (id === 'drug') {
+          const d = page.locator('.ip2-sheets .ip2-sheet[data-sheet=drug]');
+          await d.locator('input.ip2-drug-search').fill('epineph');
+          await page.keyboard.press('Enter');
+          await d.locator('.ip2-presets button.ip2-preset').first().click();
+        }
+        expect.soft(await covered(page, `.ip2-sheets .ip2-sheet[data-sheet=${id}]:not([hidden])`, '.ip2-dock'), `${id} sheet at ${size.width}×${size.height}`).toEqual([]);
+        expect.soft(await covered(page, '.ip2-dock .ip2-lp', '.ip2-sheets'), `the card at ${size.width}×${size.height} with the ${id} sheet open`).toEqual([]);
+        // the dock's own controls stay on their one row under the card
+        const mids = await page.locator('.ip2-dock > :not(.ip2-lp)').evaluateAll((es) => es.map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => Math.round(r.top + r.height / 2)));
+        expect.soft(Math.max(...mids) - Math.min(...mids), `the dock's controls on one row at ${size.width}×${size.height}`).toBeLessThanOrEqual(2);
+      }
+    }
+    // a real press of the laptop's Give (no force): the drug is in the engine, the record and the Log
+    await page.locator('.ip2-sheets .ip2-sheet[data-sheet=drug] button.ip2-give', { hasText: /^Give epinephrine 10 µg now$/ }).click({ timeout: 5_000 });
+    await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('epinephrine');
+    await expect.poll(async () => (await rows(page)).filter((r) => r.ev === 'drug:epinephrine' && r.kind === 'action').length, { timeout: 10_000 }).toBe(1);
+    await expect.poll(() => logLines(page, 'instructor'), { timeout: 10_000 }).toContain('Epinephrine 10 µg IV');
+    await expect(control).toBeVisible(); // the card is still there to use
+    await ctx.close();
+  });
+}

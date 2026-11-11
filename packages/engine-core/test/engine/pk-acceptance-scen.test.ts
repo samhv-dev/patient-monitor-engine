@@ -67,7 +67,7 @@ describe('drug scenarios', () => {
   it('CPU: 10 concurrent drugs cost ≤ 0.05 ms per 20 ms tick (advancePk alone, 1 simulated hour)', () => {
     const pk = createPkState();
     const give = (event: Record<string, unknown>) => applyPkCommand(pk, { type: 'applyEvent', event } as unknown as Command, 0);
-    give({ kind: 'tci', drugId: 'propofol', mode: 'effect', target: 3 });
+    give({ kind: 'tci', drugId: 'propofol', mode: 'effect', target: 3, opioids: true }); // E2: typed "with opioids"
     give({ kind: 'tci', drugId: 'remifentanil', mode: 'effect', target: 3 });
     give({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg', route: 'iv' });
     give({ kind: 'infusion', drugId: 'norepinephrine', rate: 0.1, unit: 'mcg/kg/min' });
