@@ -240,6 +240,7 @@ transports (`src/protocol.ts`).
 | `instructorMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). |
 | `learnerDefibMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, bare), else the reason it is refused (R5c). |
 | `learnerMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted `learner` peer may send `c` (one of LEARNER_COMMANDS, with its own fields only), else the reason it is refused (§4 D2). |
+| `pumpMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted `pump` peer may send `c` (one of PUMP_COMMANDS on a channel, with its own fields only), else the reason it is refused (§4 D2). |
 | `newSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random 6-character session code (31^6 ≈ 8.9e8 codes). |
 | `normalizeSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Upper-cases and strips spaces/dashes; |
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
@@ -383,6 +384,7 @@ None recorded.
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 0 | 0 |
 | [`relay/relay-instructor.test.ts`](../../packages/controller/test/relay/relay-instructor.test.ts) | 0 | 0 |
 | [`relay/relay-learner.test.ts`](../../packages/controller/test/relay/relay-learner.test.ts) | 0 | 0 |
+| [`relay/relay-pump.test.ts`](../../packages/controller/test/relay/relay-pump.test.ts) | 0 | 0 |
 | [`relay/relay-refuses-mirror.test.ts`](../../packages/controller/test/relay/relay-refuses-mirror.test.ts) | 0 | 0 |
 | [`relay/relay-state.test.ts`](../../packages/controller/test/relay/relay-state.test.ts) | 0 | 0 |
 | [`relay/relay-vent.test.ts`](../../packages/controller/test/relay/relay-vent.test.ts) | 0 | 0 |
