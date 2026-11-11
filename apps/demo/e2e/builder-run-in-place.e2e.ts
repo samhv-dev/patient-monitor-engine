@@ -45,7 +45,6 @@ test('builder B6: a draft runs in place beside Instructor v2, the next phase is 
   await expect(panel.getByRole('heading', { name: 'Run in place' })).toBeVisible();
   await expect(panel).toContainText('It is not in the library');
   await expect(panel.locator('.sb-run-log')).toContainText('Calm: the card starts here');
-  await page.screenshot({ path: info.outputPath(`run-in-place-1920-${browserName}.png`) });
 
   await panel.getByRole('button', { name: 'To the next phase' }).click();
   const log = panel.locator('.sb-run-log');
@@ -54,6 +53,8 @@ test('builder B6: a draft runs in place beside Instructor v2, the next phase is 
   await expect(log).toContainText('Script (card-set) warmUp, on entering Warm');
   await expect(log).toContainText('Opened: Call for help');
   await expect(page.locator('.ff-banner')).toContainText('stopped early: the next phase began');
+  await page.waitForTimeout(8500); // the banner's own 8 s, so the shot shows the run
+  await page.screenshot({ path: info.outputPath(`run-in-place-1920-${browserName}.png`) });
 
   // the draft is nowhere a device could name it
   const kept = await page.evaluate(() => ({ imported: localStorage.getItem('pme.imported-cards'), recent: localStorage.getItem('pme.recent-cards') }));
@@ -70,9 +71,18 @@ test('builder B6: a draft runs in place beside Instructor v2, the next phase is 
   await expect(panel).toContainText('The draft B6 run draft, edited (b6-run-draft)');
   await expect(log).not.toContainText('Warm entered');
 
+  // below 1600 px the panel folds to a strip by itself (finding 5: Instructor v2 crowds below about 1000 px of its
+  // own); the author may open it again, and then the width no longer decides
   for (const w of [1440, 1280]) {
     await page.setViewportSize({ width: w, height: 900 });
-    await page.waitForTimeout(300);
-    await page.screenshot({ path: info.outputPath(`run-in-place-${w}-${browserName}.png`) });
+    await expect(page.locator('.app')).toHaveAttribute('data-run', 'strip');
+    await page.waitForTimeout(1200); // Instructor v2 repaints at 1 Hz
+    await page.screenshot({ path: info.outputPath(`run-in-place-${w}-strip-${browserName}.png`) });
   }
+  await panel.getByRole('button', { name: 'Run panel' }).click();
+  await expect(page.locator('.app')).toHaveAttribute('data-run', 'open');
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: info.outputPath(`run-in-place-1280-open-${browserName}.png`) });
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await expect(page.locator('.app')).toHaveAttribute('data-run', 'open');
 });

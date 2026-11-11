@@ -29,6 +29,9 @@ const SKIPS: readonly number[] = [120, 300];
 /** At or above this window width the panel opens beside Instructor v2; below it, it starts as a strip (finding 5:
  *  Instructor v2 is crowded below about 1000 px of its own). Decided on the screenshots at 1280, 1440 and 1920. [ENG: ui] */
 export const RUN_PANEL_OPEN_MIN_PX = 1600;
+/** How long a draft's load may take to reach the driver (through the host's command chain) before the panel gives
+ *  it up as not loaded, wall ms. [ENG: ui] */
+const LOAD_WAIT_MS = 10_000;
 
 export interface DraftStore {
   get(id: string): DraftMeta | null;
@@ -61,7 +64,9 @@ export interface DraftRun {
 export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore; width?: () => number }): DraftRun {
   const { link } = o;
   const session = () => link.host;
-  let cur: { draftId: string; doc: ScenarioDocV2 } | null = null;
+  /** The draft running; `seen`: the driver has started it (the load reaches the driver through the host's chain, a
+   *  moment after `run`), `at`: when it was asked for. */
+  let cur: { draftId: string; doc: ScenarioDocV2; seen?: boolean; at?: number } | null = null;
   /** The saved draft as last read (by its save time), its refusals, for the Apply buttons. */
   let edited: { savedAt: number; doc: ScenarioDocV2 | null; refusals: string[] } | null = null;
   let reading = false;
@@ -77,7 +82,7 @@ export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore;
   const fromMarkBtn = button('Apply from this phase’s mark', () => void applyFromMark());
   const applyWhy = h('p', { class: 'sb-hint sb-run-why', 'aria-live': 'polite' });
   const log = h('ol', { class: 'sb-run-log', 'aria-label': 'What fired, and why' });
-  const fold = button('Hide the run panel', () => setOpen(!open), 'ghost small sb-run-fold', { 'aria-expanded': 'true', 'aria-controls': 'sb-run-body' });
+  const fold = button('Hide the run panel', () => ((chosen = true), setOpen(!open)), 'ghost small sb-run-fold', { 'aria-expanded': 'true', 'aria-controls': 'sb-run-body' });
   const body = h('div', { class: 'sb-run-body', id: 'sb-run-body' },
     back,
     h('h2', { id: 'sb-run-h' }, 'Run in place'),
@@ -95,7 +100,11 @@ export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore;
     h('section', { class: 'sb-run-box', 'aria-labelledby': 'sb-run-log-h' }, h('h3', { id: 'sb-run-log-h' }, 'What fired, and why'), log));
   const panel = h('aside', { class: 'sb-run', 'aria-labelledby': 'sb-run-h', hidden: true }, fold, body);
   o.root.append(panel);
-  let open = (o.width?.() ?? innerWidth) >= RUN_PANEL_OPEN_MIN_PX;
+  const wide = () => (o.width?.() ?? innerWidth) >= RUN_PANEL_OPEN_MIN_PX;
+  let open = wide();
+  /** The author opened or folded the panel: the window's width no longer decides. */
+  let chosen = false;
+  addEventListener('resize', () => !chosen && wide() !== open && setOpen(wide()));
   const setOpen = (on: boolean) => {
     open = on;
     body.hidden = !on;
@@ -169,7 +178,7 @@ export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore;
     if (!n) return void toast('Not applied: the run’s marks did not take the edited card', 'alert');
     const r = await link.send({ type: 'scenario', action: 'restoreBookmark', target: f.mark });
     if (!r.accepted) return void toast(`Not applied: ${r.reason ?? 'refused'}`, 'alert');
-    cur = { draftId: cur.draftId, doc: f.doc };
+    cur = { ...cur, doc: f.doc };
     link.note('Draft edits applied from this phase’s mark', 'scenario');
     paint();
   };
@@ -183,12 +192,15 @@ export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore;
     const s = session();
     const r = s?.driver.phaseRunner ?? null;
     // the panel lives while the draft runs: a library load, Finish's close or a restart on another body ends it
-    if (cur && (!r || r.doc.id !== cur.doc.id)) cur = null;
+    if (cur) {
+      if (r && r.doc.id === cur.doc.id) cur.seen = true;
+      else if (cur.seen || performance.now() - (cur.at ?? 0) > LOAD_WAIT_MS) cur = null;
+    }
     const on = !!cur && location.hash.startsWith(hrefOf('teach2'));
     panel.hidden = !on;
     if (on) o.root.setAttribute('data-run', open ? 'open' : 'strip');
     else o.root.removeAttribute('data-run');
-    if (!on || !cur || !r || !open) return;
+    if (!on || !cur || !r || r.doc.id !== cur.doc.id || !open) return;
     void readEdited();
     title.textContent = `The draft ${cur.doc.title} (${cur.doc.id}) runs on this computer’s engine. It is not in the library, and no phone follows unless you open the room.`;
     back.setAttribute('href', hrefOf('scenarios', `builder/${cur.draftId}`));
@@ -228,7 +240,7 @@ export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore;
     s.driver.markStages(true);
     const r = s.loadScenario(doc, room);
     if (!r.ok) return r;
-    cur = { draftId, doc: r.doc as ScenarioDocV2 };
+    cur = { draftId, doc: r.doc as ScenarioDocV2, at: performance.now() };
     edited = null;
     logKey = '';
     s.setLearner(false); // a draft has no catalogue entry asking for learner controls: off, as for any card that does not

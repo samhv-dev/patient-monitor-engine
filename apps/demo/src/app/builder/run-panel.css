@@ -10,7 +10,7 @@
 .app[data-route='teach2'][data-run]:not(.has-rail) { grid-template: 'run main' minmax(0, 1fr) / var(--run-w) minmax(0, 1fr); }
 .app[data-route='teach2'][data-run] > .main { grid-area: main; }
 .sb-run { grid-area: run; display: flex; flex-direction: column; min-height: 0; overflow: auto; border-right: 1px solid var(--ip2-line); background: var(--ip2-page); color: var(--ip2-text); color-scheme: dark; font: 400 13px/1.45 var(--font-plex); }
-.sb-run[hidden] { display: none; }
+.sb-run[hidden], .sb-run-body[hidden] { display: none; }
 .sb-run-fold { align-self: flex-end; margin: 6px 6px 0; }
 .app[data-run='strip'] .sb-run-fold { align-self: center; writing-mode: vertical-rl; min-height: 140px; padding: 8px 0; }
 .sb-run-body { display: grid; gap: 12px; padding: 4px 16px 16px; }

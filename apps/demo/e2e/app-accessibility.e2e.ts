@@ -90,6 +90,15 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.getByRole('button', { name: 'Add from the Drug sheet' }).click();
     await run(page, '#/scenarios/builder/<draft> Actions, Dantrolene, a violation and a command being added');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
+    // B6: the draft run in place (its refusal mended first: Run waits for 0), Instructor v2 with the run panel beside it
+    await page.getByRole('button', { name: /^Header/ }).click();
+    await page.locator('.sb-page .field').filter({ has: page.locator('label:text-is("Title")') }).locator('input').fill('MH draft');
+    await expect(page.getByRole('button', { name: 'Run in place' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Run in place' }).click();
+    const runIt = page.getByRole('button', { name: 'Run the draft' });
+    if (await runIt.isVisible({ timeout: 1000 }).catch(() => false)) await runIt.click();
+    await expect(page.locator('aside.sb-run')).toBeVisible();
+    await run(page, '#/teach2 with the run panel (B6)');
     if (remote) {
       await remote.bringToFront();
       found.push(...(await focusWalk(remote)).map((f) => `focus (remote): ${f}`));
