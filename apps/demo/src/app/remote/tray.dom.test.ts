@@ -56,7 +56,7 @@ describe('the tray (L7)', () => {
     expect(m.sent).toEqual([{ id: 'cmd1', type: 'prep', action: 'stage', prep: { id: 'dant0001', components: DANTROLENE.components, diluent: { id: 'water', volumeMl: 0 }, container: 'syringe-pp' } }]);
     expect(m.t.ids).toEqual(['dant0001']);
     expect(m.text('dant0001', '.lr-item-title')).toBe('Dantrolene · Syringe (polypropylene)');
-    expect(m.text('dant0001', '.lr-conc')).toBe('Dantrolene 6 mg/mL · 20 mL');
+    expect(m.text('dant0001', '.lr-conc')).toBe('Dantrolene 5.31 mg/mL · 22.6 mL'); // the phone's preview: the label's 22.6 mL (N73)
     expect(m.item('dant0001').querySelector<HTMLElement>('.lr-conc')?.dataset.from).toBe('preview');
     expect(m.text('dant0001', '.lr-conc-source')).toBe(TRAY_WORDS.preview);
     expect(m.text('dant0001', '.lr-said')).toBe(TRAY_WORDS.sending);

@@ -31,10 +31,16 @@ export interface Strength extends Sourced {
   perVial: boolean;
 }
 
+/** N73: what the label states of the vial once reconstituted (a powder adds volume): its final volume, its
+ *  concentration, or that it states neither (`stated: false`, with the label it was read in). */
+export type Reconstituted = (Sourced & { volumeMl: number }) | (Sourced & { perMl: number }) | (Sourced & { stated: false });
+
 export interface Reconstitution extends Sourced {
   /** Diluent ids (`diluents/<id>.json`) the monograph lists for reconstitution. */
   diluents: string[];
+  /** The volume of diluent the label says to add. */
   volumeMl: number;
+  final: Reconstituted;
 }
 
 /** The preparation time, or a gap (LQ7: ready at once, the Debrief says "no source for the preparation time"). */
@@ -70,6 +76,9 @@ export interface CrossCheck {
 
 export type Verdict = 'incompatible' | 'compatible' | 'conditional' | 'not tested';
 
+/** The containers a preparation is made in, as the formulary names them (a stability row's, a statement's). */
+export type Container = 'vial' | 'syringe-pp' | 'bag-pvc' | 'bag-polyolefin';
+
 /** A compatibility or stability statement: our words (≤ 200 characters, a paraphrase, never a copied monograph). */
 export interface Statement extends Sourced {
   statement: string;
@@ -78,6 +87,9 @@ export interface Statement extends Sourced {
 
 export interface Compat extends Statement {
   verdict: Verdict;
+  /** N60: the containers the statement's own source says it holds for (adsorption to PVC, say). Absent: every
+   *  container. A preparation in another container, or in none named, is not described by it. */
+  containers?: Container[];
 }
 
 export interface DiluentListing extends Sourced {
@@ -106,14 +118,21 @@ export interface Stability extends Statement {
   diluent: string;
   /** Absent when the source states none: the row then answers for any concentration no stated row covers. */
   concentration?: Concentration;
-  container: 'vial' | 'syringe-pp' | 'bag-pvc' | 'bag-polyolefin';
+  container: Container;
   tempC: number;
   /** [hours, fraction remaining] pairs as the source gives them. */
   points: Array<[number, number]>;
 }
 
+/** N61: the mass of one mmol of the drug, from a label or a pharmacopoeia: it joins a strength in mmol to stability rows
+ *  stated as a mass per mL (and back). Never a valence: an mEq is joined to nothing by it. */
+export interface MolarMass extends Sourced {
+  mgPerMmol: number;
+}
+
 export interface DrugEntry {
   drugId: string;
+  molarMass?: MolarMass;
   products: Product[];
   diluents: DiluentListing[];
   admixtures: Admixture[];
