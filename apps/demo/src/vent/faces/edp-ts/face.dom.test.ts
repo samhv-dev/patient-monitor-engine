@@ -71,11 +71,13 @@ describe('the EDP-TS face', () => {
 
   it('every control not honoured yet is drawn, marked unavailable and says why', () => {
     const ui = mount(createVentDriver(null));
-    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl="side:silence"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
+    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
       expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
       expect(b.querySelector('.r')?.textContent, b.dataset.ctl).toMatch(/needs piece V\d|not modelled/);
     }
-    for (const id of ['tag:pLo', 'tag:peepHi', 'tag:o2Hi', 'tag:o2Lo']) expect(document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent).toBe('---');
+    // V3 turned these on: the device's limits (research/57 L-02, L-13, L-08), live
+    for (const [id, v] of [['tag:pLo', '5'], ['tag:peepHi', '20.0'], ['tag:o2Hi', '60'], ['tag:o2Lo', '40']]) expect(document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent).toBe(v);
+    expect(document.querySelector('[data-ctl="side:silence"]')!.getAttribute('aria-disabled')).toBeNull();
     click('[data-ctl="side:mode"]');
     const off = [...document.querySelectorAll('.edp-row.off')].map((e) => e.textContent);
     expect(off).toEqual(['PSV/CPAPneeds piece V2', 'SIMV(PCV)+PSVneeds piece V6', 'Noninvasive (NIV)needs piece V8']);

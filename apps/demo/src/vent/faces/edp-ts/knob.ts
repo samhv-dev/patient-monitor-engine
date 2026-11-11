@@ -8,7 +8,9 @@
 //   be changed before the press (O-15) into a draft the press commits with the mode;
 // - Ctrl lights until the next press or Esc; Ctrl + Oxygen steps by 10 (H-22); on a "*" row whose Ctrl step the manual
 //   does not give (O-05) the step stays and the reason says so;
-// - Menu pressed again: Ventilatory adjuncts, then Tools, then the main menu (H-10).
+// - Menu pressed again: Ventilatory adjuncts, then Tools, then the main menu (H-10);
+// - the alarm keys (V3): the silence key's presses (H-09, A-20); Esc also resets the lamps of the alarms that have
+//   ended (H-25); Ctrl + Alarm Limits: the help of the active alarm, or with none active the alarm test (H-21, A-06).
 // A pressed control that is not honoured yet shows its reason in the message bar for a few seconds.
 import type { VentConfig } from '@pme/ventilator';
 import type { Cockpit } from '../../core/cockpit.ts';
@@ -23,6 +25,9 @@ type Cfg = Readonly<VentConfig>;
 /** A row's focusable part: the row itself, or one limit cell of it. */
 export interface Item { row: number; cell?: string }
 export interface Win { id: WindowId; focus: number }
+/** One step of the alarm test: each priority's lamp and tone in turn, high first (plan GA18) [eng: face.json layout.alarmTestStepS]. */
+export type AlarmTestStep = 'high' | 'medium' | 'low';
+const TEST_STEPS: readonly AlarmTestStep[] = ['high', 'medium', 'low'];
 
 export interface Knob {
   readonly pending: Pending;
@@ -37,6 +42,9 @@ export interface Knob {
   /** The bottom row's mode. */
   rowMode(): FaceMode;
   ctrl(): boolean;
+  /** The alarm test's step now (Ctrl + Alarm Limits with no alarm active, research/57 H-21): the priority whose lamp and
+   *  tone are shown in turn, or null when no test runs. */
+  alarmTest(): AlarmTestStep | null;
   /** The reason the message bar shows now, or null. */
   note(): ReasonId | null;
   /** A touch on a control of the table (`key:vt`, `tag:pmax`, `side:mode`, `right:freeze`, …). */
@@ -59,6 +67,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   let ctrl = false;
   let note: { r: ReasonId; until: number } | null = null;
   let menuPresses = 0;
+  let testFrom: number | null = null;
   let selSetting: Setting & { ctrl?: number | ReasonId; ends?: SettingCtl['ends'] } | null = null;
   const subs = new Set<() => void>();
   const changed = () => { for (const fn of [...subs]) fn(); };
@@ -124,6 +133,11 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     shown: draftCfg,
     rowMode: () => faceMode(draftCfg()),
     ctrl: () => ctrl,
+    alarmTest: () => {
+      if (testFrom === null) return null;
+      const i = Math.floor((now() - testFrom) / (num(LAYOUT.alarmTestStepS) * 1000));
+      return TEST_STEPS[i] ?? null;
+    },
     note: () => (note && now() < note.until ? note.r : null),
     press(id) {
       const ctl = CONTROLS.find((x) => x.id === id);
@@ -138,9 +152,18 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
           target().apply(s.again(target().cfg())); // Sens touched twice: flow ↔ pressure (research/57 O-06)
         }
         select(id, s, target());
-      } else if (ctl.kind === 'limit') select(id, LIMITS[ctl.limit]!, live);
-      else if (ctl.action === 'mode') openOnly('modes');
-      else if (ctl.action === 'alarmLimits') openOnly('alarms');
+      } else if (ctl.kind === 'limit') {
+        const L = LIMITS[ctl.limit]!;
+        select(id, L, live);
+        if (L.note) say(L.note);
+      } else if (ctl.action === 'mode') openOnly('modes');
+      else if (ctl.action === 'alarmLimits' && ctrl) {
+        // research/57 H-21, A-06: with an alarm active, its causes and remedies (not in the simulator yet); else the test
+        ctrl = false;
+        if (c.alarms().signals?.message) say('alarmHelp');
+        else testFrom = now();
+      } else if (ctl.action === 'alarmLimits') openOnly('alarms');
+      else if (ctl.action === 'silence') c.silence();
       else if (ctl.action === 'menu') {
         menuPresses = wins[0]?.id === 'menu' && !confirming ? (menuPresses % 3) + 1 : 1;
         openOnly('menu');
@@ -148,7 +171,11 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
         if (menuPresses === 3) wins.push({ id: 'tools', focus: 0 });
       } else if (ctl.action === 'ctrl') ctrl = !ctrl;
       else if (ctl.action === 'esc') {
-        // research/57 H-25: cancels the operation; closes the window
+        // research/57 H-25: resets the lamps of the alarms that have ended; cancels the operation; closes the window
+        // [inferred: the manual lists Esc's four functions, not their order; one press does the lamp reset and the first
+        // of the others that applies]
+        c.esc();
+        testFrom = null;
         if (pending.key !== null) pending.cancel();
         else if (confirming) { confirming = null; edits = {}; }
         else wins.pop();
