@@ -8,6 +8,7 @@ import type { SiteProfile } from '../site.ts';
 import type { Begin } from './begin.ts';
 import type { Finish } from './finish.ts';
 import type { Keys } from './keys.ts';
+import type { LabsSource } from './labs-sheet.ts';
 
 export interface Teach2Ctx {
   link: Link;
@@ -26,6 +27,8 @@ export interface Teach2Ctx {
   /** The app's one load (main.ts), as the library's Load (retire-instructor-v1 decision 7: required; a peer instructor
    *  is refused `scenario load` anyway). */
   loadScenario(card: ScenarioCard): boolean;
+  /** L15: the host's samples and results for the Labs sheet (labs-sheet.ts); absent off the host (no Labs sheet). */
+  labs?: LabsSource;
 }
 
 export interface Slot {
