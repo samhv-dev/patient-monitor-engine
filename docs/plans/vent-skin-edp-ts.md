@@ -978,6 +978,7 @@ have persian settings inside" (§6).
 | IMG_1543.MOV | 1 frame a second at 480 px as 4 × 3 contact sheets, three 40 s sections; three frames at 1 280 px (0:03, 1:02, 1:52); frames deleted after reading |
 | The code on c13cb826 | the files named in "Base and inputs", by function |
 | The plans | `room-and-instruments.md` (R5b, R8a–R8d), `pump-rack-tci.md` (header, SK1, SK2, PQ2), `scenario-builder.md` (header, mock-up convention) |
+| The research note (piece VR) | [`research/57-edp-ts-ventilator.md`](../../research/57-edp-ts-ventilator.md): §2 re-read fact by fact, each row tagged and cited; its last section lists where it differs from §2 |
 
 **Could not read or see, plainly:**
 - **The device being operated**: the video shows the running screen only (§2.1, R7).
