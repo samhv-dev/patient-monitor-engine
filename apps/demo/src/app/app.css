@@ -980,6 +980,7 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .lr-lab-sends { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
 .lr-lab-send { min-height: 44px; white-space: normal; }
 .lr-lab-said:empty { display: none; }
+.lr-lab-said[data-ok='true'] { color: var(--text); font-weight: 400; }
 .lr-lab-state[data-state='pending'] { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .lr-lab-result[hidden], .lr-lab-none[hidden], .lr-lab-empty[hidden] { display: none; }
 .lr-lab-none, .lr-lab-ranges { margin: 0; }

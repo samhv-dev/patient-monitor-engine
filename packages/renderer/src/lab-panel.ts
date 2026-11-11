@@ -82,10 +82,10 @@ export function labCritical(r: LabRow, v: number, panel?: LabPanelId): boolean {
 }
 
 const num = (x: number) => String(x).replace('-', '−');
-/** The range as shown beside the value: "135–145", "< 1.5", "> 0.5", or "—" when none is sourced. */
+/** The range as shown beside the value: "135–145", "−2 to 2", "< 1.5", "> 0.5", or "—" when none is sourced. */
 export function rangeText(x: LabLimits | null): string {
   if (!x) return '—';
-  if (x.lo !== undefined && x.hi !== undefined) return `${num(x.lo)}–${num(x.hi)}`;
+  if (x.lo !== undefined && x.hi !== undefined) return x.lo < 0 ? `${num(x.lo)} to ${num(x.hi)}` : `${num(x.lo)}–${num(x.hi)}`;
   return x.hi !== undefined ? `< ${num(x.hi)}` : `> ${num(x.lo as number)}`;
 }
 

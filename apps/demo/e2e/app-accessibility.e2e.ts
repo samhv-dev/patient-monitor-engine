@@ -323,7 +323,7 @@ test("accessibility: the learner remote's Infusions tab with a syringe to start 
 // 44 px targets on touch, names, contrast, one h1, no sideways scroll, a focus walk. PME_L11_SHOTS=<dir> also saves the
 // screenshots the brief asks for (the pending row, the result, a flagged value; dark and light).
 test("accessibility: the learner remote's Labs tab with a pending sample and a flagged result", async ({ browser }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(180_000);
   const dir = mkdtempSync(join(tmpdir(), 'l11-'));
   writeFileSync(join(dir, 'index.html'), '<!doctype html>');
   const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
@@ -347,10 +347,22 @@ test("accessibility: the learner remote's Labs tab with a pending sample and a f
       await expect(p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`);
       await p.getByRole('tab', { name: 'Labs' }).click();
       found.push(...(await audit(p, { touchPanel: true })).map((f) => `labs empty ${theme} ${f.rule}: ${f.what}`));
+      // sodium bicarbonate 200 mmol and calcium chloride 3 g on the laptop first, two minutes of the case before the draw (×8),
+      // so the gas has flagged values (HCO3, BE, pH, Na) and a critical one (iCa) to show and to check for contrast; the
+      // light pass draws from the same patient
+      if (theme === 'dark') {
+        for (const event of [{ kind: 'drug', drugId: 'sodiumBicarbonate', dose: 200, unit: 'mmol', route: 'iv' }, { kind: 'drug', drugId: 'calciumChloride', dose: 3, unit: 'g', route: 'iv' }]) {
+          expect((await host.evaluate((ev) => (window as unknown as L).__pmeApp.link.send({ type: 'applyEvent', event: ev }), event)).accepted).toBe(true);
+        }
+        expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 8 }))).accepted).toBe(true);
+        await p.waitForTimeout(15_000);
+        expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 1 }))).accepted).toBe(true);
+      }
       await p.locator('.lr-lab-send[data-panel="abg"]').click();
       await expect(p.locator('.lr-lab .lr-lab-state[data-state="pending"]')).toHaveCount(1, { timeout: 10_000 });
+      await p.locator('.lr-lab').first().scrollIntoViewIfNeeded();
       found.push(...(await audit(p, { touchPanel: true })).map((f) => `labs pending ${theme} ${f.rule}: ${f.what}`));
-      if (shots) await p.screenshot({ path: join(shots, `labs-pending-${theme}.png`), fullPage: true });
+      if (shots) await p.screenshot({ path: join(shots, `labs-pending-${theme}.png`) });
       expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 8 }))).accepted).toBe(true);
       await expect(p.locator('.lr-lab .lr-lab-state[data-state="resulted"]')).toHaveCount(1, { timeout: 30_000 });
       expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 1 }))).accepted).toBe(true);
@@ -358,10 +370,12 @@ test("accessibility: the learner remote's Labs tab with a pending sample and a f
       await expect(p.locator('.lr-lab')).toHaveCount(2, { timeout: 10_000 });
       found.push(...(await audit(p, { touchPanel: true })).map((f) => `labs result ${theme} ${f.rule}: ${f.what}`));
       if (theme === 'dark') found.push(...(await focusWalk(p, 16)).map((f) => `labs focus: ${f}`));
+      await expect(p.locator('.lr-lab[data-panel="abg"] tr.high').first()).toBeVisible();
+      if (theme === 'dark') await expect(p.locator('.lr-lab[data-panel="abg"] tr.crit').first()).toBeVisible();
       if (shots) {
-        await p.screenshot({ path: join(shots, `labs-result-${theme}.png`), fullPage: true });
-        const flagged = p.locator('.lr-lab tr.high, .lr-lab tr.low, .lr-lab tr.crit').first();
-        if (await flagged.count()) await p.locator('.lr-lab[data-panel="abg"]').screenshot({ path: join(shots, `labs-flagged-${theme}.png`) });
+        await p.locator('.lr-lab[data-panel="abg"]').screenshot({ path: join(shots, `labs-result-${theme}.png`) });
+        await p.locator('.lr-lab[data-panel="abg"] tr.crit, .lr-lab[data-panel="abg"] tr.high').last().scrollIntoViewIfNeeded();
+        await p.screenshot({ path: join(shots, `labs-flagged-${theme}.png`) });
       }
       await phone.close();
     }

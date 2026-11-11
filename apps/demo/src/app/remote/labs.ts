@@ -140,6 +140,7 @@ export function labsView(): Labs {
     const panel = pending.get(commandId);
     if (panel === undefined) return;
     pending.delete(commandId);
+    said.dataset.ok = String(accepted);
     if (!accepted) return setText(said, LABS_WORDS.notSent(reason ?? ''));
     setText(said, LABS_WORDS.sent(nameOf(panel)));
     if (!samples.some((s) => s.id === commandId)) add(commandId, panel, tick);
