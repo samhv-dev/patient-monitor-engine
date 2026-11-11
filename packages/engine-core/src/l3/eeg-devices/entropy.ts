@@ -15,7 +15,7 @@
 // only the figure gives F, so its curve is read off the page (the knots below; Fig. 7's own marks — the slope-1 points
 // at about 0.47 and 0.89 — are the test's check). A signal with no power is perfectly regular: entropy 0 (p. 158).
 //
-// WHERE THE PAPER IS SILENT, AND WHAT IS DONE [ENG: device, each named in its constant's tag]:
+// WHERE THE PAPER IS SILENT, AND WHAT IS DONE [ENG: device; each named in its constant's tag]:
 //  - The set of frequency components. Eq 7 divides SE and RE by ONE count, N[R_low+high], although their windows differ,
 //    so both are read on one set of components; and the module's SE tops out at 91 on screen (p. 159), which with F's
 //    slope below 1 above ≈ 0.89 (Fig. 7) needs log N[R_low] / log N[R_low+high] < ≈ 0.91: a coarse grid, not the
