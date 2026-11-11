@@ -32,6 +32,7 @@ import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
 import { mountFastForward } from './fast-forward.ts';
 import { watchHiddenTab } from './hidden-tab.ts';
+import { mountDepthWindow } from './views/depth.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { deviceKey, pickerView } from './views/join.ts';
 import { learnerRemoteView } from './views/learner-remote.ts';
@@ -62,7 +63,8 @@ const relay = relayOf(location);
 const moved = normalizeSessionCode(q.get('moved') ?? '');
 // R4 (plan room-and-instruments.md §4 D7): what a follower page shows, from its hash — `#/pick` the instrument picker
 // (the QR's address), `#/monitor/wide` the patient monitor, `#/defib` the defibrillator window (Room plan R5:
-// landscape, the room model's look), anything else today's learner monitor
+// landscape, the room model's look), `#/depth` the depth-of-anaesthesia window (EEG plan E12), anything else today's
+// learner monitor
 const shows = follow ? instrumentOf(location.hash) : null;
 const defibWindow = shows === 'defib';
 if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
@@ -129,14 +131,25 @@ if (follow && shows === 'pick') {
 } else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
-  const what = defibWindow ? 'Defibrillator' : 'Learner monitor';
+  const what = defibWindow ? 'Defibrillator' : shows === 'depth' ? 'Depth of anaesthesia' : 'Learner monitor';
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': what });
   shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
   const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { show: shows, device: deviceKey() });
-  // "SIMULATION · not a clinical monitor" at the top of this monitor (in a two-row header, else a strip above it)
-  const line = simLine(shell.stage, !!join && shows === 'learner');
-  line.set(follower.monitor, follower.style, true);
-  follower.onStyle = (s) => line.set(follower.monitor, s, true);
+  if (shows === 'depth') {
+    // E12: the depth device over its follower's monitor, which is not this screen's instrument (its engine is the
+    // window's source); the device's own screen prints the simulation line
+    shell.monitorHost.setAttribute('aria-hidden', 'true');
+    const depth = mountDepthWindow(shell.stage);
+    depth.setTheme(follower.style.theme);
+    follower.onStyle = (s) => depth.setTheme(s.theme);
+    void follower.monitor.viewerClock().then((c) => depth.attach(c));
+    Object.assign(window, { __pmeDepth: depth });
+  } else {
+    // "SIMULATION · not a clinical monitor" at the top of this monitor (in a two-row header, else a strip above it)
+    const line = simLine(shell.stage, !!join && shows === 'learner');
+    line.set(follower.monitor, follower.style, true);
+    follower.onStyle = (s) => line.set(follower.monitor, s, true);
+  }
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
@@ -172,7 +185,7 @@ if (follow && shows === 'pick') {
   let lpin: InstructorPin | null = null;
   const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
   const learner = (lpin = learnerPin(() => pin.get()));
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
   learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
@@ -262,6 +275,8 @@ if (follow && shows === 'pick') {
     instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
+    // E12: the room's depth-of-anaesthesia device, kept with the site profile and switched on in the patient's engine
+    depth: { model: () => site.eegModel, choose: (m) => ((site.eegModel = m), saveSite(site), session.setEegModel(m)) },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
