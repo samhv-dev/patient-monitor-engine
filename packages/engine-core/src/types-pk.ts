@@ -1,5 +1,6 @@
 // The drug model's public types (PK/PD), kept in their own file so parallel modules do not collide in types.ts.
 import type { SimSeconds } from './types.ts';
+import type { PkParams } from './l2/pk/compartment.ts';
 
 export type DoseUnit = 'mcg' | 'mg' | 'g' | 'mcg/kg' | 'mg/kg' | 'g/kg' | 'mEq' | 'mmol' | 'mmol/kg' | 'units' | 'units/kg' | 'mL' | 'mL/kg';
 export type RateUnit = 'mcg/min' | 'mg/min' | 'mcg/kg/min' | 'mcg/kg/h' | 'mg/kg/h' | 'mg/h' | 'units/min' | 'units/h' | 'mmol/h' | 'mL/h' | 'mL/kg/min'; // mmol/h (potassium chloride)
@@ -13,7 +14,9 @@ export type PkRoute = 'iv' | 'io' | 'im' | 'inh' | 'neb' | 'sc' | 'perineural' |
 export type PkClinicalEvent =
   | { kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit; route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number } // concentrationPct: hypertonic saline 3 | 7.5 | 23.4 (default 3)
   | { kind: 'infusion'; drugId: string; rate: number; unit: RateUnit; concentration?: { amount: number; unit: 'mg' | 'mcg' | 'units' | 'g'; perMl: number } }
-  | { kind: 'tci'; drugId: string; model?: string; mode: 'plasma' | 'effect'; target: number; maxRateMlH?: number }
+  // `model` names the PUMP's set (it no longer changes the patient, pump-rack E2 D3); its patient is the case patient,
+  // with `opioids` the Eleveld co-administration flag as typed (absent: false)
+  | { kind: 'tci'; drugId: string; model?: string; mode: 'plasma' | 'effect'; target: number; maxRateMlH?: number; opioids?: boolean }
   | { kind: 'vaporiser'; agent: 'sevoflurane' | 'isoflurane' | 'desflurane'; dialPct: number; fgfLpm?: number; n2oFrac?: number }
   | PumpEvent;
 
@@ -36,6 +39,9 @@ export interface PumpConcentration { amount: number; unit: 'mg' | 'mcg' | 'g' | 
  * - `start` / `stop`: run and pause, the programme kept. `unload`: take the syringe or bag off.
  * - `purge`: `volumeMl` at `rateMlH`, to waste before the channel has delivered anything, into the patient after (D7).
  * - `bolus` (syringe channels): `volumeMl`, or `dose` converted with the programme, at `rateMlH`.
+ * - `tci` (syringe channels, piece E2): target-controlled infusion of the PROGRAMMED drug with the set `setId`, on the
+ *   patient data typed into the pump (`patient`, and `opioids` for Eleveld); `maxRateMlH` the device's ceiling (absent:
+ *   the engine's 1200 mL/h, tci.ts); `target 0` stops it. The pump predicts with its own model (D3), never the patient.
  */
 export type PumpEvent =
   | { kind: 'pump'; action: 'load'; ch: number; channel: 'syringe' | 'drip'; contents: { drugId: string; concentration: PumpConcentration; volumeMl: number }; syringeMl?: number }
@@ -43,7 +49,33 @@ export type PumpEvent =
   | { kind: 'pump'; action: 'rate'; ch: number; rate: number; unit: RateUnit | 'drops/min'; limitMl?: number | null; weightKg?: number }
   | { kind: 'pump'; action: 'start' | 'stop' | 'unload'; ch: number }
   | { kind: 'pump'; action: 'purge'; ch: number; volumeMl: number; rateMlH: number }
-  | { kind: 'pump'; action: 'bolus'; ch: number; volumeMl?: number; dose?: { amount: number; unit: DoseUnit }; weightKg?: number; rateMlH: number };
+  | { kind: 'pump'; action: 'bolus'; ch: number; volumeMl?: number; dose?: { amount: number; unit: DoseUnit }; weightKg?: number; rateMlH: number }
+  | { kind: 'pump'; action: 'tci'; ch: number; setId: string; mode: 'plasma' | 'effect'; target: number; patient: TciTypedPatient; opioids?: boolean; maxRateMlH?: number };
+
+/** The patient data typed into a TCI pump (D6): what the sets read. */
+export interface TciTypedPatient { ageY: number; weightKg: number; heightCm: number; sex: 'm' | 'f'; pmaWeeks?: number }
+
+/**
+ * A TCI pump's own prediction (pump-rack E2, decision D3; the owner's PQ5 = A): the set it runs, the patient data typed
+ * into it, the set's parameters computed ONCE from them, and its own compartment state, stepped with what the pump
+ * believes it delivered. It never reads the patient: the displayed Cp and Ce are this model's, not the patient's.
+ */
+export interface TciPrediction {
+  setId: string;
+  patient: TciTypedPatient;
+  opioids: boolean;
+  params: PkParams;
+  x: number[];
+}
+
+/** One TCI pump's prediction in the `drugs` event (the pump's face shows it; never the patient's truth). */
+export interface TciPredictionRow {
+  setId: string;
+  mode: 'plasma' | 'effect' | null; // null: TCI stopped (the prediction still falls)
+  target: number | null;
+  cp: number; ce: number; // the pump's predicted plasma and effect-site concentrations, in `unit`
+  unit: string;
+}
 
 /** The alarms a channel raises when it stops (D8): End (syringe), Empty Container and Infusion Complete (drip). */
 export type PumpAlarmId = 'end' | 'emptyContainer' | 'infusionComplete';
@@ -58,7 +90,12 @@ export interface PumpChannel {
   /** What the learner programmed: the face's drug, the dose-rate conversion. */
   programmed: { drugId: string; concentration: PumpConcentration } | null;
   set: number | null; // drip channels: the IV set, drops/mL
-  mode: 'rate'; // E2 adds 'tci'
+  mode: 'rate' | 'tci';
+  /** TCI's controller (E2): absent or null in rate mode. `next` is when it chooses its next rate (s). */
+  tci?: { mode: 'plasma' | 'effect'; target: number; maxRateMlH: number; next: number } | null;
+  /** The pump's own prediction (E2, D3): made by the first `tci` action and kept (stepped) after TCI stops, across a
+   * syringe change, until a new set or new patient data starts a fresh one. */
+  pred?: TciPrediction | null;
   rate: { rate: number; unit: RateUnit | 'drops/min'; weightKg?: number } | null; // as entered
   rateMlH: number; // the entered rate in mL/h, under the current programme and set
   limitMl: number | null; // drip channels: the volume limit (null: none)
@@ -77,11 +114,13 @@ export interface PumpPanelRow {
   state: 'notLoaded' | 'loaded' | 'running' | 'paused' | 'alarm';
   programmed: { drugId: string; concentration: PumpConcentration } | null;
   contents: { drugId: string; concentration: PumpConcentration } | null;
-  syringeMl: number | null; set: number | null; mode: 'rate';
+  syringeMl: number | null; set: number | null; mode: 'rate' | 'tci';
   rate: { rate: number; unit: RateUnit | 'drops/min'; weightKg?: number } | null; rateMlH: number; limitMl: number | null;
   volumeMl: number; infusedMl: number; wasteMl: number;
   timeToEmptyMin: number | null; // at the running rate (null: not running)
   alarms: PumpAlarmId[];
+  /** The pump's own TCI prediction (E2); null for a channel that never ran TCI. */
+  tci: TciPredictionRow | null;
 }
 
 /** A validated `pump` command whose channel changed before it applied (the engine applies a command on a later tick
@@ -194,4 +233,7 @@ export type DrugsEvent = {
   macTotal: number;
   /** The pump channels (piece E1); absent until the first `pump` event, so a run without pumps is unchanged. */
   pumps?: PumpPanelRow[];
+  /** The channel-less TCI pumps' own predictions (E2, D3), one per drug that has run the `tci` event; absent in a run
+   * without one. `drugs` stays the patient's truth. */
+  tciPumps?: (TciPredictionRow & { drugId: string })[];
 };

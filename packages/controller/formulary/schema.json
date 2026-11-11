@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "pme-formulary/1",
   "title": "The formulary layer (plan learner-action-remote.md §5)",
-  "description": "One file per drug (<drugId>.json) and per diluent (diluents/<id>.json), sources.json and pending.json. Every number sits in an object with a src (a key into sources.json) or is a gap naming an owner question. The source rules beyond shape are in packages/controller/src/formulary/load.ts (checkFormulary).",
+  "description": "One file per drug (<drugId>.json) and per diluent (diluents/<id>.json), sources.json, pending.json and stock-syringes.json (the pump rack's stock, plan pump-rack-tci.md S1). Every number sits in an object with a src (a key into sources.json) or is a gap naming an owner question. The source rules beyond shape are in packages/controller/src/formulary/load.ts (checkFormulary).",
   "definitions": {
     "id": { "type": "string", "pattern": "^[a-z][A-Za-z0-9-]*$" },
     "src": { "type": "string", "minLength": 1 },
@@ -25,6 +25,10 @@
       }
     },
     "verdict": { "enum": ["incompatible", "compatible", "conditional", "not tested"] },
+    "containers": {
+      "description": "N60: the containers the statement's own source says it holds for (adsorption to PVC, say); absent: every container.",
+      "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["vial", "syringe-pp", "bag-pvc", "bag-polyolefin"] }
+    },
     "concentration": {
       "description": "The concentration a stability row was measured at, as its source states it: amount, or amount to max for a stated range; per mL or per L.",
       "type": "object", "additionalProperties": false, "required": ["amount", "unit", "src"],
@@ -47,7 +51,7 @@
     },
     "compat": {
       "type": "object", "additionalProperties": false, "required": ["verdict", "statement", "src", "crossCheck"],
-      "properties": { "verdict": { "$ref": "#/definitions/verdict" }, "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" }, "crossCheck": { "$ref": "#/definitions/crossCheck" } }
+      "properties": { "verdict": { "$ref": "#/definitions/verdict" }, "containers": { "$ref": "#/definitions/containers" }, "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" }, "crossCheck": { "$ref": "#/definitions/crossCheck" } }
     },
     "product": {
       "type": "object", "additionalProperties": false, "required": ["id", "form", "strength"],
@@ -59,8 +63,20 @@
           "properties": { "amount": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "type": "string", "minLength": 1 }, "perVial": { "type": "boolean" }, "src": { "$ref": "#/definitions/src" } }
         },
         "reconstitute": {
-          "type": "object", "additionalProperties": false, "required": ["diluents", "volumeMl", "src"],
-          "properties": { "diluents": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/id" } }, "volumeMl": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } }
+          "type": "object", "additionalProperties": false, "required": ["diluents", "volumeMl", "final", "src"],
+          "properties": {
+            "diluents": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/id" } },
+            "volumeMl": { "type": "number", "exclusiveMinimum": 0 },
+            "final": {
+              "description": "N73: what the label states of the reconstituted vial (a powder adds volume): its final volume, its concentration, or stated: false where it states neither.",
+              "oneOf": [
+                { "type": "object", "additionalProperties": false, "required": ["volumeMl", "src"], "properties": { "volumeMl": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } } },
+                { "type": "object", "additionalProperties": false, "required": ["perMl", "src"], "properties": { "perMl": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } } },
+                { "type": "object", "additionalProperties": false, "required": ["stated", "src"], "properties": { "stated": { "const": false }, "src": { "$ref": "#/definitions/src" } } }
+              ]
+            },
+            "src": { "$ref": "#/definitions/src" }
+          }
         },
         "prepTime": {
           "oneOf": [
@@ -76,6 +92,11 @@
       "properties": {
         "$comment": { "type": "string" },
         "drugId": { "$ref": "#/definitions/id" },
+        "molarMass": {
+          "description": "N61: the mass of one mmol of the drug, from a label or a pharmacopoeia; joins a strength in mmol to stability rows stated as a mass per mL.",
+          "type": "object", "additionalProperties": false, "required": ["mgPerMmol", "src"],
+          "properties": { "mgPerMmol": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } }
+        },
         "products": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/product" } },
         "diluents": {
           "type": "array",
@@ -88,7 +109,7 @@
           "type": "array",
           "items": {
             "type": "object", "additionalProperties": false, "required": ["with", "verdict", "statement", "src", "crossCheck"],
-            "properties": { "with": { "$ref": "#/definitions/id" }, "verdict": { "$ref": "#/definitions/verdict" }, "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" }, "crossCheck": { "$ref": "#/definitions/crossCheck" } }
+            "properties": { "with": { "$ref": "#/definitions/id" }, "verdict": { "$ref": "#/definitions/verdict" }, "containers": { "$ref": "#/definitions/containers" }, "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" }, "crossCheck": { "$ref": "#/definitions/crossCheck" } }
           }
         },
         "stability": {
@@ -136,6 +157,32 @@
         ]
       }
     },
-    "pending": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+    "pending": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "stockItem": {
+      "description": "A product at its labelled strength, ready to load on a pump channel (plan pump-rack-tci.md S1, PQ7 = B): the drug file and product it is, the volume it holds and the label's use at that strength, both from the product's own monograph.",
+      "type": "object", "additionalProperties": false, "required": ["id", "drugId", "product", "volumeMl", "use"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "drugId": { "$ref": "#/definitions/id" },
+        "product": { "$ref": "#/definitions/id" },
+        "volumeMl": {
+          "type": "object", "additionalProperties": false, "required": ["ml", "src"],
+          "properties": { "ml": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } }
+        },
+        "use": {
+          "type": "object", "additionalProperties": false, "required": ["statement", "src"],
+          "properties": { "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" } }
+        }
+      }
+    },
+    "stock": {
+      "description": "stock-syringes.json: the syringes and the bags a pump channel can take from stock.",
+      "type": "object", "additionalProperties": false, "required": ["syringes", "bags"],
+      "properties": {
+        "$comment": { "type": "string" },
+        "syringes": { "type": "array", "items": { "$ref": "#/definitions/stockItem" } },
+        "bags": { "type": "array", "items": { "$ref": "#/definitions/stockItem" } }
+      }
+    }
   }
 }

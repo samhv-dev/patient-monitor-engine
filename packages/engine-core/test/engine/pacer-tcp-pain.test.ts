@@ -17,7 +17,7 @@ async function arm(o: { ga: boolean; mA: number; threshold?: number; mode?: 'fix
   if (o.ga) {
     ev(1, { kind: 'airwayDevice', device: 'ett' });
     ev(1, { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 });
-    ev(1, { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 3.5 });
+    ev(1, { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 3.5, opioids: true }); // E2: typed "with opioids" (remifentanil from t = 1)
     ev(1, { kind: 'tci', drugId: 'remifentanil', mode: 'effect', target: 4 });
   }
   // under GA the block starts 10 s before the pacer (a 4 min anaesthetised CHB 30 collapses before pacing starts)

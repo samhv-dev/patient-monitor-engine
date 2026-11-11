@@ -55,8 +55,11 @@ export const transports = {
 };
 // Plan learner-action-remote.md L1: the formulary layer's types, the source check and the loader (no file reading,
 // no ajv: the bench is handed the parsed files; the schema and the folder checks run in CI)
-export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT } from './formulary/load.ts';
+export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT, STOCK_FILE } from './formulary/load.ts';
 export type * from './formulary/types.ts';
+// Plan pump-rack-tci.md D12, S1: the reference pumps' device profiles (pump-devices/), their source check and loader
+export { checkPumpDevices, loadPumpDevices, PUMP_DEVICE_IDS, MAX_DEVICE_TEXT } from './pump-devices.ts';
+export type * from './pump-devices.ts';
 // Plan learner-action-remote.md L5: the bench's Finding, which the /2 administration record's `prep` carries
 export type { Finding, FindingKind } from './formulary/findings.ts';
 // Plan learner-action-remote.md L7: the bench's preview on the learner's phone runs the host's own pure step (the host's

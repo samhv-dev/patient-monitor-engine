@@ -170,7 +170,7 @@ export class AppSession {
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
-  private formulary: Formulary | null = null;
+  formulary: Formulary | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
@@ -253,6 +253,7 @@ export class AppSession {
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
       onPreparation: (p) => this.driver.recordPreparation(p),
+      deviceName: (key) => readLayout(store)[key]?.name ?? null, // L9: the instructor's card names the remote as Room setup did
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
       // R8c: the granted remote cockpit's link messages and its grant, for the Ventilator desk (views/vent.ts)

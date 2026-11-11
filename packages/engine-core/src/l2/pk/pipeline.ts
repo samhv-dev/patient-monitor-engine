@@ -2,7 +2,7 @@
 // the PD combination. Outputs: pk.fx (the circulation's DrugEffect), pk.betaBlockAdd, pk.bus (DrugBus — per-agent Ce,
 // volatiles, the dose log), pk.out (1 Hz `drugs`). The drug model consumes EVERY library drug event.
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
-import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute, type PumpAlarmEvent, type PumpChannel, type PumpEvent, type RateUnit } from '../../types-pk.ts';
+import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute, type PumpAlarmEvent, type PumpChannel, type PumpEvent, type RateUnit, type TciPrediction, type TciTypedPatient } from '../../types-pk.ts';
 import type { DrugEffect } from '../circ/drugs.ts';
 import { STATE_SCHEMA } from '../../l1/state.ts';
 import { combine, NEUTRAL_FX, type Active } from './combine.ts';
@@ -13,12 +13,12 @@ import { DRUGS } from './data/drugs.ts';
 import { LAST_THRESHOLDS } from './data/rows-other.ts';
 import { gammaConc, gammaN, onsetChain, ONSET_N_MIN, type GammaDose } from './gamma.ts';
 import { GEPTS } from './tci-sets/gepts.ts';
-import { PENDING_TCI_MODEL_IDS, TCI_SETS, tciSet } from './tci-sets/index.ts';
-import { applyPump, pumpPanel, stepPumps, validatePump } from './pump.ts';
+import { tciSet, type TciSet } from './tci-sets/index.ts';
+import { applyPump, newPrediction, opioidsFor, predictionRow, pumpPanel, samePrediction, stepPrediction, stepPumps, TCI_LOCKED, tciSetRefusal, validatePump } from './pump.ts';
 import { bindSugammadex, bindSugammadexSites, CISATRACURIUM, MW, PCHE_CL_MULT, perKg, ROCURONIUM, SUCCINYLCHOLINE, SUGAMMADEX, VECURONIUM } from './nmb.ts';
 import { hill, tachy } from './pd.ts';
 import type { DrugRow, PdTarget } from './row.ts';
-import { tciRate, TCI_DT_S } from './tci.ts';
+import { tciRate, TCI_DT_S, TCI_MAX_RATE_ML_H } from './tci.ts';
 import { toAmount, toRate } from './units.ts';
 import { createVolatile, macForAge, macFraction, stepVolatile, uptakeLpm, type VolatileAgent, type VolatileState } from './volatile.ts';
 
@@ -51,7 +51,6 @@ export const LIPID_SINK_CEREBRAL = 0.315;
 
 export interface DrugInst {
   id: string;
-  model: string | null; // propofol TCI model choice
   x: number[]; // compartment state (pk/nmb rows); [] for gamma/volatile/blood rows
   factor: number; // clearance factor the params were built with (quantised)
   dist?: number; // Cardiac-output ratio the distribution was built with (quantised; rows with flowDist)
@@ -59,7 +58,11 @@ export interface DrugInst {
   /** amount/min the pump channels delivered over the last step (D5: added to `rate`; absent before any channel ran) */
   pumpRate?: number;
   rateUntil: number; // s (NEVER = until changed)
-  tci: { mode: 'plasma' | 'effect'; target: number; maxRate: number; next: number } | null;
+  /** The channel-less TCI's controller; `rate` is the rate IT chose (amount/min), what its pump believes it gives. */
+  tci: { mode: 'plasma' | 'effect'; target: number; maxRate: number; next: number; rate?: number } | null;
+  /** The channel-less TCI pump's own prediction (pump-rack E2, D3): its set, the case patient's data, its own state.
+   * Made by the first `tci` event, kept (and stepped) after TCI stops; absent for a drug never run by TCI. */
+  pred?: TciPrediction;
   doses: GammaDose[];
   infC: number; // gamma infusion state, reference units
   infTarget: number;
@@ -88,6 +91,10 @@ export interface PkState {
   /** TEST-ONLY seam — pins the cardiac-output ratio (as `pinCoreTemp`/`pinHbfRel` do) so a rig can assert PK
    * equality under pinned conditions. Never set by the engine. */
   pinDistQ?: number;
+  /** TEST-ONLY seam — pins every compartment row's clearance factor (as `pinDistQ` pins the distribution), so a rig can
+   * show that the patient equals the pump's prediction when only the patient's physiology differs. Never set by the
+   * engine. */
+  pinClFactor?: number;
   panelNext: number;
   dec: Record<string, number>; // decrement-from-now per running drug, min (Task 19)
   /** The pump channels (pump.ts, piece E1), made by the first `pump` event: absent in a run without pumps and in an
@@ -179,14 +186,32 @@ function modelParams(pk: PkState, m: string): PkParams {
   return (tciSet(m) ?? GEPTS).params(p);
 }
 
-/** The model ids the TCI command accepts: the registry's, and those still pending (rule 7 of the TCI-set check). */
-const TCI_MODEL_IDS: ReadonlySet<string> = new Set([...TCI_SETS.map((s) => s.meta.id), ...Object.keys(PENDING_TCI_MODEL_IDS)]);
+/** The case patient as a TCI pump's typed data: the channel-less `tci` event's pump is given the case sheet (D3). */
+function typedPatientOf(p: PkPatient): TciTypedPatient {
+  return { ageY: p.ageY, weightKg: p.weightKg, heightCm: p.heightCm, sex: p.sex, ...(p.pmaWeeks !== undefined ? { pmaWeeks: p.pmaWeeks } : {}) };
+}
+
+/** The set a channel-less `tci` event runs: the one it names, else the drug row's own model. */
+const tciEventSet = (row: DrugRow, model: string | undefined): TciSet | undefined => tciSet(model ?? (row.pk.kind === 'model' ? row.pk.model : ''));
+
+/** Why a channel-less `tci` event cannot apply now, or undefined (the set's drug and mode, the lock while it runs). */
+function tciEventRefusal(pk: PkState, row: DrugRow, c: Extract<PkClinicalEvent, { kind: 'tci' }>): string | undefined {
+  const set = tciEventSet(row, c.model);
+  if (!set) return `unknown TCI model ${c.model}`;
+  const why = tciSetRefusal(set, row.id, c.mode);
+  if (why) return why;
+  if (c.opioids !== undefined && typeof c.opioids !== 'boolean') return 'opioids must be true or false';
+  const d = pk.drugs[row.id];
+  if (c.target > 0 && d?.tci && d.pred && !samePrediction(d.pred, set.meta.id, typedPatientOf(pk.patient), opioidsFor(set, c.opioids))) return TCI_LOCKED;
+  return undefined;
+}
 
 function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null {
   const p = pk.patient;
   switch (row.pk.kind) {
     case 'model': {
-      const b = modelParams(pk, inst.model ?? row.pk.model);
+      // The patient's own model: a TCI's set is its pump's, never the patient's (pump-rack E2, D3)
+      const b = modelParams(pk, row.pk.model);
       // Opioids: a SEPARATE ventilatory effect site after the model's own → x[4]
       return row.pk.ventKe0 !== undefined ? { ...b, ke0: [...b.ke0, row.pk.ventKe0] } : b;
     }
@@ -259,7 +284,7 @@ function inst(pk: PkState, id: string): DrugInst {
   let d = pk.drugs[id];
   if (!d) {
     const row = DRUGS[id] as DrugRow;
-    const probe: DrugInst = { id, model: null, x: [], factor: 1, rate: 0, rateUntil: NEVER, tci: null, doses: [], infC: 0, infTarget: 0, total: 0, bound: 0, bolusTimes: [] };
+    const probe: DrugInst = { id, x: [], factor: 1, rate: 0, rateUntil: NEVER, tci: null, doses: [], infC: 0, infTarget: 0, total: 0, bound: 0, bolusTimes: [] };
     const p = baseParams(pk, row, probe);
     probe.x = p ? zeroState(p) : [];
     d = probe;
@@ -288,8 +313,8 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   if (ev.kind === 'tci') {
     const c = ev as Extract<PkClinicalEvent, { kind: 'tci' }>;
     if (row.pk.kind !== 'model') return `${row.id} has no TCI model`;
-    if (c.model !== undefined && !TCI_MODEL_IDS.has(c.model)) return `unknown TCI model ${c.model}`;
-    return c.target >= 0 && c.target <= 100 && (c.mode === 'plasma' || c.mode === 'effect') ? undefined : 'target must be 0–100 with mode plasma or effect';
+    if (!(c.target >= 0 && c.target <= 100 && (c.mode === 'plasma' || c.mode === 'effect'))) return 'target must be 0–100 with mode plasma or effect';
+    return tciEventRefusal(_pk, row, c);
   }
   // A volatile row has no compartment model: an IV bolus was accepted and then threw in pkSystem on the next tick
   if (row.pk.kind === 'volatile') return `${row.id}: a volatile agent is given through the vaporiser, not as an IV drug`;
@@ -405,9 +430,24 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
     d.rateUntil = NEVER;
   };
   if (ev.kind === 'tci') {
-    d.tci = ev.target > 0 ? { mode: ev.mode, target: ev.target, maxRate: ((ev.maxRateMlH ?? 1200) * (row.syringePerMl ?? 10)) / 60, next: t } : null;
-    if (ev.model) d.model = ev.model;
-    if (!d.tci) d.rate = 0;
+    if (ev.target > 0) {
+      // Re-checked at apply (validated at dispatch; another `tci` may have applied in between): not applied, and said
+      const why = tciEventRefusal(pk, row, ev);
+      if (why !== undefined) {
+        pk.out.push({ type: 'drugWarning', t, drugId: row.id, text: `${row.name} TCI not changed: ${why}` });
+        return true;
+      }
+      const set = tciEventSet(row, ev.model) as TciSet;
+      const patient = typedPatientOf(pk.patient);
+      const opioids = opioidsFor(set, ev.opioids);
+      // A new set or new data starts a fresh prediction at zero (a real pump knows nothing of the drug already given);
+      // a new target with the same set and data keeps it
+      if (!d.pred || !samePrediction(d.pred, set.meta.id, patient, opioids)) d.pred = newPrediction(set, patient, opioids);
+      d.tci = { mode: ev.mode, target: ev.target, maxRate: ((ev.maxRateMlH ?? TCI_MAX_RATE_ML_H) * (row.syringePerMl ?? 10)) / 60, next: t, rate: 0 };
+    } else {
+      d.tci = null;
+      d.rate = 0;
+    }
   } else if (ev.kind === 'infusion') {
     const perMl = ev.concentration ? (toAmount(ev.concentration.amount, ev.concentration.unit, row.amountUnit, w) as number) / ev.concentration.perMl : row.syringePerMl;
     d.tci = null;
@@ -453,6 +493,15 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
 }
 
 // --- step -------------------------------------------------------------------------------------------------------
+
+/** An older snapshot's running TCI, from before the pump had its own prediction: the row's set on the case patient,
+ * its state seeded from the patient's (what the oracle controller last used), then the pump's own from there on. */
+function seededPrediction(pk: PkState, row: DrugRow, d: DrugInst): TciPrediction {
+  const set = tciEventSet(row, undefined) as TciSet;
+  const pred = newPrediction(set, typedPatientOf(pk.patient), false);
+  pred.x = d.x.slice(0, pred.x.length);
+  return pred;
+}
 
 export function concOf(pk: PkState, id: string): number {
   return pk.lastC[id] ?? 0;
@@ -516,14 +565,19 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
         d.total += amt;
       }
     } else if (d.x.length) {
-      const f = clFactor(row, ctx);
+      const f = pk.pinClFactor ?? clFactor(row, ctx); // Test pin
       if (f !== d.factor) d.factor = f;
       if (row.flowDist) d.dist = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // Test pin
       const p = params(pk, row, d) as PkParams;
+      // An older snapshot's running TCI has no prediction: seeded once from the patient's state (the oracle's last view)
+      if (d.tci && !d.pred) d.pred = seededPrediction(pk, row, d);
       if (d.tci && t >= d.tci.next - 1e-9) {
-        d.rate = tciRate(p, d.x, d.tci.mode, d.tci.target, d.tci.maxRate);
+        // The pump doses from its OWN model (D3, PQ5 = A): its set, the typed data, its state — never `p` or `d.x`
+        d.tci.rate = tciRate((d.pred as TciPrediction).params, (d.pred as TciPrediction).x, d.tci.mode, d.tci.target, d.tci.maxRate);
+        d.rate = d.tci.rate;
         d.tci.next = t + TCI_DT_S;
       }
+      if (d.pred) stepPrediction(d.pred, PK_DT_S, d.tci ? (d.tci.rate ?? d.rate) : 0); // what the pump believes it gives
       if (t > d.rateUntil) {
         d.rate = 0;
         d.rateUntil = NEVER;
@@ -642,17 +696,19 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
         cp: p ? cp(p, d.x) : pk.lastC[d.id] ?? 0,
         ce: pk.lastC[d.id] ?? 0,
         rate: running ? (d.pumpRate ? d.rate + d.pumpRate : d.rate) : null, rateUnit: running ? `${row.amountUnit}/min` : null,
-        tci: d.tci ? { mode: d.tci.mode, target: d.tci.target, model: d.model ?? (row.pk.kind === 'model' ? row.pk.model : '') } : null,
+        tci: d.tci ? { mode: d.tci.mode, target: d.tci.target, model: d.pred?.setId ?? (row.pk.kind === 'model' ? row.pk.model : '') } : null,
         totalAmount: d.total, amountUnit: row.amountUnit,
         decrement50Min: running && p ? (pk.dec[d.id] ?? decrementFromNowMin(p, d.x)) : null,
       });
     }
     const v = pk.vap;
+    const tciPumps = Object.values(pk.drugs).filter((d) => d.pred).map((d) => ({ drugId: d.id, ...predictionRow(d.pred as TciPrediction, d.tci, concUnit(DRUGS[d.id] as DrugRow)) }));
     pk.out.push({
       type: 'drugs', t, drugs: rows,
       volatile: v ? { agent: v.agent, dialPct: v.dialPct, fgfLpm: v.s.fgf, fi: 100 * v.s.fi, fa: 100 * v.s.fa, brain: 100 * v.s.vrg, macAge: macForAge(v.agent, pk.patient.ageY), macFrac: macBrain, n2oFrac: v.n2oFrac } : null,
       macTotal: macBrain,
-      ...(pk.pumps ? { pumps: pumpPanel(pk.pumps) } : {}),
+      ...(pk.pumps ? { pumps: pumpPanel(pk.pumps, (id) => (DRUGS[id] ? concUnit(DRUGS[id]) : '')) } : {}),
+      ...(tciPumps.length ? { tciPumps } : {}),
     });
   }
 }
