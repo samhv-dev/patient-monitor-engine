@@ -16,7 +16,16 @@ import { button, clock, h, select, setText, toast, toggle } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
 import { ibpScalesControl } from './ibp-scales.ts';
 
-const CHANNELS: ReadonlyArray<[SensorId, 'on' | 'connected']> = [['ecg', 'on'], ['spo2', 'on'], ['nibp', 'on'], ['co2', 'on'], ['temp', 'on'], ['abp', 'connected'], ['cvp', 'connected'], ['pap', 'connected']];
+/** The sensors the sheet attaches, each with the state it attaches in. */
+export const CHANNELS: ReadonlyArray<[SensorId, 'on' | 'connected']> = [['ecg', 'on'], ['spo2', 'on'], ['nibp', 'on'], ['co2', 'on'], ['temp', 'on'], ['abp', 'connected'], ['cvp', 'connected'], ['pap', 'connected']];
+/** The sheet's command for a sensor attached or removed (an invasive line is removed as 'none', a sensor as 'off'). */
+export const sensorCmd = (s: SensorId, on: boolean): Record<string, unknown> =>
+  ({ type: 'attachSensor', sensor: s, state: on ? (CHANNELS.find(([x]) => x === s)?.[1] ?? 'on') : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
+/** The NIBP's automatic intervals, in the sheet's words ('0' = manual). */
+export const NIBP_INTERVALS: Array<[string, string]> = [['0', 'Off (manual)'], ['1', 'Every 1 min'], ['3', 'Every 3 min'], ['5', 'Every 5 min'], ['10', 'Every 10 min'], ['15', 'Every 15 min']];
+/** The sheet's NIBP commands: a measurement now, or the automatic interval (0 = manual). */
+export const nibpCmd = (v: 'start' | number): Record<string, unknown> =>
+  ({ type: 'device', action: v === 'start' ? { device: 'nibp', action: 'start' } : v > 0 ? { device: 'nibp', action: 'auto', intervalMin: v } : { device: 'nibp', action: 'manual' } });
 
 export function devicesTab(c: PanelCtx): HTMLElement {
   const { link } = c;
@@ -59,10 +68,10 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   // a toggle just pressed waits up to 3 s for the engine to report it, so a repaint between the press and the next 1 Hz
   // state does not flip it back (#27)
   const pending = new Map<SensorId, { on: boolean; until: number }>();
-  const toggles = CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
+  const toggles = CHANNELS.map(([s]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
     attached.set(s, on);
     pending.set(s, { on, until: performance.now() + 3000 });
-    void now({ type: 'attachSensor', sensor: s, state: on ? onState : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
+    void now(sensorCmd(s, on));
   }));
   // A Remote does not know which sensors are attached (the engine does not report it yet): its toggles start with no
   // pressed state, and the first tap attaches the sensor.
@@ -91,9 +100,8 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   // O2: the host shows the interval its skin started the cuff on (saadat-like 5 min); a Remote does not know it ('0')
   const startSkin = host?.monitor?.skin?.skin;
   const initial = host && host.spec.attached && startSkin ? String(nibpStartCommand(startSkin)?.intervalMin ?? 0) : '0';
-  const interval = select('Automatic interval', [['0', 'Off (manual)'], ['1', 'Every 1 min'], ['3', 'Every 3 min'], ['5', 'Every 5 min'], ['10', 'Every 10 min'], ['15', 'Every 15 min']], initial, (v) =>
-    void dev(Number(v) > 0 ? { device: 'nibp', action: 'auto', intervalMin: Number(v) } : { device: 'nibp', action: 'manual' }));
-  const nibp = h('div', { class: 'row' }, button('Start NIBP now', () => void dev({ device: 'nibp', action: 'start' })), interval.el);
+  const interval = select('Automatic interval', NIBP_INTERVALS, initial, (v) => void now(nibpCmd(Number(v))));
+  const nibp = h('div', { class: 'row' }, button('Start NIBP now', () => void now(nibpCmd('start'))), interval.el);
 
   // ---- IBP lane scales (E130) ----
   const scales = ibpScalesControl(host);

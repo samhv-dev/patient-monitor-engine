@@ -8,7 +8,8 @@
 // connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there. The scenario
 // builder (B2) is audited with a draft open, at each of its three sections, and walked by keyboard; B3 adds its Phases
 // section with a phase open (and its add form), B4 its Actions section with an action open (and two add forms), and B5
-// its Script, Outcomes, Debrief hints and Handout questions sections (each with an entry being added), before the walk.
+// its Script, Outcomes, Debrief hints and Handout questions sections (each with an entry being added), before the walk;
+// piece 162 the Script's command form on a sheet command with its fields (the ventilator) and a command being edited.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -94,6 +95,12 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.getByRole('button', { name: /^Script/ }).click();
     await page.getByRole('button', { name: 'Add a script entry' }).click();
     await run(page, '#/scenarios/builder/<draft> Script, a new entry being added');
+    await page.locator('[aria-label="New command: what"]').selectOption('vent:ventilator');
+    await expect(page.locator('[aria-label="New command: Rate (/min)"]')).toBeVisible();
+    await run(page, '#/scenarios/builder/<draft> Script, a new entry sending the ventilator');
+    await page.getByRole('button', { name: 'Entry 1: edit command 1' }).click();
+    await expect(page.locator('[aria-label="Entry 1, command 1: what"]')).toBeFocused();
+    await run(page, '#/scenarios/builder/<draft> Script, a command being edited');
     await page.getByRole('button', { name: /^Outcomes/ }).click();
     await page.getByRole('button', { name: 'Add an outcome' }).click();
     await run(page, '#/scenarios/builder/<draft> Outcomes, a new outcome being added');
