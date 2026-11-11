@@ -136,3 +136,45 @@ Neither value changed.
 - Absalom's Table 1 prints a time to peak of 4.5 min beside ke0 0.26. With Marsh's PK, 0.26 peaks at 3.92 min; 4.5 min
   is the time for ke0 0.20 (Struys 2000, p. 400).
 
+
+## The T3 census (11 November 2026): sets found, none registered yet
+
+Piece T3 (plan §13) adds the remaining published TCI sets for the drugs the engine models with compartments
+(propofol, remifentanil, fentanyl, sufentanil). A set registers only from its own paper read in full. None of the
+papers below is in the workspace library (`library/sources/papers/tci/`), and none could be read in full on the web:
+the Anesthesiology and Anesthesia & Analgesia pages (journals.lww.com, ovid.com) answer 402 (payment required), the
+British Journal of Anaesthesia pages (bjanaesthesia.org, academic.oup.com) refuse automated readers (403), and the
+others are closed access. Europe PMC holds no full text of any of them. So **no T3 set is registered**: each waits
+for its paper. To register one, place its PDF in the library; a later executor then reads it and its second reader
+reads it again, as in T2.
+
+Children's sets, when registered, run against the engine's adult plant until paediatric physiology exists; each set's
+source field will say so.
+
+| Drug | Set | Paper (the PK paper to place in the library) | Population (from the abstract or a review, NOT read in the paper) |
+|---|---|---|---|
+| Propofol (children) | Kataria | Kataria BK et al. Anesthesiology 1994;80:104–122, doi 10.1097/00000542-199401000-00018, PMID 8291699 | 53 children, 3–11 yr; venous samples (abstract) |
+| Propofol (children) | Paedfusor | Absalom A, Kenny G. "'Paedfusor' pharmacokinetic data set". Br J Anaesth 2005;95:110, doi 10.1093/bja/aei567, PMID 15941735; with Absalom A et al. Br J Anaesth 2003;91:507–513, doi 10.1093/bja/aeg220, PMID 14504151 (the accuracy study the plan cites) | 29 children, 1–15 yr, in the 2003 accuracy study (abstract) |
+| Propofol (children) | Short | Short et al. Br J Anaesth 1994;72:302–306, doi 10.1093/bja/72.3.302 | 10 children, 4–7 yr (review, Sahinovic 2018, PMC6267518, Table 1) |
+| Propofol | Schüttler | Schüttler, Ihmsen. Anesthesiology 2000;92:727–738, doi 10.1097/00000542-200003000-00017 | 270 adults and children, 2–88 yr (review, Table 1) |
+| Propofol | Eleveld 2014 | Eleveld DJ et al. Anesth Analg 2014;118:1221–1237, doi 10.1213/ane.0000000000000165 | general-purpose (superseded by Eleveld 2018, which is registered) |
+| Propofol (obese) | Cortínez | Cortínez et al. Br J Anaesth 2010;105:448–456, doi 10.1093/bja/aeq195 | 18 obese adults, 82–134 kg (review, Table 1) |
+| Propofol (obese) | van Kralingen | van Kralingen et al. Clin Pharmacokinet 2011;50:739–750, doi 10.2165/11592890-000000000-00000 | morbidly obese adults (review, Table 1) |
+| Propofol (children) | Coppens | Coppens et al. Anesthesiology 2011;115:83–93, doi 10.1097/aln.0b013e31821a8d80 | children (title) |
+| Remifentanil | Eleveld 2017 | Eleveld DJ et al. Anesthesiology 2017;126:1005–1018, doi 10.1097/ALN.0000000000001634, PMID 28509794 | 131 subjects, 5 days–85 yr, 2.5–106 kg; arterial samples (abstract) |
+| Remifentanil (obese) | Kim | Kim et al. Anesthesiology 2017;126:1019–1032, doi 10.1097/aln.0000000000001635 | adults across body mass (title) |
+| Remifentanil (children) | Ross | Ross et al. Anesth Analg 2001;93:1393–1401, doi 10.1097/00000539-200112000-00008 | anaesthetised children (title) |
+| Remifentanil | Egan | Egan et al. Anesthesiology 1993;79:881–892, doi 10.1097/00000542-199311000-00004 | healthy adult male volunteers (title) |
+| Fentanyl | Scott & Stanski | Scott, Stanski. J Pharmacol Exp Ther 1987;240:159–166, doi 10.1016/s0022-3565(25)22695-7 | adults across age (title) |
+| Fentanyl | McClain & Hug | McClain, Hug. Clin Pharmacol Ther 1980;28:106–114, doi 10.1038/clpt.1980.138 | adults (title) |
+| Fentanyl | Hudson | Hudson et al. Anesthesiology 1986;64:334–338, doi 10.1097/00000542-198603000-00006 | abdominal aortic surgery (title) |
+| Fentanyl (children) | Ginsberg | Ginsberg et al. Anesthesiology 1996;85:1268–1275, doi 10.1097/00000542-199612000-00007 | children (title) |
+| Sufentanil | Bovill | Bovill et al. Anesthesiology 1984;61:502–506, doi 10.1097/00000542-198411000-00004 | surgical adults (title) |
+| Sufentanil (children) | Greeley | Greeley et al. Anesth Analg 1987;66:1067–1072, doi 10.1213/00000539-198711000-00001 | paediatric cardiovascular patients (title) |
+
+Found and left out: Knibbe 2005 (Br J Clin Pharmacol 59:705, PMC1884857, open) is a two-compartment interspecies
+propofol model (rats, children, adults), not a set published for or run by a TCI device; it is listed for the owner,
+not built. Sets for drugs that are not in the engine's library (alfentanil: Maitre, Anesthesiology 1987;66:3, doi
+10.1097/00000542-198701000-00002; remimazolam: Schüttler, Anesthesiology 2020;132:636, doi
+10.1097/aln.0000000000003103) wait until the owner names the drug (plan §11, PQ6 = C). Dexmedetomidine, midazolam and
+ketamine sets belong to pieces E3a–E3c.

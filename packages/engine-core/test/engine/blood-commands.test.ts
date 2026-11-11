@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { turnaroundFor } from '../../src/l2/blood/analysers.ts';
 import { circCoLpm, circVolumeMl, evB, labsAt, rigB, runTo, st } from '../helpers/blood.ts';
 
 describe('blood commands and labs', { timeout: 300_000 }, () => {
@@ -14,9 +15,11 @@ describe('blood commands and labs', { timeout: 300_000 }, () => {
     expect(e.dispatch(evB({ kind: 'condition', id: 'burns', severity: 0.5 })).accepted).toBe(true);
     expect(e.dispatch(evB({ kind: 'condition', id: 'mh', severity: 1 })).accepted).toBe(true); // still Stage 3's
     expect(e.dispatch(evB({ kind: 'lab', panel: 'abg' })).accepted).toBe(true);
+    expect(e.dispatch(evB({ kind: 'lab', panel: 'chem' })).accepted).toBe(true);
+    expect(e.dispatch(evB({ kind: 'lab', panel: 'coag' })).accepted).toBe(true);
     expect(e.dispatch(evB({ kind: 'lab', panel: 'csf' })).accepted).toBe(false);
   });
-  it('emits `labs` once per second and the ABG 120 s after the draw, frozen at the draw', async () => {
+  it('emits `labs` once per second and the ABG after the analyser row’s turnaround, frozen at the draw', async () => {
     const { e, ev } = rigB();
     await runTo(e, 30);
     expect(ev.filter((x) => x.type === 'labs' && x.t > 20 && x.t <= 30)).toHaveLength(10);
@@ -30,7 +33,8 @@ describe('blood commands and labs', { timeout: 300_000 }, () => {
     const r = ev.find((x) => x.type === 'labResult');
     expect(r).toBeDefined();
     if (r?.type !== 'labResult') return;
-    expect(r.t - r.drawnAt).toBeCloseTo(120, 0);
+    expect(r.t - r.drawnAt).toBeCloseTo(turnaroundFor('abg'), 0);
+    expect(r.values).not.toHaveProperty('mg'); // the ABL800 FLEX does not measure magnesium (Radiometer 928-544)
     expect(r.values.hb).toBeCloseTo(15, 0); // drawn before the bleed
   });
   it('a bleed moves out of the circulation (volume and CO fall), kChem is written, no haemodynamic fallback', async () => {

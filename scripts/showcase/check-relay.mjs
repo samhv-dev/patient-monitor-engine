@@ -17,7 +17,10 @@
 // remote says hello as `learner` with the learner PIN, its `prep stage` is `forbidden` while pending and, once the host
 // grants it, reaches the host byte for byte, while its `applyEvent drug` with a forged `by` and an instructor's
 // `time pause` are `forbidden` and never reach the host (its next `prep deliver` is the host's next command) (learner
-// remote L3); the relay is still running; then the relay is stopped and the port is free again.
+// remote L3); a pump tablet says hello as `pump` with the learner PIN, its `pump load` is `forbidden` while pending and,
+// once the host grants it, reaches the host byte for byte, while a raw `applyEvent pump` and a `pump load` that carries a
+// `concentration` are `forbidden` and never reach the host (its next `pump start` is the host's next command) (pump rack
+// C1); the relay is still running; then the relay is stopped and the port is free again.
 // Room plan R1b and the kit store (docs/plans/scenario-builder.md §8 layer 2; the owner's ruling of 10 November 2026):
 // each run gets a state directory of its own (relay.mjs --state-dir; the launchers' PME_STATE_DIR, which stands in for
 // the kit's user-data folder): after the host hello /pme-relay.json answers lastRoom and the hidden .room.json in that
@@ -275,6 +278,41 @@ async function frames(port, proc, steps, state) {
   const afterNo = JSON.parse(await hostNext('the learner prep deliver', (f) => f.kind === 'command'));
   if (afterNo.body?.id !== 'kit-lrn-deliver') throw new Error(`the host's next command after the refused ones: ${JSON.stringify(afterNo)}`);
   step(`learner remote: pending, its prep was refused (${early.code}); granted, its prep stage (${Buffer.byteLength(stageCmd)} bytes) reached the host byte for byte; its applyEvent drug with a forged by and a time pause were refused (${drugNo.code}, ${pauseNo.code}) and never reached the host`);
+  // Pump rack C1: the learner PIN signs the pump in as it does the learner remote; granted, D2's shapes reach the host
+  const PMP_ID = 'kit-check-pump';
+  const tablet = socket(port, proc);
+  await tablet.opened;
+  tablet.ws.send(wire('hello', PMP_ID, 1, { role: 'pump', device: 'kitpump00001', pin: '582913' }));
+  await hostNext('the pump hello', (f) => f.kind === 'hello' && f.from === PMP_ID && f.role === 'pump');
+  const pumpRefusal = async (what) => {
+    for (let i = 0; i < 6; i++) {
+      const f = JSON.parse(await tablet.next(what));
+      if (f.relay === 'error') return f;
+    }
+    return null;
+  };
+  const pmpCmd = (seq, body) => wire('command', PMP_ID, seq, { body: { issuedBy: 'pump', ...body } });
+  const syringe = { stock: 'propofol1pct50ml' };
+  tablet.ws.send(pmpCmd(2, { id: 'kit-pmp-early', type: 'pump', action: 'load', ch: 1, syringe }));
+  const pmpEarly = await pumpRefusal('the refusal of a pending pump load');
+  if (pmpEarly?.code !== 'forbidden') throw new Error(`a pending pump's load was not refused: ${JSON.stringify(pmpEarly)}`);
+  host.ws.send(wire('grant', 'kit-check-host-0123456789abcdef', 6, { to: PMP_ID, granted: true }));
+  for (let f = null; f?.kind !== 'grant'; ) f = JSON.parse(await tablet.next('the grant at the pump'));
+  const loadCmd = pmpCmd(3, { id: 'kit-pmp-load', type: 'pump', action: 'load', ch: 1, syringe });
+  tablet.ws.send(loadCmd);
+  const loadGot = await hostNext('the pump load', (f) => f.kind === 'command');
+  if (loadGot !== loadCmd) throw new Error(`the pump load differs at the host: ${loadGot}`);
+  tablet.ws.send(pmpCmd(4, { id: 'kit-pmp-raw', type: 'applyEvent', event: { kind: 'pump', action: 'start', ch: 1 } }));
+  const rawNo = await pumpRefusal('the refusal of the raw applyEvent pump');
+  if (rawNo?.code !== 'forbidden') throw new Error(`the pump's raw applyEvent pump was not refused: ${JSON.stringify(rawNo)}`);
+  tablet.ws.send(pmpCmd(5, { id: 'kit-pmp-conc', type: 'pump', action: 'load', ch: 2, syringe, concentration: { amount: 10, unit: 'mg', perMl: 1 } }));
+  const concNo = await pumpRefusal('the refusal of the pump load with a concentration');
+  if (concNo?.code !== 'forbidden') throw new Error(`the pump load with a concentration was not refused: ${JSON.stringify(concNo)}`);
+  tablet.ws.send(pmpCmd(6, { id: 'kit-pmp-start', type: 'pump', action: 'start', ch: 1 }));
+  const pmpAfter = JSON.parse(await hostNext('the pump start', (f) => f.kind === 'command'));
+  if (pmpAfter.body?.id !== 'kit-pmp-start') throw new Error(`the host's next command after the refused pump ones: ${JSON.stringify(pmpAfter)}`);
+  step(`pump: pending, its load was refused (${pmpEarly.code}); granted, its pump load (${Buffer.byteLength(loadCmd)} bytes) reached the host byte for byte; a raw applyEvent pump and a load with a concentration were refused (${rawNo.code}, ${concNo.code}) and never reached the host`);
+  tablet.ws.close();
   learner.ws.close();
   defib.ws.close();
   vent.ws.close();
