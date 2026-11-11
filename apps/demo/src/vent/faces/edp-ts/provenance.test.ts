@@ -90,15 +90,24 @@ describe('the control table and the windows name real reasons and gap rows', () 
 
 describe('the face draws no colour, word or number of its own', () => {
   const src = (f: string) => readFileSync(resolve(import.meta.dirname, f), 'utf8');
-  it('face.css: colours only through the custom properties face.ts sets from face.json', () => {
+  it('face.css: colours only through the custom properties face.ts sets from face.json (and the font token)', () => {
     const css = src('face.css').replace(/\/\*[\s\S]*?\*\//g, '');
-    expect(css.match(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/g) ?? []).toEqual([]);
-    for (const [, name] of css.matchAll(/var\(--edp-([a-zA-Z]+)\)/g)) expect((FACE.colours as Record<string, unknown>)[name as string], name).toBeDefined();
+    expect(css.match(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|color-mix\(/g) ?? []).toEqual([]);
+    // every --edp-* name (hyphens included, so a typo cannot slip past) is a face.json colour, or the font token
+    for (const [, name] of css.matchAll(/var\(--edp-([a-zA-Z0-9-]+)\)/g)) expect(name === 'font' || (FACE.colours as Record<string, unknown>)[name as string] !== undefined, name).toBe(true);
   });
-  it('face.ts: no string literal shown on the face (words come from face.json through word() and reason())', () => {
-    const ts = src('face.ts');
-    // canvas text and DOM text: every fillText and every text node argument is a word(), a number, or a format
+  // VF (brief 159): the drawing is split over face.ts, device.ts (the housing and screen), view.ts (what they show) and
+  // pictograms.ts (one drawing per subject); none of them holds a colour, and none writes canvas text of its own
+  it.each(['face.ts', 'device.ts', 'view.ts', 'pictograms.ts'])('%s: no colour literal, no canvas text', (f) => {
+    const ts = src(f);
     expect(ts.match(/fillText\('/g) ?? []).toEqual([]);
-    expect(ts.match(/#[0-9a-fA-F]{6}\b/g) ?? []).toEqual([]);
+    expect(ts.match(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|color-mix\(/g) ?? []).toEqual([]);
+  });
+  it('every region box of the design grid is a measured (or reasoned eng) leaf, inside the device or the screen', () => {
+    const G = FACE.layout.grid as Record<string, { v: unknown; p: string }>;
+    for (const [k, l] of Object.entries(G)) expect(['measured', 'documented', 'eng'], k).toContain(l.p);
+    const box = (k: string) => G[k]!.v as number[];
+    for (const k of ['head', 'topLeft', 'msg', 'left', 'win', 'alarmBox']) { const [x, y, w, h] = box(k); expect(x! >= 0 && y! >= 0 && x! + w! <= 800 && y! + h! <= 600, k).toBe(true); }
+    for (const k of ['face', 'frame']) { const [x, y, w, h] = box(k); expect(x! + w! <= (G.devW!.v as number) && y! + h! <= (G.devH!.v as number), k).toBe(true); }
   });
 });

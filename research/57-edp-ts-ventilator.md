@@ -549,6 +549,87 @@ face follows the page the plan names until the owner's video):
 
 ---
 
+## 16. Measured from the photographs (brief 159, piece VF)
+
+Brief 159's standard: **the photographs decide what they show** (look, colours, positions and proportions, words, the
+order of entries, the pictograms' subjects); the manual decides what they do not; what neither shows is an engineering
+choice marked `eng` in `face.json`. For anything a photograph shows, this replaces the reading of VQ7 by which the
+manual's wording won (X-01 keeps the manual's form beside the photographed one).
+
+**Method.** Each photograph (the `sips` 1600 × 1200 JPEG copy) is rectified to the LCD's own 800 × 600 grid (R-03) by a
+homography: IMG_1542 from the four corners of the LCD's lit area, found as the strongest luminance step along probe
+lines (photo px: top-left 146.6, 123; top-right 1347.3, 142.6; bottom-left 192.6, 1027; bottom-right 1320, 987);
+IMG_1544 to IMG_1547, which do not show all four corners, by a least-squares fit to four to eight landmarks whose LCD
+coordinates were read on the rectified IMG_1542 (panel corners, tag corners, tile corners, the LCD's right and bottom
+edges; residuals 0 to 4.3 photo px). The same homography, extended, gives the whole front on a 1080 × 820 grid with the
+LCD at (120, 55) (IMG_1542, IMG_1546). The rectified images are kept with the photographs, outside the repository
+(`assets/ventilators/edp-ts/reference/`). A box below is in LCD px (housing px for the front), read on those images at
+2× with a 10 px grid and checked by edge probes; a colour is the per-channel median of the patch named (x0, y0)-(x1, y1),
+uncorrected for white balance, away from glare.
+
+| Id | Fact | Value as the source gives it | Source | Tag |
+|---|---|---|---|---|
+| P-01 | Mode windows' title | "Operative Modes", both windows | IMG_1544; IMG_1545 | P |
+| P-02 | Mode windows' entries, in order | first: VCV, PCV, PSV/CPAP, SIMV(PCV)+PSV, SIMV(VCV)+PSV, Noninvasive (NIV), Other Operative modes; second: MMV+PSV, PSV+VT Assured, APRV, PRVC, Other Operative modes; the second window takes the first one's place | IMG_1544; IMG_1545 | P |
+| P-03 | Menu entries, in order | Patient's Data, Backup ventilation, Ventilatory adjuncts, Records, Tools, Intrahospital transport ("No" at its right) | IMG_1547 | P |
+| P-04 | An entry that opens a further list | a small "+" at the right end of the entry | IMG_1544; IMG_1545; IMG_1547 | P |
+| P-05 | Type forms | "fTotal" with an italic f; "V̇E" with the dot and a small E; "V̇(L/min)" with the dot; the "f" of the settings row italic | IMG_1542 | P |
+| P-06 | The knob's ring | lit violet-blue with a window open or a key selected (IMG_1544 to IMG_1547); dark with neither (IMG_1542) | IMG_1542; IMG_1544; IMG_1546 | P |
+| P-07 | The pictogram column, top to bottom | the screen layout (curves and loops), a snowflake, lungs over a ruler, a loop with an arrow into a tray, a spray bottle, a question mark, lungs with a power symbol; no words; pale keys with a raised edge; lungs-over-ruler and lungs-with-power faint | IMG_1542; IMG_1547 | P |
+| P-08 | Message bar | light blue; at its left a pictogram in a blue rounded square and three faint places; the message left-aligned, small bold | IMG_1542 | P |
+| P-09 | Limit tag | one yellow tag per value column; a step from low to high with an arrowhead at the high end, the low end or both; the limits at the right, high over low | IMG_1542 | P |
+| P-10 | Left column, top to bottom | green battery; grey lungs (shown with a patient's effort, V-05); Peak and value; Trach.; Plateau; Mean and value; PEEP and value; a tag 20.0; Pressure Limits; key 40 with the symbol under the number; key 5 with the symbol over it; thin blue rules between the groups | IMG_1542; IMG_1546 | P |
+| P-11 | Curves | navy at the top, lighter blue at the bottom; a light-blue scale strip with every tick labelled (Paw 35, 28, 21, 14, 7, 0, 7; VT 1.0, 0.8, 0.6, 0.4, 0.2, 0, 0.2; V̇ 60, 40, 20, 0, 20, 40, 60); a light-blue time strip under each panel, 0 to 12 by 2; "(s)" at the lower right; a white dotted zero line; the title bold white at the top left; the trace about two screen px | IMG_1542 | P |
+| P-12 | Loops | ticks on the left and under each loop (volume 1.0 to 0.2 below zero; pressure 7 below zero to 35; flow 60 to 60; volume 0.2 below zero to 1.0); white dotted axes through zero; the y name right of the vertical axis at the top, the x name at the right on the zero line | IMG_1542 | P |
+| P-13 | Settings tiles | light tiles, raised edge; value large and thin, unit small, label on a light-blue band at the foot; Rise Time and Flow Waveform a pictogram over a two-line label; the selected tile solid blue with white words; Flow Waveform faint | IMG_1542; IMG_1546 | P |
+| P-14 | Membrane keys | periwinkle keys, dark lettering: Alarm Limits (a small mark under the words), a crossed bell with "30-60 s" printed under the key, Menu, Mode (outlined); under the screen a padlock, Suction %O2, Manual Insp., Insp/Exp Pause, Ctrl, Esc | IMG_1542 | P |
+| P-15 | Lamps | "Alarm Signals" printed; "Vent Inop" left of a triangle, "High" left of a triangle (red when lit), "Med Low" left of a round lamp (amber when lit); unlit lamps flat off-white | IMG_1542; IMG_1547 | P |
+| P-16 | Power legends | a plug, "~ VAC"; a battery outline, "Battery/Charge" | IMG_1542 | P |
+| P-17 | The knob | a cream base disc in the housing's lower right corner, and a cream cylinder standing out of it toward the lower right | IMG_1542 | P |
+| P-18 | Screen type | a plain sans; the "1" has no foot, the "4" is closed, the "2" ends flat; large numerals regular weight, labels bold | IMG_1542; IMG_1546 | P |
+| P-19 | Windows | open at the right, over the loops, beside the pictogram column; a blue title bar; pale entries with a soft edge; the entry under the knob solid blue with white words; "Press [Knob] Select - [Esc] Exit" at the foot; one window at a time | IMG_1544; IMG_1545; IMG_1547 | P |
+| P-20 | The design grid | the LCD 800 × 600 (R-03), rectified as stated above | IMG_1542 | meas |
+| P-21 | Header band; top-left block | [0, 0, 800, 62]; [0, 0, 266, 88] | IMG_1542 | meas |
+| P-22 | Value cells | eight cells from x 266, 66.5 wide, a blue divider at each left edge | IMG_1542 | meas |
+| P-23 | Tags | y 64, 25 high, inset 2 px in their cells | IMG_1542 | meas |
+| P-24 | Message bar | [62, 88, 738, 33] | IMG_1542 | meas |
+| P-25 | Left column | [0, 88, 58, 450]; rows at y 96 battery, 116 lungs, 163 Peak, 183 value, 204 rule, 209 Trach., 249 rule, 251 Plateau, 291 rule, 295 Mean, 312 value, 336 rule, 340 PEEP, 356 value, 380 tag (24 high), 407 Pressure Limits, 435 key (46 high), 486 key (44 high) | IMG_1542 | meas |
+| P-26 | Curves | scale strip x 61, 28 wide; panels x 89, 362 wide, at y 130, 264, 398, 120 high; time strips 12 high | IMG_1542 | meas |
+| P-27 | Loops | scale strip x 456; panels x 483, 260 wide, at y 130 (186 high) and 330 (187 high) | IMG_1542 | meas |
+| P-28 | Pictogram column | x 747, 50 wide; from y 133, every 56.5, 50 high | IMG_1542 | meas |
+| P-29 | Settings row | eleven tiles from x 2, every 72.2, 68 wide; y 535, 63 high; label band 18 high | IMG_1542; IMG_1546 | meas |
+| P-30 | Window | [456, 125, 287, 396]; title bar 30 high; entries 7 px in, the first 41 px under the window's top, 26 high, every 42.2; the foot's words at 368 | IMG_1544; IMG_1547 | meas |
+| P-31 | The front | a 1080 × 820 grid with the LCD at (120, 55); the housing's face [25, 25, 1025, 795]; the recessed frame [102, 40, 838, 630] | IMG_1542 | meas |
+| P-32 | Lamps | at x 990, 40 × 34, tops at y 78, 122, 169; "Alarm Signals" at y 46 | IMG_1542 | meas |
+| P-33 | Membrane keys | Alarm Limits [970, 266, 50, 34]; silence [970, 337, 50, 37]; Menu [970, 446, 50, 34]; Mode [969, 552, 51, 37]; "30-60 s" at y 392; under the screen at y 721, 35 high: padlock x 278, Suction %O2 425, Manual Insp. 497, Insp/Exp Pause 569, Ctrl 725, Esc 797 | IMG_1542 | meas |
+| P-34 | Knob | base disc centre (980, 735), radius 70; the cylinder's face radius 50, 38 px right and 25 px down | IMG_1542 | meas |
+| P-35 | Power legends | plug and "~ VAC" at (40, 715); battery and "Battery/Charge" at (40, 745) | IMG_1542 | meas |
+| P-41 | "ADL" blue | `#2e468a` (darkest 12 % of the glyphs' pixels, IMG_1542 6,14-56,33) | IMG_1542 | meas |
+| P-42 | Screen ink | `#292829` (darkest 12 % of the glyph pixels: the mode name `#242223`, the left column's values `#2d2f2f`; their mean) | IMG_1542 | meas |
+| P-43 | Units, scale numbers | `#7c8083` (glyph pixels of "L/min", IMG_1542 288,32-312,41) | IMG_1542 | meas |
+| P-44 | Dividers and rules | `#7e8eaf` (IMG_1542 332,15-334,50) | IMG_1542 | meas |
+| P-45 | Curves' lower blue | `#363c70` (IMG_1542 200,372-240,380); the upper navy is C-05 | IMG_1542 | meas |
+| P-46 | Tiles' label band | `#9cb1be` (IMG_1546 268,586-285,596) | IMG_1546 | meas |
+| P-47 | Window ground | `#bfc5c7` (IMG_1544 470,455-700,490) | IMG_1544 | meas |
+| P-48 | Entry under the knob | `#466fbd` (IMG_1544 620,336-700,346: `#527ac3`; IMG_1547 600,177-700,190: `#3963b8`; their mean) | IMG_1544; IMG_1547 | meas |
+| P-49 | Battery green | `#68ac1c` (IMG_1542 22,98-40,104) | IMG_1542 | meas |
+| P-50 | Lungs grey | `#9c9ea2` (IMG_1542 28,130-34,140) | IMG_1542 | meas |
+| P-51 | Housing | `#6e5f50` (front of IMG_1542, 350,770-650,800, under the keys) | IMG_1542 | meas |
+| P-52 | Housing, lit (right) | `#796654` (front 1040,300-1060,400) | IMG_1542 | meas |
+| P-53 | Housing, shaded (upper left) | `#5d4d42` (front 150,20-400,35) | IMG_1542 | meas |
+| P-54 | Recessed frame | `#6c5d4f` (front 400,672-600,680) | IMG_1542 | meas |
+| P-55 | Membrane keys | `#736e78` (front, the top strip of Menu, 975,449-1015,453) | IMG_1542 | meas |
+| P-56 | Key lettering | `#302a2d` (glyph pixels of "Menu") | IMG_1542 | meas |
+| P-57 | Printed legends | `#362a22` (glyph pixels of "Alarm Signals", "Vent Inop") | IMG_1542 | meas |
+| P-58 | Unlit lamp | `#c7b09d` (IMG_1547 photo px 1265,65-1280,85; the three lamps agree within 2) | IMG_1547 | meas |
+| P-59 | Knob, the cylinder's face | `#a68c77` (front 1005,750-1035,775) | IMG_1542 | meas |
+| P-60 | Knob, shadow side | `#4d3c2e` (front 935,765-948,785) | IMG_1542 | meas |
+| P-61 | Knob ring, lit | `#8671b5` (IMG_1546 photo px 1300,960-1306,985) | IMG_1546 | meas |
+| P-62 | Knob base's edge (ring dark) | `#77634e` (front 913,735-917,745) | IMG_1542 | meas |
+| P-63 | Flow Waveform's pictogram | `#cdba63` (the most saturated 5 % of IMG_1542 730,540-792,565, the yellow ramp) | IMG_1542 | meas |
+| P-64 | The gasket between frame and LCD | `#51463c` (front 400,660-600,664) | IMG_1542 | meas |
+| P-65 | Knob base disc | `#a78b6c` (front 960,690-990,700) | IMG_1542 | meas |
+
 ## Gaps that remain (not in the manual, the photographs or the video)
 
 Written as gaps; none is filled with a likely value. Rows: T-24 (Rise Time's range and step), T-48 (suction period's
