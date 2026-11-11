@@ -44,4 +44,7 @@ describe('every V2 option off is the model of 83354a05, bit for bit', () => {
   it('the options left out (the default) reproduce the base traces exactly', () => {
     expect(hashAll({})).toBe(BASE_SHA256);
   });
+  it('the options set explicitly to off (backupMode off, pmaxAction cap) reproduce the base traces exactly', () => {
+    expect(hashAll({ backupMode: 'off', pmaxAction: 'cap' })).toBe(BASE_SHA256);
+  });
 });
