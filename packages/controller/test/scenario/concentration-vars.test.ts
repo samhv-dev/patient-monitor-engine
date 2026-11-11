@@ -185,13 +185,13 @@ describe('DC1 through the driver and the engine', () => {
   }, 60_000);
 
   // The guard the pump plan's E2 keeps (pump-rack-tci.md, its cross-reference to DC1): a TCI whose patient does not
-  // follow its target. Today's engine has no separate pump prediction (E2 adds `xPump`); the mismatch it can make is the
-  // pump's rate limit: a plasma target of 4 µg/mL with the pump held to 200 mL/h (10 mg/mL: 33 mg/min) is reached by
-  // this 70-kg patient only after 73 s (measured, seed 7; 120 mL/h: 244 s), so for that minute the controller's target
-  // (4) and the patient's Cp part by up to 3.9 µg/mL. The rule follows the patient: it enters on the first drugs event
-  // whose patient Cp is past 3.9, never on the target.
+  // follow its target. A plasma target of 4 µg/mL with the pump held to 200 mL/h (10 mg/mL: 33 mg/min). Before E2 the
+  // controller read the patient, which reached 3.9 after 73 s. Since E2 (decision D3) the pump predicts with its own
+  // model: ITS Cp reaches 4.000 by 75 s and holds, while this patient (its own clearance and distribution) plateaus at
+  // 3.4–3.6 (measured, seed 7: 3.371 at 60 s, 3.479 at 75 s, 3.426 at 150 s). The rule follows the patient: it enters on
+  // the first drugs event whose patient Cp is past 3.3, never on the target, and never on the pump's 4.
   it('guard: under a rate-limited propofol TCI (target 4 µg/mL) the rule reads the patient\'s Cp, not the target', async () => {
-    const d = withLeaf({ value: { var: 'cp:propofol', op: '>=', value: 3.9 } });
+    const d = withLeaf({ value: { var: 'cp:propofol', op: '>=', value: 3.3 } });
     d.phases[2].enter = { value: { var: 'cp:propofol', op: '>=', value: 4.5 } }; // never: past the target
     d.phases[1].next = ['treated'];
     const o = rig(d);
@@ -203,9 +203,12 @@ describe('DC1 through the driver and the engine', () => {
     });
     const rows = o.drugs.map((e) => ({ t: e.t, row: e.drugs.find((r) => r.id === 'propofol') })).filter((x) => x.row);
     expect(rows.every((x) => x.row!.tci?.target === 4)).toBe(true); // the controller's target, all along
-    const cross = rows.find((x) => x.row!.cp >= 3.9);
-    expect(cross, 'the patient reaches 3.9 within 150 s').toBeDefined();
-    expect(cross!.t).toBeGreaterThan(60); // a minute and more with the target at 4 and the patient below 3.9
+    const cross = rows.find((x) => x.row!.cp >= 3.3);
+    expect(cross, 'the patient reaches 3.3 within 150 s').toBeDefined();
+    expect(cross!.t).toBeGreaterThan(45); // most of a minute with the target at 4 and the patient below 3.3
+    // The pump's own prediction (the `drugs` event's tciPumps) is on its target; the patient never reaches it
+    expect(o.drugs.at(-1)!.tciPumps!.find((x) => x.drugId === 'propofol')!.cp).toBeCloseTo(4, 2);
+    expect(Math.max(...rows.map((x) => x.row!.cp))).toBeLessThan(3.9);
     expect(Math.max(...gaps)).toBeGreaterThan(3); // the patient's Cp is ≥ 3 µg/mL below the target early on
     const entered = o.pr.phases.find((p) => p.id === 'early');
     expect(entered?.t).toBeCloseTo(cross!.t, 1); // entered at the patient's crossing (the drugs event's own second)

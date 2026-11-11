@@ -7,6 +7,7 @@ import { defineConfig } from 'vite';
 // PME_TEST_SET=fast excludes the slow set, PME_TEST_SET=slow runs only it (one file at a time); unset = everything.
 const SLOW = [
   'test/engine/**/*longrun*.test.ts',
+  'test/engine/pk-tci-pump-control.test.ts', // pump-rack E2: the long run's control, one 6 h engine run (slow-b, the remainder)
   'test/engine/engine-pipeline.test.ts', // holds the ECG 6 h/24 h drift run
   'test/engine/lung-recruitment.test.ts',
   'test/engine/lung-unilateral.test.ts',

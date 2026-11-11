@@ -364,7 +364,7 @@ describe('pump-rack E1: pump channels in the drug layer, both kinds', () => {
     expect(refused(pk, { action: 'load', ch: 1, channel: 'syringe', syringeMl: 50, contents: { ...contents, drugId: 'sevoflurane' } })).toMatch(/vaporiser/);
     expect(refused(pk, { action: 'load', ch: 1, channel: 'syringe', syringeMl: 50, contents: { ...contents, drugId: 'calciumChloride' } })).toMatch(/bolus/);
     expect(refused(pk, { action: 'program', ch: 1, drugId: 'propofol', concentration: PROPOFOL_10 })).toMatch(/load/);
-    expect(refused(pk, { action: 'tci', ch: 1 })).toMatch(/action/);
+    expect(refused(pk, { action: 'tci', ch: 1 })).toMatch(/load/); // since E2 a channel action, refused on an empty channel
     expect(refused(pk, { action: 'toString', ch: 1 })).toMatch(/action/);
     propofolSyringe(pk);
     noradBag(pk);
