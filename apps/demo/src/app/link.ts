@@ -3,7 +3,7 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, PUMP_ISSUED_BY, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
@@ -191,7 +191,7 @@ export class Link {
 
   /**
    * Brief 164: on the host, a command the host applied for ANOTHER device — a learner remote's give, the defibrillator
-   * window's press, the instructor phone's command — is a Log line at the tick it was applied, naming the device (the name
+   * window's press, a pump tablet's press (C2), the instructor phone's command — is a Log line at the tick it was applied, naming the device (the name
    * Room setup gave it). This link's own commands are logged with their ack (`send`); a replay, a cockpit frame, the card's
    * own commands (its state lines say them) and the ventilator's hand-over are not presses.
    */
@@ -201,9 +201,10 @@ export class Link {
     if (!this.host || !c || r?.replay || r?.mirror || e.commandId.startsWith(`${this.ctl.peerId}-`)) return;
     const text = describeCommand(c);
     if (c.issuedBy === 'remote') return this.add({ simT: e.tick * TICK_S, kind: 'instructor', text: `${text} (instructor's phone)` });
-    if (c.issuedBy !== LEARNER_ISSUED_BY) return;
+    if (c.issuedBy !== LEARNER_ISSUED_BY && c.issuedBy !== PUMP_ISSUED_BY) return;
     const name = typeof c.by === 'string' ? this.host.deviceName(c.by) : null;
-    const device = c.event?.kind === 'defib' ? 'defibrillator window' : 'learner remote';
+    // pump-rack-tci.md C2: a pump tablet's press, filed `issuedBy: 'pump'` (its line names the channel: describe.ts)
+    const device = c.issuedBy === PUMP_ISSUED_BY ? 'pump tablet' : c.event?.kind === 'defib' ? 'defibrillator window' : 'learner remote';
     this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${device}${name ? `: ${name}` : ''})` });
   }
 
