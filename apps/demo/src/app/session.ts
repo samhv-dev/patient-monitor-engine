@@ -81,6 +81,10 @@ export class AppSession {
   readonly driver: ScenarioDriver;
   /** The same-screen instructor panel's controller (in-process hub, R7). */
   readonly panel: ControllerSession;
+  /** The name Room setup gave a device key (R7's remembered layout), or null: the record's and the Log's (brief 164). */
+  deviceName(key: string): string | null {
+    return readLayout(store)[key]?.name ?? null;
+  }
   /** The panel's end of the in-process hub (the panel taps it for raw events: alarmStatus, deviceStatus). */
   readonly panelTransport: ManagedTransport;
   /** True once the session has been used beyond the Start screen (a patient restart then asks first). */
@@ -190,7 +194,7 @@ export class AppSession {
     this.code = normalizeSessionCode(o.code ?? '') ?? newSessionCode();
     // the host's phase runner (a pme-scenario/2 card): the record copies its grade inputs (plan F7)
     // R5d: a learner defibrillator press names its device as Room setup keeps it (R7's remembered layout)
-    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null, (key) => readLayout(store)[key]?.name ?? null);
+    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null, (key) => this.deviceName(key));
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
       dispatchGroup: (cs) => this.need().dispatchAll(cs), // R15: a stage group in one worker message, on one tick
@@ -249,6 +253,11 @@ export class AppSession {
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
+      // B6 "To the next phase": the /2 card's last phase entry (its id and time), the stop the host's fast-forward reads
+      phaseMark: () => {
+        const e = this.driver.phaseRunner?.phases.at(-1);
+        return e ? `${e.id}@${e.t}` : null;
+      },
       // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
       // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),

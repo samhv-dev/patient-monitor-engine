@@ -810,14 +810,14 @@ dialog.room-renew p { margin: 0; font-size: 14px; line-height: 1.5; }
     'ff action' auto
     'stage action' minmax(0, 1fr)
     'alarm action' auto
-    'dock dock' 64px / minmax(0, 6fr) minmax(0, 7fr);
+    'dock dock' minmax(64px, auto) / minmax(0, 6fr) minmax(0, 7fr);
 }
 /* The strip with a status line under its chips (#211's Case briefing, #214's finishing: briefing.css and finish.css
    each lay the strip out as a 52-px row of chips, then the 40-px line): the strip keeps its own 75 px, laid out as
    without the line (the chips' one row centred in it), and the line adds its 40: 115 px. With no case loaded the
    strip has no line (the owner, 1 November): its one chip is centred in the 75 px, as the chips of a loaded case are.
    One more class than those rules, so this wins whatever order the sheets load in. */
-.app .main[data-route='teach2']:has(.ip2-strip:is([data-briefing], [data-finishing])) { grid-template-rows: 48px 115px auto auto minmax(0, 1fr) auto 64px; }
+.app .main[data-route='teach2']:has(.ip2-strip:is([data-briefing], [data-finishing])) { grid-template-rows: 48px 115px auto auto minmax(0, 1fr) auto minmax(64px, auto); }
 .main[data-route='teach2'] .ip2-strip:is([data-briefing], [data-finishing]) { grid-template: '.' minmax(0, 1fr) 'chips' 40px '.' minmax(0, 1fr) 'status' 40px / minmax(0, 1fr); }
 .main[data-route='teach2'] > .view[data-view='teach2'] { grid-area: 1 / 1 / -1 / -1; display: grid; grid-template-rows: subgrid; grid-template-columns: subgrid; overflow: hidden; }
 /* the base rule hides the stage off Monitor, Instructor and Ventilator; the stage's id outranks it here. Inside STATE's
@@ -1007,6 +1007,26 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .lr-state[data-state='preparing'] { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .lr-finding { padding: var(--s-2) var(--s-3); border-left: 4px solid var(--danger); border-radius: var(--r-control); background: var(--bezel-3); }
 .lr-finding p { margin: 0 0 var(--s-1); }
+/* L11: the Labs tab: four Send buttons (44 px, two to a row) over this phone's samples on the tray's cards; the result
+   table in the app's figures, a flagged value in the warning colour and a critical one in the danger colour, each with
+   its arrow or the word "critical" as well, never colour alone */
+.lr-labs { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-3) var(--s-4); }
+.lr-lab-sends { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+.lr-lab-send { min-height: 44px; white-space: normal; }
+.lr-lab-said:empty { display: none; }
+.lr-lab-said[data-ok='true'] { color: var(--text); font-weight: 400; }
+.lr-lab-state[data-state='pending'] { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.lr-lab-result[hidden], .lr-lab-none[hidden], .lr-lab-empty[hidden] { display: none; }
+.lr-lab-none, .lr-lab-ranges { margin: 0; }
+.lr-lab .pme-lab-panel table { width: 100%; border-collapse: collapse; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.lr-lab .pme-lab-panel caption { text-align: left; color: var(--text-muted); font-size: var(--t-13); padding-bottom: var(--s-1); }
+.lr-lab .pme-lab-panel th, .lr-lab .pme-lab-panel td { padding: 2px var(--s-1); text-align: left; border-bottom: 1px solid var(--line); }
+.lr-lab .pme-lab-panel thead th { color: var(--text-muted); font-size: var(--t-13); font-weight: 400; }
+.lr-lab .pme-lab-panel tbody th { color: var(--text-strong); font-weight: 600; }
+.lr-lab .pme-lab-panel td.u, .lr-lab .pme-lab-panel td.range { color: var(--text-muted); font-size: var(--t-13); }
+.lr-lab .pme-lab-panel tr.high td.v, .lr-lab .pme-lab-panel tr.low td.v { color: var(--warn); font-weight: 600; }
+.lr-lab .pme-lab-panel tr.crit td.v { color: var(--danger); font-weight: 700; }
+
 .lr-finding-src { color: var(--text-muted); }
 .lr-drugs .seg { display: flex; }
 .lr-drugs .seg button { flex: 1 1 0; }

@@ -456,6 +456,23 @@ describe('the preparation time and the lab sample', () => {
     expect((await ack(x.got, id)).accepted).toBe(true);
     expect(x.tg.got[0]).toMatchObject({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' }, issuedBy: 'learner', by: KEY });
   });
+  it("brief 164: a learner's lab before and after its Give, and the laptop's own bolus after it, all reach the engine and are applied (the host's chain is not left waiting)", async () => {
+    const x = setup();
+    const lr = await signIn(x);
+    x.tg.at(100);
+    expect((await lr.send({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } })).accepted).toBe(true);
+    await lr.send(stage('p0000020'));
+    x.tg.at(400);
+    const give = lr.command(deliver('p0000020', 5));
+    expect((await ack(x.got, give)).accepted).toBe(true);
+    const lab = lr.command({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } });
+    const mine = x.laptop.command({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 10, unit: 'mcg', route: 'iv' } });
+    expect((await ack(x.got, lab)).accepted).toBe(true);
+    await waitFor(() => ackOf(x.panelGot, mine) !== undefined, 2000, 'the laptop ack');
+    expect(ackOf(x.panelGot, mine)?.accepted).toBe(true);
+    expect(drugsAt(x.tg.got).map((e) => e.kind === 'lab' ? 'lab' : e.drugId)).toEqual(['lab', 'benchpowder', 'lab', 'epinephrine']);
+    for (const id of [give, lab, mine]) expect(applied(x.panelGot, id)).toBeDefined(); // each a commandApplied on the laptop's screens
+  });
   it('discard removes the preparation: it can no longer be given, and a new one may take its id', async () => {
     const x = setup();
     const lr = await signIn(x);

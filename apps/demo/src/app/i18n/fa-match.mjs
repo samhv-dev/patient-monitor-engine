@@ -56,7 +56,8 @@ export function* match(parts, i, s, pos, caps) {
  *  the entries it used onto `used`; a bookmark label it could not translate goes into `missing`. */
 export function faMatcher(TABLE) {
   const GROUPS = new Map(Object.entries(TABLE.groups).map(([g, es]) => [g, new Map(es.map((e) => [e.en, e]))]));
-  const EXACT = new Map(TABLE.strings.map((e) => [e.en, e]));
+  // a string without its Persian yet (`fa: null`, e.g. N84's lab panels awaiting their draft) is skipped as a template is
+  const EXACT = new Map(TABLE.strings.filter((e) => e.fa).map((e) => [e.en, e]));
   // a template without its Persian yet (`fa: null`, e.g. the /3 words awaiting F7.6) is skipped: its line prints in English
   const TEMPLATES = TABLE.templates.filter((e) => e.fa).map((e) => ({ e, kind: e.kind ?? 'top', parts: parse(e.en) }));
   /** A group's Persian for `en` (also with its first letter lowered: "The state" / "Salbutamol" at a sentence start). */

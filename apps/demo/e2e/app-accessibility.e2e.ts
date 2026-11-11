@@ -8,7 +8,8 @@
 // connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there. The scenario
 // builder (B2) is audited with a draft open, at each of its three sections, and walked by keyboard; B3 adds its Phases
 // section with a phase open (and its add form), B4 its Actions section with an action open (and two add forms), and B5
-// its Script, Outcomes, Debrief hints and Handout questions sections (each with an entry being added), before the walk.
+// its Script, Outcomes, Debrief hints and Handout questions sections (each with an entry being added), before the walk;
+// piece 162 the Script's command form on a sheet command with its fields (the ventilator) and a command being edited.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -94,6 +95,12 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.getByRole('button', { name: /^Script/ }).click();
     await page.getByRole('button', { name: 'Add a script entry' }).click();
     await run(page, '#/scenarios/builder/<draft> Script, a new entry being added');
+    await page.locator('[aria-label="New command: what"]').selectOption('vent:ventilator');
+    await expect(page.locator('[aria-label="New command: Rate (/min)"]')).toBeVisible();
+    await run(page, '#/scenarios/builder/<draft> Script, a new entry sending the ventilator');
+    await page.getByRole('button', { name: 'Entry 1: edit command 1' }).click();
+    await expect(page.locator('[aria-label="Entry 1, command 1: what"]')).toBeFocused();
+    await run(page, '#/scenarios/builder/<draft> Script, a command being edited');
     await page.getByRole('button', { name: /^Outcomes/ }).click();
     await page.getByRole('button', { name: 'Add an outcome' }).click();
     await run(page, '#/scenarios/builder/<draft> Outcomes, a new outcome being added');
@@ -106,6 +113,23 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.locator('[aria-label="Question 1: its words"]').fill('What told you this was MH?');
     await run(page, '#/scenarios/builder/<draft> Handout questions, a question');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
+    // B6: a draft run in place, Instructor v2 with the run panel beside it. The draft audited above is left mid-edit on
+    // purpose (an emptied title, and B5's built-to-show line and opener added empty: refusals Run must wait for), so the run
+    // starts from a fresh copy of the MH card, which the validator accepts
+    await go(page, '#/scenarios/builder');
+    await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();
+    await page.waitForSelector('.sb-page .sb-edit');
+    await expect(page.getByRole('button', { name: 'Run in place' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Run in place' }).click();
+    const runIt = page.getByRole('button', { name: 'Run the draft' });
+    if (await runIt.isVisible({ timeout: 1000 }).catch(() => false)) await runIt.click();
+    await expect(page.locator('aside.sb-run')).toBeVisible();
+    // the route has settled: Instructor v2's own view shown with its heading, and the Scenarios view gone (WebKit once
+    // audited the page mid-switch and measured the Scenarios view's width under the run panel's column)
+    await expect(page.locator('.main[data-route="teach2"] > .view[data-view="teach2"]')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Instructor v2' })).toBeAttached();
+    await expect(page.locator('.view[data-view="scenarios"]')).toBeHidden();
+    await run(page, '#/teach2 with the run panel (B6)');
     if (remote) {
       await remote.bringToFront();
       found.push(...(await focusWalk(remote)).map((f) => `focus (remote): ${f}`));
@@ -266,6 +290,28 @@ test("accessibility: the learner remote's Drugs tab with the bench open and a tr
   expect(found).toEqual([]);
 });
 
+// Plan vent-skin-edp-ts.md V1: the EDP-TS ventilator face (vent-hamilton.html?face=edp-ts) at the laptop size and at
+// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast (the
+// greyed words of an unavailable control included: they stay 4.5:1), one h1, a main landmark, no sideways scroll.
+test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const found: string[] = [];
+  for (const vp of [{ width: 1280, height: 800 }, { width: 1920, height: 1080 }]) {
+    const ctx = await browser.newContext({ viewport: vp });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
+    await page.waitForSelector('main.edp .edp-key');
+    const at = `${vp.width}×${vp.height}`;
+    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
+    await page.click('[data-ctl="side:mode"]');
+    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
+    await page.click('[data-ctl="side:alarmLimits"]');
+    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
+    await ctx.close();
+  }
+  expect(found).toEqual([]);
+});
+
 // Plan learner-action-remote.md L9: the learner preparations card on the laptop's dock (Instructor v2 at 1280 × 800)
 // and on the instructor's phone (390 × 844, touch: 44 px targets), with a finding and its one control, in the dark and
 // the light theme on the phone; names, contrast, no sideways scroll, one h1, and a focus walk that reaches the control.
@@ -375,6 +421,74 @@ test("accessibility: the learner remote's Infusions tab with a syringe to start 
       await expect(p.locator('.lr-inf[data-drug="remifentanil"] .lr-setby')).toHaveText('set before this phone signed in');
       found.push(...(await audit(p, { touchPanel: true })).map((f) => `infusions ${theme} ${f.rule}: ${f.what}`));
       if (theme === 'dark') found.push(...(await focusWalk(p, 30)).map((f) => `infusions focus: ${f}`));
+      await phone.close();
+    }
+    await host.context().close();
+  } finally {
+    await relay.close();
+  }
+  expect(found).toEqual([]);
+});
+
+// Plan learner-action-remote.md L11: the learner remote's Labs tab on a phone, dark and light: a gas pending (its expected
+// time and analyser), then its result table with flagged values (the MH card), a chemistry sample still pending beside it.
+// 44 px targets on touch, names, contrast, one h1, no sideways scroll, a focus walk. PME_L11_SHOTS=<dir> also saves the
+// screenshots the brief asks for (the pending row, the result, a flagged value; dark and light).
+test("accessibility: the learner remote's Labs tab with a pending sample and a flagged result", async ({ browser }) => {
+  test.setTimeout(180_000);
+  const dir = mkdtempSync(join(tmpdir(), 'l11-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  const relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
+  const shots = process.env.PME_L11_SHOTS;
+  const found: string[] = [];
+  type L = { __pmeApp: { session: { code: string }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
+  try {
+    const host = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+    await openApp(host, base, `?relay=${ws}&scenario=showcase-mh-v2#/teach2`, { warmMs: 1500 });
+    const code = await host.evaluate(() => (window as unknown as L).__pmeApp.session.code);
+    const pin = (await host.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+    for (const theme of ['dark', 'light'] as const) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+      if (theme === 'light') await phone.addInitScript(() => localStorage.setItem('pme.site', JSON.stringify({ schema: 'pme-site/1', theme: 'projector-light' })));
+      const p = await phone.newPage();
+      await p.goto(`${base}/?join=${code}&relay=${ws}#/remote/learner`);
+      for (const d of pin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+      await p.locator('.ip-peer-go').click();
+      await expect(p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`);
+      await p.getByRole('tab', { name: 'Labs' }).click();
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `labs empty ${theme} ${f.rule}: ${f.what}`));
+      // sodium bicarbonate 200 mmol and calcium chloride 3 g on the laptop first, two minutes of the case before the draw (×8),
+      // so the gas has flagged values (HCO3, BE, pH, Na) and a critical one (iCa) to show and to check for contrast; the
+      // light pass draws from the same patient
+      if (theme === 'dark') {
+        for (const event of [{ kind: 'drug', drugId: 'sodiumBicarbonate', dose: 200, unit: 'mmol', route: 'iv' }, { kind: 'drug', drugId: 'calciumChloride', dose: 3, unit: 'g', route: 'iv' }]) {
+          expect((await host.evaluate((ev) => (window as unknown as L).__pmeApp.link.send({ type: 'applyEvent', event: ev }), event)).accepted).toBe(true);
+        }
+        expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 8 }))).accepted).toBe(true);
+        await p.waitForTimeout(15_000);
+        expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 1 }))).accepted).toBe(true);
+      }
+      await p.locator('.lr-lab-send[data-panel="abg"]').click();
+      await expect(p.locator('.lr-lab .lr-lab-state[data-state="pending"]')).toHaveCount(1, { timeout: 10_000 });
+      await p.locator('.lr-lab').first().scrollIntoViewIfNeeded();
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `labs pending ${theme} ${f.rule}: ${f.what}`));
+      if (shots) await p.screenshot({ path: join(shots, `labs-pending-${theme}.png`) });
+      expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 8 }))).accepted).toBe(true);
+      await expect(p.locator('.lr-lab .lr-lab-state[data-state="resulted"]')).toHaveCount(1, { timeout: 30_000 });
+      expect((await host.evaluate(() => (window as unknown as L).__pmeApp.link.send({ type: 'time', action: 'scale', value: 1 }))).accepted).toBe(true);
+      await p.locator('.lr-lab-send[data-panel="chem"]').click();
+      await expect(p.locator('.lr-lab')).toHaveCount(2, { timeout: 10_000 });
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `labs result ${theme} ${f.rule}: ${f.what}`));
+      if (theme === 'dark') found.push(...(await focusWalk(p, 16)).map((f) => `labs focus: ${f}`));
+      await expect(p.locator('.lr-lab[data-panel="abg"] tr.high').first()).toBeVisible();
+      if (theme === 'dark') await expect(p.locator('.lr-lab[data-panel="abg"] tr.crit').first()).toBeVisible();
+      if (shots) {
+        await p.locator('.lr-lab[data-panel="abg"]').screenshot({ path: join(shots, `labs-result-${theme}.png`) });
+        await p.locator('.lr-lab[data-panel="abg"] tr.crit, .lr-lab[data-panel="abg"] tr.high').last().scrollIntoViewIfNeeded();
+        await p.screenshot({ path: join(shots, `labs-flagged-${theme}.png`) });
+      }
       await phone.close();
     }
     await host.context().close();
