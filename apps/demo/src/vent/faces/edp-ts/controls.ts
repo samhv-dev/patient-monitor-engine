@@ -169,8 +169,8 @@ export const SETTINGS: Record<string, SettingCtl> = {
   },
   backupMode: {
     // Menu → Backup ventilation → Ventilation Modes: VCV or PCV (research/57 T-37, T-40; plan GP17, piece V2). Its
-    // breaths run at the cfg's own VCV or PCV settings: the window sets only the kind and the apnoea time [ENG:
-    // backup-settings: the manual names no separate backup settings (T-37 to T-41)]
+    // breaths run at the cfg's own VCV or PCV settings, as the window sets only the kind and the apnoea time
+    // [ENG: device] the manual names no separate backup settings (research/57 T-37 to T-41): the backup-settings gap
     id: 'backupMode', word: 'backupModes', gap: 'GP17', unit: () => null,
     range: () => [0, 1, 1],
     read: (c) => (c.backupMode === 'PC' ? 1 : 0),
