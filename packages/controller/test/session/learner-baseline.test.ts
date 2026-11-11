@@ -4,7 +4,7 @@
 // cover has 61 injectable ids. A later piece that changes one of these on purpose changes the pin in its own PR and says
 // so (L3/L4: the learner role; L5: a real draw satisfying a sample action; L10a: the 120 s turnaround).
 import { afterEach, describe, expect, it } from 'vitest';
-import { createEngine, DRUGS, DRUG_IDS, type Command, type EngineEvent } from '@pme/engine-core';
+import { createEngine, DRUGS, DRUG_IDS, turnaroundFor, type Command, type EngineEvent } from '@pme/engine-core';
 import { HostSession, type HostTarget } from '../../src/session/host-session.ts';
 import { ControllerSession } from '../../src/session/controller-session.ts';
 import { ViewerSync } from '../../src/session/viewer-sync.ts';
@@ -182,13 +182,14 @@ describe('L0: a lab sample drawn on the host comes back on a follower at the sam
         v.engine.advanceTo(to);
       }
     };
-    until(drawnAt + 119);
+    const tat = turnaroundFor('abg'); // the room's analyser row (L10a: the ABL800 FLEX's measuring time, Radiometer 928-544)
+    until(drawnAt + tat - 1);
     expect(atHost).toEqual([]); // not before the turnaround
-    until(drawnAt + 122);
+    until(drawnAt + tat + 2);
     expect(sync.resyncs).toBe(0);
     expect(atHost).toHaveLength(1);
     expect(atHost[0]?.drawnAt).toBeCloseTo(drawnAt, 9);
-    expect(atHost[0]?.t).toBeCloseTo(drawnAt + 120, 9); // LAB_TURNAROUND_S today ([ENG: device]; L10a sources it)
+    expect(atHost[0]?.t).toBeCloseTo(drawnAt + tat, 9);
     expect(atHost[0]?.panel).toBe('abg');
     expect(atFollower).toEqual(atHost); // the same event at the same tick, the same frozen values
     ctl.close();

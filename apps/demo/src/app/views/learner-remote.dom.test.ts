@@ -260,6 +260,15 @@ describe('L7: the learner remote sends under its hello\'s id, and hands each gra
     expect(v.panels.labs.textContent).toBe(LEARNER_WORDS.empty.labs);
     expect(Object.keys(LEARNER_WORDS.empty)).toEqual(['infusions', 'labs']);
   });
+
+  it('L8: the Infusions tab holds the infusions menu it is given; Labs keeps its one line', () => {
+    history.replaceState(null, '', `/?join=${CODE}#/remote/learner`);
+    const menu = document.createElement('div');
+    const v = learnerRemoteView({ code: CODE, infusions: menu, follow: () => { throw new Error('not signed in'); } });
+    expect(v.panels.infusions.firstElementChild).toBe(menu);
+    expect(v.panels.infusions.childElementCount).toBe(1);
+    expect(v.panels.labs.textContent).toBe(LEARNER_WORDS.empty.labs);
+  });
 });
 
 describe("Room setup's learner PIN (L6, §4 D9)", () => {

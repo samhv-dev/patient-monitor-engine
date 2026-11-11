@@ -51,7 +51,7 @@ transports (`src/protocol.ts`).
 |---|---|
 | [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
 | [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
-| [`preparations.ts:130`](../../packages/controller/src/session/preparations.ts#L130) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
+| [`preparations.ts:132`](../../packages/controller/src/session/preparations.ts#L132) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
 
 ## State
 
@@ -137,6 +137,12 @@ transports (`src/protocol.ts`).
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `MAX_STATEMENT` | `200` | — | [ENG: test; keeps an entry a paraphrase, never a copied monograph] | A statement is a paraphrase in our words, never a copied monograph (rule 6) [ENG: test; keeps an entry a paraphrase, never a copied monograph]. |
+
+### [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `MAX_DEVICE_TEXT` | `200` | — | [ENG: test; as the formulary's MAX_STATEMENT] | A string in a profile is our words or a few printed ones, never a copied catalogue passage [ENG: test; as the formulary's MAX_STATEMENT]. |
 
 ### [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts)
 
@@ -224,6 +230,7 @@ transports (`src/protocol.ts`).
 | `prepare` | [`formulary/prepare.ts`](../../packages/controller/src/formulary/prepare.ts) | The preparation made from `components` in `diluent` (none: |
 | `covers` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | True when `perMl` (`unit` per mL, as prepare gives it) is the row's stated concentration, or inside its stated range. |
 | `stabilityRows` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Indexes of `entry`'s stability rows for `diluent` and `container` (any temperature) that state `concentration` or state none; |
+| `whyNoRow` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | Why no stability row describes the preparation (N61: |
 | `remaining` | [`formulary/remaining.ts`](../../packages/controller/src/formulary/remaining.ts) | r at `ageS` seconds for `entry` in `diluent`, `container`, `tempC` (exact match). |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
@@ -244,6 +251,8 @@ transports (`src/protocol.ts`).
 | `normalizeSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Upper-cases and strips spaces/dashes; |
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
 | `createStamper` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Adds {v, session, from, seq, sentAt}. |
+| `checkPumpDevices` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The profiles' source rules: |
+| `loadPumpDevices` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The typed profiles, when every rule holds; |
 | `briefingOf` | [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts) | The card's briefing with its defaults (60 s, English), or null when it has none. |
 | `concentrationVar` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | A rule variable as a concentration: |
 | `ruleConcentrations` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | The concentration variables a card's rules read, once each, in the order first met: |
@@ -314,6 +323,7 @@ Exported without a doc comment: `startRelay`, `clamp`, `targetCommand`, `pinComm
 | [`panel/staging.ts`](../../packages/controller/src/panel/staging.ts) | Stage-then-commit (REALITi, research 01 §4 item 6; brief §4.9): staged commands are sent together with one stageGroup, and the host applies them on one tick. |
 | [`panel/styles.ts`](../../packages/controller/src/panel/styles.ts) | Panel and remote CSS, injected once per document. |
 | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Wire protocol v1 (brief §7.5, §3.7). |
+| [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | Plan pump-rack-tci.md D12, piece S1: the reference pumps' device profiles (`packages/controller/pump-devices/`), as sourced data. |
 | [`remote/remote-app.ts`](../../packages/controller/src/remote/remote-app.ts) | Remote controller (R7): a phone/tablet page that joins a session code, shows the generated controls and a live 1 Hz readout, and never renders waveforms (samples never reach it anyway). |
 | [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts) | A card's Case briefing with its defaults (pme-scenario/1 `briefing`; owner's board Orientation 7b): what the host sends the learners' screens when the card loads. |
 | [`scenario/builtins.ts`](../../packages/controller/src/scenario/builtins.ts) | Built-in scenarios (JSON under packages/controller/scenarios/). |
@@ -357,6 +367,7 @@ None recorded.
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
 | [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
+| [`formulary/shipped-rows.test.ts`](../../packages/controller/test/formulary/shipped-rows.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |

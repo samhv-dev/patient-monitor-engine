@@ -1,3 +1,4 @@
+import { LAB_PANELS } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
 import { createStamper, INSTRUMENTS, LEARNER_COMMANDS, LEARNER_DEFIB_COMMANDS, LEARNER_LAB_PANELS, learnerDefibMay, learnerMay, NOTE_EVENTS, PUMP_COMMANDS, pumpMay, type CommandInput, type WireMessage } from '../src/protocol.ts';
@@ -233,10 +234,13 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     ['infusion set 0 (stop)', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 0 })],
     ['applyEvent lab abg', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } })],
     ['applyEvent lab vbg', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'vbg' } })],
+    ['applyEvent lab chem', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'chem' } })],
+    ['applyEvent lab coag', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'coag' } })],
   ];
   it('LEARNER_COMMANDS is exactly §4 D2; learnerMay passes each shape, and the guard parses each', () => {
     expect([...LEARNER_COMMANDS].sort()).toEqual(['applyEvent lab', 'infusion set', 'prep deliver', 'prep discard', 'prep infuse', 'prep stage']);
-    expect([...LEARNER_LAB_PANELS].sort()).toEqual(['abg', 'vbg']);
+    expect([...LEARNER_LAB_PANELS].sort()).toEqual(['abg', 'chem', 'coag', 'vbg']);
+    expect([...LEARNER_LAB_PANELS].sort()).toEqual([...LAB_PANELS].sort()); // the engine's panels (analysers.ts)
     for (const [what, c] of SHAPES) {
       expect(learnerMay(c), what).toBeNull();
       expect(parseWireMessage({ ...stamp({ kind: 'command', body: c as never }) }), what).not.toBeNull();
@@ -275,11 +279,13 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     ['prep infuse with atTick', cmd({ type: 'prep', action: 'infuse', prepId: 'p0000001', rateMlH: 12, atTick: 0 })],
     ['prep discard with a stageGroup', cmd({ type: 'prep', action: 'discard', prepId: 'p0000001', stageGroup: 'g' })],
     ['prep notice (the instructor\'s, L9)', cmd({ type: 'prep', action: 'notice', prepId: 'p0000001' })],
+    ['prep notice as the instructor\'s card sends it (L9: instructor-only)', cmd({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'p0000001' })],
     ['infusion set with a concentration', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4, concentration: { amount: 4, unit: 'mg', perMl: 50 } })],
     ['infusion set with a unit', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4, unit: 'mcg/kg/min' })],
     ['infusion start', cmd({ type: 'infusion', action: 'start', drugId: 'norepinephrine', rateMlH: 4 })],
     ['applyEvent lab with a turnaroundS', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg', turnaroundS: 30 } })],
-    ['applyEvent lab of a panel the engine has not', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'chem' } })],
+    ['applyEvent lab of a panel the engine has not', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'csf' } })],
+    ['applyEvent lab with an analyser', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg', analyser: 'abl825' } })],
     ['applyEvent lab with atTick', cmd({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' }, atTick: 100 })],
     ['applyEvent without an event', cmd({ type: 'applyEvent' })],
   ];
@@ -311,8 +317,14 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
       ['an infusion set at -1 mL/h', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: -1 })],
       ['an unknown prep action', cmd({ type: 'prep', action: 'mix', prepId: 'p0000001' })],
       ['a discard without its preparation', cmd({ type: 'prep', action: 'discard' })],
+      // L9: the instructor's notice names the device (a device key) and the preparation
+      ['a notice without its device', cmd({ type: 'prep', action: 'notice', prepId: 'p0000001' })],
+      ['a notice naming a device that is not a key', cmd({ type: 'prep', action: 'notice', by: 'Bed 2!', prepId: 'p0000001' })],
+      ['a notice with a preparation id not [a-z0-9]{8}', cmd({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'P1' })],
     ];
     for (const [what, c] of BAD) expect(parseWireMessage(body(c)), what).toBeNull();
+    // and the notice as the instructor's card sends it is parsed (its sender is the host's question: instructorMay)
+    expect(parseWireMessage(body(cmd({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'p0000001' })))).not.toBeNull();
   });
 });
 

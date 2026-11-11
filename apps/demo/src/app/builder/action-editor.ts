@@ -836,80 +836,9 @@ export function actionSection(form: CardForm, changed: () => void, redrawn: () =
       g.length ? h('ol', { class: 'sb-next' }, ...rows) : hint(String(a.kind) === 'communication' || String(a.kind) === 'procedure' ? 'Nothing: the press is recorded (the scenario record command).' : 'Nothing.'), adder,
       hint('Ventilation, CPR, airway and other device commands are kept as the card has them and can be reordered or removed; a new one comes from the Drug sheet’s form (drugs, fluids, the vaporiser).')));
   };
-  /** The Drug sheet's form for a new command: its items (drugs by name, the fluids, the vaporisers), a bolus or an infusion,
-   *  the dose with the sheet's units and presets; the command is the sheet's own (physiology-console/actions.ts `bolus`,
-   *  `infusion`, `fluid`, `vaporiser`, which the sheet sends). */
-  const giveForm = (a: Rec, done: () => void, cancel: () => void): HTMLElement => {
-    const drugId = drugOf(a.drug as Rec | undefined) ?? '';
-    const what = select(drugId ? `drug:${drugId}` : '', [[null, [['', 'choose']]], ['Drugs', DRUG_CHOICES.map((d) => [`drug:${d.id}`, d.name] as [string, string])],
-      ['Fluids', FLUID_IDS.map((f) => [`fluid:${f}`, f] as [string, string])], ['Vaporiser', ['sevoflurane', 'isoflurane', 'desflurane'].map((x) => [`vap:${x}`, x] as [string, string])]], 'New command: what');
-    const form = h('div', { class: 'sb-leafrow' });
-    const ok = button('Add to the press', () => {
-      const c = build();
-      if (!c) return;
-      ((a.give ??= []) as Rec[]).push(c as Rec);
-      done();
-    }, 'small primary');
-    const st: Rec = { route: 'bolus' };
-    const numIn = (k: string, label: string) => {
-      const i = h('input', { type: 'number', step: 'any', inputmode: 'decimal', class: 'input sb-num', 'aria-label': `New command: ${label}` });
-      i.value = typeof st[k] === 'number' ? String(st[k]) : '';
-      i.addEventListener('input', () => ((st[k] = i.value.trim() === '' ? undefined : Number(i.value)), ready()));
-      return i;
-    };
-    const pos = (k: string) => typeof st[k] === 'number' && Number.isFinite(st[k]) && (st[k] as number) > 0;
-    const build = (): Rec | null => {
-      const [kind, id] = what.value.split(':') as [string, string];
-      if (kind === 'drug' && pos('dose')) return (st.route === 'infusion' ? infusion(id, st.dose as number, String(st.unit)) : bolus(id, st.dose as number, String(st.unit))) as Rec;
-      if (kind === 'fluid' && pos('vol') && pos('min')) return fluidCmd(id, st.vol as number, (st.min as number) * 60) as Rec;
-      if (kind === 'vap' && typeof st.dial === 'number' && st.dial >= 0 && pos('fgf')) return vaporiser(id, st.dial, st.fgf as number) as Rec;
-      return null;
-    };
-    const preview = h('span', { class: 'sb-hint' });
-    const ready = () => {
-      const c = build();
-      ok.disabled = !c;
-      preview.textContent = c ? `The press will send: ${describeCommand(c)}` : 'Waits for every number.';
-    };
-    const drawForm = () => {
-      const [kind, id] = what.value.split(':') as [string, string];
-      for (const k of Object.keys(st)) if (k !== 'route') delete st[k];
-      if (kind === 'drug') {
-        const units = () => unitsFor(id, st.route === 'infusion');
-        const p = PRESETS[id] ?? {};
-        if (!(st.route === 'bolus' ? p.bolus : p.infusion) && (st.route === 'bolus' ? p.infusion : p.bolus)) st.route = st.route === 'bolus' ? 'infusion' : 'bolus';
-        const rs = select(String(st.route), [[null, [['bolus', 'IV bolus'], ['infusion', 'Infusion']]]], 'New command: given as');
-        const first = (st.route === 'bolus' ? p.bolus : p.infusion)?.[0];
-        st.unit = first?.[1] ?? units()[0];
-        if (first) st.dose = first[0];
-        const us = select(String(st.unit), [[null, units().map((u) => [u, unitText(u)] as [string, string])]], 'New command: unit');
-        us.addEventListener('change', () => ((st.unit = us.value), ready()));
-        const dose = numIn('dose', st.route === 'bolus' ? 'the dose' : 'the rate');
-        const presets = ((st.route === 'bolus' ? p.bolus : p.infusion) ?? []).map(([v, u]) => button(`${v} ${unitText(u)}`, () => {
-          st.dose = v;
-          st.unit = u;
-          dose.value = String(v);
-          us.value = u;
-          ready();
-        }, 'small ghost', { 'aria-label': `Preset ${v} ${unitText(u)}` }));
-        rs.addEventListener('change', () => ((st.route = rs.value), drawForm()));
-        form.replaceChildren(rs, dose, us, ...(presets.length ? [h('span', { class: 'sb-hint' }, 'Presets'), ...presets] : []));
-      } else if (kind === 'fluid') {
-        st.vol = 500;
-        st.min = 10;
-        form.replaceChildren(numIn('vol', 'volume, mL'), h('span', { class: 'sb-hint' }, 'mL over'), numIn('min', 'over how many minutes'), h('span', { class: 'sb-hint' }, 'min'));
-      } else if (kind === 'vap') {
-        st.dial = 2;
-        st.fgf = 2;
-        form.replaceChildren(h('span', { class: 'sb-hint' }, 'Dial'), numIn('dial', 'dial, %'), h('span', { class: 'sb-hint' }, '% at'), numIn('fgf', 'fresh gas, L/min'), h('span', { class: 'sb-hint' }, 'L/min'));
-      } else form.replaceChildren();
-      ready();
-    };
-    what.addEventListener('change', drawForm);
-    drawForm();
-    return h('div', { class: 'sb-adder', role: 'group', 'aria-label': 'New command, from the Drug sheet’s form' }, h('div', { class: 'sb-leafrow' }, what), form, preview,
-      h('div', { class: 'sb-acts' }, ok, button('Cancel', cancel, 'small ghost')));
-  };
+  /** The Drug sheet's form for a new command of the press (`commandForm`, shared with the script's entries). */
+  const giveForm = (a: Rec, done: () => void, cancel: () => void): HTMLElement =>
+    commandForm({ first: drugOf(a.drug as Rec | undefined), add: (c) => (((a.give ??= []) as Rec[]).push(c), done()), cancel, addWords: 'Add to the press', sends: 'The press will send' });
 
   // ------------------------------------------------------------------------------------------------ one action
   const drawAction = (i: number): HTMLElement[] => {
@@ -1166,3 +1095,101 @@ export function actionSection(form: CardForm, changed: () => void, redrawn: () =
   return view;
 }
 
+export interface CommandFormOpts {
+  /** The drug the form starts on (an action's own drug). */
+  first?: string;
+  /** The command built, once every number is typed. */
+  add(c: Rec): void;
+  cancel(): void;
+  addWords: string;
+  /** "<sends>: <the command in words>". */
+  sends: string;
+  /** More groups of items after the Drug sheet's (the script's card-set events and the other sheets' commands, B5 and
+   *  piece 162), each value `<kind>:<id>`, with the fields of their kinds and the command they build. `fields` gets the
+   *  form's number field, its `ready` (a field of its own calls it on each change) and the controls' name. */
+  more?: {
+    groups: Array<[string, Array<[string, string]>]>;
+    fields(kind: string, id: string, st: Rec, numIn: (k: string, label: string) => HTMLInputElement, ready: () => void, who: string): Array<HTMLElement | string> | null;
+    build(kind: string, id: string, st: Rec): Rec | null;
+  };
+  /** A command being edited (piece 162): the item and the fields' values it starts on, as `more`'s kinds read them. */
+  edit?: { what: string; st: Rec };
+  /** The controls' name ("<who>: what"), 'New command' unless told. */
+  who?: string;
+}
+
+/** The Drug sheet's form for a new command: its items (drugs by name, the fluids, the vaporisers), a bolus or an infusion,
+ *  the dose with the sheet's units and presets; the command is the sheet's own (physiology-console/actions.ts `bolus`,
+ *  `infusion`, `fluid`, `vaporiser`, which the sheet sends). B4's press and B5's script entries use it. */
+export function commandForm(o: CommandFormOpts): HTMLElement {
+  const drugId = o.first ?? '';
+  const who = o.who ?? 'New command';
+  let seed = o.edit ? { ...o.edit.st } : null;
+  const what = select(o.edit?.what ?? (drugId ? `drug:${drugId}` : ''), [[null, [['', 'choose']]], ['Drugs', DRUG_CHOICES.map((d) => [`drug:${d.id}`, d.name] as [string, string])],
+    ['Fluids', FLUID_IDS.map((f) => [`fluid:${f}`, f] as [string, string])], ['Vaporiser', ['sevoflurane', 'isoflurane', 'desflurane'].map((x) => [`vap:${x}`, x] as [string, string])], ...(o.more?.groups ?? [])], `${who}: what`);
+  const form = h('div', { class: 'sb-leafrow' });
+  const ok = button(o.addWords, () => {
+    const c = build();
+    if (c) o.add(c);
+  }, 'small primary');
+  const st: Rec = { route: 'bolus' };
+  const numIn = (k: string, label: string) => {
+    const i = h('input', { type: 'number', step: 'any', inputmode: 'decimal', class: 'input sb-num', 'aria-label': `${who}: ${label}` });
+    i.value = typeof st[k] === 'number' ? String(st[k]) : '';
+    i.addEventListener('input', () => ((st[k] = i.value.trim() === '' ? undefined : Number(i.value)), ready()));
+    return i;
+  };
+  const pos = (k: string) => typeof st[k] === 'number' && Number.isFinite(st[k]) && (st[k] as number) > 0;
+  const build = (): Rec | null => {
+    const [kind, id] = what.value.split(':') as [string, string];
+    if (kind === 'drug' && pos('dose')) return (st.route === 'infusion' ? infusion(id, st.dose as number, String(st.unit)) : bolus(id, st.dose as number, String(st.unit))) as Rec;
+    if (kind === 'fluid' && pos('vol') && pos('min')) return fluidCmd(id, st.vol as number, (st.min as number) * 60) as Rec;
+    if (kind === 'vap' && typeof st.dial === 'number' && st.dial >= 0 && pos('fgf')) return vaporiser(id, st.dial, st.fgf as number) as Rec;
+    return o.more?.build(kind, id, st) ?? null;
+  };
+  const preview = h('span', { class: 'sb-hint' });
+  const ready = () => {
+    const c = build();
+    ok.disabled = !c;
+    preview.textContent = c ? `${o.sends}: ${describeCommand(c)}` : 'Waits for every number.';
+  };
+  const drawForm = () => {
+    const [kind, id] = what.value.split(':') as [string, string];
+    for (const k of Object.keys(st)) if (k !== 'route') delete st[k];
+    if (seed) (Object.assign(st, seed), (seed = null)); // an edited command's values, once
+    if (kind === 'drug') {
+      const units = () => unitsFor(id, st.route === 'infusion');
+      const p = PRESETS[id] ?? {};
+      if (!(st.route === 'bolus' ? p.bolus : p.infusion) && (st.route === 'bolus' ? p.infusion : p.bolus)) st.route = st.route === 'bolus' ? 'infusion' : 'bolus';
+      const rs = select(String(st.route), [[null, [['bolus', 'IV bolus'], ['infusion', 'Infusion']]]], `${who}: given as`);
+      const first = (st.route === 'bolus' ? p.bolus : p.infusion)?.[0];
+      st.unit = first?.[1] ?? units()[0];
+      if (first) st.dose = first[0];
+      const us = select(String(st.unit), [[null, units().map((u) => [u, unitText(u)] as [string, string])]], `${who}: unit`);
+      us.addEventListener('change', () => ((st.unit = us.value), ready()));
+      const dose = numIn('dose', st.route === 'bolus' ? 'the dose' : 'the rate');
+      const presets = ((st.route === 'bolus' ? p.bolus : p.infusion) ?? []).map(([v, u]) => button(`${v} ${unitText(u)}`, () => {
+        st.dose = v;
+        st.unit = u;
+        dose.value = String(v);
+        us.value = u;
+        ready();
+      }, 'small ghost', { 'aria-label': `Preset ${v} ${unitText(u)}` }));
+      rs.addEventListener('change', () => ((st.route = rs.value), drawForm()));
+      form.replaceChildren(rs, dose, us, ...(presets.length ? [h('span', { class: 'sb-hint' }, 'Presets'), ...presets] : []));
+    } else if (kind === 'fluid') {
+      st.vol = 500;
+      st.min = 10;
+      form.replaceChildren(numIn('vol', 'volume, mL'), h('span', { class: 'sb-hint' }, 'mL over'), numIn('min', 'over how many minutes'), h('span', { class: 'sb-hint' }, 'min'));
+    } else if (kind === 'vap') {
+      st.dial = 2;
+      st.fgf = 2;
+      form.replaceChildren(h('span', { class: 'sb-hint' }, 'Dial'), numIn('dial', 'dial, %'), h('span', { class: 'sb-hint' }, '% at'), numIn('fgf', 'fresh gas, L/min'), h('span', { class: 'sb-hint' }, 'L/min'));
+    } else form.replaceChildren(...(o.more?.fields(kind, id, st, numIn, ready, who) ?? []));
+    ready();
+  };
+  what.addEventListener('change', drawForm);
+  drawForm();
+  return h('div', { class: 'sb-adder', role: 'group', 'aria-label': o.more ? `${who}, from the instructor sheets’ forms` : 'New command, from the Drug sheet’s form' }, h('div', { class: 'sb-leafrow' }, what), form, preview,
+    h('div', { class: 'sb-acts' }, ok, button('Cancel', o.cancel, 'small ghost')));
+}

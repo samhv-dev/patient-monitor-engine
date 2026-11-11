@@ -1,12 +1,12 @@
-// The lab panel (plan decision 13): a 1 Hz `labs` truth event and the instructor's "send ABG/VBG" with a turnaround.
-import type { LabPanel } from '../../types-blood.ts';
+// The lab panel (plan decision 13): a 1 Hz `labs` truth event, and a drawn sample (`labSample`) that analysers.ts turns
+// into a panel and returns after its row's sourced turnaround (plan learner-action-remote.md L10a).
+import type { LabPanel, LabPanelId, LabValues } from '../../types-blood.ts';
 import { solvePh } from './acid-base.ts';
 import type { BloodCore } from './core.ts';
 import { albGL } from './fluids.ts';
 import { satDB } from './odc.ts';
 import { NORMAL } from './params.ts';
 
-export const LAB_TURNAROUND_S = 120; // point-of-care analyser ≈ 60–90 s + the walk [ENG: device]
 const r = (x: number, d: number) => Math.round(x * 10 ** d) / 10 ** d;
 
 export interface LabInputs {
@@ -51,9 +51,26 @@ export function labPanel(bc: BloodCore, x: LabInputs, panel: 'abg' | 'vbg'): Lab
   };
 }
 
+/** What the sample carries from the other modules: the liver model's INR (absent without the organ model). */
+export interface LabContext {
+  inr?: number;
+}
+
+/**
+ * Every analyte the engine computes for a sample drawn now, at the site (`abg` arterial, `vbg` venous; the chemistry and
+ * coagulation analytes do not differ by site in the engine). A piece that computes a new analyte adds its key here.
+ */
+export function labSample(bc: BloodCore, x: LabInputs, site: 'abg' | 'vbg', ctx: LabContext = {}): LabValues {
+  const v: LabValues = { ...labPanel(bc, x, site) };
+  if (ctx.inr !== undefined) v.inr = r(ctx.inr, 1);
+  return v;
+}
+
+/** A drawn sample: its values and due time frozen at the draw, the row it ran on (snapshotted with the blood state). */
 export interface PendingLab {
   drawnAt: number;
   due: number;
-  panel: 'abg' | 'vbg';
-  values: LabPanel;
+  panel: LabPanelId;
+  analyser: string;
+  values: LabValues;
 }

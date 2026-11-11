@@ -190,7 +190,18 @@ const DATA: Record<string, (root: string) => Promise<Rows[]>> = {
   blood: async (root) => {
     const { FLUIDS } = await imp(root, 'packages/engine-core/src/l2/blood/params.ts');
     const keys = Object.keys(Object.values(FLUIDS)[0] as object);
-    return [{ title: 'Fluids (`FLUIDS`, mmol/L unless the key says otherwise)', head: ['Fluid', ...keys], rows: Object.entries(FLUIDS).map(([id, f]) => [`\`${id}\``, ...keys.map((k) => String((f as Record<string, number>)[k]))]) }];
+    const { ANALYSERS, ANALYSER_IDS, DEFAULT_ANALYSER, LABORATORY } = await imp(root, 'packages/engine-core/src/l2/blood/analysers.ts');
+    type Sec = { panels: string[]; analytes: string[]; turnaroundS: number; turnaroundSrc: string };
+    type Row = { id: string; name: string; analytesSrc: string; sections: Sec[] };
+    const rows = [...ANALYSER_IDS.map((id: string) => ANALYSERS[id]), LABORATORY] as Row[];
+    return [
+      { title: 'Fluids (`FLUIDS`, mmol/L unless the key says otherwise)', head: ['Fluid', ...keys], rows: Object.entries(FLUIDS).map(([id, f]) => [`\`${id}\``, ...keys.map((k) => String((f as Record<string, number>)[k]))]) },
+      {
+        title: `Analyser rows (\`packages/engine-core/src/l2/blood/analysers.ts\`; the room's default \`${DEFAULT_ANALYSER}\`; a panel returns the analytes listed that the engine computes)`,
+        head: ['Row', 'Name', 'Panels', 'Analytes named', 'Turnaround (s)', 'Turnaround source', 'Analytes source'],
+        rows: rows.flatMap((r) => r.sections.map((x) => [`\`${r.id}\``, r.name, x.panels.join(', '), x.analytes.join(', '), String(x.turnaroundS), x.turnaroundSrc, r.analytesSrc])),
+      },
+    ];
   },
 };
 

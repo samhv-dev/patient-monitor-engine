@@ -7,6 +7,7 @@ import type {
   DispatchResult,
   DoseUnit,
   EngineEvent,
+  LabPanelId,
   NumericId,
   PatientSnapshot,
   PkClinicalEvent,
@@ -91,7 +92,9 @@ export type ClinicalEvent =
       action: 'flush' | 'zero' | 'sample' | 'disconnect' | 'reconnect' | 'damp' | 'level' | 'wedge'; value?: number;
     }
   | { kind: 'surgical'; action: 'diathermy' | 'shiver' | 'motion'; on: boolean; durationS?: number }
-  | { kind: 'condition'; id: 'anaphylaxis' | 'mh' | 'last' | 'tamponade' | 'tensionPtx' | 'pe'; severity: number };
+  | { kind: 'condition'; id: 'anaphylaxis' | 'mh' | 'last' | 'tamponade' | 'tensionPtx' | 'pe'; severity: number }
+  /** A blood sample (engine-core types-blood.ts): `analyser` is the room's row, set by the host, never by a learner (LAB_EVENT_KEYS). */
+  | { kind: 'lab'; panel: LabPanelId; turnaroundS?: number; analyser?: string };
 export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp';
 
 /**
@@ -142,7 +145,11 @@ export type PrepCommand =
   | { type: 'prep'; action: 'stage'; prep: { id: string; components: PrepComponent[]; diluent?: { id: string; volumeMl: number }; container?: string } }
   | { type: 'prep'; action: 'discard'; prepId: string }
   | { type: 'prep'; action: 'deliver'; prepId: string; volumeMl: number | 'all'; route: PkRoute; overS?: number }
-  | { type: 'prep'; action: 'infuse'; prepId: string; rateMlH: number };
+  | { type: 'prep'; action: 'infuse'; prepId: string; rateMlH: number }
+  /** L9 (§4 D7, LQ3): the INSTRUCTOR's one control on a learner's preparation, from the laptop's dock card or the phone's:
+   *  show the incompatibility notice of the preparation `prepId` of the device `by` (its device key; D2 wrote `{by, id}`,
+   *  and `id` is the command's own). Instructor-only: in INSTRUCTOR_COMMANDS, never in LEARNER_COMMANDS. */
+  | { type: 'prep'; action: 'notice'; by: string; prepId: string };
 /** One product drawn into a preparation: the formulary's product id, and how much of it, in that product's unit. */
 export interface PrepComponent {
   productId: string;
@@ -454,6 +461,9 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   // measured by the census once it crawled the pme-scenario/2 cards (P6): Instructor v2's A presses on the MH card in
   // phases send its actions' `give`, which holds these two (the induction's airway device and preoxygenation)
   'applyEvent airwayDevice', 'applyEvent preoxygenate',
+  // plan learner-action-remote.md L9 (LQ3): the staging card's one control, on the laptop's dock and the phone (the census
+  // measures the laptop's press on a card it is shown)
+  'prep notice',
 ]);
 
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */
@@ -510,10 +520,12 @@ export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
  */
 export const LEARNER_COMMANDS: ReadonlySet<string> = new Set(['prep stage', 'prep discard', 'prep deliver', 'prep infuse', 'infusion set', 'applyEvent lab']);
 /**
- * The panels a learner may draw (§4 D2 item 5): the engine's panels today (engine-core types-blood.ts `lab`). L10a adds the
- * laboratory panels LQ2 ruled when the engine computes them, so a learner never asks for a panel the engine refuses.
+ * The panels a learner may draw (§4 D2 item 5): the engine's panels (engine-core analysers.ts `LAB_PANELS`, equal by
+ * guard.test.ts; a literal here, because the e2e side loads this file in Node, where engine-core's runtime must not load): the gas
+ * panels on the room's analyser and, since L10a, the laboratory's chemistry and coagulation panels (LQ2), so a learner
+ * never asks for a panel the engine refuses. The analyser and the turnaround are not the learner's (LAB_EVENT_KEYS).
  */
-export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set(['abg', 'vbg']);
+export const LEARNER_LAB_PANELS: ReadonlySet<string> = new Set<LabPanelId>(['abg', 'vbg', 'chem', 'coag']);
 /** Every field each learner shape may carry, on the command (`cmd`) and inside it; any other field is refused (§4 D2). */
 const LEARNER_KEYS: Readonly<Record<string, { cmd: readonly string[]; need: readonly string[] }>> = {
   'prep stage': { cmd: ['prep'], need: ['prep'] },

@@ -7,6 +7,9 @@
 import { pkStep, pkSystem, type PkParams } from './compartment.ts';
 
 export const TCI_DT_S = 10;
+/** A TCI pump's rate ceiling when the event carries none (the host supplies the device's, D4): 1200 mL/h, the published
+ * pumps' (above) [ENG: device; the plan's D2 item 5 keeps it until the Mindray SP5 manual re-sources it]. */
+export const TCI_MAX_RATE_ML_H = 1200;
 export const TCI_HORIZON_STEPS = 90; // 15 min: > 4× the slowest TTPE among TCI drugs (fentanyl 3.6 min)
 
 export type TciMode = 'plasma' | 'effect';

@@ -11,7 +11,8 @@ import { applyLungSpecs, metabolic, type BloodView, type RespState } from '../re
 import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCapPressure, pushCircVolume, setCircChemistry, setCircViscosity, volumeCoFactor } from './circ-adapter.ts';
 import { createBloodCore, DKA_KETO_MMOL_L, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
 import { bloodMl, ecfMl, type Flow } from './fluids.ts';
-import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './labs.ts';
+import { isAnalyserId, LAB_PANELS, panelValues, sectionFor } from './analysers.ts';
+import { labPanel, labSample, type LabContext, type LabInputs, type PendingLab } from './labs.ts';
 import { BLOOD_DT_S, COLD_UNIT_C, DO2_CRIT_ML_KG_MIN, FLUIDS, hypertonicSaline, K_ANAER, LACTATE_CO2_ML_PER_MMOL, SAO2_NORMAL, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedComp, type Composition, type FluidId, type ProductId } from './params.ts';
 import { BLOOD_DRUGS, bicarbCo2MlMin, CA_MMOL_PER_G } from './treatments.ts';
 import { ivInflow } from '../thermal/environment.ts';
@@ -258,7 +259,7 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     }
     if (bs.k % 10 === 0 && bs.k > 0) {
       bs.events.push({ type: 'labs', t, values: labPanel(c, labInputs(rs, t), 'abg') });
-      for (const p of bs.labs) if (p.due <= t) bs.events.push({ type: 'labResult', t: p.due, drawnAt: p.drawnAt, panel: p.panel, values: p.values });
+      for (const p of bs.labs) if (p.due <= t) bs.events.push({ type: 'labResult', t: p.due, drawnAt: p.drawnAt, panel: p.panel, analyser: p.analyser, values: p.values });
       bs.labs = bs.labs.filter((p) => p.due > t);
     }
     bs.k++;
@@ -323,22 +324,26 @@ export function validateBloodCommand(cmd: Command): string | undefined | null {
     }
     case 'lab': {
       const l = ev as Extract<BloodClinicalEvent, { kind: 'lab' }>;
-      return l.panel !== 'abg' && l.panel !== 'vbg' ? "panel must be 'abg' or 'vbg'" : num('turnaroundS', l.turnaroundS, 30, 3600);
+      if (!LAB_PANELS.includes(l.panel)) return `panel must be ${LAB_PANELS.map((p) => `'${p}'`).join(', ')}`;
+      if (l.analyser !== undefined && (!isAnalyserId(l.analyser) || (l.panel !== 'abg' && l.panel !== 'vbg'))) {
+        return 'analyser must be a point-of-care row (analysers.ts ANALYSER_IDS), on a gas panel';
+      }
+      return num('turnaroundS', l.turnaroundS, 30, 3600);
     }
     default:
       return null;
   }
 }
 
-/** Apply hook: true when the command was a blood command. `t` is the sim time; `rs` for lab snapshots. */
-export function applyBloodCommand(bs: BloodState, cmd: Command, t: number, rs: RespState): boolean {
-  const ok = applyBloodEvent(bs, cmd, t, rs);
+/** Apply hook: true when the command was a blood command. `t` is the sim time; `rs` and `lab` (the liver's INR) for lab samples. */
+export function applyBloodCommand(bs: BloodState, cmd: Command, t: number, rs: RespState, lab: LabContext = {}): boolean {
+  const ok = applyBloodEvent(bs, cmd, t, rs, lab);
   // any accepted command except a blood draw perturbs the patient: the resting-CO reference stops settling (addendum 15 (5))
   if (ok && cmd.type === 'applyEvent' && (cmd.event as { kind: string }).kind !== 'lab') bs.rest.latched = true;
   return ok;
 }
 
-function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState): boolean {
+function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState, lab: LabContext): boolean {
   if (cmd.type !== 'applyEvent') return false;
   const c = bs.core;
   const w = c.pat.weightKg;
@@ -408,7 +413,9 @@ function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState)
     }
     case 'lab': {
       const l = ev as Extract<BloodClinicalEvent, { kind: 'lab' }>;
-      bs.labs.push({ drawnAt: t, due: t + (l.turnaroundS ?? LAB_TURNAROUND_S), panel: l.panel, values: labPanel(c, labInputs(rs, t), l.panel) });
+      const { row, section } = sectionFor(l.panel, isAnalyserId(l.analyser) ? l.analyser : undefined);
+      const sample = labSample(c, labInputs(rs, t), l.panel === 'vbg' ? 'vbg' : 'abg', lab);
+      bs.labs.push({ drawnAt: t, due: t + (l.turnaroundS ?? section.turnaroundS), panel: l.panel, analyser: row.id, values: panelValues(sample, section) });
       return true;
     }
     default:
