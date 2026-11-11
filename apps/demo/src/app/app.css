@@ -973,6 +973,25 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .lr-state[data-state='preparing'] { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .lr-finding { padding: var(--s-2) var(--s-3); border-left: 4px solid var(--danger); border-radius: var(--r-control); background: var(--bezel-3); }
 .lr-finding p { margin: 0 0 var(--s-1); }
+/* L11: the Labs tab: four Send buttons (44 px, two to a row) over this phone's samples on the tray's cards; the result
+   table in the app's figures, a flagged value in the warning colour and a critical one in the danger colour, each with
+   its arrow or the word "critical" as well, never colour alone */
+.lr-labs { display: grid; gap: var(--s-4); padding: var(--s-2) var(--s-3) var(--s-4); }
+.lr-lab-sends { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+.lr-lab-send { min-height: 44px; white-space: normal; }
+.lr-lab-said:empty { display: none; }
+.lr-lab-state[data-state='pending'] { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.lr-lab-result[hidden], .lr-lab-none[hidden], .lr-lab-empty[hidden] { display: none; }
+.lr-lab-none, .lr-lab-ranges { margin: 0; }
+.lr-lab .pme-lab-panel table { width: 100%; border-collapse: collapse; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.lr-lab .pme-lab-panel caption { text-align: left; color: var(--text-muted); font-size: var(--t-13); padding-bottom: var(--s-1); }
+.lr-lab .pme-lab-panel th, .lr-lab .pme-lab-panel td { padding: 2px var(--s-1); text-align: left; border-bottom: 1px solid var(--line); }
+.lr-lab .pme-lab-panel thead th { color: var(--text-muted); font-size: var(--t-13); font-weight: 400; }
+.lr-lab .pme-lab-panel tbody th { color: var(--text-strong); font-weight: 600; }
+.lr-lab .pme-lab-panel td.u, .lr-lab .pme-lab-panel td.range { color: var(--text-muted); font-size: var(--t-13); }
+.lr-lab .pme-lab-panel tr.high td.v, .lr-lab .pme-lab-panel tr.low td.v { color: var(--warn); font-weight: 600; }
+.lr-lab .pme-lab-panel tr.crit td.v { color: var(--danger); font-weight: 700; }
+
 .lr-finding-src { color: var(--text-muted); }
 .lr-drugs .seg { display: flex; }
 .lr-drugs .seg button { flex: 1 1 0; }
