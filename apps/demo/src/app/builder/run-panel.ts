@@ -76,7 +76,7 @@ export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore;
   const back = h('a', { class: 'console-back' }, '← Back to the builder');
   const skips = SKIPS.map((s) => button(`+${s / 60} min`, () => void jump(s), '', { 'aria-label': `Fast forward by ${s / 60} min` }));
   const next = button('To the next phase', () => void toNext(), 'primary');
-  const markSel = h('select', { 'aria-label': 'A phase to go back to' });
+  const markSel = h('select', { class: 'input', 'aria-label': 'A phase to go back to' }); // the app's select (its own arrow; WebKit sizes it)
   const markBtn = button('Back to this phase’s start', () => void backTo(markSel.value), '');
   const restartBtn = button('Apply my edits and restart', () => void applyRestart());
   const fromMarkBtn = button('Apply from this phase’s mark', () => void applyFromMark());
@@ -210,7 +210,9 @@ export function draftRun(o: { link: Link; root: HTMLElement; drafts: DraftStore;
     const want = marks.map((m) => `${m.target}|${m.note}`).join(',');
     if (markSel.dataset.k !== want) {
       markSel.dataset.k = want;
-      markSel.replaceChildren(...marks.map((m) => h('option', { value: String(m.target) }, `${label(String(m.note))} (${clock((m.atTick ?? 0) * 0.02)})`)));
+      markSel.replaceChildren(...(marks.length
+        ? marks.map((m) => h('option', { value: String(m.target) }, `${label(String(m.note))} (${clock((m.atTick ?? 0) * 0.02)})`))
+        : [h('option', { value: '' }, 'No phase marked yet')]));
     }
     markBtn.disabled = !marks.length || busy();
     restartBtn.disabled = !edited?.doc;

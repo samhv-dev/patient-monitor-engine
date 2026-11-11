@@ -20,7 +20,7 @@
 .sb-run .console-back { color: var(--ip2-muted); }
 .sb-run-box { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--ip2-line); border-radius: 8px; }
 .sb-run-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.sb-run-row select { min-height: 36px; max-width: 100%; background: var(--ip2-bar); color: var(--ip2-text); border: 1px solid var(--ip2-control); border-radius: 6px; }
+.sb-run-row select.input { min-height: 36px; min-width: 160px; width: auto; flex: 1 1 160px; background-color: var(--ip2-bar); color: var(--ip2-text); border-color: var(--ip2-control); }
 .sb-run-why { min-height: 1.4em; }
 .sb-run-log { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .sb-run-line { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px; padding: 8px; border: 1px solid var(--ip2-line); border-radius: 6px; }
