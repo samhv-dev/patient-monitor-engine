@@ -686,6 +686,8 @@ renderer, audio and skin contracts.
 | `mountFinish` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | Mount the pane into `el` (inside ACTION); |
 | `mountHeader` | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The view's session bar on `link`; |
 | `mountKeys` | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The view's keyboard on the document, answering only while `el` is shown. |
+| `hostLabsSource` | [`apps/demo/src/app/teach2/labs-sheet.ts`](../../apps/demo/src/app/teach2/labs-sheet.ts) | The host's source (the laptop's AppSession): |
+| `labsSheet` | [`apps/demo/src/app/teach2/labs-sheet.ts`](../../apps/demo/src/app/teach2/labs-sheet.ts) | Fill `frame` (the sheets slot's frame for 'labs') from `book`; |
 | `whatText` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | What was staged, in the host's figures: |
 | `sourcesText` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). |
 | `mountLearnerPreps` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | The card on `link` (the laptop's Link or the phone's). |
@@ -988,6 +990,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | "Finish the case" in Instructor v2 (the owner's board "Finish 2", approved 30 October). |
 | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The Instructor v2 session bar (design §3.1; the owner's final layout, board "Option G"; answer 9). |
 | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The Instructor v2 keyboard (design §3.1, §3.4, §4; answer 16): Space pauses and resumes through the clock pill (from the page, an ACTION row, a header, Fast forward or dock button; elsewhere it is the focused control's o |
+| [`apps/demo/src/app/teach2/labs-sheet.ts`](../../apps/demo/src/app/teach2/labs-sheet.ts) | Plan learner-action-remote.md L15 (§4 D6; LQ13 ruled B, 9 November: a remote sees its own samples, the laptop sees every result): the laptop's Labs sheet in Instructor v2. |
 | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | Plan learner-action-remote.md L9 (§4 D7; LQ3 ruled 9 November): what the learner remotes have prepared, as the INSTRUCTOR sees it, on the laptop's dock (Instructor v2) and on the instructor's phone (views/remote.ts mount |
 | [`apps/demo/src/app/teach2/prep-board.ts`](../../apps/demo/src/app/teach2/prep-board.ts) | Plan learner-action-remote.md L9 (§4 D7): the instructor's copy of the learner remotes' preparations, as the Link keeps it from the host's `prep` news addressed to the host's own id (the laptop's Link and the instructor |
 | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Instructor v2 (E127): the two presses of the ACTION list, sending exactly what today's Scenario tab sends. |
@@ -1196,6 +1199,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/laptop-labs.e2e.ts`](../../apps/demo/e2e/laptop-labs.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-labs.e2e.ts`](../../apps/demo/e2e/learner-labs.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
@@ -1369,6 +1373,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/integration.dom.test.ts`](../../apps/demo/src/app/teach2/integration.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/judged-offer.dom.test.ts`](../../apps/demo/src/app/teach2/judged-offer.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/keys.dom.test.ts`](../../apps/demo/src/app/teach2/keys.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/labs-sheet.dom.test.ts`](../../apps/demo/src/app/teach2/labs-sheet.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/learner-preps.dom.test.ts`](../../apps/demo/src/app/teach2/learner-preps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/marks-note.dom.test.ts`](../../apps/demo/src/app/teach2/marks-note.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/press.dom.test.ts`](../../apps/demo/src/app/teach2/press.dom.test.ts) | 0 | 0 |
