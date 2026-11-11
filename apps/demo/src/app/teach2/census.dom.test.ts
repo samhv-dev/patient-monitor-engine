@@ -11,7 +11,7 @@
 // §2's table: since P6, the host's allow-list `INSTRUCTOR_COMMANDS` itself (P0 wrote it as a literal).
 // With PME_CENSUS_OUT set, the measured census (each shape with the controls that sent it) is written there as JSON.
 import { writeFileSync } from 'node:fs';
-import { INSTRUCTOR_COMMANDS, isV2, ScenarioView, type AckResult, type AnyScenarioDoc, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioDoc } from '@pme/controller';
+import { INSTRUCTOR_COMMANDS, isV2, ScenarioView, type AckResult, type AnyScenarioDoc, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type ScenarioDoc } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ACUTE_EVENTS } from '../events.ts';
 import { Link } from '../link.ts';
@@ -58,6 +58,16 @@ const detailOf = (c: CommandInput): string | null => {
   // brief 52: a remote's note carries its event tag (the Recognised press on a free run or a /1 card without a recognition objective)
   if (x.type === 'note') return `note kind=${String(x.kind)} ev=${(c as { ev?: unknown }).ev === undefined ? '(none)' : String((c as { ev?: unknown }).ev)}`;
   return null;
+};
+
+/** L9: the instructor's copy of a learner's preparation with a finding (the host's `prep` news, InstructorPrepNews). */
+const FLAGGED_PREP: InstructorPrepNews = {
+  news: 'made',
+  prep: {
+    id: 'bicepi01', by: 'bed2remote01', name: 'Bed 2', t: 60, actives: [{ drugId: 'sodiumBicarbonate', amount: 10, unit: 'mmol', perMl: 10 / 11, rows: [] }],
+    volumeMl: 11, leftMl: 11, diluent: null, container: 'syringe-pp', notice: null, givenAt: null, ready: { atS: 60, src: [], gap: null },
+    findings: [{ kind: 'incompatible', drugId: 'sodiumBicarbonate', against: 'admixture', other: 'epinephrine', statement: 'A census finding.', src: null }],
+  },
 };
 
 interface Sent { view: string; by: string; shape: string; detail: string | null }
@@ -217,6 +227,8 @@ async function v2(cfg: Config, scope: 'all' | 'scenario'): Promise<string[]> {
   view = 'v2';
   const loads: string[] = [];
   const r = rig(cfg);
+  // L9: a learner remote staged a preparation with a finding: the dock's card shows its one control (`prep notice`)
+  if (scope === 'all') r.link.preps.apply(FLAGGED_PREP, 60);
   const top = { soundOn: () => false, toggleSound: () => undefined, code: 'CNS234', phones: () => 0 };
   // as main.ts mounts it: the no-case window's Load is the app's one load (begin.ts), never a `scenario load` send
   const v = teach2View(r.link, { site: DEFAULT_SITE, weightKg: () => 70, top, loadScenario: (c) => (loads.push(c.title), true) });

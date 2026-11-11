@@ -669,6 +669,9 @@ renderer, audio and skin contracts.
 | `mountFinish` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | Mount the pane into `el` (inside ACTION); |
 | `mountHeader` | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The view's session bar on `link`; |
 | `mountKeys` | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The view's keyboard on the document, answering only while `el` is shown. |
+| `whatText` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | What was staged, in the host's figures: |
+| `sourcesText` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). |
+| `mountLearnerPreps` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | The card on `link` (the laptop's Link or the phone's). |
 | `pressAction` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | A pme-scenario/2 A press (plan F6, design §10): |
 | `pressStep` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Press the step labelled `label`: |
 | `judge` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Record the judged objective `text` (its words as the card writes them) as met: |
@@ -965,6 +968,8 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | "Finish the case" in Instructor v2 (the owner's board "Finish 2", approved 30 October). |
 | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The Instructor v2 session bar (design §3.1; the owner's final layout, board "Option G"; answer 9). |
 | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The Instructor v2 keyboard (design §3.1, §3.4, §4; answer 16): Space pauses and resumes through the clock pill (from the page, an ACTION row, a header, Fast forward or dock button; elsewhere it is the focused control's o |
+| [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | Plan learner-action-remote.md L9 (§4 D7; LQ3 ruled 9 November): what the learner remotes have prepared, as the INSTRUCTOR sees it, on the laptop's dock (Instructor v2) and on the instructor's phone (views/remote.ts mount |
+| [`apps/demo/src/app/teach2/prep-board.ts`](../../apps/demo/src/app/teach2/prep-board.ts) | Plan learner-action-remote.md L9 (§4 D7): the instructor's copy of the learner remotes' preparations, as the Link keeps it from the host's `prep` news addressed to the host's own id (the laptop's Link and the instructor |
 | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Instructor v2 (E127): the two presses of the ACTION list, sending exactly what today's Scenario tab sends. |
 | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | Instructor v2, the ACTION rows classified live (design §3.4, §3.5; answers 4–8, 20). |
 | [`apps/demo/src/app/teach2/sheet.ts`](../../apps/demo/src/app/teach2/sheet.ts) | Instructor v2, the sheet frame (design §4, board "Proposal v11"; plan IP7): every sheet has the same shape. |
@@ -1340,6 +1345,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/integration.dom.test.ts`](../../apps/demo/src/app/teach2/integration.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/judged-offer.dom.test.ts`](../../apps/demo/src/app/teach2/judged-offer.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/keys.dom.test.ts`](../../apps/demo/src/app/teach2/keys.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/learner-preps.dom.test.ts`](../../apps/demo/src/app/teach2/learner-preps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/marks-note.dom.test.ts`](../../apps/demo/src/app/teach2/marks-note.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/press.dom.test.ts`](../../apps/demo/src/app/teach2/press.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/rows-stay.dom.test.ts`](../../apps/demo/src/app/teach2/rows-stay.dom.test.ts) | 0 | 0 |
