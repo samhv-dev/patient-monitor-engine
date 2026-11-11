@@ -6,6 +6,8 @@
 //    incompatible admixture (sodium bicarbonate with epinephrine, Stabilis): nothing warns and no sound plays before
 //    the instructor shows the notice; a Give before it is given; at the instructor's press (the host's showPrepNotice,
 //    which L9's card calls) the phone sounds once and shows the finding with its source.
+// 4. L9: the laptop, the instructor phone and the learner phone together: the staging card on the dock and the phone at
+//    once, a Give before the press, the phone's press reaching the learner once, the record keeping its time.
 // PME_E2E_PORT and PME_E2E_RELAY_PORT (+ the worker's index) keep Vite and the relay inside a machine's port range.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -174,4 +176,67 @@ test('L7: an incompatible admixture: no warning and no sound before the instruct
   await p.waitForTimeout(1000);
   expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1); // once
   await ctx.close();
+});
+
+// Plan learner-action-remote.md L9 (§4 D7, LQ3): the laptop, the instructor's phone and the learner's phone in one room.
+// The learner stages the incompatible mix; the card shows at once on the laptop's dock AND on the instructor's phone, with
+// the finding and its source; a Give before the press is given and both cards say "notice not shown"; the instructor
+// presses on the PHONE, the learner's phone sounds once and shows the finding, both cards read "Notice shown at mm:ss",
+// the laptop's control is gone, and the host's record keeps the time.
+test('L9: the instructor sees the staging on the laptop dock and the phone, and the phone\'s press shows the notice on the learner\'s phone once', async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const KEY = 'bed2remote01';
+  const { code, pin } = await laptop(page, 'showcase-mh-v2', { [KEY]: 'Bed 2' });
+  const instructorPin = (await page.evaluate(() => localStorage.getItem('pme.instructorPin'))) as string;
+  // the instructor's phone, signed in with the instructor PIN
+  const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  const ictx = await browser.newContext(dev);
+  const ip = await ictx.newPage();
+  await ip.goto(`${base}/?relay=${encodeURIComponent(ws())}#/remote?code=${code}`);
+  for (const d of instructorPin) await ip.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+  await ip.locator('.ip-peer-go').click();
+  await expect(ip.locator('.ip-peer-status')).toHaveText(`Signed in as the instructor's remote · ${code}`, { timeout: 20_000 });
+  // the learner's phone stages sodium bicarbonate 8.4 % 10 mL + epinephrine 1 mg/mL 1 mL in one syringe
+  const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
+  await prepareOn(p, [
+    { search: 'sodium bic', drug: 'sodiumBicarbonate', product: 'sodium-bicarbonate-84mg-ml', amount: 10 },
+    { search: 'epinephrine', drug: 'epinephrine', product: 'adrenalin-1mg-ml', amount: 1 },
+  ], null);
+  const item = p.locator('.lr-item').first();
+  await expect(item.locator('.lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
+  const [id] = await trayIds(p);
+  const onLaptop = page.locator(`.ip2-dock .lp-card[data-prep="${id}"]`);
+  const onPhone = ip.locator(`.lp-inline .lp-card[data-prep="${id}"]`);
+  for (const c of [onLaptop, onPhone]) {
+    await expect(c.locator('.lp-what')).toHaveText(/^Bed 2 remote staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/, { timeout: 5_000 });
+    await expect(c.locator('.lp-finding[data-kind="incompatible"]').first()).toContainText(/^Incompatible: .+\(Stabilis .+; Trissel 2013 .+ agrees\)$/);
+    await expect(c.getByRole('button', { name: 'Show the incompatibility notice to the learner' })).toBeVisible();
+  }
+  await expect(page.locator('.ip2-preps-count')).toHaveText('1 preparation to look at');
+  await expect(item.locator('.lr-finding')).toBeHidden(); // nothing on the learner's phone before the press
+  // a Give (2 mL) before the press: given, and both cards say the notice had not been shown
+  await item.locator('.seg button[data-v="part"]').click();
+  await item.locator('.lr-give .stepper input').first().fill('2');
+  await item.locator('.lr-give .stepper input').first().dispatchEvent('change');
+  await item.locator('.lr-give-btn').click();
+  await expect(item.locator('.lr-said')).toHaveText(/^Given 2 mL at \d\d:\d\d$/, { timeout: 10_000 });
+  for (const c of [onLaptop, onPhone]) await expect(c.locator('.lp-fate')).toHaveText(/^given at \d\d:\d\d, notice not shown$/, { timeout: 10_000 });
+  expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(0);
+  // the instructor presses on the phone
+  await onPhone.getByRole('button', { name: 'Show the incompatibility notice to the learner' }).click();
+  await expect(item.locator('.lr-finding')).toBeVisible({ timeout: 10_000 });
+  await expect.poll(() => p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1);
+  for (const c of [onLaptop, onPhone]) {
+    await expect(c.locator('.lp-shown')).toHaveText(/^Notice shown at \d\d:\d\d$/, { timeout: 10_000 });
+    await expect(c.locator('.lp-show')).toHaveCount(0);
+  }
+  await expect(page.locator('.ip2-preps-count')).toBeHidden();
+  const rec = await page.evaluate(({ k, i }) => (window as unknown as HostW).__pmeApp.session.host.preparation(k, i)?.notice ?? null, { k: KEY, i: id as string });
+  expect(rec?.shownAt).toEqual(expect.any(Number));
+  await expect(onLaptop.locator('.lp-shown')).toHaveText(`Notice shown at ${String(Math.floor(rec!.shownAt / 60)).padStart(2, '0')}:${String(Math.floor(rec!.shownAt % 60)).padStart(2, '0')}`);
+  await p.waitForTimeout(1000);
+  expect(await p.evaluate(() => (window as unknown as PhoneW).__pmeLearnerDrugs.tray?.sounded)).toBe(1); // once
+  await ctx.close();
+  await ictx.close();
 });

@@ -275,6 +275,7 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     ['prep infuse with atTick', cmd({ type: 'prep', action: 'infuse', prepId: 'p0000001', rateMlH: 12, atTick: 0 })],
     ['prep discard with a stageGroup', cmd({ type: 'prep', action: 'discard', prepId: 'p0000001', stageGroup: 'g' })],
     ['prep notice (the instructor\'s, L9)', cmd({ type: 'prep', action: 'notice', prepId: 'p0000001' })],
+    ['prep notice as the instructor\'s card sends it (L9: instructor-only)', cmd({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'p0000001' })],
     ['infusion set with a concentration', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4, concentration: { amount: 4, unit: 'mg', perMl: 50 } })],
     ['infusion set with a unit', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4, unit: 'mcg/kg/min' })],
     ['infusion start', cmd({ type: 'infusion', action: 'start', drugId: 'norepinephrine', rateMlH: 4 })],
@@ -311,7 +312,13 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
       ['an infusion set at -1 mL/h', cmd({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: -1 })],
       ['an unknown prep action', cmd({ type: 'prep', action: 'mix', prepId: 'p0000001' })],
       ['a discard without its preparation', cmd({ type: 'prep', action: 'discard' })],
+      // L9: the instructor's notice names the device (a device key) and the preparation
+      ['a notice without its device', cmd({ type: 'prep', action: 'notice', prepId: 'p0000001' })],
+      ['a notice naming a device that is not a key', cmd({ type: 'prep', action: 'notice', by: 'Bed 2!', prepId: 'p0000001' })],
+      ['a notice with a preparation id not [a-z0-9]{8}', cmd({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'P1' })],
     ];
     for (const [what, c] of BAD) expect(parseWireMessage(body(c)), what).toBeNull();
+    // and the notice as the instructor's card sends it is parsed (its sender is the host's question: instructorMay)
+    expect(parseWireMessage(body(cmd({ type: 'prep', action: 'notice', by: 'bed2remote01', prepId: 'p0000001' })))).not.toBeNull();
   });
 });

@@ -3,10 +3,11 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
+import { PrepBoard } from './teach2/learner-preps.ts';
 
 export type AlarmStatusEvent = Extract<EngineEvent, { type: 'alarmStatus' }>;
 export type DeviceStatusEvent = Extract<EngineEvent, { type: 'deviceStatus' }>;
@@ -36,6 +37,9 @@ export class Link {
    * only (the host reads its originals). Instructor v2 reads it through `viewNow()`.
    */
   view: ViewFeed | null = null;
+  /** L9 (§4 D7): the learner remotes' preparations as the instructor sees them (the host's copy to its own id), on the
+   *  laptop and on the instructor's phone alike. */
+  readonly preps = new PrepBoard();
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
   private lastRaised = new Set<string>();
@@ -53,7 +57,7 @@ export class Link {
     this.offs = [
       transport.onMessage((m: WireMessage) => {
         if (m.kind !== 'event') return;
-        for (const e of m.body) this.onEvent(e);
+        for (const e of m.body) this.onEvent(e, m.from);
       }),
       ctl.onChange(() => this.changed()),
     ];
@@ -142,8 +146,13 @@ export class Link {
     return { level: top ? top.level : null, n: act.length, top };
   }
 
-  private onEvent(e: WireEvent): void {
-    if (e.type === 'alarmStatus') {
+  private onEvent(e: WireEvent, from: string): void {
+    if (e.type === 'prep') {
+      // L9: the host addresses the instructor's copy to its own id; a learner's copy (to that remote) is not this card's
+      if (e.to !== from) return;
+      this.preps.apply(e.body as InstructorPrepNews, e.t);
+      this.changed();
+    } else if (e.type === 'alarmStatus') {
       const a = e as unknown as AlarmStatusEvent;
       this.alarms = a;
       const now = new Set(a.active.map((x) => x.id));
@@ -160,6 +169,7 @@ export class Link {
       // A new timeline — onsets in progress began on the old one; a restart also ends the acute events (a Remote has no
       // AppSession.onMount to tell it); a bookmark restore keeps them (the engine does not report them)
       this.ramps.clear();
+      this.preps.clear(); // the host's preparation table ends with the old engine, a restore's too (host-session newTimeline)
       if (e.cause !== 'restore') this.conditions.clear();
       this.changed();
     } else if (e.type === 'fastForward') {
