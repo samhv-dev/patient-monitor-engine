@@ -17,6 +17,9 @@
 // `grant` as an instructor is and under the same per-address wrong-PIN limits; it receives what a viewer receives, granted
 // or not, plus the host's `prep` events that name it; its commands are `forbidden` until it is granted, then only
 // LEARNER_COMMANDS (learnerMay) go to the host, any other is `forbidden`, more than 6 a second close it.
+// Plan pump-rack-tci.md C1 (§4 D2, §7): a `pump` socket (the infusion-pump rack on a tablet) is admitted exactly as a
+// `learner` one, on the same learner PIN; granted, only PUMP_COMMANDS (pumpMay) go to the host, any other is `forbidden`,
+// more than 6 a second close it; it receives a viewer's frames plus the host's `prep` events that name it.
 // A non-host socket keeps the role of its first hello: a hello as another role on it is `forbidden`.
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -26,7 +29,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { storeRoutes } from './store.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
-import { SESSION_CODE_RE, VIEWER_EVENTS, learnerDefibMay, learnerMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
+import { SESSION_CODE_RE, VIEWER_EVENTS, learnerDefibMay, learnerMay, pumpMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
 import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayDevice, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
@@ -127,8 +130,8 @@ interface Peer {
   alive: boolean;
   /**
    * The host granted it: a controller always; an instructor (or the ventilator) once the host granted its PIN, and then it
-   * gets the host's frames whole; a learner once the host granted its learner PIN, and then it may command (learnerMay),
-   * but it still gets a viewer's frames.
+   * gets the host's frames whole; a learner remote or a pump once the host granted its learner PIN, and then it may
+   * command (learnerMay, pumpMay), but it still gets a viewer's frames.
    */
   granted: boolean;
   /** The socket's address (the wrong-PIN limit counts per address). */
@@ -143,7 +146,7 @@ interface Peer {
   seenAt: number;
   /** R8b: the relay-clock times of the `vent` messages from it and to it within the last second (VENT_PER_S). */
   vent: { from: number[]; to: number[] };
-  /** R5c, L3: the relay-clock times of a `defib` or `learner` socket's commands within the last second (DEFIB_PER_S, LEARNER_PER_S). */
+  /** R5c, L3, C1: the relay-clock times of a `defib`, `learner` or `pump` socket's commands within the last second (DEFIB_PER_S, LEARNER_PER_S, PUMP_PER_S). */
   cmds: number[];
 }
 
@@ -215,17 +218,24 @@ const DEFIB_PER_S = 4;
  * R5c's 4 a second covers two presses].
  */
 const LEARNER_PER_S = 6;
+/**
+ * C1 (pump-rack-tci.md §4 D2): commands a `pump` socket may send in any one second, refused ones included; one more closes
+ * it (`too-many-tries`) [ENG: network; L3's figure: four channels changed in one press sequence plus a margin for double taps].
+ */
+const PUMP_PER_S = 6;
+/** The roles the LEARNER PIN signs in (learner-action-remote.md D9; pump-rack-tci.md §7): never the instructor's. */
+const onLearnerPin = (r: Role) => r === 'learner' || r === 'pump';
 /** The roles that sign in with the instructor's PIN: never counted among the learners, never told to them. */
 const signsIn = (r: Role) => r === 'instructor' || r === 'ventilator';
 /**
  * The roles that prove a PIN in their hello (the instructor's, or the learner PIN for `learner`, D9): pending until the
  * host's grant, under the per-address wrong-PIN and hello limits (one count per address, whichever PIN it tried).
  */
-const pinned = (r: Role) => signsIn(r) || r === 'learner';
+const pinned = (r: Role) => signsIn(r) || onLearnerPin(r);
 /** The sockets that follow the patient: learners count only these (an instructor and the cockpit are not told of). */
 const follows = (p: { role: Role }) => !signsIn(p.role);
-/** Gets the host's frames byte for byte: a granted controller or instructor (a learner remote, granted, still follows as a viewer). */
-const whole = (p: { role: Role; granted: boolean }) => p.granted && p.role !== 'learner';
+/** Gets the host's frames byte for byte: a granted controller or instructor (a learner remote or a pump, granted, still follows as a viewer). */
+const whole = (p: { role: Role; granted: boolean }) => p.granted && !onLearnerPin(p.role);
 /** What a learner's phone must never receive inside `commandApplied` (plan §7): a mark's kind and note, a judged objective. */
 const LEARNERS_NEVER: ReadonlySet<string> = new Set(['scenario', 'note']);
 const forLearners = (e: WireEvent) =>
@@ -274,7 +284,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     d.hellos.push(t);
     return true;
   };
-  const tooMany = (ws: WebSocket, role: Role) => refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', `too many ${role === 'learner' ? 'learner remote' : 'instructor'} sign-ins from this device: wait a minute`);
+  const tooMany = (ws: WebSocket, role: Role) => refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', `too many ${role === 'learner' ? 'learner remote' : role === 'pump' ? 'pump' : 'instructor'} sign-ins from this device: wait a minute`);
   let relaySeq = 0;
   const wrongPin = (address: string) => {
     const t = clock();
@@ -283,7 +293,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     if (d.at.length >= PIN_TRIES) {
       d.at = [];
       d.until = t + PIN_WINDOW_MS;
-      log(`${address}: ${PIN_TRIES} wrong PINs; no PIN hello (instructor, ventilator, learner) from it for ${PIN_WINDOW_MS / 1000} s`);
+      log(`${address}: ${PIN_TRIES} wrong PINs; no PIN hello (instructor, ventilator, learner, pump) from it for ${PIN_WINDOW_MS / 1000} s`);
     }
     denials.set(address, d);
   };
@@ -357,7 +367,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
             frame(peer.ws, { relay: 'error', code: 'forbidden', message: `this socket said hello as ${peer.role}` });
             return;
           }
-          // A re-said instructor (or learner) hello counts too: one open socket must not flood the host with PIN checks (G1)
+          // A re-said instructor (or learner, or pump) hello counts too: one open socket must not flood the host with PIN checks (G1)
           if (pinned(peer.role) && (blocked(peer.address) || !mayHello(peer.address))) return tooMany(peer.ws, peer.role);
           peer.show = m.show ?? null; // R2: what it shows is its LAST hello's
           peer.device = m.device ?? null;
@@ -379,6 +389,15 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           // L3: counted first, as the window's; pending, every command is refused; granted, only LEARNER_COMMANDS pass
           if (overRate(peer, peer.cmds, LEARNER_PER_S, 'commands')) return;
           const why = peer.granted ? learnerMay(m.body) : 'the learner remote is not signed in';
+          if (why) {
+            dropped++;
+            frame(peer.ws, { relay: 'error', code: 'forbidden', message: why });
+            return;
+          }
+        } else if (peer.role === 'pump') {
+          // C1: exactly the learner remote's line, with the pump's allow-list (D2)
+          if (overRate(peer, peer.cmds, PUMP_PER_S, 'commands')) return;
+          const why = peer.granted ? pumpMay(m.body) : 'the pump is not signed in';
           if (why) {
             dropped++;
             frame(peer.ws, { relay: 'error', code: 'forbidden', message: why });
@@ -430,7 +449,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           // (a welcome event of the host's own — its style — carries `replay: true` itself)
           const welcome = m.body.some((e) => (e as { replay?: unknown }).replay === true || (e.type === 'commandApplied' && (e.resolved as { replay?: unknown } | undefined)?.replay === true));
           // the copy for viewers, pending instructors and learners (VIEWER_EVENTS, minus the instructor's words), made once per
-          // message; L3: a learner remote's own `prep` events ride in its copy only (§4 D7)
+          // message; L3: a learner remote's own `prep` events ride in its copy only (§4 D7); C1: a pump's, its preparation
+          // labels, in its copy only (pump-rack-tci.md §7)
           let lean: string | null | undefined;
           const preps = m.body.filter((e): e is Extract<WireEvent, { type: 'prep' }> => e.type === 'prep');
           if (welcome) room.welcomed = new Set(room.awaiting);
@@ -444,7 +464,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
               const body = m.body.filter(forLearners);
               lean = body.length === 0 ? null : body.length === m.body.length ? data : JSON.stringify({ ...m, body });
             }
-            const mine = p.role === 'learner' && p.granted ? preps.filter((e) => e.to === p.id) : [];
+            const mine = onLearnerPin(p.role) && p.granted ? preps.filter((e) => e.to === p.id) : [];
             if (mine.length > 0) raw(p.ws, JSON.stringify({ ...m, body: m.body.filter((e) => forLearners(e) || mine.includes(e as never)) }));
             else if (lean !== null) raw(p.ws, lean);
           }
@@ -615,14 +635,14 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         // Stage 12: another device follows; only this machine hosts or commands (the room has seen the code). P4: or it
         // says `instructor`, and commands once the host has granted its PIN.
         // R8b: or `ventilator`, the cockpit on another device, with the same PIN. R5c: or `defib`, as a learner does. L3: or
-        // `learner`, the learner action remote, with the learner PIN
+        // `learner`, the learner action remote, with the learner PIN. C1: or `pump`, with the same PIN
         if (!local && opts.remoteRoles === 'viewer' && m.role !== 'viewer' && m.role !== 'defib' && !pinned(m.role)) return refuse(ws, RELAY_CLOSE.forbiddenRole, 'forbidden', `${m.role} only from the instructor's computer`);
         if (signsIn(m.role)) {
           if (blocked(address)) return refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many wrong PINs from this device: wait a minute');
           if (m.role === 'instructor' && count(room, (p) => p.role === 'instructor') >= INSTRUCTOR_PLACES) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} has no instructor place free`);
           if (!mayHello(address)) return tooMany(ws, m.role);
-        } else if (m.role === 'learner') {
-          // L3 (D9): the wrong-PIN limits first, as an instructor's; then a learner's place, as a phone's
+        } else if (onLearnerPin(m.role)) {
+          // L3 (D9), C1 (§7): the wrong-PIN limits first, as an instructor's; then a learner's place, as a phone's
           if (blocked(address)) return refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many wrong PINs from this device: wait a minute');
           if (count(room, follows) >= maxPeers) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} is full (${maxPeers})`);
           if (!mayHello(address)) return tooMany(ws, m.role);

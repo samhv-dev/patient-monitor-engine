@@ -1099,7 +1099,7 @@ class Engine implements MonitorEngine {
       this.syncOrganBuffers();
       return;
     }
-    if (applyBloodCommand(ps.blood, cmd, simT, ps.resp)) return;
+    if (applyBloodCommand(ps.blood, cmd, simT, ps.resp, { inr: ps.organs.liver.inr })) return; // a lab sample carries the liver's INR
     if (cmd.type === 'applyEvent' && (cmd.event as { kind: string }).kind === 'stimulus') {
       const sv = cmd.event as { intensity: number; site?: string }; // The circulation sees the vagal site before the endocrine model consumes the stimulus
       circVagalStimulus(ps.hemo.circ, sv.site, sv.intensity, simT);
