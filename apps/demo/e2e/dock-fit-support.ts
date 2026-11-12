@@ -66,23 +66,25 @@ export const sheetFootBlocked = (page: Page): Promise<string[]> => page.evaluate
 export const sheetFootCount = (page: Page): Promise<number> => page.locator('.ip2-sheets .ip2-sheet:not([hidden]) .ip2-sheet-foot').locator('button:visible, select:visible').count();
 
 /** The open sheet's rows as drawn: each grid row's height, and whether the Onset select shows its whole chosen text
- *  (the prototype of brief 207 saw "Nc" at 1280 px and a tray row not drawn at 1280 × 800). */
+ *  (the prototype of brief 207 saw "Nc" at 1280 px, a select shrunk below its natural width, and a tray row not drawn at
+ *  1280 × 800). */
 export const sheetRows = (page: Page): Promise<{ head: number; tabs: number; body: number; tray: number; foot: number; trayInView: boolean; onsetCut: boolean; onsetW: number }> => page.evaluate(() => {
   const s = document.querySelector<HTMLElement>('.ip2-sheets .ip2-sheet:not([hidden])') as HTMLElement;
   const hOf = (sel: string) => Math.round(s.querySelector(sel)?.getBoundingClientRect().height ?? 0);
   const tray = s.querySelector('.ip2-sheet-tray')?.getBoundingClientRect();
   const dockTop = document.querySelector('.ip2-dock')?.getBoundingClientRect().top ?? innerHeight;
   const sel = s.querySelector<HTMLSelectElement>('.ip2-onset select');
-  // the chosen option's text, measured in the select's own font, against the room inside it (padding and the arrow)
+  // the select against its own natural width: a copy of it, out of the flex row, in the same place (same styles)
   let onsetCut = false;
   let onsetW = 0;
   if (sel) {
-    const cs = getComputedStyle(sel);
-    const g = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D;
-    g.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    const longest = Math.max(...[...sel.options].map((o) => g.measureText(o.text).width));
+    const copy = sel.cloneNode(true) as HTMLSelectElement;
+    copy.style.cssText = 'position:absolute;visibility:hidden;flex:none;width:auto;min-width:0';
+    sel.after(copy);
+    const natural = copy.getBoundingClientRect().width;
+    copy.remove();
     onsetW = Math.round(sel.getBoundingClientRect().width);
-    onsetCut = sel.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 14 < longest; // 14 px: the drop arrow
+    onsetCut = sel.getBoundingClientRect().width < natural - 0.5;
   }
   return { head: hOf('.ip2-sheet-head'), tabs: hOf('.ip2-sheet-tabs'), body: hOf('.ip2-sheet-body'), tray: Math.round(tray?.height ?? 0), foot: hOf('.ip2-sheet-foot'), trayInView: !!tray && tray.height >= 40 && tray.bottom <= dockTop + 0.5, onsetCut, onsetW };
 });
