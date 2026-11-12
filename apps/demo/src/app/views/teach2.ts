@@ -60,7 +60,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
 
   const keys = mountKeys(el, { link, togglePause: header.togglePause });
   const begin = beginState(() => paintNow());
-  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, loadScenario: o.loadScenario, ...(link.host ? { labs: hostLabsSource(link.host) } : {}) };
+  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, loadScenario: o.loadScenario, ...(link.host?.panelTransport ? { labs: hostLabsSource(link.host) } : {}) }; // a test's stand-in host has no transport: no Labs
   // The sheets mount first: they set ctx.openSheet
   const slots: Slot[] = [mountSheets(sheets, ctx), mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(actionBody, ctx)];
   openAlarms = () => ctx.openSheet('devices');
