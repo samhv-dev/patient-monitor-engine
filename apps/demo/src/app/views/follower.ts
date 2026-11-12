@@ -112,8 +112,10 @@ export interface NetFollow {
 
 /** What this window shows and its device's key, said on every hello (plan room-and-instruments.md R4, §4 D1). */
 export interface FollowerInstrument {
-  show: Extract<Instrument, 'learner' | 'monitor' | 'defib' | 'depth'>;
+  show: Extract<Instrument, 'learner' | 'monitor' | 'defib' | 'depth' | 'pump'>;
   device: string;
+  /** With `pin`: the role each hello says, `learner` (the remote, L6) unless `pump` (the pump tablet, pump-rack-tci.md A1). */
+  role?: 'learner' | 'pump';
   /**
    * L6 (plan learner-action-remote.md §4 D1): the learner remote's page. Each hello then says the `learner` role with
    * this learner PIN (read at each hello from the page's memory, never kept), and the host grants it on that PIN (L4).
@@ -126,7 +128,7 @@ export interface FollowerInstrument {
  * adds them (viewer-sync.ts, which says the hello, is not changed: §4 D1).
  */
 export function withInstrument(t: ManagedTransport, i: FollowerInstrument): ManagedTransport {
-  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, ...(i.pin ? { role: 'learner' as const, pin: i.pin() } : {}), show: i.show, device: i.device } : m);
+  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, ...(i.pin ? { role: i.role ?? 'learner', pin: i.pin() } : {}), show: i.show, device: i.device } : m);
   return new Proxy(t, {
     get(target, key) {
       if (key === 'send') return send;
@@ -165,6 +167,8 @@ function asOnePeer(t: ManagedTransport, role?: 'defib'): ManagedTransport {
  */
 export interface FollowerOptions {
   defib?: boolean;
+  /** false: no Sound and no Silence here (the pump tablet shows no monitor, so it sounds none of its alarms; A1). */
+  sound?: boolean;
 }
 
 /**
@@ -172,7 +176,7 @@ export interface FollowerOptions {
  * `defib` (R5). `show: 'defib'` is the defibrillator window too.
  */
 export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow, o: Partial<FollowerInstrument> & FollowerOptions = {}): Follower {
-  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device, ...(o.pin ? { pin: o.pin } : {}) } : undefined;
+  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device, ...(o.pin ? { pin: o.pin, ...(o.role ? { role: o.role } : {}) } : {}) } : undefined;
   const defib = o.defib === true || o.show === 'defib';
   // EEG plan E12: the depth-of-anaesthesia window (`#/depth`, views/depth.ts draws it from this follower's engine): the
   // patient monitor under it is not this screen's instrument, so neither is its alarm sound (no Sound, no Silence here)
@@ -212,7 +216,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   hush.setAttribute('aria-pressed', 'false');
   hush.title = "Silence this window's alarm sound";
   hush.disabled = true;
-  bar.append(status, ...(depth ? [] : [sound, hush]));
+  bar.append(status, ...(depth || o.sound === false ? [] : [sound, hush]));
   // R4: back to the instrument picker (a link, not a control of the patient)
   if (instrument) bar.append(h('a', { class: 'btn small follower-change', href: '#/pick' }, 'Change'));
   // Under a phone's monitor when the instructor's style has no phone layout

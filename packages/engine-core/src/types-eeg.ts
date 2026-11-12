@@ -91,8 +91,9 @@ export interface EegPeak {
 
 /** The spectral description of one cortical state (E2): what the generator (E3) turns into microvolts. */
 export interface EegSpectrum {
-  /** Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz. */
-  aperiodic: { offsetDb: number; slope: number };
+  /** Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz; above `hfCornerHz`
+   * it falls with the exponent `hfSlope` instead (continuous at the corner). Absent, or `hfSlope` ≤ `slope`: no corner. */
+  aperiodic: { offsetDb: number; slope: number; hfCornerHz?: number; hfSlope?: number };
   peaks: EegPeak[];
   /** Burst suppression: fraction of time suppressed, burst amplitude and the suppressed level (µV). */
   suppression: { p: number; burstUv: number; suppressedUv: number };
@@ -115,7 +116,11 @@ export type EegDeviceAction =
  * index's (`device depth`, Q3). The generic reader: spectral edge frequency and median frequency (Hz), its suppression
  * ratio (%) and the highest electrode impedance (kΩ).
  */
-export type EegNumericId = 'sef' | 'mf' | 'eegSr' | 'eegImp';
+export type EegNumericId = 'sef' | 'mf' | 'eegSr' | 'eegImp' | BisTypeNumericId;
+/** The BIS-type reader's (E7, l3/eeg-devices/bis-type.ts): its index (0–100), its burst suppression rate (%) and its three
+ * components (dB): the sedation component (≈ the β ratio, 30–47 vs 11–20 Hz), the power concentration of 40–47 Hz vs
+ * the whole spectrum, and low (0.5–4 Hz) vs mid (11–20 Hz), which weights sedation against general anaesthesia. */
+export type BisTypeNumericId = 'bis' | 'bisSr' | 'bisBeta' | 'bisConc' | 'bisLowMid';
 
 /** The bands a device reports power in (µV²): the engine's names, Ch36 Table 36.1; each device its own edges. */
 export type EegBandName = 'slow' | 'delta' | 'theta' | 'alpha' | 'beta' | 'gamma';

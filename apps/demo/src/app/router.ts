@@ -3,7 +3,7 @@
 // E125 (owner, 26 October): the app opens on Home (`#/`, `#/home`); the old `#/start` address still reaches it.
 // E127: `#/teach2` is Instructor v2, the only Instructor view since retire-instructor-v1 (6 November 2026): the old
 // `#/teach` address still reaches it, as `#/start` reaches Home.
-export const ROUTES = ['home', 'room', 'scenarios', 'patient', 'monitor', 'teach2', 'remote', 'explore', 'vent', 'validate', 'dev', 'settings', 'debrief'] as const;
+export const ROUTES = ['home', 'room', 'scenarios', 'patient', 'monitor', 'teach2', 'remote', 'pump', 'explore', 'vent', 'validate', 'dev', 'settings', 'debrief'] as const;
 export type RouteId = (typeof ROUTES)[number];
 export interface Route {
   id: RouteId;
