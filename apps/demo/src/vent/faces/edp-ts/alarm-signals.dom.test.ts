@@ -33,10 +33,9 @@ const click = (sel: string) => q(sel).click();
 const lamp = (which: 'inop' | 'high' | 'med') => q(`.edp-lamp[data-lamp="${which}"]`);
 const lamps = () => ({ inop: lamp('inop').dataset.state, high: lamp('high').dataset.state, med: lamp('med').dataset.state });
 const box = () => q('.edp-alarm');
-/** Start-up: the model raises Low pressure on its empty breath record at t = 0.005 s (a defect reported with an expected
- *  failure in packages/ventilator/test/alarms-edp.test.ts) and Low minute volume for 10 ms at 11 s while the minute
- *  volume builds up; both latch, as every EDP-TS alarm does. Run past them and press Esc, as the device's user would. */
-const settle = (d: VentDriver) => { run(d, 15); click('[data-ctl="under:esc"]'); };
+/** Start-up: a quiet start leaves nothing latched (brief 202, round 2: no condition reads a quantity before a breath has
+ *  produced it; packages/ventilator/test/alarms-edp.test.ts). Run past the first breaths before scripting an alarm. */
+const settle = (d: VentDriver) => run(d, 15);
 const ALARM = FACE.alarms as Record<string, { text: { v: string }; priority: { v: 'high' | 'medium' | 'low' } }>;
 
 describe('the alarm signals on the redrawn EDP-TS face', () => {
@@ -45,10 +44,8 @@ describe('the alarm signals on the redrawn EDP-TS face', () => {
   it('no alarm: every lamp off (unlit as photographed, IMG_1547), no message box', () => {
     const d = createVentDriver(null);
     const ui = mount(d);
-    run(d, 15);
-    expect(lamps().high, 'the start-up latch (see settle)').toBe('steady');
-    click('[data-ctl="under:esc"]');
-    expect(lamps()).toEqual({ inop: 'off', high: 'off', med: 'off' });
+    // every second of the first 15, nothing lit and no message: no Esc needed after start-up
+    for (let i = 0; i < 15; i++) { run(d, 1); expect(lamps(), `${i + 1} s`).toEqual({ inop: 'off', high: 'off', med: 'off' }); expect(box().hidden).toBe(true); }
     for (const w of ['inop', 'high', 'med'] as const) expect(lamp(w).className, w).not.toMatch(/on-|flash/);
     expect(box().hidden).toBe(true);
     ui.stop();

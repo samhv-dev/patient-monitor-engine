@@ -64,20 +64,51 @@ describe('the EDP-TS alarm conditions', () => {
   });
 });
 
-// Brief 202: two misses of the conditions above, recorded as expected failures (the conditions' numbers are not changed
-// here). N111: the device reads its oxygen cell; the model has none. And the minimum-pressure condition is evaluated on
-// the breath record before any breath has been delivered.
+// Brief 202: one miss recorded as an expected failure (the conditions' numbers are not changed here). N111: the device
+// reads its oxygen cell; the model has none.
 describe('the EDP-TS alarm conditions: known misses', () => {
   it.fails('o2High is raised on the oxygen the device\'s cell reads (A-44): IMG_1542 shows 43 % read at a set 40 %, so a high limit of 42 is crossed (measured: not raised, as the model has no oxygen sensor and its O2 alarms compare the SET 40 % with the limit, finding N111)', () => {
     const vs = createVent({ fio2: 40, almO2hi: 42, almO2lo: 30 });
     advanceVent(vs, 40);
     expect(ids(vs)).toContain('o2High');
   });
+});
 
-  it.fails('lowPressure waits for a delivered breath (A-35: the airway pressure under the minimum): none in the first second after start (measured: raised at t = 0.005 s on the empty breath record, PIP 0, until the first breath ends at 1.0 s; the face latches it, High lamp lit until Esc)', () => {
+// Brief 202, round 2: a condition is evaluated only once the quantity it reads exists. Peak is "the maximum pressure in
+// each breath" (research/57 R-20, M p. 16) and the exhaled VT a breath's (V-10): a breath-based condition waits for the
+// first breath whose inspiration has ended. V̇E is "the volume delivered per minute" (S-08, M p. 15) and the model's is
+// the rate of the breath intervals times the last exhaled VT: it exists once the record read holds a rate. Before that,
+// the record holds zeros that no breath produced, and the v1.9 conditions read them as a low peak and a low minute
+// volume (brief 202 found Low pressure at t = 0.005 s and Low minute volume latched at 11 s on a quiet start).
+describe('no condition reads a quantity that does not exist yet', () => {
+  const EDP = { almPlo: 5, almContHiP: 5, almPeepHi: 20, almO2hi: 60, almO2lo: 30 };
+  it('a quiet start on a connected patient: no condition at any 5 ms step of the first 30 s (but contHighPressure, true in every inspiration by design: its 15 s is the face\'s delay, A-31)', () => {
+    const vs = createVent(EDP);
+    const seen = new Set<string>();
+    advanceVent(vs, 30, (v) => { for (const a of ventAlarms(v, {})) if (a.id !== 'contHighPressure') seen.add(`${a.id}@${v.p.t.toFixed(3)}`); });
+    expect([...seen]).toEqual([]);
+  });
+  it('lowPressure, pmax and disconnection read the last COMPLETED breath (R-20): none before the first inspiration ends', () => {
     const vs = createVent({ almPlo: 5 });
-    advanceVent(vs, 0.5);
-    expect(ids(vs)).not.toContain('lowPressure');
+    let firstEnd = -1;
+    advanceVent(vs, 3, (v) => {
+      if (firstEnd < 0 && v.p.breathTimes.length > 0) firstEnd = v.p.t;
+      if (firstEnd < 0) expect(ids(v)).toEqual([]);
+    });
+    expect(firstEnd).toBeGreaterThan(0);
+  });
+  it('a circuit open to air from the start still alarms once a breath has been delivered into it (A-34, A-35)', () => {
+    const vs = createVent({ almPlo: 5 });
+    setCircuit(vs, 'disconnected');
+    advanceVent(vs, 8);
+    expect(ids(vs)).toContain('lowPressure');
+    expect(ids(vs)).toContain('disconnection');
+  });
+  it('mvLow / mvHigh wait for the minute volume to exist: a rate in the record they read (S-08); then they read it', () => {
+    const vs = createVent({ almMVlo: 2.41 });
+    advanceVent(vs, 30, (v) => { if (!((v.p.shown ?? v.p.measured).RR > 0)) expect(ids(v)).not.toContain('mvLow'); });
+    vs.cfg.almMVlo = 50;
+    expect(ids(vs)).toContain('mvLow');
   });
 });
 

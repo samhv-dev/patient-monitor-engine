@@ -25,10 +25,9 @@ const run = (d: VentDriver, s: number) => {
 };
 
 describe('the View of the alarm signals', () => {
-  it('quiet: lamps off, no message, no silence (after Esc clears the start-up latches: see alarm-signals.dom.test.ts)', () => {
+  it('quiet: lamps off, no message, no silence, with no Esc after start-up', () => {
     const { d, c, k } = setup();
     run(d, 15);
-    k.press('under:esc');
     const v = viewOf(c, k);
     expect(v.lamps).toEqual({ inop: 'off', high: 'off', med: 'off' });
     expect(v.alarm).toBeNull();
@@ -38,7 +37,6 @@ describe('the View of the alarm signals', () => {
   it('the alarm test: High fast, Med/Low slow, Med/Low steady, then off; no message', () => {
     const { d, c, k, tick } = setup();
     run(d, 15);
-    k.press('under:esc'); // the start-up latches
     k.press('under:ctrl');
     k.press('side:alarmLimits');
     const step = num(DATA.layout.alarmTestStepS) * 1000;

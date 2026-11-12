@@ -129,6 +129,16 @@ describe('the alarm signals: their sources', () => {
     for (const k of ['lampHigh', 'lampMed', 'lampOff'] as const) expect(L(FACE.colours[k]).p, k).toBe('measured');
     for (const k of ['lampFastS', 'lampSlowS'] as const) { expect(L(FACE.layout[k]).p, k).toBe('eng'); expect(L(FACE.layout[k]).why, k).toMatch(/half/); }
   });
+  it('the lamps unlit and lit as photographed (round 2): a flat unlit lamp at its measured contrast to the bezel (S-10), an even lit fill with its glow outward and no pale centre (S-11)', () => {
+    expect(L(FACE.colours.lampUnlit)).toMatchObject({ p: 'measured', src: 'research/57 S-10, P-51' });
+    expect(ROWS.get('S-10')).toBe('meas');
+    expect(ROWS.get('S-11')).toBe('meas');
+    const css = readFileSync(resolve(import.meta.dirname, 'face.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const lampRules = css.split('\n').filter((l) => l.includes('.edp-lamp')).join('\n');
+    expect(lampRules).not.toMatch(/radial-gradient|box-shadow/);
+    expect(lampRules).toMatch(/var\(--edp-lampUnlit\)/);
+    expect(lampRules).toMatch(/drop-shadow\(/);
+  });
   it('the simulator\'s words outside the device: the silenced state and the Vent Inop lamp\'s reason', () => {
     expect(L(FACE.reasons.silenced).p).toBe('sim');
     expect(L(FACE.reasons.ventInop)).toMatchObject({ p: 'sim', src: 'plan GA14' });
