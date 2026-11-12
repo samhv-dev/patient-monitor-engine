@@ -7,9 +7,9 @@
 // While the ventilator drives the patient the follower holds (follower.ts), and so does this screen: its clock stops,
 // the last reading stays.
 //
-// The look: one FACE per EEG device model (DEPTH_FACES, keyed by the registry's ids, l3/eeg-devices/registry.ts). Today
-// only the generic reader is built, so the window wears the generic face: a plain processed-EEG screen with what that
-// reader computes and nothing else. A later piece gives a named device (BIS-type, Entropy, Narcotrend, PSI) its own
+// The look: one FACE per EEG device model (DEPTH_FACES, keyed by the registry's ids, l3/eeg-devices/registry.ts): the
+// generic reader's plain processed-EEG screen and the BIS-type reader's (E7), each with what its reader computes and
+// nothing else. A later piece gives a named device (Entropy, Narcotrend, PSI; the BIS photographs) its own
 // face by adding one function here and one row in DEPTH_FACES; the window, its source and its "off" state stay.
 // English only on the device's screen (the owner's rule for device faces).
 import { EEG_DEVICES, type EegModelId, type EegReadingEvent, type EngineEvent, type Measured, type NumericId } from '@pme/engine-core';
@@ -30,6 +30,8 @@ export const DEPTH_WORDS = {
   offSub: 'The instructor switches one on in Room setup. This screen shows it as soon as it reads.',
   noValue: '--',
   quality: { good: 'Signal good', questionable: 'Check electrodes', invalid: 'Artefact: epoch rejected' },
+  /** The BIS-type face's Q8 note (EEG plan Q8 B): what the reading is and is not. */
+  bisNote: 'The maker\'s algorithm is proprietary; this index uses the published components only (Connor 2022, Rampil 1998).',
 };
 
 /** One reading as a face draws it: the device's `eegReading` and its numerics (the measurement of the same time). */
@@ -171,8 +173,82 @@ export function genericFace(model: string): DepthFace {
   };
 }
 
+/**
+ * The BIS-type face (EEG plan E7, the BIS-type reader l3/eeg-devices/bis-type.ts): a plain screen with the index large
+ * and its trend over the last hour (0–100), the burst suppression rate, the electrode impedance, the raw EEG and the
+ * signal quality from the reader's flags; the Q8 label and note say it is computed from published components. Not a
+ * picture of the maker's monitor: a face matched to the owner's photographs replaces this function in DEPTH_FACES.
+ * No EMG or SQI value: neither paper defines one from the signal.
+ */
+export function bisTypeFace(model: string): DepthFace {
+  const spec = EEG_DEVICES.bisType.spec;
+  const k = spec.constants;
+  const disp = createEegDisplay(spec.id, EEG_FS_HZ);
+  const rawUv = 100; // ±100 µV over the trace's height, as the generic face [ENG: display]
+  const histS = k.dsaHistoryS.value; // the trend over the same hour the generic face keeps [ENG: display]
+  const trend: Array<{ t: number; v: number }> = [];
+  const canvas = (cls: string, label: string) => h('canvas', { class: cls, role: 'img', 'aria-label': label });
+  const raw = canvas('depth-raw', 'Raw EEG');
+  const tr = canvas('depth-trend', 'Index trend');
+  const tile = (id: string, label: string, unit: string, big = false) => {
+    const v = h('span', { class: 'v' }, DEPTH_WORDS.noValue);
+    return { v, el: h('div', { class: `depth-tile${big ? ' big' : ''}`, 'data-id': id }, h('span', { class: 'l' }, label), v, h('span', { class: 'u' }, unit)) };
+  };
+  const bis = tile('bis', 'Index', '0–100', true);
+  const sr = tile('bisSr', 'SR', '%');
+  const imp = tile('eegImp', 'Impedance', 'kΩ');
+  const q = h('span', { class: 'depth-sqi', role: 'status' }, '');
+  const cap = (text: string) => h('span', { class: 'depth-cap' }, text);
+  const el = h('div', { class: 'depth-face', 'data-face': 'bisType' },
+    h('header', { class: 'depth-head' }, h('h2', { class: 'depth-label' }, spec.label), h('span', { class: 'depth-sim', role: 'note' }, SIM_LINE), q,
+      h('p', { class: 'depth-note' }, DEPTH_WORDS.bisNote)),
+    h('div', { class: 'depth-waves' },
+      h('figure', { class: 'depth-lane raw' }, cap(`EEG · ${k.rawWindowS.value} s · ±${rawUv} µV`), raw),
+      h('figure', { class: 'depth-lane trend' }, cap(`Index trend · 0–100 · ${Math.round(histS / 60)} min`), tr)),
+    h('div', { class: 'depth-nums' }, bis.el, sr.el, imp.el));
+  const draw = (t: number) => {
+    const r = sized(raw);
+    if (r) {
+      r.ctx.strokeStyle = trace(el);
+      r.ctx.lineWidth = r.k;
+      drawEegRaw(r.ctx, disp.raw, r.w, r.h, disp.rawN, rawUv);
+    }
+    const g = sized(tr);
+    if (g) {
+      g.ctx.clearRect(0, 0, g.w, g.h);
+      g.ctx.strokeStyle = trace(el);
+      g.ctx.lineWidth = 1.5 * g.k;
+      g.ctx.beginPath();
+      trend.forEach((p, i) => {
+        const x = ((p.t - (t - histS)) / histS) * g.w;
+        const y = g.h - (p.v / 100) * g.h;
+        if (i === 0) g.ctx.moveTo(x, y);
+        else g.ctx.lineTo(x, y);
+      });
+      g.ctx.stroke();
+    }
+  };
+  return {
+    el,
+    model,
+    show(e) {
+      pushEegDisplay(disp, e);
+      const b = e.values.bis;
+      if (b && b.value !== null && b.flag !== 'invalid') trend.push({ t: e.t, v: b.value });
+      while (trend.length && (trend[0] as { t: number }).t < e.t - histS) trend.shift();
+      setText(bis.v, fmt(b, 0));
+      setText(sr.v, fmt(e.values.bisSr, 0));
+      setText(imp.v, fmt(e.values.eegImp, 1));
+      const quality = e.flags.invalid ? 'invalid' : e.flags.questionable ? 'questionable' : 'good';
+      q.dataset.q = quality;
+      setText(q, DEPTH_WORDS.quality[quality]);
+      draw(e.t);
+    },
+  };
+}
+
 /** One face per EEG model of the registry; a model without its own face wears the generic one. */
-export const DEPTH_FACES: Readonly<Record<string, (model: string) => DepthFace>> = { generic: genericFace };
+export const DEPTH_FACES: Readonly<Record<string, (model: string) => DepthFace>> = { generic: genericFace, bisType: bisTypeFace };
 
 /** The window in `parent` (the follower's stage, over its monitor): a face once the device reads, else "no device". */
 export function mountDepthWindow(parent: HTMLElement): DepthWindow {

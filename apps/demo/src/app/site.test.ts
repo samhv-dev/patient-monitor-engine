@@ -4,8 +4,8 @@ import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, EEG_CHOICES, gas, loadSite,
 
 describe('site profile', () => {
   it('keeps known values and replaces anything else with the default', () => {
-    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic', eegModel: 'generic' })).toEqual({
-      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic', eegModel: 'generic',
+    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic', eegModel: 'generic', pumpRack: ['drip', 'syringe'] })).toEqual({
+      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic', eegModel: 'generic', pumpRack: ['drip', 'syringe'],
     });
     expect(DEFAULT_SITE.drugNames).toBe('us'); // "epinephrine / norepinephrine" unless the site chooses
     expect(parseSite({ skin: 'nonsense', fps: 144, theme: 'neon', defibModel: 'lifepak-like', eegModel: 'bis' })).toEqual(DEFAULT_SITE); // E12: an unbuilt reader is no choice
@@ -23,11 +23,30 @@ describe('site profile', () => {
   });
 });
 
+// Plan pump-rack-tci.md A1 (§5; PQ1 = C, "1–8, default 4"; PQ2 = B): the room's pump rack, each channel's kind, kept
+// with the room's other choices so it survives a restart of the instructor's computer
+describe("the room's pump rack", () => {
+  it('is four syringe channels by default (a TIVA tower is syringes, §5)', () => {
+    expect(DEFAULT_SITE.pumpRack).toEqual(['syringe', 'syringe', 'syringe', 'syringe']);
+  });
+  it('keeps 1 to 8 channels of the two kinds, and falls back to the default for anything else', () => {
+    expect(parseSite({ pumpRack: ['drip'] }).pumpRack).toEqual(['drip']);
+    expect(parseSite({ pumpRack: Array(8).fill('drip') }).pumpRack).toHaveLength(8);
+    for (const bad of [[], Array(9).fill('syringe'), ['syringe', 'tci'], 'syringe', null, [1]]) expect(parseSite({ pumpRack: bad }).pumpRack, JSON.stringify(bad)).toEqual(DEFAULT_SITE.pumpRack);
+  });
+  it('survives a restart', () => {
+    vi.stubGlobal('localStorage', new MemoryStorage());
+    saveSite({ ...DEFAULT_SITE, pumpRack: ['syringe', 'drip', 'drip'] });
+    expect(loadSite().pumpRack).toEqual(['syringe', 'drip', 'drip']);
+    vi.unstubAllGlobals();
+  });
+});
+
 // EEG plan E12: the room's depth-of-anaesthesia device, from the engine's EEG registry (built readers only)
 describe("the room's depth-of-anaesthesia device", () => {
   it('is off by default (no EEG: the engine computes none, D4), offers the registry\'s built readers, and is kept per room', () => {
     expect(DEFAULT_SITE.eegModel).toBeNull();
-    expect(EEG_CHOICES).toEqual([{ id: 'generic', label: 'Processed EEG (generic)' }]);
+    expect(EEG_CHOICES).toEqual([{ id: 'generic', label: 'Processed EEG (generic)' }, { id: 'bisType', label: 'BIS-type index, computed from published components' }]); // E7 adds the BIS-type reader
     vi.stubGlobal('localStorage', new MemoryStorage());
     saveSite({ ...DEFAULT_SITE, eegModel: 'generic' });
     expect(loadSite().eegModel).toBe('generic');

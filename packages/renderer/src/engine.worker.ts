@@ -46,9 +46,34 @@ function answer(msg: FromWorker, transfer?: Transferable[]): void {
   else scope.postMessage(msg);
 }
 
+/**
+ * Brief 195: why the simulation stopped (null: it runs). A throw while the engine steps (a frame, a catch-up, a
+ * fast-forward step) can leave it half a tick on: one module stepped and the next not, the sweep half drawn. Run on, it
+ * would show a patient no model computed, so it does not: the core is dropped here, for good, the page is told the
+ * error's message (`stopped`), and every later request is answered with the reason, never left waiting. The way on is
+ * the page's (a new monitor: Restart the patient, or a reload).
+ */
+let stoppedBy: string | null = null;
+const why = (): string => (stoppedBy === null ? 'not initialised' : `the simulation stopped: ${stoppedBy}`);
+function stop(err: unknown): void {
+  stoppedBy = err instanceof Error ? err.message : String(err);
+  core = null;
+  release(); // what the engine generated before the throw happened; it goes first
+  scope.postMessage({ type: 'stopped', message: stoppedBy });
+}
+/** One engine step; a throw stops the simulation (above). */
+function step(f: (c: MonitorCore) => void): void {
+  if (!core) return;
+  try {
+    f(core);
+  } catch (err) {
+    stop(err);
+  }
+}
+
 function loop(t: number): void {
-  core?.frame(performance.timeOrigin + t);
-  scope.requestAnimationFrame?.(loop);
+  step((c) => c.frame(performance.timeOrigin + t));
+  if (core) scope.requestAnimationFrame?.(loop); // stopped: the chain ends here, said (not an uncaught error)
 }
 
 function onMessage(ev: MessageEvent<ToWorker>): void {
@@ -59,6 +84,7 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         const ctx = m.canvas.getContext('2d', { alpha: false, desynchronized: true }) as unknown as Ctx2D;
         unread = 0;
         held = null;
+        stoppedBy = null;
         core = new MonitorCore(m.canvas, ctx, m.size, m.opts, postEvents);
         // FX-11a: the watchdog sees a long run working. Not an event batch: it is never held for an eventsAck (#310)
         core.onProgress = () => scope.postMessage({ type: 'progress' });
@@ -73,20 +99,20 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         return;
       case 'frame':
         if (useRaf) return;
-        core?.frame(m.epochMs);
-        scope.postMessage({ type: 'framed' }); // the page posts the next frame only now (worker-host.ts, `inFlight`)
+        step((c) => c.frame(m.epochMs));
+        scope.postMessage({ type: 'framed' }); // ALWAYS, a frame that threw too: the page posts the next only now (worker-host.ts, `inFlight`)
         return;
       case 'catchUp':
-        core?.catchUp(m.epochMs);
+        step((c) => c.catchUp(m.epochMs));
         return;
       case 'command': {
-        const result = core ? core.command(m.cmd) : { accepted: false, tick: 0, reason: 'not initialised' };
+        const result = core ? core.command(m.cmd) : { accepted: false, tick: 0, reason: why() };
         answer({ type: 'result', reqId: m.reqId, result });
         return;
       }
       case 'commands': {
         // R15: one message, one task — the engine runs no tick between these dispatches
-        const results = m.cmds.map((c) => (core ? core.command(c) : { accepted: false, tick: 0, reason: 'not initialised' }));
+        const results = m.cmds.map((c) => (core ? core.command(c) : { accepted: false, tick: 0, reason: why() }));
         scope.postMessage({ type: 'results', reqId: m.reqId, results });
         return;
       }
@@ -113,7 +139,7 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         return;
       case 'snapshot':
         if (core) answer({ type: 'snapshot', reqId: m.reqId, snapshot: core.engine.snapshot() });
-        else answer({ type: 'error', message: 'not initialised', reqId: m.reqId });
+        else answer({ type: 'error', message: why(), reqId: m.reqId });
         return;
       case 'plan':
         core?.setPlan(m.plan);
@@ -123,7 +149,7 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         return;
       case 'capture12': // The 12 lead arrays are transferred, not copied
         try {
-          if (!core) throw new Error('not initialised');
+          if (!core) throw new Error(why());
           const capture = core.capture12();
           answer({ type: 'capture12', reqId: m.reqId, capture }, Object.values(capture.leads).map((a) => a.buffer));
         } catch (err) {
@@ -131,12 +157,17 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         }
         return;
       case 'advance': // a fast-forward step; its events were posted before this answer
-        if (!core) throw new Error('not initialised');
-        answer({ type: 'advanced', reqId: m.reqId, ...core.advance(m.ticks, m.last) });
+        if (!core) throw new Error(why());
+        try {
+          answer({ type: 'advanced', reqId: m.reqId, ...core.advance(m.ticks, m.last) });
+        } catch (err) {
+          stop(err); // a fast-forward step is the engine stepping too
+          throw err; // …and its request is answered with the error (below)
+        }
         return;
       case 'restore':
         try {
-          if (!core) throw new Error('not initialised');
+          if (!core) throw new Error(why());
           core.restore(m.snapshot); // The lanes restart with the engine
           answer({ type: 'restored', reqId: m.reqId });
         } catch (err) {

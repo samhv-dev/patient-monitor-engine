@@ -38,6 +38,9 @@ export const WORKER_SILENT_MS = 3000;
 const CATCHUP_GRACE_MS = 30_000;
 const WATCH_MS = 500;
 
+/** Brief 195: the reason a monitor whose engine threw while it stepped gives (`pme-monitor-failed`'s detail). */
+export const stoppedReason = (message: string): string => `an error in the simulation: ${message}`;
+
 export interface Host {
   readonly canvas: HTMLCanvasElement;
   readonly path: Promise<RenderPath>;
@@ -121,22 +124,43 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
   // has ended, as the worker answers its messages in order: never inside a step.
   const yields = taskYield();
   let busy: Promise<unknown> | null = null;
-  const after = <T>(f: () => T): Promise<T> => (busy ? busy.then(f, f) : Promise.resolve(f()));
+  // Brief 195: a throw while the engine steps stops it for good, as on the worker (engine.worker.ts `stop`): the frame
+  // loop ends, the page is told (`pme-monitor-failed`), and every later request rejects with the reason
+  let failure: Error | null = null;
+  let closed = false;
+  const after = <T>(f: () => T): Promise<T> => (failure ? Promise.reject(failure) : busy ? busy.then(f, f) : Promise.resolve(f()));
   let raf = 0;
   let hiddenTimer: ReturnType<typeof setInterval> | null = null;
+  const stop = (err: unknown) => {
+    failure = new Error(stoppedReason(err instanceof Error ? err.message : String(err)));
+    cancelAnimationFrame(raf);
+    if (hiddenTimer !== null) clearInterval(hiddenTimer);
+    hiddenTimer = null;
+    canvas.dispatchEvent(new CustomEvent('pme-monitor-failed', { bubbles: true, detail: { reason: failure.message } }));
+  };
+  const step = (f: () => void): boolean => {
+    if (failure) return false;
+    try {
+      f();
+      return true;
+    } catch (err) {
+      stop(err);
+      return false;
+    }
+  };
   const loop = (t: number) => {
-    core.frame(epochNow(t));
-    raf = requestAnimationFrame(loop);
+    if (step(() => core.frame(epochNow(t)))) raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
   const onVis = () => {
+    if (failure) return;
     const hidden = document.visibilityState === 'hidden';
     core.setVisible(!hidden);
-    if (hidden && hiddenTimer === null) hiddenTimer = setInterval(() => core.catchUp(epochNow()), HIDDEN_PUMP_MS);
+    if (hidden && hiddenTimer === null) hiddenTimer = setInterval(() => step(() => core.catchUp(epochNow())), HIDDEN_PUMP_MS);
     if (!hidden && hiddenTimer !== null) {
       clearInterval(hiddenTimer);
       hiddenTimer = null;
-      core.catchUp(epochNow());
+      step(() => core.catchUp(epochNow()));
     }
   };
   document.addEventListener('visibilitychange', onVis);
@@ -147,7 +171,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
     command: (cmd) => after(() => core.command(cmd)),
     commands: (cmds) => after(() => cmds.map((c) => core.command(c))),
     snapshot: () => after(() => core.engine.snapshot()),
-    restore: (s) => (busy ? busy.then(() => core.restore(s), () => core.restore(s)) : (async () => core.restore(s))()), // The lanes restart with the engine
+    restore: (s) => (failure ? Promise.reject(failure) : busy ? busy.then(() => core.restore(s), () => core.restore(s)) : (async () => core.restore(s))()), // The lanes restart with the engine
     control: (m) => {
       if (m.type === 'resize') core.resize(m.size);
       else if (m.type === 'timeScale') core.clock.timeScale = m.k;
@@ -158,16 +182,18 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
       else if (m.type === 'ibpScales') core.setIbpScales(m.scales);
       else core.calibrate(m.pxPerMm);
     },
-    capture12: () => (busy ? after(() => core.capture12()) : Promise.resolve().then(() => core.capture12())),
+    capture12: () => (busy || failure ? after(() => core.capture12()) : Promise.resolve().then(() => core.capture12())),
     advance: (ticks, last) => {
+      if (failure) return Promise.reject(failure);
       const run = () => core.advanceInSlices(ticks, last, yields.next);
       const p = busy ? busy.then(run, run) : run();
       busy = p;
       const done = () => void (busy === p && (busy = null));
-      p.then(done, done);
+      p.then(done, (err: unknown) => (done(), !closed && !failure && stop(err))); // a fast-forward step is the engine stepping too
       return p;
     },
     destroy: () => {
+      closed = true; // the step's rejection now is the destroy's, not an error of the engine
       yields.close();
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
@@ -315,6 +341,11 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         if (late) canvas.dispatchEvent(new CustomEvent('pme-monitor-worker-ready', { bubbles: true, detail: { readyMs: Math.round(performance.now() - t0), path: m.path } }));
         resolve(m.path);
       } else if (m.type === 'framed') inFlight = false;
+      else if (m.type === 'stopped') {
+        // Brief 195: the engine threw while it stepped and stopped for good (engine.worker.ts `stop`): a failure, said
+        inFlight = false;
+        fail(new Error(stoppedReason(m.message)));
+      }
       else if (m.type === 'events') {
         // read, then acknowledged: the worker sends the next batch only now, so a slow page holds one batch, not a queue
         try {

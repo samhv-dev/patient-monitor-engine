@@ -7,7 +7,7 @@ import { LIBRARY } from '../scenarios.ts';
 import { docOf, formOf, sectionOf } from './form.ts';
 
 const FILES = {
-  ...import.meta.glob<string>('../showcase/*.json', { eager: true, query: '?raw', import: 'default' }),
+  ...import.meta.glob<string>(['../showcase/*.json', '!../showcase/ports.json'], { eager: true, query: '?raw', import: 'default' }),
   ...import.meta.glob<string>('../../../../../packages/controller/scenarios/*.json', { eager: true, query: '?raw', import: 'default' }),
 };
 const fileOf = (id: string): string => {
