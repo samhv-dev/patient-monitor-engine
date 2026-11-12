@@ -27,7 +27,7 @@ describe('CI WebKit rig (brief 203)', () => {
   it('runs every e2e container without core dumps', () => {
     const ci = read('.github/workflows/ci.yml');
     const e2e = ci.slice(ci.indexOf('\n  e2e:'), ci.indexOf('\n  e2e-count:') > 0 ? ci.indexOf('\n  e2e-count:') : undefined);
-    const options = /container:\s*\n\s*image:[^\n]*\n\s*options:([^\n]*)/.exec(e2e)?.[1] ?? '';
+    const options = /^\s+options:([^\n]*)$/m.exec(e2e.slice(e2e.indexOf('container:')))?.[1] ?? '';
     expect(options).toContain('--ulimit core=0');
   });
 });
