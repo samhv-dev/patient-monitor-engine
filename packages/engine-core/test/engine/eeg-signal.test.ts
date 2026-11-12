@@ -105,6 +105,11 @@ describe('EEG channel on the engine', () => {
       e.on((x) => {
         if (x.type === 'eegReading') return;
         if (x.type === 'measurement' && Object.keys(x.values).every((id) => ['sef', 'mf', 'eegSr', 'eegImp'].includes(id))) return;
+        // E12 (Q9): the state event's `eeg` is the EEG's own (its artefacts' state, for the instructor's sheet)
+        if (x.type === 'state' && 'eeg' in x) {
+          const { eeg: _eeg, ...rest } = x;
+          return void evs.push(rest as EngineEvent);
+        }
         evs.push(x);
       });
       if (withEeg) ok(e, eeg('on'));

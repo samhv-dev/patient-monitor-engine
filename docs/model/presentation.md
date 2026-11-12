@@ -171,6 +171,12 @@ renderer, audio and skin contracts.
 |---|---|---|---|---|
 | `CPU_WINDOW_MS` | `2000` | ms | — | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). They run only while Home is on screen. What each one measures, exactly: - Engine: the median time of one 20-ms engine tick, measured by engine-bench.worker.ts on the same engine build in a background thread of this page (the monitor's own worker has no timing hook). Updated every 5 s. - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); a browser without it (Safari, Firefox) has no Memory tile (MUI-17). The workers' heaps (the monitor's engine among them) are not in it. - CPU, this app: the MAIN THREAD's busy fraction over the last 2 s, in % of one core. Busy time = the long tasks a `PerformanceObserver` reports (`longtask`, every task of 50 ms or more, exact) + the frame overruns seen by requestAnimationFrame (an interval longer than 1.5 frames counts its excess over one frame as busy) that no long task already covers. Short tasks that delay no frame are not seen, and the monitor's engine and drawing run in their own worker thread, so this is the instructor page's own load, not the whole browser's. MUI-17: the owner's 2 s (it was 5 s: a change of load took 5 s to show). 2 s holds 120 frames at 60 Hz, so one frame's overrun (16.7 ms) moves the tile by 0.8 % — finer than the whole-percent it prints. |
 
+### [`apps/demo/src/app/panel/eeg.ts`](../../apps/demo/src/app/panel/eeg.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `LOOSE_ELECTRODE_KOHM` | `20` | — | [ENG: control; an electrode lifted off the skin: well over the 5 kΩ limit of the generic reader (Ch36 p. 1145 gives 5 or 8 kΩ by device), so every device's quality flag reads it] | The loose electrode's impedance, kΩ [ENG: control; an electrode lifted off the skin: well over the 5 kΩ limit of the generic reader (Ch36 p. 1145 gives 5 or 8 kΩ by device), so every device's quality flag reads it]. |
+
 ### [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -624,6 +630,7 @@ renderer, audio and skin contracts.
 | `busyFraction` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | The busy fraction (0–1) of the main thread over [now − windowMs, now] (method above). |
 | `memoryMb` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | This page's JS heap in MB, or null where the browser does not say (only Chromium has `performance.memory`). |
 | `oxygenBlock` | [`apps/demo/src/app/oxygen.ts`](../../apps/demo/src/app/oxygen.ts) | Why the oxygen control is off now, or null when it may act: |
+| `eegGroup` | [`apps/demo/src/app/panel/eeg.ts`](../../apps/demo/src/app/panel/eeg.ts) | The Devices sheet's EEG group: |
 | `describeIbpScale` | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | The mode and the numbers in words. |
 | `ibpScalesControl` | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | The control; |
 | `nibpStartCommand` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | O2 (research/34 §8 O2): |
@@ -978,6 +985,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/panel/defib.ts`](../../apps/demo/src/app/panel/defib.ts) | Defib, pacing & CPR (research/13 §4.3 item 5). |
 | [`apps/demo/src/app/panel/devices.ts`](../../apps/demo/src/app/panel/devices.ts) | Devices & alarms (research/13 §4.3 item 6). |
 | [`apps/demo/src/app/panel/drugs.ts`](../../apps/demo/src/app/panel/drugs.ts) | Drugs & fluids (research/13 brief §7 "Dose picker"): find a drug by name (or another name: "noradrenaline"), pick a preset or type a dose, see the absolute dose for this patient's weight, then Give (applies now: a bolus |
+| [`apps/demo/src/app/panel/eeg.ts`](../../apps/demo/src/app/panel/eeg.ts) | EEG artefacts (EEG plan E12, Q9). |
 | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | E130: the IBP1 (arterial) and IBP2 (venous) lane scales, per channel: Fixed (the skin's own), a Range the instructor types within 0–200 mmHg, or Auto (judged every 30 s of sim time from discrete ranges, renderer ibp-scal |
 | [`apps/demo/src/app/panel/log.ts`](../../apps/demo/src/app/panel/log.ts) | Log (research/13 §4.3 item 8): the debrief view — every instructor, learner, scenario and alarm event with the sim time, filters, notes and bookmarks, and CSV/JSON export. |
 | [`apps/demo/src/app/panel/panel.ts`](../../apps/demo/src/app/panel/panel.ts) | The instructor panel (research/13 §4.3, brief §7): eight tabs in the order they are used, the staged-changes footer (the controller pages' stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), ke |
@@ -1222,6 +1230,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/controller-pages.e2e.ts`](../../apps/demo/e2e/controller-pages.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/controller-screens.e2e.ts`](../../apps/demo/e2e/controller-screens.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/debrief.e2e.ts`](../../apps/demo/e2e/debrief.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/depth-artefacts.e2e.ts`](../../apps/demo/e2e/depth-artefacts.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/depth-window.e2e.ts`](../../apps/demo/e2e/depth-window.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/device-layer-page.e2e.ts`](../../apps/demo/e2e/device-layer-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/drug-evidence-page.e2e.ts`](../../apps/demo/e2e/drug-evidence-page.e2e.ts) | 0 | 0 |
@@ -1335,6 +1344,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/debrief.test.ts`](../../apps/demo/src/app/debrief.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/defib-model-session.dom.test.ts`](../../apps/demo/src/app/defib-model-session.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/defib-model-sync.test.ts`](../../apps/demo/src/app/defib-model-sync.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/describe-eeg.test.ts`](../../apps/demo/src/app/describe-eeg.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-lab.test.ts`](../../apps/demo/src/app/describe-lab.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-ventilation.test.ts`](../../apps/demo/src/app/describe-ventilation.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/drugs.test.ts`](../../apps/demo/src/app/drugs.test.ts) | 0 | 0 |
@@ -1365,6 +1375,8 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/panel/airway.dom.test.ts`](../../apps/demo/src/app/panel/airway.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/defib.dom.test.ts`](../../apps/demo/src/app/panel/defib.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/devices.dom.test.ts`](../../apps/demo/src/app/panel/devices.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/eeg-artefacts-engine.test.ts`](../../apps/demo/src/app/panel/eeg-artefacts-engine.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/eeg.dom.test.ts`](../../apps/demo/src/app/panel/eeg.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/ibp-scales.dom.test.ts`](../../apps/demo/src/app/panel/ibp-scales.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/panel-load-tab.dom.test.ts`](../../apps/demo/src/app/panel/panel-load-tab.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/scenario.dom.test.ts`](../../apps/demo/src/app/panel/scenario.dom.test.ts) | 0 | 0 |

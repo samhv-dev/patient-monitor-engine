@@ -87,4 +87,8 @@ export type HemoEvent =
        *  when the event is committed, as it does `sensors` (optional in the type for the same reason: the haemodynamic
        *  pipeline builds the record without it). */
       signals?: StateSignals;
+      /** While an EEG device is on (EEG plan E12, the owner's Q9): its model and the settings the instructor switches —
+       *  each electrode's impedance (kΩ) and the ECG pickup flag — so the instructor's sheet shows the engine's state,
+       *  on a Remote too. Assembled with `sensors`; absent while the EEG is off (D4). */
+      eeg?: { model: string; impedanceKOhm: number[]; ecgPickup: boolean };
     }; // The brief §7.3 `alarm` event (NIBP INOP) is the copy in types.ts
