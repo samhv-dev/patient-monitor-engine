@@ -1,6 +1,7 @@
 // The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and
 // alarm defaults, and the shell's units and speed. It belongs to the room, not to a case, so loading a scenario never
 // changes it. Stored per browser (a convenience, research/13 brief §5) and exportable as one JSON file.
+import { EEG_DEVICES, EEG_MODEL_IDS } from '@pme/engine-core';
 import { resolveSkin, type Skin } from '@pme/skins';
 import { store } from './store.ts';
 
@@ -23,6 +24,10 @@ export interface SiteProfile {
    *  `DEFIB_CHOICES` id, which the host sends to the engine at every patient mount, or null (not chosen: the monitor
    *  style's own defibrillator values, as before). */
   defibModel: string | null;
+  /** The room's depth-of-anaesthesia device (EEG plan E12): an `EEG_CHOICES` id (the engine's EEG registry), which the
+   *  host switches on (`device eeg on`, then `device eeg model <id>`) at every patient mount, or null (no EEG device:
+   *  the engine computes no EEG, D4, as before). */
+  eegModel: string | null;
 }
 
 /** Monitor choices, in the words the Settings and Start screens use. */
@@ -42,6 +47,12 @@ export const MONITORS: ReadonlyArray<{ id: string; label: string; hint: string }
  * with its own sourced block, and one line here.
  */
 export const DEFIB_CHOICES: ReadonlyArray<{ id: string; label: string; look: string }> = [{ id: 'generic', label: 'Generic defibrillator', look: 'zoll-like' }];
+/**
+ * The depth-of-anaesthesia devices a room can choose (EEG plan E12): the engine's EEG registry, which holds the built
+ * readers only (l3/eeg-devices/registry.ts; today the generic one), each with its own screen label. A new reader joins
+ * here by joining the registry.
+ */
+export const EEG_CHOICES: ReadonlyArray<{ id: string; label: string }> = EEG_MODEL_IDS.map((id) => ({ id, label: EEG_DEVICES[id].spec.label }));
 /** The Defib tab's energy before R5b (panel/defib.ts), kept when no model is chosen. */
 const NO_MODEL_ENERGY_J = 200;
 /** A model's energies as the panel offers them; no model chosen = the panel's energy as before. */
@@ -60,7 +71,7 @@ export function pacerDefaults(model: string | null): { ratePpm: number; pausePct
 export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];
 export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark'], ['projector-light', 'Projector (light)'], ['ecg-grid', 'ECG paper grid']];
 
-export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null };
+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, eegModel: null };
 
 /** A stored or imported profile; the keys the profile no longer has (`instructor` and `panel`, the two-view choices
  *  retired on 6 November 2026) are ignored, so an older site file still imports. */
@@ -76,6 +87,7 @@ export function parseSite(raw: unknown): SiteProfile {
     sensorsOff: o.sensorsOff === true,
     drugNames: o.drugNames === 'uk' ? 'uk' : 'us',
     defibModel: DEFIB_CHOICES.some((c) => c.id === o.defibModel) ? (o.defibModel as string) : d.defibModel,
+    eegModel: EEG_CHOICES.some((c) => c.id === o.eegModel) ? (o.eegModel as string) : d.eegModel,
   };
 }
 
