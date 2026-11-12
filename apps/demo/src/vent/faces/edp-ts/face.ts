@@ -147,7 +147,7 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   handle.textContent = SIM_WORD;
   void env.translate?.(SIM_WORD).then((t) => { if (t) handle.textContent = t; }).catch(() => {});
   handle.onclick = () => tools.open();
-  const strip = el('div', { class: 'edp-strip' }, sil, why, handle);
+  const strip = el('div', { class: 'edp-strip' }, why, sil, handle);
   body.append(strip, d.reasons);
 
   // the drawer's switch: marks every control not simulated yet (off by default; face state only, never written to cfg,
