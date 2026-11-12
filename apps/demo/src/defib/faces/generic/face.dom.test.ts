@@ -23,7 +23,7 @@ const status = (o: Partial<DefibStatusIn> = {}): DefibStatusIn => ({ defib: { en
 function mount() {
   const sent: DefibCommand[] = [];
   let feed = (_s: DefibStatusIn) => {};
-  const core = createDefibCore({ send: (c) => (sent.push(c), `c${sent.length}`), onStatus: (fn) => ((feed = fn), () => {}), onAck: () => () => {} }, genericFace.spec);
+  const core = createDefibCore({ newId: () => `c${sent.length + 1}`, send: (c) => void sent.push(c), onStatus: (fn) => ((feed = fn), () => {}), onAck: () => () => {} }, genericFace.spec);
   const presses: Array<[string, Phase]> = [];
   const press = core.press;
   core.press = (k, p) => (presses.push([k, p]), press(k, p));

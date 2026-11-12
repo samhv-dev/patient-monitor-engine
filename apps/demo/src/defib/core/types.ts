@@ -91,9 +91,11 @@ export interface DefibFaceSpec {
   revertMs: number | null;
 }
 
-/** The window's end of the wire: how a command goes out (returning its id), and what comes back. */
+/** The window's end of the wire: how a command goes out, and what comes back. */
 export interface DefibDriver {
-  send(c: DefibCommand): string;
+  /** A fresh command id. The core notes it as its own BEFORE `send`, so an ack the send answers at once is not missed. */
+  newId(): string;
+  send(c: DefibCommand, id: string): void;
   /** Every `deviceStatus` of this window's own engine. */
   onStatus(fn: (s: DefibStatusIn) => void): () => void;
   /** The host's ack of a command (by id). */

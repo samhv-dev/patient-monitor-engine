@@ -20,7 +20,8 @@ function fakeDriver() {
   const ackFns = new Set<(id: string, ok: boolean, reason?: string) => void>();
   let n = 0;
   const d: DefibDriver = {
-    send: (c) => (sent.push([`c${++n}`, c]), `c${n}`),
+    newId: () => `c${++n}`,
+    send: (c, id) => void sent.push([id, c]),
     onStatus: (fn) => (statusFns.add(fn), () => void statusFns.delete(fn)),
     onAck: (fn) => (ackFns.add(fn), () => void ackFns.delete(fn)),
   };
@@ -83,7 +84,7 @@ describe('the defibrillator core: presses', () => {
     core.press('shock', 'down');
     core.press('shock', 'up');
     core.press('shock', 'click');
-    expect(f.sent.map(([, c]) => (c as { action: { value: unknown } }).action.value)).toEqual([{ phase: 'down', button: 'panel' }, { phase: 'up', button: 'panel' }]);
+    expect(f.sent.map(([, c]) => (c.action as { value: unknown }).value)).toEqual([{ phase: 'down', button: 'panel' }, { phase: 'up', button: 'panel' }]);
   });
 
   it('an unknown key sends nothing', () => {

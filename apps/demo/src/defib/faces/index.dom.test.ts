@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 // The defibrillator's faces (plan defibrillator-zoll-m2.md §4.2, piece F0): the registry and the room model → face
 // mapping. Only the generic face is built; a `zoll-m2` room shows it until F1 registers the M2's own face. The skin the
 // window's monitor wears is instrument.ts defibSkin's, unchanged.
