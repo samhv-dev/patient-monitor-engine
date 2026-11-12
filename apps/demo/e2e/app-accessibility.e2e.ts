@@ -291,8 +291,9 @@ test("accessibility: the learner remote's Drugs tab with the bench open and a tr
 });
 
 // Plan vent-skin-edp-ts.md V1: the EDP-TS ventilator face (vent-hamilton.html?face=edp-ts) at the laptop size and at
-// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast (the
-// greyed words of an unavailable control included: they stay 4.5:1), one h1, a main landmark, no sideways scroll.
+// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast, one h1,
+// a main landmark, no sideways scroll. Since VF (brief 159) the drawn device keeps its photographed colours: contrast is
+// not checked inside `.edp-dev` (the audit's one `drawnDevice` exemption); the strip, handle and drawer keep it.
 test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
   test.setTimeout(120_000);
   const found: string[] = [];
@@ -300,13 +301,13 @@ test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: vp });
     const page = await ctx.newPage();
     await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
-    await page.waitForSelector('main.edp .edp-key');
+    await page.waitForSelector('main.edp .edp-tile');
     const at = `${vp.width}×${vp.height}`;
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
     await page.click('[data-ctl="side:mode"]');
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
     await page.click('[data-ctl="side:alarmLimits"]');
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
     await ctx.close();
   }
   expect(found).toEqual([]);
