@@ -380,22 +380,31 @@ before it is confirmed) is the app's core. This is the same cut as the ventilato
   whose directions are sourced and whose sizes are [FIT];
 - for cardioversion, curves by rhythm and energy.
 
-Its AF curve is calibrated on Mittal 2000 (`outcome.ts:104–120`). The guide reports a trial with the same design and the same first-shock figure, without naming it (randomised
-multicentre cardioversion of AF, rectilinear biphasic 70/120/150/170 J): first-shock 68 % at 70 J, and Kaplan–Meier
-failure 0.318 / 0.147 / 0.091 / 0.057 after shocks 1–4 [G A-28], [G A-29]. The guide does not say whether
-70/120/150/170 J are settings or delivered energies, and 170 J is not an M2 setting [G A-2]: the trial used an earlier
-device. Table A-2 shows how far the two can differ: a 70 J selection delivers 49 J into 25 Ω, 76 J into 50 Ω and 87 J
-into 125 Ω [G A-16]. M0a checks in Mittal 2000 itself which energy it reports (WANTED, §7.2).
+Its AF curve is calibrated on Mittal 2000 (`outcome.ts:104–120`), which M0a has now read in full (research note §6). It
+is the guide's AF trial [G A-28], [G A-29]: first-shock 68 % at 70 J, Kaplan–Meier failure 0.318 / 0.147 / 0.091 / 0.057
+after shocks 1–4. **70/120/150/170 J are SELECTED energies**, nominal into a 50-Ω load ("For a selected energy …",
+Mittal 2000 p. 1283; Table 3 footnote "Energy delivered into a 50-Ω load", p. 1285); the delivered energy of the first
+shock was measured separately, 77 ± 7 (54–86) J. The trial's device was a ZOLL PD-2100, not the M2 (170 J is not an M2
+setting [G A-2]). M0a's findings on the curve, for a later engine piece, not changed here (note §6.5): the code comment's
+"delivered" is wrong (F1); the curve, drawn independently per shock, gives 99.9 % cumulative over the escalation against
+the trial's 94 %, because the paper reports success at 120–170 J only in patients who failed every lower shock (F2); and
+it is applied to pre-excited AF, which the trial excluded (F3).
 
-**Decision for this plan.** The outcome keeps reading the SELECTED energy, as it does today, until M0a has settled what
-its sources report. Impedance enters as:
+**Decision for this plan.** The outcome reads the SELECTED energy, as it does today; M0a confirmed that this is what
+Mittal 2000's energies are. Impedance enters as:
 
 - the device's gate (15–300 Ω);
 - the delivered energy, current and impedance in the record and on screen;
-- nothing else, until a source gives an effect of impedance on success for this waveform.
+- an effect on success only as the owner rules in DQ7.
 
-The guide says efficacy was held in high-impedance patients (> 90 Ω): first shock 100 % biphasic against 63 %
-monophasic [G A-28]. That is a reason NOT to add an impedance penalty for this waveform. DQ7 asks the owner.
+What the sources say (note §9): for VF with this waveform, none of them shows an effect. Mittal 1999 (induced VF in an
+electrophysiology laboratory, apex–posterior pads) converted 58/58 episodes below 70 Ω, 67/68 at or above 70 Ω and 19/19
+at or above 90 Ω with 120 J RLB, against 40/42, 24/28 and 5/8 with 200 J monophasic (Mittal 1999 p. 1599; the guide's
+"greater than 90 ohms" [G A-28] is the paper's ≥ 90 Ω subgroup, and its confidence interval is not the paper's). Chen 2013
+(594 out-of-hospital arrests, RLB AEDs) found success flat across impedance bins, though its regression reports an odds
+ratio of 0.995 (0.992–0.999) with no unit stated (note §8.4). For AF, Mittal 2000 found success fell with impedance
+("relative risk" 0.64 per 10 Ω, 0.46–0.90), but pooled over both waveforms and over the whole escalation, with no
+RLB-only estimate (note §6.4). DQ7 asks the owner.
 
 Three corrections the M2 work brings, each with its source:
 
@@ -413,8 +422,8 @@ Three corrections the M2 work brings, each with its source:
 
 | Gap | What is missing | Why it matters | Source needed | Blocks |
 |---|---|---|---|---|
-| G-PADS | The electrical axis of the pads lead for apex–sternum and anterior–posterior placement | The AED reads only the Pads lead [G 12-4]; Manual Defib shows it at the top by default [G 6-7] | A study or textbook giving the pads lead's vector, or a lead-field projection of the two placements | E2b (E4 runs without it on the limb leads) |
-| G-TTI | The distribution of adult and paediatric transthoracic impedance with pads, and the effect of poor contact | The delivered energy and the gate | Measured impedance series (WANTED, §7.2) | E2b |
+| G-PADS | The electrical axis of the pads lead for apex–sternum and anterior–posterior placement | The AED reads only the Pads lead [G 12-4]; Manual Defib shows it at the top by default [G 6-7] | M0a read Frank 1954 and Dower 1968 in full: PROPOSED rows in Frank's image-space units, apex–sternum (+171, +65, +1) and anterior–posterior (−77, −53, −96), with a wide spread over the pad's footprint (note §10.4). Still missing: the scale to the engine's Dower rows (they are not Dower 1968's rows on one scale, note §10.5; W7), the pad-area weighting (W8) and the device's polarity | E2b (E4 runs without it on the limb leads) |
+| G-TTI | The distribution of adult and paediatric transthoracic impedance with pads, and the effect of poor contact | The delivered energy and the gate | Adults: settled as far as published (note §2, §6.2, §7.2, §8.2); the only RLB arrest series (Chen 2013) gives a mean of 134.8 Ω, a range and four bins, but no SD. Paediatric (< 8 y): still a gap; Samson 1995 is test-current only and not the ZOLL pad (note §11; W9, W10). Partial contact: no source | E2b |
 | G-THR | How pacing threshold depends on placement and patient | The guide says only that anterior–posterior usually needs less and gives typical 40–80 mA [G 16-3], [G 16-6] | Published thresholds by placement (WANTED) | E6 (until then: the existing `paceThresholdMa` as the instructor's setting, unchanged) |
 | G-CPR | How compression depth and rate set flow and pressure | Replacing `quality` by depth | Experimental or clinical depth–pressure relations (WANTED) | E3 |
 | G-FAT | How a rescuer's depth and rate drift over 2 minutes | A scripted rescuer | Fatigue studies (WANTED) | E3 (until then: depth and rate are the instructor's settings) |
@@ -656,11 +665,11 @@ choice marked `eng`, and re-checked when pictures come.
 
 | For | What | Lead (unverified, to be checked in M0a–M0d) |
 |---|---|---|
-| Algorithm reporting | Kerber RE et al. AHA statement on AED arrhythmia analysis performance, Circulation 1997;95:1677–1682 | cited by the guide itself [G A-27], [G A-34] |
-| AF cardioversion | Mittal S et al. Circulation 2000;101:1282 | already cited in `outcome.ts`; the guide reports a trial with the same design and the same 68 % at 70 J [G A-28], [G A-29] without naming it: whether it is Mittal 2000 is checked in M0a |
-| Biphasic energies | Stiell IG et al. BIPHASIC trial, Circulation 2007;115:1511–1517 | DOI 10.1161/CIRCULATIONAHA.106.648204, listed in Wigginton 2025's references |
-| G-TTI | measured transthoracic impedance with self-adhesive pads in adults and children | WANTED |
-| G-PADS | the pads lead's vector for the two placements | WANTED |
+| Algorithm reporting | Kerber RE et al. AHA statement on AED arrhythmia analysis performance, Circulation 1997;95:1677–1682 | cited by the guide itself [G A-27], [G A-34]. DOI 10.1161/01.cir.95.6.1677, verified in M0a (Europe PMC record, DOI resolves); full text not read (`docs/research/defib-zoll-m2-pads-impedance.md` §4) |
+| AF cardioversion | Mittal S et al. Circulation 2000;101:1282–1287 | READ IN FULL (M0a, brief 181; note §6): the guide's AF trial, DOI 10.1161/01.cir.101.11.1282. 70/120/150/170 J are SELECTED energies (p. 1283, p. 1285). The paper's TTI by arm contradicts itself (note §6.2) |
+| Biphasic energies | Stiell IG et al. BIPHASIC trial, Circulation 2007;115:1511–1517 | DOI 10.1161/CIRCULATIONAHA.106.648204, listed in Wigginton 2025's references; DOI resolved and Europe PMC record checked in M0a (not read) |
+| G-TTI | measured transthoracic impedance with self-adhesive pads in adults and children | M0a: series and effects in `docs/research/defib-zoll-m2-pads-impedance.md` §2; Chen 2013, Mittal 1999 and Samson 1995 read in full (note §7, §8, §11). Still WANTED: a shock-measured biphasic pads series in children under 8, and the ZOLL pad areas (note §4, W9, W10) |
+| G-PADS | the pads lead's vector for the two placements | M0a: Frank 1954 and Dower 1968 read in full; PROPOSED rows in Frank's units (note §10). Still WANTED: the derivation of the engine's Dower matrix (W7, lead: Dower, Machado, Osborne, Clin Cardiol 1980, not verified), a large-electrode lead field (W8), the ZOLL packaging's placement instructions (W9) |
 | G-THR | transcutaneous pacing thresholds by placement | WANTED; Cummins 1993 (NEJM 328:1377, DOI 10.1056/NEJM199305133281902, from Wigginton 2025's references) for outcome, not threshold |
 | G-CPR | depth–pressure and depth–flow relations | M0c: 27 rows of measured relations in `docs/research/defib-zoll-m2-cpr.md` §1 (abstracts unless marked). The only stated form is threshold-linear, in dogs (Babbs 1983, DOI 10.1016/s0196-0644(83)80290-x: CO = a(x − x0), x0 mean 2.3 cm); human depth data are outcome and EtCO2 slopes only (Sheak 2015, DOI 10.1016/j.resuscitation.2015.01.026: +1.4 mmHg per 10 mm); no adult human depth–CPP relation found. Edelson 2006 VERIFIED: Resuscitation 71:137–145, DOI 10.1016/j.resuscitation.2006.04.008, shock success aOR 1.99 per 5 mm (abstract) — outcome, not pressure. Still WANTED: Babbs 1983, Ryu 2016, Ristagno 2007, Sheak 2015 full texts (research note §4, W1–W4) |
 | G-FAT | rescuer fatigue over 2 minutes | M0c: research note §2. Clinical with feedback: Sugerman 2009 (DOI 10.1016/j.resuscitation.2009.06.002, Table 3, full text): rate ≈ 105 /min unchanged; depth 48.3 mm flat to 90 s, 46.0 at 91–120 s, 43.7 at 151–180 s. Manikin without feedback: correct compressions fall from minute 2 (Hightower 1995, Ochoa 1998, Ashton 2002, McDonald 2013); decay within 2 min rare in paramedics (Bjørshol 2011). No clinical time course without feedback found |
@@ -710,11 +719,18 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Options:* A, the learner PIN, as the learner remote has; B, no PIN, as now.
 - *Proposal:* A.
 
-**DQ7. Impedance and the shock's success.**
-- *Explanation:* The guide reports that this waveform kept its efficacy in high-impedance patients [G A-28].
-- *Options:* A, impedance gates the shock and is shown and recorded, but does not change success; B, a penalty above
-  some impedance (needs a source).
-- *Proposal:* A.
+**DQ7. Does chest impedance change a shock's chance of success, and for which rhythm?**
+- *Explanation:* With the M2's waveform, the VF studies (an electrophysiology-laboratory trial and 594 out-of-hospital
+  arrests) found success the same at low and high impedance. In AF cardioversion, the M2's own trial found success fell
+  as impedance rose, but it measured that over both waveforms together and over the whole four-shock escalation, not for
+  one shock of this waveform; a study with another biphasic waveform found the same direction for the first shock
+  (research note §9).
+- *Options:* A, impedance gates the shock and is shown and recorded, and changes success for no rhythm; B, as A for VF,
+  and for AF a reduction using Mittal 2000's pooled figure (0.64 per 10 Ω, cumulative), applied per shock by a rule you
+  approve; C, as A for VF, and for AF Sadek 2018's first-shock figure (odds ratio of failure 1.36 per 10 Ω, a different
+  biphasic waveform); D, an effect for both rhythms (no source for this waveform supports one in VF).
+- *Proposal:* A for VF. For AF, A until a source gives a per-shock effect for this waveform; B if you accept the pooled,
+  cumulative figure as the nearest the device's own trial gives.
 
 **DQ8. The bedside monitor's VF alarm.**
 - *Explanation:* Today it reads the simulated rhythm's name, not the signal.

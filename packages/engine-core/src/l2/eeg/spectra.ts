@@ -135,6 +135,31 @@ export const SLOWING_FAST_LOSS_DB = 10;
  * dominate) [FIT: metabolic delta rise; brief research/43 P-7]. */
 export const SLOWING_DELTA_DB = 10;
 
+// --- the high-frequency fall at depth (brief 172: Akeju 2014 Anesthesiology 121:990, Purdon 2013 PNAS 110:E1142,
+// Purdon 2015 BJA 115 S1:i46) ---
+// MECHANISM. As propofol deepens, the broadband beta–gamma activity of sedation narrows and moves down into the alpha
+// band — the "traveling peak", median frequency 23.1 → 12.0 Hz and bandwidth 17.4 → 9.1 Hz from the first behavioural
+// effect to loss of consciousness (Purdon 2013 p. E1144, Fig. 3) — as thalamus and cortex entrain into a coherent alpha
+// oscillation (p. E1147, their network models), while cortical spiking is confined to a brief phase of the slow
+// oscillation and silent otherwise (p. E1148). What is left above the beta range at general anaesthesia is a steep
+// power law with no peak: the frontal spectra fall ≈ f^−4 from 20 to 40 Hz (Akeju 2014 Fig. 3C; Purdon 2015 Fig. 3A).
+// The engine's 1/f^κ background (κ ≈ 1 at depth) kept ≈ f^−1.7 there. So above HF_CORNER_HZ the background takes the
+// measured exponent, coming on with the frontal alpha through loss of responsiveness (the same process, ALPHA_LOR_ON →
+// ALPHA_LOR_FULL) and for the GABA-ergic IV share only (propofol; barbiturates and etomidate as propofol, Ch36 p. 1143
+// [INF]; the ethers' measured spectra are not read here). Amplifier noise and muscle are not this spectrum: the EMG and
+// the electrode noise are added after it (artefacts.ts) and are not changed.
+/** The exponent of the frontal propofol GA spectrum above the corner: the measured 30–39.5 Hz exponent, Akeju 2014
+ * Fig. 3C p. 995 (−18.6 → −23.0 dB: 3.76) and Purdon 2015 Fig. 3A p. i52, young (−15.3 → −20.9 dB: 4.65), the mean
+ * (read off the figures' curves against their own axis ticks, scratch/172-tools). At the reference age; age flattens
+ * it as it flattens κ (Purdon 2015 Fig. 3A: the elderly 20–39.5 Hz exponent 3.86 against the young's 4.69). */
+export const HF_SLOPE_GA = 4.2;
+/** The corner above which the background takes HF_SLOPE_GA, Hz [FIT: corner of the GA high-frequency power law, the one
+ * value that puts the propofol 3.5 µg/mL spectrum's 25–39.5 Hz levels below its alpha peak and its 25–39.5 Hz share on
+ * the measured medians; src Akeju 2014 Fig. 3C p. 995; Purdon 2015 Fig. 3A p. i52]. It is the papers' own beta/gamma
+ * boundary (Purdon 2015 p. i49: beta 12–25, gamma 25–40 Hz). Above 39.5 Hz no paper measures: the power law is
+ * continued to the 62.5 Hz Nyquist edge [INF]. */
+export const HF_CORNER_HZ = 25;
+
 // --- burst suppression (research/43 P-8; Ch36 pp. 1139–1141, 1145) ---
 /** Suppressed stretches < 5 µV (Miller Ch36 Fig. 36.6): the suppressed level, RMS µV [FIT: suppressed level, below the criterion; brief research/43 P-8]. */
 export const SUPPRESSED_UV = 1.5; // µV
@@ -223,8 +248,11 @@ export function spectrumOf(c: CortexState, m: AgentMix): EegSpectrum {
   const supW = ivShare + volShare;
   const ratio = supW > 0 ? (ivShare + m.sevoflurane * BURST_SEVO_RATIO + (m.isoflurane + m.desflurane) * BURST_ISO_RATIO) / supW : 1;
   const ff = c.suppressDrive < FORME_FRUSTE_ON ? 0 : c.suppressDrive < 1 ? (c.suppressDrive - FORME_FRUSTE_ON) / (1 - FORME_FRUSTE_ON) : 1 - c.suppress;
+  // the high-frequency fall: the background's exponent above the corner moves from κ to the measured GA exponent (aged
+  // as κ is) as the alpha comes on, for the GABA-ergic IV share
+  const hfSlope = slope + aw * ivShare * Math.max(0, HF_SLOPE_GA * (c.ageSlope / ref.slope) - slope);
   return {
-    aperiodic: { offsetDb, slope },
+    aperiodic: hfSlope > slope ? { offsetDb, slope, hfCornerHz: HF_CORNER_HZ, hfSlope } : { offsetDb, slope },
     peaks,
     suppression: { p: c.suppress, burstUv: prop * ratio, suppressedUv: SUPPRESSED_UV },
     formeFruste: clamp01(ff),
@@ -237,9 +265,17 @@ export function peakOf(s: EegSpectrum, name: EegPeakName): EegPeak {
   if (!p) throw new Error(`no ${name} peak`);
   return p;
 }
+/** The aperiodic background at f, dB re 1 µV²/Hz: offset − 10·κ·log10 f, and above the corner the high-frequency
+ * exponent instead (continuous at the corner). The generator (synth.ts) renders this same function. */
+export function aperiodicDb(ap: EegSpectrum['aperiodic'], f: number): number {
+  const v = apDb(ap.offsetDb, ap.slope, f);
+  const fc = ap.hfCornerHz;
+  const hi = ap.hfSlope ?? ap.slope;
+  return fc !== undefined && f > fc && hi > ap.slope ? v - 10 * (hi - ap.slope) * Math.log10(f / fc) : v;
+}
 /** PSD at f, dB re 1 µV²/Hz. */
 export function psdDb(s: EegSpectrum, f: number): number {
-  let p = lin(apDb(s.aperiodic.offsetDb, s.aperiodic.slope, f));
+  let p = lin(aperiodicDb(s.aperiodic, f));
   for (const k of s.peaks) p += lin(k.powerDb) * Math.exp(-((f - k.fHz) ** 2) / (2 * k.widthHz ** 2));
   return dbOf(p);
 }
