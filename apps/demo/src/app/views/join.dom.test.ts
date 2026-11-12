@@ -49,6 +49,9 @@ const WORDS = {
     // L6 (plan learner-action-remote.md): the learner action remote, signed in with the learner PIN on its own page. The
     // line is the plan's draft: the owner rules the words
     { show: 'remote', title: 'Learner remote', chip: 'With the learner PIN', text: "Give drugs and infusions, send samples and read their results from this phone. Everything you give is recorded under this phone's name.", foot: 'Upright on a phone', action: true },
+    // A1 (plan pump-rack-tci.md; PQ10 = B, the owner's words, exactly): the infusion-pump rack on a tablet, signed in
+    // with the learner PIN on its own page (#/pump). The chip and the foot are this piece's, as the learner remote's
+    { show: 'pump', title: 'Infusion pumps', chip: 'With the learner PIN', text: "A rack of syringe and drip pumps for infusions and TCI. Everything you set is recorded under this tablet's name.", foot: 'Sideways on a tablet', action: true },
     // R8d: the ventilator on a tablet, signed in with the instructor's PIN (m5's card; its chip and foot say how)
     { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
     // EEG plan E12: the room's depth-of-anaesthesia device on this screen (`#/depth`)
@@ -99,7 +102,7 @@ describe('the instrument picker at #/pick (R4)', () => {
     expect(titles).not.toContain('Instructor remote');
     expect(el.textContent).not.toMatch(/tick what they noticed|SQI|EMG|BIS/);
     // R8d, L6: a PIN is named on the cards that sign in with one only (the Ventilator, the Learner remote), never asked for here
-    for (const c of cards(el)) if (c.dataset.show !== 'vent' && c.dataset.show !== 'remote') expect(c.textContent, c.dataset.show).not.toMatch(/PIN/);
+    for (const c of cards(el)) if (c.dataset.show !== 'vent' && c.dataset.show !== 'remote' && c.dataset.show !== 'pump') expect(c.textContent, c.dataset.show).not.toMatch(/PIN/);
     expect(el.querySelector('input')).toBeNull();
   });
 
@@ -149,6 +152,21 @@ describe('the instrument picker at #/pick (R4)', () => {
     expect(next.dataset.selected).toBe('true');
     expect(next.querySelector('.st')?.textContent).toBe(WORDS.lastHere);
     expect(again).not.toHaveBeenCalled();
+  });
+
+  it("A1: the Infusion pumps card says the owner's words; its Show here opens #/pump on this page (its learner-PIN form), and the choice is kept", () => {
+    const store = memory();
+    const go = vi.fn();
+    const el = pickerView({ code: CODE, store, go, open: () => expect.unreachable('the pump page is this page'), parent: document.body });
+    const pump = cards(el).find((c) => c.dataset.show === 'pump') as HTMLElement;
+    expect(pump.querySelector('h2')?.textContent).toBe('Infusion pumps');
+    expect(pump.querySelector('p')?.textContent).toBe("A rack of syringe and drip pumps for infusions and TCI. Everything you set is recorded under this tablet's name.");
+    expect(pump.querySelector('.join-pic svg')).not.toBeNull();
+    expect(pump.querySelector('.join-pic')?.textContent).toBe(''); // the drawing has no word or number, and names no maker
+    (pump.querySelector('button') as HTMLButtonElement).click();
+    expect(go).toHaveBeenCalledExactlyOnceWith('#/pump');
+    expect(store.m.get('instrument')).toBe('pump');
+    expect(cards(pickerView({ code: CODE, store, go: () => {} })).find((c) => c.dataset.show === 'pump')?.dataset.selected).toBe('true');
   });
 
   it('a stored value that is not an instrument this device can show preselects the learner monitor', () => {

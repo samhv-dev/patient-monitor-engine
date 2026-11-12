@@ -72,7 +72,8 @@ describe('the scenario builder page (B2)', () => {
   it('the start page: no drafts yet, the /2 library cards to copy, Import; a copy gets its own id and opens', async () => {
     const { p, q } = await mount();
     expect(q('.sb-drafts')?.textContent).toContain('No drafts in this browser yet');
-    expect([...p.el.querySelectorAll('.sb-start button')].map((x) => x.getAttribute('aria-label'))).toEqual(['Open a copy of Malignant hyperthermia (phases)', 'Open a copy of Class IV haemorrhage, PEA and resuscitation (phases)']);
+    expect([...p.el.querySelectorAll('.sb-start button')].map((x) => x.getAttribute('aria-label')).filter((x) => !x?.startsWith('Convert '))).toEqual([ // B7's Convert offers: port.dom.test.ts
+      'Open a copy of Malignant hyperthermia (phases)', 'Open a copy of Class IV haemorrhage, PEA and resuscitation (phases)']);
     p.el.remove();
     const { id, s } = await copy(/Malignant/);
     expect(s.get(id)).toMatchObject({ cardId: 'showcase-mh-v2-copy', title: 'Malignant hyperthermia (phases)', from: 'a copy of the library card showcase-mh-v2' });

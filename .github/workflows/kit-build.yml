@@ -1,0 +1,127 @@
+name: kit-build
+
+# The classroom kit and the site tree, built once and checked; nothing is published here. Called by kit-and-site.yml
+# (after ci passes on a merge to main: the site and the rolling `kit-latest` pre-release) and by release.yml (a `v*` tag: the kit zips
+# on that release). Uploads two workflow artifacts:
+#   kit-zips   pme-classroom-kit<S>.zip (macOS/Linux) and pme-classroom-kit-windows<S>.zip (the same kit with the
+#              official Windows Node.js in runtime/), each exactly what scripts/showcase/make-bundle.mjs writes, zipped
+#              with their file modes; <S> is "" for `naming: latest` and "-v<version>" for `naming: release`
+#   site       site.tar: the GitHub Pages tree (scripts/showcase/site-tree.mjs), made from the macOS/Linux kit's app
+# Checks, all on the UNZIPPED zips (what a user gets): the relay check on both kits (Linux), the sub-path check on the
+# site tree (Linux), the server check on the macOS/Linux kit (macOS: it starts every server through the launcher and
+# mounts a read-only disk image with hdiutil). The tests of the repository are ci.yml's; they are not run again here.
+on:
+  workflow_call:
+    inputs:
+      naming:
+        description: '"latest" (stable asset names, for kit-latest) or "release" (names carry the version, as release.yml''s do)'
+        type: string
+        required: true
+      ref:
+        description: 'the commit to build (kit-and-site: the head SHA of the ci run that passed; release: the tag commit)'
+        type: string
+        required: true
+
+permissions: {}
+
+env:
+  # The Windows kit's runtime/node.exe: the official Node.js build, pinned. The SHA-256 is the line nodejs.org publishes
+  # for this file in https://nodejs.org/dist/v22.23.5/SHASUMS256.txt (recorded 12 Nov 2026); the download must match it,
+  # and make-bundle.mjs (win-node.mjs) checks the zip against the downloaded SHASUMS256.txt again. To move to a newer
+  # Node.js (22 or later), change both lines together from that release's SHASUMS256.txt.
+  WIN_NODE_VERSION: v22.23.5
+  WIN_NODE_SHA256: 4a191082e9706866830379d577d2cc8a50c776fcd9436a8d061b063ed0d9a0e3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Windows Node.js (download, check against the pinned SHA-256)
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/win-node"; z="node-$WIN_NODE_VERSION-win-x64.zip"; mkdir -p "$d"
+          curl -fsSL --retry 3 -o "$d/$z" "https://nodejs.org/dist/$WIN_NODE_VERSION/$z"
+          curl -fsSL --retry 3 -o "$d/SHASUMS256.txt" "https://nodejs.org/dist/$WIN_NODE_VERSION/SHASUMS256.txt"
+          grep -qx "$WIN_NODE_SHA256  $z" "$d/SHASUMS256.txt" || { echo "::error::SHASUMS256.txt does not list the pinned SHA-256 for $z"; exit 1; }
+          echo "$WIN_NODE_SHA256  $d/$z" | sha256sum -c -
+      - name: Build the two kits (make-bundle.mjs) and zip them
+        run: |
+          set -euo pipefail
+          S=""
+          if [ "${{ inputs.naming }}" = release ]; then
+            V="$GITHUB_REF_NAME"
+            [ "$GITHUB_REF_TYPE" = tag ] || V="v$(node -p "require('./packages/renderer/package.json').version")" # dry run off a branch, as release.yml
+            S="-$V"
+          elif [ "${{ inputs.naming }}" != latest ]; then echo "::error::naming must be latest or release"; exit 1; fi
+          K="$RUNNER_TEMP/kits"; mkdir -p "$K" "$RUNNER_TEMP/kit-zips"
+          node scripts/showcase/make-bundle.mjs "$K/pme-classroom-kit" > "$RUNNER_TEMP/kit-build.log"
+          node scripts/showcase/make-bundle.mjs "$K/pme-classroom-kit-windows" --win-node "$RUNNER_TEMP/win-node/node-$WIN_NODE_VERSION-win-x64.zip" > "$RUNNER_TEMP/kit-windows-build.log"
+          tail -n 15 "$RUNNER_TEMP/kit-build.log"; cat "$K/pme-classroom-kit-windows/VERSION.txt"
+          (cd "$K" && zip -qry -X "$RUNNER_TEMP/kit-zips/pme-classroom-kit$S.zip" pme-classroom-kit \
+                   && zip -qry -X "$RUNNER_TEMP/kit-zips/pme-classroom-kit-windows$S.zip" pme-classroom-kit-windows)
+          ls -l "$RUNNER_TEMP/kit-zips"
+      - name: Relay check on both unzipped kits (check-relay.mjs)
+        run: |
+          set -euo pipefail
+          U="$RUNNER_TEMP/unzipped"; mkdir -p "$U"
+          for z in "$RUNNER_TEMP"/kit-zips/*.zip; do unzip -q "$z" -d "$U"; done
+          test -x "$U/pme-classroom-kit/Start Classroom.command" && test -f "$U/pme-classroom-kit-windows/runtime/node.exe"
+          node scripts/showcase/check-relay.mjs "$U/pme-classroom-kit"
+          node scripts/showcase/check-relay.mjs "$U/pme-classroom-kit-windows"
+      - name: The site tree (site-tree.mjs) and its sub-path check (check-subpath.mjs)
+        run: |
+          set -euo pipefail
+          node scripts/showcase/site-tree.mjs "$RUNNER_TEMP/unzipped/pme-classroom-kit" "$RUNNER_TEMP/site"
+          node scripts/showcase/check-subpath.mjs "$RUNNER_TEMP/site"
+          test ! -e "$RUNNER_TEMP/site/pme-kit.json"
+          grep -q "$(git rev-parse HEAD)" "$RUNNER_TEMP/site/README.md"
+          mkdir -p "$RUNNER_TEMP/site-artifact"; tar -C "$RUNNER_TEMP/site" -cf "$RUNNER_TEMP/site-artifact/site.tar" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kit-zips
+          path: ${{ runner.temp }}/kit-zips/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: ${{ runner.temp }}/site-artifact/site.tar
+          if-no-files-found: error
+          retention-days: 30
+
+  servers:
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          sparse-checkout: scripts/showcase
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: kit-zips
+          path: ${{ runner.temp }}/kit-zips
+      - name: Server check on the unzipped macOS/Linux kit (check-servers.mjs)
+        run: |
+          set -euo pipefail
+          U="$RUNNER_TEMP/unzipped"; mkdir -p "$U"
+          unzip -q "$(ls "$RUNNER_TEMP"/kit-zips/pme-classroom-kit*.zip | grep -v -- -windows)" -d "$U"
+          node scripts/showcase/check-servers.mjs "$U/pme-classroom-kit"
