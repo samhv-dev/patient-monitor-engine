@@ -54,12 +54,14 @@ test('EDP-TS face: PCV chosen with the knob, PEEP changed, the monitor\'s airway
   expect(await vent()).toMatchObject({ mode: 'PC', modeLabel: 'PCV' });
 
   // the airway before: the monitor's engine follows the set PEEP. Its mean airway pressure is the mean over the last
-  // breath cycle (engine-core resp/driver.ts), so it is read once two PCV breaths have been delivered since the mode
-  // started: read at once, the window still holds the last VCV breath, whose mean pressure is not PCV's (since piece V2
-  // the EDP-TS VCV starts with the descending ramp, research/57 T-26, and its mean is the higher one)
-  const breaths = () => page.evaluate(() => (document.getElementById('vent') as Any).contentWindow.__vent.vs.p.breathCount as number);
-  const n0 = await breaths();
-  await expect.poll(breaths, { timeout: 15_000 }).toBeGreaterThanOrEqual(n0 + 2);
+  // breath cycle (engine-core resp/driver.ts: the last Ti + Te, here 5 s), so it is read once the first PCV breath has
+  // ended its inspiration: the last VCV inspiration (at most one cycle before that breath) has then left the window, and
+  // what remains of the VCV breath is its expiration at the same PEEP. Read at once, the window holds the VCV
+  // inspiration, whose mean pressure is not PCV's (since piece V2 the EDP-TS VCV starts with the descending ramp,
+  // research/57 T-26, and its mean is the higher one)
+  const breath = () => page.evaluate(() => { const p = (document.getElementById('vent') as Any).contentWindow.__vent.vs.p; return { n: p.breathCount as number, phase: p.phase as string }; });
+  const n0 = (await breath()).n;
+  await expect.poll(async () => { const b = await breath(); return b.n >= n0 + 1 && b.phase === 'exp'; }, { timeout: 15_000 }).toBe(true);
   await expect.poll(async () => (await engineAirway(page))?.peep, { timeout: 15_000 }).toBe(await vent().then((c) => c.peep));
   const before = (await engineAirway(page))!;
   const peep0 = (await vent()).peep;
