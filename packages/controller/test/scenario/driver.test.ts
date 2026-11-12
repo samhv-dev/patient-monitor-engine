@@ -313,6 +313,7 @@ describe('ScenarioDriver and a pme-scenario/2 document (F2)', () => {
     }],
     script: [{ id: 'tachy', on: 'action:induce#1', commands: [{ type: 'setRhythm', rhythm: 'sinusTachy' }] }],
   };
+  const host2T = (d: ScenarioDriver) => d.phaseRunner?.phases.at(-1)?.t ?? 0;
   /** The rig with stage marks on and every dispatch the engine answered (command, accepted, applied tick). */
   function rig2() {
     const host = manualHost({ seed: 42 });
@@ -364,7 +365,8 @@ describe('ScenarioDriver and a pme-scenario/2 document (F2)', () => {
     const r = await driver.hook({ id: 'r1', issuedBy: 'instructor', type: 'scenario', action: 'restoreBookmark', target: marks[1]!.target });
     expect(r.accepted).toBe(true);
     expect(driver.phaseRunner?.stateId).toBe('beating');
-    expect(driver.phaseRunner?.phases).toEqual([{ id: 'calm', t: 0, exitT: beatingT, rule: 'initial' }, { id: 'beating', t: beatingT, rule: 'enter:beating' }]);
+    expect(driver.phaseRunner?.phases).toMatchObject([{ id: 'calm', t: 0, exitT: beatingT, rule: 'initial' }, { id: 'beating', t: beatingT, rule: 'enter:beating' }]); // B6: plus the entry's leaf reads
+    expect(driver.phaseRunner?.phases).toHaveLength(2);
     expect(driver.phaseRunner?.edges.every((e) => e.t <= (marks[1]!.atTick as number) * 0.02 + 1e-9)).toBe(true);
     expect(events.at(-1)).toEqual({ type: 'scenario', t: beatingT, stateId: 'beating' });
     expect(driver.stageMarks().map((m) => m.note)).toEqual(['calm', 'beating']);
@@ -379,6 +381,37 @@ describe('ScenarioDriver and a pme-scenario/2 document (F2)', () => {
     expect(p?.runner.schema).toBe('pme-scenario-runner/2');
     expect(driver.hold('kept', p!)).toBe(true);
   });
+
+  it('B6: reviseMarks makes every mark of the card hold the edited card; a restore then runs it from that mark', async () => {
+    const { driver, run, settle } = rig2();
+    expect(driver.load(CARD).ok).toBe(true);
+    driver.poll();
+    await settle();
+    for (let i = 0; i < 16; i++) {
+      run(1);
+      await settle();
+    }
+    const marks = driver.stageMarks();
+    const edited = structuredClone(CARD);
+    edited.phases[2]!.enter = { value: { var: 'hr', op: '>', value: 0, forS: 20 } }; // the threshold's hold, edited in place
+    const seen: string[] = [];
+    expect(driver.reviseMarks(edited, (st) => (seen.push(st.stateId), st))).toBe(3);
+    expect(seen.sort()).toEqual(['beating', 'calm', 'settled']);
+    expect((await driver.hook({ id: 'r1', issuedBy: 'instructor', type: 'scenario', action: 'restoreBookmark', target: marks[1]!.target })).accepted).toBe(true);
+    expect(driver.phaseRunner?.doc.phases[2]?.enter).toEqual(edited.phases[2]!.enter);
+    expect(driver.phaseRunner?.stateId).toBe('beating');
+    const from = host2T(driver);
+    for (let i = 0; i < 25; i++) {
+      run(1);
+      await settle();
+    }
+    const settled = driver.phaseRunner?.phases.find((p) => p.id === 'settled');
+    expect(settled && settled.t - from).toBeGreaterThanOrEqual(20 - 0.02); // the edited 20-s hold, not the card's 10 s
+    // a card that fails the validator, or another card's id, revises nothing
+    expect(driver.reviseMarks({ ...edited, phases: [] } as never, (s) => s)).toBe(0);
+    expect(driver.reviseMarks({ ...edited, id: 'other' }, (s) => s)).toBe(0);
+  }, SLOW);
+
 
   it('a script entry on an action\'s first taking goes out in the press\'s stage group, on the press\'s tick, card-set', () => {
     const { driver, sent, run } = rig2();
