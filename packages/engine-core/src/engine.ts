@@ -19,6 +19,7 @@ import { createFilterState, designEcgFilter, filterBand, filterSample, type Biqu
 import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrMethod, type HrState } from './l3/hr.ts';
 import { resolveSkin } from '@pme/skins'; // Data-only dependency
 import { createQrsState, PACE_LEAD_N, qrsPaceGate, qrsPacePulse, qrsStep, type QrsState } from './l3/qrs.ts';
+import { createEcgFeed, feedView, feedWrite, type EcgFeedState } from './l3/ecg-analysis/feed.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 import { createRngState, seedStream, type Sfc32State, type StreamName } from './rng/sfc32.ts';
 import {
@@ -122,6 +123,7 @@ interface PipelineState {
   laneFilter: number[][];
   detFilter: number[]; // filter state of the detection lead
   qrs: QrsState;
+  feed: EcgFeedState; // The ECG analysis feed (defibrillator plan §3.4.3, E4a): the detection lead after the front end
   hrm: HrState;
   out: EngineEvent[]; // measurement events waiting for their time
   detections: Detection[]; // QRS detections found during this pass
@@ -395,6 +397,7 @@ class Engine implements MonitorEngine {
       laneFilter: lanes.map(() => createFilterState(this.filter('monitor'))),
       detFilter: createFilterState(this.filter('monitor')),
       qrs: createQrsState(0),
+      feed: createEcgFeed(DETECTION_LEAD, ECG_RATE),
       hrm: createHrState(),
       out: [],
       detections: [],
@@ -575,6 +578,7 @@ class Engine implements MonitorEngine {
     data.st.blood ??= createBloodState(undefined); // Absent in older snapshots
     data.st.neuro ??= createNeuroState(undefined, seed); // Absent in older snapshots
     data.st.rng.ectopyHazard ??= seedStream(seed, 'ectopyHazard'); // E133's stream, absent in older snapshots
+    data.st.feed ??= createEcgFeed(DETECTION_LEAD, ECG_RATE, data.st.n); // E4a's feed, absent in older snapshots: empty until a segment is held
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
@@ -787,7 +791,9 @@ class Engine implements MonitorEngine {
           const v = filterSample(sections, ps.laneFilter[i] as number[], ecgFrontEnd(ps.mods, this.mainsHz, lead, n, projectLead(lead, x, y, z)));
           (laneBufs[i] as RingBuffer).write(n, v);
         }
-        const det = qrsPaceGate(ps.qrs, ecgFrontEnd(ps.mods, this.mainsHz, DETECTION_LEAD, n, projectLead(DETECTION_LEAD, x, y, z)));
+        const fe = ecgFrontEnd(ps.mods, this.mainsHz, DETECTION_LEAD, n, projectLead(DETECTION_LEAD, x, y, z));
+        feedWrite(ps.feed, n, fe); // The analysis feed: the same front-end sample the QRS detector reads, before its pace gate and filter
+        const det = qrsPaceGate(ps.qrs, fe);
         const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, det));
         if (r >= 0) {
           hrOnQrs(ps.hrm, r / ECG_RATE);
@@ -957,6 +963,7 @@ class Engine implements MonitorEngine {
       abp: ps.hemo.lines.abp.sensor === 'connected' && simT < ps.hemo.lines.abp.zeroUntil ? 'zeroing' : ps.hemo.lines.abp.sensor,
       temp: ps.resp.tempSensor,
       committedN: ps.n,
+      ecgFeed: feedView(ps.feed), // E4a: the committed analysis feed (no rhythm identity in it)
       vcgAt: (n) => {
         const x = bx.at(n);
         return Number.isNaN(x) ? null : [x, by.at(n), bz.at(n)];

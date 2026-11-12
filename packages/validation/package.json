@@ -17,7 +17,8 @@
     "review:build": "vite-node src/review/cli-clips.ts",
     "review:score": "vite-node src/review/cli-score.ts",
     "bedside:apply": "vite-node src/bedside/cli-apply.ts",
-    "perf:ticks": "NODE_OPTIONS=--expose-gc vite-node src/perf/cli-ticks.ts"
+    "perf:ticks": "NODE_OPTIONS=--expose-gc vite-node src/perf/cli-ticks.ts",
+    "ecg-rig": "vite-node src/ecg-analysis/cli-rig.ts"
   },
   "dependencies": {
     "@pme/controller": "workspace:*",

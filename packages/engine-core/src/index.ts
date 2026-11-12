@@ -39,8 +39,12 @@ export { validateBloodCommand } from './l2/blood/pipeline.ts';
 export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // demo/controller drug pickers
 export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence page: the onset shapes (gamma vs chain)
 export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor
+export { M2_COMMANDS, M2_ENERGIES_J, M2_LIMIT_KEYS, M2_NIBP_INTERVALS_MIN, NOT_M2 } from './l3/defib-pacer/m2-vocabulary.ts'; // the ZOLL M2's frozen vocabulary (defibrillator plan E0): the learner allow-list (R1), the instructor's sheet (R3), the face (F0)
 export type * from './types-truth.ts';
 export type * from './types-neuro.ts';
 export type * from './types-eeg.ts';
 export { EEG_DEVICES, EEG_MODEL_IDS, type EegModelId } from './l3/eeg-devices/registry.ts'; // the EEG devices' spec rows (the developer page, the renderer's strip)
 export { pruneTruth, TRUTH_LIMITS } from './truth.ts';
+export { measureSegment, SEGMENT_S, type SegmentFeatures } from './l3/ecg-analysis/features.ts'; // the ECG analysis core (defibrillator plan E4a): the validation rig and the perf set measure with it
+export { FEED_S, type EcgFeedView } from './l3/ecg-analysis/feed.ts';
+export { CUDB_HELD_OUT, cudbSegments, ptbxlClass, ptbxlSegments, runRig, type RigClass, type RigRecording, type RigResult, type RigSegment } from './l3/ecg-analysis/rig.ts';

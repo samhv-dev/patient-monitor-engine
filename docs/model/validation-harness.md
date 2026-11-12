@@ -88,6 +88,12 @@ No exported `…State` type in this module.
 | `HYPO_MAP` | `65` | — | [ENG: measurement; the usual IOH definition is MAP < 65] | Minimum seconds of ART_MBP < 65 that tag a window `hypotension` [ENG: measurement; the usual IOH definition is MAP < 65]. |
 | `HYPO_MIN_S` | `60` | s | — | — |
 
+### [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `PTBXL_PER_CLASS` | `20` | — | [ENG: test] | PTB-XL records per class: the first in the database's own order that qualify [ENG: test]. |
+
 ### [`engine/match.ts`](../../packages/validation/src/engine/match.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -142,6 +148,12 @@ No exported `…State` type in this module.
 | `inspirationsFromAwp` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | Inspiration onsets from airway pressure: |
 | `newReadings` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | Solar8000 repeats the last NIBP reading every 2 s: |
 | `vitaldbSignals` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | The recorded Signals of one window (times re-based to the window start). |
+| `loadCudb` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | The 29 CUDB records that are not held out, cut into VF and VT segments (lead 1, mV). |
+| `scpCodes` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | Parse PTB-XL's scp_codes cell ("{'NORM': |
+| `ptbxlSelection` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | The PTB-XL records of each non-shockable class (rig.ts `ptbxlClass`): |
+| `loadPtbxl` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | The selected PTB-XL records the cache holds, lead II in mV, and the selected files it does not hold. |
+| `fetchRigSets` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | Fill the cache: |
+| `rigSummary` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | One line per class: |
 | `pulseBeats` | [`metrics/abp.ts`](../../packages/validation/src/metrics/abp.ts) | One beat per R peak (sample times in s of the ECG `rS`); |
 | `intervalFills` | [`morphology/intervals-suite.ts`](../../packages/validation/src/morphology/intervals-suite.ts) | p10–p90 of each interval in the reference: |
 | `series` | [`morphology/suite.ts`](../../packages/validation/src/morphology/suite.ts) | Per-window scalar or per-beat series of a metric (per-window scalars become one-element arrays). |
@@ -196,6 +208,8 @@ Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`
 | [`datasets/sources.ts`](../../packages/validation/src/datasets/sources.ts) | Every dataset the harness reads, with the licence and attribution the report and NOTICES carry (brief §8, R6). |
 | [`datasets/vital.ts`](../../packages/validation/src/datasets/vital.ts) | Reader for VitalRecorder `.vital` files (the PhysioNet VitalDB 1.0.0 copy, CC BY 4.0), written clean-room from the published file-format description (VitalRecorder "Vital File Format" document; the reader code of vitalut |
 | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | VitalDB (PhysioNet copy, CC BY 4.0): candidate selection from clinical metadata (decision 2), case loading with SHA-256 verification, and the analysis-window finder that turns a case into matched-engine targets. |
+| [`ecg-analysis/cli-rig.ts`](../../packages/validation/src/ecg-analysis/cli-rig.ts) | `pnpm --filter @pme/validation ecg-rig fetch\|report` — the ECG analysis rig's recorded sets (defibrillator plan E4a). |
+| [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | The recorded sets of the ECG analysis rig (defibrillator plan E4a; the rules are engine-core's l3/ecg-analysis/rig.ts). |
 | [`engine/capture.ts`](../../packages/validation/src/engine/capture.ts) | Headless engine capture for the harness: run @pme/engine-core in Node with a fixed seed and scripted commands, return the requested channels at their native rates plus every event. |
 | [`engine/match.ts`](../../packages/validation/src/engine/match.ts) | An engine run matched to a recorded analysis window (decision 5): same HR, SBP/DBP, arterial site, ventilator RR/VT/PEEP (ventilation event at t = 0), EtCO2 (setTarget AFTER the ventilation event — an etco2 baseline targ |
 | [`index.ts`](../../packages/validation/src/index.ts) | — |
@@ -266,6 +280,7 @@ None recorded.
 | [`docs-honesty.test.ts`](../../packages/validation/test/docs-honesty.test.ts) | 0 | 0 |
 | [`docs-readers.test.ts`](../../packages/validation/test/docs-readers.test.ts) | 0 | 0 |
 | [`e2e-shard-plan.test.ts`](../../packages/validation/test/e2e-shard-plan.test.ts) | 0 | 0 |
+| [`ecg-analysis/rig-sets.test.ts`](../../packages/validation/test/ecg-analysis/rig-sets.test.ts) | 0 | 0 |
 | [`engine/capture-match.test.ts`](../../packages/validation/test/engine/capture-match.test.ts) | 0 | 0 |
 | [`finish-dist.test.ts`](../../packages/validation/test/finish-dist.test.ts) | 0 | 0 |
 | [`invalid-results/compare-wave.test.ts`](../../packages/validation/test/invalid-results/compare-wave.test.ts) | 0 | 0 |

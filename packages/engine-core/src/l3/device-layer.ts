@@ -6,6 +6,7 @@
 import { uniform, type Sfc32State } from '../rng/sfc32.ts';
 import type { AgeBand, DeviceClinicalEvent } from '../types-device.ts';
 import type { LineSensorState } from '../types-hemo.ts';
+import type { EcgFeedView } from './ecg-analysis/feed.ts';
 import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, StateVar } from '../types.ts';
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
@@ -14,6 +15,7 @@ import { afterShock, applyDefib, createDefib, FALLBACK_DEFIB, stepDefib, validat
 import { drawOutcome, shockClass, T_PEAK_WINDOW_S, type ShockOutcome } from './defib-pacer/outcome.ts';
 import { applyPacer, createPacer, FALLBACK_PACER, tcpSpec, validatePacer, type PacerSpec, type PacerState } from './defib-pacer/pacer.ts';
 import { createSyncState, SYNC_RATE, syncStep, type SyncState } from './defib-pacer/sync.ts';
+import { createM2State, m2Status, validateM2Command, type M2State } from './defib-pacer/m2-vocabulary.ts';
 
 /** Rhythms a monitor classifies as VF (research 03 §1.8). */
 export const VF_RHYTHMS: ReadonlySet<RhythmId> = new Set(['vfCoarse', 'vfFine']);
@@ -54,6 +56,9 @@ export interface DeviceState {
    * defibrillator and pacer spec, else the fallback.
    * Absent in older snapshots (read as null). */
   defibModel: string | null;
+  /** The ZOLL M2's own state (plan E0), present only while the room's model is one with the M2 vocabulary; absent
+   * otherwise, so the generic model's state and snapshot are unchanged. */
+  m2?: M2State;
   sync: SyncState;
   pending: PendingRhythm | null;
   lastBeat: { t: number; qtMs: number } | null;
@@ -79,6 +84,9 @@ export interface DeviceHost {
   committedN: number;
   /** One committed VCG sample (null when not held). */
   vcgAt(n: number): [number, number, number] | null;
+  /** The ECG analysis feed (defibrillator plan §3.4.3, E4a): a named lead after the front end, committed samples only.
+   * Optional: a host without it gives the analysers nothing to read. */
+  ecgFeed?: EcgFeedView;
   outcomeRng: Sfc32State;
   l1(v: StateVar): number;
   /** Mutate the committed modifiers (ECG artefacts, TCP) and invalidate the look-ahead. */
@@ -134,8 +142,9 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
   }
   if (cmd.type === 'applyEvent') {
     const ev = cmd.event as DeviceClinicalEvent | { kind: string };
-    if (ev.kind === 'defib') return validateDefib(d.defib, ev as Extract<DeviceClinicalEvent, { kind: 'defib' }>);
-    if (ev.kind === 'pacer') return validatePacer(ev as Extract<DeviceClinicalEvent, { kind: 'pacer' }>, pacerSpec(d));
+    const m = modelOf(d);
+    if (ev.kind === 'defib') return validateDefib(d.defib, ev as Extract<DeviceClinicalEvent, { kind: 'defib' }>, m?.energiesJ ? { list: m.energiesJ, name: m.name ?? 'model' } : undefined);
+    if (ev.kind === 'pacer') return validatePacer(ev as Extract<DeviceClinicalEvent, { kind: 'pacer' }>, pacerSpec(d), m?.pacerGrid ? { ...m.pacerGrid, name: m.name ?? 'model' } : undefined);
     return null;
   }
   if (cmd.type !== 'device') return null;
@@ -154,7 +163,8 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
     return `unknown monitor action ${String((a as { action: string }).action)}`;
   }
   if (a.device === 'defib') {
-    if (a.action !== 'model') return `unknown defib action ${String((a as { action: string }).action)}`;
+    // the M2's vocabulary (plan E0): an unknown name, a room that is not an M2, or the command's own check
+    if (a.action !== 'model') return validateM2Command(String((a as { action: unknown }).action), (a as { value?: unknown }).value, modelOf(d)?.m2 === true);
     return typeof a.value === 'string' && Object.hasOwn(DEFIB_MODELS, a.value) ? undefined : `unknown defibrillator model ${String(a.value)}`; // Own keys only
   }
   return null;
@@ -201,9 +211,14 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
     return true;
   }
   if (a.device === 'defib') {
+    // Every M2 command is declared and validated (E0) and does nothing until its own piece lands
+    if (a.action !== 'model') return true;
     // The room's model: its spec from now on, and its adult energy selected, as the energy selector does (a charged
     // device disarms, defib.ts selectEnergy)
     d.defibModel = a.value;
+    // the M2's own state, idle, while the model carries it (setting the M2 again starts it afresh)
+    if (modelOf(d)?.m2) d.m2 = createM2State();
+    else delete d.m2;
     applyDefib(d.defib, { kind: 'defib', action: 'selectEnergy', energyJ: defibSpec(d).energyAdultJ }, t, defibSpec(d), out);
     // and its pacer (row 58): a pacer that is off takes the model's default rate and output, as a new device does
     // (createPacer); a running pacer keeps what the clinician set
@@ -354,6 +369,7 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
       defib: { energyJ: df.energyJ, state: df.state, sync: df.sync, readyAt: df.readyAt, shocks: df.shocks, lastShock: df.lastShock },
       pacer: { mode: pc.mode, ratePpm: pc.ratePpm, mA: pc.mA, paused: pc.paused },
       hrDashes: p.hrDashesWhilePacing && pc.mode !== 'off',
+      ...(d.m2 ? { m2: m2Status(d.m2) } : {}),
     });
   }
   return keep;

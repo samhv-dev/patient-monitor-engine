@@ -19,7 +19,7 @@ export const TRUTH_LIMITS = {
 } as const;
 
 /** Top-level pipeline keys that are ECG/QRS machinery, not physiology. */
-const SKIP_TOP = new Set(['n', 'hrv', 'laneFilter', 'detFilter', 'qrs', 'hrm', 'detections', 'lanes', 'filterMode']);
+const SKIP_TOP = new Set(['n', 'hrv', 'laneFilter', 'detFilter', 'qrs', 'feed', 'hrm', 'detections', 'lanes', 'filterMode']);
 /** Keys skipped at any depth: event queues and PRNG state. */
 const SKIP_ANY = new Set(['out', 'rng']);
 /** `blood.out` is the published chemistry block (Na, K, lactate, Hb…), not an event queue — kept (its twin `blood.core.out` is skipped). */
