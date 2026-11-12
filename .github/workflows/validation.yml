@@ -1,9 +1,16 @@
 name: validation
 
-# Long (30–60 min): never on every push. Weekly, on demand, or when a PR carries the `run-validation` label.
+# Long (30–60 min): never on every push. Two jobs side by side (brief 218): `validate` (`pnpm validate`, ≈ 26 min) and
+# `soak` (the 60 min Chromium soak, ≈ 64 min). They ran one after the other in one job until brief 218 (89 min).
+# - validate: weekly, on demand, or when a PR carries the `run-validation` label.
+# - soak: nightly on main, weekly with validate, on demand, and on a release tag (the owner's ruling of 12 November
+#   2026); never on a pull request. Its condition is ONE line, marked below.
+# scripts/ci/validation-steps.mjs (run in ci.yml's `changes` job) fails if a step of the old single job is missing from
+# these two jobs, and prints each job's triggers.
 on:
   schedule:
-    - cron: '0 2 * * 1'
+    - cron: '0 2 * * 1' # weekly: the whole workflow (validate and soak)
+    - cron: '30 22 * * *' # nightly on main (02:00 in the owner's time zone): the soak only
   workflow_dispatch:
     inputs:
       args:
@@ -12,10 +19,13 @@ on:
         default: ''
   pull_request:
     types: [labeled, synchronize]
+  push:
+    tags: ['v*'] # a release tag, as release.yml: the soak only
 
 jobs:
   validate:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-validation')
+    # today's triggers: a labelled PR, the weekly schedule, a manual run (not the nightly cron, not a tag)
+    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-validation')) || github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2 * * 1'
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -38,6 +48,25 @@ jobs:
           name: validation-report
           path: docs/validation/
           if-no-files-found: error
+
+  # The soak reads nothing `validate` writes (it runs the demo from source on a Vite server and writes only
+  # docs/validation/perf/soak-<date>.json), so it needs no `needs:`. Until brief 218 it ran only after `validate`
+  # passed; now it runs whatever `validate` does.
+  soak:
+    # OWNER'S DECISION, THIS ONE LINE: where the 60 min soak runs. Today (ruling of 12 November 2026): every schedule
+    # (the nightly and the weekly cron above, both on the default branch), a manual run, a `v*` release tag; not a pull
+    # request. To run it on every labelled PR again, add: || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-validation'))
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       # The soak runs inside the official Playwright image (the lockfile's version; Chromium and its system libraries
       # baked in): no `playwright install --with-deps`, whose apt step stalled up to 40 min on the runner's Ubuntu
       # mirror. Same workspace path, the runner's user; PME_SOAK_MIN passes through when set.

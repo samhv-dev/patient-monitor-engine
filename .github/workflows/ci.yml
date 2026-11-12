@@ -3,7 +3,14 @@ name: ci
 on:
   push:
     branches: [main]
+    tags: ['v*'] # a release tag (as release.yml): the nightly set only
   pull_request:
+  # brief 218 (the owner's ruling of 12 November 2026): the @known-flaky WebKit quarantine runs nightly on main, on a
+  # manual dispatch and on a release tag, never on a pull request. Those runs carry ONLY the e2e sets marked 'nightly'
+  # in scripts/ci/e2e-sets.mjs (the quarantine) and its count check; every other job skips (`changes.outputs.nightly`).
+  schedule:
+    - cron: '30 22 * * *' # nightly, 02:00 in the owner's time zone (the soak's hour, validation.yml)
+  workflow_dispatch:
 
 # A PR's run of an older head stops when the branch gets a newer push; main's runs never cancel (research/42 §1.4 d1).
 concurrency:
@@ -18,6 +25,7 @@ jobs:
     outputs:
       code: ${{ steps.f.outputs.code }}
       engine: ${{ steps.f.outputs.engine }}
+      nightly: ${{ steps.f.outputs.nightly }}
       e2e_matrix: ${{ steps.e2e.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +33,9 @@ jobs:
           fetch-depth: 2 # the PR's merge commit and its base parent
       - id: f
         run: |
+          # nightly: the schedule, a manual dispatch or a tag push run the 'nightly' e2e sets only (brief 218)
+          nightly=false; case "${{ github.event_name }}:${{ github.ref }}" in schedule:*|workflow_dispatch:*|push:refs/tags/*) nightly=true ;; esac
+          echo "nightly=$nightly"; echo "nightly=$nightly" >> "$GITHUB_OUTPUT"
           if [ "${{ github.event_name }}" != pull_request ]; then echo "code=true" >> "$GITHUB_OUTPUT"; echo "engine=true" >> "$GITHUB_OUTPUT"; exit 0; fi
           git diff --name-only HEAD^1 HEAD > "$RUNNER_TEMP/files.txt"; cat "$RUNNER_TEMP/files.txt"
           code=false; grep -qvE '^(docs/|[^/]+\.md$|CITATION\.cff$)' "$RUNNER_TEMP/files.txt" && code=true
@@ -32,12 +43,14 @@ jobs:
           echo "code=$code engine=$engine"
           echo "code=$code" >> "$GITHUB_OUTPUT"; echo "engine=$engine" >> "$GITHUB_OUTPUT"
       # The e2e matrix, one row per shard, from scripts/ci/e2e-sets.mjs: the one place each set's shard count is set (the
-      # shard plan and e2e-count read it there too).
+      # shard plan and e2e-count read it there too), and which run carries it: 'pr' (PRs, pushes to main) or 'nightly'.
       - id: e2e
         run: |
-          m=$(node scripts/ci/e2e-sets.mjs matrix); echo "$m"
+          m=$(node scripts/ci/e2e-sets.mjs matrix ${{ steps.f.outputs.nightly == 'true' && 'nightly' || 'pr' }}); echo "$m"
           echo "matrix=$m" >> "$GITHUB_OUTPUT"
       - run: node scripts/ci/markers.mjs # [ENG: kind] / [FIT: target; src | brief] markers and their counts (docs/DESIGN-BRIEF.md)
+      # brief 218: every step of the old one-job validation workflow is in its `validate` or `soak` job, each job's triggers named
+      - run: node scripts/ci/validation-steps.mjs
 
   # Documents-only PRs (docs/, root *.md, CITATION.cff): every unit-test file that reads a document
   # (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts keeps that list complete) and the NOTICES
@@ -61,7 +74,7 @@ jobs:
 
   build:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.nightly != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,7 +88,7 @@ jobs:
       - name: slow groups are disjoint, cover SLOW and are all in the test-slow matrix
         working-directory: packages/engine-core
         run: |
-          groups="slow-a slow-b slow-c slow-d slow-e slow-f slow-g slow-h slow-i"
+          groups="slow-a slow-b slow-c slow-d slow-e slow-f slow-g slow-h slow-i slow-j slow-k slow-l slow-m"
           for g in slow $groups; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
           for g in $groups; do grep -Eq "^ +group: \[.*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the test-slow matrix"; exit 1; }; done
           cd "$RUNNER_TEMP"
@@ -110,16 +123,19 @@ jobs:
       - name: kit classroom relay smoke test
         run: node scripts/showcase/make-bundle.mjs "$RUNNER_TEMP/kit" > "$RUNNER_TEMP/kit-build.log" && node scripts/showcase/check-relay.mjs "$RUNNER_TEMP/kit"
 
-  # The unit tests (the fast set; the slow engine set and the showcase cards are in test-slow), in three parallel jobs:
+  # The unit tests (the fast set; the slow engine set and the showcase cards are in test-slow), in four parallel jobs:
   # `pnpm -r test` ran the packages in dependency order (engine-core → controller → validation → demo, ≈ 31–43 min),
   # though every test runs from source and none needs another package's tests first (research/42 §1.2, §1.4 d3).
+  # brief 218: `rest` (26 min of tests, 22–31 min a job on 12 November) is split in two. Vitest's per-package durations,
+  # mean of three runs (43186437413, 43199909378, 43185270151): engine-core 10.4 min, validation 8.1, demo 6.3,
+  # renderer 1.5, skins 0.1, audio 0.0, so `core` ≈ 12.0 and `rest` ≈ 14.4 min of tests.
   unit:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.nightly != 'true'
     strategy:
       fail-fast: false
       matrix:
-        part: [controller, ventilator, rest]
+        part: [controller, ventilator, core, rest]
     name: unit (${{ matrix.part }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -137,10 +153,13 @@ jobs:
         if: matrix.part == 'controller'
       - run: pnpm --filter @pme/ventilator test
         if: matrix.part == 'ventilator'
-      # audio, skins, engine-core, renderer, validation, demo: one package at a time (each Vitest run already uses every
-      # core; with pnpm's default of four at once, renderer's real-engine tests timed out at 30 s on the first run of
-      # this job), in no dependency order, and every package runs even after one fails, so each reports its counts.
-      - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter '!@pme/controller' --filter '!@pme/ventilator' test
+      # One package at a time (each Vitest run already uses every core; with pnpm's default of four at once, renderer's
+      # real-engine tests timed out at 30 s on the first run of this job), in no dependency order, and every package runs
+      # even after one fails, so each reports its counts. `core`: engine-core, renderer, skins, audio. `rest`: every
+      # other package (today validation and demo), by exclusion, so a new package is never left out.
+      - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter @pme/engine-core --filter @pme/renderer --filter @pme/skins --filter @pme/audio test
+        if: matrix.part == 'core'
+      - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter '!@pme/controller' --filter '!@pme/ventilator' --filter '!@pme/engine-core' --filter '!@pme/renderer' --filter '!@pme/skins' --filter '!@pme/audio' test
         if: matrix.part == 'rest'
 
   # fix-ci-webkit-3: the renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads
@@ -169,7 +188,8 @@ jobs:
           v=$(pnpm exec playwright --version | awk '{print $2}')
           echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
           echo "version=$v" >> "$GITHUB_OUTPUT"
-      # e2e shards by recorded duration: the latest green run of this workflow on main, whose e2e reports balance the
+      # e2e shards by recorded duration: the latest green run of this workflow on main (a push: a nightly run on main
+      # carries only the quarantine's report, brief 218), whose e2e reports balance the
       # shards (scripts/ci/e2e-shard-plan.mjs). The plan is made here, once, and every e2e shard reads it, so the shards
       # of a set always split the same way (research/41 row 64: planned in each shard, one shard's failed download of
       # one report gave it its own split, and 174 WebKit tests ran against 165 listed, run 42284321017). Any failure
@@ -181,7 +201,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
           echo "last green main run: ${id:-none}"
           echo "run=$id" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4 # every set's reports from that run
@@ -233,7 +253,8 @@ jobs:
   # count is set once; e2e-shard-plan.mjs and e2e-count.mjs read the same count.
   # ci-stabilise (2026-10-24): the jobs run in the official Playwright image, which carries the browsers and their
   # system libraries, so no job runs `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's
-  # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit); the
+  # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit), on the
+  # nightly run only since brief 218 (same job, same container, same report steps; scripts/ci/e2e-sets.mjs `runs`); the
   # gating e2e (webkit) job runs every other test; e2e (chromium) runs every test, enforced as before
   # (docs/gates/stage-14.md, "Temporary relaxation"; docs/guides/known-deviations.md, "Browser tests that passed only on
   # a retry").
@@ -352,8 +373,10 @@ jobs:
             fi
           fi
 
-  # The shards together ran every test: per set, the summed totals of its shards' reports equal `playwright test --list`
-  # on the same tree (scripts/ci/e2e-count.mjs; a gating set that differs fails, the quarantine warns).
+  # The shards together ran every test: per set of this run, the summed totals of its shards' reports equal
+  # `playwright test --list` on the same tree (scripts/ci/e2e-count.mjs). A PR or main push checks the gating sets; the
+  # nightly run checks the quarantine (brief 218); a difference fails either. On a PR it no longer waits for the
+  # quarantine, which is not in a PR's matrix.
   e2e-count:
     needs: [changes, e2e]
     if: ${{ !cancelled() && needs.changes.outputs.code == 'true' }}
@@ -371,21 +394,23 @@ jobs:
         with:
           pattern: e2e-report-*
           path: reports
-      - run: node scripts/ci/e2e-count.mjs reports
+      - run: node scripts/ci/e2e-count.mjs reports ${{ needs.changes.outputs.nightly == 'true' && 'nightly' || 'pr' }}
 
   test-slow:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.nightly != 'true'
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
     # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
-    # cannot starve the Vitest worker RPC there. Nine file groups, one job each, packed on the per-file CI maximum (≤ 33 min of tests each on the slowest runner seen).
-    # On a PR the nine engine groups run only when the engine, the skins or the root config change (the changes job;
+    # cannot starve the Vitest worker RPC there. Thirteen file groups, one job each (brief 218), packed on the per-file CI
+    # mean of three runs of 12 November to ≈ 17.5 min of tests each (packages/engine-core/vite.config.ts); nine groups
+    # of ≈ 33 min each until then.
+    # On a PR the thirteen engine groups run only when the engine, the skins or the root config change (the changes job;
     # engine-core's only workspace dependency is @pme/skins); main runs them all. The showcase cards, split in two
     # halves (apps/demo/vite.config.ts), run on every code PR: they also run @pme/controller and the demo's debrief.
     strategy:
       fail-fast: false
       matrix:
-        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, showcase-a, showcase-b]
+        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, slow-j, slow-k, slow-l, slow-m, showcase-a, showcase-b]
     name: test-slow (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
