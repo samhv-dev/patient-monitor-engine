@@ -18,14 +18,14 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 13 | 43 | 10 |
 | [Brain, kidney and liver](organs.md) | 14 | 30 | 13 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 16 |
-| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 32 | 8 |
+| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 33 | 12 |
 | [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 31 | 53 | 33 |
-| [Monitor measurements (device layer)](monitor.md) | 19 | 35 | 10 |
+| [Monitor measurements (device layer)](monitor.md) | 19 | 35 | 8 |
 | [Alarms](alarms.md) | 4 | 17 | 0 |
 | [Defibrillator and pacer](defib-pacer.md) | 4 | 9 | 0 |
 | [Ventilator](ventilator.md) | 16 | 26 | 8 |
 | [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 25 | 18 | 0 |
 | [Control: commands, transports, scenarios](control.md) | 53 | 98 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 261 | 390 | 4 |
+| [Presentation: renderer, audio, skins, the app](presentation.md) | 262 | 392 | 4 |
 | [Validation harness](validation-harness.md) | 60 | 51 | 0 |
 | [Whole-patient scenario suites](integration.md) | 0 | 1 | 8 |
