@@ -23,6 +23,37 @@ from the per-file durations in the last green main run's reports (longest first 
 Playwright's own `--shard` when no such report can be read. The plan is made once per run, in the renderer job, and
 every shard of a set reads that one plan, so the shards never split a set two ways.
 
+### Reading the evidence of a retry-only pass
+
+When an e2e attempt fails in CI (a retry that then passes included), its job keeps evidence from **every page and
+browser context the test had open**, in the artifact `e2e-evidence-<set>-<shard>of<n>` of that job (nothing is kept,
+and nothing uploaded, when every attempt passed). The job's warning line for a retry-only pass names the artifact and
+the folder, `test-results/<test>/`, of the failed attempt. In that folder:
+
+- `trace.zip`: the first attempt's Playwright trace, every context in one file (`npx playwright show-trace trace.zip`,
+  or drop it on trace.playwright.dev): the actions, each page's console and network, DOM snapshots. A trace exists only
+  for a failed FIRST attempt (`trace: retain-on-first-failure`, playwright.config.ts); a failed retry has the rest.
+- `evidence/index.json`: the pages that were open, in browser-context order; `evidence/<n>-<role>.json` per page: the
+  application's own counters read at the end of the failed test function and again 1 s later (`atFailure`,
+  `oneSecondLater`), so what still moves shows: frame count (`frames.count` grows while the page paints), the host's
+  `simNow`, its last engine event times (`lastEventT`), its relay link's `sent` / `received` with `sentAgoMs` /
+  `receivedAgoMs`, `reconnects` and `lastClose`; a follower's `sync.status`, `lagS`, its link's counts and its own clock
+  (`monitor.renderT`); the status pill and any toast. `role` is `host`, `follower`, `learner-remote`, `app` or `page`.
+- `evidence/<n>-<role>.console.txt`: that page's console (Playwright keeps its last 200 messages) and page errors.
+- `test-failed-<k>.png`: a screenshot of each open page; `error-context.md`: the error and one page's ARIA snapshot.
+
+So a frozen phone reads as: the host's `relay.sent` still growing with a small `sentAgoMs` while the follower's
+`link.received` stands still (the relay or the phone's socket), or the host's `sent` and `frames.count` standing still
+too (the host stopped). If the upload fails ("Failed to CreateArtifact"), the job stays the tests' own colour, the warning
+says so, and the step "evidence not uploaded" prints every counters and console file to the log (the traces are lost).
+Locally, `PME_E2E_EVIDENCE=1` turns all of it on (`=0` off, also in CI).
+
+To repeat one spec many times in CI without a pull request: Actions → **e2e-repeat** → Run workflow (or
+`gh workflow run e2e-repeat.yml -f spec=apps/demo/e2e/<name>.e2e.ts -f browser=webkit -f repeat=10 [-f grep='<title>']`).
+It runs that spec in CI's container, retries 0, at most 20 repetitions, and uploads `e2e-repeat-evidence-<browser>-<run>`
+with the evidence of every failing repetition. Every e2e spec takes `test` from `apps/demo/e2e/evidence.ts`, which
+re-exports all of `@playwright/test` (`packages/validation/test/e2e-evidence.test.ts` checks it).
+
 ## Rules that CI or review enforce
 
 1. **One piece of work per pull request**, described in the PR template (including "Sources consulted").

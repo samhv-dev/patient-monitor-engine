@@ -300,10 +300,48 @@ jobs:
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         with:
           name: e2e-report-${{ matrix.report }}-${{ matrix.shard }}of${{ matrix.of }}
+          # the evidence of failed attempts goes in its own artifact below, so the reports the shard plan and e2e-count
+          # download stay as small as before
           path: |
             playwright-report-${{ matrix.report }}.json
             test-results/
+            !test-results/**/trace.zip
+            !test-results/**/evidence/**
+            !test-results/**/test-failed-*.png
           if-no-files-found: warn
+      # Brief 194: the evidence of every attempt that failed (a retry that then passed included), for every page and
+      # context the test had open: the first attempt's Playwright trace (playwright.config.ts `trace`), a screenshot of
+      # each page, and each page's counters and console (apps/demo/e2e/evidence.ts). Nothing is written, so nothing is
+      # uploaded, when every attempt passed. The upload may fail (GitHub's "Failed to CreateArtifact"): the step then
+      # warns and the job's result stays the tests' own; the counters and consoles are printed to the log instead.
+      - name: evidence of failed attempts
+        id: evidence
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
+        run: |
+          n=$(find test-results -path '*/evidence/index.json' 2>/dev/null | wc -l)
+          t=$(find test-results -name 'trace.zip' 2>/dev/null | wc -l)
+          echo "count=$((n + t))" >> "$GITHUB_OUTPUT"
+          [ $((n + t)) -gt 0 ] || { echo "no failed attempt: no evidence"; exit 0; }
+          echo "failed attempts with evidence: $n; traces: $t; size: $(du -ch $(find test-results \( -name trace.zip -o -name 'test-failed-*.png' -o -path '*/evidence/*' \) -type f) | tail -1 | cut -f1)"
+      - id: evidence_upload
+        if: ${{ !cancelled() && steps.evidence.outputs.count != '' && steps.evidence.outputs.count != '0' }}
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        timeout-minutes: 5
+        with:
+          name: e2e-evidence-${{ matrix.report }}-${{ matrix.shard }}of${{ matrix.of }}
+          path: |
+            playwright-report-${{ matrix.report }}.json
+            test-results/**/trace.zip
+            test-results/**/evidence/**
+            test-results/**/test-failed-*.png
+            test-results/**/error-context.md
+          if-no-files-found: ignore
+      - name: evidence not uploaded - the counters and consoles here instead
+        if: ${{ !cancelled() && steps.evidence_upload.outcome == 'failure' }}
+        run: |
+          echo "::warning title=e2e evidence::the evidence artifact e2e-evidence-${{ matrix.report }}-${{ matrix.shard }}of${{ matrix.of }} could not be uploaded; the counters and consoles of every failed attempt follow in this log (the traces are lost)"
+          find test-results -path '*/evidence/*' -type f | sort | while read -r f; do echo "::group::$f"; head -c 65536 "$f"; echo; echo "::endgroup::"; done
       # A set-up step failed and no test ran: say so, as an infrastructure failure, and skip the report checks below (a
       # red job here has no test result; re-running it discards no test outcome).
       - name: no test ran (infrastructure)
@@ -342,8 +380,20 @@ jobs:
           node scripts/ci/e2e-report.mjs retry "$f" > "$RUNNER_TEMP/flaky.raw" \
             || { echo "::error title=e2e JSON report::$f could not be read: the retry check cannot run"; exit 1; }
           sort -u "$RUNNER_TEMP/flaky.raw" > "$RUNNER_TEMP/flaky.tsv"
-          { echo "### e2e tests that passed only on retry: $(wc -l < "$RUNNER_TEMP/flaky.tsv")"; sed -e 's/^known\t/- (@known-flaky) /' -e 's/^new\t/- **NEW** /' "$RUNNER_TEMP/flaky.tsv"; } >> "$GITHUB_STEP_SUMMARY"
-          while IFS="$(printf '\t')" read -r k l; do echo "::warning title=e2e passed only on retry::$l"; done < "$RUNNER_TEMP/flaky.tsv"
+          # Brief 194: each line names where its failed attempt's evidence is (the artifact, and the folder inside it)
+          case "${{ steps.evidence_upload.outcome }}" in
+            success) where="artifact e2e-evidence-${{ matrix.report }}-${{ matrix.shard }}of${{ matrix.of }}" ;;
+            failure) where="NOT uploaded (the counters and consoles are in this job's log, step \"evidence not uploaded\")" ;;
+            *) where="none kept" ;;
+          esac
+          {
+            echo "### e2e tests that passed only on retry: $(wc -l < "$RUNNER_TEMP/flaky.tsv")"
+            while IFS="$(printf '\t')" read -r k l d; do
+              if [ "$k" = known ]; then tag='(@known-flaky)'; else tag='**NEW**'; fi
+              echo "- $tag $l (evidence: $where, ${d:--})"
+            done < "$RUNNER_TEMP/flaky.tsv"
+          } >> "$GITHUB_STEP_SUMMARY"
+          while IFS="$(printf '\t')" read -r k l d; do echo "::warning title=e2e passed only on retry::$l (evidence: $where, ${d:--})"; done < "$RUNNER_TEMP/flaky.tsv"
           if grep -q '^new' "$RUNNER_TEMP/flaky.tsv"; then
             if [ "${{ matrix.browser }}" = "webkit" ]; then
               echo "::warning title=e2e passed only on retry::WebKit retry-only passes are recorded, not enforced, until the demo of 3 November (orchestrator ruling 2026-10-18)"

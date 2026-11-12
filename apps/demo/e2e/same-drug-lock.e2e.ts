@@ -5,7 +5,7 @@
 // laptop's PIN on its keypad, then shows today's instructor panel alone; the host files it as the phone). The laptop gives
 // atropine; 3 s of sim later the phone's Drugs tab shows the lock and its Give is refused, said on the phone; the
 // laptop's run record holds the one dose only.
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, startVite } from './app-support.ts';

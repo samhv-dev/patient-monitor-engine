@@ -5,7 +5,7 @@
 // read from its snapshot).
 // Run: pnpm exec playwright test apps/demo/e2e/vent-edp-ts.e2e.ts
 import { resolve } from 'node:path';
-import { expect, test, type FrameLocator, type Page } from '@playwright/test';
+import { expect, test, type FrameLocator, type Page } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;

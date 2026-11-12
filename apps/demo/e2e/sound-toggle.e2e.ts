@@ -1,7 +1,7 @@
 // FU-11 Task H4 (samhv-dev, live at the first showcase): the top bar's Sound button turns sound OFF again — before, it only
 // unlocked audio and relabelled itself. Per window (owner ruling Q3): the learner monitor's own button does the same for
 // its window only.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite, TEACH2 } from './app-support.ts';
 

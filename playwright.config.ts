@@ -11,11 +11,20 @@ const chromiumLaunch = { args: ['--disable-features=WebRtcHideLocalIpsWithMdns']
 // WebKit runs one worker at a time. Local runs (and the PW_SYSTEM_CHROME path) are unchanged.
 const ci = !!process.env.CI;
 
+// Brief 194: the evidence of a failed first attempt, from every page and context the test had open (on in CI;
+// PME_E2E_EVIDENCE=1 locally, =0 off). The trace records the FIRST attempt of every test and is kept only when that attempt
+// fails (Playwright merges every context of the test into one trace.zip); no screencast frames (`screenshots: false`) on
+// the 2-vCPU runner. A screenshot of every open page only on a failure. The counters and the console of each page come
+// from the fixture in apps/demo/e2e/evidence.ts. `*.proof.ts` (apps/demo/e2e/proof/) never runs in a normal suite:
+// PME_E2E_PROOF=1 lets a path name one.
+const evidence = process.env.PME_E2E_EVIDENCE ? process.env.PME_E2E_EVIDENCE === '1' : ci;
+
 export default defineConfig({
   testDir: 'apps/demo/e2e',
-  testMatch: '*.e2e.ts',
+  testMatch: process.env.PME_E2E_PROOF === '1' ? ['*.e2e.ts', '**/proof/*.proof.ts'] : '*.e2e.ts',
   reporter: 'list',
   retries: ci ? 2 : 0,
+  use: evidence ? { trace: { mode: 'retain-on-first-failure', screenshots: false, snapshots: true, sources: false, attachments: false }, screenshot: 'only-on-failure' } : {},
   projects: process.env.PW_SYSTEM_CHROME
     ? [{ name: 'chrome', use: { ...devices['Desktop Chrome'], channel: 'chrome', launchOptions: chromiumLaunch } }]
     : [

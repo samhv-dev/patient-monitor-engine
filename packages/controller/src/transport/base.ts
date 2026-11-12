@@ -15,6 +15,13 @@ export abstract class TransportBase implements ManagedTransport {
   protected closed = false;
   /** Messages refused by parseWireMessage (malformed, oversized or carrying samples). */
   rejected = 0;
+  /** Diagnostics: wire messages handed to the link while open, and delivered to the listeners (brief 194: CI's evidence
+   *  of a test that failed reads them, to tell a host that stopped sending from a link that stopped delivering). */
+  sentCount = 0;
+  receivedCount = 0;
+  /** performance.now() of the last message sent and the last one delivered, or null before the first. */
+  lastSentAt: number | null = null;
+  lastReceivedAt: number | null = null;
 
   get status(): TransportStatus {
     return this.current;
@@ -24,6 +31,8 @@ export abstract class TransportBase implements ManagedTransport {
   send(m: WireMessage): void {
     assertWireSafe(m);
     if (this.closed || this.current !== 'open') return;
+    this.sentCount++;
+    this.lastSentAt = performance.now();
     this.write(m);
   }
 
@@ -107,6 +116,8 @@ export abstract class TransportBase implements ManagedTransport {
       this.rejected++;
       return;
     }
+    this.receivedCount++;
+    this.lastReceivedAt = performance.now();
     for (const fn of [...this.msgFns]) fn(m);
   }
 }

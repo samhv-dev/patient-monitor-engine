@@ -44,6 +44,26 @@ describe('WebSocket transport', () => {
     expect(t.status).toBe('open');
   });
 
+  it('counts what it sent, delivered and heard, and keeps how the last socket closed (brief 194 diagnostics)', () => {
+    const t = createWebSocketTransport(opts);
+    const m = createStamper('ABC234', 'h')({ kind: 'hello', role: 'host' });
+    t.send(m); // not open yet: dropped, not counted
+    expect([t.sentCount, t.receivedCount, t.relayFrames, t.lastSentAt, t.lastReceivedAt, t.lastHeardAt, t.lastClose]).toEqual([0, 0, 0, null, null, null, null]);
+    FakeWebSocket.last.open();
+    t.send(m);
+    t.send(m);
+    FakeWebSocket.last.receive(m);
+    FakeWebSocket.last.receive({ relay: 'hb' });
+    FakeWebSocket.last.receive('garbage'); // refused by the guard: rejected, not received
+    expect([t.sentCount, t.receivedCount, t.relayFrames, t.rejected]).toEqual([2, 1, 1, 1]);
+    expect(typeof t.lastSentAt).toBe('number');
+    expect(typeof t.lastReceivedAt).toBe('number');
+    expect(typeof t.lastHeardAt).toBe('number');
+    FakeWebSocket.last.close(4000, 'liveness timeout');
+    expect(t.lastClose).toMatchObject({ code: 4000, reason: 'liveness timeout' });
+    t.close();
+  });
+
   it('reconnects with backoff after a drop, and counts reconnects', () => {
     const t = createWebSocketTransport(opts);
     FakeWebSocket.last.open();

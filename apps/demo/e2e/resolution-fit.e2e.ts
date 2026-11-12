@@ -5,7 +5,7 @@
 // result shown), at 1280 × 720, 1366 × 768 and 1920 × 1080, in both views: no horizontal overflow; the NIBP, EtCO₂ (CO2)
 // and SpO₂ tiles lie inside the viewport and the monitor; no text of theirs wraps or leaves its tile; and each tile's box,
 // measured in the monitor's own frame, is the same at every size (one scale factor for all of it).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 import { app, openMhV2, pressPath } from './mh-v2-path.ts';

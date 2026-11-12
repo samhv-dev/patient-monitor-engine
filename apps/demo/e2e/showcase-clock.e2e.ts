@@ -1,7 +1,7 @@
 // Showcase hotfix (rehearsal 2026-10-04): after "Choose another scenario" → Load, the patient restarts on a new engine
 // whose sim time starts at 0. The session clock and the scenario's time in state must restart near 00:00 and count
 // up, not stay frozen at the previous case's high-water time while the vital signs move.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, speedV2, startVite } from './app-support.ts';
 

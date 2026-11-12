@@ -5,7 +5,7 @@
 // test-results/monitor-return-controls/ (the PR's before/after evidence).
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

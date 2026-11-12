@@ -3,7 +3,7 @@
 // and the developer page draws its raw trace and spectrogram strip under the label "Processed EEG (generic)".
 // philips-like: the tile appears with the device, SEF as its value, "SR n" under it. saadat-like (BFA always shown):
 // the first part relabelled SEF, BS% the device's SR, SQI% and EMG% blank (the generic reader computes neither).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startVite } from './app-support.ts';
 

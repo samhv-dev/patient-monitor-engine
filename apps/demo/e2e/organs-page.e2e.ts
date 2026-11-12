@@ -2,7 +2,7 @@
 // the gate screenshots into docs/gates/stage-7d/ (node apps/demo/scripts/organs-shots.mjs).
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;

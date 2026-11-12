@@ -11,7 +11,7 @@
 // sized again from its own rate and run again; the one that counts lasts past WORKER_SILENT_MS + 2000 ms (5 s against
 // 3 s), the product's own constant, read from the module the page runs.
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

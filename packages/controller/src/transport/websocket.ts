@@ -39,6 +39,11 @@ class WsTransport extends TransportBase {
   private liveTimer: ReturnType<typeof setTimeout> | null = null;
   /** Number of reconnects after the first open. */
   reconnects = 0;
+  /** Diagnostics (brief 194): the relay's control frames heard (its 10-s heartbeat among them), performance.now() of the
+   *  last frame of any kind on the socket, and how the last socket closed (code, reason, performance.now()). */
+  relayFrames = 0;
+  lastHeardAt: number | null = null;
+  lastClose: { code: number; reason: string; at: number } | null = null;
   private everOpened = false;
 
   constructor(o: WebSocketTransportOptions) {
@@ -68,6 +73,7 @@ class WsTransport extends TransportBase {
     ws.onmessage = (ev) => {
       if (this.ws !== ws) return;
       this.touch();
+      this.lastHeardAt = performance.now();
       if (typeof ev.data !== 'string') return;
       let o: unknown;
       try {
@@ -77,6 +83,7 @@ class WsTransport extends TransportBase {
         return;
       }
       if (isRelayFrame(o)) {
+        this.relayFrames++;
         this.relayFrame(o); // before the status: a session knows why the link failed when it hears 'error'
         // Review F2: only a refusal that ends the socket ends the link (the others come with a fatal close). `forbidden`
         // for a command is the relay's per-command answer: the socket stays open and follows.
@@ -93,6 +100,7 @@ class WsTransport extends TransportBase {
     };
     ws.onclose = (ev) => {
       if (this.ws !== ws) return;
+      this.lastClose = { code: ev.code, reason: ev.reason, at: performance.now() };
       this.ws = null;
       this.clearLive();
       if (this.closed) return;
@@ -137,7 +145,18 @@ class WsTransport extends TransportBase {
   }
 }
 
-export type WebSocketTransport = ManagedTransport & { readonly reconnects: number; dropForTest(): void };
+export type WebSocketTransport = ManagedTransport & {
+  readonly reconnects: number;
+  readonly rejected: number;
+  readonly sentCount: number;
+  readonly receivedCount: number;
+  readonly lastSentAt: number | null;
+  readonly lastReceivedAt: number | null;
+  readonly relayFrames: number;
+  readonly lastHeardAt: number | null;
+  readonly lastClose: { code: number; reason: string; at: number } | null;
+  dropForTest(): void;
+};
 
 export function createWebSocketTransport(o: WebSocketTransportOptions): WebSocketTransport {
   return new WsTransport(o);
