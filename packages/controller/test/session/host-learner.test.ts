@@ -456,6 +456,23 @@ describe('the preparation time and the lab sample', () => {
     expect((await ack(x.got, id)).accepted).toBe(true);
     expect(x.tg.got[0]).toMatchObject({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' }, issuedBy: 'learner', by: KEY });
   });
+  it("brief 164: a learner's lab before and after its Give, and the laptop's own bolus after it, all reach the engine and are applied (the host's chain is not left waiting)", async () => {
+    const x = setup();
+    const lr = await signIn(x);
+    x.tg.at(100);
+    expect((await lr.send({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } })).accepted).toBe(true);
+    await lr.send(stage('p0000020'));
+    x.tg.at(400);
+    const give = lr.command(deliver('p0000020', 5));
+    expect((await ack(x.got, give)).accepted).toBe(true);
+    const lab = lr.command({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } });
+    const mine = x.laptop.command({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 10, unit: 'mcg', route: 'iv' } });
+    expect((await ack(x.got, lab)).accepted).toBe(true);
+    await waitFor(() => ackOf(x.panelGot, mine) !== undefined, 2000, 'the laptop ack');
+    expect(ackOf(x.panelGot, mine)?.accepted).toBe(true);
+    expect(drugsAt(x.tg.got).map((e) => e.kind === 'lab' ? 'lab' : e.drugId)).toEqual(['lab', 'benchpowder', 'lab', 'epinephrine']);
+    for (const id of [give, lab, mine]) expect(applied(x.panelGot, id)).toBeDefined(); // each a commandApplied on the laptop's screens
+  });
   it('discard removes the preparation: it can no longer be given, and a new one may take its id', async () => {
     const x = setup();
     const lr = await signIn(x);
@@ -681,5 +698,50 @@ describe('L9: the instructor-only `prep notice`, from the laptop or the granted 
     tg.at(230);
     expect((await ack(panelGot, laptop.command(notice(KEY, 'p0000031')))).accepted).toBe(true);
     expect(hs.preparation(KEY, 'p0000031')?.notice).toEqual({ shownAt: 230 });
+  });
+});
+
+// Plan learner-action-remote.md L13: the Debrief reads a preparation from the record alone (an archived run has no host),
+// so the record keeps what the host computed from the formulary, never words of its own: every drug in the preparation,
+// when it was ready (the product's sourced time, or the LQ7 gap: ready at once) and, at a give, what r rested on (the
+// stability row's source, past its data or not, and the formulary's note where the source gives no quantity, LQ8 A).
+describe('L13: what the record keeps of a preparation for the Debrief', () => {
+  it('the fixture powder in water: ready at its sourced 120 s; every drug; at a give r from the fixture row, no note', async () => {
+    const x = setup();
+    const lr = await signIn(x);
+    x.tg.at(100);
+    expect((await lr.send(stage('p0000040'))).accepted).toBe(true);
+    const staged = x.host.preparation(KEY, 'p0000040');
+    expect(staged?.ready).toEqual({ atS: 220, gap: null, src: ['fixture-study'] });
+    expect(staged?.actives).toEqual([{ drugId: 'benchpowder', amount: 20, unit: 'mg', perMl: 2 }]);
+    expect(staged?.basis).toBeUndefined(); // no give yet: nothing to rest on
+    x.tg.at(100 + 2 * 3600);
+    expect((await lr.send(deliver('p0000040', 5))).accepted).toBe(true);
+    expect(x.host.preparation(KEY, 'p0000040')?.basis).toEqual({ src: 'fixture-stabilis', beyondData: false, note: null });
+    x.tg.at(100 + 5 * 3600); // past the row's last point (4 h): the last value, flagged
+    expect((await lr.send(deliver('p0000040', 1))).accepted).toBe(true);
+    expect(x.host.preparation(KEY, 'p0000040')).toMatchObject({ remaining: 0.5, basis: { src: 'fixture-stabilis', beyondData: true, note: null } });
+  });
+
+  it("the shipped sodium bicarbonate with epinephrine (Stabilis: incompatible, no quantity): ready at once with the LQ7 gap; each drug's give rests on no figure, 'loss not modelled'", async () => {
+    const x = setup({ formulary: () => SHIPPED });
+    const lr = await signIn(x);
+    x.tg.at(60);
+    const mix = { type: 'prep', action: 'stage', prep: { id: 'b0000001', components: [{ productId: 'sodium-bicarbonate-84mg-ml', amount: 10, unit: 'mL' }, { productId: 'adrenalin-1mg-ml', amount: 1, unit: 'mL' }] } };
+    expect((await lr.send(mix)).accepted).toBe(true);
+    expect(x.host.preparation(KEY, 'b0000001')?.ready).toEqual({ atS: 60, gap: 'LQ7', src: [] });
+    expect(x.host.preparation(KEY, 'b0000001')?.actives?.map((a) => a.drugId)).toEqual(['sodiumBicarbonate', 'epinephrine']);
+    expect((await lr.send(deliver('b0000001', 2))).accepted).toBe(true);
+    for (const d of ['sodiumBicarbonate', 'epinephrine']) expect(x.host.preparation(KEY, 'b0000001', d)).toMatchObject({ remaining: 1, basis: { src: null, beyondData: false, note: 'loss not modelled' } });
+  });
+
+  it('the staged copy the driver records carries the drugs and the ready time, and no give figures', async () => {
+    const staged: StagedPrep[] = [];
+    const x = setup({ onPreparation: (p) => void staged.push(p) });
+    const lr = await signIn(x);
+    expect((await lr.send(stage('p0000041'))).accepted).toBe(true);
+    expect(staged.at(-1)).toMatchObject({ id: 'p0000041', ready: { atS: 120, gap: null, src: ['fixture-study'] }, actives: [{ drugId: 'benchpowder', amount: 20, unit: 'mg', perMl: 2 }] });
+    expect(staged.at(-1)).not.toHaveProperty('basis');
+    expect(staged.at(-1)).not.toHaveProperty('remaining');
   });
 });

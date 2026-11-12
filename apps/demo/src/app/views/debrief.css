@@ -158,6 +158,13 @@
 .debrief .db-actions tr.db-act td { border-top: 1px solid var(--line-strong); }
 .debrief .db-actions tr.db-repeat td:first-child { padding-left: 1.4em; }
 .debrief .db-outcomes, .debrief .db-violations { padding-left: 1.4em; }
+/* L13: the learner remotes' preparations, one item each; its findings, notice and gives under its head line */
+.debrief .db-preps { padding-left: 1.4em; margin: 0; }
+.debrief .db-preps > li { margin: 0 0 0.6em; }
+.debrief .db-preps p { margin: 0.1em 0; }
+.debrief .db-prep-head { font-weight: 600; }
+.debrief .db-prep-findings { margin: 0.1em 0; padding-left: 1.2em; }
+.debrief .db-prep-ready, .debrief .db-prep-notice, .debrief .db-prep-grade { font-size: var(--t-13); }
 .debrief .db-moments tr.db-alarms td { color: var(--text-muted); font-size: var(--t-12, 12px); border-bottom-style: dotted; }
 .debrief .db-whocell { white-space: nowrap; }
 .debrief .db-note60, .debrief .db-norecord { font-size: var(--t-13); color: var(--text-muted); }
@@ -234,6 +241,8 @@
   .debrief #db-objectives ~ #db-moments { break-before: auto; }
   .debrief #db-swimlane { margin-top: 2mm; }
   .debrief #db-hints { break-inside: avoid; }
+  .debrief .db-preps > li { break-inside: avoid; font-size: 8.5pt; line-height: 1.3; }
+  .debrief .db-prep-ready, .debrief .db-prep-notice, .debrief .db-prep-grade { font-size: 8.5pt; }
   .debrief .db-hint-block h3 { font-size: 9pt; margin: 1.5mm 0 0.5mm; }
   .debrief .db-hint-show, .debrief .db-hint-openers { font-size: 8.5pt; line-height: 1.3; }
   .debrief .db-swim svg { max-width: none; }
