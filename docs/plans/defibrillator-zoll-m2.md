@@ -656,11 +656,11 @@ choice marked `eng`, and re-checked when pictures come.
 
 | For | What | Lead (unverified, to be checked in M0a–M0d) |
 |---|---|---|
-| Algorithm reporting | Kerber RE et al. AHA statement on AED arrhythmia analysis performance, Circulation 1997;95:1677–1682 | cited by the guide itself [G A-27], [G A-34] |
-| AF cardioversion | Mittal S et al. Circulation 2000;101:1282 | already cited in `outcome.ts`; the guide reports a trial with the same design and the same 68 % at 70 J [G A-28], [G A-29] without naming it: whether it is Mittal 2000 is checked in M0a |
-| Biphasic energies | Stiell IG et al. BIPHASIC trial, Circulation 2007;115:1511–1517 | DOI 10.1161/CIRCULATIONAHA.106.648204, listed in Wigginton 2025's references |
-| G-TTI | measured transthoracic impedance with self-adhesive pads in adults and children | WANTED |
-| G-PADS | the pads lead's vector for the two placements | WANTED |
+| Algorithm reporting | Kerber RE et al. AHA statement on AED arrhythmia analysis performance, Circulation 1997;95:1677–1682 | cited by the guide itself [G A-27], [G A-34]. DOI 10.1161/01.cir.95.6.1677, verified in M0a (Europe PMC record, DOI resolves); full text not read (`docs/research/defib-zoll-m2-pads-impedance.md` §4) |
+| AF cardioversion | Mittal S et al. Circulation 2000;101:1282–1287 | VERIFIED in M0a as the guide's AF trial: DOI 10.1161/01.cir.101.11.1282; design, both energy sequences, 88 + 77 = 165, first-shock 60/88 and 16/77, cumulative 83/88 and 61/77 match [G A-28], [G A-29] (abstract read). Whether 70/120/150/170 J are selected or delivered energies is NOT settled: full text still WANTED (research note §3.3, W1) |
+| Biphasic energies | Stiell IG et al. BIPHASIC trial, Circulation 2007;115:1511–1517 | DOI 10.1161/CIRCULATIONAHA.106.648204, listed in Wigginton 2025's references; DOI resolved and Europe PMC record checked in M0a (not read) |
+| G-TTI | measured transthoracic impedance with self-adhesive pads in adults and children | M0a: measured series and effects in `docs/research/defib-zoll-m2-pads-impedance.md` §2. Still WANTED: Chen 2013 (RLB arrest series, DOI 10.1016/j.resuscitation.2012.09.017) and Samson 1995 (children, DOI 10.1016/s0002-9149(99)80606-7); no paediatric (< 8 y) biphasic pads series found |
+| G-PADS | the pads lead's vector for the two placements | M0a: no published vector found for either placement; physical basis is Frank's image surface (Frank 1954, DOI 10.1016/0002-8703(54)90196-9), still WANTED with Dower 1968 (DOI 10.1016/s0022-0736(68)80013-5); research note §1 |
 | G-THR | transcutaneous pacing thresholds by placement | WANTED; Cummins 1993 (NEJM 328:1377, DOI 10.1056/NEJM199305133281902, from Wigginton 2025's references) for outcome, not threshold |
 | G-CPR | depth–pressure and depth–flow relations | WANTED; Edelson 2006 (Resuscitation 71:137, listed in ERC BLS 2025's references) for depth and shock success |
 | G-FAT | rescuer fatigue over 2 minutes | WANTED |
