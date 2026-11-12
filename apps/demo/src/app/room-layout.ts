@@ -21,7 +21,7 @@ export const MAX_NAME = 32;
 
 export type Layout = Record<string, KnownDevice>;
 /** The windows of this computer, by what they show. */
-export type Windows = Partial<Record<'learner' | 'monitor' | 'defib', number>>;
+export type Windows = Partial<Record<'learner' | 'monitor' | 'defib' | 'depth', number>>; // E12: the depth window too
 
 const isShow = (v: unknown): v is Instrument => typeof v === 'string' && (INSTRUMENTS as readonly string[]).includes(v);
 
@@ -75,7 +75,7 @@ export function readWindows(s: Store): Windows {
   const v = parse(s.get(WINDOWS_KEY)) as Record<string, unknown> | null;
   const n = (x: unknown) => (typeof x === 'number' && Number.isInteger(x) && x > 0 && x <= 8 ? x : 0);
   const out: Windows = {};
-  if (v && typeof v === 'object') for (const k of ['learner', 'monitor', 'defib'] as const) if (n(v[k])) out[k] = n(v[k]);
+  if (v && typeof v === 'object') for (const k of ['learner', 'monitor', 'defib', 'depth'] as const) if (n(v[k])) out[k] = n(v[k]);
   return out;
 }
 
@@ -84,7 +84,7 @@ export function windowsOf(peers: readonly PeerSeen[]): Windows {
   const out: Windows = {};
   for (const p of peers) {
     if (p.via !== 'local' || p.role !== 'viewer') continue;
-    const k = p.show === 'monitor' || p.show === 'defib' ? p.show : 'learner';
+    const k = p.show === 'monitor' || p.show === 'defib' || p.show === 'depth' ? p.show : 'learner';
     out[k] = (out[k] ?? 0) + 1;
   }
   return out;
@@ -92,7 +92,7 @@ export function windowsOf(peers: readonly PeerSeen[]): Windows {
 
 /** Kept only when a window is open: a session that opened none leaves the last one's layout to reopen. */
 export function writeWindows(s: Store, w: Windows): void {
-  if ((w.learner ?? 0) + (w.monitor ?? 0) + (w.defib ?? 0) > 0) s.set(WINDOWS_KEY, JSON.stringify(w));
+  if ((w.learner ?? 0) + (w.monitor ?? 0) + (w.defib ?? 0) + (w.depth ?? 0) > 0) s.set(WINDOWS_KEY, JSON.stringify(w));
 }
 
 /** "Forget the room": the names and the windows, never the code or the PIN. */
@@ -102,7 +102,7 @@ export function forgetRoom(s: Store): void {
 }
 
 const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const SHOW_WORD: Record<Instrument, string> = { learner: 'learner monitor', monitor: 'monitor', defib: 'defibrillator', depth: 'depth of anaesthesia' };
+const SHOW_WORD: Record<Instrument, string> = { learner: 'learner monitor', monitor: 'monitor', defib: 'defibrillator', depth: 'depth of anaesthesia', pump: 'pump tablet' };
 
 /**
  * m5's foot line, from what was kept: "Last time in this room: 1 monitor window and 2 learner monitor windows on this
@@ -110,7 +110,7 @@ const SHOW_WORD: Record<Instrument, string> = { learner: 'learner monitor', moni
  */
 export function lastTime(l: Layout, w: Windows): string | null {
   const parts: string[] = [];
-  const wins = (['monitor', 'defib', 'learner'] as const).filter((k) => w[k]).map((k) => count(w[k] ?? 0, `${SHOW_WORD[k]} window`));
+  const wins = (['monitor', 'defib', 'depth', 'learner'] as const).filter((k) => w[k]).map((k) => count(w[k] ?? 0, `${SHOW_WORD[k]} window`));
   if (wins.length) parts.push(`${wins.length > 1 ? `${wins.slice(0, -1).join(', ')} and ${wins[wins.length - 1]}` : wins[0]} on this computer`);
   const devs = Object.values(l);
   if (devs.length) {

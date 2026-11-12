@@ -1,3 +1,6 @@
+SUPERSEDED (piece VF, brief 159): m1 to m4 are superseded by the built EDP-TS face, drawn to the owner's photographs
+(docs/plans/vent-skin-edp-ts.md §5 as amended; research/57 §16). They are kept as the plan's history, not redrawn.
+
 Mock-ups of the EDP-TS ventilator face, drawn 2026-11-10 for docs/plans/vent-skin-edp-ts.md (brief 141).
 
   m1-main.html / .png     the main screen, SIMV(VCV)+PSV, with Exp. Sensitiv. selected (target state after piece V6)

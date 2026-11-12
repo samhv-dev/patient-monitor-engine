@@ -8,11 +8,10 @@
 // (remote/tray.ts, L7), and the card reads "Notice shown at mm:ss". There is no remove and no let-stand: the preparation
 // stays the learner's; a Give before the press is given, and the card says "given at mm:ss, notice not shown". Clean
 // preparations are listed collapsed ("3 preparations, no finding"). Nothing here warns the learner (LQ3).
-import type { Finding, Formulary, InstructorPrepView, Source } from '@pme/controller';
+import type { Finding, Formulary, InstructorPrepView } from '@pme/controller';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { sourceText } from '../remote/bench.ts';
-import { FINDING_WORDS } from '../remote/tray.ts';
+import { FINDING_WORDS, NO_SOURCE, NO_STATEMENT, sourcesText } from '../prep-words.ts';
 import type { BoardEntry } from './prep-board.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import './learner-preps.css';
@@ -30,8 +29,8 @@ export const PREPS_WORDS = {
   givenAt: (t: number, notice: string) => `given at ${clock(t)}, ${notice}`,
   discardedAt: (t: number) => `discarded at ${clock(t)}`,
   clean: (n: number) => `${n} ${n === 1 ? 'preparation' : 'preparations'}, no finding`,
-  noStatement: 'no statement in the formulary',
-  noSource: 'no source speaks',
+  noStatement: NO_STATEMENT,
+  noSource: NO_SOURCE,
   refused: (why: string) => `Notice not shown: ${why}`,
   /** The header's count: preparations with a finding whose notice has not been shown. */
   count: (n: number) => `${n} ${n === 1 ? 'preparation' : 'preparations'} to look at`,
@@ -49,30 +48,7 @@ export function whatText(p: InstructorPrepView, f: Formulary | null): string {
   return [`${drugs}${diluent}`, where, `${fmt(p.volumeMl)} mL`].filter(Boolean).join(', ');
 }
 
-/** "p. 350" for a page number; a page the reader wrote out ("PDF p. 1859 (page stamp 1839)") as written. */
-const pageText = (page: number | string): string => (typeof page === 'number' || /^\d+$/.test(page) ? `p. ${page}` : page);
-
-/** Trissel 2013's reading of the statement behind a finding, as the card says it ("Trissel 2013 p. 1859 agrees"). */
-function crossText(x: Finding, f: Formulary): string | null {
-  const e = f.drugs[x.drugId];
-  const st = x.against === 'diluent' ? e?.diluents.find((d) => d.id === x.other)?.compat : e?.admixtures.find((a) => a.with === x.other && a.src === x.src);
-  const c = st?.crossCheck;
-  if (!c) return null;
-  if (c.trissel === 'not listed') return 'not in Trissel 2013';
-  const s = c.src ? f.sources[c.src] : undefined;
-  const page = s?.kind === 'trissel' ? ` ${pageText(s.page)}` : '';
-  return `Trissel 2013${page} ${c.trissel}${c.trissel === 'differs' && c.ruling ? `; the entry follows ${c.ruling.follows}` : ''}`;
-}
-
-/** A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). */
-export function sourcesText(x: Finding, f: Formulary | null): string {
-  if (x.src === null) return `(${PREPS_WORDS.noSource})`;
-  if (!f) return `(${x.src})`;
-  const s: Source | undefined = f.sources[x.src];
-  const main = s?.kind === 'trissel' ? `Trissel 2013 ${pageText(s.page)}` : sourceText(s, x.src);
-  const cross = s?.kind === 'trissel' ? null : crossText(x, f);
-  return `(${[main, cross].filter(Boolean).join('; ')})`;
-}
+export { sourcesText } from '../prep-words.ts'; // L13: one DOM-free place for the naming of sources
 
 /** One finding: "Incompatible: <statement> (<sources>)". */
 function findingRow(x: Finding, f: Formulary | null): HTMLElement {
