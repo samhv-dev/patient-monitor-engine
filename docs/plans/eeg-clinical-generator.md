@@ -1,5 +1,63 @@
 # A clinical EEG generator: status epilepticus and sleep beside depth of anaesthesia — Plan
 
+**STATE OF READINESS (12 November 2026, brief 170).** The build is **on hold until the owner's word**. The plan is ready
+for that word in the following sense.
+- **Settled:**
+  - the inventory of clinical uses (§1.5, U1–U41), from a pass over Miller's whole text. Brief 175 then read Ch35,
+    Ch36 and Ch80 whole, section by section (§1.5.4, reading log in Appendix A). §1.5.3 states what it is complete
+    against and what was still not read. Two uses found have no mechanism in the plan and are put to the owner
+    (EQ24, EQ25);
+  - the owner's rulings, written in: EQ11 = A (the brain's core model always runs), the hold, and the four depth
+    readers built now on today's generator (§4.1, §4.6);
+  - the four mechanism gaps, each searched and given one outcome (§3.9):
+    - uraemic encephalopathy: a physiological basis, no EEG model;
+    - septic encephalopathy: nothing found, an open gap;
+    - BAEP: a published mechanism;
+    - subcortical SSEP and MEP: published parts, with the joint this plan's composition;
+    - ischaemic injury, split in two: loss of function, a published mechanism; cell death, a physiological basis
+      with no EEG model;
+  - the order of the pieces: every sources review comes before any build piece (§5, §5.2).
+- **Waits for papers:**
+  - the choice of equation family (EQ12), decided in G0a, G0d and X0 together. No model paper is in the library yet:
+    `library/sources/papers/eeg/` holds the six reader papers only (§7);
+  - every [ABS] row, which stays at abstract level until its paper is read in full;
+  - the clinical definitions (ACNS, Salzburg, Trinka, AASM), for G0b.
+- **Waits for his rulings (§8):**
+  - **he can rule these now:** EQ1–EQ8, EQ10, EQ13–EQ20 and EQ22–EQ25. Four of them change the structure:
+    - EQ3: the montage, now that PSI is built on today's generator;
+    - EQ15 and EQ16: their own plans for V0, BD2, and the evoked-potential pathways and MEP;
+    - EQ20: what stands in for the unpublished death of brain tissue. **Brain death (BD1) waits on it.**
+  - **these need the reviews or G1 first:** EQ9 (the budget, from G1's measurement), EQ12 (the family, from G0a, G0d
+    and X0′) and EQ21 (the ion layer, from G0d and G1).
+
+**REFINEMENT (brief 170, 12 November 2026).** Base: `origin/plan-eeg-clinical-generator-amend` **96ea653e** (PR #426,
+still open when this was written; it holds the amendment). Worktree `scratch/wt-plan-eeg-refine`, branch
+`plan-eeg-clinical-generator-refine`. The refinement:
+- adds the full pass and its pages to §1.5, with twelve new uses (U26–U37);
+- adds §3.9, the four gap searches and their outcomes;
+- writes in the owner's rulings (EQ11 = A; the hold; four readers now, BIS-type first, PR #427);
+- adds sources-review pieces G0c, G0d and X0′, puts G1 behind them, and resizes EP2 and EP3 (§5.2);
+- reconciles §7 with `research/58-papers-wanted-eeg-2026-11-11.md`;
+- revises EQ2, EQ3, EQ9, EQ12, EQ13, EQ14, EQ16 and EQ17, marks EQ11 ruled, and adds EQ20–EQ23;
+- adds a refinement self-review (§9.3).
+
+No code, test, constant, card or kit file was changed.
+
+**INVENTORY CLOSED AGAINST THE UNREAD CHAPTERS (brief 175, 12 November 2026).** Base:
+`origin/plan-eeg-clinical-generator-refine` **f89b480a** (PR #430, still open; it carries PR #426's commit too).
+Worktree `scratch/wt-plan-eeg-ch36`, branch `plan-eeg-inventory-unread-chapters`. This pass:
+- read Ch35 (pp. 1099–1131), Ch36 (pp. 1133–1151) and Ch80 (pp. 2570–2592) whole, section by section, from the split
+  PDFs with `pdftotext` (Poppler). The log of every section is Appendix A;
+- added pages and constraints to existing rows, and four new rows, U38–U41 (§1.5.4);
+- put two uses with no mechanism in the plan to the owner: EQ24 (consciousness and memory as states in their own right,
+  U40) and EQ25 (vagal nerve stimulation for status epilepticus, U41);
+- corrected the Ch36 page numbers the refinement had written. Ch36's printed page is the PDF page − **233**, not − 228,
+  so its body is pp. 1133–1151. "Ch36 p. 1150" (age) is p. 1145, and "p. 1155" (deep anaesthesia, phase–amplitude
+  coupling) is p. 1150. The burst-suppression target of 50–80 % is Ch35 p. 1106, not Ch36 p. 1140;
+- rewrote the completeness sentence (§1.5.3).
+
+The plan's structure was not changed. No code, test, constant, card or kit file was changed.
+
 **STATUS: DRAFT FOR REVIEW (2026-11-11).** A planning executor wrote this plan for brief 166 of the post-demo set. Nothing
 in it is ruled until the owner answers §8 and the orchestrator reviews the pieces. No product code, test, constant, card
 or kit file was changed while writing it.
@@ -40,7 +98,8 @@ by the function name given, because lines move.
 grep -i eeg` lists only `stage-eeg-depth-of-anaesthesia.md`. Nobody had written this plan.
 
 **Sources, and how each was read.** The convention for page numbers is "printed page". In the full Miller PDF the
-printed page is the PDF page − 228 in chapters 35–36, and the PDF page − 51 in chapter 9. All PDFs were read with PyMuPDF
+printed page is the PDF page − 228 in chapter 35, the PDF page − 233 in chapter 36 (corrected by brief 175: PDF 1366
+prints p. 1133), and the PDF page − 51 in chapter 9. All PDFs were read with PyMuPDF
 under `python3 -I`, and no file was downloaded.
 
 - **Miller's Anesthesia, 10th ed. (2025)**, `library/sources/full-pdfs/miller-10th.pdf`, read by page range:
@@ -50,6 +109,38 @@ under `python3 -I`, and no file was downloaded.
     "Ch36 p. n".
   - The "Neurocritical Care" chapter of section VII, pp. 2578 and 2587. Below, "NCC p. n". Its chapter number was not
     found on the pages read.
+- **Added by the refinement (brief 170): the full pass.** The 10th edition has no index: the book ends with Ch87's
+  references (PDF p. 3283), and the three-page table of contents (`library/sources/tocs/miller-10th-toc.pdf`) lists
+  chapters only. **A keyword sweep over all 3283 PDF pages stood in for the index.** Its terms were EEG,
+  electroencephalog-, evoked potential or response, SSEP, MEP, BAEP, AEP, brain death, death by neurologic criteria,
+  burst suppression, isoelectric, electrocerebral, BIS, bispectral, spectral edge, PSI, entropy, seizure, convulsion,
+  epileptic, status epilepticus, myoclonus, polysomnography, REM and slow-wave sleep, sleep architecture, spindle,
+  triphasic, encephalopathy and electrocorticography.
+  - **Outside Ch09, Ch35, Ch36 and Ch80**, hits were read as short context windows of about 110–190 characters:
+    - EEG and evoked-potential hits: every hit outside the pharmacology chapters, and up to two per page in Ch10,
+      Ch16, Ch17 and Ch21–24;
+    - seizure, sleep-term and encephalopathy hits: one per page.
+
+    Some sentences were cut by the window. Where a value is cited, its passage was re-read in full.
+  - **The core chapters**, read from their section headings, with depth stated per chapter:
+    - Ch09 pp. 152–176: headings, and the sleep-assessment, respiratory-arousal and ICU passages;
+    - Ch35 pp. 1099–1131: headings plus every sentence naming a modality, cut at about 150 characters. Pp. 1104 (in
+      part), 1126 with Table 35.4, 1127–1128, 1129, and Table 35.5 (pp. 1130–1131) were read in full;
+    - Ch36 (written here as "pp. 1138–1156", which is PDF − 228; the printed pages are 1133–1151): headings only,
+      except printed p. 1145 (age and pre-existing disease) and p. 1150 (in part). Its drug-by-drug text was taken
+      from the depth plan's reading. Note: the keyword sweep skipped Ch36 because the split file named "Ch35" spans it
+      (PDF 1327–1389);
+    - Ch80 pp. 2570–2591: headings plus every sentence naming the EEG, evoked potentials, seizures or brain death,
+      cut at about 160 characters. Pp. 2578–2579 (neurophysiologic monitoring) were read in full.
+  - **Superseded by brief 175 for three chapters:** Ch35 pp. 1099–1131, Ch36 pp. 1133–1151 and Ch80 pp. 2570–2592
+    (the body ends with Fig. 80.8 on p. 2592) were read whole, section by section, figure legends and table text
+    included. Each section's line is in Appendix A.
+  - **Read in full for the gaps:** Ch10 pp. 211–212.
+
+  Printed pages were set from each chapter's running header. The offset (PDF page − printed page) was measured per
+  chapter, for example 87 in Ch16, 113 in Ch21, 123 in Ch22, 137 in Ch23, 159 in Ch25, 334 in Ch52, 339 in Ch53,
+  445 in Ch71, 476 in Ch75 and 520 in Ch82. Note: Ch24 (neuromuscular blocking drugs) sits inside the split file named
+  "Ch23"; its printed pages start at 674 (PDF 820).
 - **The depth plan's own sources:** Ch35–36, and `research/43-eeg-sources-review.md` (cited as "research/43" where its
   reading is used).
 - **Read as abstract only (tagged [ABS]).** Each was read through the Europe PMC REST service, which returns the
@@ -229,10 +320,18 @@ The engine should not choose among these. A sleep scorer uses the AASM manual's 
 
 ### 1.5 The inventory: every clinical use of the EEG and evoked potentials found in the sources
 
-**How it was built.** From the Miller passages read for the amendment (pages below) and the clinical-application
-passages of Ch35 (pp. 1115–1128). It was **not** built from a heading-by-heading pass of Ch35's clinical applications
-and Ch80, because the PDF's table of contents lists chapters only. That pass is the first task of G0b, and any use it adds
-joins this table. Page convention as before. Two more page conventions:
+**How it was built.** The amendment built U1–U25 from the Miller passages it had read (pages below) and from the
+clinical-application passages of Ch35 (pp. 1115–1128). **The refinement (brief 170) did the pass** described under
+"Sources": the headings and modality sentences of Ch09, Ch35 and Ch80, Ch36's headings and p. 1145, and the keyword
+sweep's passages in the other chapters. Its depth per chapter is stated there. The pass gave three things:
+- new pages and constraints for U1–U25 (§1.5.1);
+- twelve new uses, U26–U37 (§1.5.2);
+- the completeness statement (§1.5.3).
+
+**Brief 175 then read Ch35, Ch36 and Ch80 whole** (Appendix A) and added §1.5.4: pages and constraints for existing rows,
+and four new rows, U38–U41.
+
+G0b no longer has to do this pass. Page convention as before. Two more page conventions:
 - Ch10 "Cerebral Physiology and the Effects of Anesthetic Drugs": PDF page 278 prints p. 219 (read from the running
   header).
 - The Neurocritical Care chapter is **Chapter 80** (its own Table 80.8, p. 2584), still written "NCC".
@@ -247,32 +346,154 @@ joins this table. Page convention as before. Two more page conventions:
 | U1 | Depth of anaesthesia, sedation titration | depth cells C1–C35 (depth plan §7.2) | region + drug actions (§3.4) | as §4.3 | G3a, G3b, G4 |
 | U2 | Status epilepticus, non-convulsive seizures, seizures after cardiac surgery | §1.2; postoperative subclinical seizures in high-risk children (p. 2314); NCS in critically ill children (p. 2455) | slow excitability + fast dynamics (§3.7) | [ABS-claimed] for generalised (Robinson 2002), focal (Wendling 2002) | G7a–G7d |
 | U3 | Sleep and sleep studies | §1.3 | arousal drive + corticothalamic region | [ABS-claimed] spectra and spindles (Robinson 2001) | G6a, G6b, G9 |
-| U4 | Barbiturate coma and burst suppression titration | "monitor the effects of barbiturates administered to induce coma" (p. 2455); SR 50–80 % when targeted (Ch36 p. 1140) | metabolic slow variable (Ching 2012) + drug action | [ABS-claimed] (Ching 2012) | G4, G7c |
-| U5 | Brain death (electrocerebral inactivity) | prerequisites: an irreversible cause clear; adequate oxygenation and perfusion; confounders corrected: hypothermia, metabolic compromise, sedative or neuromuscular drugs; an apnoea trial with PaCO2 confirmation; an ancillary test when an examination step cannot be completed (NCC p. 2591). EEG used to diagnose "isoelectric brain death" (p. 2455). Recording standard WANTED (ACNS Guideline 6) | global failure of the metabolic variable, made irreversible by an injury state (I1); confounders through the existing drug, temperature and glucose inputs. **A constraint from p. 1113:** thiopental far beyond an isoelectric EEG preserves early cortical and subcortical SSEPs and BAEPs. So drug silence and death must differ in the evoked responses, and the suppression mechanism must reproduce that | EEG silence [ABS-claimed] (Ching 2012 for metabolic suppression); irreversibility [none identified; searched: Hofmeijer 2012, van Putten 2016 abstracts propose synaptic then membrane failure, not an EEG model] | G4, I1, BD1, BD2 |
-| U6 | Hypoxic-ischaemic injury, cardiac-arrest prognosis | malignant patterns burst suppression, α-coma, low-voltage delta; persisting reactivity good (NCC p. 2578); standardised patterns WANTED (Westhall 2016) | metabolic variable + injury state per region; reactivity = the region's response to the stimulus input | burst suppression [ABS-claimed]; α-coma, low-voltage delta, reactivity [plausible] | G4, I1, C1 |
+| U4 | Barbiturate coma and burst suppression titration | "monitor the effects of barbiturates administered to induce coma" (p. 2455); SR 50–80 % of an epoch when targeted (Ch35 p. 1106; corrected by brief 175 from "Ch36 p. 1140") | metabolic slow variable (Ching 2012) + drug action | [ABS-claimed] (Ching 2012) | G4, G7c |
+| U5 | Brain death (electrocerebral inactivity) | prerequisites: an irreversible cause clear; adequate oxygenation and perfusion; confounders corrected: hypothermia, metabolic compromise, sedative or neuromuscular drugs; an apnoea trial with PaCO2 confirmation; an ancillary test when an examination step cannot be completed (NCC p. 2591). EEG used to diagnose "isoelectric brain death" (p. 2455). Recording standard WANTED (ACNS Guideline 6) | global failure of the metabolic variable, made irreversible by an injury state (I1); confounders through the existing drug, temperature and glucose inputs. **A constraint from p. 1113:** thiopental far beyond an isoelectric EEG preserves early cortical and subcortical SSEPs and BAEPs. So drug silence and death must differ in the evoked responses, and the suppression mechanism must reproduce that | EEG silence [ABS-claimed] (Ching 2012 for metabolic suppression); irreversibility: split by the refinement (§3.9 gap 4) into 4a, loss of function and terminal depolarisation (**published mechanism [ABS-claimed]**), and 4b, the transition to cell death (**physiological basis, no EEG model**) | G4, I1a, I1b, BD1, BD2 |
+| U6 | Hypoxic-ischaemic injury, cardiac-arrest prognosis | malignant patterns burst suppression, α-coma, low-voltage delta; persisting reactivity good (NCC p. 2578); standardised patterns WANTED (Westhall 2016) | metabolic variable + injury state per region; reactivity = the region's response to the stimulus input | burst suppression [ABS-claimed]; the six common postanoxic categories and their transitions [ABS-claimed] (Ruijter 2017, a mean-field model with thalamic input; refinement, §3.9 gap 4a); α-coma, reactivity [plausible] | G4, I1a, C1 |
 | U7 | Hypoglycaemic encephalopathy | glucose falling to about 40 mg/dL: alpha and beta shift to delta and theta; below 20 mg/dL: suppression (flat); persisting: seizures and hippocampal injury (Ch10 p. 219) | glucose as substrate of the metabolic variable (the endocrine glucose state exists) | [plausible] (Ching 2012 claims metabolic suppression; glucose as its input is unread) | G4b |
 | U8 | Hypercapnic encephalopathy | hypercapnia has "only indirect effects secondary to increased CBF" unless severe with hypoxaemia (Ch35 p. 1127) | PaCO2 → CBF (the brain model's own) → the metabolic variable; a direct CO2 effect on neurons is WANTED | [plausible] | G4b |
 | U9 | Hepatic encephalopathy, triphasic waves | patterns WANTED (Kaplan 2004; ACNS 2021) | ammonia raising neuronal excitability, impairing synaptic transmission, enhancing inhibition, on a Liley-type neural mass | **[ABS-claimed]**: Ligtenstein 2021 (GPDs and their suppression by GABA-ergic drugs; a shared mechanism with NCSE argued); Song 2018 and Song 2019 (Liley family; triphasic-wave periodicity). Note: the Song models' parameters are **fitted to patient EEG by particle filtering**, which the owner's rule would reject as a parameter source | X0, X1, X2 |
 | U10 | Minimal hepatic encephalopathy | alpha disturbance WANTED | neuron–astrocyte coupling, reduced astrocytic GABA uptake | [ABS-claimed] (Song 2024) | X2 |
 | U11 | Drug-toxic encephalopathy | cefepime: triphasic-like GPDs with a high negative component | GABA-A antagonism; interneuron auto-inhibition | [ABS-claimed] (Tamune 2019); other drugs [none identified; searched: Europe PMC title query "triphasic / encephalopathy + model"] | X4 |
-| U12 | Uraemic encephalopathy | patterns WANTED (Kaplan 2004) | — | [none identified; searched: same query] | X3 |
-| U13 | Septic encephalopathy | patterns WANTED | — | [none identified; searched: same query; one mouse study, not a model] | X3 |
+| U12 | Uraemic encephalopathy | patterns WANTED (Kaplan 2004); uraemia lists "muscular irritability, myoclonus, coma" (Ch55 p. 1808) | uraemic guanidino compounds antagonising GABA-A and glycine responses → the region's inhibitory synapse (§3.9 gap 1) | **physiological basis, no EEG model** (refinement, §3.9) | X0′, X3 |
+| U13 | Septic encephalopathy | EEG grades normal, excess theta, predominant delta, triphasic waves, suppression or burst suppression (Young 1992 [ABS]) | — | **nothing found as a model; open gap** (refinement, §3.9) | X3 |
 | U14 | Focal lesions: tumour, stroke | regional asymmetry with tumours, epilepsy, ischaemia or infarction (Ch35 p. 1105) | a per-region structural property of the patient (lesion) + per-region perfusion | [plausible] | F1, V0 |
 | U15 | Carotid endarterectomy, regional ischaemia | EEG abnormal from CBF 20 mL/100 g/min, cell survival threatened at 12, normal 50 (Ch35 p. 1122, Xe washout comparison); SSEP threshold similar but slightly lower (p. 1123); hemispheric ischaemia after ICA clamping (Fig. 35.22, p. 1124) | per-hemisphere / per-territory perfusion → the metabolic variable per region; slowing with voltage preserved first (Ch35 p. 1105) via the "slows only" share | [plausible]; synaptic failure first [ABS-claimed as a mechanism, not an EEG model] (Hofmeijer 2012) | V0, G4b, F1 |
 | U16 | Delayed cerebral ischaemia after SAH | a fall of the alpha/delta ratio (Claassen 2004 [ABS]); EEG monitoring in high-risk SAH (NCC p. 2583) | per-territory perfusion falling with vasospasm (a vascular model) | [plausible] | V0 |
 | U17 | Hypothermia, CPB, deep hypothermic circulatory arrest | complete suppression usually at 15–18 °C (Ch35 p. 1127); in DHCA, residual activity "is associated with ongoing cerebral metabolism", and "isoelectric silence can then be induced by further cooling" (p. 2314) | temperature acting on metabolism and on synaptic rates | [plausible]; the temperature dependence of rates is WANTED | G4b |
 | U18 | ECT | seizure duration prolonged with remifentanil 1 mcg/kg + methohexital 0.625 mg/kg compared with methohexital 1.25 mg/kg alone (Ch22 p. 571) | an electrical stimulus into the region → the seizure mechanism; drugs through their actions | [plausible] | G7e |
 | U19 | Intraoperative seizure mapping, awake craniotomy, electrocorticography | afterdischarges after cortical stimulation that may progress to seizures; stopped by iced saline or a small dose of barbiturate or propofol; foci activated by hyperventilation or methohexital (Ch35 p. 1116) | the same stimulus input, on a cortical (not scalp) electrode; temperature per region | [plausible] | G7e |
-| U20 | Somatosensory evoked potentials (spine, aortic, carotid, motor strip) | generators: N9 brachial plexus, N11 posterior columns or roots, N13/P13 dorsal column nuclei, N14–15 brainstem or thalamus, N19/P22 parietal cortex (Table 35.2, p. 1109); latency and amplitude (Fig. 35.7, p. 1108); volatiles raise cortical latency and lower amplitude, not subcortical; 0.5–1 MAC with N2O compatible (p. 1112); propofol preferred (p. 1113); thiopental preserves them beyond an isoelectric EEG (p. 1113); etomidate raises cortical amplitude (p. 1113); opioids compatible even in high doses (p. 1113); temperature affects them (p. 1127) | cortical peaks: a stimulus pulse into the thalamic input of the region (Jansen 1995 [ABS] simulates VEPs so). Peripheral and subcortical peaks: a pathway conduction model (nerve, dorsal column, brainstem, thalamus) with temperature-dependent conduction | cortical [ABS-claimed] for VEP only; the pathway [none identified; searched: not searched, WANTED] | EP1, EP2 |
-| U21 | Brainstem auditory evoked potentials (posterior fossa) | far-field, often < 0.3 µV, 500–2000 repetitions; waves I–VII, VI–VII unreliable under GA (p. 1110); volatiles raise latency without much amplitude change (p. 1112); fentanyl 50 mcg/kg no change (p. 1113) | pathway conduction model (cochlea to inferior colliculus, Fig. 35.10) | [none identified] | EP2 |
+| U20 | Somatosensory evoked potentials (spine, aortic, carotid, motor strip) | generators: N9 brachial plexus, N11 posterior columns or roots, N13/P13 dorsal column nuclei, N14–15 brainstem or thalamus, N19/P22 parietal cortex (Table 35.2, p. 1109); latency and amplitude (Fig. 35.7, p. 1108); volatiles raise cortical latency and lower amplitude, not subcortical; 0.5–1 MAC with N2O compatible (p. 1112); propofol preferred (p. 1113); thiopental preserves them beyond an isoelectric EEG (p. 1113); etomidate raises cortical amplitude (p. 1113); opioids compatible even in high doses (p. 1113); temperature affects them (p. 1127) | cortical peaks: a stimulus pulse into the thalamic input of the region (Jansen 1995 [ABS] simulates VEPs so). Peripheral and subcortical peaks: a pathway conduction model (nerve, dorsal column, brainstem, thalamus) with temperature-dependent conduction | cortical [ABS-claimed] for VEP only; the pathway: **sourced parts, the joint is this plan's composition** (refinement, §3.9 gap 2) | EP1, EP2 |
+| U21 | Brainstem auditory evoked potentials (posterior fossa) | far-field, often < 0.3 µV, 500–2000 repetitions; waves I–VII, VI–VII unreliable under GA (p. 1110); volatiles raise latency without much amplitude change (p. 1112); fentanyl 50 mcg/kg no change (p. 1113) | pathway conduction model (cochlea to inferior colliculus, Fig. 35.10) | **published mechanism [ABS-claimed]**: Dau 2003, Verhulst 2015/2018 (refinement, §3.9 gap 2) | EP2 |
 | U22 | Visual evoked potentials | dose-dependent latency rise with volatiles, with or without amplitude change; waveform variability (p. 1112) | pulse into an occipital region (Jansen 1995 [ABS]) | [ABS-claimed] | EP1 |
-| U23 | Transcranial motor evoked potentials | anaesthetics' effects "surprisingly profound", because the spinal α-motor neuron integrates corticospinal, propriospinal, cerebellar and subcortical input (p. 1113); 0.3 MAC isoflurane effect shown (Fig. 35.14); infants exquisitely sensitive (p. 1126) | a motor-cortex output → corticospinal conduction → a motor-neuron pool integrating its inputs, with the drug actions on it | [none identified] | EP3 |
+| U23 | Transcranial motor evoked potentials | anaesthetics' effects "surprisingly profound", because the spinal α-motor neuron integrates corticospinal, propriospinal, cerebellar and subcortical input (p. 1113); 0.3 MAC isoflurane effect shown (Fig. 35.14); infants exquisitely sensitive (p. 1126) | a motor-cortex output → corticospinal conduction → a motor-neuron pool integrating its inputs, with the drug actions on it | **sourced parts, the joint is this plan's composition** (refinement, §3.9 gap 3) | EP3 |
 | U24 | EMG and nerve monitoring (cranial nerves, peripheral nerve action potentials) | EMG responses reaching a threshold become audible feedback (p. 1114); nerve action potentials (Fig. 35.21, p. 1122) | peripheral nerve and muscle models (the engine has TOF only) | [none identified] | EQ17 |
 | U25 | The depth plan's §9 exclusions: infants and neonates; anaesthetic epileptiform spikes (sevoflurane, etomidate, hypocapnia); xenon; connectivity and complexity indices; nociception indices; auditory evoked potentials (for depth) | as the depth plan cites them | each as its row's mechanism | — | EQ17 |
 
 **Disagreement found.** Status epilepticus in children is defined as more than 20 minutes of continuous motor seizure, or
 seizures without awakening in between (p. 2461). The adult chapter says a seizure past 5 minutes is unlikely to stop
 (NCC p. 2587). The definitions themselves are G0b's (Trinka 2015).
+
+#### 1.5.1 What the full pass added to U1–U25 (refinement)
+
+**Rule used.** A use was folded into an existing row only when its mechanism, its engine input and its piece are all
+the same. Otherwise it got a new row (§1.5.2). Rows were never renumbered.
+
+| Row | Added from the pass (printed pages) |
+|---|---|
+| U1 | EEG used as the drug-effect measure in PK/PD work: spectral edge and BIS for the effect-site delay (Ch16 pp. 356–358; Ch22 pp. 568–570; Ch23 p. 629 and Table on p. 633). Index-guided closed-loop delivery is U28. Sedation vs anaesthesia (Ch09 p. 167). Airway management raises EEG activity, CMR and CBF (Ch40 p. 1235). Pregnancy: anaesthetic EEG effects similar (Ch58 pp. 1889, 1904). Propofol and sleep EEG similar (Ch17 p. 378; Ch26 p. 779). Depth readers used in cardiac surgery, with the BIS lagging events by its 15–30 s processing (Ch50 pp. 1581–1582, 1600) |
+| U2 | NCS frequent in the neuro-ICU; cEEG continuous in unconscious patients (NCC p. 2578). Refractory SE 20–30 % after a benzodiazepine and one second-line agent; super-refractory after 24 h (p. 2587). Early post-traumatic seizures reduced by phenytoin (p. 2581). EEG monitoring in high-risk SAH (p. 2583). Seizures in encephalitis and meningitis (pp. 2589–2590). cEEG in the PICU (Ch75 pp. 2433, 2455). Automatic seizure detection still has false negatives and positives and "cannot replace an EEG-trained neurologist" (NCC p. 2578). Subclinical seizures after neonatal cardiac surgery (Ch73 p. 2314). NCSE in the differential of terminal delirium (Ch48 p. 1499). Systemic causes are U26 |
+| U3 | Opioids reduce deep sleep on polysomnography (Ch22 p. 568). Sleep beyond staging is U29 |
+| U4 | Barbiturate therapy under EEG monitoring for raised ICP (NCC p. 2581). EEG to confirm metabolic suppression during temporary aneurysm clipping (Ch35 p. 1119; Ch53 p. 1763). Burst suppression by barbiturate or propofol in total circulatory arrest (Ch50 p. 1623). Barbiturate burst suppression with CBF and CMR about 50 % at complete EEG suppression (Ch10 p. 199; Ch21 p. 524). Tolerance: the thiamylal dose to keep burst suppression rose within 24 h (Ch10 p. 199) |
+| U5 | Death by neurologic criteria, and the absence of CBF as an ancillary sign (Ch07 p. 126). CBF studies are the "gold standard" ancillary test, required during barbiturate coma or when an apnoea test cannot be done (Ch75 p. 2456). The systemic course of brain death (Table 57.1, Ch57 p. 1872): catecholamine storm, then profound hypotension; pituitary failure with diabetes insipidus and loss of T3, T4 and ACTH (p. 1873); diabetes insipidus (Ch75 p. 2465). These belong to BD2, not to the EEG |
+| U6 | Post-arrest care: "EEG monitoring" in the algorithm (Ch82 p. 2635). The SSEP part is U36 |
+| U7 | Infants: insulin hypoglycaemia to 30 mg/dL did not alter the EEG; after 10 minutes of hypocapnic hypoglycaemia it became flat (Ch73 p. 2324). Hypoglycaemia lists seizure activity (Ch29 p. 892) |
+| U8 | **Hypocapnia added:** EEG abnormalities and paraesthesia in volunteers hyperventilating to PaCO2 below 20 mmHg (Ch53 p. 1745). Ch35's section "Hypercarbia and Hypocarbia" (p. 1127). The row now reads "hyper- and hypocapnia" |
+| U9 | Hepatic encephalopathy defined as brain dysfunction from hepatic insufficiency (Ch13 p. 316). The EEG patterns themselves stay WANTED (Kaplan 2004) |
+| U10, U11 | No Miller page found for either. Both stay WANTED for their patterns (Song 2024; Tamune 2019) |
+| U14 | Abnormal, ischaemic or scarred cortex under an electrode lowers amplitude, often with more slow waves; few studies of how pre-existing disease alters monitoring (Ch36 p. 1145). A thalamocortical model of cortical lesions after acute ischaemic stroke [ABS-claimed] (van Wijngaarden 2016, found by the gap search). Mechanism level becomes [ABS-claimed] for the lesion's effect on thalamocortical rhythms |
+| U15 | Global CBF 50 mL/100 g/min; symptoms at about 30; EEG ischaemia from about 20; isoelectric at about 15. Flat EEG with membranes preserved between about 6 and 12: the penumbra (Ch10 p. 211, Fig. 10.20). Processed EEG less sensitive than raw (Ch52 p. 1733). Contralateral occlusion raises significant ischaemic changes at clamping to nearly 50 % (p. 1733). EEG misses subcortical or small cortical ischaemia; most strokes are embolic (p. 1734). Hyperperfusion after the repair: headache, seizure, oedema (p. 1735). At least four channels (two per side) needed (Ch35 p. 1123). NIRS and EEG/SSEP watch different territories (p. 1124). EEG as a guide during temporary occlusion in aneurysm surgery (Ch53 p. 1763). Interventional neuroradiology (Ch69 p. 2199) |
+| U16 | No new page |
+| U17 | Accidental hypothermia: loss of consciousness common below 28 °C; reflexes, pupillary reactivity and EEG activity decline and become absent with progressive hypothermia (Ch71 p. 2254). EEG silence below the movement threshold, with individual variability (p. 2256). Neonatal hypoxic–ischaemic encephalopathy: whole-body hypothermia to 33.5 °C for 72 h (Ch10 p. 215). Brainstem and cortical EPs and processed EEG altered after DHCA (Ch73 p. 2323). Hypothermia-induced EEG isoelectricity as the endpoint of cooling (Ch50 p. 1623). Evoked-potential temperature data: Stockard 1978 and Markand 1990 (§3.9 gap 2), test bands only |
+| U18 | Esmolol shortens ECT seizures (Ch10 p. 197); etomidate gives longer ECT seizures than other hypnotics (Ch21 p. 543); the thiobarbiturate at ECT (Ch21 p. 526); ECT in the pacemaker patient (Ch34 pp. 1096–1097); ambulatory ECT (Ch68 p. 2156) |
+| U19 | Video-telemetry electrode placement; propofol stopped at least 15 minutes before the recording, with a residual high-frequency footprint; provocative manoeuvres (Ch53 pp. 1772–1773). Dexmedetomidine does not reduce focal epileptiform activity (Ch21 p. 547); etomidate activates foci (Ch21 p. 542); enflurane's EEG activation used to find foci (Ch10 p. 209). Stereo-EEG and DBS by robot (Ch67 p. 2145). Microelectrodes placed transcortically record single neurons, for example in Parkinson surgery (Ch35 p. 1104): a scale below the region model, [none identified; not searched] |
+| U20 | **Physiological confounders (Ch35 pp. 1127–1128):** below autoregulation the SSEP amplitude falls until loss, with no latency change; cortical responses are more sensitive to hypoperfusion than spinal, brainstem or non-synaptic ones; transient amplitude falls with rapid pressure drops above the lower limit. Hypothermia raises latency and lowers amplitude for all modalities; hyperthermia lowers SSEP amplitude, lost at 42 °C. Hypoxia lowers amplitude. Anaemia raises SSEP and VEP latency below a haematocrit of 15 %, amplitudes fall at about 7 %. **Positioning and limbs:** see U33. **Surgery:** see U32 |
+| U21 | BAEPs resist even profound hypotension (MAP 20 mmHg in dogs; Ch35 p. 1127). ABR hearing tests in infants under anaesthesia: sevoflurane more likely than propofol to give a false-positive hearing loss; low-quality ABR with volatiles under 24 months (p. 1126, Table 35.4). After TBI, impaired brainstem activity is the best predictor of a bad outcome (NCC p. 2579). The other surgical criteria are in U32 |
+| U22 | Glycine VEPs: see U35 |
+| U23 | Volatiles impede MEPs, and MEPs degrade nonlinearly over a narrow dose range (Ch35 p. 1128). Ketamine and etomidate may improve evoked potentials (p. 1128). Fentanyl and ketamine have little effect on myogenic MEPs (Ch52 p. 1714). Complete NMB makes MEPs impossible (p. 1714). The surgical criteria are in U32 |
+| U24 | Spontaneous EMG from stretch, compression, electrocautery heat or ischaemia (Ch35 p. 1122); neurotonic discharges; sharp section may give none (p. 1118); cranial-nerve EMG to tongue and glottis (p. 1118). Triggered EMG for pedicle screws (p. 1121; Table 35.5, p. 1130). A surface-EMG model exists in the motor-unit-pool paper (Fuglevand 1993 [ABS], §3.9 gap 3) |
+| U25 | **Infants:** EEG and MAC relation substantially different, cause unknown (Ch72 p. 2273); EEG unreliable in infants (p. 2272). Isoelectric patterns in young children under GA with hypotension (p. 2287). Infants under 3 months barely change from rest to anaesthesia; alpha and theta from 4 months (Ch35 p. 1126). Neonatal tracé alternant; children over about 12 months like young adults but of much higher amplitude; delta-dominated anaesthesia EEG until about 4 months (Ch36 p. 1145). Table 35.4 (Ch35 p. 1126): prolonged interpeak latencies and difficult SSEPs from incomplete myelination; corticospinal conduction velocities so varied that the D-wave is hard to obtain under 24 months; bulbocavernosus reflex very sensitive to volatiles. Cortical EEG present only 2 % of the time at 24 weeks' gestation (Ch59 p. 1941). **Anaesthetic spikes:** anaesthetic-induced seizures modelled as phase transitions of a mean-field cortex (Ch17 p. 389, citing Wilson 2006, title only); sevoflurane epileptiform activity and tonic–clonic seizures (Ch59 p. 1942; Ch72 p. 2273; Ch10 p. 210). **Research measures:** TMS–EEG connectivity, ERPs by summation over trials, midlatency AEP Pa/Na and implicit memory (Ch08 pp. 138, 145, 149). Phase–amplitude coupling and slow-wave saturation (Ch36 p. 1150) |
+
+#### 1.5.2 New uses found by the full pass (U26–U37)
+
+Same columns and levels as U1–U25. "Engine input" was checked by a search of `packages/engine-core/src` on this
+branch; where it was not checked, the row says so.
+
+| # | Use | What must be seen (with source, or WANTED) | Mechanism in the planned structure; engine input | Level | Piece |
+|---|---|---|---|---|---|
+| U26 | **Provoked seizures from systemic causes** (each cause has its own level; no shared tag) | (a) local anaesthetic toxicity: seizures reported with lidocaine doses as low as 1.4 mg/kg in IV regional anaesthesia; the CC/CNS ratio lower for bupivacaine (Ch25 pp. 755, 761–762); infants with bupivacaine infusions (p. 760). (b) Hyponatraemia: seizures and coma, TURP (Ch43 pp. 1353–1354; Ch55 p. 1819, below 110 mEq/L); children below 120 mEq/L (Ch75 p. 2463). (c) Hypocalcaemia and hypomagnesaemia (Ch43 pp. 1356, 1358). (d) Tranexamic acid, through GABA-A binding (Ch46 p. 1449); more seizures at loading doses of 100 mg/kg, 20 mg/kg proposed as the balance (Ch50 p. 1612). (e) Hyperbaric oxygen: seizures rising with PO2 and time (Ch71 pp. 2234, 2244). (f) Eclampsia (Ch58 p. 1908). (g) Normeperidine (Ch22 p. 604; Ch72 p. 2275). (h) Alcohol and drug withdrawal lower the threshold (NCC p. 2587; Ch28 p. 857). (i) Anaesthetic pro-convulsants: large-dose methohexital, ketamine, etomidate, sevoflurane (Ch10 pp. 209–210; Ch21 pp. 527, 542). (j) Others named: cyanide (Ch83 p. 2657), nerve agents (Ch64 p. 2070), CAR-T neurotoxicity (Ch79 p. 2564), retrobulbar local anaesthetic spread (Ch65 p. 2091) | (a) Na-channel block, with its EEG action WANTED; engine: a lidocaine PK row exists, PD antinociception only (`l2/pk/row.ts`). (b, c) Plasma Na, iCa and Mg exist (`l2/blood/solutes.ts`); the brain effect does not. (d) GABA-A antagonism, the same joint as U11; TXA row exists but is inert (`l2/pk/data/rows-other.ts`). (e) No CNS oxygen-toxicity input (ambient pressure not checked). (f–j) Not checked | (a) none identified, not searched; (b, c) none identified, not searched; (d) **physiological basis stated by Miller**, joins U11's mechanism; (e–j) not searched; (i) → U25 | X0′, G7f |
+| U27 | **Delirium risk; the elderly patient** | Avoid burst suppression; MAC falls 6 % per decade (Ch61 p. 1995). Ageing lowers amplitude at all frequencies and flattens the spectral slope by about 20 % (the "paradox of age"); burst suppression is more likely, with smaller bursts; abrupt state changes at emergence (Ch36 p. 1145). Severe suppression including burst suppression consistently associated with delirium; EEG-guided trials mixed (p. 1996; Ch78 pp. 2541–2547). Indices less reliable in the elderly; peak alpha slows with age (Ch36 p. 1145). Deep anaesthesia by burst suppression or low index linked with postoperative delirium (p. 1150) | the same region and drug actions as U1 and U4, with age as a patient property (depth cell C28, WANTED) | as U1/U4; age [plausible] | G3b, G4 |
+| U28 | **Index-guided closed-loop delivery** | BIS as the controlled variable with PID or model-based controllers for propofol and remifentanil (Ch23 pp. 665–670); TCI with BIS targets (pp. 663–664); PSI-2 against response to stimulation (p. 635) | a controller device reading a depth reader's output and setting a pump; no new physiology. The engine has TCI pumps (not checked) | no new mechanism needed | EQ22 |
+| U29 | **Sleep beyond staging** | Respiratory arousal ends an apnoea through chemoreceptors, upper-airway sensors and effort (Ch09 p. 164, Fig. 9.9). Up to 70 % of sedated or ventilated ICU patients show EEG that fits no standard sleep or wake category; deep NREM and REM reduced (p. 173; Table, p. 174). Opioids reduce REM (p. 175). Narcolepsy, cataplexy even under regional anaesthesia (pp. 175–176). Periodic limb movements with arousals (p. 176). High altitude: altered architecture, periodic breathing (Ch70 pp. 2214–2215) | the sleep model's arousal drive with chemical and mechanical airway inputs; engine: airway obstruction exists (`drive.obstruction`, `AirwayState`); chemoreceptor drive not checked | [plausible]; arousal drive [ABS] (Phillips 2007) | G6c |
+| U30 | **Spreading depolarisation** (electrocorticography after brain injury) | spreading depolarisations occur in about half of head-trauma patients and can cause secondary damage; continuous detection "might" become possible by intracranial ECoG (NCC p. 2578) | ion concentrations and the energy of the pumps in the region: spreading depression and the anoxic "wave of death" (Wei 2014 [ABS]); not in the engine | **published mechanism [ABS-claimed]** | SD1 (not sized), EQ21 |
+| U31 | **Acute global hypoxaemia, hypotension, anaemia and CPB during anaesthesia** | hypoxaemia: no EEG change while CBF compensates, then slowing, then abolition (Ch35 p. 1126). Hypotension: changes bilateral and modest, clear in sudden arrhythmias (p. 1127). Evoked-potential confounders as in U20 (pp. 1127–1128). CPB: changes mimic ischaemia (p. 1125; Ch50 p. 1582) | global DO2 and CBF → the metabolic variable; engine: `BrainSummary.cbf`, `pbto2`, haemoglobin (not checked by name) | [plausible] | B1, G4b, EP1, EP2 |
+| U32 | **Intraoperative monitoring criteria and procedures** | SSEP phase reversal across the central fissure from a subdural strip (Ch35 p. 1116). Retraction-induced BAEP I–V prolongation (p. 1117). Lateral spread response in hemifacial spasm (p. 1117). Alert examples: 0.5 ms wave V latency, 50 % cortical SSEP amplitude, 80 % tcMEP CMAP (p. 1129). Unilateral change unlikely to be anaesthetic (p. 1129). MEP below 25 % of baseline in TAA repair, every minute (Ch52 p. 1714). D-wave recorded epidurally, resistant to anaesthesia and NMB (Ch60 p. 1980). tcMEP from the anal sphincter; bulbocavernosus reflex; compound action potentials of dorsal rootlets in selective dorsal rhizotomy (Ch35 p. 1126). Table 35.5 (pp. 1130–1131): the procedures and monitors, including aortic coarctation | each through EP1–EP3 and U24, with surgical causes (retraction, clip, screw, cross-clamp) as scenario events (§6.4); the dipole orientation across the fissure needs region geometry (G5) | as EP1–EP3 | EP1–EP4 |
+| U33 | **Positioning and limb ischaemia** | ulnar SSEP and arm position (Ch30 p. 946); brachial-plexus SSEP in sternal retraction and prone arm positions; reversible changes without deficit (p. 948); tongue injury from tcMEP bite (p. 950); limb ischaemia delays peripheral conduction (Ch52 p. 1714) | a compression or perfusion state of a peripheral segment of the pathway; not in the engine | none identified; not searched | EP2 |
+| U34 | **Pre-existing neurological disease** | abnormal evoked potentials in MS (Ch31 p. 985); MERRF: generalised spike-and-wave with slowing (p. 982); EEG in the differential of myotonia congenita (p. 979); diabetic neuropathy needs higher MEP stimulation; incomplete myelination in young children (Ch35 p. 1128) | slowed conduction in the pathway (demyelination); a patient property per segment | [plausible]; temperature and MS VEP delay [ABS] (Regan 1977, found in §3.9) | EP2, F1 |
+| U35 | **Glycine absorption (TURP)** | VEP prolongation with deteriorating vision after a few hundred mL of 1.5 % glycine (Ch55 p. 1819); hyperglycinaemia and hyperammonaemia in the TURP syndrome (p. 1820) | glycine as a retinal inhibitory transmitter (not read); engine: glycine osmoles exist (`osmOther`, `l2/blood/solutes.ts`) | none identified; not searched | EP1 |
+| U36 | **Post-arrest prognosis by SSEP and myoclonus** | Bilateral absent N20 to median-nerve stimulation is the most reliable predictor of non-awakening in post-anoxic coma, and preserved cognitive EPs predict awakening (NCC pp. 2578–2579). SSEPs are much less influenced by drugs and metabolic derangement; bilateral absent N20 and status myoclonus within 72 h are markers of poor outcome (Ch82 p. 2639); in children, a continuous and reactive EEG in the first 7 days predicts good outcome (p. 2647) | the cortical SSEP of EP1 on a region with injury (I1a); myoclonus not modelled | N20 [plausible] via EP1 + I1a; cognitive EPs and myoclonus none identified, not searched | EP1, C1 |
+| U37 | **Hyperthermia** | SSEP amplitude falls with temperature, lost at 42 °C (Ch35 p. 1127) | temperature on the pathway's rates (the same WANTED source as G4b) | [plausible] | EP2, G4b |
+
+#### 1.5.3 Completeness
+
+**The sentence (rewritten by brief 175).** Against Miller's 10th edition, the inventory U1–U41 holds every use of the
+EEG, of a processed EEG index or of evoked potentials described in Ch35 (pp. 1099–1131), Ch36 (pp. 1133–1151) and
+Ch80 (pp. 2570–2592), each read whole, section by section, with figure legends and table text (Appendix A), and in the
+passages the keyword sweep found in the rest of the book; it is complete against those, and it is **not** proven
+complete for the parts listed below.
+
+**What was not read, and what that leaves open:**
+- **Uses described without any keyword of the sweep, outside Ch35, Ch36 and Ch80.** For example, a passage on "brain
+  monitoring" that names neither EEG nor a modality was not found. The book has no index to catch these.
+- **Ch09 beyond its headings and the sleep-assessment, respiratory-arousal and ICU passages** (pp. 152–176). Brief 175
+  did not read it whole: its brief named Ch36, Ch35 and Ch80.
+- ~~Ch36 beyond its headings~~ and ~~the parts of Ch35 and Ch80 read as fragments~~: **read whole by brief 175.**
+- **Seizure, sleep and encephalopathy hits beyond the first on each page** (outside Ch35, Ch36 and Ch80).
+- **Pharmacology chapters (Ch16, 17, 21–24) beyond their EEG and seizure passages.** Their drug-by-drug EEG actions
+  feed U1 and depth cells C1–C35, and they were taken from the depth plan's reading.
+- **The figure images** of Ch35, Ch36 and Ch80 (their legends and the text of their tables were read), and the figure
+  legends elsewhere beyond what the text cites.
+- **The Miller 9th edition, and every other book in the library.**
+- **All references** ("Complete references available online").
+
+#### 1.5.4 What the whole reading of Ch35, Ch36 and Ch80 added (brief 175)
+
+**Rule used.** As §1.5.1: a use is folded into an existing row only when its mechanism, its engine input and its piece
+are the same; otherwise it gets a new row. Rows were not renumbered. Pages are printed pages. Where a page was already
+in a row it is not repeated. Every section and its uses are in Appendix A.
+
+**Pages and constraints added to existing rows:**
+
+| Row | Added from the whole reading |
+|---|---|
+| U1 | The reasons to monitor: titrating drug to the individual, and the ideal monitor's list (continuous hypnotic index; risk of consciousness; prediction of movement or autonomic response) (Ch36 pp. 1133–1134). An index does not predict movement to a new stimulus (p. 1135; p. 1147: "correlation … with future response to surgical incision is poor"). Antimuscarinic drugs such as hyoscine cause marked EEG changes through the brainstem arousal systems (p. 1138); their mechanism is U38's arousal drive. Procedural sedation: beta and loss of posterior alpha, with a waking pattern on a painful stimulus (pp. 1138–1139). The aperiodic slope falls with dose (p. 1139). **Burst suppression and movement:** propofol burst suppression at a median target of about 5 mcg/mL against at least 15 mcg/mL to prevent movement at incision, reduced 80 % by fentanyl 3 ng/mL; for volatiles the burst-suppression concentration is about 30 % above the no-movement one (p. 1141). So immobility is not read from the EEG; the engine's movement output is not the brain model's. An abrupt burst suppression after a fentanyl bolus (Fig. 36.6, p. 1141). **Noxious stimulation:** desynchronised arousal, alpha up or down, paradoxical delta, abrupt burst suppression, index dips (pp. 1141–1142); opioids above 4 ng/mL fentanyl prevent or treat beta arousal and alpha dropout, a "behavioural–EEG dissociation" (p. 1145). These are the depth plan's noxious-arousal cell. Emergence-like EEG in about 5 % of cardiac patients during ongoing surgery, around separation from bypass (p. 1142). Scalp EMG is a signal that the patient is grimacing (p. 1142; artefacts C18). Sevoflurane alpha slows below 8 Hz above about 1.7 %, alpha amplitude is locked to delta phase, delta is not spatially synchronous (p. 1143); propofol alpha does not slow below 10 Hz (p. 1143). Benzodiazepines: beta, then alpha or spindles (pp. 1143–1144). Nitrous oxide: large short-lived delta on an abrupt rise or fall, thought to be brainstem NMDA block (p. 1144). Ketamine: huge slow waves with gamma bursts; a bolus on volatile mainly lowers alpha; indices rise spuriously (p. 1144, Fig. 36.8). Dexmedetomidine: alpha in short spindle-like bursts (p. 1144, Fig. 36.9). High-dose opioid delta, median frequency down (p. 1144). Index design and validation; BIS values at awareness from 40 to 90 (pp. 1146–1147). False scenarios of Table 36.3 (p. 1148): awake paralysis after a syringe swap gives a target-range index through the loss of EMG; a noisy burst suppression read as awake. Awareness trials (Table 36.4, pp. 1149–1150); EEG most needed when illness precludes MAC > 0.7 and with TIVA (p. 1151). **Display:** µV per division and the colour scale must be set to age, or an alpha-delta pattern reads as awake, isoelectric or noise (p. 1145; Table 36.3) — a G8 instrument setting, not physiology. Ch35: processed EEG uses ≤ 4 channels and processes artefact as signal (p. 1105); DSA and CSA, 2-s epochs (pp. 1105–1106); Table 35.1 (p. 1107); EEG used to titrate propofol during IONM so that accumulation does not degrade the evoked potentials (p. 1128) |
+| U2 | Seizures are a "secondary physiologic insult" to the injured brain (NCC p. 2572). cEEG in comatose patients with no other explanation (p. 2587). Causes: any vascular, infectious, mechanical, metabolic or toxic insult; a lowered threshold from pre-existing disease or withdrawal (p. 2587). Treatment ladder: lorazepam 0.1 mg/kg or diazepam 0.2 mg/kg; fosphenytoin, valproate or levetiracetam; midazolam or propofol infusions, thiopental or pentobarbital; super-refractory: inhaled anaesthetics, ketamine; vagal nerve stimulation (U41) and ECT (U18) (p. 2587). Long-term paralysis masks seizures (p. 2587). **Systemic complications of status epilepticus:** hypoxic respiratory failure, acid–base imbalance, glucose abnormalities, myocardial depression from the drugs, rhabdomyolysis and renal dysfunction after prolonged convulsions (p. 2587): the convulsion's muscle (G7d) and the brain state acting on the body (§4.7). Meningitis and encephalitis: intractable seizures and oedema carry a worse prognosis, self-limited seizures a swift recovery (p. 2590). Seizures after craniotomy (p. 2590). The ideal monitor's list names seizures (Ch36 p. 1134); epilepsy as spike and slow wave (Ch35 p. 1105) |
+| U3 | Normal EEG in sleep: slow waves with spindles in deep sleep; light and REM sleep "activated", with the eye-muscle EMG on the EEG (Ch35 p. 1104, Fig. 35.5). Dexmedetomidine spindles resemble natural sleep spindles (Ch36 p. 1144) |
+| U4 | The EEG's second perioperative use: guiding anaesthetic metabolic suppression before a loss of CBF or for raised ICP (Ch35 p. 1103). **Burst suppression targeted at 50–80 % of an epoch** (Ch35 p. 1106; this row formerly cited Ch36 p. 1140). Purposeful burst suppression to reduce CMR for protection (Ch36 p. 1141) |
+| U6 | The EEG's third perioperative use: predicting neurological outcome after a brain insult (Ch35 p. 1103) |
+| U8 | Hypocapnia activates excitable seizure foci, and rarely shows EEG ischaemia even awake (Ch35 p. 1127) |
+| U13 | **A Miller page at last:** "a typical septic patient, whose EEG might show delta waves, who is verging on burst suppression when given only 0.6 % end-tidal isoflurane" (Ch36 p. 1138). The mechanism stays an open gap (§3.9 gap 1b, EQ14) |
+| U14 | Abnormal patterns reflect anatomic or metabolic change (Ch35 p. 1105) |
+| U15 | The EEG's first perioperative use: inadequate cortical blood flow from retraction or anaesthetic hypotension (Ch35 p. 1103); CBF below 20–25 mL/100 g/min first fails function (p. 1100). Anaesthetic EEG changes parallel progressive ischaemia, so ischaemia monitoring needs an active EEG and a stable anaesthetic (p. 1106). Carotid surgery: shunt malfunction detected; hypotension-related EEG changes with critical stenosis and poor collaterals; transient changes not linked with stroke, persistent ones linked; frontoparietal plus frontotemporal channels over the MCA territory gave 100 % sensitivity and specificity against 16 channels; novices read processed EEG with 91–98 % positive predictive value; SSEPs intact to about 15 mL/100 g/min, and combining SSEP with EEG raises sensitivity (pp. 1122–1123); NIRS discordant with EEG and SSEP in 24 of 323 (p. 1124). **Untoward events:** severe EEG change before incision from an acute carotid occlusion; detecting a new stroke during other surgery in at-risk patients (p. 1127). Table 80.5: 50 normal, 20 EEG slowing, 15 isoelectric, 6–15 penumbra, < 6 neuronal death (NCC p. 2576). Seizures in hyperperfusion after revascularisation (NCC p. 2586). Aneurysm surgery: SSEP changes that persist predict a new deficit (Ch35 pp. 1119–1120) |
+| U16 | SSEP monitoring to guide blood pressure in patients with or at risk of vasospasm (Ch35 p. 1120). cEEG increasingly used to detect DCI in high-grade patients (NCC p. 2584) |
+| U17 | Hypothermic perfusate and haemodilution on bypass mimic ischaemia (Ch35 p. 1125). Burst suppression from hypothermia (Ch36 p. 1141) |
+| U18 | ECT used with success in super-refractory status epilepticus (NCC p. 2587): the same stimulus input as G7e, here ending a seizure rather than starting one |
+| U19 | Electrocorticography limited to a few minutes and to interictal discharges, under lightened anaesthesia (Ch35 p. 1116); Fig. 35.16, afterdischarges as sharp waves of falling frequency after 60-Hz bipolar stimulation (p. 1117) |
+| U20 | Recording: 50–500 sweeps; near-field and far-field; latency, amplitude, polarity convention; reproducible baseline needed (Ch35 pp. 1106–1108). Lower-limb SSEPs partly through the lateral funiculus and dorsal spinocerebellar tract (p. 1109): see U39. Nitrous oxide lowers SSEP amplitude without latency change (p. 1112). Cortical SSEPs may fall 50 % over a long spine operation without a deficit (p. 1129). Anaesthetic accumulation during long infusions degrades evoked potentials progressively; blood loss raises infusion concentrations (p. 1128): through the existing PK |
+| U21 | Stimulus at 60–70 dB above threshold or 90 dB nHL, 100-µs clicks, 10–15/s, polarity choice, contralateral masking (Ch35 pp. 1109–1110). Nitrous oxide changes the BAEP only if gas accumulates in the middle ear (p. 1112). A 0.5-ms wave V change means more for a healthy nerve than one displaced by a schwannoma (p. 1129) |
+| U22 | Flash goggles through closed lids; VEPs vary with pupil, retina and attention, so they are the least used (Ch35 pp. 1110–1111). Nitrous oxide alone raises VEP latency and lowers amplitude (p. 1112) |
+| U23 | tcMEP needs ≥ 400 V; direct cortical 40–50 V; only the largest 2–3 % of corticospinal fibres carry it; deep current spread can bypass an ischaemic internal capsule (Ch35 pp. 1111–1112, 1120). Corticobulbar MEPs (p. 1112). Dexmedetomidine attenuated tcMEPs in one scoliosis study (p. 1114; "mixed", p. 1128). Peripheral neuropathy needs higher stimulation (p. 1128). **"Anaesthetic fade":** the tcMEP threshold rises gradually during surgery (p. 1129); Miller gives no mechanism there, and p. 1128's accumulation is the plausible one, through the existing PK [plausible] |
+| U24 | Lumbar-plexus mapping by triggered EMG in the lateral approach; saphenous SSEP (Ch35 p. 1121); nerve roots protected by myelin give less spontaneous EMG (p. 1121). Electrophysiological studies for prognosis in Guillain–Barré syndrome and for diagnosis in seronegative myasthenia gravis (NCC pp. 2588–2589). Still [none identified]: the engine has TOF only (EQ17) |
+| U25 | Sevoflurane and enflurane give more sharp waves than desflurane and isoflurane, most at high concentration, with hypocapnia and without N2O or opioid; etomidate and methohexitone likewise (Ch36 p. 1143). Xenon: delta-dominated (p. 1144). Nociception indices: heart-rate variability and the analgesia–nociception index, the surgical pleth index, skin conductance, the pupillary dilation reflex (p. 1137). Midlatency AEPs fall with depth and predict movement (p. 1146). Multichannel connectivity, frontal alpha hypersynchrony, alpha-connectivity hysteresis, complexity and criticality (pp. 1150–1151) |
+| U27 | Brain frailty in the ideal monitor's list (Ch36 p. 1134); the alpha-delta pattern marks a resilient brain unlikely to suffer cognitive disturbance (p. 1139); overdose possibly harmful (p. 1134); "functional brain age" with comorbidity (p. 1145); a titration strategy: hypnotic until slow waves, reduce if burst suppression (p. 1145). Keeping an active EEG is harder at the extremes of age (Ch35 p. 1106); EEG amplitude falls from infancy as neurons are lost (p. 1104) |
+| U30 | Cortical spreading depolarisation and ischaemia among the mechanisms of delayed cerebral ischaemia after SAH (NCC p. 2584) |
+| U31 | The bypass confounders: drug levels changed by bypass, PaCO2, pressure, haemodilution and hypothermia all mimic ischaemia; approximate entropy quantifies the temperature effect; quantitative EEG for hypoperfusion (Ch35 p. 1125) |
+| U32 | Motor mapping by stimulus intensity against distance to the tract (Ch35 pp. 1116–1117). Brainstem monitored by combining BAEP, SSEP and MEP, with obligatory false negatives (p. 1119, Fig. 35.19). tcMEP for perforator injury in anterior-circulation aneurysms (p. 1120). Dorsal-column midline mapping by SSEP after durotomy (p. 1121). Fig. 35.23, the troubleshooting algorithm: surgical, anaesthetic, positioning, physiological and technical causes; anaesthetic changes are global (p. 1129). Wake-up test (Table 35.5, p. 1130) |
+| U33 | A tourniquet left on a limb (Ch35 p. 1130). A cold extremity (Fig. 35.23, p. 1129). Leg-muscle ischaemia distinguished from cord ischaemia by stimulating a peripheral nerve (p. 1125) |
+| U34 | Neurologically impaired patients may tolerate no inhaled agent for SSEPs (Ch35 p. 1112); cerebral palsy still gives tcMEPs (p. 1111); latency depends on age, height and neurological disease (p. 1109) |
+
+**New rows (brief 175):**
+
+| # | Use | What must be seen (with source, or WANTED) | Mechanism in the planned structure; engine input | Level | Piece |
+|---|---|---|---|---|---|
+| U38 | **Emergence and neural inertia** | Over emergence, slow-delta and alpha power fall, alpha frequency rises, then alpha goes; late emergence can show no delta or alpha while the patient is unresponsive (disconnected consciousness, often dreaming); about a third jump straight from high delta to responsiveness; occipital alpha returns with eyes closed (Ch36 p. 1142). **Neural inertia:** higher concentrations are needed to lose responsiveness than are present at emergence, beyond PK lag; active brainstem arousal (the young, analeptics) reduces the hysteresis, its suppression (the elderly, dexmedetomidine) enhances it; the patient on 0.1 % sevoflurane for 20 minutes with large delta who suddenly sits up (p. 1142). The elderly change state abruptly at emergence (p. 1145). Dexmedetomidine sedation is easier to wake from than propofol, because it acts subcortically (p. 1144) | the arousal drive of the sleep model (Phillips 2007's flip-flop with hysteresis, §3.2) acting on the region, with each drug's action on the arousal nuclei and on the cortex kept apart (dexmedetomidine subcortical; propofol both, p. 1144); engine input: age, the drug effect sites | [plausible]; hysteresis of the sleep–wake switch [ABS] (Phillips 2007); for anaesthetic emergence, none read | G3b, G6a |
+| U39 | **Spinal cord ischaemia by vascular territory** (scoliosis distraction, laminar hooks, thoracoabdominal aortic repair) | The dorsal columns are fed mainly by the posterior spinal arteries, the motor tracts and grey matter by the anterior spinal artery, so a motor deficit can follow intact SSEPs (Ch35 pp. 1109, 1121); SSEP changes reversed by less distraction or higher pressure (p. 1121); reversible SSEP changes at "safe" pressures during distraction (p. 1127); after aortic repair, posterior-column function often spared (32 % in one series) and MEPs guide reimplantation, perfusion pressure, CSF drainage and cooling (p. 1125); MAP 85–90 mmHg for 7 days after spinal cord injury (NCC p. 2582) | a perfusion state per cord territory feeding the pathway segments of EP2 (dorsal column) and EP3 (corticospinal tract), from arterial pressure and the cross-clamp; distinct from U33's peripheral segment. Engine input: MAP exists; spinal-cord perfusion and CSF pressure not checked | [plausible] | EP2, EP3, V0 |
+| U40 | **Consciousness and memory as states the EEG is meant to monitor** | Connected consciousness (isolated forearm technique responses) occurs about two orders of magnitude more often than awareness with recall, even with a classic alpha-delta pattern and normal index values; indices predict it with values around 0.7 (Ch36 pp. 1139, 1148). Disconnected consciousness (dreaming) at late emergence (pp. 1134, 1142). An EEG signature of amnesia: alpha/beta ratio in one small study (p. 1144). The front-versus-back debate on where consciousness lies is unresolved (p. 1151) | **none in the plan.** The region model produces the EEG; nothing in the plan produces responsiveness, connected consciousness or memory that can come apart from it. The engine's `conscious` and awareness flag read the depth index (`di > 60 && TOF ≤ 2`, depth plan D7/Q4) | **none identified; not searched** | EQ24 |
+| U41 | **Vagal nerve stimulation in super-refractory status epilepticus** | "used with success, but evidence supporting their routine use is lacking" (NCC p. 2587) | **none in the plan.** G7e's stimulus enters the cortical region; a vagal input through the brainstem to the thalamocortical system is not in any piece | **none identified; not searched** | EQ25 |
+
+**Not new uses.** The intracranial monitors of Ch35 (pp. 1100–1103) and Ch80 (pp. 2575–2578), the clinical signs and the
+isolated forearm technique itself (Ch36 pp. 1135–1136), the neuromuscular and infective diseases (NCC pp. 2588–2590)
+and the ethics of brain death (NCC pp. 2591–2592) describe no further use of the EEG or evoked potentials beyond those
+logged.
 
 ---
 
@@ -554,6 +775,9 @@ That joint is this plan's composition unless a paper publishes it. G0a's discrim
 | Brain death beyond the EEG | brainstem reflexes, the apnoea test, pupils. The engine has none: `pupilMm` follows opioids only (`l2/neuro/outputs.ts:29`); respiratory drive is not tied to brainstem perfusion; `herniated` is a label set when CPP ≤ 10 mmHg for 60 s, tagged [FIT] (`l2/brain/params.ts:77–78`, `model.ts:153–154`), and changes nothing else. A **brainstem function state** fed by brainstem perfusion and injury is needed (BD2), beyond this plan's EEG |
 | Uraemic, septic encephalopathy | **none identified** (searched: one Europe PMC title query for triphasic or encephalopathy with "model"; 25 hits, models only for hepatic and cefepime). Not built until a source exists (EQ14). The engine variables they would need (uraemic solutes; a sepsis brain mediator) also do not exist: the kidney publishes `gfr`, `akiStage`; the sepsis condition has a phase (`types-endo.ts:14–17`); urea appears only as a constant in the osmolality formula (`l2/blood/solutes.ts:48`) |
 
+**Refinement note.** The "no paper identified" and "none identified" entries in this table for EP2, EP3 and the uraemic
+and septic rows were written before a proper search. §3.9 replaces them.
+
 **4. No drawn waveform, no fitted shape, no scripted spectrum anywhere in this table.** Where a mechanism is
 missing, the row says so and EQ14 asks the owner. A chain is accepted only if every link is sourced and ends on a
 parameter the chosen family already has. For example "ammonia → excitability" is sourced in Ligtenstein 2021's
@@ -580,6 +804,185 @@ abstract, but the size of the step from a blood ammonia to that parameter is unr
   noise-free template.
 - The rate is `[WANTED: the ACNS evoked-potential standard]`. EQ4 is revised accordingly.
 
+**7. EQ11 is ruled A (the owner, 12 November 2026): "the model should always run".**
+- The brain's core model runs always. The electrodes, montage, head mixing and readers are switched on with a device.
+- Every always-on layer this plan adds joins G1's cost measurement and EQ9's budget for the always-on core. These are
+  the region core, the injury state I1a, and, if EQ21 adds it, the ion-concentration layer.
+- The evoked-potential sweeps stay instrument-gated, because they exist only while a stimulator runs (point 6).
+
+### 3.9 The four gaps, searched (refinement, brief 170)
+
+**How the searches were done.**
+- **Service:** the Europe PMC REST search (`/webservices/rest/search`), read as JSON in memory; no file was saved.
+- **Queries:** several per gap, by title words, author and topic, sorted by citations or by relevance.
+- **Read:** each paper named below, at least as its abstract through the same service ([ABS]).
+- **DOIs:** every DOI below is the one Europe PMC's record returned for that title and first author. No full text was
+  read, so no value below comes from these papers; their numbers are WANTED.
+- **The test for each outcome:** does a paper publish equations that produce the response recorded clinically? If yes,
+  outcome 1. If the parts are published but not their joint, the joint is this plan's composition, with every link
+  sourced (outcome 1 for each part, outcome 2 for the joint). Relations between a variable and a measured response
+  (latency against temperature, F-wave against MAC) are **test bands, never mechanisms**.
+
+**Gap 1a: uraemic encephalopathy — outcome 2: a physiological basis exists, no EEG model.**
+- Searched:
+  - "uremic/uraemic encephalopathy" with EEG (281 hits);
+  - the same with mechanism, pathophysiology or guanidino (933 hits);
+  - title words with GABA, NMDA or neurotransmitter (19 hits);
+  - guanidino compounds with GABA or NMDA and uraemia (50 hits);
+  - neural-mass or computational models with uraemia or renal failure and EEG (no relevant hit).
+- Found:
+  - De Deyn & Macdonald 1990 (Ann Neurol, 10.1002/ana.410280505). Guanidine, methylguanidine, creatinine and
+    guanidinosuccinic acid, raised in uraemic CSF and brain, inhibit GABA and glycine responses of mouse spinal
+    neurons, reversibly and dose-dependently. Guanidinosuccinic acid is the most potent.
+  - De Deyn et al. 2001 (Kidney Int Suppl, 10.1046/j.1523-1755.2001.59780077.x): these four compounds are experimental
+    convulsants, and epileptic and cognitive symptoms are typical of uraemic encephalopathy.
+- **What would have to be modelled:**
+  - a uraemic guanidino-compound concentration in the brain, from the kidney's clearance. The engine has `gfr` and
+    `akiStage`, and urea only in the osmolality formula;
+  - its antagonism of the region's GABA-A synapse. This is the joint that cefepime (U11) and tranexamic acid (U26d)
+    also use: one mechanism, three causes.
+- The concentration–effect relation is in De Deyn 1990's full text (WANTED). The step from plasma creatinine to
+  brain guanidino level is unidentified.
+- Note: a mouse spinal-neuron culture is not a human cortex. Whether the same action holds at the cortical synapse is
+  for X0′ to state.
+
+**Gap 1b: septic encephalopathy — outcome 3: nothing found as a model; open, named gap.**
+- Searched:
+  - sepsis-associated or septic encephalopathy with EEG and model, computational, neural mass or mechanism (441 hits);
+  - title words with EEG (155 hits);
+  - sepsis, LPS or cytokines with neural-mass, neural-field, computational or network models and EEG, cortex or
+    delirium (1392 hits; none relevant in the first pages by citation).
+- Found:
+  - Mazeraud 2020 (Neurotherapeutics, 10.1007/s13311-020-00862-1), a review: the pathophysiology "may involve
+    neurotransmitter dysfunction, inflammatory and ischemic lesions to the brain, microglial activation, and
+    blood-brain barrier dysfunction".
+  - Young 1992 (J Clin Neurophysiol, 10.1097/00004691-199201000-00016): five EEG grades in 62 bacteraemic patients
+    (normal, excessive theta, predominant delta, triphasic waves, suppression or burst suppression), the EEG more
+    sensitive than the clinical criteria.
+- No single mechanism, and no model. The parts that are ischaemic or metabolic would join existing joints: per-region
+  perfusion (V0) and the hepatic and uraemic joints. The septic part itself stays an **open gap for the owner (EQ14)**.
+
+**Gap 2: the subcortical SSEP peaks and the BAEP.** Outcomes: **2a, BAEP — outcome 1 (a published mechanism)**; **2b,
+subcortical SSEP — outcome 2 (the parts are published; the joint from nerve to cortex is this plan's composition)**.
+- Searched:
+  - ABR or BAEP with model, simulation, computational or "unitary response" (848 hits by citation, no relevant top
+    hits), then title words (45 hits);
+  - author searches for Dau and Verhulst;
+  - "somatosensory evoked" with far-field, generator or model in the title (91 hits);
+  - far-field, stationary-peak or junction potential with dipole, volume conductor or model (57 hits);
+  - evoked potentials with hypothermia or temperature in the title (19 + 25 hits).
+- **BAEP: a published mechanism.**
+  - Dau 2003 (J Acoust Soc Am, 10.1121/1.1534833): the ABR is computed as the convolution of a unitary response with
+    the instantaneous discharge rate of a nonlinear auditory-nerve model.
+  - Verhulst et al. 2015 (J Acoust Soc Am, 10.1121/1.4928305): human ABR from auditory-nerve, cochlear-nucleus and
+    inferior-colliculus cell models with broadband peripheral excitation.
+  - Verhulst et al. 2018 (Hear Res, 10.1016/j.heares.2017.12.018): the human periphery with evoked potentials and
+    hearing loss.
+  - Rattay & Danner 2014 (Hear Res, 10.1016/j.heares.2014.07.001): peak I from the somatic regions of type I spiral
+    ganglion cells, by a biophysical model.
+- **Subcortical SSEP: the parts are published.**
+  - Stegeman et al. 1987 (Electroencephalogr Clin Neurophysiol, 10.1016/0013-4694(87)90042-3): a propagating volley
+    that meets a change in the volume conductor, or a change of direction, produces non-moving ("far-field") components.
+  - Dumitru & Jewett 1993 (Muscle Nerve, 10.1002/mus.880160302), a review of far-field potentials (title only).
+  - Mauguière et al. 1983 (10.1016/0013-4694(83)90253-5): the generators of P14 and N18, from lesions of the thalamus
+    or its radiations (title only).
+  - Desmedt & Cheron 1981 (10.1016/0013-4694(81)90055-9) and 1983 (10.1016/0013-4694(83)90031-7): oesophageal
+    recordings of the spinal and far-field components (titles only).
+  - No paper found joins these into one simulated SSEP from nerve to cortex.
+- **Temperature: test bands only.**
+  - Stockard et al. 1978 (Ann Neurol, 10.1002/ana.410030416): hypothermia prolongs central auditory conduction time
+    in humans.
+  - Markand et al. 1990 (10.1016/0168-5597(90)90002-u): N10, P14 and N19 latencies rise from 37 °C to 20 °C on CPB,
+    more for the later components.
+- **How it joins the structure:**
+  - A volley travels along a chain of segments (peripheral nerve, root, dorsal column, nucleus, medial lemniscus,
+    thalamus), each with a conduction delay and a temperature dependence.
+  - Each change of the volume conductor along the way gives a stationary peak (Stegeman 1987).
+  - At its end, the volley is the thalamic input pulse to the cortical region (EP1), which makes N20/P22.
+  - The BAEP chain ends in the inferior colliculus. Its continuation to the thalamus and auditory cortex gives the
+    midlatency AEP that U25 needs for depth.
+  - The drug actions on these brainstem synapses (volatiles lengthen latency, p. 1112) are WANTED.
+- EQ16 becomes "its own plan, now with papers".
+
+**Gap 3: the motor-neuron pool behind the MEP — outcome 2.** Physiological parts are published (the pool, I-waves,
+summation, drug depression of motoneurons). No paper models the tcMEP under anaesthesia as one chain, so the joint is
+this plan's composition.
+- Searched:
+  - motor-unit or motoneuron pool with model or simulation in the title (8 hits);
+  - I-wave, D-wave or corticospinal volley with model (41 hits, mostly physics);
+  - anaesthetics with motoneuron, spinal cord, F-wave or H-reflex and excitability (108 hits);
+  - author searches for Fuglevand, Rampil, Rusu and Zhou;
+  - MEP with train, multipulse or temporal summation (5 hits).
+- Found:
+  - Fuglevand et al. 1993 (J Neurophysiol, 10.1152/jn.1993.70.6.2470): a pool of 120 motor units, recruitment and
+    firing times under excitatory drive, with force and surface EMG.
+  - Rusu et al. 2014 (Brain Stimul, 10.1016/j.brs.2014.02.009): a model of TMS-induced I-waves in motor cortex.
+    Schaworonkow & Triesch 2018 (10.1016/j.brs.2018.03.010): ongoing rhythms shape I-waves (title only).
+  - Taylor et al. 1993 (J Neurol Neurosurg Psychiatry, 10.1136/jnnp.56.1.104): a double pulse gives temporal
+    summation in the cord, so a maximal CMAP is obtained under good surgical anaesthesia.
+  - King & Rampil 1994 (Anesthesiology, 10.1097/00000542-199412000-00024) and Rampil & King 1996 (Anesthesiology,
+    10.1097/00000542-199607000-00018): volatile anaesthetics depress α-motoneuron excitability, measured by F-waves
+    in rats.
+  - Zhou & Zhu 2000 (Anesthesiology, 10.1097/00000542-200007000-00010): isoflurane's effect on the MEP and the F-wave
+    in 12 patients.
+- **How it joins the structure:**
+  - the motor region (G3a, G5) makes a D-wave and I-waves (Rusu 2014);
+  - corticospinal conduction is the pathway model of gap 2;
+  - the motor-neuron pool (Fuglevand 1993) sums the descending volleys; its excitability is lowered by the drug
+    actions;
+  - the junction is the engine's NMB model (TOF);
+  - the CMAP is the pool's summed output.
+- Miller's "surprisingly profound" effect (p. 1113) is then the product of cortical, spinal and junctional
+  depression, a result to be shown rather than drawn.
+- The motoneuron dose–response for each drug is WANTED: the rat F-wave abstracts are not human; Zhou 2000's full
+  text is.
+
+**Gap 4: what makes ischaemic injury irreversible — split into two items, one outcome each.**
+- Searched:
+  - Jones 1981 by author and title;
+  - van Putten as author, with postanoxic, anoxia, "wave of death", ischaemia or synaptic, and with model (20 hits);
+  - ischaemia, anoxia or hypoxia with model and neuron, ion or depolarisation in the title (337 hits, mostly
+    pharmacology);
+  - spreading depolarisation or depression with model in the title (105 hits);
+  - author searches for Kalia, Zandt, Dronne (0 hits) and Wei/Schiff.
+- **4a. Loss of function and the terminal (anoxic) depolarisation — outcome 1: a published mechanism [ABS].**
+  - Wei, Ullah & Schiff 2014 (J Neurosci, 10.1523/jneurosci.0516-14.2014): Hodgkin–Huxley extended with conservation
+    of particles and charge and the energy to restore ionic gradients. As a function of potassium and oxygen it
+    produces spikes, seizures, spreading depression and the terminal anoxic "wave of death".
+  - Zandt et al. 2011 (PLoS One, 10.1371/journal.pone.0022127): one neuron with its ion concentrations. When the
+    Na/K pumps stop, membrane oscillations give the high-amplitude slow wave seen about a minute after decapitation.
+  - Zandt et al. 2014 (J Comput Neurosci, 10.1007/s10827-014-0517-5): neural-mass equations built from single-cell
+    dynamics, so that ion concentrations act on the EEG.
+  - Ruijter et al. 2017 (Clin Neurophysiol, 10.1016/j.clinph.2017.06.245): a mean-field model (excitatory and
+    inhibitory neurons, thalamic afferents). Anoxic damage is aggravated short-term synaptic depression recovering
+    over many hours, with excitatory transmission potentiated. It reproduces the six common postanoxic EEG categories
+    and their transitions in time, against 155 patients. Whether its parameters were fitted to those patients is not
+    stated in the abstract (EQ13).
+  - Kalia et al. 2023 (bioRxiv **preprint**, 10.1101/2023.04.07.535995): interacting thalamic and cortical neural
+    masses with energy-dependent synaptic transmission reproduce the EEG of ischaemia. No peer-reviewed version was
+    found in Europe PMC.
+  - **Structural consequence:** these models carry an ion-and-energy layer that may be the same thing as the
+    "metabolic variable" of Ching 2012 (its ATP-gated potassium current). That is a seventh G0a discriminator (EQ12,
+    EQ21).
+- **4b. The transition to cell death — outcome 2: a physiological basis, no EEG model.**
+  - Miller: between about 10 and 20 mL/100 g/min neuronal dysfunction is temporarily reversible, and neurons die
+    if flow is not restored (Ch10 p. 211, Fig. 10.20). In the 6–12 range, energy cannot support electrical activity
+    but can prevent complete membrane failure "for extended periods" (Fig. 10.20 legend). The cascade from energy
+    failure through calcium, enzymes, radicals and DNA damage to death is Ch10 p. 212, Fig. 10.22.
+  - Jones et al. 1981 (J Neurosurg, 10.3171/jns.1981.54.6.0773), awake monkeys: thresholds of flow for paralysis and
+    for infarction that depend on duration (abstract; full text WANTED).
+  - **What would have to be modelled:** the death of tissue as a function of how far and how long the supply falls.
+    No paper found models this so that it ends on a parameter of an EEG family.
+  - A flow × duration integrator drawn through two thresholds would be a fitted rule, so **I1b is not sized on it**.
+    The thresholds of Ch10 p. 211 and Jones 1981 are offered as **test bands** for whatever mechanism the owner
+    accepts (EQ20).
+  - The thiopental constraint (Ch35 p. 1113) still holds for both items: drug silence must not be death.
+
+**New use found by the searches.** U14 gains van Wijngaarden et al. 2016 (PLoS Comput Biol,
+10.1371/journal.pcbi.1005048), a thalamocortical model of the effect of cortical lesions after acute ischaemic stroke
+[ABS]. U34 gains Regan et al. 1977 (J Neurol Neurosurg Psychiatry, 10.1136/jnnp.40.11.1083), body temperature and VEP
+delay in multiple sclerosis, as a test band.
+
 ---
 
 ## 4. The transition
@@ -595,7 +998,13 @@ abstract, but the size of the step from a blood ammonia to that parameter is unr
     *decimator* is a filter that removes frequencies above the new Nyquist limit and then keeps every n-th sample.
 - **The device layer.** Readers keep the signature `reader(samples, fsHz, impedanceKOhm, state)` and the import-boundary
   test (depth plan §5, D8). No reader reads the generator's state.
-- **Reader tests split into two kinds.** This is what lets the BIS-type reader proceed now:
+- **The owner's ruling (12 November 2026):** all four named depth readers are built now on today's spectral
+  generator, BIS-type first (PR #427, from Rampil 1998 and Connor 2022), then Entropy, Narcotrend and PSI. The build of
+  this plan is on hold. So this section must keep all four valid through every piece, and it does so by the split
+  below. PR #427 already records one generator-dependent fact for G11 to explain: on today's generator the mean
+  bicoherence is at the level of no phase coupling (0.163–0.167 at every depth), "as expected from a spectral
+  synthesiser with random phases". It also records C28 (age) as an expected miss.
+- **Reader tests split into two kinds.** This is what lets the four readers proceed now:
   - **generator-independent**: on fixed inputs (synthetic signals with known content, or the published checks of the
     reader's own paper). They stay valid on any generator.
   - **generator-dependent courses**: the reader on the engine's EEG through a clinical course (for example C14 ketamine,
@@ -676,6 +1085,18 @@ class's action is read and built. Then (A). By the owner's rule a permanent coex
   be built separately on the spectral generator: building it there would create channels "by construction" (§2, P2),
   later replaced.
 - This is a scope interaction to rule in EQ3. Until it is ruled, the PSI reader (E11) waits behind G5 rather than E10.
+- **Superseded by the owner's ruling (refinement, 12 November 2026).** PSI is among the four readers built now on today's
+  generator, so it cannot wait behind G5, and its four channels must come from somewhere before G5. The plan's answer
+  keeps every reader valid without channels "by construction" being presented as physiology:
+  - **E10 is built now, as the depth plan states it** (depth plan §E10): `l2/eeg/montage.ts`, with frontal and
+    posterior channels rendered from one cortical state on today's generator, and acceptance cell C32
+    (anteriorisation, Ch36 p. 1138). Electrode sites are the owner's P-19 (the PSI device's montage).
+  - **Any cell E10 cannot meet on today's generator is recorded as an expected miss with its cause**, as PR #427 does
+    for the BIS-type reader. It is never tuned to pass.
+  - **At G5 the channel source changes to the 10–20 electrodes of the regions and head mixing.** E10's channel ids and
+    the PSI reader's input stay as they are, so G5 changes the source behind `l2/eeg/montage.ts`. PSI's course tests
+    are re-run at G11 with the other three readers, and each difference is reported by cause.
+  - EQ3 is rewritten to ask the owner exactly this.
 - The depth window E12 (`apps/demo/src/app/views/depth.ts`) does **not exist** on 44ac1ef4. What exists is the renderer's
   strip, `packages/renderer/src/eeg-strip.ts` (with `test/eeg-strip.test.ts`), and the generic tile e2e
   `apps/demo/e2e/eeg-generic-tile.e2e.ts`.
@@ -693,10 +1114,14 @@ insulin overdose, a liver failure, a cardiac arrest. It never switches a pattern
 | CO2 | `BrainSummary.paco2`; the brain model's CO2 reactivity of CBF | a direct neuronal CO2 effect (WANTED) | B1 |
 | Temperature | core temperature (`CortexInputs.tempC`, `types-eeg.ts`) | brain temperature distinct from core (WANTED) | B1 |
 | Liver failure | `LiverSummary.liverFn`; condition `hepaticFailure` (`types-organs.ts:31`) | blood and brain ammonia | X1 |
-| Kidney failure | `KidneySummary.gfr`, `akiStage` | uraemic solutes | X3 (blocked) |
-| Sepsis | endocrine condition `sepsis` with phase | a brain mediator | X3 (blocked) |
+| Kidney failure | `KidneySummary.gfr`, `akiStage` | uraemic guanidino compounds in brain (§3.9 gap 1a) | X0′, X3 |
+| Sepsis | endocrine condition `sepsis` with phase | no mechanism (§3.9 gap 1b) | X3 (open gap) |
+| Electrolytes (refinement) | plasma Na, K, iCa, Mg, glycine osmoles (`l2/blood/solutes.ts`) | their brain effects (U26b–c, U35) | X0′, G7f |
+| Drugs that provoke seizures (refinement) | lidocaine PK row (PD antinociception only); TXA row (inert) | their convulsant actions (U26a, d) | X0′, G7f |
+| Peripheral and spinal pathway (refinement) | — | segment perfusion, compression, temperature, demyelination (U33, U34) | EP2 |
+| Ion concentrations and pump energy (refinement) | — | the layer of §3.9 gap 4a, if EQ21 adds it | G0d, SD1 |
 | Drugs | the drug bus (`hypByClass`, MAC fractions, fentanyl equivalent, dexmedetomidine Ce) | cefepime, methohexital, phenytoin-class rows as needed | G3b, X4, G7c |
-| Injury and irreversibility | — | an energy-debt / injury state per region (WANTED: its mechanism) | I1 |
+| Injury and irreversibility | — | 4a: synaptic and energy failure per region (published, §3.9); 4b: cell death (no EEG model, EQ20) | I1a, I1b |
 | Brainstem function | — | reflexes, pupils, drive from brainstem perfusion | BD2 (own plan, EQ15) |
 
 **What the brain state gives back** (each a validation-workflow piece, B2):
@@ -718,11 +1143,12 @@ Effort is in **plan hours** and **executor-hours** (plan hours ÷ 8 to ÷ 6, the
 value (00-common-rules). Every piece writes its tests first, keeps the depth plan's §5 "must not touch" list, and runs
 the common gate of the depth plan §5.
 
-**The BIS-type reader proceeds independently.** It is being built from Rampil 1998 and Connor 2022 on today's spectral
+**The four depth readers proceed independently** (the owner's ruling, 12 November 2026). BIS-type is being built
+first, from Rampil 1998 and Connor 2022 (PR #427), then Entropy, Narcotrend and PSI, all on today's spectral
 generator.
 - Its generator-independent tests (§4.1) are its acceptance now.
 - Its course tests run on the spectral generator now, and on both at G11.
-- No piece here changes a reader's algorithm. Two pieces add a file under `l3/eeg-devices/`: G5 adds `montage.ts`
+- No piece here changes a reader's algorithm. Two pieces add a file under `l3/eeg-devices/` (refinement: G5 now changes the source of E10's `l2/eeg/montage.ts`, §4.6): G5 adds `montage.ts`
   (electrode differences only), and G11 re-runs the course tests.
 
 ```
@@ -739,6 +1165,9 @@ G1 seam, harness, measures ───┼─► G2 brain-state container (empty)  
 ```
 
 G0b feeds G6 and G7 only, so a late manual blocks neither G3 nor G5.
+
+**Order amended by the refinement (§5.2):** G1 no longer starts in parallel with G0a. Every sources review (G0a, G0b,
+G0c, G0d, X0′) comes before any build piece.
 
 ### G0a: Sources review — the equation family (plan 16 h · 2.0–2.7 executor-h; no code)
 
@@ -764,7 +1193,9 @@ papers arrive. **Files:** the same research note, its own section. **Validation:
 ### G1: The generator seam, the dual-run harness, the measurements (plan 12 h · 1.5–2.0 executor-h)
 
 **Purpose:** let two generators sit behind one interface, run any cell on both, and measure cost, identity and the
-bispectral prediction of §2 before the model is built. **Depends on:** nothing (it can start now). **Files:**
+bispectral prediction of §2 before the model is built. **Depends on:** the owner's word to start, and (refinement,
+by the brief's order rule) the sources reviews G0a, G0b, G0c, G0d and X0′ being done. G1 itself needs no paper; it
+waits only so that no build piece starts before the sources. **Files:**
 - `l2/eeg/generator.ts` (new interface; `synth.ts` wrapped as `spectral`, unchanged);
 - `pipeline.ts` (choose by setting);
 - `test/helpers/eeg-dual.ts` (new);
@@ -852,7 +1283,9 @@ hypothermic halves can go first.
 frontal derivation (§4.1's constraint on its sites). **Depends on:** G3a; the head-model reference (§7 group 4); EQ3.
 **Files:**
 - `l2/eeg/renderer/regions.ts`, `head.ts`;
-- `l3/eeg-devices/montage.ts` (electrode differences only: the one new file under the readers' folder);
+- `l3/eeg-devices/montage.ts` (electrode differences only: the one new file under the readers' folder). *Refinement:* E10's
+  `l2/eeg/montage.ts` exists by then (§4.6). G5 changes its source to the electrodes and keeps its channel ids;
+  whether the derivation also moves under `l3/eeg-devices/` is decided in G5's PR;
 - `types.ts` (electrode channel ids or one multichannel buffer, decided in the PR with the orchestrator);
 - tests.
 
@@ -991,7 +1424,7 @@ only. **The BIS-type reader still proceeds now.** None of these touches a reader
 
 **Order changes:**
 - G1 now also measures the cost of the region model running always (EQ11 A). Its result is a precondition of G2.
-- G2 holds the region core when EQ11 is ruled A.
+- G2 holds the region core (EQ11 ruled A, 12 November 2026).
 - G4 now runs per region from the start, so G5's regions nest inside V0's territories (or inside the hemispheres until
   V0 exists).
 
@@ -1133,6 +1566,102 @@ and injury (§3.8 point 3). EQ15.
 | **Added** | **190** | **≈ 24–32** | | |
 | **Plan total with §5** | **458** | **≈ 57–76** | | |
 | Not sized (own plans or unidentified equations) | V0, BD2, EP2, EP3, X1, X3 | | | |
+
+### 5.2 Pieces changed or added by the refinement (brief 170)
+
+**The order rule (the brief): nothing of the build starts before the sources-review pieces.** All five reviews are
+documents and need no code:
+- G0a, the equation family;
+- G0b, the clinical definitions;
+- G0c, the evoked-potential pathways and the motor system (new);
+- G0d, ischaemia, injury and ion dynamics (new);
+- X0′, the encephalopathies and provoked seizures (X0 widened).
+
+Every build piece follows all five, G1 included (the brief's rule; this replaces §5's "G0b feeds G6 and G7 only").
+- **When a review counts as done.** A review is done when it has read every paper the owner has placed in the library
+  for it, and listed each missing paper as WANTED with the pieces that wait on it. A missing paper never holds back the
+  other reviews; it holds back only the pieces it names. For example, the AASM manual (a purchase) holds back G6a, and
+  the unidentified EP standard holds back EP4.
+- **The family decision (EQ12) waits for G0a, G0d and X0′ together.** The anoxia, ischaemia and encephalopathy models
+  bear on the choice: their ion-and-energy layer and their mean-field families (§3.9 gap 4a; §3.8 point 1).
+
+```
+G0a family ─┐
+G0d ischaemia, injury, ions ─┼─► EQ12 ruled ─► G1 seam, harness, cost (now incl. every always-on layer)
+X0′ encephalopathies, seizures ─┘                    │
+G0b clinical definitions ───────────────────────────┤
+G0c EP pathways, motor ──────────────────────────────┼─► EP2, EP3 (own plan, EQ16)
+                                                     └─► G2 … G11 as §5 and §5.1
+```
+
+**G0c. Sources review: evoked-potential pathways and the motor system (plan 20 h · 2.5–3.3 executor-h; no code;
+fifteen papers and the EP plan's draft, against G0a's 16 h for seven).**
+- **Read in full:** Dau 2003, Verhulst 2015 and 2018, Rattay & Danner 2014, Stegeman 1987, Dumitru & Jewett 1993,
+  Mauguière 1983, Fuglevand 1993, Rusu 2014, Taylor 1993, King & Rampil 1994, Rampil & King 1996, Zhou & Zhu 2000,
+  Stockard 1978 and Markand 1990, plus the ACNS evoked-potential standard once identified.
+- **State for each:** the equations in words; which parameters are human; which were fitted; and how it ends on the
+  region's thalamic input (sensory, auditory) or the NMB model (motor).
+- **Output:** EP2's and EP3's own plan (EQ16).
+- **Validation:** no.
+
+**G0d. Sources review: ischaemia, injury and ion dynamics (plan 12 h · 1.5–2.0 executor-h; no code).**
+- **Read in full:** Wei 2014, Zandt 2011 and 2014, Ruijter 2017, Kalia 2023 (or its journal version), Hofmeijer 2012,
+  van Putten 2016 and Jones 1981.
+- **State:**
+  - whether the ion-and-energy layer is the same variable as Ching 2012's metabolic one (EQ12, EQ21);
+  - whether Ruijter 2017's values were fitted to patients (EQ13);
+  - what 4b's test bands are.
+- **Validation:** no.
+
+**X0′. Sources review: encephalopathies and provoked seizures (X0 widened; plan 18 h · 2.3–3.0 executor-h; no code;
+four more papers and ten cause searches).**
+- X0's list, plus De Deyn & Macdonald 1990, De Deyn 2001, Young 1992 and Mazeraud 2020.
+- For each cause of U26: one search for a mechanism on the chosen family, with its outcome in §3.9's three-way form.
+- **Validation:** no.
+
+**I1 split.** I1a, synaptic and energy failure per region (plan 16 h · 2.0–2.7 executor-h, as I1 was), is unblocked
+once G0d reads its papers. I1b, cell death, is **not sized**: there is no EEG model (EQ20).
+- **BD1 is now BLOCKED on EQ20 as well as ACNS Guideline 6.** Brain death is irreversible by definition. A view built
+  on I1a alone would show a silence that might recover, which is a slice of the use, not the use.
+- C1's cells that need lasting injury (a prognosis at days) wait on EQ20 too. Its early patterns depend on I1a only.
+
+**G7f. Provoked seizures (not sized: most causes have no mechanism yet; BLOCKED on X0′ and G7a).**
+- Each cause of U26 that X0′ gives a mechanism moves the region's excitability. Drugs act through their PK rows, and
+  electrolytes through `l2/blood/solutes.ts`.
+- **Cells waiting for it:**
+  - hyponatraemic seizures (Ch55 p. 1819; Ch75 p. 2463, direction);
+  - TXA's dose relation (Ch50 p. 1612, direction), through the GABA-A joint.
+- A cause without a mechanism stays a recorded miss. It is sized cause by cause once X0′ has read.
+- **Validation:** yes.
+
+**G6c. Respiratory arousal and sleep in the ICU (plan 10 h · 1.3–1.7 executor-h; after G6a and B1).**
+- Arousal from chemoreceptor, airway and effort inputs (Ch09 p. 164, Fig. 9.9), read by the sleep model's arousal
+  drive; opioids' REM reduction (p. 175).
+- **Tests first:** directions only until sizes are sourced.
+- **Validation:** yes.
+
+**EP2, EP3: no longer "no paper".** Their own plan (EQ16), written from G0c. Sized as estimates for the hub totals:
+EP2 24 h (3.0–4.0 executor-h), EP3 24 h (3.0–4.0 executor-h). EP2 now also meets:
+- the physiological confounders of U20 and U31 (Ch35 pp. 1127–1128);
+- the criteria of U32 (p. 1129);
+- positioning and demyelination, U33 and U34.
+
+**SD1. Spreading depolarisation (not sized; EQ21).** Needs the ion layer of G0d and a DC-coupled cortical electrode.
+
+**G11 (amended).** Re-runs the course tests of all four readers (BIS-type, Entropy, Narcotrend, PSI), not only one,
+with each difference reported by cause.
+
+| Piece | Plan h | Executor-h [EST] | Validation | Blocked on |
+|---|---|---|---|---|
+| G0c | 20 | 2.5–3.3 | no | its papers |
+| G0d | 12 | 1.5–2.0 | no | its papers |
+| X0′ (X0 + 8) | +8 | +1.0–1.3 | no | its papers |
+| G6c | 10 | 1.3–1.7 | yes | G6a, B1 |
+| EP2 | 24 | 3.0–4.0 | yes | G0c, EP1 |
+| EP3 | 24 | 3.0–4.0 | yes | G0c, EP2, the NMB model |
+| **Added by the refinement** | **98** | **≈ 12–16** | | |
+| **Plan total** | **556** | **≈ 69–92** | | |
+| Not sized | V0, BD2, X1, X3, I1b, SD1, G7f | | | |
 
 ---
 
@@ -1291,6 +1820,78 @@ through the Europe PMC REST search (by DOI, with title and first author matched)
 | A source on the temperature dependence of synaptic and membrane rates in the chosen family | G4b, EP1 | not identified | — |
 
 **Group 8: evoked-potential pathways and the motor-neuron pool (unblocks EP2, EP3).** None identified. G0a searches them.
+*Superseded by group 9 (refinement).*
+
+**Group 9: found by the gap searches (refinement, 12 November 2026; unblocks G0c, G0d, X0′).**
+- **DOIs:** each is the DOI of the Europe PMC record whose title and first author match.
+- **Read:** the abstract only, through the same service, for each paper not marked "title only".
+- **Library:** none is in the library.
+
+| Paper | Why | DOI |
+|---|---|---|
+| De Deyn PP, Macdonald RL. Guanidino compounds that are increased in cerebrospinal fluid and brain of uremic patients inhibit GABA and glycine responses on mouse neurons in cell culture. Ann Neurol 1990 | uraemic mechanism (gap 1a) | 10.1002/ana.410280505 |
+| De Deyn PP, et al. Endogenous guanidino compounds as uremic neurotoxins. Kidney Int Suppl 2001 | the same | 10.1046/j.1523-1755.2001.59780077.x |
+| Young GB, et al. The electroencephalogram in sepsis-associated encephalopathy. J Clin Neurophysiol 1992 | septic EEG grades (U13) | 10.1097/00004691-199201000-00016 |
+| Mazeraud A, et al. Septic-associated encephalopathy: a comprehensive review. Neurotherapeutics 2020 | septic pathophysiology (gap 1b) | 10.1007/s13311-020-00862-1 |
+| Dau T. The importance of cochlear processing for the formation of auditory brainstem and frequency following responses. J Acoust Soc Am 2003 | BAEP mechanism | 10.1121/1.1534833 |
+| Verhulst S, et al. Functional modeling of the human auditory brainstem response to broadband stimulation. J Acoust Soc Am 2015 | BAEP, human | 10.1121/1.4928305 |
+| Verhulst S, Altoè A, Vasilkov V. Computational modeling of the human auditory periphery. Hear Res 2018 | BAEP, human periphery | 10.1016/j.heares.2017.12.018 |
+| Rattay F, Danner SM. Peak I of the human auditory brainstem response results from the somatic regions of type I spiral ganglion cells. Hear Res 2014 | BAEP wave I | 10.1016/j.heares.2014.07.001 |
+| Stegeman DF, et al. Far-field evoked potential components induced by a propagating generator: computational evidence. Electroencephalogr Clin Neurophysiol 1987 | subcortical SSEP peaks | 10.1016/0013-4694(87)90042-3 |
+| Dumitru D, Jewett DL. Far-field potentials. Muscle Nerve 1993 (title only) | the same, review | 10.1002/mus.880160302 |
+| Mauguière F, et al. Neural generators of N18 and P14 far-field SEPs… Electroencephalogr Clin Neurophysiol 1983 (title only) | generators | 10.1016/0013-4694(83)90253-5 |
+| Stockard JJ, et al. Effects of hypothermia on the human brainstem auditory response. Ann Neurol 1978 | test band | 10.1002/ana.410030416 |
+| Markand ON, et al. Effects of hypothermia on short latency somatosensory evoked potentials in humans. Electroencephalogr Clin Neurophysiol 1990 | test band | 10.1016/0168-5597(90)90002-u |
+| Fuglevand AJ, et al. Models of recruitment and rate coding organization in motor-unit pools. J Neurophysiol 1993 | motor-neuron pool | 10.1152/jn.1993.70.6.2470 |
+| Rusu CV, et al. A model of TMS-induced I-waves in motor cortex. Brain Stimul 2014 | D- and I-waves | 10.1016/j.brs.2014.02.009 |
+| Taylor BA, et al. Temporal summation — the key to motor evoked potential spinal cord monitoring in humans. J Neurol Neurosurg Psychiatry 1993 | pulse trains | 10.1136/jnnp.56.1.104 |
+| King BS, Rampil IJ. Anesthetic depression of spinal motor neurons… Anesthesiology 1994 | drug on the pool (rat) | 10.1097/00000542-199412000-00024 |
+| Rampil IJ, King BS. Volatile anesthetics depress spinal motor neurons. Anesthesiology 1996 | the same | 10.1097/00000542-199607000-00018 |
+| Zhou HH, Zhu C. Comparison of isoflurane effects on motor evoked potential and F wave. Anesthesiology 2000 | drug on the pool (human) | 10.1097/00000542-200007000-00010 |
+| Wei Y, Ullah G, Schiff SJ. Unification of neuronal spikes, seizures, and spreading depression. J Neurosci 2014 | ion and energy layer; SD; wave of death | 10.1523/jneurosci.0516-14.2014 |
+| Zandt BJ, et al. Neural dynamics during anoxia and the "wave of death". PLoS One 2011 | anoxic depolarisation | 10.1371/journal.pone.0022127 |
+| Zandt BJ, et al. A neural mass model based on single cell dynamics to model pathophysiology. J Comput Neurosci 2014 | ions into a neural mass | 10.1007/s10827-014-0517-5 |
+| Ruijter BJ, et al. Synaptic damage underlies EEG abnormalities in postanoxic encephalopathy: a computational study. Clin Neurophysiol 2017 | postanoxic EEG (U6) | 10.1016/j.clinph.2017.06.245 |
+| Kalia M, et al. A neural mass model for the EEG in ischemia. bioRxiv 2023 (**preprint**) | ischaemia EEG | 10.1101/2023.04.07.535995 |
+| Jones TH, et al. Thresholds of focal cerebral ischemia in awake monkeys. J Neurosurg 1981 | 4b test bands | 10.3171/jns.1981.54.6.0773 |
+| van Wijngaarden JB, et al. The impact of cortical lesions on thalamo-cortical network dynamics after acute ischaemic stroke. PLoS Comput Biol 2016 | focal lesions (U14) | 10.1371/journal.pcbi.1005048 |
+| Wilson MT, et al. General anesthetic-induced seizures can be explained by a mean-field model of cortical dynamics. Anesthesiology 2006 (title only; Miller Ch17 ref. 266) | anaesthetic seizures on a mean-field cortex (EQ12, U25) | 10.1097/00000542-200603000-00026 |
+| Regan D, et al. Effect of body temperature on visual evoked potential delay and visual perception in multiple sclerosis. J Neurol Neurosurg Psychiatry 1977 (title only) | U34 test band | 10.1136/jnnp.40.11.1083 |
+
+**Reconciliation with `research/58-papers-wanted-eeg-2026-11-11.md` (refinement).** That file is outside this
+repository; the corrections below are stated here and reported, and the file itself was not edited.
+- **Its groups 1–4 (the readers): complete in the library.** `library/sources/papers/eeg/` (listed 12 November 2026)
+  holds the six reader papers:
+  - `connor-2022-open-reimplementation-bis-anesth-analg.pdf`, 20 pp;
+  - `rampil-1998-primer-eeg-signal-processing-anesthesiology.pdf`, 23 pp;
+  - `viertio-oja-2004-entropy-algorithm-acta-anaesthesiol-scand.pdf`, 8 pp;
+  - `kreuer-wilhelm-2006-narcotrend-monitor-bprca.pdf`, 9 pp;
+  - `drover-ortega-2006-patient-state-index-bprca.pdf`, 8 pp;
+  - `prichep-2004-patient-state-index-bja.pdf`, 7 pp.
+
+  These are the reader papers, not generator papers, so **step 4 of the brief does not apply**: no model paper is in
+  the library, and §3's claims stay at abstract level.
+- **DOIs corrected or confirmed.**
+  - Drover & Ortega 2006 (10.1016/j.bpa.2005.07.008) and Prichep 2004 (10.1093/bja/aeh082) were marked "from memory,
+    not confirmed by search". Both are now confirmed: by Europe PMC DOI query (PMIDs 16634419, 14742326) and by the
+    DOI printed in the library PDFs.
+  - The other reader DOIs also resolve by Europe PMC DOI query to the titles listed: Kreuer 2006, Viertiö-Oja 2004,
+    Connor 2022 and Rampil 1998.
+  - Kaplan 2004 is correct in both lists: no DOI, PMID 15592005.
+- **Duplicates and a stale row in this section.**
+  - Brophy 2012 and Claassen 2013 appear in group 3 (as "not verified") and in group 5 (verified). The group 5 rows
+    stand.
+  - Group 3's "ACNS guideline on minimum technical standards… not identified" is Sinha 2016 (group 5) and is
+    identified.
+- **A number to check.** `research/58`'s group 4 row for Stecker 2016 gives the brain-death recording standard as
+  "nothing over 2 µV, electrode pairs at least 10 cm apart". That paper has not been read by this plan, so those numbers
+  are not cited here until G0b reads it.
+- **Its "still not identified" list is now shorter.**
+  - Still not identified: a septic mechanism (gap 1b); the evoked-potential recording standard; ammonia kinetics; the
+    temperature dependence of the family's rates.
+  - Now identified: a uraemic basis (gap 1a), the EP pathway parts (gap 2) and the motor parts (gap 3).
+- **Its group 5 matches this section's groups 5–7** (Ligtenstein, Song ×3, Tamune, Kwon, Westhall, Hofmeijer, van
+  Putten, Claassen 2004), with the same DOIs.
 
 ---
 
@@ -1319,7 +1920,12 @@ named cells or channels. The alternative is to use only the seizures the cortico
 - B: not allowed; only cell- or synapse-named mechanisms;
 - C: decide after G0a reads the full texts.
 
-*Proposal:* C.
+*Refinement:* the gap searches found a biophysical alternative to the Epileptor's slow variable. Wei, Ullah & Schiff 2014
+[ABS] derive seizures, and their end, from ion concentrations and the energy of the pumps: named quantities, not
+abstract ones. If EQ21 adds that layer, it can be the slow seizure variable, and option B would then lose nothing. G0a
+and G0d read it.
+
+*Proposal:* C, unchanged. The refinement adds B's strongest candidate for those reviews to read.
 
 **EQ3. How many channels and which montage; and the depth plan's four-channel E10?**
 *Explanation:*
@@ -1327,12 +1933,16 @@ named cells or channels. The alternative is to use only the seizures the cortico
 - More regions give a truer topography and cost more.
 - E10 (ruled "built" on 6 November) is not built yet. Building it on today's generator would be replaced.
 
-*Options:*
-- A: the full 10–20 set (19–21 electrodes) from about 8–19 regions, with E10 folded into G5;
-- B: a reduced ICU set;
-- C: keep E10 on the spectral generator now, and G5 later.
+- *Refinement:* you ruled that all four readers, PSI included, are built now on today's generator. So E10 is built
+  now (§4.6), and the question is only what G5 builds later and how E10 passes to it.
 
-*Proposal:* A, E10 folded into G5, PSI waiting behind G5.
+*Options:*
+- A: the full 10–20 set (19–21 electrodes) from about 8–19 regions at G5. E10's channels become derivations of it,
+  with its channel ids kept, and PSI is re-run at G11;
+- B: a reduced ICU set at G5, with E10 passing to it the same way;
+- C: E10's channels stay on the spectral generator permanently. This would be a workaround by your rule.
+
+*Proposal:* A.
 
 **EQ4. Sampling rate of the clinical channels.**
 *Explanation:*
@@ -1402,7 +2012,7 @@ regions will cost more. The engine runs at 361× real time, so the limit is fast
   in G1), the depth tile alone staying within +10 %;
 - C: no budget.
 
-*Proposal:* B, with the number set after G1 measures. *Amended:* if EQ11 is ruled A, the region core runs always,
+*Proposal:* B, with the number set after G1 measures. *Amended:* EQ11 is ruled A (refinement), so the region core runs always,
 so a budget for the always-on core is needed as well. The plan proposes setting both from G1's measurement.
 
 **EQ10. Follower identity across browsers.**
@@ -1416,8 +2026,8 @@ so a budget for the always-on core is needed as well. The plan proposes setting 
 **Questions added by the amendment (EQ11–EQ19), and the revisions of EQ1, EQ4, EQ5, EQ6 and EQ9 above (marked
 "amended").**
 
-**EQ11. Does the region model run always, so that the body responds to a seizure or burst suppression with no EEG
-shown?**
+**EQ11 (RULED, 12 November 2026; kept for the record). Does the region model run always, so that the body responds
+to a seizure or burst suppression with no EEG shown?**
 *Explanation:* the slow variables alone cannot decide when a seizure ends; the fast dynamics do (§3.8 point 5).
 *Options:*
 - A: the region core always on (depth plan D4 lifted for the core; montage and readers stay device-gated);
@@ -1425,6 +2035,10 @@ shown?**
 - C: no body coupling until B exists.
 
 *Proposal:* A, with the cost set by EQ9 after G1 measures it.
+
+**RULED A by the owner (12 November 2026):** "the model should always run". The brain's core model runs always;
+electrodes and readers are switched on with a device. Written into §3.8 point 7, §4.7 and G1. This question is closed
+and is no longer counted among the open questions.
 
 **EQ12. Which family: corticothalamic, Liley-type, or a Liley cortex with a thalamic loop?**
 *Explanation:*
@@ -1436,9 +2050,19 @@ shown?**
 - A: corticothalamic;
 - B: Liley;
 - C: Liley cortex plus thalamic loop, only if its joint is published;
-- D: decide in G0a against its six discriminators.
+- D: decide in G0a, G0d and X0′ together, against seven discriminators (the six of §3.8 and the ion-and-energy
+  layer below).
 
 *Proposal:* D.
+
+*Refinement, the reasons for D's new form:*
+- **A seventh discriminator:** the ion-and-energy layer. The anoxia and ischaemia models found (Wei 2014; Zandt
+  2011, 2014; Ruijter 2017; Kalia 2023, §3.9 gap 4a) are mean-field or single-cell models with thalamic input and
+  energy-dependent synapses. Ching 2012's metabolic variable may be the same variable.
+- Ruijter 2017 and Kalia 2023 are mean-field models with a thalamic input. If G0d finds their cortex is Liley-type or
+  Jansen-type, that weighs toward option C.
+- Anaesthetic-induced seizures have been modelled as phase transitions of a mean-field cortex (Wilson 2006, the source
+  Miller cites in Ch17 p. 389; title only). That is a further family claim for G0a to read.
 
 **EQ13. May a mechanism be taken from a paper whose parameters were fitted to patients' EEG?**
 *Explanation:* Song 2018/2019 fit their parameters to EEG by a particle filter. The mechanism (ammonia → excitability,
@@ -1450,14 +2074,24 @@ synaptic impairment, inhibition) is a physiological claim, but the fitted values
 
 *Proposal:* A.
 
-**EQ14. Uraemic and septic encephalopathy: no mechanism has been identified.**
-*Explanation:* one search found none (§3.8 point 3). Building them without one would be a drawn pattern.
-*Options:*
-- A: listed as known gaps on the model page until a source is found, with a dedicated search (X0);
-- B: you supply sources;
-- C: build from the hepatic mechanism by analogy. This is not a mechanism by your rule, so it is not proposed.
+*Refinement:* Ruijter 2017 (§3.9 gap 4a) compared its simulations with 155 patients. Whether its values were fitted to
+them is not in the abstract. G0d states it; the ruling then applies to it as to Song.
 
-*Proposal:* A, then B.
+**EQ14. Uraemic and septic encephalopathy (revised by the refinement).**
+*Explanation:* the proper search (§3.9 gap 1) splits them.
+- **Uraemic:** a physiological basis exists. Uraemic guanidino compounds inhibit GABA and glycine responses and are
+  convulsants (De Deyn 1990, 2001). It would join the region at the same GABA-A joint as cefepime and tranexamic
+  acid. It needs a uraemic-solute state in the engine and the concentration–effect relation from the full text.
+- **Septic:** nothing found as a model, and the basis is multifactorial (Mazeraud 2020).
+
+*Options:*
+- A: uraemic built through the GABA-A joint once X0′ reads De Deyn 1990 in full and a uraemic-solute source exists;
+  septic listed as an open gap on the model page;
+- B: both wait for you to supply sources;
+- C: septic built from the hepatic or uraemic mechanism by analogy. This is not a mechanism by your rule, so it is
+  not proposed.
+
+*Proposal:* A.
 
 **EQ15. Regional cerebral perfusion (V0) and brainstem function (BD2): their own plans?**
 *Explanation:* both are new physiology outside the EEG. Regional ischaemia, carotid clamping, DCI and brain death depend
@@ -1468,14 +2102,20 @@ on them.
 
 *Proposal:* A (as the hub plan does with H11c).
 
-**EQ16. Evoked-potential pathways (EP2) and motor evoked potentials (EP3): here or their own plan?**
-*Explanation:* no paper has been identified for either. They share the region but are separate models (conduction
-chain; motor-neuron pool).
-*Options:*
-- A: their own plan, with a search first;
-- B: pieces here once papers arrive.
+**EQ16. Evoked-potential pathways (EP2) and motor evoked potentials (EP3): here or their own plan? (revised by the
+refinement)**
+*Explanation:* papers now exist (§3.9 gaps 2 and 3).
+- The BAEP has published models (Dau 2003, Verhulst 2015/2018).
+- The SSEP's far-field peaks have a published mechanism (Stegeman 1987).
+- The MEP's parts are published: the motor-unit pool (Fuglevand 1993), I-waves (Rusu 2014), and anaesthetic
+  depression of motoneurons (Rampil & King; Zhou 2000). Their joint is this plan's composition.
+- They share the region, but they are separate models with their own time scale (§3.8 point 6).
 
-*Proposal:* A.
+*Options:*
+- A: their own plan, written from G0c's reading;
+- B: pieces here (EP2, EP3 as sized in §5.2).
+
+*Proposal:* A. The hub totals carry them as estimates.
 
 **EQ17. The exclusions the plans made without your ruling: which are in?**
 *Explanation:* the depth plan's §9 left out infants and neonates, anaesthetic epileptiform spikes (sevoflurane,
@@ -1486,6 +2126,9 @@ This plan had not covered EMG and nerve monitoring (Ch35 pp. 1114, 1122).
 - B: you name which.
 
 *Proposal:* A. Anaesthetic spikes join G7a, auditory EPs join EP2, infants need their own source review.
+
+*Refinement:* the pass gave each exclusion its Miller pages (§1.5.1, row U25). EMG now has a published surface-EMG
+model inside the motor-unit-pool paper (Fuglevand 1993 [ABS]), so it can join EP3's plan rather than wait.
 
 **EQ18. Is the evoked-potential monitor its own instrument in the room?**
 *Options:*
@@ -1500,6 +2143,97 @@ meets the recording standard and flag the confounders.
 *Options:*
 - A: the view shows "recording meets / does not meet the technical standard" and lists confounders, never a diagnosis;
 - B: it states "consistent with electrocerebral inactivity" when every condition holds.
+
+*Proposal:* A.
+
+**Questions added by the refinement (EQ20–EQ23).**
+
+**EQ20. The death of brain tissue (I1b): what may stand in for a mechanism that is not published?**
+*Explanation:*
+- The loss of function and the terminal depolarisation have published models (§3.9 gap 4a).
+- That tissue dies after enough time at low flow has a physiological basis: Ch10 p. 211, Fig. 10.20; Jones 1981.
+  No model found ends this on an EEG family's parameter.
+- A rule "death after flow below X for Y minutes", drawn through two thresholds, is a fitted rule.
+
+*Options:*
+- A: I1b stays unbuilt. A silence that should last is a recorded miss. The thresholds are test bands for any future
+  mechanism.
+- B: a cell-death model from the cascade (Ch10 Fig. 10.22), if G0d finds one published.
+- C: the threshold rule. This is not proposed, being a fitted rule by your standard.
+
+*Proposal:* A, with B searched in G0d.
+
+**EQ21. An ion-and-energy layer in the region, and spreading depolarisation (U30)?**
+*Explanation:*
+- The models that produce the anoxic depolarisation and spreading depression carry ion concentrations and the pumps'
+  energy (Wei 2014; Zandt 2011, 2014).
+- They may also be the metabolic variable of burst suppression (EQ12's seventh discriminator).
+- They cost more, and with EQ11 = A they run always.
+
+*Options:*
+- A: yes, if G0d shows it is the same variable as the metabolic one. Then SD1 follows.
+- B: no ion layer. Spreading depolarisation and the terminal depolarisation stay gaps.
+- C: decide after G1 measures the cost.
+
+*Proposal:* A, with the cost measured in G1 before G2.
+
+**EQ22. Index-guided closed-loop delivery (U28): an instrument in the room?**
+*Explanation:*
+- Miller describes controllers that set a propofol or remifentanil pump from the BIS (Ch23 pp. 665–670).
+- No new physiology is needed: it is a device that reads a depth reader.
+
+*Options:*
+- A: a later instrument plan, after the four readers;
+- B: not in the simulator.
+
+*Proposal:* A.
+
+**EQ23. Which provoked seizures (U26) first?**
+*Explanation:*
+- Ten causes were found, each with its own mechanism level.
+- Tranexamic acid shares the GABA-A joint with cefepime and uraemia, so one built joint serves three causes.
+- Local anaesthetic toxicity is an operating-room cause with a dose threshold in Miller (Ch25 p. 755). Its EEG
+  mechanism is not yet searched.
+
+*Options:*
+- A: the GABA-A joint first (TXA, cefepime, uraemia), then local anaesthetics once X0′ finds a mechanism;
+- B: local anaesthetics first;
+- C: you name the order.
+
+*Proposal:* A.
+
+**EQ24. Consciousness and memory as states of their own (U40; added by brief 175)?**
+*Explanation:*
+- Ch36 says connected consciousness, shown by the isolated forearm technique, happens about a hundred times more often
+  than awareness with recall. It happens even under a classic alpha-delta pattern with normal index values, and the
+  indices predict it with values near 0.7 (Ch36 pp. 1139, 1148). Dreaming, a disconnected consciousness, fills late
+  emergence (p. 1142), and one small study links the alpha/beta ratio to amnesia (p. 1144).
+- To teach this, the simulator needs responsiveness, connected consciousness and memory that can **come apart from the
+  EEG**. No mechanism in this plan produces them. The region model produces the EEG and nothing else, and the engine's
+  `conscious` and awareness flag are read from the depth index (depth plan D7/Q4).
+- Miller says the mechanism is not known: whether consciousness sits in the front or the back of the cortex is
+  "unresolved" (p. 1151). No search for a model was made.
+
+*Options:*
+- A: a sources review (a G0-type piece, no code) searches for a published mechanism of connected consciousness and
+  memory under anaesthesia. The plan's structure changes only if it finds one;
+- B: you rule that the simulator teaches only what the EEG and the index show, and that the dissociation is named on
+  the model page as not modelled;
+- C: you name another course.
+
+*Proposal:* A, because your rule is mechanism first. B is listed because the choice of scope is yours, not the plan's.
+
+**EQ25. Vagal nerve stimulation for status epilepticus (U41; added by brief 175)?**
+*Explanation:*
+- NCC p. 2587 lists vagal nerve stimulation, with ECT, as a non-drug treatment of super-refractory status epilepticus.
+  It says they have been used with success, but routine use lacks evidence.
+- ECT fits G7e: a stimulus into the cortical region. A vagal input that reaches the thalamocortical system through the
+  brainstem is in no piece, and no mechanism was searched.
+
+*Options:*
+- A: add it to X0′'s or G0b's search list, so that a mechanism is looked for before G7c is planned in detail;
+- B: you rule it is not taught;
+- C: you name another course.
 
 *Proposal:* A.
 
@@ -1575,3 +2309,234 @@ meets the recording standard and flag the confounders.
 1. Paediatric SE is defined as more than 20 min (p. 2461); the adult chapter uses 5 min (NCC p. 2587).
 2. The encephalopathy models sit on a different family (Liley) from the one §3.7 leads with (corticothalamic): EQ12.
 3. The Song models' parameters are fitted to EEG: EQ13.
+
+### 9.3 Refinement self-review (brief 170, base 96ea653e)
+
+| Claim | File and line, or page |
+|---|---|
+| Miller 10th has no index | the book ends with Ch87's references at PDF p. 3283; `library/sources/tocs/miller-10th-toc.pdf` (3 pp.) has no "Index" entry |
+| Ch80 is "Neurocritical Care" | its opening page (PDF 3080) prints "80" and "Neurocritical Care", p. 2570 (this replaces the amendment's inference from Table 80.8) |
+| Ch24 inside the "Ch23" split file | PDF 820 prints p. 674, "Pharmacology of Neuromuscular Blocking Drugs"; the table of contents gives 674 |
+| Plasma Na, K, iCa, Mg and glycine osmoles exist | `packages/engine-core/src/l2/blood/solutes.ts:8`, `:15`, `:24` |
+| Lidocaine has a PK row with antinociception only | `l2/pk/row.ts:21`; `types-pk.ts:174` |
+| Tranexamic acid row is inert | `l2/pk/data/rows-other.ts:104–106` |
+| Airway obstruction exists as a state | `types-neuro.ts:65` (`drive.obstruction`); `types-resp.ts:12` (`AirwayState`) |
+| PR #427's bicoherence on today's generator | the PR's description (read 12 November 2026) |
+| Every DOI of §3.9 and §7 group 9 | Europe PMC REST records, title and first author matched |
+| The library's EEG folder | `ls library/sources/papers/eeg/`, 12 November 2026: six reader PDFs |
+
+**What could not be verified (refinement):**
+1. No paper found by the gap searches was read in full. Every §3.9 claim is an abstract's, and some rows are titles
+   only (marked).
+2. Kalia 2023 is a preprint; no peer-reviewed version was found in Europe PMC.
+3. Whether Ruijter 2017 fitted its values to patients is not in its abstract.
+4. The keyword sweep cannot find a use described without its keywords (§1.5.3).
+5. The engine-input column of U26–U37 was checked by name search only, and some rows say "not checked".
+6. Hits that a context window cut short were read only as far as the window. Ch35 pp. 1127–1128 and Table 35.5 were
+   read in full.
+
+**Disagreements found (refinement):**
+1. **Where the EEG goes flat.** Ch10 p. 211 says the cortical EEG is isoelectric at about 15 mL/100 g/min, and gives
+   6–12 as the range where the EEG is flat but membranes hold. Ch35 p. 1122 says the cell's survival is threatened from
+   about 12. Both stay as test bands, each with its page. Neither is averaged into one number.
+2. **Seizure duration in children.** The paediatric chapter (Ch75 p. 2461) and NCC (p. 2587) still differ, as before.
+3. **E10.** The depth plan ruled E10 built (Q10 B); the plan had proposed folding it into G5. The owner's ruling that
+   PSI is built now settles this: E10 is built now as the depth plan states it, and G5 later changes its source (§4.6,
+   EQ3).
+
+**Corrections made after the second review of this refinement.**
+- The completeness sentence was narrowed to what was read. Ch36's body is named as unread.
+- BD1 was blocked on EQ20, so that brain death is not built as a slice.
+- §4.6 was rewritten from the depth plan's own E10 text, and an unread claim about PSI's features was removed.
+- The order rule was made one rule (every review before any build), with a definition of "done".
+- G0c and X0′ were resized; G7f was set to "not sized".
+- Three Miller citations were re-read on the page and corrected (Ch71 p. 2254, Ch25 p. 755, Ch17 p. 389).
+
+---
+
+## Appendix A. Reading log: Ch35, Ch36 and Ch80 read whole (brief 175)
+
+**How.** Miller's Anesthesia, 10th ed., the split files `library/sources/miller-10th-2025/Ch35 - Neurophysiologic
+onitoring.pdf` (63 PDF pages, which hold Ch35 and Ch36: PDF 1327–1389 of the full book) and `Ch80 - Neurocritical
+Care.pdf` (34 pages). Text was extracted page by page with Poppler's `pdftotext` and read in full, figure legends and
+table text included; the figure images were not looked at. No file was downloaded. Printed page = the running header:
+Ch35 = full-PDF page − 228; Ch36 = full-PDF page − 233 (split page 40 prints p. 1133); Ch80 = split page + 2569.
+
+**Format.** Section title (as Miller prints it) — printed pages — every use of the EEG, a processed EEG index or evoked
+potentials it describes, and the row it went to. "None" means the section describes no such use.
+
+### A.1 Chapter 36, "Monitoring the Brain's Response to Anesthesia and Surgery" (pp. 1133–1151)
+
+1. Key points; Why should we monitor the brain during anesthesia? — 1133 — titrating hypnotic to the individual;
+   preventing unintended consciousness (→ U1, U40).
+2. Box 36.1 Awareness with recall; The harms of giving too little anesthesia; The harms of giving too much — 1134 —
+   awareness (→ U40); overdose and the brain (→ U27).
+3. What would we like from an ideal monitor of anesthetic effect? — 1134 — continuous hypnotic index; risk of
+   consciousness; prediction of movement and autonomic response; brain frailty; seizures and ischaemia (→ U1, U40,
+   U27, U2, U15).
+4. Consciousness terminology; Fig. 36.1 — 1134–1135 — connected and disconnected consciousness, IFT, AWR (→ U40).
+5. Nociception and antinociception — 1135 — an index of 42 and a patient who sits up: the index does not predict
+   movement (→ U1).
+6. Clinical signs in anesthesia monitoring; Responsiveness; sedation scales — 1135–1136 — none.
+7. Brainstem reflexes — 1136 — none.
+8. The isolated forearm technique; Box 36.2 — 1136 — none of the EEG; the reference standard of U40 (→ U40).
+9. Autonomic nervous system signs, measures, and indices; Nociceptive indices — 1136–1137 — none of the EEG; HRV/ANI,
+   surgical pleth index, skin conductance, pupillary dilation reflex (→ U25).
+10. Electroencephalography; Where does the EEG signal originate? — 1137 — none (generator constraints: pyramidal
+    dipoles, about 6 cm² of cortex per electrode, thalamic and brainstem modulation, far-field volume conduction; G5).
+11. From raw EEG to the spectrogram; Figs. 36.2–36.3 — 1137–1139 — raw EEG, spectrum and DSA as displays (G8); a
+    patient underdosed on clinical signs; the septic patient near burst suppression at 0.6 % isoflurane (→ U1, U13).
+12. Anesthetic drug effects on the frontal EEG; Induction — 1138–1139 — antimuscarinics (hyoscine); beta buzz;
+    anteriorisation; procedural sedation (→ U1, U38).
+13. Maintenance: the "alpha-delta" pattern; Figs. 36.4–36.5; Table 36.1 — 1139–1140 — the titration target; the
+    aperiodic slope; a resilient brain (→ U1, U27).
+14. Burst suppression; Fig. 36.6 — 1139–1141 — suppression ratio, QUAZI, forme fruste; causes (anaesthetic, toxic,
+    hypothermia, hypoxia, ischaemia); delirium; induced for protection; propofol and volatile concentrations for burst
+    suppression against those for immobility; burst suppression after a fentanyl bolus (→ U1, U4, U15, U17, U27, U31).
+15. EEG effects of noxious stimulation during anesthesia — 1141–1142 — arousal, alpha change, paradoxical delta, abrupt
+    burst suppression, index dips (→ U1).
+16. Transition periods during maintenance anesthesia — 1142 — emergence-like EEG in about 5 % around separation from
+    bypass; transfers (→ U1, U31).
+17. Emergence — 1142 — the spectral sequence; disconnected consciousness; a third jump to responsiveness (→ U38, U40).
+18. Neural inertia during emergence — 1142 — hysteresis and the arousal systems (→ U38).
+19. Muscle activity (EMG) — 1142 — EMG as a signal of grimacing (→ U1; artefacts C18).
+20. Specific GABA-ergic drug effects; Volatile ethers; Fig. 36.7 — 1142–1143 — alpha to delta above about 1.7 %
+    sevoflurane; alpha locked to delta phase; epileptiform sharp waves with sevoflurane and enflurane (→ U1, U25).
+21. Propofol, barbiturates, etomidate, and benzodiazepines — 1143–1144 — propofol's alpha; etomidate and methohexitone
+    epileptiform activity; benzodiazepine beta and spindles; an amnesia signature (→ U1, U25, U40).
+22. Specific non-GABA-ergic drug effects: Nitrous oxide; Xenon — 1144 — N2O transients; xenon delta (→ U1, U25).
+23. Ketamine; Fig. 36.8 — 1144 — slow waves with gamma bursts; alpha fall; spurious index rise (→ U1).
+24. Dexmedetomidine; Fig. 36.9 — 1144 — sleep-like pattern, spindles; easier waking (→ U1, U3, U38).
+25. Opioids — 1144–1145 — high-dose delta; the behavioural–EEG dissociation (→ U1).
+26. The effects of age and preexisting neurological disease on EEG monitoring — 1145 — the paradox of age; functional
+    brain age; burst suppression in the elderly; a titration strategy; abrupt emergence; children and neonates (tracé
+    alternant); abnormal cortex under the electrode (→ U27, U38, U25, U14).
+27. Technical considerations: Scaling of the EEG display — 1145 — gain and colour scale by age (→ U1 display, G8).
+28. Noise and artifacts in the EEG; Fig. 36.10 — 1145–1146 — mains, diathermy, impedance, blinks and eye movement
+    mistaken for delta, ECG spikes and harmonic stripes, EMG (→ artefacts C18–C23, already in the generator).
+29. Clinical application of EEG monitoring: EEG-based indices — 1146 — spectral edge; midlatency AEPs; BIS (→ U1, U25).
+30. Derivation and design of EEG indices; Table 36.2; Validation of indices; Volunteer and early clinical studies —
+    1146–1147 — predictive values; awareness at BIS 40–90 (→ U1).
+31. The gold standard for anesthetic failure: AWR or intraoperative consciousness?; Box 36.3 — 1147–1148 — the Brice
+    interview (→ U40).
+32. "Diagnosing consciousness": EEG index performance against IFT responses — 1148 — indices against IFT; alpha-delta
+    with IFT responses; neuromuscular block lowers BIS in the awake (→ U40, U1).
+33. Epidemiology of index-based monitoring; Table 36.3 — 1148 — false-negative and false-positive scenarios (→ U1, U27,
+    U40).
+34. The problem of rare events — 1148–1149 — none (statistics of awareness detection).
+35. Clinical outcome research: Awareness with recall; Table 36.4 — 1149–1150 — BIS-guided anaesthesia and awareness;
+    the TIVA trial (→ U1, U40).
+36. Is "deep" anesthesia harmful? — 1150 — burst suppression and low index with delirium and decline; apoptosis
+    (→ U27).
+37. Other putative frontal EEG measures of anesthetic effect — 1150 — phase–amplitude coupling, slow-wave activity
+    saturation, Lempel–Ziv complexity (→ U25).
+38. Multichannel EEG monitoring of anesthesia — 1150–1151 — connectivity, the front-versus-back question, frontal
+    hypersynchrony, alpha-connectivity hysteresis, complexity, criticality (→ U25, U40).
+39. Conclusions — 1151 — EEG when illness precludes MAC > 0.7 or with TIVA (→ U1).
+
+### A.2 Chapter 35, "Neurophysiologic Monitoring" (pp. 1099–1131)
+
+1. Key points; introduction — 1099–1100 — none (the principles of IONM).
+2. Monitoring modalities: Monitors of adequacy of nervous system blood flow; tracers, TCD, SjvO2, cerebral oximetry —
+   1100–1103 — none of the EEG; CBF below 20–25 mL/100 g/min fails function (→ U15).
+3. Tissue-level blood flow monitoring; tissue PO2 — 1103 — none.
+4. Monitors of nervous system function — 1103–1104 — the EEG's four perioperative uses (→ U15, U4, U6, U1); evoked
+   responses defined (→ U20).
+5. Electroencephalogram: basic unprocessed concepts; Fig. 35.3 — 1104 — the 10–20 system; 16 diagnostic channels, 1–32
+   intraoperative; electrocorticography; single-neuron microelectrodes; amplitude 5–500 µV, falling with age (→ U19,
+   U27; G5).
+6. Normal electroencephalogram; Figs. 35.4–35.5 — 1104–1105 — awake beta, eyes-closed occipital alpha; sleep
+   spindles; REM and light sleep activated with eye EMG (→ U3).
+7. Abnormal electroencephalogram — 1104–1105 — asymmetry; epilepsy; ischaemic slowing with voltage kept; anaesthetic
+   patterns resembling ischaemia (→ U2, U14, U15).
+8. Processed electroencephalogram concepts — 1105 — artefact processed as signal; ≤ 4 channels; two or four channels
+   over watershed areas (→ U1, U15).
+9. Fourier transformation of EEG; Fig. 35.6 — 1105–1106 — CSA and DSA; epoch length (→ U1, G8).
+10. Anesthesia and the electroencephalogram; Table 35.1 — 1106–1107 — drug patterns; anaesthetic EEG paralleling
+    ischaemia; extremes of age; burst suppression of 50–80 % when targeted (→ U1, U4, U15, U27).
+11. Evoked potentials: sensory evoked responses; Fig. 35.7 — 1106–1108 — averaging; near and far field; cortical and
+    subcortical; latency, amplitude, polarity; baseline (→ U20).
+12. Somatosensory evoked potentials; Table 35.2; Fig. 35.8 — 1108–1109 — the pathways; lower-limb conduction and the
+    anterior spinal artery; interpeak latencies; age, height, disease (→ U20, U34, U39).
+13. Brainstem auditory evoked potentials; Figs. 35.9–35.10 — 1109–1111 — stimulus and recording; waves I–V (→ U21).
+14. Visual evoked potentials — 1110–1111 — flash goggles; variability (→ U22).
+15. Transcranial motor evoked potentials — 1111–1112 — D-wave, stimulus intensities, corticobulbar MEPs (→ U23, U32).
+16. Anesthesia and evoked responses; Table 35.3; Figs. 35.11–35.14 — 1112–1115 — every drug class on SSEP, BAEP, VEP
+    and tcMEP (→ U20–U23).
+17. Electromyography; Fig. 35.15 — 1114–1115 — passive and active EMG, cranial nerves, pedicle screws (→ U24).
+18. Clinical applications: Intracranial neurosurgery – supratentorial: Seizure surgery — 1115–1116 — ECoG of
+    interictal discharges; lightened anaesthesia; provocation (→ U19).
+19. Awake craniotomies; Fig. 35.16 — 1116–1117 — stimulation mapping, afterdischarges, iced saline (→ U19).
+20. Craniotomies under general anesthesia: motor strip localization; Fig. 35.17 — 1116–1118 — phase reversal; motor
+    mapping (→ U32).
+21. Intracranial neurosurgery – posterior fossa; Microvascular decompression; Fig. 35.18 — 1117–1119 — BAEP and
+    retraction; lateral spread response (→ U21, U24, U32).
+22. Vestibular nerve schwannoma — 1117–1118 — BAEP; facial EMG (→ U21, U24).
+23. Other posterior fossa neoplasms and skull base surgery; Fig. 35.19 — 1118–1119 — brainstem mapping by EMG;
+    brainstem by combined EPs (→ U24, U32).
+24. Intracranial neurovascular surgery for aneurysms; Fig. 35.20 — 1119–1120 — EEG to confirm suppression at temporary
+    clipping; SSEP and outcome; SSEP-guided pressure in vasospasm; tcMEP for perforators (→ U4, U15, U16, U23).
+25. Spine surgery; Scoliosis, adult correction, and spinal cord surgery — 1120–1121 — SSEP changes and their reversal;
+    the two spinal arterial territories; SSEP with MEP; pedicle screw testing; dorsal-column mapping (→ U39, U32, U24).
+26. Lumbar spine surgery — 1121 — root overlap; triggered EMG; saphenous SSEP (→ U24).
+27. Peripheral nerve surgery; Fig. 35.21 — 1121–1122 — nerve action potentials across a lesion (→ U24).
+28. Neurophysiologic monitoring during vascular surgery: Carotid vascular surgery; Fig. 35.22 — 1122–1124 — the EEG and
+    SSEP thresholds and their use (→ U15).
+29. Aortic surgery — 1125 — MEPs for spinal cord ischaemia; leg-muscle ischaemia (→ U39, U33).
+30. Cardiopulmonary bypass — 1125 — the bypass confounders; quantitative EEG (→ U31, U17).
+31. Applications of intraoperative monitoring to pediatric patients; Table 35.4 — 1125–1126 — immaturity, TIVA,
+    dorsal rhizotomy, ABR hearing tests, bulbocavernosus reflex, infant EEG (→ U21, U25, U32).
+32. Nonsurgical factors: Pathophysiologic effects on the EEG: Hypoxia; Hypotension — 1126–1127 — (→ U31).
+33. Hypothermia — 1127 — (→ U17).
+34. Hypercarbia and hypocarbia — 1127 — hypocapnia activates foci (→ U8, U19).
+35. Untoward events — 1127 — unexpected occlusion and new stroke (→ U15).
+36. Physiologic factors influencing sensory evoked responses — 1127–1128 — pressure, temperature, gases, anaemia
+    (→ U20, U37).
+37. Anesthetic optimization during multimodality neurophysiologic monitoring — 1128 — TIVA; EEG to titrate propofol;
+    accumulation; adjuncts; neuropathy; nonlinear dose (→ U1, U20, U23, U34).
+38. Troubleshooting IONM alerts; Fig. 35.23 — 1129–1130 — thresholds; SSEP fall over long surgery; anaesthetic fade;
+    the five causes; positioning; electrical noise (→ U20, U21, U23, U32, U33; artefacts).
+39. Summary; Table 35.5 — 1130–1131 — the procedures (→ U32).
+
+### A.3 Chapter 80, "Neurocritical Care" (pp. 2570–2592)
+
+1. Key points; introduction; Box 80.1 — 2570–2571 — none.
+2. Intracranial physiology and cerebrovascular autoregulation; Figs. 80.1–80.4 — 2571–2573 — seizures as a secondary
+   insult (→ U2).
+3. General cardiopulmonary considerations; Fluids, electrolytes, blood glucose; Table 80.1 — 2573–2574 — none.
+4. Temperature control — 2574 — none.
+5. Monitoring; Clinical examination; Tables 80.2–80.4 — 2574–2576 — none beyond "processed electrical activity" as a
+   surrogate.
+6. Intracranial pressure and cerebral perfusion pressure — 2575–2576 — none.
+7. Cerebral blood flow; Table 80.5 — 2576 — the CBF thresholds of EEG slowing and silence (→ U15).
+8. Thermal diffusion flowmetry; Transcranial Doppler — 2576–2577 — none.
+9. Cerebrovascular autoregulation and vasomotor reactivity — 2577 — none.
+10. Cerebral oxygenation: SjvO2; brain tissue oxygen tension — 2577–2578 — none.
+11. Brain metabolism and biochemistry: cerebral microdialysis — 2578 — none.
+12. Near-infrared spectroscopy — 2578 — none.
+13. Neurophysiologic monitoring: Electroencephalography — 2578 — NCS and cEEG; automatic detection; malignant
+    postanoxic patterns and reactivity; spreading depolarisations (→ U2, U6, U30).
+14. Evoked potentials — 2578–2579 — N20, cognitive EPs, brainstem after TBI (→ U36, U21).
+15. Multimodality neuromonitoring — 2579 — cEEG among the streams (→ U2).
+16. Radiographic imaging; Tables 80.6–80.9 — 2579 — none.
+17. Traumatic brain injury: pathophysiology; CPP; treatment; ICP; Box 80.2 — 2580–2581 — barbiturate therapy under
+    EEG monitoring (→ U4).
+18. Oxygenation and ventilation; Sedation; Nutrition; Transfusion — 2581 — none.
+19. Seizure prophylaxis — 2581 — (→ U2).
+20. Spinal cord injury; Table 80.10 — 2581–2582 — none of the EEG; MAP targets (→ U39).
+21. Cerebrovascular diseases; Subarachnoid hemorrhage; Early brain injury; Rebleeding — 2582–2583 — EEG and
+    prophylaxis only for high-risk patients (→ U2, U16).
+22. Acute hydrocephalus; Neurogenic cardiac and pulmonary disturbances — 2583 — none.
+23. Secondary brain injury: Delayed cerebral ischemia; Box 80.3 — 2583–2584 — spreading depolarisation among DCI's
+    mechanisms; cEEG to detect DCI (→ U16, U30).
+24. Hyponatremia; Fig. 80.7 — 2584–2585 — none.
+25. Ischemic stroke — 2584–2586 — seizures in hyperperfusion after revascularisation (→ U15).
+26. Intracerebral hemorrhage — 2586–2587 — none.
+27. Status epilepticus — 2587 — the whole section (→ U2, U18, U41).
+28. Neuromuscular diseases: Guillain–Barré syndrome — 2588 — electrophysiological studies (→ U24).
+29. Myasthenia gravis — 2588–2589 — electrophysiological studies (→ U24).
+30. Central nervous system infection; Meningitis — 2589–2590 — seizures (→ U2).
+31. Encephalitis — 2590 — seizures and prognosis (→ U2).
+32. Postoperative neurosurgical care — 2590 — seizures as a complication (→ U2).
+33. Brain death — 2591 — the prerequisites (→ U5, already in the row).
+34. Ethical considerations; Conclusion; Fig. 80.8 — 2591–2592 — none.

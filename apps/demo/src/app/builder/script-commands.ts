@@ -6,11 +6,19 @@
 // values (the same exported constants the sheet's steppers take), and a number outside the sheet's limits is refused in
 // place and not written. `seedOf` reads a card's command back into the form only when the form builds that very
 // command again, so editing never rewrites a command the form cannot say; anything else stays as the card has it.
-// Two kinds the plan names are not here: a lung condition and a TCI. The `/2` schema's script command is `/1`'s, whose
-// event kinds do not include `lungCondition` or `tci`, so the validator refuses either in a card (piece 162's report).
-import { SENSORS } from '../describe.ts';
+// Brief 174 (finding N105) adds the five kinds the format gained: a lung condition, built by the Airway sheet's own
+// builder with its conditions, severities and sides; and four no Instructor sheet sends (a TCI, the tube in one
+// mainstem bronchus, a recruitment manoeuvre, a lab sample), built by the physiology console's builders
+// (physiology-console/actions.ts, the commands it sends on the wire). Their numbers have no sheet, so the form holds no
+// limit of its own: the command is refused in place, not written, in the validator's words, which are the engine's
+// (`eventRefusal`, the engine's validation hook for that kind).
+import { concUnit, DRUG_IDS, DRUGS, LAB_PANELS } from '@pme/engine-core';
+import { eventRefusal } from '@pme/controller/scenario';
+import { lab, lungCondition, mainstem, recruit, tci } from '../../physiology-console/actions.ts';
+import { LAB_PANEL_WORDS, SENSORS } from '../describe.ts';
+import { drugName, lungLabel } from '../glossary.ts';
 import { O2_DEFAULT, O2_FLOWS, oxygen, type O2Device } from '../oxygen.ts';
-import { AIRWAY, airwayCmd, BREATHING, breathingCmd, O2_CHOICES, VENT_LIMITS } from '../panel/airway.ts';
+import { AIRWAY, airwayCmd, BREATHING, breathingCmd, LUNG_CHOICES, LUNG_SEVERITY, LUNG_SIDES, O2_CHOICES, VENT_LIMITS } from '../panel/airway.ts';
 import { CPR_QUALITY, CPR_RATE, cprCmd, defibCmd, ENERGY_LIMITS, PACER_LIMITS, PACER_MODES, pacerCmd } from '../panel/defib.ts';
 import { CHANNELS, NIBP_INTERVALS, nibpCmd, sensorCmd } from '../panel/devices.ts';
 import { defibDefaults } from '../site.ts';
@@ -34,6 +42,17 @@ const has = (xs: ReadonlyArray<readonly [string, ...unknown[]]>, v: string) => x
 export const within = (v: unknown, l: Limit): v is number => typeof v === 'number' && Number.isInteger(v) && v >= l.min && v <= l.max;
 const limitWords = (l: Limit) => `a whole number from ${l.min} to ${l.max} ${l.unit}, the sheet’s limits`;
 
+/** The drugs the engine takes a TCI of: asked of the engine (a plasma TCI stopped, the lightest it could refuse). */
+const TCI_DRUGS = DRUG_IDS.filter((id) => eventRefusal({ kind: 'tci', drugId: id, mode: 'plasma', target: 0 }) === undefined);
+/** A TCI's two modes; a lung's ventilation by the tube, in the app's words (describe.ts). */
+const TCI_MODES: Array<['plasma' | 'effect', string]> = [['effect', 'Effect site (Ce)'], ['plasma', 'Plasma (Cp)']];
+const MAINSTEM: Array<['both' | 'left' | 'right', string]> = [['both', 'Both lungs ventilated'], ['left', 'Only the left lung ventilated'], ['right', 'Only the right lung ventilated']];
+/** The lung-condition form's severities: the sheet's, and its Remove (severity 0). */
+const LUNG_SEVERITY_FORM: Array<[string, string]> = [...LUNG_SEVERITY, ['0', 'Removed (the sheet’s Remove)']];
+const sidedOf = (id: string) => LUNG_CHOICES.find((c) => c.id === id);
+/** A built command the engine refuses: its words, else undefined. */
+const refusal = (c: Rec | null) => (c ? eventRefusal(c.event) : undefined);
+
 /** The groups the form's "what" offers, each value `<kind>:<id>`. [ENG: ui] the group names are the sheets'. */
 export const SHEET_GROUPS: More['groups'] = [
   ['Airway (Airway sheet)', AIRWAY.map(([v, t]) => [`airway:${v}`, `Airway: ${t}`] as [string, string])],
@@ -44,6 +63,11 @@ export const SHEET_GROUPS: More['groups'] = [
   ['CPR (Defib · CPR sheet)', [['cpr:start', 'Start CPR'], ['cpr:stop', 'Stop CPR']]],
   ['Sensors (Devices sheet)', CHANNELS.map(([s]) => [`sensor:${s}`, `Sensor: ${SENSORS[s] ?? s}`] as [string, string])],
   ['NIBP (Devices sheet)', [['nibp:start', 'Start NIBP now'], ['nibp:interval', 'NIBP: automatic interval']]],
+  ['Lung condition (Airway sheet)', LUNG_CHOICES.map((c) => [`lung:${c.id}`, `Lung: ${lungLabel(c.id, c.label)}`] as [string, string])],
+  ['Target-controlled infusion', TCI_DRUGS.map((id) => [`tci:${id}`, `TCI: ${drugName(id)}`] as [string, string])],
+  ['Lungs ventilated', MAINSTEM.map(([v, t]) => [`mainstem:${v}`, t] as [string, string])],
+  ['Recruitment', [['recruit:', 'Recruitment manoeuvre']]],
+  ['Lab sample', LAB_PANELS.map((p) => [`lab:${p}`, `Lab: ${LAB_PANEL_WORDS[p] ?? p}`] as [string, string])],
 ];
 
 /** The fields of a sheet kind, null for a kind that is not one. `st` holds what the fields edit; a value already in it
@@ -74,7 +98,50 @@ export function sheetFields(kind: string, id: string, st: Rec, ready: () => void
     s.addEventListener('change', () => ((st[k] = s.value), ready()));
     return h('span', { class: 'sb-leafrow' }, h('span', { class: 'sb-hint' }, label), s);
   };
+  /** A number no sheet bounds: the form holds no limit; the command's refusal, if any, is the engine's (`why`). */
+  const why = h('span', { class: 'sb-numwhy', 'aria-live': 'polite' });
+  const sayWhy = () => {
+    const r = refusal(consoleBuild(kind, id, st, false));
+    why.textContent = r ? `${r}: not written` : '';
+  };
+  const free = (k: string, label: string, unit: string) => {
+    const i = h('input', { type: 'number', step: 'any', inputmode: 'decimal', class: 'input sb-num', 'aria-label': `${who}: ${label} (${unit})` });
+    i.value = typeof st[k] === 'number' ? String(st[k]) : '';
+    i.addEventListener('input', () => {
+      st[k] = i.value.trim() === '' ? undefined : Number(i.value);
+      sayWhy();
+      ready();
+    });
+    return h('span', { class: 'sb-leafrow' }, h('span', { class: 'sb-hint' }, label), i, h('span', { class: 'sb-hint' }, unit));
+  };
+  const picked = (k: string, label: string, xs: Array<[string, string]>, first: string) => {
+    const el = pick(k, label, xs, first);
+    el.querySelector('select')?.addEventListener('change', sayWhy);
+    return el;
+  };
   switch (kind) {
+    case 'lung': {
+      const c = sidedOf(id);
+      if (!c) return null;
+      const sev = pick('sev', 'Severity', LUNG_SEVERITY_FORM, '0.67');
+      if (!c.sided) return [sev];
+      return [sev, pick('side', 'Side', LUNG_SIDES, c.defaultSide ?? 'R')];
+    }
+    case 'tci': {
+      const row = DRUGS[id];
+      if (!row) return null;
+      const out = [picked('mode', 'Mode', TCI_MODES, 'effect'), free('target', 'Target', concUnit(row)), why];
+      sayWhy();
+      return out;
+    }
+    case 'mainstem':
+    case 'lab':
+      return [];
+    case 'recruit': {
+      const out = [free('p', 'Pressure', 'cmH₂O'), free('s', 'Held for', 's'), why];
+      sayWhy();
+      return out;
+    }
     case 'airway':
       return [];
     case 'vent':
@@ -104,6 +171,17 @@ export function sheetFields(kind: string, id: string, st: Rec, ready: () => void
 export function sheetBuild(kind: string, id: string, st: Rec): Rec | null {
   const n = (k: string, l: Limit) => within(st[k], l);
   switch (kind) {
+    case 'lung': {
+      const c = sidedOf(id);
+      if (!c || !has(LUNG_SEVERITY_FORM, String(st.sev))) return null;
+      if (c.sided && !has(LUNG_SIDES, String(st.side))) return null;
+      return lungCondition(id, Number(st.sev), c.sided ? (st.side as 'L' | 'R') : '');
+    }
+    case 'tci':
+    case 'mainstem':
+    case 'recruit':
+    case 'lab':
+      return consoleBuild(kind, id, st, true);
     case 'airway':
       return has(AIRWAY, id) ? airwayCmd(id) : null;
     case 'vent':
@@ -137,6 +215,18 @@ export function sheetBuild(kind: string, id: string, st: Rec): Rec | null {
   }
 }
 
+/** The command of a kind no sheet sends, from the physiology console's builders; with `checked`, null while the engine
+ *  refuses it (or a number is missing). */
+function consoleBuild(kind: string, id: string, st: Rec, checked: boolean): Rec | null {
+  const num = (k: string) => (typeof st[k] === 'number' && Number.isFinite(st[k]) ? (st[k] as number) : null);
+  let c: Rec | null = null;
+  if (kind === 'tci' && TCI_DRUGS.includes(id) && has(TCI_MODES, String(st.mode)) && num('target') !== null) c = tci(id, num('target') as number, st.mode as 'plasma' | 'effect');
+  else if (kind === 'mainstem' && has(MAINSTEM, id)) c = mainstem(id as 'both' | 'left' | 'right');
+  else if (kind === 'recruit' && id === '' && num('p') !== null && num('s') !== null) c = recruit(num('p') as number, num('s') as number);
+  else if (kind === 'lab' && (LAB_PANELS as readonly string[]).includes(id)) c = lab(id as (typeof LAB_PANELS)[number]);
+  return c && checked && refusal(c) ? null : c;
+}
+
 /** The form's item and fields for a card's command, before checking (kinds of the sheets and the card-set events). */
 function guess(c: Rec): { what: string; st: Rec } | null {
   const e = (c.type === 'applyEvent' && c.event && typeof c.event === 'object' ? c.event : {}) as Rec;
@@ -164,6 +254,16 @@ function guess(c: Rec): { what: string; st: Rec } | null {
       return { what: `cond:${String(e.id)}`, st: { sev: e.severity } };
     case 'bleed':
       return { what: 'bleed:', st: { vol: e.volumeMl, min: typeof e.overS === 'number' ? e.overS / 60 : undefined } };
+    case 'lungCondition':
+      return { what: `lung:${String(e.id)}`, st: { sev: String(e.severity), ...(e.side !== undefined ? { side: String(e.side) } : {}) } };
+    case 'tci':
+      return { what: `tci:${String(e.drugId)}`, st: { mode: e.mode, target: e.target } };
+    case 'mainstem':
+      return { what: `mainstem:${String(e.ventilated)}`, st: {} };
+    case 'recruit':
+      return { what: 'recruit:', st: { p: e.pressureCmH2O, s: e.durationS } };
+    case 'lab':
+      return { what: `lab:${String(e.panel)}`, st: {} };
     default:
       return null;
   }
