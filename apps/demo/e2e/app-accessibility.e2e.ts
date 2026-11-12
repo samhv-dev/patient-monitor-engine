@@ -113,6 +113,23 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.locator('[aria-label="Question 1: its words"]').fill('What told you this was MH?');
     await run(page, '#/scenarios/builder/<draft> Handout questions, a question');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
+    // B6: a draft run in place, Instructor v2 with the run panel beside it. The draft audited above is left mid-edit on
+    // purpose (an emptied title, and B5's built-to-show line and opener added empty: refusals Run must wait for), so the run
+    // starts from a fresh copy of the MH card, which the validator accepts
+    await go(page, '#/scenarios/builder');
+    await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();
+    await page.waitForSelector('.sb-page .sb-edit');
+    await expect(page.getByRole('button', { name: 'Run in place' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Run in place' }).click();
+    const runIt = page.getByRole('button', { name: 'Run the draft' });
+    if (await runIt.isVisible({ timeout: 1000 }).catch(() => false)) await runIt.click();
+    await expect(page.locator('aside.sb-run')).toBeVisible();
+    // the route has settled: Instructor v2's own view shown with its heading, and the Scenarios view gone (WebKit once
+    // audited the page mid-switch and measured the Scenarios view's width under the run panel's column)
+    await expect(page.locator('.main[data-route="teach2"] > .view[data-view="teach2"]')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Instructor v2' })).toBeAttached();
+    await expect(page.locator('.view[data-view="scenarios"]')).toBeHidden();
+    await run(page, '#/teach2 with the run panel (B6)');
     if (remote) {
       await remote.bringToFront();
       found.push(...(await focusWalk(remote)).map((f) => `focus (remote): ${f}`));
@@ -219,6 +236,66 @@ test("accessibility: the learner remote's PIN form and signed-in page, and the R
   expect(found).toEqual([]);
 });
 
+// Plan pump-rack-tci.md A1: the pump tablet at a 10-inch tablet's landscape size (§5: 1280 px), dark and light, with
+// the 44 px touch targets: the learner-PIN form, then the rack. The host grants a pump in C2, not yet,
+// so the TEST issues the grant through the host's own grant method (HostSession.grant; not a product path) and loads a
+// syringe and a drip channel through the instructor's own command path (E1's `pump` event), to audit the rack as the
+// tablet draws it.
+test('accessibility: the pump tablet\'s PIN form and its rack of syringe and drip channels at a tablet size', async ({ browser }) => {
+  test.setTimeout(150_000);
+  const dir = mkdtempSync(join(tmpdir(), 'a1-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  const relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
+  const found: string[] = [];
+  type HostW = { __pmeApp: { session: { code: string; relay: unknown; host: { grant(t: unknown, to: string, granted: boolean): void } }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
+  try {
+    const host = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+    await openApp(host, base, `?relay=${ws}&scenario=showcase-induction#/teach2`, { warmMs: 1500, site: { schema: 'pme-site/1', pumpRack: ['syringe', 'drip', 'syringe', 'syringe'] } });
+    const code = await host.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
+    const pin = (await host.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+    const send = (event: Record<string, unknown>) => host.evaluate((e) => (window as unknown as HostW).__pmeApp.link.send({ type: 'applyEvent', event: e }), { kind: 'pump', ...event });
+    for (const e of [
+      { action: 'load', ch: 1, channel: 'syringe', contents: { drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 }, volumeMl: 50 }, syringeMl: 50 },
+      { action: 'program', ch: 1, drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
+      { action: 'rate', ch: 1, rate: 20, unit: 'mL/h' },
+      { action: 'start', ch: 1 },
+      { action: 'load', ch: 2, channel: 'drip', contents: { drugId: 'norepinephrine', concentration: { amount: 4, unit: 'mg', perMl: 250 }, volumeMl: 250 } },
+      { action: 'program', ch: 2, drugId: 'norepinephrine', concentration: { amount: 4, unit: 'mg', perMl: 250 }, set: 20 },
+      { action: 'rate', ch: 2, rate: 30, unit: 'drops/min' },
+      { action: 'start', ch: 2 },
+    ]) await expect.poll(async () => (await send(e)).accepted, { message: JSON.stringify(e), timeout: 10_000, intervals: [200] }).toBe(true); // each once the one before has applied
+    for (const theme of ['dark', 'light'] as const) {
+      const tablet = await browser.newContext({ viewport: { width: 1280, height: 800 }, hasTouch: true });
+      if (theme === 'light') await tablet.addInitScript(() => localStorage.setItem('pme.site', JSON.stringify({ schema: 'pme-site/1', theme: 'projector-light' })));
+      const p = await tablet.newPage();
+      await p.goto(`${base}/?join=${code}&relay=${ws}#/pump`);
+      await p.waitForSelector('.ip-peer-form');
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `pump form ${theme} ${f.rule}: ${f.what}`));
+      const typePin = async (x: string) => {
+        for (const d of x) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+        await p.locator('.ip-peer-go').click();
+      };
+      // (no wrong-PIN state here: before C2 the host answers no pump hello at all; its words are pump/page.dom.test.ts's)
+      if (theme === 'dark') found.push(...(await focusWalk(p, 16)).map((f) => `pump form focus: ${f}`));
+      await typePin(pin);
+      const from = await p.waitForFunction(() => (window as unknown as { __pmePumpPage: { follower(): { peerId: string } | null } }).__pmePumpPage.follower()?.peerId ?? null).then((x) => x.jsonValue() as Promise<string>);
+      await host.evaluate((to) => { const s = (window as unknown as HostW).__pmeApp.session; s.host.grant(s.relay, to, true); }, from);
+      await expect(p.locator('.pump-face')).toHaveCount(4);
+      await expect(p.locator('.pump-face[data-ch="2"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
+      await expect(p.locator('.pump-face[data-ch="1"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `pump rack ${theme} ${f.rule}: ${f.what}`));
+      if (theme === 'dark') found.push(...(await focusWalk(p, 12)).map((f) => `pump rack focus: ${f}`));
+      await tablet.close();
+    }
+    await host.context().close();
+  } finally {
+    await relay.close();
+  }
+  expect(found).toEqual([]);
+});
+
 // Plan learner-action-remote.md L7: the learner remote's Drugs tab on a phone, dark and light: the bench open on a
 // product (the vial, the diluent with its groups, the volume, the container, the preview and the time), then a tray of
 // two (a ready syringe and a preparing one). 44 px targets on touch, names, contrast, one h1, no sideways scroll, and a
@@ -274,8 +351,9 @@ test("accessibility: the learner remote's Drugs tab with the bench open and a tr
 });
 
 // Plan vent-skin-edp-ts.md V1: the EDP-TS ventilator face (vent-hamilton.html?face=edp-ts) at the laptop size and at
-// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast (the
-// greyed words of an unavailable control included: they stay 4.5:1), one h1, a main landmark, no sideways scroll.
+// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast, one h1,
+// a main landmark, no sideways scroll. Since VF (brief 159) the drawn device keeps its photographed colours: contrast is
+// not checked inside `.edp-dev` (the audit's one `drawnDevice` exemption); the strip, handle and drawer keep it.
 test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
   test.setTimeout(120_000);
   const found: string[] = [];
@@ -283,13 +361,13 @@ test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: vp });
     const page = await ctx.newPage();
     await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
-    await page.waitForSelector('main.edp .edp-key');
+    await page.waitForSelector('main.edp .edp-tile');
     const at = `${vp.width}×${vp.height}`;
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
     await page.click('[data-ctl="side:mode"]');
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
     await page.click('[data-ctl="side:alarmLimits"]');
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
     await ctx.close();
   }
   expect(found).toEqual([]);

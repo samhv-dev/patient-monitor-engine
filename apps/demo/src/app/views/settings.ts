@@ -44,6 +44,7 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
       save('Site profile imported');
       skin();
       session?.setDefibModel(site.defibModel); // the room's defibrillator model comes with the profile (R5b)
+      session?.setEegModel(site.eegModel); // and its depth-of-anaesthesia device (E12)
     } catch {
       toast('That file is not a site profile');
     }
