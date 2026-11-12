@@ -237,10 +237,9 @@ test("accessibility: the learner remote's PIN form and signed-in page, and the R
 });
 
 // Plan pump-rack-tci.md A1: the pump tablet at a 10-inch tablet's landscape size (§5: 1280 px), dark and light, with
-// the 44 px touch targets: the learner-PIN form, then the rack. The host grants a pump in C2, not yet,
-// so the TEST issues the grant through the host's own grant method (HostSession.grant; not a product path) and loads a
-// syringe and a drip channel through the instructor's own command path (E1's `pump` event), to audit the rack as the
-// tablet draws it.
+// the 44 px touch targets: the learner-PIN form, then the rack with A2's channel controls. The host grants the tablet on
+// the learner PIN (A2 wired C2's admission into the app); a syringe and a drip channel are loaded through the
+// instructor's own command path (E1's `pump` event), to audit the rack as the tablet draws it, with one flow open.
 test('accessibility: the pump tablet\'s PIN form and its rack of syringe and drip channels at a tablet size', async ({ browser }) => {
   test.setTimeout(150_000);
   const dir = mkdtempSync(join(tmpdir(), 'a1-'));
@@ -249,7 +248,7 @@ test('accessibility: the pump tablet\'s PIN form and its rack of syringe and dri
   const relay = await startRelay({ port: fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
   const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
   const found: string[] = [];
-  type HostW = { __pmeApp: { session: { code: string; relay: unknown; host: { grant(t: unknown, to: string, granted: boolean): void } }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
+  type HostW = { __pmeApp: { session: { code: string }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
   try {
     const host = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
     await openApp(host, base, `?relay=${ws}&scenario=showcase-induction#/teach2`, { warmMs: 1500, site: { schema: 'pme-site/1', pumpRack: ['syringe', 'drip', 'syringe', 'syringe'] } });
@@ -277,15 +276,17 @@ test('accessibility: the pump tablet\'s PIN form and its rack of syringe and dri
         for (const d of x) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
         await p.locator('.ip-peer-go').click();
       };
-      // (no wrong-PIN state here: before C2 the host answers no pump hello at all; its words are pump/page.dom.test.ts's)
+      // (the wrong-PIN words are pump/page.dom.test.ts's)
       if (theme === 'dark') found.push(...(await focusWalk(p, 16)).map((f) => `pump form focus: ${f}`));
-      await typePin(pin);
-      const from = await p.waitForFunction(() => (window as unknown as { __pmePumpPage: { follower(): { peerId: string } | null } }).__pmePumpPage.follower()?.peerId ?? null).then((x) => x.jsonValue() as Promise<string>);
-      await host.evaluate((to) => { const s = (window as unknown as HostW).__pmeApp.session; s.host.grant(s.relay, to, true); }, from);
+      await typePin(pin); // A2: the host grants it on the learner PIN (C2's admission, wired into the app)
       await expect(p.locator('.pump-face')).toHaveCount(4);
       await expect(p.locator('.pump-face[data-ch="2"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
       await expect(p.locator('.pump-face[data-ch="1"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
       found.push(...(await audit(p, { touchPanel: true })).map((f) => `pump rack ${theme} ${f.rule}: ${f.what}`));
+      // A2: a flow's form open on a face (TCI, the longest: the set, the mode, the target and the patient)
+      await p.locator('.pump-face[data-ch="1"] .pf-btn[data-flow="tci"]').click();
+      await expect(p.locator('.pump-face[data-ch="1"] .pf-flow[data-flow="tci"]')).toBeVisible();
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `pump TCI form ${theme} ${f.rule}: ${f.what}`));
       if (theme === 'dark') found.push(...(await focusWalk(p, 12)).map((f) => `pump rack focus: ${f}`));
       await tablet.close();
     }
