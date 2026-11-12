@@ -10,14 +10,14 @@ the citations resolve. Worktree `scratch/wt-plan-coagulation`, branch `plan-coag
   - the state the engine carries (§2.1) and why it is that granularity;
   - which readings are direct and need no new relation: fibrinogen (Clauss), the platelet count, anti-Xa and heparin
     level, FIBTEM A5 (§2.4);
-  - eight arithmetic checks in which plain mass balance on the sourced contents reproduces the sources' own
+  - nine arithmetic checks in which plain mass balance on the sourced contents reproduces the sources' own
     increments and dilution thresholds (§2.11). These become acceptance tests.
 - **The critical path is one missing relation (gap G1, question CQ1):** none of the sources read gives the curve from
   clotting-factor activity to PT seconds or aPTT seconds. PT/INR, aPTT, and with them the reversal pieces (heparin's
   aPTT, warfarin, PCC, the DOACs) wait on it. Fibrinogen, the platelet count, the factor pools, the products, and the
   in-vivo effects of temperature and calcium do not. So the build starts with them (§4).
 - **Waits for papers:** the sources reviews C0a–C0d (§4), each on papers the owner supplies (§5.2).
-- **Waits for his rulings:** CQ1–CQ12 (§6). CQ1 (the clotting-time relation), CQ2 (diffuse bleeding as volume) and CQ3
+- **Waits for his rulings:** CQ1–CQ16 (§6). CQ1 (the clotting-time relation), CQ2 (diffuse bleeding as volume) and CQ3
   (the hypothermia validation cells) change the structure.
 
 **How to read the citations.** Every clinical statement cites its source as the source note gives it:
@@ -30,7 +30,7 @@ the citations resolve. Worktree `scratch/wt-plan-coagulation`, branch `plan-coag
 
 Number tags follow the project's rule:
 - a number with a source has the source beside it;
-- a number no source gives is a **named gap** (G1–G18, collected in §2.12) with the paper that would settle it;
+- a number no source gives is a **named gap** (G1–G24, collected in §2.12) with the paper that would settle it;
 - a gap is never filled by a value chosen here. Where the owner allows a marked placeholder (CQ1, CQ2), it is written
   `[GAP-PH: Gn]` in code and shown as such in the model docs.
 
@@ -466,6 +466,7 @@ C4 tests record both sources and which the relation reproduces.
 | **G21** | Protamine reaction magnitudes and incidence | M50 refs 124-126 (Welsby 2005, Kimmel 1998, 2002; not read) |
 | **G22** | The factor IU definition | the international standard, cited by C3 |
 | **G23** | Fibrinogen's acute-phase synthesis rise; FDP inhibition in DIC | D74 refs 47, 51 (not read) |
+| **G24** | Uraemic platelet dysfunction as a relation to the renal model's urea | not identified (M46 p. 1438 gives the mechanism only) |
 
 Two numbers in the source note lost a symbol in the web text: L3's INR threshold and the TEG K unit (hand-over 206).
 Neither is a parameter of this plan. If a later piece needs one, it confirms it on the PDF first.
@@ -801,3 +802,244 @@ no paper, is CQ13.
 
 The learner-remote plan sized this as L10c at 12 h (`learner-action-remote.md` L10c), and said it "may need its own
 plan". This plan replaces L10c: L10c's mechanism is C1 + C2 + C4 here, 32 h.
+
+---
+
+## 5. Sources
+
+### 5.1 What was read, and how
+
+- **The source note** `docs/research/coagulation-sources.md` (PR 462, brief 206), read whole, one section at a time.
+  - Miller 10e ch. 45 and 46 were read there from a text extraction of the local PDFs, by printed page.
+  - The fourteen open papers were read as full text through Europe PMC; the others as abstracts (**[ABS]**).
+  - The orchestrator checked 21 of its textbook numbers against the book and found 20 word for word.
+- **The earlier notes on the other chapters** (`scratch/191-src/notes-B-other-chapters.md`, brief 191): Miller ch. 62,
+  58, 50 and 14; Stoelting ch. 16, 23 and 32; Dellinger ch. 26, 66 and 74; ERC 2025.
+- **No new literature search was made for this plan** (brief 216). Every reference below that is not in the source
+  note is one the chapters themselves cite (NB). It is named so the owner can supply it, not read.
+
+### 5.2 Papers wanted
+
+| For | Reference | DOI | Why | Open |
+|---|---|---|---|---|
+| G1, C0a | Hiippala ST et al. Anesth Analg 1995;81:360-5 (L9) | 10.1097/00000539-199508000-00026 | critical activities, regressions of the fall with replacement | no |
+| G1, C0a | Murray DJ et al. Anesthesiology 1988;69:839-45 (L21) | 10.1097/00000542-198812000-00007 | per-patient factors, PT and aPTT per 0.3 blood volume | no |
+| G1, C0a | a factor-dilution study of PT and aPTT seconds | not identified | the curve itself; C0a names it | ? |
+| G8, CQ16 | Miller RD et al. Ann Surg 1971;174:794-801 | 10.1097/00000658-197111000-00010 | platelet count and bleeding (M45 Table 45.10) | no |
+| G6, C0b | Rourke C et al. J Thromb Haemost 2012;10:1342-51 (L10) | 10.1111/j.1538-7836.2012.04752.x | fibrinogen across transfusion in trauma | no |
+| G6, C0b | Charbit B et al. J Thromb Haemost 2007;5:266-73 (L11) | 10.1111/j.1538-7836.2007.02297.x | fibrinogen, FV, AT, protein C, PT over 24 h of PPH | no |
+| G10, G13 | Dirkmann D et al. Anesth Analg 2008;106:1627-32 (L7) | 10.1213/ane.0b013e31817340ad | ROTEM by temperature and pH | no |
+| G13 | Martini WZ et al. J Trauma 2005;58:1002-10 (L8) | 10.1097/01.ta.0000156246.53383.9f | swine acidosis and hypothermia, full tables | no |
+| G13 | Meng ZH et al. J Trauma 2003;55:886-91 (L6) | 10.1097/01.ta.0000066184.20808.a5 | FVIIa activity against pH and temperature | no |
+| §2.5 | Rohrer MJ, Natale AM. Crit Care Med 1992;20:1402-5 (L5) | 10.1097/00003246-199210000-00007 | the temperature ratios used in C5: method and sample | no |
+| G12 | L4, Thromb J 2024, Figures 1-3 | 10.1186/s12959-024-00661-0 | EXTEM CT, CFT and alpha by temperature and pH | yes (figures) |
+| G12 | Davenport R et al. Crit Care Med 2011;39:2652 (M62 ref 148) | not resolved in this run | EXTEM CA5 in trauma | ? |
+| G6 | Brohi K et al. J Trauma 2003;54:1127 and 2008; Cohen MJ et al. Ann Surg 2012 (M62 refs 139-141; D26 ref 86) | not resolved in this run | APC and hypoperfusion: magnitudes | ? |
+| G3 | Bull BS et al. J Thorac Cardiovasc Surg 1975;69:674 and 685 (M50 refs 93, 101) | not resolved in this run | heparin dose-response, ACT, protamine | ? |
+| G21 | Welsby IJ et al. Anesthesiology 2005;102:308; Kimmel SE et al. JACC 1998;32:1916 and Anesth Analg 2002;94:1402 (M50 refs 124-126) | not resolved in this run | protamine reactions | ? |
+| G9 | Bokenes 2000, Int J Circumpolar Health (D66 ref 31) | not resolved in this run | hypothermic platelet sequestration | ? |
+| G5, G23 | D74 refs 47, 51, 56 | not resolved in this run | liver factor pattern; DIC laboratory | ? |
+| G11 | the product information of one 4-factor PCC | n/a | composition per IU of IX | label |
+| G20 | a study of coagulation values at term | not searched (SN §5b) | the pregnant baseline | ? |
+| G17 | a study of factor activities per unit of plasma | not found (SN §5b) | FFP's fibrinogen and V | ? |
+
+---
+
+## 6. Questions for the owner
+
+Each question is one decision.
+
+**CQ1 — Until the clotting-time relation is sourced, what stands in for PT and aPTT seconds?**
+- *Explanation:* every routine clotting time is a curve from factor level to seconds. None of the sources read gives
+  it (G1). The same holds for the rates of consumption and fibrinolysis (G6) and for V and X's half-lives (G4).
+- *Options:*
+  - **A.** No stand-in: the PT, INR and aPTT stay absent from the panel until a paper settles G1 (C4 blocked);
+    fibrinogen and platelets ship first.
+  - **B.** A marked placeholder `[GAP-PH: G1]`, shown as such in the model docs and on the instructor view, replaced
+    when the paper is read.
+  - **C.** Show the factor activities (%) instead of seconds.
+- *Proposal:* **A.** It is the only option with no unsourced number on a resident's screen. The papers (L9, L21) are
+  in §5.2.
+
+**CQ2 — Should diffuse (coagulopathic) bleeding take volume from the patient?**
+- *Explanation:* the sources give the thresholds at which bleeding becomes diffuse, but no rate in mL/min (G15).
+- *Options:*
+  - **A.** A sign only (instructor view and debrief), no volume.
+  - **B.** The mechanism turns diffuse bleeding on and off; the card's author sets its rate, as he sets the surgical
+    bleed today.
+  - **C.** Nothing until a source.
+- *Proposal:* **B.** It gives the resident the true consequence (products stop the ooze), and the only number is the
+  author's scenario input.
+
+**CQ3 — Validation cells BF-25a and BF-25e expect the PT to move at 33 °C. The sources say a laboratory PT, run at
+37 °C, does not.**
+- *Explanation:* three sources say the warmed test hides hypothermia: D66 p. 1115; L17 (standard tests did not
+  differ); M50 p. 1585 (the ACT sample is warmed). D26 p. 371 says temperatures < 34 °C come with "elevated PT and
+  PTT" in patients. M46 p. 1442 says hypothermia prolongs the ACT, which disagrees with M50's warmed sample.
+- *Options:*
+  - **A.** The cells read the patient's competence and the viscoelastic test at the patient's temperature, while the
+    laboratory PT stays unchanged by temperature.
+  - **B.** The laboratory PT moves with temperature.
+  - **C.** The cells stay NE until he decides.
+- *Proposal:* **A**, with the cell wording changed by him. The plan does not redefine a cell.
+
+**CQ4 — Which laboratory's reference ranges, ISI and MNPT does the coagulation panel use?**
+- *Explanation:* the PT, aPTT and their ranges are reagent-specific (M46 p. 1441), and no source read prints a normal
+  range.
+- *Options:*
+  - **A.** His hospital laboratory's figures.
+  - **B.** L5's pooled-plasma values (PT 11.8 s, aPTT 36.0 s), as one laboratory's anchor.
+- *Proposal:* **A.** The analyser row already waits for his laboratory's figures (L10a).
+
+**CQ5 — Does FFP carry fibrinogen at L12's "~70 % of all clotting factors"?**
+- *Explanation:* L12 says FFP contains about 70 % of the normal level of all clotting factors. M45 says FFP has "a
+  variable amount of fibrinogen". No source gives FFP's fibrinogen content (G17).
+- *Options:*
+  - **A.** Read L12 as including fibrinogen.
+  - **B.** FFP carries no fibrinogen until a source gives it.
+- *Proposal:* **A**, marked as that reading.
+
+**CQ6 — Liver disease: which factors fall, and how far?**
+- *Explanation:* the engine's single liver-failure value lowers every liver-made factor alike. The sources say V and
+  fibrinogen hold until late, and VIII and vWF rise (D74 p. 1225); no source read gives the amounts (G5). Cirrhosis
+  also lowers platelets through the spleen (M14 pp. 308-309).
+- *Options:*
+  - **A.** Uniform scaling for now, marked G5.
+  - **B.** The card or patient profile sets each factor's baseline in cirrhosis.
+  - **C.** Wait for D74's references.
+- *Proposal:* **B.** The baselines are a patient's, like his Hb.
+
+**CQ7 — Pregnancy: build the term baseline now, or with the pregnant patient (v1.1)?**
+- *Explanation:* the directions are sourced (M58 Table 58.4), but the values at term are not (G20), and the pregnant
+  patient is listed `later: 'v1.1'`.
+- *Options:*
+  - **A.** With the v1.1 patient (C14).
+  - **B.** Now, as a profile.
+- *Proposal:* **A.**
+
+**CQ8 — Cardiopulmonary bypass.**
+- *Explanation:* CPB's contact activation, prime dilution and fibrinolysis are sourced (M50 pp. 1586-1615). The
+  engine's CPB is an interface that throws (`l2/circ/devices.ts:167`).
+- *Options:*
+  - **A.** Plan CPB haemostasis with the CPB circuit (its own plan).
+  - **B.** Model the prime dilution only, as a fluid.
+- *Proposal:* **A.** Heparin, protamine and the ACT (C8) do not need the circuit.
+
+**CQ9 — Cell salvage.**
+- *Explanation:* returns red cells without plasma factors or platelets (M58 pp. 1913-1914). M45's salvage section was
+  not read.
+- *Options:*
+  - **A.** A product in C3 after C0d reads M45's section.
+  - **B.** Later.
+- *Proposal:* **A.**
+
+**CQ10 — Children.**
+- *Explanation:* children have lower procoagulant proteins and fewer inhibitors (M62 p. 2038), with no numbers in the
+  sources read.
+- *Options:*
+  - **A.** Adult baselines with a marked gap.
+  - **B.** Wait for paediatric reference values.
+- *Proposal:* **B.**
+
+**CQ11 — Heparin-induced thrombocytopenia.**
+- *Explanation:* HIT develops over days (M50 p. 1589), longer than a case. M46's HIT pages were not read.
+- *Options:*
+  - **A.** A patient-profile state (a low count and the bivalirudin path).
+  - **B.** Out of the build until a card asks for it.
+- *Proposal:* **A**, after C0d.
+
+**CQ12 — The notes on the other chapters live in project scratch, not in the repository.**
+- *Explanation:* the plan cites them (NB). A reader of the repository cannot check them.
+- *Options:*
+  - **A.** Commit them as `docs/research/coagulation-sources-other-chapters.md` in C0d.
+  - **B.** Leave them in scratch.
+- *Proposal:* **A.**
+
+**CQ13 — May the pieces that need no paper start before the sources reviews?**
+- *Explanation:* the EEG plan put every sources review first. Here C1, C2, C3 (in part), C5 and C12 need no
+  outstanding paper.
+- *Options:*
+  - **A.** Start them on his word.
+  - **B.** Every review first.
+- *Proposal:* **A.**
+
+**CQ14 — The apheresis unit's platelet content.**
+- *Explanation:* L12 gives 3-4 x 10^11. The engine needs one number per unit.
+- *Options:*
+  - **A.** The range's midpoint, 3.5 x 10^11, tagged as the midpoint.
+  - **B.** The card states it.
+- *Proposal:* **A**, with B as an override.
+
+**CQ15 — Two sources are industry-linked.**
+- *Explanation:* L1 is a cryoprecipitate-versus-concentrate content comparison by a team including the concentrate
+  maker's group. L14 is a concentrate's pharmacokinetics; its sponsor was not checked.
+- *Options:*
+  - **A.** Accept them for content and recovery, marked.
+  - **B.** Use M45's and L12's figures only.
+- *Proposal:* **A.** Check 8 shows L14's recovery follows from plasma volume alone.
+
+**CQ16 — Which source sets the band for the platelet increment?**
+- *Explanation:* the sources disagree on the rise per unit:
+  - M45 p. 1410: 7-10 x 10^9/L per concentrate;
+  - M45 p. 1422: 10 units for 10 x 10^9/L;
+  - L12 R30: > 30 per apheresis unit;
+  - S23 p. 482: about 50.
+
+  The mass balance (§2.11 checks 6 and 7) lands inside M45 p. 1410, L12 and S23, and far from M45 p. 1422.
+- *Options:*
+  - **A.** The bands of M45 p. 1410, L12 and S23, with p. 1422 recorded as a disagreement.
+  - **B.** Another choice.
+- *Proposal:* **A.**
+
+---
+
+## 7. Self-review against the codebase
+
+**Files read for this plan** (at `origin/main` 45dc8511):
+- `l2/blood/fluids.ts` (whole);
+- `l2/blood/labs.ts` (whole);
+- `l2/blood/params.ts` (lines 99-209: the bands, `bloodPatient`, `Composition`, the fluids, the products,
+  `storedComp`);
+- `l2/blood/treatments.ts` (whole);
+- `l2/blood/pipeline.ts` (the commands, 283-424);
+- `l2/blood/solutes.ts` (`sidOf`, `ionisedCa`);
+- `l2/liver/liver.ts` (whole);
+- `l2/thermal/metabolic.ts` (the `coagF` lines);
+- `l2/pk/data/rows-other.ts` (100-106);
+- `l2/blood/analysers.ts` (the LABORATORY row, by search);
+- `types-blood.ts` (by search);
+- `engine.ts:1110`;
+- `couplings/blood.ts`;
+- `l2/circ/devices.ts` (the CPB interface);
+- `packages/renderer/src/lab-panel.ts` (its rows);
+- the haemorrhage showcase cards;
+- `apps/demo/src/app/patients.ts:35`;
+- `docs/gates/fu-9/bf-matrix-after.md`;
+- `docs/plans/learner-action-remote.md` L10a-L10c;
+- the form of `docs/plans/eeg-clinical-generator.md`.
+
+**What the plan stands on, checked in the code:**
+- Plasma proteins are masses in Vp that bleed, dilute and arrive with products (`fluids.ts:36-37, 122-141`).
+- Volume elimination and filtration move water only (`fluids.ts:147-151`), so a protein amount is lost only by
+  bleeding: the convention §2.2 uses.
+- Products carry volume, electrolytes and citrate only (`params.ts:204-209`).
+- Storage ages K and lactate only (`params.ts:222-231`).
+- The `transfusion` command takes a product, units, storage days 1-42 (default 14) and warming (`pipeline.ts:304-307,
+  368-372`).
+- The haemorrhage cards transfuse through the fluid alias `blood` = whole blood stored 14 days (`pipeline.ts:283`).
+- iCa is computed with citrate (`solutes.ts:123-125`).
+- The liver's INR is `[FIT]` (`liver.ts:76`).
+- `coagF` is unread (`metabolic.ts:61`; `endo/pipeline.ts:21` the neutral cascade).
+- TXA's row is inert and must keep its id (`rows-other.ts:104-106`).
+- The `coag` panel names five analytes and returns only INR (`analysers.ts:72`; `labs.ts:63-66`).
+- The engine has no heparin, protamine, warfarin or DOAC row (searched).
+- CPB is an interface only.
+
+**Known limits of this plan:**
+- Every number taken from L5-L11, L21 and L22 rests on an abstract only, and is marked [ABS]. The full texts are
+  wanted (§5.2).
+- NB is outside the repository (CQ12).
+- §2.11's checks are arithmetic on sourced figures. They show the mass balance is consistent with the sources; they
+  are not measurements, and the engine's own runs replace them in C1-C3.
+- The L3 INR threshold and the TEG K unit (symbols lost in the web text) are not used as parameters.
+- The plan replaces the learner-remote plan's L10c. That plan's L11 lab view continues as C12 here.
