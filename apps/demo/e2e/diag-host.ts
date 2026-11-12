@@ -7,6 +7,8 @@
 // verdict when the main thread has been silent for more than 300 ms (with the task still open), to a collector in the
 // test process over HTTP, every 200 ms. One JSON line per record in <test output>/diag/host-<n>.jsonl.
 import { createServer, type Server } from 'node:http';
+import { execFile } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { test, type Page } from './evidence.ts';
@@ -16,6 +18,50 @@ export const diagOn = (): boolean => process.env.PME_DIAG_HOST === '1';
 let server: Server | null = null;
 let port = 0;
 const files = new Map<string, string>();
+const heardAt = new Map<string, number>(); // token → when its page's records last arrived
+const dumped = new Set<string>();
+
+const sh = (cmd: string, args: string[], ms: number): Promise<string> =>
+  new Promise((ok) => execFile(cmd, args, { timeout: ms, maxBuffer: 64 << 20 }, (err, out, errOut) => ok(`${out}${errOut}${err ? `\n(exit: ${String(err.message).slice(0, 200)})` : ''}`)));
+
+/** Every WebKit process of this machine: ps, each thread's name, state, wchan and CPU ticks (twice, 1 s apart), and a gdb
+ *  backtrace of every thread (CI's diag job installs gdb and gives the container ptrace). */
+async function dumpWebKit(file: string, why: string): Promise<void> {
+  const pids = readdirSync('/proc').filter((d) => /^\d+$/.test(d)).filter((d) => {
+    try {
+      return /WebKit|webkit|MiniBrowser|pw_run/.test(readFileSync(`/proc/${d}/comm`, 'utf8') + readFileSync(`/proc/${d}/cmdline`, 'utf8').slice(0, 200));
+    } catch {
+      return false;
+    }
+  });
+  const threads = (pid: string) => {
+    try {
+      return readdirSync(`/proc/${pid}/task`).map((t) => {
+        const r = (f: string) => { try { return readFileSync(`/proc/${pid}/task/${t}/${f}`, 'utf8').trim(); } catch { return '?'; } };
+        const st = r('stat').replace(/^.*\) /, '').split(' ');
+        return { t, comm: r('comm'), state: st[0], utime: Number(st[11]), stime: Number(st[12]), wchan: r('wchan'), syscall: r('syscall').split(' ')[0] };
+      });
+    } catch {
+      return [];
+    }
+  };
+  const a = Object.fromEntries(pids.map((p) => [p, threads(p)]));
+  await new Promise((r) => setTimeout(r, 1000));
+  const b = Object.fromEntries(pids.map((p) => [p, threads(p)]));
+  let out = `# ${new Date().toISOString()} ${why}\n` + (await sh('ps', ['-eo', 'pid,ppid,pcpu,rss,stat,etimes,comm,args', '--sort=pid'], 5000)) + '\n';
+  for (const p of pids) {
+    let cmd = '';
+    try { cmd = readFileSync(`/proc/${p}/cmdline`, 'utf8').replace(/\0/g, ' ').slice(0, 300); } catch { /* gone */ }
+    out += `\n## pid ${p}: ${cmd}\n`;
+    for (const t of b[p] ?? []) {
+      const t0 = (a[p] ?? []).find((x) => x.t === t.t);
+      const cpu = t0 ? t.utime + t.stime - t0.utime - t0.stime : NaN;
+      out += `  tid ${t.t} ${t.comm.padEnd(16)} ${t.state} cpu/1s=${cpu} ticks wchan=${t.wchan} syscall=${t.syscall}\n`;
+    }
+  }
+  appendFileSync(file, out);
+  for (const p of pids) appendFileSync(file, `\n## gdb pid ${p}\n` + (await sh('gdb', ['-p', p, '-batch', '-nx', '-ex', 'set pagination off', '-ex', 'thread apply all bt 40'], 90_000)));
+}
 let lagTimer: ReturnType<typeof setInterval> | null = null;
 
 async function collector(): Promise<number> {
@@ -29,6 +75,7 @@ async function collector(): Promise<number> {
     req.on('data', (d: Buffer) => (body += d.toString()));
     req.on('end', () => {
       const file = files.get(token);
+      if (file) heardAt.set(token, Date.now());
       if (file) {
         const at = Date.now();
         const lines = body.split('\n').filter(Boolean).map((l) => l.replace(/^\{/, `{"rx":${at},`));
@@ -48,6 +95,16 @@ async function collector(): Promise<number> {
     last = now;
   }, 100);
   lagTimer.unref();
+  // A host page whose records stop for 3 s while its test runs: every WebKit process is dumped, once per page
+  const watch = setInterval(() => {
+    for (const [token, at] of heardAt) {
+      if (dumped.has(token) || Date.now() - at < 3000) continue;
+      dumped.add(token);
+      const file = (files.get(token) as string).replace(/\.jsonl$/, '-procs.txt');
+      void dumpWebKit(file, `no record from ${token} for ${Date.now() - at} ms`).catch((e) => appendFileSync(file, `dump failed: ${String(e)}\n`));
+    }
+  }, 500);
+  watch.unref();
   return port;
 }
 
@@ -59,8 +116,28 @@ export async function instrumentHost(page: Page): Promise<void> {
   const file = info.outputPath('diag', `host-${files.size + 1}.jsonl`);
   mkdirSync(dirname(file), { recursive: true });
   files.set(token, file);
+  // a page that closed is silent for that reason: no dump. A passing test's page closes at its end; a failed attempt's
+  // page stays open until the evidence fixture has read it, so the dump (3 s of silence) comes first
+  page.on('close', () => (heardAt.delete(token), dumped.add(token)));
   appendFileSync(file, JSON.stringify({ rx: Date.now(), k: 'start', test: info.titlePath.join(' › '), retry: info.retry, repeat: info.repeatEachIndex }) + '\n');
   await page.addInitScript(instrument, { url: `http://127.0.0.1:${p}/diag?t=${encodeURIComponent(token)}` });
+}
+
+/**
+ * PME_DIAG_SLOW_WORKER=<fraction>: a controlled slow machine for the engine only. Every 100 ms each of the page's
+ * workers is held by a busy loop for <fraction> × 100 ms (Playwright runs it as a task of that worker), so the engine
+ * keeps (1 − fraction) of its thread. Local experiments only.
+ */
+export function slowWorkers(page: Page): void {
+  const f = Number(process.env.PME_DIAG_SLOW_WORKER) || 0;
+  if (!(f > 0)) return;
+  const ms = Math.round(f * 100);
+  const tick = async () => {
+    if (page.isClosed()) return;
+    await Promise.all(page.workers().map((w) => w.evaluate((n) => { const end = performance.now() + n; while (performance.now() < end); }, ms).catch(() => undefined)));
+    setTimeout(() => void tick(), Math.max(0, 100 - ms));
+  };
+  void tick();
 }
 
 /** In the page, before its own scripts (an init script: self-contained). */
@@ -217,7 +294,9 @@ function instrument(cfg: { url: string }): void {
     const s = typeof data === 'string' ? data : '';
     const ty = /"type":"([^"]+)"/.exec(s.slice(0, 200))?.[1] ?? '';
     tell({ k: 'wsSend', e: epoch(), len: typeof data === 'string' ? data.length : -1, ty, rs: this.readyState, buffered: this.bufferedAmount });
-    return wsSend.call(this, data);
+    const r = wsSend.call(this, data);
+    tell({ k: 'wsSent', e: epoch() });
+    return r;
   };
   const wPost = Worker.prototype.postMessage as (this: Worker, m: unknown, t?: unknown) => void;
   let acks = 0;

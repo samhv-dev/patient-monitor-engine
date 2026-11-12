@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 45
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.version.outputs.playwright }}-noble
-      options: --ipc=host
+      options: --ipc=host --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -49,8 +49,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         timeout-minutes: 5
-      - name: nproc and memory
-        run: nproc; free -m
+      - name: nproc and memory; gdb for the thread dumps of a stuck WebKit process (apps/demo/e2e/diag-host.ts)
+        run: |
+          nproc; free -m
+          apt-get update -qq && apt-get install -y -qq gdb > /dev/null && gdb --version | head -1
+        timeout-minutes: 5
       - id: e2e
         name: the two specs, repeated (retries 0, one worker as ci.yml's WebKit)
         run: pnpm test:e2e --project=webkit --repeat-each="$REPEAT" --retries=0 --reporter=list,json --grep "a phone picks Depth of anaesthesia|Drugs tab with the bench open and a tray of two" apps/demo/e2e/depth-window.e2e.ts apps/demo/e2e/app-accessibility.e2e.ts
