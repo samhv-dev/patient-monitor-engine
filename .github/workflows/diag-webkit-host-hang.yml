@@ -32,6 +32,7 @@ jobs:
   # symbols at and before them, and the code around them (the library is stripped of its own symbol table)
   symbols:
     needs: version
+    if: ${{ false }} # done (runs 43184258161, 43184658177, 43187385584)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -47,14 +48,15 @@ jobs:
 
   repeat:
     needs: version
-    if: ${{ false }} # this push asks only the symbols job
     strategy:
       fail-fast: false
       matrix:
         part: [1, 2, 3]
         # worker: the host as the product runs it (its monitor in an OffscreenCanvas worker); main: the same host with
         # transferControlToOffscreen removed, so its monitor runs on the page's main thread (diag-host.ts)
-        variant: [worker, main]
+        # cpu: the worker variant with WEBKIT_SKIA_ENABLE_CPU_RENDERING=1, so WPE's 2D canvas draws with Skia's CPU
+        # rasteriser instead of its GPU backend (Ganesh, on Mesa's llvmpipe here), where every fatal crash was
+        variant: [worker, cpu]
     name: diag webkit ${{ matrix.variant }} (${{ matrix.part }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -85,6 +87,7 @@ jobs:
           DEBUG: 'pw:browser' # the browser processes' own stderr in this log (a WebKit assertion or crash message)
           REPEAT: '12'
           PME_DIAG_NO_OFFSCREEN: ${{ matrix.variant == 'main' && '1' || '0' }}
+          WEBKIT_SKIA_ENABLE_CPU_RENDERING: ${{ matrix.variant == 'cpu' && '1' || '' }}
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-diag.json
       - name: repetitions passed and failed
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
