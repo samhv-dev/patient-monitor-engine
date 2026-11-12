@@ -192,13 +192,15 @@ export class ViewerSync {
     }
     for (const c of this.replays) this.o.target.dispatch(c); // lane chrome only: restore() replaces engine state
     this.o.target.restore(s);
-    for (const c of this.early) if ((c.atTick ?? 0) > s.tick) this.o.target.dispatch(c);
+    let refused = false;
+    for (const c of this.early) if ((c.atTick ?? 0) > s.tick && !this.o.target.dispatch(c).accepted) refused = true;
     this.replays = [];
     this.early = [];
     this.hostBeats.clear();
     this.localBeats.clear();
     this.anchor ??= { simT: s.tick * TICK_S, wallMs: this.now() };
     this.status = 'synced';
+    if (refused) this.requestSync(); // an early command this engine refused (as in onEvent): ask again
   }
 
   private onEvent(e: WireEvent): void {
@@ -279,7 +281,10 @@ export class ViewerSync {
     if ((m.atTick ?? 0) <= this.o.target.tick()) return this.requestSync(); // too late to mirror exactly
     this.mirrored.add(e.commandId);
     if (this.mirrored.size > 256) this.mirrored.delete(this.mirrored.values().next().value as string);
-    this.o.target.dispatch(m);
+    // A command the host applied that this engine refuses cannot be mirrored exactly either: this engine validates it
+    // now, ahead of its tick, before the commands still queued for earlier ticks have applied (a pump's Start a moment
+    // after its TCI target, pump-rack-tci.md A2), so the two engines would part. A fresh snapshot carries it
+    if (!this.o.target.dispatch(m).accepted) this.requestSync();
   }
 
   /** Blend a new host anchor: small disagreements are smoothed, big ones reset [ENG: network]. */
