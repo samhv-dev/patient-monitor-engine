@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 // Finding N125 (plan pump-rack-tci.md §5, D12): the pump page was given no device profiles (`profiles: null`), so every
 // face said "device profile not loaded" and could show no limit or gap in words. The app now loads S1's shipped
 // profiles through the source rules (loadPumpDevices) for the host and the tablet alike, and the face reads them.

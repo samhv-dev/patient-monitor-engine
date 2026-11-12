@@ -1,7 +1,7 @@
 // The app (research/13 brief §4–§5): one document, one engine session for every view. A document opened at
 // #/remote is a Remote instead: it pairs to a monitor on another device and never starts an engine.
 import './app.css';
-import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controller';
+import { attachReveal, normalizeSessionCode, RevealGesture, type Formulary } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
@@ -37,6 +37,8 @@ import { watchHiddenTab } from './hidden-tab.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { deviceKey, pickerView } from './views/join.ts';
 import { pumpPageView } from './pump/page.ts';
+import { mountFlows, pumpLink } from './pump/controls.ts';
+import { faceProfilesOf, shippedPumpDevices } from './pump/devices.ts';
 import { learnerRemoteView } from './views/learner-remote.ts';
 import { drugsMenu } from './remote/drugs.ts';
 import { infusionsLink, infusionsView } from './remote/infusions.ts';
@@ -139,12 +141,22 @@ if (follow && shows === 'pick') {
 } else if (follow && shows === 'pump') {
   // A1 (plan pump-rack-tci.md §4 D1): the pump tablet. Its learner-PIN form first; at sign-in the follower, whose every
   // hello says `{role: 'pump', show: 'pump', device, pin}` (the PIN from the page's memory); granted, the rack. No monitor
-  // and none of its sound. The device profiles (D12) join when S1 has merged: until then the faces say so (null)
+  // and none of its sound. The faces read S1's shipped device profiles (D12; N125: they were given none before A2)
+  const devices = shippedPumpDevices();
   const page = pumpPageView({
     code: follow,
     stage: shell.stage,
-    profiles: null,
+    profiles: faceProfilesOf(devices),
     follow: (code, bar, pin) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), pin, sound: false }),
+  });
+  // A2: the channel flows on each face, sending through the granted follower; the stock list is the formulary's (S1)
+  let formulary: Formulary | null = null;
+  void loadShippedFormulary().then((f) => void (formulary = f));
+  page.onSignedIn((f) => {
+    const link = pumpLink(f, deviceKey());
+    if (!link) return;
+    const flows = mountFlows(page.rack, link, { devices, formulary: () => formulary });
+    return () => flows.destroy();
   });
   shell.add(page);
   shell.start();
