@@ -56,6 +56,8 @@ export type BatchMeta = { batch?: { id: string; n: number } };
 type CommandBase = {
   id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string; by?: string; prepId?: string;
   replaced?: { rate: number; rateUnit: string; by: string };
+  /** C2 (pump-rack-tci.md §7): on an `applyEvent pump` the host built, its channel and what the record needs (PumpMeta). */
+  pump?: PumpMeta;
 } & BatchMeta;
 
 /**
@@ -180,6 +182,13 @@ export type PumpCommand = { type: 'pump'; ch: number } & (
   | { action: 'start' | 'stop' | 'unload' }
   | { action: 'purge'; volumeMl: number }
 );
+/**
+ * Plan pump-rack-tci.md A1 (§5, PQ1 = C, PQ2 = B): the kind of each channel of the room's pump rack, in channel order, as
+ * Room setup sets it (1 to PUMP_LIMITS.channels channels). It rides the host's `style` event (`pumps`), as the room's
+ * defibrillator model does, so a pump tablet builds its rack from it at every hello and every change.
+ */
+export const PUMP_KINDS = ['syringe', 'drip'] as const;
+export type PumpKind = (typeof PUMP_KINDS)[number];
 /** A syringe or bag to load (D2 item 1): a preparation by the device that made it and its id, or a stock item's id. */
 export type PumpSource = { prep: { device: string; id: string } } | { stock: string };
 /** The patient typed into the pump for TCI (D6): what the TCI sets read (engine-core tci-sets TciCovariate). */
@@ -191,6 +200,38 @@ export interface PumpPatient {
   pmaWeeks?: number;
   opioids?: boolean;
 }
+/**
+ * Plan pump-rack-tci.md C2 (§7 "Record", §8): what the host writes on an `applyEvent pump` it built, beside the event
+ * (the engine ignores it, as `by` and `prepId`): the channel; the channel's TRUE contents at the action; for a load, the
+ * syringe's or bag's origin and the label it was made or stocked at; `gives`, the drug a bolus gives the patient (the
+ * drug lock reads it, drug-lock.ts); `bolus`, a bolus's volume, true dose and seconds at the device's rapid rate (PQ3 = A:
+ * filed as a bolus, its seconds kept for the Debrief); `infusion`, the rate an action starts, changes or stops delivery
+ * at; `replaced`, the values it replaced and who had set them; `mismatch`, the programme, set when the action gives the
+ * patient the contents of a channel whose contents and programme differ (§8). A device's own `pump` field is refused (pumpMay).
+ */
+export interface PumpMeta {
+  ch: number;
+  contents?: { drugId: string; concentration: PumpConcentration };
+  origin?: PumpSource;
+  label?: PumpConcentration;
+  gives?: string;
+  bolus?: { volumeMl: number; dose: number; unit: string; seconds: number };
+  infusion?: { rate: number; unit: string };
+  replaced?: PumpReplaced[];
+  mismatch?: { programmed: { drugId: string; concentration: PumpConcentration } };
+}
+/** One value a pump action replaced (§7), and who had set it: a device key, or drug-lock.ts GivenBy. */
+export type PumpReplaced =
+  | { what: 'programme'; drugId: string; concentration: PumpConcentration; set?: number; by: string }
+  | { what: 'rate'; rate: number; unit: string; by: string }
+  | { what: 'tci'; setId: string; mode: 'plasma' | 'effect'; target: number; by: string }
+  | { what: 'patient'; patient: PumpPatient; by: string };
+/**
+ * C2 (§7): what the host writes as `issuedBy` on a granted pump's applied command, whatever the tablet wrote, so the
+ * Debrief's "by Pump tablet" needs no parsing of the device name; the device key rides as `by`.
+ */
+export const PUMP_ISSUED_BY = 'pump';
+
 /** The run events a `note` command may carry (the guard refuses any other): 'recognised', the /1 Recognised press
  *  (the demo's record.ts KEEPS; brief 52). */
 export const NOTE_EVENTS = ['recognised'] as const;
@@ -267,7 +308,7 @@ export type ExtraEvent =
    * phone draws the instructor's range.
    */
   // `defib` (Room plan R5): the room's defibrillator model, which a defibrillator window wears the look of (null: none)
-  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; replay?: true }
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; pumps?: PumpKind[]; replay?: true }
   /**
    * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
    * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
@@ -348,10 +389,11 @@ export interface AppliedResolution {
 
 /**
  * What a follower device shows, named on its hello (plan room-and-instruments.md §4 D1): the learner monitor (phone,
- * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot. Legal with `role:
- * 'viewer'` or `'defib'` only (guard.ts; R5c); the ventilator is a role of its own (R8a), never an instrument here.
+ * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot, and the infusion-pump rack
+ * (pump-rack-tci.md A1, a tablet). Legal with `role: 'viewer'`, `'defib'` or `'learner'` (guard.ts; R5c), and `'pump'`
+ * with `role: 'pump'` only; the ventilator is a role of its own (R8a), never an instrument here.
  */
-export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth'] as const;
+export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth', 'pump'] as const;
 export type Instrument = (typeof INSTRUMENTS)[number];
 
 /**
@@ -401,7 +443,7 @@ export type WireMessage = { v: 1; session: string; from: string; seq: number; se
   /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`. */
   | {
       kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
-      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' | 'learner' };
+      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' | 'learner' | 'pump' };
     }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }

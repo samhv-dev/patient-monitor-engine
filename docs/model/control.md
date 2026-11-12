@@ -284,6 +284,7 @@ transports (`src/protocol.ts`).
 | `samePin` | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The PIN comparison: |
 | `stagePrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Make the preparation a remote asked for (`prep stage`), or say why not. |
 | `remainingOf` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | r for one drug of a preparation at sim time `simT` (§7.1): |
+| `notUsable` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Why a preparation cannot be used now (not ready, or LQ8 C), else null (a give, an infusion, a pump's load: |
 | `deliverPrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration × its r at `simT`, through the instructor's own path (the drug lock, staged del |
 | `infusePrep` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `prep infuse` → one `applyEvent infusion` per drug at the pump's mL/h, with that drug's concentration × its r at the start (§7.1: |
 | `setInfusion` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | `infusion set` (LQ4, option B): |
@@ -291,6 +292,17 @@ transports (`src/protocol.ts`).
 | `stagedOf` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | The preparation as staged, for the scenario driver's record (driver.ts recordPreparation): |
 | `learnerView` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | What the remote that staged it is told (§4 D7): |
 | `instructorView` | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | What the instructor's screens are told (§4 D7): |
+| `sameConc` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | Two concentrations of one amount per mL (to 1 part in 10⁶), whatever their units. |
+| `rateMlH` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | mL/h of a rate as entered, with the PROGRAMMED concentration and the typed weight (as a real pump converts a dose rate, plan D2 item 3; |
+| `doseMl` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | mL of a bolus dose with the PROGRAMMED concentration (and the typed weight). |
+| `translatePump` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | A pump's command → the engine's `pump` event with the host's metadata (`meta`: |
+| `rateRefusal` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The device range a rate must fall in (D2 item 3, D12), in the profile's own figures, or null when it does. |
+| `mismatched` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | A channel's contents and programme differ (§8): |
+| `noteApplied` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | An APPLIED `pump` event (accepted by the engine) into the host's table, by `by` (a device key, or the sender's drug-lock.ts GivenBy) at sim time `t`. |
+| `channelsRunning` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The channels on which `drugId` runs now (its contents are that drug and it is started), by channel number (D9). |
+| `onPumpsWords` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | D9's refusal: |
+| `routedToChannel` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | D9: a remote's or the Drug sheet's rate for a drug that runs on exactly one channel (and no channel-less infusion), as that channel's `pump rate` (or `pump stop` at 0), checked against its device. |
+| `pumpWire` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The command a translated pump action becomes (the instructor's own `applyEvent`, through command()). |
 | `backoffDelay` | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Delay before reconnect attempt `attempt` (0-based): |
 | `windowEndpoint` | [`transport/post-message.ts`](../../packages/controller/src/transport/post-message.ts) | Endpoint for talking to another window (an iframe's contentWindow, or window.parent from inside the iframe). |
 | `createRelaySignaling` | [`transport/webrtc.ts`](../../packages/controller/src/transport/webrtc.ts) | Signalling over the relay's /signal endpoint (url is the relay base, e.g. |
@@ -348,6 +360,7 @@ Exported without a doc comment: `startRelay`, `clamp`, `targetCommand`, `pinComm
 | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The same drug is not given twice within SAME_DRUG_LOCK_S of simulated time, from any device (the owner's ruling of 5 November 2026). |
 | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The host end of every transport (brief §3.7, R7): it owns the engine. |
 | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Plan learner-action-remote.md L4 (§4 D3, D7, D8; §7.1; LQ3, LQ4, LQ7–LQ9): the host's table of the preparations its learner remotes staged, and the translation of a remote's `prep deliver`, `prep infuse` and `infusion se |
+| [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | Plan pump-rack-tci.md C2 (§4 D2, D4, D7, D9, D12; §7, §8): the host's side of the pump tablet. |
 | [`session/viewer-sync.ts`](../../packages/controller/src/session/viewer-sync.ts) | Viewer role (brief §3.7): a second monitor that runs its OWN engine and never receives samples. |
 | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Reconnect delays: exponential with jitter, capped [ENG: network]. |
 | [`transport/base.ts`](../../packages/controller/src/transport/base.ts) | Shared plumbing for every transport: listener sets, status replay on subscribe, send-side sample guard, receive-side validation. |
@@ -418,6 +431,7 @@ None recorded.
 | [`scenario/phase-runner.test.ts`](../../packages/controller/test/scenario/phase-runner.test.ts) | 0 | 0 |
 | [`scenario/probability.test.ts`](../../packages/controller/test/scenario/probability.test.ts) | 0 | 0 |
 | [`scenario/profile.test.ts`](../../packages/controller/test/scenario/profile.test.ts) | 0 | 0 |
+| [`scenario/pump-format.test.ts`](../../packages/controller/test/scenario/pump-format.test.ts) | 0 | 0 |
 | [`scenario/readers-v2.test.ts`](../../packages/controller/test/scenario/readers-v2.test.ts) | 0 | 0 |
 | [`scenario/replay.test.ts`](../../packages/controller/test/scenario/replay.test.ts) | 0 | 0 |
 | [`scenario/restore-brings-case.test.ts`](../../packages/controller/test/scenario/restore-brings-case.test.ts) | 0 | 0 |
@@ -442,6 +456,8 @@ None recorded.
 | [`session/host-learner-defib.test.ts`](../../packages/controller/test/session/host-learner-defib.test.ts) | 0 | 0 |
 | [`session/host-learner.test.ts`](../../packages/controller/test/session/host-learner.test.ts) | 0 | 0 |
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 0 | 0 |
+| [`session/host-pump-relay.test.ts`](../../packages/controller/test/session/host-pump-relay.test.ts) | 0 | 0 |
+| [`session/host-pump.test.ts`](../../packages/controller/test/session/host-pump.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |
 | [`session/host-speed-range.test.ts`](../../packages/controller/test/session/host-speed-range.test.ts) | 0 | 0 |
@@ -452,6 +468,7 @@ None recorded.
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |
 | [`session/timeline-reset.test.ts`](../../packages/controller/test/session/timeline-reset.test.ts) | 0 | 0 |
 | [`session/timeline-restore.test.ts`](../../packages/controller/test/session/timeline-restore.test.ts) | 0 | 0 |
+| [`session/viewer-chain.test.ts`](../../packages/controller/test/session/viewer-chain.test.ts) | 0 | 0 |
 | [`session/viewer-mirror.test.ts`](../../packages/controller/test/session/viewer-mirror.test.ts) | 0 | 0 |
 | [`session/viewer-resume-anchor.test.ts`](../../packages/controller/test/session/viewer-resume-anchor.test.ts) | 0 | 0 |
 | [`session/viewer-stage-group.test.ts`](../../packages/controller/test/session/viewer-stage-group.test.ts) | 0 | 0 |

@@ -30,6 +30,9 @@ export { DRUG_BUS_NEUTRAL } from './types-pk.ts';
 export type { PkState, DrugInst } from './l2/pk/pipeline.ts';
 export { IV_ROUTES, routeHonoured } from './l2/pk/pipeline.ts'; // the validator, the record and the Drug sheet ask the engine
 export { concUnit } from './l2/pk/pipeline.ts'; // DC1: the unit of a drug row's panel cp/ce, which a /2 phase rule reads
+// pump-rack-tci.md A2: the TCI-set registry, read-only, for the pump tablet's TCI flow (it offers only the sets registered here)
+export { TCI_SETS, NO_KE0_REFUSAL } from './l2/pk/tci-sets/index.ts';
+export type { TciSet, TciSetMeta } from './l2/pk/tci-sets/types.ts';
 export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // demo/controller drug pickers
 export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence page: the onset shapes (gamma vs chain)
 export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor

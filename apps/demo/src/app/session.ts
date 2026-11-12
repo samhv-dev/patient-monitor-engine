@@ -9,8 +9,10 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, PumpKind, RelayDevice } from '@pme/controller';
+import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
+import { shippedPumpDevices } from './pump/devices.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -173,6 +175,9 @@ export class AppSession {
   /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
+  /** A1 (plan pump-rack-tci.md §5): the room's pump rack, each channel's kind (site.ts pumpRack), sent to the pump tablet
+   *  on the style event. */
+  pumpRack: PumpKind[];
   /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
    *  patient mount, or null: no EEG device (none switched on). */
   eegModel: string | null;
@@ -181,10 +186,11 @@ export class AppSession {
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[] }) {
     this.el = el;
     this.defibModel = o.defibModel ?? null;
     this.eegModel = o.eegModel ?? null;
+    this.pumpRack = [...(o.pumpRack ?? DEFAULT_SITE.pumpRack)];
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -265,6 +271,10 @@ export class AppSession {
       // made from (loaded once, below; null until then), and each staged preparation into the /2 record
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
+      // pump-rack-tci.md A2 (C2's hand-over): the room's rack as Room setup sets it, and the shipped device profiles
+      // (S1, N125), so the host grants a pump tablet on the learner PIN and checks each of its commands against them
+      pumpRack: () => this.pumpRack,
+      pumpDevices: () => shippedPumpDevices(),
       onPreparation: (p) => this.driver.recordPreparation(p),
       deviceName: (key) => readLayout(store)[key]?.name ?? null, // L9: the instructor's card names the remote as Room setup did
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
@@ -532,8 +542,15 @@ export class AppSession {
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
-  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null } {
-    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel }; // R5: the window's look
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null; pumps: PumpKind[] } {
+    // R5: the window's look; A1: the room's pump rack, for the pump tablet
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel, pumps: [...this.pumpRack] };
+  }
+
+  /** Room setup's pump rack (A1): kept here, and sent to the pump tablet at once on the style event (as the defibrillator model). */
+  setPumpRack(kinds: PumpKind[]): void {
+    this.pumpRack = [...kinds];
+    for (const f of this.skinFns) f(this.skin, this.theme);
   }
 
   private ibp: IbpScales = {};

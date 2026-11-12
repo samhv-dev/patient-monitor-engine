@@ -1,7 +1,7 @@
 // The app (research/13 brief §4–§5): one document, one engine session for every view. A document opened at
 // #/remote is a Remote instead: it pairs to a monitor on another device and never starts an engine.
 import './app.css';
-import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controller';
+import { attachReveal, normalizeSessionCode, RevealGesture, type Formulary } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
@@ -37,6 +37,9 @@ import { watchHiddenTab } from './hidden-tab.ts';
 import { mountDepthWindow } from './views/depth.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { deviceKey, pickerView } from './views/join.ts';
+import { pumpPageView } from './pump/page.ts';
+import { mountFlows, pumpLink } from './pump/controls.ts';
+import { faceProfilesOf, shippedPumpDevices } from './pump/devices.ts';
 import { learnerRemoteView } from './views/learner-remote.ts';
 import { drugsMenu } from './remote/drugs.ts';
 import { infusionsLink, infusionsView } from './remote/infusions.ts';
@@ -72,6 +75,7 @@ const shows = follow ? instrumentOf(location.hash) : null;
 const defibWindow = shows === 'defib';
 if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 if (follow && shows === 'remote') document.documentElement.dataset.learner = 'remote'; // L6: the monitor strip over the tabs (app.css)
+if (follow && shows === 'pump') document.documentElement.dataset.learner = 'pump'; // A1: the rack, no monitor (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -136,6 +140,30 @@ if (follow && shows === 'pick') {
   shell.start();
   document.title = 'Learner remote: patient monitor simulator';
   Object.assign(window, { __pmeLearnerRemote: remote, __pmeLearnerDrugs: drugs, __pmeLearnerInfusions: infusions, __pmeLearnerLabs: labs, __pmeApp: { shell, frames, site } });
+} else if (follow && shows === 'pump') {
+  // A1 (plan pump-rack-tci.md §4 D1): the pump tablet. Its learner-PIN form first; at sign-in the follower, whose every
+  // hello says `{role: 'pump', show: 'pump', device, pin}` (the PIN from the page's memory); granted, the rack. No monitor
+  // and none of its sound. The faces read S1's shipped device profiles (D12; N125: they were given none before A2)
+  const devices = shippedPumpDevices();
+  const page = pumpPageView({
+    code: follow,
+    stage: shell.stage,
+    profiles: faceProfilesOf(devices),
+    follow: (code, bar, pin) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), pin, sound: false }),
+  });
+  // A2: the channel flows on each face, sending through the granted follower; the stock list is the formulary's (S1)
+  let formulary: Formulary | null = null;
+  void loadShippedFormulary().then((f) => void (formulary = f));
+  page.onSignedIn((f) => {
+    const link = pumpLink(f, deviceKey());
+    if (!link) return;
+    const flows = mountFlows(page.rack, link, { devices, formulary: () => formulary });
+    return () => flows.destroy();
+  });
+  shell.add(page);
+  shell.start();
+  document.title = 'Infusion pumps: patient monitor simulator';
+  Object.assign(window, { __pmePumpPage: page, __pmeApp: { shell, frames, site } });
 } else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
@@ -193,7 +221,7 @@ if (follow && shows === 'pick') {
   let lpin: InstructorPin | null = null;
   const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
   const learner = (lpin = learnerPin(() => pin.get()));
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, pumpRack: site.pumpRack, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
   learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
@@ -288,6 +316,9 @@ if (follow && shows === 'pick') {
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
     // E12: the room's depth-of-anaesthesia device, kept with the site profile and switched on in the patient's engine
     depth: { model: () => site.eegModel, choose: (m) => ((site.eegModel = m), saveSite(site), session.setEegModel(m)) },
+    // A1 (plan pump-rack-tci.md §5): the room's pump rack, kept with the site profile (so a restart keeps it) and sent to
+    // the pump tablet on the style event
+    pumps: { kinds: () => site.pumpRack, choose: (k) => ((site.pumpRack = k), saveSite(site), session.setPumpRack(k)) },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });

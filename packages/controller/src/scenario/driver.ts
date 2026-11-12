@@ -28,7 +28,7 @@ import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
 import { isV2, type AnyScenarioDoc, type DocCommand, type ScenarioState } from './types.ts';
 import type { Administration, PhaseRunnerState, PrepRecord, RunnerInputV2, StagedPrep } from './types-v2.ts';
-import { LEARNER_ISSUED_BY } from '../protocol.ts';
+import { LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type PumpMeta } from '../protocol.ts';
 import { validateScenario } from './validate.ts';
 
 export interface ScenarioDriverOptions {
@@ -625,9 +625,9 @@ function administrationOf(
 ): Omit<Administration, 'seq'> | null {
   const e = c.event as FlatEvent;
   const by = c.issuedBy;
-  const source: Administration['source'] = typeof c.actionId === 'string' ? 'action' : by === 'scenario' ? 'script' : by === LEARNER_ISSUED_BY ? 'learner' : by === 'remote' || by.startsWith('controller:') ? 'remote' : 'panel';
+  const source: Administration['source'] = typeof c.actionId === 'string' ? 'action' : by === 'scenario' ? 'script' : by === LEARNER_ISSUED_BY ? 'learner' : by === PUMP_ISSUED_BY ? 'pump' : by === 'remote' || by.startsWith('controller:') ? 'remote' : 'panel';
   const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: e.kind === 'drug' && e.route !== undefined && e.drugId in DRUGS && !routeHonoured(e.drugId, e.route) };
-  const device = source === 'learner' && typeof c.by === 'string' ? c.by : undefined;
+  const device = (source === 'learner' || source === 'pump') && typeof c.by === 'string' ? c.by : undefined;
   const prepId = (c as { prepId?: unknown }).prepId;
   const prep = device !== undefined && typeof prepId === 'string' ? preparation?.(device, prepId, typeof e.drugId === 'string' ? e.drugId : undefined) : undefined;
   const base = { t, source, ...(source === 'action' ? { actionId: c.actionId as string } : {}), ...(device !== undefined ? { by: device } : {}) };
@@ -639,6 +639,7 @@ function administrationOf(
   };
   const cls = (id: string) => (DRUGS[id]?.cls !== undefined ? { cls: DRUGS[id]?.cls as string } : {});
   const set = (o: Record<string, unknown>) => ({ settings: Object.fromEntries(Object.entries(o).filter(([, v]) => typeof v === 'number' || typeof v === 'string')) as Record<string, number | string> });
+  if (e.kind === 'pump') return pumpAdministration(c as { pump?: PumpMeta }, e, base, weightKg, tail, cls, set);
   switch (e.kind) {
     case 'drug': {
       if (e.infusion) return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.dose, rateUnit: e.unit, route: e.route, ...replaced(e.drugId), ...tail };
@@ -665,6 +666,39 @@ function administrationOf(
       return { ...base, kind: 'procedure', ...set({ fio2: e.fio2, durationS: e.durationS }), ...tail };
     case 'lab':
       return source === 'action' || source === 'script' ? null : { ...base, kind: 'sample', ...set({ panel: e.panel }), ...tail };
+  }
+  return null;
+}
+
+/**
+ * Plan pump-rack-tci.md C2 (§7, §8, PQ3 = A): a pump channel's act as the record sees it, from the host's metadata on the
+ * command (PumpMeta), its drug the channel's TRUE contents. A bolus is a bolus (`drug`, its true dose, its seconds as
+ * `bolusS`, never `overS`); a rate that changes what a running channel delivers, a start and a stop are the `infusion` at
+ * that rate (0: stopped); a TCI target is `tci`. A load, a programme, a purge and an unload give no administration (the
+ * app's record keeps their rows). Each carries its channel, and `mismatch` when it gave a mismatched channel's contents.
+ */
+function pumpAdministration(
+  c: { pump?: PumpMeta }, e: FlatEvent, base: Pick<Administration, 't' | 'source'> & Partial<Administration>, weightKg: number | undefined,
+  tail: Pick<Administration, 'result'> & Partial<Administration>, cls: (id: string) => { cls?: string }, set: (o: Record<string, unknown>) => { settings: Record<string, number | string> },
+): Omit<Administration, 'seq'> | null {
+  const m = c.pump;
+  const k = m?.contents;
+  if (!m || !k) return null;
+  const conc = (x: { amount: number; unit: string; perMl: number }) => `${+(x.amount / x.perMl).toFixed(3)} ${x.unit}/mL`;
+  const p = m.mismatch?.programmed;
+  const head = {
+    ...base, channel: m.ch, drugId: k.drugId, ...cls(k.drugId),
+    ...(p ? { mismatch: { contents: `${k.drugId} ${conc(k.concentration)}`, programmed: `${p.drugId} ${conc(p.concentration)}` } } : {}),
+  };
+  const ev = e as unknown as { action?: string; mode?: string; target?: number; setId?: string };
+  if (ev.action === 'bolus' && m.bolus) {
+    const perKg = MASS.test(m.bolus.unit) && weightKg ? m.bolus.dose / weightKg : undefined;
+    return { ...head, kind: 'drug', dose: m.bolus.dose, unit: m.bolus.unit, ...(perKg !== undefined ? { perKg } : {}), route: 'iv', bolusS: m.bolus.seconds, ...tail };
+  }
+  if (ev.action === 'tci' && typeof ev.target === 'number') return { ...head, kind: 'tci', ...set({ mode: ev.mode, target: ev.target, setId: ev.setId }), ...tail };
+  if (m.infusion) {
+    const r = m.replaced?.find((x) => x.what === 'rate');
+    return { ...head, kind: 'infusion', rate: m.infusion.rate, rateUnit: m.infusion.unit, route: 'iv', ...(r && r.what === 'rate' ? { replaced: { rate: r.rate, rateUnit: r.unit, by: r.by } } : {}), ...tail };
   }
   return null;
 }

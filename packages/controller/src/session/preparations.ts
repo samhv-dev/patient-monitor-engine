@@ -109,8 +109,8 @@ export function remainingOf(f: Formulary, h: HostPrep, drugId: string, simT: num
   return remaining(entry, h.prep.diluent?.id ?? '', h.prep.container as Stability['container'], PREP_TEMP_C, Math.max(0, simT - h.t), { incompatible });
 }
 
-/** Why a preparation cannot be used now (not ready, or LQ8 C), else null. */
-function notUsable(f: Formulary, h: HostPrep, simT: number): string | null {
+/** Why a preparation cannot be used now (not ready, or LQ8 C), else null (a give, an infusion, a pump's load: pump-host.ts). */
+export function notUsable(f: Formulary, h: HostPrep, simT: number): string | null {
   if (simT < h.prep.ready.atS) return `not ready yet (${mmss(h.prep.ready.atS - simT)})`;
   const stop = h.prep.actives.find((a) => !remainingOf(f, h, a.drugId, simT).deliverable);
   return stop ? `${stop.drugId} in this preparation cannot be given (${remainingOf(f, h, stop.drugId, simT).note})` : null;
@@ -207,8 +207,9 @@ export function stagedOf(h: HostPrep): StagedPrep {
   return { ...rest, by: h.by, t: h.t };
 }
 
-/** What a `prep` event says happened to the preparation (§4 D7); `notice` (L7, LQ3): the instructor showed its finding. */
-export type PrepNewsKind = 'made' | 'delivered' | 'infusing' | 'discarded' | 'notice';
+/** What a `prep` event says happened to the preparation (§4 D7); `notice` (L7, LQ3): the instructor showed its finding;
+ *  `loaded` (pump-rack-tci.md §8): a pump channel took it, so it left the maker's tray. */
+export type PrepNewsKind = 'made' | 'delivered' | 'infusing' | 'discarded' | 'notice' | 'loaded';
 /** The `prep` event's body to the remote that staged it (`to` its peer id): L7's tray reads this. */
 export interface LearnerPrepNews { news: PrepNewsKind; prep: LearnerPrepView }
 /** The `prep` event's body to the host's own screens and granted instructors (`to` the host's peer id): L9's card reads this. */

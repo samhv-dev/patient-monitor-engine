@@ -3,7 +3,7 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, PUMP_ISSUED_BY, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type PumpMismatchNews, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
@@ -40,6 +40,8 @@ export class Link {
   /** L9 (§4 D7): the learner remotes' preparations as the instructor sees them (the host's copy to its own id), on the
    *  laptop and on the instructor's phone alike. */
   readonly preps = new PrepBoard();
+  /** pump-rack-tci.md A2 (§8, PQ8 = A): the host's standing pump-mismatch findings, by channel, for the instructor's card. */
+  readonly pumpFindings = new Map<number, PumpMismatchNews>();
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
   private lastRaised = new Set<string>();
@@ -150,7 +152,12 @@ export class Link {
     if (e.type === 'prep') {
       // L9: the host addresses the instructor's copy to its own id; a learner's copy (to that remote) is not this card's
       if (e.to !== from) return;
-      this.preps.apply(e.body as InstructorPrepNews, e.t);
+      // pump-rack-tci.md A2 (§8): the host's pump-mismatch finding rides the same event to the same id; it is not a
+      // preparation's news (before A2 the board read it as one and threw on its missing `prep`)
+      const b = e.body as { news?: unknown; ch?: unknown } | null;
+      if (b?.news === 'pumpMismatch' && typeof b.ch === 'number') this.pumpFindings.set(b.ch, b as unknown as PumpMismatchNews);
+      else if (b?.news === 'pumpMismatchCleared' && typeof b.ch === 'number') this.pumpFindings.delete(b.ch);
+      else this.preps.apply(e.body as InstructorPrepNews, e.t);
       this.changed();
     } else if (e.type === 'alarmStatus') {
       const a = e as unknown as AlarmStatusEvent;
@@ -169,6 +176,7 @@ export class Link {
       // A new timeline — onsets in progress began on the old one; a restart also ends the acute events (a Remote has no
       // AppSession.onMount to tell it); a bookmark restore keeps them (the engine does not report them)
       this.ramps.clear();
+      this.pumpFindings.clear(); // the host's channels end with the old engine too (host-session newTimeline)
       this.preps.clear(); // the host's preparation table ends with the old engine, a restore's too (host-session newTimeline)
       if (e.cause !== 'restore') this.conditions.clear();
       this.changed();
@@ -191,7 +199,7 @@ export class Link {
 
   /**
    * Brief 164: on the host, a command the host applied for ANOTHER device — a learner remote's give, the defibrillator
-   * window's press, the instructor phone's command — is a Log line at the tick it was applied, naming the device (the name
+   * window's press, a pump tablet's press (C2), the instructor phone's command — is a Log line at the tick it was applied, naming the device (the name
    * Room setup gave it). This link's own commands are logged with their ack (`send`); a replay, a cockpit frame, the card's
    * own commands (its state lines say them) and the ventilator's hand-over are not presses.
    */
@@ -201,9 +209,10 @@ export class Link {
     if (!this.host || !c || r?.replay || r?.mirror || e.commandId.startsWith(`${this.ctl.peerId}-`)) return;
     const text = describeCommand(c);
     if (c.issuedBy === 'remote') return this.add({ simT: e.tick * TICK_S, kind: 'instructor', text: `${text} (instructor's phone)` });
-    if (c.issuedBy !== LEARNER_ISSUED_BY) return;
+    if (c.issuedBy !== LEARNER_ISSUED_BY && c.issuedBy !== PUMP_ISSUED_BY) return;
     const name = typeof c.by === 'string' ? this.host.deviceName(c.by) : null;
-    const device = c.event?.kind === 'defib' ? 'defibrillator window' : 'learner remote';
+    // pump-rack-tci.md C2: a pump tablet's press, filed `issuedBy: 'pump'` (its line names the channel: describe.ts)
+    const device = c.issuedBy === PUMP_ISSUED_BY ? 'pump tablet' : c.event?.kind === 'defib' ? 'defibrillator window' : 'learner remote';
     this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${device}${name ? `: ${name}` : ''})` });
   }
 

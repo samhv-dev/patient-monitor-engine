@@ -17,7 +17,7 @@
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type WireEvent } from '@pme/controller';
+import { asV1, isV2, LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type PumpMeta, type PumpReplaced, type WireEvent } from '@pme/controller';
 import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
@@ -26,7 +26,8 @@ import { describeCommand } from './describe.ts';
 export type StateBy = 'press' | 'rule' | 'goto';
 /** `learner` (Room plan R5d): a press of the learner defibrillator window, applied by the host as the instructor's own;
  *  (learner-action-remote.md L4) a give, an infusion change or a sample from a learner remote, the same way. */
-export type RowKind = 'action' | 'remote' | 'learner' | 'scenario' | 'alarm' | 'bookmark' | 'restore' | 'patient' | 'note';
+/** `pump` (pump-rack-tci.md C2): a press of the pump tablet, or the host's mismatch finding on one of its channels. */
+export type RowKind = 'action' | 'remote' | 'learner' | 'pump' | 'scenario' | 'alarm' | 'bookmark' | 'restore' | 'patient' | 'note';
 export interface Row {
   /** Simulated seconds, as the monitor's clock showed them. */
   t: number;
@@ -58,6 +59,11 @@ export interface Row {
   /** A `learner` row (L4, LQ4): an infusion change's replaced rate, and who had set it (a device key or the laptop,
    *  phone or card), as the host wrote it on the command. */
   replaced?: { rate: number; rateUnit: string; by: string };
+  /** A pump channel's row (C2, §7 "Record"): its channel, whoever pressed (the tablet, a remote or the laptop, D9). */
+  channel?: number;
+  /** A pump channel's row: the values the change replaced and who had set each (a device key, or laptop, phone, card),
+   *  as the host wrote them on the command; for a load, where the syringe or bag came from. */
+  pump?: { replaced?: PumpReplaced[]; origin?: PumpMeta['origin']; mismatch?: true };
   /** A bookmark row (Instructor v2 marks): the mark's kind, and the note the instructor wrote with it. */
   markKind?: Exclude<MarkKind, 'stage'>;
   note?: string;
@@ -227,6 +233,11 @@ export class RunRecord {
       };
       return this.add(row);
     }
+    if (e.type === 'prep') {
+      const b = e.body as Record<string, unknown> | null;
+      if (b && (b.news === 'pumpMismatch' || b.news === 'pumpMismatchCleared')) this.pumpFinding(e.t, b);
+      return;
+    }
     if (e.type !== 'commandApplied') return;
     const r = e.resolved as AppliedResolution | undefined;
     if (!r?.command || r.replay || r.mirror) return; // a late-join replay or a cockpit frame is not an action
@@ -261,6 +272,7 @@ export class RunRecord {
     }
     const ev = c.type === 'applyEvent' ? (c.event as Record<string, unknown>) : null;
     if (c.issuedBy === LEARNER_ISSUED_BY && ev?.kind === 'defib') return this.add(this.learnerRow(t, c, ev));
+    if (ev?.kind === 'pump') return this.add(this.pumpRow(t, c, ev, text));
     const learner = c.issuedBy === LEARNER_ISSUED_BY;
     const row: Row = { t, kind: bySc ? 'scenario' : learner ? 'learner' : c.issuedBy === 'remote' ? 'remote' : 'action', text };
     // L4: a learner remote's give names its device (and the name Room setup gave it), its preparation and, for an
@@ -291,6 +303,38 @@ export class RunRecord {
       t, kind: 'learner', text: `${shock ? 'Shock' : 'Charge'}${this.defibJ !== null ? ` ${this.defibJ} J` : ''}`,
       ...(shock ? { ev: 'shock' } : {}), ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}),
     };
+  }
+
+  /**
+   * C2 (§7 "Record"): a pump channel's act, as the host applied it: the tablet's own (kind `pump`, its device key and the
+   * name Room setup gave it), or a remote's or the laptop's change routed to the channel (D9: that sender's kind); the
+   * channel, the values replaced and who had set them, a load's origin; the drug is the channel's TRUE contents (`ev`,
+   * and a bolus's true dose for the drug totals).
+   */
+  private pumpRow(t: number, c: Record<string, unknown>, ev: Record<string, unknown>, text: string): Row {
+    const meta = c.pump as PumpMeta | undefined;
+    const kind: RowKind = c.issuedBy === PUMP_ISSUED_BY ? 'pump' : c.issuedBy === LEARNER_ISSUED_BY ? 'learner' : c.issuedBy === 'remote' ? 'remote' : 'action';
+    const by = kind === 'pump' || kind === 'learner' ? (typeof c.by === 'string' ? c.by : undefined) : undefined;
+    const name = by !== undefined ? this.deviceName(by) : null;
+    const drug = meta?.contents?.drugId;
+    const gives = ev.action === 'bolus' || ev.action === 'tci' || meta?.infusion !== undefined;
+    const extra: Row['pump'] = { ...(meta?.replaced ? { replaced: meta.replaced } : {}), ...(meta?.origin ? { origin: meta.origin } : {}), ...(meta?.mismatch ? { mismatch: true as const } : {}) };
+    return {
+      t, kind, text, channel: Number(ev.ch), ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), ...(kind === 'learner' ? { remote: true as const } : {}),
+      ...(drug && gives ? { ev: `drug:${drug}` } : {}),
+      ...(drug && ev.action === 'bolus' && meta?.bolus ? { dose: { drugId: drug, dose: meta.bolus.dose, unit: meta.bolus.unit } } : {}),
+      ...(Object.keys(extra).length ? { pump: extra } : {}),
+    };
+  }
+
+  /** C2 (§8): the host's mismatch finding on a channel, as the instructor's screens hear it (never the pump's). */
+  private pumpFinding(t: number, b: Record<string, unknown>): void {
+    const ch = Number(b.ch);
+    if (b.news === 'pumpMismatchCleared') return this.add({ t, kind: 'pump', channel: ch, text: `Channel ${ch}: contents and programme agree` });
+    const what = b.kind === 'drip' ? 'Bag' : 'Syringe';
+    const n = b.notice as { shownAt?: number } | null;
+    if (n && typeof n.shownAt === 'number') return this.add({ t: n.shownAt, kind: 'pump', channel: ch, text: `Channel ${ch}: mismatch notice shown on the pump` });
+    this.add({ t, kind: 'pump', channel: ch, text: `Channel ${ch}: ${what} and programme differ (${String(b.text)})` });
   }
 
   /** L4: a learner remote's device key, the name Room setup gave it, its preparation and an infusion change's replaced rate. */
