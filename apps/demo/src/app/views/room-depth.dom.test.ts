@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // EEG plan E12: Room setup's "Depth of anaesthesia in this room". The choices are the engine's EEG registry (built
-// readers only: today the generic processed-EEG reader), with "Off" first; a choice is handed to the session, which
+// readers only: the generic processed-EEG reader and, since E7, the BIS-type reader), with "Off" first; a choice is handed to the session, which
 // switches the patient's EEG on with that reader (eeg-model-session.dom.test.ts).
 import type { ManagedTransport, TransportStatus } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
@@ -18,13 +18,15 @@ describe("E12: Room setup's depth-of-anaesthesia device", () => {
     const card = v.el.querySelector('.room-depth') as HTMLElement;
     expect(card.querySelector('h2')?.textContent).toBe('Depth of anaesthesia in this room');
     const sel = card.querySelector('select') as HTMLSelectElement;
-    expect([...sel.options].map((o) => [o.value, o.textContent])).toEqual([['', 'Off: no EEG device'], ['generic', 'Processed EEG (generic)']]);
+    expect([...sel.options].map((o) => [o.value, o.textContent])).toEqual([['', 'Off: no EEG device'], ['generic', 'Processed EEG (generic)'], ['bisType', 'BIS-type index, computed from published components']]);
     expect(sel.value).toBe('');
     sel.value = 'generic';
     sel.dispatchEvent(new Event('change'));
+    sel.value = 'bisType'; // E7: the BIS-type reader beside the generic one
+    sel.dispatchEvent(new Event('change'));
     sel.value = '';
     sel.dispatchEvent(new Event('change'));
-    expect(chosen).toEqual(['generic', null]);
+    expect(chosen).toEqual(['generic', 'bisType', null]);
     expect(card.textContent).toContain("switches the patient's EEG on");
   });
   it('the kept choice is shown; without the session\'s choice there is no card', () => {

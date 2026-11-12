@@ -331,7 +331,10 @@ export function restingPatient(p: PatientProfile | undefined): PatientProfile | 
 
 class Engine implements MonitorEngine {
   readonly version = engineKey; // `${version}+${build}`, the snapshot compatibility key
-  private readonly seed: number;
+  /** The run's seed. Every random stream is hash(seed, name) (rng/sfc32.ts): the running ones carry their state in the
+   * snapshot, and one that starts later (the EEG's, at `device eeg on`) is seeded from this, so restore() adopts the
+   * snapshot's seed (N109): a follower continues every stream exactly where the host's is. */
+  private seed: number;
   private readonly lookTicks: number;
   private readonly mainsHz: 50 | 60;
   private st: PipelineState;
@@ -554,6 +557,10 @@ class Engine implements MonitorEngine {
     if (s.schema !== 'pme-snapshot/1') throw new Error(`unknown snapshot schema ${String(s.schema)}`);
     // Exact replay is promised only on the same build and the same filter design.
     if (s.engineVersion !== this.version) throw new Error(`snapshot is from engine version ${s.engineVersion}, this is ${this.version}`);
+    // The host's seed. Every pme-snapshot/1 has carried it since the first engine; one without a uint32 seed (hand-made
+    // or damaged) keeps this engine's own: the running streams still continue from the state, and a stream started
+    // later cannot be the host's, because nothing in that snapshot says what the host's seed was.
+    const seed = Number.isInteger(s.seed) && s.seed >= 0 && s.seed <= 0xffffffff ? s.seed : this.seed;
     const data = decodeState(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState; groups?: Array<[string, number]> };
     data.st.pk ??= createPkState(pkPatientOf(undefined)); // Absent in older snapshots
     data.st.pkHooks ??= createHookState();
@@ -566,12 +573,13 @@ class Engine implements MonitorEngine {
       rebaselineOrgans(data.st.organs, this.organsCtx(data.st));
     }
     data.st.blood ??= createBloodState(undefined); // Absent in older snapshots
-    data.st.neuro ??= createNeuroState(undefined, this.seed); // Absent in older snapshots
-    data.st.rng.ectopyHazard ??= seedStream(this.seed, 'ectopyHazard'); // E133's stream, absent in older snapshots
+    data.st.neuro ??= createNeuroState(undefined, seed); // Absent in older snapshots
+    data.st.rng.ectopyHazard ??= seedStream(seed, 'ectopyHazard'); // E133's stream, absent in older snapshots
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
     data.st.hemo.circ.svRest ??= data.st.hemo.circ.ref.sv; // a snapshot without SV₀ keeps the reference it was drawn with
+    this.seed = seed;
     this.st = data.st;
     this.queue = data.queue;
     this.groupTicks = new Map(data.groups ?? []); // The bookmark's pending groups, never the discarded future's
@@ -1013,7 +1021,7 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const neuro = validateNeuroCommand(cmd); // After pk (the chain); null for every drug/vaporiser event
     if (neuro !== null) return neuro;
-    const eeg = validateEegCommand(cmd, this.st.eeg !== undefined, EEG_MODEL_IDS); // `device eeg …` only (null otherwise)
+    const eeg = validateEegCommand(cmd, this.eegOnWhenApplied(), EEG_MODEL_IDS); // `device eeg …` only (null otherwise)
     if (eeg !== null) return eeg;
     const organs = validateOrgansCommand(cmd); // After pk (and neuro), before blood/endo/resp — its own ids only (null otherwise)
     if (organs !== null) return organs;
@@ -1294,6 +1302,17 @@ class Engine implements MonitorEngine {
 
   /** `device eeg on|off` creates or drops the EEG state, its device and its channel; `model` starts the chosen device
    * afresh (a different instrument on the same electrodes); the other actions set the running EEG. */
+  /** Whether the EEG will be on when a command dispatched now is applied: the last `device eeg on|off` still queued
+   * decides, else the state. Room setup sends `on` and its `model` together (session.ts sendEegModel); judged against the
+   * state alone, the `model` met an EEG still off and was refused, leaving the default reader (found with E7). */
+  private eegOnWhenApplied(): boolean {
+    for (let i = this.queue.length - 1; i >= 0; i--) {
+      const c = (this.queue[i] as { cmd: Command }).cmd as { type: string; action?: { device?: string; action?: string } };
+      if (c.type === 'device' && c.action?.device === 'eeg' && (c.action.action === 'on' || c.action.action === 'off')) return c.action.action === 'on';
+    }
+    return this.st.eeg !== undefined;
+  }
+
   private applyEeg(ps: PipelineState, a: EegDeviceAction): void {
     if (a.action === 'on') {
       if (!ps.eeg) {
