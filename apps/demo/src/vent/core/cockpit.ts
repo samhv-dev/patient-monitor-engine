@@ -6,9 +6,10 @@
 import {
   bannerText, clamp, DT, loadPreset, lungBaseOf, manualBreath, modeName, monitorMatchedFlow, resetPhysics, runScenario,
   setMode, silenceAlarms, toggleHold, ventAlarms,
-  type Measured, type PresetId, type VentAlarm, type VentConfig, type VentDriver, type VentPhysics, type VentState,
+  type Measured, type PresetId, type VentAlarm, type VentConfig, type VentDriver, type VentPhase, type VentPhysics, type VentState,
 } from '@pme/ventilator';
-import type { Change, ChangeSource, FaceSpec, NumKey } from './types.ts';
+import { createRecorder } from './record.ts';
+import type { BreathRecord, Change, ChangeSource, FaceSpec, NumKey } from './types.ts';
 
 export interface SampleBuffers {
   /** Displayed airway pressure (cmH₂O), flow (L/min), volume (mL) and sim time (s), one sample per 5 ms step. */
@@ -16,12 +17,15 @@ export interface SampleBuffers {
   readonly f: readonly number[];
   readonly v: readonly number[];
   readonly t: readonly number[];
+  /** V1: each sample's phase (a face colours its traces by it) and the volume since that breath started (mL). */
+  readonly ph: readonly VentPhase[];
+  readonly vb: readonly number[];
 }
 
 export interface AlarmView {
   /** The banner: silenced countdown, the first active alarm, or none. */
   banner: { cls: '' | 'armed' | 'silenced'; text: string };
-  /** The model's active alarms, through the face's alarm profile (V3; V0 passes them through). */
+  /** The model's active alarms through the face's alarm profile: V1 applies its `show` and `priority` (V3 delays, latching). */
   active: VentAlarm[];
 }
 
@@ -39,6 +43,8 @@ export interface Cockpit {
   lungLinked(): boolean;
 
   readonly buf: SampleBuffers;
+  /** V1: the last complete breath (live while the display is frozen), or null before the first. */
+  record(): BreathRecord | null;
   clearBuf(): void;
   readonly frozen: boolean;
   toggleFreeze(): void;
@@ -77,22 +83,38 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   const vs = d.vs;
   const S = vs.cfg;
   const P = vs.p;
-  const BUF = { p: [] as number[], f: [] as number[], v: [] as number[], t: [] as number[] };
+  const BUF = { p: [] as number[], f: [] as number[], v: [] as number[], t: [] as number[], ph: [] as VentPhase[], vb: [] as number[] };
+  const rec = createRecorder();
+  if (face.init) Object.assign(S, face.init);
   let frozen = false;
   const changes = new Set<(c: Change) => void>();
   const steps = new Set<() => void>();
-  const emit = (source: ChangeSource, keys: ReadonlyArray<keyof VentConfig> = []) => { for (const fn of [...changes]) fn({ source, keys }); };
+  /** V1: the face's invariants restored after any change (FaceSpec.settle), before anyone hears of it. */
+  const settle = (keys: ReadonlyArray<keyof VentConfig>): ReadonlyArray<keyof VentConfig> => {
+    const fix = face.settle?.(S);
+    if (!fix) return keys;
+    const k = (Object.keys(fix) as Array<keyof VentConfig>).filter((x) => S[x] !== fix[x]);
+    if (!k.length) return keys;
+    Object.assign(S, fix);
+    return [...keys, ...k.filter((x) => !keys.includes(x))];
+  };
+  const emit = (source: ChangeSource, keys: ReadonlyArray<keyof VentConfig> = []) => {
+    const all = settle(keys);
+    for (const fn of [...changes]) fn({ source, keys: all });
+  };
+  settle([]); // the face's starting state is settled too (VC's flow from its set Ti)
   /** The drawer edits the lung before the first lungState and the stand-alone lung (link/core.ts patchVent); linked, lungState
    *  overwrites C, R, flow limitation and pleural pressure every second (Stage V.1) — the base keeps the patient's own effort. */
   const syncBase = () => { d.core.lung.base = lungBaseOf(S); };
-  const clearBuf = () => { BUF.p.length = BUF.f.length = BUF.v.length = BUF.t.length = 0; };
+  const clearBuf = () => { BUF.p.length = BUF.f.length = BUF.v.length = BUF.t.length = BUF.ph.length = BUF.vb.length = 0; };
   const keep = () => Math.ceil(((S.sweepSec || 12) * 1.15) / DT) + 40;
 
   d.onStep = () => {
+    rec.step(vs);
     if (frozen) return;
-    BUF.p.push(P.dispPaw); BUF.f.push(P.dispFlowLpm); BUF.v.push(P.V); BUF.t.push(P.t);
+    BUF.p.push(P.dispPaw); BUF.f.push(P.dispFlowLpm); BUF.v.push(P.V); BUF.t.push(P.t); BUF.ph.push(P.phase); BUF.vb.push(Math.max(0, P.V - P.breathVstart));
     const k = keep();
-    while (BUF.t.length > k) { BUF.p.shift(); BUF.f.shift(); BUF.v.shift(); BUF.t.shift(); }
+    while (BUF.t.length > k) { BUF.p.shift(); BUF.f.shift(); BUF.v.shift(); BUF.t.shift(); BUF.ph.shift(); BUF.vb.shift(); }
     for (const fn of [...steps]) fn();
   };
   d.onControl = () => emit('remote'); // a remote patch (link page, demo, host)
@@ -110,6 +132,9 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     if (source !== 'remote' && (keys.includes('vcFlow') || keys.includes('pause'))) matched = false;
   };
 
+  const prof = face.alarmProfile;
+  const profiled = (a: VentAlarm[]): VentAlarm[] => (prof ? a.filter((x) => !prof.show || prof.show.includes(x.id)).map((x) => ({ ...x, priority: prof.priority?.[x.id] ?? x.priority })) : a);
+
   let raf = 0;
   const c: Cockpit = {
     d, vs, cfg: S, p: P, face,
@@ -117,6 +142,7 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     modeName: () => modeName(S),
     lungLinked: () => d.core.lung.last !== null,
     buf: BUF,
+    record: () => rec.last(),
     clearBuf,
     get frozen() { return frozen; },
     toggleFreeze() { frozen = !frozen; emit('action'); },
@@ -139,15 +165,17 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     chooseMode(name) {
       const m = face.modes[name];
       if (!m) return false;
+      const carried = m.carry?.(S) ?? {}; // from the settings of the mode being left
       setMode(vs, m.mode);
       if (m.patch) Object.assign(S, m.patch);
+      Object.assign(S, carried);
       S.modeLabel = m.label;
-      emit('mode', ['mode', 'modeLabel', ...(Object.keys(m.patch ?? {}) as Array<keyof VentConfig>)]);
+      emit('mode', ['mode', 'modeLabel', ...(Object.keys({ ...m.patch, ...carried }) as Array<keyof VentConfig>)]);
       return true;
     },
     preset(id) { loadPreset(vs, id); syncBase(); emit('preset'); },
     scenario(id) { runScenario(vs, id); clearBuf(); emit('scenario'); },
-    alarms: () => ({ banner: bannerText(vs), active: ventAlarms(vs) }),
+    alarms: () => ({ banner: bannerText(vs), active: profiled(ventAlarms(vs)) }),
     silence() { silenceAlarms(vs); emit('action'); },
     onChange: (fn) => (changes.add(fn), () => void changes.delete(fn)),
     onStep: (fn) => (steps.add(fn), () => void steps.delete(fn)),

@@ -53,7 +53,9 @@ function onEvent(e: EngineEvent) {
 }
 
 function loadVent(id: ProfileId, patch: Partial<VentConfig> = {}) {
-  $<HTMLIFrameElement>('vent').src = `../vent-hamilton.html?link=${session}&profile=${id}`;
+  // the ventilator's face passes through (`dev/vent-link.html?face=edp-ts`, plan vent-skin-edp-ts.md §4.5)
+  const face = new URLSearchParams(location.search).get('face');
+  $<HTMLIFrameElement>('vent').src = `../vent-hamilton.html?link=${session}&profile=${id}${face ? `&face=${encodeURIComponent(face)}` : ''}`;
   $<HTMLIFrameElement>('vent').onload = () => {
     post({ patch });
     port.post({ v: 1, kind: 'time', action: 'scale', value: Number($<HTMLSelectElement>('speed').value) });

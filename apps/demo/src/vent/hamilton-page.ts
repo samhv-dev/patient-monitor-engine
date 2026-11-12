@@ -12,6 +12,11 @@ import { h, setText } from '../app/ui.ts';
 import { PHONE_WORDS, pinForm, refusalWords } from '../app/views/pin-form.ts';
 import { signInVentilator, type VentDevice } from './device-link.ts';
 import { faceFromLocation, mountFace } from './faces/index.ts';
+import { hostLang } from '../app/i18n/lang.ts';
+
+/** An app string through the app's Persian table when the app is in Persian (plan vent-skin-edp-ts.md §6); loaded only then. */
+const translate = (en: string): Promise<string | null> =>
+  hostLang() === 'fa' ? import('../app/i18n/fa-dom.ts').then((m) => m.faText(en, m.faPass())) : Promise.resolve(null);
 
 const q = new URLSearchParams(location.search);
 const pid = q.get('profile');
@@ -101,7 +106,7 @@ function devicePage(code: string, relay: string): void {
         port = createRelayPort(wire, { settings: () => (drv ? settingsOf(drv) : null) });
         drv = createVentDriver(port, profile);
         driver = drv;
-        mountFace(drv, faceFromLocation(location), { linked: true });
+        mountFace(drv, faceFromLocation(location), { linked: true, translate });
         (window as unknown as { __vent: VentDriver }).__vent = drv; // e2e hook
       }
       port?.setHidden(document.visibilityState === 'hidden'); // its settings at once: the host knows what it would hand over
@@ -142,6 +147,6 @@ else {
   const driver = createVentDriver(port, profile);
   if (port && !embedded) sayWindowSettings(port, driver);
   // the face (`?face=`, plan vent-skin-edp-ts.md §4.5); linked, the Hamilton face matches the monitor ventilator's flow in VC
-  mountFace(driver, faceFromLocation(location), { linked: port !== null });
+  mountFace(driver, faceFromLocation(location), { linked: port !== null, translate });
   (window as unknown as { __vent: typeof driver }).__vent = driver; // e2e hook
 }

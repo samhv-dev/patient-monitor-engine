@@ -11,25 +11,42 @@ import { button, h, seg, select, setText, stepper } from '../ui.ts';
 import { lungDetail, lungLabel } from '../glossary.ts';
 import type { PanelCtx } from './ctx.ts';
 
-const AIRWAY: Array<[string, string]> = [
+/** The airway states the sheet stages (the builder's Script offers the same, builder/script-commands.ts). */
+export const AIRWAY: Array<[string, string]> = [
   ['patent', 'Patent'], ['obstructed', 'Obstructed'], ['bronchospasm', 'Bronchospasm'], ['apnoea', 'Apnoea'], ['disconnected', 'Circuit disconnected'],
   ['oesophageal', 'Tube in the oesophagus'], ['endobronchial', 'Tube endobronchial'],
 ];
+
+/** Who breathes, in the sheet's words. */
+export const BREATHING: Array<[string, string]> = [['spontaneous', 'Spontaneous'], ['bvm', 'Bag-mask'], ['ventilator', 'Ventilator']];
+/** The bag's and the ventilator's settings: the sheet's steppers (their limits, steps and first values). */
+export const VENT_LIMITS = {
+  rr: { label: 'Rate', unit: '/min', min: 4, max: 40, step: 1, value: 12 },
+  vt: { label: 'Tidal volume', unit: 'mL', min: 50, max: 1000, step: 10, value: 500 },
+  peep: { label: 'PEEP', unit: 'cmH₂O', min: 0, max: 25, step: 1, value: 5 },
+  fio2: { label: 'FiO₂', unit: '%', min: 21, max: 100, step: 1, value: 50 },
+} as const;
+/** The oxygen devices, in the sheet's words. */
+export const O2_CHOICES: Array<[O2Device, string]> = [['none', 'Off (room air)'], ['nasal', 'Nasal cannula'], ['mask', 'Face mask']];
+/** The sheet's airway command. */
+export const airwayCmd = (state: string): Record<string, unknown> => ({ type: 'applyEvent', event: { kind: 'airway', state } });
+/** The sheet's breathing command: the FiO₂ is typed in %. */
+export const breathingCmd = (source: string, rr: number, vtMl: number, peep: number, fio2Pct: number): Record<string, unknown> => ventilation(source, rr, vtMl, peep, fio2Pct / 100);
 
 export function airwayTab(c: PanelCtx): HTMLElement {
   const { staging } = c;
   const stage = (cmd: Record<string, unknown>, key: string) => staging.submit(cmd as never, key, describeCommand(cmd));
 
   const airway = select('Airway', AIRWAY, 'patent');
-  const airwayRow = h('div', { class: 'row' }, airway.el, button('Stage', () => stage({ type: 'applyEvent', event: { kind: 'airway', state: airway.sel.value } }, 'airway')));
+  const airwayRow = h('div', { class: 'row' }, airway.el, button('Stage', () => stage(airwayCmd(airway.sel.value), 'airway')));
 
   let source = 'spontaneous';
-  const rr = stepper({ label: 'Rate', unit: '/min', min: 4, max: 40, step: 1, value: 12 });
-  const vt = stepper({ label: 'Tidal volume', unit: 'mL', min: 50, max: 1000, step: 10, value: 500 });
-  const peep = stepper({ label: 'PEEP', unit: 'cmH₂O', min: 0, max: 25, step: 1, value: 5 });
-  const fio2 = stepper({ label: 'FiO₂', unit: '%', min: 21, max: 100, step: 1, value: 50 });
+  const rr = stepper({ ...VENT_LIMITS.rr });
+  const vt = stepper({ ...VENT_LIMITS.vt });
+  const peep = stepper({ ...VENT_LIMITS.peep });
+  const fio2 = stepper({ ...VENT_LIMITS.fio2 });
   const settings = h('div', { class: 'grid2' }, f('Rate (/min)', rr.el), f('Tidal volume (mL)', vt.el), f('PEEP (cmH₂O)', peep.el), f('FiO₂ (%)', fio2.el));
-  const src = seg<string>('Breathing', [['spontaneous', 'Spontaneous'], ['bvm', 'Bag-mask'], ['ventilator', 'Ventilator']], source, (v) => {
+  const src = seg<string>('Breathing', BREATHING, source, (v) => {
     source = v;
     settings.hidden = v === 'spontaneous';
   });
@@ -61,7 +78,7 @@ export function airwayTab(c: PanelCtx): HTMLElement {
     flow.el.hidden = o2 === 'none';
     showO2();
   };
-  const o2Seg = seg<O2Device>('Oxygen', [['none', 'Off (room air)'], ['nasal', 'Nasal cannula'], ['mask', 'Face mask']], o2, (v) => ((o2 = v), syncO2()));
+  const o2Seg = seg<O2Device>('Oxygen', O2_CHOICES, o2, (v) => ((o2 = v), syncO2()));
   flow.sel.addEventListener('change', showO2);
   const o2Stage = button('Stage', () => {
     if (block()) return showO2(); // never sent while the bag, a ventilator or an airway device is in use
@@ -102,7 +119,7 @@ export function airwayTab(c: PanelCtx): HTMLElement {
     h('h3', {}, 'Airway'), airwayRow,
     h('h3', {}, 'Breathing'), src, settings,
     h('div', { class: 'row' },
-      button('Stage', () => stage(ventilation(source, rr.value, vt.value, peep.value, fio2.value / 100), 'ventilation')),
+      button('Stage', () => stage(breathingCmd(source, rr.value, vt.value, peep.value, fio2.value), 'ventilation')),
       h('a', { class: 'btn ghost', href: hrefOf('vent') }, 'Open the ventilator')),
     h('h3', {}, 'Oxygen'), o2Seg, flow.el, o2Hint,
     h('div', { class: 'row' }, o2Stage),

@@ -34,6 +34,9 @@ export interface Remaining {
   src: string | null;
 }
 
+/** What the record and the Debrief say when `beyondData` is true (§7.2: no extrapolation, the last point's r, flagged). */
+export const BEYOND_DATA_WORDS = "beyond the source's data";
+
 /** Seconds in an hour: the points are in hours, the age in seconds [ENG: conversion]. */
 const S_PER_H = 3600;
 /** A mass unit in mg [ENG: conversion]. */
