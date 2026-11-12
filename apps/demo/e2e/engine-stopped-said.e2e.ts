@@ -6,7 +6,7 @@
 // second. The instructor restarts the patient and the phone follows again.
 // Before brief 195 the worker-pump path froze with only a console line, and on every path the phone said "The
 // instructor's monitor is not answering" three seconds after the stop, as for a host that had left.
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
 import { resolve } from 'node:path';
 import { devices, expect, test, type Page } from '@playwright/test';
@@ -15,7 +15,7 @@ import { openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
-let relay: ChildProcessWithoutNullStreams | null = null;
+let relay: ChildProcess | null = null;
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 test.afterEach(async () => {
