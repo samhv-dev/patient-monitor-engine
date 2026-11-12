@@ -31,7 +31,8 @@ and nothing uploaded, when every attempt passed). The job's warning line for a r
 the folder, `test-results/<test>/`, of the failed attempt. In that folder:
 
 - `trace.zip`: the first attempt's Playwright trace, every context in one file (`npx playwright show-trace trace.zip`,
-  or drop it on trace.playwright.dev): the actions, each page's console and network, DOM snapshots. A trace exists only
+  or drop it on trace.playwright.dev): the actions with their timing, each page's console, network and errors (no DOM
+  snapshots or screencast: they slowed CI's passing path). A trace exists only
   for a failed FIRST attempt (`trace: retain-on-first-failure`, playwright.config.ts); a failed retry has the rest.
 - `evidence/index.json`: the pages that were open, in browser-context order; `evidence/<n>-<role>.json` per page: the
   application's own counters read at the end of the failed test function and again 1 s later (`atFailure`,
