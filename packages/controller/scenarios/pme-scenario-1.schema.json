@@ -122,7 +122,9 @@
     "sensorId": { "enum": ["ecg", "spo2", "nibp", "abp", "cvp", "pap", "co2", "temp"] },
     "eventKind": {
       "enum": ["drug", "fluid", "bleed", "airway", "ventilation", "preoxygenate", "cpr", "defib", "pacer", "line",
-               "surgical", "condition", "stimulus", "airwayDevice", "neuroProfile", "vaporiser", "infusion"]
+               "surgical", "condition", "stimulus", "airwayDevice", "neuroProfile", "vaporiser", "infusion", "lungCondition",
+               "tci", "mainstem", "recruit", "lab"],
+      "description": "The engine's applyEvent kinds a card may send. The schema checks `kind` only; for lungCondition, tci, mainstem, recruit and lab, validate.ts asks the engine's own validation hook (its fields' types, units and ranges are the engine's, written once there)."
     },
     "ramp": {
       "type": "object",

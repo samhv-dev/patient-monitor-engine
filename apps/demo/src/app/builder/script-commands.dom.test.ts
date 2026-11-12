@@ -6,8 +6,11 @@
 // command of the library that the form can say is read into it and built back to the same command, and an untouched
 // edit keeps the card's very object; the commands it cannot say are named and stay as the card has them. (4) Through
 // the page, a card scripting every such kind is drawn, touched, edited untouched and exported byte-identical, and a new
-// entry of each kind is accepted by the validator. (5) The two kinds the schema refuses (lung condition, TCI).
-import { SCENARIO_SCHEMA, validateScenario } from '@pme/controller/scenario';
+// entry of each kind is accepted by the validator. (5) Brief 174: the five kinds the format gained (a lung condition,
+// by the Airway sheet's builder; a TCI, a mainstem, a recruitment and a lab sample, by the physiology console's, the
+// wire's commands), refused in place in the validator's words, and the library unchanged.
+import { DRUG_IDS, LAB_PANELS } from '@pme/engine-core';
+import { ENGINE_CHECKED_KINDS, eventRefusal, validateScenario } from '@pme/controller/scenario';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AckResult, CommandInput } from '@pme/controller';
 import { asFactory, MemoryIDB } from '../memory-idb.ts';
@@ -19,7 +22,7 @@ import { devicesTab } from '../panel/devices.ts';
 import { DEFAULT_SITE } from '../site.ts';
 import { LIBRARY } from '../scenarios.ts';
 import mhCard from '../showcase/showcase-mh-v2.json';
-import { lungCondition, tci } from '../../physiology-console/actions.ts';
+import { lab, mainstem, recruit, tci } from '../../physiology-console/actions.ts';
 import { commandForm } from './action-editor.ts';
 import { CHECK_DELAY_MS } from './checks.ts';
 import { Drafts, type Body } from './drafts.ts';
@@ -301,18 +304,99 @@ describe('the library’s commands read back: built again to the same command, o
   });
 });
 
-describe('the two kinds the plan names that the schema refuses in a card: a lung condition and a TCI', () => {
-  it('the /1 command schema (which /2’s script reuses) has no lungCondition or tci event kind; the validator refuses each', () => {
-    const kinds = ((SCENARIO_SCHEMA as { definitions: Record<string, { enum?: string[] }> }).definitions.eventKind!.enum)!;
-    expect(kinds).not.toContain('lungCondition');
-    expect(kinds).not.toContain('tci');
-    for (const c of [lungCondition('bronchospasm', 0.67), tci('propofol', 3, 'effect')]) {
-      const doc = JSON.parse(JSON.stringify(MH)) as Rec;
-      (doc.script as Rec[])[0]!.commands = [c];
-      const r = validateScenario(doc);
-      expect(r.ok).toBe(false);
-      expect(!r.ok && r.errors.join('\n')).toContain('/script/0/commands/0/event/kind');
+describe('brief 174: the five kinds the format gained, in the Script’s form', () => {
+  it('a lung condition: the form and the Airway sheet’s own controls build the same command (severities, sides, Remove)', () => {
+    for (const [id, sev, side] of [['bronchospasm', '1', ''], ['ards', '0.33', ''], ['effusion', '0.67', 'L'], ['ptxTension', '1', 'R'], ['atelectasis', '0.67', '']] as const) {
+      for (const button of ['Stage', 'Remove']) {
+        const s = sheetRig(airwayTab);
+        s.choose('Condition', id);
+        s.seg('Severity', sev);
+        if (side) s.seg('Side', side);
+        s.after('Lung condition', button).click();
+        const f = formRig();
+        f.set('what', `lung:${id}`);
+        f.set('Severity', button === 'Remove' ? '0' : sev);
+        if (side) f.set('Side', side);
+        expect(f.add()).toEqual(s.out[0]);
+      }
     }
+    // the sheet's conditions are the form's, in its words
+    const s = sheetRig(airwayTab);
+    const sheetIds = [...[...s.el.querySelectorAll('select')].find((x) => x.labels?.[0]?.textContent === 'Condition')!.options].map((o) => [o.value, o.textContent]);
+    const f = formRig();
+    const formIds = [...f.by<HTMLSelectElement>('what').options].filter((o) => o.value.startsWith('lung:')).map((o) => [o.value.slice(5), o.textContent!.replace(/^Lung: /, '')]);
+    expect(formIds).toEqual(sheetIds);
+    expect(formIds.length).toBeGreaterThan(20);
+  });
+
+  it('a TCI, a mainstem, a recruitment and a lab sample: the form’s command equals the physiology console’s (the wire’s) and the engine takes it', () => {
+    const f = formRig();
+    const built: unknown[] = [];
+    f.set('what', 'tci:propofol');
+    f.set('Mode', 'effect');
+    f.set('Target (µg/mL)', '3');
+    built.push(f.add());
+    f.set('what', 'tci:remifentanil');
+    f.set('Mode', 'plasma');
+    f.set('Target (ng/mL)', '4');
+    built.push(f.add());
+    for (const v of ['both', 'left', 'right']) {
+      f.set('what', `mainstem:${v}`);
+      built.push(f.add());
+    }
+    f.set('what', 'recruit:');
+    f.set('Pressure (cmH₂O)', '40');
+    f.set('Held for (s)', '30');
+    built.push(f.add());
+    for (const p of LAB_PANELS) {
+      f.set('what', `lab:${p}`);
+      built.push(f.add());
+    }
+    const wire = [tci('propofol', 3, 'effect'), tci('remifentanil', 4, 'plasma'), mainstem('both'), mainstem('left'), mainstem('right'), recruit(40, 30), ...LAB_PANELS.map((p) => lab(p))];
+    expect(built).toEqual(wire);
+    for (const c of built) expect(eventRefusal((c as Rec).event)).toBeUndefined();
+    expect(LAB_PANELS).toEqual(['abg', 'vbg', 'chem', 'coag']);
+  });
+
+  it('the TCI offers the drugs the engine takes a TCI of, each with its concentration unit', () => {
+    const f = formRig();
+    const offered = [...f.by<HTMLSelectElement>('what').options].filter((o) => o.value.startsWith('tci:')).map((o) => o.value.slice(4));
+    expect(offered).toEqual(DRUG_IDS.filter((id) => eventRefusal({ kind: 'tci', drugId: id, mode: 'plasma', target: 1 }) === undefined));
+    expect(offered).toEqual(expect.arrayContaining(['propofol', 'remifentanil']));
+    expect(offered).not.toContain('rocuronium');
+  });
+
+  it('a number the engine refuses is not written: the field says the validator’s words (the engine’s) and Add waits', () => {
+    const f = formRig();
+    const addOff = () => [...f.el.querySelectorAll('button')].find((x) => x.textContent === 'Add')!.disabled;
+    f.set('what', 'recruit:');
+    expect(f.el.textContent).toContain('Waits for every number.');
+    f.set('Pressure (cmH₂O)', '100');
+    f.set('Held for (s)', '30');
+    const why = eventRefusal({ kind: 'recruit', pressureCmH2O: 100, durationS: 30 })!;
+    expect(why).toBeTruthy();
+    expect(f.el.textContent).toContain(`${why}: not written`);
+    expect(addOff()).toBe(true);
+    // the same words the validator prints for that command in a card
+    const doc = JSON.parse(JSON.stringify(MH)) as Rec;
+    (doc.script as Rec[])[0]!.commands = [recruit(100, 30)];
+    expect(validateScenario(doc)).toMatchObject({ ok: false, errors: [`/script/0/commands/0/event: ${why}`] });
+    f.set('Pressure (cmH₂O)', '40');
+    expect(f.el.textContent).not.toContain('not written');
+    expect(addOff()).toBe(false);
+    f.set('what', 'tci:propofol');
+    f.set('Target (µg/mL)', '500');
+    expect(f.el.textContent).toContain(`${eventRefusal({ kind: 'tci', drugId: 'propofol', mode: 'effect', target: 500 })}: not written`);
+    expect(addOff()).toBe(true);
+    // no limit of the form's own: the number inputs carry none
+    for (const i of f.el.querySelectorAll('input')) expect([i.min, i.max]).toEqual(['', '']);
+  });
+});
+
+describe('the library: every card is valid and scripts none of the five (no card changes meaning)', () => {
+  it.each(LIBRARY.map((c) => [c.id, c] as const))('%s', (_id, card) => {
+    expect(validateScenario(card.doc)).toMatchObject({ ok: true });
+    expect(commandsOf(card.doc).filter((c) => c.type === 'applyEvent' && ENGINE_CHECKED_KINDS.includes(String((c.event as Rec).kind)))).toEqual([]);
   });
 });
 
@@ -326,6 +410,13 @@ const ALL_KINDS: Rec[] = [
   { type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 } },
   { type: 'attachSensor', sensor: 'abp', state: 'connected' },
   { type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 3 } },
+  // brief 174
+  { type: 'applyEvent', event: { kind: 'lungCondition', id: 'bronchospasm', severity: 0.67 } },
+  { type: 'applyEvent', event: { kind: 'lungCondition', id: 'ptxTension', severity: 1, side: 'R' } },
+  { type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 3 } },
+  { type: 'applyEvent', event: { kind: 'mainstem', ventilated: 'right' } },
+  { type: 'applyEvent', event: { kind: 'recruit', pressureCmH2O: 40, durationS: 30 } },
+  { type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } },
 ];
 const FIXTURE: Rec = { ...MH, id: 'mh-162-fixture', script: [...(MH.script as Rec[]), { id: 'everyKind', on: 'phase:earlySigns', src: 'PLACEHOLDER: a test fixture', commands: ALL_KINDS }] };
 
@@ -410,6 +501,44 @@ describe('the Script section in the page (piece 162)', () => {
     expect(Object.keys(cmds[1]!)[0]).toBe('$comment');
     expect(cmds[3]).toEqual({ type: 'applyEvent', event: { kind: 'defib', action: 'charge', energyJ: 150 } });
     expect(cmds[4]).toEqual(ALL_KINDS[4]);
+    expect(e.q('.sb-checks li').textContent).toMatch(/^The validator accepts this draft/);
+  });
+
+  it('brief 174: the five kinds edited through the page; a new entry of each is accepted by the validator', async () => {
+    const e = await open(FIXTURE);
+    const at = ALL_KINDS.findIndex((c) => (c.event as Rec | undefined)?.kind === 'recruit') + 1;
+    e.byLabel<HTMLButtonElement>(`Entry 2: edit command ${at}`).click();
+    expect(e.byLabel(`Entry 2, command ${at}: Pressure (cmH₂O)`).value).toBe('40');
+    e.set(e.byLabel(`Entry 2, command ${at}: Held for (s)`), '20');
+    e.press('Save the command');
+    const lung = ALL_KINDS.findIndex((c) => (c.event as Rec | undefined)?.id === 'ptxTension') + 1;
+    e.byLabel<HTMLButtonElement>(`Entry 2: edit command ${lung}`).click();
+    expect(e.byLabel<HTMLSelectElement>(`Entry 2, command ${lung}: Side`).value).toBe('R');
+    e.set(e.byLabel<HTMLSelectElement>(`Entry 2, command ${lung}: Side`), 'L');
+    e.press('Save the command');
+    const cmds = ((await e.body()).script as Rec[])[1]!.commands as Rec[];
+    expect(cmds[at - 1]).toEqual({ type: 'applyEvent', event: { kind: 'recruit', pressureCmH2O: 40, durationS: 20 } });
+    expect(cmds[lung - 1]).toEqual({ type: 'applyEvent', event: { kind: 'lungCondition', id: 'ptxTension', severity: 1, side: 'L' } });
+    const items: Array<[string, Array<[string, string]>]> = [
+      ['lung:asthma', [['Severity', '0.33']]], ['lung:effusion', [['Severity', '1'], ['Side', 'L']]], ['tci:propofol', [['Mode', 'plasma'], ['Target (µg/mL)', '4']]],
+      ['mainstem:left', []], ['recruit:', [['Pressure (cmH₂O)', '30'], ['Held for (s)', '40']]], ['lab:vbg', []],
+    ];
+    for (const [what, fields] of items) {
+      e.press('Add a script entry');
+      e.set(e.byLabel('New entry: id'), `e${what.replace(/[^A-Za-z0-9]/g, '')}`);
+      e.set(e.byLabel<HTMLSelectElement>('New command: what'), what);
+      for (const [l, v] of fields) e.set(e.byLabel(`New command: ${l}`), v);
+      e.press('Add the entry');
+    }
+    const script = (await e.body()).script as Rec[];
+    expect(script.slice(-items.length).map((x) => x.commands)).toEqual([
+      [{ type: 'applyEvent', event: { kind: 'lungCondition', id: 'asthma', severity: 0.33 } }],
+      [{ type: 'applyEvent', event: { kind: 'lungCondition', id: 'effusion', severity: 1, side: 'L' } }],
+      [{ type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', mode: 'plasma', target: 4 } }],
+      [{ type: 'applyEvent', event: { kind: 'mainstem', ventilated: 'left' } }],
+      [{ type: 'applyEvent', event: { kind: 'recruit', pressureCmH2O: 30, durationS: 40 } }],
+      [{ type: 'applyEvent', event: { kind: 'lab', panel: 'vbg' } }],
+    ]);
     expect(e.q('.sb-checks li').textContent).toMatch(/^The validator accepts this draft/);
   });
 
