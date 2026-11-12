@@ -2,7 +2,7 @@
 // no function") the Devices & alarms tab shows "Pause alarms" disabled with the reason in clinical words; the keyboard
 // shortcut's refusal is a toast with that reason (it was silent); on a monitor with a pause (Philips-like) the control
 // is enabled and pauses the alarms for the skin's time. Both browsers.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, sheet, startVite, TEACH2 } from './app-support.ts';
 

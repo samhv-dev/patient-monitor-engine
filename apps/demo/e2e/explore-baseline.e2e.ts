@@ -1,5 +1,5 @@
 // FU-11 Task H2 (presenter note D5): Explore's baseline is taken at 1 minute of sim time, opened or not.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, speedV2, startVite, TEACH2 } from './app-support.ts';
 

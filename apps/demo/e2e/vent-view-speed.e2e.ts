@@ -1,5 +1,5 @@
 // FU-11 Task H1 (presenter note D3): the Ventilator view's cockpit runs at the session's speed after a later change.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, speedV2, startVite, TEACH2 } from './app-support.ts';
 

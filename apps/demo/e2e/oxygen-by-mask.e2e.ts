@@ -3,7 +3,7 @@
 // Vitals tab goes from 21 % to 60 %, the log and the Debrief's timeline print the line, Off brings back room air, and on
 // the ventilator the control is disabled and says what is in use ("… FiO₂ 50 % from the ventilator.", UI review #13).
 // Driven through the visible UI only. Chromium only (one engine path; CI amendment rules).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { debriefLinkV2, deliver, openApp, sheet, startVite } from './app-support.ts';
 

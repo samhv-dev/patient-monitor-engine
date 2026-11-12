@@ -12,7 +12,7 @@
 // PME_SHOTS=1 (Chromium) it writes the gate screenshots to docs/gates/fx25/ (FX25_SHOT_TAG=before on main).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { shot8 } from './indexed-png.ts';
 import { openApp, sheet, startVite, TEACH2 } from './app-support.ts';

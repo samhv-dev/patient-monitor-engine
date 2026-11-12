@@ -1,6 +1,6 @@
 // FU-11 Task H4 (R50 F10): a new patient (patient restart, scenario load) unloads the Ventilator view's cockpit — it no
 // longer ventilates the next case with the last case's settings; the next visit loads a fresh one, as on a fresh page.
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

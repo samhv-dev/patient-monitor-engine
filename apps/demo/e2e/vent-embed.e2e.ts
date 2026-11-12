@@ -6,7 +6,7 @@
 import { mkdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 
 const url = pathToFileURL(resolve(import.meta.dirname, '../dist/embed/ventilator-monitor.html')).href;
 const shots = resolve(import.meta.dirname, '../../../docs/gates/stage-8b');

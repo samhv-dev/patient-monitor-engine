@@ -7,7 +7,7 @@
 // the Linux runner's fonts may lack a glyph's ToUnicode entry; PME_PDF_TEXT=1 reads it anywhere).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { pdfInfo, pdfText, squash } from './pdf-text.ts';
 import { debriefLinkV2, openApp, pillV2, scanEngineIds, sheet, closeSheets, speedV2, startVite } from './app-support.ts';

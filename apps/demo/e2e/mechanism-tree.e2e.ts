@@ -4,7 +4,7 @@
 // its default view (the trigger and 4 generations, the folds), which fits one screen at 1440 × 900 without scrolling and
 // prints on one A4 page; "+n" draws more, "path to" ART M leaves a route on each trigger, and the whole tree (the T1
 // pins) is one button away.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import { resolve } from 'node:path';
 import { createServer, type ViteDevServer } from 'vite';
 import { openApp } from './app-support.ts';

@@ -10,7 +10,7 @@
 import { mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import { build, preview, type PreviewServer } from 'vite';
 
 let server: PreviewServer;

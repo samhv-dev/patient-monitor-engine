@@ -2,7 +2,7 @@
 // Run: PW_SYSTEM_CHROME=1 pnpm exec playwright test apps/demo/e2e/validation-review.e2e.ts
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;

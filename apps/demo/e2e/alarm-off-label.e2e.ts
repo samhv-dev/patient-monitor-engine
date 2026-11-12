@@ -1,6 +1,6 @@
 // FU-11 Task H3 (showcase kit K3, presenter note D4): the "all limit alarms off" state is named for what it is;
 // Sound is reachable below 900 px.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

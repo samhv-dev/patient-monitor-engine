@@ -1,6 +1,6 @@
 // FU-11 Task F3 (R50 M4): the session bar's Pause button shows what the instructor asked for while the host has not yet
 // answered — the 1 s redraw from the host's state must not flip it back (a quick second click then sent the wrong action).
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, pillV2, startVite, TEACH2 } from './app-support.ts';
 

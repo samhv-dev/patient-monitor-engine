@@ -3,7 +3,7 @@
 // task: at background QoS the panel was never seen, the page drew nothing for 11–13 s and a click came back after the
 // span. Here the main thread is forced (no transferControlToOffscreen, so canUseWorker() is false): the panel shows, the
 // page keeps drawing frames while the span runs, and the span is the whole span.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { ffV2, openApp, startVite } from './app-support.ts';
 

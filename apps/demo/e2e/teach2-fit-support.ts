@@ -4,7 +4,7 @@
 // R9). Screenshots go to TEACH2_SHOTS (default: the test's output folder) for the owner's look.
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 import { app, ffToPhase, openMhV2, pressPath } from './mh-v2-path.ts';

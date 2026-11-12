@@ -1,7 +1,7 @@
 // FU-4 evidence page smoke (plan Task 23): the owner's scenario (tamponade → propofol 2 mg/kg at 11 min) reaches a pulseless
 // state within 16 sim-min and the page logs no errors. ≈ 4 min of ×4 simulation: Chromium only (G7g/G7x rule).
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;
