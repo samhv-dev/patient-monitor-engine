@@ -7,7 +7,8 @@
 // under "Recognised"; the marks now keep their width and the note field gives up width first (200 px down to 96 px).
 // The learner's card comes through the Link's own path for the host's `prep` news (`link.preps.apply`, as link.ts does on
 // the event): the real phone-to-host path is learner-remote.e2e.ts's. PR 459's pump mismatch card (`.ip2-pm`) is not on
-// main when this was written; the helper counts its buttons once it is.
+// main when this was written; the helper counts its buttons once it is. The dock is measured with six tools and again
+// with a seventh in Labs' place.
 // PME_208_SHOTS=<folder> writes a picture of each step there for the owner.
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
@@ -86,6 +87,19 @@ for (const size of DOCK_SIZES) {
         await check('patient-events', true);
       }
     }
+    // the seventh tool's place (ruling 3: Labs enters after Log, PR 451): a button of a tool's size and words in it, so
+    // the dock is measured as it will be; with six tools the marks' overlap of brief 185 does not show at 1280 px
+    await page.locator('.ip2-sheets .ip2-sheet:not([hidden]) .ip2-sheet-close').click();
+    await page.evaluate(() => {
+      const log = document.querySelector('.ip2-dock-tools button.ip2-tool[data-sheet=log]') as HTMLElement;
+      const labs = log.cloneNode(true) as HTMLElement;
+      labs.dataset.sheet = 'labs-place';
+      labs.textContent = 'Labs';
+      log.after(labs);
+    });
+    await check('seven tools', false);
+    await tool(page, 'patient').click();
+    await check('seven tools, patient', true);
     expect(found).toEqual([]);
   });
 }
