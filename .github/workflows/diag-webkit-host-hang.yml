@@ -41,7 +41,9 @@ jobs:
       - run: |
           apt-get update -qq && apt-get install -y -qq binutils python3 > /dev/null
           L=$(readlink -f /ms-playwright/webkit-*/minibrowser-wpe/lib/libWPEWebKit-2.0.so.1)
-          python3 .github/diag/strings_near.py $L 0x592439d 0x5924476 0x5928253 0x5921547 0x59226c2 0x5924b68 0x59a82f7 0x5afbea8 0x5919a6e 0x5910873 0x5918bea 0x59236c3
+          # the switches this build reads for its 2D canvas and Skia (environment variables, settings)
+          strings -n 8 $L | grep -E '^WEBKIT_|^WPE_|SKIA_|canvas-acceleration|Canvas.*Accelerat|CPU_RENDERING|GPU_RENDERING' | sort -u | head -120
+          for b in /ms-playwright/webkit-*/minibrowser-wpe/bin/MiniBrowser /ms-playwright/webkit-*/minibrowser-wpe/lib/libWPEWebKit-2.0.so.1; do echo "== $b"; strings -n 6 $b | grep -iE 'accelerat|skia' | sort -u | head -40; done
 
   repeat:
     needs: version
