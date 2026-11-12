@@ -51,7 +51,7 @@ export interface HostPrep {
   /** L9: sim time of the first delivery or infusion from it (null: not given), for the instructor's card. */
   givenAt: number | null;
   /** The figures of each drug's last give from it, read by the scenario driver's record (driver.ts `preparation`). */
-  gives: Record<string, { remaining: number; activeAmount: number; unit: string }>;
+  gives: Record<string, { remaining: number; activeAmount: number; unit: string; basis: NonNullable<PrepRecord['basis']> }>;
 }
 
 /** A running infusion as the host applied it: its rate and unit, its syringe concentration (absent: the row's own), who set it. */
@@ -109,6 +109,9 @@ export function remainingOf(f: Formulary, h: HostPrep, drugId: string, simT: num
   return remaining(entry, h.prep.diluent?.id ?? '', h.prep.container as Stability['container'], PREP_TEMP_C, Math.max(0, simT - h.t), { incompatible });
 }
 
+/** L13: what r rests on, kept in the record for the Debrief (the source, past its data, the formulary's note). */
+const basisOf = (r: Remaining): NonNullable<PrepRecord['basis']> => ({ src: r.src, beyondData: r.beyondData, note: r.note });
+
 /** Why a preparation cannot be used now (not ready, or LQ8 C), else null (a give, an infusion, a pump's load: pump-host.ts). */
 export function notUsable(f: Formulary, h: HostPrep, simT: number): string | null {
   if (simT < h.prep.ready.atS) return `not ready yet (${mmss(h.prep.ready.atS - simT)})`;
@@ -145,9 +148,10 @@ export function deliverPrep(
   if (h.prep.actives.length > 1 && cmd.batch && cmd.batch.n > 1) return no('a preparation of two drugs is delivered on its own, not in a tray');
   const out = spread(base, h.prep.actives, (a) => {
     if (!DOSE_UNITS.has(a.unit)) return `the monitor takes no ${a.drugId} dose in ${a.unit}`;
-    const r = remainingOf(f, h, a.drugId, simT).r;
+    const rem = remainingOf(f, h, a.drugId, simT);
+    const r = rem.r;
     const dose = volumeMl * a.perMl * r;
-    h.gives[a.drugId] = { remaining: r, activeAmount: dose, unit: a.unit };
+    h.gives[a.drugId] = { remaining: r, activeAmount: dose, unit: a.unit, basis: basisOf(rem) };
     return { kind: 'drug', drugId: a.drugId, dose, unit: a.unit, route: cmd.route, ...(cmd.overS !== undefined ? { overS: cmd.overS } : {}) };
   });
   return out.ok ? { ok: true, cmds: out.cmds, volumeMl } : out;
@@ -165,8 +169,9 @@ export function infusePrep(
   if (why) return no(why);
   const out = spread(base, h.prep.actives, (a) => {
     if (!SYRINGE_UNITS.has(a.unit)) return `the pump takes no ${a.drugId} syringe in ${a.unit}`;
-    const r = remainingOf(f, h, a.drugId, simT).r;
-    h.gives[a.drugId] = { remaining: r, activeAmount: a.perMl * r, unit: `${a.unit}/mL` }; // an infusion's: per mL of the syringe
+    const rem = remainingOf(f, h, a.drugId, simT);
+    const r = rem.r;
+    h.gives[a.drugId] = { remaining: r, activeAmount: a.perMl * r, unit: `${a.unit}/mL`, basis: basisOf(rem) }; // an infusion's: per mL of the syringe
     return { kind: 'infusion', drugId: a.drugId, rate: cmd.rateMlH, unit: 'mL/h', concentration: { amount: a.perMl * r, unit: a.unit, perMl: 1 } };
   });
   if (!out.ok) return out;
@@ -198,12 +203,15 @@ export function prepRecord(h: HostPrep, drugId?: string): PrepRecord | undefined
     id: h.id, drugId: a.drugId, productId: h.products[a.drugId] as string, ...(h.prep.diluent ? { diluent: h.prep.diluent.id } : {}),
     concentration: { amount: a.amount, unit: a.unit, perMl: a.perMl }, volumeMl: h.prep.volumeMl, findings: h.prep.findings, notice: h.notice,
     remaining: g?.remaining ?? 1, activeAmount: g?.activeAmount ?? 0, unit: g?.unit ?? a.unit,
+    actives: h.prep.actives.map((x) => ({ drugId: x.drugId, amount: x.amount, unit: x.unit, perMl: x.perMl })),
+    ready: { atS: h.prep.ready.atS, gap: h.prep.ready.gap, src: [...h.prep.ready.src] },
+    ...(g ? { basis: { ...g.basis } } : {}),
   };
 }
 
 /** The preparation as staged, for the scenario driver's record (driver.ts recordPreparation): its first drug, every finding. */
 export function stagedOf(h: HostPrep): StagedPrep {
-  const { remaining: _r, activeAmount: _a, unit: _u, ...rest } = prepRecord(h) as PrepRecord;
+  const { remaining: _r, activeAmount: _a, unit: _u, basis: _b, ...rest } = prepRecord(h) as PrepRecord;
   return { ...rest, by: h.by, t: h.t };
 }
 

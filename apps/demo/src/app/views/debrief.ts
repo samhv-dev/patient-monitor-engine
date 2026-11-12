@@ -18,13 +18,14 @@
 // footer through the one table and matcher the
 // handout script uses (i18n/fa-dom.ts), right to left in the bundled Vazirmatn; while an entry printed is unread by the
 // owner, "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed page (DQ10).
-import { asV1, type MarkKind } from '@pme/controller';
+import { asV1, type Formulary, type MarkKind } from '@pme/controller';
 import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import { kitOffLine } from '../kit-store.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, preparationsOf, PREP_WORDS, PRESSURE_KEYS, remoteKeys, remoteWho, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type PrepRow, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { loadShippedFormulary } from '../formulary.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey } from '../record.ts';
@@ -42,8 +43,6 @@ import { DRAFT_LINE, faPass, translateTree, unreviewed, type FaPass } from '../i
 import { LTR_RUN } from '../i18n/fa-match.mjs';
 import { hostLang, setHostLang, type HostLang } from '../i18n/lang.ts';
 import { archiveHref, archiveList, downloadEntry, entryTitle, exportAll } from './archive-list.ts';
-import { readLayout } from '../room-layout.ts';
-import { store } from '../store.ts';
 
 /** The build this page was served from (vite.config.ts `define`: the git commit, "+" with uncommitted changes, the date). */
 declare const __PME_BUILD__: string;
@@ -107,17 +106,16 @@ function actionsTable(r: Report3): HTMLElement {
     ])));
 }
 
-/** The name Room setup keeps for a device key on this computer (R7's remembered layout; R5d's who line). */
-const deviceName = (key: string): string | null => readLayout(store)[key]?.name ?? null;
 /** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record); a learner
- *  defibrillator press reads its who line (R5d). */
-function timelineRows(d: RunData): HTMLElement[] {
+ *  defibrillator press reads its who line (R5d), a learner remote's its own (L4, L13). `names`: the name Room setup gives
+ *  a device key, from the session's one name source (AppSession.deviceName, brief 164). */
+function timelineRows(d: RunData, names: (key: string) => string | null): HTMLElement[] {
   const line = (r: Row, text: string | string[], isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
     h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, ...[text].flat(), undoneText(r))); // separate texts: the Persian page reads each (D13)
   const done = new Set<string>();
   return d.rows.flatMap((r) => {
     const b = r.batch?.id;
-    if (r.kind === 'learner') return [line(r, learnerWho(d.rows, r, deviceName), false)];
+    if (r.kind === 'learner') return [line(r, learnerWho(d.rows, r, names), false)];
     if (b === undefined) return [line(r, r.text, setup(r))];
     if (done.has(b)) return [];
     done.add(b);
@@ -473,7 +471,30 @@ export function hintsSection(d: RunData, ms: KeyMoment[]): HTMLElement | null {
       n ? h('p', { class: 'db-hint-left muted' }, n === 1 ? '1 opener not shown: its event did not happen in this run' : `${n} openers not shown: their events did not happen in this run`) : null) : null);
 }
 
+/** L13: the learner remotes' preparations (debrief.ts preparationsOf), one item each: what was staged and by which
+ *  remote, when it was ready, its findings with their sources, the notice, each give and the formulary's grade. Null: no
+ *  learner remote prepared anything in this run (nothing is printed). */
+function prepSection(p: { rows: PrepRow[]; unrecorded: boolean } | null): HTMLElement | null {
+  if (!p) return null;
+  return section('preparations', PREP_WORDS.title, h('p', { class: 'db-subhead' }, PREP_WORDS.sub),
+    p.unrecorded ? h('p', { class: 'muted' }, PREP_WORDS.unrecorded)
+    : h('ol', { class: 'db-preps' }, ...p.rows.map((r) => h('li', { 'data-prep': r.id, 'data-by': r.by, ...(r.grade ? { 'data-grade': r.grade } : {}) },
+      h('p', { class: 'db-prep-head' }, r.head),
+      ...kids(r.ready ? h('p', { class: 'db-prep-ready' }, r.ready) : null,
+        r.findings.length ? h('ul', { class: 'db-prep-findings' }, ...r.findings.map((x) => h('li', { class: 'db-prep-finding', 'data-kind': x.kind }, x.text))) : null,
+        r.notice ? h('p', { class: 'db-prep-notice' }, r.notice) : null),
+      ...r.gives.map((g) => h('p', { class: 'db-prep-give' }, g)),
+      ...kids(r.grade === 'deviation' || r.grade === 'violation' ? h('p', { class: 'db-prep-grade' }, PREP_WORDS.grade[r.grade]) : null)))));
+}
+
 export function debriefView(session: AppSession, link: Link): View {
+  /** The name Room setup gives a device key: the session's one name source (brief 164), the record's and the Log's. */
+  const names = (key: string): string | null => session.deviceName?.(key) ?? null;
+  // L13: the formulary names a preparation's sources: the session's (loaded with the learner PIN), else the shipped one,
+  // loaded once when a run with preparations is drawn (an archived run on a page whose host never loaded it)
+  let shipped: Formulary | null = null;
+  let loading: Promise<void> | null = null;
+  const formulary = (): Formulary | null => session.formulary ?? shipped;
   const who = h('input', { class: 'input', id: 'db-who', autocomplete: 'off', placeholder: 'Instructor and learners' });
   const notes = h('div', { class: 'db-notes', contenteditable: 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-labelledby': 'db-notes-h' });
   // Decision 11: render() rebuilds only the two live containers; the Run by field, the talking points and the notes
@@ -575,6 +596,8 @@ export function debriefView(session: AppSession, link: Link): View {
         h('span', { class: 'db-runby' }, who.value)));
     const obj = objectives(d);
     const r3 = report3(d); // a pme-scenario/2 run (F7)
+    const preps = preparationsOf(d, names, formulary()); // L13
+    if (preps?.rows.length && !formulary() && !loading) loading = loadShippedFormulary().then((f) => void ((shipped = f) && render()), () => undefined);
     const fs = facts(d);
     const meds = d.rows.filter((r) => r.ev?.startsWith('drug:') || r.ev === 'fluid');
     const totals = drugTotals(d);
@@ -623,7 +646,8 @@ export function debriefView(session: AppSession, link: Link): View {
         d.keeps?.includes('pressures') ? null : notRecorded('SBP, DBP and CVP')),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
-          h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text, undoneText(r))))))
+          h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)),
+            h('td', {}, r.text, r.kind === 'learner' && r.remote ? `, by ${remoteWho(r.by ?? '', remoteKeys(d.rows), names, r.name)}` : '', undoneText(r))))))
         : h('p', { class: 'muted' }, 'No drugs or fluids were given.'),
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
       ...(r3 ? [
@@ -633,10 +657,11 @@ export function debriefView(session: AppSession, link: Link): View {
           ? h('ul', { class: 'db-violations' }, ...r3.violations.map((v) => h('li', {}, `${mmss(v.t)} ${v.text}${v.harm === 'not modelled' ? ' (harm not modelled)' : ''}`)))
           : h('p', { class: 'muted' }, 'No contraindicated administration.')),
       ] : []),
+      ...kids(prepSection(preps)),
       ...(ss.length ? [section('steps', 'Steps on the card', h('p', { class: 'db-subhead' }, 'What the record shows: each step in the card’s order and when it was taken; it does not grade the person'), stepsTable(ss, d))] : []),
       section('timeline', 'Timeline', h('table', { class: 'db-table db-timeline' },
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Kind'), h('th', { scope: 'col' }, 'Event'))),
-        h('tbody', {}, ...timelineRows(d)))),
+        h('tbody', {}, ...timelineRows(d, names)))),
       section('bookmarks', 'Bookmarks', marks.length
         ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, nums.has(r) ? numberedLine(r, nums.get(r) as number) : markLine(r))))
         : h('p', { class: 'muted' }, 'No bookmarks.')),

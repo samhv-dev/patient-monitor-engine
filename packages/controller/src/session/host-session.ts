@@ -273,8 +273,12 @@ const LEFT_MAX = 1000;
  */
 export const MESSAGE_BUDGET_BYTES = 128 * 1024;
 export const EVENTS_PER_MESSAGE = 200;
-/** Events that stay on the host: audio is scheduled locally by every monitor from its own engine. */
-const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel']);
+/**
+ * Events that stay on the host: audio is scheduled locally by every monitor from its own engine; an EEG device's
+ * display (`eegReading`: its raw samples and spectrogram column) is drawn by every follower from its own engine's
+ * EEG, which reads the same samples (EEG plan D3: no EEG sample crosses the wire; the wire guard refuses them).
+ */
+const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel', 'eegReading']);
 const TICK_S = 0.02;
 /** A viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every
  *  resync) [ENG: network]. */

@@ -18,7 +18,7 @@
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
 import { asV1, isV2, LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type PumpMeta, type PumpReplaced, type WireEvent } from '@pme/controller';
-import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
+import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
 
@@ -137,12 +137,17 @@ export interface RunData {
   phases?: PhaseEntry[];
   admin?: Administration[];
   edges?: RuleEdge[];
+  /** A pme-scenario/2 run (learner-action-remote.md L13): the preparations the learner remotes staged, given or not, as
+   *  the runner keeps them (absent: none staged, or a record made before L13). */
+  preps?: StagedPrep[];
 }
 /** What the record copies from the host's phase runner (`ScenarioDriver.phaseRunner`). */
 export interface GradeInputs {
   readonly phases: readonly PhaseEntry[];
   readonly admin: readonly Administration[];
   readonly edges: readonly RuleEdge[];
+  /** L13: the staged preparations (the phase runner's `preps`). */
+  readonly preps?: readonly StagedPrep[];
 }
 
 /** Ventilated breaths "begin" after this long without one [ENG: ui; longer than any set rate's interval, 6/min = 10 s]. */
@@ -439,6 +444,8 @@ export class RunRecord {
     const r = this.runner();
     if (!r || !this.data.doc || !isV2(this.data.doc)) return;
     Object.assign(this.data, { format: 2, phases: r.phases.map((p) => ({ ...p })), admin: structuredClone([...r.admin]), edges: [...r.edges] });
+    if (r.preps?.length) this.data.preps = structuredClone([...r.preps]); // L13: absent until the first, as in the runner
+    else delete this.data.preps;
   }
 
   /** The record and its trackers as plain JSON (kept with the run's position across a reload of the page). */
