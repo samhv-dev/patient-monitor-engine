@@ -45,6 +45,17 @@ describe('EEG E3 generator: self-check against the spectral description', () => 
     }
   });
 
+  it('the high-frequency corner at depth (brief 172): the Welch exponent above the corner is the spectrum\'s hfSlope within 10 %, below it κ', () => {
+    const ap = GA.aperiodic;
+    expect(ap.hfCornerHz).toBeDefined();
+    const s: EegSpectrum = { ...GA, peaks: GA.peaks.map((p) => ({ ...p, powerDb: -200 })), suppression: { ...GA.suppression, p: 0 }, formeFruste: 0 };
+    const w = welch(gen(s, 60), FS);
+    const hi = slopeFit(w.f, w.psd, (ap.hfCornerHz as number) + 5, 60);
+    expect(Math.abs(hi - (ap.hfSlope as number)) / (ap.hfSlope as number), `above: ${hi} vs ${ap.hfSlope}`).toBeLessThanOrEqual(0.1);
+    const lo = slopeFit(w.f, w.psd, 1, (ap.hfCornerHz as number) - 3);
+    expect(Math.abs(lo - ap.slope) / ap.slope, `below: ${lo} vs ${ap.slope}`).toBeLessThanOrEqual(0.1);
+  });
+
   it('real states: peaks within ±1 Hz and the fitted slope within 10 % of the model; the level within 1.5 dB', () => {
     const states: [string, EegSpectrum, [number, number] | null][] = [
       ['awake', AWAKE, null],
