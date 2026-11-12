@@ -52,9 +52,9 @@ renderer, audio and skin contracts.
 | [`vitals.ts:11`](../../apps/demo/src/app/vitals.ts#L11) | Display = engine value × scale. |
 | [`meta.ts:9`](../../apps/demo/src/physiology-console/meta.ts#L9) | Displayed = raw × scale (e.g. mmHg·s/mL → dyn·s/cm⁵). |
 | [`model.ts:29`](../../apps/demo/src/physiology-console/model.ts#L29) | Raw engine values; `unit` is the display unit and display = raw × scale. |
-| [`controls.ts:27`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L27) | The set I:E on the knob's axis u: 1:E is u = 1 − E, I:1 is u = I − 1 (1:1 is 0; one step is 0.1 of either side). |
-| [`controls.ts:66`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L66) | In VC the model's Ti is VT / flow: the face's settle() turns this set Ti into vcFlow = 60 · VT / Ti (plan GM1) |
-| [`modes.ts:47`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L47) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
+| [`controls.ts:33`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L33) | The set I:E on the knob's axis u: 1:E is u = 1 − E, I:1 is u = I − 1 (1:1 is 0; one step is 0.1 of either side). |
+| [`controls.ts:72`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L72) | In VC the model's Ti is VT / flow: the face's settle() turns this set Ti into vcFlow = 60 · VT / Ti (plan GM1) |
+| [`modes.ts:56`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L56) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
 | [`clock-map.ts:2`](../../packages/audio/src/clock-map.ts#L2) | wallMs(t) = anchorWall + (t − anchorSim) · 1000 / timeScale |
 | [`clock-map.ts:3`](../../packages/audio/src/clock-map.ts#L3) | audioTime(wallMs) = contextTime + (wallMs − performanceTime) / 1000   (AudioContext.getOutputTimestamp) |
 | [`pitch-maps.ts:1`](../../packages/audio/src/profiles/pitch-maps.ts#L1) | Pulse-tone pitch maps (brief §3.6; research 03 §3.6, 05 §2.5): f = baseHz · 2^(−(100 − SpO2)·s/12). |

@@ -3,6 +3,8 @@
   "words": {
     "adl": {"v": "ADL", "p": "documented", "src": "research/57 R-06"},
     "backupOff": {"v": "Backup: OFF", "p": "documented", "src": "research/57 R-06"},
+    "backupVCV": {"v": "Backup: VCV", "p": "inferred", "src": "research/57 R-05, R-06, T-37", "why": "R-05: the block shows the backup mode if any; written as R-06 writes \"Backup: OFF\", with T-37's mode name"},
+    "backupPCV": {"v": "Backup: PCV", "p": "inferred", "src": "research/57 R-05, R-06, T-37", "why": "as backupVCV"},
     "peakFlow": {"v": "Peak Flow", "p": "documented", "src": "research/57 W-01"},
     "ti": {"v": "Ti", "p": "documented", "src": "research/57 W-01"},
     "te": {"v": "Te", "p": "documented", "src": "research/57 W-01"},
@@ -79,6 +81,10 @@
     "menuTitle": {"v": "Menu", "p": "documented", "src": "research/57 E-01, P-03"},
     "patientsData": {"v": "Patient's Data", "p": "documented", "src": "research/57 E-01, P-03"},
     "backupVent": {"v": "Backup ventilation", "p": "documented", "src": "research/57 P-03"},
+    "backupModes": {"v": "Ventilation Modes", "p": "documented", "src": "research/57 T-40"},
+    "apneaTime": {"v": "Apnea time", "p": "documented", "src": "research/57 T-40"},
+    "backupSimv": {"v": "Backup in SIMV/APRV", "p": "documented", "src": "research/57 T-40"},
+    "accept": {"v": "Accept", "p": "documented", "src": "research/57 T-40, T-41"},
     "ventAdjuncts": {"v": "Ventilatory adjuncts", "p": "documented", "src": "research/57 E-01, P-03"},
     "records": {"v": "Records", "p": "documented", "src": "research/57 E-01, P-03"},
     "tools": {"v": "Tools", "p": "documented", "src": "research/57 E-01, P-03"},
@@ -161,14 +167,13 @@
     "pLo": {"v": "The low pressure limit is not simulated yet", "p": "sim", "src": "plan GA3", "piece": "V3"},
     "peepHi": {"v": "The PEEP limit is not simulated yet", "p": "sim", "src": "plan GA10", "piece": "V3"},
     "o2Lim": {"v": "The oxygen limits are not simulated yet", "p": "sim", "src": "plan GA11", "piece": "V3"},
-    "psvMode": {"v": "PSV/CPAP is not simulated yet", "p": "sim", "src": "plan GM3", "piece": "V2"},
     "simvMode": {"v": "SIMV modes are not simulated yet", "p": "sim", "src": "plan GM4, GM5", "piece": "V6"},
     "nivMode": {"v": "NIV is not simulated yet", "p": "sim", "src": "plan GM6", "piece": "V8"},
     "mmvMode": {"v": "This mode is not simulated yet", "p": "sim", "src": "plan GM7, GM8", "piece": "V9"},
     "aprvMode": {"v": "APRV is not simulated yet", "p": "sim", "src": "plan GM9", "piece": "V10"},
-    "psvKeys": {"v": "PSV settings are not simulated in this mode yet", "p": "sim", "src": "plan GM3", "piece": "V2"},
+    "psvKeys": {"v": "PSV and Exp. Sensitiv. are set in PSV/CPAP", "p": "sim", "src": "plan GM3", "why": "research/57 D-03: the PSV/CPAP row", "piece": "none planned"},
+    "psvPressureCycle": {"v": "PSV/CPAP: a breath ends at Exp. Sensitiv. or after 3 s; the third criterion (pressure over 14 % of the set pressure plus 5 cmH2O) is not simulated, its arithmetic being unclear in the manual", "p": "sim", "src": "plan GM3", "why": "research/57 M-06 states the three criteria; M-07: the third one's arithmetic is unclear, so it is not built", "piece": "none planned"},
     "patientsData": {"v": "Patient's Data is not simulated yet", "p": "sim", "src": "plan GD16", "piece": "V4"},
-    "backupVent": {"v": "Backup ventilation is not simulated yet", "p": "sim", "src": "plan GX12", "piece": "V2"},
     "records": {"v": "Records are not simulated yet", "p": "sim", "src": "plan GD20", "piece": "V13"},
     "gas": {"v": "Transport is not modelled", "p": "sim", "src": "plan GX18", "piece": "none planned"},
     "sighs": {"v": "Sighs are not simulated yet", "p": "sim", "src": "plan GP18", "piece": "V7"},
@@ -185,7 +190,6 @@
     "rate4": {"v": "4 bpm is the model's lowest rate", "p": "sim", "src": "plan GP4", "piece": "V6"},
     "ctrlGap": {"v": "Ctrl's step for this setting is not in the manual", "p": "sim", "src": "plan GX10", "piece": "none planned"},
     "vcvOnly": {"v": "Inspiratory pause is VCV only", "p": "sim", "src": "plan GP14", "piece": "none planned"},
-    "descending": {"v": "The descending flow waveform is not simulated yet", "p": "sim", "src": "plan GP13", "piece": "V2"},
     "simMode": {"v": "A simulator scenario's mode: choose a mode with Mode", "p": "sim", "src": "plan GM3", "piece": "none planned"}
   },
   "colours": {
@@ -428,7 +432,10 @@
       "init": {"v": 0, "p": "documented", "src": "research/57 T-28"}
     },
     "apnea": {
-      "init": {"v": 15, "p": "documented", "src": "research/57 L-12"}
+      "min": {"v": 5, "p": "documented", "src": "research/57 T-38, L-12"},
+      "max": {"v": 60, "p": "documented", "src": "research/57 T-38, L-12"},
+      "step": {"v": 5, "p": "documented", "src": "research/57 T-38, L-12"},
+      "init": {"v": 15, "p": "documented", "src": "research/57 L-12, T-40"}
     }
   },
   "limits": {
