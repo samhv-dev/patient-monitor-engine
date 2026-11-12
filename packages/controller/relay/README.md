@@ -76,7 +76,9 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 | ventilator, granted | forwarded to the host (its PIN reaches the host alone); awaits no snapshot | refused (`forbidden`: its commands ride `vent`) | dropped | dropped | dropped | dropped | to the host alone, as sent |
 | ventilator, pending | same as granted | refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`), never at the host |
 | viewer | same as controller | refused (`{relay:'error', code:'forbidden'}`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
-| defib | same as controller | Charge or Shock, bare (`LEARNER_DEFIB_COMMANDS`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
+| defib, no PIN | same as controller | Charge or Shock, bare (`LEARNER_DEFIB_COMMANDS`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
+| defib with the learner PIN, granted | same as controller (its PIN reaches the host alone) | the ZOLL M2's own controls with their own fields only (`learnerDefibM2May`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
+| defib with the learner PIN, pending | same as granted | refused (`forbidden`: "the defibrillator is not signed in") | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | learner, granted | same as controller (its learner PIN reaches the host alone) | `LEARNER_COMMANDS` with their own fields only (`learnerMay`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | learner, pending | same as granted | refused (`forbidden`: "the learner remote is not signed in") | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | pump, granted | same as controller (its learner PIN reaches the host alone) | `PUMP_COMMANDS` with their own fields only (`pumpMay`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
@@ -116,8 +118,8 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   ventilator window on the laptop itself (`vent-hamilton.html?link=CODE`) never comes here: it links over the
   browser's BroadcastChannel, trusted as every window of that browser is (§4 D9).
 - **The defibrillator window** (`hello {role:'defib'}`, plan room-and-instruments.md R5c, Q5 ruled 5 November: learners
-  press Charge and Shock themselves). It joins as a learner does: from any device, with no PIN (a PIN on its hello is
-  refused by the guard), in a learner's place under `--max-peers`, and counted in `peers`. It may name `show` and
+  press Charge and Shock themselves). It joins as a learner does: from any device, with no PIN (with one it is the screen
+  below), in a learner's place under `--max-peers`, and counted in `peers`. It may name `show` and
   `device` as a viewer does. It RECEIVES what a viewer receives: the lean copy, the snapshot after its hello, the cached
   snapshot while the host is away. Of what it SENDS, a `command` goes to the host only if `learnerDefibMay` passes it:
   `applyEvent` of `{kind:'defib', action:'charge'}` or `{kind:'defib', action:'shock'}` and no other field (no
@@ -126,6 +128,17 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   passing command comes back to it, as to a controller. At most 4 commands a second through one `defib` socket,
   refused ones included [ENG: network; a charge and a shock per cycle, with a margin for double taps]; the 5th within a sliding
   second closes it (`too-many-tries`, close 4028). The host checks the allow-list again itself (R5d).
+- **The defibrillator screen with the learner PIN** (`hello {role:'defib', pin}`, docs/plans/defibrillator-zoll-m2.md
+  §5.1, piece R1; DQ6 = A, ruled 12 November 2026: the screen that operates the room's ZOLL M2 is admitted with the
+  learner PIN). It is admitted as the learner remote is (the per-address wrong-PIN limits, a learner's place) and is
+  PENDING until the host's `grant`: every command is `forbidden` until then, and a denial closes it. Granted, a command
+  goes to the host only if `learnerDefibM2May` passes it: the shapes of `LEARNER_DEFIB_M2` (energy, charge, shock,
+  disarm, sync, the pacer's mode, rate and output, and the M2's `device defib` keys of §5.1, `connect` among them), each
+  with its own fields only; never `preselect`, a pacer `fault` or `pause`, `device defib model` or `config`, the clock, a
+  scenario or a drug. It still receives a viewer's frames. At most 7 commands a second [ENG: network; the face's Trim
+  Knob every 250 ms (4) + its final value on press (1) + Shock down and up (2)], the 8th closes it. A socket keeps how its
+  first hello was admitted. Until piece R2 the host grants no `defib` hello and checks every `defib` peer with
+  `learnerDefibMay`: the M2 table is inert in a room until then. Every refusal of a `defib` command is logged.
 - **The learner action remote** (`hello {role:'learner', show:'learner', device, pin}`, plan learner-action-remote.md
   L3, §4 D2, D9; LQ1 ruled 9 November: a separate learner PIN, which never grants the instructor's role, and the
   instructor's PIN never this one). A hello without a PIN is refused by the guard. It joins from any device, in a

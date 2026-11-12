@@ -153,8 +153,12 @@ const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib', 'learner'])
  * no instrument yet: `pump` joins INSTRUMENTS with the app's words for it (A1).
  */
 const DEVICE_WITH: ReadonlySet<unknown> = new Set([...SHOWS_WITH, 'pump']);
-/** The roles whose hello proves a PIN (the instructor's, or for `learner` and `pump` the learner PIN); all but the first must carry one. */
-const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump']);
+/**
+ * The roles whose hello proves a PIN (the instructor's, or for `learner`, `pump` and `defib` the learner PIN); the
+ * ventilator, the learner remote and the pump must carry one. `defib` (defibrillator plan R1, DQ6 = A): MAY, and is then
+ * held pending until the host's grant (relay/server.ts); with none it is the window of R5c, its two presses only.
+ */
+const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump', 'defib']);
 
 const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
 const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);

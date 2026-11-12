@@ -12,6 +12,11 @@
 // Plan room-and-instruments.md R5c: a `defib` socket (the learner defibrillator window) joins as a learner does, from
 // another device and with no PIN, in a learner's place, and receives what a viewer receives; of its commands only
 // LEARNER_DEFIB_COMMANDS (Charge and Shock, bare) go to the host, any other is `forbidden`, more than 4 a second close it.
+// Defibrillator plan R1 (docs/plans/defibrillator-zoll-m2.md §5.1, DQ6 = A): a `defib` hello that carries the LEARNER PIN is
+// admitted as a learner remote is (the wrong-PIN limits, a learner's place), PENDING until the host's grant: every command
+// `forbidden` until then; granted, only the ZOLL M2's own controls (learnerDefibM2May) go to the host, any other is
+// `forbidden`, more than DEFIB_M2_PER_S a second close it; it still receives a viewer's frames. A socket keeps how its
+// first hello was admitted. Until R2 the host grants no `defib` hello, so the M2 table is reached only behind a grant.
 // Plan learner-action-remote.md L3 (§4 D2, D9; LQ1 ruled 9 November): a `learner` socket (the learner action remote) joins
 // from another device with the LEARNER PIN, in a learner's place (counted under maxPeersPerRoom), PENDING until the host's
 // `grant` as an instructor is and under the same per-address wrong-PIN limits; it receives what a viewer receives, granted
@@ -29,7 +34,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { storeRoutes } from './store.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
-import { SESSION_CODE_RE, VIEWER_EVENTS, learnerDefibMay, learnerMay, pumpMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
+import { SESSION_CODE_RE, VIEWER_EVENTS, defibShape, learnerDefibM2May, learnerDefibMay, learnerMay, pumpMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
 import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayDevice, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
@@ -148,6 +153,8 @@ interface Peer {
   vent: { from: number[]; to: number[] };
   /** R5c, L3, C1: the relay-clock times of a `defib`, `learner` or `pump` socket's commands within the last second (DEFIB_PER_S, LEARNER_PER_S, PUMP_PER_S). */
   cmds: number[];
+  /** Defibrillator R1: a `defib` socket whose first hello carried the learner PIN (pending until the host's grant). */
+  pin: boolean;
 }
 
 interface Room {
@@ -213,6 +220,14 @@ const VENT_PER_S = 120;
  */
 const DEFIB_PER_S = 4;
 /**
+ * Defibrillator R1: commands an ADMITTED `defib` socket (its hello with the learner PIN) may send in any one second,
+ * refused ones included; one more closes it (`too-many-tries`). Derived from the face's fastest legitimate use (plan §4.3):
+ * the Trim Knob's value at most every 250 ms while it turns (1000 / 250 = 4), plus the final value on its press (1), plus
+ * Shock held down and let go in the same second (`shockButton` down and up, 2): 4 + 1 + 2 = 7 [ENG: network; this
+ * derivation, the 250 ms being the face's own throttle]. The no-PIN window keeps DEFIB_PER_S.
+ */
+const DEFIB_M2_PER_S = 1000 / 250 + 1 + 2;
+/**
  * L3 (§4 D2): commands a `learner` socket may send in any one second, refused ones included; one more closes it
  * (`too-many-tries`) [ENG: network; a tray of up to 4 preparations delivered in one press plus a margin for double taps;
  * R5c's 4 a second covers two presses].
@@ -232,10 +247,12 @@ const signsIn = (r: Role) => r === 'instructor' || r === 'ventilator';
  * host's grant, under the per-address wrong-PIN and hello limits (one count per address, whichever PIN it tried).
  */
 const pinned = (r: Role) => signsIn(r) || onLearnerPin(r);
+/** A socket that proved a PIN in its hello: a pinned role, or a `defib` whose hello carried the learner PIN (R1). */
+const pinnedPeer = (p: { role: Role; pin: boolean }) => pinned(p.role) || (p.role === 'defib' && p.pin);
 /** The sockets that follow the patient: learners count only these (an instructor and the cockpit are not told of). */
 const follows = (p: { role: Role }) => !signsIn(p.role);
 /** Gets the host's frames byte for byte: a granted controller or instructor (a learner remote or a pump, granted, still follows as a viewer). */
-const whole = (p: { role: Role; granted: boolean }) => p.granted && !onLearnerPin(p.role);
+const whole = (p: { role: Role; granted: boolean }) => p.granted && !onLearnerPin(p.role) && p.role !== 'defib'; // R1: a granted screen follows as a viewer
 /** What a learner's phone must never receive inside `commandApplied` (plan §7): a mark's kind and note, a judged objective. */
 const LEARNERS_NEVER: ReadonlySet<string> = new Set(['scenario', 'note']);
 const forLearners = (e: WireEvent) =>
@@ -284,7 +301,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     d.hellos.push(t);
     return true;
   };
-  const tooMany = (ws: WebSocket, role: Role) => refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', `too many ${role === 'learner' ? 'learner remote' : role === 'pump' ? 'pump' : 'instructor'} sign-ins from this device: wait a minute`);
+  const tooMany = (ws: WebSocket, role: Role) => refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', `too many ${role === 'learner' ? 'learner remote' : role === 'pump' ? 'pump' : role === 'defib' ? 'defibrillator' : 'instructor'} sign-ins from this device: wait a minute`);
   let relaySeq = 0;
   const wrongPin = (address: string) => {
     const t = clock();
@@ -367,8 +384,14 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
             frame(peer.ws, { relay: 'error', code: 'forbidden', message: `this socket said hello as ${peer.role}` });
             return;
           }
+          // R1: and how it was admitted (a no-PIN window does not become a pending one on its socket, nor the reverse)
+          if (peer.role === 'defib' && (m.pin !== undefined) !== peer.pin) {
+            dropped++;
+            frame(peer.ws, { relay: 'error', code: 'forbidden', message: `this socket said hello ${peer.pin ? 'with' : 'without'} the learner PIN` });
+            return;
+          }
           // A re-said instructor (or learner, or pump) hello counts too: one open socket must not flood the host with PIN checks (G1)
-          if (pinned(peer.role) && (blocked(peer.address) || !mayHello(peer.address))) return tooMany(peer.ws, peer.role);
+          if (pinnedPeer(peer) && (blocked(peer.address) || !mayHello(peer.address))) return tooMany(peer.ws, peer.role);
           peer.show = m.show ?? null; // R2: what it shows is its LAST hello's
           peer.device = m.device ?? null;
           if (peer.role !== 'ventilator') room.awaiting.add(peer); // R8b: the cockpit waits on no snapshot
@@ -377,11 +400,13 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         return;
       case 'command': {
         if (peer.role === 'defib') {
-          // R5c: counted before anything else (a flood is closed, not answered `forbidden` each time); then the allow-list
-          if (overRate(peer, peer.cmds, DEFIB_PER_S, 'commands')) return;
-          const why = learnerDefibMay(m.body);
+          // R5c: counted before anything else (a flood is closed, not answered `forbidden` each time); then the allow-list.
+          // R1: a screen admitted on the learner PIN is pending until the host's grant, then sends the M2 table, at its cap
+          if (overRate(peer, peer.cmds, peer.pin ? DEFIB_M2_PER_S : DEFIB_PER_S, 'commands')) return;
+          const why = !peer.pin ? learnerDefibMay(m.body) : peer.granted ? learnerDefibM2May(m.body) : 'the defibrillator is not signed in';
           if (why) {
             dropped++;
+            log(`defib ${peer.id}: refused ${defibShape(m.body)}: ${why}`);
             frame(peer.ws, { relay: 'error', code: 'forbidden', message: why });
             return;
           }
@@ -424,7 +449,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       case 'grant': {
         // The host's answer to an instructor hello (plan §1), sent before its welcome: consumed here, and told to that
         // socket only. Denied: a pending socket gave a wrong PIN (counted per address); a granted one is revoked.
-        const to = isHost ? [...room.peers].find((p) => pinned(p.role) && p.id === m.to) : undefined;
+        const to = isHost ? [...room.peers].find((p) => pinnedPeer(p) && p.id === m.to) : undefined;
         if (!to) return void dropped++;
         raw(to.ws, data);
         if (m.granted) to.granted = true;
@@ -561,7 +586,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     let room: Room | null = null;
     let held: string[] | null = null; // This socket's frames while its hello waits on a liveness check
     const admit = (r: Room, m: Extract<WireMessage, { kind: 'hello' }>, data: string) => {
-      const p: Peer = (peer = { ws, id: m.from, role: m.role, alive: true, granted: m.role === 'controller', address, show: m.show ?? null, device: m.device ?? null, rttMs: null, answered: 0, seenAt: clock(), vent: { from: [], to: [] }, cmds: [] });
+      const p: Peer = (peer = { ws, id: m.from, role: m.role, alive: true, granted: m.role === 'controller', address, show: m.show ?? null, device: m.device ?? null, rttMs: null, answered: 0, seenAt: clock(), vent: { from: [], to: [] }, cmds: [], pin: m.role === 'defib' && m.pin !== undefined });
       if (m.role === 'host') {
         const old = r.host;
         if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
@@ -571,7 +596,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         // verifies every instructor again. A granted phone is told so first, in the relay's own grant false, so that it
         // says its hello again on the host's hello below (review F1); it is not a denial: its socket stays open.
         for (const q of r.peers) {
-          if (!pinned(q.role) || !q.granted) continue;
+          if (!pinnedPeer(q) || !q.granted) continue;
           q.granted = false;
           relaySeq = Math.max(relaySeq + 1, Date.now()); // rises across a relay restart too (the phone's sequence filter)
           raw(q.ws, JSON.stringify({ v: 1, session: r.code, from: RELAY_FROM, seq: relaySeq, sentAt: Date.now(), kind: 'grant', to: q.id, granted: false, reason: REJOINED } satisfies WireMessage));
@@ -641,8 +666,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           if (blocked(address)) return refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many wrong PINs from this device: wait a minute');
           if (m.role === 'instructor' && count(room, (p) => p.role === 'instructor') >= INSTRUCTOR_PLACES) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} has no instructor place free`);
           if (!mayHello(address)) return tooMany(ws, m.role);
-        } else if (onLearnerPin(m.role)) {
-          // L3 (D9), C1 (§7): the wrong-PIN limits first, as an instructor's; then a learner's place, as a phone's
+        } else if (onLearnerPin(m.role) || (m.role === 'defib' && m.pin !== undefined)) {
+          // L3 (D9), C1 (§7), defibrillator R1 (DQ6): the wrong-PIN limits first, as an instructor's; then a learner's place, as a phone's
           if (blocked(address)) return refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many wrong PINs from this device: wait a minute');
           if (count(room, follows) >= maxPeers) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} is full (${maxPeers})`);
           if (!mayHello(address)) return tooMany(ws, m.role);

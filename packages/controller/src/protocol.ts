@@ -385,8 +385,8 @@ export type VentLinkKind = VentLinkBody['kind'];
 
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  // `pin`: only with role 'instructor', 'ventilator', 'learner' or 'pump' (the last three must carry one; a learner's and a
-  // pump's is the LEARNER PIN), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role
+  // `pin`: only with role 'instructor', 'ventilator', 'learner', 'pump' or 'defib' (the ventilator, learner and pump must
+  // carry one; a learner's, a pump's and a defibrillator's is the LEARNER PIN: defibrillator plan R1, DQ6 = A), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role
   // 'viewer', 'defib' or 'learner', and `device` alone with 'pump' (guard.ts; plan room-and-instruments.md §4 D1, R8a, R5c;
   // learner-action-remote.md §4 D1, L3; pump-rack-tci.md C1)
   | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
@@ -509,6 +509,83 @@ export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
     return 'The defibrillator window sends Charge and Shock only.';
   const extra = [...Object.keys(c).filter((k) => !DEFIB_COMMAND_KEYS.has(k)), ...Object.keys(ev).filter((k) => !DEFIB_EVENT_KEYS.has(k))];
   if (extra.length > 0) return `The room's defibrillator sets the rest (${extra.join(', ')} is not the window's).`;
+  return null;
+}
+
+// --- what an ADMITTED learner defibrillator may send (plan defibrillator-zoll-m2.md §5.1, piece R1) ---------------
+/**
+ * Every `device defib` action of the vocabulary E0 froze (engine-core m2-vocabulary.ts M2_COMMANDS, and `model`), by who
+ * sends it: the learner at the device (§5.1), Room setup (§5.4: the Supervisor configuration, R4), or refused to the
+ * learner (§5.1 "Never allowed": the room's model). test/learner-defib-m2.test.ts fails on an unclassified key.
+ */
+export const M2_DEVICE_ACTION_CLASS: Readonly<Record<string, 'learner' | 'refused' | 'roomSetup'>> = {
+  model: 'refused',
+  config: 'roomSetup',
+  selector: 'learner', patientType: 'learner', defibMode: 'learner', shockButton: 'learner', analyze: 'learner',
+  fourToOne: 'learner', alarmControl: 'learner', alarmLimit: 'learner', nibp: 'learner', co2: 'learner',
+  codeMarker: 'learner', print: 'learner', setting: 'learner',
+  // DQ5 = A: the learner connects the patient (pads, paddles, the ECG cable, the sensors). The instructor's override is
+  // the laptop's own path (a controller, or the granted instructor phone) and never crosses a `defib` socket, so the wire
+  // has nothing to tell apart
+  connect: 'learner',
+};
+/** One shape of the table: the §5.1 control it is, where its fields ride (the event or the device action), which, and which it needs. */
+export interface DefibM2Shape { section: string; on: 'event' | 'action'; keys: readonly string[]; need: readonly string[] }
+const defibPress = (section: string, extra: readonly string[] = []): DefibM2Shape => ({ section, on: 'event', keys: ['kind', 'action', ...extra], need: extra });
+const m2Key = (section: string, value = true): DefibM2Shape => ({ section, on: 'action', keys: value ? ['device', 'action', 'value'] : ['device', 'action'], need: value ? ['value'] : [] });
+/**
+ * The shapes an admitted `defib` peer (the learner PIN proved, the host's grant; DQ6 = A) may send: exactly the controls
+ * plan §5.1 gives the learner, as E0's vocabulary carries them. Energy, Charge, Disarm and Sync stay `applyEvent defib`;
+ * the pacer's mode, rate and output `applyEvent pacer` (no `pause`: §5.1 does not give it, the M2 pauses at 0 mA
+ * [G 1-11]; no `fault`: the instructor's, which the engine's PacerEvent takes and the ClinicalEvent type here does not
+ * declare, so it is refused by field); the rest `device defib <action>`. The bare `applyEvent defib shock` stays for the
+ * generic window. Fields only: the values are the engine's to validate at dispatch (E0), on the room's model.
+ * Inert in a room until R2: the host grants no `defib` hello yet and still checks every `defib` peer with learnerDefibMay.
+ */
+export const LEARNER_DEFIB_M2: Readonly<Record<string, DefibM2Shape>> = {
+  'applyEvent defib selectEnergy': defibPress('energy select', ['energyJ']),
+  'applyEvent defib charge': defibPress('charge'),
+  'applyEvent defib shock': defibPress('shock down/up'),
+  'applyEvent defib disarm': defibPress('disarm'),
+  'applyEvent defib syncOn': defibPress('sync on/off'),
+  'applyEvent defib syncOff': defibPress('sync on/off'),
+  'applyEvent pacer': { section: 'pacer mode/rate/output/start', on: 'event', keys: ['kind', 'action', 'mode', 'ratePpm', 'mA'], need: ['mode'] },
+  'device defib selector': m2Key('mode selector'),
+  'device defib patientType': m2Key('patient type'),
+  'device defib defibMode': m2Key('Manual/AED switch'),
+  'device defib shockButton': m2Key('shock down/up'),
+  'device defib analyze': m2Key('Analyze', false),
+  'device defib fourToOne': m2Key('4:1 down/up'),
+  'device defib alarmControl': m2Key('Alarm Control'),
+  'device defib alarmLimit': m2Key("the M2's alarm limits and settings"),
+  'device defib setting': m2Key("the M2's alarm limits and settings"),
+  'device defib nibp': m2Key('NIBP start/stop'),
+  'device defib co2': m2Key('CO2 on/zero'),
+  'device defib codeMarker': m2Key('code marker'),
+  'device defib print': m2Key('print'),
+  'device defib connect': m2Key("the connections drawer's pads and paddles"),
+};
+
+/** The table's key of a command: `applyEvent defib <action>`, `device <device> <action>`, else its census shape. */
+export function defibShape(c: WireCommand | CommandInput): string {
+  const x = c as { type?: unknown; event?: unknown; action?: unknown };
+  if (x.type === 'applyEvent' && isRecord(x.event) && x.event.kind === 'defib') return `applyEvent defib ${String(x.event.action)}`;
+  if (x.type === 'device' && isRecord(x.action)) return `device ${String(x.action.device)} ${String(x.action.action)}`;
+  return commandShape(c);
+}
+
+/** Null when an ADMITTED `defib` peer may send `c` (a shape of LEARNER_DEFIB_M2, its own fields only), else the reason. */
+export function learnerDefibM2May(c: WireCommand | CommandInput): string | null {
+  const shape = defibShape(c);
+  const s = Object.hasOwn(LEARNER_DEFIB_M2, shape) ? LEARNER_DEFIB_M2[shape] : undefined;
+  if (s === undefined) return `The defibrillator sends the device's own controls only (${shape} is not the learner's).`;
+  const x = c as unknown as Record<string, unknown>;
+  const inner = x[s.on];
+  if (!isRecord(inner)) return `A defibrillator ${shape} needs its ${s.on}.`;
+  const missing = s.need.filter((k) => inner[k] === undefined);
+  if (missing.length > 0) return `A defibrillator ${shape} needs ${missing.join(', ')}.`;
+  const extra = [...strays(x, new Set(['id', 'issuedBy', 'type', s.on]), ''), ...strays(inner, new Set(s.keys), `${s.on}.`)];
+  if (extra.length > 0) return `The instructor's computer sets the rest (${extra.join(', ')} is not the defibrillator's).`;
   return null;
 }
 
