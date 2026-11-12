@@ -116,6 +116,12 @@ export interface HostSessionOptions {
   formulary?: () => Formulary | null;
   /** L4 (§6): a preparation as staged, for the scenario driver's record (ScenarioDriver.recordPreparation). */
   onPreparation?: (p: StagedPrep) => void;
+  /**
+   * B6 (plan scenario-builder.md §6, "To the next phase"): a token of the running /2 card's last phase entry (its id and
+   * entry time, so two entries inside one step still differ), or null while no /2 card runs. Absent or null:
+   * `fastForwardToNextPhase` is refused.
+   */
+  phaseMark?: () => string | null;
   /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
   deviceName?: (key: string) => string | null;
 }
@@ -222,6 +228,10 @@ export const COCKPIT_EVENT_MS = 1000;
 export const FF_STEP_TICKS = 25;
 /** The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG: network]. */
 export const FF_MAX_S = 600;
+/** The longest "To the next phase" (`fastForwardToNextPhase`), s: the plan's 30 min (scenario-builder.md §6) [ENG: ui]. */
+export const FF_PHASE_MAX_S = 1800;
+/** The end's `stopped` when "To the next phase" met its phase change. */
+export const FF_PHASE_STOP = 'the next phase began';
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
 /** The roles that sign in with the instructor's PIN, each in its own single place (P3; R8c). */
@@ -231,6 +241,7 @@ type Holder = { t: ManagedTransport; from: string; pin: string };
 const FF_REFUSAL = 'the simulation is fast-forwarding; try again when it ends';
 
 export class HostSession {
+  private nextPhaseN = 0;
   readonly peerId: string;
   private readonly o: HostSessionOptions;
   private readonly stamp: (b: WireBody) => WireMessage;
@@ -1128,21 +1139,23 @@ export class HostSession {
    * order and gives the patient a run polled every 0.5 s would. Every peer sees a `fastForward` start and end (the end
    * lists the alarms raised during it); a late joiner gets the jump as a sticky replay.
    */
-  private fastForward(cmd: TimeCommand): { result: DispatchResult; applied: WireCommand } {
+  private fastForward(cmd: TimeCommand, until = false): { result: DispatchResult; applied: WireCommand } {
     const { tick } = this.o.target.now();
     const no = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     const target = this.o.target;
     if (!target.fastForwardStep) return no('this monitor cannot fast-forward');
-    if (!(typeof cmd.value === 'number' && cmd.value > 0 && cmd.value <= FF_MAX_S)) return no(`fast-forward must be 0–${FF_MAX_S} s`);
+    const max = until ? FF_PHASE_MAX_S : FF_MAX_S;
+    if (!(typeof cmd.value === 'number' && cmd.value > 0 && cmd.value <= max)) return no(`fast-forward${until ? ' to the next phase' : ''} must be 0–${max} s`);
+    if (until && !this.o.phaseMark?.()) return no('no phase to wait for: no pme-scenario/2 card is running');
     if (this.ff) return no('a fast-forward is already running');
     const ff = { fromTick: tick, toTick: tick + Math.round(cmd.value / TICK_S), alarms: [] };
     this.ff = ff;
     const applied: TimeCommand = { ...cmd, atTick: tick };
-    void this.runFastForward(ff, applied, (n, last) => (target.fastForwardStep as NonNullable<HostTarget['fastForwardStep']>)(n, last));
+    void this.runFastForward(ff, applied, (n, last) => (target.fastForwardStep as NonNullable<HostTarget['fastForwardStep']>)(n, last), until);
     return { result: { accepted: true, tick }, applied };
   }
 
-  private async runFastForward(ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] }, cmd: TimeCommand, advance: NonNullable<HostTarget['fastForwardStep']>): Promise<void> {
+  private async runFastForward(ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] }, cmd: TimeCommand, advance: NonNullable<HostTarget['fastForwardStep']>, until = false): Promise<void> {
     const timeline = this.timelines;
     const span = ff.toTick - ff.fromTick;
     const wallMs = this.o.fastForwardWallMs ?? 0;
@@ -1153,6 +1166,7 @@ export class HostSession {
       Object.assign(ff, { fromTick: tick, toTick: tick + span });
       this.sticky.set('time.jump', { ...cmd, atTick: tick });
       this.queue({ type: 'fastForward', t: tick * TICK_S, tick, phase: 'start', fromT: tick * TICK_S, toT: ff.toTick * TICK_S, wallMs });
+      const mark0 = until ? this.o.phaseMark?.() : undefined; // B6: the phase entry the span started in
       const w0 = this.now();
       while (tick < ff.toTick) {
         if (this.timelines !== timeline) {
@@ -1162,6 +1176,12 @@ export class HostSession {
         const n = Math.min(FF_STEP_TICKS, ff.toTick - tick);
         tick = (await advance(n, tick + n >= ff.toTick)).tick;
         await this.chain; // the scenario's commands of this step are applied before the next step
+        // B6: the first phase change ends "To the next phase" here, after the new phase's own entry script landed
+        if (until && tick < ff.toTick && this.o.phaseMark?.() !== mark0) {
+          stopped = FF_PHASE_STOP;
+          tick = (await advance(0, true)).tick; // the monitor's clock back (a full span gives it back on its last step)
+          break;
+        }
         const wait = w0 + (wallMs * (tick - ff.fromTick)) / span - this.now(); // the pace: ahead of it, wait
         if (wait > 0 && tick < ff.toTick) await (this.o.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms))))(wait);
       }
@@ -1181,6 +1201,30 @@ export class HostSession {
     const end = this.timelines === timeline ? { t: tick * TICK_S, tick } : this.o.target.now(); // a new timeline's clock
     const alarms = ff.alarms.map((a) => ({ ...a, ended: !this.activeAlarms.has(a.id) }));
     this.queue({ type: 'fastForward', t: 't' in end ? end.t : end.simT, tick: end.tick, phase: 'end', fromT: ff.fromTick * TICK_S, toT: ff.toTick * TICK_S, ...(stopped ? { stopped } : {}), alarms });
+  }
+
+  /**
+   * B6 (plan scenario-builder.md §6), "To the next phase": a fast-forward of at most `maxS` (≤ FF_PHASE_MAX_S, the
+   * plan's 30 min) that also stops at the running /2 card's first phase change (`phaseMark`), with the end's `stopped`
+   * FF_PHASE_STOP. Host-local: the builder's run panel on the laptop that hosts calls it; no wire command asks for it
+   * (the orchestrator's ruling, 11 November 2026). It runs in the command chain as the host's own commands do, and the
+   * peers see a plain `time jump` of the span applied, then the fast-forward's start and end as for any jump.
+   */
+  fastForwardToNextPhase(maxS: number = FF_PHASE_MAX_S): Promise<DispatchResult> {
+    const cmd: TimeCommand = { id: `next-phase-${++this.nextPhaseN}`, issuedBy: 'host', type: 'time', action: 'jump', value: maxS };
+    const run = this.chain.then(() => {
+      const { result, applied } = this.fastForward(cmd, true);
+      if (!result.accepted) {
+        this.stats.rejected++;
+        return result;
+      }
+      this.stats.applied++;
+      this.queue({ type: 'commandApplied', commandId: cmd.id, tick: result.tick, resolved: { command: applied } satisfies AppliedResolution });
+      this.emitState();
+      return result;
+    });
+    this.chain = run.then(() => undefined, (err) => console.error('[pme host]', err));
+    return run;
   }
 
   private async scenario(cmd: ScenarioCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {

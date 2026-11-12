@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**188 known misses.** Split from the test titles: a band recognised in the target of 164, a measured value in 175, a source in 88; "—" = not stated in a form the generator reads.
+**190 known misses.** Split from the test titles: a band recognised in the target of 166, a measured value in 177, a source in 88; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 137 of these misses carry an audit verdict — RIGHT 29, TOO NARROW 24, TOO WIDE 3, MIS-SPECIFIED 56, UNSUPPORTED 25 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -23,9 +23,9 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Blood, acid–base, electrolytes and fluids](#blood) | 10 |
 | [Brain, kidney and liver](#organs) | 13 |
 | [Endocrine, metabolism and temperature](#endocrine-thermal) | 16 |
-| [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 8 |
+| [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 12 |
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 33 |
-| [Monitor measurements (device layer)](#monitor) | 15 |
+| [Monitor measurements (device layer)](#monitor) | 13 |
 | [Ventilator](#ventilator) | 6 |
 | [Presentation: renderer, audio, skins, the app](#presentation) | 4 |
 | [Whole-patient scenario suites](#integration) | 8 |
@@ -225,6 +225,10 @@ Module page: [docs/model/neuro.md](../model/neuro.md)
 |---|---|---|---|---|---|
 | residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control | ratio 0.80 | — | MIS-SPECIFIED ([audit row 6](../../docs/validation/target-audit/30-target-audit.md#row-6)) | awake arm: VT ratio >= 0.8 (near-normal) with an obstruction/inspiratory-flow load present; keep < 0.75 only on a sedated (hypnotic) arm | [`neuro-acceptance.test.ts`](../../packages/engine-core/test/engine/neuro-acceptance.test.ts) |
 | propofol 2 mg/kg: depth-index nadir 18.4–39.0 | 50 | Blum 2006 | not audited | — | [`neuro-engine.test.ts`](../../packages/engine-core/test/engine/neuro-engine.test.ts) |
+| 12–25 Hz (beta): 15 and 20 Hz below the alpha peak and the 12–25 Hz share (AKE14 Fig. 3C; PUR15 Fig. 3A) | 15 Hz −12.2, 20 Hz −13.4, share −12.3 dB | — | not audited | — | [`spectra-measured.test.ts`](../../packages/engine-core/test/l2/eeg/spectra-measured.test.ts) |
+| sedation: 25–35 Hz power rises ≈ 3.6 dB over awake before LOC (PUR13 Fig. 2C) | +0.9 dB at propofol 1.5 µg/mL | — | not audited | — | [`spectra-measured.test.ts`](../../packages/engine-core/test/l2/eeg/spectra-measured.test.ts) |
+| unconscious: 25–35 Hz power stays ≈ 3.7 dB over awake 15 min after LOC (PUR13 Fig. 2C) | −6.7 dB at LOC + 1 µg/mL | — | not audited | — | [`spectra-measured.test.ts`](../../packages/engine-core/test/l2/eeg/spectra-measured.test.ts) |
+| LOC → unconscious: 25–35 Hz power changes by only −0.7 dB (15 min) and −1.6 dB (29 min) after LOC (PUR13 Fig. 2C) | −3.6 and −5.5 dB | — | not audited | — | [`spectra-measured.test.ts`](../../packages/engine-core/test/l2/eeg/spectra-measured.test.ts) |
 | synergy: propofol 1 + remifentanil 1 depresses more than the product of each | equal at α 0 | — | RIGHT ([audit row 5](../../docs/validation/target-audit/30-target-audit.md#row-5)) | keep (both > Bliss prediction); optionally quantify: resting VE depression at propofol 1 + remi 1 clearly beyond Bliss | [`depth-drive.test.ts`](../../packages/engine-core/test/l2/neuro/depth-drive.test.ts) |
 | 1 MAC volatile lowers non-depolariser EC50 by ~33 % | × 0.847, −15 % | tables §5d | MIS-SPECIFIED ([audit row 2](../../docs/validation/target-audit/30-target-audit.md#row-2)) | 0.72-0.90 at 1 MAC | [`depth-drive.test.ts`](../../packages/engine-core/test/l2/neuro/depth-drive.test.ts) |
 | rocuronium 0.6 mg/kg: the efforts stay below the dead space for ≥ 5 min | 2.8 min | — | not audited | — | [`diaphragm-recovery.test.ts`](../../packages/engine-core/test/l2/neuro/diaphragm-recovery.test.ts) |
@@ -280,9 +284,7 @@ Module page: [docs/model/monitor.md](../model/monitor.md)
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3) | 85.6 vs 83.5 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
-| C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149) | 85.6 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
-| C28: at the cortex's own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) | 89.31 vs 88.78 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
+| C28: at the cortex's own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) | 87.08 vs 86.90 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
 | awake reads high (toward 100: full book p. 2169): SE above 80 | 69 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
 | C27 for Entropy: surgical depth (propofol + fentanyl, no stimulus) lies in "adequate hypnosis" — original SE ≥ 0.5 (p. 159) — and below awake | 0.482 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
 | C28: at the cortex's own loss of responsiveness SE is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145: "entropy measures … tend to be higher in the elderly") | 50.5 vs 63.9 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |

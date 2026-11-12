@@ -9,7 +9,8 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, PumpKind, RelayDevice } from '@pme/controller';
+import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
@@ -173,6 +174,9 @@ export class AppSession {
   /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
+  /** A1 (plan pump-rack-tci.md §5): the room's pump rack, each channel's kind (site.ts pumpRack), sent to the pump tablet
+   *  on the style event. */
+  pumpRack: PumpKind[];
   /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
    *  patient mount, or null: no EEG device (none switched on). */
   eegModel: string | null;
@@ -181,10 +185,11 @@ export class AppSession {
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[] }) {
     this.el = el;
     this.defibModel = o.defibModel ?? null;
     this.eegModel = o.eegModel ?? null;
+    this.pumpRack = [...(o.pumpRack ?? DEFAULT_SITE.pumpRack)];
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -253,6 +258,11 @@ export class AppSession {
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
+      // B6 "To the next phase": the /2 card's last phase entry (its id and time), the stop the host's fast-forward reads
+      phaseMark: () => {
+        const e = this.driver.phaseRunner?.phases.at(-1);
+        return e ? `${e.id}@${e.t}` : null;
+      },
       // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
       // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
@@ -527,8 +537,15 @@ export class AppSession {
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
-  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null } {
-    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel }; // R5: the window's look
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null; pumps: PumpKind[] } {
+    // R5: the window's look; A1: the room's pump rack, for the pump tablet
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel, pumps: [...this.pumpRack] };
+  }
+
+  /** Room setup's pump rack (A1): kept here, and sent to the pump tablet at once on the style event (as the defibrillator model). */
+  setPumpRack(kinds: PumpKind[]): void {
+    this.pumpRack = [...kinds];
+    for (const f of this.skinFns) f(this.skin, this.theme);
   }
 
   private ibp: IbpScales = {};

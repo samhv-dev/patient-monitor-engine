@@ -588,9 +588,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3) | 85.6 vs 83.5 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
-| C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149) | 85.6 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
-| C28: at the cortex's own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) | 89.31 vs 88.78 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
+| C28: at the cortex's own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) | 87.08 vs 86.90 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
 | awake reads high (toward 100: full book p. 2169): SE above 80 | 69 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
 | C27 for Entropy: surgical depth (propofol + fentanyl, no stimulus) lies in "adequate hypnosis" — original SE ≥ 0.5 (p. 159) — and below awake | 0.482 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
 | C28: at the cortex's own loss of responsiveness SE is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145: "entropy measures … tend to be higher in the elderly") | 50.5 vs 63.9 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
@@ -609,7 +607,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`engine/device-determinism.test.ts`](../../packages/engine-core/test/engine/device-determinism.test.ts) | 0 | 0 |
-| [`engine/eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) | 3 | 0 |
+| [`engine/eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) | 1 | 0 |
 | [`engine/eeg-device.test.ts`](../../packages/engine-core/test/engine/eeg-device.test.ts) | 0 | 0 |
 | [`engine/eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) | 4 | 0 |
 | [`engine/fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) | 1 | 0 |

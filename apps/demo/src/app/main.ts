@@ -11,6 +11,8 @@ import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
 import { restartSameCard } from './teach2/finish.ts';
+import { draftRun } from './builder/run-panel.ts';
+import { drafts } from './builder/drafts.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
 import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
@@ -35,6 +37,7 @@ import { watchHiddenTab } from './hidden-tab.ts';
 import { mountDepthWindow } from './views/depth.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { deviceKey, pickerView } from './views/join.ts';
+import { pumpPageView } from './pump/page.ts';
 import { learnerRemoteView } from './views/learner-remote.ts';
 import { drugsMenu } from './remote/drugs.ts';
 import { infusionsLink, infusionsView } from './remote/infusions.ts';
@@ -70,6 +73,7 @@ const shows = follow ? instrumentOf(location.hash) : null;
 const defibWindow = shows === 'defib';
 if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 if (follow && shows === 'remote') document.documentElement.dataset.learner = 'remote'; // L6: the monitor strip over the tabs (app.css)
+if (follow && shows === 'pump') document.documentElement.dataset.learner = 'pump'; // A1: the rack, no monitor (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -134,6 +138,20 @@ if (follow && shows === 'pick') {
   shell.start();
   document.title = 'Learner remote: patient monitor simulator';
   Object.assign(window, { __pmeLearnerRemote: remote, __pmeLearnerDrugs: drugs, __pmeLearnerInfusions: infusions, __pmeLearnerLabs: labs, __pmeApp: { shell, frames, site } });
+} else if (follow && shows === 'pump') {
+  // A1 (plan pump-rack-tci.md §4 D1): the pump tablet. Its learner-PIN form first; at sign-in the follower, whose every
+  // hello says `{role: 'pump', show: 'pump', device, pin}` (the PIN from the page's memory); granted, the rack. No monitor
+  // and none of its sound. The device profiles (D12) join when S1 has merged: until then the faces say so (null)
+  const page = pumpPageView({
+    code: follow,
+    stage: shell.stage,
+    profiles: null,
+    follow: (code, bar, pin) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), pin, sound: false }),
+  });
+  shell.add(page);
+  shell.start();
+  document.title = 'Infusion pumps: patient monitor simulator';
+  Object.assign(window, { __pmePumpPage: page, __pmeApp: { shell, frames, site } });
 } else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
@@ -191,7 +209,7 @@ if (follow && shows === 'pick') {
   let lpin: InstructorPin | null = null;
   const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
   const learner = (lpin = learnerPin(() => pin.get()));
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, pumpRack: site.pumpRack, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
   learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
@@ -209,6 +227,8 @@ if (follow && shows === 'pick') {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
+  // B6 (scenario-builder.md §6): the builder's run in place, a draft on this computer's session beside Instructor v2
+  const draft = draftRun({ link, root: shell.root, drafts });
   // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed
   // is read from this Link by Instructor v2's functions
   session.serveInstructors({ note: (text, kind, t, ev) => link.note(text, kind, t, ev), feed: () => feedOf(link) });
@@ -256,6 +276,7 @@ if (follow && shows === 'pick') {
       toast(`The scenario could not load: ${c.title}`, 'alert');
       return false;
     }
+    draft.end(); // a library or imported card runs now, not a draft
     link.note(`Scenario loaded: ${c.title}`, 'scenario');
     session.setLearner(SCENARIO_META[c.id]?.learnerControls ?? false); // Off unless the case asks
     noteRecent(c.id); // The Scenarios page's Recent
@@ -283,11 +304,14 @@ if (follow && shows === 'pick') {
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
     // E12: the room's depth-of-anaesthesia device, kept with the site profile and switched on in the patient's engine
     depth: { model: () => site.eegModel, choose: (m) => ((site.eegModel = m), saveSite(site), session.setEegModel(m)) },
+    // A1 (plan pump-rack-tci.md §5): the room's pump rack, kept with the site profile (so a restart keeps it) and sent to
+    // the pump tablet on the style event
+    pumps: { kinds: () => site.pumpRack, choose: (k) => ((site.pumpRack = k), saveSite(site), session.setPumpRack(k)) },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
   shell.add(room);
-  shell.add(scenariosView({ session, loadScenario }));
+  shell.add(scenariosView({ session, loadScenario, runDraft: (id, doc) => draft.run(id, doc) }));
   shell.add(patientView({ session, site }));
   shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
@@ -295,7 +319,8 @@ if (follow && shows === 'pick') {
   // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
   // a reload shows no case either
   const finish = {
-    restart: (): boolean => restartSameCard(session.driver, loadScenario, () => session.roomKeep()),
+    // B6: a draft running in place restarts as the draft (never through the library's load, its Recent or its card)
+    restart: (): boolean => (draft.current() ? draft.restart(session.roomKeep()) : restartSameCard(session.driver, loadScenario, () => session.roomKeep())),
     close: (): void => {
       session.endCase();
       const u = new URL(location.href);
