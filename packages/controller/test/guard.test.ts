@@ -151,11 +151,15 @@ describe("the hello's `show` and `device` (plan room-and-instruments.md §4 D1, 
 // learner (no PIN), and may send exactly two command shapes: Charge and Shock, the room's model choosing the energy.
 describe('the learner defibrillator role (plan room-and-instruments.md R5c)', () => {
   const hello = (role: string, extra: Record<string, unknown> = {}) => ({ ...stamp({ kind: 'hello', role: 'viewer' }), role, ...extra });
-  it('a `defib` hello is legal alone and with show and device; never with a PIN', () => {
+  // Defibrillator plan R1 (DQ6 = A, ruled 12 November 2026): the screen may now prove the LEARNER PIN in its hello, as the
+  // learner remote does; without one it is today's window (its two presses). A PIN is 4 to 8 digits, as everywhere.
+  it('a `defib` hello is legal alone, with show and device, and with a learner PIN of 4 to 8 digits', () => {
     expect(parseWireMessage(hello('defib'))).toMatchObject({ kind: 'hello', role: 'defib' });
     expect(parseWireMessage(hello('defib', { show: 'defib', device: 'k3x9q2m7' }))).toMatchObject({ role: 'defib', show: 'defib', device: 'k3x9q2m7' });
     expect(parseWireMessage(hello('defib', { device: 'k3x9q2m7' }))).not.toBeNull();
-    expect(parseWireMessage(hello('defib', { pin: '4729' }))).toBeNull();
+    expect(parseWireMessage(hello('defib', { pin: '4729' }))).toMatchObject({ role: 'defib', pin: '4729' });
+    expect(parseWireMessage(hello('defib', { pin: '47291305', show: 'defib', device: 'k3x9q2m7' }))).toMatchObject({ role: 'defib', pin: '47291305', device: 'k3x9q2m7' });
+    for (const pin of ['472', '472912345', '47a9', 4729, null, '']) expect(parseWireMessage(hello('defib', { pin })), JSON.stringify(pin)).toBeNull();
     expect(parseWireMessage(hello('defib', { show: 'vent' }))).toBeNull();
     expect(parseWireMessage(hello('defib', { device: 'K3X9' }))).toBeNull();
   });
@@ -216,8 +220,8 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     expect(parseWireMessage(hello('learner', { pin: '4729', device: 'K3X9' }))).toBeNull();
     expect(parseWireMessage(hello('learner', { pin: '4729', show: 'vent' }))).toBeNull();
   });
-  it('a PIN is still refused on a viewer, a defibrillator window, a controller and a host', () => {
-    for (const role of ['viewer', 'defib', 'controller', 'host']) expect(parseWireMessage(hello(role, { pin: '4729' })), role).toBeNull();
+  it('a PIN is still refused on a viewer, a controller and a host (the defibrillator screen proves one since defib R1)', () => {
+    for (const role of ['viewer', 'controller', 'host']) expect(parseWireMessage(hello(role, { pin: '4729' })), role).toBeNull();
   });
 
   const cmd = (c: object) => ({ id: 'k1', issuedBy: 'learner-a', ...c }) as unknown as CommandInput;
