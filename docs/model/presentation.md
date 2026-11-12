@@ -742,6 +742,7 @@ renderer, audio and skin contracts.
 | `handoutQuestions` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | The handout's "Questions to think about" (D16, Decision 14): |
 | `hintsSection` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | "From the card's author" (D9; |
 | `genericFace` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The generic processed-EEG face (EEG plan E5's "Processed EEG (generic)"): |
+| `bisTypeFace` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The BIS-type face (EEG plan E7, the BIS-type reader l3/eeg-devices/bis-type.ts): |
 | `mountDepthWindow` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The window in `parent` (the follower's stage, over its monitor): |
 | `sectionRows` | [`apps/demo/src/app/views/explore.ts`](../../apps/demo/src/app/views/explore.ts) | The rows of one Explore section for the model's current state: |
 | `phoneStyle` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | The style a PHONE wears — the instructor's (it comes in the follow stream), upright. |
