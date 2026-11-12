@@ -70,3 +70,54 @@ test('EDP-TS face: PCV chosen with the knob, PEEP changed, the monitor\'s airway
   await expect.poll(async () => (await engineAirway(page))!.meanPaw, { timeout: 30_000 }).toBeGreaterThan(before.meanPaw + 3);
   expect(errs).toEqual([]);
 });
+
+// Brief 202 (V3 on the redrawn face): an alarm raised by the MODEL, seen on the face as the device shows it. The
+// Pressure Limits max key turned below the breath's peak: the model raises High Pressure (research/57 A-32, no delay);
+// the High lamp flashes (H-06) and the message box shows the device's words on red (R-16, R-17; S-01, S-02); the silence
+// key pauses the sound only (A-20), said outside the device; the limit set back: the message goes at once (A-19), the
+// lamp stays lit, steady (A-16), until Esc (H-25).
+test('EDP-TS face: High Pressure from the model, its lamp and message, silenced, cleared and reset with Esc', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errs: string[] = [];
+  page.on('pageerror', (e) => errs.push(String(e)));
+  await page.setViewportSize({ width: 1400, height: 820 });
+  await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
+  await expect(page.locator('main.edp')).toBeVisible({ timeout: 20_000 });
+  const lamp = (w: string) => page.locator(`.edp-lamp[data-lamp="${w}"]`);
+  const box = page.locator('.edp-alarm');
+  const cfg = () => page.evaluate(() => (window as Any).__vent.vs.cfg.pmax as number);
+  const peak = () => page.evaluate(() => (window as Any).__vent.vs.p.measured.PIP as number);
+  await expect.poll(peak, { timeout: 20_000 }).toBeGreaterThan(10);
+
+  // the limit under the peak: select the key, turn, press (research/57 O-01)
+  const pmax0 = await cfg();
+  const steps = pmax0 - Math.max(10, Math.floor((await peak()) - 5));
+  await page.locator('[data-ctl="tag:pmax"]').click();
+  await knobTurnPage(page, -steps);
+  await page.locator('.edp-knob').click();
+  expect(await cfg()).toBe(pmax0 - steps);
+  await expect(box).toHaveText('High Pressure', { timeout: 15_000 });
+  await expect(box).toHaveClass(/high/);
+  await expect(lamp('high')).toHaveAttribute('data-state', 'fast');
+  await expect(lamp('inop')).toHaveAttribute('data-state', 'off');
+
+  // silenced: the device unchanged, the seconds left in the simulator's strip
+  await page.locator('[data-ctl="side:silence"]').click();
+  await expect(page.locator('.edp-strip .sil')).toHaveText(/^Alarm sound paused: (30|29) s$/);
+  await expect(box).toHaveText('High Pressure');
+  await expect(lamp('high')).toHaveAttribute('data-state', 'fast');
+
+  // the limit back: the message goes, the lamp stays lit steady until Esc
+  await page.locator('[data-ctl="tag:pmax"]').click();
+  await knobTurnPage(page, steps);
+  await page.locator('.edp-knob').click();
+  expect(await cfg()).toBe(pmax0);
+  await expect(box).toBeHidden({ timeout: 15_000 });
+  await expect(lamp('high')).toHaveAttribute('data-state', 'steady');
+  await page.locator('[data-ctl="under:esc"]').click();
+  await expect(lamp('high')).toHaveAttribute('data-state', 'off');
+  expect(errs).toEqual([]);
+});
+async function knobTurnPage(p: Page, n: number) {
+  for (let i = 0; i < Math.abs(n); i++) await p.locator('.edp-knob').dispatchEvent('wheel', { deltaY: n > 0 ? -100 : 100 });
+}

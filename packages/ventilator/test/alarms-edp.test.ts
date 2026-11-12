@@ -64,6 +64,23 @@ describe('the EDP-TS alarm conditions', () => {
   });
 });
 
+// Brief 202: two misses of the conditions above, recorded as expected failures (the conditions' numbers are not changed
+// here). N111: the device reads its oxygen cell; the model has none. And the minimum-pressure condition is evaluated on
+// the breath record before any breath has been delivered.
+describe('the EDP-TS alarm conditions: known misses', () => {
+  it.fails('o2High is raised on the oxygen the device\'s cell reads (A-44): IMG_1542 shows 43 % read at a set 40 %, so a high limit of 42 is crossed (measured: not raised, as the model has no oxygen sensor and its O2 alarms compare the SET 40 % with the limit, finding N111)', () => {
+    const vs = createVent({ fio2: 40, almO2hi: 42, almO2lo: 30 });
+    advanceVent(vs, 40);
+    expect(ids(vs)).toContain('o2High');
+  });
+
+  it.fails('lowPressure waits for a delivered breath (A-35: the airway pressure under the minimum): none in the first second after start (measured: raised at t = 0.005 s on the empty breath record, PIP 0, until the first breath ends at 1.0 s; the face latches it, High lamp lit until Esc)', () => {
+    const vs = createVent({ almPlo: 5 });
+    advanceVent(vs, 0.5);
+    expect(ids(vs)).not.toContain('lowPressure');
+  });
+});
+
 describe('silenceAlarms', () => {
   it('120 s by default (v1.9), or the duration a face passes', () => {
     const vs = createVent();
