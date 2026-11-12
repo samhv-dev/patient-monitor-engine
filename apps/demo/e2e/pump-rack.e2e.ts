@@ -9,7 +9,8 @@
 // A refusal on the tablet is the host's words. Then a mismatched load — a phenylephrine syringe on a channel programmed
 // as propofol — shows the instructor's card at once and nothing on the pump, until the card's one control shows the
 // notice there. With the pump tablet connected and that card on the dock, every sheet's primary button on the
-// instructor's page is the element at its own centre at 1440 × 900.
+// instructor's page and every dock control is the element at its own centre, with no two dock controls overlapping, at
+// 1280 × 720, 1280 × 800, 1440 × 900 and 1920 × 1080 (with the learner preparations' card on the dock as well).
 // PME_E2E_PORT and PME_E2E_RELAY_PORT (+ the worker's index) keep Vite and the relay inside a machine's port range;
 // PME_A2_SHOTS=<dir>: each flow's form is saved there as PNG (for the PR; CI sets none).
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -149,6 +150,35 @@ const footBlocked = (page: Page, id: string) => page.evaluate((sid) => {
   }
   return out;
 }, id);
+/** The laptop sizes the dock is measured at (the gate's four). */
+const SIZES = [{ width: 1280, height: 720 }, { width: 1280, height: 800 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }];
+/** The dock's visible controls (its tools, marks, links and both cards' buttons) whose centre is not the control itself. */
+const dockBlocked = (page: Page) => page.evaluate(() => {
+  const out: string[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>('.ip2-dock button, .ip2-dock a[href], .ip2-dock summary, .ip2-dock input, .ip2-dock select')) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
+    const box = (el.closest('.ip2-lp, .ip2-pm') ?? el).getBoundingClientRect(); // scrolled out of a card's own box: hidden by it, not covered
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    if (y < box.top || y > box.bottom) continue;
+    const hit = document.elementFromPoint(x, y);
+    if (!hit || !(el === hit || el.contains(hit))) out.push(`${el.className || el.tagName} "${(el.textContent ?? '').trim().slice(0, 30)}" under ${hit instanceof HTMLElement ? hit.className || hit.tagName : 'nothing'}`);
+  }
+  return out;
+});
+/** Pairs of the dock's visible controls whose boxes overlap (by more than half a pixel each way). */
+const dockOverlaps = (page: Page) => page.evaluate(() => {
+  const els = [...document.querySelectorAll<HTMLElement>('.ip2-dock button, .ip2-dock a[href], .ip2-dock summary')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+  const out: string[] = [];
+  for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+    const a = els[i]!, b = els[j]!;
+    if (a.contains(b) || b.contains(a)) continue;
+    const p = a.getBoundingClientRect(), q = b.getBoundingClientRect();
+    const w = Math.min(p.right, q.right) - Math.max(p.left, q.left), hh = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
+    if (w > 0.5 && hh > 0.5) out.push(`"${(a.textContent ?? a.getAttribute('aria-label') ?? '').trim().slice(0, 20)}" × "${(b.textContent ?? b.getAttribute('aria-label') ?? '').trim().slice(0, 20)}"`);
+  }
+  return out;
+});
 /** How many footer buttons the open sheet `id` shows (so the check above is not vacuous). */
 const footCount = (page: Page, id: string) => page.locator(`.ip2-sheets .ip2-sheet[data-sheet=${id}]:not([hidden]) .ip2-sheet-foot button:visible`).count();
 
@@ -260,12 +290,24 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   expect(await p.content()).not.toMatch(/phenylephrine 100|100 µg\/mL/i); // the label listed it; the face shows the programme only
   if (process.env.PME_A2_SHOTS) await card.screenshot({ path: `${process.env.PME_A2_SHOTS}/201-card-${browserName}.png` });
 
-  // Every sheet's primary buttons on the instructor's page at 1440 × 900, the tablet connected and the card on the dock
-  for (const id of ['airway', 'defib', 'vitals', 'devices', 'patient', 'log', 'drug'] as const) {
-    await sheet(page, id);
-    expect.soft(await footBlocked(page, id), `the ${id} sheet's primary buttons`).toEqual([]);
-    if (id === 'drug') expect.soft(await footCount(page, id), 'the Drug sheet shows its footer').toBeGreaterThan(0);
+  // The dock with BOTH cards (the learner preparations' card for the remote's propofol, and the mismatch card) at the
+  // four laptop sizes, the tablet connected: every dock control and every sheet's footer button is the element at its
+  // own centre, no two dock controls overlap, and the cards' own controls are not covered by a sheet
+  await expect(page.locator('.ip2-dock .ip2-lp')).toBeVisible();
+  for (const size of SIZES) {
+    await page.setViewportSize(size);
+    for (const id of ['airway', 'defib', 'vitals', 'devices', 'patient', 'log', 'drug'] as const) {
+      await sheet(page, id);
+      const at = `${id} sheet at ${size.width}×${size.height}`;
+      expect.soft(await footBlocked(page, id), `the ${at}: its primary buttons`).toEqual([]);
+      if (id === 'drug') expect.soft(await footCount(page, id), `the Drug sheet shows its footer at ${size.width}×${size.height}`).toBeGreaterThan(0);
+      expect.soft(await dockBlocked(page), `the dock's controls, the ${at}`).toEqual([]);
+      expect.soft(await dockOverlaps(page), `the dock's controls overlapping, the ${at}`).toEqual([]);
+      if (process.env.PME_A2_SHOTS && id === 'drug') await page.waitForTimeout(600).then(() => page.screenshot({ path: `${process.env.PME_A2_SHOTS}/201-dock-${size.width}x${size.height}-${browserName}.png` }));
+    }
+    expect(await page.locator('.ip2-dock button:visible, .ip2-dock a[href]:visible').count()).toBeGreaterThanOrEqual(13); // seven tools, the marks, Recognised, Debrief and the cards' controls
   }
+  await page.setViewportSize({ width: 1440, height: 900 });
   await expect(card).toBeVisible();
 
   // The card's one control: the pump shows the notice on channel 1, in the host's words
