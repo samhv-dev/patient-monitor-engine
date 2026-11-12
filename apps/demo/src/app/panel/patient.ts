@@ -9,6 +9,10 @@ import { describeCommand } from '../describe.ts';
 import type { PanelCtx } from './ctx.ts';
 
 export function patientTab(c: PanelCtx): HTMLElement {
+  // brief 208: on the laptop's Patient sheet a MODELED run holds no value (PanelCtx.holds)
+  const modes = c.holds === false
+    ? 'MODELED: the body responds by itself; a value changes through its cause. MANUAL: you set every value.'
+    : 'MODELED: the body responds by itself and you can hold any value. MANUAL: you set every value.';
   const { link } = c;
   const who = h('p', { class: 'summary num' });
   const conds = h('ul', { class: 'plain' });
@@ -73,6 +77,6 @@ export function patientTab(c: PanelCtx): HTMLElement {
     if (m) modeSeg.set(m);
   });
   return h('div', {}, h('h3', {}, 'Patient'), who, conds, events, h('h3', {}, 'Physiology'), modeSeg,
-    h('p', { class: 'hint' }, 'MODELED: the body responds by itself and you can hold any value. MANUAL: you set every value.'),
+    h('p', { class: 'hint' }, modes),
     h('div', { class: 'row' }, edit, restart));
 }

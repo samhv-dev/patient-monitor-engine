@@ -107,4 +107,4 @@
 .ip2-staged { color: var(--ip2-muted); }
 .ip2-staged:not([data-count='0']) { border-color: var(--ip2-blue); color: var(--ip2-blue-text); font-weight: 600; }
 .ip2-note { display: flex; }
-.ip2-note-field { width: 200px; height: 36px; }
+.ip2-note-field { width: 100%; min-width: 96px; height: 36px; } /* 200 px at most, 96 px at least: teach2.css */

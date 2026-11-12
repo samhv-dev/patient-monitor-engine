@@ -104,6 +104,8 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     r.key('Escape');
     r.key('1');
     expect(r.shown('.ip2-ff')).toBe(true);
+    r.key('Escape'); // brief 208: Free roam opened the Patient sheet; the first Esc closes it, Free roam stays
+    expect(r.shown('.ip2-ff')).toBe(true);
     r.key('Escape');
     expect(r.shown('.ip2-ff')).toBe(false);
     r.key('2');

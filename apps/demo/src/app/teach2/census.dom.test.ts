@@ -336,7 +336,7 @@ describe('the command census of the laptop\'s Instructor view (P0)', () => {
     expect(shapes.filter((s) => PLAN_S2_REFUSED.includes(s)), 'a refused shape is sent').toEqual([]);
     expect(shapes).toEqual(PLAN_S2);
     // brief 208: every shape set aside is still one the host allows, and the laptop sends none of them
-    expect(NOT_FROM_THE_LAPTOP.filter((x) => !(INSTRUCTOR_COMMANDS as readonly string[]).includes(x))).toEqual([]);
+    expect(NOT_FROM_THE_LAPTOP.filter((x) => !INSTRUCTOR_COMMANDS.has(x))).toEqual([]);
     expect(shapes.filter((x) => NOT_FROM_THE_LAPTOP.includes(x)), 'a hold sent from the laptop').toEqual([]);
     // retire-instructor-v1: v2 alone sends every shape of the union (v2 ⊇ the union: the crawl is v2's only, so the
     // equality above is that condition; kept as its own line so the condition is named)

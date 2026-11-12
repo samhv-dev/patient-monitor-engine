@@ -90,6 +90,10 @@
 .ip2-dock { grid-area: dock; display: flex; align-items: center; gap: 6px; min-width: 0; padding: 0 16px; border-top: 1px solid var(--ip2-line); background: var(--ip2-bar); font-size: 13px; }
 .ip2-dock-label { padding-right: 6px; color: var(--ip2-muted); }
 .ip2-dock-tools, .ip2-dock-marks, .ip2-dock-note { display: flex; align-items: center; gap: 6px; min-width: 0; }
+/* brief 208 (the 1280 px overlap at its cause, brief 185, prototype 207): the marks never shrink below their three
+   buttons (they slid under "Recognised"); the note field gives up width first, from 200 px down to 96 px */
+.ip2-dock-marks { flex: none; }
+.ip2-dock-note, .ip2-dock-note .ip2-note { flex: 0 1 200px; min-width: 96px; }
 .ip2-dock-div { flex: none; width: 1px; height: 36px; margin: 0 10px; background: var(--ip2-control); }
 .ip2-dock-div:last-of-type { margin: 0 18px; }
 .ip2-dock-mid { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }

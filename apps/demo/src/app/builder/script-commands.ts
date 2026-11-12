@@ -1,4 +1,4 @@
-// The Script section's commands from the Airway, Defib · CPR and Devices sheets (docs/plans/scenario-builder.md §5.2;
+// The Script section's commands from the Airway, CPR and Devices sheets (docs/plans/scenario-builder.md §5.2;
 // piece 162, finding N83 of B5): an airway state, who breathes with the bag's or the ventilator's settings, oxygen for
 // the spontaneously breathing patient, the defibrillator's charge, shock, disarm and synchronised mode, the pacer, CPR
 // started or stopped, a sensor attached or removed, and the NIBP. Each command is the sheet's own builder
@@ -39,9 +39,9 @@ export const SHEET_GROUPS: More['groups'] = [
   ['Airway (Airway sheet)', AIRWAY.map(([v, t]) => [`airway:${v}`, `Airway: ${t}`] as [string, string])],
   ['Breathing (Airway sheet)', BREATHING.map(([v, t]) => [`vent:${v}`, `Breathing: ${t}`] as [string, string])],
   ['Oxygen (Airway sheet)', O2_CHOICES.map(([v, t]) => [`o2:${v}`, `Oxygen: ${t}`] as [string, string])],
-  ['Defibrillator (Defib · CPR sheet)', DEFIB_ACTIONS.map(([v, t]) => [`defib:${v}`, `Defibrillator: ${t}`] as [string, string])],
-  ['Pacing (Defib · CPR sheet)', PACER_MODES.map(([v, t]) => [`pacer:${v}`, `Pacer: ${t}`] as [string, string])],
-  ['CPR (Defib · CPR sheet)', [['cpr:start', 'Start CPR'], ['cpr:stop', 'Stop CPR']]],
+  ['Defibrillator (CPR sheet)', DEFIB_ACTIONS.map(([v, t]) => [`defib:${v}`, `Defibrillator: ${t}`] as [string, string])],
+  ['Pacing (CPR sheet)', PACER_MODES.map(([v, t]) => [`pacer:${v}`, `Pacer: ${t}`] as [string, string])],
+  ['CPR (CPR sheet)', [['cpr:start', 'Start CPR'], ['cpr:stop', 'Stop CPR']]],
   ['Sensors (Devices sheet)', CHANNELS.map(([s]) => [`sensor:${s}`, `Sensor: ${SENSORS[s] ?? s}`] as [string, string])],
   ['NIBP (Devices sheet)', [['nibp:start', 'Start NIBP now'], ['nibp:interval', 'NIBP: automatic interval']]],
 ];
