@@ -1,6 +1,6 @@
 // The neuro model's NMT (train-of-four) and BFA (BIS-like depth index) tiles. Pure formatters (Node has no DOM) from
 // the engine's `measurement` values: tofCount/tofRatio (every train), ptc (23 s after a PTC) and di/sr (1 Hz while the
-// depth monitor is on) or an EEG device's own ids (sef/eegSr, 1 Hz while it is on; EEG plan E6), as the neuro demo
+// depth monitor is on) or an EEG device's own ids (sef/eegSr at 1 Hz, bis/bisSr at 2 Hz while it is on; EEG plan E6, E7), as the neuro demo
 // draws them. Like a plug-in module, a tile is shown only while its device
 // publishes (MODULE_TILES); the other tiles are always drawn.
 import type { Measured, NumericId } from '@pme/engine-core';
@@ -16,7 +16,7 @@ const ok = (x: Measured | undefined): x is Measured & { value: number } => !!x &
  */
 export const MODULE_TILES: Partial<Record<TileParam, { numerics: NumericId[]; staleS: number }>> = {
   NMT: { numerics: ['tofCount', 'ptc'], staleS: 120 },
-  BFA: { numerics: ['di', 'sr', 'sef', 'eegSr'], staleS: 5 }, // the present index or an EEG device (E6), both 1 Hz
+  BFA: { numerics: ['di', 'sr', 'sef', 'eegSr', 'bis', 'bisSr'], staleS: 5 }, // the present index or an EEG device (E6, E7): 1 Hz, 2 Hz
   AGENTS: { numerics: ['etAa', 'mac'], staleS: 5 }, // The neuro model publishes both at 1 Hz while an agent is present
 };
 
@@ -48,16 +48,32 @@ export function formatAgents(v: Values, noValue: string): { main: string; sub: s
 }
 
 /**
- * What the BFA tile reads (EEG plan E6, Q3): the chosen EEG device's index and suppression ratio while it publishes —
- * the generic processed-EEG reader's SEF (Hz, labelled SEF) and its SR — and the present depth index's di/sr
- * otherwise. The EEG device wins unless the depth monitor's reading is a whole stale window (5 s) newer, i.e. the EEG
- * device has stopped. This mapping lives here, never in a skin's JSON; parts the reader does not compute (Saadat's
- * SQI%, EMG%) stay blank.
+ * The EEG readers the BFA tile can show, one row each (EEG plan E6, E7; the next readers add a row): the numeric ids of
+ * the reader's index and suppression ratio, the digits and the label the tile wears for it. The BIS-type label carries
+ * Q8's point in its wording: a type, not the maker's monitor.
+ */
+export const BFA_READERS: ReadonlyArray<{ index: NumericId; sr: NumericId; digits: number; label: string }> = [
+  { index: 'bis', sr: 'bisSr', digits: 0, label: 'BIS-type' },
+  { index: 'sef', sr: 'eegSr', digits: 1, label: 'SEF' },
+];
+
+/**
+ * What the BFA tile reads (EEG plan E6, Q3): the chosen EEG reader's index and suppression ratio while it publishes —
+ * the reader whose values are newest (after a change of reader the old one's last values stay in the map and must not
+ * win) — and the present depth index's di/sr otherwise. The EEG reader wins unless the depth monitor's reading is a
+ * whole stale window (5 s) newer, i.e. the EEG device has stopped. This mapping lives here, never in a skin's JSON;
+ * parts the reader does not compute (Saadat's SQI%, EMG%) stay blank.
  */
 export function bfaReading(v: Values): { index: Measured | undefined; sr: Measured | undefined; digits: number; label?: string } {
-  const eeg = v.eegSr ?? v.sef;
+  let best: { r: (typeof BFA_READERS)[number]; at: number } | null = null;
+  for (const r of BFA_READERS) {
+    const x = v[r.sr] ?? v[r.index];
+    if (x && (!best || x.at > best.at)) best = { r, at: x.at };
+  }
   const depth = v.sr ?? v.di;
-  if (eeg && (!depth || eeg.at >= depth.at - (MODULE_TILES.BFA?.staleS ?? 5))) return { index: v.sef, sr: v.eegSr, digits: 1, label: 'SEF' };
+  if (best && (!depth || best.at >= depth.at - (MODULE_TILES.BFA?.staleS ?? 5))) {
+    return { index: v[best.r.index], sr: v[best.r.sr], digits: best.r.digits, label: best.r.label };
+  }
   return { index: v.di, sr: v.sr, digits: 0 };
 }
 
