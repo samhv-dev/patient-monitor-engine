@@ -40,7 +40,9 @@ import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot k
 import { mountMonitor, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
-import { defibReadout, defibSkin, defibWords } from '../instrument.ts';
+import { createDefibCore } from '../../defib/core/core.ts';
+import type { DefibStatusIn } from '../../defib/core/types.ts';
+import { DEFIB_FACES, defibFace } from '../../defib/faces/index.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
 import { followerStatus, hostPause, phoneStyle } from './follower-status.ts';
@@ -157,8 +159,10 @@ function asOnePeer(t: ManagedTransport, role?: 'defib'): ManagedTransport {
 
 /**
  * `defib` (Room plan R5): this window is the defibrillator (`#/defib`): it wears the room's defibrillator model's look
- * (instrument.ts defibSkin; the host's style changes its theme only), landscape, and reads out the energy and CHARGING /
- * READY from its own engine. R5d: it has Charge and Shock (Q5 ruled 5 November: the window's only presses), sent bare
+ * (defib/faces defibFace's skin; the host's style changes its theme only), landscape, and reads out the energy and CHARGING /
+ * READY from its own engine. Defibrillator plan F0: the window is a core (defib/core, its state and its key → command
+ * table) and a face (defib/faces, drawing only); this page gives the core its driver (the wire below and this window's
+ * engine). R5d: it has Charge and Shock (Q5 ruled 5 November: the window's only presses), sent bare
  * under a `defib` hello; the host applies them as the instructor's own and answers a refusal in the ack, shown here in
  * the device's words.
  */
@@ -224,7 +228,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   let hold = false;
   let raf = 0;
   let offDraw = () => {}; // The pill's redraw on host messages (after the sync's own handler)
-  let offReadout = () => {}; // R5: the defibrillator readout's subscription to this window's engine
+  let offReadout = () => {}; // R5: the defibrillator core's subscription to this window's engine
   const f: Follower = { monitor, transport, peerId, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
   // L7: the learner remote's commands, under the sync's id (the peer its learner hello made); `issuedBy` is the host's to set
   let sentN = 0;
@@ -233,26 +237,19 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     transport.send({ v: 1, session: code, from: peerId, seq: 0, sentAt: epochNow(), kind: 'command', body: { ...body, id, issuedBy: 'learner' } } as WireMessage);
     return id;
   };
-  // R5: the defibrillator window's readout, from this window's own engine (its deviceStatus)
-  const readout = defib ? h('p', { class: 'defib-readout', role: 'status', 'aria-label': 'Defibrillator' }) : null;
-  if (readout) shell.stage.append(readout);
-  // R5d: Charge and Shock, always enabled — the host's device decides (a shock with no charge is refused there, and the
-  // ack's reason shows under them); a press goes once, a lost one is pressed again, as on the device
-  const pending = new Set<string>();
+  // R5 + F0: the defibrillator window, a core and its face. The core reads this window's own engine (its deviceStatus);
+  // R5d: its presses go out bare under the window's `defib` hello, and the host's ack of a refusal reads in the device's
+  // words. Charge and Shock always enabled: the host's device decides (a shock with no charge is refused there)
+  const statusFns = new Set<(s: DefibStatusIn) => void>();
   let pressN = 0;
-  const saidEl = defib ? h('p', { class: 'defib-said', role: 'status', 'aria-live': 'polite' }) : null;
-  const pressKey = (action: 'charge' | 'shock') => {
-    const id = `${peerId}-press-${++pressN}`;
-    pending.add(id);
-    if (saidEl) setText(saidEl, '');
-    transport.send({ v: 1, session: code, from: peerId, seq: 0, sentAt: epochNow(), kind: 'command', body: { id, issuedBy: 'learner', type: 'applyEvent', event: { kind: 'defib', action } } } as WireMessage);
-  };
-  const keys = defib ? h('div', { class: 'defib-keys', role: 'group', 'aria-label': 'Defibrillator' }, button('Charge', () => pressKey('charge')), button('Shock', () => pressKey('shock'), 'primary')) : null;
-  if (keys && saidEl) bar.append(keys, saidEl);
-  const offAcks = defib ? transport.onMessage((m) => {
-    if (m.kind !== 'ack' || !pending.delete(m.commandId)) return;
-    if (saidEl) setText(saidEl, m.accepted ? '' : defibWords(m.reason));
-  }) : () => {};
+  const face = DEFIB_FACES[defibFace(site.defibModel, site.skin).face]; // generic for every model until F1
+  const defibCore = defib ? createDefibCore({
+    newId: () => `${peerId}-press-${++pressN}`,
+    send: (body, id) => void transport.send({ v: 1, session: code, from: peerId, seq: 0, sentAt: epochNow(), kind: 'command', body: { ...body, id, issuedBy: 'learner' } } as WireMessage),
+    onStatus: (fn) => (statusFns.add(fn), () => void statusFns.delete(fn)),
+    onAck: (fn) => transport.onMessage((m) => void (m.kind === 'ack' && fn(m.commandId, m.accepted, m.reason))),
+  }, face.spec) : null;
+  const defibUi = defibCore ? face.mount(defibCore, { stage: shell.stage, bar }) : null;
   /** Put on a style: the defibrillator window wears the room model's look whatever the monitor style. */
   const wear = (skin: string, theme: string) => {
     if (skin === f.style.skin && theme === f.style.theme) return;
@@ -273,13 +270,13 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     const m = ev.data;
     if (m?.kind !== 'style') return;
     wearIbp(m.ibp);
-    wear(defib ? defibSkin(m.defib ?? null, m.skin) : m.skin, m.theme);
+    wear(defib ? defibFace(m.defib ?? null, m.skin).skin : m.skin, m.theme);
   };
   style?.postMessage({ kind: 'ask' } satisfies StyleMsg);
   void monitor.viewerClock().then((clock) => {
     const sync = new ViewerSync({ session: code, transport, target: clock, engineVersion, peerId });
     f.sync = sync;
-    if (readout) offReadout = clock.on((e) => void (e.type === 'deviceStatus' && setText(readout, defibReadout(e.defib))), ['deviceStatus']);
+    if (defibCore) offReadout = clock.on((e) => void (e.type === 'deviceStatus' && statusFns.forEach((fn) => fn(e))), ['deviceStatus']);
     // The pill after every host message, once the sync has taken it (subscribed after it): the 500 ms poll alone showed
     // what the phone knew during an instructor's reload for up to a poll after it was synced again (kit check 30 Oct)
     offDraw = transport.onMessage(drawStatus);
@@ -314,7 +311,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     for (const e of m.body) {
       if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
       if (e.type === 'style' && net) {
-        if (defib) wear(defibSkin(e.defib ?? null, e.skin), e.theme); // landscape, the room model's look (R5)
+        if (defib) wear(defibFace(e.defib ?? null, e.skin).skin, e.theme); // landscape, the room model's look (R5)
         else if (depth) wear(e.skin, e.theme); // E12: the depth window wears the theme; its monitor is not shown
         else wearPhone(e.skin, e.theme);
         wearIbp(e.ibp);
@@ -351,8 +348,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     upright?.removeEventListener('change', onTurn);
     offDraw();
     offReadout();
-    offAcks();
-    readout?.remove();
+    defibUi?.stop();
+    defibCore?.stop();
     offHost();
     offOpen();
     document.removeEventListener('visibilitychange', onVisible);
