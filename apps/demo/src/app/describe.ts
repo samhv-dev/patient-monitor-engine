@@ -37,6 +37,42 @@ const AIRWAY: Readonly<Record<string, string>> = {
   endobronchial: 'tube endobronchial', bronchospasm: 'bronchospasm',
 };
 
+/** "10 mg/mL" with the drug's own words for its unit. */
+const conc = (c: unknown): string => {
+  const k = (c ?? {}) as Any;
+  return `${+(num(k.amount) / num(k.perMl)).toFixed(3)} ${unitText(String(k.unit))}/mL`;
+};
+/**
+ * A pump channel's act (plan pump-rack-tci.md C2): the engine's `pump` event as the host applied it. The line names the
+ * channel and what the event says; who pressed it is the record row's (`kind`, `by`).
+ */
+function pumpLine(e: Any): string {
+  const ch = `Channel ${e.ch}`;
+  const k = (e.contents ?? {}) as Any;
+  switch (e.action) {
+    case 'load':
+      return `${ch}: ${e.channel === 'drip' ? 'bag' : `${e.syringeMl} mL syringe`} of ${drug(k.drugId)} ${conc(k.concentration)} loaded (${+num(k.volumeMl).toFixed(2)} mL)`;
+    case 'program':
+      return `${ch} programmed: ${drug(e.drugId)} ${conc(e.concentration)}${e.set !== undefined ? `, ${e.set} drops/mL set` : ''}`;
+    case 'rate':
+      return `${ch}: rate ${e.rate} ${unitText(String(e.unit))}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
+    case 'tci':
+      return num(e.target) > 0 ? `${ch}: TCI ${e.setId}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${e.target}` : `${ch}: TCI stopped`;
+    case 'bolus':
+      return e.volumeMl !== undefined ? `${ch}: bolus ${e.volumeMl} mL` : `${ch}: bolus ${(e.dose as Any | undefined)?.amount} ${unitText(String((e.dose as Any | undefined)?.unit))}`;
+    case 'purge':
+      return `${ch}: purge ${e.volumeMl} mL`;
+    case 'start':
+      return `${ch} started`;
+    case 'stop':
+      return `${ch} stopped`;
+    case 'unload':
+      return `${ch} unloaded`;
+    default:
+      return `${ch} changed`;
+  }
+}
+
 function event(e: Any): string {
   switch (e.kind) {
     case 'drug':
@@ -87,6 +123,8 @@ function event(e: Any): string {
     case 'lab':
       // the panel that was sent (L10a: the gas panels on the room's analyser, chemistry and coagulation to the laboratory)
       return LAB_SENT[String(e.panel)] ?? 'Clinical event';
+    case 'pump':
+      return pumpLine(e);
     case 'mainstem':
       return e.ventilated === 'both' ? 'Both lungs ventilated' : `Only the ${e.ventilated} lung ventilated`;
     default:

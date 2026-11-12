@@ -454,6 +454,17 @@ const covered = (page: Page, scope: string, over: string) => page.evaluate(([sel
   }
   return out;
 }, [scope, over] as const);
+/** The visible footer buttons of the open sheet `id` (its primary buttons, sheet.ts) whose centre is not the button itself. */
+const footBlocked = (page: Page, id: string) => page.evaluate((sid) => {
+  const out: string[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>(`.ip2-sheets .ip2-sheet[data-sheet=${sid}]:not([hidden]) .ip2-sheet-foot button`)) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit || !(el === hit || el.contains(hit))) out.push(`"${(el.textContent ?? '').trim().slice(0, 40)}" under ${hit instanceof HTMLElement ? hit.className || hit.tagName : 'nothing'}`);
+  }
+  return out;
+}, id);
 for (const which of ['clean', 'incompatible'] as const) {
   test(`brief 164 (the staging card, ${which}): no open sheet's control lies under the dock's card, at the laptop sizes; the Drug sheet's Give gives`, async ({ page, browser, browserName }) => {
     test.setTimeout(240_000);
@@ -475,7 +486,8 @@ for (const which of ['clean', 'incompatible'] as const) {
     await expect(control).toBeVisible();
     for (const size of SIZES) {
       await page.setViewportSize(size);
-      for (const id of ['airway', 'defib', 'devices', 'drug'] as const) {
+      // every sheet of the dock (C2's merge of PR 423: all seven, the Drug sheet last for the press below)
+      for (const id of ['airway', 'defib', 'vitals', 'devices', 'patient', 'log', 'drug'] as const) {
         await sheet(page, id);
         if (id === 'drug') {
           const d = page.locator('.ip2-sheets .ip2-sheet[data-sheet=drug]');
@@ -485,6 +497,8 @@ for (const which of ['clean', 'incompatible'] as const) {
         }
         expect.soft(await covered(page, `.ip2-sheets .ip2-sheet[data-sheet=${id}]:not([hidden])`, '.ip2-dock'), `${id} sheet at ${size.width}×${size.height}`).toEqual([]);
         expect.soft(await covered(page, '.ip2-dock .ip2-lp', '.ip2-sheets'), `the card at ${size.width}×${size.height} with the ${id} sheet open`).toEqual([]);
+        // the sheet's primary buttons (its footer: Deliver and its own) are each the element at their own centre, whatever lies over them
+        expect.soft(await footBlocked(page, id), `the ${id} sheet's primary buttons at ${size.width}×${size.height}`).toEqual([]);
         // the dock's own controls stay on their one row under the card
         const mids = await page.locator('.ip2-dock > :not(.ip2-lp)').evaluateAll((es) => es.map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => Math.round(r.top + r.height / 2)));
         expect.soft(Math.max(...mids) - Math.min(...mids), `the dock's controls on one row at ${size.width}×${size.height}`).toBeLessThanOrEqual(2);

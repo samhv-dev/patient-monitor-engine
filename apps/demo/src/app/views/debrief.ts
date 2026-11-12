@@ -56,7 +56,7 @@ const PEARLS: ReadonlyArray<readonly [string, string]> = [
   ['Analysis', 'Take one key moment: what did you see, what did you think, what did you do?'],
   ['Summary', 'One thing to keep doing, one thing to do differently next time.'],
 ];
-const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 'Remote', learner: 'Learner', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
+const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 'Remote', learner: 'Learner', pump: 'Pump', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
 /** The verdict words (E42–E44): the mark (`data-mark`), its words with a glyph, and the reason printed under it. A
  *  rule-less objective the instructor ticked reads Observed, with the tick's time as its reason. */
 function markOf(o: ReturnType<typeof objectives>[number]): { mark: 'observed' | 'not-observed' | 'not-assessable' | 'discuss'; words: string; why: string } {
