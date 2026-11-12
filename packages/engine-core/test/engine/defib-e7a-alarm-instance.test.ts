@@ -147,7 +147,9 @@ describe('E7a: a device owns a second alarm instance', () => {
     expect(devOf(restored).ownAlarms!.defib!.alarms!.silencedUntil).toBeNull();
     expect(devOf(restored).alarms.silencedUntil).toBeNull();
     expect(devOf(restored).ownAlarms).toEqual(devOf(host.e).ownAlarms);
-    expect(bedsideOf(rev)).toEqual(bedsideOf(host.ev.slice(n)));
+    // (a restore first revokes the tones queued past its time: the one toneCancel only the restored engine has)
+    expect(bedsideOf(rev).slice(1)).toEqual(bedsideOf(host.ev.slice(n)));
+    expect(bedsideOf(rev)[0]).toEqual({ type: 'toneCancel', after: 20 });
     expect(lastStatus(rev)).toEqual(lastStatus(host.ev));
   });
 

@@ -98,6 +98,12 @@ waits or stays quiet; an embedding developer gets one `alarmStatus` summary for 
 | `observeEvent` | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | An engine event the device layer sees (measurements, beats, NIBP results and the raw technical flags). |
 | `buildConditions` | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | Every condition that is true at sim time t (the manager applies delays, switches and silence). |
 | `chain` | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | Mark the conditions a CHAIN parent explains as `suppressed`; |
+| `createAlarmInstance` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | A new instance, idle until its owner gives it a profile. |
+| `setInstanceProfile` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | Give the instance a profile, or a new one at a patient-type change, as a skin switch does for the bedside monitor. |
+| `validateInstanceAction` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | A refusal for an alarm action on this instance, or undefined (the bedside monitor's validation). |
+| `applyInstanceAction` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | Apply a validated alarm action to this instance alone. |
+| `stepInstance` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | One committed tick of the instance, true when its visible state changed (its owner's status is then due). |
+| `instanceBlock` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | The owner's published block from the instance. |
 | `latchCovers` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Whether a latching mode covers an alarm. |
 | `setProfile` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Switch skin or age band: |
 | `limitOf` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Effective limit (after setLimit) for a limit key, or null when the skin has none. |
@@ -116,6 +122,7 @@ Exported without a doc comment: `createInputs`, `defaultConfig`, `createAlarmMgr
 | File | Header |
 |---|---|
 | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | Alarm conditions (brief §6.4 "Conditions", §6.4.1, §6.2 sensors; research 03 §1.12, §8.10): what the monitor sees — displayed numerics, QRS detections, beat classes, sensor states — turned into this tick's true condition |
+| [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | A device's own alarm instance (docs/plans/defibrillator-zoll-m2.md §3.1 C3, piece E7a; owner's ruling DQ3 = A): the room's defibrillator is its own monitor, so silencing it does not silence the bedside monitor, and the r |
 | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Alarm manager (brief §6.4 IEC-style, §6.4.1 Saadat-like): turns conditions into raised / cleared / acked / silenced / paused alarm events with the skin's priorities, delays, latching, silence and pause rules, and keeps o |
 | [`l3/alarms/profile.ts`](../../packages/engine-core/src/l3/alarms/profile.ts) | The device layer's view of a skin (brief §3.8, §6.4, §6.4.1, §6.5, §6.8): everything the alarm manager, the defibrillator and the pacer need, as plain JSON-safe data built once per skin/age-band switch from @pme/skins. |
 | [`l3/alarms/text.ts`](../../packages/engine-core/src/l3/alarms/text.ts) | Alarm message text (brief §6.4 "Message format: `***SpO2 94<96`"; brief §6.4.1: Saadat-like messages are English uppercase without asterisks, e.g. |

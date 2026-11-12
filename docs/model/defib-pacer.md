@@ -178,6 +178,7 @@ None recorded.
 
 | File | Expected failures | Skipped |
 |---|---|---|
+| [`engine/defib-e7a-alarm-instance.test.ts`](../../packages/engine-core/test/engine/defib-e7a-alarm-instance.test.ts) | 0 | 0 |
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
 | [`engine/defib-m2-vocabulary.test.ts`](../../packages/engine-core/test/engine/defib-m2-vocabulary.test.ts) | 0 | 0 |
 | [`engine/defib-model.test.ts`](../../packages/engine-core/test/engine/defib-model.test.ts) | 0 | 0 |

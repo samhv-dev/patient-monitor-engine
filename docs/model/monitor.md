@@ -103,6 +103,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `pacer` | `PacerState` | — |
 | `defibModel` | `string \| null` | The room's defibrillator model (a `DEFIB_MODELS` key, Room plan R5a; its pacer too, row 58), or null: the skin's defibrillator and pacer spec, else the fallback. Absent in older snapshots (read as null). |
 | `m2` | `M2State` | The ZOLL M2's own state (plan E0), present only while the room's model is one with the M2 vocabulary; absent otherwise, so the generic model's state and snapshot are unchanged. |
+| `ownAlarms` | `Partial<Record<AlarmOwner, AlarmInstance>>` | The alarm instances a device owns beside the bedside monitor's `alarms`/`inputs` (plan E7a, DQ3 = A): the M2's, present with `m2`, idle until E7b gives it a profile; absent otherwise, so the generic model's state is unchanged. |
 | `sync` | `SyncState` | — |
 | `pending` | `PendingRhythm \| null` | — |
 | `lastBeat` | `{ t: number; qtMs: number } \| null` | — |
