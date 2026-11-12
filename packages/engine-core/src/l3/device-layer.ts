@@ -9,11 +9,13 @@ import type { LineSensorState } from '../types-hemo.ts';
 import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, StateVar } from '../types.ts';
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
+import { createAlarmInstance, instanceBlock, stepInstance, type AlarmInstance, type AlarmOwner } from './alarms/instance.ts';
 import { DEFIB_MODELS, deviceProfile, skinBand, type DefibModel } from './alarms/profile.ts';
 import { afterShock, applyDefib, createDefib, FALLBACK_DEFIB, stepDefib, validateDefib, type DefibSpec, type DefibState } from './defib-pacer/defib.ts';
 import { drawOutcome, shockClass, T_PEAK_WINDOW_S, type ShockOutcome } from './defib-pacer/outcome.ts';
 import { applyPacer, createPacer, FALLBACK_PACER, tcpSpec, validatePacer, type PacerSpec, type PacerState } from './defib-pacer/pacer.ts';
 import { createSyncState, SYNC_RATE, syncStep, type SyncState } from './defib-pacer/sync.ts';
+import { createM2State, m2Status, validateM2Command, type M2State } from './defib-pacer/m2-vocabulary.ts';
 
 /** Rhythms a monitor classifies as VF (research 03 §1.8). */
 export const VF_RHYTHMS: ReadonlySet<RhythmId> = new Set(['vfCoarse', 'vfFine']);
@@ -54,6 +56,12 @@ export interface DeviceState {
    * defibrillator and pacer spec, else the fallback.
    * Absent in older snapshots (read as null). */
   defibModel: string | null;
+  /** The ZOLL M2's own state (plan E0), present only while the room's model is one with the M2 vocabulary; absent
+   * otherwise, so the generic model's state and snapshot are unchanged. */
+  m2?: M2State;
+  /** The alarm instances a device owns beside the bedside monitor's `alarms`/`inputs` (plan E7a, DQ3 = A): the M2's,
+   * present with `m2`, idle until E7b gives it a profile; absent otherwise, so the generic model's state is unchanged. */
+  ownAlarms?: Partial<Record<AlarmOwner, AlarmInstance>>;
   sync: SyncState;
   pending: PendingRhythm | null;
   lastBeat: { t: number; qtMs: number } | null;
@@ -134,8 +142,9 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
   }
   if (cmd.type === 'applyEvent') {
     const ev = cmd.event as DeviceClinicalEvent | { kind: string };
-    if (ev.kind === 'defib') return validateDefib(d.defib, ev as Extract<DeviceClinicalEvent, { kind: 'defib' }>);
-    if (ev.kind === 'pacer') return validatePacer(ev as Extract<DeviceClinicalEvent, { kind: 'pacer' }>, pacerSpec(d));
+    const m = modelOf(d);
+    if (ev.kind === 'defib') return validateDefib(d.defib, ev as Extract<DeviceClinicalEvent, { kind: 'defib' }>, m?.energiesJ ? { list: m.energiesJ, name: m.name ?? 'model' } : undefined);
+    if (ev.kind === 'pacer') return validatePacer(ev as Extract<DeviceClinicalEvent, { kind: 'pacer' }>, pacerSpec(d), m?.pacerGrid ? { ...m.pacerGrid, name: m.name ?? 'model' } : undefined);
     return null;
   }
   if (cmd.type !== 'device') return null;
@@ -154,7 +163,8 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
     return `unknown monitor action ${String((a as { action: string }).action)}`;
   }
   if (a.device === 'defib') {
-    if (a.action !== 'model') return `unknown defib action ${String((a as { action: string }).action)}`;
+    // the M2's vocabulary (plan E0): an unknown name, a room that is not an M2, or the command's own check
+    if (a.action !== 'model') return validateM2Command(String((a as { action: unknown }).action), (a as { value?: unknown }).value, modelOf(d)?.m2 === true);
     return typeof a.value === 'string' && Object.hasOwn(DEFIB_MODELS, a.value) ? undefined : `unknown defibrillator model ${String(a.value)}`; // Own keys only
   }
   return null;
@@ -201,9 +211,20 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
     return true;
   }
   if (a.device === 'defib') {
+    // Every M2 command is declared and validated (E0) and does nothing until its own piece lands
+    if (a.action !== 'model') return true;
     // The room's model: its spec from now on, and its adult energy selected, as the energy selector does (a charged
     // device disarms, defib.ts selectEnergy)
     d.defibModel = a.value;
+    // the M2's own state, idle, while the model carries it (setting the M2 again starts it afresh)
+    // with its own alarm instance (E7a)
+    if (modelOf(d)?.m2) {
+      d.m2 = createM2State();
+      d.ownAlarms = { defib: createAlarmInstance(t) };
+    } else {
+      delete d.m2;
+      delete d.ownAlarms;
+    }
     applyDefib(d.defib, { kind: 'defib', action: 'selectEnergy', energyJ: defibSpec(d).energyAdultJ }, t, defibSpec(d), out);
     // and its pacer (row 58): a pacer that is off takes the model's default rate and output, as a new device does
     // (createPacer); a running pacer keeps what the clinician set
@@ -344,16 +365,21 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
   if (host.temp === 'on') inp.tempSeen = true;
   inp.pacing = d.pacer.mode !== 'off';
   stepAlarms(d.alarms, t, buildConditions(d.alarms, inp, t), out);
+  // the devices' own instances (E7a): the same rules, their own inputs, published only in their owner's status
+  const own = d.ownAlarms?.defib;
+  const ownChanged = own ? stepInstance(own, t) : false;
   // device status on change and at 1 Hz
   const df = d.defib;
   const pc = d.pacer;
-  if (statusChanged(d) || t - d.lastStatusT >= STATUS_EVERY_S - 1e-9) {
+  if (statusChanged(d) || ownChanged || t - d.lastStatusT >= STATUS_EVERY_S - 1e-9) {
     d.lastStatusT = t;
+    if (d.m2 && own) d.m2.alarm = instanceBlock(own, t);
     out.push({
       type: 'deviceStatus', t,
       defib: { energyJ: df.energyJ, state: df.state, sync: df.sync, readyAt: df.readyAt, shocks: df.shocks, lastShock: df.lastShock },
       pacer: { mode: pc.mode, ratePpm: pc.ratePpm, mA: pc.mA, paused: pc.paused },
       hrDashes: p.hrDashesWhilePacing && pc.mode !== 'off',
+      ...(d.m2 ? { m2: m2Status(d.m2) } : {}),
     });
   }
   return keep;

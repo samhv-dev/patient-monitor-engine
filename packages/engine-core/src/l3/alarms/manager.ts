@@ -217,8 +217,9 @@ export function applyAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction, t: numb
 /**
  * Advance the life cycle to sim time t with this tick's true conditions: raise after the delay, clear when gone
  * (unless latched), end silence/pause on time or on a new alarm (saadat), and emit alarmStatus on change and at 1 Hz.
+ * Returns whether the visible state changed this step (an owned instance's status trigger, instance.ts).
  */
-export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Condition[], out: EngineEvent[]): void {
+export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Condition[], out: EngineEvent[]): boolean {
   const p = s.profile;
   if (s.pausedUntil !== null && t >= s.pausedUntil) {
     s.pausedUntil = null;
@@ -302,11 +303,13 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     emitAlarm(out, t, e, 'cleared');
     s.dirty = true;
   }
+  const changed = s.dirty;
   if (s.dirty || t - s.lastStatusT >= STATUS_EVERY_S - 1e-9) {
     out.push(alarmStatus(s, t));
     s.lastStatusT = t;
     s.dirty = false;
   }
+  return changed;
 }
 
 /** The renderer's summary (types-device.ts `alarmStatus`). */
