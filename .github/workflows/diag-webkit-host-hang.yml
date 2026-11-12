@@ -60,6 +60,7 @@ jobs:
         env:
           CI: '1'
           PME_DIAG_HOST: '1'
+          DEBUG: 'pw:browser' # the browser processes' own stderr in this log (a WebKit assertion or crash message)
           REPEAT: '8'
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-diag.json
       - name: repetitions passed and failed

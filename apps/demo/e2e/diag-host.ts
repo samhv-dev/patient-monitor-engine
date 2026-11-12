@@ -7,8 +7,8 @@
 // verdict when the main thread has been silent for more than 300 ms (with the task still open), to a collector in the
 // test process over HTTP, every 200 ms. One JSON line per record in <test output>/diag/host-<n>.jsonl.
 import { createServer, type Server } from 'node:http';
-import { execFile } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { execFile, spawn } from 'node:child_process';
+import { existsSync, openSync, readdirSync, readFileSync, readlinkSync } from 'node:fs';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { test, type Page } from './evidence.ts';
@@ -53,6 +53,9 @@ async function dumpWebKit(file: string, why: string): Promise<void> {
     let cmd = '';
     try { cmd = readFileSync(`/proc/${p}/cmdline`, 'utf8').replace(/\0/g, ' ').slice(0, 300); } catch { /* gone */ }
     out += `\n## pid ${p}: ${cmd}\n`;
+    try {
+      out += '  fds: ' + readdirSync(`/proc/${p}/fd`).map((fd) => { try { return `${fd}→${readlinkSync(`/proc/${p}/fd/${fd}`)}`; } catch { return fd; } }).join(' ') + '\n';
+    } catch { /* gone */ }
     for (const t of b[p] ?? []) {
       const t0 = (a[p] ?? []).find((x) => x.t === t.t);
       const cpu = t0 ? t.utime + t.stime - t0.utime - t0.stime : NaN;
@@ -106,6 +109,36 @@ async function collector(): Promise<number> {
   }, 500);
   watch.unref();
   return port;
+}
+
+const webPids = (): string[] => {
+  try {
+    return readdirSync('/proc').filter((d) => /^\d+$/.test(d)).filter((d) => { try { return readFileSync(`/proc/${d}/comm`, 'utf8').startsWith('WPEWebProcess') && !readFileSync(`/proc/${d}/stat`, 'utf8').includes(') Z'); } catch { return false; } });
+  } catch {
+    return [];
+  }
+};
+const watched = new Set<string>();
+/**
+ * Called by openApp once the host page runs (Linux with gdb only: CI's diag job). Every WebKit web process not watched
+ * yet gets a gdb that lets every signal pass silently except a crash's (SIGILL, the trap WebKit's CRASH() and
+ * RELEASE_ASSERT raise; SIGSEGV, SIGBUS, SIGABRT, SIGFPE): on one it prints the faulting thread's backtrace and every
+ * thread's, then detaches and the signal goes on as without gdb. Run 43177130997 found the stuck host's process exiting
+ * on SIGILL with one worker thread blocked in a pipe write: this records where the SIGILL came from.
+ */
+export function watchCrashes(): void {
+  if (process.platform !== 'linux' || !existsSync('/usr/bin/gdb')) return;
+  const dir = test.info().outputPath('diag');
+  mkdirSync(dir, { recursive: true });
+  for (const pid of webPids()) {
+    if (watched.has(pid)) continue;
+    watched.add(pid);
+    const out = openSync(`${dir}/gdb-${pid}.txt`, 'a');
+    const args = ['-p', pid, '-batch', '-nx', '-ex', 'set pagination off', '-ex', 'set print thread-events off', '-ex', 'handle all nostop noprint pass'];
+    for (const sig of ['SIGILL', 'SIGSEGV', 'SIGBUS', 'SIGABRT', 'SIGFPE']) args.push('-ex', `handle ${sig} stop print pass`);
+    args.push('-ex', 'continue', '-ex', 'echo \\n=== STOPPED ===\\n', '-ex', 'info threads', '-ex', 'bt 80', '-ex', 'thread apply all bt 40', '-ex', 'info registers rip', '-ex', 'x/4i $pc');
+    spawn('gdb', args, { stdio: ['ignore', out, out], detached: true }).unref();
+  }
 }
 
 /** Called by openApp for the page it opens (the host), before goto. */
