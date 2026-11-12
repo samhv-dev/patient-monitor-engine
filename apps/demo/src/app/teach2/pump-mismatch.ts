@@ -37,7 +37,8 @@ export function mountPumpMismatch(link: Pick<Link, 'pumpFindings' | 'onChange' |
   const el = h('section', { class: 'ip2-pm', 'aria-label': MISMATCH_CARD_WORDS.title, hidden: true }, list);
   let drawn = '';
   const draw = () => {
-    const all = [...link.pumpFindings.values()].sort((a, b) => a.ch - b.ch);
+    const all = [...(link.pumpFindings?.values() ?? [])] // a test's partial Link has none
+      .sort((a, b) => a.ch - b.ch);
     const sig = JSON.stringify(all);
     if (sig === drawn) return; // a button under the pointer stays the same element
     drawn = sig;
