@@ -160,7 +160,18 @@ export const SETTINGS: Record<string, SettingCtl> = {
     write: (v) => ({ pause: v }),
     format: (v) => (v > 0 ? v.toFixed(dec('pause')) : null),
   },
+  sound: {
+    // Menu → Tools → Settings → Sound: the alarm volume, 25 to 100 % in steps of 25, never off (research/57 E-10; plan
+    // GP25). A face setting: the model makes no sound; the tones' gain follows it (tones.ts)
+    id: 'sound', word: 'sound', gap: 'GP25', unit: () => 'uPct',
+    range: () => r(S.sound.min, S.sound.max, S.sound.step),
+    read: (c) => c.alarmVolume ?? num(S.sound.init),
+    write: (v) => ({ alarmVolume: v }),
+    format: (v) => v.toFixed(dec('sound')),
+  },
 };
+/** Settings reached through a window only, never a bottom-row key. */
+const WINDOW_ONLY = new Set(['pause', 'sound']);
 
 /** The bottom row of each mode, left to right (research/57 D-01 VCV, D-02 PCV, D-12 PRVC; D-03 for a scenario's PSV). */
 export const ROWS: Record<FaceMode, string[]> = {
@@ -173,6 +184,7 @@ export const ROWS: Record<FaceMode, string[]> = {
 
 /** A setting's state in a configuration: what the device's mode offers (research/57 D-01, D-02, D-12, T-16, T-28). */
 export function settingState(id: string, c: Cfg): CtlState {
+  if (id === 'sound') return 'live'; // a device setting, in every mode
   if (isSim(c)) return { reason: 'simMode' };
   if (id === 'pause') return c.mode === 'VC' ? 'live' : { reason: 'vcvOnly' };
   if (!ROWS[faceMode(c)].includes(id)) return { reason: 'psvKeys' }; // PSV and Exp. Sensitiv. belong to PSV/CPAP (GM3)
@@ -186,8 +198,10 @@ export interface LimitCtl extends Setting {
   side: 'hi' | 'lo';
   format(v: number): string;
   gap: string;
+  /** What the simulator says when the limit is selected: how the model raises its alarm (O2 and High PEEP, plan GA10, GA11). */
+  note?: ReasonId;
 }
-const lim = (id: string, side: 'hi' | 'lo', gap: string, decimals: number, s: Pick<Setting, 'range' | 'read' | 'write'>): LimitCtl => ({ id, side, gap, format: (v) => v.toFixed(decimals), ...s });
+const lim = (id: string, side: 'hi' | 'lo', gap: string, decimals: number, s: Pick<Setting, 'range' | 'read' | 'write'>, note?: ReasonId): LimitCtl => ({ id, side, gap, format: (v) => v.toFixed(decimals), ...s, ...(note ? { note } : {}) });
 export const LIMITS: Record<string, LimitCtl> = {
   pmax: lim('pmax', 'hi', 'GA1', dec('lPmax'), { range: () => r(L.pmax.min, L.pmax.max, L.pmax.step), read: (c) => c.pmax, write: (v) => ({ pmax: v }) }),
   vtHi: lim('vtHi', 'hi', 'GA7', dec('lVt'), {
@@ -207,10 +221,24 @@ export const LIMITS: Record<string, LimitCtl> = {
     read: (c) => c.almMVlo, write: (v) => ({ almMVlo: v }),
   }),
   fHi: lim('fHi', 'hi', 'GA8', dec('lF'), { range: () => r(L.fHi.min, L.fHi.max, L.fHi.step), read: (c) => c.almFhi, write: (v) => ({ almFhi: v }) }),
+  // V3's limits (research/57 L-02, L-08, L-13); a cfg without them (a scenario's, the Hamilton face's) reads the device's default
+  pLo: lim('pLo', 'lo', 'GA3', dec('lPlo'), {
+    range: (c) => [num(L.pLo.min), Math.min(num(L.pLo.max), c.pmax - num(L.pLo.step)), num(L.pLo.step)], // below the maximum (L-02)
+    read: (c) => c.almPlo ?? num(L.pLo.init), write: (v) => ({ almPlo: v }),
+  }),
+  peepHi: lim('peepHi', 'hi', 'GA10', dec('lPeepHi'), {
+    range: () => r(L.peepHi.min, L.peepHi.max, L.peepHi.step), read: (c) => c.almPeepHi ?? num(L.peepHi.init), write: (v) => ({ almPeepHi: v }),
+  }, 'peepModel'),
+  o2Hi: lim('o2Hi', 'hi', 'GA11', dec('lO2'), {
+    range: () => r(L.o2Hi.min, L.o2Hi.max, L.o2Hi.step), read: (c) => c.almO2hi ?? num(L.o2Hi.init), write: (v) => ({ almO2hi: v }),
+  }, 'o2Set'),
+  o2Lo: lim('o2Lo', 'lo', 'GA11', dec('lO2'), {
+    range: () => r(L.o2Lo.min, L.o2Lo.max, L.o2Lo.step), read: (c) => c.almO2lo ?? num(L.o2Lo.init), write: (v) => ({ almO2lo: v }),
+  }, 'o2Set'),
 };
 
 /** The face's own actions (no cfg key: they move the knob's state; knob.ts), the knob's two motions included. */
-export type FaceAction = 'mode' | 'menu' | 'alarmLimits' | 'ctrl' | 'esc' | 'knobTurn' | 'knobPress';
+export type FaceAction = 'mode' | 'menu' | 'alarmLimits' | 'silence' | 'ctrl' | 'esc' | 'knobTurn' | 'knobPress';
 
 /** One control the face draws. */
 export type Ctl =
@@ -224,13 +252,9 @@ const un = (id: string, region: Region, word: WordId | undefined, reason: Reason
 
 /** Every control outside the windows. The bottom row's keys come from the mode (modes.ts); their settings are here. */
 export const CONTROLS: Ctl[] = [
-  ...Object.keys(SETTINGS).filter((k) => k !== 'pause').map((k): Ctl => ({ id: `key:${k}`, region: 'bottom', kind: 'setting', setting: k })),
+  ...Object.keys(SETTINGS).filter((k) => !WINDOW_ONLY.has(k)).map((k): Ctl => ({ id: `key:${k}`, region: 'bottom', kind: 'setting', setting: k })),
   // alarm-limit tags under the top row and in the left column (research/57 R-11, R-12, R-18, R-24)
   ...Object.keys(LIMITS).map((k): Ctl => ({ id: `tag:${k}`, region: 'tag', kind: 'limit', limit: k })),
-  un('tag:pLo', 'tag', undefined, 'pLo', 'GA3'),
-  un('tag:peepHi', 'tag', undefined, 'peepHi', 'GA10'),
-  un('tag:o2Hi', 'tag', undefined, 'o2Lim', 'GA11'),
-  un('tag:o2Lo', 'tag', undefined, 'o2Lim', 'GA11'),
   // the right column (research/57 R-33)
   un('right:graphics', 'right', 'graphics', 'graphics', 'GD12'),
   un('right:freeze', 'right', 'freeze', 'freeze', 'GD13'),
@@ -241,7 +265,7 @@ export const CONTROLS: Ctl[] = [
   un('right:standby', 'right', 'standby', 'standby', 'GX5'),
   // the keys beside the screen (research/57 H-31) and the knob (H-26)
   { id: 'side:alarmLimits', region: 'side', kind: 'action', action: 'alarmLimits', word: 'alarmLimits', gap: 'GA17' },
-  un('side:silence', 'side', 'silence', 'silence', 'GA16'),
+  { id: 'side:silence', region: 'side', kind: 'action', action: 'silence', word: 'silence', gap: 'GA16' },
   { id: 'side:menu', region: 'side', kind: 'action', action: 'menu', word: 'menu', gap: 'GX11' },
   { id: 'side:mode', region: 'side', kind: 'action', action: 'mode', word: 'mode', gap: 'GX9' },
   { id: 'side:knobTurn', region: 'side', kind: 'action', action: 'knobTurn', gap: 'GX10' },
@@ -264,7 +288,7 @@ export type Row =
   | { kind: 'limits'; word: WordId; cells: string[]; off?: { reason: ReasonId; gap: string } }
   | { kind: 'off'; word: WordId; reason: ReasonId; gap: string; value?: WordId; more?: true };
 
-export type WindowId = 'modes' | 'otherModes' | 'menu' | 'adjuncts' | 'tools' | 'alarms';
+export type WindowId = 'modes' | 'otherModes' | 'menu' | 'adjuncts' | 'tools' | 'settings' | 'alarms';
 export interface WindowDef { title: WordId; rows: Row[]; footer: boolean }
 
 /**
@@ -310,16 +334,26 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
     { kind: 'off', word: 'autoscale', reason: 'autoscale', gap: 'GD15', value: 'no' },
     { kind: 'off', word: 'suctionConfig', reason: 'suctionConfig', gap: 'GX4', more: true },
     { kind: 'off', word: 'calibration', reason: 'calibration', gap: 'GX19', more: true },
-    { kind: 'off', word: 'settings', reason: 'settings', gap: 'GP25', more: true },
+    { kind: 'open', word: 'settings', window: 'settings' },
     { kind: 'off', word: 'timeOfUse', reason: 'notModelled', gap: 'GP25' },
   ] },
+  // Tools → Settings (research/57 E-09 to E-12, U-13; plan GP25: Sound and the clock only). No figure shows this window:
+  // its rows are the manual's text's, in its order, and its title is the Tools row that opens it
+  settings: { title: 'settings', footer: true, rows: [
+    { kind: 'off', word: 'pressureUnits', reason: 'notModelled', gap: 'GP25', value: 'uCmH2O' },
+    { kind: 'off', word: 'ambientPressure', reason: 'notModelled', gap: 'GP25' },
+    { kind: 'setting', word: 'sound', setting: 'sound' },
+    { kind: 'off', word: 'dateTime', reason: 'clock', gap: 'GP25' },
+    { kind: 'off', word: 'language', reason: 'notModelled', gap: 'GP25', value: 'english' },
+  ] },
   alarms: { title: 'alarmSettings', footer: true, rows: [
-    { kind: 'limits', word: 'inspPressure', cells: ['pmax'] },
+    { kind: 'limits', word: 'inspPressure', cells: ['pmax', 'pLo'] },
     { kind: 'limits', word: 'tidalVolume', cells: ['vtHi', 'vtLo'] },
     { kind: 'limits', word: 'minuteVolume', cells: ['mvHi', 'mvLo'] },
-    { kind: 'limits', word: 'o2Conc', cells: [], off: { reason: 'o2Lim', gap: 'GA11' } },
+    { kind: 'limits', word: 'o2Conc', cells: ['o2Hi', 'o2Lo'] },
     { kind: 'limits', word: 'respRate', cells: ['fHi'] },
-    { kind: 'limits', word: 'lowPeep', cells: [], off: { reason: 'peepHi', gap: 'GA10' } },
+    // the PEEP row holds the High PEEP limit (the owner's tag rule, research/57 L-17, Y-01)
+    { kind: 'limits', word: 'lowPeep', cells: ['peepHi'] },
     { kind: 'off', word: 'etco2', reason: 'etco2', gap: 'GA13' },
   ] },
 };

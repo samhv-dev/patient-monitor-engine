@@ -81,13 +81,14 @@ describe('the EDP-TS face', () => {
   it('every control not honoured yet is drawn as the device draws it, marked unavailable and described with its reason', () => {
     const ui = mount(createVentDriver(null));
     const why = (b: HTMLElement) => document.getElementById(b.getAttribute('aria-describedby') ?? '')?.textContent ?? '';
-    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl="side:silence"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
+    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
       expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
       expect(why(b), b.dataset.ctl).toMatch(/not simulated yet|not modelled|cannot be changed yet/);
       expect(b.dataset.unsim, b.dataset.ctl).toBeTruthy();
     }
-    // the tags not simulated show the manual's initial limits (research/57 L-02, L-08, L-13), as the device would
-    expect(['tag:pLo', 'tag:peepHi', 'tag:o2Hi', 'tag:o2Lo'].map((id) => document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent)).toEqual(['5', '20.0', '60', '40']);
+    // V3 turned these on: the device's limits (research/57 L-02, L-13, L-08), live, and the silence key
+    for (const [id, v] of [['tag:pLo', '5'], ['tag:peepHi', '20.0'], ['tag:o2Hi', '60'], ['tag:o2Lo', '40']]) expect(document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent).toBe(v);
+    for (const id of ['tag:pLo', 'tag:peepHi', 'tag:o2Hi', 'tag:o2Lo', 'side:silence']) expect(document.querySelector(`[data-ctl="${id}"]`)!.getAttribute('aria-disabled'), id).not.toBe('true');
     click('[data-ctl="side:mode"]');
     const off = [...document.querySelectorAll<HTMLElement>('.edp-entry[aria-disabled="true"]')].map((e) => [e.textContent, why(e)]);
     expect(off).toEqual([['PSV/CPAP', 'PSV/CPAP is not simulated yet'], ['SIMV(PCV)+PSV', 'SIMV modes are not simulated yet'], ['SIMV(VCV)+PSV', 'SIMV modes are not simulated yet'], ['Noninvasive (NIV)', 'NIV is not simulated yet']]);

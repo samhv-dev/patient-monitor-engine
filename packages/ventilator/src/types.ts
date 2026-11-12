@@ -26,6 +26,20 @@ export interface VentConfig {
   /** Carried from v1.9, where they are settings without behaviour (sigh, TRC, apnoea backup): kept unwired. */
   sigh: boolean; trc: boolean; trcPct: number; apneaTime: number; backup: boolean; backupRate: number;
   almMVlo: number; almMVhi: number; almFlo: number; almFhi: number; almVTlo: number; almVThi: number;
+  /**
+   * The EDP-TS alarm limits (plan vent-skin-edp-ts.md V3, research/57 §10b), OPTIONAL: an alarm whose limit is absent is
+   * not evaluated, so the v1.9 configuration (the Hamilton-style face, the reference scenarios) raises none of them and
+   * its cfg keeps exactly its v1.9 keys. A face that has these alarms writes their limits (its starting settings).
+   * - `almPlo`: minimum inspiratory pressure, cmH2O (`lowPressure`: the last breath's peak under it; L-02, A-35);
+   * - `almContHiP`: cmH2O above the set PEEP (`contHighPressure`: the airway pressure above PEEP + this; how long it
+   *   must last, 15 s, is the face's alarm delay; L-15, A-31);
+   * - `almPeepHi`: High PEEP, cmH2O (`highPeep`: the end-expiratory pressure the caller measured above it; L-13, A-49);
+   * - `almO2hi` / `almO2lo`: oxygen concentration, % (`o2High` / `o2Low`: the set oxygen, the model having no oxygen
+   *   sensor, outside them; L-08, A-44).
+   */
+  almPlo?: number; almContHiP?: number; almPeepHi?: number; almO2hi?: number; almO2lo?: number;
+  /** The device's alarm sound volume, % (research/57 E-10). A face setting: the model makes no sound. Optional, as above. */
+  alarmVolume?: number;
   _preset?: string | null;
 }
 
@@ -64,5 +78,11 @@ export interface VentState {
 }
 
 export type VentAlarmId =
-  | 'pmax' | 'mvHigh' | 'mvLow' | 'vtHigh' | 'vtLow' | 'fHigh' | 'fLow' | 'intrinsicPeep' | 'disconnection' | 'apnea';
-export interface VentAlarm { id: VentAlarmId; text: string; priority: 'high' | 'medium' }
+  | 'pmax' | 'mvHigh' | 'mvLow' | 'vtHigh' | 'vtLow' | 'fHigh' | 'fLow' | 'intrinsicPeep' | 'disconnection' | 'apnea'
+  // the EDP-TS alarms the v1.9 model did not have (plan V3); raised only when their optional limit is set
+  | 'lowPressure' | 'contHighPressure' | 'highPeep' | 'o2High' | 'o2Low';
+/** `low` is a face's priority (the EDP-TS has three, research/57 A-02); the model itself raises high and medium only. */
+export interface VentAlarm { id: VentAlarmId; text: string; priority: 'high' | 'medium' | 'low' }
+/** What the caller measured that the model does not: the EDP-TS's PEEP, the mean airway pressure of the last 50 ms of
+ *  expiration (research/57 R-23), which the cockpit core's breath record keeps. */
+export interface AlarmObs { peepEnd?: number }

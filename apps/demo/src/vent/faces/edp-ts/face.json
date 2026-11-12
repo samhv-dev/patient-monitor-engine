@@ -1,5 +1,5 @@
 {
-  "$about": "The EDP-TS face's words, colours, layout numbers, ranges and steps (plan docs/plans/vent-skin-edp-ts.md §5, pieces V1 and VF). Every leaf {v, p, src[, why]}: p is documented, measured, inferred, eng (a gap the face must fill; why says how) or sim (the simulator's own words, citing the plan's gap table). Since VF the photographs decide what they show (research/57 §16, rows P-xx), the manual what they do not. The maker, Ehya Darman Pishrafteh, is named here and in research/57, never drawn. Checked by provenance.test.ts.",
+  "$about": "The EDP-TS face's words, colours, layout numbers, ranges and steps (plan docs/plans/vent-skin-edp-ts.md §5, pieces V1 and VF). Every leaf {v, p, src[, why]}: p is documented, measured, inferred, eng (a gap the face must fill; why says how) or sim (the simulator's own words, citing the plan's gap table). Since VF the photographs decide what they show (research/57 §16, rows P-xx), the manual what they do not. The maker, Ehya Darman Pishrafteh, is named here and in research/57, never drawn. Since V3 on VF (brief 202) the alarm signals are drawn: the lamps as photographed lit and unlit, flashing as the manual says (H-06), the message box as the manual's screen picture places it (S-01, S-02); the silenced state outside the device (S-06). Finding N111: the model has no oxygen sensor, so the High and Low O2 concentration alarms compare the SET Oxygen with their limits, not a measured one: they sound only when a limit is set across the set value, never because the delivered oxygen drifts. Checked by provenance.test.ts.",
   "words": {
     "adl": {"v": "ADL", "p": "documented", "src": "research/57 R-06"},
     "backupOff": {"v": "Backup: OFF", "p": "documented", "src": "research/57 R-06"},
@@ -109,40 +109,92 @@
     "faceName": {"v": "EDP-TS", "p": "sim", "src": "plan §5"},
     "knob": {"v": "control knob", "p": "inferred", "src": "research/57 O-14", "why": "the knob's name as the confirmation window prints it (\"Press control knob to start\"); the knob carries no word"},
     "simPSV": {"v": "PSV (simulator scenario)", "p": "sim", "src": "plan GM3"},
-    "simPAV": {"v": "PAV (simulator scenario)", "p": "sim", "src": "plan §3.1"}
+    "simPAV": {"v": "PAV (simulator scenario)", "p": "sim", "src": "plan §3.1"},
+    "pressureUnits": {"v": "Pressure units", "p": "inferred", "src": "research/57 E-09", "why": "the manual's text names this row in Persian; no figure or photograph shows the Settings window's English word"},
+    "ambientPressure": {"v": "Mean ambient pressure", "p": "inferred", "src": "research/57 U-13", "why": "the manual's text names this row in Persian; no figure or photograph shows the Settings window's English word"},
+    "sound": {"v": "Sound", "p": "inferred", "src": "research/57 E-10", "why": "the manual's text names this row in Persian; no figure or photograph shows the Settings window's English word"},
+    "dateTime": {"v": "Date and time", "p": "inferred", "src": "research/57 E-11", "why": "the manual's text names this row in Persian; no figure or photograph shows the Settings window's English word"},
+    "language": {"v": "Language", "p": "inferred", "src": "research/57 E-12", "why": "the manual's text names this row in Persian; no figure or photograph shows the Settings window's English word"},
+    "english": {"v": "English", "p": "inferred", "src": "research/57 E-12", "why": "the manual's text names this row in Persian; no figure or photograph shows the Settings window's English word"}
   },
   "alarms": {
+    "contHighPressure": {
+      "text": {"v": "Continuous high Pressure", "p": "documented", "src": "research/57 A-31"},
+      "priority": {"v": "high", "p": "documented", "src": "research/57 A-31"},
+      "delay": {"v": 15, "p": "documented", "src": "research/57 A-31, L-15"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
+    },
     "pmax": {
       "text": {"v": "High Pressure", "p": "documented", "src": "research/57 A-32"},
-      "priority": {"v": "high", "p": "documented", "src": "research/57 A-32"}
+      "priority": {"v": "high", "p": "documented", "src": "research/57 A-32"},
+      "delay": {"v": 0, "p": "inferred", "src": "research/57 A-32", "why": "no delay stated; the expiratory valve opens to PEEP within the breath, so the alarm is raised with the breath's peak"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     },
     "disconnection": {
       "text": {"v": "Disconnection", "p": "documented", "src": "research/57 A-34"},
-      "priority": {"v": "high", "p": "documented", "src": "research/57 A-34"}
+      "priority": {"v": "high", "p": "documented", "src": "research/57 A-34"},
+      "delay": {"v": 5, "p": "documented", "src": "research/57 A-34"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
+    },
+    "lowPressure": {
+      "text": {"v": "Low pressure", "p": "documented", "src": "research/57 A-35"},
+      "priority": {"v": "high", "p": "documented", "src": "research/57 A-35"},
+      "delay": {"v": 0, "p": "eng", "src": "research/57 A-35", "why": "the manual states no delay for Low pressure: raised with the first breath whose peak is under the minimum, until the owner's video"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     },
     "mvHigh": {
       "text": {"v": "High minute volume", "p": "documented", "src": "research/57 A-40"},
-      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-40"}
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-40"},
+      "delay": {"v": 10, "p": "documented", "src": "research/57 A-40"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     },
     "mvLow": {
       "text": {"v": "Low minute volume", "p": "documented", "src": "research/57 A-40"},
-      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-40"}
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-40"},
+      "delay": {"v": 10, "p": "documented", "src": "research/57 A-40"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     },
     "vtHigh": {
       "text": {"v": "High tidal volume", "p": "documented", "src": "research/57 A-41"},
-      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-41"}
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-41"},
+      "delay": {"v": 10, "p": "documented", "src": "research/57 A-41"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     },
     "vtLow": {
       "text": {"v": "Low tidal volume", "p": "documented", "src": "research/57 A-42"},
-      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-42"}
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-42"},
+      "delay": {"v": 20, "p": "documented", "src": "research/57 A-42"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
+    },
+    "o2High": {
+      "text": {"v": "High O2 concentration", "p": "inferred", "src": "research/57 A-44", "why": "the row names the pair \"High/Low O2 concentration\"; one message each, as the minute-volume pair (A-40)"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-44"},
+      "delay": {"v": 30, "p": "documented", "src": "research/57 A-44"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
+    },
+    "o2Low": {
+      "text": {"v": "Low O2 concentration", "p": "inferred", "src": "research/57 A-44", "why": "as o2High"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-44"},
+      "delay": {"v": 30, "p": "documented", "src": "research/57 A-44"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     },
     "apnea": {
       "text": {"v": "Apnea condition", "p": "documented", "src": "research/57 A-45"},
-      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-45"}
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-45"},
+      "delay": {"v": 0, "p": "documented", "src": "research/57 A-45"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
+    },
+    "highPeep": {
+      "text": {"v": "High PEEP", "p": "documented", "src": "research/57 A-49"},
+      "priority": {"v": "medium", "p": "documented", "src": "research/57 A-49"},
+      "delay": {"v": 5, "p": "inferred", "src": "research/57 A-49", "why": "the manual gives \"at most 5 s\", a bound: the alarm is raised once the end-expiratory pressure has been over the limit for 5 s, the latest the manual allows"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     },
     "fHigh": {
       "text": {"v": "High rate", "p": "documented", "src": "research/57 A-50"},
-      "priority": {"v": "low", "p": "documented", "src": "research/57 A-50"}
+      "priority": {"v": "low", "p": "documented", "src": "research/57 A-50"},
+      "delay": {"v": 30, "p": "documented", "src": "research/57 A-50"},
+      "latch": {"v": true, "p": "documented", "src": "research/57 A-15, A-16"}
     }
   },
   "reasons": {
@@ -153,14 +205,10 @@
     "nebul": {"v": "Nebulised gas is not modelled", "p": "sim", "src": "plan GX6", "piece": "version 2"},
     "help": {"v": "Help is not simulated yet", "p": "sim", "src": "plan GX8", "piece": "V4"},
     "standby": {"v": "Standby is not simulated yet", "p": "sim", "src": "plan GX5", "piece": "V5"},
-    "silence": {"v": "Alarm silence is not simulated yet", "p": "sim", "src": "plan GA16", "piece": "V3"},
     "lock": {"v": "The screen lock is not simulated yet", "p": "sim", "src": "plan GX7", "piece": "V4"},
     "suction": {"v": "Suction %O2 is not simulated yet", "p": "sim", "src": "plan GX4", "piece": "V5"},
     "manualInsp": {"v": "A manual breath is not simulated yet", "p": "sim", "src": "plan GX1", "piece": "V4"},
     "inspExpPause": {"v": "Insp/Exp Pause is not simulated yet", "p": "sim", "src": "plan GX3", "piece": "V4"},
-    "pLo": {"v": "The low pressure limit is not simulated yet", "p": "sim", "src": "plan GA3", "piece": "V3"},
-    "peepHi": {"v": "The PEEP limit is not simulated yet", "p": "sim", "src": "plan GA10", "piece": "V3"},
-    "o2Lim": {"v": "The oxygen limits are not simulated yet", "p": "sim", "src": "plan GA11", "piece": "V3"},
     "psvMode": {"v": "PSV/CPAP is not simulated yet", "p": "sim", "src": "plan GM3", "piece": "V2"},
     "simvMode": {"v": "SIMV modes are not simulated yet", "p": "sim", "src": "plan GM4, GM5", "piece": "V6"},
     "nivMode": {"v": "NIV is not simulated yet", "p": "sim", "src": "plan GM6", "piece": "V8"},
@@ -179,14 +227,20 @@
     "autoscale": {"v": "Autoscale is not simulated yet", "p": "sim", "src": "plan GD15", "piece": "V4"},
     "suctionConfig": {"v": "Suction configuration is not simulated yet", "p": "sim", "src": "plan GX4", "piece": "V5"},
     "calibration": {"v": "The start-up sequence is not simulated yet", "p": "sim", "src": "plan GX19", "piece": "V12"},
-    "settings": {"v": "Settings are not simulated yet", "p": "sim", "src": "plan GP25", "piece": "V3"},
     "notModelled": {"v": "Not modelled", "p": "sim", "src": "plan GP25", "piece": "none planned"},
     "etco2": {"v": "ETCO2 is not modelled yet", "p": "sim", "src": "plan GA13", "piece": "V14"},
     "rate4": {"v": "4 bpm is the model's lowest rate", "p": "sim", "src": "plan GP4", "piece": "V6"},
     "ctrlGap": {"v": "Ctrl's step for this setting is not in the manual", "p": "sim", "src": "plan GX10", "piece": "none planned"},
     "vcvOnly": {"v": "Inspiratory pause is VCV only", "p": "sim", "src": "plan GP14", "piece": "none planned"},
     "descending": {"v": "The descending flow waveform is not simulated yet", "p": "sim", "src": "plan GP13", "piece": "V2"},
-    "simMode": {"v": "A simulator scenario's mode: choose a mode with Mode", "p": "sim", "src": "plan GM3", "piece": "none planned"}
+    "simMode": {"v": "A simulator scenario's mode: choose a mode with Mode", "p": "sim", "src": "plan GM3", "piece": "none planned"},
+    "alarmHelp": {"v": "The causes and remedies of this alarm are not in the simulator yet", "p": "sim", "src": "plan GA18", "piece": "V4"},
+    "alarmTest": {"v": "Alarm test: every lamp and tone in turn", "p": "sim", "src": "plan GA18", "piece": "none planned"},
+    "silenced": {"v": "Alarm sound paused", "p": "sim", "src": "plan GA16", "piece": "none planned"},
+    "o2Set": {"v": "No oxygen sensor is modelled: the O2 alarms compare the SET Oxygen with their limits, not a measured one", "p": "sim", "src": "plan GA11", "piece": "none planned"},
+    "ventInop": {"v": "Vent Inop (a technical fault of the device) is not simulated: this lamp never lights", "p": "sim", "src": "plan GA14", "piece": "none planned"},
+    "peepModel": {"v": "High PEEP compares the measured PEEP (last 50 ms of expiration) with this limit", "p": "sim", "src": "plan GA10", "piece": "none planned"},
+    "clock": {"v": "The computer's clock", "p": "sim", "src": "plan GP25", "piece": "none planned"}
   },
   "colours": {
     "panel": {"v": "#d0d5da", "p": "measured", "src": "research/57 C-01"},
@@ -203,6 +257,8 @@
     "lampMed": {"v": "#faa763", "p": "measured", "src": "research/57 C-13"},
     "alarmHigh": {"v": "#f9203f", "p": "measured", "src": "research/57 C-12"},
     "alarmMed": {"v": "#faa763", "p": "measured", "src": "research/57 C-13"},
+    "alarmHighInk": {"v": "#ffffff", "p": "documented", "src": "research/57 S-02"},
+    "alarmMedInk": {"v": "#292829", "p": "eng", "src": "research/57 S-07, P-42", "why": "the manual's screen picture shows a high alarm only (white words on its box); on the yellow box the screen's own ink (P-42), which white would not read on"},
     "inkLight": {"v": "#ffffff", "p": "eng", "src": "research/57 P-13, C-05", "why": "the photographs show white words on the blue of a selection and on the navy curves; white is not sampled (glyphs are thinner than a patch)"},
     "category": {"v": "#2e468a", "p": "measured", "src": "research/57 P-41"},
     "ink": {"v": "#292829", "p": "measured", "src": "research/57 P-42"},
@@ -222,6 +278,7 @@
     "hkeyInk": {"v": "#434452", "p": "measured", "src": "research/57 P-56"},
     "legend": {"v": "#4b423d", "p": "measured", "src": "research/57 P-57"},
     "lampOff": {"v": "#f0ece4", "p": "measured", "src": "research/57 P-58"},
+    "lampUnlit": {"v": "#eeece2", "p": "measured", "src": "research/57 S-10, P-51"},
     "knob": {"v": "#e6e2d4", "p": "measured", "src": "research/57 P-59"},
     "knobShade": {"v": "#6b6152", "p": "measured", "src": "research/57 P-60"},
     "gasket": {"v": "#353530", "p": "measured", "src": "research/57 P-64"},
@@ -280,9 +337,15 @@
       "lVt": {"v": 3, "p": "documented", "src": "research/57 R-12"},
       "lVe": {"v": 2, "p": "documented", "src": "research/57 R-12"},
       "lF": {"v": 0, "p": "documented", "src": "research/57 R-12"},
-      "lPeep": {"v": 1, "p": "documented", "src": "research/57 R-18"},
-      "lO2": {"v": 0, "p": "documented", "src": "research/57 R-12"}
+      "lPlo": {"v": 0, "p": "documented", "src": "research/57 R-18"},
+      "lPeepHi": {"v": 1, "p": "documented", "src": "research/57 R-18"},
+      "lO2": {"v": 0, "p": "documented", "src": "research/57 R-12"},
+      "sound": {"v": 0, "p": "documented", "src": "research/57 E-10"}
     },
+    "lampFastS": {"v": 0.5, "p": "eng", "src": "research/57 H-06", "why": "one flash period of the High lamp (fast), lit for the first half of it; the manual says only \"fast\" and no photograph (a still) shows a flash"},
+    "lampSlowS": {"v": 1.6, "p": "eng", "src": "research/57 H-06", "why": "one flash period of the Med/Low lamp (slow), lit for the first half of it; the manual says only \"slow\" and no photograph (a still) shows a flash"},
+    "alarmTestStepS": {"v": 2, "p": "eng", "src": "research/57 H-21", "why": "how long each lamp and tone of the alarm test lasts; the manual names the test only"},
+    "alarmTieBreak": {"v": "the manual's table order", "p": "eng", "src": "research/57 A-03", "why": "the manual shows only the higher of two alarms; between two of one priority it does not say: the earlier in its tables (A-31 to A-50) is shown, so a disconnection is not hidden by the low pressure it causes"},
     "grid": {
       "devW": {"v": 1080, "p": "measured", "src": "research/57 P-31"},
       "devH": {"v": 820, "p": "measured", "src": "research/57 P-31"},
@@ -338,7 +401,7 @@
       "underKeys": {"v": [[278, 721, 48, 35, "under:lock"], [425, 721, 48, 35, "under:suction"], [497, 721, 50, 35, "under:manualInsp"], [569, 721, 48, 35, "under:inspExpPause"], [725, 721, 47, 35, "under:ctrl"], [797, 721, 47, 35, "under:esc"]], "p": "measured", "src": "research/57 P-33"},
       "knob": {"v": [980, 735, 50, 70], "p": "measured", "src": "research/57 P-34"},
       "power": {"v": [40, 715, 40, 745], "p": "measured", "src": "research/57 P-35"},
-      "alarmBox": {"v": [470, 91, 270, 27], "p": "eng", "src": "research/57 R-16", "why": "the manual puts the alarm message box on the right of the screen (R-16, Figure 3-5); no photograph shows one, so it sits at the right of the message bar, where it covers no value"},
+      "alarmBox": {"v": [460, 88, 340, 33], "p": "documented", "src": "research/57 S-01"},
       "stripH": {"v": 34, "p": "eng", "src": "research/57 P-31", "why": "the simulator's strip under the drawn device, outside it (brief 159 R20): one line of text and the Simulator handle"},
       "vtLabels": {"v": [1.0, 0.8, 0.6, 0.4, 0.2, 0, -0.2], "p": "documented", "src": "research/57 P-11"},
       "flowLabels": {"v": [60, 40, 20, 0, -20, -40, -60], "p": "documented", "src": "research/57 P-11"},
@@ -429,6 +492,12 @@
     },
     "apnea": {
       "init": {"v": 15, "p": "documented", "src": "research/57 L-12"}
+    },
+    "sound": {
+      "min": {"v": 25, "p": "documented", "src": "research/57 E-10"},
+      "max": {"v": 100, "p": "documented", "src": "research/57 E-10"},
+      "step": {"v": 25, "p": "documented", "src": "research/57 E-10"},
+      "init": {"v": 50, "p": "eng", "src": "research/57 E-10", "why": "the manual gives the range and that it cannot be switched off, not the starting volume"}
     }
   },
   "limits": {
@@ -458,24 +527,70 @@
       "step": {"v": 0.01, "p": "inferred", "src": "research/57 L-07", "why": "as mvHi"},
       "init": {"v": 2.41, "p": "documented", "src": "research/57 L-07"}
     },
-    "pLo": {
-      "init": {"v": 5, "p": "documented", "src": "research/57 L-02"}
-    },
-    "peepHi": {
-      "init": {"v": 20, "p": "documented", "src": "research/57 L-13"}
-    },
-    "o2Hi": {
-      "init": {"v": 60, "p": "documented", "src": "research/57 L-08"}
-    },
-    "o2Lo": {
-      "init": {"v": 40, "p": "documented", "src": "research/57 L-08"}
-    },
     "fHi": {
       "min": {"v": 3, "p": "documented", "src": "research/57 L-14"},
       "max": {"v": 160, "p": "documented", "src": "research/57 L-14"},
       "step": {"v": 1, "p": "documented", "src": "research/57 L-14"},
       "init": {"v": 30, "p": "documented", "src": "research/57 L-14"}
+    },
+    "pLo": {
+      "min": {"v": 1, "p": "documented", "src": "research/57 L-02"},
+      "max": {"v": 99, "p": "documented", "src": "research/57 L-02"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 L-02"},
+      "init": {"v": 5, "p": "documented", "src": "research/57 L-02"}
+    },
+    "contHiP": {
+      "init": {"v": 5, "p": "documented", "src": "research/57 L-15"}
+    },
+    "peepHi": {
+      "min": {"v": 1, "p": "documented", "src": "research/57 L-13"},
+      "max": {"v": 50, "p": "documented", "src": "research/57 L-13"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 L-13"},
+      "init": {"v": 20, "p": "documented", "src": "research/57 L-13"}
+    },
+    "o2Hi": {
+      "min": {"v": 25, "p": "documented", "src": "research/57 L-08"},
+      "max": {"v": 110, "p": "documented", "src": "research/57 L-08"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 L-08"},
+      "init": {"v": 60, "p": "documented", "src": "research/57 L-08"}
+    },
+    "o2Lo": {
+      "min": {"v": 19, "p": "documented", "src": "research/57 L-08"},
+      "max": {"v": 95, "p": "documented", "src": "research/57 L-08"},
+      "step": {"v": 1, "p": "documented", "src": "research/57 L-08"},
+      "init": {"v": 40, "p": "documented", "src": "research/57 L-08"}
     }
+  },
+  "silence": {
+    "onePressS": {"v": 30, "p": "documented", "src": "research/57 A-20, H-09"},
+    "twoPressesS": {"v": 60, "p": "documented", "src": "research/57 A-20, H-09"}
+  },
+  "tones": {
+    "high": {
+      "pulses": {"v": 10, "p": "documented", "src": "research/57 A-10"},
+      "groups": {"v": 2, "p": "documented", "src": "research/57 A-10"},
+      "endPulses": {"v": 5, "p": "documented", "src": "research/57 A-18"},
+      "freqHz": {"v": 960, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"},
+      "repeatS": {"v": 10, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"}
+    },
+    "medium": {
+      "pulses": {"v": 3, "p": "documented", "src": "research/57 A-10"},
+      "groups": {"v": 1, "p": "documented", "src": "research/57 A-10"},
+      "endPulses": {"v": 3, "p": "documented", "src": "research/57 A-18"},
+      "freqHz": {"v": 720, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"},
+      "repeatS": {"v": 20, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"}
+    },
+    "low": {
+      "pulses": {"v": 1, "p": "documented", "src": "research/57 A-10"},
+      "groups": {"v": 1, "p": "documented", "src": "research/57 A-10"},
+      "endPulses": {"v": 0, "p": "documented", "src": "research/57 A-18"},
+      "freqHz": {"v": 540, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"},
+      "repeatS": {"v": 30, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"}
+    },
+    "pulseMs": {"v": 150, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"},
+    "gapMs": {"v": 100, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"},
+    "groupGapMs": {"v": 400, "p": "eng", "src": "research/57 A-11", "why": "the alarm tones' sound is not in the manual (A-11); a simulator choice until the owner's recording (VQ6)"},
+    "gainMax": {"v": 0.25, "p": "eng", "src": "research/57 A-12", "why": "the device's level is 81.4-85.6 dBA (A-12); a browser cannot set a level in dBA: the gain at 100 % volume, scaled by the volume setting"}
   },
   "fonts": {
     "screen": {"v": "Arial, \"Helvetica Neue\", Helvetica, \"Liberation Sans\", sans-serif", "p": "eng", "src": "research/57 P-18", "why": "the screen font is not named in any source; the photographs show a plain sans whose \"1\" has no foot, \"4\" is closed and \"2\" ends flat (P-18), as Arial, which macOS, iPadOS and Windows carry; Tahoma and Verdana, the other system sans of the era, have a footed \"1\""}

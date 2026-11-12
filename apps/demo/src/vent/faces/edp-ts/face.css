@@ -135,10 +135,12 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-win.conf p { position: static; margin: 0; padding: 0 12px; font-size: 14px; line-height: 22px; }
 .edp-win.conf .t + p { margin-top: 44px; }
 
-/* the alarm message box (R-16, R-17): red or yellow by priority, at the right of the message bar */
-.edp-alarm { z-index: 3; border: 1px solid var(--edp-ink); border-radius: 3px; text-align: center; font-weight: 700; font-size: 14px; line-height: 25px; }
-.edp-alarm.high { background: var(--edp-alarmHigh); }
-.edp-alarm.medium, .edp-alarm.low { background: var(--edp-alarmMed); }
+/* the alarm message box (R-16, R-17): red or yellow by priority, over the message bar's right part to the screen's edge,
+   a solid box with no border, the name bold and centred, cap height about 11 px (15 px type): the manual's screen
+   picture, research/57 S-01, S-02; white on red there, the screen's ink on yellow (S-07, a choice) */
+.edp-alarm { z-index: 3; text-align: center; font-weight: 700; font-size: 15px; line-height: 33px; white-space: nowrap; overflow: hidden; }
+.edp-alarm.high { background: var(--edp-alarmHigh); color: var(--edp-alarmHighInk); }
+.edp-alarm.medium, .edp-alarm.low { background: var(--edp-alarmMed); color: var(--edp-alarmMedInk); }
 
 /* ---- the housing's printed words, lamps, membrane keys, knob (P-14 to P-17, P-32 to P-35) ---- */
 .edp-legend { color: var(--edp-legend); font-size: 13px; font-weight: 700; line-height: 13px; }
@@ -147,11 +149,23 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-legend.pw svg { height: 17px; width: auto; color: var(--edp-legend); }
 /* the plug lit green: mains present (P-69; eng: the model has no power state, so mains is always present) */
 .edp-legend.pw .plugfill { fill: var(--edp-plugLit); }
-.edp-lamp { background: var(--edp-lampOff); box-shadow: inset 0 -3px 4px var(--edp-housing); }
-.edp-lamp.tri { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+/* the lamps as photographed (research/57 S-10, S-11): unlit, flat and translucent at their measured contrast to the
+   bezel, no shading; lit, an even fill with no pale centre, the light spreading outward past the edge (about 6 px for
+   the red, 3 px for the amber). The shape is drawn by ::before so the glow (a drop-shadow on the lamp) follows it. */
+.edp-lamp::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--edp-lampUnlit);
+  animation-duration: inherit; animation-timing-function: step-end; animation-iteration-count: infinite; }
+.edp-lamp.tri::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .edp-lamp.circ { border-radius: 50%; width: 38px !important; height: 38px !important; }
-.edp-lamp.on-high { background: radial-gradient(circle at 50% 65%, var(--edp-lampOff), var(--edp-lampHigh) 45%); }
-.edp-lamp.on-med { background: radial-gradient(circle at 50% 50%, var(--edp-lampOff), var(--edp-lampMed) 50%); }
+.edp-lamp.on-high::before { background: var(--edp-lampHigh); }
+.edp-lamp.on-med::before { background: var(--edp-lampMed); }
+.edp-lamp.on-high { filter: drop-shadow(0 0 3px var(--edp-lampHigh)) drop-shadow(0 0 3px var(--edp-lampHigh)); }
+.edp-lamp.on-med { filter: drop-shadow(0 0 2px var(--edp-lampMed)); }
+/* flashing (research/57 H-06): lit for the first half of each period, unlit for the second; the period is face.json's
+   lampFastS / lampSlowS (eng), set on the lamp by device.ts and inherited by its shape */
+@keyframes edp-flash { 50%, 100% { background: var(--edp-lampUnlit); } }
+@keyframes edp-glow { 50%, 100% { filter: none; } }
+.edp-lamp.flash-fast, .edp-lamp.flash-slow { animation-name: edp-glow; animation-duration: 1s; animation-timing-function: step-end; animation-iteration-count: infinite; }
+.edp-lamp.flash-fast::before, .edp-lamp.flash-slow::before { animation-name: edp-flash; }
 .edp-hkey .cap { position: absolute; inset: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
   background: var(--edp-hkey); border-radius: 6px; color: var(--edp-hkeyInk);
   box-shadow: inset 0 1px 0 var(--edp-lampOff), 0 2px 3px var(--edp-knobShade); font-size: 13px; font-weight: 700; line-height: 13px; text-align: center; }
@@ -184,5 +198,8 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-strip { position: fixed; left: 0; right: 0; bottom: 0; height: 34px; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 0;
   background: var(--edp-simStrip); color: var(--edp-inkLight); font: 13px system-ui, sans-serif; }
 .edp-strip .why { flex: 1; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the alarm sound silenced (A-20): no source shows it on the device (research/57 S-06), so it is said here, with the seconds left */
+.edp-strip .sil { white-space: nowrap; font-weight: 600; }
+.edp-strip .sil:empty { display: none; }
 .edp-simhandle { min-height: 28px; padding: 3px 12px; border-radius: 6px; background: var(--edp-room); color: var(--edp-inkLight);
   border: 1px solid var(--edp-inkSoft); font: 600 13px system-ui, sans-serif; cursor: pointer; }

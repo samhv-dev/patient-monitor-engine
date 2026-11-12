@@ -8,6 +8,7 @@ import {
   setMode, silenceAlarms, toggleHold, ventAlarms,
   type Measured, type PresetId, type VentAlarm, type VentConfig, type VentDriver, type VentPhase, type VentPhysics, type VentState,
 } from '@pme/ventilator';
+import { createAlarmView, type AlarmEvent, type AlarmSignals } from './alarms-view.ts';
 import { createRecorder } from './record.ts';
 import type { BreathRecord, Change, ChangeSource, FaceSpec, NumKey } from './types.ts';
 
@@ -25,8 +26,10 @@ export interface SampleBuffers {
 export interface AlarmView {
   /** The banner: silenced countdown, the first active alarm, or none. */
   banner: { cls: '' | 'armed' | 'silenced'; text: string };
-  /** The model's active alarms through the face's alarm profile: V1 applies its `show` and `priority` (V3 delays, latching). */
+  /** The model's alarm CONDITIONS now, through the face's profile's `show` and `priority` (no delay, no latch). */
   active: VentAlarm[];
+  /** With a profile (V3): what the device signals — the delayed, latched alarms, the one message, the lamps, the tone. */
+  signals?: AlarmSignals;
 }
 
 export interface Cockpit {
@@ -62,7 +65,12 @@ export interface Cockpit {
   scenario(id: string): void;
 
   alarms(): AlarmView;
+  /** The silence key: with a profile its presses (`silenceS`), otherwise v1.9's 120 s. */
   silence(): void;
+  /** Esc's alarm part (research/57 H-25): reset the latched lamps of the alarms that have ended; true when one was. */
+  esc(): boolean;
+  /** With a profile: every alarm signalled or ended, with its sim time (the record of activated alarms, V13). */
+  onAlarm(fn: (e: AlarmEvent) => void): () => void;
 
   /** Every change of settings or state, with who made it. */
   onChange(fn: (c: Change) => void): () => void;
@@ -109,8 +117,14 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   const clearBuf = () => { BUF.p.length = BUF.f.length = BUF.v.length = BUF.t.length = BUF.ph.length = BUF.vb.length = 0; };
   const keep = () => Math.ceil(((S.sweepSec || 12) * 1.15) / DT) + 40;
 
+  const prof = face.alarmProfile;
+  /** The EDP-TS PEEP is the record's end-expiratory pressure (research/57 R-23): the model's High PEEP condition reads it. */
+  const conditions = () => ventAlarms(vs, { peepEnd: rec.last()?.peepEnd });
+  const view = prof ? createAlarmView(prof) : null;
+
   d.onStep = () => {
     rec.step(vs);
+    view?.step(P.t, conditions(), S); // every step, frozen or not: a freeze stops the display, not the alarms
     if (frozen) return;
     BUF.p.push(P.dispPaw); BUF.f.push(P.dispFlowLpm); BUF.v.push(P.V); BUF.t.push(P.t); BUF.ph.push(P.phase); BUF.vb.push(Math.max(0, P.V - P.breathVstart));
     const k = keep();
@@ -132,7 +146,6 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     if (source !== 'remote' && (keys.includes('vcFlow') || keys.includes('pause'))) matched = false;
   };
 
-  const prof = face.alarmProfile;
   const profiled = (a: VentAlarm[]): VentAlarm[] => (prof ? a.filter((x) => !prof.show || prof.show.includes(x.id)).map((x) => ({ ...x, priority: prof.priority?.[x.id] ?? x.priority })) : a);
 
   let raf = 0;
@@ -175,8 +188,18 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     },
     preset(id) { loadPreset(vs, id); syncBase(); emit('preset'); },
     scenario(id) { runScenario(vs, id); clearBuf(); emit('scenario'); },
-    alarms: () => ({ banner: bannerText(vs), active: profiled(ventAlarms(vs)) }),
-    silence() { silenceAlarms(vs); emit('action'); },
+    alarms: () => (view ? { banner: bannerText(vs), active: profiled(conditions()), signals: view.signals(P.t) } : { banner: bannerText(vs), active: profiled(ventAlarms(vs)) }),
+    silence() {
+      if (view && prof?.silenceS?.length) silenceAlarms(vs, view.silence(P.t));
+      else silenceAlarms(vs);
+      emit('action');
+    },
+    esc() {
+      const any = view?.esc() ?? false;
+      if (any) emit('action');
+      return any;
+    },
+    onAlarm: (fn) => view?.onEvent(fn) ?? (() => {}),
     onChange: (fn) => (changes.add(fn), () => void changes.delete(fn)),
     onStep: (fn) => (steps.add(fn), () => void steps.delete(fn)),
     start(draw) {

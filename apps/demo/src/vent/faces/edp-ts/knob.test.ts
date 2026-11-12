@@ -189,7 +189,7 @@ describe('Menu and Alarm Limits (research/57 H-10, A-21)', () => {
   it('Alarm Limits: the knob reaches each limit cell and edits it', () => {
     const { c, k } = setup();
     k.press('side:alarmLimits');
-    k.turn(1); // pmax → vtHi
+    k.turn(2); // pmax → pLo (V3) → vtHi
     k.push();
     expect(k.pending.key).toBe('tag:vtHi');
     k.turn(-5);
