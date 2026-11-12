@@ -468,6 +468,7 @@ None recorded.
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |
 | [`session/timeline-reset.test.ts`](../../packages/controller/test/session/timeline-reset.test.ts) | 0 | 0 |
 | [`session/timeline-restore.test.ts`](../../packages/controller/test/session/timeline-restore.test.ts) | 0 | 0 |
+| [`session/viewer-chain.test.ts`](../../packages/controller/test/session/viewer-chain.test.ts) | 0 | 0 |
 | [`session/viewer-mirror.test.ts`](../../packages/controller/test/session/viewer-mirror.test.ts) | 0 | 0 |
 | [`session/viewer-resume-anchor.test.ts`](../../packages/controller/test/session/viewer-resume-anchor.test.ts) | 0 | 0 |
 | [`session/viewer-stage-group.test.ts`](../../packages/controller/test/session/viewer-stage-group.test.ts) | 0 | 0 |
