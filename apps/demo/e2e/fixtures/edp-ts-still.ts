@@ -39,7 +39,7 @@ const base = (o: Partial<View>): View => ({
   },
   left: { peak: '', trach: '', plateau: '', mean: '', peep: '' },
   tiles: TILES(), rightDim: ['right:respMech', 'right:standby'], window: null, alarm: null,
-  lamps: { inop: false, high: true, med: true }, ring: true, ctrl: false, ...o,
+  lamps: { inop: 'off', high: 'steady', med: 'steady' }, silencedS: 0, ring: true, ctrl: false, ...o,
 });
 const top = (...v: Array<string | [string]>) => v.map((x) => (Array.isArray(x) ? { v: x[0], dim: true } : { v: x, dim: false }));
 const MODES1 = ['VCV', 'PCV', 'PSV/CPAP', 'SIMV(PCV)+PSV', 'SIMV(VCV)+PSV', 'Noninvasive (NIV)'].map((w) => W(w as WordId)).concat(W('otherModes'));
@@ -58,7 +58,7 @@ export const STILLS: Record<string, View> = {
   // Exp. Sensitiv. selected (solid blue), the lungs absent, Ti and Te faint
   1546: base({ top: top('22', ['1.85'], ['2.4'], '1:1.1', '17', '0.305', '4.82', '44'), left: { peak: '16', trach: '', plateau: '', mean: '8.8', peep: '4.8' }, tiles: TILES(5) }),
   // Menu, Patient's Data under the knob; both alarm lamps unlit
-  1547: base({ top: top('21', '1.86', '2.5', '1:1.1', ['16'], '0.226', '4.49', '44'), lamps: { inop: false, high: false, med: false },
+  1547: base({ top: top('21', '1.86', '2.5', '1:1.1', ['16'], '0.226', '4.49', '44'), lamps: { inop: 'off', high: 'off', med: 'off' },
     window: { ...win(W('menuTitle'), entries(MENU, 0, [1, 2, 3, 4], { 5: W('no') })), id: 'menu' } }),
 };
 

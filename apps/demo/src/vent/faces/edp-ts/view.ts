@@ -12,6 +12,9 @@ import type { PictoId } from './pictograms.ts';
 
 type Cfg = Readonly<VentConfig>;
 export type Side = 'hi' | 'lo' | 'both';
+/** A lamp (research/57 H-06, A-16): off; flashing fast (High, a high alarm) or slow (Med/Low, a medium one); lit steady
+ *  (a low alarm, or the remaining signal of an alarm that has ended, until Esc). */
+export type LampState = 'off' | 'fast' | 'slow' | 'steady';
 
 /** One drawn limit tag: one or two limits (high over low) behind one symbol (research/57 L-17, P-09). */
 export interface TagView { hi?: LimitView; lo?: LimitView; side: Side }
@@ -35,7 +38,9 @@ export interface View {
   rightDim: string[];
   window: WindowView | null;
   alarm: { text: string; priority: 'high' | 'medium' | 'low' } | null;
-  lamps: { inop: boolean; high: boolean; med: boolean };
+  lamps: { inop: LampState; high: LampState; med: LampState };
+  /** Seconds of alarm-sound silence left (A-20), 0 when none: shown outside the device (no source shows it on it). */
+  silencedS: number;
   /** The knob's ring: lit while a selection or a window is active (research/57 P-06). */
   ring: boolean;
   ctrl: boolean;
@@ -124,8 +129,20 @@ export function viewOf(c: Cockpit, knob: Knob, now: Date = new Date()): View {
     ? { id: 'confirm', title: W('modeWord'), entries: [], footer: null, lines: [[W('modeWord'), W(conf as WordId)], [W('pressKnob')], [W('pressEsc')]] }
     : topWin ? windowView(c, knob, topWin.id, topWin.focus) : null;
 
-  const act = [...c.alarms().active].sort((a, b) => PRI[a.priority] - PRI[b.priority]);
-  const alarm = act[0] ? { text: alarmText(act[0].id) ?? '', priority: act[0].priority } : null;
+  // V3: the device's signals from the core's alarm view (the profile's delays, the one message, flashing and latched
+  // lamps); a face without a profile would show the model's conditions at once, steady
+  const al = c.alarms();
+  const s = al.signals;
+  const act = [...al.active].sort((a, b) => PRI[a.priority] - PRI[b.priority]);
+  const shownAlarm = s ? s.message : act[0] ?? null;
+  // the alarm test (Ctrl + Alarm Limits with no alarm active, H-21): each priority's lamp as that priority lights it
+  const test = knob.alarmTest();
+  const alarm = shownAlarm && !test ? { text: alarmText(shownAlarm.id) ?? '', priority: shownAlarm.priority } : null;
+  const lamps: View['lamps'] = test
+    ? { inop: 'off', high: test === 'high' ? 'fast' : 'off', med: test === 'medium' ? 'slow' : test === 'low' ? 'steady' : 'off' }
+    : s
+      ? { inop: 'off', high: s.lamps.high, med: s.lamps.medLow }
+      : { inop: 'off', high: act.some((a) => a.priority === 'high') ? 'steady' : 'off', med: act.some((a) => a.priority !== 'high') ? 'steady' : 'off' };
 
   return {
     category: W('adl'), mode: modeName(cfg), backup: W('backupOff'), date: fmtDate(now), time: fmtTime(now),
@@ -147,8 +164,9 @@ export function viewOf(c: Cockpit, knob: Knob, now: Date = new Date()): View {
     rightDim: topWin || conf ? ['right:respMech', 'right:standby'] : [],
     window,
     alarm,
-    // the lamps steady (flashing and latching are V3's, plan GA16)
-    lamps: { inop: false, high: act.some((a) => a.priority === 'high'), med: act.some((a) => a.priority !== 'high') },
+    // Vent Inop never lights: the model has no technical fault (plan GA14)
+    lamps,
+    silencedS: s?.silencedS ?? 0,
     ring: ws.length > 0 || conf !== null || knob.pending.key !== null,
     ctrl: knob.ctrl(),
   };

@@ -636,6 +636,24 @@ uncorrected for white balance on the screen (it is lit from within) and correcte
 | P-69 | The plug, lit green (mains present) | `#a4cc78` = `#767e43` (photo px 91,1124-101,1132, the plug's fill) × P-36 | IMG_1542 | meas |
 | P-70 | Trace stroke | 2 to 3 px wide on flat segments of the rectified IMG_1542 and IMG_1546 (columns 320-360, Paw panel), i.e. about 2.1 % of the 120-px panel height; drawn 2.5 px (was 2 px) | IMG_1542; IMG_1546 | meas |
 
+## 17. The alarm signals as the sources show them (brief 202, piece V3 on the redrawn face)
+
+Every photograph was looked at for an alarm lamp, a message and a silenced indicator (the `sips` copies of IMG_1542,
+IMG_1544, IMG_1545, IMG_1546, IMG_1547, read whole, then deleted). Where no photograph shows a thing, the manual's page;
+its screen picture of an alarm (p. 17, Figure 3-5) is the PDF's own embedded image, 885 × 671 px for the 800 × 600
+screen (scale 1.1 on both axes, a 2-px border), read with the same luminance-step probes as section 16 and converted to
+LCD px; the page image was rendered in a scratch folder outside the repository and deleted.
+
+| Id | Fact | Value as the source gives it | Source | Tag |
+|---|---|---|---|---|
+| S-01 | The alarm message box: place and size | over the right part of the message bar, from LCD x 460 to the screen's right edge (800), the bar's whole height (y 88, 33 high); image px 508–881 × 105–142 | F p. 17 Figure 3-5 | F |
+| S-02 | The box's look | a solid box with no border; the alarm's name bold, white on the high (red) box, about centred (its words at LCD x 594–691, the box's centre 630), cap height about 11 LCD px; the message bar's left part stays beside it | F p. 17 Figure 3-5 | F |
+| S-03 | The figure's word for the high-pressure alarm | "High pressure" (lower-case p); the alarm table prints "High Pressure" (A-32); the face keeps the table's word until the owner's video | F p. 17; M p. 95 Table 9-7 | F |
+| S-04 | The lamps in the photographs | High (red triangle) and Med/Low (amber circle) lit with no message on the screen (IMG_1542, IMG_1544, IMG_1545, IMG_1546); all three unlit (IMG_1547); Vent Inop unlit in all five. Stills: none can show whether a lamp flashes | IMG_1542; IMG_1544; IMG_1545; IMG_1546; IMG_1547 | P |
+| S-05 | The message box in the photographs | not shown in any of the five (the message bar reads "Volume compensation" in each) | IMG_1542; IMG_1544; IMG_1545; IMG_1546; IMG_1547 | P |
+| S-06 | What the screen shows while the alarm sound is silenced | in no source: p. 92 says only what the key does (30 s, 60 s), and no photograph was taken while silenced | M p. 92 (searched); IMG_1542 to IMG_1547 | GAP |
+| S-07 | The words' colour on a medium or low (yellow) box | not shown: the figure is of a high alarm | F p. 17 Figure 3-5 | GAP |
+
 ## Gaps that remain (not in the manual, the photographs or the video)
 
 Written as gaps; none is filled with a likely value. Rows: T-24 (Rise Time's range and step), T-48 (suction period's

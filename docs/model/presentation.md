@@ -782,7 +782,7 @@ renderer, audio and skin contracts.
 | `fitDevice` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The device scaled as a whole to the space it is given above the strip (R19: |
 | `drawTraces` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The lanes and loops of the cockpit's buffer: |
 | `train` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | One train of a priority: |
-| `webAudioPlayer` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The browser's player: |
+| `audioPackagePlayer` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The player through the project's audio package (@pme/audio): |
 | `viewOf` | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | The live View: |
 | `faceFromLocation` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | `?face=<id>`; |
 | `mountFace` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The cockpit on the driver, the simulator's tools, and the face on both; |
@@ -1458,12 +1458,15 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/vent/core/pending.test.ts`](../../apps/demo/src/vent/core/pending.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/record.test.ts`](../../apps/demo/src/vent/core/record.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/device-link.dom.test.ts`](../../apps/demo/src/vent/device-link.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/alarm-signals.dom.test.ts`](../../apps/demo/src/vent/faces/edp-ts/alarm-signals.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/controls.test.ts`](../../apps/demo/src/vent/faces/edp-ts/controls.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/face.dom.test.ts`](../../apps/demo/src/vent/faces/edp-ts/face.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/knob.test.ts`](../../apps/demo/src/vent/faces/edp-ts/knob.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/link.test.ts`](../../apps/demo/src/vent/faces/edp-ts/link.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/provenance.test.ts`](../../apps/demo/src/vent/faces/edp-ts/provenance.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/tones-player.test.ts`](../../apps/demo/src/vent/faces/edp-ts/tones-player.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/hamilton/face.dom.test.ts`](../../apps/demo/src/vent/faces/hamilton/face.dom.test.ts) | 0 | 0 |
 | [`alarm-bursts.test.ts`](../../packages/audio/test/alarm-bursts.test.ts) | 0 | 0 |
 | [`alarm-sounder.test.ts`](../../packages/audio/test/alarm-sounder.test.ts) | 0 | 0 |

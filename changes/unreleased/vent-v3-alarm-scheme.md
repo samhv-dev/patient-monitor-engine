@@ -11,4 +11,9 @@
   with its time. On the EDP-TS face the controls that said "needs piece V3" are live: the O2, High PEEP and minimum
   pressure tags and Alarm settings rows, the silence key, Esc's lamp reset, Ctrl + Alarm Limits (the alarm test) and
   Tools → Settings → Sound. The tones' pulse counts are the manual's; their pitch is the simulator's until the owner's
-  recording. Drawing the flashing lamps, the latched lamp and the silenced state waits for the face's redraw.
+  recording. On the redrawn face (brief 202) the alarms are drawn: the High lamp flashing fast and the Med/Low lamp slow
+  (steady for a low alarm, and for an ended alarm until Esc), the message box where the manual's screen picture puts it,
+  in the device's words on red or yellow, the silence's seconds left in the simulator's strip outside the device, the
+  alarm test, and the tones through the audio package. The Vent Inop lamp never lights (no technical fault is
+  simulated). Known: the O2 alarms compare the SET oxygen, as the model has no oxygen sensor (N111); and Low pressure is
+  raised once at start-up, before the first breath, and latches until Esc (an expected failure records it).

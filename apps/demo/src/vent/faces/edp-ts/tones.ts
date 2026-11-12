@@ -3,7 +3,8 @@
 // the cause ends high 5, medium 3, low none; only the highest priority sounds; silence pauses the audio only (A-20).
 // What a pulse sounds like (pitch, length, gaps, how often a train repeats, the gain) is not in the manual (A-11): face.json
 // `tones` tags each `eng` until the owner's recording. Pure: `createAlarmSound` decides WHEN a train starts and hands it
-// to a player; `webAudioPlayer` is the browser's player (an oscillator per pulse).
+// to a player; `audioPackagePlayer` plays it through @pme/audio (brief 202).
+import { playAlarmPulse, type AudioOut } from '@pme/audio';
 import type { AlarmEvent, AlarmSignals } from '../../core/alarms-view.ts';
 import { DATA, num } from './data.ts';
 
@@ -58,22 +59,12 @@ export function createAlarmSound(play: (pulses: Pulse[], gain: number) => void):
   };
 }
 
-/** The browser's player: each pulse a sine oscillator with a short ramp (no click). */
-export function webAudioPlayer(ctx: AudioContext): (pulses: Pulse[], gain: number) => void {
+/** The player through the project's audio package (@pme/audio): each pulse one `playAlarmPulse` on the context and
+ *  master gain `unlockAudio` made in a user gesture, a pure tone (one harmonic) with a 5 ms ramp, no click [eng: the
+ *  tone's timbre is not in the manual either (A-11)]. */
+export function audioPackagePlayer(out: AudioOut): (pulses: Pulse[], gain: number) => void {
   return (pulses, gain) => {
-    const t0 = ctx.currentTime + 0.02;
-    for (const p of pulses) {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.frequency.value = p.freqHz;
-      const a = t0 + p.atMs / 1000, b = a + p.durMs / 1000;
-      g.gain.setValueAtTime(0, a);
-      g.gain.linearRampToValueAtTime(gain, a + 0.005);
-      g.gain.setValueAtTime(gain, b - 0.005);
-      g.gain.linearRampToValueAtTime(0, b);
-      o.connect(g).connect(ctx.destination);
-      o.start(a);
-      o.stop(b + 0.01);
-    }
+    const t0 = out.ctx.currentTime + 0.02;
+    for (const p of pulses) playAlarmPulse(out.ctx, out.master, t0 + p.atMs / 1000, { freqHz: p.freqHz, durS: p.durMs / 1000, gain }, [0], 5);
   };
 }
