@@ -1191,7 +1191,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 |---|---|---|
 | [`apps/demo/e2e/alarm-off-label.e2e.ts`](../../apps/demo/e2e/alarm-off-label.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/apnoea-alarm-latched.e2e.ts`](../../apps/demo/e2e/apnoea-alarm-latched.e2e.ts) | 0 | 0 |
-| [`apps/demo/e2e/app-accessibility.e2e.ts`](../../apps/demo/e2e/app-accessibility.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-learner-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-learner-phone.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-pump.e2e.ts`](../../apps/demo/e2e/app-accessibility-pump.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-ventilator.e2e.ts`](../../apps/demo/e2e/app-accessibility-ventilator.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-views.e2e.ts`](../../apps/demo/e2e/app-accessibility-views.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-glossary.e2e.ts`](../../apps/demo/e2e/app-glossary.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-instructor-tasks.e2e.ts`](../../apps/demo/e2e/app-instructor-tasks.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-one-session.e2e.ts`](../../apps/demo/e2e/app-one-session.e2e.ts) | 0 | 0 |
