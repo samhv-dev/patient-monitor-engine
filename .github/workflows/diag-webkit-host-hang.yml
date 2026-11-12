@@ -52,6 +52,7 @@ jobs:
       - name: nproc and memory; gdb for the thread dumps of a stuck WebKit process (apps/demo/e2e/diag-host.ts)
         run: |
           nproc; free -m
+          echo "core_pattern: $(cat /proc/sys/kernel/core_pattern)"; echo "ulimit -c: $(ulimit -c)"
           apt-get update -qq && apt-get install -y -qq gdb > /dev/null && gdb --version | head -1
         timeout-minutes: 5
       - id: e2e
