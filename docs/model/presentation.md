@@ -932,7 +932,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The phase editor's model (docs/plans/scenario-builder.md §5.3, piece B3): what a phase rule may read and how it reads in words, the rule tree's edits, where a phase sits in the card's course, and a phase id's rename. |
 | [`apps/demo/src/app/builder/run-panel.ts`](../../apps/demo/src/app/builder/run-panel.ts) | Run in place (docs/plans/scenario-builder.md §6, mock-up 04-run-in-place; piece B6). |
 | [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | Run in place (docs/plans/scenario-builder.md §6, mock-up 04-run-in-place; piece B6): the two pure parts of the run panel, DOM-free so B7's twin run and a headless harness can read them too. |
-| [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The Script section's commands from the Airway, Defib · CPR and Devices sheets (docs/plans/scenario-builder.md §5.2; piece 162, finding N83 of B5): an airway state, who breathes with the bag's or the ventilator's settings |
+| [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The Script section's commands from the Airway, CPR and Devices sheets (docs/plans/scenario-builder.md §5.2; piece 162, finding N83 of B5): an airway state, who breathes with the bag's or the ventilator's settings, oxygen |
 | [`apps/demo/src/app/builder/script-editor.ts`](../../apps/demo/src/app/builder/script-editor.ts) | The builder's Script section (docs/plans/scenario-builder.md §5.2; piece B5): what the card does itself, card-set and never graded. |
 | [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The builder's first three sections (docs/plans/scenario-builder.md §5.2; piece B2): Header and story, Patient and sensors, Case briefing. |
 | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Reading a scenario card for Instructor v2 (E127, docs/plans/instructor-panel-redesign.md §3.2, §3.4, §7): the stages of the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, ju |
@@ -1279,6 +1279,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/skins-page.e2e.ts`](../../apps/demo/e2e/skins-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/sound-toggle.e2e.ts`](../../apps/demo/e2e/sound-toggle.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/stage-group-one-tick.e2e.ts`](../../apps/demo/e2e/stage-group-one-tick.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/teach2-dock-fit.e2e.ts`](../../apps/demo/e2e/teach2-dock-fit.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-panes.e2e.ts`](../../apps/demo/e2e/teach2-fit-panes.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-stages.e2e.ts`](../../apps/demo/e2e/teach2-fit-stages.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-strip.e2e.ts`](../../apps/demo/e2e/teach2-fit-strip.e2e.ts) | 0 | 0 |
