@@ -386,6 +386,7 @@ None recorded.
 | [`panel/scenario-tab.dom.test.ts`](../../packages/controller/test/panel/scenario-tab.dom.test.ts) | 0 | 0 |
 | [`panel/staging.test.ts`](../../packages/controller/test/panel/staging.test.ts) | 0 | 0 |
 | [`protocol.test.ts`](../../packages/controller/test/protocol.test.ts) | 0 | 0 |
+| [`relay/kit-site.test.ts`](../../packages/controller/test/relay/kit-site.test.ts) | 0 | 0 |
 | [`relay/kit-store.test.ts`](../../packages/controller/test/relay/kit-store.test.ts) | 0 | 0 |
 | [`relay/kit-windows.test.ts`](../../packages/controller/test/relay/kit-windows.test.ts) | 0 | 0 |
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
