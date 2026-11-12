@@ -2,7 +2,7 @@
 // entry (and the renderer's IIFE, which imports it) never bundles ajv or the built-in JSON.
 export * from './types.ts';
 export type * from './types-v2.ts';
-export { validateScenario, formatAjvError, SCENARIO_SCHEMA, SCENARIO_SCHEMA_V2, type ValidationResult, type ValidateOptions } from './validate.ts';
+export { validateScenario, formatAjvError, eventRefusal, ENGINE_CHECKED_KINDS, SCENARIO_SCHEMA, SCENARIO_SCHEMA_V2, type ValidationResult, type ValidateOptions } from './validate.ts';
 export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry, type VitalHold } from './runner.ts';
 export { PhaseRunner, type PhaseRunnerEffect, type PhaseRunLogEntry, type PhaseHold } from './phase-runner.ts';
 export { concentrationVar, ruleConcentrations, CONCENTRATION_VAR, type ConcentrationVar, type ConcentrationInfo } from './concentration.ts';
