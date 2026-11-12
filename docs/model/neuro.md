@@ -543,6 +543,7 @@ Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `o
 
 | File | Expected failures | Skipped |
 |---|---|---|
+| [`engine/eeg-artefact-state.test.ts`](../../packages/engine-core/test/engine/eeg-artefact-state.test.ts) | 0 | 0 |
 | [`engine/eeg-baseline.test.ts`](../../packages/engine-core/test/engine/eeg-baseline.test.ts) | 0 | 0 |
 | [`engine/eeg-cortex.test.ts`](../../packages/engine-core/test/engine/eeg-cortex.test.ts) | 0 | 0 |
 | [`engine/eeg-signal.test.ts`](../../packages/engine-core/test/engine/eeg-signal.test.ts) | 0 | 0 |
