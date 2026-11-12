@@ -1,5 +1,6 @@
-// EEG artefacts (EEG plan E12; the owner's Q9: the instructor's artefact controls belong to E12, not to the Devices
-// sheet, which two other plans are reshaping). The Instructor page's "EEG" sheet: one switch per artefact the engine has
+// EEG artefacts (EEG plan E12, Q9). The owner ruled on 12 November that "the EEG should go into devices as a device":
+// the Devices sheet (panel/devices.ts) carries this group, "EEG device: artefacts", only while an EEG device is on, and
+// the Instructor dock has no EEG tool (an eighth tool overflowed it at 1280 px). One switch per artefact the engine has
 // an instructor command for, so the instructor can make the resident's depth reading unreliable the way a real one is:
 //   Loose electrode → `device eeg impedance [2, 2, 20]` (one electrode off the skin: over the reader's limit and
 //                     unequal, Ch36 p. 1145); off → every electrode back to the engine's default
@@ -13,7 +14,7 @@
 import { EEG_DEVICES, EEG_ELECTRODES, EEG_IMPEDANCE_DEFAULT_KOHM, type EegModelId } from '@pme/engine-core';
 import { describeCommand } from '../describe.ts';
 import { h, setText, toast, toggle } from '../ui.ts';
-import type { PanelCtx } from './ctx.ts';
+import type { Link } from '../link.ts';
 
 /** The loose electrode's impedance, kΩ [ENG: control; an electrode lifted off the skin: well over the 5 kΩ limit of
  *  the generic reader (Ch36 p. 1145 gives 5 or 8 kΩ by device), so every device's quality flag reads it]. */
@@ -48,14 +49,15 @@ export const EEG_ARTEFACTS: ReadonlyArray<{ id: 'electrode' | 'pickup'; label: s
 ];
 
 export const EEG_WORDS = {
-  off: 'No EEG device is on: choose one in Room setup',
+  heading: 'EEG device: artefacts',
   patient: 'Muscle activity (EMG) and eye blinks come from the patient: muscle tone (no neuromuscular block), arousal and the tube. They have no switch.',
 };
 
-export function eegTab(c: PanelCtx): HTMLElement {
-  const { link } = c;
+/** The Devices sheet's EEG group: hidden while the engine reports no EEG device. `refresh` is called from the Devices
+ *  sheet's own repaint (one registration per tab body). */
+export function eegGroup(link: Link): { el: HTMLElement; refresh(): void } {
   const view = (): EegStateView | null => link.ctl.state?.eeg ?? null;
-  const device = h('p', { class: 'eeg-device', role: 'status' });
+  const device = h('p', { class: 'eeg-device hint', role: 'status' });
   const pending = new Map<string, { on: boolean; until: number }>();
   const rows = EEG_ARTEFACTS.map((a) => {
     const state = h('span', { class: 'eeg-state hint' });
@@ -69,20 +71,22 @@ export function eegTab(c: PanelCtx): HTMLElement {
     });
     return { a, sw, state, el: h('div', { class: 'row', 'data-artefact': a.id }, sw, state, h('span', { class: 'hint' }, a.hint)) };
   });
+  const el = h('section', { class: 'eeg-group', 'data-group': 'eeg', 'aria-label': EEG_WORDS.heading },
+    h('h3', {}, EEG_WORDS.heading), device, ...rows.map((r) => r.el), h('p', { class: 'hint' }, EEG_WORDS.patient));
   const draw = () => {
     const s = view();
-    setText(device, s ? (EEG_DEVICES[s.model as EegModelId]?.spec.label ?? s.model) : EEG_WORDS.off);
+    el.hidden = !s;
+    if (!s) return;
+    setText(device, EEG_DEVICES[s.model as EegModelId]?.spec.label ?? s.model);
     for (const r of rows) {
-      r.sw.disabled = !s;
       const p = pending.get(r.a.id);
-      const on = s ? r.a.on(s) : false;
+      const on = r.a.on(s);
       if (p && p.on !== on && performance.now() < p.until) continue;
       pending.delete(r.a.id);
       r.sw.set(on);
-      setText(r.state, s ? r.a.text(s) : '');
+      setText(r.state, r.a.text(s));
     }
   };
-  c.onRefresh(draw);
   draw();
-  return h('div', {}, h('h3', {}, 'EEG artefacts'), device, ...rows.map((r) => r.el), h('p', { class: 'hint' }, EEG_WORDS.patient));
+  return { el, refresh: draw };
 }

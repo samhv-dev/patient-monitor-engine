@@ -1,17 +1,15 @@
 // @vitest-environment happy-dom
-// EEG plan E12, the owner's Q9: the instructor's EEG artefact controls (panel/eeg.ts, the Instructor page's "EEG"
-// sheet). One switch per artefact the engine has an instructor command for — a loose electrode and ECG pickup (`device
+// EEG plan E12, the owner's Q9: the instructor's EEG artefact controls (panel/eeg.ts, the Devices sheet's group "EEG
+// device: artefacts": the owner ruled on 12 November that "the EEG should go into devices as a device"). One switch per artefact the engine has an instructor command for — a loose electrode and ECG pickup (`device
 // eeg impedance`, `device eeg ecgPickup`) — each sending the engine's own command at once (no artefact drawn here),
 // each showing the state the ENGINE reports in its `state` event (never the press alone), each a Log line. Muscle
 // (EMG) and blinks have no switch: the engine computes them from the patient (D5), and the sheet says so. Diathermy and
 // mains are the ECG model's `setModifiers`, which no Instructor view may send (plan instructor-peer-role.md §2): not
-// on this sheet until that is ruled. While no EEG device is on, the switches are off and say why.
+// in this group until that is ruled. While no EEG device is on, the group is not shown.
 import { describe, expect, it } from 'vitest';
 import type { AckResult, CommandInput } from '@pme/controller';
 import type { Link } from '../link.ts';
-import { DEFAULT_SITE } from '../site.ts';
-import type { PanelCtx } from './ctx.ts';
-import { EEG_ARTEFACTS, eegArtefactCmd, eegTab, LOOSE_ELECTRODE_KOHM } from './eeg.ts';
+import { EEG_ARTEFACTS, eegArtefactCmd, eegGroup, LOOSE_ELECTRODE_KOHM } from './eeg.ts';
 
 const OK: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 };
 const ON_STATE = { model: 'generic', impedanceKOhm: [2, 2, 2], ecgPickup: false };
@@ -25,9 +23,9 @@ function rig(eeg: Partial<EegView> | null, ack: AckResult = OK) {
     send: async (c: CommandInput) => (sent.push(c), ack),
     onChange: () => () => undefined,
   } as { simT: number; ctl: { state: Record<string, unknown> } };
-  let refresh = () => undefined as void;
-  const ctx = { link: link as unknown as Link, staging: { submit: () => undefined }, site: DEFAULT_SITE, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx;
-  const el = eegTab(ctx);
+  const g = eegGroup(link as unknown as Link);
+  const el = g.el;
+  const refresh = g.refresh;
   document.body.replaceChildren(el);
   refresh();
   const btn = (name: string) => [...el.querySelectorAll('button')].find((b) => b.textContent === name) as HTMLButtonElement;
@@ -51,6 +49,8 @@ describe("Q9: the instructor's EEG artefact controls", () => {
     for (const a of EEG_ARTEFACTS) expect(r.pressed(a.label), a.label).toBe('false');
     expect(r.el.textContent).toMatch(/Muscle activity \(EMG\) and eye blinks come from the patient/);
     expect(r.el.querySelector('.eeg-device')?.textContent).toBe('Processed EEG (generic)');
+    expect(r.el.querySelector('h3')?.textContent).toBe('EEG device: artefacts');
+    expect(r.el.hidden).toBe(false);
   });
 
   it("each sends the engine's own command, at once (never staged); off sends the engine's default back", async () => {
@@ -87,12 +87,13 @@ describe("Q9: the instructor's EEG artefact controls", () => {
     expect(r.pressed('ECG pickup')).toBe('true');
   });
 
-  it('no EEG device on: every switch disabled, and the sheet says where it is switched on', () => {
+  it('no EEG device on: the group is not shown; it appears when the engine reports one, and goes when it reports none', () => {
     const r = rig(null);
-    for (const a of EEG_ARTEFACTS) expect(r.btn(a.label).disabled, a.label).toBe(true);
-    expect(r.el.querySelector('.eeg-device')?.textContent).toBe('No EEG device is on: choose one in Room setup');
+    expect(r.el.hidden).toBe(true);
     r.setState(ON_STATE);
-    for (const a of EEG_ARTEFACTS) expect(r.btn(a.label).disabled, a.label).toBe(false);
+    expect(r.el.hidden).toBe(false);
+    r.setState(null);
+    expect(r.el.hidden).toBe(true);
   });
 
   it("a refused command shows the engine's reason, and the switch follows the engine (off)", async () => {

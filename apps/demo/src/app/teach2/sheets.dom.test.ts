@@ -66,7 +66,7 @@ const shape = (el: Element) => el.outerHTML.replace(/ (id|for|aria-describedby|a
 describe('the sheets', () => {
   it('the dock\'s tools in order, no Gas; a press opens its sheet over ACTION, lit, and the same press closes it', () => {
     const r = rig();
-    expect([...r.tools.querySelectorAll('.ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'Defib · CPR', 'Vitals', 'Devices', 'EEG', 'Patient', 'Log']);
+    expect([...r.tools.querySelectorAll('.ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'Defib · CPR', 'Vitals', 'Devices', 'Patient', 'Log']);
     expect(r.tools.querySelector('.ip2-staged')?.textContent).toBe('Staged · 0');
     expect((r.tools.querySelector('.ip2-staged') as HTMLElement).hidden, 'hidden while nothing is staged').toBe(true);
     expect(r.layer.children).toHaveLength(0); // nothing built until a sheet opens

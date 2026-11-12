@@ -51,7 +51,7 @@ describe('Instructor v2 frame', () => {
     expect(v.el.querySelector('.ip2-cue')?.hasAttribute('data-stub')).toBe(false);
     expect(v.el.querySelector('.ip2-action-body .ip2-list')).not.toBeNull();
     expect(v.el.querySelector('.ip2-sheets')?.hasAttribute('data-stub')).toBe(false);
-    expect(v.el.querySelectorAll('.ip2-dock-tools .ip2-tool')).toHaveLength(8);
+    expect(v.el.querySelectorAll('.ip2-dock-tools .ip2-tool')).toHaveLength(7);
     expect(() => v.openSheet('no-such-sheet')).not.toThrow();
     v.enter?.('');
   });

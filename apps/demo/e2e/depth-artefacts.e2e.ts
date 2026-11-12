@@ -1,12 +1,15 @@
 // EEG plan E12, the owner's Q9 (docs/plans/stage-eeg-depth-of-anaesthesia.md §10): the instructor's EEG artefact
-// switches on the Instructor page (its "EEG" sheet, panel/eeg.ts). Through a relay in a process of its OWN (the built
+// switches on the Instructor page: the Devices sheet's group "EEG device: artefacts" (panel/eeg.ts), shown while an EEG
+// device is on (the owner, 12 November: "the EEG should go into devices as a device"). Through a relay in a process of its OWN (the built
 // kit's when PME_KIT_RELAY names it, else the source relay's bin; never the in-process relay, which can hide a host that
 // acknowledges without applying), a tablet follows the room's depth device at `#/depth`. The instructor switches a
 // loose electrode on: the host ENGINE's state says so, the tablet's depth window shows the degraded signal quality
 // ("Check electrodes") and the raised impedance, at each reading the same quality the host's own engine read at that
 // sim time, and the Log and the case record carry the line. Off again: the state, the window and the record follow.
-// The second case: at 1440 × 900 every sheet of the Instructor page opens from the dock with the EEG sheet present,
-// and its Deliver, its close button and (on the EEG sheet) both switches are on top where they are drawn.
+// The second case: at 1280 × 720, 1280 × 800, 1440 × 900 and 1920 × 1080, with the Devices sheet open and the EEG group
+// shown, every control of the dock, every button of the sheet's footer, its close button and both EEG switches are the
+// element at their own centre. Nothing is staged: the marks group's overlap with "Staged · n" at 1280 px exists on main
+// and is being cured on its own branch (instructor-dock-patient-tool).
 // Ports: PME_E2E_PORT for Vite, PME_E2E_RELAY_PORT for the relay (that port + 6 + the worker index); unset, the
 // system picks free ones.
 import { spawn } from 'node:child_process';
@@ -15,7 +18,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { devices, expect, test, type Browser, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, sheet, startVite, type SheetId } from './app-support.ts';
+import { openApp, sheet, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -145,7 +148,8 @@ test("through a relay in its own process: the instructor's loose electrode degra
     await shows(p, page, 'good', '2.0');
     await expect(p.locator('.depth-sqi')).toHaveText('Signal good');
     await shot(p, 'tablet-depth-before', browserName);
-    const s = await sheet(page, 'eeg');
+    const s = await sheet(page, 'devices');
+    await expect(s.locator('[data-group="eeg"]')).toBeVisible();
     const loose = s.getByRole('button', { name: 'Loose electrode', exact: true });
     await expect(loose).toHaveAttribute('aria-pressed', 'false');
     await loose.click();
@@ -155,7 +159,7 @@ test("through a relay in its own process: the instructor's loose electrode degra
     await shows(p, page, 'questionable', '20.0');
     await expect(p.locator('.depth-sqi')).toHaveText('Check electrodes');
     await shot(p, 'tablet-depth-loose-electrode', browserName);
-    await shot(page, 'host-eeg-sheet-loose-electrode', browserName);
+    await shot(page, 'host-devices-eeg-loose-electrode', browserName);
     console.log(`[Q9] ${browserName}: loose electrode on: the tablet reads "Check electrodes", 20.0 kΩ, the host engine's quality`);
     const line = 'EEG electrodes 2 · 2 · 20 kΩ';
     const logs = () => page.evaluate(() => (window as unknown as HostW).__pmeApp.link.log.map((x) => x.text));
@@ -176,25 +180,31 @@ test("through a relay in its own process: the instructor's loose electrode degra
   }
 });
 
-test('at 1440 × 900 every sheet of the Instructor page opens from the dock with the EEG sheet present; its Deliver, its close button and the EEG switches are on top', async ({ page, browserName }) => {
+test('at four laptop sizes, with the Devices sheet open and its EEG group shown, every dock control, every footer button, the close button and both EEG switches are on top', async ({ page, browserName }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, base, '#/teach2', { warmMs: 1500, site: { eegModel: 'generic' } });
   await expect.poll(() => engineEeg(page), { timeout: 10_000 }).toMatchObject({ model: 'generic' });
-  const onTop = (sel: string) => page.locator(sel).evaluate((el) => {
-    const r = el.getBoundingClientRect();
-    const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    return r.width > 0 && r.bottom <= innerHeight && r.right <= innerWidth && !!at && (at === el || el.contains(at));
-  });
-  const ids = await page.locator('.ip2-dock-tools button.ip2-tool').evaluateAll((bs) => bs.map((b) => (b as HTMLElement).dataset.sheet as string));
-  expect(ids).toEqual(['drug', 'airway', 'defib', 'vitals', 'devices', 'eeg', 'patient', 'log']);
-  for (const id of ids) {
-    const s = await sheet(page, id as SheetId); // the dock's tool, clicked by Playwright: visible, enabled, not covered
-    await expect(s).toBeVisible();
-    const open = `.ip2-sheets .ip2-sheet[data-sheet="${id}"]`;
-    expect(await onTop(`${open} button.ip2-deliver`), `${id}: Deliver`).toBe(true);
-    expect(await onTop(`${open} .ip2-sheet-close`), `${id}: close`).toBe(true);
-    if (id === 'eeg') await shot(page, 'instructor-eeg-sheet-1440', browserName);
-    if (id === 'eeg') for (const a of ['electrode', 'pickup']) expect(await onTop(`${open} [data-artefact="${a}"] button`), `eeg: ${a}`).toBe(true);
+  const s = await sheet(page, 'devices'); // the dock's tool, clicked by Playwright: visible, enabled, not covered
+  await expect(s.locator('[data-group="eeg"]')).toBeVisible();
+  expect(await page.locator('.ip2-dock-tools button.ip2-tool[data-sheet="eeg"]').count()).toBe(0); // no EEG tool in the dock
+  for (const [w, hgt] of [[1280, 720], [1280, 800], [1440, 900], [1920, 1080]] as const) {
+    await page.setViewportSize({ width: w, height: hgt });
+    await s.locator('[data-artefact="electrode"]').scrollIntoViewIfNeeded();
+    const misses = await page.evaluate(() => {
+      const sheetEl = document.querySelector('.ip2-sheets .ip2-sheet[data-sheet="devices"]') as HTMLElement;
+      const els = [
+        ...document.querySelectorAll<HTMLElement>('.ip2-dock button, .ip2-dock a, .ip2-dock input'),
+        ...sheetEl.querySelectorAll<HTMLElement>('.ip2-sheet-foot button, .ip2-sheet-close, [data-artefact] button'),
+      ].filter((e) => e.offsetParent !== null);
+      return els.flatMap((e) => {
+        const r = e.getBoundingClientRect();
+        const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        const ok = r.width > 0 && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && !!at && (at === e || e.contains(at));
+        return ok ? [] : [`${(e.textContent || e.getAttribute('aria-label') || e.tagName).trim()} (covered by ${(at as HTMLElement | null)?.className ?? 'nothing'})`];
+      });
+    });
+    expect(misses, `${w} × ${hgt}`).toEqual([]);
+    await shot(page, `instructor-devices-eeg-${w}x${hgt}`, browserName);
   }
 });

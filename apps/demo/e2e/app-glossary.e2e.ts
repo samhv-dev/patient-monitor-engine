@@ -12,7 +12,7 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
 /** Instructor v2's sheets, today's tabs but the Scenario tab (ACTION, no sheet open). */
-const SHEETS: readonly SheetId[] = ['vitals', 'drug', 'airway', 'defib', 'devices', 'eeg', 'patient', 'log'];
+const SHEETS: readonly SheetId[] = ['vitals', 'drug', 'airway', 'defib', 'devices', 'patient', 'log'];
 const STATE_VARS = ['hr', 'sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'spo2', 'etco2', 'fio2', 'tempCore', 'volumeStatus', 'paceThresholdMa', 'svr', 'qtc'];
 
 test('no engine id reaches a clinical view', { tag: '@known-flaky' }, async ({ page }) => {

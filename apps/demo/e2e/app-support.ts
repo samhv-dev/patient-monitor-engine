@@ -211,7 +211,7 @@ export async function ffV2(page: Page, min: 2 | 5): Promise<void> {
   await page.locator('.ip2-ff').getByRole('button', { name: `Fast forward by ${min} min`, exact: true }).click();
 }
 
-export type SheetId = 'drug' | 'airway' | 'defib' | 'vitals' | 'devices' | 'eeg' | 'patient' | 'log';
+export type SheetId = 'drug' | 'airway' | 'defib' | 'vitals' | 'devices' | 'patient' | 'log';
 
 /** Open the dock's sheet `id` (today's tab of the same body) if it is not open; the open sheet's locator. */
 export async function sheet(page: Page, id: SheetId) {
