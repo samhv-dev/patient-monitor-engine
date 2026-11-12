@@ -141,24 +141,31 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | Function | File | Doc |
 |---|---|---|
 | `chargeTimeS` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Charge time (s) for an energy: |
+| `validateDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | `energies`: |
 | `applyDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Apply a validated action. |
 | `stepDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Timed transitions: |
 | `afterShock` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | After a delivered shock (brief §6.5: |
+| `energyReason` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The refusal for an energy not in a model's list, or undefined. |
+| `pacerGridReason` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The refusal for a pacer rate or output off the model's grid, or undefined. |
+| `validateM2Command` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | Validate one `device defib <action>` other than `model`: |
+| `m2Status` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The published status: |
 | `shockClass` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | What is being shocked (vtPoly/torsades count as pulseless VT: |
 | `shockStateFactor` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | The multiplier on the ROSC share from the state the shock lands in (1 = no information). |
 | `temperatureTermination` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | The multiplier on the whole TERMINATION (ROSC and asystole/PEA) from core temperature. |
 | `outcomeProbabilities` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | Outcome probabilities for a shock (they sum to 1). |
 | `drawOutcome` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | Draw one outcome from the `outcome` stream (one uniform per shock, so replay is exact). |
+| `validatePacer` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | `grid`: the room's model's rate and output steps (plan E0: |
 | `tcpSpec` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | The TCP modifier for this pacer state. |
 | `syncStep` | [`l3/defib-pacer/sync.ts`](../../packages/engine-core/src/l3/defib-pacer/sync.ts) | Feed samples [st.n, end] read from the VCG X/Y/Z channels; |
 
-Exported without a doc comment: `createDefib`, `validateDefib`, `cardioversionSinus`, `createPacer`, `validatePacer`, `applyPacer`, `createSyncState`.
+Exported without a doc comment: `createDefib`, `createM2State`, `cardioversionSinus`, `createPacer`, `applyPacer`, `createSyncState`.
 
 ## Source files
 
 | File | Header |
 |---|---|
 | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Defibrillator (brief §6.5 table; research/05 §2.6): energy select, charge with a charge time and tone, ready, auto-disarm, sync mode. |
+| [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The ZOLL M2 as a defibrillator model (docs/plans/defibrillator-zoll-m2.md, piece E0): the limits its Operator's Guide states, and the frozen command vocabulary and status every later piece fills. |
 | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | Post-shock rhythm (brief §6.5 "Post-shock rhythm" table; research 03 §1.8–§1.9): a scenario rule or the instructor's pre-selection wins; otherwise the outcome is drawn from the `outcome` PRNG stream. |
 | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | Transcutaneous pacer device (brief §6.5 "Pacer (TCP)"; research/05 §2.6): mode, rate, output, pause, and the instructor faults. |
 | [`l3/defib-pacer/sync.ts`](../../packages/engine-core/src/l3/defib-pacer/sync.ts) | Defibrillator sync detector (brief §6.5 "Sync": a marker on every detected R; the shock on the next R within ≤ 60 ms). |
@@ -171,7 +178,9 @@ None recorded.
 
 | File | Expected failures | Skipped |
 |---|---|---|
+| [`engine/defib-e1a-paediatric-energy.test.ts`](../../packages/engine-core/test/engine/defib-e1a-paediatric-energy.test.ts) | 0 | 0 |
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
+| [`engine/defib-m2-vocabulary.test.ts`](../../packages/engine-core/test/engine/defib-m2-vocabulary.test.ts) | 0 | 0 |
 | [`engine/defib-model.test.ts`](../../packages/engine-core/test/engine/defib-model.test.ts) | 0 | 0 |
 | [`engine/defib-tones.test.ts`](../../packages/engine-core/test/engine/defib-tones.test.ts) | 0 | 0 |
 | [`engine/pacer-engine.test.ts`](../../packages/engine-core/test/engine/pacer-engine.test.ts) | 0 | 0 |
