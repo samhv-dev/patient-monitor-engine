@@ -113,6 +113,23 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     await page.locator('[aria-label="Question 1: its words"]').fill('What told you this was MH?');
     await run(page, '#/scenarios/builder/<draft> Handout questions, a question');
     found.push(...(await focusWalk(page, 40)).map((f) => `focus (builder): ${f}`));
+    // B6: a draft run in place, Instructor v2 with the run panel beside it. The draft audited above is left mid-edit on
+    // purpose (an emptied title, and B5's built-to-show line and opener added empty: refusals Run must wait for), so the run
+    // starts from a fresh copy of the MH card, which the validator accepts
+    await go(page, '#/scenarios/builder');
+    await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();
+    await page.waitForSelector('.sb-page .sb-edit');
+    await expect(page.getByRole('button', { name: 'Run in place' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Run in place' }).click();
+    const runIt = page.getByRole('button', { name: 'Run the draft' });
+    if (await runIt.isVisible({ timeout: 1000 }).catch(() => false)) await runIt.click();
+    await expect(page.locator('aside.sb-run')).toBeVisible();
+    // the route has settled: Instructor v2's own view shown with its heading, and the Scenarios view gone (WebKit once
+    // audited the page mid-switch and measured the Scenarios view's width under the run panel's column)
+    await expect(page.locator('.main[data-route="teach2"] > .view[data-view="teach2"]')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Instructor v2' })).toBeAttached();
+    await expect(page.locator('.view[data-view="scenarios"]')).toBeHidden();
+    await run(page, '#/teach2 with the run panel (B6)');
     if (remote) {
       await remote.bringToFront();
       found.push(...(await focusWalk(remote)).map((f) => `focus (remote): ${f}`));
@@ -274,8 +291,9 @@ test("accessibility: the learner remote's Drugs tab with the bench open and a tr
 });
 
 // Plan vent-skin-edp-ts.md V1: the EDP-TS ventilator face (vent-hamilton.html?face=edp-ts) at the laptop size and at
-// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast (the
-// greyed words of an unavailable control included: they stay 4.5:1), one h1, a main landmark, no sideways scroll.
+// 1920 × 1080, running and with the mode window and the Alarm settings window open: targets, names, contrast, one h1,
+// a main landmark, no sideways scroll. Since VF (brief 159) the drawn device keeps its photographed colours: contrast is
+// not checked inside `.edp-dev` (the audit's one `drawnDevice` exemption); the strip, handle and drawer keep it.
 test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
   test.setTimeout(120_000);
   const found: string[] = [];
@@ -283,13 +301,13 @@ test('accessibility: the EDP-TS ventilator face', async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: vp });
     const page = await ctx.newPage();
     await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
-    await page.waitForSelector('main.edp .edp-key');
+    await page.waitForSelector('main.edp .edp-tile');
     const at = `${vp.width}×${vp.height}`;
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} running ${f.rule}: ${f.what}`));
     await page.click('[data-ctl="side:mode"]');
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} modes ${f.rule}: ${f.what}`));
     await page.click('[data-ctl="side:alarmLimits"]');
-    found.push(...(await audit(page, { touchPanel: false })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
+    found.push(...(await audit(page, { touchPanel: false, drawnDevice: '.edp-dev' })).map((f) => `edp-ts ${at} alarm settings ${f.rule}: ${f.what}`));
     await ctx.close();
   }
   expect(found).toEqual([]);

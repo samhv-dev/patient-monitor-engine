@@ -160,9 +160,8 @@ export function deviceRows(o: { relay: RelayState; phones: number; peers: readon
     for (const d of o.devices) {
       if (d.device) here.add(d.device);
       const lvl = deviceLevel(d);
-      const depth = d.role === 'viewer' && d.show === 'depth';
       // R8d: a granted ventilator says whether it drives the patient or has handed it over
-      const state = d.role === 'ventilator' && d.granted && o.vent?.device ? o.vent.device : d.role === 'instructor' || d.role === 'ventilator' || d.role === 'learner' ? (d.granted ? 'granted' : 'signing in') : depth ? 'Not available yet' : missed(d) ? 'missed a heartbeat' : lvl === 'weak' ? 'slow' : 'connected';
+      const state = d.role === 'ventilator' && d.granted && o.vent?.device ? o.vent.device : d.role === 'instructor' || d.role === 'ventilator' || d.role === 'learner' ? (d.granted ? 'granted' : 'signing in') : missed(d) ? 'missed a heartbeat' : lvl === 'weak' ? 'slow' : 'connected';
       rows.push({ level: lvl, id: d.id, device: d.device, show: d.role === 'viewer' ? d.show : null, name: phone(d.device), named: !!d.device, where: '', showing: showingOf(d.role, d.role === 'viewer' ? d.show : null), state, ping: d.rttMs === null ? '—' : `${d.rttMs} ms`, heard: ago(d.sinceMs + (o.ageMs ?? 0)) });
     }
     for (const [key, k] of Object.entries(known)) {

@@ -8,13 +8,15 @@
 // classroom.ts), where P7's PIN form signs it in as the `ventilator`; the cockpit then fills the screen.
 // L6 (plan learner-action-remote.md): the Learner remote card's "Show here" opens `#/remote/learner` on this page, whose
 // learner-PIN form signs it in as a `learner` (views/learner-remote.ts); the picker itself asks for no PIN.
+// EEG plan E12: the Depth of anaesthesia card's "Show here" opens `#/depth` on this page, the room's EEG device as a
+// follower (views/depth.ts); like the monitors it needs no PIN.
 import { DEVICE_RE } from '@pme/controller';
 import { hashOf, ventDeviceUrl, type PageLocation } from '../classroom.ts';
 import { store as appStore } from '../store.ts';
 import { h } from '../ui.ts';
 
 type Store = { get(k: string): string | null; set(k: string, v: string): void };
-type Shown = 'learner' | 'monitor' | 'remote';
+type Shown = 'learner' | 'monitor' | 'remote' | 'depth';
 type Card = { show: Shown | 'vent' | 'depth' | 'iabp'; title: string; chip: string; text: string; foot: string; action: boolean };
 
 /**
@@ -37,17 +39,18 @@ export const PICKER_WORDS = {
     { show: 'remote', title: 'Learner remote', chip: 'With the learner PIN', text: "Give drugs and infusions, send samples and read their results from this phone. Everything you give is recorded under this phone's name.", foot: 'Upright on a phone', action: true },
     // R8d: on a tablet over the relay (R8a–R8c), signed in with the instructor's PIN on its own page
     { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
-    // The engine has had its EEG and a generic processed-EEG reader since PR #322 (EEG plan E5/E6); the depth window of
-    // its own in the room (plan stage-eeg-depth-of-anaesthesia.md E12, `#/depth`) is not built, so the card has no action
-    { show: 'depth', title: 'Depth of anaesthesia', chip: 'Coming later', text: 'The engine simulates the EEG and reads it as a processed-EEG monitor; its screen in the room is still to come.', foot: 'Not in this release', action: false },
+    // EEG plan E12 (plan stage-eeg-depth-of-anaesthesia.md): the room's depth-of-anaesthesia device on this screen
+    // (`#/depth`, views/depth.ts), the device Room setup switches on; English only, the owner rules the words
+    { show: 'depth', title: 'Depth of anaesthesia', chip: 'Ready', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device.", foot: 'A phone, a tablet or a second screen', action: true },
     // Q8: a console needs a balloon-pressure wave the engine does not compute (§9)
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
   ] satisfies Card[] as Card[],
 };
 
 /**
- * m5's drawings (instruments.js), inline. Every number and word in them is gone (no text, no font), as are the traces
- * of what no screen shows yet: the depth monitor's EEG line, the balloon pump's pressure wave.
+ * m5's drawings (instruments.js), inline. Every number and word in them is gone (no text, no font), as is the trace
+ * of what no screen shows yet: the balloon pump's pressure wave. E12: the depth monitor's screen has an EEG line, a
+ * spectrogram band and a value box, no number or word.
  */
 const PIC: Record<CardShow, string> = {
   // Room setup's Defibrillator opener (R7; the picker does not offer it): a screen with a rhythm line, an energy dial and
@@ -55,7 +58,7 @@ const PIC: Record<CardShow, string> = {
   defib: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="8" y="8" width="184" height="84" rx="6" fill="#111" stroke="#2a3340"/><rect x="16" y="16" width="112" height="52" rx="3" fill="#0b0e12" stroke="#2a3340"/><polyline points="20,44 40,44 46,28 52,60 58,44 82,44 88,30 94,58 100,44 124,44" fill="none" stroke="#5fd99b" stroke-width="2"/><circle cx="160" cy="38" r="16" fill="none" stroke="#3a4656" stroke-width="3"/><rect x="146" y="64" width="28" height="14" rx="3" fill="#d9534f"/><rect x="16" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="46" y="74" width="24" height="10" rx="2" fill="#263142"/></svg>',
   monitor: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="6" y="6" width="188" height="88" rx="6" fill="#111" stroke="#2a3340"/><polyline points="14,40 40,40 48,22 56,58 64,40 90,40 98,30 104,50 110,40 150,40 158,24 166,56 174,40 190,40" fill="none" stroke="#5fd99b" stroke-width="2"/><polyline points="14,76 60,76 70,64 80,76 120,76 130,64 140,76 190,76" fill="none" stroke="#5db7ff" stroke-width="2"/></svg>',
   vent: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="10" y="8" width="180" height="84" rx="6" fill="#111" stroke="#2a3340"/><rect x="18" y="16" width="110" height="52" rx="3" fill="#0b0e12" stroke="#2a3340"/><path d="M22 60 L40 60 L46 30 L60 30 L66 60 L84 60 L90 30 L104 30 L110 60 L126 60" fill="none" stroke="#f0c75e" stroke-width="2"/><circle cx="160" cy="42" r="16" fill="none" stroke="#3a4656" stroke-width="3"/><rect x="18" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="48" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="78" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="146" y="70" width="28" height="12" rx="2" fill="#5fd99b"/></svg>',
-  depth: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="30" y="14" width="140" height="72" rx="8" fill="#111" stroke="#2a3340"/></svg>',
+  depth: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="30" y="14" width="140" height="72" rx="8" fill="#111" stroke="#2a3340"/><polyline points="38,34 44,30 48,38 53,28 58,36 63,31 68,40 73,29 78,35 83,32 88,38 93,30 98,36 104,33 110,37" fill="none" stroke="#5db7ff" stroke-width="1.5"/><rect x="38" y="50" width="72" height="26" rx="2" fill="#1d3b6e"/><rect x="38" y="64" width="72" height="12" rx="2" fill="#2f7d8c"/><rect x="120" y="26" width="42" height="26" rx="3" fill="#0b0e12" stroke="#2a3340"/><rect x="120" y="58" width="42" height="18" rx="3" fill="#263142"/></svg>',
   iabp: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="8" y="8" width="184" height="84" rx="6" fill="#111" stroke="#2a3340"/><rect x="16" y="70" width="60" height="14" rx="3" fill="#263142"/><circle cx="160" cy="76" r="8" fill="none" stroke="#3a4656" stroke-width="2"/></svg>',
   // L6: a phone with the monitor strip at its top and three tabs under it, no number or word
   remote: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="70" y="4" width="60" height="92" rx="10" fill="#111" stroke="#2a3340"/><rect x="76" y="14" width="48" height="30" rx="3" fill="#0b0e12"/><polyline points="80,30 92,30 96,22 100,38 104,30 120,30" fill="none" stroke="#5fd99b" stroke-width="1.5"/><rect x="76" y="50" width="14" height="8" rx="2" fill="#5db7ff"/><rect x="93" y="50" width="14" height="8" rx="2" fill="#263142"/><rect x="110" y="50" width="14" height="8" rx="2" fill="#263142"/><rect x="76" y="62" width="48" height="22" rx="3" fill="#0b0e12" stroke="#2a3340"/></svg>',
