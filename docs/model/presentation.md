@@ -582,6 +582,7 @@ renderer, audio and skin contracts.
 | `activeText` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | "Cardiac tamponade (severe)", for the session bar and the Patient tab. |
 | `fastForwardDoneLines` | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | The two lines of the banner after a fast-forward, worded here only: |
 | `loadShippedFormulary` | [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | L4 (learner-action-remote.md §4 D3, D4): |
+| `loadShippedPumpDevices` | [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | Pump rack C2 (plan pump-rack-tci.md D12): |
 | `entry` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The glossary entry by its research/11 number. |
 | `shortLabel` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The label a screen shows. |
 | `lookup` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | Glossary entry for a truth path, or null (then the path is a model internal and stays out of clinical views). |
