@@ -1,0 +1,78 @@
+name: diag-webkit-host-hang
+
+# DIAGNOSTIC ONLY (brief 203, branch diag-webkit-host-hang, never merged). The two specs whose host page stopped answering
+# on CI WebKit (run 43151492170, e2e-evidence-webkit-2of3), repeated in CI's own container with retries 0 and the host
+# page instrumented (apps/demo/e2e/diag-host.ts, PME_DIAG_HOST=1). Every repetition's host record is uploaded, failed or
+# passed, so the failing ones can be compared with the passing ones.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diag-webkit-host-hang-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    if: github.head_ref == 'diag-webkit-host-hang'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      playwright: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          v=$(node -p "require('./package.json').devDependencies['@playwright/test']")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+  repeat:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3]
+    name: diag webkit (${{ matrix.part }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.version.outputs.playwright }}-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        timeout-minutes: 5
+      - name: nproc and memory
+        run: nproc; free -m
+      - id: e2e
+        name: the two specs, repeated (retries 0, one worker as ci.yml's WebKit)
+        run: pnpm test:e2e --project=webkit --repeat-each="$REPEAT" --retries=0 --reporter=list,json --grep "a phone picks Depth of anaesthesia|Drugs tab with the bench open and a tray of two" apps/demo/e2e/depth-window.e2e.ts apps/demo/e2e/app-accessibility.e2e.ts
+        env:
+          CI: '1'
+          PME_DIAG_HOST: '1'
+          REPEAT: '8'
+          PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-diag.json
+      - name: repetitions passed and failed
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
+        run: node scripts/ci/e2e-report.mjs quarantine playwright-report-diag.json | cut -f1 | sort | uniq -c || true
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 5
+        with:
+          name: diag-webkit-host-hang-${{ matrix.part }}-${{ github.run_attempt }}
+          path: |
+            playwright-report-diag.json
+            test-results/**/diag/**
+            test-results/**/trace.zip
+            test-results/**/evidence/**
+            test-results/**/error-context.md
+          if-no-files-found: ignore
+          retention-days: 14

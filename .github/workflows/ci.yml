@@ -14,6 +14,8 @@ jobs:
   # What the PR changes (research/42 §1.4 a, d2): code at all (if not, the docs job alone runs) and the engine or the
   # root config (if not, the engine's slow groups skip). On main every job runs.
   changes:
+    # DIAGNOSTIC branch only (brief 203, never merged): the full CI is not run for it; diag-webkit-host-hang.yml runs
+    if: github.head_ref != 'diag-webkit-host-hang'
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.f.outputs.code }}

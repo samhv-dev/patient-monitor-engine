@@ -3,6 +3,7 @@
 import { resolve } from 'node:path';
 import type { Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
+import { diagOn, instrumentHost } from './diag-host.ts'; // DIAGNOSTIC ONLY (brief 203)
 
 export async function startVite(): Promise<{ vite: ViteDevServer; base: string }> {
   // PME_E2E_PORT: a fixed port per Playwright worker (that port + TEST_PARALLEL_INDEX), for a machine whose runs must keep
@@ -17,6 +18,7 @@ export async function startVite(): Promise<{ vite: ViteDevServer; base: string }
 
 /** Open the app, optionally with a site profile, and wait for the session and real warm-up time (brief §11.1). */
 export async function openApp(page: Page, base: string, hash = '#/', o: { site?: Record<string, unknown>; warmMs?: number } = {}): Promise<void> {
+  if (diagOn()) await instrumentHost(page); // DIAGNOSTIC ONLY (brief 203): never merged
   if (o.site) await page.addInitScript((s) => localStorage.setItem('pme.site', JSON.stringify(s)), o.site);
   await page.goto(`${base}/${hash}`);
   await page.waitForFunction(() => '__pmeApp' in window);
