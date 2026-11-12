@@ -30,6 +30,12 @@ export { DRUG_BUS_NEUTRAL } from './types-pk.ts';
 export type { PkState, DrugInst } from './l2/pk/pipeline.ts';
 export { IV_ROUTES, routeHonoured } from './l2/pk/pipeline.ts'; // the validator, the record and the Drug sheet ask the engine
 export { concUnit } from './l2/pk/pipeline.ts'; // DC1: the unit of a drug row's panel cp/ce, which a /2 phase rule reads
+// The engine's own validation hooks for a card's scripted event (brief 174): the scenario validator asks the engine
+// whether it takes a lung condition, a mainstem, a recruitment (resp), a lab sample (blood) or a TCI (pk, on a fresh
+// patient's drug model), so each field's type, unit and range is written once, here, where the engine refuses it.
+export { createPkState, validatePkCommand } from './l2/pk/pipeline.ts';
+export { validateRespCommand } from './l2/resp/pipeline.ts';
+export { validateBloodCommand } from './l2/blood/pipeline.ts';
 export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // demo/controller drug pickers
 export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence page: the onset shapes (gamma vs chain)
 export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor
