@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` e1c026ae (Merge pull request #429 from samhv-dev/ci-kit-and-pages-workflow), built 2026-11-12T17:32:40.898Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/e1c026aef679fa4844b676decf8882e27bf5ec0c
+The built teaching app of `main` 2ee5015c (Merge pull request #428 from samhv-dev/vent-v2-breath-behaviours), built 2026-11-12T19:03:03.317Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/2ee5015c8137a3e4ddfa662579e9de7e35b733b9
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
