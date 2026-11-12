@@ -55,6 +55,10 @@ jobs:
           print('   nearest dynamic symbol before: %s +0x%x'%(best[1][:200],a-best[0]) if best else '   none')"
             objdump -d -C --no-show-raw-insn --start-address=0x$(printf '%x' $((0x$a - 48))) --stop-address=0x$(printf '%x' $((0x$a + 4))) $L | tail -14
           done
+
+  repeat:
+    needs: version
+    if: ${{ false }} # this push asks only the symbols job
     strategy:
       fail-fast: false
       matrix:
