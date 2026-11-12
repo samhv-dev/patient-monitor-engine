@@ -115,7 +115,11 @@ export type EegDeviceAction =
  * index's (`device depth`, Q3). The generic reader: spectral edge frequency and median frequency (Hz), its suppression
  * ratio (%) and the highest electrode impedance (kΩ).
  */
-export type EegNumericId = 'sef' | 'mf' | 'eegSr' | 'eegImp';
+export type EegNumericId = 'sef' | 'mf' | 'eegSr' | 'eegImp' | BisTypeNumericId;
+/** The BIS-type reader's (E7, l3/eeg-devices/bis-type.ts): its index (0–100), its burst suppression rate (%) and its three
+ * components (dB): the sedation component (≈ the β ratio, 30–47 vs 11–20 Hz), the power concentration of 40–47 Hz vs
+ * the whole spectrum, and low (0.5–4 Hz) vs mid (11–20 Hz), which weights sedation against general anaesthesia. */
+export type BisTypeNumericId = 'bis' | 'bisSr' | 'bisBeta' | 'bisConc' | 'bisLowMid';
 
 /** The bands a device reports power in (µV²): the engine's names, Ch36 Table 36.1; each device its own edges. */
 export type EegBandName = 'slow' | 'delta' | 'theta' | 'alpha' | 'beta' | 'gamma';
