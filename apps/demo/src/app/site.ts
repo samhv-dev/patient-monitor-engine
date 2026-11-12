@@ -2,6 +2,7 @@
 // alarm defaults, and the shell's units and speed. It belongs to the room, not to a case, so loading a scenario never
 // changes it. Stored per browser (a convenience, research/13 brief §5) and exportable as one JSON file.
 import { PUMP_KINDS, PUMP_LIMITS, type PumpKind } from '@pme/controller';
+import { EEG_DEVICES, EEG_MODEL_IDS } from '@pme/engine-core';
 import { resolveSkin, type Skin } from '@pme/skins';
 import { store } from './store.ts';
 
@@ -27,6 +28,10 @@ export interface SiteProfile {
   /** The room's pump rack (plan pump-rack-tci.md A1, §5; PQ1 = C, PQ2 = B): each channel's kind, in channel order, 1 to
    *  PUMP_LIMITS.channels channels. The host sends it to the pump tablet on its `style` event; C2 checks commands against it. */
   pumpRack: PumpKind[];
+  /** The room's depth-of-anaesthesia device (EEG plan E12): an `EEG_CHOICES` id (the engine's EEG registry), which the
+   *  host switches on (`device eeg on`, then `device eeg model <id>`) at every patient mount, or null (no EEG device:
+   *  the engine computes no EEG, D4, as before). */
+  eegModel: string | null;
 }
 
 /** Monitor choices, in the words the Settings and Start screens use. */
@@ -46,6 +51,12 @@ export const MONITORS: ReadonlyArray<{ id: string; label: string; hint: string }
  * with its own sourced block, and one line here.
  */
 export const DEFIB_CHOICES: ReadonlyArray<{ id: string; label: string; look: string }> = [{ id: 'generic', label: 'Generic defibrillator', look: 'zoll-like' }];
+/**
+ * The depth-of-anaesthesia devices a room can choose (EEG plan E12): the engine's EEG registry, which holds the built
+ * readers only (l3/eeg-devices/registry.ts; today the generic one), each with its own screen label. A new reader joins
+ * here by joining the registry.
+ */
+export const EEG_CHOICES: ReadonlyArray<{ id: string; label: string }> = EEG_MODEL_IDS.map((id) => ({ id, label: EEG_DEVICES[id].spec.label }));
 /** The Defib tab's energy before R5b (panel/defib.ts), kept when no model is chosen. */
 const NO_MODEL_ENERGY_J = 200;
 /** A model's energies as the panel offers them; no model chosen = the panel's energy as before. */
@@ -67,7 +78,7 @@ export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark
 /** PQ1 = C, the owner's ruling (research/00-orchestrator-rulings.md, 9 November 16:00): "1–8, default 4". All syringe
  *  channels by default, a plan decision (§5, ENG: ui): a TIVA tower is syringes; Room setup turns any channel into drip. */
 export const DEFAULT_PUMP_CHANNELS = 4;
-export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, pumpRack: Array<PumpKind>(DEFAULT_PUMP_CHANNELS).fill('syringe') };
+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, eegModel: null, pumpRack: Array<PumpKind>(DEFAULT_PUMP_CHANNELS).fill('syringe') };
 
 /** A stored rack (1 to PUMP_LIMITS.channels channels of the two kinds), or null. */
 export const pumpRackOf = (v: unknown): PumpKind[] | null =>
@@ -87,6 +98,7 @@ export function parseSite(raw: unknown): SiteProfile {
     sensorsOff: o.sensorsOff === true,
     drugNames: o.drugNames === 'uk' ? 'uk' : 'us',
     defibModel: DEFIB_CHOICES.some((c) => c.id === o.defibModel) ? (o.defibModel as string) : d.defibModel,
+    eegModel: EEG_CHOICES.some((c) => c.id === o.eegModel) ? (o.eegModel as string) : d.eegModel,
     pumpRack: pumpRackOf(o.pumpRack) ?? [...d.pumpRack],
   };
 }
