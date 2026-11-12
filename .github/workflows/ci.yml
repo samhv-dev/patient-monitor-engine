@@ -296,6 +296,13 @@ jobs:
         continue-on-error: ${{ matrix.set == 'known-flaky' }} # quarantine: its results are summarised below instead
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.report }}.json
+          PME_E2E_LEAK_LOG: e2e-leaks # brief 194: what each test left open (the fixture closes it)
+      # Brief 194: the contexts and pages tests left open when they ended, which apps/demo/e2e/evidence.ts then closed
+      - name: contexts and pages left open by tests (closed by the e2e fixture)
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
+        run: |
+          node scripts/ci/e2e-leaks.mjs e2e-leaks | tee "$RUNNER_TEMP/leaks.txt"
+          { echo "### e2e: contexts and pages left open by tests"; echo; echo '```'; cat "$RUNNER_TEMP/leaks.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         with:

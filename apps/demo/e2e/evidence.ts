@@ -13,7 +13,7 @@
 // `trace` option (playwright.config.ts). A passing attempt does nothing here: no read, no file.
 //
 // On by default in CI; PME_E2E_EVIDENCE=1 turns it on locally, PME_E2E_EVIDENCE=0 off (also in CI).
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test as base, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 
@@ -126,21 +126,74 @@ async function collect(browser: Browser, earlier: Set<BrowserContext>, testInfo:
   writeFileSync(join(dir, 'index.json'), JSON.stringify({ test: testInfo.titlePath.join(' › '), attempt: testInfo.retry, status: testInfo.status, contexts: browser.contexts().length, pages: index }, null, 1));
 }
 
+/**
+ * Brief 194 (b): what a test opened is closed when it ends. A context created during the test (browser.newContext,
+ * directly or in a helper) and still open after its afterEach hooks is closed, and so is a page the test opened in a
+ * context that existed before it (one from a beforeAll); a context or page that existed when the test started (opened
+ * by beforeAll, kept on purpose for the file) is left alone. Before this, a test that ended without closing its own
+ * contexts (any test that failed before its `ctx.close()`, and several that never close them) left them running in the
+ * worker's browser for every later test: follower pages reconnecting to relays that had closed, engines still ticking.
+ * Not tracked: contexts of another browser the test launched itself (chromium.launch, launchPersistentContext), and
+ * what a beforeAll opens (its file's afterAll owns it).
+ * PME_E2E_LEAKS=keep leaves them open (to measure the old behaviour); PME_E2E_LEAK_LOG=<dir> writes one JSON line per
+ * test that left something open (leaks-<worker>.jsonl), with each page's state when PME_E2E_LEAKS=keep.
+ */
+const leakLog = (testInfo: TestInfo, row: Record<string, unknown>) => {
+  const dir = process.env.PME_E2E_LEAK_LOG;
+  if (!dir) return;
+  mkdirSync(dir, { recursive: true });
+  appendFileSync(join(dir, `leaks-${testInfo.parallelIndex}-${process.pid}.jsonl`), JSON.stringify(row) + '\n');
+};
+
+/** Contexts a finished test left open in this worker (closing failed, or PME_E2E_LEAKS=keep); the next test fails on one. */
+const leftByEarlierTests = new Set<BrowserContext>();
+
+async function tidy(browser: Browser, earlier: Set<BrowserContext>, earlierPages: Set<Page>, testInfo: TestInfo): Promise<void> {
+  const contexts = browser.contexts().filter((c) => !earlier.has(c));
+  const pages = [...contexts.flatMap((c) => c.pages()), ...[...earlier].flatMap((c) => c.pages()).filter((p) => !earlierPages.has(p))];
+  if (contexts.length === 0 && pages.length === 0) return;
+  const keep = process.env.PME_E2E_LEAKS === 'keep';
+  const state = keep && process.env.PME_E2E_LEAK_LOG
+    ? await Promise.all(pages.map((p) => timed(p.evaluate(readCounters), 1500, 'read').then((r) => ({
+        role: r.role, pill: (r.statusPills as string[])[0] ?? null, frames: (r.frames as { count: number } | null)?.count ?? null,
+        link: ((r.follower as { link?: unknown } | null)?.link ?? (r.host as { relay?: unknown } | null)?.relay ?? null),
+        simNow: (r.host as { simNow?: number } | null)?.simNow ?? null,
+      }), (e) => ({ error: String(e).slice(0, 120) }))))
+    : [];
+  leakLog(testInfo, {
+    file: testInfo.titlePath[0], title: testInfo.titlePath.slice(1).join(' › '), retry: testInfo.retry, status: testInfo.status,
+    contexts: contexts.length, pages: pages.length, openInWorker: browser.contexts().length, closed: !keep,
+    urls: pages.map((p, i) => ({ url: p.url().replace(/^https?:\/\/[^/]+/, ''), ...(state[i] ?? {}) })),
+  });
+  if (keep) return void contexts.forEach((c) => leftByEarlierTests.add(c));
+  await Promise.all([
+    ...contexts.map((c) => c.close({ reason: 'the test that opened it has ended (apps/demo/e2e/evidence.ts)' }).catch(() => undefined)),
+    ...pages.filter((p) => !contexts.includes(p.context())).map((p) => p.close().catch(() => undefined)),
+  ]);
+  for (const c of contexts) if (browser.contexts().includes(c)) leftByEarlierTests.add(c);
+}
+
 export const test = base.extend<{ _evidence: void }>({
   _evidence: [
     async ({ browser }, use, testInfo) => {
-      if (!evidenceOn()) return use();
       const earlier = new Set(browser.contexts());
+      const earlierPages = new Set([...earlier].flatMap((c) => c.pages()));
+      // A page of a finished test still open here means the tidy-up below did not run or failed (brief 194 (b))
+      const stale = [...leftByEarlierTests].filter((c) => browser.contexts().includes(c));
+      if (stale.length && process.env.PME_E2E_LEAKS !== 'keep') throw new Error(`${stale.length} browser context(s) of a finished test still open at the start of this one`);
+      const on = evidenceOn();
       let done: Promise<void> | null = null;
       const capture = () => (done ??= collect(browser, earlier, testInfo).catch((e) => void testInfo.annotations.push({ type: 'evidence', description: `not written: ${String(e)}` })));
       // At the end of the test function, before afterEach hooks (Playwright's own failure screenshot runs at the same
       // point); Playwright 1.63 exposes no public hook there, so the fixture teardown below is the fallback
       const hooks = (testInfo as unknown as { _onDidFinishTestFunctionCallbacks?: Set<() => Promise<void>> })._onDidFinishTestFunctionCallbacks;
-      const atEnd = async () => void (failed(testInfo) && (await capture()));
+      const atEnd = async () => void (on && failed(testInfo) && (await capture()));
       hooks?.add(atEnd);
       await use();
       hooks?.delete(atEnd);
       await atEnd();
+      // after the evidence and after afterEach hooks: what this test opened is closed
+      await tidy(browser, earlier, earlierPages, testInfo);
     },
     { auto: true, box: true, timeout: 30_000 },
   ],

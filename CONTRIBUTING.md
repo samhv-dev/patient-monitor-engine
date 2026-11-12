@@ -55,6 +55,12 @@ It runs that spec in CI's container, retries 0, at most 20 repetitions, and uplo
 with the evidence of every failing repetition. Every e2e spec takes `test` from `apps/demo/e2e/evidence.ts`, which
 re-exports all of `@playwright/test` (`packages/validation/test/e2e-evidence.test.ts` checks it).
 
+The same fixture closes, when a test ends (after its evidence and its afterEach hooks), every browser context the test
+created and every page it opened in a context from before it; what a `beforeAll` opened is left to its `afterAll`. A test
+that keeps a page for a later test must therefore open it in `beforeAll`. Each e2e job's step "contexts and pages left
+open by tests" lists the files whose tests left any (`scripts/ci/e2e-leaks.mjs`); `PME_E2E_LEAKS=keep` turns the closing
+off to measure, and `evidence-tidy.e2e.ts` fails if a finished test's context is still open in the next.
+
 ## Rules that CI or review enforce
 
 1. **One piece of work per pull request**, described in the PR template (including "Sources consulted").
