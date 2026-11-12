@@ -29,6 +29,7 @@ const PADS = { type: 'adult', placement: 'anteriorPosterior', contact: 'poor' };
 const CASES: Record<string, { ok: unknown[]; bad: unknown[] }> = {
   selector: { ok: ['off', 'monitor', 'defib', 'pacer'], bad: ['aed', '', 3, undefined] },
   patientType: { ok: ['adult', 'pediatric'], bad: ['neonate', 'paed', null] },
+  lead: { ok: ['pads', 'II', 'aVR', 'V6'], bad: ['ecgII', 'V7', 'paddles', '', 2] },
   defibMode: { ok: [{ mode: 'manual' }, { mode: 'aed' }, { mode: 'manual', password: '1234' }], bad: ['aed', { mode: 'sync' }, { mode: 'manual', password: 12 }, { mode: 'aed', extra: 1 }] },
   shockButton: {
     ok: [{ phase: 'down', button: 'panel' }, { phase: 'up', button: 'apex' }, { phase: 'down', button: 'sternum' }, { phase: 'up', button: 'internal' }],
@@ -60,12 +61,14 @@ const CASES: Record<string, { ok: unknown[]; bad: unknown[] }> = {
       { cprAtStart: true, cprPeriodS: 120, cprTargetDepthCm: 5 }, { metronome: { mode: 'compressions', ratePerMin: 105 } },
       { aedPassword: '0000' }, { nibpIntervalMin: 2.5 }, { aedPassword: null }, { checkPatientPause: true }, { trendIntervalS: 30 }, { trendIntervalS: 1800 },
       { accessories: { pads: true, externalPaddles: false, internalHandles: true } },
+      { syncAfterShock: true }, { topLead: { monitor: 'I', manual: 'pads' } },
     ],
     bad: [
       {}, { startMode: 'pacer' }, { readyTimeoutS: 10 }, { readyTimeoutS: 61 }, { readyTimeoutS: 30.5 },
       { escalation: { on: true, adult: [120, 150, 360], pediatric: [50, 70, 85] } }, { escalation: { on: true, adult: [120, 150], pediatric: [50, 70, 85] } },
       { aedEnergies: { adult: [120, 140, 200], pediatric: [50, 70, 85] } }, { cprPeriodS: -1 }, { cprTargetDepthCm: Number.NaN }, { metronome: { mode: 'always' } },
       { aedPassword: 1234 }, { nibpIntervalMin: 7 }, { ecgLeadsOff: true }, { trendIntervalS: 10 }, { accessories: { pads: true } }, { language: 'fa' },
+      { syncAfterShock: 'yes' }, { topLead: { monitor: 'I' } }, { topLead: { monitor: 'X', manual: 'pads' } },
     ],
   },
 };
@@ -132,9 +135,11 @@ describe('E0: the frozen vocabulary', () => {
   });
 
   it('each command is accepted in its valid forms on zoll-m2 and changes nothing yet (state and status equal a room without it)', () => {
-    // `connect` has its behaviour since E2a (defib-m2-connections.test.ts); its forms are still accepted here
+    // `connect` has its behaviour since E2a (defib-m2-connections.test.ts), and `selector`, `patientType`, `lead`,
+    // `config` and the panel `shockButton` since E1 (defib-m2-manual-sync.test.ts); their forms are still accepted here
+    const BUILT = ['connect', 'selector', 'patientType', 'lead', 'config', 'shockButton'];
     for (const [action, c] of Object.entries(CASES)) {
-      if (action === 'connect') {
+      if (BUILT.includes(action)) {
         for (const v of c.ok) expect(room('zoll-m2').e.dispatch(m2(action, v)).accepted, `${action} ${JSON.stringify(v)}`).toBe(true);
         continue;
       }
@@ -223,8 +228,12 @@ describe('E0: deviceStatus.m2', () => {
     restored.restore(host.e.snapshot());
     restored.advanceTo(5);
     host.e.advanceTo(5);
-    // idle but for the poor-contact pads E2a now applies, and the message they give [G 14-9]
-    expect(lastStatus(rev).m2).toEqual({ ...M2_IDLE_STATUS, connections: { ...M2_IDLE_STATUS.connections, pads: PADS }, messages: ['Attach Pads'] });
+    // idle but for the poor-contact pads E2a now applies and the message they give [G 14-9], and E1's patient type,
+    // configuration and held panel SHOCK button
+    expect(lastStatus(rev).m2).toEqual({
+      ...M2_IDLE_STATUS, patientType: 'pediatric', config: { ...M2_IDLE_STATUS.config, readyTimeoutS: 30 }, held: { ...M2_IDLE_STATUS.held, panel: true },
+      connections: { ...M2_IDLE_STATUS.connections, pads: PADS }, messages: ['Attach Pads'],
+    });
     expect(lastStatus(rev)).toEqual(lastStatus(host.ev));
     expect(lastStatus(rev).defib!.energyJ).toBe(150);
   });

@@ -3,6 +3,7 @@
 // lead II from the unfiltered VCG, a slow baseline, a peak envelope, and the R reported at the local maximum of
 // |lead II − baseline| once the signal has fallen from it. Written from the description above [ENG: device]; plain data.
 import { projectLead } from '../../l2/ecg/vcg.ts';
+import type { LeadId } from '../../types.ts';
 
 export const SYNC_RATE = 500;
 const BASE_TAU_S = 0.5; // baseline EMA [ENG: device]
@@ -30,14 +31,16 @@ export function createSyncState(n0 = 0): SyncState {
 
 /**
  * Feed samples [st.n, end] read from the VCG X/Y/Z channels; returns the R sample indices detected, each paired
- * with the sample at which it was reported.
+ * with the sample at which it was reported. `lead`: the lead the detector reads, Lead II unless the device names its
+ * top trace (the ZOLL M2: "The ECG trace displayed in the top ECG waveform field is the ECG source used to synchronize
+ * the shock" [G 14-14], plan E1); the generic model and the skins keep Lead II.
  */
-export function syncStep(st: SyncState, end: number, vcg: (n: number) => [number, number, number] | null): Array<{ r: number; at: number }> {
+export function syncStep(st: SyncState, end: number, vcg: (n: number) => [number, number, number] | null, lead: LeadId = 'ecgII'): Array<{ r: number; at: number }> {
   const out: Array<{ r: number; at: number }> = [];
   for (; st.n <= end; st.n++) {
     const s = vcg(st.n);
     if (!s) continue;
-    const x = projectLead('ecgII', s[0], s[1], s[2]);
+    const x = projectLead(lead, s[0], s[1], s[2]);
     st.base += (x - st.base) * kBase;
     const a = Math.abs(x - st.base);
     st.env = Math.max(a, st.env * kEnv);

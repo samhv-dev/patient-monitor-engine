@@ -140,11 +140,22 @@ export interface M2Config {
   trendIntervalS: number;
   /** The accessories the room has (DQ11 = A: pads and external paddles by default; internal handles exist, not present). */
   accessories: { pads: boolean; externalPaddles: boolean; internalHandles: boolean };
+  /** Stay in Sync after each shock (Supervisor, Basic Defib); off by default: "Unless otherwise configured, the unit
+   * automatically exits Sync mode after each shock" [G 14-16], [G 1-16] (plan §5.4, E1). */
+  syncAfterShock: boolean;
+  /** The top trace at entry into Monitor and Manual Defib, configurable in the Supervisor menu; defaults Lead II and
+   * Pads/Paddles [G 6-7] (plan §5.4, E1). An M2 lead name ('pads', 'I', 'II', …, 'V6'). */
+  topLead: { monitor: M2LeadName; manual: M2LeadName };
 }
+
+/** The M2's top-trace sources (E1, m2.ts M2_LEADS) [G 6-7], [G 2-13]. */
+export type M2LeadName = 'pads' | 'I' | 'II' | 'III' | 'aVR' | 'aVL' | 'aVF' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6';
 
 export type M2DeviceAction =
   | { device: 'defib'; action: 'selector'; value: M2Selector; lane?: never }
   | { device: 'defib'; action: 'patientType'; value: M2PatientType; lane?: never }
+  /** The Lead key: the top trace's source, which sync, HR and demand pacing read [G 2-13], [G 6-7] (added by E1). */
+  | { device: 'defib'; action: 'lead'; value: M2LeadName; lane?: never }
   /** Manual/AED switch [G 12-12]; `password` when the configuration asks for one (DQ20). */
   | { device: 'defib'; action: 'defibMode'; value: { mode: 'manual' | 'aed'; password?: string }; lane?: never }
   | { device: 'defib'; action: 'shockButton'; value: { phase: M2Phase; button: M2ShockButton }; lane?: never }
