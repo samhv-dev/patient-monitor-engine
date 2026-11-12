@@ -1019,7 +1019,7 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const neuro = validateNeuroCommand(cmd); // After pk (the chain); null for every drug/vaporiser event
     if (neuro !== null) return neuro;
-    const eeg = validateEegCommand(cmd, this.st.eeg !== undefined, EEG_MODEL_IDS); // `device eeg …` only (null otherwise)
+    const eeg = validateEegCommand(cmd, this.eegOnWhenApplied(), EEG_MODEL_IDS); // `device eeg …` only (null otherwise)
     if (eeg !== null) return eeg;
     const organs = validateOrgansCommand(cmd); // After pk (and neuro), before blood/endo/resp — its own ids only (null otherwise)
     if (organs !== null) return organs;
@@ -1300,6 +1300,17 @@ class Engine implements MonitorEngine {
 
   /** `device eeg on|off` creates or drops the EEG state, its device and its channel; `model` starts the chosen device
    * afresh (a different instrument on the same electrodes); the other actions set the running EEG. */
+  /** Whether the EEG will be on when a command dispatched now is applied: the last `device eeg on|off` still queued
+   * decides, else the state. Room setup sends `on` and its `model` together (session.ts sendEegModel); judged against the
+   * state alone, the `model` met an EEG still off and was refused, leaving the default reader (found with E7). */
+  private eegOnWhenApplied(): boolean {
+    for (let i = this.queue.length - 1; i >= 0; i--) {
+      const c = (this.queue[i] as { cmd: Command }).cmd as { type: string; action?: { device?: string; action?: string } };
+      if (c.type === 'device' && c.action?.device === 'eeg' && (c.action.action === 'on' || c.action.action === 'off')) return c.action.action === 'on';
+    }
+    return this.st.eeg !== undefined;
+  }
+
   private applyEeg(ps: PipelineState, a: EegDeviceAction): void {
     if (a.action === 'on') {
       if (!ps.eeg) {
