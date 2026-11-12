@@ -54,7 +54,8 @@ const WORDS = {
     { show: 'pump', title: 'Infusion pumps', chip: 'With the learner PIN', text: "A rack of syringe and drip pumps for infusions and TCI. Everything you set is recorded under this tablet's name.", foot: 'Sideways on a tablet', action: true },
     // R8d: the ventilator on a tablet, signed in with the instructor's PIN (m5's card; its chip and foot say how)
     { show: 'vent', title: 'Ventilator', chip: "With the instructor's PIN", text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'A tablet drives the patient', action: true },
-    { show: 'depth', title: 'Depth of anaesthesia', chip: 'Coming later', text: 'The engine simulates the EEG and reads it as a processed-EEG monitor; its screen in the room is still to come.', foot: 'Not in this release', action: false },
+    // EEG plan E12: the room's depth-of-anaesthesia device on this screen (`#/depth`)
+    { show: 'depth', title: 'Depth of anaesthesia', chip: 'Ready', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device.", foot: 'A phone, a tablet or a second screen', action: true },
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
   ],
 };
@@ -169,7 +170,7 @@ describe('the instrument picker at #/pick (R4)', () => {
   });
 
   it('a stored value that is not an instrument this device can show preselects the learner monitor', () => {
-    for (const bad of ['depth', 'vent', 'defib', 'x', ''])
+    for (const bad of ['iabp', 'vent', 'defib', 'x', ''])
       expect(cards(pickerView({ code: CODE, store: memory({ instrument: bad }), go: () => {} }))[0]?.dataset.selected, bad).toBe('true');
   });
 
@@ -185,9 +186,20 @@ describe('the instrument picker at #/pick (R4)', () => {
     expect(store.m.get('instrument')).toBeUndefined();
   });
 
-  it('the Depth of anaesthesia and balloon pump cards have no action; each says why in its chip', () => {
+  it("E12: Depth of anaesthesia's Show here opens #/depth and is remembered on this device", () => {
+    const store = memory();
+    const go = vi.fn();
+    (pickerView({ code: CODE, store, go }).querySelector('.join-card[data-show="depth"] button') as HTMLButtonElement).click();
+    expect(go).toHaveBeenCalledExactlyOnceWith('#/depth');
+    expect(store.m.get('instrument')).toBe('depth');
+    const next = pickerView({ code: CODE, store, go: () => {} }).querySelector('.join-card[data-show="depth"]') as HTMLElement;
+    expect(next.dataset.selected).toBe('true');
+    expect(next.querySelector('.st')?.textContent).toBe(WORDS.lastHere);
+  });
+
+  it('the balloon pump card has no action; it says why in its chip', () => {
     const el = pickerView({ code: CODE, store: memory(), go: () => {} });
-    for (const show of ['depth', 'iabp']) {
+    for (const show of ['iabp']) {
       const c = el.querySelector(`.join-card[data-show="${show}"]`) as HTMLElement;
       expect(c.querySelector('button, a'), show).toBeNull();
       expect(c.querySelector('.st')?.textContent, show).not.toBe('');
