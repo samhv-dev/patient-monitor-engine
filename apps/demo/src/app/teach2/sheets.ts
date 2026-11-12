@@ -5,6 +5,7 @@
 // (answer 14), so their Stage buttons fill the same cache the Drug sheet does. Gas is not built; there is no CPR
 // takeover (answer 15). A sheet is built the first time it opens (so today's view's locators never meet a second copy
 // of its tab bodies in the DOM until the instructor opens one here) and keeps its state: it reopens on its last item.
+// Labs (plan learner-action-remote.md L15) is the last tool, on the host only: every sample of the case (labs-sheet.ts).
 //
 // Keys (answer 16; keys.ts): D opens and closes the Drug sheet, A Airway, F Defib · CPR, V Vitals; Esc closes the open
 // sheet (also from a field inside it); while a sheet is open, Enter gives now and S adds to the cache. Deliver has no
@@ -23,6 +24,7 @@ import { Cache } from './cache.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { MARK_KINDS } from './dock.ts';
 import { drugSheet } from './drug-sheet.ts';
+import { LabBook, labsSheet } from './labs-sheet.ts';
 import { sheetFrame, type SheetFrame } from './sheet.ts';
 
 /** The sheets in the dock's order: id, the dock's name, its letter ('' = none), the group tab (today's tab name). */
@@ -35,6 +37,8 @@ export const SHEETS: ReadonlyArray<{ id: string; name: string; letter: string; g
   { id: 'patient', name: 'Patient', letter: '', group: 'Patient', body: patientTab },
   { id: 'log', name: 'Log', letter: '', group: 'Log', body: logTab },
 ];
+/** L15 (LQ13 ruled B): the laptop's Labs sheet, after the others, offered on the host only (labs-sheet.ts). */
+export const LABS_SHEET = { id: 'labs', name: 'Labs', letter: '', group: '' } as const;
 /** The onsets of a staged delivery, as today's staged-changes footer offers them (panel/panel.ts). */
 const ONSETS: Array<[string, string]> = [['0', 'Now'], ['30', 'Over 30 s'], ['60', 'Over 1 min'], ['120', 'Over 2 min'], ['300', 'Over 5 min']];
 /** Today's tab ids (a tab body's `goTab`) to the sheet that holds them; the Scenario tab is ACTION (the sheet closes). */
@@ -52,6 +56,10 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const { link, keys } = ctx;
   const cache = new Cache(link);
   const built = new Map<string, Built>();
+  // the book listens from the mount, so a sample drawn before the sheet is first opened is listed
+  const book = ctx.labs ? new LabBook(ctx.labs) : null;
+  const offered: ReadonlyArray<(typeof SHEETS)[number]> = book ? [...SHEETS, LABS_SHEET] : SHEETS;
+  const offs: Array<() => void> = [];
   let openId: string | null = null;
   let lastId = 'drug';
 
@@ -66,7 +74,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   onset.el.classList.add('ip2-onset');
 
   // ---- the dock: tools, Staged · n, the note field ----
-  const tools = SHEETS.map((s) => h('button', {
+  const tools = offered.map((s) => h('button', {
     type: 'button', class: 'ip2-dock-btn ip2-tool', 'data-sheet': s.id, 'aria-pressed': 'false', 'aria-keyshortcuts': s.letter ? s.letter.toUpperCase() : undefined,
     title: s.letter ? `${s.name} (${s.letter.toUpperCase()})` : s.name, onclick: () => toggle(s.id),
   }, s.name));
@@ -119,7 +127,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       }
   };
   const build = (id: string): Built => {
-    const def = SHEETS.find((s) => s.id === id) as (typeof SHEETS)[number];
+    const def = offered.find((s) => s.id === id) as (typeof SHEETS)[number];
     const hint = def.letter ? `${def.letter.toUpperCase()} opens and closes · Esc closes` : 'Esc closes';
     const frame = sheetFrame({ id, name: def.name, hint, onClose: () => close() });
     // Esc from a field inside the sheet (keys.ts ignores keys while the user types)
@@ -134,6 +142,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     if (id === 'drug') {
       const ds = drugSheet(frame, { link, weightKg: ctx.weightKg, cache });
       return { frame, refresh: ds.refresh, give: ds.give, stage: ds.stage };
+    }
+    if (id === 'labs' && book) {
+      const ls = labsSheet(frame, book);
+      offs.push(ls.destroy);
+      return { frame, refresh: ls.refresh };
     }
     const refreshers: Array<() => void> = [];
     const pctx: PanelCtx = {
@@ -175,7 +188,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     for (const b of tools) b.setAttribute('aria-pressed', String(b.dataset.sheet === openId));
   };
   const open = (id: string) => {
-    if (!SHEETS.some((s) => s.id === id)) return;
+    if (!offered.some((s) => s.id === id)) return;
     if (openId === id) return;
     if (openId) built.get(openId)?.frame.close();
     let b = built.get(id);
@@ -232,6 +245,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       offEsc();
       for (const s of SHEETS) if (s.letter) keys.letter(s.letter, null);
       keys.letter('s', null);
+      for (const off of offs) off();
+      book?.destroy();
     },
   };
 }

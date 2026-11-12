@@ -108,3 +108,24 @@
 .ip2-staged:not([data-count='0']) { border-color: var(--ip2-blue); color: var(--ip2-blue-text); font-weight: 600; }
 .ip2-note { display: flex; }
 .ip2-note-field { width: 200px; height: 36px; }
+
+/* L15: the Labs sheet: every sample of the case as a card in a column; the result table is the phone's (app.css .lr-lab),
+   in Instructor v2's tokens: a flagged value in the warning colour and a critical one in the danger colour, each with its
+   arrow or the word "critical" as well, never colour alone */
+.ip2-lab-list { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.ip2-lab-list:empty, .ip2-lab-empty[hidden], .ip2-lab .lr-lab-result[hidden], .ip2-lab .lr-lab-none[hidden] { display: none; }
+.ip2-lab { display: flex; flex-direction: column; gap: 4px; max-width: 760px; padding: 10px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); font-size: 13px; }
+.ip2-lab p { margin: 0; }
+.ip2-lab .lr-lab-title { font-weight: 600; color: var(--ip2-text); }
+.ip2-lab-who { color: var(--ip2-soft); }
+.ip2-lab .lr-lab-state { color: var(--ip2-muted); font-variant-numeric: tabular-nums; }
+.ip2-lab .lr-lab-state[data-state='pending'] { color: var(--ip2-soft); }
+.ip2-lab-ranges { margin: 10px 0 0; font-size: 12px; }
+.ip2-lab .pme-lab-panel table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ip2-lab .pme-lab-panel caption { text-align: left; color: var(--ip2-muted); font-size: 12px; padding-bottom: 4px; }
+.ip2-lab .pme-lab-panel th, .ip2-lab .pme-lab-panel td { padding: 2px 6px; text-align: left; border-bottom: 1px solid var(--ip2-line); }
+.ip2-lab .pme-lab-panel thead th { color: var(--ip2-muted); font-size: 12px; font-weight: 400; }
+.ip2-lab .pme-lab-panel tbody th { color: var(--ip2-text); font-weight: 600; }
+.ip2-lab .pme-lab-panel td.u, .ip2-lab .pme-lab-panel td.range { color: var(--ip2-muted); font-size: 12px; }
+.ip2-lab .pme-lab-panel tr.high td.v, .ip2-lab .pme-lab-panel tr.low td.v { color: var(--ip2-pause); font-weight: 600; }
+.ip2-lab .pme-lab-panel tr.crit td.v { color: #ff6369; font-weight: 700; } /* the app's dark --danger: Instructor v2 is dark only, and the app's light --danger (#c2362f) is 2.98:1 on its card #1c2127, this one 5.59:1 (WCAG relative luminance) */

@@ -22,6 +22,7 @@ import { mountFastForward } from '../teach2/ff.ts';
 import { mountFinish, type FinishHooks } from '../teach2/finish.ts';
 import { mountHeader, type TopControls } from '../teach2/header.ts';
 import { mountKeys } from '../teach2/keys.ts';
+import { hostLabsSource } from '../teach2/labs-sheet.ts';
 import { mountLearnerPreps } from '../teach2/learner-preps.ts';
 import { mount as mountSheets } from '../teach2/sheets.ts';
 import { mount as mountStrip } from '../teach2/strip.ts';
@@ -59,7 +60,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
 
   const keys = mountKeys(el, { link, togglePause: header.togglePause });
   const begin = beginState(() => paintNow());
-  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, loadScenario: o.loadScenario };
+  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, loadScenario: o.loadScenario, ...(link.host?.panelTransport ? { labs: hostLabsSource(link.host) } : {}) }; // a test's stand-in host has no transport: no Labs
   // The sheets mount first: they set ctx.openSheet
   const slots: Slot[] = [mountSheets(sheets, ctx), mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(actionBody, ctx)];
   openAlarms = () => ctx.openSheet('devices');
