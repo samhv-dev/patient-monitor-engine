@@ -250,7 +250,11 @@ jobs:
     continue-on-error: ${{ matrix.set == 'known-flaky' }} # the quarantine never fails the run
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.renderer.outputs.playwright }}-noble
-      options: --ipc=host # Playwright's Docker guidance for Chromium (the default 64 MB /dev/shm crashes it)
+      # --ipc=host: Playwright's Docker guidance for Chromium (the default 64 MB /dev/shm crashes it). --ulimit core=0
+      # (brief 203): the runner pipes cores to systemd-coredump with no size limit, which held a crashed ≈ 700 MB WebKit
+      # web process in its exit for minutes, so its page answered nothing and Playwright never said "Target crashed";
+      # without a core, a crash ends the page at once and is reported as one
+      options: --ipc=host --ulimit core=0
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

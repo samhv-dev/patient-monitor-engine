@@ -8,6 +8,14 @@ constant, card or kit file was changed while writing it.
 the signal too (DQ8 = B), planned in §3.4 with pieces M0e, E4a, E4b, B1, B2 and B3; the rulings DQ1, DQ4, DQ7 (withdrawn), DQ8,
 DQ13, DQ17–DQ20, DQ24 and DQ26 are written under their questions in §8; three new questions, DQ27–DQ29.
 
+**Consolidated 2026-11-12 (brief 213).** Every ruling the owner gave on 12 November is written under its question in §8
+in his words, with what follows for the pieces; the questions still open are listed together at the top of §8. The
+pieces built so far carry their PR and state in §6, and the conditions the rulings settle are plain statements there.
+The findings of the pieces built so far are placed where they belong: N137 (§3.1 C5), N147 (§3.4.1 I1), N154 and N163
+(§5.1 and the new piece E0b in §6), N155 and N174 (§3.1, a known limit), and the hand-over notes' further findings in
+the rows of the pieces they concern. Nothing was decided here; three new questions (DQ33–DQ35) carry what a ruling or
+finding leaves to the owner. §9 says what was read.
+
 **Why this plan exists.** When a resident opens "Defibrillator" in the room today, the screen is the patient monitor
 with an energy readout and two buttons, Charge and Shock (`#/defib`, Room plan R5–R5d, merged). That was a stop-gap from
 the ruling of 5 November ("generic now, the department's model later"). On 12 November the owner said: "we need to
@@ -351,6 +359,9 @@ before it is confirmed) is the app's core. This is the same cut as the ventilato
 
   Today `CPR_SV_FRAC`, `CPR_THORACIC_MMHG` and the like are scaled by quality (`l2/hemo/params.ts:74–77`). Their
   relation to depth needs a source (§7.2, gap G-CPR).
+  **Corrected (N137, M0c, PR 439):** the constants named in `l2/hemo/params.ts` are no longer read; the live ones are in
+  `l2/circ/params.ts:114–130` (`CPR_CARDIAC_MMHG`, `CPR_THORACIC_MMHG`, `V_CPR_REF_FRAC`, `CPR_RELEASE_RESIDUAL`; on
+  this branch `l2/hemo/pipeline.ts` imports them from `../circ/params.ts`). E3 starts from those.
 - **C6. The Pads lead and impedance** (E2b).
   - **Pads lead.** A lead whose vector depends on pad placement (apex–sternum or anterior–posterior [G 14-8]). A bipolar
     lead is the difference of the potentials at its two sites. M0a first checks whether the engine's ECG model can give
@@ -374,6 +385,23 @@ before it is confirmed) is the app's core. This is the same cut as the ventilato
 
   Faces (`apps/demo/src/defib/faces/{generic,zoll-m2}/`) build DOM from it. The generic window moves onto the core
   with no behaviour change (F0's gate), as V0 did for the Hamilton face.
+
+**Known limit: commands are validated at dispatch, not at apply (N155, E0, PR 438; N174, pump A2, PR 459).** A command
+is checked against the device state when it is dispatched, and applied at the next tick. What follows:
+
+- "`device defib model zoll-m2`" followed at once by `config` or `connect` (one burst, as R4 and S1 will send them) is
+  refused unless the model has applied first (one tick); E0's rule meanwhile is "send the model first, as the room does
+  at mount";
+- an energy accepted on `generic` (for example 360 J) and still queued when the model switches is applied to the M2,
+  and a running pacer keeps a rate or output off the M2's grid across the switch; E1 re-checks energies against the
+  model at apply;
+- a follower dispatches each mirrored command ahead of its tick, so its own engine can refuse a command the host
+  applied (N174: the pump tablet's mirrored Start before its queued TCI target). PR 459 recovers by asking for a fresh
+  snapshot when that happens; the snapshot is a recovery, not a repair of the ordering.
+
+The pieces this concerns: **E1** (the re-check at apply), **R1** (the learner's commands arrive as mirrored commands),
+**R4** and **S1** (the model and its configuration sent together). Whether the ordering itself is repaired as its own
+piece is **DQ34**.
 
 **Rejected structures.**
 
@@ -403,14 +431,17 @@ shock was measured separately, 77 ± 7 (54–86) J. The trial's device was a ZOL
 setting [G A-2]). M0a's findings on the curve, for a later engine piece, not changed here (note §6.5): the code comment's
 "delivered" is wrong (F1); the curve, drawn independently per shock, gives 99.9 % cumulative over the escalation against
 the trial's 94 %, because the paper reports success at 120–170 J only in patients who failed every lower shock (F2); and
-it is applied to pre-excited AF, which the trial excluded (F3).
+it is applied to pre-excited AF, which the trial excluded (F3). These findings (N141) are planned in their own plan,
+`docs/plans/shock-outcome-threshold.md` (PR 461, open: a per-patient threshold and refibrillation), whose piece S4 depends
+on this plan's E2b and on DQ7.
 
 **Decision for this plan.** The outcome reads the SELECTED energy, as it does today; M0a confirmed that this is what
 Mittal 2000's energies are. Impedance enters as:
 
 - the device's gate (15–300 Ω);
 - the delivered energy, current and impedance in the record and on screen;
-- an effect on success only as the owner rules in DQ7.
+- an effect on success only as the owner rules in DQ7. **Ruled DQ7 = A (12 November 2026):** no impedance effect on
+  VF termination; for AF none until a source gives a per-shock effect for the M2's waveform.
 
 What the sources say (note §9): for VF with this waveform, none of them shows an effect. Mittal 1999 (induced VF in an
 electrophysiology laboratory, apex–posterior pads) converted 58/58 episodes below 70 Ω, 67/68 at or above 70 Ω and 19/19
@@ -437,7 +468,7 @@ Three corrections the M2 work brings, each with its source:
 
 | Gap | What is missing | Why it matters | Source needed | Blocks |
 |---|---|---|---|---|
-| G-PADS | The electrical axis of the pads lead for apex–sternum and anterior–posterior placement | The AED reads only the Pads lead [G 12-4]; Manual Defib shows it at the top by default [G 6-7] | M0a read Frank 1954 and Dower 1968 in full: PROPOSED rows in Frank's image-space units, apex–sternum (+171, +65, +1) and anterior–posterior (−77, −53, −96), with a wide spread over the pad's footprint (note §10.4). Still missing: the scale to the engine's Dower rows (they are not Dower 1968's rows on one scale, note §10.5; W7), the pad-area weighting (W8) and the device's polarity | E2b (E4 runs without it on the limb leads) |
+| G-PADS | The electrical axis of the pads lead for apex–sternum and anterior–posterior placement | The AED reads only the Pads lead [G 12-4]; Manual Defib shows it at the top by default [G 6-7] | M0a read Frank 1954 and Dower 1968 in full: PROPOSED rows in Frank's image-space units, apex–sternum (+171, +65, +1) and anterior–posterior (−77, −53, −96), with a wide spread over the pad's footprint (note §10.4). Still missing: the scale to the engine's Dower rows (they are not Dower 1968's rows on one scale, note §10.5; W7; the engine's precordial rows have y components of the opposite sign to Dower 1968's, to be checked against the source the engine's matrix came from before anything is called wrong, N142), the pad-area weighting (W8) and the device's polarity | E2b (E4 runs without it on the limb leads) |
 | G-TTI | The distribution of adult and paediatric transthoracic impedance with pads, and the effect of poor contact | The delivered energy and the gate | Adults: settled as far as published (note §2, §6.2, §7.2, §8.2); the only RLB arrest series (Chen 2013) gives a mean of 134.8 Ω, a range and four bins, but no SD. Paediatric (< 8 y): still a gap; Samson 1995 is test-current only and not the ZOLL pad (note §11; W9, W10). Partial contact: no source | E2b |
 | G-THR | How pacing threshold depends on placement and patient | The guide says only that anterior–posterior usually needs less and gives typical 40–80 mA [G 16-3], [G 16-6] | M0b (`docs/research/defib-zoll-m2-pacing.md`): thresholds vary widely between patients (adult means 57–94 mA, ranges 30–140, higher after surgery and in bradycardic emergencies); with a Zoll 40 ms pulse AP was 33 mA lower than AL (95 % CI 20–45; Moayedi 2022, 13 paired patients), not replicated with another maker's pacer (Goldschmied 2026); no measured dependence on body size, hypoxia, acidosis or electrolytes | E6 (the instructor's `paceThresholdMa`, plus a placement offset only if the owner accepts M0b's proposal) |
 | G-CPR | How compression depth and rate set flow and pressure | Replacing `quality` by depth | Experimental or clinical depth–pressure relations (WANTED) | E3 |
@@ -460,7 +491,7 @@ labels, rather than on a signal. Read on 3a373c24 (the plan's branch); find each
 
 | # | Alarm or value | Reads today (file, function) | What a real monitor reads | Decision |
 |---|---|---|---|---|
-| I1 | **VFIB** | `VF_RHYTHMS.has(host.rhythmId)` sets `inputs.vfSince` (`l3/device-layer.ts` `stepDevice`); raised `VF_CONFIRM_S` = 3 s later [ENG] (`l3/alarms/conditions.ts` `buildConditions`) | the ECG: Philips "VTach/VFib … a fibrillatory waveform lasting for at least 4 seconds" (Aboukhalil 2008, §2.2, Philips CMS); GE: "Coarse flutter waves without QRS complexes" (Drew 2014, Table 3) | **Ruled (DQ8 = B): B1** |
+| I1 | **VFIB** | `VF_RHYTHMS.has(host.rhythmId)` sets `inputs.vfSince` (`l3/device-layer.ts` `stepDevice`); raised `VF_CONFIRM_S` = 3 s later [ENG] (`l3/alarms/conditions.ts` `buildConditions`) | the ECG: Philips "VTach/VFib … a fibrillatory waveform lasting for at least 4 seconds" (Aboukhalil 2008, §2.2, Philips CMS); in the GE Solar study, its annotation protocol, which is the study's and not GE's definition (corrected, N147, M0e): "Coarse flutter waves without QRS complexes" (Drew 2014, Table 3) | **Ruled (DQ8 = B): B1** |
 | I2 | HR shown empty in VF (the E126 ruling of 26 October) | `this.dev.inputs.vfSince` (`engine.ts`, the per-second HR measurement in the ECG loop) | the monitor's own VF analysis: no QRS found, no HR | **Included in B1**: it reads "VF since" and must read the detector's, or the HR field would empty on the rhythm's name while the alarm waits for the signal |
 | I3 | ASYSTOLE and PAUSE, and the chain | already from the QRS detector on the signal (`observeQrs`, `qrs.ts`); gated by `!vf` and suppressed by VFIB in `CHAIN` | the same detector; asystole "No QRS for 4 sec" (Aboukhalil 2008, Table 1) | **Included in B1**: the gate and the suppression follow the detector's VF, so they move with it (§3.4.4) |
 | I4 | HR, the HR limits, EXTREME BRADY/TACHY, BRADY/TACHY | already from the QRS detector on the filtered lead II with artefacts and lead-off applied (`engine.ts`, `hrOnQrs`, `hrMeasure`) | the same | unchanged in code; their timing in VF moves because VFIB suppresses them (§3.4.4) |
@@ -553,6 +584,8 @@ re-recorded by B1 is re-recorded again by E3, each time with its cause and contr
 Conditionally: if DQ28 is answered with multi-lead analysis, a `monitor` action selecting the analysis lead(s); if DQ27
 is answered yes, a relearn action for the beat classifier (DQ29 needs no command) (the Saadat skin already carries `learnS`, research/06). Both
 touch `l3/alarms/profile.ts`, which E0 also edits.
+**Settled by the rulings (brief 213):** DQ27 = A and DQ28 = B (later), so both actions are needed. E0 (PR 438) did not
+declare them; they are declared in **E0b** (§6), additively.
 
 ## 4. The face
 
@@ -619,6 +652,11 @@ offered in Room setup (R5a ruling). DQ10 asks whether it should ever be a face.
   goes to the engine as the device does. The relay allows 4 commands a second per socket (`relay/server.ts`, R5c). The
   face sends the knob's value at most every 250 ms while turning, plus the final one on press: that fits the cap, so the
   cap stays. R1's test turns the knob while pressing Shock and checks that nothing is refused.
+  **Corrected (N182, R1's stopped executor, hand-over 214):** "the cap stays" is wrong as the numbers stand. The relay
+  allows 4 commands a second per defibrillator socket (`DEFIB_PER_S = 4`); the knob alone sends 4 a second, and Shock's
+  down and up add 2, so turning while holding Shock sends 6 in a second and the socket is closed at 4. R1 derives the
+  cap for this role from the device's fastest legitimate use, with the arithmetic shown and marked as an engineering
+  choice (as `LEARNER_PER_S = 6` was given its reason), and its test checks that use against the derived cap.
 - **Sounds:** the tones of [G A-7] and [G 5-4], and voice prompts (DQ9).
 
 ### 4.4 Outside the bezel: the connections drawer
@@ -669,6 +707,12 @@ resident does at the device, and nothing an instructor does:
   - the connections drawer's pads and paddles (DQ5).
 - **Never allowed:** `preselect`, pacer `fault`, `setTarget`, any time control, scenario, the bedside monitor's alarms,
   drugs, `device defib model`.
+- **Added by the guide reading after E0's brief (N154, E0, PR 438), declared in E0b:** the learner's keys Lead (the
+  top trace's source [G 2-13], [G 6-7]), Clear (Pacer, pads off or shorted [G 2-16], [G 16-2]), the 30 J test
+  [G 2-15], [G 18-4], Diag [G 2-14], [G 6-9], 12-lead Acquire [G 13-8], Brightness [G 2-15], and Trend/Export
+  [G 2-14], [G 2-15] (Export by DQ12 = A); and the instructor's inputs of §5.2, which the learner is never allowed:
+  device faults (DQ14 = A), impedance (E2b), compression depth and rate (E3). With them (N163, E2a, PR 455), state E0
+  has no field for: paddles in their wells ([G 12-11], [G 18-6]) and the therapy cable's kind ([G 2-8], [G 2-9]).
 
 `learnerDefibMay` becomes a table of command shapes (R1). The host checks again (R5d's rule).
 
@@ -719,59 +763,72 @@ piece that can move a value, and (the R5a precedent) every piece that touches `l
 - the `generic` model's behaviour and the showcase goldens are unchanged unless the piece names the change.
 
 **Answer first.** DQ3 (the second monitor), DQ5 (who connects the patient), DQ6 (admission) and DQ11 (paddles and
-internal handles) decide the command vocabulary that E0 freezes. E0 waits for them.
+internal handles) decide the command vocabulary that E0 freezes. E0 waits for them. **All four were ruled A on 12 November
+2026** (§8), and E0 was built on them (PR 438).
+
+**State of the pieces (consolidation of 12 November 2026, brief 213; checked with `gh pr list --state all`).** A piece
+built so far carries "**Built:** PR n, merged" or "PR n, open (draft)" at the start of its Purpose cell; no row was
+deleted. The PRs that are open had passed their gate and were in the merge queue when this was written.
 
 | Piece | Purpose | Depends on | Files (main) | Tests first (numbers and sources) | Must not touch | Gate | Hours | VW |
 |---|---|---|---|---|---|---|---|---|
-| **M0a** | Sources: G-PADS (and whether apex–sternum is derivable from the ECG model), G-TTI, and what energy Mittal 2000 reports | — | `docs/research/defib-zoll-m2-pads-impedance.md` | none (docs) | code | docs job | 10 | — |
-| **M0b** | Sources: G-THR, pacing threshold by placement | — | `docs/research/defib-zoll-m2-pacing.md` | none | code | docs job | 6 | — |
-| **M0c** | Sources: G-CPR and G-FAT, depth and flow, rescuer fatigue | — | `docs/research/defib-zoll-m2-cpr.md` | none | code | docs job | 10 | — |
-| **M0d** | The picture register (each view of §4.1 with its source), and the Configuration Guide search | — | `docs/research/defib-zoll-m2-pictures.md` | none | code | docs job | 3 | — |
-| **E0** | Vocabulary freeze. Covers the M2 model in `DEFIB_MODELS` (energy list [G A-2], escalation [G 14-4], AED sequence [G 12-6], pacer 30–180 / 2 ppm and 8–140 / 2 mA [G A-10], [G 16-5]) and per-model energy validation. Declares EVERY command of §5.1 and §5.4: mode selector, patient type, energy, charge, Shock down/up, disarm, sync, Analyze, Manual/AED, pacer settings and 4:1 down/up, the M2's Alarm Control and limits, NIBP, CO2 on/zero, code marker, print, connections (C2), configuration. Adds the `deviceStatus` fields. Amends the Room plan's D6 text (the role's commands) | DQ3, DQ5, DQ6, DQ11 answered | `types-device.ts`, `l3/alarms/profile.ts`, `l3/defib-pacer/defib.ts` (validation), `device-layer.ts` (dispatch only), `docs/plans/room-and-instruments.md` (D6 note) | 360 J refused on `zoll-m2`, accepted on `generic`; 140 J refused on `zoll-m2` (not in its list [G A-2]); every declared command validates and is a no-op until its piece lands; generic unchanged in every existing test | outcome tables | common + engine-core + validation | 8 | VW |
-| **E1a** | The paediatric first-shock energy in the outcome (S8): `defaultJ` from the patient type, not the adult energy | E0 | `device-layer.ts` | a paediatric 50 J VF shock has the same termination share as an adult 120 J shock; the adult tables unchanged | everything else | common + engine-core + validation | 3 | VW |
-| **E2a** | Patient connections and their messages (C2): Attach Pads, Connect Therapy Cable, Check Pads, Use Pads to Pace, Release Shock Button; the paddles' two-button shock | E0 | `l3/defib-pacer/connections.ts` (new), `device-layer.ts` | a shock with pads off is refused with "Attach Pads" [G 14-9]; the test plug gives "Check Pads – Pads Shorted" [G 12-11]; one paddle button does not discharge [G 18-7]; paddles cannot pace [G 2-10] | outcome | common + engine-core + validation | 8 | VW |
-| **E1** | Manual, Sync and patient type: covers the selector, power-off memory [G 3-1], escalation [G 14-3], the disarm rules [G 14-6], the ready time-out and its tones [G A-7], [G 12-7], Sync persistence [G 14-17], sync blocked on lead-off [G 14-16], internal paddles at 10 J with a 50 J maximum [G 14-18], and the top lead by mode [G 6-7]. The configuration enters as an input (§5.4) | E0, E2a | `l3/defib-pacer/m2.ts` (new), `device-layer.ts`, `sync.ts` (top trace) | escalation 120 → 150 → 200 → 200; a manual selection outside the sequence plus a shock ends escalation until 30 s off [G 14-6]; sync stays on after a ready time-out and after an energy change, off after a shock [G 14-17], [G 14-18]; the sync detector follows the top trace's lead | generic behaviour | common + engine-core + validation | 10 | VW |
-| **E2b** | The Pads lead and impedance: the pads lead (from M0a), impedance as patient state from a named stream, the 15–300 Ω gate, Table A-2 delivered energy (nearest column outside 25–175 Ω, marked), the shock record's impedance and current | E2a, M0a | `l2/ecg/vcg.ts` (a pads projection), `l3/defib-pacer/impedance.ts` (new) | delivered energy at a 120 J setting: 85 J at 25 Ω, 131 J at 50 Ω, 143 J at 75 Ω, 147 J at 100 Ω [G A-16]; 10 Ω refused; the outcome unchanged (§3.2) | outcome tables | common + engine-core + validation | 12 | VW |
-| **E3** | Compressions as events with depth (C5): the sensor reading, and the artefact following the same compressions; `quality` kept as a derived view for old scenarios | M0c, DQ23 | `l2/hemo/pipeline.ts`, `params.ts`, `l2/ecg/artefacts/body.ts`, `types-hemo.ts` | old CPR commands give exactly today's CoPP and EtCO2 (`quality` mapped to depth by DQ23's anchor); the sensor's error ≤ 0.6 cm [G A-10]; rate "- - -" after a few seconds without compressions [G 15-3] | — | common + engine-core + validation | 14 | VW |
+| **M0a** | **Built:** PR 434, merged; its second part (the six papers read in full) PR 441, merged. Sources: G-PADS (and whether apex–sternum is derivable from the ECG model), G-TTI, and what energy Mittal 2000 reports | — | `docs/research/defib-zoll-m2-pads-impedance.md` | none (docs) | code | docs job | 10 | — |
+| **M0b** | **Built:** PR 440, merged (with the guide reading and M0d). Sources: G-THR, pacing threshold by placement | — | `docs/research/defib-zoll-m2-pacing.md` | none | code | docs job | 6 | — |
+| **M0c** | **Built:** PR 439, merged. Sources: G-CPR and G-FAT, depth and flow, rescuer fatigue | — | `docs/research/defib-zoll-m2-cpr.md` | none | code | docs job | 10 | — |
+| **M0d** | **Built:** PR 440, merged. The picture register (each view of §4.1 with its source), and the Configuration Guide search | — | `docs/research/defib-zoll-m2-pictures.md` | none | code | docs job | 3 | — |
+| **E0** | **Built:** PR 438, open (draft). Vocabulary freeze. Covers the M2 model in `DEFIB_MODELS` (energy list [G A-2], escalation [G 14-4], AED sequence [G 12-6], pacer 30–180 / 2 ppm and 8–140 / 2 mA [G A-10], [G 16-5]) and per-model energy validation. Declares EVERY command of §5.1 and §5.4: mode selector, patient type, energy, charge, Shock down/up, disarm, sync, Analyze, Manual/AED, pacer settings and 4:1 down/up, the M2's Alarm Control and limits, NIBP, CO2 on/zero, code marker, print, connections (C2), configuration. Adds the `deviceStatus` fields. Amends the Room plan's D6 text (the role's commands) | DQ3, DQ5, DQ6, DQ11 (all ruled A, 12 November 2026) | `types-device.ts`, `l3/alarms/profile.ts`, `l3/defib-pacer/defib.ts` (validation), `device-layer.ts` (dispatch only), `docs/plans/room-and-instruments.md` (D6 note) | 360 J refused on `zoll-m2`, accepted on `generic`; 140 J refused on `zoll-m2` (not in its list [G A-2]); every declared command validates and is a no-op until its piece lands; generic unchanged in every existing test | outcome tables | common + engine-core + validation | 8 | VW |
+| **E1a** | **Built:** PR 456, open (draft). The paediatric first-shock energy in the outcome (S8): `defaultJ` from the patient type, not the adult energy | E0 | `device-layer.ts` | a paediatric 50 J VF shock has the same termination share as an adult 120 J shock; the adult tables unchanged. **Left by E1a (hand-over 197):** the comment on `defaultJ` at `outcome.ts:49` still says "defib.energyAdultJ" (stale, for the piece that next edits `outcome.ts`); a paediatric patient in a GENERIC room is still scored against the adult energy (N165, DQ33) | everything else | common + engine-core + validation | 3 | VW |
+| **E2a** | **Built:** PR 455, open (draft). Patient connections and their messages (C2): Attach Pads, Connect Therapy Cable, Check Pads, Use Pads to Pace, Release Shock Button; the paddles' two-button shock | E0 | `l3/defib-pacer/connections.ts` (new), `device-layer.ts` | a shock with pads off is refused with "Attach Pads" [G 14-9]; the test plug gives "Check Pads – Pads Shorted" [G 12-11]; one paddle button does not discharge [G 18-7]; paddles cannot pace [G 2-10]. **Also built in E2a** (hand-over 198): internal handles at 10 J with a 50 J maximum [G 14-18], listed under E1 below. **Left by E2a (N163):** `m2.messages` is rewritten whole every tick from the connection messages, so E5, E6 and E7c merge their messages into the same list (sorted by `messagePriority`), never overwrite it; the paddles-in-wells state, the cable kind and the package exports go to E0b | outcome | common + engine-core + validation | 8 | VW |
+| **E0b** | Vocabulary completion (N154, N163; added by the consolidation, brief 213), additive to E0 as E0 says. Declares the commands the guide reading added after E0's brief (§5.1): Lead [G 2-13], [G 6-7], Clear [G 2-16], [G 16-2], the 30 J test [G 2-15], [G 18-4], Diag [G 2-14], [G 6-9], 12-lead Acquire [G 13-8], Brightness [G 2-15], Trend/Export [G 2-14], [G 2-15] (DQ12 = A); the instructor's inputs (§5.2): device faults [G C-1 to C-9] (DQ14 = A), impedance (E2b), compression depth and rate (E3); the bedside monitor's relearn action (DQ27 = A) and analysis-lead setting (DQ28 = B, later) of §3.4.4. Adds the state E0 lacks (N163): paddles in their wells, which give "Check Pads - Pads Shorted" [G 12-11], and face to face "Check Paddles - Paddles Shorted" [G 18-6]; the therapy cable's kind (the MFC-CPRD for CPR pads, the plain MFC for paddles [G 2-8], [G 2-9]). Exports the connection words (`MSG` and helpers) from the package entry | E0, E2a | `types-device.ts`, `l3/defib-pacer/m2-vocabulary.ts`, `device-layer.ts` (dispatch only), `l3/alarms/profile.ts` (the two monitor actions), `src/index.ts` (exports) | every new command validates and is a no-op until its piece lands, as in E0; every `M2_COMMANDS` key is classified for R1's learner table (allowed or refused); the new state fields round-trip in the snapshot and on a follower; generic unchanged in every existing test | outcome tables; any piece's behaviour | common + engine-core + validation | 6 | VW |
+| **E1** | Manual, Sync and patient type: covers the selector, power-off memory [G 3-1], escalation [G 14-3], the disarm rules [G 14-6], the ready time-out and its tones [G A-7], [G 12-7], Sync persistence [G 14-17], sync blocked on lead-off [G 14-16], internal paddles at 10 J with a 50 J maximum [G 14-18] (**built in E2a, PR 455; E1 does not build it again**, N163), and the top lead by mode [G 6-7]. The configuration enters as an input (§5.4), with the factory defaults the owner ruled (DQ4, DQ13, DQ17–DQ20, DQ24, DQ26). **From E0 and E1a (hand-overs 179, 197):** energies are re-checked against the model at apply (§3.1, the known limit); `m2.patientType` and the rest of `deviceStatus.m2` enter `statusChanged` (until then the M2's status goes out once a second); `patientType` selects that type's Shock 1 energy [G 14-3], and E0's no-op test case for it changes | E0, E2a | `l3/defib-pacer/m2.ts` (new), `device-layer.ts`, `sync.ts` (top trace) | escalation 120 → 150 → 200 → 200; a manual selection outside the sequence plus a shock ends escalation until 30 s off [G 14-6]; sync stays on after a ready time-out and after an energy change, off after a shock [G 14-17], [G 14-18]; the sync detector follows the top trace's lead | generic behaviour | common + engine-core + validation | 10 | VW |
+| **E2b** | The Pads lead and impedance: the pads lead (from M0a), impedance as patient state from a named stream, the 15–300 Ω gate, Table A-2 delivered energy (nearest column outside 25–175 Ω, marked), the shock record's impedance and current. **Ruled DQ16 = C (12 November 2026):** outside the table, the delivered energy is derived from the guide's waveform [G A-17 to A-26] if that derivation reproduces Table A-2's documented columns within the guide's tolerance; otherwise the nearest column, marked. **Ruled DQ7 = A:** impedance changes no rhythm's success | E2a, M0a | `l2/ecg/vcg.ts` (a pads projection), `l3/defib-pacer/impedance.ts` (new) | delivered energy at a 120 J setting: 85 J at 25 Ω, 131 J at 50 Ω, 143 J at 75 Ω, 147 J at 100 Ω [G A-16]; 10 Ω refused; the outcome unchanged (§3.2) | outcome tables | common + engine-core + validation | 12 | VW |
+| **E3** | Compressions as events with depth (C5): the sensor reading, and the artefact following the same compressions; `quality` kept as a derived view for old scenarios | M0c, DQ23 | `l2/hemo/pipeline.ts`, `params.ts`, `l2/ecg/artefacts/body.ts`, `types-hemo.ts` | old CPR commands give exactly today's CoPP and EtCO2 (`quality` mapped to depth by DQ23's anchor; the live CPR constants are in `l2/circ/params.ts`, N137; under DQ23's option A the engine's EtCO2 rises 2.8 mmHg per 10 mm against 1.4 and about 1.0 in humans, N136, M0c: for E3 with the papers C1–C8; the CPR sensor needs the cable kind of E0b, N163); the sensor's error ≤ 0.6 cm [G A-10]; rate "- - -" after a few seconds without compressions [G 15-3] | — | common + engine-core + validation | 14 | VW |
 | **E4a** | The ECG analysis core (§3.4.2): the sample feed (§3.4.3: a named lead after the front end, committed samples, state cloned with the look-ahead); lead-agnostic measurements in 3-s segments (noise and baseline content, spectrum, QRS rate/width/variability, regularity of peaks [G A-34]; for the bedside a marked `eng` choice); the recorded-ECG rig every consumer is tested on | E0 | `l3/ecg-analysis/features.ts`, `l3/ecg-analysis/rig.ts` (test support) (new); `engine.ts` and `DeviceHost` (the feed) | each measurement checked on a constructed signal with a known answer (a sine's frequency, a pulse train's rate and width); the rig loads CUDB VF and VT (DOI 10.13026/C2X59M) HOLDING OUT the records the engine's VF templates were taken from (`packages/validation/src/templates/extract-vf.ts`), and PTB-XL's non-shockable rhythms (shared cache), each set's size stated; the input has no `rhythmId` (a test removes it); cost of one 3-s segment on a phone follower measured in the e2e perf set | alarms, device layer | common + engine-core + validation | 8 | VW |
 | **E4b** | AED analysis and Check Patient (C4) on the core: the AED's decision on Pads-lead segments; Check Patient's continuous analysis on the top trace, off in Pacer ("VF/VT Alarms Disabled" [G 6-12]); its window and artefact rule are the AED's run continuously, marked `eng`, until G-CPV is sourced. Reads the Pads lead once E2b lands | E4a | `l3/defib-pacer/analysis.ts` (new) | the goals of [G A-34]: coarse VF sensitivity > 90 %, rapid VT > 75 %, NSR specificity > 99 %, other non-shockable > 95 %, asystole > 95 %, on E4a's rig; analysis halts during compressions; Check Patient's VERDICT within the maximum ECG alarm delay, 10 s [G A-7] (E4b emits the verdict; E7b raises the alarm on the M2's instance) | the bedside alarm conditions (B1 owns them; was "the bedside VF alarm (until DQ8)") | common + engine-core + validation | 12 | VW |
-| **E5** | The AED cycle (A1–A10): the CPR period and metronome, the Manual/AED switch | E1, E2a, E4b | `m2.ts`, `device-layer.ts` | analysis 6–12 s [G A-34]; CPR period 120 s [G 12-9]; No Shock Advised shown 5 s [G 12-10]; Shock Advised → charge → Press Shock → time-out → CPR [G 12-7]; a patient-type change resets to shock 1 [G 12-3] | — | common + engine-core + validation | 10 | VW |
-| **E6** | M2 pacing: 2 mA and 2 ppm steps, start at 0 and the 10-min resume [G 16-5], 0 mA pauses [G 1-11], 4:1 [G 16-6], the pads-off alarm with Clear [G 16-2], no Check Patient while pacing [G 6-12], the 40 ms pulse on the trace [G A-10]; the threshold by placement once M0b has a source | E0, E2a | `pacer.ts`, `l2/ecg/tcp.ts` | 4:1 held gives 18 ppm at 72 [G 16-6]; re-entry within 10 min resumes at the last mA after about 3 s [G 16-5] | — | common + engine-core + validation | 8 | VW |
-| **E7a** | The second alarm instance: a seam so a device can own its alarm state and profile, with the bedside monitor unchanged | E0 | `device-layer.ts`, `l3/alarms/*` | every bedside alarm test passes unchanged; a second instance raised and silenced alone | the bedside monitor's behaviour | common + engine-core + validation | 10 | VW |
-| **E7b** | The M2's profile, Alarm Control and limits: priorities and tones [G 5-4], [G A-7], pause 90 s and the off states [G 5-5], [G 5-6], latching [G 5-6], limits by patient type [G 6-11], [G 7-3], [G 10-8], delays [G A-7]; channels present only when connected; "Check Patient" (High [G C-2]) raised from E4b's verdict with the HR alarm on, "VF/VT Alarms Disabled" in Pacer [G 6-12] | E7a, E2a, E4b | `profile.ts`, `device-layer.ts` | silencing the M2 does not silence the bedside monitor; HR limits 50/120 adult, 50/150 paediatric [G 6-11]; Alarm Control held > 3 s turns alarms off [G 5-6] | — | common + engine-core + validation | 8 | VW |
-| **E7c** | The equipment-message table of appendix C as data (type, priority by mode) | E7b | `l3/defib-pacer/messages.ts` (new) | "Attach Pads" medium [G C-2]; "Check Pads – Pads Shorted" medium in Defib, low in Monitor [G C-2] | — | common + engine-core + validation | 6 | VW |
+| **E5** | The AED cycle (A1–A10): the CPR period and metronome, the Manual/AED switch; with the ruled defaults (DQ19 analysis first, DQ20 no password, DQ24 no pause, DQ26 metronome the whole period) and AED mode allowed under 1 year with the Debrief noting it (DQ25 = A); its messages merge into `m2.messages` (N163) | E1, E2a, E4b | `m2.ts`, `device-layer.ts` | analysis 6–12 s [G A-34]; CPR period 120 s [G 12-9]; No Shock Advised shown 5 s [G 12-10]; Shock Advised → charge → Press Shock → time-out → CPR [G 12-7]; a patient-type change resets to shock 1 [G 12-3] | — | common + engine-core + validation | 10 | VW |
+| **E6** | M2 pacing: 2 mA and 2 ppm steps, start at 0 and the 10-min resume [G 16-5], 0 mA pauses [G 1-11], 4:1 [G 16-6], the pads-off alarm with Clear [G 16-2], no Check Patient while pacing [G 6-12], the 40 ms pulse on the trace [G A-10]; the threshold by placement once M0b has a source | E0, E2a | `pacer.ts`, `l2/ecg/tcp.ts` | 4:1 held gives 18 ppm at 72 [G 16-6]; re-entry within 10 min resumes at the last mA after about 3 s [G 16-5]; its messages merge into `m2.messages` (N163) | — | common + engine-core + validation | 8 | VW |
+| **E7a** | **Built:** PR 458, open (draft). The second alarm instance: a seam so a device can own its alarm state and profile, with the bedside monitor unchanged | E0 | `device-layer.ts`, `l3/alarms/*` | every bedside alarm test passes unchanged; a second instance raised and silenced alone. **Left by E7a (hand-over 199):** the owned instance publishes no `alarm`/`alarmStatus` event (only `deviceStatus.m2.alarm`); one marked choice maps silence and pause onto the M2's block until E7b | the bedside monitor's behaviour | common + engine-core + validation | 10 | VW |
+| **E7b** | The M2's profile, Alarm Control and limits: priorities and tones [G 5-4], [G A-7], pause 90 s and the off states [G 5-5], [G 5-6], latching [G 5-6], limits by patient type [G 6-11], [G 7-3], [G 10-8], delays [G A-7]; channels present only when connected; "Check Patient" (High [G C-2]) raised from E4b's verdict with the HR alarm on, "VF/VT Alarms Disabled" in Pacer [G 6-12] | E7a, E2a, E4b | `profile.ts`, `device-layer.ts` | silencing the M2 does not silence the bedside monitor; HR limits 50/120 adult, 50/150 paediatric [G 6-11]; Alarm Control held > 3 s turns alarms off [G 5-6]; the high-priority tone repeats every 10 s, chapter 5 (DQ15 = A). **From E7a:** E7b and E8 feed the owned instance's inputs from the M2's own sensors; the bedside `inputs.vfSince` is deliberately not copied (B1) | — | common + engine-core + validation | 8 | VW |
+| **E7c** | The equipment-message table of appendix C as data (type, priority by mode) | E7b | `l3/defib-pacer/messages.ts` (new) | "Attach Pads" medium [G C-2]; "Check Pads – Pads Shorted" medium in Defib, low in Monitor [G C-2]; the table merges into `m2.messages`, never overwrites E2a's (N163) | — | common + engine-core + validation | 6 | VW |
 | **E8a** | ECG functions: leads, filters [G A-2], size, Diag 12 s [G 6-9], HR [G A-3], pace marker and blanking [G 6-9] (chapter 6 read page by page first) | E7b | renderer and engine ECG channels | HR = mean of the last 5 intervals [G A-3]; Diag at 0.525–40 Hz for 12 s [G 6-9]; Auto size in Monitor only [G 6-9] | — | common + engine-core + renderer | 10 | — |
 | **E8b** | The other channels (chapters 7–11 read page by page first): NIBP modes and defaults [G A-5], [G 8-4], SpO2 averaging [G A-5], CO2 zero, FiCO2 and O2/N2O compensation [G 9-5], [G 9-16], T1/T2/ΔT [G 11-3], the respiration source [G 7-2] | E7b | the M2's channel wrappers over existing models | NIBP Auto default 30 min [G 8-4]; cuff 160 / 120 mmHg [G A-5]; SpO2 Medium = 8 s [G A-5]; O2 compensation default 21 % [G 9-16] | the physiology models | common + engine-core | 12 | — |
 | **E8c** | 12-lead (chapter 13 read page by page first): acquire 10 s, formats, review, print [G 13-1] | E8a | ECG channels, app view | wait 15 s after a shock [G 13-2]; 4×3 standard by default [G 13-15] | — | common + engine-core + demo | 12 | — |
-| **E9a** | The incident record: event log, snapshots, summary report, trends, code markers (28), the printer as a strip view | E1, E5, E7b | `l3/defib-pacer/record.ts` (new), app print view | snapshot windows 6 s + 12 s [G 17-6]; the shock snapshot's fields [G 17-8]; a new incident after 30 s off [G 17-1] | the room's record | common + engine-core + demo | 12 | — |
-| **E9b** | Readiness: power-on and daily self-test, the 30 J test, battery and AC states, charge times by battery state [G A-2], instructor-injected faults (DQ14) | E1, E2a | `m2.ts`, panel | the 30 J test with the test plug passes [G 2-9]; low battery allows 10 more 200 J shocks [G A-9] | — | common + engine-core + demo | 8 | — |
-| **F0** | The defibrillator core, and the generic window moved onto it with no behaviour change | E0 | `apps/demo/src/defib/core/*`, `faces/generic/*`, `views/follower.ts`, `instrument.ts` | every `defib-window*.dom.test.ts`, `room-defib.dom.test.ts` and `learner-defib.e2e.ts` passes unchanged | engine | common + demo + e2e | 10 | — |
-| **F1** | The M2 face: bezel, controls, lights, screen regions, header, traces and numerics, brightness modes, alarm bar; `face.json` with provenance; colours measured from the photographs | F0, E7b | `faces/zoll-m2/*` | provenance test: every word and colour cites a page or is `eng`; layout proportions within the figure's measured ratios | engine | common + demo + e2e | 24 | — |
+| **E9a** | The incident record: event log, snapshots, summary report, trends, code markers (28), the printer as a strip view | E1, E5, E7b | `l3/defib-pacer/record.ts` (new), app print view | snapshot windows 6 s + 12 s [G 17-6]; the shock snapshot's fields [G 17-8]; a new incident after 30 s off [G 17-1]; Export saves the incident as a file from the browser, WiFi and e-mail show "not configured" (DQ12 = A). **From E7a:** an owner-tagged alarm event is needed (the owned instance's life-cycle events are dropped today), or E9a diffs `deviceStatus.m2.alarm` | the room's record | common + engine-core + demo | 12 | — |
+| **E9b** | Readiness: power-on and daily self-test, the 30 J test, battery and AC states, charge times by battery state [G A-2], instructor-injected faults (DQ14 = A, ruled 12 November 2026) | E1, E2a | `m2.ts`, panel | the 30 J test with the test plug passes [G 2-9]; low battery allows 10 more 200 J shocks [G A-9] | — | common + engine-core + demo | 8 | — |
+| **F0** | **Built:** PR 457, open (draft). The defibrillator core, and the generic window moved onto it with no behaviour change | E0 | `apps/demo/src/defib/core/*`, `faces/generic/*`, `views/follower.ts`, `instrument.ts` | every `defib-window*.dom.test.ts`, `room-defib.dom.test.ts` and `learner-defib.e2e.ts` passes unchanged | engine | common + demo + e2e | 10 | — |
+| **F1** | The M2 face: bezel, controls, lights, screen regions, header, traces and numerics, brightness modes, alarm bar; `face.json` with provenance; colours measured from the photographs | F0, E7b | `faces/zoll-m2/*` | provenance test: every word and colour cites a page or is `eng`; layout proportions within the figure's measured ratios. Named "ZOLL M2", no logo drawn (DQ1 = A). **From F0 (hand-over 200):** register `zoll-m2` in `DEFIB_FACES`; remount the face when the room's model changes; the knob's time-out `revertMs` is a marked choice (the guide gives none); Shock's down and up become `device defib shockButton` | engine | common + demo + e2e | 24 | — |
 | **F2** | AED and CPR screens: messages, dashboard, bar graph, energy bar | F1, E3, E5 | `faces/zoll-m2/*` | bar-graph markers at 5 and 6 cm adult [G 15-4]; rate "- - -" without compressions [G 15-3] | — | common + demo | 8 | — |
 | **F3** | Pacer, Manual and Sync screens | F1, E1, E6 | `faces/zoll-m2/*` | Output highlighted at entry [G 16-4]; Sync key green and "Sync Defib" [G 14-16] | — | common + demo | 6 | — |
-| **F4** | Audio: tones [G A-7], [G 5-4], metronome, voice prompts (DQ9) | F1 | `packages/audio` use, face | tone frequencies and intervals as the guide gives them | — | common + demo | 6 | — |
+| **F4** | Audio: tones [G A-7], [G 5-4] (high-priority repeat 10 s, DQ15 = A), metronome, voice prompts by the browser's speech in English, replaced by the owner's recordings if he provides them (DQ9 = A) | F1 | `packages/audio` use, face | tone frequencies and intervals as the guide gives them | — | common + demo | 6 | — |
 | **F5** | The connections drawer, the paddles in use, the printer door | F1, E2a | `faces/zoll-m2/drawer.ts` | pads off in the drawer → "Attach Pads" on the screen | — | common + demo | 6 | — |
 | **F6** | Menus and windows: Settings, ECG, NIBP, CO2, SpO2, Temp, Resp, Alarm Limits, Trend, Treatment Summary, Waveform Sources, System, code markers | F1, E7b, E8a, E8b, E9a | `faces/zoll-m2/menus/*` | each window's fields as the guide lists them, e.g. ECG: Pace Marker, 12 Lead Mode Pace Marker, Sweep Speed, QRS/PR Volume [G 6-10] | — | common + demo | 20 | — |
-| **M0e** | Sources for the bedside arrhythmia alarms (G-BVF, G-CPV): IEC 60601-2-27's and ANSI/AAMI EC57's arrhythmia-detector clauses (what is required and what is only disclosed); the vendors' EC57 disclosure tables and VF/VT/asystole alarm criteria and delays in their operator's manuals for each skin (Philips, GE, Mindray, Saadat); published bedside VF/VT detector performance beyond Drew 2014 and Aboukhalil 2008; ZOLL's statements on Check Patient's window and artefact behaviour (the Rev. D guide, technical notes). The two standards are sold, not open, and nothing may be downloaded without the owner's yes: M0e reads what is open (vendor manuals on the makers' sites, published papers) and lists the rest as WANTED from the owner, so B1 is not left with no route | — | `docs/research/bedside-arrhythmia-detection.md` | none (docs) | code | docs job | 10 | — |
+| **M0e** | **Built:** PR 449, open (draft). Sources for the bedside arrhythmia alarms (G-BVF, G-CPV): IEC 60601-2-27's and ANSI/AAMI EC57's arrhythmia-detector clauses (what is required and what is only disclosed); the vendors' EC57 disclosure tables and VF/VT/asystole alarm criteria and delays in their operator's manuals for each skin (Philips, GE, Mindray, Saadat); published bedside VF/VT detector performance beyond Drew 2014 and Aboukhalil 2008; ZOLL's statements on Check Patient's window and artefact behaviour (the Rev. D guide, technical notes). The two standards are sold, not open, and nothing may be downloaded without the owner's yes: M0e reads what is open (vendor manuals on the makers' sites, published papers) and lists the rest as WANTED from the owner, so B1 is not left with no route | — | `docs/research/bedside-arrhythmia-detection.md` | none (docs) | code | docs job | 10 | — |
 | **B1** | The bedside VF alarm from the signal (§3.4, DQ8 = B): a continuous detector on the core reading the detection lead after the front end (artefacts and lead-off as the QRS detector sees them); each skin's criterion and delay from M0e, replacing `VF_CONFIRM_S`; the VF/VT boundary of the "VTach/VFib" alarm; `inputs.vfSince` set by the detector, the patient's VF onset moved to the host for the outcome (§3.4.3); the HR blanking (E126) and the asystole gate and chain follow the detector; every recording that moves re-recorded here (§3.4.4) | E4a, E7a, M0e | `l3/device-layer.ts` (`stepDevice`, `deliverShock`), `l3/ecg-analysis/vf-monitor.ts` (new), `engine.ts` (HR blanking), `l3/alarms/profile.ts` (the skin's criterion), `packages/skins` (the skin type, each of the six skin JSONs with the criterion's provenance, `CONTRACT.md`), `docs/model/alarms.md` | the input has no `rhythmId` (a test removes it, and a test sets `vfCoarse` with the ECG lead off and sees no VFIB); `vfCoarse` raises VFIB within the skin's criterion plus the measured latency (Philips ≥ 4 s, Aboukhalil 2008); the CUDB and PTB-XL sets REPORTED (sensitivity, specificity, set sizes) and asserted only against M0e's sourced numbers; `vfFine`, `vtMono`, `vtPoly`, `torsades` and CPR on asystole and on PEA reported against the control; a shock's outcome identical seed for seed before and after; every condition unit test that injects `vfSince` passes unchanged; an old snapshot restored in the middle of VF (its `vfSince` written with the old meaning) resumes without a spurious raise or clear; the detector's cost per simulated second measured on a phone follower and in the 24 h runs; the alarm-timeline diff of every recorded course against the control (§3.4.4); the E126 stop rule | the outcome tables; the AED's rule (E4b) | common + engine-core + skins + validation + e2e | 24 | VW |
-| **B2** | Only if DQ27 = yes: a beat classifier on the signal (the dominant template learned, each QRS's width and match) feeding VTAC's run count and PVCS in place of the generator's labels | B1, DQ27, M0e | `l3/ecg-analysis/beats.ts` (new), `conditions.ts` (`observeEvent`), `packages/skins` (relearn time) | VTAC on a run of ≥ 5 ventricular beats above 100/min (Aboukhalil 2008, Table 1) or the skin's M0e criterion; PVCs per minute on the recorded sets reported; the input has no `beat` labels (a test removes them); learning after a relearn and after leads on; recordings re-recorded as in §3.4.4 | the outcome tables | common + engine-core + skins + validation + e2e | 24 | VW |
-| **B3** | Only if DQ29 = yes: the ECG auto-gain reads the monitor's own QRS detections (the engine's `qrs` tone events, `refT`) in place of the generator's beat times | B1 | `packages/renderer/src/monitor-core.ts` | the gain on the rhythm library equals today's within the display's step where the detector finds every beat; where it does not (VF, artefact), the difference is shown | engine | common + renderer + e2e | 4 | — |
-| **R1** | The learner role's allow-list, guard and relay; admission by DQ6 | E0 | `protocol.ts`, `guard.ts`, `relay/server.ts` | every allowed shape passes; preselect, fault, setTarget, time, scenario and drug refused at the relay AND the host; turning the knob while pressing Shock stays under the cap | host-session | common + controller + check-relay | 6 | — |
-| **R2** | Host apply, record rows and Debrief lines | R1, E9a | `host-session.ts`, `record.ts`, Debrief | a learner's AED shock reads with the device's numbers (selected and delivered energy, impedance) | — | common + demo + e2e | 6 | — |
-| **R3** | The instructor's sheet: model-aware energy, faults, compressions, connections (DQ5) | E2a, E3, E9b | `panel/defib.ts` | 360 J refused in an M2 room | — | common + demo | 6 | — |
-| **R4** | Room setup: the M2 in the model choice, and its configuration; amends the Room plan's D5 and the roadmap row (`docs/roadmap/v1.0-remaining.md`) | E0, E1, E5 | `site.ts`, `views/room.ts`, `session.ts` | the configuration is re-sent at each patient mount; followers equal | — | common + demo | 6 | — |
-| **S1** | Scenario format: device configuration and connections at start; existing scenarios and builder scripts with energies outside the M2's list | R4 | scenario schema, loader | a scenario starts with pads on, anterior–posterior; a scenario or script that charges 360 J in an M2 room is refused at load with its reason, never rounded silently; in a generic room it runs as today | — | common + demo + scenario tests | 6 | — |
+| **B2** | Ruled DQ27 = A (12 November 2026): a beat classifier on the signal (the dominant template learned, each QRS's width and match) feeding VTAC's run count and PVCS in place of the generator's labels | B1, M0e | `l3/ecg-analysis/beats.ts` (new), `conditions.ts` (`observeEvent`), `packages/skins` (relearn time) | VTAC on a run of ≥ 5 ventricular beats above 100/min (Aboukhalil 2008, Table 1) or the skin's M0e criterion; PVCs per minute on the recorded sets reported; the input has no `beat` labels (a test removes them); learning after a relearn and after leads on; recordings re-recorded as in §3.4.4 | the outcome tables | common + engine-core + skins + validation + e2e | 24 | VW |
+| **B3** | Ruled DQ29 = A (12 November 2026): the ECG auto-gain reads the monitor's own QRS detections (the engine's `qrs` tone events, `refT`) in place of the generator's beat times | B1 | `packages/renderer/src/monitor-core.ts` | the gain on the rhythm library equals today's within the display's step where the detector finds every beat; where it does not (VF, artefact), the difference is shown | engine | common + renderer + e2e | 4 | — |
+| **R1** | The learner role's allow-list, guard and relay; admission by DQ6 (= A, the learner PIN). **Settled by the orchestrator after R1's executor stopped before writing code (N182, hand-over 214):** the PIN cannot be checked inside R1's files (the relay only holds a socket pending and passes on the host's grant; the host checks the PIN per role, `HostSession.verifyLearner` in `host-session.ts`, which is R2's). So R1 builds the allow-list table with its two-way completeness test (every `M2_COMMANDS` key classified allowed or refused), lets the guard accept a `pin` on the defibrillator hello and makes the relay hold it pending. Until R2 the table is inert in a real room and today's no-PIN window keeps its two presses. `pacer pause` is not in §5.1: refused in the M2's learner table (the guide pauses pacing at 0 mA [G 1-11]). `applyEvent pacer` takes `fault` in the engine (`pacer.ts`) but the controller's `ClinicalEvent` type does not declare it, so `fault` is refused by field, not by type | E0 | `protocol.ts`, `guard.ts`, `relay/server.ts` | every allowed shape passes; preselect, fault, setTarget, time, scenario and drug refused at the relay AND the host; the cap for this role derived from the device's fastest legitimate use, the arithmetic shown and marked as an engineering choice (§4.3: the knob alone sends 4 a second and Shock's down and up add 2, against today's 4 a second), and turning the knob while pressing Shock stays under the derived cap | host-session | common + controller + check-relay | 6 | — |
+| **R2** | Host apply, record rows and Debrief lines; **and the defibrillator's admission (N182):** the host verifies the defibrillator hello's PIN beside the pump role, passes the grant to the check, and the widened table replaces `learnerDefibMay` for a granted socket only. The controller's command log formats the M2's object-valued commands (it prints "[object Object]" today, `controller-session.ts`, hand-over 179) | R1, E9a | `host-session.ts`, `record.ts`, Debrief | a learner's AED shock reads with the device's numbers (selected and delivered energy, impedance); a defibrillator hello without the PIN keeps the two presses, one with it gets the table | — | common + demo + e2e | 6 | — |
+| **R3** | The instructor's sheet: model-aware energy, faults (DQ14 = A), compressions, connections (DQ5 = A: the learner connects in the drawer, the instructor overrides) | E2a, E3, E9b | `panel/defib.ts` | 360 J refused in an M2 room | — | common + demo | 6 | — |
+| **R4** | Room setup: the M2 in the model choice, and its configuration (the ruled factory defaults: start mode Manual, DQ4; first shock 120 J, DQ13; ready time-out 60 s, DQ17; escalation on, DQ18; DQ19, DQ20, DQ24, DQ26; the accessories pads and external paddles, DQ11); the model applied before its configuration is sent (§3.1, the known limit); amends the Room plan's D5 and the roadmap row (`docs/roadmap/v1.0-remaining.md`) | E0, E1, E5 | `site.ts`, `views/room.ts`, `session.ts` | the configuration is re-sent at each patient mount; followers equal | — | common + demo | 6 | — |
+| **S1** | Scenario format: device configuration and connections at start (sent after the model has applied, §3.1); existing scenarios and builder scripts with energies outside the M2's list | R4 | scenario schema, loader | a scenario starts with pads on, anterior–posterior; a scenario or script that charges 360 J in an M2 room is refused at load with its reason, never rounded silently; in a generic room it runs as today | — | common + demo + scenario tests | 6 | — |
 
-**Total, estimated:** 372 h of plan time (the sum of the column; 306 h before the DQ8 amendment, which split E4's 16 h
-into E4a 8 h and E4b 12 h and added M0e 10 h, B1 24 h, B2 24 h and B3 4 h; B2 only if DQ27 = yes, B3 only if DQ29 =
-yes).
+**Total, estimated:** 378 h of plan time (the sum of the column, recomputed in the consolidation of brief 213: 372 h
+plus E0b's 6 h, an estimate written by the consolidation and open to the orchestrator's correction; 306 h before the DQ8
+amendment, which split E4's 16 h into E4a 8 h and E4b 12 h and added M0e 10 h, B1 24 h, B2 24 h and B3 4 h). B2 and B3
+are no longer conditional: DQ27 = A and DQ29 = A were ruled on 12 November 2026. The hours of pieces already built are
+kept as they were estimated, not replaced by what they took. The piece for DQ28 = B (later) has no row and no hours yet
+(DQ35).
 
 **Order:**
 
-1. M0a–M0e at once (documents). The four answer-first DQs, then E0.
-2. After E0, in parallel: E1a, E2a, E4a (lead-agnostic), E7a, F0, R1.
+1. M0a–M0e at once (documents). The four answer-first DQs, then E0. (Done: M0a–M0d merged, M0e open; the four DQs
+   ruled; E0 open, PR 438.)
+2. After E0, in parallel: E1a, E2a, E4a (lead-agnostic), E7a, F0, R1. (Built and open: E1a, E2a, E7a, F0. R1 was
+   started and stopped before code, N182; it now builds as its row says, and R2 completes the admission.) E0b after E0
+   and E2a, before any piece that needs one of its commands or fields (E3, E6, E8a, E8c, E9a, E9b, R1's completeness
+   test, R3, B2).
 3. E1 after E2a. E2b after E2a and M0a. E3 after M0c and DQ23. E4b after E4a. E5 after E1 and E4b. E6 after E2a.
-   B1 after E4a, E7a and M0e; B2 after B1 and DQ27; B3 after B1 and DQ29. E7b after E7a, E2a and E4b. B1 and E3 each re-record the CPR courses, whichever lands second
+   B1 after E4a, E7a and M0e; B2 after B1 (DQ27 = A); B3 after B1 (DQ29 = A). E7b after E7a, E2a and E4b. B1 and E3 each re-record the CPR courses, whichever lands second
    on top of the first (§3.4.4). Elsewhere in this plan, "E4" written before this amendment (§2 rows A2, A3, M9; §3.3
    G-PADS; "Blocked on sources") now means E4b on E4a.
 4. E7b after E7a; E7c, E8a, E8b after E7b; E8c after E8a.
@@ -839,6 +896,18 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 
 ## 8. Questions for the owner
 
+**Where the questions stand (consolidation of 12 November 2026, brief 213).** Each ruling is written under its question
+in the owner's words, from the orchestrator's record of 12 November 2026, with what follows for the pieces.
+
+- **Still open:** DQ2 (the guide revision), DQ21 (the Manual Defib key levels), DQ22 (photographs of the unshown
+  views), DQ23 (what today's CPR "quality" means in centimetres; put after the papers C1–C8 are read, N136), and the
+  three new questions below, DQ33 (a paediatric patient in a generic room, N165), DQ34 (the command ordering, N155 and
+  N174) and DQ35 (where the DQ28 analysis-lead setting is planned). The M0e note's DQ30 (the VF alarm on the five skins
+  with no sourced criterion), DQ31 (the standards) and DQ32 (the M2's alarms after a shock) are open too; they are
+  written in full in `docs/research/bedside-arrhythmia-detection.md` §5, not repeated here.
+- **Ruled on 12 November 2026:** DQ1, DQ3, DQ4, DQ5, DQ6, DQ7, DQ8, DQ9, DQ10, DQ11, DQ12, DQ13, DQ14, DQ15, DQ16,
+  DQ17, DQ18, DQ19, DQ20, DQ24, DQ25, DQ26, DQ27, DQ28, DQ29.
+
 **DQ1. The name on the face.**
 - *Explanation:* The ventilator was named after the device (EDP-TS), with no logo drawn.
 - *Options:* A, "ZOLL M2", no logo; B, "Zoll-style", no name.
@@ -873,12 +942,16 @@ software matches?**
 - *Options:* A, its own alarm instance and its own channels, live only when their sensor is connected; B, mirror the
   bedside monitor's numbers and alarms.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A.** The M2 is its own monitor: its own alarm instance and its own channels, each live
+  only when its sensor is connected; silencing it does not silence the bedside monitor.
+- His words: "as you proposed". Follows: E7a (built, PR 458), E7b and E8a–E8c stand as planned.
 
 **DQ4. Start mode (answer early: it is the first thing a resident sees).**
 - *Explanation:* At DEFIB the M2 starts in Manual or in AED mode, by configuration [G 12-2], [G 14-2].
 - *Options:* A, Manual; B, AED; C, Room setup offers both, with your unit's setting as the default.
 - *Proposal:* C, defaulting to Manual until you tell me your unit's setting.
-- **Ruled 12 November 2026: C, default Manual** (his words: "Manual as default for defib"). Room setup offers Manual
+- **Ruled 12 November 2026: C, default Manual** (his words: "Manual as default for defib"; earlier the same night:
+  "as you proposed, it depends on how your turn the the knob on the device, there is a selector for this I think"). Room setup offers Manual
   and AED as the start mode in DEFIB; the default is Manual. On the device the operator also switches with the
   "Manual Defib" and "AED" quick-access keys; the Mode Selector itself has only OFF, MONITOR, DEFIB and PACER
   [G 2-4] (§2.1 D1); within DEFIB the start mode is the configuration's [G 12-2], [G 14-2].
@@ -888,12 +961,21 @@ software matches?**
 - *Options:* A, the learner does it in a drawer beside the device, and the instructor can override; B, the
   instructor only.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A.** The learner connects the patient (pads with type, placement and contact; paddles;
+  the ECG cable; the sensors) in a drawer beside the device; the instructor can override (the same `device defib
+  connect` command, E0).
+- His words: "as you proposed". The instructor overrides from the laptop (start with pads on, pull one off). Follows:
+  F5 (the drawer), R3 (the instructor's override), R1 (the learner's `connect` is allowed).
 
 **DQ6. Admission of the defibrillator screen (answer first).**
 - *Explanation:* It was admitted without a PIN because it could only Charge and Shock. As the M2 it can do everything
   in §5.1.
 - *Options:* A, the learner PIN, as the learner remote has; B, no PIN, as now.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A.** The learner's defibrillator screen is admitted with the learner PIN, the same as the
+  learner remote's (the Room plan's D6 is amended; R1 builds it).
+- His words: "as you proposed". Follows (N182, settled by the orchestrator): R1 builds the allow-list, the guard's `pin`
+  on the defibrillator hello and the relay's pending state; R2 makes the host verify the PIN and grant (§6).
 
 **DQ7. Does chest impedance change a shock's chance of success, and for which rhythm?**
 - *Explanation:* With the M2's waveform, the VF studies (an electrophysiology-laboratory trial and 594 out-of-hospital
@@ -911,6 +993,10 @@ software matches?**
   M0a found that published AF series link higher impedance to cardioversion failure, so the effect differs by rhythm;
   another piece reads the papers in full and re-puts this question. §3.2's "impedance does not change success" stands
   only until then.
+- **Ruled 12 November 2026: A** (his words: "as proposed"), on the question as re-put after the papers were read
+  (research note §9.3): no impedance effect on VF termination; for AF none until a source gives a per-shock effect for
+  the M2's waveform. Follows: §3.2 stands; E2b changes no rhythm's success; the shock-outcome plan's S4 follows this
+  answer.
 
 **DQ8. The bedside monitor's VF alarm.**
 - *Explanation:* Today it reads the simulated rhythm's name, not the signal.
@@ -924,21 +1010,32 @@ software matches?**
 - *Explanation:* The M2 speaks its prompts.
 - *Options:* A, the browser's speech in English; B, recordings you provide; C, text only.
 - *Proposal:* A, replaced by B if you send recordings.
+- **Ruled 12 November 2026: A** (his words: "as you proposed"): the M2 speaks through the browser's speech in English,
+  replaced by his unit's recordings if he provides them. Follows: F4.
 
 **DQ10. The LIFEPAK-style profile.**
 - *Options:* A, keep it as a monitor skin's defibrillator values, with no face; B, plan a LIFEPAK face later.
 - *Proposal:* A.
+- **Ruled 12 November 2026: B** (his words: "DQ10: Plan a lifepak face later."), against the proposal. The LIFEPAK-style
+  values stay as they are now, and a LIFEPAK face gets its own plan later; which model, its guide and its pictures are
+  asked of him then. No piece of this plan changes.
 
 **DQ11. Paddles and internal handles (answer first).**
 - *Explanation:* The guide covers external paddles and internal handles.
 - *Options:* A, all three accessories (pads, paddles, internal); B, pads only.
 - *Proposal:* A; tell me whether your unit has paddles.
+- **Ruled 12 November 2026: A.** All three accessories are built: adhesive pads, external paddles, internal handles.
+  The owner's unit has external paddles and pads, so a room's default accessories are pads and external paddles;
+  internal handles exist but are not present by default (`config.accessories`, E0).
+- His words: "as you proposed, our unit has external paddles and pads".
 
 **DQ12. Data transfer.**
 - *Explanation:* The M2 exports by USB and WiFi and e-mails 12-leads.
 - *Options:* A, Export saves the incident as a file from the browser, and WiFi/e-mail show "not configured" as an
   unconfigured unit does; B, leave the keys inert.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A** (his words: "the rest as you proposed", in the same message as DQ10): Export saves the
+  incident as a file from the browser; WiFi and e-mail show "not configured". Follows: E9a, and the Export key in E0b.
 
 **DQ13. First-shock energy.**
 - *Explanation:* The M2's factory default is 120 J; ERC 2025 recommends at least 150 J for this waveform type.
@@ -950,17 +1047,27 @@ software matches?**
 - *Explanation:* Appendix C lists device faults (low battery, stuck buttons, printer out of paper, Defib Disabled).
 - *Options:* A, the instructor can inject them; B, not simulated.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A** (his words: "the rest as you proposed", with DQ10): the instructor can inject the device
+  faults of the guide's appendix C. Follows: the faults as an instructor input in E0b, E9b, R3.
 
 **DQ15. Two figures that disagree.**
 - *Explanation:* The guide gives the high-priority alarm repeat as 10 s in chapter 5 [G 5-4] and as 6 s in the
   specifications [G A-7].
 - *Options:* A, chapter 5; B, the specification.
 - *Proposal:* A, until your unit settles it.
+- **Ruled 12 November 2026: A** (his words: "A as you proposed."): the high-priority alarm tone repeats every 10 s, as
+  chapter 5 gives it [G 5-4], until his unit settles it; he times his unit when next at it. Follows: E7b, F4.
 
 **DQ16. Impedance outside the guide's table.**
 - *Explanation:* The device accepts 15–300 Ω [G A-2], but Table A-2 gives delivered energy only for 25–175 Ω [G A-16].
 - *Options:* A, hold the nearest column's value and mark it; B, refuse to show a delivered energy outside the table.
 - *Proposal:* A.
+- **Ruled 12 November 2026: C** (his words: "as you proposed for DQ16"). The question as put to him carried an option C
+  that this text does not show; it is taken from the record's entry: delivered energy outside the guide's impedance
+  table is derived from the waveform if the derivation reproduces the table's documented columns within the guide's
+  tolerance; otherwise the nearest column, marked. The check (the guide's waveform, appendix A-17 to A-26, against
+  Table A-2's columns) belongs to E2b. C6 above (nearest column, until a source or the owner says otherwise) is read
+  with this ruling.
 
 **DQ17. Ready time-out.**
 - *Explanation:* A charged M2 disarms itself after 15 to 60 s, by configuration [G 14-7]; chapter 1 names 60 s "or
@@ -1023,6 +1130,8 @@ software matches?**
   refuses.
 - *Options:* A, allowed, and the Debrief notes it; B, refused by the simulator.
 - *Proposal:* A (the device's own behaviour as documented).
+- **Ruled 12 November 2026: A** (his words: "the rest as you proposed", with DQ10): AED mode under 1 year is allowed as
+  the device behaves; the Debrief notes it. Follows: E5, R2.
 
 **DQ26. The metronome in AED mode.**
 - *Explanation:* It beeps for the whole CPR period, or only once compressions are detected [G 12-9].
@@ -1039,6 +1148,8 @@ software matches?**
 - *Options:* A, yes: a beat classifier on the signal replaces the labels in both (piece B2, about 24 h, after B1);
   B, no: they keep the labels, and the plan says so.
 - *Proposal:* A, so that every bedside verdict comes from the signal as on the real device.
+- **Ruled 12 November 2026: A** (his words: "as proposed"): the bedside monitor's VT runs and PVC counts are classified
+  from the ECG signal. Follows: B2 is no longer conditional; its relearn action is declared in E0b.
 
 **DQ28. The lead or leads the bedside monitor analyses (added by the DQ8 amendment, §3.4.2)**
 - *Explanation:* Today the simulated monitor detects QRS on lead II only, and B1 would read VF there too. Monitors
@@ -1047,6 +1158,10 @@ software matches?**
 - *Options:* A, lead II only, as today; B, multi-lead analysis as a monitor setting (a new monitor command that E0
   would declare), default off.
 - *Proposal:* A now; B if your monitors are set to multi-lead.
+- **Ruled 12 November 2026: B, later; A until then** (his words: "as you proposed"): a monitor setting for the
+  arrhythmia analysis leads, each monitor skin defaulting to what its real counterpart does where a source states it;
+  built after the VF detection itself, from the makers' manuals; lead II only until then. Follows: B1 reads lead II;
+  the setting's command is declared in E0b; the piece that builds the setting has no row yet (DQ35).
 
 **DQ29. The ECG's automatic size (added by the DQ8 amendment, §3.4.1 row I7)**
 - *Explanation:* The bedside ECG's automatic size is set from the simulator's own beat times, so it always finds every
@@ -1054,6 +1169,32 @@ software matches?**
 - *Options:* A, the automatic size reads the monitor's own QRS detections (piece B3, about 4 h, after B1); B, it keeps
   the simulator's beat times.
 - *Proposal:* A.
+- **Ruled 12 November 2026: A** (his words: "as proposed"): the monitor's automatic ECG gain uses the monitor's own beat
+  detections. Follows: B3 is no longer conditional.
+
+**DQ33. A paediatric patient in a generic room (added by the consolidation, from E1a's finding N165)**
+- *Explanation:* E1a (PR 456) gives the M2 the patient type's first-shock reference energy, so a paediatric 50 J shock
+  on the M2 is no longer scored as low energy. A generic room has no patient type, so a paediatric patient there is
+  still scored against the adult energy.
+- *Options (as the finding gives them):* A, the generic model gets a patient type; B, the outcome takes a dose per
+  kilogram.
+- *Proposal:* none from the consolidation (it decides nothing); the orchestrator brings a proposal with the question.
+
+**DQ34. The order of a command's check and its effect (added by the consolidation, from N155 and N174)**
+- *Explanation:* A command is checked when it is sent and takes effect at the next tick (§3.1, the known limit). So a
+  burst "choose the M2, then its configuration" is refused, an energy queued before a model switch reaches the M2
+  unchecked, and a follower can refuse a command the host accepted (repaired today by asking for a fresh snapshot).
+- *Options:* A, the ordering itself is repaired as its own piece (outside this plan's pieces; it concerns every device);
+  B, each piece works around it as §3.1 says (E1 re-checks at apply; R4 and S1 send the model first; followers recover by
+  snapshot).
+- *Proposal:* none from the consolidation; the record calls the ordering "a design piece".
+
+**DQ35. Where the analysis-lead setting is planned (added by the consolidation, from the DQ28 ruling)**
+- *Explanation:* DQ28 = B (later) asks for a monitor setting for the analysis leads, built after the VF detection and
+  from the makers' manuals. No piece in §6 builds it: that would be a new piece, which a consolidation does not add.
+- *Options:* A, a new piece after B1, planned by a later amendment of this plan (after the manuals of M0e's WANTED list
+  are read); B, a part of B1 (B1 grows).
+- *Proposal:* none from the consolidation.
 
 ## 9. Self-review against the codebase
 
@@ -1080,7 +1221,7 @@ software matches?**
 - **Reading coverage (amended by brief 178).** Every page of chapters 1–18 and appendices B and C has been read page by
   page; appendix A only at A-1 to A-16, A-27 to A-29 and A-34 to A-35 (see "Sources" and
   `docs/research/defib-zoll-m2-guide-reading-log.md`).
-- **The hours** are the column's sum (372 h after the DQ8 amendment), estimates.
+- **The hours** are the column's sum (372 h after the DQ8 amendment; 378 h after the consolidation of brief 213, below), estimates.
 - **The DQ8 amendment (brief 182) was read against the code on 3a373c24:** `device-layer.ts` (`stepDevice`,
   `deliverShock`, `VF_RHYTHMS`), `l3/alarms/conditions.ts` (`observeEvent`, `buildConditions`, `CHAIN`), `engine.ts`
   (the detection lead, the per-second HR and its E126 blanking), `l3/qrs.ts`, `l2/ecg/artefacts/body.ts` (the CPR
@@ -1088,3 +1229,15 @@ software matches?**
   A grep for every consumer of the rhythm id and of the `beat` event's `origin` and `template` in `l3`, the renderer,
   the app and the controller found nothing further that is a device's verdict (§3.4.1 I10). Not read: IEC 60601-2-27,
   ANSI/AAMI EC57 and every bedside vendor's arrhythmia disclosure (M0e).
+- **The consolidation (brief 213, 12 November 2026)** was made on `origin/defib-m0e-bedside-alarm-sources` (PR 449,
+  which carries PR 442 and main 45dc8511; neither had merged). It read the orchestrator's record of 12 November (every
+  entry naming a DQ, an owner's ruling or a finding on this plan), the hand-over notes of E0 (179), E1a (197), E2a (198),
+  E7a (199), F0 (200), the guide reading (178, 178b), M0e (189) and R1's stopped start (214), and checked every piece's
+  PR state with `gh pr list --state all`. It changed: the rulings DQ3, DQ5, DQ6, DQ7, DQ9, DQ10, DQ11, DQ12, DQ14, DQ15,
+  DQ16, DQ25, DQ27, DQ28 and DQ29 written under their questions (DQ1, DQ4, DQ8, DQ13, DQ17–DQ20, DQ24 and DQ26 were
+  already there and were checked against the record; DQ4 gained his earlier words); the open questions listed at the top
+  of §8; three new questions DQ33–DQ35; the pieces built marked with their PR and state; B2 and B3 made unconditional; the
+  new piece E0b; and the findings N136, N137, N141, N142, N147, N154, N155, N163, N165, N174 and N182 placed in §3.1,
+  §3.2, §3.3, §3.4, §4.3, §5.1 and the rows of §6. It added no clinical number and changed no number or page already
+  here; the one new number is E0b's 6 h, an estimate. The hours' sum recomputed from the column: **378 h** (372 h plus
+  E0b's 6 h).
