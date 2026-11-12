@@ -261,6 +261,12 @@ export type ExtraEvent =
    */
   | { type: 'cockpit'; t: SimSeconds; tick: Tick; off?: true }
   /**
+   * Brief 195: the host's engine has stopped (an error while it stepped: the monitor's `pme-monitor-failed`), and why.
+   * The host session sends it at once and then once a second, from its own timer, until a new engine runs (a restart's
+   * `timeline`): a follower hears that the host is here and its simulation has stopped, not the silence of a host gone.
+   */
+  | { type: 'engineStopped'; t: SimSeconds; tick: Tick; reason: string }
+  /**
    * The instructor's monitor style, for a phone on the relay (the second screen has its own same-browser style channel).
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
    * Presentation only. `ibp` (E130): the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale), so a
@@ -327,10 +333,10 @@ export type WireEvent = EngineEvent | ExtraEvent;
  * The events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor (`state`),
  * the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward (ViewerSync; the
  * follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the Ventilator view's
- * `cockpit` notice, the instructor's monitor `style` and the card's Case `briefing`. The relay sends a viewer on the network only these (at ×8 the
+ * `cockpit` notice, the instructor's monitor `style`, the card's Case `briefing` and the host's `engineStopped`. The relay sends a viewer on the network only these (at ×8 the
  * rest — measurements, alarm and organ status its own engine computes — was 4/5 of a phone's traffic).
  */
-export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style', 'briefing']);
+export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style', 'briefing', 'engineStopped']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
 export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }>;
 

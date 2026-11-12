@@ -19,7 +19,8 @@
 //    and the relay drops them (a declared deviation from brief §3.7). A network follower gets none: a mobile
 //    monitor over the relay must mirror the cockpit's SETTINGS instead, or show the Ventilator view's patient as
 //    unsupported.
-//  - Liveness: any host message within HOST_SILENT_MS (5 s) while running, else "not answering".
+//  - Liveness: any host message within HOST_SILENT_MS (5 s) while running, else "not answering". A host whose engine
+//    has stopped sends `engineStopped` once a second (brief 195) until its `timeline`: "has stopped", not "not answering".
 //  - Style: a separate channel `pme-style:<CODE>` — `{kind:'ask'}` → `{kind:'style', skin, theme, ibp}`, and every change
 //    (`publishStyle` on the instructor's page). Presentation only, not the session wire. `ibp` (E130): the IBP1/IBP2
 //    lane scales; the follower's monitor draws them (AUTO judges the same range from the same samples).
@@ -185,6 +186,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   let refused: { code: string; message: string } | null = null; // The relay's refusal (a full session)
   let hostAway = false; // The relay says the instructor's page is not connected
   let cockpitAt = -Infinity; // Wall ms of the host's last `cockpit` event (the Ventilator view drives)
+  let stopped = false; // Brief 195: the host said its simulation stopped, and no new engine has run since
   const onRelay = (fr: RelayFrame) => {
     if (fr.relay === 'error') refused = fr;
     if (fr.relay === 'peers') hostAway = !fr.hostOnline;
@@ -305,11 +307,13 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (m.kind === 'hello' && m.role !== 'host') return;
     if (m.kind === 'command') return;
     heard = performance.now();
-    if (m.kind === 'hello') cockpitAt = -Infinity; // A (re)loaded instructor's page: its Ventilator view is not open yet
+    if (m.kind === 'hello') (cockpitAt = -Infinity), (stopped = false); // A (re)loaded instructor's page: its Ventilator view is not open yet, its engine new
     if (m.kind !== 'event') return;
     followBriefing(briefing, m);
     for (const e of m.body) {
       if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
+      if (e.type === 'engineStopped') stopped = true; // brief 195: said once a second while it lasts
+      if (e.type === 'timeline') stopped = false; // a new engine (the instructor restarted the patient)
       if (e.type === 'style' && net) {
         if (defib) wear(defibSkin(e.defib ?? null, e.skin), e.theme); // landscape, the room model's look (R5)
         else wearPhone(e.skin, e.theme);
@@ -334,7 +338,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     pausedEl.set(paused);
     const v = followerStatus({
       code, net: !!net, sync: f.sync?.status ?? 'waiting', transport: transport.status, opened, sinceStartMs: now - t0, refused, hostAway,
-      heardAgoMs: now - heard, paused, cockpitAgoMs: now - cockpitAt,
+      heardAgoMs: now - heard, paused, cockpitAgoMs: now - cockpitAt, stopped,
     });
     if (hold && !v.hold) f.sync?.resync(); // The ventilator view closed — start again from the host's snapshot
     hold = v.hold;

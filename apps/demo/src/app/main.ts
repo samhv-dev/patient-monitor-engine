@@ -35,6 +35,7 @@ import { exploreView } from './views/explore.ts';
 import { mountFastForward } from './fast-forward.ts';
 import { watchHiddenTab } from './hidden-tab.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
+import { stoppedNotice } from './engine-stopped.ts';
 import { deviceKey, pickerView } from './views/join.ts';
 import { learnerRemoteView } from './views/learner-remote.ts';
 import { drugsMenu } from './remote/drugs.ts';
@@ -203,11 +204,26 @@ if (follow && shows === 'pick') {
   // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed
   // is read from this Link by Instructor v2's functions
   session.serveInstructors({ note: (text, kind, t, ev) => link.note(text, kind, t, ev), feed: () => feedOf(link) });
-  // A monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the console
-  // for the gate note's diagnostics
+  // A monitor whose engine stopped is final (no fallback) — say so and name the way out; the reason goes to the console
+  // for the gate note's diagnostics. Brief 195: and the reason to the instructor, in a notice that stays until a new
+  // engine runs (engine-stopped.ts) with the two ways on and what each keeps, and into the log (the session itself tells
+  // the phones: AppSession's own listener)
+  const stopped = stoppedNotice(shell.root, {
+    restart: () => {
+      const inCase = session.caseDoc() !== null;
+      const r = session.restartPatient();
+      if (!r.ok) return toast(`The patient could not restart: ${r.reason}`, 'alert');
+      link.note(inCase ? 'Patient restarted: the case starts again from 0:00' : 'Patient restarted', 'system');
+    },
+    reload: () => location.reload(),
+  });
+  session.onMount(() => stopped.hide()); // a new engine runs
   shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {
-    console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
+    const reason = (e as CustomEvent<{ reason: string }>).detail.reason;
+    console.error('monitor failed:', reason);
     toast('The monitor stopped — Restart the patient', 'alert');
+    link.note(`The simulation stopped: ${reason}`, 'system');
+    stopped.show(reason, session.caseDoc() !== null);
   });
   // FX-11a: the watchdog warns first — a busy or starved worker is slow, not dead, and catches up by itself
   shell.monitorHost.addEventListener('pme-monitor-slow', () => toast('The monitor is slow to answer: the computer is busy. It catches up by itself.'));

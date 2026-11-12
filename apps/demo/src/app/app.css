@@ -470,6 +470,12 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
    Debrief, and neither it nor a toast prints, from any view. */
 .app[data-route='debrief'] .ff-banner { display: none; }
 @media print { .ff-banner, .toasts { display: none !important; } }
+/* Brief 195: the simulation has stopped (engine-stopped.ts). Over every view, the monitor's too, until a new engine runs;
+   alarm red is the patient's, so the warning accent of an 'alert' toast. */
+.engine-stopped { position: fixed; top: calc(var(--chrome-bottom, 0px) + var(--s-4)); left: 50%; transform: translateX(-50%); z-index: 50; width: min(40rem, calc(100vw - 2 * var(--s-4))); max-height: calc(100vh - 2 * var(--s-4)); overflow: auto; padding: var(--s-4); background: var(--bezel-3); color: var(--text-strong); border: 1px solid var(--line-strong); border-left: 4px solid var(--danger); border-radius: var(--r-control); box-shadow: 0 6px 24px rgb(0 0 0 / 0.45); }
+.engine-stopped h2 { margin: 0 0 var(--s-2); }
+.engine-stopped-way { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-2) var(--s-4); align-items: start; margin-top: var(--s-4); }
+@media (max-width: 34rem) { .engine-stopped-way { grid-template-columns: 1fr; } }
 .ff-group { display: inline-flex; align-items: center; gap: var(--s-1); }
 
 /* FU-11 (owner ruling Q3): the learner monitor's status and its own Sound / Silence, under the monitor */
