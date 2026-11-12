@@ -37,24 +37,11 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.version.outputs.playwright }}-noble
     steps:
+      - uses: actions/checkout@v4
       - run: |
           apt-get update -qq && apt-get install -y -qq binutils python3 > /dev/null
-          L=$(ls /ms-playwright/webkit-*/minibrowser-wpe/lib/libWPEWebKit-2.0.so.1); ls -l $L; readelf -S -W $L | grep -E ' \.text|\.rodata|\.dynsym|\.symtab'
-          T=$(readelf -S -W $L | awk '$2==".text"{print $4}')
-          nm -D --defined-only $L | sort > /tmp/dyn.txt; wc -l /tmp/dyn.txt
-          nm --defined-only $L 2>&1 | head -2
-          for o in 0x592439d 0x5924476 0x5928253 0x5921547 0x59226c2 0x5924b68 0x59a82f7 0x5afbea8 0x5919a6e 0x5918bea 0x59236c3 0x590dbc9 0x5910873; do
-            a=$(printf '%x' $((0x$T + o)))
-            echo "== text+$o = 0x$a"
-            python3 -c "import sys;a=int('$a',16);best=None
-          for l in open('/tmp/dyn.txt'):
-              p=l.split(None,2)
-              if len(p)<3: continue
-              v=int(p[0],16)
-              if v<=a and (best is None or v>best[0]): best=(v,p[2].strip())
-          print('   nearest dynamic symbol before: %s +0x%x'%(best[1][:200],a-best[0]) if best else '   none')"
-            objdump -d -C --no-show-raw-insn --start-address=0x$(printf '%x' $((0x$a - 48))) --stop-address=0x$(printf '%x' $((0x$a + 4))) $L | tail -14
-          done
+          L=$(readlink -f /ms-playwright/webkit-*/minibrowser-wpe/lib/libWPEWebKit-2.0.so.1)
+          python3 .github/diag/strings_near.py $L 0x592439d 0x5924476 0x5928253 0x5921547 0x59226c2 0x5924b68 0x59a82f7 0x5afbea8 0x5919a6e 0x5910873 0x5918bea 0x59236c3
 
   repeat:
     needs: version
