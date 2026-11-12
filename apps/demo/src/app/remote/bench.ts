@@ -8,7 +8,7 @@
 // and its answer is what the tray shows (D3). The listed diluents come first and every other diluent is offered too:
 // choosing it is the learner's act, which the format grades (LQ11); nothing here warns before the instructor's notice
 // (LQ3), so the bench never shows a finding.
-import { prepare, type Formulary, type Product, type Source, type Stability } from '@pme/controller';
+import { prepare, type Formulary, type Product, type Stability } from '@pme/controller';
 import { drugName } from '../glossary.ts';
 import { findDrugs, unitText } from '../drugs.ts';
 import { button, h, select, setText, stepper, type Stepper } from '../ui.ts';
@@ -54,13 +54,7 @@ export const mmss = (s: number): string => {
 export const perMlText = (amount: number, unit: string): string => `${fmt(amount)} ${unitText(unit)}/mL`;
 
 /** A source as the phone names it (the finding after the notice, a product's label). */
-export function sourceText(s: Source | undefined, key: string): string {
-  if (!s) return key;
-  if (s.kind === 'stabilis') return `Stabilis ${s.id}`;
-  if (s.kind === 'trissel') return `Trissel ${s.edition}, p. ${s.page}`;
-  if (s.kind === 'monograph') return `${s.product} (${s.issuer})`;
-  return s.citation;
-}
+export { sourceText } from '../prep-words.ts'; // L13: one DOM-free place for the naming of sources
 
 /** A product as the bench names it: the label's product name when the strength's source is a label, then its strength and form. */
 export function productWords(f: Formulary, p: Product): { name: string; detail: string } {

@@ -1,129 +1,188 @@
-/* The EDP-TS face (plan vent-skin-edp-ts.md §2.2, §5, mock-up m1; piece V1): plain shapes, no image, no mark.
-   Colours come ONLY from face.json through the --edp-* custom properties face.ts sets (provenance.test.ts forbids a
-   colour literal here). Sizes are the device's 800 x 600 screen (research/57 R-03) in CSS px and a plain bezel around
-   it; region proportions after the photograph (face.json layout.proportions, eng: not measured in pixels). */
-body.edp-ts { background: var(--edp-bezel); overflow: hidden; }
-body.edp-ts #screen { position: fixed; inset: 0; display: block; background: var(--edp-bezel); overflow: hidden; }
-body.edp-ts .credit { color: var(--edp-ink); }
+/* The EDP-TS face (plan vent-skin-edp-ts.md §5 as amended by brief 159, piece VF): the device drawn to the owner's
+   photographs. Colours ONLY from face.json through the --edp-* custom properties (provenance.test.ts forbids a colour
+   literal here); every region's box is placed by device.ts from face.json's measured grid (research/57 P-20 to P-35), so
+   this sheet holds the look of each part, not where it sits. Sizes are design px of the 800 x 600 screen (R-03) and the
+   housing around it; face.ts scales the whole device, so nothing here reflows. */
+body.edp-ts { background: var(--edp-room); overflow: hidden; }
+body.edp-ts #screen { position: fixed; inset: 0; display: block; background: var(--edp-room); overflow: hidden; }
+body.edp-ts .credit { bottom: 11px; z-index: 31; color: var(--edp-inkLight); opacity: .8; }
 /* the instructor's drawer, closed, is out of reach (no tab stop, no screen-reader text behind the device) */
 body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; }
-.edp { position: absolute; inset: 0; font-family: var(--font, system-ui, sans-serif); color: var(--edp-ink); }
-.edp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
-.edp-dev { position: absolute; left: 50%; top: 50%; width: 1000px; height: 724px; transform-origin: 50% 50%;
-  background: var(--edp-bezel); border-radius: 14px; }
-.edp button { font-family: inherit; color: inherit; cursor: pointer; }
-.edp button:focus-visible { outline: 3px solid var(--edp-selected); outline-offset: 1px; }
+.edp { position: absolute; inset: 0; font-family: var(--edp-font); color: var(--edp-ink); }
+.edp-sr { color: var(--edp-inkLight); position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
+.edp button { font-family: inherit; color: inherit; cursor: pointer; padding: 0; margin: 0; border: 0; background: none; }
+.edp button:focus-visible { outline: 3px solid var(--edp-selected); outline-offset: 1px; z-index: 9; }
+.edp-dev, .edp-dev * { box-sizing: border-box; }
+.edp-dev [style*="left"] { position: absolute; }
 
-/* the screen */
-.edp-screen { position: absolute; left: 14px; top: 14px; width: 800px; height: 600px; background: var(--edp-panel);
-  display: grid; grid-template-columns: 82px 1fr 210px 74px; grid-template-rows: 70px 28px 24px 1fr 88px;
-  grid-template-areas: "head head head head" "tags tags tags tags" "msg msg msg msg" "left curves loops right" "bottom bottom bottom bottom";
-  overflow: hidden; border: 2px solid var(--edp-strip); }
-.edp-head { grid-area: head; display: grid; grid-template-columns: 150px repeat(8, 1fr); }
-.edp-hdr { padding: 2px 4px; line-height: 1.05; min-width: 0; }
-.edp-hdr .cat { color: var(--edp-category); font-weight: 700; font-size: 22px; }
-.edp-hdr .mn { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.edp-hdr .bk, .edp-hdr .dt { font-size: 10px; }
-.edp-hdr .dt span + span { margin-left: 4px; }
-.edp-cell { border-left: 1px solid var(--edp-strip); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
-.edp-cell .v { font-size: 22px; font-weight: 700; }
-.edp-cell .u, .edp-cell .c { font-size: 10px; }
-.edp-cell .n { font-size: 12px; font-weight: 700; }
-.edp-tags { grid-area: tags; display: grid; grid-template-columns: 150px repeat(8, 1fr); align-items: stretch; }
-.edp-tagpair { display: flex; gap: 2px; padding: 1px 3px; }
-.edp-tag { flex: 1; min-width: 0; min-height: 24px; background: var(--edp-tag); border: 1px solid var(--edp-strip); border-radius: 3px;
-  display: flex; align-items: center; justify-content: center; gap: 3px; padding: 0 2px; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; }
-.edp-tag .sym { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; }
-.edp-tag .sym.hi { border-bottom: 7px solid var(--edp-ink); }
-.edp-tag .sym.lo { border-top: 7px solid var(--edp-ink); }
-.edp-tag.sel { background: var(--edp-selected); }
-.edp-tag.off { border-style: dashed; color: var(--edp-inkDim); }
-.edp-msg { grid-area: msg; background: var(--edp-msgBar); display: flex; align-items: center; gap: 4px; padding: 0 8px; font-size: 13px; font-weight: 700; }
-.edp-msg .ico { width: 18px; height: 16px; border: 1px solid var(--edp-strip); background: var(--edp-axis); }
-.edp-msg .ico.on { background: var(--edp-panel); }
-.edp-msg .txt { flex: 1; text-align: center; }
-.edp-msg .txt.why { font-weight: 400; font-style: italic; }
+/* ---- the housing (P-31): a cream-grey front, lit from the upper left; the recessed dark frame round the LCD ---- */
+.edp-dev { position: absolute; transform-origin: 50% 50%; background: var(--edp-housingLo); border-radius: 28px; }
+.edp-face { border-radius: 20px; background: linear-gradient(to bottom, transparent 62%, var(--edp-housingLo) 100%), linear-gradient(100deg, var(--edp-housingLo) 0%, var(--edp-housing) 40%, var(--edp-housing) 80%, var(--edp-housingHi) 100%);
+  box-shadow: inset 2px 2px 3px var(--edp-housingHi), inset -2px -3px 4px var(--edp-housingLo); }
+/* the recessed frame (P-54, P-64): an outer dark edge, a grey face about 12 px wide shadowed from the top, then the
+   near-black gasket round the LCD */
+.edp-frame { border-radius: 22px; background: linear-gradient(to bottom, var(--edp-frameEdge), var(--edp-frame) 30%, var(--edp-frame));
+  box-shadow: 0 0 0 3px var(--edp-frameEdge), inset 0 8px 10px -2px var(--edp-gasket), inset 0 -2px 3px var(--edp-housing), 0 2px 1px var(--edp-housing); }
+.edp-screen { border-radius: 8px; overflow: hidden; background: var(--edp-panel); box-shadow: 0 0 0 6px var(--edp-gasket); }
+.edp-screen > * { position: absolute; }
 
-.edp-left { grid-area: left; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px 3px; font-size: 11px; text-align: center; border-right: 1px solid var(--edp-strip); }
-.edp-left .bat { width: 30px; height: 11px; border: 1px solid var(--edp-ink); background: var(--edp-insp); }
-.edp-left .lung { width: 26px; height: 18px; border-radius: 13px 13px 3px 3px; background: var(--edp-lampOff); }
-.edp-left .lung.on { background: var(--edp-strip); }
-.edp-left .lv { font-size: 17px; font-weight: 700; }
-.edp-left .lab { font-weight: 700; }
-.edp-left .edp-tag { width: 70px; flex: 0 0 auto; }
-.edp-curves { grid-area: curves; display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 3px; padding: 3px 3px 3px 0; min-height: 0; }
-.edp-lane { position: relative; display: grid; grid-template-columns: 28px 1fr; background: var(--edp-wave); min-height: 0; }
-.edp-lane .ax { background: var(--edp-axis); position: relative; font-size: 9px; }
-.edp-lane .ax span { position: absolute; right: 2px; transform: translateY(-50%); }
-.edp-lane .ax span:first-child { transform: none; }
-.edp-lane .ax span:last-child { transform: translateY(-100%); }
-.edp-lane .lt { position: absolute; left: 34px; top: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
-.edp-lane .s { position: absolute; right: 4px; bottom: 2px; color: var(--edp-inkLight); font-size: 10px; }
-.edp-lane canvas, .edp-loop canvas { width: 100%; height: 100%; display: block; }
-.edp-loops { grid-area: loops; display: grid; grid-template-rows: 1fr 1fr; gap: 3px; padding: 3px 3px 3px 0; min-height: 0; position: relative; }
-.edp-loop { position: relative; background: var(--edp-wave); min-height: 0; }
-.edp-loop .lt { position: absolute; left: 4px; top: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
-.edp-loop .lx { position: absolute; right: 4px; bottom: 2px; color: var(--edp-inkLight); font-size: 11px; font-weight: 700; }
-.edp-right { grid-area: right; display: flex; flex-direction: column; gap: 3px; padding: 3px; }
-.edp-rkey { flex: 1; min-width: 0; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 4px; font-size: 10px; font-weight: 700; line-height: 1.1; padding: 1px; overflow: hidden; }
-.edp-bottom { grid-area: bottom; display: flex; gap: 3px; padding: 3px; border-top: 1px solid var(--edp-strip); }
-.edp-key { flex: 1; min-width: 0; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 4px; padding: 0;
-  display: grid; grid-template-rows: 1fr auto auto; overflow: hidden; }
-.edp-key .v { font-size: 22px; font-weight: 700; align-self: end; line-height: 1; }
-.edp-key .u { font-size: 10px; min-height: 12px; }
-.edp-key .n { background: var(--edp-strip); color: var(--edp-inkLight); font-size: 11px; font-weight: 700; padding: 1px 0; }
-.edp-key svg { width: 34px; height: 26px; align-self: end; justify-self: center; }
-.edp-key svg * { stroke: var(--edp-ink); fill: none; stroke-width: 2.5; }
-.edp-key.sel { background: var(--edp-selected); }
-.edp-key.shown { color: var(--edp-inkDim); cursor: default; }
-.edp-key.off, .edp-rkey.off, .edp-hkey.off { border-style: dashed; color: var(--edp-inkDim); }
-.edp .r { display: block; font-size: 9px; font-weight: 400; font-style: italic; color: var(--edp-inkDim); line-height: 1.1; }
-.edp-key.sel .r { color: var(--edp-ink); }
+/* ---- the header (R-06, R-07; P-21, P-22) ---- */
+.edp-head { background: var(--edp-panel); }
+.edp-tl > div { position: absolute; white-space: nowrap; line-height: 1; }
+.edp-tl .cat { left: 6px; top: 7px; font-size: 26px; font-weight: 700; color: var(--edp-category); letter-spacing: -.3px; }
+.edp-tl .mn { left: 4px; top: 36px; font-size: 19px; letter-spacing: -.9px; }
+.edp-tl .bk { left: 6px; top: 61px; font-size: 10.5px; font-weight: 700; }
+.edp-tl .dt { left: 192px; top: 8px; font-size: 10.5px; font-weight: 700; }
+.edp-tl .tm { left: 199px; top: 19px; font-size: 10.5px; font-weight: 700; }
+.edp-cell { border-left: 2px solid var(--edp-divider); text-align: center; line-height: 1; height: 58px !important; top: 3px !important; }
+.edp-cell > span { position: absolute; left: 0; right: 0; white-space: nowrap; }
+.edp-cell .v { color: var(--edp-numeral); top: 5px; font-size: 23px; letter-spacing: -.8px; }
+.edp-cell .u { top: 30px; font-size: 10px; color: var(--edp-inkSoft); }
+.edp-cell .n { top: 45px; font-size: 11px; font-weight: 700; }
+.edp-cell .n.fTotal::first-letter { font-style: italic; font-family: Georgia, "Times New Roman", serif; font-size: 15px; }
+.edp-cell .n.ve { font-size: 9.5px; }
+.edp-cell .n.ve::first-letter { font-size: 13px; }
+.edp-cell.dim > span { opacity: .22; }
 
-/* the alarm message box: on the right of the screen, red or yellow by priority (research/57 R-16, R-17) */
-.edp-alarm { position: absolute; right: 80px; top: 126px; min-width: 190px; padding: 6px 10px; font-weight: 700; font-size: 14px; text-align: center; border: 1px solid var(--edp-ink); z-index: 3; }
+/* ---- the limit tags (R-12, L-17; P-09, P-23): one yellow tag, its step symbol at the left, high over low ---- */
+.edp-tag { background: var(--edp-tag); border-radius: 3px; box-shadow: inset -1px -1px 0 var(--edp-legend), inset 1px 1px 0 var(--edp-lampOff); color: var(--edp-ink); }
+.edp-tag > svg { position: absolute; left: 3px; top: 2px; width: 25px; height: 21px; }
+.edp-tag.key, .edp-tag.pale { border-radius: 5px; background: var(--edp-tagKey); }
+.edp-tag.key > svg { left: 14px; width: 27px; height: 18px; }
+.edp-tag.key.hi > svg { top: 26px; }
+.edp-tag.key.lo > svg { top: 4px; }
+.edp-tag.sel { background: var(--edp-selected); color: var(--edp-inkLight); }
+.edp-limit { z-index: 2; }
+.edp-limit .tv { position: absolute; right: 6px; font-size: 11px; line-height: 12px; white-space: nowrap; }
+.edp-limit.sel .tv { color: var(--edp-inkLight); }
+.edp-limit[data-ctl="tag:pmax"] .tv, .edp-limit[data-ctl="tag:pLo"] .tv { left: 0; right: 0; text-align: center; font-size: 25px; line-height: 24px; }
+
+/* ---- the message bar (R-13; P-08, P-24): a blue rounded square, three faint places, the message at the left ---- */
+.edp-msg { background: var(--edp-msgBar); border-top: 1px solid var(--edp-panel); }
+.edp-msg .ico { position: absolute; top: 5px; width: 24px; height: 23px; color: var(--edp-ink); opacity: .22; }
+.edp-msg .ico:nth-child(1) { left: 3px; } .edp-msg .ico:nth-child(2) { left: 28px; } .edp-msg .ico:nth-child(3) { left: 53px; } .edp-msg .ico:nth-child(4) { left: 78px; }
+.edp-msg .ico.on { opacity: 1; background: var(--edp-winSel); color: var(--edp-inkLight); border-radius: 4px; box-shadow: 0 0 0 1px var(--edp-inkLight); }
+.edp-msg .ico svg { width: 100%; height: 100%; }
+.edp-msg .txt { position: absolute; left: 134px; top: 9px; font-size: 12.5px; font-weight: 700; color: var(--edp-ink); white-space: nowrap; }
+
+/* ---- the left column (R-18; P-10, P-25) ---- */
+.edp-left { background: var(--edp-panel); }
+.edp-screen .battery svg { display: block; width: 32px; height: 15px; margin: 0 auto; }
+.edp-screen .battery .bf { fill: var(--edp-batteryOn); stroke: var(--edp-knobShade); stroke-width: .6; }
+.edp-screen .lung svg { display: block; width: 40px; height: 40px; margin: 0 auto; color: var(--edp-lungs); }
+.edp-screen .lung:not(.on) { visibility: hidden; }
+.edp-screen .lab { text-align: center; font-size: 12.5px; line-height: 14px; white-space: nowrap; }
+.edp-screen .lab.plimits { font-weight: 700; font-size: 12px; line-height: 13px; white-space: normal; }
+.edp-screen .lv { color: var(--edp-numeral); text-align: center; font-size: 22px; line-height: 22px; }
+.edp-screen .rule { border-top: 2px solid var(--edp-divider); margin: 0 6px; width: auto !important; left: 0; right: 0; }
+
+/* ---- the curves and loops (R-26 to R-31; P-11, P-12, P-26, P-27) ---- */
+.edp-scale { background: var(--edp-axis); }
+.edp-scale span { position: absolute; right: 3px; transform: translateY(-50%); font-size: 10px; line-height: 10px; color: var(--edp-inkSoft); }
+.edp-scale span.first { transform: translateY(1px); }
+.edp-scale span.last { transform: translateY(-100%); }
+.edp-panel { background: linear-gradient(to bottom, var(--edp-wave) 0%, var(--edp-wave) 30%, var(--edp-waveLow) 100%); }
+.edp-panel canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.edp-panel .lt { position: absolute; left: 6px; top: 4px; color: var(--edp-inkLight); font-weight: 700; font-size: 12px; white-space: nowrap; }
+.edp-panel .s { position: absolute; right: 4px; bottom: 4px; color: var(--edp-inkLight); font-weight: 700; font-size: 11px; }
+.edp-panel.loop .lx { position: absolute; right: 4px; color: var(--edp-inkLight); font-weight: 700; font-size: 12px; white-space: nowrap; }
+.edp-time { background: var(--edp-axis); }
+.edp-time .tl span { position: absolute; top: 1px; transform: translateX(-50%); font-size: 10px; line-height: 10px; color: var(--edp-inkSoft); }
+.edp-time .tl span.first { transform: translateX(1px); }
+.edp-time .tl span.last { transform: translateX(-100%); }
+
+/* ---- the pictogram column (R-33; P-07, P-28): pale keys with a soft raised edge, pictograms only ---- */
+.edp-rkey { background: var(--edp-key) !important; border-radius: 6px; color: var(--edp-ink);
+  box-shadow: inset 2px 2px 0 var(--edp-inkLight), inset -2px -2px 0 var(--edp-inkSoft), 0 1px 1px var(--edp-inkSoft); }
+.edp-rkey svg { position: absolute; left: 8px; top: 8px; width: 34px; height: 34px; }
+.edp-rkey .pf { opacity: .55; }
+.edp-rkey.dim svg { opacity: .3; }
+
+/* ---- the settings row (R-35; P-13, P-29): value large and thin, unit small, the label on a light-blue band ---- */
+.edp-tile { background: var(--edp-key) !important; border-radius: 7px; overflow: hidden; text-align: center; line-height: 1;
+  box-shadow: inset 2px 2px 0 var(--edp-inkLight), inset -1px -1px 0 var(--edp-inkSoft), 0 1px 2px var(--edp-inkSoft); }
+.edp-tile > span { position: absolute; left: 0; right: 0; white-space: nowrap; }
+.edp-tile .v { color: var(--edp-numeral); top: 8px; font-size: 24px; letter-spacing: -.5px; }
+.edp-tile .v svg { width: 32px; height: 27px; }
+.edp-tile .v .fw { color: var(--edp-flowWave); }
+.edp-tile .u { top: 34px; font-size: 10px; color: var(--edp-inkSoft); }
+.edp-tile.pict .n { height: 28px; line-height: 12px; padding: 2px 16px 0; white-space: normal; font-size: 11px; color: var(--edp-inkSoft); }
+.edp-tile.pict .v { top: 2px; }
+.edp-tile .n { bottom: 0; height: 18px; line-height: 18px; background: var(--edp-tileBand); font-size: 11px; font-weight: 700; }
+.edp-tile .n.f { font-style: italic; font-family: Georgia, "Times New Roman", serif; font-size: 13px; }
+.edp-tile.sel { background: var(--edp-selected) !important; color: var(--edp-inkLight); }
+.edp-tile.sel .v { color: var(--edp-inkLight); }
+.edp-tile.sel .u, .edp-tile.sel .n { background: var(--edp-selected); color: var(--edp-inkLight); }
+.edp-tile.dim > span { opacity: .4; }
+
+/* ---- the window (P-19, P-30): at the right over the loops; a blue title bar; pale entries; the chosen one solid blue ---- */
+.edp-winhost { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.edp-win { pointer-events: auto; background: var(--edp-winGround); border: 1px solid var(--edp-divider); border-radius: 3px; box-shadow: 0 2px 4px var(--edp-inkSoft); }
+.edp-win > * { position: absolute; }
+.edp-win .t { left: 0; right: 0; top: 0; height: 30px; padding-left: 9px; line-height: 31px; font-size: 16px; color: var(--edp-ink);
+  background: var(--edp-title); }
+.edp-entry { display: flex; align-items: center; gap: 6px; padding: 0 7px !important; text-align: left; font-size: 15.5px; white-space: nowrap;
+  background: var(--edp-key) !important; border-radius: 3px; box-shadow: inset 1px 1px 0 var(--edp-inkLight), inset -2px -2px 0 var(--edp-inkSoft); }
+.edp-entry.focus { background: var(--edp-winSel) !important; color: var(--edp-inkLight); box-shadow: inset 0 0 0 2px var(--edp-category); }
+.edp-entry .val { margin-left: auto; font-size: 14px; }
+.edp-entry .val.sel { background: var(--edp-selected); color: var(--edp-inkLight); padding: 0 4px; }
+.edp-entry .more { position: absolute; right: 4px; top: 0; font-size: 11px; line-height: 11px; }
+.edp-entry.cells .lbl { flex: 1; font-size: 13px; }
+.edp-cell-btn { position: static !important; min-width: 56px; height: 26px; background: var(--edp-tag) !important; border-radius: 3px; font-size: 12px; }
+.edp-cell-btn.sel { background: var(--edp-selected) !important; color: var(--edp-inkLight); }
+.edp-cell-btn.focus { outline: 3px solid var(--edp-selected); }
+.edp-win .ft { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--edp-inkSoft); line-height: 16px; }
+.edp-win.conf p { position: static; margin: 0; padding: 0 12px; font-size: 14px; line-height: 22px; }
+.edp-win.conf .t + p { margin-top: 44px; }
+
+/* the alarm message box (R-16, R-17): red or yellow by priority, at the right of the message bar */
+.edp-alarm { z-index: 3; border: 1px solid var(--edp-ink); border-radius: 3px; text-align: center; font-weight: 700; font-size: 14px; line-height: 25px; }
 .edp-alarm.high { background: var(--edp-alarmHigh); }
 .edp-alarm.medium, .edp-alarm.low { background: var(--edp-alarmMed); }
 
-/* windows (research/57 O-09 to O-14, E-01, E-02, E-06, A-21) */
-.edp-wins { position: absolute; left: 96px; top: 130px; display: flex; gap: 8px; z-index: 4; }
-.edp-win { width: 262px; background: var(--edp-panel); border: 2px solid var(--edp-strip); display: flex; flex-direction: column; }
-.edp-win .t { background: var(--edp-title); color: var(--edp-ink); font-size: 15px; font-weight: 700; padding: 6px 8px; }
-.edp-win .rows { display: flex; flex-direction: column; gap: 3px; padding: 6px; }
-.edp-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: 28px; padding: 2px 8px; text-align: left;
-  background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 2px; font-size: 13px; }
-.edp-row.focus { background: var(--edp-selected); }
-.edp-row.off { border-style: dashed; color: var(--edp-inkDim); flex-wrap: wrap; }
-.edp-row.off .r { flex-basis: 100%; }
-.edp-row .cells { display: flex; gap: 3px; }
-.edp-row .edp-tag { min-width: 58px; }
-.edp-win .ft { font-size: 11px; font-weight: 700; text-align: center; padding: 4px 4px 6px; }
-.edp-win.conf { width: 300px; }
-.edp-win.conf p { margin: 10px 12px; font-size: 13px; }
-
-/* Words on the measured blue (C-10) and slate (C-11) are dark: white on them measures under 4.5:1 (WCAG AA); the
-   photographs show white. A difference for the owner's eye, said in the pull request. */
-
-/* the hardware beside and under the screen (research/57 H-01 to H-31); the bezel plain */
-.edp-side { position: absolute; left: 830px; top: 14px; width: 156px; height: 600px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.edp-lamps { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; }
-.edp-lamp { width: 30px; height: 26px; background: var(--edp-lampOff); }
+/* ---- the housing's printed words, lamps, membrane keys, knob (P-14 to P-17, P-32 to P-35) ---- */
+.edp-legend { color: var(--edp-legend); font-size: 13px; font-weight: 700; line-height: 13px; }
+.edp-legend.r { text-align: right; } .edp-legend.c { text-align: center; }
+.edp-legend.pw { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+.edp-legend.pw svg { height: 17px; width: auto; color: var(--edp-legend); }
+/* the plug lit green: mains present (P-69; eng: the model has no power state, so mains is always present) */
+.edp-legend.pw .plugfill { fill: var(--edp-plugLit); }
+.edp-lamp { background: var(--edp-lampOff); box-shadow: inset 0 -3px 4px var(--edp-housing); }
 .edp-lamp.tri { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.edp-lamp.circ { border-radius: 50%; }
-.edp-lamp.on-high { background: var(--edp-lampHigh); }
-.edp-lamp.on-med { background: var(--edp-lampMed); }
-.edp-hkey { min-width: 72px; min-height: 40px; background: var(--edp-key); border: 1px solid var(--edp-strip); border-radius: 5px; font-size: 12px; font-weight: 700; padding: 2px 6px; line-height: 1.15; }
-.edp-hkey.lit { background: var(--edp-selected); }
-.edp-knob { width: 116px; height: 116px; border-radius: 50%; margin-top: auto; background: var(--edp-panel); border: 6px solid var(--edp-selected);
-  touch-action: none; position: relative; }
-.edp-knob .mark { position: absolute; left: 50%; top: 6px; width: 4px; height: 22px; margin-left: -2px; background: var(--edp-strip); border-radius: 2px; transform-origin: 2px 47px; }
-.edp-under { position: absolute; left: 14px; top: 628px; width: 800px; height: 84px; display: flex; align-items: center; gap: 14px; padding-left: 20px; }
-.edp-lock { width: 22px; height: 16px; border: 3px solid currentColor; border-radius: 3px; display: inline-block; margin-top: 8px; position: relative; }
-.edp-lock::before { content: ""; position: absolute; left: 2px; top: -12px; width: 12px; height: 10px; border: 3px solid currentColor; border-bottom: 0; border-radius: 7px 7px 0 0; }
-.edp-power { margin-left: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; }
-.edp-power span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; background: var(--edp-lampOff); }
-.edp-power span.on::before { background: var(--edp-insp); }
+.edp-lamp.circ { border-radius: 50%; width: 38px !important; height: 38px !important; }
+.edp-lamp.on-high { background: radial-gradient(circle at 50% 65%, var(--edp-lampOff), var(--edp-lampHigh) 45%); }
+.edp-lamp.on-med { background: radial-gradient(circle at 50% 50%, var(--edp-lampOff), var(--edp-lampMed) 50%); }
+.edp-hkey .cap { position: absolute; inset: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  background: var(--edp-hkey); border-radius: 6px; color: var(--edp-hkeyInk);
+  box-shadow: inset 0 1px 0 var(--edp-lampOff), 0 2px 3px var(--edp-knobShade); font-size: 13px; font-weight: 700; line-height: 13px; text-align: center; }
+.edp-hkey.outlined .cap { box-shadow: inset 0 0 0 2px var(--edp-hkeyInk), 0 1px 2px var(--edp-knobShade); }
+.edp-hkey.lit .cap { background: var(--edp-selected); }
+.edp-hkey .cap svg { height: 24px; width: auto; }
+.edp-hkey .kp svg { height: 9px; }
+.edp-knob { touch-action: none; border-radius: 50%; }
+.edp-knob .ring, .edp-knob .base, .edp-knob .cap { position: absolute; border-radius: 50%; }
+.edp-knob { filter: drop-shadow(5px 7px 5px var(--edp-knobShade)); }
+.edp-knob .ring { left: -2px; top: -2px; width: calc(var(--base) + 4px); height: calc(var(--base) + 4px); border: 3px solid var(--edp-ringDark); }
+.edp-knob.lit .ring { left: -5px; top: -5px; width: calc(var(--base) + 10px); height: calc(var(--base) + 10px); border: 6px solid var(--edp-ringLit); box-shadow: 0 0 14px 4px var(--edp-ringLit), inset 0 0 8px var(--edp-ringLit); }
+.edp-knob .base { left: 0; top: 0; width: var(--base); height: var(--base); background: radial-gradient(circle at 35% 30%, var(--edp-lampOff), var(--edp-knobBase) 55%, var(--edp-ringDark) 100%);
+  box-shadow: inset -3px -4px 6px var(--edp-ringDark); }
+/* the cylinder: the cap's face, offset toward the lower right, its side drawn as stacked shadows back to the base */
+.edp-knob .cap { width: var(--cap); height: var(--cap); left: calc(var(--base) / 2 - var(--cap) / 2 + 38px); top: calc(var(--base) / 2 - var(--cap) / 2 + 25px);
+  background: radial-gradient(circle at 38% 34%, var(--edp-lampOff), var(--edp-knob) 55%, var(--edp-ringDark) 100%);
+  /* the side wall, back to the base: lit near the top face, in shade toward the base (P-17, P-60) */
+  box-shadow: 0 0 0 1px var(--edp-ringDark), -4px -3px 0 var(--edp-knobBase), -9px -6px 0 var(--edp-knobBase), -14px -9px 0 var(--edp-knobBase), -19px -12px 0 var(--edp-knobBase), -24px -16px 0 var(--edp-knobBase), -30px -20px 0 var(--edp-knobBase), -36px -24px 1px var(--edp-knobBase), -36px -24px 0 1px var(--edp-ringDark), 3px 4px 5px var(--edp-knobShade); }
+/* the side wall's shade: a darker band under the lit face, toward the lower left */
+.edp-knob .cap::before { content: ""; position: absolute; inset: 0; border-radius: 50%; transform: translate(-6px, -4px); z-index: -1; box-shadow: -2px 3px 6px 2px var(--edp-ringDark); }
+/* the turn's only cue (eng: the real knob carries no mark; a resident needs to see a detent register) */
+.edp-knob .mark { position: absolute; left: 50%; top: 8px; width: 3px; height: 16px; margin-left: -1.5px; border-radius: 2px; background: var(--edp-housing); opacity: .5; transform-origin: 1.5px calc(var(--cap) / 2 - 8px); }
 
-/* the simulator's own handle, OUTSIDE the bezel (plan §4.3): the instructor's tools, not the device's */
-.edp-simhandle { position: fixed; right: 8px; bottom: 8px; z-index: 30; min-height: 32px; padding: 4px 12px; border-radius: 6px;
-  background: var(--edp-strip); color: var(--edp-inkLight); border: 1px solid var(--edp-ink); font: 600 13px var(--font, system-ui, sans-serif); cursor: pointer; }
+/* not simulated yet (R20): drawn as the device draws it; the drawer's switch marks it with a hatch */
+.edp-show-unsim [data-unsim]::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; opacity: .6;
+  background: repeating-linear-gradient(45deg, var(--edp-lampHigh) 0 3px, transparent 3px 8px); outline: 2px dashed var(--edp-lampHigh); }
+
+/* ---- OUTSIDE the device: the simulator's strip (R20) and its handle ---- */
+.edp-strip { position: fixed; left: 0; right: 0; bottom: 0; height: 34px; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 0;
+  background: var(--edp-simStrip); color: var(--edp-inkLight); font: 13px system-ui, sans-serif; }
+.edp-strip .why { flex: 1; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.edp-simhandle { min-height: 28px; padding: 3px 12px; border-radius: 6px; background: var(--edp-room); color: var(--edp-inkLight);
+  border: 1px solid var(--edp-inkSoft); font: 600 13px system-ui, sans-serif; cursor: pointer; }
