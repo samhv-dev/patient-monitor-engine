@@ -4,6 +4,7 @@ import type { DefibEvent } from '../../types-device.ts';
 import type { EngineEvent, RhythmId } from '../../types.ts';
 import { RHYTHMS } from '../../l2/ecg/rhythms.ts';
 import type { DeviceProfile } from '../alarms/profile.ts';
+import { energyReason } from './m2-vocabulary.ts';
 
 export type DefibSpec = NonNullable<DeviceProfile['defib']>;
 /** Skins without a defibrillator (saadat-like, philips-like: bedside monitors) still accept shocks as patient
@@ -47,7 +48,12 @@ export function chargeTimeS(spec: DefibSpec, energyJ: number): number {
   return (pts[pts.length - 1] as readonly [number, number])[1];
 }
 
-export function validateDefib(d: DefibState, ev: DefibEvent): string | undefined {
+/**
+ * `energies`: the room's model's energy list and name (plan E0: the ZOLL M2's [G A-2]); an energy outside it is refused
+ * with a reason a face can show. Absent (the generic model, a skin's defibrillator): any 1–360 J, as before.
+ */
+export function validateDefib(d: DefibState, ev: DefibEvent, energies?: { list: readonly number[]; name: string }): string | undefined {
+  if (energies && (ev.action === 'selectEnergy' || (ev.action === 'charge' && ev.energyJ !== undefined))) return energyReason(ev.energyJ, energies.list, energies.name);
   switch (ev.action) {
     case 'selectEnergy':
       return ev.energyJ !== undefined && Number.isFinite(ev.energyJ) && ev.energyJ >= ENERGY_RANGE_J[0] && ev.energyJ <= ENERGY_RANGE_J[1] ? undefined : 'energyJ must be 1–360 J';
