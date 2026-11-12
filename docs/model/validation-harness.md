@@ -315,6 +315,7 @@ None recorded.
 | [`templates/compare-ptbxl.test.ts`](../../packages/validation/test/templates/compare-ptbxl.test.ts) | 0 | 0 |
 | [`templates/wfdb.test.ts`](../../packages/validation/test/templates/wfdb.test.ts) | 0 | 0 |
 | [`version.test.ts`](../../packages/validation/test/version.test.ts) | 0 | 0 |
+| [`webkit-ci-canvas.test.ts`](../../packages/validation/test/webkit-ci-canvas.test.ts) | 0 | 0 |
 
 ## Related documents
 

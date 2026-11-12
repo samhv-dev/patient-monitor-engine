@@ -28,6 +28,11 @@ export const VENT_LIMITS = {
 } as const;
 /** The oxygen devices, in the sheet's words. */
 export const O2_CHOICES: Array<[O2Device, string]> = [['none', 'Off (room air)'], ['nasal', 'Nasal cannula'], ['mask', 'Face mask']];
+/** The lung conditions the sheet stages (the catalogue's, pregnancy aside), its severities and its sides (the builder's
+ *  Script offers the same, builder/script-commands.ts). */
+export const LUNG_CHOICES = LUNG_CONDITIONS.filter((x) => x.id !== 'pregnancy');
+export const LUNG_SEVERITY: Array<[string, string]> = [['0.33', 'Mild'], ['0.67', 'Moderate'], ['1', 'Severe']];
+export const LUNG_SIDES: Array<['L' | 'R', string]> = [['L', 'Left'], ['R', 'Right']];
 /** The sheet's airway command. */
 export const airwayCmd = (state: string): Record<string, unknown> => ({ type: 'applyEvent', event: { kind: 'airway', state } });
 /** The sheet's breathing command: the FiO₂ is typed in %. */
@@ -96,15 +101,15 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   gateO2();
   c.onRefresh(gateO2);
 
-  const conds = LUNG_CONDITIONS.filter((x) => x.id !== 'pregnancy');
+  const conds = LUNG_CHOICES;
   // short names from the glossary (Task 26); the catalogue's full text is each option's tooltip and the hint below
   const cond = select('Condition', conds.map((x) => [x.id, lungLabel(x.id, x.label)]), conds[0]?.id ?? '');
   for (const o of cond.sel.options) o.title = lungDetail(conds.find((x) => x.id === o.value)?.label ?? '');
   const condHint = h('p', { class: 'hint' });
   let severity = 0.67;
-  const sev = seg<string>('Severity', [['0.33', 'Mild'], ['0.67', 'Moderate'], ['1', 'Severe']], '0.67', (v) => (severity = Number(v)));
+  const sev = seg<string>('Severity', LUNG_SEVERITY, '0.67', (v) => (severity = Number(v)));
   let side: '' | 'L' | 'R' = '';
-  const sideSeg = seg<'' | 'L' | 'R'>('Side', [['L', 'Left'], ['R', 'Right']], 'R', (v) => (side = v));
+  const sideSeg = seg<'' | 'L' | 'R'>('Side', LUNG_SIDES, 'R', (v) => (side = v));
   const syncSide = () => {
     const d = conds.find((x) => x.id === cond.sel.value);
     setText(condHint, lungDetail(d?.label ?? ''));
