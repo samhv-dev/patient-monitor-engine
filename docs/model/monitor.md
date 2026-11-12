@@ -58,6 +58,11 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 
 | Where | Relation |
 |---|---|
+| [`features.ts:148`](../../packages/engine-core/src/l3/ecg-analysis/features.ts#L148) | Barro's spectral algorithm as [AM] describes it (SPEC): Hamming window, FFT; amplitude = \|Re\| + \|Im\|; the peak |
+| [`features.ts:151`](../../packages/engine-core/src/l3/ecg-analysis/features.ts#L151) | the amplitude 0.5 Hz…min(20Ω, 100 Hz). The moment M = (1/Ω)·Σ aⱼwⱼ / Σ aⱼ over the lines up to that limit is the |
+| [`features.ts:202`](../../packages/engine-core/src/l3/ecg-analysis/features.ts#L202) | narrow band-stop at the mean frequency; the output is the leakage. N = ⌊π·Σ\|Vᵢ\| / Σ\|Vᵢ − Vᵢ₋₁\| + ½⌋ and |
+| [`features.ts:203`](../../packages/engine-core/src/l3/ecg-analysis/features.ts#L203) | l = Σ\|Vᵢ + Vᵢ₋N\| / Σ(\|Vᵢ\| + \|Vᵢ₋N\|) are the standard forms of the original's equations; [AM]'s equations are images, |
+| [`features.ts:348`](../../packages/engine-core/src/l3/ecg-analysis/features.ts#L348) | Pc the samples in (0, 0.1·Vp), Nc those in (0.1·Vn, 0); the threshold Td = 0 if Pc + Nc < 0.4·n, else 0.2·Vp if |
 | [`ecg-filter.ts:10`](../../packages/engine-core/src/l3/ecg-filter.ts#L10) | Normalised biquad (a0 = 1): y = b0·x + b1·x₋₁ + b2·x₋₂ − a1·y₋₁ − a2·y₋₂. |
 | [`generic.ts:8`](../../packages/engine-core/src/l3/eeg-devices/generic.ts#L8) | SR = 100 × (time with \|x\| < 5 µV for ≥ 0.5 s) ÷ (valid time) over the last 60 s |
 | [`spectral.ts:5`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts#L5) | PSD_k = c·\|Σ w_i·(x_i − x̄)·e^(−2πik/N)\|² / (fs·Σ w_i²), c = 2 except at 0 Hz and fs/2; Hann window w |
@@ -109,6 +114,16 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `tcpKey` | `string` | — |
 | `statusLast` | `Array<number \| string \| boolean \| null>` | defib/pacer fields of the last deviceStatus (JSON-safe), compared field by field. |
 | `lastStatusT` | `number` | — |
+
+### `EcgFeedState` ([`l3/ecg-analysis/feed.ts`](../../packages/engine-core/src/l3/ecg-analysis/feed.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `lead` | `LeadId` | — |
+| `fs` | `number` | — |
+| `buf` | `number[]` | Ring of the last FEED_S·fs samples; sample n sits at n mod buf.length. |
+| `next` | `number` | The next sample index expected (the pipeline's committed frontier, for the committed state). |
+| `held` | `number` | Samples written since the feed was created, capped at buf.length. |
 
 ### `GenericState` ([`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts))
 
@@ -268,6 +283,12 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `ROSC_BP_START` | `0.5` | — | — | — |
 | `CARDIOVERSION_HR` | `75` | — | — | — |
 
+### [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `SEGMENT_S` | `3` | s | — | The analysis segment: "Divides the ECG rhythm into three-second segments" [G A-34]. |
+
 ### [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -388,6 +409,20 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `applyDeviceCommand` | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | Apply a validated device command at sim time t. |
 | `deviceOnQrs` | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | A committed QRS detection (R time, s). |
 | `stepDevice` | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | One committed tick: |
+| `preprocess` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | [AM] "Preprocessing": |
+| `amplitude` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Peak-to-peak and mean absolute value. |
+| `bandFractions` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Noise, artefact and baseline wander [G A-34]: |
+| `spectrum` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Barro's spectral algorithm as [AM] describes it (SPEC): |
+| `vfLeakage` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Kuo & Dillman's VF filter as [AM] describes it: |
+| `pulses` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | QRS rate, width and variability [G A-34] from pulses at Thakor's threshold-crossing rule as [AM] gives it (TCI): |
+| `autocorrelation` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Temporal regularity of peaks and troughs, "auto-correlation" [G A-34]. |
+| `lzComplexity` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Zhang's complexity measure as [AM] gives it (CPLX): |
+| `measureSegment` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Every measurement of one segment: |
+| `feedWrite` | [`l3/ecg-analysis/feed.ts`](../../packages/engine-core/src/l3/ecg-analysis/feed.ts) | Write sample n. |
+| `cudbSegments` | [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | Non-overlapping 3-s segments of a CUDB record, each wholly inside a VF episode ('[' to ']', or to the record's end when the episode is left open) or a VT interval ('(VT' to the next rhythm mark). |
+| `ptbxlClass` | [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | A PTB-XL record's class from its SCP statements: |
+| `ptbxlSegments` | [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | The whole 3-s segments of a PTB-XL record (10 s → from 0, 3 and 6 s). |
+| `runRig` | [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | Measure every segment of every recording; |
 | `filterBand` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | [lo, hi] Hz of a filter mode ('band:0.5-24' → [0.5, 24]), or null when the band is malformed or out of range. |
 | `designEcgFilter` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | The section cascade for a mode at sample rate fs. |
 | `createFilterState` | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Plain-data filter state: |
@@ -423,7 +458,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `deviceBias` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | Device bias: |
 | `spo2PitchHz` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): |
 
-Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
+Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createEcgFeed`, `feedSegment`, `feedView`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
 
 ## Source files
 
@@ -432,6 +467,9 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/capture12/capture.ts`](../../packages/engine-core/src/l3/capture12/capture.ts) | 12-lead capture (brief §6.6): the last 10 s from the VCG ring buffer, projected to 12 leads with the DIAGNOSTIC 0.05–150 Hz filter whatever the monitor filter is (LIFEPAK prints this way, research/05 §2.6), laid out 3×4 |
 | [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts) | CO2 numerics (brief §4.4 "Numerics (L3)"; research 03 §4.5) measured from the DISPLAYED capnogram: breath detection on a rising edge above 50 % of the recent peak with hysteresis, EtCO2 = maximum breath peak of the last |
 | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | The device layer (brief §3.2 L3 "alarm engine, pacer and defibrillator"): one JSON-safe state object the engine keeps beside its pipeline state. |
+| [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | The ECG analysis core (defibrillator plan §3.4.2, piece E4a): lead-agnostic measurements on one 3-s segment of the samples a device sees. |
+| [`l3/ecg-analysis/feed.ts`](../../packages/engine-core/src/l3/ecg-analysis/feed.ts) | The ECG analysis feed (defibrillator plan §3.4.3, piece E4a): the samples a device's analysis sees — one named lead after the monitor's front end (electrodes, artefacts, lead-off, mains; engine.ts `ecgFrontEnd`), before |
+| [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | The recorded-ECG rig (defibrillator plan §3.4.2, piece E4a): human recordings cut into labelled 3-s segments, on which every consumer of the analysis core (E4b's AED rule and Check Patient, B1's bedside VF detector) is t |
 | [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Monitor ECG filters (brief §4.1 "Measurement chain"; research 03 §1.11, Philips MP2 datasheet): Monitor 0.5–40 Hz + automatic mains notch (50 Hz default, brief §5 / the owner's decision) Diagnostic 0.05–150 Hz, no notch |
 | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | EEG E5 (plan §7 E5; D8): the generic processed-EEG reader — everything Miller says a monitor shows, computed from the samples, the sample rate and the electrode impedance only (the device boundary, plan §5). |
 | [`l3/eeg-devices/registry.ts`](../../packages/engine-core/src/l3/eeg-devices/registry.ts) | EEG plan D8: the registry of EEG devices, one spec row each (like the room's defibrillator models): the device's label, update interval and every constant with its tag (docs/model/monitor.md lists them), and its reader — |
@@ -479,6 +517,9 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/capture12-arrest.test.ts`](../../packages/engine-core/test/l3/capture12-arrest.test.ts) | 0 | 0 |
 | [`l3/capture12.test.ts`](../../packages/engine-core/test/l3/capture12.test.ts) | 0 | 0 |
 | [`l3/co2-numerics/co2-numerics.test.ts`](../../packages/engine-core/test/l3/co2-numerics/co2-numerics.test.ts) | 0 | 0 |
+| [`l3/ecg-analysis/features.test.ts`](../../packages/engine-core/test/l3/ecg-analysis/features.test.ts) | 0 | 0 |
+| [`l3/ecg-analysis/feed.test.ts`](../../packages/engine-core/test/l3/ecg-analysis/feed.test.ts) | 0 | 0 |
+| [`l3/ecg-analysis/rig.test.ts`](../../packages/engine-core/test/l3/ecg-analysis/rig.test.ts) | 0 | 0 |
 | [`l3/ecg-filter-bands.test.ts`](../../packages/engine-core/test/l3/ecg-filter-bands.test.ts) | 0 | 0 |
 | [`l3/ecg-filter.test.ts`](../../packages/engine-core/test/l3/ecg-filter.test.ts) | 0 | 0 |
 | [`l3/eeg-devices/boundary.test.ts`](../../packages/engine-core/test/l3/eeg-devices/boundary.test.ts) | 0 | 0 |

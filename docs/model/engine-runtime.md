@@ -49,7 +49,7 @@ too busy to keep real time says so (the clock pill reads BEHIND) instead of runn
 | Where | Relation |
 |---|---|
 | [`clock.ts:1`](../../packages/engine-core/src/clock/clock.ts#L1) | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. |
-| [`engine.ts:686`](../../packages/engine-core/src/engine.ts#L686) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`engine.ts:690`](../../packages/engine-core/src/engine.ts#L690) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
