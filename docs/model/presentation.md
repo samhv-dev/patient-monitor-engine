@@ -113,6 +113,12 @@ renderer, audio and skin contracts.
 | `SAVE_DELAY_MS` | `300` | ms | [ENG: ui] | The pause after the last change before the draft is saved in this browser: the plan's 300 ms (§8). [ENG: ui] |
 | `KIT_EVERY_MS` | `120000` | ms | [ENG: ui] | How often an open draft that changed is kept in the kit's folder: the plan's "every 2 min while the kit runs on Node" (§8). [ENG: ui] |
 
+### [`apps/demo/src/app/builder/run-panel.ts`](../../apps/demo/src/app/builder/run-panel.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `RUN_PANEL_OPEN_MIN_PX` | `1600` | — | [ENG: ui] | At or above this window width the panel opens beside Instructor v2; below it, it starts as a strip (finding 5: Instructor v2 is crowded below about 1000 px of its own). Decided on the screenshots at 1280, 1440 and 1920. [ENG: ui] |
+
 ### [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -492,6 +498,10 @@ renderer, audio and skin contracts.
 | `renamePhase` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Phase `i` renamed to `to`, and every mention of its old id with it (the `next` lists, `visited`, `phaseEntered`, `phases`, `inPhases`, the `phase:<id>` anchors): |
 | `idFromLabel` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | An id for a new phase from its label ("Late signs" → "lateSigns"), made unique with a number. |
 | `instructorWords` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | ------------------------------------------------------------------------------------------- Instructor v2's words What Instructor v2 will show for phase `i`, produced by its own functions: |
+| `runRefusals` | [`apps/demo/src/app/builder/run-panel.ts`](../../apps/demo/src/app/builder/run-panel.ts) | The validator's refusals of a draft as a run would see them (and the builder's own: |
+| `leafWords` | [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | A leaf as the runner read it, in words: |
+| `whatFired` | [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | The log, newest first. |
+| `refit` | [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | The runner state of a mark, made the edited card's: |
 | `sheetFields` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The fields of a sheet kind, null for a kind that is not one. |
 | `sheetBuild` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The command a sheet kind builds from its fields, null while a field is outside the sheet's limits or the item is not the sheet's. |
 | `sameCommand` | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | Two commands with the same content, in any key order. |
@@ -769,6 +779,10 @@ renderer, audio and skin contracts.
 | `sparkY` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | y of `v` in an h-tall box (1 px inset); |
 | `sparkPoints` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | Canvas points for `values` in a w×h box, the newest at the right edge; |
 | `settingState` | [`apps/demo/src/vent/faces/edp-ts/controls.ts`](../../apps/demo/src/vent/faces/edp-ts/controls.ts) | A setting's state in a configuration: |
+| `applyTokens` | [`apps/demo/src/vent/faces/edp-ts/device.ts`](../../apps/demo/src/vent/faces/edp-ts/device.ts) | The face's colours, fonts and lane colours as custom properties on an element (face.json → CSS). |
+| `fitDevice` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The device scaled as a whole to the space it is given above the strip (R19: |
+| `drawTraces` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The lanes and loops of the cockpit's buffer: |
+| `viewOf` | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | The live View: |
 | `faceFromLocation` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | `?face=<id>`; |
 | `mountFace` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The cockpit on the driver, the simulator's tools, and the face on both; |
 | `levelSound` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | The level's sound with skin overrides applied (repeat time; |
@@ -869,7 +883,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createKnob`, `settle`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -894,6 +908,8 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/page.ts`](../../apps/demo/src/app/builder/page.ts) | The scenario builder's page (docs/plans/scenario-builder.md §5, §8, mock-up 01-builder-main; piece B2), in place of the stub that explained the /1 format. |
 | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | The builder's Phases section (docs/plans/scenario-builder.md §5.3, mock-up 02-phase-editor; piece B3): the course of the case, one phase open at a time. |
 | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The phase editor's model (docs/plans/scenario-builder.md §5.3, piece B3): what a phase rule may read and how it reads in words, the rule tree's edits, where a phase sits in the card's course, and a phase id's rename. |
+| [`apps/demo/src/app/builder/run-panel.ts`](../../apps/demo/src/app/builder/run-panel.ts) | Run in place (docs/plans/scenario-builder.md §6, mock-up 04-run-in-place; piece B6). |
+| [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | Run in place (docs/plans/scenario-builder.md §6, mock-up 04-run-in-place; piece B6): the two pure parts of the run panel, DOM-free so B7's twin run and a headless harness can read them too. |
 | [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The Script section's commands from the Airway, Defib · CPR and Devices sheets (docs/plans/scenario-builder.md §5.2; piece 162, finding N83 of B5): an airway state, who breathes with the bag's or the ventilator's settings |
 | [`apps/demo/src/app/builder/script-editor.ts`](../../apps/demo/src/app/builder/script-editor.ts) | The builder's Script section (docs/plans/scenario-builder.md §5.2; piece B5): what the card does itself, card-set and never graded. |
 | [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The builder's first three sections (docs/plans/scenario-builder.md §5.2; piece B2): Header and story, Patient and sensors, Case briefing. |
@@ -1065,9 +1081,12 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/vent/embed.ts`](../../apps/demo/src/vent/embed.ts) | The ventilator-simulator embed: the Hamilton ventilator and the patient monitor in ONE page that opens from file:// with no server. |
 | [`apps/demo/src/vent/faces/edp-ts/controls.ts`](../../apps/demo/src/vent/faces/edp-ts/controls.ts) | The EDP-TS face's control table (plan vent-skin-edp-ts.md §3, piece V1): EVERY control the face draws, what it does to the model, or why it does nothing yet. |
 | [`apps/demo/src/vent/faces/edp-ts/data.ts`](../../apps/demo/src/vent/faces/edp-ts/data.ts) | The EDP-TS face's data (face.json): every word, colour, layout number, range and step, each leaf with its provenance (plan docs/plans/vent-skin-edp-ts.md §5; checked by provenance.test.ts). |
-| [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The EDP-TS face (plan vent-skin-edp-ts.md §2, §4.3, §5, §6, piece V1): the screen of research/57 §2 and the keys of §3 drawn from plain shapes (mock-up m1) on the cockpit core. |
+| [`apps/demo/src/vent/faces/edp-ts/device.ts`](../../apps/demo/src/vent/faces/edp-ts/device.ts) | The drawn EDP-TS device (brief 159): the housing and the screen on ONE fixed design grid (face.json layout.grid, every box measured on the rectified photographs, research/57 P-20 to P-35), scaled as a whole by face.ts, n |
+| [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The EDP-TS face (plan vent-skin-edp-ts.md §2, §4.3, §5, §6; pieces V1 and VF): the device drawn to the owner's photographs (device.ts, on one design grid scaled as a whole), painted from the View of the cockpit and the k |
 | [`apps/demo/src/vent/faces/edp-ts/knob.ts`](../../apps/demo/src/vent/faces/edp-ts/knob.ts) | The EDP-TS face's ONE knob-navigation mechanism (plan vent-skin-edp-ts.md §2.4; research/57 H-10, H-25, H-26, O-01 to O-16), pure and DOM-free so it is tested headless (knob.test.ts) and every window of every later piece |
 | [`apps/demo/src/vent/faces/edp-ts/modes.ts`](../../apps/demo/src/vent/faces/edp-ts/modes.ts) | The EDP-TS face's modes and its spec for the cockpit core (plan vent-skin-edp-ts.md §3.3 GM1, GM2, GM10; piece V1): the three modes the model runs under the device's names, the bottom row each shows (research/57 D-01, D- |
+| [`apps/demo/src/vent/faces/edp-ts/pictograms.ts`](../../apps/demo/src/vent/faces/edp-ts/pictograms.ts) | The EDP-TS face's pictograms (brief 159, R7, R8, R11, R12, R15, R18): ONE entry per subject the photographs show (research/57 P-07 to P-17), each my own drawing of that subject in inline SVG, never a trace of the device' |
+| [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | What the EDP-TS screen and housing show at one moment (brief 159): a plain-data View. |
 | [`apps/demo/src/vent/faces/hamilton/face.ts`](../../apps/demo/src/vent/faces/hamilton/face.ts) | The Hamilton-style face: the v1.9 Hamilton-style front end (ventilator-sim-hamilton.html "UI" block), ported to TypeScript and rendering from @pme/ventilator instead of page globals. |
 | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The ventilator's faces (plan vent-skin-edp-ts.md §4.3, §4.5): the registry, the choice from the address, and the mount every page uses (vent-hamilton.html in its three link modes, and the embed). |
 | [`apps/demo/src/vent/hamilton-page.ts`](../../apps/demo/src/vent/hamilton-page.ts) | vent-hamilton.html: the ventilator alone (no ?link) or linked to a monitor in another window/iframe (?link=<session>[&profile=<id>]) over BroadcastChannel `pme-vent/<session>`, or over a direct frame port with its parent |
@@ -1168,6 +1187,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/builder-end-sections.e2e.ts`](../../apps/demo/e2e/builder-end-sections.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-local-store.e2e.ts`](../../apps/demo/e2e/builder-local-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-phase-editor.e2e.ts`](../../apps/demo/e2e/builder-phase-editor.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/builder-run-in-place.e2e.ts`](../../apps/demo/e2e/builder-run-in-place.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/case-briefing.e2e.ts`](../../apps/demo/e2e/case-briefing.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-page.e2e.ts`](../../apps/demo/e2e/circulation-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-rhythm-rates.e2e.ts`](../../apps/demo/e2e/circulation-rhythm-rates.e2e.ts) | 0 | 0 |
@@ -1244,6 +1264,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/ui-polish-b.e2e.ts`](../../apps/demo/e2e/ui-polish-b.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/validation-bedside.e2e.ts`](../../apps/demo/e2e/validation-bedside.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/validation-review.e2e.ts`](../../apps/demo/e2e/validation-review.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/vent-edp-ts-stills.e2e.ts`](../../apps/demo/e2e/vent-edp-ts-stills.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-edp-ts.e2e.ts`](../../apps/demo/e2e/vent-edp-ts.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-embed.e2e.ts`](../../apps/demo/e2e/vent-embed.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-handover-phones.e2e.ts`](../../apps/demo/e2e/vent-handover-phones.e2e.ts) | 0 | 0 |
@@ -1270,6 +1291,8 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/page.dom.test.ts`](../../apps/demo/src/app/builder/page.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/phase-editor.dom.test.ts`](../../apps/demo/src/app/builder/phase-editor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/phases.test.ts`](../../apps/demo/src/app/builder/phases.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/run-panel.dom.test.ts`](../../apps/demo/src/app/builder/run-panel.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/run.test.ts`](../../apps/demo/src/app/builder/run.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/script-commands.dom.test.ts`](../../apps/demo/src/app/builder/script-commands.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-read.test.ts`](../../apps/demo/src/app/card-read.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-seed.dom.test.ts`](../../apps/demo/src/app/card-seed.dom.test.ts) | 0 | 0 |
