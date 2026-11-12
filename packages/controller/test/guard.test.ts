@@ -116,8 +116,9 @@ describe("the hello's `show` and `device` (plan room-and-instruments.md §4 D1, 
     expect(parseWireMessage(hello('viewer', { show: 'defib', device: 'k3x9q2m7' }))).toMatchObject({ kind: 'hello', role: 'viewer', show: 'defib', device: 'k3x9q2m7' });
     expect(parseWireMessage(JSON.stringify(hello('viewer', { show: 'learner' })))).not.toBeNull();
     expect(parseWireMessage(hello('viewer', { device: '0123456789abcdef' }))).not.toBeNull();
-    expect([...INSTRUMENTS]).toEqual(['learner', 'monitor', 'defib', 'depth']);
-    for (const show of INSTRUMENTS) expect(parseWireMessage(hello('viewer', { show, device: 'abcd1234' })), show).not.toBeNull();
+    expect([...INSTRUMENTS]).toEqual(['learner', 'monitor', 'defib', 'depth', 'pump']);
+    // the pump rack (A1) is the pump's own instrument: a viewer may not say it shows it (the pump role's tests below)
+    for (const show of INSTRUMENTS.filter((s) => s !== 'pump')) expect(parseWireMessage(hello('viewer', { show, device: 'abcd1234' })), show).not.toBeNull();
   });
 
   it('refuses show or device on any other role', () => {
@@ -341,9 +342,19 @@ describe('the pump role (plan pump-rack-tci.md C1)', () => {
     for (const pin of ['472', '472912345', '47a9', 4729, null, '']) expect(parseWireMessage(hello('pump', { pin })), JSON.stringify(pin)).toBeNull();
     expect(parseWireMessage(hello('pump', { pin: '4729', device: 'K3X9' }))).toBeNull();
   });
-  it('a pump hello names no instrument: `pump` is not in INSTRUMENTS until the app lists it (A1), and no other is the pump\'s', () => {
-    expect([...INSTRUMENTS]).not.toContain('pump');
-    for (const show of ['pump', 'learner', 'monitor', 'defib']) expect(parseWireMessage(hello('pump', { pin: '4729', show })), show).toBeNull();
+  it('A1: `pump` is an instrument; a pump hello may show it, and nothing else', () => {
+    expect([...INSTRUMENTS]).toContain('pump');
+    expect(parseWireMessage(hello('pump', { pin: '4729', show: 'pump', device: 'k3x9q2m7' }))).toMatchObject({ role: 'pump', show: 'pump', device: 'k3x9q2m7', pin: '4729' });
+    for (const show of ['learner', 'monitor', 'defib', 'depth', 'rack']) expect(parseWireMessage(hello('pump', { pin: '4729', show })), show).toBeNull();
+  });
+  it('A1: no other role may say it shows the pump rack', () => {
+    expect(parseWireMessage(hello('viewer', { show: 'pump', device: 'k3x9q2m7' }))).toBeNull();
+    expect(parseWireMessage(hello('defib', { show: 'pump', device: 'k3x9q2m7' }))).toBeNull();
+    expect(parseWireMessage(hello('learner', { pin: '4729', show: 'pump', device: 'k3x9q2m7' }))).toBeNull();
+    for (const role of ['instructor', 'ventilator', 'controller', 'host']) expect(parseWireMessage(hello(role, { pin: '4729', show: 'pump' })), role).toBeNull();
+    // the instruments they had are theirs still
+    expect(parseWireMessage(hello('viewer', { show: 'monitor', device: 'k3x9q2m7' }))).toMatchObject({ role: 'viewer', show: 'monitor' });
+    expect(parseWireMessage(hello('learner', { pin: '4729', show: 'learner', device: 'k3x9q2m7' }))).toMatchObject({ role: 'learner', show: 'learner' });
   });
 
   const cmd = (c: object) => ({ id: 'k1', issuedBy: 'pump', ...c }) as unknown as CommandInput;
