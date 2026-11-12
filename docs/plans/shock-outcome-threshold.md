@@ -56,8 +56,8 @@ engine's draw produces.
 | AF, BTE 360-360-360 J | Schmidt 2020, Eur Heart J 41:626, DOI 10.1093/eurheartj/ehz585 (abstract) | 75 % / 75 % then 17/32 = 53 % over shocks 2–3 / 88 % | (BTE not modelled) independent at 75 % would give 98.4 % |
 | AF, BTE 125-150-200 J | Schmidt 2020 (abstract) | 34 % / — / 66 % | — |
 | AF, BTE 100/150/200/200 J | Page 2002, JACC, DOI 10.1016/s0735-1097(02)01898-3 (abstract, hand-over 192) | — / repeat 200 J converts about 1 in 10 of those left / 60, 77, 90, 91 % | — |
-| Flutter, biphasic, by energy | AHA 2025 Part 9 (Wigginton et al., DOI 10.1161/cir.0000000000001376), atrial flutter section | 50–75 % at 50 J, 85–90 % at 100 J, ≈ 100 % at 200 J | 92 % at 50 J, 96 % at 100 J (curve E50 12 J): **too high at 50 J** |
-| VF, BTE 200→200→360 J, **stacked** (ERC 2000), OHCA | Koster 2008, Resuscitation 78:252, DOI 10.1016/j.resuscitation.2008.03.231 (abstract) | 92 % / 92, 61, 83 % (second shock: about 23/37) / 465 of 467 within three | 90 % / 90, 90, 90 % / 99.9 % |
+| Flutter, biphasic, by energy | AHA 2025 Part 9 (Wigginton et al., DOI 10.1161/cir.0000000000001376), atrial flutter section | "comparable CUMULATIVE cardioversion success" across RLB and BTE: 50–75 % at 50 J, 85–90 % at 100 J, ≈ 100 % at 200 J (p S569; the studies' designs, e.g. Mortensen 2008, not read) | 92 % at 50 J, 96 % at 100 J (curve E50 12 J): higher at 50 J, IF those escalations started at 50 J (then their 50 J figure is a first shock) — to be checked before it is used |
+| VF, BTE 200→200→360 J, OHCA, ALS per ERC 2000 (stacked shocks INFERRED from the ERC 2000 protocol; not stated in the abstract) | Koster 2008, Resuscitation 78:252, DOI 10.1016/j.resuscitation.2008.03.231 (abstract) | 92 % / 92, 61, 83 % (second shock: about 23/37, INFERRED from 8 % of 467) / 465 of 467 within three | 90 % / 90, 90, 90 % / 99.9 % |
 | VF, BTE 200 J then 200 or 300 J, OHCA AEDs | Walker 2009, Resuscitation 80:773, DOI 10.1016/j.resuscitation.2009.04.002 (abstract) | first ≈ 93 % (61 of 863 failed) / later shocks 69 % (162/234) if the first failed, 93 % (955/1027) if it succeeded / 5 % of patients gave 71 % of failed shocks | 90 % at every shock whatever came before |
 | VF, standard shocks with 2-min CPR, ≥ 4 shocks (OHCA, selected) | Verkaik 2025, Eur Heart J 46:582, DOI 10.1093/eurheartj/ehae767 (full text) | 77 % of the first three shocks terminated; per patient 0/1/2/3 terminations in 3 shocks = 5 / 14 / 26 / 55 % | at 0.77 independent: 1.2 / 12 / 41 / 46 % |
 | VF, first shock by delay from call (OHCA, witnessed) | Stieglis 2025, Circulation, DOI 10.1161/circulationaha.124.069834 (full results) | 95 % (< 1 min) → 75 % (> 16 min); RR of failure 1.06 per min; 87 % overall | 90 % at every duration (duration acts on ROSC only) |
@@ -171,8 +171,11 @@ engine's draw produces.
   Each family's value is drawn from its own seed-derived copy (hash(patientSeed, family)), as
   `l2/ecg/morphology/individuality.ts` does for the ECG fingerprint. A later family then never shifts an earlier one.
 - **Where it lives.** It is carried in the pipeline state, so the snapshot holds it and a follower and a replay agree.
-  On restore of an older snapshot without it, the value is drawn from the seed as at creation. That is deterministic,
-  so old snapshots stay reproducible.
+  The snapshot is `encodeState({ st, queue, mainsHz, dev, groups })` (`engine.ts:550`), and `restore` refuses a
+  snapshot from another engine version (`engine.ts:556`); within a version, absent fields are filled the way E133's
+  stream is (`data.st.rng.ectopyHazard ??= seedStream(this.seed, 'ectopyHazard')`, `engine.ts:570`). S0 does the same
+  for `shockResistance`, `refibrillation` and the latent values, which are re-derived from the seed, so restore is
+  deterministic. A pending recurrence is device state (`dev`), so it travels in the snapshot with `d.pending`.
 - **Where it is not used.** Never on the `outcome` stream. That stream is shared with the repeat-suxamethonium draw
   (`engine.ts:819`), the VF waveform seed (`l2/ecg/arrest/vf.ts:105`, four draws whenever a VF episode is built),
   `l2/hemo/pipeline.ts:461`, the drug-hook hazards (`l2/pk/hooks.ts:80, 114, 130`) and the post-shock timings in
@@ -203,6 +206,16 @@ P_i(D)  = Φ( (ln D − ln T_i) / s_w,f )                                 (the c
   impedance and Table A-2 [G A-16]. That is S4, and it re-solves μ at the cohort's impedance distribution, so the
   first-shock numbers stay exact.
 - Until S4, impedance moves no rhythm's success. That matches DQ7's proposal A for VF.
+- **The dose is relative to a waveform's reference energy, not absolute joules** (added after review). The sources are
+  on different waveforms (Koster, Walker, Schmidt: BTE; Mittal, Hess 2011, the M2: RLB), and the skins differ in
+  `defaultJ`. A μ solved at Koster's BTE 200 J and used at the M2's 120 J RLB would give about 74 % (feasibility
+  numbers), which is a waveform artefact, not a measurement. So for every family:
+  - σ and ρ (the spread and its split) are estimated INSIDE the determining cohort with that cohort's own μ, and then
+    TRANSFERRED as dimensionless numbers on ln(dose / reference dose);
+  - the device's μ is solved at its own waveform's reference first shock: for the M2 (RLB) the first-shock
+    termination at 120 J (Hess 2011, RLB, 87.8 %, energy protocol to be read; or the anchor Q3 chooses), and for AF
+    Mittal's 68 % at 70 J;
+  - the transfer of a spread from BTE to RLB is put to the owner: Q2 for AF, Q11 for VF.
 
 ### 3.4 What shifts the threshold, and what stays on the ROSC share
 
@@ -210,7 +223,7 @@ Each existing state factor gets one row: which stage it acts on.
 
 | Factor | Today | In this plan | Source for direction / size |
 |---|---|---|---|
-| VF duration | ROSC share × 0.5 / × 0.2 | **Threshold**, by Stieglis's RR 1.06 per minute of failure (§3.5, Q3); the ROSC-share factor stays until Q1 is decided | Stieglis 2025 / measured |
+| VF duration | ROSC share × 0.5 / × 0.2 | **Threshold**, by Stieglis's RR 1.06 per minute of failure (§3.5, Q3), on the ARREST clock (see below); the ROSC-share factor stays until Q1 is decided | Stieglis 2025 / measured |
 | Temperature < 30 °C | termination × (1 − 0.3/°C) | threshold shift; the same size, still `[FIT]` | ERC, AHA / no size (GAP stays) |
 | Antiarrhythmic occupancy | ROSC × (1 + 0.3 u) | AF: threshold (direction, Brandes Table 2). VF: unchanged unless the owner chooses recurrence (Q5) | Brandes 2020; AHA opinion / no size |
 | CoPP (circulatory phase) | ROSC share | unchanged; a CPR-before-shock threshold term only if the owner wants a placeholder (Q8) | AHA Part 7 direction / no size |
@@ -218,6 +231,16 @@ Each existing state factor gets one row: which stage it acts on.
 | Arrest time (non-VF) | ROSC share | unchanged | — |
 | Energy < 50 % of default | termination × 0.5 `[FIT]` | REMOVED: the dose term replaces it, sourced by the dose–response | Schmidt, Koster, Mittal |
 | Impedance | none | S4 only, by DQ7 | research note §9 |
+
+**The clock.** The engine's `vfDurationS` is `t − vfSince` (`device-layer.ts:233`), and `vfSince` is cleared whenever
+the rhythm leaves VF (`device-layer.ts:337–338`). With refibrillation it would RESTART at every recurrence, sending each
+recurrence back to the 95 % end of Stieglis's curve. Hess 2008/2011 found recurrences terminated as often as the first
+episode, not more often. So the threshold's time shift runs on the ARREST clock (time since the arrest began; the
+engine's `arrestS`, from `circ.arrest.t`), not on the episode clock. Stieglis's clock is the delay from the call, with
+bystander CPR in 84 %. So his slope already contains the effect of the CPR those patients received: the shift is
+applied as measured, whether or not CPR runs, and Q8 decides whether CPR gets its own term. The ROSC-share factor keeps
+reading `vfDurationS` until S3b replaces it (Q1), so between S2 and S3b time acts on both the threshold and ROSC. That is
+stated in S2's PR, and the showcase is re-recorded in both pieces, each with its cause.
 
 **No double counting.** Cohort heterogeneity already contains the cohort's spread of VF duration (and of impedance).
 Two rules follow:
@@ -258,8 +281,8 @@ If the predictions miss, that is reported, not tuned.
 
 | Parameter | Determined by | n |
 |---|---|---|
-| μ_vf | the first-shock termination at the reference state: the engine's 0.90 (biphasic, 85–98 %, outcome.ts) or Hess 2011 RLB 87.8 %; Q3 decides the anchor | 90 (Hess 2011) |
-| ρ_vf | Koster 2008: the second, stacked 200 J shock (same episode, same energy, seconds later) 61 % after a first 200 J of 92 % | ≈ 37 (about 23/37; Wilson 95 % CI ≈ 46–76 %) |
+| μ_vf (the DEVICE's) | ONE anchor, chosen by Q3: either the engine's 0.90 at the skin's first energy, or Stieglis's delay curve (Q3's proposal) applied at the device's reference shock. Koster's 92 % is used only for Koster's own μ inside the calibration of σ and ρ, never for the device | 90 (Hess 2011) / 3448 (Stieglis) |
+| ρ_vf (transferred, Q11) | Koster 2008: the second, stacked 200 J shock (same episode, same energy, seconds later) 61 % after a first 200 J of 92 % | ≈ 37 (about 23/37; Wilson 95 % CI ≈ 46–76 %) |
 | σ_vf | Koster 2008: the third stacked shock at 360 J, 83 % | ≈ 14 (Wilson CI ≈ 60–96 %) |
 | **Predictions** (acceptance tests, S3, because they need refibrillation) | Walker 2009: 69 vs 93 % after first failure vs success, and 5 % of patients giving 71 % of failures; Verkaik's 5 / 14 / 26 / 55 % count distribution and 5 % refractory; Hess 2008/2011: recurrence termination ≈ initial; van Alem 2003: median 2 recurrences (IQR 1–4); Koster's 90 → 80 % across ≥ 5 episodes (a check on the "reveals, not changes" claim) | |
 
@@ -270,6 +293,9 @@ The feasibility pre-computation (σ 0.68, ρ 0.64, BTE median threshold 77 J) gi
 failure and 95 % after a success. A naive equal-shocks estimate gives "worst 5 % hold 40 % of failures", against
 Walker's 71 %. Walker's hard patients received more shocks, which raises his figure, so only the protocol simulation
 can test that row. It is flagged as the likeliest prediction to fail.
+
+If Walker's or Verkaik's figures come out EASIER than predicted (less concentration of failures), that points to a
+per-episode component the model lacks. That is reported as a finding, not tuned.
 
 The precision is low: Koster's second shock has about 37 patients. The plan reports the CI on every prediction band
 and never narrows it.
@@ -292,9 +318,15 @@ After a shock terminates VF (any non-VF outcome of the class `'vf'`):
    bins and van Alem's median of 45 s are cross-checks. The three cohorts watched different windows (Verkaik and Spies
    one 2-min CPR cycle; van Alem the whole attempt), so their medians differ partly through right truncation. The plan
    uses Verkaik within a cycle and checks against the other two. Only measured points are used; nothing is fitted.
-2. **The probability per terminated episode** is set so that the share of patients who refibrillate within 2 min of
-   the first termination is Koster's 48 %. Predictions: Spies 81 % and Conover 74 % of terminating shocks, van Alem
-   79 % ≥ 1 recurrence, and AHA's ≈ 80 % of VF at checks.
+2. **The recurrence process is a cumulative incidence with a tail, anchored at two measured points** (changed after
+   review): 48 % of patients refibrillate within 2 min of the first termination, and 74 % at some time during
+   prehospital care (both Koster 2008). A single draw at 48 % with a within-cycle timing would cap recurrence at 48 %
+   ever and make van Alem's median of 2 recurrences impossible by design. The shape inside 2 min follows Verkaik's
+   timing. Verkaik's curve is CONDITIONAL on recurrence inside the cycle, so it sets only the shape, not the level.
+   The tail beyond 2 min is supported by Spies's 121–240 s bin (13.5 %) and van Alem's IQR to 115 s; its shape between
+   2 min and "ever" is the measured two points joined by a stated rule (piecewise, no fitted rate), marked so in the
+   code. Every new termination restarts the process. Predictions: Spies 81 % and Conover 74 % of terminating shocks,
+   van Alem 79 % ≥ 1 recurrence and median 2 (IQR 1–4), and AHA's ≈ 80 % of VF at checks.
 
    The probability is the same at every episode. No source read supports a decline across episodes: Koster's
    11 → 42 % organised share came from a subgroup selected for ≥ 5 episodes. This is checked as a prediction against
@@ -311,8 +343,13 @@ After a shock terminates VF (any non-VF outcome of the class `'vf'`):
      2. rhythm at 5 s: asystole 60 %, organised 28 %, from Stieglis's 3448 patients (69 % / 31 % of terminations);
      3. recurrence.
 
-     ROSC then emerges and is checked. The organised fraction is later split into perfusing and PEA by the existing
-     haemodynamics (CoPP and the myocardium, as the showcase already does).
+     ROSC then emerges and is checked. Two cautions, both work for S3b before B is built:
+     - "organised" depends on WHEN it is read: 28 % at 5 s (Stieglis, mixed waveforms), 69 % within 60 s (van Alem
+       2003, BTE 200 J) and 24.9 % within 60 s (Chen 2013, RLB AED). Option B therefore needs an asystole-to-organised
+       evolution in the first minute, sourced from these three, or most terminations would stay in asystole;
+     - the claim that the organised rhythm's pulse comes from the existing haemodynamics (CoPP and the myocardium)
+       comes from the showcase card's note. Where the engine decides a pulse returns was NOT read for this plan; S3b
+       reads it first, and sizes the piece by what it finds.
 
 ### 3.7 Scenario rules, instructor pre-selection, the population
 
@@ -365,17 +402,18 @@ Each piece is one PR on main. Physiology PRs carry `run-validation` from the fir
 
 | Piece | Purpose | Depends on | Files | Tests first (numbers and sources) | Must not touch | Gate | Hours | Label |
 |---|---|---|---|---|---|---|---|---|
-| **S0** | The cohort harness and the patient latent, with no behaviour change. Adds `shockResistance` and `refibrillation` to `STREAM_NAMES`, the per-family `z` in pipeline state and the snapshot, and a test harness that runs N seeded patients through a protocol (energies, stacked vs 2-min CPR, entry rule) and returns per-shock, per-patient and cumulative figures | — | `rng/sfc32.ts`, `l3/defib-pacer/resistance.ts` (new), `engine.ts` (state only), `test/l3/defib-pacer/cohort-harness.ts` (new) | Same seed gives the same `z` after a snapshot round-trip and in a follower. Adding the streams leaves every existing stream's sequence byte-identical. Every existing test and recorded course is unchanged (the latent is not yet read) | `outcome.ts` probabilities, `deliverShock` | common + engine-core | 6 | run-validation |
-| **S1** | Cardioversion by threshold (AF, flutter/SVT, VT with a pulse); F1, F2, F3 | S0; Q2, Q4, Q6 answered | `outcome.ts` (curves → `resistance.ts`), `device-layer.ts` (pass the latent) | Harness, Mittal protocol: first shock 68 % (exact, ± sampling SE at N = 20 000). PREDICTION bands: 54 % (CI 36–70), 38 % (18–64), 38 % (14–69), cumulative 94 % (87–98). Schmidt fixed and escalating arms. Flutter: first-shock 50–75 % at 50 J, 85–90 % at 100 J (AHA Part 9). No-latent fallback equals the marginal | VF path; `shockStateFactor` K/pH | common + engine-core + validation | 12 | run-validation |
-| **S2** | VF termination by threshold; the dose term replaces `LOW_ENERGY_*`; temperature and VF duration become threshold shifts | S1; Q3 | `outcome.ts`, `resistance.ts` | Harness, Koster protocol (stacked 200/200/360): 92 / 61 / 83 % determining. Stieglis protocol by delay: 95 % (< 1 min) to 75 % (> 16 min) as determining (RR 1.06/min). Hypothermia factor unchanged in size. `outcome.test.ts` 10 000-shock rows re-derived as the population marginal | refibrillation; ROSC share (until Q1) | common + engine-core + validation | 12 | run-validation |
-| **S3** | Refibrillation; the post-shock split per Q1; antiarrhythmic placement per Q5 | S2; Q1, Q5 | `outcome.ts`, `device-layer.ts` (pending recurrence, cancelled by instructor/card events), `l3/defib-pacer/refib.ts` (new) | Timing: cumulative 50 % at 27 s, 75 % at 60 s, 87 % at 90 s (Verkaik). Koster: 48 % within 2 min (determining). PREDICTIONS: Verkaik 5 / 14 / 26 / 55 % and 5 % refractory; Walker 69 vs 93 % and 71 % of failures in 5 %; Spies 81 %; van Alem median 2 (IQR 1–4); Hess recurrence ≈ initial termination; Koster 90 → 80 % across episodes; AHA ≈ 80 % of checks are recurrence. Every miss is reported in the PR, not tuned | the latent's parameters (fixed in S1/S2) | common + engine-core + validation + e2e `learner-defib`, `scenario-runner-page`, `device-layer-page` | 14 | run-validation |
-| **S4** | Dose in delivered current; re-solve μ at the cohort's impedance distribution | S3, M2 plan **E2b**, DQ7 | `resistance.ts`, `impedance.ts` (read only) | Every first-shock number of S1–S3 unchanged at the cohort impedance. At 200 vs 300 J the current rises 27 % (Walker 2009). VF success flat across impedance strata for RLB (Mittal 1999, Chen 2013, research note §9). AF per DQ7's answer | E2b's own outputs | common + engine-core + validation | 8 | run-validation |
+| **S0** | The cohort harness and the patient latent, with no behaviour change. Adds `shockResistance` and `refibrillation` to `STREAM_NAMES`, the per-family `z` in pipeline state and the snapshot, and a test harness that runs N seeded patients through a protocol (energies, stacked vs 2-min CPR, entry rule) and returns per-shock, per-patient and cumulative figures | — | `rng/sfc32.ts`, `l3/defib-pacer/resistance.ts` (new), `engine.ts` (state and the `restore` fill, §3.1), `test/l3/defib-pacer/cohort-harness.ts` (new) | Same seed gives the same `z` after a snapshot round-trip and in a follower. Adding the streams leaves every existing stream's sequence byte-identical. Every existing test and recorded course is unchanged (the latent is not yet read). The harness reproduces each cohort's protocol (Mittal, Schmidt both arms, Koster stacked, Walker, Verkaik, Stieglis by delay) as a data table checked against the papers' printed protocols | `outcome.ts` probabilities, `deliverShock` | common + engine-core | 10 | run-validation |
+| **S1** | Cardioversion by threshold (AF, flutter/SVT, VT with a pulse); F1, F2, F3 | S0; Q2, Q4, Q6 answered | `outcome.ts` (curves → `resistance.ts`), `device-layer.ts` (pass the latent) | Harness, Mittal protocol: first shock 68 % (exact, ± sampling SE at N = 20 000). PREDICTION bands: 54 % (CI 36–70), 38 % (18–64), 38 % (14–69), cumulative 94 % (87–98). Schmidt fixed and escalating arms. Flutter: only if Q4 confirms the AHA figures are first-shock at 50 J (the guideline calls them cumulative; the escalations' designs are to be read). No-latent fallback equals the marginal | VF path; `shockStateFactor` K/pH | common + engine-core + validation | 12 | run-validation |
+| **S2** | VF termination by threshold; the dose term replaces `LOW_ENERGY_*`; temperature and the arrest-clock time shift become threshold shifts (§3.4) | S0 (not S1); Q3, Q11 | `outcome.ts`, `resistance.ts` | Harness, Koster protocol (stacked 200/200/360): 92 / 61 / 83 % determining. Stieglis protocol by delay: 95 % (< 1 min) to 75 % (> 16 min) as determining (RR 1.06/min). Hypothermia factor unchanged in size. `outcome.test.ts` 10 000-shock rows re-derived as the population marginal | refibrillation; ROSC share (until Q1) | common + engine-core + validation | 12 | run-validation |
+| **S3a** | Refibrillation: the cumulative-incidence process with its tail (§3.6), the pending recurrence in `dev`, cancelled by instructor/card events; the post-shock split UNCHANGED | S2 | `l3/defib-pacer/refib.ts` (new), `device-layer.ts` | Koster: 48 % within 2 min and 74 % ever (determining). Timing shape: Verkaik 50 % at 27 s, 75 % at 60 s, 87 % at 90 s within a cycle. PREDICTIONS through the harness: Verkaik 5 / 14 / 26 / 55 % and 5 % refractory; Walker 69 vs 93 % and 71 % of failures in 5 %; Spies 81 %; van Alem median 2 (IQR 1–4); Hess recurrence ≈ initial; Koster 90 → 80 % across episodes; AHA ≈ 80 % of checks are recurrence. `acls-vf-witnessed.json` unchanged. Every miss is reported, not tuned | the latent's parameters; ROSC share | common + engine-core + validation + e2e `learner-defib`, `device-layer-page` | 12 | run-validation |
+| **S3b** | The post-shock stages per Q1 (termination → rhythm in the first minute → recurrence), and the antiarrhythmic placement per Q5. First step: read where the engine decides pulse return, and re-size | S3a; Q1, Q5 | `outcome.ts`, `device-layer.ts` | Option B: asystole/organised at 5 s 69 / 31 % of terminations (Stieglis); organised within 60 s between Chen's 24.9 % (RLB) and van Alem's 69 % (BTE), the band set by the owner's answer; ROSC emergent, reported against the cohorts. `drug-layer.test.ts` row per Q5 | the latent; refibrillation | common + engine-core + validation + e2e `scenario-runner-page` | 10 (re-sized after the first step) | run-validation |
+| **S4** | Dose in delivered current; re-solve μ at the cohort's impedance distribution | S3b, M2 plan **E2b**, DQ7 | `resistance.ts`, `impedance.ts` (read only) | Every first-shock number of S1–S3b unchanged at the cohort impedance. At 200 vs 300 J the current rises 27 % (Walker 2009). VF success flat across impedance strata for RLB (Mittal 1999, Chen 2013, research note §9). AF per DQ7's answer | E2b's own outputs | common + engine-core + validation | 8 | run-validation |
 
 ### 5.1 Order relative to the M2 plan
 
-S0–S3 need nothing from the M2 plan. Their dose is the selected energy, which `deliverShock` already has. They can
+S0–S3b need nothing from the M2 plan. S1 (cardioversion) and S2 (VF) both stand only on S0 and can go in either order. Their dose is the selected energy, which `deliverShock` already has. They can
 run before or beside E2a (PR 455, draft) and E2b; they touch `deliverShock` at one call site, which E2b also edits.
-Whichever of S1 or E2b lands second merges the other's edit.
+Whichever of S1/S2 or E2b lands second merges the other's edit.
 
 E2b's acceptance row "the outcome unchanged (§3.2)" stays true. E2b adds impedance and delivered energy and changes no
 probability. S4 is the join and goes after both.
@@ -385,12 +423,13 @@ probability. S4 is the join and goes after both.
 | What | Moves in | Rule |
 |---|---|---|
 | `test/l3/defib-pacer/outcome.test.ts` (10 000 seeded shocks ± 2 %) | S1, S2 | Rows become population marginals over N patients through the harness; each row keeps its source. A row that changes value names the source change (F2) |
-| `test/l3/shock-state.test.ts` (Mittal 68 % at 70 J; AF 75–90 % at 200 J; flutter/SVT ≥ 90 % at 50 J; VT > 90 % at 100 J) | S1 | 68 % stays. "AF 75–90 % at 200 J" is not a measured shock-naive figure (Mittal measured none at 200 J), so it is re-sourced or removed with that reason in the PR. "Flutter ≥ 90 % at 50 J" contradicts AHA Part 9 (50–75 %) and becomes the AHA band |
-| `test/engine/drug-layer.test.ts` (`it.fails` on amiodarone and ROSC) | S3 (by Q5) | Stays `it.fails` unless Q5 gives a sourced size |
-| `test/engine/device-determinism.test.ts`, `test/engine/defib-engine.test.ts` | S0–S3 | Determinism must hold with the new streams. Seeded expectations that change are re-derived, stating the cause |
-| Showcase course `apps/demo/src/app/showcase/showcase-haemorrhage.json`, rows E132 of `docs/showcase/SHOWCASE-2-RUN-SHEET.md` | S2, S3 | Its two VF shocks take "the defibrillator's outcome table on the engine seed", so the course is re-recorded in the same PR. Cause: the threshold (S2) or refibrillation (S3). Control: the same course with the shocks replaced by an instructor pre-selection, which must be unchanged to the shock time |
-| `packages/controller/scenarios/acls-vf-witnessed.json` | none | Its own `probability` rules win (§3.7). It must be unchanged; that is a test in S3 |
+| `test/l3/shock-state.test.ts` (Mittal 68 % at 70 J; AF 75–90 % at 200 J; flutter/SVT ≥ 90 % at 50 J; VT > 90 % at 100 J) | S1 | 68 % stays. "AF 75–90 % at 200 J" is not a measured shock-naive figure (Mittal measured none at 200 J), so it is re-sourced or removed with that reason in the PR. "Flutter ≥ 90 % at 50 J" is checked against AHA Part 9 (50–75 %, called cumulative) once the escalations' designs are read (Q4) |
+| `test/engine/drug-layer.test.ts` (`it.fails` on amiodarone and ROSC) | S3b (by Q5) | Stays `it.fails` unless Q5 gives a sourced size |
+| `test/engine/device-determinism.test.ts`, `test/engine/defib-engine.test.ts` | S0–S3b | Determinism must hold with the new streams. Seeded expectations that change are re-derived, stating the cause |
+| Showcase course `apps/demo/src/app/showcase/showcase-haemorrhage.json`, rows E132 of `docs/showcase/SHOWCASE-2-RUN-SHEET.md` | S2, S3a, S3b | Its two VF shocks take "the defibrillator's outcome table on the engine seed", so the course is re-recorded in the same PR. Cause: the threshold (S2), refibrillation (S3a) or the post-shock stages (S3b). Control: the same course with the shocks replaced by an instructor pre-selection, which must be unchanged to the shock time |
+| `packages/controller/scenarios/acls-vf-witnessed.json` | none | Its own `probability` rules win (§3.7). It must be unchanged; that is a test in S3a |
 | Courses with no shock | none | Byte-identical: the control that the new streams moved nothing |
+| Validation cells (`packages/validation/src`) | none found | A search of `packages/validation/src` found no cell that reads a shock's outcome. Each piece's PR confirms that and regenerates `docs/validation/known-misses.md` if any test changes |
 
 ### 5.3 Stream invariance, stated honestly
 
@@ -465,8 +504,9 @@ Each question gives a short explanation, the options, and a proposal.
   - A. Threshold with ρ = 0 (independent draws, as now, but with AHA's corrected flutter location).
   - B. Borrow AF's ρ, marked placeholder.
   - C. Wait for sources.
-- *Proposal:* A for now, with the flutter location corrected to AHA Part 9 and the gap named. B is a fitted borrowing
-  between different tissues.
+- *Proposal:* A for now, with the gap named. The flutter location is corrected to AHA Part 9's 50–75 % at 50 J only
+  after the escalations' designs are read (the guideline calls those figures cumulative). B would borrow a spread
+  from a different tissue.
 
 **Q5. Antiarrhythmics.**
 - *Explanation:* For AF, drugs lower the cardioversion threshold (direction only, Brandes Table 2). For VF, the
@@ -515,6 +555,14 @@ Each question gives a short explanation, the options, and a proposal.
   - B. A separate piece moving those consumers to their own streams first.
 - *Proposal:* A here; B as its own brief if you want course stability across physiology changes.
 
+**Q11. May the VF spread be taken from BTE cohorts for the RLB device?**
+- *Explanation:* The spread and its split come from Koster 2008 (BTE 200/200/360 J). The M2 is rectilinear biphasic,
+  and the only RLB VF sources read (Hess 2011, Mittal 1999) give first shocks only.
+- *Options:*
+  - A. Transfer Koster's σ and ρ on ln(dose / reference dose), marked as a waveform transfer.
+  - B. Wait for an RLB repeated-shock source (Hess 2011 full text may have one).
+- *Proposal:* A now, re-checked against Hess 2011's full text.
+
 **DQ7 (as it stands in the research note §9.3). Does chest impedance change a shock's chance of success, and for which
 rhythm?**
 - *Explanation:* With the M2's waveform, two VF sources found no difference across impedance strata. For AF, the M2's
@@ -545,8 +593,10 @@ rhythm?**
   - e2e `device-layer-page`, `learner-defib`, `scenario-runner-page`.
 - **The recorded course** (`showcase-haemorrhage.json`; `docs/showcase/SHOWCASE-2-RUN-SHEET.md`) takes its shocks from
   the table. `acls-vf-witnessed.json` uses its own probabilities.
-- **What this plan cannot see from the code:** whether a restored old snapshot fills a missing stream name. `ps.rng`
-  is `Record<StreamName, Sfc32State>` (`engine.ts:115`), so S0's first test is a restore of a pre-S0 snapshot.
+- **Snapshot and follower:** read `engine.ts` 548–570. Snapshots are refused across engine versions, and absent
+  fields are filled from the seed (the `ectopyHazard` precedent). S0 follows it (§3.1).
+- **Not read in the code:** where the engine decides that a pulse returns after an organised rhythm (S3b's first step).
+- **The episode clock** `vfSince` restarts at each VF episode (`device-layer.ts:337–338`); the plan uses the arrest clock (§3.4).
 - **Assumptions stated:**
   - lognormal–probit;
   - independent latents per family;
@@ -555,5 +605,5 @@ rhythm?**
 - **Risks:**
   - The VF calibration rests on about 37 patients (Koster's second shock).
   - Walker's concentration figure is the likeliest prediction to miss.
-  - S3's predictions mix threshold and recurrence, so a miss there may be either mechanism's. The PR then reports
+  - S3a's predictions mix threshold and recurrence, so a miss there may be either mechanism's. The PR then reports
     which prediction rows fail and leaves the model as it is.
