@@ -50,7 +50,7 @@ reader *publishes*, at the one place every display, alarm, trend, record and sce
 above all of them and below everything physiology reads (§2). Two new top-level commands carry the holds:
 `setEegPattern` and `setEegIndex`. They are accepted only in MANUAL, logged, replayed by followers, in the snapshot,
 and scriptable in a MANUAL card (§3). Entering MODELED returns both to the drugs (§4). The controls are a "Brain" group
-in the Patient tool's "Vitals & rhythm" tab (§5). Six pieces build it (§6), and fourteen questions go to the owner
+in the Patient tool's "Vitals & rhythm" tab (§5). Seven pieces build it (§6), and fourteen questions go to the owner
 (§9).
 
 ---
@@ -99,7 +99,17 @@ generator's own mechanisms" in the most literal sense the code allows:
 the engine's physiology (`eeg-clinical-generator.md` §4.7, piece G2). If the hold were placed on that state, a
 hand-set pattern would move the body, against the owner's "monitors only". The hold therefore forks **only the EEG
 pipeline's read of the inputs**. G2 and later pieces must keep that fork: the brain state physiology reads is never the
-held one. This is written into P1's must-not-touch list and into the clinical plan's note (P1 adds it).
+held one. This is written into P1a's must-not-touch list and into the clinical plan's note (P1a adds it).
+
+**The cortex's memory at a switch: the N2O reference.** `cortexStep` carries one value from the previous hop:
+`n2oRef`, the N2O level the cortex has adapted to. It fires the transient on a change of either sign. Left alone, any
+N2O-free pattern chosen while the drugs give N2O would show about three minutes of slow-delta, caused by the switch
+itself and not by the pattern. So at a pattern's first hop, and again on release to the drugs, `prev` is not carried
+over. The cortex is stepped as `spectrumNow(undefined, …)` already does at switch-on, which seeds `n2oRef` from the
+new vector, so the switch itself makes no transient. The one exception is declared in the table: a pattern may name
+`n2oFrom`, the reference its first hop is seeded with. Only `n2o-step` uses it (`n2oFrom` 0 while its vector holds
+0.6 MAC), so its transient is the cortex's own response to that step and decays with the sourced τ.
+**[ENG: the reset at a switch; the only carried value is the N2O reference]**
 
 **Body-side inputs under a held pattern.** A pattern's vector holds every input except `ageY`. That covers the drug
 part, `stimulus` and `antinoc`, `do2Rel` and `tempC`, so what the screen shows is exactly what was chosen. A surgical
@@ -107,7 +117,12 @@ incision in a MANUAL run then does not raise beta on a held "surgical" pattern, 
 does not slow it. The artefact path stays live: EMG still reads the twitch T1, the tube and the held cortex's
 `lor`/`arousal`, and diathermy, mains, impedance and ECG pickup act as now. This is the plan's proposal and **a
 question for the owner (Q4)**; the alternatives keep the stimulus, or all body-side inputs, flowing through a held
-pattern.
+pattern. Q4 decides which rows can exist:
+- `light-arousal` holds a stimulus, so it exists only under A;
+- the brain-supply and temperature rows hold O2 delivery or temperature, so they exist under A or B, but not C;
+- every other row exists under any answer.
+
+The table's last column says so per row.
 
 **Onset.** `setRhythm` has no ramp. `setEegPattern` has none either: a new pattern takes effect at the generator's
 next hop (≤ 1 s). The existing per-hop gain smoothing (`synth.ts`, "a new hop's gains reach the trace without a step")
@@ -124,42 +139,54 @@ Concentrations are computed from the anchors for the patient's age with `ce50Pro
 and cell columns use the stage plan's acceptance cells C1–C35 (`stage-eeg-depth-of-anaesthesia.md` §7.2) and the
 clinical plan's inventory U1–U41 (`eeg-clinical-generator.md` §1.5).
 
-"Producible today" means the generator on 45dc8511 produces the pattern's described features, as the cited cell's
-test shows. The column names the test, or says the course is generated but not yet tested (P1 then adds the test).
-The misses recorded on 12 November (stage plan §7.2 note; N139, N140) qualify some rows and are written beside them.
+"Produced" means the generator on 45dc8511 produces the described features, as a passing test of the cited cell
+shows. The cell tests were found by searching the cell ids across `packages/engine-core/test`:
+- **spectrum level:** `test/l2/eeg/spectra.test.ts` (C1–C8, C10–C17, C28's spectral half, C34/C35);
+- **cortex level:** `test/l2/eeg/state.test.ts` (C8, C9, C16, C34, C35);
+- **engine level:** `test/engine/eeg-cortex.test.ts` (C7, C8, C14, C17) and the BIS-type course
+  `test/engine/eeg-bis-course.test.ts` (C26–C29).
+
+"Generated" means the cortex and the spectrum render it, but no test checks that point; P1b adds one. Several of
+these tests are spectrum-level, not trace-level. The misses recorded on 12 November (stage plan §7.2 note; N139,
+N140; `spectra-measured.test.ts`'s `it.fails` rows) qualify some rows and are written beside them. Tags in the inputs
+column:
+- `[ENG: midway]`: a point placed midway between two sourced anchors, because the cell names a range;
+- `[ENG: at the constant]`: a value placed on an existing constant, where the cell gives only a threshold.
+
+The last column gives the answers to Q4 under which the row exists.
 
 #### Producible today
 
-| Id (label on the picker) | Agent group | Held inputs (all others 0; `ageY` the patient's) | What must be seen, source | Today |
-|---|---|---|---|---|
-| `awake` (Awake) | No drug | nothing; stimulus 0 | RMS ≈ 5–10 µV, beta base, blinks (C1; Ch36 p. 1138; Ch35 p. 1104) | produced (`eeg-signal.test.ts`). **Note N140:** the blinks dominate the low-frequency power, so the Entropy reader reads awake SE 69, not above 80 (PR 433) |
-| `propofol-sedation` (Sedation, beta) | Propofol | `hyp.gabaIv` at `lor` = 0.6: the generator's sedation-beta peak (`BETA_SED_RISE_DB`, "peaking at lor 0.6" **[FIT]**) | beta ↑ 15–25 Hz before loss of response (C2; Ch36 p. 1138) | produced (BIS-type course "sedation" state, `eeg-bis-course.test.ts`) |
-| `propofol-lor` (Loss of responsiveness, frontal alpha) | Propofol | `hyp.gabaIv` at `lor` = 1: the class's own LOR point (`locPropofol(age)`) | frontal alpha 8–12 Hz appears (C3; Ch36 p. 1138; Ch35 p. 1106) | produced (course "loss of responsiveness"). Anteriorisation (C32) needs four channels: waits for E10/G5 |
-| `propofol-surgical` (Surgical, alpha–delta) | Propofol | `hyp.gabaIv` at `hyper` = 1 (`SLOW_GA_HYPER`, "the propofol BIS-50 Ce50" **[INF]**) | slow-delta + alpha, beta and gamma ↓, alpha ≥ 10 Hz (C4, C7; Ch36 pp. 1139, 1143, 1145) | produced. BIS-type reads 51.1 at the course's surgical state (PR 437, C27 inside 40–60) |
-| `propofol-forme-fruste` (Before burst suppression, forme fruste) | Propofol | `hyp.gabaIv` at `suppressDrive` midway between `FORME_FRUSTE_ON` (0.85) and 1 (**[FIT]** both: spectra.ts) | > 2 Hz drop-outs with sustained 0.5–2 Hz (C10; Ch36 pp. 1139–1141) | generated; no course test at this point: P1 adds one |
-| `propofol-burst-suppression` (Burst suppression) | Propofol | `hyp.gabaIv` placing `suppress` at the chosen fraction on the generator's own `suppressionCurve` (option `suppressedPct`, default 50 % = `SUPP_ESTABLISHED` **[FIT]**). Onset anchor CP50_BS 4.9 µg/mL (`BS_ONSET_PROP_NG_ML`, Pilge 2014, Ch36 p. 1141) | suppressed stretches < 5 µV, lengthening with dose (C8, C10; Ch36 pp. 1139–1141); 50–80 % when targeted (C25, U4; Ch35 p. 1106) | produced (course "burst suppression"; C29 noisy BS) |
-| `propofol-isoelectric` (Isoelectric) | Propofol | `hyp.gabaIv` at `suppress` = 1 (`BS_ISOELECTRIC_MAC` 2.5 MAC-eq **[FIT]**) | silence (C10; Ch36 p. 1141) | generated; P1 adds the test |
-| `volatile-sedation` | Volatile (option `agent`: sevoflurane, isoflurane, desflurane; default sevoflurane) | MAC at `lor` = 0.6 (`MAC_AWAKE` units) | as C2, "common to all ethers" (Ch36 p. 1143) **[INF]** | generated; P1 adds the test |
-| `volatile-lor` | Volatile | MAC at `lor` = 1 (`MAC_AWAKE`) | frontal alpha (C3) | generated; P1 adds the test |
-| `volatile-surgical` (Surgical, alpha + theta) | Volatile | 1 MAC (`hyper` = 1) | alpha ≈ 10 Hz with theta ≈ 4.9 Hz (Ch36 p. 1143; Akeju 2014 via `THETA_HZ`) | produced (`eeg-signal.test.ts` sevoflurane rows) |
-| `volatile-alpha-to-delta` (Deep, alpha-to-delta shift) | Volatile | MAC at `deep` = `DEEP_SPAN_MAC` past `DEEP_ONSET` (0.944 MAC, Ch36 p. 1143 ÷ Mapleson 1996 **[INF]**; span **[FIT]**) | > 20 Hz lost; alpha ≈ 10 → 7–8 Hz and fades (C6; Ch36 pp. 1142–1143, Fig. 36.7) | produced (C6 test) |
-| `volatile-burst-suppression` | Volatile | MAC placing `suppress` at `suppressedPct` on `suppressionCurve` with the agent's onset (`BS_ONSET_SEVO_MAC` 1.4, `_ISO_` 1.3, `_DES_` 1.25: Pilge 2014; Rampil 1991 **[INF]**) | C9, C10 (Ch36 p. 1141; Ch35 Table 35.1) | produced (C9 direction). The onset itself is `[OWNER P-1]` |
-| `volatile-isoelectric` | Volatile | `BS_ISOELECTRIC_MAC` 2.5 **[FIT]** | silence | generated; P1 adds the test |
-| `ketamine-adjunct` (Ketamine on a volatile) | Ketamine | `hyp.dissociative` at `ketDepol` = `KET_SAT` (0.3, "the 25–50 mg adjunct range" **[FIT]**) on sevoflurane 0.7 MAC (the cell's own context) | alpha ↓, every index ↑ or unchanged ("spurious elevation") (C14; Ch36 p. 1144, Fig. 36.8) | produced (C14 test) |
-| `ketamine-alone` (Ketamine, hypnotic dose) | Ketamine | `ketDepol` = 1 (ketamine-alone LOR) | large slow waves with gamma bursts, no suppression (C15; Ch36 p. 1144; Ch35 Table 35.1) | produced (C15 test) |
-| `opioid-alone` (High-dose opioid alone) | Opioid-heavy | `opioidFentEq` at `opioid` = 2 (16 ng/mL; `OPIOID_DELTA_DB` is defined "at opioid 2"; threshold 8 ng/mL `OPIOID_EEG_FENT_NG_ML`, Ch36 p. 1144) | delta ↑, median frequency ↓, never suppression (C11; Ch36 p. 1144; Ch35 pp. 1106–1107) | produced (C11 test) |
-| `opioid-with-hypnotic` (Hypnotic with opioid) | Opioid-heavy | `propofol-surgical`'s vector + `opioidFentEq` > 4 ng/mL (C13's threshold) | little change from the hypnotic alone (C12; Ch36 p. 1145) | produced (C12 test) |
-| `light-arousal` (Light anaesthesia, noxious arousal) | Propofol | `propofol-lor`'s vector + `stimulus` = 1, `antinoc` = 0, opioid 0 | beta arousal and alpha drop-out (C13; Ch36 pp. 1141, 1145) | produced (C13 test). **Note N139** (arousal blunted under remifentanil) concerns the drug path, not a held vector. This row needs Q4 = A or C |
-| `n2o-steady` (Nitrous oxide alone) | Nitrous oxide | N2O 0.6 MAC (`N2O_FAST_DB` is defined "at 0.6 MAC" **[FIT]**), held long enough that `n2oRef` has adapted | minimal change, frontal fast activity > 30 Hz (C16; Ch36 p. 1144; Ch35 Table 35.1) | produced (C16 test) |
-| `n2o-step` (Nitrous oxide switched on) | Nitrous oxide | N2O 0 → 0.6 MAC at the moment of choosing; the cortex's own `n2oRef` then adapts (τ `N2O_TRANSIENT_TAU_S` 180 s, Pavone 2016) | a large short-lived delta transient with alpha loss, no suppression (C16) | produced (C16 transient test) |
-| `dexmedetomidine` (Dexmedetomidine, spindles) | Dexmedetomidine | `alpha2Eq` at the LOR anchor `DEXMED_LOR_NG_ML` 2.09 ng/mL (Ch36 p. 1144, Fig. 36.9, one patient) | alpha–delta with ≈ 12–13 Hz spindle bursts, no suppression (C17) | produced (C17 test). Dexmedetomidine's potency is `[OWNER P-12]` (Q11) |
-| `benzodiazepine` (Benzodiazepine sedation, beta) | Benzodiazepine | `hyp.benzo` at `lor` = 0.6 | "mainly increased beta" (Ch36 p. 1144) | generated (`BETA_SED_RISE_DB` benzo share); P1 adds the test |
-| `barbiturate-*` (four rows: fast beta, frontal alpha-frequency spindles, diffuse delta, burst suppression) | Barbiturate / etomidate (option `agent`) | `hyp.barbiturate` or `hyp.etomidate` at `lor` 0.6 / `lor` 1 / `hyper` 1 / `suppressedPct` | Table 35.1's sequence (Ch35 p. 1107; clinical plan §1.2) | generated by the class shares; **no cell tests the barbiturate course**. P1 adds direction tests, and a row whose test fails moves to the waiting list |
-| `ischaemic-slowing` (Ischaemia: slowing, voltage kept) | Brain supply | `do2Rel` at `metabolic` = `METABOLIC_SLOW_SHARE` (0.5 **[FIT]**) between `DO2_EEG_ABNORMAL` 20/50 and `DO2_EEG_LOST` 12/50 (Ch35 p. 1122); drugs 0 | slowing with preserved voltage (C34; Ch35 pp. 1105, 1122) | produced (C34 test) |
-| `ischaemic-loss` (Ischaemia: loss of voltage) | Brain supply | `do2Rel` = `DO2_EEG_LOST` | voltage lost (C34) | produced |
-| `hypothermic-slowing` (Hypothermia: slowing) | Temperature | `tempC` midway between `COLD_SLOW_FROM_C` 37 **[FIT]** and `BS_TEMP_ONSET_C` 24.4 (Stecker 2001) | progressive slowing (C35; Ch35 p. 1127) | produced (C35 test) |
-| `hypothermic-burst-suppression` | Temperature | `tempC` between 24.4 and `BS_TEMP_SILENT_C` 17.8 (Stecker 2001) | burst suppression (U17) | produced |
-| `hypothermic-silence` (Hypothermia: silence; DHCA) | Temperature | `tempC` ≤ 17.8 | complete suppression at 15–18 °C (C35; U17, Ch35 p. 1127, p. 2314) | produced |
+| Id (label on the picker) | Agent group | Held inputs (all others 0; `ageY` the patient's) | What must be seen, source | Today | Q4 |
+|---|---|---|---|---|---|
+| `awake` (Awake) | No drug | nothing; stimulus 0 | RMS ≈ 5–10 µV, beta base, blinks (C1; Ch36 p. 1138; Ch35 p. 1104) | produced (`spectra.test.ts` C1). **N140:** the blinks dominate the low-frequency power, so the Entropy reader reads awake SE 69, not above 80 (PR 433) | any |
+| `propofol-sedation` (Sedation, beta) | Propofol | `hyp.gabaIv` at `lor` = 0.6, the sedation-beta peak. Today this is a bare literal in `spectrumOf` (`bump = c.lor < 0.6 …`); its comment on `BETA_SED_RISE_DB` says "peaking at lor 0.6" **[FIT]**. P1b exports it as a named constant with no value change | beta ↑ 15–25 Hz before loss of response (C2; Ch36 p. 1138) | produced (`spectra.test.ts` C2). **Miss:** the measured 25–35 Hz sedation rise is not reached (`spectra-measured.test.ts` `it.fails`, PUR13 Fig. 2C) | any |
+| `propofol-lor` (Loss of responsiveness, frontal alpha) | Propofol | `hyp.gabaIv` at `lor` = 1: the class's own LOR point (`locPropofol(age)`) | frontal alpha 8–12 Hz appears (C3; Ch36 p. 1138; Ch35 p. 1106) | produced (`spectra.test.ts` C3). Anteriorisation (C32) needs four channels: waits for E10/G5 | any |
+| `propofol-surgical` (Surgical, alpha–delta) | Propofol | `hyp.gabaIv` at `hyper` = 1 (`SLOW_GA_HYPER`, "the propofol BIS-50 Ce50" **[INF]**) | slow-delta + alpha, beta and gamma ↓, alpha ≥ 10 Hz (C4, C7; Ch36 pp. 1139, 1143, 1145) | produced (`spectra.test.ts` C4, C7; `eeg-cortex.test.ts` C7). BIS-type reads 51.1 at the course's surgical state (PR 437) | any |
+| `propofol-forme-fruste` (Before burst suppression, forme fruste) | Propofol | `hyp.gabaIv` at `suppressDrive` midway between `FORME_FRUSTE_ON` (0.85 **[FIT]**) and 1 **[ENG: midway]** | > 2 Hz drop-outs with sustained 0.5–2 Hz (C10; Ch36 pp. 1139–1141) | produced in order (`spectra.test.ts` C10: "the forme fruste comes first"); the point itself is untested, so P1b adds a test | any |
+| `propofol-burst-suppression` (Burst suppression) | Propofol | `hyp.gabaIv` placing `suppress` at the chosen fraction on the generator's own `suppressionCurve`. Option `suppressedPct`: 5–100 % (the floor of 5 % is **[ENG: control]**); default 50 % = `SUPP_ESTABLISHED` **[FIT]**. Onset anchor CP50_BS 4.9 µg/mL (`BS_ONSET_PROP_NG_ML`, Pilge 2014, Ch36 p. 1141) | suppressed stretches < 5 µV, lengthening with dose (C8, C10; Ch36 pp. 1139–1141); 50–80 % when targeted (C25, U4; Ch35 p. 1106) | produced (`spectra.test.ts` C8, C10; `eeg-bis-course.test.ts` C29). C25 has no test, so P1b adds one at 50 and 80 % | any |
+| `propofol-isoelectric` (Isoelectric) | Propofol | `hyp.gabaIv` at `suppress` = 1 (`BS_ISOELECTRIC_MAC` 2.5 MAC-eq **[FIT]**) | silence (C10; Ch36 p. 1141) | produced (`spectra.test.ts` C10 "to isoelectric") | any |
+| `volatile-sedation` | Volatile (option `agent`: sevoflurane, isoflurane, desflurane; default sevoflurane) | MAC at `lor` = 0.6 (`MAC_AWAKE` units) | as C2, "common to all ethers" (Ch36 p. 1143) **[INF]** | generated: C2 is tested for propofol only, so P1b adds a test | any |
+| `volatile-lor` | Volatile | MAC at `lor` = 1 (`MAC_AWAKE`) | frontal alpha (C3) | generated: P1b adds a test | any |
+| `volatile-surgical` (Surgical, alpha + theta) | Volatile | 1 MAC (`hyper` = 1) | alpha ≈ 10 Hz with theta ≈ 4.9 Hz (Ch36 p. 1143; Akeju 2014 via `THETA_HZ`) | produced (`spectra.test.ts` C5 at ≈ 1 MAC sevoflurane; C6's lower arm) | any |
+| `volatile-alpha-to-delta` (Deep, alpha-to-delta shift) | Volatile | MAC at `deep` = `DEEP_SPAN_MAC` past `DEEP_ONSET` (0.944 MAC: Ch36 p. 1143 ÷ Mapleson 1996 **[INF]**; the span **[FIT]**) | > 20 Hz lost; alpha ≈ 10 → 7–8 Hz and fades (C6; Ch36 pp. 1142–1143, Fig. 36.7) | produced (`spectra.test.ts` C6) | any |
+| `volatile-burst-suppression` | Volatile | MAC placing `suppress` at `suppressedPct` on `suppressionCurve`, with the agent's onset: `BS_ONSET_SEVO_MAC` 1.4 and `_ISO_` 1.3 (Pilge 2014); `_DES_` 1.25 (Rampil 1991 **[INF]**) | C9, C10 (Ch36 p. 1141; Ch35 Table 35.1) | produced (`state.test.ts` C9). The onset itself is `[OWNER P-1]` | any |
+| `volatile-isoelectric` | Volatile | `BS_ISOELECTRIC_MAC` 2.5 **[FIT]** | silence | generated: P1b adds a test | any |
+| `ketamine-adjunct` (Ketamine on a volatile) | Ketamine | `hyp.dissociative` at `ketDepol` = `KET_SAT` (0.3, "the 25–50 mg adjunct range" **[FIT]**) on sevoflurane 0.7 MAC (the cell's own context) | alpha ↓, every index ↑ or unchanged ("spurious elevation") (C14; Ch36 p. 1144, Fig. 36.8) | produced (`spectra.test.ts`, `eeg-cortex.test.ts` C14) | any |
+| `ketamine-alone` (Ketamine, hypnotic dose) | Ketamine | `ketDepol` = 1 (ketamine-alone LOR) | large slow waves with gamma bursts, no suppression (C15; Ch36 p. 1144; Ch35 Table 35.1) | produced (`spectra.test.ts` C15) | any |
+| `opioid-alone` (High-dose opioid alone) | Opioid-heavy | `opioidFentEq` at `opioid` = 2: 16 ng/mL. `OPIOID_DELTA_DB` is defined "at opioid 2" **[ENG: at the constant]**; the threshold is 8 ng/mL (`OPIOID_EEG_FENT_NG_ML`, Ch36 p. 1144) | delta ↑, median frequency ↓, never suppression (C11; Ch36 p. 1144; Ch35 pp. 1106–1107) | produced (`spectra.test.ts` C11) | any |
+| `opioid-with-hypnotic` (Hypnotic with opioid) | Opioid-heavy | `propofol-surgical`'s vector + `opioidFentEq` 8 ng/mL (`OPIOID_EEG_FENT_NG_ML`, above C13's 4 ng/mL) **[ENG: at the constant]** | little change from the hypnotic alone (C12; Ch36 p. 1145) | produced (`spectra.test.ts` C12) | any |
+| `light-arousal` (Light anaesthesia, noxious arousal) | Propofol | `propofol-lor`'s vector + `stimulus` = 1, `antinoc` = 0, opioid 0 | beta arousal and alpha drop-out (C13; Ch36 pp. 1141, 1145) | produced (`spectra.test.ts` C13). N139 (arousal blunted under remifentanil) concerns the drug path, not a held vector | **A only** |
+| `n2o-steady` (Nitrous oxide alone) | Nitrous oxide | N2O 0.6 MAC (`N2O_FAST_DB` is defined "at 0.6 MAC" **[FIT]**); `n2oRef` seeded at 0.6, so no transient | minimal change, frontal fast activity > 30 Hz (C16; Ch36 p. 1144; Ch35 Table 35.1) | produced (`spectra.test.ts` C16, steady half) | any |
+| `n2o-step` (Nitrous oxide switched on) | Nitrous oxide | the same vector with `n2oFrom` 0: the cortex's own `n2oRef` then adapts (τ `N2O_TRANSIENT_TAU_S` 180 s, Pavone 2016) | a large short-lived delta transient with alpha loss, no suppression (C16) | produced (`spectra.test.ts`, `state.test.ts` C16 transient) | any |
+| `dexmedetomidine` (Dexmedetomidine, spindles) | Dexmedetomidine | `alpha2Eq` at the LOR anchor `DEXMED_LOR_NG_ML` 2.09 ng/mL (Ch36 p. 1144, Fig. 36.9, one patient) | alpha–delta with ≈ 12–13 Hz spindle bursts, no suppression (C17) | produced (`spectra.test.ts`, `eeg-cortex.test.ts` C17). Dexmedetomidine's potency is `[OWNER P-12]` (Q11) | any |
+| `benzodiazepine` (Benzodiazepine sedation, beta) | Benzodiazepine | `hyp.benzo` at `lor` = 0.6 | "mainly increased beta" (Ch36 p. 1144) | generated (the benzo share of the beta rise); P1b adds a test | any |
+| `barbiturate-beta`, `-spindles`, `-delta`, `-burst-suppression` (four rows: fast beta, frontal alpha-frequency spindles, diffuse delta, burst suppression) | Barbiturate / etomidate (option `agent`) | `hyp.barbiturate` or `hyp.etomidate` at `lor` 0.6 / `lor` 1 / `hyper` 1 / `suppressedPct` | Table 35.1's sequence (Ch35 p. 1107; clinical plan §1.2) | generated by the class shares; **no cell tests the barbiturate course**. P1b adds direction tests, and a row whose test fails moves to the waiting list (Q14) | any |
+| `ischaemic-slowing` (Ischaemia: slowing, voltage kept) | Brain supply | `do2Rel` at `metabolic` = `METABOLIC_SLOW_SHARE` (0.5 **[FIT]**), between `DO2_EEG_ABNORMAL` 20/50 and `DO2_EEG_LOST` 12/50 (Ch35 p. 1122); drugs 0 | slowing with preserved voltage (C34; Ch35 pp. 1105, 1122) | produced (`spectra.test.ts`, `state.test.ts` C34) | A or B |
+| `ischaemic-loss` (Ischaemia: loss of voltage) | Brain supply | `do2Rel` = `DO2_EEG_LOST` | voltage lost (C34) | produced (`state.test.ts` C34) | A or B |
+| `hypothermic-slowing` (Hypothermia: slowing) | Temperature | `tempC` 30.7 °C, midway between `COLD_SLOW_FROM_C` 37 **[FIT]** and `BS_TEMP_ONSET_C` 24.4 (Stecker 2001) **[ENG: midway]** | progressive slowing (C35; Ch35 p. 1127) | produced (`spectra.test.ts`, `state.test.ts` C35) | A or B |
+| `hypothermic-burst-suppression` | Temperature | `tempC` 21.1 °C, midway between 24.4 and `BS_TEMP_SILENT_C` 17.8 (Stecker 2001) **[ENG: midway]** | burst suppression (U17) | produced (`state.test.ts` C35) | A or B |
+| `hypothermic-silence` (Hypothermia: silence; DHCA) | Temperature | `tempC` 17.8 °C (`BS_TEMP_SILENT_C`, Stecker 2001) | complete suppression at 15–18 °C (C35; U17, Ch35 p. 1127, p. 2314) | produced (`state.test.ts` C35) | A or B |
 
 Notes on the list:
 - **Three isoelectric rows, one EEG.** Drug, ischaemic and hypothermic silence look alike on the trace. They differ in
@@ -179,7 +206,7 @@ Notes on the list:
 #### Waiting for their EEG piece (named in the inventory; not producible by today's generator)
 
 These are listed so that the picker can show them later without a redesign. **None is approximated.** Each enters the
-pattern table when its piece merges, as a held input of that piece's own mechanism. The P1 test "every pattern id is
+pattern table when its piece merges, as a held input of that piece's own mechanism. The P1b test "every pattern id is
 producible" keeps them out until then.
 
 | Pattern (inventory name) | Inventory row | Why not today (clinical plan §2) | Waits for |
@@ -247,6 +274,20 @@ value for all, is put to the owner as **Q1**.
 change only its published value, never `diRaw`, which the ventilatory drive, the CMRO2 and the awareness flag read
 (D7). Proposal: settable, published only. **Q6.**
 
+`di` leaves the neuro model by three paths (`l2/neuro/pipeline.ts`):
+1. **The `measurement` value `di`**, from `emitSecond`: the smoothed `ns.diShown`, null and questionable while
+   stimulated and unparalysed. This is what every monitor face, trend, record entry and scenario rule reads. **The
+   hold covers this one.**
+2. **The `anaesthesia` event's `di`**: `Math.round(d.diRaw)`, beside `awarenessRisk: d.diRaw > 60 && tof.count <= 2`.
+   This is the model's truth, used for the awareness flag and the debug views, and the hold does not touch it. A held
+   `di` of 30 with an awareness flag raised is then a true statement about the model, shown only where the model's
+   truth is shown.
+3. **`diRaw` into the drive and the outputs** (`neuroResp`, `neuroOutputs`): physiology, never held (D7).
+
+The neuro model also runs in the engine's look-ahead pass. `setEegIndex` is a command, so its apply marks the
+look-ahead dirty from its tick through the engine's common command path (`engine.ts`, `dirtyFromN`), as every other
+command does. P2's test 4 checks that a posted `di` after a hold never shows the pre-hold value.
+
 ### 2.3 The monitor's smoothing and delay
 
 **None of the readers has an index-level smoother into which a number could be inserted.**
@@ -294,6 +335,12 @@ real monitor produces. Proposal:
 - **The Instructor's row shows what the trace reads**: "Trace reads 22". The reader keeps computing its own index from
   the trace while a hold is on, and the engine reports it to the instructor (§3.2, `brain.reads`).
 - No threshold is invented for when the two disagree. The instructor sees both numbers side by side and decides.
+- Two things on the learner's side keep saying where the numbers come from:
+  - the tile's label still reads "BIS-type index, computed from published components" (`BIS_TYPE_SPEC.label`, Q8 of
+    the stage plan), although the number shown is hand-set;
+  - the depth window (`#/depth`, E12) still shows the components computed from the trace beside it.
+
+  Both are part of Q3.
 
 The alternatives are put to the owner as **Q3**: a warning line, or refusing combinations.
 
@@ -317,7 +364,7 @@ brainHold?: {
   switch-on is the pattern's, not the drugs'. `device depth off/on` likewise keeps a held `di`. This keeps stage plan
   D4: the EEG still runs only while a device is on. Only the instructor's setting outlives the device.
 - **Snapshot, bookmarks, restore.** `PipelineState` is plain JSON-safe data, snapshotted through
-  `snapshot-codec.ts` and cloned for bookmarks. `brainHold` is carried without codec changes; a test proves it (P1). An
+  `snapshot-codec.ts` and cloned for bookmarks. `brainHold` is carried without codec changes; a test proves it (P1a). An
   older snapshot has no field, which means nothing is held; the engine version key already guards cross-build
   restores.
 - **Absent unless used.** An engine that never receives a hold carries no field and computes exactly what it computes
@@ -340,10 +387,13 @@ The row is still "built like the other rows": same stepper widget, chip and onse
 { type: 'setEegIndex';   id: HeldIndexId; value: number | null; ramp?: Ramp }   // null: release, back to the reader
 ```
 
-- **MANUAL only, checked at apply time.** `validate` refuses both while the mode *when the command applies* is
-  MODELED: "MODELED: the EEG and the index follow the drugs". That means a `setMode` still queued counts, as
-  `eegOnWhenApplied()` does for `device eeg on/off` (`engine.ts`). A command that was valid when queued but finds
-  MODELED on apply is dropped, with a reason in the ack.
+- **MANUAL only, judged for the moment the command applies.** The ack is issued at dispatch, and `apply` has no
+  refusal path today. So the check is made at dispatch, against the mode the command will find when it applies:
+  - `validate` scans the queue for the last `setMode` that will apply before the command, as `eegOnWhenApplied()` does
+    for `device eeg on/off` (`engine.ts`). The new helper is `modeWhenApplied()`.
+  - It refuses both commands when that mode is MODELED: "MODELED: the EEG and the index follow the drugs".
+  - As a guard, `apply` checks again. If the engine is in MODELED there anyway (no case is known that leads there),
+    the command does nothing, and the engine log records a line saying so. No `brainHold` event is emitted for it.
 - **Validation.**
   - `pattern` must be in the pattern table (`l2/eeg/patterns.ts`, new) or be `'drugs'`.
   - `opts.agent` must be in that pattern's group.
@@ -381,8 +431,9 @@ The row is still "built like the other rows": same stepper widget, chip and onse
 ### 3.4 The allow-list and its census
 
 `INSTRUCTOR_COMMANDS` (`packages/controller/src/protocol.ts`) gains `'setEegPattern'` and `'setEegIndex'`. The census
-test (`apps/demo/src/app/teach2/census.dom.test.ts`) measures what the laptop sends. It must find both once the Brain
-group exists (P4), and `packages/controller/test/protocol.test.ts` pins the set. A granted instructor's phone may then
+test (`apps/demo/src/app/teach2/census.dom.test.ts`) compares what the laptop's views send with the allow-list
+itself, and `packages/controller/test/protocol.test.ts` pins the set against its `CENSUS` literal. So the two shapes
+enter the allow-list in the same piece as the control that sends them (P4), never before. A granted instructor's phone may then
 send them too, since the allow-list is one for both. No phone control is built here (Q13).
 
 ### 3.5 The scenario format and the builder
@@ -391,8 +442,13 @@ Today a card may set a rhythm in a state's `onEnter` (`packages/controller/src/s
 its patient (`p.rhythm`, `runner.ts`, `phase-runner.ts`). A card also has a `mode` (`types.ts:180`). His analogy ("like
 what we do with ECG rhythms") reads as: **a MANUAL card may choose a pattern and set the index as it may a rhythm.**
 - `DocCommand` gains `setEegPattern` and `setEegIndex`.
+- The card's patient may start with a pattern, as `patient.rhythm` lets it start with a rhythm. `ScenarioPatient`
+  gains `eegPattern?: { id, opts? }`, which the runner and the phase runner turn into a setup `setEegPattern`, exactly
+  as they do `p.rhythm` (`runner.ts:156`, `phase-runner.ts:201`).
 - `validate.ts` warns on an unknown pattern, as it does for an unknown rhythm. It reports an **error** for either
-  command in a card whose `mode` is MODELED, or in a state reached after a scripted `setMode modeled`.
+  command, or for `patient.eegPattern`, in a card whose `mode` is MODELED. A state reached after a scripted
+  `setMode modeled` cannot be decided statically, so it is left to the engine's own refusal (§3.2), whose ack reason
+  the runner already logs.
 - The builder's Script (`apps/demo/src/app/builder/script-commands.ts`) offers "EEG pattern" and "Depth index" only on
   a MANUAL card.
 
@@ -440,8 +496,9 @@ control.
   With no EEG reader in the room and `device depth on`, the row is the present index's `di`.
 - **With no depth monitor in the room**, the group shows its pattern picker and the line "No EEG monitor in the room:
   the setting shows when one is switched on" (Q9).
-- **In MODELED** the group shows the live pattern state and index and the line "Follows the drugs: change it with the
-  drugs, or switch to MANUAL". There is no picker, no stepper, no "Set", no "Return". This is brief 208's rule 5 for
+- **In MODELED** the group shows the live index and the line "Follows the drugs: change it with the drugs, or switch
+  to MANUAL". It names no pattern, because nothing classifies a drug-driven trace into a pattern, and one would be an
+  invented classifier. There is no picker, no stepper, no "Set", no "Return". This is brief 208's rule 5 for
   model-computed rows.
 
 ---
@@ -459,72 +516,106 @@ Every engine piece carries the tests the engine's rules require:
 Each piece is one PR: tests first (a failing test committed before the code), the common gate, the generated docs
 pages regenerated in CI's order with `docs/model` last. Hours are in the stage plan's form.
 
-### P1: The pattern hold in the engine (plan 12 h · 1.5–2.0 executor-h) — `run-validation`
+### P1a: The pattern seam in the engine, with three patterns (plan 9 h · 1.1–1.5 executor-h) — `run-validation`
 
-- **Purpose:** §1 and §3.1–3.2 for the pattern: the pattern table, the held record, `setEegPattern`, MANUAL-only at
-  apply, switch-on from the hold, the `brainHold` event, the engine log line, the `brain` block's `pattern` field.
+- **Purpose:** the structure of §1.1 and §3.1–3.2 for the pattern, proven on three patterns (`awake`,
+  `propofol-surgical`, `propofol-burst-suppression`). It covers:
+  - the held record and `setEegPattern`;
+  - the MANUAL-only check (`modeWhenApplied`, the apply guard);
+  - the N2O reference rule at a switch;
+  - switch-on from the hold;
+  - the clear on `setMode modeled`;
+  - the `brainHold` event, the engine log line, and the `brain` block's `pattern` field.
 - **Depends on:** nothing that is open.
 - **Files:**
   - `packages/engine-core/src/l2/eeg/patterns.ts` (new: ids, groups, each id's held `CortexInputs` as a function of
-    age and options, built only from the named constants);
-  - `l2/eeg/pipeline.ts` (`spectrumNow` and `createEegState` take an optional held vector);
-  - `engine.ts` (the field, validate, apply, `modeWhenApplied`, the clear on `setMode modeled`, the event);
+    age and options, built only from named constants; `n2oFrom`);
+  - `l2/eeg/pipeline.ts` (`spectrumNow` and `createEegState` take an optional held vector; no `prev` carried at a
+    switch);
+  - `engine.ts` (the field, validate, apply, `modeWhenApplied`, the clear, the event);
   - `types.ts`, `types-eeg.ts`, `types-hemo.ts` (the `brain` block);
   - `l3/trends/event-log.ts`;
-  - `index.ts` (export `EEG_PATTERN_IDS`, groups).
+  - `index.ts` (export `EEG_PATTERN_IDS` and the groups).
 - **Tests first:**
-  1. **Identity (the defining test).** At the pipeline level, `advanceEeg` with a context whose `cortexInputsOf`
-     yields vector X and with X held gives sample-identical traces from the same seed. So a pattern *is* the
-     generator's own state, not a drawing.
-  2. **Every producible pattern shows its row's features.** Each pattern is tested by the cell named in §1.2's table,
-     reusing the cell tests' measurements (`eeg-signal.test.ts`). The barbiturate, forme-fruste, isoelectric,
-     benzodiazepine and volatile-sedation/LOR rows get new direction tests. A row whose test fails moves to the
-     waiting list in this plan; nothing is tuned.
-  3. **D7: monitors only.** A 10-minute MANUAL run with drugs, once without a hold and once with `propofol-isoelectric`
-     held, leaves every physiology output identical to the bit: the E0 baseline's outputs, `diRaw`, the drive and
-     CMRO2.
-  4. Refused in MODELED; refused when a queued `setMode modeled` comes first; accepted after a queued `setMode manual`.
-  5. `device eeg off` then `on`: the first block after switch-on is the pattern's (spectrum equal to the held
+  1. **Identity (the defining test).** At the pipeline level, `advanceEeg` driven by a context whose `cortexInputsOf`
+     yields vector X, and `advanceEeg` with X held, give sample-identical traces from the same seed. So a pattern *is*
+     the generator's own state, not a drawing.
+  2. **D7: monitors only.** A 10-minute MANUAL run with drugs, once without a hold and once with
+     `propofol-burst-suppression` held, leaves every physiology output identical to the bit: the E0 baseline's
+     outputs, `diRaw`, the drive and CMRO2.
+  3. **Mode independence of the EEG's inputs:** MANUAL and MODELED runs at the same drugs, with no hold, give the same
+     `CortexInputs` (§8's untraced point). If they do not, the piece reports the branch and stops.
+  4. **The mode check:**
+     - refused in MODELED;
+     - refused when a queued `setMode modeled` applies first;
+     - accepted after a queued `setMode manual`.
+  5. **N2O at a switch:** with N2O 0.6 MAC running from the drugs, choosing `propofol-surgical` shows no transient;
+     returning to the drugs shows none either.
+  6. **Switch-on:** after `device eeg off` then `on`, the first block is the pattern's (spectrum equal to the held
      vector's).
-  6. `setMode modeled` clears the hold, emits `brainHold` with `cause: 'modeled'`, and the next hop follows the drugs.
-  7. Snapshot round trip and bookmark restore with a hold; an older snapshot without the field restores with nothing
-     held.
-  8. Follower identity, including a late join from a snapshot.
-  9. Streams: the count of `'eeg'` draws per block is the same for every pattern.
-  10. Goldens: unchanged with no hold.
+  7. **Entering MODELED:** `setMode modeled` clears the hold, emits `brainHold` with `cause: 'modeled'`, and the next
+     hop follows the drugs.
+  8. **Snapshot:** a round trip and a bookmark restore with a hold; an older snapshot without the field restores with
+     nothing held.
+  9. **Followers:** identity, including a late join from a snapshot.
+  10. **Streams:** the count of `'eeg'` draws per block is the same for every pattern.
+  11. **Goldens:** unchanged with no hold.
 - **Must not touch:**
-  - `l2/eeg/state.ts` `cortexStep` and `spectra.ts` `spectrumOf` (no constant moves);
+  - `l2/eeg/state.ts` `cortexStep`;
+  - `spectra.ts` (no value moves; P1b's one rename is below);
   - `synth.ts`, `artefacts.ts`;
   - `l2/neuro/*` (D7);
   - the readers;
   - any brain state physiology reads (EQ11's G2: the hold forks only the EEG's read).
-- **Also:** add a dated note to `eeg-clinical-generator.md` §4.7 (the fork rule) and to the stage plan (the MANUAL
+- **Also:** dated notes in `eeg-clinical-generator.md` §4.7 (the fork rule) and in the stage plan (the MANUAL
   amendment of "no number the reader did not compute").
 - **Gate:** common, plus the validation run read to its conclusion.
+
+### P1b: The whole pattern table, a test per row (plan 8 h · 1.0–1.3 executor-h) — `run-validation`
+
+- **Purpose:** every producible row of §1.2, and the P1a test that keeps the waiting list out of the table.
+- **Depends on:** P1a.
+- **Files:**
+  - `l2/eeg/patterns.ts`;
+  - `spectra.ts`: **one rename, no value change.** The sedation-beta peak `0.6` is a bare literal in `spectrumOf`.
+    It becomes the exported constant `BETA_SED_PEAK_LOR`, with its existing `[FIT]` tag, so that the pattern table can
+    name it. The goldens prove nothing moved;
+  - the tests.
+- **Tests first:** each row is tested by the cell named in §1.2's table. Where the table cites a test, its
+  measurements are reused (`test/l2/eeg/spectra.test.ts`, `state.test.ts`, `test/engine/eeg-cortex.test.ts`). New
+  direction tests cover the rows marked "generated": the volatile sedation, LOR and isoelectric rows, the
+  benzodiazepine row, the four barbiturate/etomidate rows, the forme-fruste point, and C25's 50 and 80 %. A row whose
+  test fails moves to the waiting list in this plan, and nothing is tuned. Q4's rows are gated on its answer.
+- **Must not touch:** as P1a.
+- **Gate:** common, plus validation.
 
 ### P2: The index hold in the engine (plan 10 h · 1.3–1.7 executor-h) — `run-validation`
 
 - **Purpose:** §2 and §3.2 for the index: `setEegIndex`, the readers' `settable` declarations, publication of the held
   value, the `brain` block's `held` and `reads`.
-- **Depends on:** P1 (the record, the mode check, the event).
+- **Depends on:** P1a (the record, the mode check, the event). It may run beside P1b.
 - **Files:**
   - `l3/eeg-devices/registry.ts`, `bis-type.ts`, `generic.ts` (`settable` rows: BIS-type `bis` 0–100; generic none);
-  - `engine.ts` `readEeg` (the one place EEG numerics become `measurement` events: the held value replaces a non-null
-    reading, the flag passes through, the ramp is evaluated at the reading's `t`);
-  - `l2/neuro/pipeline.ts` `emitSecond` (`di` only, at publication; `diRaw` and `d.*` untouched; Q6's default);
+  - `engine.ts` `readEeg`, the one place EEG numerics become `measurement` events. There the held value replaces a
+    non-null reading, the flag passes through, and the ramp is evaluated at the reading's `t`;
+  - `l2/neuro/pipeline.ts` `emitSecond`: the `measurement` value `di` only (exit 1 of §2.2). The `anaesthesia` event's
+    `di` and `awarenessRisk`, and `diRaw`, are untouched (Q6's default);
   - `types-eeg.ts`.
 - **Tests first:**
   1. A held `bis` reaches every consumer: the `measurement` event, the renderer's `bfaReading`, the trend the record
-     keeps, a scenario rule on `bis` (`scenario/driver.ts` reads measurements).
-  2. **Nothing physiology reads moves:** test 3 of P1 repeated with `bis` and `di` held at 5 and at 95.
+     keeps, and a scenario rule on `bis` (`scenario/driver.ts` reads measurements).
+  2. **Nothing physiology reads moves:** P1a's test 2 repeated with `bis` and `di` held at 5 and at 95. The
+     `anaesthesia` event's `di` stays the model's.
   3. Run-in and invalid epochs: blank stays blank (null), and invalid stays invalid; questionable passes through.
-  4. The ramp at the reader's own cadence (0.5 s; 1 s for `di`); release returns the reader's value at the next
-     reading.
+  4. The ramp at the reader's own cadence (0.5 s; 1 s for `di`). Release returns the reader's value at the next
+     reading. No posted value after a hold shows the pre-hold look-ahead.
   5. `reads` equals the reader's own computed value while held.
   6. Refused in MODELED; cleared on entering MODELED; kept across `device eeg off/on` and a model change.
-  7. Snapshot, follower and goldens as every piece.
-- **Must not touch:** the readers' algorithms and constants; `depth.ts` (`smoothDi`, the formula); `outputs.ts`,
-  `drive.ts`.
+  7. Snapshot, follower and goldens, as in every piece.
+- **Must not touch:**
+  - the readers' algorithms and constants;
+  - `depth.ts` (`smoothDi`, the formula);
+  - `outputs.ts`, `drive.ts`.
 - **Gate:** common, plus validation.
 
 ### P2b: The Entropy pair (plan 4 h · 0.5–0.7 executor-h) — `run-validation`
@@ -532,61 +623,82 @@ pages regenerated in CI's order with `docs/model` last. Hours are in the stage p
 - **Purpose:** `se` and `re` settable as a pair (RE ≥ SE, SE 0–91, RE 0–100, Viertiö-Oja 2004 p. 159), with `reSe`
   published as their difference.
 - **Depends on:** PR 433 merged (held today, N138) and P2.
-- **Files:** `l3/eeg-devices/entropy.ts` (its `settable` row), the validation of the pair in `engine.ts`.
-- **Tests first:** the pair's validation; `reSe` = RE − SE when held; release of one releases both.
+- **Files:** `l3/eeg-devices/entropy.ts` (its `settable` row); the validation of the pair in `engine.ts`.
+- **Tests first:**
+  - the pair's validation;
+  - `reSe` = RE − SE when held;
+  - release of one releases both.
 - **Must not touch:** the Entropy algorithm.
 - **Gate:** common, plus validation.
 
-### P3: The controller — protocol, logs, record, scenario format (plan 8 h · 1.0–1.3 executor-h)
+### P3: The controller: logs, record, scenario format (plan 8 h · 1.0–1.3 executor-h)
 
-- **Purpose:** §3.3–3.5: the two shapes in `INSTRUCTOR_COMMANDS`; the controller session's pattern tracking and
-  `describe`; the app's `describeCommand` lines and the record row for a `brainHold` with `cause: 'modeled'`; the
-  scenario `DocCommand` kinds; `validate.ts`'s warning and its MODELED-card error; the runner and phase runner passing
-  them through.
-- **Depends on:** P1 (types); P2 for `setEegIndex`. It may start after P1 with the pattern half.
+- **Purpose:** §3.3 and §3.5:
+  - the controller session's pattern tracking and its `describe`;
+  - the app's `describeCommand` lines, and the record row for a `brainHold` with `cause: 'modeled'`;
+  - the scenario `DocCommand` kinds and `ScenarioPatient.eegPattern`;
+  - `validate.ts`'s warning, and its error on a MODELED card;
+  - the runner and phase runner passing the commands through and turning `patient.eegPattern` into setup.
+
+  **The allow-list is not here.** The census test compares what the laptop sends with `INSTRUCTOR_COMMANDS`, so the
+  two shapes enter the allow-list in P4, with the control that sends them.
+- **Depends on:** P1a (types), and P2 for `setEegIndex`. The pattern half may start after P1a.
 - **Files:**
-  - `packages/controller/src/protocol.ts`;
   - `session/controller-session.ts`;
   - `scenario/types.ts`, `scenario/types-v2.ts`, `scenario/validate.ts`, `scenario/runner.ts`, `phase-runner.ts`;
   - `apps/demo/src/app/describe.ts`, `record.ts`;
-  - `packages/controller/test/protocol.test.ts`, the scenario tests.
+  - the scenario tests.
 - **Tests first:**
-  1. `instructorMay` accepts both shapes and still refuses `setFactor`.
-  2. A MODELED card with `setEegPattern` fails validation with a reason; a MANUAL card passes; an unknown pattern
-     warns.
+  1. A MODELED card with `setEegPattern` or `patient.eegPattern` fails validation with a reason; a MANUAL card passes;
+     an unknown pattern warns.
+  2. A MANUAL card's `patient.eegPattern` reaches the engine as a setup `setEegPattern`, as `patient.rhythm` does.
   3. The record's rows for a pattern, an index and a release on entering MODELED; the Debrief shows them.
-- **Must not touch:** `packages/engine-core`; the census list beyond the two shapes.
+- **Must not touch:** `packages/engine-core`; `protocol.ts`'s allow-list.
 - **Gate:** common. No validation label: no engine change.
 
-### P4: The "Brain" group in "Vitals & rhythm" (plan 10 h · 1.3–1.7 executor-h)
+### P4: The "Brain" group in "Vitals & rhythm", and the allow-list (plan 11 h · 1.4–1.8 executor-h)
 
-- **Purpose:** §5.
+- **Purpose:** §5 and §3.4.
 - **Depends on:** brief 208 merged (the Patient tool and its tab); P2 and P3.
 - **Files:**
   - `apps/demo/src/app/panel/vitals.ts` (the group);
   - `apps/demo/src/app/eeg-patterns.ts` (new: labels and groups);
   - the glossary rows for the new labels (`glossary-data.ts`);
-  - `teach2/census.dom.test.ts` (measures the two shapes);
+  - `packages/controller/src/protocol.ts` (`INSTRUCTOR_COMMANDS` gains the two shapes) and
+    `packages/controller/test/protocol.test.ts` (its `CENSUS` literal);
+  - `teach2/census.dom.test.ts` (it measures the two shapes);
   - CSS only as the existing rows use it.
 - **Tests first:**
-  1. DOM: the picker's groups and options equal `EEG_PATTERN_IDS` with no id missing; MODELED shows the line and no
-     control; MANUAL stages the two commands with the onset; "Trace reads N" while held; the Entropy pair's stepper
-     refuses RE < SE; the no-monitor line.
-  2. The census finds `setEegPattern` and `setEegIndex`.
-  3. One e2e in Chromium and WebKit: in a MANUAL run with the BIS-type reader, choose `propofol-burst-suppression`
-     and hold 45. The bedside BFA tile reads 45, the depth window's trace shows suppression, and the row reads "Trace
-     reads" a different number. Switch to MODELED and the tile returns to the reader. Run at 1280 × 720 with the
-     dock's staging card present, as brief 208's check does.
-- **Must not touch:** the dock and the sheet frame (brief 208's); `panel/devices.ts` (the EEG artefact switches,
-  PR 447); the engine.
+  1. DOM:
+     - the picker's groups and options equal `EEG_PATTERN_IDS`, with no id missing;
+     - MODELED shows the index and the line, and no control;
+     - MANUAL stages the two commands with the onset;
+     - "Trace reads N" shows while held;
+     - the Entropy pair's stepper refuses RE < SE;
+     - the no-monitor line shows.
+  2. The census measures `setEegPattern` and `setEegIndex`, and equals the new allow-list; `instructorMay` still
+     refuses `setFactor`.
+  3. One e2e in Chromium and WebKit, at 1280 × 720 with the dock's staging card present, as brief 208's check does:
+     - in a MANUAL run with the BIS-type reader, choose `propofol-burst-suppression` and hold 45;
+     - the bedside BFA tile reads 45, the depth window's trace shows suppression, and the row's "Trace reads" shows a
+       different number;
+     - switch to MODELED, and the tile returns to the reader.
+- **Must not touch:**
+  - the dock and the sheet frame (brief 208's);
+  - `panel/devices.ts` (the EEG artefact switches, PR 447);
+  - the engine.
 - **Gate:** common. No validation label.
 
 ### P5: The builder's Script (plan 4 h · 0.5–0.7 executor-h)
 
-- **Purpose:** §3.5. "EEG pattern" and "Depth index" in the Script of a MANUAL card, not offered on a MODELED one.
-- **Depends on:** P3, P4 (the labels list).
-- **Files:** `apps/demo/src/app/builder/script-commands.ts` and its test.
-- **Tests first:** offered only on a MANUAL card; a scripted pattern round-trips through save and load and runs.
+- **Purpose:** §3.5: "EEG pattern" and "Depth index" in the Script of a MANUAL card, and the patient's starting
+  pattern in its patient editor. Neither is offered on a MODELED card.
+- **Depends on:** P3, and P4 (the labels list).
+- **Files:** `apps/demo/src/app/builder/script-commands.ts` and its test; the builder's patient editor, where it sets
+  `patient.rhythm` today (P5 finds it by that field).
+- **Tests first:**
+  - the controls are offered only on a MANUAL card;
+  - a scripted pattern round-trips through save and load, and runs.
 - **Must not touch:** the format beyond P3; the engine.
 - **Gate:** common.
 
@@ -594,15 +706,16 @@ pages regenerated in CI's order with `docs/model` last. Hours are in the stage p
 
 | Order | Piece | Plan h | Executor-h | Label | Waits for |
 |---|---|---|---|---|---|
-| 1 | P1 pattern hold | 12 | 1.5–2.0 | run-validation | owner's Q4 and Q8 (the defaults are written in) |
-| 2 | P2 index hold | 10 | 1.3–1.7 | run-validation | P1; Q1, Q2, Q6, Q7 |
-| 3 | P3 controller | 8 | 1.0–1.3 | — | P1 (pattern half), P2; Q5 for the scenario half |
-| 4 | P4 Brain group | 10 | 1.3–1.7 | — | brief 208 merged, P2, P3; Q3, Q9 |
+| 1 | P1a pattern seam | 9 | 1.1–1.5 | run-validation | owner's Q8 (the default is written in) |
+| 2 | P1b pattern table | 8 | 1.0–1.3 | run-validation | P1a; Q4, Q11, Q14 |
+| 2 | P2 index hold | 10 | 1.3–1.7 | run-validation | P1a; Q1, Q2, Q6, Q7 |
+| 3 | P3 controller | 8 | 1.0–1.3 | — | P1a (pattern half), P2; Q5 |
+| 4 | P4 Brain group, allow-list | 11 | 1.4–1.8 | — | brief 208 merged, P1b, P2, P3; Q3, Q9 |
 | 5 | P5 builder | 4 | 0.5–0.7 | — | P3, P4; Q5 |
-| after 2 | P2b Entropy pair | 4 | 0.5–0.7 | run-validation | PR 433 merged |
-| | **Total** | **48** | **6.1–8.1** | | |
+| after P2 | P2b Entropy pair | 4 | 0.5–0.7 | run-validation | PR 433 merged |
+| | **Total** | **54** | **6.8–9.0** | | |
 
-P3's pattern half may run beside P2. Every other piece is in sequence.
+P1b and P2 may run side by side after P1a, as may P3's pattern half. P4 and P5 are in sequence.
 
 ---
 
@@ -612,7 +725,7 @@ P3's pattern half may run beside P2. Every other piece is in sequence.
 |---|---|---|
 | "No number on a device screen the reader did not compute" | stage plan §2, anti-goals | in MANUAL, the held index is shown in place of the reader's. Nothing else is drawn that no reader computes (SQI%, EMG% stay blank) |
 | D4: the EEG runs only while a device is on | stage plan §4 | kept; only the instructor's setting outlives the device (§3.1) |
-| D7: physiology keeps reading today's index | stage plan §4 | kept, and tested (P1 test 3, P2 test 2): a held `di` is published only, `diRaw` untouched |
+| D7: physiology keeps reading today's index | stage plan §4 | kept, and tested (P1a test 2, P2 test 2): a held `di` is published only, `diRaw` untouched |
 | §6.4: a scenario event is "a cause, never a pattern" | clinical plan §6.4 | kept for MODELED cards; a MANUAL card may choose a pattern (Q5) |
 | EQ11 = A: the brain state is always-on and coupled to physiology | clinical plan §4.7 | the hold forks only the EEG pipeline's read of the inputs; a later brain state physiology reads is never the held one |
 | Brief 208 rule 5: no hold in a modelled run | brief 208 | applied to the Brain group |
@@ -625,8 +738,10 @@ P3's pattern half may run beside P2. Every other piece is in sequence.
   model only (`scratch/207-notes.md`, confirmed on 45dc8511). This plan adds new command types and no `StateVar`.
 - `INSTRUCTOR_COMMANDS` already passes every `device` action as one shape (`commandShape` → `'device'`). That is why
   the holds are not `device eeg` actions (§3.2).
-- The drug and neuro models run the same in both modes (no mode branch in `l2/pk`), so in MANUAL with no pattern the
-  EEG follows the drugs exactly as today.
+- No mode branch was found in `l2/pk` or `l2/eeg`, so in MANUAL with no pattern the EEG follows the drugs as in
+  MODELED. Other parts of the engine do branch on mode: `engine.ts`'s `endoHrF` (MANUAL only) and the spontaneous
+  rate at `engine.ts:851`. Whether any of these reaches an EEG input in MANUAL (`stimulus`, `do2Rel`, `tempC`) was
+  not traced. P1a checks it with a MANUAL vs MODELED run at the same drugs and no hold.
 - The record keeps every applied command through `describeCommand`. A rhythm change reaches the Debrief that way, and
   the new lines follow the same path.
 - PR 437 (merged) moved the BIS-type course: surgical depth reads 51.1 (C27 inside 40–60). The `propofol-surgical`
@@ -659,7 +774,14 @@ Each has a short explanation, the options, and the proposal the plan builds if n
    - (B) As A, plus a warning line on the Instructor page.
    - (C) Refuse combinations.
 
-   **Proposal A:** no invented threshold.
+   Two more things are shown beside a held number:
+   - the tile still says "BIS-type index, computed from published components";
+   - the depth window still shows the components read from the trace.
+
+   Should the tile's label change while a number is held (for example "set by the instructor")? That would tell the
+   learner the number is not the patient's, which may defeat the exercise.
+
+   **Proposal A, with the label unchanged:** no invented threshold.
 4. **Under a chosen pattern, do surgery and the body still act on the trace?** That is, the incision's arousal, a fall
    in brain oxygen delivery, and cooling.
    - (A) No: the trace is exactly the pattern chosen (artefacts such as EMG, diathermy and loose electrodes still
@@ -667,11 +789,14 @@ Each has a short explanation, the options, and the proposal the plan builds if n
    - (B) The stimulus still acts; oxygen and temperature do not.
    - (C) All body inputs still act.
 
-   **Proposal A.** B or C would make a stimulus able to change a held picture, which may be what you want for
-   teaching arousal.
+   The answer decides which patterns can exist:
+   - "light anaesthesia with noxious arousal" exists only under A, because it holds the stimulus;
+   - the ischaemia and hypothermia patterns exist under A or B, because they hold O2 delivery or temperature.
+
+   **Proposal A.** B or C would let a stimulus change a held picture, which may be what you want for teaching arousal.
 5. **May a scripted MANUAL case choose a pattern and a number, as it may a rhythm?** The EEG plan said a scenario
    gives causes, never patterns, which is right for MODELED cases.
-   - (A) Yes in MANUAL cases only.
+   - (A) Yes, in MANUAL cases only, both in the script and as the patient's starting pattern (as `patient.rhythm`).
    - (B) Never.
 
    **Proposal A.**
@@ -721,7 +846,7 @@ Each has a short explanation, the options, and the proposal the plan builds if n
     **Proposal A.**
 14. **Barbiturate / etomidate rows.** Table 35.1's sequence is generated by the class shares, but no acceptance cell
     tests it yet.
-    - (A) Offer the rows once P1's new direction tests pass, dropping any that fails.
+    - (A) Offer the rows once P1b's new direction tests pass, dropping any that fails.
     - (B) Hold the group back.
 
     **Proposal A.**
