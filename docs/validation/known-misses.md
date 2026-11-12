@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**185 known misses.** Split from the test titles: a band recognised in the target of 164, a measured value in 172, a source in 88; "—" = not stated in a form the generator reads.
+**190 known misses.** Split from the test titles: a band recognised in the target of 166, a measured value in 177, a source in 88; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 137 of these misses carry an audit verdict — RIGHT 29, TOO NARROW 24, TOO WIDE 3, MIS-SPECIFIED 56, UNSUPPORTED 25 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -25,7 +25,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Endocrine, metabolism and temperature](#endocrine-thermal) | 16 |
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 12 |
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 33 |
-| [Monitor measurements (device layer)](#monitor) | 8 |
+| [Monitor measurements (device layer)](#monitor) | 13 |
 | [Ventilator](#ventilator) | 6 |
 | [Presentation: renderer, audio, skins, the app](#presentation) | 4 |
 | [Whole-patient scenario suites](#integration) | 8 |
@@ -285,12 +285,17 @@ Module page: [docs/model/monitor.md](../model/monitor.md)
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | C28: at the cortex's own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) | 87.08 vs 86.90 | — | not audited | — | [`eeg-bis-course.test.ts`](../../packages/engine-core/test/engine/eeg-bis-course.test.ts) |
+| awake reads high (toward 100: full book p. 2169): SE above 80 | 69 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
+| C27 for Entropy: surgical depth (propofol + fentanyl, no stimulus) lies in "adequate hypnosis" — original SE ≥ 0.5 (p. 159) — and below awake | 0.482 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
+| C28: at the cortex's own loss of responsiveness SE is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145: "entropy measures … tend to be higher in the elderly") | 50.5 vs 63.9 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
+| C31: the stimulus raises SE and RE at the same sevoflurane (the direction of a C50 shifted up) | SE 35.7 → 34.2, RE 39.3 → 39.0 | — | not audited | — | [`eeg-entropy-course.test.ts`](../../packages/engine-core/test/engine/eeg-entropy-course.test.ts) |
 | CVP limit chatter on a stable ventilated patient: CVP_M_HIGH raised ≤ 2 times in the 11-min MANUAL rhythm tour (the audit's chatter criterion) | 4 on philips-like and 4 on mindray-like | — | MIS-SPECIFIED ([audit row 179](../../docs/validation/target-audit/30-target-audit.md#row-179)) | Split: (a) no CVP_M_HIGH raise/clear cycle < 5 s (chatter, already tested); (b) no CVP_M_HIGH in the sinus/AF/sinus-tachy segments once baseline CVP is corrected; (c) a raise is ALLOWED (or expected) during VT, CHB, junctional and VVI segments | [`fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) |
 | philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats | 6 | — | MIS-SPECIFIED ([audit row 180](../../docs/validation/target-audit/30-target-audit.md#row-180)) | State the PEA kind. True PEA: spread ≤ 5 with no HR-synchronous component. Pseudo-PEA: PP 3-10 mmHg at the electrical rate, MAP 15-40, and NON-PULSATILE need not show | [`fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) |
 | saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) | 9 s | research/06 §4.1 | MIS-SPECIFIED ([audit row 182](../../docs/validation/target-audit/30-target-audit.md#row-182)) | Either keep ≤ 8 s but use the manual's end point (first displayed HR ≥ 110, expected ~6 s) or keep the 5 % end point with ≤ 10 s (8 s window + detection + update); the IEC ≤ 11 s row already passes | [`fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) |
 | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 | 1.49 | — | UNSUPPORTED ([audit row 184](../../docs/validation/target-audit/30-target-audit.md#row-184)) | PI 1.0-3.0 for a normal ventilated adult; PI(PPV) ≤ PI(spontaneous) and ≥ 0.75 × it (the SV ratio) | [`fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) |
 | MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor's 77/67 | 80/56 | — | MIS-SPECIFIED ([audit row 185](../../docs/validation/target-audit/30-target-audit.md#row-185)) | Reference = the arterial line at the reading (already passing, ± 8); add cuff PP ≤ line PP + 3 (no widening); the tracker's reach of 77/67 is a separate MANUAL-tracker test | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
 | MANUAL AF 150, 11 cycles: \|SBP bias\| ≤ 6 mmHg against the TRUE radial pressure (the audit's AF criterion) | +10.8 | — | MIS-SPECIFIED ([audit row 186](../../docs/validation/target-audit/30-target-audit.md#row-186)) | \|mean bias\| ≤ 5 mmHg vs the displayed arterial line (beat-detected), SD ≤ 8, with the first reading after AF onset excluded or 3-reading averages | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
+| SE's top on screen is 91 (p. 159) | F(log 60 / log 89 | — | not audited | — | [`entropy.test.ts`](../../packages/engine-core/test/l3/eeg-devices/entropy.test.ts) |
 | AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | — | — | not audited | — | [`shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) |
 
 <a id="ventilator"></a>

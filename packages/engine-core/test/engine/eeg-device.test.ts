@@ -33,8 +33,8 @@ async function run(e: MonitorEngine, toS: number): Promise<void> {
 const EEG_IDS = ['sef', 'mf', 'eegSr', 'eegImp'];
 
 describe('device eeg model', () => {
-  it('the registry has the generic and the BIS-type readers (E7); `model` takes a registry id only, while the EEG is on, and says why not', () => {
-    expect(Object.keys(EEG_DEVICES)).toEqual(['generic', 'bisType']);
+  it('the registry has the generic, the BIS-type (E7) and the Entropy (E8) readers; `model` takes a registry id only, while the EEG is on, and says why not', () => {
+    expect(Object.keys(EEG_DEVICES)).toEqual(['generic', 'bisType', 'entropy']);
     const e = mk();
     const off = e.dispatch(eeg('model', 'generic'));
     expect(off.accepted).toBe(false);
@@ -43,6 +43,7 @@ describe('device eeg model', () => {
     e.step(1);
     ok(e, eeg('model', 'generic'));
     ok(e, eeg('model', 'bisType'));
+    ok(e, eeg('model', 'entropy'));
     for (const [bad, why] of [['bis', /generic/], [3, /generic/], [undefined, /generic/], ['', /generic/]] as const) {
       const r = e.dispatch(eeg('model', bad));
       expect(r.accepted, String(bad)).toBe(false);
@@ -188,6 +189,36 @@ describe('the generic device on the engine', () => {
     const cr = record(c);
     await run(c, 70);
     const after = (r: { meas: Meas[]; reads: Reading[] }) => JSON.stringify([r.meas.filter((x) => 'bis' in x.values && x.t > 35.5), r.reads.filter((x) => x.t > 35.5)]);
+    expect(after(cr)).toBe(after(h));
+  }, 120_000);
+
+  it('the Entropy reader (E8) is deterministic too: a follower stepping differently and a restored snapshot publish its readings (se, re, every 0.64 s)', async () => {
+    const script = async (e: MonitorEngine, stepwise: boolean, toS: number) => {
+      ok(e, eeg('on'));
+      e.advanceTo(3);
+      ok(e, eeg('model', 'entropy'));
+      ok(e, ev({ kind: 'tci', drugId: 'propofol', mode: 'effect', target: 5 }));
+      if (stepwise) for (let i = 0; i < (toS - 3) * 50; i++) e.step(1);
+      else await run(e, toS);
+    };
+    const host = mk(7);
+    const h = record(host);
+    await script(host, true, 70);
+    const se = h.meas.filter((x) => 'se' in x.values);
+    expect(se.length).toBeGreaterThan(95); // one every 0.64 s from the first full 1.92-s epoch
+    expect(se[1]!.t - se[0]!.t).toBeCloseTo(0.64, 2);
+    const follower = mk(7);
+    const f = record(follower);
+    await script(follower, false, 70);
+    const sig = (r: { meas: Meas[]; reads: Reading[] }) => JSON.stringify([r.meas.filter((x) => 'se' in x.values), r.reads]);
+    expect(sig(f)).toBe(sig(h));
+    const b = mk(7);
+    await script(b, false, 35);
+    const c = mk(7);
+    c.restore(JSON.parse(JSON.stringify(b.snapshot())));
+    const cr = record(c);
+    await run(c, 70);
+    const after = (r: { meas: Meas[]; reads: Reading[] }) => JSON.stringify([r.meas.filter((x) => 'se' in x.values && x.t > 35.7), r.reads.filter((x) => x.t > 35.7)]);
     expect(after(cr)).toBe(after(h));
   }, 120_000);
 });

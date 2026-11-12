@@ -528,6 +528,8 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .depth-note { flex-basis: 100%; margin: 0; font-size: var(--t-12); color: var(--dw-muted); }
 .depth-face[data-face='bisType'] .depth-waves { grid-template-rows: 3fr 2fr; }
 .depth-face[data-face='bisType'] .depth-nums { grid-template-rows: 2fr 1fr 1fr; }
+.depth-face[data-face='entropy'] .depth-waves { grid-template-rows: 3fr 2fr; }
+.depth-face[data-face='entropy'] .depth-nums { grid-template-rows: 2fr 2fr 1fr 1fr; }
 @media (orientation: portrait) {
   .depth-face { grid-template: 'head' auto 'waves' minmax(0, 1fr) 'nums' auto / minmax(0, 1fr); }
   .depth-nums { grid-template: auto auto / 1fr 1fr; }
@@ -535,6 +537,8 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
   .depth-tile .v { font-size: clamp(22px, 7vw, 40px); }
   .depth-tile.big .v { font-size: clamp(40px, 16vw, 80px); }
   .depth-face[data-face='bisType'] .depth-nums { grid-template-rows: auto auto; }
+  .depth-face[data-face='entropy'] .depth-nums { grid-template-rows: auto auto auto; }
+  .depth-face[data-face='entropy'] .depth-tile.big { grid-column: auto; }
 }
 .defib-said { margin: 0; font-weight: 700; color: var(--warn); }
 .defib-said:empty { display: none; }
