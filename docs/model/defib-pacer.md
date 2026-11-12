@@ -91,6 +91,13 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 
 ## Parameters
 
+### [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `INTERNAL_START_J` | `10` | — | — | Internal handles: connecting them sets 10 J [G 14-18]. |
+| `INTERNAL_MAX_J` | `50` | — | — | Internal handles: 50 J is the maximum energy selection [G 14-18]. |
+
 ### [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -140,6 +147,19 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 
 | Function | File | Doc |
 |---|---|---|
+| `therapyOf` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | What the MFC carries, as the device sees it: |
+| `shockBlock` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | Why no energy can reach the patient through what is connected, as the device's words, or undefined. |
+| `panelShockReason` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The front panel SHOCK is active only with pads, or with paddles or handles without their own button [G 2-4], [G 14-7], [G 14-19, step 6]. |
+| `panelShockRefusal` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The refusal of a shock from the panel (today `applyEvent defib shock`): |
+| `pacingRefusal` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | Paddles and internal handles cannot pace [G 2-10], [G 16-10]. |
+| `pacingReachesPatient` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | Whether the pacer's current reaches the patient: |
+| `energyCapReason` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | Energy above the internal handles' maximum [G 14-18], or undefined. |
+| `applyConnect` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | Apply a `connect` patch (validated by E0: |
+| `pressButton` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | A paddle or handle button press or release. |
+| `m2Mode` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The M2's operating mode for its messages: |
+| `messagePriority` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | A message's equipment-alarm priority from appendix C, or 'info' for one appendix C does not list as an alarm. |
+| `connectionMessages` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The connection messages showing now, the most important first (appendix C's priorities; |
+| `connectionKey` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The connection, held-button and message fields as primitives, for the device layer's change compare (no string or object built: |
 | `chargeTimeS` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Charge time (s) for an energy: |
 | `validateDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | `energies`: |
 | `applyDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Apply a validated action. |
@@ -164,6 +184,7 @@ Exported without a doc comment: `createDefib`, `createM2State`, `cardioversionSi
 
 | File | Header |
 |---|---|
+| [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The ZOLL M2's patient connections (docs/plans/defibrillator-zoll-m2.md §3.1 C2, piece E2a): what is attached to the device and the patient behind E0's `device defib connect`, and the device's documented consequences: whi |
 | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Defibrillator (brief §6.5 table; research/05 §2.6): energy select, charge with a charge time and tone, ready, auto-disarm, sync mode. |
 | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The ZOLL M2 as a defibrillator model (docs/plans/defibrillator-zoll-m2.md, piece E0): the limits its Operator's Guide states, and the frozen command vocabulary and status every later piece fills. |
 | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | Post-shock rhythm (brief §6.5 "Post-shock rhythm" table; research 03 §1.8–§1.9): a scenario rule or the instructor's pre-selection wins; otherwise the outcome is drawn from the `outcome` PRNG stream. |
@@ -179,6 +200,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
+| [`engine/defib-m2-connections.test.ts`](../../packages/engine-core/test/engine/defib-m2-connections.test.ts) | 0 | 0 |
 | [`engine/defib-m2-vocabulary.test.ts`](../../packages/engine-core/test/engine/defib-m2-vocabulary.test.ts) | 0 | 0 |
 | [`engine/defib-model.test.ts`](../../packages/engine-core/test/engine/defib-model.test.ts) | 0 | 0 |
 | [`engine/defib-tones.test.ts`](../../packages/engine-core/test/engine/defib-tones.test.ts) | 0 | 0 |

@@ -122,7 +122,7 @@ describe('E2a: pads [G 14-9], [G 12-3], [G 14-16], [G 6-13]', () => {
   });
 
   it('a synchronised shock waiting for its R is not delivered while the pads are off', () => {
-    const { e, ev } = room('zoll-m2', { patient: { rhythm: { id: 'sinus', rateBpm: 80 } } });
+    const { e, ev } = room('zoll-m2', { patient: { rhythm: { id: 'sinus', opts: { rateBpm: 80 } } } });
     ok(e, defib('syncOn'));
     chargeReady(e, ev);
     ok(e, defib('shock')); // armed with the pads on (validated and applied first)
@@ -200,7 +200,7 @@ describe('E2a: external paddles [G 2-4], [G 14-5], [G 14-7], [G 18-6], [G 18-7]'
   });
 
   it('in Sync, both buttons held arm the shock for the next R; releasing before it cancels [G 14-14], [G 14-18]', () => {
-    const { e, ev } = room('zoll-m2', { patient: { rhythm: { id: 'sinus', rateBpm: 40 } } });
+    const { e, ev } = room('zoll-m2', { patient: { rhythm: { id: 'sinus', opts: { rateBpm: 40 } } } });
     ok(e, connect(PADDLES()));
     ok(e, defib('syncOn'));
     chargeReady(e, ev);
@@ -330,7 +330,8 @@ describe('E2a: which messages show, and their priority (appendix C)', () => {
     patch(s);
     return s;
   };
-  const off = (s: ReturnType<typeof createM2State>) => (s.connections.pads.contact = 'off');
+  // pads off; an ECG cable on and its leads on, so a cable lead as top trace raises no ECG Lead Off of its own
+  const off = (s: ReturnType<typeof createM2State>) => ((s.connections.pads.contact = 'off'), (s.connections.ecgCable = '3'));
 
   it('Monitor and Manual Defib show the pads messages only while Pads is the top trace [G C-2], [G C-3], [G 6-8]; AED and Pacer always [G 12-10], [G 16-2]', () => {
     const idle = { defibState: 'idle' as const, pacer: { mode: 'off' as const, mA: 0 } };
