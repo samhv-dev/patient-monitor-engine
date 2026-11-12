@@ -57,7 +57,7 @@ export const EEG_WORDS = {
  *  sheet's own repaint (one registration per tab body). */
 export function eegGroup(link: Link): { el: HTMLElement; refresh(): void } {
   const view = (): EegStateView | null => link.ctl.state?.eeg ?? null;
-  const device = h('p', { class: 'eeg-device hint', role: 'status' });
+  const device = h('p', { class: 'eeg-device hint' });
   const pending = new Map<string, { on: boolean; until: number }>();
   const rows = EEG_ARTEFACTS.map((a) => {
     const state = h('span', { class: 'eeg-state hint' });

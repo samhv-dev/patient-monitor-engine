@@ -173,6 +173,9 @@ describe('Devices & alarms: the EEG device\'s artefacts (EEG plan E12, Q9)', () 
     r.refresh();
     expect(group.hidden).toBe(false);
     expect(r.btn('Loose electrode').getAttribute('aria-pressed')).toBe('false');
+    // the group adds no status line: the alarm status stays the sheet's one live status beside the IBP modes
+    // (fx4-alarm-pause.e2e.ts reads it as the one `p[role=status]` without `data-ibp-now`; CI run 43215422398)
+    expect(r.el.querySelectorAll('p[role=status]:not([data-ibp-now])')).toHaveLength(1);
     (r.link.ctl as unknown as { state: unknown }).state = {};
     r.refresh();
     expect(group.hidden).toBe(true);
