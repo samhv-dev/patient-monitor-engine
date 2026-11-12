@@ -105,12 +105,16 @@ describe('C2 end to end: a pump tablet through the relay process changes the hos
     expect(ch!.infusedMl).toBeLessThan(2 + (20 * ranS) / 3600 + 0.05);
     expect(ch!.volumeMl).toBeCloseTo(50 - ch!.infusedMl, 6);
     const propofol = ev!.drugs.find((r) => r.id === 'propofol');
+    // the evidence, printed for the PR: the host engine's own numbers after the pump's give
+    console.info(`[C2 relay e2e] t=${ev!.t.toFixed(2)} s; ch1 ${ch!.state} ${ch!.rateMlH} mL/h, infused ${ch!.infusedMl.toFixed(3)} mL, left ${ch!.volumeMl.toFixed(3)} mL; propofol total ${propofol?.totalAmount.toFixed(2)} ${propofol?.amountUnit}, Cp ${propofol?.cp.toFixed(3)} ${propofol?.unit}`);
     expect(propofol?.totalAmount).toBeCloseTo(ch!.infusedMl * 10, 1); // mg: every mL the channel moved, at 10 mg/mL
     expect(propofol!.totalAmount).toBeGreaterThan(20);
     expect(propofol!.cp).toBeGreaterThan(0);
     // and every press was filed as the pump's (what the host's Log and the record read)
-    const applied = got.filter((m) => m.kind === 'event').flatMap((m) => m.body as Array<{ type: string; resolved?: { command: { issuedBy: string; by?: string } } }>).filter((e) => e.type === 'commandApplied');
-    expect(applied.length).toBeGreaterThanOrEqual(5);
+    // (each press's commandApplied follows its ack on the socket: wait for the five, the last may still be on the wire)
+    const appliedOf = () => got.filter((m) => m.kind === 'event').flatMap((m) => m.body as Array<{ type: string; resolved?: { command: { issuedBy: string; by?: string } } }>).filter((e) => e.type === 'commandApplied');
+    await waitFor(() => appliedOf().length >= 5, 5000, 'the five presses applied');
+    const applied = appliedOf();
     expect(applied.every((e) => e.resolved?.command.issuedBy === PUMP_ISSUED_BY && e.resolved.command.by === 'pumptab0001')).toBe(true);
   }, 60_000);
 });
