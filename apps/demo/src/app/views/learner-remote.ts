@@ -8,7 +8,7 @@
 // page shows the patient's monitor as a strip at the top, three tabs (Drugs, Infusions, Labs) and, under them, the
 // follower's connection line with its own Sound, Silence and "Change" (back to the picker). L7 puts the drugs menu (the
 // bench and the tray, remote/drugs.ts) in the Drugs tab (`drugs`), L8 the infusions menu (remote/infusions.ts) in the
-// Infusions tab (`infusions`); Labs (L11) is still an empty frame that says so (as a tab given no menu does). Each sign-in mounts a new follower: `onSignedIn` hands it to the menus once the host grants it. A refusal (a wrong
+// Infusions tab (`infusions`), L11 the labs view (remote/labs.ts) in the Labs tab (`labs`); a tab given no menu is an empty frame that says so. Each sign-in mounts a new follower: `onSignedIn` hands it to the menus once the host grants it. A refusal (a wrong
 // learner PIN, too many tries, the learner PIN changed on the laptop) tears the follower down and shows the form again
 // with the reason in words.
 import { INSTRUCTOR_REASONS, LEARNER_REASONS, type RelayFrame, type WireMessage } from '@pme/controller';
@@ -82,13 +82,15 @@ export interface LearnerRemoteOptions {
   drugs?: HTMLElement;
   /** L8: the Infusions tab's menu (remote/infusions.ts), mounted in its panel. */
   infusions?: HTMLElement;
+  /** L11: the Labs tab's view (remote/labs.ts), mounted in its panel. */
+  labs?: HTMLElement;
 }
 
 /** L7: what a menu does with a granted follower; its return is called when that follower goes (a refusal, a new sign-in). */
 export type OnSignedIn = (f: Follower) => (() => void) | void;
 
 export interface LearnerRemote extends View {
-  /** The three tabs' mount points: L7's drugs menu is in `drugs`; L8 and L11 put theirs in the other two. */
+  /** The three tabs' mount points: L7's drugs menu is in `drugs`, L8's in `infusions`, L11's in `labs`. */
   readonly panels: Readonly<Record<LearnerTab, HTMLElement>>;
   /** The follower while signed in or signing in, else null. */
   follower(): Follower | null;
@@ -114,7 +116,7 @@ export function learnerRemoteView(o: LearnerRemoteOptions): LearnerRemote {
   // Before the sign-in the picker is one tap away too (the follower bar's "Change" replaces it once signed in)
   form.append(h('p', { class: 'lr-change' }, h('a', { class: 'btn small', href: '#/pick' }, LEARNER_WORDS.change)));
   const status = h('p', { class: 'status-pill lr-status', role: 'status' });
-  const menus: Partial<Record<LearnerTab, HTMLElement>> = { ...(o.drugs ? { drugs: o.drugs } : {}), ...(o.infusions ? { infusions: o.infusions } : {}) };
+  const menus: Partial<Record<LearnerTab, HTMLElement>> = { ...(o.drugs ? { drugs: o.drugs } : {}), ...(o.infusions ? { infusions: o.infusions } : {}), ...(o.labs ? { labs: o.labs } : {}) };
   const panels = Object.fromEntries(LEARNER_TABS.map((t) => [t.id, h('div', { class: 'lr-panel', 'data-panel': t.id }, ...(menus[t.id] ? [menus[t.id] as HTMLElement] : t.id === 'drugs' ? [] : [h('p', { class: 'hint lr-empty' }, LEARNER_WORDS.empty[t.id])]))])) as unknown as Record<LearnerTab, HTMLElement>;
   const hooks = new Set<OnSignedIn>();
   const tabSet = tabs(LEARNER_WORDS.tabsLabel, LEARNER_TABS.map((t) => ({ id: t.id, label: t.label, render: () => panels[t.id] })), 'drugs', undefined, 'tabs lr-tabs');
