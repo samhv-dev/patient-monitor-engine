@@ -112,7 +112,7 @@ export interface NetFollow {
 
 /** What this window shows and its device's key, said on every hello (plan room-and-instruments.md R4, §4 D1). */
 export interface FollowerInstrument {
-  show: Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
+  show: Extract<Instrument, 'learner' | 'monitor' | 'defib' | 'depth'>;
   device: string;
   /**
    * L6 (plan learner-action-remote.md §4 D1): the learner remote's page. Each hello then says the `learner` role with
@@ -174,12 +174,15 @@ export interface FollowerOptions {
 export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow, o: Partial<FollowerInstrument> & FollowerOptions = {}): Follower {
   const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device, ...(o.pin ? { pin: o.pin } : {}) } : undefined;
   const defib = o.defib === true || o.show === 'defib';
+  // EEG plan E12: the depth-of-anaesthesia window (`#/depth`, views/depth.ts draws it from this follower's engine): the
+  // patient monitor under it is not this screen's instrument, so neither is its alarm sound (no Sound, no Silence here)
+  const depth = instrument?.show === 'depth';
   applySkinAlarmColours(site.skin, site.theme);
   // This window's alarm SOUND is its own (its Sound and Silence buttons); the alarms are the patient's
   // A phone held upright shows the monitor upright (tiles under the waveforms); turned sideways, the skin's own screen
   // (the whole Saadat-like screen scaled as one unit, the owner's mock-up m14 of 26 October), and it follows each turn
   // R4: the patient monitor (`#/monitor/wide`) stays landscape, held either way; so does the defibrillator (R5)
-  const upright = net && instrument?.show !== 'monitor' && !defib ? matchMedia('(orientation: portrait)') : null;
+  const upright = net && instrument?.show !== 'monitor' && !defib && !depth ? matchMedia('(orientation: portrait)') : null;
   const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: upright?.matches ?? false });
   const onTurn = () => monitor.setPortrait(upright?.matches ?? false);
   upright?.addEventListener('change', onTurn);
@@ -209,7 +212,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   hush.setAttribute('aria-pressed', 'false');
   hush.title = "Silence this window's alarm sound";
   hush.disabled = true;
-  bar.append(status, sound, hush);
+  bar.append(status, ...(depth ? [] : [sound, hush]));
   // R4: back to the instrument picker (a link, not a control of the patient)
   if (instrument) bar.append(h('a', { class: 'btn small follower-change', href: '#/pick' }, 'Change'));
   // Under a phone's monitor when the instructor's style has no phone layout
@@ -316,6 +319,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
       if (e.type === 'timeline') stopped = false; // a new engine (the instructor restarted the patient)
       if (e.type === 'style' && net) {
         if (defib) wear(defibSkin(e.defib ?? null, e.skin), e.theme); // landscape, the room model's look (R5)
+        else if (depth) wear(e.skin, e.theme); // E12: the depth window wears the theme; its monitor is not shown
         else wearPhone(e.skin, e.theme);
         wearIbp(e.ibp);
       }
