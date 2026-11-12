@@ -35,18 +35,20 @@ code by the function name given, because lines move.
 - **The guide.** *ZOLL M2 Operator's Guide*, REF 9650-000873-01 Rev. C, issue date December 2021, 294 PDF pages, in
   English. The owner allowed it to be downloaded, and the orchestrator downloaded it to
   `assets/defibrillators/zoll-m2/` (git-ignored). It was read with `pdftotext`, and its figures and tables as page
-  images. How much of each chapter was read:
-  - read page by page: chapters 2, 5, 12, 14, 15, 16 and 17, and appendices A (A-1 to A-16, A-27 to A-29, A-34 to A-35),
-    B and C;
-  - read in part (the pages cited, plus a search of every page for defaults, ranges and settings): chapters 1 (1-8 to
-    1-12), 3, 4, 6–11, 13 (13-1, 13-2) and 18 (18-1 to 18-15, the start of each page). The monitoring rows of §2.3 rest on
-    those pages. Their full wording is checked in the piece that builds them (E8a–E8c, F6), which reads its chapter page
-    by page first;
+  images. How much of each chapter was read (amended by brief 178, 12 November 2026): every page of chapters 1–18 and
+  appendices B and C of the Rev. C guide has now been read page by page (chapters 2, 5, 12, 14–17 and appendices B and
+  C in brief 168; chapters 1, 3, 4, 6–11, 13 and 18 in brief 178, logged in
+  `docs/research/defib-zoll-m2-guide-reading-log.md`); appendix A was read page by page only at A-1 to A-16, A-27 to
+  A-29 and A-34 to A-35, and its waveform figures (A-17 to A-26) and EMC tables (A-30 to A-33, A-36) remain read in
+  part. Finding N130 (the partly-read chapters) is closed by that log; the rows it corrected or added are listed at its
+  end.
   - Tables A-2 and A-4 were checked against the page images, because their extracted text is scrambled. It is cited as **[G n-m]**, the page number printed in its footer (chapter-page, or A-n,
   B-n, C-n for the appendices). The brief named REF 9650-000860-01 Rev. C (September 2019, the copy on ManualsLib), which
   could not be opened from this machine (§7.3). The two documents carry different REF numbers. ZOLL's own site lists
   newer revisions in other languages: French 9650-000873-02 Rev. D, dated December 2024, and Indonesian -56 Rev. C. The
-  owner's unit may run newer software than Rev. C describes (DQ2).
+  owner's unit may run newer software than Rev. C describes (DQ2). The French Rev. D is now on disk and its differences
+  from Rev. C are listed in `docs/research/defib-zoll-m2-rev-d-differences.md` (cited **[D n-m]**); ZOLL's host also
+  answers for an English **Rev. E** (`9650-000873-01-SF_E.pdf`, 12 475 735 bytes by HTTP header, not downloaded, §4.6).
 - **The pictures.** A distributor's three-page product brochure (source ph.getzhealthcare.com; printed "MCN IP 1807
   0232-05", copyright 2018), in `assets/defibrillators/zoll-m2/pictures/`. It is cited as **[B p]**, by its PDF page.
 - **The guidelines.** The library's AHA 2025 and ERC 2025 documents, read as text with their page numbers (§7.1).
@@ -117,16 +119,16 @@ The class tags are:
 | # | Function | What the device shows and does | Engine today | Missing | Class | Piece |
 |---|---|---|---|---|---|---|
 | D1 | Mode selector | OFF, MONITOR, DEFIB (Manual or AED), PACER [G 2-4] | no device power or mode: the window is always "on" | the selector as device state; OFF ends the incident after 30 s [G 17-1] | W | E1 |
-| D2 | Start-up | Red and yellow lights flash, then "All Tests Passed" [G 14-3]. Alarm indicator self-test: tone and lights for 3 s [G 5-2] | none | the power-on self-test sequence | W | E9b |
-| D3 | Power-off memory | Off for less than 30 s keeps every setting. Off for 30 s or more resets the patient settings (limits, energy) to defaults [G 3-1], [G 5-7] | none | a power-off timer | W | E1 |
+| D2 | Start-up | Red and yellow lights flash, then "All Tests Passed" [G 14-3]. Alarm indicator self-test: tone and lights for 3 s [G 5-2]. One beep, red and yellow lights for 3 s, "All Tests Passed" or "Self-Test Failed" [G 18-4]; the self-test report prints if so configured; the Trim Knob selects OK to begin [G 1-3] | none | the power-on self-test sequence | W | E9b |
+| D3 | Power-off memory | Off for less than 30 s keeps every setting. Off for 30 s or more resets the patient settings (limits, energy) to defaults [G 1-23], [G 3-1], [G 5-7], [G 8-7]. Turning the selector OFF and on again is also the restart that clears some fault messages [G 1-23] | none | a power-off timer | W | E1 |
 | D4 | ENERGY SELECT ▲▼ | Front panel and STERNUM paddle [G 2-4]. Selections 1–10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200 J [G A-2] | `selectEnergy` takes any value 1–360 J (`defib.ts:13`, `:52–53`) | per-model energy list (max 200 J) and stepping through it | W | E0 |
 | D5 | CHARGE | Charges to the selected energy [G 2-4]. Charge tone 1510 Hz, 150 ms, every 390 ms [G A-7]. Energy bar fills [G 14-6] | charge with its time and tone (`defib.ts:74–87`) | the M2 tone spec; the bar | P | E1, F2 |
 | D6 | Charge time | Under 7 s to 200 J on a new battery; under 10 s at the 16th maximum discharge; under 15 s on mains alone at 90 % voltage; under 25 s from power-on to ready [G A-2] | the 7 s / 200 J rule (`defib.ts:12`), skin table interpolated | the M2's numbers as the model's table, with battery state | P | E1, E9b |
 | D7 | Ready | Continuous ready tone at 1510 Hz [G A-7]. READY shown; SHOCK button lights [G 14-12] | ready marker and tone (`defib.ts:136–143`) | the lit Shock button | P | F1 |
-| D8 | Ready time-out | "15 to 60 seconds (depending on configuration)", then the device disarms itself [G 14-7], [G 14-13]. In AED mode: a continuous tone for 10–50 s, then a higher tone for 5–10 s [G 12-7] | `readyTimeoutS` 60 (`zoll-like.json`) | the configured value (the factory default is not in the guide); the two-tone sequence | P, Q | E1, DQ17 |
-| D9 | Disarm | Disarm quick key; changing the energy while charging or charged disarms [G 14-6], [G 2-15] | `disarm`, and energy change disarms (`defib.ts:72–73`) | the M2 rule that a manual change ends the auto escalation [G 14-3] | P | E1 |
+| D8 | Ready time-out | "15 to 60 seconds (depending on configuration)", then the device disarms itself [G 14-7], [G 14-13]. Chapter 1 names the value: it disarms "if left charged for more than 60 seconds (or other user configurable interval)" [G 1-13]. In AED mode: a continuous tone for 10–50 s, then a higher tone for 5–10 s [G 12-7] | `readyTimeoutS` 60 (`zoll-like.json`) | the configured value (60 s unless configured otherwise [G 1-13]); the two-tone sequence | P, Q | E1, DQ17 |
+| D9 | Disarm | Disarm quick key; changing the energy while charging or charged disarms [G 14-6], [G 2-15]. Also: the Mode Selector to OFF or MONITOR, and a change of patient type [G 1-13]. Repeated internal discharges give "Excessive Disarms Detected" [G 18-13] | `disarm`, and energy change disarms (`defib.ts:72–73`) | the M2 rule that a manual change ends the auto escalation [G 14-3]; disarm on patient-type change and on the selector | P | E1 |
 | D10 | SHOCK (pads) | Front-panel SHOCK, press and hold until delivered; active only with pads or with paddles that have no shock button [G 2-4], [G 14-12] | `shock` is one event | press-and-hold (down/up) | W | E0, E1 |
-| D11 | SHOCK (paddles) | Both paddle SHOCK buttons pressed together; one alone does not discharge [G 14-7], [G 18-7]. The front-panel key gives the invalid-operation tone (160 Hz, 250 ms) [G 14-7], [G A-7]. "Release Shock Button" if a shock key is held while charging [G 14-5] | none | the paddle accessory and its two buttons | W | E2a, F5 |
+| D11 | SHOCK (paddles) | Both paddle SHOCK buttons pressed together; one alone does not discharge [G 14-7], [G 18-7]. The front-panel key gives the invalid-operation tone (160 Hz, 250 ms) [G 14-7], [G A-7]. "Release Shock Button" if a shock key is held while charging [G 14-5]. Paddle checks: "Apply Paddles to Patient" when connected and open; "Check Paddles - Paddles Shorted" face to face; RECORDER ON/OFF on the Sternum paddle; CHARGE on the Apex paddle and its CHARGE light when ready; ENERGY SELECT on a paddle while charged disarms [G 18-6], [G 18-7], [G 6-13] | none | the paddle accessory and its two buttons | W | E2a, F5 |
 | D12 | Delivered energy and shock count | Shown at the bottom of the screen after the shock [G 14-7] | `lastShock.energyJ` is the SELECTED energy (`defib.ts:149`) | delivered energy from impedance (Table A-2 [G A-16]) | W | E2b |
 | D13 | Auto energy escalation | Shocks 1/2/3 at the configured levels: 120/150/200 J adult, 50/70/85 J paediatric. After the third shock, every shock is at the third level. A manual change outside the sequence plus a shock disables escalation until power is off for more than 30 s [G 14-3], [G 14-4], [G 14-10] | none (`energyAdultJ` only) | the escalation state | W | E1 |
 | D14 | Patient type | Adult or Pediatric, chosen with the Trim Knob at the top of the screen. Paediatric means 1–8 years or < 25 kg. It changes energies, the AED algorithm, NIBP and alarm defaults, and CPR prompts [G 14-2], [G 14-3], [G 12-3], [G 8-10] | `ageBand` on the monitor; the defibrillator ignores it (`createDefib` starts at `energyAdultJ`) | the device's patient type driving all of these | W | E1 |
@@ -137,66 +139,71 @@ The class tags are:
 | D19 | NIBP button | Starts or stops a measurement [G 2-4] | NIBP model (`l3/nibp/nibp.ts`) on the bedside monitor | the M2's own NIBP channel | W | E8b |
 | D20 | Print button | Starts or stops the strip printer [G 2-4] | none | printer (§2.8) | W | E9a |
 | D21 | Visual alarm lights | Red and yellow lights on top [G 2-3]. High: flashing red. Medium: flashing yellow. Low: steady yellow [G 5-4] | none on the device | the lights | W | F1 |
-| D22 | AC and battery LEDs | AC LED lit on mains. Battery LED: steady amber = charging; green = charged; alternating = no battery or fault; off = not on mains [G 2-3] | none | power state | W | E9b, F1 |
-| D23 | Battery icon | No battery, communication fault, error, low, levels 1–5 (> 30 min to full), calibration required [G 2-6]. Capacity: ≥ 4 h monitoring and twenty 200 J shocks; ≥ 10 shocks after Low Battery [G A-9] | none | battery as device state, instructor-settable | W, Q | E9b, DQ14 |
-| D24 | Brightness | Levels, and a toggle between white-background high contrast and black-background colour [G 2-15], [G 2-16] | renderer theme only | the device's two display modes | W | F1 |
+| D22 | AC and battery LEDs | AC LED lit on mains. Battery LED: steady amber = charging; green = charged; alternating = no battery or fault; off = not on mains [G 2-3], [G 1-13], [G 18-4] | none | power state | W | E9b, F1 |
+| D23 | Battery icon | No battery, communication fault, error, low, levels 1–5 (> 30 min to full), calibration required [G 2-6]. Capacity: ≥ 4 h monitoring and twenty 200 J shocks; ≥ 10 shocks after Low Battery [G A-9]. Messages: "Low Battery", then "Replace Battery" (shut-down imminent) [G 1-20]; "Battery error", "Battery Calibration Required", "Battery communication error" [G 18-12] | none | battery as device state, instructor-settable | W, Q | E9b, DQ14 |
+| D24 | Brightness | Levels, and a toggle between white-background high contrast and black-background colour [G 2-15], [G 2-16]. Only the colour mode is pictured in Rev. C; the high-contrast mode is pictured in Rev. D [D 12-11], [D 15-4] (layout only) | renderer theme only | the device's two display modes | W | F1 |
 | D25 | Code markers | Code Marker key opens a preconfigured list of up to 28 clinical actions; the chosen one is recorded with a time stamp [G 2-16], [G 2-17] | Debrief record rows exist for instructor events | the M2 list and its record | W | E9a, F6 |
-| D26 | Paddles | APEX/STERNUM with Energy, Charge, Shock, Recorder buttons and a charge-ready light; built-in paediatric plates under PEDI [G 2-12]. No pacing through paddles [G 2-10]. "Use Pads to Pace" [G 16-10] | none | accessory state (§3.1 C2) | W, Q | E2a, F5, DQ11 |
+| D26 | Paddles | APEX/STERNUM with Energy, Charge, Shock, Recorder buttons and a charge-ready light; built-in paediatric plates under PEDI [G 2-12]. No pacing through paddles [G 2-10]. "Use Pads to Pace" [G 16-10]. With PADDLES as the ECG source the trace is always drawn solid, even shorted or off the patient [G 6-8] | none | accessory state (§3.1 C2) | W, Q | E2a, F5, DQ11 |
 | D27 | Internal paddles | Automatically set 10 J; 50 J maximum [G 14-18]. Shown as "Int. Paddles" on the Lead key [G 14-19] | none | accessory state | W, Q | E2a, DQ11 |
 | D28 | Rear connectors | ECG, SpO2, NIBP, CO2, Temp1/Temp2, MFC; USB at the side; AC [G 2-2], [G 2-7] | none | connection state for each sensor | W | E2a, F5 |
-| D29 | MFC and test plug | MFC, MFC with CPRD connector, CPRD adapter. The test plug (30 J) gives "Check Pads – Pads Shorted" [G 2-8], [G 2-9], [G 12-11] | none | accessory state | W | E2a |
+| D29 | MFC and test plug | MFC, MFC with CPRD connector, CPRD adapter. The test plug (30 J) gives "Check Pads – Pads Shorted" [G 2-8], [G 2-9], [G 12-11]. With the test plug fitted (or the paddles face to face) the SYNC quick-access key is replaced by the 30 Joule Self-test key [G 18-4], [G 18-6] | none | accessory state; the key swap | W | E2a, E9b |
+| D31 | Audio volume | Set in the System Setting window (Menu → System) [G 18-12]; the same window holds Display Brightness [G 2-16]. No figure of the System window | none | the device's own volume, applied to its tones and prompts | W | F4, F6 |
 | D30 | Rear and side views | Handle, speaker, paper compartment, paddle wells, battery compartment [G 2-2] | — | drawn only where the face needs them (paddle wells, printer door) | W | F5 |
 
 ### 2.2 Quick-access keys (guide table 3 [G 2-13 to 2-16])
 
 | Key | Meaning [page] | Piece |
 |---|---|---|
-| Lead (I, II, III…) | ECG source for the top trace; HR, sync and demand pacing use it [G 2-13] | E8a, F0 |
-| 12-Lead (optional) | 12-lead screen [G 2-13] | E8a |
-| CO2 / CO2 with green light / CO2 Zero | Enable CO2; module active; zero for 10 s when needed [G 2-13], [G 2-14] | E8b |
-| Diag | All leads at 0.525–40 Hz for 12 s [G 2-14] | E8a |
+| Lead (I, II, III…) | ECG source for the top trace; HR, sync and demand pacing use it [G 2-13]. Each press steps through the leads the connected cable provides [G 6-7] | E8a, F0 |
+| 12-Lead (optional) | 12-lead screen [G 2-13]. Inside it the keys are Acquire, Patient Information, print stored snapshots, transfer stored snapshots, Exit 12-lead [G 13-8], [G 13-9] | E8a, E8c |
+| CO2 / CO2 with green light / CO2 Zero | Enable CO2; module active; zero for 10 s when needed [G 2-13], [G 2-14]. Off is drawn as a grey dot, on as a green dot [G 9-5]; the Zero control reverts to On/Off after 10 s if not pressed [G 9-6] | E8b |
+| Diag | All leads at 0.525–40 Hz for 12 s [G 2-14]; on units without the 12-lead option [G 6-9]. Leaving Pacer for Monitor, the Clear key is replaced by Diag [G 18-5] | E8a |
 | Code Marker | §2.1 D25 [G 2-14] | E9a |
 | Sync | Synchronised cardioversion [G 2-14] | E1 |
 | More/Back | Next or previous key level [G 2-14] | F0 |
 | Alarm Limits | View and set all limits [G 2-14] | E7, F6 |
 | Treatment Summary, Trend, Data, Export, Clear Selection, Patient Information, 12-Lead Review, Exit 12-Lead, Acquire | Data keys [G 2-14], [G 2-15] | E9a, E8a |
-| Manual Mode / AED Mode | Switch between AED and Manual (optional password) [G 2-14], [G 12-12] | E5 |
+| Manual Mode / AED Mode | Switch between AED and Manual (optional password) [G 2-14], [G 12-12]. In the Manual Defib screen figures the key is labelled "AED" [G 14-6] | E5 |
 | Analyze | AED analysis (AED mode only) [G 2-14] | E4, E5 |
 | Brightness | Display mode [G 2-15] | F1 |
 | Disarm | Internal discharge [G 2-15] | E1 |
-| 30 Joule Test | Self-test shock [G 2-15], [G 14-19] | E9b |
+| 30 Joule Test | Self-test shock [G 2-15], [G 14-19]. It appears in place of the SYNC key while the pads are shorted by the test plug or the paddles are face to face; "30J Test Passed" / "30J Test Failed" [G 18-4] to [G 18-7] | E9b |
 | 4:1 | Pacer: stimuli at ¼ rate while held [G 2-15], [G 16-6] | E6 |
 | Clear | Flashes yellow in Pacer mode on pads off or shorted [G 2-16] | E6 |
 | System Self-test Report | Up to 2,000 stored reports [G 2-16], [G 18-1] | E9b |
 
 The guide shows the Monitor-mode first level only (Lead, 12, Code Marker, CO2, More) [G 2-13], and the AED-mode level
 (Manual Defib, Analyze, Code Marker, More) in the screen figure [G 15-2], [B 2]. The Pacer level (Lead, 4:1, Code
-Marker, More) is in the pacer figure [G 16-4], [B 2]. **The Manual Defib and Sync first levels are not shown by any
-picture or table I have** (§4.6, DQ21, DQ22).
+Marker, More) is in the pacer figure [G 16-4], [B 2]. **Corrected by brief 178:** the Manual Defib first level IS shown,
+in the screen figures of chapter 14 [G 14-6], [G 14-7], [G 14-11] to [G 14-13]: Lead ("I, II, III…"), SYNC, AED, CO2,
+and at the bottom Disarm while charging or charged, the More arrow otherwise. The Sync state is pictured only as the
+green SYNC key [G 14-16] and the "S" markers on a trace [G 14-14]; the rest of the Sync screen, and the second and
+third key levels in Manual Defib, are not pictured in Rev. C (Rev. D shows an AED-mode second level, [D 12-11]; see
+`docs/research/defib-zoll-m2-pictures.md`).
 
 ### 2.3 Monitoring (guide chapters 3, 4, 6–11, 13)
 
 | # | Function | What the device shows and does | Engine today | Missing | Class | Piece |
 |---|---|---|---|---|---|---|
-| M1 | Traces | Up to four; the top one is always ECG and cannot be removed; insert, replace or remove from the trace label [G 3-2], [G 3-3] | the renderer's lanes from a skin | an M2 layout and the trace menu | W | F1, F6 |
-| M2 | Lead set | Pads/Paddles, I, II, III, aVR, aVL, aVF, V1–V6 [G A-2], [G 3-2] | limb and V leads from the VCG (`l2/ecg/vcg.ts` `DOWER`) | **no Pads lead** (no vector) | G, W | E2b |
-| M3 | Default top lead | Lead II in Monitor and Pacer; Pads/Paddles in Manual Defib and AED [G 6-7] | none | per mode | W | E1 |
+| M1 | Traces | Up to four; the top one is always ECG and cannot be removed; insert (below the selected trace), replace or remove from the trace label, through the Waveform Sources menu [G 3-2], [G 3-3]. The capnogram is inserted automatically when CO2 starts [G 9-12], and does not appear when four traces are already shown [G 18-14]; the plethysmogram goes in the second to fourth position, Monitor mode [G 10-7]. A dashed line in place of a trace means no data is acquired [G 3-2] | the renderer's lanes from a skin | an M2 layout and the trace menu | W | F1, F6 |
+| M2 | Lead set | Pads/Paddles, I, II, III, aVR, aVL, aVF, V1–V6 [G A-2], [G 3-2], [G 1-12]. A chosen source that is not acquired shows a dashed line and "ECG Lead Off" (a lead), or "Attach Pads" / "Check Pads - Pads Shorted" (PADS); PADDLES is always drawn solid [G 6-8] | limb and V leads from the VCG (`l2/ecg/vcg.ts` `DOWER`) | **no Pads lead** (no vector); the dashed-line rule | G, W | E2b, E8a |
+| M3 | Default top lead | Lead II in Monitor and Pacer; Pads/Paddles in Manual Defib and AED [G 6-7]. The Monitor and Manual Defib defaults are configurable (Supervisor); Pacer is always Lead II [G 3-2], [G 6-7] | none | per mode, with the configured default as input (§5.4) | W | E1 |
 | M4 | ECG filters | Monitor 0.67–20 Hz (default) or 0.67–40 Hz; Diag 0.525–40 Hz [G A-2] | the bedside monitor's filtering | the M2 bands | W | E8a |
-| M5 | Size and sweep | Size 0.125, 0.25, 0.5, 1, 1.5, 2, 3 cm/mV and auto (Auto in Monitor mode only); default 1 cm/mV [G A-3], [G 6-9]. Sweep 12.5/25/50 mm/s [G 6-10] | renderer gain and sweep | the M2 options | W | F1 |
-| M6 | Heart rate | 20–300 bpm; mean of the last 5 beat-to-beat intervals; ±3 % or ±3 bpm [G A-3]. From the top trace [G 3-2] | HR detector on the bedside monitor | an HR channel on the M2's top lead | W | E8a |
+| M5 | Size and sweep | Size 0.125, 0.25, 0.5, 1, 1.5, 2, 3 cm/mV and auto (Auto in Monitor mode only); default 1 cm/mV, chosen from a drop-down beside the lead label [G A-3], [G 6-8], [G 6-9]. Sweep 12.5/25/50 mm/s [G 6-10] | renderer gain and sweep | the M2 options | W | F1 |
+| M6 | Heart rate | 20–300 bpm; mean of the last 5 beat-to-beat intervals; ±3 % or ±3 bpm [G A-3]. From the top trace [G 3-2], [G 6-11]. Labelled HR from ECG, PR when the ECG (leads or pads/paddles) is disconnected and SpO2 is measured [G 7-5], [G 10-2]; the PR alarm acts only without ECG [G 10-8]. Limits default 50/120 adult, 50/150 paediatric; lower 20–299, upper 21–300 bpm [G 6-11] | HR detector on the bedside monitor | an HR channel on the M2's top lead; the HR→PR source switch | W | E8a, E8b |
 | M7 | QRS tone | Volume Off, 1–5 [G 6-10]; heart beep 650 Hz, 40 ms [G A-7] | bedside beep | M2 tone | W | F4 |
 | M8 | Pace marker | On or off (3/5 lead and 12-lead) [G 6-10]. On: detects implanted-pacemaker pulses, blanks them from the waveform for QRS detection, and draws dashed lines; off: a Pacer Off Marker icon [G 6-9] | pacer spikes drawn | marker display, blanking | W | E8a |
-| M9 | Check Patient (VF/VT) | With the HR alarm on, in Monitor or Defib: continuous analysis of the top trace; VF or wide-complex VT gives "Check Patient" [G 6-12]. Disabled in Pacer ("VF/VT Alarms Disabled") [G 6-12] | the bedside VF alarm reads the RHYTHM ID (`vfSince`, `device-layer.ts:336–338`), not the signal | the same classifier as the AED (E4), reading the signal | W | E4, E7 |
-| M10 | Diagnostic ECG | 12 s at 0.525–40 Hz [G 6-9], [G 17-11] | none | — | W | E8a |
-| M11 | 12-lead | Acquire 10 s; 4×3 or 2×6, standard or Cabrera; 0.525–40 or 0.05–150 Hz; print, store, e-mail [G 13-1], [G 2-15]. Wait 15 s after a shock [G 13-2] | 12 leads exist in the generator | acquisition, report, review | W | E8a, Q (e-mail: DQ12) |
-| M12 | Respiration | From CO2 by default; impedance pneumography (lead I) off by default; 2–150 br/min [G 7-2], [G A-4]. Limits 5/50; No Breath off or 10–60 s [G 7-3] | RR on the bedside monitor | the M2's resp source logic | W | E8b |
-| M13 | NIBP | Manual, Auto (2.5–120 min; default 30 min), STAT [G A-5], [G 8-4]. Cuff 160 mmHg adult, 120 paediatric. Smart inflation [G 8-10], [G A-5]. Determination 30–45 s, maximum 175 s [G A-5], [G A-6] | oscillometric model (`l3/nibp/nibp.ts`) | an M2 instance with its modes and defaults | P | E8b |
-| M14 | SpO2 | 0–100 %; PR 25–240; averaging Low 16 s, Medium 8 s, High 4 s [G A-4], [G A-5]. Limits 85/100 [G 10-8] | SpO2 model (`l3/spo2/spo2.ts`) | the M2 instance and averaging | P | E8b |
-| M15 | CO2 | Mainstream or sidestream; 0–150 mmHg; zero; FiCO2 display off by default; scale 0–80 mmHg default [G 9-13]; sweep 6.25/12.5/25 mm/s, default 6.25 [G 9-16]; O2 compensation (default 21 %) and N2O compensation (default 0 %), with a blue or orange dot under BR when set [G 9-16] [G 9-5], [G A-6]. Rise time < 250 ms mainstream, < 490 ms sidestream [G A-6] | capnography model | the M2 instance and its zero step | P | E8b |
-| M16 | Temperature | T1, T2, ΔT; 0–50 °C; 0.1 °C resolution [G A-6], [G 11-3] | core temperature | two channels | P | E8b |
-| M17 | Trends | Logged every 30 s to 30 min (default 30 s); view and print [G 4-1] | none on the device | trend store | W | E9a |
+| M9 | Check Patient (VF/VT) | With the HR alarm on, in Monitor mode, or in Defib mode "with some AED configurations" [G 6-12] (the guide's qualifier; which configurations is not stated, so it is a configuration input, G-CFG): continuous analysis of the top trace; VF or wide-complex VT gives "Check Patient" [G 6-12]. Disabled in Pacer ("VF/VT Alarms Disabled") [G 6-12] | the bedside VF alarm reads the RHYTHM ID (`vfSince`, `device-layer.ts:336–338`), not the signal | the same classifier as the AED (E4), reading the signal | W | E4, E7 |
+| M10 | Diagnostic ECG | 12 s at 0.525–40 Hz, a slightly delayed copy of the signal, then back to the monitoring band; on units without the 12-lead option [G 6-9], [G 17-11] | none | — | W | E8a |
+| M11 | 12-lead | Acquire 10 s; 4×3 or 2×6, standard or Cabrera; 0.525–40 or 0.05–150 Hz; print, store, e-mail [G 13-1], [G 2-15]. Wait 15 s after a shock [G 13-2]. Live view: 2 columns × 6 rows, a dashed lead for an electrode off, all dashed when a limb lead is off [G 13-8]. Acquisition: "Acquiring 12 Lead" bar, Cancel → "12 Lead Acquisition Halted" (not saved), "12 Lead Acquisition Complete", automatic print if configured, then Transfer / Print / Close [G 13-11], [G 13-12]. Patient ID, sex, age, name entered in the Patient Setting window with an on-screen keyboard [G 13-9] to [G 13-11]. The printer prints 4×3 standard (default) or 4×3 Cabrera; 2×6 is PDF only [G 13-15], [G 13-16] | 12 leads exist in the generator | acquisition, report, review, patient data entry | W | E8a, E8c, Q (e-mail: DQ12) |
+| M12 | Respiration | From CO2 by default; impedance pneumography (lead I, RA–LA) off by default; 2–150 br/min [G 7-2], [G A-4]. **Impedance respiration is disabled in Manual Defib, AED and Pacer modes and whenever CO2 is active** [G 7-1]; it runs only when "RESP Automatic Activation" is enabled (default disabled; otherwise the meter shows dashes without CO2) [G 7-2], [G 7-4]. Labelled RR from impedance, BR from CO2 [G 7-3]. Breath rate within 5 % of HR: "- -" and "RESP CV Artifact Detected" [G 7-3]. Limits 5/50, lower 2–149, upper 3–150 br/min [G 7-3]; No Breath Off (default) or 10, 15, 20, 25, 30, 40, 50, 60 s [G 7-3], [G 9-15] | RR on the bedside monitor | the M2's resp source logic and its mode gate | W | E8b |
+| M13 | NIBP | Manual, Auto, STAT [G A-5], [G 8-4]. Auto interval 2.5, 5, 10, 15, 20, 30 (default), 45, 60, 90, 120 min; an Auto measurement due within 30 s after a Manual one is skipped [G 8-9]. STAT: as many measurements as possible in 5 min; started by holding the NIBP button ≥ 2 s or from the window; the button again stops it [G 8-8], [G 8-10]. Display: SYS/DIA/MAP, the type, the Auto interval, STAT time left as MM:SS, the last Manual time as HH:MM, "?" for motion artefact; mmHg or kPa [G 8-4]. Inflation presets adult 120–260 in 20 mmHg steps (default 160), paediatric 80–150 in 10 mmHg steps (default 120) [G 8-11]; systolic not found → inflation raised; nothing after 3 min → abort [G 8-3]. Smart inflation [G 8-10], [G A-5]. Determination 30–45 s, maximum 175 s [G A-5], [G A-6] (the 3-minute abort of [G 8-3] is the operator text's figure). Not for neonates [G 8-1]. Limits and messages L6, M18 | oscillometric model (`l3/nibp/nibp.ts`) | an M2 instance with its modes and defaults | P | E8b |
+| M14 | SpO2 | 0–100 %; PR 25–240; averaging Low 16 s, Medium 8 s, High 4 s [G A-4], [G A-5]; sensitivity Low/Medium/High in the SpO2 Setting window, Medium recommended [G 10-6]. On connection "Pulse Searching" and "Initializing"; a pulse bar beside the value; "- -" no pulse; "- - -" signal insufficient; "?" beside the value with "Low Perfusion" [G 10-3], [G 10-5], [G 10-9]. Plethysmogram size 0.5, 1.0 (default), 2, 4, 8 [G 10-7]. Limits 85/100; lower settable 85–99 %, upper 86–100 % [G 10-8]. Adult and paediatric only [G 10-1] | SpO2 model (`l3/spo2/spo2.ts`) | the M2 instance and averaging | P | E8b |
+| M15 | CO2 | Mainstream or sidestream; 0–150 mmHg; zero; FiCO2 display off by default [G 9-12]; scale 0–20/40/80/100/150 mmHg, default 0–80 (kPa and %: 0–3/5/10/15/20, default 10) [G 9-13]; sweep 6.25/12.5/25 mm/s, default 6.25 [G 9-16]; O2 compensation (default 21 %) and N2O compensation (default 0 %), with a blue or orange dot under BR when set [G 9-16] [G 9-5], [G A-6]. **The window figure shows the O2 compensation as "160 mmHg"** [G 9-16], against "21.0 %" in the text: by §1 the figure decides the face's word and unit. Rise time < 250 ms mainstream, < 490 ms sidestream [G A-6]. The key shows a grey dot off, green on; "CO2 Warm Up" about 2 min mainstream, about 30 s sidestream; zero: "CO2 Zeroing in Progress" about 10 s, "CO2 Zeroing Completed", or "CO2 Zeroing Failed"; "CO2 Zeroing Required" turns the key into the Zero control for 10 s [G 9-5], [G 9-6], [G 9-9], [G 9-10]. Sidestream draws 50 ml/min [G 9-1] | capnography model | the M2 instance, its warm-up and its zero step | P | E8b |
+| M16 | Temperature | T1, T2, ΔT; 0–50 °C; 0.1 °C resolution [G A-6], [G 11-3]. With two probes the numeric shows T1, T2 and ΔT in turn [G 11-1]; °C or °F by configuration; a short pause after connection [G 11-3]. Limits L6 | core temperature | two channels | P | E8b |
+| M17 | Trends | Logged every 30 s to 30 min (default 30 s); also at every patient alarm and every completed NIBP; view and print [G 4-1]. Window (More → Data → Trend): Incident, Interval (30 s, 1, 2, 5, 10, 30 min), Print Option (Current / Selected incidents), Column (RESP: BR, EtCO2, FiCO2, or TEMP: T1, T2, ΔT), page carets; with a patient connected only the current incident shows [G 4-2], [G 4-3] | none on the device | trend store | W | E9a |
 | M19 | Patient groups | Neonate: ≤ 28 days (term) or up to 44 gestational weeks; paediatric: 29 days to 8 years or < 25 kg; adult: > 8 years or > 25 kg [G 1-8]. NIBP from 3 years [G 1-10]. Paediatric pads under 8 years or 25 kg [G 1-12] | `ageBand` | the M2's patient type has two values (Adult, Pediatric) [G 14-2]; a neonate is Pediatric on the device | W | E1 |
-| M18 | Monitoring messages | ECG [G 6-13], Resp [G 7-6], NIBP [G 8-13], CO2 [G 9-17], SpO2 [G 10-9], Temp [G 11-4] | partly on the bedside monitor | the M2 wording | W | E7, E8b |
+| M18 | Monitoring messages | ECG [G 6-13], Resp [G 7-6], [G 7-7], NIBP [G 8-13], [G 8-14], CO2 [G 9-17], [G 9-18], SpO2 [G 10-9], [G 10-10], Temp [G 11-4], [G 11-5]; troubleshooting additions (ECG Communications Fault, CO2 Disabled - Critical Fault) [G 18-13], [G 18-14]; each listed in the reading log. "ECG Lead Off" for a lead deliberately removed is answered with Alarm Control [G 6-13]. NIBP "Waiting" after a measurement [G 8-14] | partly on the bedside monitor | the M2 wording | W | E7, E8b |
 
 ### 2.4 Defibrillation, sync and AED (guide chapters 12, 14)
 
@@ -206,7 +213,7 @@ picture or table I have** (§4.6, DQ21, DQ22).
 | S2 | Impedance window | 15–300 Ω with pads or external paddles; 7–300 Ω with internal paddles [G A-2] | none | transthoracic impedance as patient state | W, G | E2b |
 | S3 | Waveform and delivered energy | Rectilinear biphasic: 6 ms first phase, 200 µs interphase, 4 ms second phase [G A-15]. Delivered energy by setting and load, 25–175 Ω (Table A-2) [G A-16] | none (energy is the selection) | Table A-2 as data; delivered energy, current and impedance in the record | W | E2b |
 | S4 | Sync | Sync key; the key turns green; "S" markers over each detected R on the top trace; "Sync Defib" replaces "Manual Defib" [G 14-16]. Shock on the next R; delay < 60 ms [G 14-14], [G A-2] | sync detector on **lead II only** (`sync.ts:44`) | sync must follow the top trace, whatever lead it shows | P | E1, E2b |
-| S5 | Sync persistence | Sync stays on when the ready state times out, when the energy changes, and on Disarm. After a shock, Sync must be pressed again for the next one [G 14-17], [G 14-18] | `afterShock` clears sync (`defib.ts:157`), as LIFEPAK-like "Sync After Shock off" for every skin | the M2 rule as model data | P | E1 |
+| S5 | Sync persistence | Sync stays on when the ready state times out, when the energy changes, and on Disarm. After a shock, Sync must be pressed again for the next one [G 14-17], [G 14-18], **unless the unit is configured (Supervisor, Basic Defib settings) to stay in Sync after each shock** [G 1-16], [G 14-16]: a configuration input (§5.4, G-CFG) | `afterShock` clears sync (`defib.ts:157`), as LIFEPAK-like "Sync After Shock off" for every skin | the M2 rule as model data | P | E1 |
 | S6 | Sync lead-off | An ECG Lead Off on the selected leads blocks the synchronised discharge (the defibrillator itself still works) [G 14-16] | demand pacing knows `leadsOff`; sync does not | the gate | W | E1 |
 | S7 | Shock outcome | The patient's response. The guide's trials: VF/VT first shock 99 % at 120 J [G A-27]; AF first shock 68 % at 70 J, Kaplan–Meier failure 0.318, 0.147, 0.091, 0.057 over 70/120/150/170 J [G A-29] | `outcome.ts` tables, with state factors | see §3.2 (energy and impedance) | P, G | E2b, DQ7 |
 | S8 | Paediatric energy in the outcome | — | `defaultJ` = the ADULT energy (`device-layer.ts:237`), so a paediatric 50 J shock counts as "low energy" (< 50 % of 120 J) and loses half its termination | the patient type's first-shock energy | W | E1 |
@@ -230,7 +237,7 @@ picture or table I have** (§4.6, DQ21, DQ22).
 | C3 | Rate and depth | Depth 1.9–7.6 cm, ±0.6 cm; rate 50–150 /min [G A-10]. "- - -" when none in the last few seconds [G 15-3] | CPR is a COMMAND `{rate, quality 0–1.5}` (`l2/hemo/pipeline.ts:769`, `:894`) with no depth in cm and no single compressions | compressions as events with depth (§3.1 C5) | W, G | E3 |
 | C4 | Bar graph | 12.5 mm/s; 0–7.6 cm scale; markers at 0, 5 and 6 cm adult, and 0, 2.5 and 5 cm paediatric [G 15-4] | none | — | W | F2 |
 | C5 | Metronome | 105 /min (configurable) [G 12-9], [G A-10]. Manual: beeps only while compressions are detected [G 15-3] | none | — | W | E5, F4 |
-| C6 | Voice prompts | Push Harder / Good Compressions, adults only, when depth is consistently below or above 5 cm [G 15-3] | none | the rule on measured depth | W | E3, F4 |
+| C6 | Voice prompts | Push Harder / Good Compressions, adults only, when depth is consistently below or above 5 cm [G 15-3]; in paediatric patient type depth and rate are shown with no audio prompting [G 1-9], [G 1-18] | none | the rule on measured depth | W | E3, F4 |
 | C7 | Release | The guide's sensor reports depth and rate only (no release or leaning measure in chapter 15 or [G A-10]) | `cprRelease` term exists in the haemodynamics (`pipeline.ts:289`) | nothing to show; the face shows no release metric | H | — |
 
 ### 2.6 External pacing (guide chapter 16)
@@ -241,10 +248,10 @@ picture or table I have** (§4.6, DQ21, DQ22).
 | P2 | Rate | 30–180 ppm ±2 [G A-10]; steps of 2; default 70 (configurable) [G 16-4] | range 30–180, default 70 (`FALLBACK_PACER`) | step of 2 | P | E0 |
 | P3 | Output | 8–140 mA (±5 % or 5 mA), steps of 2 [G 16-5], [G A-10]; 0 mA pauses pacing [G 1-11]. Starts at 0 mA, except within 10 min of the last pacing (and not off for more than 30 s): resumes at the last current after about 3 s [G 16-1], [G 16-5] | 0–140, steps +10/−5 (`zoll-like.json` pacer) | the M2 steps and the resume rule | P | E0, E6 |
 | P4 | Pulse | Rectilinear constant current, 40 ms ±2 [G A-10] | spikes drawn by `l2/ecg/tcp.ts` | the 40 ms width on the trace | P | E6 |
-| P5 | Capture | Electrical capture is a widened QRS with a large T; mechanical capture is a femoral or right brachial/radial pulse [G 16-5]. Typical threshold 40–80 mA; the ideal current is about 10 % above it; electrode position changes it; anterior–posterior usually needs less [G 16-6], [G 16-3] | capture iff mA ≥ `paceThresholdMa` (default 70, range 10–200; `l1/state.ts:42`) | threshold depending on pad placement | P, G | E6 |
+| P5 | Capture | Electrical capture is a widened QRS with a large T; mechanical capture is a femoral or right brachial/radial pulse [G 16-5], [G 1-17]. Typical threshold 40–80 mA; the ideal current is about 10 % above it; electrode position changes it; anterior–posterior usually needs less [G 16-6], [G 16-3] | capture iff mA ≥ `paceThresholdMa` (default 70, range 10–200; `l1/state.ts:42`) | threshold depending on pad placement | P, G | E6 |
 | P6 | 4:1 | Held: stimuli at ¼ rate, "4:1 Selected" [G 16-6], [G 16-10] | `pausePct` exists (LIFEPAK-like 25) | `pausePct: 25` while held for the M2 | W | E6 |
 | P7 | Pacer dashboard | Rate / Output / Mode fields; the Trim Knob moves, selects and turns; Output is highlighted at entry [G 16-4] | none | — | W | F3 |
-| P8 | Pacing alarms | Pads off: "Attach Pads". Pads off or shorted while pacing: an equipment alarm with the flashing yellow Clear key, even with alarms off [G 16-2]. Messages: Demand Pacing Disabled, ECG Lead Off (then Fixed), Pacer Disabled, Release 4:1 Button, Set Pacer Output MA, Use Pads to Pace [G 16-10] | none | — | W | E6, E7 |
+| P8 | Pacing alarms | Pads off: "Attach Pads". Pads off or shorted while pacing: an equipment alarm with the flashing yellow Clear key, even with alarms off [G 16-2]. Messages: Demand Pacing Disabled, ECG Lead Off (then Fixed), Pacer Disabled, Release 4:1 Button, Set Pacer Output MA, Use Pads to Pace [G 16-10]. The pacer status bar reads "Pacer: Check Pads - Pads Shorted", and alternates it with "Pacer: Attach Pads" when the pads come off; the Clear key flashes and the tone sounds until the selector leaves PACER [G 18-5] | none | — | W | E6, E7 |
 | P9 | ECG during pacing | Through monitoring leads only; no Pads ECG in Pacer [G 16-3]. Lead II at Pacer entry [G 16-3]. Check Patient disabled [G 6-12] | — | — | W | E6 |
 | P10 | Paediatric pacing | Same method; small pads below 15 kg [G 16-10] | — | pad size as accessory | W | E2a |
 
@@ -257,9 +264,9 @@ picture or table I have** (§4.6, DQ21, DQ22).
 | L3 | Sounds | High: two sets of five short beeps every 10 s. Medium: three longer beeps every 15 s. Low: one beep every 25 s [G 5-4]. The physiological tone is 660 Hz [G A-7]. **The guide gives a 6 s repetition at [G A-7] against 10 s at [G 5-4]**: the plan follows chapter 5 (operator text) and names the conflict | — | F4 tones | W, Q | F4 |
 | L4 | Pause, off, alarms off, reminders, latching | §2.1 D18; reminder every 5/10/15 min, 190 ms [G 5-6]; all patient alarms latch [G 5-6] | — | — | W | E7 |
 | L5 | Multiple alarms | A "+" beside the message field; the messages rotate [G 5-2] | — | — | W | F1 |
-| L6 | Limits | Alarm Limits window; defaults by patient type, e.g. HR 50/120 adult, 50/150 paediatric [G 6-11]; SpO2 85/100 [G 10-8]; RR 5/50 [G 7-3]; NIBP systolic lower 75 adult [G 8-12] | bedside limit model | the M2 defaults | W | E7 |
+| L6 | Limits | Alarm Limits window (More → Limits, or Menu → Alarm Limits; picture [G 5-7]); Status / Lower / Upper; the field turns green while being changed [G 6-12]. Defaults adult / paediatric and settable ranges: HR 50/120, 50/150 (lower 20–299, upper 21–300) [G 6-11]; RR/BR 5/50 both (2–149, 3–150) [G 7-3]; SpO2 85/100 both (85–99, 86–100) [G 10-8]; NIBP SYS 75/220, 75/145 (adult 20–264, 21–265; paediatric 20–239, 21–240); DIA 35/110, 35/100 (adult 10–219, 11–220; paediatric 10–179, 11–180); MAP 50/120, 50/110 (adult 13–234, 14–235; paediatric 13–199, 14–200) mmHg, NIBP alarms high priority and on by factory default [G 8-11] to [G 8-13]; EtCO2 8/60 mmHg both (0–149, 1–150); FiCO2 0/8 mmHg both (0–98, 1–99) [G 9-14], [G 9-15]; T1/T2 35.0/37.8 °C (0.0–49.9, 0.1–50.0); ΔT 0.0/0.5 °C (0.0–4.9, 0.1–5.0) [G 11-4]. HR defaults are Supervisor-configurable [G 6-11] | bedside limit model | the M2 defaults | W | E7 |
 | L7 | Maximum alarm delays | ECG 10 s, SpO2 10 s, EtCO2 7 s, Temp 4 s [G A-7] | bedside delays | M2 profile | W | E7 |
-| L8 | Equipment messages | About 100 in appendix C, with type and priority, many depending on mode [G C-1 to C-9]. Device-fault messages ("… Button Stuck", "Defib Disabled", "Replace Battery", printer) are faults the instructor can inject (DQ14) | none | message table as data | W | E7, R3 |
+| L8 | Equipment messages | About 100 in appendix C, with type and priority, many depending on mode [G C-1 to C-9]. Device-fault messages ("… Button Stuck", "Defib Disabled", "Replace Battery", printer) are faults the instructor can inject (DQ14). Chapter 18 adds the operator's view of: Excessive Disarms Detected, 30 J Test Failed, Defib Charging Failed, Demand Pacing Disabled, Pacer Disabled, Pacer Current Out of Tolerance (pacing continues), Printer Door Opened, Printer Out Of Paper, Printer Fault (head or motor overheating, restarts when cooled) [G 18-10], [G 18-13] to [G 18-15] | none | message table as data | W | E7, R3 |
 
 ### 2.8 Records, printer, readiness (guide chapters 17, 18)
 
@@ -269,9 +276,9 @@ picture or table I have** (§4.6, DQ21, DQ22).
 | R2 | Event log | Presenting ECG, analysis, shock, Check Patient, Pacer entry, patient alarm, recorder on, code marker, Diag ECG, 12-lead [G 17-4] | instructor/learner record rows | the device's list | W | E9a |
 | R3 | Snapshots | 6 s before and 12 s after; 9 types; the shock snapshot carries shock count, selected and delivered energy, impedance, first-phase current, sync [G 17-6 to 17-11] | none | — | W | E9a |
 | R4 | Summary report | Start time, duration, snapshots, shocks, pacing time [G 17-3] | Debrief shows a summary of its own | the device's report as a printed strip | W | E9a |
-| R5 | Printer | 80 mm thermal, 25 or 50 mm/s, 6 s delay, annotations [G A-8]; up to 4 traces; numerics every 10 s [G 3-2] | none | a printed-strip view | W | E9a |
+| R5 | Printer | 80 mm thermal, 25 or 50 mm/s, 6 s delay, annotations [G A-8]; up to 4 traces; numerics every 10 s [G 3-2]. "Print Number of Traces" 1–4; default 25 mm/s; 5 mm / 1 mm grid; ECG always printed [G 3-2]. Pace markers every 25 mm at 60 ppm [G 18-5]; the strip may start on its own on entering Pacer, by configuration [G 18-5]; the Sternum paddle's RECORDER button [G 18-6]. Printer Out Of Paper / Printer Door Opened / Printer Fault; the Print key resumes after loading [G 18-10], [G 18-11], [G 18-14], [G 18-15] | none | a printed-strip view | W | E9a |
 | R6 | Full disclosure and transfer | ≥ 6 h; USB or WiFi/SFTP [G 17-13 to 17-21] | the room's archive | whether to export a file (DQ12) | Q | DQ12 |
-| R7 | Self-tests | Power-on; daily (on AC) [G 18-2]; 30 J test with the test plug or paddles [G 2-9], [G 14-19], [G 18-5]; up to 2,000 reports [G 18-1] | none | — | W | E9b |
+| R7 | Self-tests | Power-on; daily (on AC only, at a configured time of day) [G 18-2]; 30 J test with the test plug or paddles [G 2-9], [G 14-19], [G 18-4] to [G 18-7]; up to 2,000 reports, shown as All / Power On / 30J Self-tests and printed as Selected / Last 30 Days / All; printing of the results can be configured [G 18-1] | none | — | W | E9b |
 | R8 | Shift check | Daily checklist [G 18-3 to 18-7] (instructions to the user; the simulator offers the 30 J test and the readiness states it checks) | — | — | W | E9b |
 | R9 | Troubleshooting | Instructions to the user [G 18-12 to 18-15]; the faults it lists are in L8 | — | — | — | — |
 
@@ -424,10 +431,10 @@ Three corrections the M2 work brings, each with its source:
 |---|---|---|---|---|
 | G-PADS | The electrical axis of the pads lead for apex–sternum and anterior–posterior placement | The AED reads only the Pads lead [G 12-4]; Manual Defib shows it at the top by default [G 6-7] | M0a read Frank 1954 and Dower 1968 in full: PROPOSED rows in Frank's image-space units, apex–sternum (+171, +65, +1) and anterior–posterior (−77, −53, −96), with a wide spread over the pad's footprint (note §10.4). Still missing: the scale to the engine's Dower rows (they are not Dower 1968's rows on one scale, note §10.5; W7), the pad-area weighting (W8) and the device's polarity | E2b (E4 runs without it on the limb leads) |
 | G-TTI | The distribution of adult and paediatric transthoracic impedance with pads, and the effect of poor contact | The delivered energy and the gate | Adults: settled as far as published (note §2, §6.2, §7.2, §8.2); the only RLB arrest series (Chen 2013) gives a mean of 134.8 Ω, a range and four bins, but no SD. Paediatric (< 8 y): still a gap; Samson 1995 is test-current only and not the ZOLL pad (note §11; W9, W10). Partial contact: no source | E2b |
-| G-THR | How pacing threshold depends on placement and patient | The guide says only that anterior–posterior usually needs less and gives typical 40–80 mA [G 16-3], [G 16-6] | Published thresholds by placement (WANTED) | E6 (until then: the existing `paceThresholdMa` as the instructor's setting, unchanged) |
+| G-THR | How pacing threshold depends on placement and patient | The guide says only that anterior–posterior usually needs less and gives typical 40–80 mA [G 16-3], [G 16-6] | M0b (`docs/research/defib-zoll-m2-pacing.md`): thresholds vary widely between patients (adult means 57–94 mA, ranges 30–140, higher after surgery and in bradycardic emergencies); with a Zoll 40 ms pulse AP was 33 mA lower than AL (95 % CI 20–45; Moayedi 2022, 13 paired patients), not replicated with another maker's pacer (Goldschmied 2026); no measured dependence on body size, hypoxia, acidosis or electrolytes | E6 (the instructor's `paceThresholdMa`, plus a placement offset only if the owner accepts M0b's proposal) |
 | G-CPR | How compression depth and rate set flow and pressure | Replacing `quality` by depth | Experimental or clinical depth–pressure relations (WANTED) | E3 |
 | G-FAT | How a rescuer's depth and rate drift over 2 minutes | A scripted rescuer | Fatigue studies (WANTED) | E3 (until then: depth and rate are the instructor's settings) |
-| G-CFG | The M2's factory configuration defaults (start mode, ready time-out, CPR at start, metronome mode, password, Check Patient pause) | The guide says "depending on configuration" | *ZOLL M2 Configuration Guide* (§4.6) | nothing: configuration is an INPUT (§5.4); its defaults are the owner's answers to DQ4, DQ17–DQ20, DQ24 and DQ26 |
+| G-CFG | The M2's factory configuration defaults (start mode, ready time-out, CPR at start, metronome mode, password, Check Patient pause, and the further inputs of §5.4) | The guide says "depending on configuration". Two values are in the Operator's Guide itself: ready time-out 60 s [G 1-13]; Sync cleared after each shock unless configured [G 1-16], [G 14-16] | *ZOLL M2 Configuration Guide* (§4.6); searched again in M0d, not found | nothing: configuration is an INPUT (§5.4); its defaults are the owner's answers to DQ4, DQ17–DQ20, DQ24 and DQ26 |
 | G-ANCHOR | Which compression depth today's `quality` values stand for | E3's equivalence test needs an anchor so old scenarios keep their values | none in the code: `quality` is dimensionless (`l2/hemo/params.ts:74`) | E3 (DQ23) |
 
 ## 4. The face
@@ -443,21 +450,25 @@ Three corrections the M2 work brings, each with its source:
 | Screen, AED with CPR | [G 15-2], [B 2] | dashboard (CPR depth / rate / time; selected energy; shock count), bar graph, message bar "AED: Perform CPR", keys Manual Defib/Analyze |
 | Screen, AED analysing | [B 2] | "AED: Analyzing ECG" with the energy box |
 | Screen, Pacer | [G 16-4], [B 2] | Pacer dashboard (Rate / Output / Mode), pace markers, keys Lead/4:1/code marker |
-| Paddles | [G 2-12] | APEX/STERNUM controls |
+| Paddles | [G 2-10] to [G 2-12] | APEX/STERNUM controls |
 | Alarm display | [G 5-2], [G 5-3] | the message bar colours and "+" |
+| Screen, Manual Defib (added by M0d) | [G 14-6], [G 14-7], [G 14-11] to [G 14-13] | CHARGING with the energy bar, READY, Delivered Energy with shock count, Selected Energy; message bar "Manual Defib: Check Patient"; first-level keys lead, SYNC, AED, CO2, and Disarm or More at the bottom |
+| Sync (added by M0d) | [G 14-14] ("S" markers on a trace), [G 14-16] (the green SYNC key) | marker shape and place; the key's green state |
+| Menu windows (added by M0d) | Waveform Sources [G 3-3], Trend [G 4-2], Alarm Limits [G 5-7], ECG [G 6-10], Resp [G 7-4], NIBP [G 8-9], CO2 [G 9-16], SpO2 [G 10-6], Patient Setting and keyboard [G 13-9] to [G 13-11], 12-Lead snapshot list [G 13-14], Select Rescue Incident [G 17-3] | window frame, the category column (ECG, RESP, SpO2, NIBP, CO2, Alarm Limits, System), field order |
+| 12-lead screen (added by M0d) | [G 13-8], [G 13-11], [G 13-12] | the live 2 × 6 view, its keys, the acquisition dialogs |
+| Printer strips (added by M0d) | [G 4-3], [G 13-3], [G 13-16] to [G 13-18], [G 17-4] to [G 17-11]; printer door [G 18-11] | strip layout, annotations, grid |
 
-**Views that no picture I have shows** (each is a marked choice until a picture arrives):
+**Corrected by M0d (`docs/research/defib-zoll-m2-pictures.md`).** The earlier list of unpictured views included the
+Manual Defib screen and keys, the menu windows, the 12-lead screen and the printer strip; all are pictured in Rev. C
+(rows above). **Views that no picture shows** (each a marked choice until a picture arrives):
 
-- the Manual Defib screen (the energy bar, CHARGING/READY, delivered energy and shock number at the bottom [G 14-6],
-  [G 14-7]);
-- the Sync screen (green Sync key, "S" markers, "Sync Defib" [G 14-16]);
-- the Manual Defib first-level keys;
-- every menu window (Settings, ECG, NIBP, CO2, SpO2, Temp, Resp, Alarm Limits, Trend, Treatment Summary, System,
-  Waveform Sources) beyond the descriptions at [G 3-3], [G 5-7], [G 6-10], [G 8-8], [G 9-16];
-- the 12-lead screen;
-- the rear and side connector panels in use (only the line drawing at [G 2-7]);
+- the whole Sync screen with "Sync Defib" in the message bar [G 14-16];
+- the Manual Defib second and third key levels;
+- the System window and the Supervisor menus; the Temp settings; the code-marker list;
+- a photograph of the rear and side connector panels (only drawings: [G 2-7], [G 2-9], [G 6-6], [G 8-5], [G 11-2],
+  [G 17-13]);
 - the internal paddles;
-- the printer strip.
+- the high-contrast display mode (pictured only in the French Rev. D, [D 12-11], [D 15-4], layout only).
 
 ### 4.2 The architecture: a defibrillator core with faces
 
@@ -508,9 +519,10 @@ English). The drawer and the Debrief follow the app's language.
 
 | Name | URL | Size | Why |
 |---|---|---|---|
-| ZOLL M2 Operator's Guide, French, 9650-000873-02 Rev. D (Dec 2024) | https://info.zoll.com/hubfs/Products/M2/Manuals/9650-000873-02-SF_D.pdf | 15 341 332 bytes (HTTP header) | the newest revision found; its figures may show screens Rev. C lacks, and its changes list says what changed since Rev. C |
-| ZOLL M2 Configuration Guide | not found on the web from here (ZOLL's site refuses automated reading) | — | G-CFG: factory defaults |
-| A photograph of the Manual Defib and Sync screens, the menus, and the rear panel | none found | — | §4.1's unshown views |
+| ZOLL M2 Operator's Guide, French, 9650-000873-02 Rev. D (Dec 2024) | https://info.zoll.com/hubfs/Products/M2/Manuals/9650-000873-02-SF_D.pdf | 15 341 332 bytes (HTTP header) | FETCHED (on disk, `rev-d-fr/`); it has no changes list; differences in `docs/research/defib-zoll-m2-rev-d-differences.md` |
+| ZOLL M2 Operator's Guide, English, 9650-000873-01 **Rev. E** | https://info.zoll.com/hubfs/Products/M2/Manuals/9650-000873-01-SF_E.pdf | 12 475 735 bytes (HTTP header, last modified 9 January 2026) | found by M0d; newer than Rev. C and Rev. D, and in English, so it gives the device's words for any change; proposed for download under the owner's yes (DQ2) |
+| ZOLL M2 Configuration Guide | searched again in M0d: not found on the web or on ZOLL's file host | — | G-CFG: factory defaults |
+| A picture of the full Sync screen, the Manual Defib second level, the System and Supervisor windows, the internal paddles, the rear panel | none seen; three YouTube videos found by title (M0d §3) could not be opened from this machine | — | §4.1's unshown views |
 
 ## 5. Who operates it in the room
 
@@ -570,7 +582,11 @@ record. The Debrief shows both, with:
 ### 5.4 Configuration and the scenario format
 
 The M2's Supervisor configuration (start mode, ready time-out, escalation levels, CPR at start, CPR period, metronome
-mode and rate, password, Check Patient pause, NIBP interval, trend interval) is set in Room setup (R4) and sent as one
+mode and rate, password, Check Patient pause, NIBP interval, trend interval; and, from the reading log of brief 178:
+Sync kept or cleared after a shock [G 1-16], [G 14-16], the power-up top lead in Monitor and Manual Defib [G 6-7], RESP
+automatic activation [G 7-2], CPR monitoring in Manual Defib [G 15-2], automatic 12-lead printing [G 13-11], automatic
+printing in Pacer [G 18-5], smart NIBP inflation [G 8-10], NIBP and temperature units [G 8-4], [G 11-3]) is set in Room
+setup (R4) and sent as one
 `device defib config` command, so followers replay it. A scenario may name the device configuration and the patient's
 connections at start (S1).
 
@@ -637,15 +653,18 @@ internal handles) decide the command vocabulary that E0 freezes. E0 waits for th
 
 **Before and after pictures.** Built before any further picture arrives: every E piece, F0, R1–R4, S1, and F1's
 structure (its regions and controls come from [G 2-3], [G 2-5], [B 1–2]). Waiting for a picture: the look of the
-unshown views (§4.1). F3's Manual and Sync screens and F6's menus are built from the guide's text, with every visual
-choice marked `eng`, and re-checked when pictures come.
+unshown views (§4.1). F3's Manual Defib screen and F6's menu windows follow the guide's figures (M0d: [G 14-6],
+[G 14-7]; [G 3-3] to [G 13-14]); the rest of the Sync screen, the System window and the further key levels are built
+from the guide's text, with every visual choice marked `eng`, and re-checked when pictures come.
 
 **Blocked on sources.**
 
 - E2b waits for M0a (G-PADS, G-TTI). Until it lands, E4 runs on the engine's limb leads and the AED stays unavailable
   on the face (a marked state).
 - E3 waits for M0c (G-CPR) and DQ23 (the anchor).
-- E6's placement effect waits for M0b (G-THR). Until then the threshold is the instructor's `paceThresholdMa`, unchanged.
+- E6's placement effect waited for M0b (G-THR). M0b found one measured offset with the M2's pulse type (AP 33 mA lower
+  than AL, Moayedi 2022) and no measured dependence on body size or physiology; whether E6 applies the offset is the
+  owner's call on M0b's proposal. Until then the threshold is the instructor's `paceThresholdMa`, unchanged.
 
 ## 7. Sources
 
@@ -655,6 +674,7 @@ choice marked `eng`, and re-checked when pictures come.
 |---|---|---|---|
 | ZOLL M2 Operator's Guide, REF 9650-000873-01 Rev. C, December 2021 | — | read from the local file, page by page | §2, §3, §4 |
 | ZOLL M2 brochure, MCN IP 1807 0232-05 (2018), 3 pages | — | read from the local file | §4.1 |
+| ZOLL M2 Operator's Guide (French), REF 9650-000873-02 Rev. D, December 2024, 312 pages | — | local file `rev-d-fr/`, compared with Rev. C by contents, page counts, numbers, figures and selected sections (brief 178) | DQ2, `docs/research/defib-zoll-m2-rev-d-differences.md` |
 | Kleinman et al. Part 7: Adult Basic Life Support. 2025 AHA Guidelines. Circulation 2025;152(suppl 2):S448–S478 | DOI 10.1161/CIR.0000000000001369 | read in the library copy: rate 100–120/min and depth at least 5 cm, avoiding more than 6 cm (p. 16–17 of the PDF); audiovisual feedback 2a (p. 16) | CPR targets, E3, F2 |
 | Wigginton et al. Part 9: Adult Advanced Life Support. 2025 AHA Guidelines. Circulation 2025;152(suppl 2):S538–S577 | DOI 10.1161/CIR.0000000000001376 | read in the library copy: escalating vs fixed energy "based on the specific manufacturer's instructions" (p. 3 of the PDF); transcutaneous pacing for atropine-refractory bradycardia (p. 36) | DQ13, E6 |
 | Soar et al. ERC Guidelines 2025: Adult Advanced Life Support. Resuscitation 2025;215:110769 | DOI 10.1016/j.resuscitation.2025.110769 | read in the library copy: first shock at least 150 J for rectilinear or truncated exponential biphasic (p. 7 of the PDF); AF cardioversion and VT with a pulse 120–150 J (p. 9); pre-shock pause under 5 s by compressing during charging (p. 19) | §3.2, DQ13 |
@@ -670,10 +690,10 @@ choice marked `eng`, and re-checked when pictures come.
 | Biphasic energies | Stiell IG et al. BIPHASIC trial, Circulation 2007;115:1511–1517 | DOI 10.1161/CIRCULATIONAHA.106.648204, listed in Wigginton 2025's references; DOI resolved and Europe PMC record checked in M0a (not read) |
 | G-TTI | measured transthoracic impedance with self-adhesive pads in adults and children | M0a: series and effects in `docs/research/defib-zoll-m2-pads-impedance.md` §2; Chen 2013, Mittal 1999 and Samson 1995 read in full (note §7, §8, §11). Still WANTED: a shock-measured biphasic pads series in children under 8, and the ZOLL pad areas (note §4, W9, W10) |
 | G-PADS | the pads lead's vector for the two placements | M0a: Frank 1954 and Dower 1968 read in full; PROPOSED rows in Frank's units (note §10). Still WANTED: the derivation of the engine's Dower matrix (W7, lead: Dower, Machado, Osborne, Clin Cardiol 1980, not verified), a large-electrode lead field (W8), the ZOLL packaging's placement instructions (W9) |
-| G-THR | transcutaneous pacing thresholds by placement | WANTED; Cummins 1993 (NEJM 328:1377, DOI 10.1056/NEJM199305133281902, from Wigginton 2025's references) for outcome, not threshold |
+| G-THR | transcutaneous pacing thresholds by placement | M0b: measured series from 14 papers in `docs/research/defib-zoll-m2-pacing.md` §2, DOIs resolved; abstracts read, full text only for Goldschmied 2026 (open access). Still WANTED: the full text of Moayedi 2022 (DOI 10.1016/j.resuscitation.2022.11.009) for its device, pad sites and per-patient values. Cummins 1993 (NEJM 328:1377, DOI 10.1056/NEJM199305133281902) remains for outcome, not threshold |
 | G-CPR | depth–pressure and depth–flow relations | M0c: 27 rows of measured relations in `docs/research/defib-zoll-m2-cpr.md` §1 (abstracts unless marked). The only stated form is threshold-linear, in dogs (Babbs 1983, DOI 10.1016/s0196-0644(83)80290-x: CO = a(x − x0), x0 mean 2.3 cm); human depth data are outcome and EtCO2 slopes only (Sheak 2015, DOI 10.1016/j.resuscitation.2015.01.026: +1.4 mmHg per 10 mm); no adult human depth–CPP relation found. Edelson 2006 VERIFIED: Resuscitation 71:137–145, DOI 10.1016/j.resuscitation.2006.04.008, shock success aOR 1.99 per 5 mm (abstract) — outcome, not pressure. Still WANTED: Babbs 1983, Ryu 2016, Ristagno 2007, Sheak 2015 full texts (research note §4, W1–W4) |
 | G-FAT | rescuer fatigue over 2 minutes | M0c: research note §2. Clinical with feedback: Sugerman 2009 (DOI 10.1016/j.resuscitation.2009.06.002, Table 3, full text): rate ≈ 105 /min unchanged; depth 48.3 mm flat to 90 s, 46.0 at 91–120 s, 43.7 at 151–180 s. Manikin without feedback: correct compressions fall from minute 2 (Hightower 1995, Ochoa 1998, Ashton 2002, McDonald 2013); decay within 2 min rare in paramedics (Bjørshol 2011). No clinical time course without feedback found |
-| G-CFG | ZOLL M2 Configuration Guide | not found (§4.6) |
+| G-CFG | ZOLL M2 Configuration Guide | not found (§4.6); M0d searched the web and ZOLL's file host again and found none (`docs/research/defib-zoll-m2-pictures.md` §4) |
 
 ### 7.3 Pages that could not be read
 
@@ -694,6 +714,9 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Options:* A, build to Rev. C now and check Rev. D's changes list (fetch it, §4.6); B, wait for your unit's
   software version.
 - *Proposal:* A.
+- *What the choice changes (brief 178):* choosing Rev. D adds a date-and-time window, colour-coded CPR depth and rate
+  (green, yellow outside 5–6 cm and 100–120 cpm) and a configurable switch for CPR voice prompts, and changes nothing
+  else the plan uses (`docs/research/defib-zoll-m2-rev-d-differences.md`; an English Rev. E also exists, §4.6).
 
 **DQ3. The M2 as a second monitor (answer first).**
 - *Explanation:* Today the defibrillator shares the bedside monitor's alarms. On the real M2, its own Alarm Control,
@@ -779,7 +802,8 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Proposal:* A.
 
 **DQ17. Ready time-out.**
-- *Explanation:* A charged M2 disarms itself after 15 to 60 s, by configuration [G 14-7].
+- *Explanation:* A charged M2 disarms itself after 15 to 60 s, by configuration [G 14-7]; chapter 1 names 60 s "or
+  other user configurable interval" [G 1-13], so 60 s is the guide's own value, not a guess.
 - *Options:* A, 60 s; B, 30 s; C, your unit's value.
 - *Proposal:* C; A until you send it.
 
@@ -799,15 +823,18 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - *Proposal:* A.
 
 **DQ21. The Manual Defib key level.**
-- *Explanation:* No table or picture shows which five quick-access keys appear first in Manual Defib mode. Sync and
-  Disarm must be reachable [G 14-16], [G 14-7].
-- *Options:* A, you photograph or tell me your unit's keys; B, a marked choice (Lead, Sync, Disarm, Code Marker,
-  More) until then.
+- *Explanation (corrected by brief 178):* the guide's own screen figures show the Manual Defib first level: lead
+  ("I, II, III…"), SYNC, AED, CO2, and at the bottom Disarm while charging or charged, More otherwise [G 14-6],
+  [G 14-7], [G 14-11] to [G 14-13]. The earlier marked choice (Lead, Sync, Disarm, Code Marker, More) is withdrawn.
+  What no picture shows is the second and third levels in Manual Defib.
+- *Options:* A, you photograph or tell me your unit's keys (your configuration may differ); B, the guide's first
+  level, with the further levels as a marked choice until then.
 - *Proposal:* B now, A when you can.
 
 **DQ22. Photographs of the views no picture shows.**
-- *Explanation:* §4.1 lists them: the Manual Defib and Sync screens, the menus, the 12-lead screen, the rear panel,
-  the paddles and the printer strip.
+- *Explanation:* §4.1 lists them. After M0d they are: the whole Sync screen, the Manual Defib second and third key
+  levels, the System window and the Supervisor menus, the code-marker list, the internal paddles, a photograph of the
+  rear and side panels, and the high-contrast display mode.
 - *Options:* A, you photograph your unit (they then decide over published pictures); B, the face stays on marked
   choices for those views.
 - *Proposal:* A, whenever convenient; B until then.
@@ -852,11 +879,13 @@ the ZOLL-hosted REF 9650-000873-01 Rev. C (December 2021).
 - **R5a–R5d are merged.** This plan extends their model registry, role and window. It reverses none of their tests
   except where a piece names it (R1 widens the allow-list; F0 keeps the generic window's tests unchanged).
 - **No number in the plan comes from memory.** Each device number cites the guide's page; each guideline number cites
-  the library PDF's page. The marked choices are: the knob's send rate (§4.3), the nearest-column hold outside Table A-2 (DQ16), the depth anchor (DQ23), the Manual Defib key level (DQ21), and the defaults the DQs propose.
+  the library PDF's page. The marked choices are: the knob's send rate (§4.3), the nearest-column hold outside Table A-2 (DQ16), the depth anchor (DQ23), the Manual Defib second and third key levels (DQ21; the first level is the guide's figure), and the defaults the DQs propose.
 - **Possible double counting.** VF termination already falls with temperature, pH and the rest. The plan adds no
   impedance factor (§3.2), so nothing is counted twice.
-- **What I could not settle:** the Manual Defib keys and screens are not illustrated; the configuration defaults; the
-  source gaps of §3.3. Each is a DQ or a named gap, not a guess.
-- **Reading coverage.** Chapters 1, 3, 4, 6–11, 13 and 18 were read in part (see "Sources"). The pieces that build
-  their functions read their chapters page by page first (E8a–E8c, E9b, F6).
+- **What I could not settle:** the Manual Defib second and third key levels and the full Sync screen are not
+  illustrated (the first level and the Manual Defib screen are, [G 14-6]); the configuration defaults; the source gaps
+  of §3.3. Each is a DQ or a named gap, not a guess.
+- **Reading coverage (amended by brief 178).** Every page of chapters 1–18 and appendices B and C has been read page by
+  page; appendix A only at A-1 to A-16, A-27 to A-29 and A-34 to A-35 (see "Sources" and
+  `docs/research/defib-zoll-m2-guide-reading-log.md`).
 - **The hours** are the column's sum (306 h), estimates.
