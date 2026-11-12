@@ -4,7 +4,7 @@
 // P-15), on the 800 × 600 screen of the fixed design grid (P-20), with no page error.
 // Run: pnpm exec playwright test apps/demo/e2e/vent-edp-ts-stills.e2e.ts
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;
