@@ -6,6 +6,7 @@
 // question (DQ) that will set it.
 import type { M2Config, M2Connections, M2Settings, M2Status } from '../../types-device.ts';
 import type { DefibSpec } from './defib.ts';
+import { M2_LEADS } from './m2.ts';
 import type { PacerSpec } from './pacer.ts';
 
 /** The model's name in its refusals. */
@@ -127,6 +128,8 @@ const SETTINGS = record('setting', {
   respImpedance: bool('respImpedance'),
 } satisfies Record<keyof M2Settings, Check>, false);
 
+/** The top trace's sources (E1, m2.ts M2_LEADS) [G 6-7], [G 2-13]. */
+const LEAD = oneOf('lead', M2_LEADS);
 const CONFIG = record('config', {
   startMode: oneOf('startMode', ['manual', 'aed']),
   readyTimeoutS: whole('readyTimeoutS', 15, 60), // [G 14-13]; whole seconds [ENG: device; placeholder, the step is not given]
@@ -141,6 +144,8 @@ const CONFIG = record('config', {
   nibpIntervalMin: oneOf('nibpIntervalMin', M2_NIBP_INTERVALS_MIN), // [G 8-9]
   trendIntervalS: whole('trendIntervalS', 30, 1800), // 30 s to 30 min [G 4-1]
   accessories: record('accessories', { pads: bool('pads'), externalPaddles: bool('externalPaddles'), internalHandles: bool('internalHandles') }, true),
+  syncAfterShock: bool('syncAfterShock'), // [G 14-16], [G 1-16] (E1)
+  topLead: record('topLead', { monitor: LEAD, manual: LEAD }, true), // [G 6-7] (E1)
 } satisfies Record<keyof M2Config, Check>, false);
 
 /**
@@ -151,6 +156,7 @@ const CONFIG = record('config', {
 export const M2_COMMANDS: Readonly<Record<string, { piece: string; shape: string; validate: Check }>> = {
   selector: { piece: 'E1', shape: "'off' | 'monitor' | 'defib' | 'pacer'", validate: oneOf('selector', ['off', 'monitor', 'defib', 'pacer']) },
   patientType: { piece: 'E1', shape: "'adult' | 'pediatric'", validate: oneOf('patientType', ['adult', 'pediatric']) },
+  lead: { piece: 'E1 (E8a: the sources each cable offers)', shape: "'pads' | 'I' | 'II' | 'III' | 'aVR' | 'aVL' | 'aVF' | 'V1'–'V6'", validate: LEAD },
   defibMode: { piece: 'E5', shape: "{ mode: 'manual' | 'aed', password?: string }", validate: (v) => record('defibMode', { mode: oneOf('mode', ['manual', 'aed']), password: text('password', 1, 16) }, false)(v) ?? (Object.hasOwn(v as object, 'mode') ? undefined : 'defibMode: mode is missing') },
   shockButton: { piece: 'E1 (panel), E2a (paddles, internal)', shape: "{ phase: 'down' | 'up', button: 'panel' | 'apex' | 'sternum' | 'internal' }", validate: record('shockButton', { phase: PHASE, button: oneOf('button', ['panel', 'apex', 'sternum', 'internal']) }, true) },
   analyze: { piece: 'E4, E5', shape: '(no value)', validate: (v) => (v === undefined ? undefined : 'analyze takes no value') },
@@ -179,9 +185,9 @@ export function validateM2Command(action: string, value: unknown, isM2: boolean)
 export type M2State = Omit<M2Status, 'config'> & { config: M2Config };
 
 const IDLE_CONFIG: M2Config = {
-  startMode: 'manual', // [ENG: device; placeholder until DQ4]
-  readyTimeoutS: 60, // [ENG: device; placeholder until DQ17]
-  escalation: { on: true, adult: [120, 150, 200], pediatric: [50, 70, 85] }, // levels [G 14-4]; on [ENG: device; placeholder until DQ18]
+  startMode: 'manual', // DQ4 = C, default Manual (owner, 12 November); a Room setup choice
+  readyTimeoutS: 60, // DQ17 (owner, 12 November): 60 s, the value chapter 1 names [G 1-13]; configurable 15–60 s [G 14-13]
+  escalation: { on: true, adult: [120, 150, 200], pediatric: [50, 70, 85] }, // levels [G 14-4]; on: DQ18 (owner, 12 November)
   aedEnergies: { adult: [120, 150, 200], pediatric: [50, 70, 85] }, // [G 12-6]
   cprAtStart: false, // the default starts with analysis [G 12-6] (DQ19)
   cprPeriodS: 120, // [G 12-9]
@@ -192,6 +198,8 @@ const IDLE_CONFIG: M2Config = {
   nibpIntervalMin: 30, // [G 8-9]
   trendIntervalS: 30, // [G 4-1]
   accessories: { pads: true, externalPaddles: true, internalHandles: false }, // DQ11 = A (owner, 12 November)
+  syncAfterShock: false, // "Unless otherwise configured, the unit automatically exits Sync mode after each shock" [G 14-16]
+  topLead: { monitor: 'II', manual: 'pads' }, // [G 6-7]
 };
 
 const IDLE: M2State = {

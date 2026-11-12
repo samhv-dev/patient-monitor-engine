@@ -16,6 +16,7 @@ import { applyPacer, createPacer, FALLBACK_PACER, tcpSpec, validatePacer, type P
 import { createSyncState, SYNC_RATE, syncStep, type SyncState } from './defib-pacer/sync.ts';
 import { createM2State, m2Status, validateM2Command, type M2State } from './defib-pacer/m2-vocabulary.ts';
 import { applyConnect, connectionKey, connectionMessages, energyCapReason, INTERNAL_START_J, pacingReachesPatient, pacingRefusal, panelShockRefusal, pressButton, shockBlock } from './defib-pacer/connections.ts';
+import { afterShockEscalation, commandRefusal, M2_TONES, m2Key, onEnergySelected, pressPanel, selectorRefusal, setPatientType, syncLeadOf, syncSignal, turnSelector, type M2Effect } from './defib-pacer/m2.ts';
 
 /** Rhythms a monitor classifies as VF (research 03 §1.8). */
 export const VF_RHYTHMS: ReadonlySet<RhythmId> = new Set(['vfCoarse', 'vfFine']);
@@ -98,7 +99,11 @@ export interface DeviceHost {
 }
 
 const modelOf = (d: DeviceState): DefibModel | undefined => (d.defibModel ? DEFIB_MODELS[d.defibModel] : undefined);
-const defibSpec = (d: DeviceState): DefibSpec => modelOf(d)?.defib ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
+/** The defibrillator's spec; on the M2, with its configured ready time-out (DQ17) [G 14-13], [G 1-13] (E1). */
+const defibSpec = (d: DeviceState): DefibSpec => {
+  const s = modelOf(d)?.defib ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
+  return d.m2 ? { ...s, readyTimeoutS: d.m2.config.readyTimeoutS } : s;
+};
 const pacerSpec = (d: DeviceState): PacerSpec => modelOf(d)?.pacer ?? d.alarms.profile.pacer ?? FALLBACK_PACER;
 /**
  * The model's HR-while-pacing rule onto the device profile (row 58): the alarm conditions (conditions.ts) and the
@@ -161,15 +166,17 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
   }
   if (a.device === 'defib') {
     // the M2's vocabulary (plan E0): an unknown name, a room that is not an M2, or the command's own check
-    if (a.action !== 'model') return validateM2Command(String((a as { action: unknown }).action), (a as { value?: unknown }).value, modelOf(d)?.m2 === true);
+    if (a.action !== 'model') return validateM2Command(String((a as { action: unknown }).action), (a as { value?: unknown }).value, modelOf(d)?.m2 === true) ?? (d.m2 ? commandRefusal(d.m2, a.action) : undefined);
     return typeof a.value === 'string' && Object.hasOwn(DEFIB_MODELS, a.value) ? undefined : `unknown defibrillator model ${String(a.value)}`; // Own keys only
   }
   return null;
 }
 
-/** The M2's connection refusals of a defibrillator event (E2a): the panel shock through what is connected
- * [G 2-4], [G 14-9], [G 12-11]; the internal handles' 50 J maximum [G 14-18]. */
+/** The M2's refusals of a defibrillator event: the Mode Selector (E1) [G 2-4], [G 1-13]; the panel shock through what is
+ * connected (E2a) [G 2-4], [G 14-9], [G 12-11]; the internal handles' 50 J maximum [G 14-18]. */
 function m2DefibRefusal(m: M2State, df: DefibState, ev: Extract<DeviceClinicalEvent, { kind: 'defib' }>): string | undefined {
+  const sel = selectorRefusal(m, ev);
+  if (sel) return sel;
   if (ev.action === 'shock') return panelShockRefusal(m.connections);
   if (ev.action === 'selectEnergy' || ev.action === 'charge') return energyCapReason(m.connections, ev.energyJ ?? df.energyJ);
   return undefined;
@@ -191,11 +198,20 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
   if (cmd.type === 'applyEvent') {
     const ev = cmd.event as DeviceClinicalEvent | { kind: string };
     if (ev.kind === 'defib') {
-      // the M2's connections checked again at apply: they may have changed since the shock was validated (E2a)
-      if (d.m2 && (ev as { action: string }).action === 'shock' && panelShockRefusal(d.m2.connections)) return true;
-      if (applyDefib(d.defib, ev as Extract<DeviceClinicalEvent, { kind: 'defib' }>, t, defibSpec(d), out) === 'shock') {
+      const de = ev as Extract<DeviceClinicalEvent, { kind: 'defib' }>;
+      const m = d.m2;
+      if (m) {
+        // checked again at apply: the selector, the connections or the model may have changed since the event was
+        // validated (E2a; E0's finding that an energy accepted elsewhere could reach the M2)
+        const mm = modelOf(d);
+        if ((mm?.energiesJ && validateDefib(d.defib, de, { list: mm.energiesJ, name: mm.name ?? 'model' })) || m2DefibRefusal(m, d.defib, de)) return true;
+        if (de.action === 'selectEnergy') onEnergySelected(m, de.energyJ as number, d.defib.state !== 'idle'); // [G 14-6]
+      }
+      const from = out.length;
+      if (applyDefib(d.defib, de, t, defibSpec(d), out) === 'shock') {
         deliverShock(d, host, host.committedN / SYNC_RATE, false, out);
       }
+      if (m) m2Tones(out, from);
       return true;
     }
     if (ev.kind === 'pacer') {
@@ -242,18 +258,47 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
   return false;
 }
 
-/** The M2 commands with behaviour so far: the patient connections and the paddle and handle buttons (E2a). */
+/** The M2 commands with behaviour so far: the patient connections and the paddle and handle buttons (E2a); the Mode
+ * Selector, the patient type, the Lead key, the configuration and the front panel SHOCK button (E1). */
 function applyM2(d: DeviceState, m: M2State, a: DefibDeviceAction, host: DeviceHost, out: EngineEvent[]): void {
   const t = host.simT;
   if (a.action === 'connect') {
     // internal handles connected: the device selects 10 J (and disarms if charged, as any energy change) [G 14-18]
     if (applyConnect(m, a.value)) applyDefib(d.defib, { kind: 'defib', action: 'selectEnergy', energyJ: INTERNAL_START_J }, t, defibSpec(d), out);
   } else if (a.action === 'shockButton') {
-    const r = pressButton(m, a.value.button, a.value.phase, d.defib.state === 'ready');
+    const ready = d.defib.state === 'ready';
+    const r = a.value.button === 'panel' ? pressPanel(m, a.value.phase, ready) : pressButton(m, a.value.button, a.value.phase, ready);
     if (r === 'cancel') d.defib.syncArmed = false;
-    else if (r === 'shock' && !shockBlock(m.connections) && applyDefib(d.defib, { kind: 'defib', action: 'shock' }, t, defibSpec(d), out) === 'shock') {
+    else if (r === 'shock' && !shockBlock(m.connections) && !selectorRefusal(m, { kind: 'defib', action: 'shock' }) && applyDefib(d.defib, { kind: 'defib', action: 'shock' }, t, defibSpec(d), out) === 'shock') {
       deliverShock(d, host, host.committedN / SYNC_RATE, false, out);
     }
+  } else if (a.action === 'selector') {
+    m2Effect(d, turnSelector(m, a.value, t), t, out);
+  } else if (a.action === 'patientType') {
+    m2Effect(d, setPatientType(m, a.value), t, out);
+  } else if (a.action === 'lead') {
+    m.topLead = a.value; // the Lead key [G 2-13], [G 6-7]
+  } else if (a.action === 'config') {
+    // the Supervisor configuration (plan §5.4): each value is read where the device reads it (the ready time-out at the
+    // next ready, the levels at the next selection, the start mode and escalation on/off at the next power-up after
+    // 30 s off, Sync after each shock, the top trace at the next entry into a mode)
+    Object.assign(m.config, structuredClone(a.value));
+  }
+}
+
+/** Apply what an M2 change asks of the defibrillator: disarm, Sync off, the device's own energy selection. */
+function m2Effect(d: DeviceState, fx: M2Effect, t: number, out: EngineEvent[]): void {
+  const df = d.defib;
+  if (fx.disarm && df.state !== 'idle') applyDefib(df, { kind: 'defib', action: 'disarm' }, t, defibSpec(d), out);
+  if (fx.syncOff) applyDefib(df, { kind: 'defib', action: 'syncOff' }, t, defibSpec(d), out);
+  if (fx.energyJ !== undefined) applyDefib(df, { kind: 'defib', action: 'selectEnergy', energyJ: fx.energyJ }, t, defibSpec(d), out);
+}
+
+/** The M2's charge and ready tones carry the guide's frequency [G A-7] (the events pushed since `from`). */
+function m2Tones(out: EngineEvent[], from: number): void {
+  for (let i = from; i < out.length; i++) {
+    const e = out[i] as EngineEvent;
+    if (e.type === 'tone' && (e.kind === 'charge' || e.kind === 'chargeReady')) e.freqHz = e.kind === 'charge' ? M2_TONES.charge.hz : M2_TONES.ready.hz;
   }
 }
 
@@ -305,7 +350,15 @@ function deliverShock(d: DeviceState, host: DeviceHost, atS: number, synced: boo
       host.setRhythm('asystole', {});
       d.pending = { atS: atS + between(rng, ISO_S), id: outcome, opts: {} };
   }
+  const shotJ = d.defib.energyJ;
   afterShock(d.defib, t, atS, synced, outcome, out);
+  const m = d.m2;
+  if (m) {
+    // Sync after the shock: off unless configured to stay on [G 14-16], [G 1-16]; the escalation's next energy [G 14-3]
+    if (m.config.syncAfterShock && synced) d.defib.sync = true;
+    const next = afterShockEscalation(m, shotJ);
+    if (next !== undefined) d.defib.energyJ = next;
+  }
 }
 
 /** Whether the defibrillator/pacer fields of deviceStatus changed since the last one (field compare, no string or
@@ -313,7 +366,7 @@ function deliverShock(d: DeviceState, host: DeviceHost, atS: number, synced: boo
 function statusChanged(d: DeviceState): boolean {
   const df = d.defib;
   const pc = d.pacer;
-  const now = [df.energyJ, df.state, df.sync, df.readyAt, df.shocks, df.lastShock?.t ?? null, pc.mode, pc.ratePpm, pc.mA, pc.paused, ...(d.m2 ? connectionKey(d.m2) : [])];
+  const now = [df.energyJ, df.state, df.sync, df.readyAt, df.shocks, df.lastShock?.t ?? null, pc.mode, pc.ratePpm, pc.mA, pc.paused, ...(d.m2 ? [...connectionKey(d.m2), ...m2Key(d.m2)] : [])];
   let changed = d.statusLast.length !== now.length;
   for (let i = 0; i < now.length && !changed; i++) if (d.statusLast[i] !== now[i]) changed = true;
   if (changed) d.statusLast = now;
@@ -342,7 +395,9 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
     keep.push(e);
   }
   // defibrillator: charge → ready → auto-disarm; post-shock rhythm onset
+  const from = out.length;
   stepDefib(d.defib, t, defibSpec(d), out);
+  if (d.m2) m2Tones(out, from);
   const pend = d.pending;
   if (pend && t >= pend.atS) {
     d.pending = null;
@@ -356,9 +411,11 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
       }
     }
   }
-  // sync detector on the committed samples: markers while SYNC is on, the armed shock on the next R
-  for (const r of syncStep(d.sync, host.committedN - 1, host.vcgAt)) {
-    if (!d.defib.sync) continue;
+  // sync detector on the committed samples: markers while SYNC is on, the armed shock on the next R. On the M2 it reads
+  // the top trace, and finds no R while that trace has no signal (a lead off, pads off) [G 14-14], [G 14-16] (E1)
+  const m2 = d.m2;
+  for (const r of syncStep(d.sync, host.committedN - 1, host.vcgAt, m2 ? syncLeadOf(m2) : 'ecgII')) {
+    if (!d.defib.sync || (m2 && !syncSignal(m2))) continue;
     const tR = r.r / SYNC_RATE;
     out.push({ type: 'marker', t: tR, kind: 'syncR' });
     if (d.defib.syncArmed && d.defib.state === 'ready' && !(d.m2 && shockBlock(d.m2.connections))) deliverShock(d, host, Math.max(tR + SYNC_DELAY_S, host.committedN / SYNC_RATE), true, out);
