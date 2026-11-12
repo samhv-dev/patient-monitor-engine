@@ -5,9 +5,14 @@
 // course struck through, the footer and the build on every page); Chromium also prints it with page.pdf(): its page
 // count, A4 pages and title on every platform, its text — every page's footer and build included — on macOS (R50 I-2:
 // the Linux runner's fonts may lack a glyph's ToUnicode entry; PME_PDF_TEXT=1 reads it anywhere).
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { expect, test, type Page } from './evidence.ts';
+// L13 (learner-action-remote.md): a learner's Give from a phone through a relay in a process of its own, and the
+// Debrief's lines against the host engine's own record of that dose. PME_E2E_RELAY_PORT (+ 5 + the worker's index)
+// keeps that relay inside a machine's port range; unset, the system picks a free port.
+import { spawn } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { devices, expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { pdfInfo, pdfText, squash } from './pdf-text.ts';
 import { debriefLinkV2, openApp, pillV2, scanEngineIds, sheet, closeSheets, speedV2, startVite } from './app-support.ts';
@@ -860,5 +865,142 @@ test('N13: the MH learner handout in Persian prints on one A4 page, its rules un
     mkdirSync(out, { recursive: true });
     writeFileSync(`${out}/debrief-fa-mh-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes, 'the Persian MH handout prints on one page').toHaveLength(1);
+  }
+});
+
+// ---- L13: the learner remotes' story in the Debrief -------------------------------------------------------------------
+
+/** A relay in a process of its own (the owner's gate rule for remote pieces: an in-process relay can hide a host that
+ *  acknowledges without applying): the built kit's when PME_KIT_RELAY names it, else the source relay's bin. */
+async function processRelay(): Promise<{ port: number; close(): Promise<void> }> {
+  const fixed = Number(process.env.PME_E2E_RELAY_PORT) || 0;
+  const port = fixed ? fixed + 5 + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0;
+  const dir = mkdtempSync(join(tmpdir(), 'l13-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>'); // the pages come from Vite here
+  const kit = process.env.PME_KIT_RELAY;
+  const args = kit ? [kit] : ['--experimental-strip-types', '--no-warnings', resolve(import.meta.dirname, '../../../packages/controller/relay/bin.ts')];
+  args.push('--port', String(port), '--host', '127.0.0.1', '--remote-roles', 'viewer', '--static', dir);
+  const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('WS_NO_')));
+  const proc = spawn(process.execPath, args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '';
+  let closing = false;
+  const exited = new Promise<number | null>((r) => proc.once('exit', (code) => r(code)));
+  const got = await new Promise<number>((ok, no) => {
+    const onData = (d: Buffer) => {
+      out += d;
+      const m = /ready on ws:\/\/[^:]+:(\d+)\//.exec(out);
+      if (m) ok(Number(m[1]));
+    };
+    proc.stdout.on('data', onData);
+    proc.stderr.on('data', onData);
+    void exited.then((code) => no(new Error(`relay exited before ready (${code}): ${out}`)));
+  });
+  test.info().annotations.push({ type: 'L13 relay', description: `its own process: ${kit ? `the built kit's ${kit}` : 'the source relay bin'} on ${got}` });
+  return {
+    port: got,
+    close: async () => {
+      if (proc.exitCode !== null || proc.signalCode !== null) {
+        if (!closing) throw new Error(`the relay exited during the test (${proc.exitCode ?? proc.signalCode}): ${out.slice(-600)}`);
+        return;
+      }
+      closing = true;
+      proc.kill('SIGTERM');
+      await exited;
+    },
+  };
+}
+
+type Admin13 = { seq: number; t: number; source: string; by?: string; drugId?: string; dose?: number; unit?: string; result: { accepted: boolean }; prep?: { id: string; activeAmount: number; remaining: number; unit: string; notice: { shownAt: number } | null } };
+type Row13 = { t: number; kind: string; text: string; by?: string; prepId?: string; dose?: { drugId: string; dose: number; unit: string } };
+type Host13 = { __pmeApp: { session: { code: string; record: { data: { rows: Row13[]; admin?: Admin13[] } }; host: { showPrepNotice(by: string, id: string): boolean; preparation(by: string, id: string): { notice: { shownAt: number } | null } | undefined } }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
+type Phone13 = { __pmeLearnerDrugs: { tray: { ids: string[] } | null } };
+const mmss13 = (t: number) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+const fmt13 = (x: number) => String(+x.toPrecision(3));
+
+// The MH card on the laptop, Room setup naming the phone "bed 2 remote"; the learner's phone stages sodium bicarbonate
+// 8.4 % 10 mL + epinephrine 1 mg/mL 1 mL in one syringe (the formulary: incompatible, Stabilis, no quantity: LQ8 A) and
+// gives 2 mL BEFORE the instructor shows the notice; the notice is shown after. The Debrief's timeline line and its
+// Preparations item must carry the doses the host engine applied (the /2 runner's administrations, accepted, and the
+// record's dose rows: the same numbers), the phone's name, "notice not shown" on the give and the notice's own time.
+test('L13: a learner gives from the phone through a relay in its own process; the Debrief names the phone, the preparation, the notice and the doses the engine applied', async ({ page, browser, browserName }) => {
+  test.setTimeout(240_000);
+  const relay = await processRelay();
+  const KEY = 'bed2remote01';
+  try {
+    const ws = `ws://127.0.0.1:${relay.port}/`;
+    await page.addInitScript((k) => localStorage.setItem('pme.roomLayout', JSON.stringify({ [k]: { name: 'bed 2 remote', show: 'remote', lastSeen: Date.now() } })), KEY);
+    await openApp(page, base, `?relay=${encodeURIComponent(ws)}&scenario=showcase-mh-v2#/teach2`, { warmMs: 1500 });
+    const code = await page.evaluate(() => (window as unknown as Host13).__pmeApp.session.code);
+    const pin = (await page.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+    // the learner's phone, signed in on the learner PIN, on its Drugs tab
+    const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+    const ctx = await browser.newContext(dev);
+    await ctx.addInitScript((k) => localStorage.setItem('pme.device', k), KEY);
+    const p = await ctx.newPage();
+    await p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/remote/learner`);
+    for (const d of pin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+    await p.locator('.ip-peer-go').click();
+    await expect(p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`, { timeout: 20_000 });
+    await expect(p.locator('.lr-bench')).toBeVisible({ timeout: 15_000 });
+    for (const [i, x] of [{ search: 'sodium bic', drug: 'sodiumBicarbonate', product: 'sodium-bicarbonate-84mg-ml', amount: 10 }, { search: 'epinephrine', drug: 'epinephrine', product: 'adrenalin-1mg-ml', amount: 1 }].entries()) {
+      if (i > 0) await p.locator('.lr-another').click();
+      await p.locator('.lr-search').fill(x.search);
+      await p.locator(`.lr-pick[data-drug="${x.drug}"]`).click();
+      await p.locator(`.lr-product[data-product="${x.product}"]`).click();
+      await p.locator(`.lr-drawn-row[data-product="${x.product}"] .stepper input`).fill(String(x.amount));
+      await p.locator(`.lr-drawn-row[data-product="${x.product}"] .stepper input`).dispatchEvent('change');
+    }
+    await p.locator('.lr-diluent select').selectOption('');
+    await p.locator('.lr-stage').click();
+    const item = p.locator('.lr-item').first();
+    await expect(item.locator('.lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
+    const [id] = await p.evaluate(() => (window as unknown as Phone13).__pmeLearnerDrugs.tray?.ids ?? []);
+    // the Give, 2 mL, before the notice
+    await item.locator('.seg button[data-v="part"]').click();
+    await item.locator('.lr-give .stepper input').first().fill('2');
+    await item.locator('.lr-give .stepper input').first().dispatchEvent('change');
+    await item.locator('.lr-give-btn').click();
+    await expect(item.locator('.lr-said')).toHaveText(/^Given 2 mL at \d\d:\d\d$/, { timeout: 10_000 });
+    // the host engine's own record of the dose: the /2 runner's administrations (copied into the record each second)
+    const gives = async () => (await page.evaluate(() => (window as unknown as Host13).__pmeApp.session.record.data.admin ?? [])).filter((a) => a.source === 'learner' && a.prep?.id === id);
+    await expect.poll(async () => (await gives()).map((a) => a.drugId).sort(), { timeout: 15_000 }).toEqual(['epinephrine', 'sodiumBicarbonate']);
+    expect(await page.evaluate(({ k, i }) => (window as unknown as Host13).__pmeApp.session.host.showPrepNotice(k, i), { k: KEY, i: id as string })).toBe(true);
+    const shownAt = (await page.evaluate(({ k, i }) => (window as unknown as Host13).__pmeApp.session.host.preparation(k, i)?.notice?.shownAt, { k: KEY, i: id as string })) as number;
+    await page.waitForTimeout(1500); // the record's next copy of the runner's staged preparation (once a second) carries the notice
+    await ctx.close();
+    const admin = await gives();
+    const rows = (await page.evaluate(() => (window as unknown as Host13).__pmeApp.session.record.data.rows)).filter((r) => r.kind === 'learner' && r.prepId === id);
+    for (const a of admin) {
+      expect(a.result.accepted, `${a.drugId}: the engine accepted the give`).toBe(true);
+      expect(a.by).toBe(KEY);
+      expect(a.prep?.notice, 'the give says no notice had been shown').toBeNull();
+      expect(a.prep?.activeAmount).toBeCloseTo(a.dose!, 12); // the host's active amount is the dose the engine applied
+      const row = rows.find((r) => r.dose?.drugId === a.drugId);
+      expect(row?.dose, `${a.drugId}: the record's row is the engine's applied command`).toEqual({ drugId: a.drugId, dose: a.dose, unit: a.unit });
+    }
+
+    await page.evaluate(() => (location.hash = '#/debrief'));
+    const view = page.locator('[data-view=debrief]');
+    await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible({ timeout: 10_000 });
+    // the timeline: each give's own line, its text as the engine's applied command described it, named as Room setup named the phone
+    const timeline = await view.locator('#db-timeline tbody tr[data-kind="learner"] td:last-child').allTextContents();
+    for (const r of rows) expect(timeline).toContain(`${r.text} at ${mmss13(r.t)}, by Learner remote (bed 2 remote)`);
+    // the Preparations item of this preparation
+    const sec = view.locator('#db-preparations');
+    await expect(sec.locator('h2')).toHaveText('Preparations');
+    const itm = sec.locator(`.db-preps > li[data-prep="${id}"]`);
+    await expect(itm.locator('.db-prep-head')).toHaveText(/^\d\d:\d\d · Learner remote \(bed 2 remote\) staged Sodium bicarbonate.* 10 mmol \(0\.909 mmol\/mL\) \+ Epinephrine 1 mg \(0\.0909 mg\/mL\), 11 mL$/);
+    await expect(itm.locator('.db-prep-ready')).toHaveText('Ready at once: no source for the preparation time');
+    await expect(itm.locator('.db-prep-finding[data-kind="incompatible"]').first()).toContainText(/^Incompatible: .*NaHCO3 as solvent degrades epinephrine.*\(Stabilis /);
+    await expect(itm.locator('.db-prep-notice')).toHaveText(`Notice shown at ${mmss13(shownAt)}`);
+    const give = await itm.locator('.db-prep-give').allTextContents();
+    expect(give).toHaveLength(1);
+    const t = admin[0]!.t;
+    expect(give[0]).toMatch(new RegExp(`^Given at ${mmss13(t)}, notice not shown: `));
+    for (const a of admin) expect(give[0], `${a.drugId}: the engine's dose`).toContain(`${fmt13(a.dose!)} ${a.unit} active of ${fmt13(a.dose! / a.prep!.remaining)} ${a.unit} prepared (100 % intact; loss not modelled)`);
+    await expect(itm.locator('.db-prep-grade')).toHaveText('violation: given with a finding');
+    test.info().annotations.push({ type: `L13 ${browserName}`, description: `${timeline.join(' | ')} || ${give[0]}` });
+  } finally {
+    await relay.close();
   }
 });

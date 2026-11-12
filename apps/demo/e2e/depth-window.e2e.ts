@@ -77,17 +77,22 @@ async function processRelay(port: number): Promise<{ port: number; close(): Prom
   };
 }
 
-/** The host: a free-run patient, the room's depth device the generic reader; its own engine's SEF kept by sim time. */
-async function host(page: Page, ws: string): Promise<string> {
-  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach2`, { warmMs: 1500, site: { eegModel: 'generic' } });
-  await page.evaluate(() => {
+/** What a case reads: the reader's index id on the window's tile and the digits it is drawn with (E12 generic: SEF; E7: BIS-type). */
+type Idx = { id: string; digits: number };
+const SEF: Idx = { id: 'sef', digits: 1 };
+const BIS: Idx = { id: 'bis', digits: 0 };
+
+/** The host: a free-run patient, the room's depth device `model` (the site profile); its own engine's `idx` kept by sim time. */
+async function host(page: Page, ws: string, model = 'generic', idx: Idx = SEF): Promise<string> {
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach2`, { warmMs: 1500, site: { eegModel: model } });
+  await page.evaluate((id) => {
     const w = window as unknown as HostW;
     w.__hostSef = {};
     w.__pmeApp.session.monitor.on((e) => {
-      const v = e.type === 'measurement' ? e.values?.sef : undefined;
+      const v = e.type === 'measurement' ? e.values?.[id] : undefined;
       if (v) (w.__hostSef as Record<string, number | null>)[String(e.t)] = v.value;
     });
-  });
+  }, idx.id);
   return page.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
 }
 
@@ -105,21 +110,21 @@ async function depthPhone(browser: Browser, browserName: string, code: string, w
   return p;
 }
 
-/** What the window shows now — the SEF as drawn and the sim time of its reading — and the host engine's SEF then. */
-async function reading(p: Page, page: Page): Promise<{ t: number; shown: string; host: string | null }> {
-  const r = await p.evaluate(() => ({ t: (document.querySelector('.depth-window') as HTMLElement).dataset.t ?? '', shown: document.querySelector('.depth-tile[data-id="sef"] .v')?.textContent ?? '' }));
+/** What the window shows now — the index as drawn and the sim time of its reading — and the host engine's index then. */
+async function reading(p: Page, page: Page, idx: Idx = SEF): Promise<{ t: number; shown: string; host: string | null }> {
+  const r = await p.evaluate((id) => ({ t: (document.querySelector('.depth-window') as HTMLElement).dataset.t ?? '', shown: document.querySelector(`.depth-tile[data-id="${id}"] .v`)?.textContent ?? '' }), idx.id);
   // the host is ahead of its followers by a frame or so: wait for its reading at that time
   await expect.poll(() => page.evaluate((t) => (window as unknown as HostW).__hostSef?.[t] !== undefined, r.t), { timeout: 5000 }).toBe(true);
   const h = await page.evaluate((t) => (window as unknown as HostW).__hostSef?.[t] ?? null, r.t);
-  return { t: Number(r.t), shown: r.shown, host: h === null ? null : h.toFixed(1) };
+  return { t: Number(r.t), shown: r.shown, host: h === null ? '--' : h.toFixed(idx.digits) }; // no value: the window's '--'
 }
 
 /** The window's SEF is the host's own at its reading's time (at least `n` readings apart), and it is returned. */
-async function sameAsHost(p: Page, page: Page, n = 3): Promise<number[]> {
+async function sameAsHost(p: Page, page: Page, n = 3, idx: Idx = SEF): Promise<number[]> {
   const seen: number[] = [];
   let last = -1;
   while (seen.length < n) {
-    const r = await reading(p, page);
+    const r = await reading(p, page, idx);
     if (r.t !== last) {
       expect(r.shown, `the window's SEF at ${r.t} s is the host engine's`).toBe(r.host);
       seen.push(Number(r.shown));
@@ -135,13 +140,13 @@ async function sameAsHost(p: Page, page: Page, n = 3): Promise<number[]> {
  * awake readings: the awake SEF scatters by 1–3 Hz from one reading to the next (27.7, 26.9, 25.1 Hz in the first local
  * run), so 5 Hz under the lowest is the drug's effect, not the scatter [ENG: test].
  */
-async function bolusMoves(page: Page, p: Page, before: number): Promise<number> {
-  const DROP_HZ = 5;
+async function bolusMoves(page: Page, p: Page, before: number, idx: Idx = SEF, drop = 5): Promise<number> {
+  const DROP_HZ = drop;
   expect(await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' } }))).toMatchObject({ accepted: true });
   expect(await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'time', action: 'scale', value: 4 }))).toMatchObject({ accepted: true });
   let after = before;
   await expect.poll(async () => {
-    const r = await reading(p, page);
+    const r = await reading(p, page, idx);
     expect(r.shown, `the window's SEF at ${r.t} s is the host engine's`).toBe(r.host);
     after = Number(r.shown);
     return before - after;
@@ -217,6 +222,60 @@ test("through a relay in its own process (the built kit's): the phone's depth wi
     const awake = await sameAsHost(p, page, 5);
     const after = await bolusMoves(page, p, Math.min(...awake));
     console.log(`[E12] ${browserName} (relay process): awake SEF ${awake.join(', ')} Hz → ${after} Hz after propofol`);
+    await p.context().close();
+  } finally {
+    await relay.close();
+  }
+});
+
+// EEG E7: the BIS-type reader. Room setup chooses it (the session sends `on` and the model together); the phone's window
+// wears its face and shows the host engine's own BIS-type index at each reading, and the index falls after propofol on
+// the host. The awake index scatters by about a point from one reading to the next (97.2 mean on the engine's course,
+// test/engine/eeg-bis-course.test.ts), so 8 points under the lowest awake reading is the drug's effect [ENG: test].
+const BIS_DROP = 8;
+/** The reader's 30-s component window full (Connor 2022 Table 1 l. 28) before the awake readings: until then its index
+ * rests on fewer epochs and scatters (90, 67, 93 in the first local run). Runs the host at ×4 to get there. */
+async function bisWarm(page: Page, p: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'time', action: 'scale', value: 4 }));
+  await expect.poll(async () => Number(await p.locator('.depth-window').getAttribute('data-t')), { timeout: 60_000 }).toBeGreaterThan(32);
+  await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'time', action: 'scale', value: 1 }));
+}
+test('E7: Room setup chooses the BIS-type reader; the phone shows the host\'s own index, and it falls after propofol on the host', async ({ page, browser, browserName }) => {
+  test.setTimeout(240_000);
+  const relay = await startRelay({ port: relayPort(0), host: '127.0.0.1', staticDir: staticDir(), remoteRoles: 'viewer' });
+  try {
+    const ws = `ws://127.0.0.1:${relay.port}/`;
+    const code = await host(page, ws, 'generic', BIS);
+    await page.evaluate(() => (location.hash = '#/room'));
+    const sel = page.locator('.room-depth select');
+    await expect(sel.locator('option[value="bisType"]')).toHaveText('BIS-type index, computed from published components');
+    await sel.selectOption('bisType');
+    await page.evaluate(() => (location.hash = '#/teach2'));
+    const p = await depthPhone(browser, browserName, code, ws);
+    await expect(p.locator('.depth-window')).toHaveAttribute('data-model', 'bisType', { timeout: 15_000 });
+    await expect(p.locator('.depth-label')).toHaveText('BIS-type index, computed from published components');
+    await bisWarm(page, p);
+    const awake = await sameAsHost(p, page, 5, BIS);
+    const after = await bolusMoves(page, p, Math.min(...awake), BIS, BIS_DROP);
+    console.log(`[E7] ${browserName}: awake BIS-type ${awake.join(', ')} → ${after} after propofol (the host's own value each read)`);
+    await p.context().close();
+  } finally {
+    await relay.close();
+  }
+});
+
+test("E7 through a relay in its own process: the room's BIS-type reader on the phone is the host's, and propofol moves it", async ({ page, browser, browserName }) => {
+  test.setTimeout(240_000);
+  const relay = await processRelay(relayPort(5));
+  try {
+    const ws = `ws://127.0.0.1:${relay.port}/`;
+    const code = await host(page, ws, 'bisType', BIS);
+    const p = await depthPhone(browser, browserName, code, ws);
+    await expect(p.locator('.depth-window')).toHaveAttribute('data-model', 'bisType');
+    await bisWarm(page, p);
+    const awake = await sameAsHost(p, page, 5, BIS);
+    const after = await bolusMoves(page, p, Math.min(...awake), BIS, BIS_DROP);
+    console.log(`[E7] ${browserName} (relay process): awake BIS-type ${awake.join(', ')} → ${after} after propofol`);
     await p.context().close();
   } finally {
     await relay.close();
