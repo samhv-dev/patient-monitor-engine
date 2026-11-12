@@ -173,14 +173,18 @@ export class AppSession {
   /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
+  /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
+   *  patient mount, or null: no EEG device (none switched on). */
+  eegModel: string | null;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
   formulary: Formulary | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null }) {
     this.el = el;
     this.defibModel = o.defibModel ?? null;
+    this.eegModel = o.eegModel ?? null;
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -587,6 +591,25 @@ export class AppSession {
     void this.panel.send({ type: 'device', action: { device: 'defib', action: 'model', value: this.defibModel } } as never);
   }
 
+  /**
+   * Room setup's depth-of-anaesthesia device (EEG plan E12). A model switches the patient's EEG on and chooses its
+   * reader now, through the host's command path (every follower replays both, so a depth window's own engine reads the
+   * same samples, D3), and at every patient mount after; null switches it off now and sends nothing at a mount.
+   */
+  setEegModel(model: string | null): void {
+    const was = this.eegModel;
+    this.eegModel = model;
+    if (model) this.sendEegModel();
+    else if (was && !this.perf8) void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'off' } } as never);
+  }
+
+  /** `on` first: the engine refuses a model while the EEG is off (validateEegCommand). */
+  private sendEegModel(): void {
+    if (!this.eegModel || this.perf8) return;
+    void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'on' } } as never);
+    void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'model', value: this.eegModel } } as never);
+  }
+
   enableSound(): Promise<void> {
     return (this.monitor?.enableSound() ?? Promise.resolve()).then(() => void (this.soundOn = true));
   }
@@ -751,6 +774,7 @@ export class AppSession {
     if (this.paused) m.pause();
     if (this.soundOn) void m.enableSound();
     this.sendDefibModel(); // a new engine starts with no model: the room's again (R5b)
+    this.sendEegModel(); // and with no EEG: the room's depth device again (E12)
     for (const fn of this.mountFns) fn(m);
   }
 }
