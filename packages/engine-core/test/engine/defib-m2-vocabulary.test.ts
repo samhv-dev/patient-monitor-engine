@@ -132,7 +132,12 @@ describe('E0: the frozen vocabulary', () => {
   });
 
   it('each command is accepted in its valid forms on zoll-m2 and changes nothing yet (state and status equal a room without it)', () => {
+    // `connect` has its behaviour since E2a (defib-m2-connections.test.ts); its forms are still accepted here
     for (const [action, c] of Object.entries(CASES)) {
+      if (action === 'connect') {
+        for (const v of c.ok) expect(room('zoll-m2').e.dispatch(m2(action, v)).accepted, `${action} ${JSON.stringify(v)}`).toBe(true);
+        continue;
+      }
       for (const v of c.ok) {
         const a = room('zoll-m2');
         const b = room('zoll-m2');
@@ -218,7 +223,8 @@ describe('E0: deviceStatus.m2', () => {
     restored.restore(host.e.snapshot());
     restored.advanceTo(5);
     host.e.advanceTo(5);
-    expect(lastStatus(rev).m2).toEqual(M2_IDLE_STATUS);
+    // idle but for the poor-contact pads E2a now applies, and the message they give [G 14-9]
+    expect(lastStatus(rev).m2).toEqual({ ...M2_IDLE_STATUS, connections: { ...M2_IDLE_STATUS.connections, pads: PADS }, messages: ['Attach Pads'] });
     expect(lastStatus(rev)).toEqual(lastStatus(host.ev));
     expect(lastStatus(rev).defib!.energyJ).toBe(150);
   });
