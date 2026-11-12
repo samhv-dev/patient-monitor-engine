@@ -81,7 +81,8 @@ The angle-bracketed values are placeholders showing where each value comes from 
   "products": [{
     "id": "<the label's product>", "form": "<powder, solution or emulsion>",
     "strength": { "amount": "<from the label>", "unit": "mg", "perVial": true, "src": "<a monograph key>" },
-    "reconstitute": { "diluents": ["water"], "volumeMl": "<from the label>", "src": "<a monograph key>" },
+    "reconstitute": { "diluents": ["water"], "volumeMl": "<from the label>",
+                      "final": { "volumeMl": "<from the label>", "src": "<a monograph key>" }, "src": "<a monograph key>" },
     "prepTime": { "gap": "LQ7" }
   }],
   "diluents": [
@@ -114,3 +115,18 @@ Three optional fields (added for the FS batch's findings):
 - **`inUse`** on a product: the label's in-use times, each `{ "h": 72, "tempC": 30, "condition": "<the label's
   condition, in our words>", "src": "<a monograph key>" }`; `tempC` is the upper end of the label's range, absent when
   the label names no temperature.
+
+Three more (brief 152):
+
+- **`containers`** on a `compat` or an `admixtures` statement: the containers the statement holds for, when its own
+  source says the container matters (insulin's loss in 0.9 % NaCl was measured in PVC bags: `["bag-pvc"]`). A
+  preparation in another container, or in none named, is not described by it. Without the field the statement holds
+  in every container. Never qualify a statement from memory: only where its source names the container.
+- **`molarMass`** on a drug: `{ "mgPerMmol": 84, "src": "<a label or pharmacopoeia key>" }`, the mass of one mmol.
+  It lets a strength in `mmol` meet stability rows stated as a mass per mL, and back. It never converts `mEq` (that
+  needs a valence the formulary does not hold).
+- **`final`** on a `reconstitute` (required): what the label states of the vial once reconstituted, because a powder
+  adds volume. `{ "volumeMl": 22.6, "src": … }` (the final volume), `{ "perMl": 5.3, "src": … }` (the
+  concentration), or `{ "stated": false, "src": … }` when the label read states neither. The bench then uses the
+  label's volume; where it is not stated it counts the diluent added only and says that the powder's own volume is
+  ignored. Never a displacement value from memory.

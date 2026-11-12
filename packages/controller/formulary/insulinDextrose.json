@@ -1,5 +1,5 @@
 {
-  "$comment": "FS batch. FQ6 (owner, 2026-11-10): the Stabilis PVC row (insulin aspart) stays out; Trissel's PVC adsorption fact is the saline statement, with no curve.",
+  "$comment": "FS batch. FQ6 (owner, 2026-11-10): the Stabilis PVC row (insulin aspart) stays out; Trissel's PVC adsorption fact is the saline statement, with no curve. N60: PVC bags only (Trissel p. 1213, note a).",
   "drugId": "insulinDextrose",
   "products": [
     {
@@ -43,6 +43,9 @@
       "src": "emc-3849",
       "compat": {
         "verdict": "incompatible",
+        "containers": [
+          "bag-pvc"
+        ],
         "statement": "Trissel: regular insulin 1 unit/mL in NaCl 0.9 % in PVC bags lost 10 % by adsorption in 1 h (50-mL bag) and 4 h (250-mL bag); no temperature. A sorption loss, not degradation.",
         "src": "trissel-insulin-p1213",
         "crossCheck": {

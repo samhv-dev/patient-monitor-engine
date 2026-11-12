@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MemoryStorage } from './memory-storage.ts';
-import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, gas, loadSite, pacerDefaults, parseSite, saveSite } from './site.ts';
+import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, EEG_CHOICES, gas, loadSite, pacerDefaults, parseSite, saveSite } from './site.ts';
 
 describe('site profile', () => {
   it('keeps known values and replaces anything else with the default', () => {
-    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic' })).toEqual({
-      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic',
+    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic', eegModel: 'generic' })).toEqual({
+      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic', eegModel: 'generic',
     });
     expect(DEFAULT_SITE.drugNames).toBe('us'); // "epinephrine / norepinephrine" unless the site chooses
-    expect(parseSite({ skin: 'nonsense', fps: 144, theme: 'neon', defibModel: 'lifepak-like' })).toEqual(DEFAULT_SITE);
+    expect(parseSite({ skin: 'nonsense', fps: 144, theme: 'neon', defibModel: 'lifepak-like', eegModel: 'bis' })).toEqual(DEFAULT_SITE); // E12: an unbuilt reader is no choice
   });
   it('a stored `instructor: \'teach\'` (or `panel`) is ignored: an older site file still imports, without the two-view keys (retire-instructor-v1 decision 5)', () => {
     const older = { schema: 'pme-site/1', skin: 'philips-like', theme: '', fps: 60, panel: 'drawer', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', instructor: 'teach', defibModel: null };
@@ -20,6 +20,20 @@ describe('site profile', () => {
   it('converts gas pressures for the tables', () => {
     expect(gas(40, 'kPa')).toBeCloseTo(5.33, 2);
     expect(gas(40, 'mmHg')).toBe(40);
+  });
+});
+
+// EEG plan E12: the room's depth-of-anaesthesia device, from the engine's EEG registry (built readers only)
+describe("the room's depth-of-anaesthesia device", () => {
+  it('is off by default (no EEG: the engine computes none, D4), offers the registry\'s built readers, and is kept per room', () => {
+    expect(DEFAULT_SITE.eegModel).toBeNull();
+    expect(EEG_CHOICES).toEqual([{ id: 'generic', label: 'Processed EEG (generic)' }]);
+    vi.stubGlobal('localStorage', new MemoryStorage());
+    saveSite({ ...DEFAULT_SITE, eegModel: 'generic' });
+    expect(loadSite().eegModel).toBe('generic');
+    saveSite({ ...DEFAULT_SITE });
+    expect(loadSite().eegModel).toBeNull();
+    vi.unstubAllGlobals();
   });
 });
 

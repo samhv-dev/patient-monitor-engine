@@ -3,7 +3,9 @@
 // through the registry on vent-hamilton.html's markup (`?face=edp-ts`), every word it draws is a face.json word or
 // reason (or a number), in every state the knob reaches (the mode window, its confirmation, Menu one to three, Alarm
 // Limits, a pending value, an alarm, a reason in the message bar); every control not honoured is drawn, marked and
-// says why; the mode window is the manual's (research/57 O-09, O-10, VQ7); stop() gives the page back unchanged.
+// says why OUTSIDE the device (brief 159, R20: drawn as the device draws it, the reason in the simulator's strip and as
+// the control's description); the mode windows are titled and ordered as photographed (VF, R14: research/57 P-01,
+// P-02); stop() gives the page back unchanged.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createVentDriver, type VentDriver } from '@pme/ventilator';
@@ -38,9 +40,12 @@ describe('the EDP-TS face', () => {
     check('running');
     expect(document.querySelector('main.edp h1')?.textContent).toBe('EDP-TS');
     click('[data-ctl="side:mode"]'); check('mode window');
-    expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Ventilation Modes']);
+    expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Operative Modes']);
+    expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['VCV', 'PCV', 'PSV/CPAP', 'SIMV(PCV)+PSV', 'SIMV(VCV)+PSV', 'Noninvasive (NIV)', 'Other Operative modes']);
     wheel(2); knobPress();
-    expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Ventilation Modes', 'Other ventilation Modes']);
+    // the second window takes the first one's place, as photographed (IMG_1545; V1 drew both side by side)
+    expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Operative Modes']);
+    expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['MMV+PSV', 'PSV+VT Assured', 'APRV', 'PRVC', 'Other Operative modes']);
     check('other modes');
     knobPress(); check('confirmation');
     expect(document.querySelector('.edp-win.conf')?.textContent).toContain('Mode PRVC');
@@ -57,7 +62,10 @@ describe('the EDP-TS face', () => {
     knobPress();
     expect(d.vs.cfg.peep).toBe(8);
     click('[data-ctl="right:nebulizer"]'); check('a reason');
-    expect(document.querySelector('.edp-msg .txt')!.textContent).toBe('nebulised gas not modelled');
+    // the reason is in the simulator's strip outside the device; the device's message bar keeps its own message
+    expect(document.querySelector('.edp-strip .why')!.textContent).toBe('Nebulised gas is not modelled');
+    expect(document.querySelector('.edp-strip')!.closest('main')).toBeNull();
+    expect(document.querySelector('.edp-msg .txt')!.textContent).toBe('Volume compensation');
     d.vs.cfg.pmax = 10; // a pressure limit under the breath's peak: the model's alarm, in the device's words
     let ms = 0;
     for (let i = 0; i < 100; i++) d.frame((ms += 100));
@@ -65,22 +73,36 @@ describe('the EDP-TS face', () => {
     check('alarm');
     expect(document.querySelector('.edp-alarm')!.textContent).toBe('High Pressure');
     expect(document.querySelector('.edp-alarm')!.className).toContain('high');
-    expect(seen.has('needs piece V4')).toBe(true);
+    // nothing about the simulator is written on the device (R20)
+    for (const t of seen) expect(t, t).not.toMatch(/piece|simulated|modelled/);
     ui.stop();
   });
 
-  it('every control not honoured yet is drawn, marked unavailable and says why', () => {
+  it('every control not honoured yet is drawn as the device draws it, marked unavailable and described with its reason', () => {
     const ui = mount(createVentDriver(null));
+    const why = (b: HTMLElement) => document.getElementById(b.getAttribute('aria-describedby') ?? '')?.textContent ?? '';
     for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
       expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
-      expect(b.querySelector('.r')?.textContent, b.dataset.ctl).toMatch(/needs piece V\d|not modelled/);
+      expect(why(b), b.dataset.ctl).toMatch(/not simulated yet|not modelled|cannot be changed yet/);
+      expect(b.dataset.unsim, b.dataset.ctl).toBeTruthy();
     }
-    // V3 turned these on: the device's limits (research/57 L-02, L-13, L-08), live
+    // V3 turned these on: the device's limits (research/57 L-02, L-13, L-08), live, and the silence key
     for (const [id, v] of [['tag:pLo', '5'], ['tag:peepHi', '20.0'], ['tag:o2Hi', '60'], ['tag:o2Lo', '40']]) expect(document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent).toBe(v);
-    expect(document.querySelector('[data-ctl="side:silence"]')!.getAttribute('aria-disabled')).toBeNull();
+    for (const id of ['tag:pLo', 'tag:peepHi', 'tag:o2Hi', 'tag:o2Lo', 'side:silence']) expect(document.querySelector(`[data-ctl="${id}"]`)!.getAttribute('aria-disabled'), id).not.toBe('true');
     click('[data-ctl="side:mode"]');
-    const off = [...document.querySelectorAll('.edp-row.off')].map((e) => e.textContent);
-    expect(off).toEqual(['PSV/CPAPneeds piece V2', 'SIMV(PCV)+PSVneeds piece V6', 'Noninvasive (NIV)needs piece V8']);
+    const off = [...document.querySelectorAll<HTMLElement>('.edp-entry[aria-disabled="true"]')].map((e) => [e.textContent, why(e)]);
+    expect(off).toEqual([['PSV/CPAP', 'PSV/CPAP is not simulated yet'], ['SIMV(PCV)+PSV', 'SIMV modes are not simulated yet'], ['SIMV(VCV)+PSV', 'SIMV modes are not simulated yet'], ['Noninvasive (NIV)', 'NIV is not simulated yet']]);
+    ui.stop();
+  });
+
+  it("the drawer's switch marks what is not simulated yet; off by default", () => {
+    const ui = mount(createVentDriver(null));
+    expect(document.querySelector('main.edp')!.classList.contains('edp-show-unsim')).toBe(false);
+    (document.querySelector('.edp-simhandle') as HTMLElement).click();
+    const cb = [...document.querySelectorAll<HTMLInputElement>('#drawer input[type=checkbox]')].find((i) => i.parentElement?.textContent === 'Show what is not simulated yet')!;
+    expect(cb.checked).toBe(false);
+    cb.click();
+    expect(document.querySelector('main.edp')!.classList.contains('edp-show-unsim')).toBe(true);
     ui.stop();
   });
 

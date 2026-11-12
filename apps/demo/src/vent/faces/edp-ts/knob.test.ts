@@ -108,7 +108,7 @@ describe('select, turn, press (test 4)', () => {
     const { c, k } = setup();
     const before = JSON.stringify(c.cfg);
     k.press('right:standby');
-    expect(k.note()).toBe('v5');
+    expect(k.note()).toBe('standby'); // VF: one resident reason per control (brief 159, R20); V1 said 'v5'
     expect(JSON.stringify(c.cfg)).toBe(before);
   });
 });

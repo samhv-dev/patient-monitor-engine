@@ -81,6 +81,10 @@ export class AppSession {
   readonly driver: ScenarioDriver;
   /** The same-screen instructor panel's controller (in-process hub, R7). */
   readonly panel: ControllerSession;
+  /** The name Room setup gave a device key (R7's remembered layout), or null: the record's and the Log's (brief 164). */
+  deviceName(key: string): string | null {
+    return readLayout(store)[key]?.name ?? null;
+  }
   /** The panel's end of the in-process hub (the panel taps it for raw events: alarmStatus, deviceStatus). */
   readonly panelTransport: ManagedTransport;
   /** True once the session has been used beyond the Start screen (a patient restart then asks first). */
@@ -169,14 +173,18 @@ export class AppSession {
   /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
+  /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
+   *  patient mount, or null: no EEG device (none switched on). */
+  eegModel: string | null;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
-  private formulary: Formulary | null = null;
+  formulary: Formulary | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null }) {
     this.el = el;
     this.defibModel = o.defibModel ?? null;
+    this.eegModel = o.eegModel ?? null;
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -186,7 +194,7 @@ export class AppSession {
     this.code = normalizeSessionCode(o.code ?? '') ?? newSessionCode();
     // the host's phase runner (a pme-scenario/2 card): the record copies its grade inputs (plan F7)
     // R5d: a learner defibrillator press names its device as Room setup keeps it (R7's remembered layout)
-    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null, (key) => readLayout(store)[key]?.name ?? null);
+    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null, (key) => this.deviceName(key));
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
       dispatchGroup: (cs) => this.need().dispatchAll(cs), // R15: a stage group in one worker message, on one tick
@@ -245,6 +253,11 @@ export class AppSession {
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
+      // B6 "To the next phase": the /2 card's last phase entry (its id and time), the stop the host's fast-forward reads
+      phaseMark: () => {
+        const e = this.driver.phaseRunner?.phases.at(-1);
+        return e ? `${e.id}@${e.t}` : null;
+      },
       // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
       // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
@@ -253,6 +266,7 @@ export class AppSession {
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
       onPreparation: (p) => this.driver.recordPreparation(p),
+      deviceName: (key) => readLayout(store)[key]?.name ?? null, // L9: the instructor's card names the remote as Room setup did
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
       // R8c: the granted remote cockpit's link messages and its grant, for the Ventilator desk (views/vent.ts)
@@ -577,6 +591,25 @@ export class AppSession {
     void this.panel.send({ type: 'device', action: { device: 'defib', action: 'model', value: this.defibModel } } as never);
   }
 
+  /**
+   * Room setup's depth-of-anaesthesia device (EEG plan E12). A model switches the patient's EEG on and chooses its
+   * reader now, through the host's command path (every follower replays both, so a depth window's own engine reads the
+   * same samples, D3), and at every patient mount after; null switches it off now and sends nothing at a mount.
+   */
+  setEegModel(model: string | null): void {
+    const was = this.eegModel;
+    this.eegModel = model;
+    if (model) this.sendEegModel();
+    else if (was && !this.perf8) void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'off' } } as never);
+  }
+
+  /** `on` first: the engine refuses a model while the EEG is off (validateEegCommand). */
+  private sendEegModel(): void {
+    if (!this.eegModel || this.perf8) return;
+    void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'on' } } as never);
+    void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'model', value: this.eegModel } } as never);
+  }
+
   enableSound(): Promise<void> {
     return (this.monitor?.enableSound() ?? Promise.resolve()).then(() => void (this.soundOn = true));
   }
@@ -741,6 +774,7 @@ export class AppSession {
     if (this.paused) m.pause();
     if (this.soundOn) void m.enableSound();
     this.sendDefibModel(); // a new engine starts with no model: the room's again (R5b)
+    this.sendEegModel(); // and with no EEG: the room's depth device again (E12)
     for (const fn of this.mountFns) fn(m);
   }
 }

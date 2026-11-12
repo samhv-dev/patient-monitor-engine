@@ -187,7 +187,7 @@ export function settingState(id: string, c: Cfg): CtlState {
   if (id === 'sound') return 'live'; // a device setting, in every mode
   if (isSim(c)) return { reason: 'simMode' };
   if (id === 'pause') return c.mode === 'VC' ? 'live' : { reason: 'vcvOnly' };
-  if (!ROWS[faceMode(c)].includes(id)) return { reason: 'v2' }; // PSV and Exp. Sensitiv. belong to PSV/CPAP (GM3)
+  if (!ROWS[faceMode(c)].includes(id)) return { reason: 'psvKeys' }; // PSV and Exp. Sensitiv. belong to PSV/CPAP (GM3)
   if (id === 'ie') return c.mode === 'PC' ? 'live' : 'shown';
   return 'live';
 }
@@ -256,13 +256,13 @@ export const CONTROLS: Ctl[] = [
   // alarm-limit tags under the top row and in the left column (research/57 R-11, R-12, R-18, R-24)
   ...Object.keys(LIMITS).map((k): Ctl => ({ id: `tag:${k}`, region: 'tag', kind: 'limit', limit: k })),
   // the right column (research/57 R-33)
-  un('right:graphics', 'right', 'graphics', 'v4', 'GD12'),
-  un('right:freeze', 'right', 'freeze', 'v4', 'GD13'),
-  un('right:respMech', 'right', 'respMech', 'v4', 'GX13'),
-  un('right:saveLoop', 'right', 'saveLoop', 'v4', 'GD14'),
+  un('right:graphics', 'right', 'graphics', 'graphics', 'GD12'),
+  un('right:freeze', 'right', 'freeze', 'freeze', 'GD13'),
+  un('right:respMech', 'right', 'respMech', 'respMech', 'GX13'),
+  un('right:saveLoop', 'right', 'saveLoop', 'saveLoop', 'GD14'),
   un('right:nebulizer', 'right', 'nebulizer', 'nebul', 'GX6'),
-  un('right:help', 'right', 'help', 'v4', 'GX8'),
-  un('right:standby', 'right', 'standby', 'v5', 'GX5'),
+  un('right:help', 'right', 'help', 'help', 'GX8'),
+  un('right:standby', 'right', 'standby', 'standby', 'GX5'),
   // the keys beside the screen (research/57 H-31) and the knob (H-26)
   { id: 'side:alarmLimits', region: 'side', kind: 'action', action: 'alarmLimits', word: 'alarmLimits', gap: 'GA17' },
   { id: 'side:silence', region: 'side', kind: 'action', action: 'silence', word: 'silence', gap: 'GA16' },
@@ -271,10 +271,10 @@ export const CONTROLS: Ctl[] = [
   { id: 'side:knobTurn', region: 'side', kind: 'action', action: 'knobTurn', gap: 'GX10' },
   { id: 'side:knobPress', region: 'side', kind: 'action', action: 'knobPress', gap: 'GX10' },
   // the keys under the screen (research/57 H-30)
-  un('under:lock', 'under', undefined, 'v4', 'GX7'),
-  un('under:suction', 'under', 'suction', 'v5', 'GX4'),
-  un('under:manualInsp', 'under', 'manualInsp', 'v4', 'GX1'),
-  un('under:inspExpPause', 'under', 'inspExpPause', 'v4', 'GX3'),
+  un('under:lock', 'under', undefined, 'lock', 'GX7'),
+  un('under:suction', 'under', 'suction', 'suction', 'GX4'),
+  un('under:manualInsp', 'under', 'manualInsp', 'manualInsp', 'GX1'),
+  un('under:inspExpPause', 'under', 'inspExpPause', 'inspExpPause', 'GX3'),
   { id: 'under:ctrl', region: 'under', kind: 'action', action: 'ctrl', word: 'ctrl', gap: 'GX10' },
   { id: 'under:esc', region: 'under', kind: 'action', action: 'esc', word: 'esc', gap: 'GX10' },
 ];
@@ -293,47 +293,47 @@ export interface WindowDef { title: WordId; rows: Row[]; footer: boolean }
 
 /**
  * The windows the knob moves through (research/57 O-09, O-10, O-13, E-01, E-02, E-04, E-06, A-21). The mode windows are
- * the MANUAL's (VQ7; X-01): the department's device titles both "Operative Modes" with SIMV(VCV)+PSV in the first (O-11,
- * O-12), which the owner's video may restore. The second window's last row opens the first again [inferred from O-10's
- * repeated row].
+ * titled and ordered AS PHOTOGRAPHED (brief 159, R14: research/57 P-01, P-02, which replace the manual's O-09/O-10 for
+ * what the photographs show; X-01 records the difference): "Operative Modes" twice, SIMV(VCV)+PSV in the first. The
+ * second window's last row opens the first again [inferred from the photographed repeated row, P-02].
  */
 export const WINDOWS: Record<WindowId, WindowDef> = {
   modes: { title: 'ventModes', footer: true, rows: [
     { kind: 'mode', word: 'VCV', mode: 'VCV' },
     { kind: 'mode', word: 'PCV', mode: 'PCV' },
-    { kind: 'mode-off', word: 'PSV/CPAP', reason: 'v2', gap: 'GM3' },
-    { kind: 'mode-off', word: 'SIMV(PCV)+PSV', reason: 'v6', gap: 'GM5' },
-    { kind: 'mode-off', word: 'Noninvasive (NIV)', reason: 'v8', gap: 'GM6' },
+    { kind: 'mode-off', word: 'PSV/CPAP', reason: 'psvMode', gap: 'GM3' },
+    { kind: 'mode-off', word: 'SIMV(PCV)+PSV', reason: 'simvMode', gap: 'GM5' },
+    { kind: 'mode-off', word: 'SIMV(VCV)+PSV', reason: 'simvMode', gap: 'GM4' },
+    { kind: 'mode-off', word: 'Noninvasive (NIV)', reason: 'nivMode', gap: 'GM6' },
     { kind: 'open', word: 'otherModes', window: 'otherModes' },
   ] },
-  otherModes: { title: 'otherModes', footer: true, rows: [
-    { kind: 'mode-off', word: 'SIMV(VCV)+PSV', reason: 'v6', gap: 'GM4' },
-    { kind: 'mode-off', word: 'MMV+PSV', reason: 'v9', gap: 'GM7' },
-    { kind: 'mode-off', word: 'PSV+VT Assured', reason: 'v9', gap: 'GM8' },
-    { kind: 'mode-off', word: 'APRV', reason: 'v10', gap: 'GM9' },
+  otherModes: { title: 'ventModes', footer: true, rows: [
+    { kind: 'mode-off', word: 'MMV+PSV', reason: 'mmvMode', gap: 'GM7' },
+    { kind: 'mode-off', word: 'PSV+VT Assured', reason: 'mmvMode', gap: 'GM8' },
+    { kind: 'mode-off', word: 'APRV', reason: 'aprvMode', gap: 'GM9' },
     { kind: 'mode', word: 'PRVC', mode: 'PRVC' },
     { kind: 'open', word: 'otherModes', window: 'modes', inferred: true },
   ] },
   menu: { title: 'menuTitle', footer: true, rows: [
-    { kind: 'off', word: 'patientsData', reason: 'v4', gap: 'GD16' },
-    { kind: 'off', word: 'backupVent', reason: 'v2', gap: 'GX12', more: true },
+    { kind: 'off', word: 'patientsData', reason: 'patientsData', gap: 'GD16' },
+    { kind: 'off', word: 'backupVent', reason: 'backupVent', gap: 'GX12', more: true },
     { kind: 'open', word: 'ventAdjuncts', window: 'adjuncts' },
-    { kind: 'off', word: 'records', reason: 'v13', gap: 'GD20', more: true },
+    { kind: 'off', word: 'records', reason: 'records', gap: 'GD20', more: true },
     { kind: 'open', word: 'tools', window: 'tools' },
     { kind: 'off', word: 'transport', reason: 'gas', gap: 'GX18', value: 'no' },
   ] },
   adjuncts: { title: 'ventAdjuncts', footer: true, rows: [
     { kind: 'setting', word: 'inspPause', setting: 'pause' },
-    { kind: 'off', word: 'sighs', reason: 'v7', gap: 'GP18', value: 'no', more: true },
+    { kind: 'off', word: 'sighs', reason: 'sighs', gap: 'GP18', value: 'no', more: true },
     { kind: 'off', word: 'tubeComp', reason: 'tube', gap: 'GP19', value: 'no', more: true },
     { kind: 'off', word: 'volumeComp', reason: 'volFixed', gap: 'GP20', value: 'yes' },
     { kind: 'off', word: 'humidifier', reason: 'humid', gap: 'GP21' },
     { kind: 'off', word: 'leakComp', reason: 'leak', gap: 'GP22', value: 'no' },
   ] },
   tools: { title: 'toolsTitle', footer: true, rows: [
-    { kind: 'off', word: 'autoscale', reason: 'v4', gap: 'GD15', value: 'no' },
-    { kind: 'off', word: 'suctionConfig', reason: 'v5', gap: 'GX4', more: true },
-    { kind: 'off', word: 'calibration', reason: 'v12', gap: 'GX19', more: true },
+    { kind: 'off', word: 'autoscale', reason: 'autoscale', gap: 'GD15', value: 'no' },
+    { kind: 'off', word: 'suctionConfig', reason: 'suctionConfig', gap: 'GX4', more: true },
+    { kind: 'off', word: 'calibration', reason: 'calibration', gap: 'GX19', more: true },
     { kind: 'open', word: 'settings', window: 'settings' },
     { kind: 'off', word: 'timeOfUse', reason: 'notModelled', gap: 'GP25' },
   ] },
@@ -354,6 +354,6 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
     { kind: 'limits', word: 'respRate', cells: ['fHi'] },
     // the PEEP row holds the High PEEP limit (the owner's tag rule, research/57 L-17, Y-01)
     { kind: 'limits', word: 'lowPeep', cells: ['peepHi'] },
-    { kind: 'off', word: 'etco2', reason: 'v14', gap: 'GA13' },
+    { kind: 'off', word: 'etco2', reason: 'etco2', gap: 'GA13' },
   ] },
 };

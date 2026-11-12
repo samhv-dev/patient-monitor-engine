@@ -11,7 +11,8 @@
 // - Menu pressed again: Ventilatory adjuncts, then Tools, then the main menu (H-10);
 // - the alarm keys (V3): the silence key's presses (H-09, A-20); Esc also resets the lamps of the alarms that have
 //   ended (H-25); Ctrl + Alarm Limits: the help of the active alarm, or with none active the alarm test (H-21, A-06).
-// A pressed control that is not honoured yet shows its reason in the message bar for a few seconds.
+// A pressed control that is not honoured yet shows its reason for a few seconds (since VF in the simulator's strip
+// outside the device, never on it: brief 159, R20).
 import type { VentConfig } from '@pme/ventilator';
 import type { Cockpit } from '../../core/cockpit.ts';
 import { createPending, type Pending } from '../../core/pending.ts';
@@ -45,8 +46,11 @@ export interface Knob {
   /** The alarm test's step now (Ctrl + Alarm Limits with no alarm active, research/57 H-21): the priority whose lamp and
    *  tone are shown in turn, or null when no test runs. */
   alarmTest(): AlarmTestStep | null;
-  /** The reason the message bar shows now, or null. */
+  /** The reason the simulator's strip shows now, or null. */
   note(): ReasonId | null;
+  /** Show a reason for a drawn thing that is not a control of the table (a window's row not simulated yet, VF R20).
+   *  It moves nothing: no window, no focus, no value. */
+  explain(r: ReasonId): void;
   /** A touch on a control of the table (`key:vt`, `tag:pmax`, `side:mode`, `right:freeze`, …). */
   press(id: string): void;
   /** A touch on a window's row (the screen is a touch screen, research/57 R-01): focus it and press. */
@@ -139,6 +143,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
       return TEST_STEPS[i] ?? null;
     },
     note: () => (note && now() < note.until ? note.r : null),
+    explain(r) { say(r); changed(); },
     press(id) {
       const ctl = CONTROLS.find((x) => x.id === id);
       if (!ctl) return;

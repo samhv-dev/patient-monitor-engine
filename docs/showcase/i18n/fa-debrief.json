@@ -473,6 +473,8 @@
   {"en": "Pacer off", "fa": "ضربان‌ساز خاموش شد", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "Arterial blood gas sent", "fa": "نمونه‌ی گاز خون شریانی فرستاده شد", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "Venous blood gas sent", "fa": "نمونه‌ی گاز خون وریدی فرستاده شد", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
+  {"en": "Chemistry sample sent", "fa": null, "source": "apps/demo/src/app/describe.ts event()", "note": "Added 2026-11-11 (brief 161, N84: the record names the panel sent); the Persian is drafted separately through the Persian-writing skill and the owner's read. Until then the line prints in English.", "reviewed": false},
+  {"en": "Coagulation sample sent", "fa": null, "source": "apps/demo/src/app/describe.ts event()", "note": "Added 2026-11-11 (brief 161, N84: the record names the panel sent); the Persian is drafted separately through the Persian-writing skill and the owner's read. Until then the line prints in English.", "reviewed": false},
   {"en": "Both lungs ventilated", "fa": "تهویه‌ی هر دو ریه", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "Clinical event", "fa": "رویداد بالینی", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "All values returned to the model", "fa": "همه‌ی مقادیر به کنترل مدل بازگشت", "source": "apps/demo/src/app/describe.ts describeCommand()", "reviewed": false},
