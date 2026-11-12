@@ -437,6 +437,7 @@ None recorded.
 | [`session/fx2-no-silent-hang.test.ts`](../../packages/controller/test/session/fx2-no-silent-hang.test.ts) | 0 | 0 |
 | [`session/host-boundary.test.ts`](../../packages/controller/test/session/host-boundary.test.ts) | 0 | 0 |
 | [`session/host-drug-lock.test.ts`](../../packages/controller/test/session/host-drug-lock.test.ts) | 0 | 0 |
+| [`session/host-engine-stopped.test.ts`](../../packages/controller/test/session/host-engine-stopped.test.ts) | 0 | 0 |
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-ff-next-phase.test.ts`](../../packages/controller/test/session/host-ff-next-phase.test.ts) | 0 | 0 |
