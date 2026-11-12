@@ -234,9 +234,9 @@ jobs:
   # ci-stabilise (2026-10-24): the jobs run in the official Playwright image, which carries the browsers and their
   # system libraries, so no job runs `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's
   # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit); the
-  # gating e2e (webkit) job runs every other test; e2e (chromium) runs every test, enforced as before
-  # (docs/gates/stage-14.md, "Temporary relaxation"; docs/guides/known-deviations.md, "Browser tests that passed only on
-  # a retry").
+  # gating e2e (webkit) job runs every other test; e2e (chromium) runs every test. Both fail on an untagged retry-only
+  # pass (docs/gates/stage-14.md, "Temporary relaxation", ended 2026-11-06; docs/guides/known-deviations.md, "Browser
+  # tests that passed only on a retry").
   e2e:
     needs: [changes, renderer]
     if: needs.changes.outputs.code == 'true'
@@ -330,11 +330,11 @@ jobs:
             sed -n -e 's/^flaky\t/- retry: /p' -e 's/^unexpected\t/- **FAILED**: /p' "$RUNNER_TEMP/q.tsv"
           } >> "$GITHUB_STEP_SUMMARY"
           sed -n 's/^\(flaky\|unexpected\)\t/\1: /p' "$RUNNER_TEMP/q.tsv" | while read -r l; do echo "::warning title=e2e quarantine::$l"; done
-      # TEMPORARY (orchestrator ruling 2026-10-18): on the webkit leg an untagged retry-only pass is a warning, not a
-      # failure, until the demo of 3 November; chromium still fails. A missing or unreadable report fails both legs.
-      # Revert (make webkit exit 1 again) after the demo, when the calibration pass's Task 0 re-harvests the known-flaky
-      # list (docs/gates/stage-14.md, "Temporary relaxation").
-      - name: e2e tests that passed only on retry (fails unless the test is tagged @known-flaky; webkit warns, temporarily)
+      # A retry is not a pass, on both browsers: an untagged test that passed only on a retry fails the job, and a
+      # missing or unreadable report fails it too. The WebKit warn-only relaxation (orchestrator ruling 2026-10-18)
+      # ended on 2026-11-06, after the stability fixes #268, #265 and #275 merged (docs/gates/stage-14.md,
+      # "Temporary relaxation").
+      - name: e2e tests that passed only on retry (fails unless the test is tagged @known-flaky)
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' && matrix.set != 'known-flaky' }}
         run: |
           f=playwright-report-${{ matrix.browser }}.json
@@ -345,11 +345,7 @@ jobs:
           { echo "### e2e tests that passed only on retry: $(wc -l < "$RUNNER_TEMP/flaky.tsv")"; sed -e 's/^known\t/- (@known-flaky) /' -e 's/^new\t/- **NEW** /' "$RUNNER_TEMP/flaky.tsv"; } >> "$GITHUB_STEP_SUMMARY"
           while IFS="$(printf '\t')" read -r k l; do echo "::warning title=e2e passed only on retry::$l"; done < "$RUNNER_TEMP/flaky.tsv"
           if grep -q '^new' "$RUNNER_TEMP/flaky.tsv"; then
-            if [ "${{ matrix.browser }}" = "webkit" ]; then
-              echo "::warning title=e2e passed only on retry::WebKit retry-only passes are recorded, not enforced, until the demo of 3 November (orchestrator ruling 2026-10-18)"
-            else
-              echo "::error title=e2e passed only on retry::a test without the @known-flaky tag passed only on retry: a retry is not a pass"; exit 1
-            fi
+            echo "::error title=e2e passed only on retry::a test without the @known-flaky tag passed only on retry: a retry is not a pass"; exit 1
           fi
 
   # The shards together ran every test: per set, the summed totals of its shards' reports equal `playwright test --list`
