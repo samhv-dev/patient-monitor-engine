@@ -42,7 +42,7 @@ jobs:
           apt-get update -qq && apt-get install -y -qq binutils python3 > /dev/null
           L=$(readlink -f /ms-playwright/webkit-*/minibrowser-wpe/lib/libWPEWebKit-2.0.so.1)
           # the switches this build reads for its 2D canvas and Skia (environment variables, settings)
-          strings -n 8 $L | grep -E '^WEBKIT_|^WPE_|SKIA_|canvas-acceleration|Canvas.*Accelerat|CPU_RENDERING|GPU_RENDERING' | sort -u | head -120
+          strings -n 8 $L | grep -E '^WEBKIT_|^WPE_|SKIA|canvas-acceleration|2d-canvas|CPU_RENDERING|GPU_RENDERING|PAINTING_THREADS' | grep -vE 'WEBKIT_(AUTH|AUTOMATION|AUTOPLAY|CACHE|CONSOLE|CONTEXT_MENU|COOKIE|CREDENTIAL|DOWNLOAD|EDITOR|FAVICON|FEATURE_STATUS|FIND|FORCE|HARDWARE|INPUT|INSECURE|ITP|LOAD|MEDIA|NAVIGATION|NETWORK|PERMISSION|PLUGIN|POLICY|PRINT|PROCESS|SAVE|SCRIPT|SECURITY|SNAPSHOT|TLS|USER|WEBSITE|WEB_EXTENSION|WEB_PROCESS|PDF|POLICY|FRAME|HIT|INSPECT|COLOR|OPTION|AUTOFILL)' | sort -u | head -150
           for b in /ms-playwright/webkit-*/minibrowser-wpe/bin/MiniBrowser /ms-playwright/webkit-*/minibrowser-wpe/lib/libWPEWebKit-2.0.so.1; do echo "== $b"; strings -n 6 $b | grep -iE 'accelerat|skia' | sort -u | head -40; done
 
   repeat:
