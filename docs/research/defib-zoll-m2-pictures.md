@@ -49,6 +49,11 @@ had been looked at page by page, and before chapter 14's figures were read for k
 window and the Supervisor menus; the code-marker list; the internal paddles; a photograph of the rear and side panels;
 the high-contrast display mode in Rev. C (Rev. D shows it).
 
+**The English Rev. E (August 2023), read after this register was first written, shows no view that Rev. C lacks:**
+its 339 images are those of Rev. C (each compared byte for byte; the one that differs is the same Alarm Control icon
+re-encoded, [E 5-5]), and no figure was added or removed (`defib-zoll-m2-rev-e-differences.md` §1). The list above is
+unchanged by it.
+
 ## 3. Where those views could be seen on the web (not downloaded, not copied)
 
 Searched on 12 November 2026 with web search (queries: ZOLL M2 rear panel connectors photo; ZOLL M2 internal paddles;
@@ -85,7 +90,8 @@ M2 Configuration Guide" [G 18-2], [G 18-3].
   Rev. B, -23 Rev. D (Spanish, September 2023), -24 Rev. D (Portuguese, August 2023), -55 Rev. D and E, -56 Rev. B and
   C, -70 Rev. C, -75 Rev. E and F). A header-only request (no download) found that the **English
   `9650-000873-01-SF_E.pdf` exists (HTTP 200, 12 475 735 bytes, last modified 9 January 2026)**, a revision newer than
-  both Rev. C and the French Rev. D. No Configuration Guide or Manual was found on the host or anywhere else.
+  Rev. C (issue date August 2023, so older than the French Rev. D). The owner then allowed it; it is on disk and was
+  compared in full (`defib-zoll-m2-rev-e-differences.md`). No Configuration Guide or Manual was found on the host or anywhere else.
 - **Conclusion:** G-CFG stays open. The factory defaults stay the owner's answers (plan §5.4); two of them are now in
   the Operator's Guide itself: the ready time-out of 60 s [G 1-13], and Sync cleared after each shock unless configured
   otherwise [G 1-16], [G 14-16].

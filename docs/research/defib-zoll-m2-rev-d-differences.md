@@ -12,8 +12,8 @@ never the words: the device's words stay English on the face (plan §4.5).
 - **[D n-m]**: REF 9650-000873-02 Rev. D, December 2024 [D p. ii], French, 312 PDF pages,
   `assets/defibrillators/zoll-m2/rev-d-fr/9650-000873-02-SF_D.pdf`.
 
-A third revision exists and was not read: the English **Rev. E**, `9650-000873-01-SF_E.pdf` on ZOLL's file host (HTTP
-200, 12 475 735 bytes, last modified 9 January 2026, header only; not downloaded). See §4.
+A third revision, the English **Rev. E** (REF 9650-000873-01, August 2023), was later allowed by the owner and read
+in full: `defib-zoll-m2-rev-e-differences.md`. It is older than this French Rev. D; rows 10–14 below were found through it.
 
 ## 1. How the comparison was made
 
@@ -69,7 +69,12 @@ side (chapters 3–11 and 13 were compared by headings, numbers and figures only
 | 5 | **CPR voice prompts** | "issues voice prompts" [C 15-3] | "peut être configuré pour émettre des messages vocaux" (can be configured to) [D 15-5] | configuration documented | one more configuration input (§5.4): voice prompts on/off |
 | 6 | **Full disclosure** | "Full Disclosure Recording", with USB and WiFi transfer as subsections [C 17-13] to [C 17-17]; the Patient Information key "to accompany Summary and full disclosure reports" [C 2-15] | "Enreg. registre serv." (service log recording), same ≥ 6 h, same USB/WiFi steps, the transfer subsections no longer listed in the contents [D 17-13] to [D 17-17], [D 2-16] | terminology (the French term for the same file) | none |
 | 7 | **Temperature probe cleaning** | a short paragraph [C 18-10] | a full cleaning and disinfection procedure (15 s wipe, 10 % bleach 3 min, rinses; 300 cycles) [D 18-10], [D 18-11] | instructions to the user | none |
-| 8 | **Appendix C messages** | 141 table entries by type column | 142 [D C-1] to [D C-10] | one entry more; not identified with certainty in the French table | to be identified when Rev. E (English) is read |
+| 8 | **Appendix C messages** | 141 table entries by type column | 142 [D C-1] to [D C-10] | message added to the table: identified through Rev. E as "Check RESP Electrodes" ("Vérifier électrodes RESP", Equipment, Medium [D C-10]; [E C-2]) | L8 and M18 gain its priority |
+| 10 | **Post-shock alarm suspension** (found through Rev. E, missed by the first comparison because it has no heading and its number was read as formatting) | no statement | patient alarms suspended 10 s after each shock, equipment alarms not [D 5-5] | function added (also in Rev. E [E 5-5]) | L4, E7b |
+| 11 | **Alarm system log** (as row 10) | no statement | Supervisor-mode alarm system log, 1 000 entries, retained [D 17-2] | function added (also [E 17-2]) | R2 or a new R10, E9a |
+| 12 | **SFTP server port** (as row 10) | "cannot be changed" [C 17-20] | entered on the numeric keypad [D 17-21] | configuration (also [E 17-20]) | R6 |
+| 13 | **"Pads/Paddles ECG Disabled" priority** (as row 10) | Medium or Low in Pacer/Manual/Monitor by configured Defib mode [C C-7] | Medium [D C-6] | message priority (also [E C-7]) | L8, E7c |
+| 14 | Paddle test step 12 (as row 10) | Energy Select "on the Apex paddle" [C 18-7] | "sur la palette du sternum" [D 18-6] | wording, a correction (also [E 18-7]) | none |
 | 9 | Chapter 12 contents | "AED Mode" and "Therapy Electrode Application" listed as headings | the same text, not listed in the contents; "3 Appuyez sur CHOC" numbered 3 | layout | none |
 
 **Checked and unchanged** (number for number): energy list and charge times [A-2]; Table A-2 (Rev. D's table extracts cleanly; the 70 J and 120 J rows the plan
@@ -83,7 +88,12 @@ to [C 2-16]/[D 2-14] to [D 2-17]; the battery icons [C 2-6]/[D 2-7]; the 30 J te
 
 ## 4. What the owner's choice of revision would change
 
-Choosing Rev. D (or Rev. E) adds a date-and-time window, colour-coded CPR depth and rate (5–6 cm, 100–120 cpm) with
-their figures, and one configurable switch for CPR voice prompts; every other number, timing, message and control the
-plan uses is the same in both. The English Rev. E is newer still; reading it (a download, under the owner's yes, §4.6 of
-the plan) would show whether these Rev. D changes carried forward and give the English words for them.
+**Amended after the English Rev. E was read** (`defib-zoll-m2-rev-e-differences.md`): rows 10–14 were found by
+looking for each Rev. E change in Rev. D; the first comparison (numbers, headings, figures) had missed them, so the
+"What this does not catch" caveat of §1 was real. Rev. E (August 2023) is *older* than this French Rev. D (December
+2024); Rev. D holds every Rev. E change.
+
+Choosing Rev. D's content adds, over Rev. C: Rev. E's five changes (post-shock alarm suspension, the alarm system log,
+the SFTP port, one message priority, one message added to the table), and three of its own: a date-and-time window,
+colour-coded CPR depth and rate (5–6 cm, 100–120 cpm) with their figures, and one configurable switch for CPR voice
+prompts. No English text of those three was found (Rev. E lacks them), so their English words are not known.
