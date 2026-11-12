@@ -187,7 +187,6 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | o2High is raised on the oxygen the device's cell reads (A-44): IMG_1542 shows 43 % read at a set 40 %, so a high limit of 42 is crossed | not raised, as the model has no oxygen sensor and its O2 alarms compare the SET 40 % | — | not audited | — | [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) |
-| lowPressure waits for a delivered breath (A-35: the airway pressure under the minimum): none in the first second after start | raised at t = 0.005 s | — | not audited | — | [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) |
 | bronchospasm 1 at 20 min | at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 | — | MIS-SPECIFIED ([audit row 110](../../docs/validation/target-audit/30-target-audit.md#row-110)) | match the link's vcFlow/pause to the engine's Ti (the file's own V.1 TODO), then keep 3 / 3 / 2 % / 10 % | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) |
 | RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found; brief 87] (the auto-PEEP papers give the direction, not the size) | −12.5 | brief 87 | not audited | — | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
@@ -199,7 +198,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 
 | File | Expected failures | Skipped |
 |---|---|---|
-| [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) | 2 | 0 |
+| [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) | 1 | 0 |
 | [`alarms-frame.test.ts`](../../packages/ventilator/test/alarms-frame.test.ts) | 0 | 0 |
 | [`catalogue-md.test.ts`](../../packages/ventilator/test/catalogue-md.test.ts) | 0 | 0 |
 | [`determinism.test.ts`](../../packages/ventilator/test/determinism.test.ts) | 0 | 0 |

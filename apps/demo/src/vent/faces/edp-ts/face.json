@@ -278,6 +278,7 @@
     "hkeyInk": {"v": "#434452", "p": "measured", "src": "research/57 P-56"},
     "legend": {"v": "#4b423d", "p": "measured", "src": "research/57 P-57"},
     "lampOff": {"v": "#f0ece4", "p": "measured", "src": "research/57 P-58"},
+    "lampUnlit": {"v": "#eeece2", "p": "measured", "src": "research/57 S-10, P-51"},
     "knob": {"v": "#e6e2d4", "p": "measured", "src": "research/57 P-59"},
     "knobShade": {"v": "#6b6152", "p": "measured", "src": "research/57 P-60"},
     "gasket": {"v": "#353530", "p": "measured", "src": "research/57 P-64"},

@@ -15,5 +15,7 @@
   (steady for a low alarm, and for an ended alarm until Esc), the message box where the manual's screen picture puts it,
   in the device's words on red or yellow, the silence's seconds left in the simulator's strip outside the device, the
   alarm test, and the tones through the audio package. The Vent Inop lamp never lights (no technical fault is
-  simulated). Known: the O2 alarms compare the SET oxygen, as the model has no oxygen sensor (N111); and Low pressure is
-  raised once at start-up, before the first breath, and latches until Esc (an expected failure records it).
+  simulated). The model's alarm conditions no longer read a quantity before it exists: those on a breath's peak or exhaled
+  volume wait for the first breath to end, those on the minute volume or the rate for a measured rate, so a quiet start
+  leaves no alarm latched (it raised Low pressure at 5 ms and Low minute volume after start-up). Known: the O2 alarms
+  compare the SET oxygen, as the model has no oxygen sensor (N111).

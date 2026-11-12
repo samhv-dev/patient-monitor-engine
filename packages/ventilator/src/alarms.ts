@@ -12,19 +12,25 @@ export function ventAlarms(vs: VentState, obs: AlarmObs = {}): VentAlarm[] {
   const m = p.shown ?? p.measured;
   const out: VentAlarm[] = [];
   const add = (id: VentAlarm['id'], text: string, priority: VentAlarm['priority'] = 'high') => out.push({ id, text, priority });
-  if (vs.circuit === 'disconnected' && p.breathCount > 0 && m.PIP < c.peep + 2) add('disconnection', 'Disconnection on patient side'); // Stage V
+  // A condition reads a quantity only once it exists (brief 202). The peak and the exhaled VT are a breath's (research/57
+  // R-20, V-10): they exist from the first breath whose inspiration has ended (its time is in breathTimes). The minute
+  // volume is the rate of the breath intervals times that VT (S-08): it exists once the record read here holds a rate.
+  // Before that the record holds the zeros it was created with, which no breath produced.
+  const hasBreath = p.breathTimes.length >= 1;
+  const hasMV = m.RR > 0;
+  if (vs.circuit === 'disconnected' && hasBreath && m.PIP < c.peep + 2) add('disconnection', 'Disconnection on patient side'); // Stage V
   if (p.t - vs.lastBreathT > c.apneaTime) add('apnea', 'Apnea'); // Stage V
-  if (m.PIP >= c.pmax) add('pmax', 'High pressure (Pmax)');
-  if (m.MV > c.almMVhi) add('mvHigh', 'ExpMinVol high');
-  if (m.VTE > 0 && m.MV < c.almMVlo) add('mvLow', 'ExpMinVol low');
-  if (m.VTE > c.almVThi) add('vtHigh', 'Vt high');
-  if (m.VTE > 0 && m.VTE < c.almVTlo) add('vtLow', 'Vt low');
-  if (m.RR > c.almFhi) add('fHigh', 'fTotal high');
-  if (m.RR > 3 && m.RR < c.almFlo) add('fLow', 'fTotal low');
+  if (hasBreath && m.PIP >= c.pmax) add('pmax', 'High pressure (Pmax)');
+  if (hasMV && m.MV > c.almMVhi) add('mvHigh', 'ExpMinVol high');
+  if (hasMV && m.VTE > 0 && m.MV < c.almMVlo) add('mvLow', 'ExpMinVol low');
+  if (hasBreath && m.VTE > c.almVThi) add('vtHigh', 'Vt high');
+  if (hasBreath && m.VTE > 0 && m.VTE < c.almVTlo) add('vtLow', 'Vt low');
+  if (hasMV && m.RR > c.almFhi) add('fHigh', 'fTotal high');
+  if (hasMV && m.RR > 3 && m.RR < c.almFlo) add('fLow', 'fTotal low');
   if (m.autoPEEP > 5) add('intrinsicPeep', 'Intrinsic PEEP', 'medium');
   // EDP-TS (research/57 A-31, A-35, A-44, A-49); the texts are the model's, a face shows its own words
   if (c.almContHiP !== undefined && p.Paw > c.peep + c.almContHiP) add('contHighPressure', 'Continuous high pressure');
-  if (c.almPlo !== undefined && p.breathCount > 0 && m.PIP < c.almPlo) add('lowPressure', 'Low pressure');
+  if (c.almPlo !== undefined && hasBreath && m.PIP < c.almPlo) add('lowPressure', 'Low pressure');
   if (c.almPeepHi !== undefined && obs.peepEnd !== undefined && obs.peepEnd > c.almPeepHi) add('highPeep', 'High PEEP', 'medium');
   if (c.almO2hi !== undefined && c.fio2 > c.almO2hi) add('o2High', 'High O2 concentration', 'medium');
   if (c.almO2lo !== undefined && c.fio2 < c.almO2lo) add('o2Low', 'Low O2 concentration', 'medium');
