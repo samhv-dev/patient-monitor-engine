@@ -5,7 +5,7 @@
 // so the IIFE and the root entry never bundle it. `pme-scenario/2` (plan F1) has its own schema, which reuses /1's
 // patient, device and command definitions by reference, and its own cross-checks (validateV2 below).
 import Ajv, { type ErrorObject } from 'ajv';
-import { DRUGS, routeHonoured } from '@pme/engine-core';
+import { createPkState, DRUGS, routeHonoured, validateBloodCommand, validatePkCommand, validateRespCommand, type Command } from '@pme/engine-core';
 import schema from '../../scenarios/pme-scenario-1.schema.json';
 import schemaV2 from '../../scenarios/pme-scenario-2.schema.json';
 import { LEARNER_LAB_PANELS } from '../protocol.ts';
@@ -22,6 +22,30 @@ export type ValidationResult =
 export interface ValidateOptions {
   /** Rhythm ids the host engine knows; setRhythm to any other id is reported as a warning (stand-ins apply). */
   rhythms?: readonly string[];
+}
+
+/**
+ * The event kinds a card sends whose fields the validator checks (brief 174), each with the engine's own validation hook:
+ * the lung model's for a lung condition, a mainstem and a recruitment, the blood model's for a lab sample, the drug
+ * model's for a TCI (on a fresh patient's drug model: what it adds at run time is TCI_LOCKED, a TCI of that drug already
+ * running on another set or other patient data). The schema checks `kind` only, as for every kind; no type, unit or range is written here.
+ */
+const ENGINE_HOOKS: Readonly<Record<string, (c: Command) => string | undefined | null>> = {
+  lungCondition: validateRespCommand,
+  mainstem: validateRespCommand,
+  recruit: validateRespCommand,
+  lab: validateBloodCommand,
+  tci: (c) => validatePkCommand(c, createPkState()),
+};
+/** The kinds `eventRefusal` asks the engine about. */
+export const ENGINE_CHECKED_KINDS: readonly string[] = Object.keys(ENGINE_HOOKS);
+
+/** The engine's reason for refusing a card's event of one of ENGINE_CHECKED_KINDS, in its own words; undefined when the
+ *  engine takes it, or for any other kind (whose fields the format leaves to the engine at run time, as before). */
+export function eventRefusal(event: unknown): string | undefined {
+  const kind = event && typeof event === 'object' ? (event as { kind?: unknown }).kind : undefined;
+  const hook = typeof kind === 'string' && Object.hasOwn(ENGINE_HOOKS, kind) ? ENGINE_HOOKS[kind] : undefined;
+  return hook?.({ type: 'applyEvent', id: 'card', issuedBy: 'scenario', event } as Command) ?? undefined;
 }
 
 const TRIGGER_KEYS = 'afterS, atScenarioS, vital, event, sensor, manual, all, any';
@@ -102,6 +126,8 @@ export function validateScenario(input: unknown, opts: ValidateOptions = {}): Va
   const checkCommands = (list: DocCommand[] | undefined, path: string) =>
     list?.forEach((c, k) => {
       if (c.type === 'setRhythm' && rhythms && !rhythms.has(c.rhythm)) warnings.push(`${path}/${k}/rhythm: "${c.rhythm}" is not in this engine`);
+      const why = c.type === 'applyEvent' ? eventRefusal(c.event) : undefined;
+      if (why) errors.push(`${path}/${k}/event: ${why}`);
     });
   if (doc.patient?.rhythm && rhythms && !rhythms.has(doc.patient.rhythm.id)) warnings.push(`/patient/rhythm/id: "${doc.patient.rhythm.id}" is not in this engine`);
   doc.states.forEach((s, i) => {
@@ -217,6 +243,8 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     list?.forEach((c, k) => {
       if (c.type === 'setRhythm' && rhythms && !rhythms.has(c.rhythm)) warnings.push(`${path}/${k}/rhythm: "${c.rhythm}" is not in this engine`);
       if (c.type === 'applyEvent' && c.event.kind === 'drug') drug(c.event.drugId, `${path}/${k}/event/drugId`);
+      const why = c.type === 'applyEvent' ? eventRefusal(c.event) : undefined;
+      if (why) errors.push(`${path}/${k}/event: ${why}`);
     });
 
   /** Display-rule anchors of action windows (F9), checked below. */

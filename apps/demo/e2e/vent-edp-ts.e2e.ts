@@ -42,14 +42,14 @@ test('EDP-TS face: PCV chosen with the knob, PEEP changed, the monitor\'s airway
   expect(await page.locator('#vent').getAttribute('src')).toContain('face=edp-ts');
   await expect.poll(() => engineAirway(page), { timeout: 30_000 }).not.toBeNull();
 
-  // Mode → the manual's window; turn once to PCV; press; the confirmation; press to start (research/57 O-09, O-14)
+  // Mode → the mode window (titled as photographed since VF); turn once to PCV; press; the confirmation; press to start (research/57 O-09, O-14)
   await f.locator('[data-ctl="side:mode"]').click();
-  await expect(f.locator('.edp-win .t').first()).toHaveText('Ventilation Modes');
+  await expect(f.locator('.edp-win .t').first()).toHaveText('Operative Modes'); // as photographed (VF, R14; research/57 P-01)
   await knobTurn(f, 1);
   await knobPress(f);
   await expect(f.locator('.edp-win.conf')).toContainText('Mode PCV');
   await knobPress(f);
-  await expect(f.locator('.edp-hdr .mn')).toHaveText('PCV');
+  await expect(f.locator('.edp-tl .mn')).toHaveText('PCV');
   const vent = () => page.evaluate(() => { const c = (document.getElementById('vent') as Any).contentWindow.__vent.vs.cfg; return { mode: c.mode as string, peep: c.peep as number, modeLabel: c.modeLabel as string }; });
   expect(await vent()).toMatchObject({ mode: 'PC', modeLabel: 'PCV' });
 

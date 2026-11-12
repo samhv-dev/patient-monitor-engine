@@ -64,4 +64,6 @@ export type * from './pump-devices.ts';
 export type { Finding, FindingKind } from './formulary/findings.ts';
 // Plan learner-action-remote.md L7: the bench's preview on the learner's phone runs the host's own pure step (the host's
 // answer, not this preview, is what the phone then shows as the concentration)
-export { prepare, type Active, type Preparation, type PrepareResult } from './formulary/prepare.ts';
+export { GAP_WORDS, prepare, type Active, type Preparation, type PrepareResult } from './formulary/prepare.ts';
+// Plan learner-action-remote.md L13: the formulary's words for what r rests on, which the Debrief prints as the record holds them
+export { BEYOND_DATA_WORDS } from './formulary/remaining.ts';

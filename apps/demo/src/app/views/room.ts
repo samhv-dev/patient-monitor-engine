@@ -17,7 +17,7 @@
 // screen, with the code, the address and the live count beneath, for a hall to scan from the back; Escape or the same
 // control returns. At 1920×1080 the card's QR is 220 px (a fifth of the height): scannable from the front rows only.
 import { isTyping } from '@pme/controller';
-import { newSessionCode, type ManagedTransport, type RelayDevice, type WireMessage } from '@pme/controller';
+import { newSessionCode, PUMP_KINDS, PUMP_LIMITS, type ManagedTransport, type PumpKind, type RelayDevice, type WireMessage } from '@pme/controller';
 import { hashOf, qrTarget, relayInfo, ventWindowUrl, type RelayInfo } from '../classroom.ts';
 import { qrSvg } from '../qr.ts';
 import { keepRoomCode } from '../room-code.ts';
@@ -25,7 +25,7 @@ import { forgetRoom, lastTime, noteDevices, readLayout, readWindows, rename, win
 import { deviceRows, HEARTBEAT_MS, PeerLog, roomStatus, WEAK_PING_MS, type DeviceRow, type PeerSeen, type RelayState, type RoomLevel, type VentScreens } from '../room-status.ts';
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
-import { DEFIB_CHOICES, defibDefaults, pacerDefaults } from '../site.ts';
+import { DEFIB_CHOICES, defibDefaults, EEG_CHOICES, pacerDefaults } from '../site.ts';
 import { store as appStore } from '../store.ts';
 import { button, h, select, setText } from '../ui.ts';
 import { instrumentCard, PICKER_WORDS, type CardShow } from './join.ts';
@@ -65,6 +65,12 @@ export interface RoomDeps {
   /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
    *  sends it to the patient's engine). Absent: no card. */
   defib?: { model(): string | null; choose(model: string | null): void };
+  /** A1 (plan pump-rack-tci.md §5, PQ1 = C): the room's pump rack, each channel's kind, and the session's hand-over of a
+   *  new setting (it saves it and sends it to the pump tablet). Absent: no card. */
+  pumps?: { kinds(): PumpKind[]; choose(kinds: PumpKind[]): void };
+  /** The room's depth-of-anaesthesia device (EEG plan E12): the site's choice, and the session's hand-over of a new one
+   *  (it saves it and switches the patient's EEG on with that reader, or off). Absent: no card. */
+  depth?: { model(): string | null; choose(model: string | null): void };
   /** R8d: the ventilator's own screens and whether each drives (views/vent.ts `ventScreens`). Absent: no rows. */
   vent?: () => VentScreens;
   /** L6: the learner PIN and the host's count of learner remotes, for the panel beside the instructor's card. Absent: no panel. */
@@ -72,6 +78,15 @@ export interface RoomDeps {
 }
 
 /** L6 (plan learner-action-remote.md §4 D9, LQ1 ruled 9 November): the learner PIN's panel's words. */
+/** Room setup's pump card's words (A1; the app's chrome, English). */
+export const PUMP_ROOM_WORDS = {
+  title: 'Pumps in this room',
+  count: 'Channels on the pump tablet',
+  channel: (ch: number) => `Channel ${ch}`,
+  kind: { syringe: 'Syringe', drip: 'Drip' } satisfies Record<PumpKind, string>,
+  hint: 'Each channel is a syringe pump or a drip pump. A change reaches a signed-in pump tablet at once.',
+};
+
 export const LEARNER_PIN_WORDS = {
   heading: 'Learner remotes',
   none: 'No learner remote signed in',
@@ -146,12 +161,12 @@ const OPENERS: Array<{ show: CardShow; title?: string; text: string; foot: strin
   { show: 'monitor', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style, the whole screen.", foot: 'A second screen or the projector' },
   { show: 'defib', title: 'Defibrillator', text: "The room's defibrillator: energy, charge, shock and sync, with the patient's rhythm.", foot: 'A second screen or a tablet' },
   { show: 'vent', text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'The Ventilator view, or a window of its own' },
-  { show: 'depth', text: 'The engine simulates the EEG and reads it as a processed-EEG monitor; its window is still to come.', foot: 'Not in this release' },
+  { show: 'depth', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device, chosen below.", foot: 'A second screen or a tablet' },
   { show: 'iabp', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release' },
 ];
 
 /** The address of a window of this computer that shows `show` (the learner monitor's address, its hash changed). */
-export const windowUrl = (learnerUrl: string, show: 'learner' | 'monitor' | 'defib'): string => learnerUrl.replace(/#.*$/, '') + hashOf(show);
+export const windowUrl = (learnerUrl: string, show: 'learner' | 'monitor' | 'defib' | 'depth'): string => learnerUrl.replace(/#.*$/, '') + hashOf(show);
 
 export function roomView(d: RoomDeps): RoomView {
   const now = d.now ?? Date.now;
@@ -293,8 +308,8 @@ export function roomView(d: RoomDeps): RoomView {
 
   // ---------------------------------------------------------------------------------------------- on this computer
   const cards = h('div', { class: 'join-grid room-openers' });
-  type Win = 'learner' | 'monitor' | 'defib';
-  const winOf = (show: DeviceRow['show']): Win => (show === 'monitor' || show === 'defib' ? show : 'learner');
+  type Win = 'learner' | 'monitor' | 'defib' | 'depth';
+  const winOf = (show: DeviceRow['show']): Win => (show === 'monitor' || show === 'defib' || show === 'depth' ? show : 'learner');
   const windowNames = (show: Win, rs: readonly DeviceRow[]) =>
     rs.filter((r) => r.where === 'this computer' && winOf(r.show) === show && r.showing !== 'Remote' && r.showing !== 'Instructor remote').map((r) => r.name);
   const openWindow = (show: Win) => {
@@ -307,7 +322,7 @@ export function roomView(d: RoomDeps): RoomView {
     cards.replaceChildren(...OPENERS.map((o) => {
       const w = PICKER_WORDS.cards.find((c) => c.show === o.show);
       const title = o.title ?? w?.title ?? o.show;
-      if (o.show === 'learner' || o.show === 'monitor' || o.show === 'defib') {
+      if (o.show === 'learner' || o.show === 'monitor' || o.show === 'defib' || o.show === 'depth') {
         const show = o.show;
         const names = [...(show === 'monitor' ? ['This window'] : []), ...windowNames(show, rs)];
         return instrumentCard({ show, title, chip: names.length ? names.join(' · ') : 'Not open', on: names.length > 0, text: o.text, foot: o.foot,
@@ -327,13 +342,13 @@ export function roomView(d: RoomDeps): RoomView {
   };
   const lastLine = h('p', { class: 'room-last' });
   const reopen = button('Reopen that layout', () => {
-    for (const show of ['monitor', 'defib', 'learner'] as const) for (let i = 0; i < (before.windows[show] ?? 0); i++) openWindow(show);
+    for (const show of ['monitor', 'defib', 'depth', 'learner'] as const) for (let i = 0; i < (before.windows[show] ?? 0); i++) openWindow(show);
     reopen.hidden = true;
   }, 'small room-reopen');
   const said = h('p', { class: 'hint room-said', role: 'status' });
   const drawLast = () => {
     setText(lastLine, before.line ?? 'Nothing was kept from an earlier time in this room: the names you give the devices and the windows you open are kept for the next time.');
-    reopen.hidden = !((before.windows.learner ?? 0) + (before.windows.monitor ?? 0) + (before.windows.defib ?? 0));
+    reopen.hidden = !((before.windows.learner ?? 0) + (before.windows.monitor ?? 0) + (before.windows.defib ?? 0) + (before.windows.depth ?? 0));
   };
   const forget = button('Forget the room', () => {
     forgetRoom(kept);
@@ -409,6 +424,49 @@ export function roomView(d: RoomDeps): RoomView {
       h('p', { class: 'hint' }, "A model applies to the patient at once and to every new patient; 'Not chosen' applies from the next patient start."));
   })() : null;
 
+  // --------------------------------------------------------------------------------------------- pumps in this room
+  // A1 (plan pump-rack-tci.md §5; PQ1 = C, "1–8, default 4"; PQ2 = B): how many channels the pump tablet shows and each
+  // channel's kind, syringe or drip; a new channel is a syringe channel (§5: a TIVA tower is syringes)
+  const pumpCard = d.pumps ? (() => {
+    const choice = d.pumps;
+    const kindsBox = h('div', { class: 'room-pump-kinds' });
+    const counts = Array.from({ length: PUMP_LIMITS.channels }, (_, i): [string, string] => [String(i + 1), String(i + 1)]);
+    const count = select(PUMP_ROOM_WORDS.count, counts, String(choice.kinds().length), (v) => {
+      const n = Number(v);
+      const now = choice.kinds();
+      choice.choose(Array.from({ length: n }, (_, i) => now[i] ?? 'syringe'));
+      drawKinds();
+    });
+    count.sel.dataset.pumps = 'count';
+    const drawKinds = () => kindsBox.replaceChildren(...choice.kinds().map((k, i) => {
+      const s = select(PUMP_ROOM_WORDS.channel(i + 1), PUMP_KINDS.map((x): [string, string] => [x, PUMP_ROOM_WORDS.kind[x]]), k, (v) => {
+        const next = [...choice.kinds()];
+        next[i] = v as PumpKind;
+        choice.choose(next);
+      });
+      s.sel.dataset.pumps = 'kind';
+      return s.el;
+    }));
+    drawKinds();
+    return h('section', { class: 'room-card room-pumps', 'aria-labelledby': 'room-pumps-h' },
+      h('h2', { id: 'room-pumps-h' }, PUMP_ROOM_WORDS.title),
+      count.el,
+      kindsBox,
+      h('p', { class: 'hint' }, PUMP_ROOM_WORDS.hint));
+  })() : null;
+  // ---------------------------------------------------------------------- depth of anaesthesia in this room
+  // EEG plan E12: the room's depth-of-anaesthesia device, from the engine's EEG registry (built readers only), in a card
+  // of its own beside the defibrillator's; the host switches the patient's EEG on with it, and the depth window shows it
+  const depthCard = d.depth ? (() => {
+    const choice = d.depth;
+    const pick = select('Device', [['', 'Off: no EEG device'], ...EEG_CHOICES.map((c): [string, string] => [c.id, c.label])], choice.model() ?? '', (v) => choice.choose(v || null));
+    return h('section', { class: 'room-card room-depth', 'aria-labelledby': 'room-depth-h' },
+      h('h2', { id: 'room-depth-h' }, 'Depth of anaesthesia in this room'),
+      pick.el,
+      h('p', { class: 'hint' }, "A device switches the patient's EEG on at once and at every new patient; the monitor's BFA tile and the Depth of anaesthesia window show its reading."),
+      h('p', { class: 'hint' }, 'The named devices (BIS-type, Entropy, Narcotrend, PSI) join as their sources are approved.'));
+  })() : null;
+
   let timer: ReturnType<typeof setInterval> | null = null;
   const el = h('section', { class: 'console room', 'aria-labelledby': 'room-h' },
     h('div', { class: 'console-page' },
@@ -416,7 +474,7 @@ export function roomView(d: RoomDeps): RoomView {
         h('div', {}, h('h1', { id: 'room-h' }, 'Room setup'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
       h('div', { class: 'room-cols' }, join, connected),
-      computer, ...(defibCard ? [defibCard] : []), roomCard), big, ask);
+      computer, ...(defibCard ? [defibCard] : []), ...(depthCard ? [depthCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');

@@ -18,8 +18,8 @@ describe('L0, changed by L6: the follower page has the learner remote at #/remot
     expect(instrumentOf('#/remote/learner')).toBe('remote');
     expect(instrumentOf('#/remote')).toBe('learner');
   });
-  it('the picker offers the remote card after the patient monitor: learner monitor, patient monitor, learner remote, ventilator, depth, IABP', () => {
-    expect(PICKER_WORDS.cards.map((c) => c.show)).toEqual(['learner', 'monitor', 'remote', 'vent', 'depth', 'iabp']);
+  it('the picker offers the remote card after the patient monitor: learner monitor, patient monitor, learner remote, infusion pumps (A1), ventilator, depth, IABP', () => {
+    expect(PICKER_WORDS.cards.map((c) => c.show)).toEqual(['learner', 'monitor', 'remote', 'pump', 'vent', 'depth', 'iabp']);
   });
 });
 

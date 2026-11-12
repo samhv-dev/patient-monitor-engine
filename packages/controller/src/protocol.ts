@@ -8,6 +8,7 @@ import type {
   DoseUnit,
   EngineEvent,
   LabPanelId,
+  LungClinicalEvent,
   NumericId,
   PatientSnapshot,
   PkClinicalEvent,
@@ -61,9 +62,11 @@ type CommandBase = {
 /**
  * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`
  * only): the drug model's units, routes (`PkRoute`), `overS` and `concentrationPct`, and its kinds `infusion`, `tci` and
- * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`).
+ * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`); the lung
+ * model's `lungCondition`, `mainstem` and `recruit` (types-lung.ts, brief 174).
  */
 export type ClinicalEvent =
+  | LungClinicalEvent
   | {
       kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit;
       route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number;
@@ -180,6 +183,13 @@ export type PumpCommand = { type: 'pump'; ch: number } & (
   | { action: 'start' | 'stop' | 'unload' }
   | { action: 'purge'; volumeMl: number }
 );
+/**
+ * Plan pump-rack-tci.md A1 (§5, PQ1 = C, PQ2 = B): the kind of each channel of the room's pump rack, in channel order, as
+ * Room setup sets it (1 to PUMP_LIMITS.channels channels). It rides the host's `style` event (`pumps`), as the room's
+ * defibrillator model does, so a pump tablet builds its rack from it at every hello and every change.
+ */
+export const PUMP_KINDS = ['syringe', 'drip'] as const;
+export type PumpKind = (typeof PUMP_KINDS)[number];
 /** A syringe or bag to load (D2 item 1): a preparation by the device that made it and its id, or a stock item's id. */
 export type PumpSource = { prep: { device: string; id: string } } | { stock: string };
 /** The patient typed into the pump for TCI (D6): what the TCI sets read (engine-core tci-sets TciCovariate). */
@@ -267,7 +277,7 @@ export type ExtraEvent =
    * phone draws the instructor's range.
    */
   // `defib` (Room plan R5): the room's defibrillator model, which a defibrillator window wears the look of (null: none)
-  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; replay?: true }
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; pumps?: PumpKind[]; replay?: true }
   /**
    * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
    * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
@@ -348,10 +358,11 @@ export interface AppliedResolution {
 
 /**
  * What a follower device shows, named on its hello (plan room-and-instruments.md §4 D1): the learner monitor (phone,
- * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot. Legal with `role:
- * 'viewer'` or `'defib'` only (guard.ts; R5c); the ventilator is a role of its own (R8a), never an instrument here.
+ * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot, and the infusion-pump rack
+ * (pump-rack-tci.md A1, a tablet). Legal with `role: 'viewer'`, `'defib'` or `'learner'` (guard.ts; R5c), and `'pump'`
+ * with `role: 'pump'` only; the ventilator is a role of its own (R8a), never an instrument here.
  */
-export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth'] as const;
+export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth', 'pump'] as const;
 export type Instrument = (typeof INSTRUMENTS)[number];
 
 /**

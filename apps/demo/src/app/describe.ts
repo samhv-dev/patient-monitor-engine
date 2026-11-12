@@ -28,6 +28,8 @@ export const CONDITIONS: Readonly<Record<string, string>> = {
 export const SENSORS: Readonly<Record<string, string>> = {
   ecg: 'ECG leads', spo2: 'SpO₂ probe', nibp: 'NIBP cuff', abp: 'Arterial line', cvp: 'CVP line', pap: 'PA catheter', co2: 'CO₂ sampling line', temp: 'Temperature probe',
 };
+/** A lab sample's panel in words (the engine's LAB_PANELS), as LAB_SENT names it; the builder's Script names its items with them. */
+export const LAB_PANEL_WORDS: Readonly<Record<string, string>> = { abg: 'Arterial blood gas', vbg: 'Venous blood gas', chem: 'Chemistry sample', coag: 'Coagulation sample' };
 /** One line per panel a sample may ask for (engine-core types-blood.ts LabPanelId). */
 const LAB_SENT: Readonly<Record<string, string>> = {
   abg: 'Arterial blood gas sent', vbg: 'Venous blood gas sent', chem: 'Chemistry sample sent', coag: 'Coagulation sample sent',
