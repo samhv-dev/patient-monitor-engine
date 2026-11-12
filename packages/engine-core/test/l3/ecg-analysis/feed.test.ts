@@ -50,7 +50,8 @@ describe('the ECG feed', () => {
       const n0 = h.committedN - s.length;
       for (const k of [0, 1, 777, s.length - 1]) {
         const v = h.vcgAt(n0 + k) as [number, number, number];
-        expect(s[k]).toBe(ecgFrontEnd(inner(e).st.mods, inner(e).mainsHz, 'ecgII', n0 + k, projectLead('ecgII', ...v)));
+        // the VCG ring holds float32 samples, the feed the front end's float64 value: equal to the ring's precision
+        expect(s[k]).toBeCloseTo(ecgFrontEnd(inner(e).st.mods, inner(e).mainsHz, 'ecgII', n0 + k, projectLead('ecgII', ...v)), 6);
       }
     }
   });

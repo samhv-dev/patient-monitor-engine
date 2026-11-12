@@ -73,6 +73,35 @@ test('frame-time histogram at 60 fps (worker path) with the ventilator window op
   expect(h.p95).toBeLessThan((1000 / 60) * 1.5); // [ENG: test] the gate above, unchanged
 });
 
+// Defibrillator plan E4a: the cost of measuring one 3-s ECG segment (packages/engine-core l3/ecg-analysis/features.ts)
+// on a phone. A phone is emulated by Chromium's CPU throttling at 4× (Lighthouse's mobile setting) [ENG: test]; the
+// segment is 1 500 samples at the engine's 500 Hz, a 5 Hz wave with 75 /min pulses. Reported in the soak record, not
+// gated: no consumer runs it per tick yet (E4b and B1 do, and gate their own cost).
+test('ECG analysis: one 3-s segment measured on an emulated phone (CPU ×4)', async ({ page }) => {
+  await page.goto(`${base}/validation-perf.html?fps=30`);
+  await page.waitForFunction(() => '__pmePerf' in window);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  const src = `/@fs${resolve(import.meta.dirname, '../../../packages/engine-core/src/l3/ecg-analysis/features.ts')}`;
+  const ms = await page.evaluate(async (url) => {
+    const { measureSegment } = (await import(/* @vite-ignore */ url)) as { measureSegment: (x: Float64Array, fs: number) => unknown };
+    const x = Float64Array.from({ length: 1500 }, (_, i) => Math.sin((2 * Math.PI * 5 * i) / 500) + ((i % 400) < 40 ? 1 : 0));
+    for (let k = 0; k < 5; k++) measureSegment(x, 500); // warm-up
+    const out: number[] = [];
+    for (let k = 0; k < 30; k++) {
+      const t0 = performance.now();
+      measureSegment(x, 500);
+      out.push(performance.now() - t0);
+    }
+    return out;
+  }, src);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  const h = hist(ms);
+  record.ecgSegmentPhoneMs = { cpuThrottle: 4, p50: h.p50, p95: h.p95, n: h.n };
+  expect(h.n).toBe(30);
+  expect(Number.isFinite(h.p95)).toBe(true);
+});
+
 test('soak: heap growth ≤ 5 MB, no spurious apnoea alarm', async ({ page }) => {
   const minutes = Number(process.env.PME_SOAK_MIN ?? 60);
   await page.setViewportSize({ width: 1300, height: 760 });

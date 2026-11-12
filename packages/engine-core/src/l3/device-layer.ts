@@ -6,6 +6,7 @@
 import { uniform, type Sfc32State } from '../rng/sfc32.ts';
 import type { AgeBand, DeviceClinicalEvent } from '../types-device.ts';
 import type { LineSensorState } from '../types-hemo.ts';
+import type { EcgFeedView } from './ecg-analysis/feed.ts';
 import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, StateVar } from '../types.ts';
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
@@ -83,6 +84,9 @@ export interface DeviceHost {
   committedN: number;
   /** One committed VCG sample (null when not held). */
   vcgAt(n: number): [number, number, number] | null;
+  /** The ECG analysis feed (defibrillator plan §3.4.3, E4a): a named lead after the front end, committed samples only.
+   * Optional: a host without it gives the analysers nothing to read. */
+  ecgFeed?: EcgFeedView;
   outcomeRng: Sfc32State;
   l1(v: StateVar): number;
   /** Mutate the committed modifiers (ECG artefacts, TCP) and invalidate the look-ahead. */

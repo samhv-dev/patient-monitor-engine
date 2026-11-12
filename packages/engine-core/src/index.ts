@@ -39,3 +39,6 @@ export type * from './types-neuro.ts';
 export type * from './types-eeg.ts';
 export { EEG_DEVICES, EEG_MODEL_IDS, type EegModelId } from './l3/eeg-devices/registry.ts'; // the EEG devices' spec rows (the developer page, the renderer's strip)
 export { pruneTruth, TRUTH_LIMITS } from './truth.ts';
+export { measureSegment, SEGMENT_S, type SegmentFeatures } from './l3/ecg-analysis/features.ts'; // the ECG analysis core (defibrillator plan E4a): the validation rig and the perf set measure with it
+export { FEED_S, type EcgFeedView } from './l3/ecg-analysis/feed.ts';
+export { CUDB_HELD_OUT, cudbSegments, ptbxlClass, ptbxlSegments, runRig, type RigClass, type RigRecording, type RigResult, type RigSegment } from './l3/ecg-analysis/rig.ts';
