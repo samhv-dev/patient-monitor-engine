@@ -9,9 +9,9 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, PumpKind, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, PumpDevices, PumpKind, RelayDevice } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
-import { loadShippedFormulary } from './formulary.ts';
+import { loadShippedFormulary, loadShippedPumpDevices } from './formulary.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -182,6 +182,8 @@ export class AppSession {
   eegModel: string | null;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
   formulary: Formulary | null = null;
+  /** C2: the shipped pump device profiles, once loaded (every pump command is refused until then). */
+  pumpDevices: PumpDevices | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
@@ -270,6 +272,10 @@ export class AppSession {
       // made from (loaded once, below; null until then), and each staged preparation into the /2 record
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
+      // pump rack C2: the room's rack (Room setup, A1) and the reference pumps' profiles; a pump tablet signs in on the
+      // learner PIN, and its commands are checked against these (both read at every hello and command)
+      pumpRack: () => this.pumpRack,
+      pumpDevices: () => this.pumpDevices,
       onPreparation: (p) => this.driver.recordPreparation(p),
       deviceName: (key) => readLayout(store)[key]?.name ?? null, // L9: the instructor's card names the remote as Room setup did
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
@@ -284,6 +290,7 @@ export class AppSession {
     });
     this.host = hs;
     if (o.learnerPin) void loadShippedFormulary().then((f) => void (this.formulary = f));
+    if (o.learnerPin) void loadShippedPumpDevices().then((d) => void (this.pumpDevices = d));
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
     this.bc = createBroadcastChannelTransport(this.code);

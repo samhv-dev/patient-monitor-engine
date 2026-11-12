@@ -399,15 +399,13 @@ test('L6: the Learner remote card opens the learner-PIN form; the learner PIN fr
 
 // A1 (plan pump-rack-tci.md §2, §4 D1, §5, §8; PQ10 = B): the QR's picker offers "Infusion pumps" in the owner's words;
 // its Show here opens the learner-PIN form at #/pump (nothing said on the wire before the PIN); the learner PIN says hello
-// as `{role: 'pump', show: 'pump', device, pin}` through the classroom relay (the guard and C1's relay pass it). The host
-// grants a pump in C2, not yet: the tablet says so after 10 s. To show the rack in a browser before C2, the test then
-// issues the grant ITSELF through the host's own grant method (HostSession.grant, standing in for C2's admission; the
-// product does not grant a pump yet, and this is not a sign-in path), and the instructor's own command path loads two
-// channels (the engine's `pump` event, E1; C2 will build these from the tablet's commands): channel 1 a REMIFENTANIL
+// as `{role: 'pump', show: 'pump', device, pin}` through the classroom relay (the guard and C1's relay pass it). C2: the
+// host signs the tablet in on the learner PIN (a wrong PIN is refused in words, the form again), and the instructor's own
+// command path loads two channels (the engine's `pump` event, E1): channel 1 a REMIFENTANIL
 // syringe programmed as propofol (§8's mismatch), channel 3 a drip bag. The tablet shows Room setup's channels and
 // kinds, a change on Room setup at once, each face's programme, and never the contents.
 // PME_A1_SHOTS=<dir>: the card and the rack are saved there as PNG (for the PR; CI sets none).
-test('A1: the Infusion pumps card opens #/pump; its learner PIN says hello as `pump`; before C2 the host does not sign it in; granted, the rack shows Room setup\'s channels and the programme, never the contents', async ({ page, browser, browserName }) => {
+test('A1: the Infusion pumps card opens #/pump; its learner PIN says hello as `pump`; the host signs it in on the learner PIN only (C2); the rack shows Room setup\'s channels and the programme, never the contents', async ({ page, browser, browserName }) => {
   test.setTimeout(180_000);
   await classroom();
   const code = await instructor(page, 'showcase-induction', { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, pumpRack: ['syringe', 'syringe', 'drip', 'syringe'] });
@@ -435,23 +433,23 @@ test('A1: the Infusion pumps card opens #/pump; its learner PIN says hello as `p
   await expect(form.getByRole('heading', { level: 1 })).toHaveText('Infusion pumps');
   await expect(form.getByLabel('Learner PIN')).toBeVisible();
   expect(hellos).toEqual([]);
-  for (const d of learnerPin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+  // C2: a wrong learner PIN is refused by the host, in words, and the form comes back
+  const wrong = learnerPin.split('').map((d) => String((Number(d) + 1) % 10)).join('');
+  for (const d of wrong) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
   await p.locator('.ip-peer-go').click();
   await expect.poll(() => hellos.length).toBeGreaterThan(0);
-  const key = (await p.evaluate(() => localStorage.getItem('pme.device'))) as string;
-  for (const m of hellos) expect(m).toMatchObject({ role: 'pump', show: 'pump', device: key, pin: learnerPin });
-  // Before C2 the host welcomes the tablet (it follows) but does not grant it: said in words, the form again
-  await expect(p.locator('.ip-peer-error')).toHaveText("The instructor's computer did not sign this tablet in: its app does not take pump tablets yet.", { timeout: 20_000 });
-  expect(refused).toEqual([]); // the relay refused nothing: the hello passed the guard and the relay
-  expect(p.url()).not.toContain(learnerPin);
-
-  // The rack in a browser: sign in again, and the TEST grants it through the host's own grant method (not a product path)
-  type PumpW = { __pmePumpPage: { follower(): { peerId: string } | null } };
-  type HostG = { __pmeApp: { session: { relay: unknown; host: { grant(t: unknown, to: string, granted: boolean): void } } } };
+  await expect(p.locator('.ip-peer-error')).toHaveText('Wrong learner PIN. Enter the learner PIN the instructor reads out.', { timeout: 20_000 });
+  // the learner PIN: the host itself grants the tablet (C2's admission, no test hook)
   for (const d of learnerPin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
   await p.locator('.ip-peer-go').click();
-  const from = await p.waitForFunction(() => (window as unknown as PumpW).__pmePumpPage.follower()?.peerId ?? null).then((h) => h.jsonValue() as Promise<string>);
-  await page.evaluate((to) => { const s = (window as unknown as HostG).__pmeApp.session; s.host.grant(s.relay, to, true); }, from);
+  await expect(p.locator('.pump-status')).toHaveText(/^Signed in/, { timeout: 20_000 });
+  const key = (await p.evaluate(() => localStorage.getItem('pme.device'))) as string;
+  for (const m of hellos) expect(m).toMatchObject({ role: 'pump', show: 'pump', device: key });
+  expect(hellos.map((m) => m.pin)).toEqual([wrong, learnerPin]); // the wrong PIN's hello, then the learner PIN's
+  // the guard and the relay passed both hellos; the one refusal is the host's own answer to the wrong PIN, which the
+  // relay carries to the tablet as `denied`
+  expect(refused.map((x) => JSON.parse(x) as Record<string, unknown>)).toEqual([{ relay: 'error', code: 'denied', message: 'wrong PIN' }]);
+  expect(p.url()).not.toContain(learnerPin);
   await expect(p.locator('.pump-status')).toHaveText(`Signed in as the room's infusion pumps · ${code}`);
   const faces = p.locator('.pump-face');
   await expect(faces).toHaveCount(4);
