@@ -10,7 +10,7 @@ import { store } from './store.ts';
 
 const FILES = {
   // The five showcase cases (reviewed, not drafts) live with the app; they carry their own card fields
-  ...import.meta.glob<{ default: ScenarioDoc }>('./showcase/*.json', { eager: true }),
+  ...import.meta.glob<{ default: ScenarioDoc }>(['./showcase/*.json', '!./showcase/ports.json'], { eager: true }), // ports.json: the twin runs' manifest (B7), not a card
   ...import.meta.glob<{ default: ScenarioDoc }>('../../../../packages/controller/scenarios/*.json', { eager: true }),
 };
 
