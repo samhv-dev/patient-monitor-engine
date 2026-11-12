@@ -496,3 +496,308 @@ The plan uses them for product content and recovery only, and CQ5 asks the owner
     not of the patient.
 - **The instructor's view** shows the truth (competence, sign and causes). The resident sees only what was sent
   and returned.
+
+---
+
+## 4. The pieces
+
+Effort is in plan hours. They are **estimates**, not measurements.
+
+**Rules for every piece:**
+- Each piece is one PR on `main`, and writes its tests first.
+- Every new coupling between modules gets its row in the coupling registry (`packages/engine-core/src/couplings/`,
+  `blood.ts` and the module it reaches; `docs/plans/mechanism-tree.md` R1).
+- Every new constant carries its source or its gap tag; the model docs regenerate.
+- **Validation** means the `run-validation` label: any PR under `packages/engine-core/src/**` that can move a value
+  (00-common-rules).
+- **Gate for every engine piece:** the common gate, `@pme/engine-core` whole, `@pme/validation`, the validation
+  workflow.
+- **Must not touch (every piece):**
+  - the circulation's own equations (`l2/circ/**`, except a registered coupling input);
+  - the drug model's machinery (`l2/pk/*.ts`; new library rows only, in `l2/pk/data/`);
+  - the renderer (except C12);
+  - another piece's files.
+
+**Goldens.** No piece is expected to move the monitor goldens or the showcase courses:
+- C1-C3 add state that nothing outside haemostasis reads;
+- diffuse bleeding (C5) acts only as CQ2 rules;
+- the circulation couplings (C8, C10) act only when protamine or desmopressin is given, which no card does today.
+
+A piece that does move a golden or a course re-records it IN THE SAME PR. It states the cause commit by commit and
+runs a control (the same course on `main`). Adding keys to the 1 Hz `labs` truth event changes recorded event
+snapshots; those regenerate in the piece that adds the key, with that cause.
+
+```
+C0a sources: clotting-time relation, ranges ──────────────► C4 PT/INR, aPTT ──┬─► C8 heparin, protamine, ACT
+C0b sources: rates, triad, viscoelastic ──┐                     ▲              ├─► C9 VKA, PCC, DOACs
+C0c sources: heparin, PCC, DOACs ─────────┼────────────────────(C8, C9)       └─► C12 lab view rows (PT/aPTT)
+C0d sources: unread sections, pregnancy ──┘
+C1 fibrinogen + platelets ─► C2 factor pools + synthesis + liver ─► C3 new products (PCC: G11)
+C1 ─► C12 lab view rows (fibrinogen, platelets)
+C1 ─► C5 competence + triad + diffuse-bleeding sign ─► C6 fibrinolysis, TXA, TIC ─► C7 consumption, DIC
+C5 ─► C10 vWF, desmopressin, rFVIIa, antiplatelets, uraemia
+C4 + C5 + C6 ─► C11 viscoelastic instrument          C7 ─► C13 acceptance courses     C0d + v1.1 patient ─► C14 pregnancy
+```
+
+**What can start on the owner's word, without any paper:** C1, C2 (its V and X half-lives aside, G4), C3 (PCC and
+freeze-dried plasma aside), C5's sourced terms, and C12's fibrinogen and platelet rows. The EEG plan put every sources
+review before any build piece (`eeg-clinical-generator.md` §5). Whether that rule applies here, where five pieces need
+no paper, is CQ13.
+
+### C0a: Sources review — the clotting-time relation and the reference ranges (8 h; no code)
+
+- **Purpose:** settle G1, and G2 where the owner's laboratory gives it.
+- **Reads:**
+  - L9 and L21 in full, when the owner supplies them;
+  - a factor-dilution study of PT and aPTT, which the review names. None is named here from memory;
+  - the owner's laboratory's ISI, MNPT and ranges.
+- **Output:** a section in `docs/research/coagulation-sources.md` giving the relation in words, with pages, and how
+  it meets the nine constraints of §2.4. If no source supports a relation, the review says so and C4 stays blocked.
+- **Gate:** docs test. **Validation:** no.
+
+### C0b: Sources review — consumption, the triad and the viscoelastic relations (12 h; no code)
+
+- **Purpose:** settle G6, G10, G12 and G13.
+- **Reads:**
+  - L10 and L11 (time courses);
+  - L7 and L8 (temperature and pH tables), L6;
+  - L4's figures;
+  - Davenport 2011, and Brohi and Cohen (M62 refs 139-141, 148).
+- **Output:** the same note, its own section.
+- **Gate:** docs test. **Validation:** no.
+
+### C0c: Sources review — heparin, PCC, DOACs, protamine reactions (8 h; no code)
+
+- **Purpose:** settle G3, G11, G18, G19 and G21.
+- **Reads:**
+  - Bull 1975 (both papers);
+  - one 4-factor PCC's product information;
+  - the DOAC labels' test sections;
+  - Welsby 2005 and Kimmel 1998 and 2002.
+- **Gate:** docs test. **Validation:** no.
+
+### C0d: Sources review — the unread sections and pregnancy (8 h; no code)
+
+- **Purpose:** read what §1's completeness note lists as unread:
+  - M46 pp. 1439-1441 (thrombotic states, HIT), pp. 1445-1446 and pp. 1451-1452;
+  - M45's reaction, salvage, ANH and compatibility sections.
+
+  Add any inventory row they bring. Settle G4, G17, G20, G22 and G23.
+- **Gate:** docs test. **Validation:** no.
+
+### C1: Fibrinogen and platelets: state, loss, dilution, products, and the two readings (12 h; validation)
+
+- **Purpose:** the first readings a resident can trust: fibrinogen and the platelet count.
+- **Depends on:** nothing outstanding (CQ5 for FFP's fibrinogen; until it is ruled, FFP carries none and says so).
+- **Files:**
+  - `l2/blood/coag.ts` and test (new);
+  - `l2/blood/pipeline.ts` (step coag after the fluids; the bled and given volumes are already returned,
+    `fluids.ts:114`);
+  - `l2/blood/params.ts` (product contents: whole blood L20, apheresis and pooled platelets);
+  - `l2/blood/labs.ts` (the two analytes);
+  - `types-blood.ts`;
+  - `couplings/blood.ts`;
+  - snapshot restore.
+- **Tests first:**
+  - a healthy patient holds fibrinogen and platelets for 24 h (production = clearance);
+  - §2.11 checks 1, 2, 6, 7 and 9, each with its source band;
+  - a bleed removes platelets with whole blood, and red cells dilute the count;
+  - whole blood stored 168 h carries 120 x 10^9/L platelets and unchanged fibrinogen (L20);
+  - the `coag` panel returns `fibrinogen` and `platelets` and still the liver's `inr`;
+  - snapshot and restore keep the state.
+- **Acceptance:**
+  - BF-05e and BF-25b/c rows report fibrinogen and platelets (their INR part waits for C4);
+  - monitor goldens unchanged (control: `main`).
+
+### C2: The factor pools, synthesis and the liver join (10 h; validation)
+
+- **Depends on:** C1.
+- **Files:** `coag.ts`, `params.ts` (FFP 70 %, the RBC residual plasma, storage losses of V and VIII), reading
+  `organs.liver.liverFn` (a registered coupling).
+- **Tests first:**
+  - the steady state at `liverFn = 1`;
+  - §2.11 checks 3, 4 and 5;
+  - whole blood at 21 days carries V 50 % and VIII 30 % (M45 p. 1421);
+  - liver failure lowers VII first, in time order (D74 p. 1225; half-lives §2.2);
+  - VIII does not fall with liver failure (M14 p. 305).
+- **G4:** V and X need a half-life for their synthesis term. Until G4 is settled, the term is marked as CQ1 rules.
+- No new reading: the activities appear in the instructor's truth only.
+
+### C3: The new products (10 h; validation)
+
+- **Depends on:** C2.
+- **Files:**
+  - `params.ts` (cryoprecipitate pool, fibrinogen concentrate, pooled platelets, PF24 or thawed plasma, freeze-dried
+    plasma, AT concentrate, PCC 3F and 4F);
+  - the `transfusion` command's product list and units (`pipeline.ts:304-307`);
+  - the concentrates as drug-library rows dosed in g or IU/kg;
+  - the scenario schema's product enum.
+- **Tests first:**
+  - §2.11 check 8;
+  - a 5-pool cryoprecipitate carries 1596 mg fibrinogen and 499 IU FVIII (L1);
+  - PCC raises II, IX, X (and VII for 4F) and the rise then decays by each half-life (M46 p. 1451; content G11:
+    PCC is BLOCKED until C0c, and the row says so);
+  - freeze-dried plasma waits on G17.
+- **Acceptance:** BF-26a/b/c/d accept their products (their FIBTEM/EXTEM targeting waits for C11).
+
+### C4: PT, INR and aPTT (10 h; validation; BLOCKED on C0a / G1 and CQ4)
+
+- **Depends on:** C2, C0a.
+- **Files:**
+  - `coag.ts` (the readings);
+  - `labs.ts`, `types-blood.ts`;
+  - `l2/liver/liver.ts:44, 49, 76` and `organs/pipeline.ts:261` (the stand-in INR deleted);
+  - `engine.ts:1110`.
+- **Tests first:**
+  - the nine constraints of §2.4;
+  - the M45 Table 45.15 patterns;
+  - normal plasma reads the laboratory's normal (CQ4);
+  - the INR formula (M46 p. 1441);
+  - no `[FIT]` INR remains;
+  - the PT and aPTT of a sample drawn at 33 °C equal those drawn at 37 °C (§2.4, I8). CQ3 decides how BF-25a and
+    25e read.
+- **Acceptance:** BF-05e and BF-25a.
+
+### C5: Haemostatic competence, the lethal triad and the diffuse-bleeding sign (12 h; validation)
+
+- **Depends on:** C1 (C2 for the factor term).
+- **Files:**
+  - `coag.ts`;
+  - `l2/thermal/metabolic.ts:40, 61` (`coagF` deleted) and `l2/endo/pipeline.ts:21` (its neutral entry);
+  - registered couplings from the core temperature, `blood.core.ab.ph` and iCa.
+- **Tests first:**
+  - the temperature ratio at 34, 31 and 28 °C equals L5's (§2.5);
+  - platelet function falls below 35 °C and below pH 7.3 (S23 p. 489);
+  - the pH factor term and the iCa term show their gaps (G13, G14) and do not move until ruled;
+  - the sign appears at the sourced thresholds (§2.10) and names its causes;
+  - nothing in the circulation moves unless CQ2 rules that it does.
+- **Acceptance:** BF-25e (as CQ3 rules).
+
+### C6: Fibrinolysis, the antifibrinolytics and trauma-induced coagulopathy (14 h; validation; rates on C0b)
+
+- **Depends on:** C2, C5, C0b.
+- **Files:**
+  - `coag.ts`;
+  - `l2/pk/data/rows-other.ts:104-106` (TXA's PD target on THIS row, as its comment requires), new EACA and
+    aprotinin rows;
+  - the card's tissue-injury input (the scenario schema).
+- **Tests first:**
+  - `lys` degrades fibrinogen, V and VIII (M46 p. 1436);
+  - TXA lowers `lys` by occupancy, and EACA does so at its sourced potency ratio (M50 p. 1591);
+  - APC lowers V and VIII with hypoperfusion before any fluid (D26 p. 371; M62 p. 2013);
+  - a late dose in the shutdown phase brings no benefit (the CRASH-2 direction, M46 p. 1449);
+  - each rate carries G6.
+- **Acceptance:** BF-24.
+
+### C7: Consumption and DIC (10 h; validation)
+
+- **Depends on:** C6.
+- **Files:** `coag.ts`; the condition command's ids (`pipeline.ts:320-324`: AFE, abruption, sepsis-driven DIC,
+  haemolytic reaction); the D-dimer reading (G7).
+- **Tests first:**
+  - consumption lowers I, II, V, VIII and platelets (M45 p. 1421);
+  - whole-blood replacement keeps fibrinogen unless DIC (M45 p. 1422);
+  - the DIC pattern of Table 45.15;
+  - an in-vivo fibrinogen < 150 mg/dL under whole-blood replacement appears only with consumption (M45 p. 1423).
+- **Acceptance:** BF-28a/b.
+
+### C8: Heparin, protamine, the ACT and the other parenteral anticoagulants (16 h; validation; on C0c)
+
+- **Depends on:** C4 (aPTT), C0c (G3, G21).
+- **Files:**
+  - `coag.ts`;
+  - new drug rows: UFH, protamine, LMWH, fondaparinux, argatroban, bivalirudin, AT;
+  - the ACT instrument row (`analysers.ts`);
+  - registered couplings from protamine to the circulation (type I hypotension, type III pulmonary vasoconstriction,
+    M50 pp. 1589-1590).
+- **Tests first:**
+  - 300 U/kg gives an ACT > 480 s at 1.5-3.0 U/mL (M50 pp. 1584, 1615);
+  - protamine 1 mg per 100 U returns the ACT to baseline (M46 p. 1442; M50 p. 1619);
+  - > 2.6 mg/100 U prolongs the ACT (M50 p. 1586);
+  - rebound within about 1 h (M50 p. 1588);
+  - heparin resistance with AT < 60 % and its correction by AT concentrate (M50 pp. 1586-1588);
+  - LMWH only 60 % reversed (D74 p. 1227);
+  - fondaparinux not reversed (M46 p. 1442).
+- **HIT** as CQ11 rules.
+- **Acceptance:** BF-27a/b/c.
+
+### C9: Warfarin, vitamin K, PCC, the DOACs and their reversal (14 h; validation; on C0c)
+
+- **Depends on:** C3 (PCC), C4, C0c.
+- **Files:** `coag.ts` (`vkF`); new rows: vitamin K, the DOACs, idarucizumab, andexanet; anti-Xa and TT readings.
+- **Tests first:**
+  - a warfarin profile has a long PT with a normal or mildly long aPTT (Table 45.15);
+  - its PT rises at 24-48 h and II and X take 4-5 days (D74 p. 1232);
+  - PCC at 25/35/50 U/kg (L12 R33) corrects the INR transiently;
+  - vitamin K holds the correction (M46 p. 1451);
+  - idarucizumab removes dabigatran (M46 p. 1448);
+  - andexanet lowers anti-Xa 92 % (M46 p. 1448).
+
+### C10: vWF, desmopressin, rFVIIa, antiplatelet drugs, uraemia, haemophilia and vWD (10 h; validation)
+
+- **Depends on:** C5.
+- **Tests first:**
+  - desmopressin raises VIII 3-5 times (S23 p. 480), with its hypotension as a registered coupling (M50 p. 1612);
+  - aspirin's platelet effect lasts the platelet life (M46 p. 1446);
+  - rFVIIa's activity falls at pH 7.0 and 33 °C (L6 [ABS]);
+  - the haemophilia A and vWD profiles bleed with normal PT and aPTT where M46 p. 1436 says they can.
+- **Gap G24:** the uraemic platelet term from the renal model's urea has no relation in the sources read (M46 p.
+  1438 gives the mechanism only).
+
+### C11: The viscoelastic instrument (14 h; validation; on C0b)
+
+- **Depends on:** C4, C5, C6, C0b.
+- **Files:** a point-of-care instrument row with its own turnaround; the device temperature setting (37 °C default,
+  M46 p. 1443); the scenario schema's sample kind.
+- **Tests first:**
+  - FIBTEM A5 = 1.58 + 3.09 x fibrinogen (L13);
+  - the instrument at 37 °C hides hypothermia, and at the patient's temperature shows it (L17);
+  - the normal, hypofibrinogenaemic and hyperfibrinolytic shapes of M46 Fig. 46.5;
+  - every other value carries G12 until C0b.
+- **Acceptance:** BF-25d; BF-26a-d targeting.
+
+### C12: The lab view's coagulation rows (6 h; no validation; e2e)
+
+- **Depends on:** C1 for fibrinogen and platelets; C4 for PT, INR and aPTT; CQ4 for the ranges.
+- **Files:** `packages/renderer/src/lab-panel.ts` (rows with range and source, critical values from the Kost list or
+  the owner's laboratory); `apps/demo/src/app/remote/labs.ts`; e2e cases.
+- **Gate:** common, renderer, demo unit, the e2e that touches the lab view.
+
+### C13: Acceptance courses from the clinical papers (8 h; validation)
+
+- **Depends on:** C7.
+- **The courses:**
+  - Hiippala's plasma-poor replacement to 230 % (L9 [ABS]: fibrinogen 1.0 at 142 %, platelets 50 at 230 %);
+  - Murray's falls per 0.3 blood volume (L21 [ABS]);
+  - the trauma platelet fall in the first 1-2 h (L12 R30);
+  - the PPH strata by fluid (L15);
+  - the RAC crystalloid strata (M62 p. 2013);
+  - the fatal-combination variables (M62 p. 2024).
+- **The rule for each course:** every course's band is its source's own. A band is never widened to the engine.
+
+### C14: Pregnancy (8 h; validation; BLOCKED on the v1.1 pregnant patient, G20 and CQ7)
+
+- **Purpose:** the term baseline:
+  - fibrinogen, VII, VIII, IX, X, XII and vWF up; XI and XIII down; AT and protein S down; platelets 0-10 % down;
+    PT and PTT about 20 % shorter (M58 Table 58.4, p. 1889);
+  - the obstetric conditions (abruption, AFE: C7);
+  - the PPH course (L15, L11).
+- **Values at term are G20.**
+
+### Hours
+
+| Piece | h | Piece | h |
+|---|---|---|---|
+| C0a | 8 | C7 | 10 |
+| C0b | 12 | C8 | 16 |
+| C0c | 8 | C9 | 14 |
+| C0d | 8 | C10 | 10 |
+| C1 | 12 | C11 | 14 |
+| C2 | 10 | C12 | 6 |
+| C3 | 10 | C13 | 8 |
+| C4 | 10 | C14 | 8 |
+| C5 | 12 | | |
+| C6 | 14 | **total** | **190** (sources reviews 36, build 154) |
+
+The learner-remote plan sized this as L10c at 12 h (`learner-action-remote.md` L10c), and said it "may need its own
+plan". This plan replaces L10c: L10c's mechanism is C1 + C2 + C4 here, 32 h.
