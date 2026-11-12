@@ -136,7 +136,7 @@ export function watchCrashes(): void {
     const out = openSync(`${dir}/gdb-${pid}.txt`, 'a');
     const args = ['-p', pid, '-batch', '-nx', '-ex', 'set pagination off', '-ex', 'set print thread-events off', '-ex', 'handle all nostop noprint pass'];
     for (const sig of ['SIGILL', 'SIGSEGV', 'SIGBUS', 'SIGABRT', 'SIGFPE']) args.push('-ex', `handle ${sig} stop print pass`);
-    args.push('-ex', 'continue', '-ex', 'echo \\n=== STOPPED ===\\n', '-ex', 'info threads', '-ex', 'bt 80', '-ex', 'thread apply all bt 40', '-ex', 'info registers rip', '-ex', 'x/4i $pc');
+    args.push('-ex', 'continue', '-ex', 'echo \\n=== STOPPED ===\\n', '-ex', 'info threads', '-ex', 'bt 80', '-ex', 'thread apply all bt 40', '-ex', 'info registers rip', '-ex', 'x/4i $pc', '-ex', 'info symbol $pc', '-ex', 'info sharedlibrary');
     spawn('gdb', args, { stdio: ['ignore', out, out], detached: true }).unref();
   }
 }
@@ -154,6 +154,9 @@ export async function instrumentHost(page: Page): Promise<void> {
   page.on('close', () => (heardAt.delete(token), dumped.add(token)));
   appendFileSync(file, JSON.stringify({ rx: Date.now(), k: 'start', test: info.titlePath.join(' › '), retry: info.retry, repeat: info.repeatEachIndex }) + '\n');
   await page.addInitScript(instrument, { url: `http://127.0.0.1:${p}/diag?t=${encodeURIComponent(token)}` });
+  // PME_DIAG_NO_OFFSCREEN=1: the variant without the OffscreenCanvas engine worker. Without transferControlToOffscreen
+  // the renderer's own test (worker-host.ts canUseWorker) puts the host's monitor on the main thread, as a follower's is
+  if (process.env.PME_DIAG_NO_OFFSCREEN === '1') await page.addInitScript(() => void delete (HTMLCanvasElement.prototype as unknown as Record<string, unknown>).transferControlToOffscreen);
 }
 
 /**

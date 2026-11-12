@@ -34,7 +34,10 @@ jobs:
       fail-fast: false
       matrix:
         part: [1, 2, 3]
-    name: diag webkit (${{ matrix.part }}/3)
+        # worker: the host as the product runs it (its monitor in an OffscreenCanvas worker); main: the same host with
+        # transferControlToOffscreen removed, so its monitor runs on the page's main thread (diag-host.ts)
+        variant: [worker, main]
+    name: diag webkit ${{ matrix.variant }} (${{ matrix.part }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     container:
@@ -57,12 +60,13 @@ jobs:
         timeout-minutes: 5
       - id: e2e
         name: the two specs, repeated (retries 0, one worker as ci.yml's WebKit)
-        run: pnpm test:e2e --project=webkit --repeat-each="$REPEAT" --retries=0 --reporter=list,json --grep "a phone picks Depth of anaesthesia|Drugs tab with the bench open and a tray of two" apps/demo/e2e/depth-window.e2e.ts apps/demo/e2e/app-accessibility.e2e.ts
+        run: pnpm test:e2e --project=webkit --repeat-each="$REPEAT" --retries=0 --reporter=list,json --grep "a phone picks Depth of anaesthesia" apps/demo/e2e/depth-window.e2e.ts
         env:
           CI: '1'
           PME_DIAG_HOST: '1'
           DEBUG: 'pw:browser' # the browser processes' own stderr in this log (a WebKit assertion or crash message)
-          REPEAT: '8'
+          REPEAT: '12'
+          PME_DIAG_NO_OFFSCREEN: ${{ matrix.variant == 'main' && '1' || '0' }}
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-diag.json
       - name: repetitions passed and failed
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
@@ -72,7 +76,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 5
         with:
-          name: diag-webkit-host-hang-${{ matrix.part }}-${{ github.run_attempt }}
+          name: diag-webkit-host-hang-${{ matrix.variant }}-${{ matrix.part }}-${{ github.run_attempt }}
           path: |
             playwright-report-diag.json
             test-results/**/diag/**
