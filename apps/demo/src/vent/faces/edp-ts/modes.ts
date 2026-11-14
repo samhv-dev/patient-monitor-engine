@@ -4,7 +4,7 @@
 // profile (the device's names and priorities, §10c; delays and latching are V3's).
 import type { VentConfig } from '@pme/ventilator';
 import type { AlarmProfile, FaceSpec, ModeEntry } from '../../core/types.ts';
-import { faceMode, SETTINGS, type FaceMode } from './controls.ts';
+import { backupOn, faceMode, SETTINGS, type FaceMode } from './controls.ts';
 export { ROWS } from './controls.ts';
 import { DATA, L, num, S, word, type Leaf } from './data.ts';
 
@@ -12,7 +12,7 @@ type Cfg = Readonly<VentConfig>;
 
 /** The device label each model mode carries on the frame (plan §4.3 coupling 1). */
 export const LABELS: Record<FaceMode, string> = {
-  VCV: word('VCV'), PCV: word('PCV'), PRVC: word('PRVC'), simPSV: word('simPSV'), simPAV: word('simPAV'),
+  VCV: word('VCV'), PCV: word('PCV'), PRVC: word('PRVC'), 'PSV/CPAP': word('PSV/CPAP'), simPSV: word('simPSV'), simPAV: word('simPAV'),
 };
 
 /**
@@ -26,18 +26,27 @@ const carryVt = (c: Cfg): Partial<VentConfig> => {
   return { vt, prvcTarget: vt };
 };
 export const MODES: Record<string, ModeEntry> = {
-  VCV: { mode: 'VC', label: LABELS.VCV, patch: { flowPattern: 'square' }, carry: carryVt }, // constant flow only until V2 (GP13)
+  VCV: { mode: 'VC', label: LABELS.VCV, carry: carryVt },
   PCV: { mode: 'PC', label: LABELS.PCV },
   PRVC: { mode: 'PRVC', label: LABELS.PRVC, carry: carryVt },
+  // PSV/CPAP (research/57 D-03, M-05, M-06, M-09): the model's PSV with the device's apnoea backup armed (piece V2). The
+  // backup kind is the one chosen in Menu → Backup ventilation, VCV when none was [O-17, "set the backup first", is not
+  // built: T-40's drawn VCV stands in]. The PSV breath's pressure criterion (M-06) is not built (M-07: its arithmetic is
+  // unclear); the model's own PSV cycling stays, and the face's strip says so when the mode starts.
+  'PSV/CPAP': { mode: 'PSV', label: LABELS['PSV/CPAP'], carry: (c) => ({ ...carryVt(c), backupMode: backupOn(c) ? c.backupMode : 'VC' }) },
 };
 
 const v = (l: unknown) => num(l);
-/** The device's starting settings: the VCV defaults (research/57 D-01, T-03, T-18, T-21, T-28) and the manual's limits (§10b). */
+/**
+ * The device's starting settings: the VCV defaults (research/57 D-01, T-03, T-18, T-21, T-28) and the manual's limits
+ * (§10b); and the device's breath behaviours, the model's V2 options: the descending ramp as the initial waveform
+ * (T-26), the breath ended at the maximum pressure (A-32), and VCV as the backup kind (T-40).
+ */
 export const INIT: Partial<VentConfig> = {
-  mode: 'VC', modeLabel: LABELS.VCV,
+  mode: 'VC', modeLabel: LABELS.VCV, backupMode: 'VC', pmaxAction: 'cycle',
   vt: v(S.vt.init) * 1000, prvcTarget: v(S.vt.init) * 1000, itime: v(S.ti.init), rate: v(S.f.init), peep: v(S.peep.init),
   trigType: 'flow', flowTrig: v(S.sensFlow.init), presTrig: v(S.sensPres.init), fio2: v(S.oxygen.init),
-  flowPattern: 'square', pause: v(S.pause.init), pc: v(S.pcv.init), ps: v(S.psv.init), cycleOff: v(S.expSens.init),
+  flowPattern: 'ramp0', pause: v(S.pause.init), pc: v(S.pcv.init), ps: v(S.psv.init), cycleOff: v(S.expSens.init),
   riseTime: v(S.riseTime.init),
   pmax: v(L.pmax.init), almVThi: v(L.vtHi.init) * 1000, almVTlo: v(L.vtLo.init) * 1000, almMVhi: v(L.mvHi.init), almMVlo: v(L.mvLo.init),
   almFhi: v(L.fHi.init), apneaTime: v(S.apnea.init), sweepSec: v(DATA.layout.sweepS),
@@ -53,7 +62,8 @@ export function settle(c: Cfg): Partial<VentConfig> {
   const fix: Partial<VentConfig> = {};
   const label = LABELS[faceMode(c)];
   if (c.modeLabel !== label) fix.modeLabel = label;
-  if (c.mode === 'VC') {
+  // the flow is the set Ti's wherever VC breaths run: VCV, and PSV/CPAP's VCV backup breaths (piece V2)
+  if (c.mode === 'VC' || (c.mode === 'PSV' && c.backupMode === 'VC')) {
     const ours = flowSet.get(c);
     let itime = c.itime;
     if (ours !== undefined && Math.abs(c.vcFlow - ours) > 1e-9) {
