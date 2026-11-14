@@ -1006,7 +1006,9 @@ export class HostSession {
     const out = routedToChannel(this.pumpChannels.get(chs[0] as number) as HostChannel, rate, unit as never, x);
     if (!out.ok) return Promise.resolve(refuse(out.why));
     const { id, issuedBy, by, stageGroup, batch } = base as WireCommand & { by?: string };
-    return this.command(t, pumpWire({ id, issuedBy, ...(by !== undefined ? { by } : {}), ...(stageGroup !== undefined ? { stageGroup } : {}), ...(batch !== undefined ? { batch } : {}) }, out as Extract<PumpTranslated, { ok: true }>), from);
+    const wire = pumpWire({ id, issuedBy, ...(by !== undefined ? { by } : {}), ...(stageGroup !== undefined ? { stageGroup } : {}), ...(batch !== undefined ? { batch } : {}) }, out as Extract<PumpTranslated, { ok: true }>);
+    if (issuedBy === LEARNER_ISSUED_BY && this.pausedNow) return Promise.resolve(this.notGiven(t, from, [wire])); // L14 on the D9 path
+    return this.command(t, wire, from);
   }
 
   /** D9 for the laptop's Drug sheet and the instructor phone's: an `applyEvent infusion` of a drug on a pump channel. */
