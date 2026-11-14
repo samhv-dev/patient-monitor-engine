@@ -23,16 +23,16 @@ const run = (d: VentDriver, s: number) => {
   for (let i = 0; i < s * 10; i++) d.frame((ms += 100));
   (d as unknown as { _ms?: number })._ms = ms + 1000; // a later run starts after a gap the driver clamps
 };
-const choose = (k: Knob, name: 'VCV' | 'PCV' | 'PRVC') => {
+const choose = (k: Knob, name: 'VCV' | 'PCV' | 'PRVC' | 'PSV/CPAP') => {
   k.press('side:mode');
-  const at = name === 'PRVC' ? null : name === 'VCV' ? 0 : 1;
+  const at = name === 'PRVC' ? null : name === 'VCV' ? 0 : name === 'PCV' ? 1 : 2;
   if (at === null) { k.turn(10); k.push(); k.push(); } else { k.turn(at); k.push(); }
   k.push();
 };
 const knobSet = (k: Knob, id: string, steps: number) => { k.press(id); k.turn(steps); k.push(); };
 
 /** What each live setting must change in the delivered breath, measured over the last breaths. */
-type Probe = { mode: 'VCV' | 'PCV' | 'PRVC'; steps: number; measure(c: Cockpit, d: VentDriver): number; prep?(c: Cockpit): void };
+type Probe = { mode: 'VCV' | 'PCV' | 'PRVC' | 'PSV/CPAP'; steps: number; measure(c: Cockpit, d: VentDriver): number; prep?(c: Cockpit): void };
 const ti = (c: Cockpit) => c.record()?.ti ?? NaN;
 const PROBES: Record<string, Probe> = {
   vt: { mode: 'VCV', steps: 10, measure: (c) => c.measured().VTE },
@@ -46,6 +46,12 @@ const PROBES: Record<string, Probe> = {
   oxygen: { mode: 'VCV', steps: 20, measure: (_c, d) => toVentFrame(d.vs, '').fio2 },
   riseTime: { mode: 'PCV', steps: 2, measure: (c) => c.record()?.peakFlowLpm ?? NaN },
   pause: { mode: 'VCV', steps: 2, measure: ti },
+  // piece V2: Constant from the device's initial Descending (research/57 T-26) changes the peak flow
+  flowWaveform: { mode: 'VCV', steps: -1, measure: (c) => c.record()?.peakFlowLpm ?? NaN },
+  // piece V2, PSV/CPAP (research/57 D-03) with the patient breathing: the support raises the peak pressure; a higher
+  // Exp. Sensitiv. ends the breath earlier
+  psv: { mode: 'PSV/CPAP', steps: 5, measure: (c) => c.measured().PIP, prep: (c) => c.write({ pmus: 6, spontRate: 14 }, 'tool') },
+  expSens: { mode: 'PSV/CPAP', steps: 6, measure: ti, prep: (c) => c.write({ pmus: 6, spontRate: 14 }, 'tool') },
 };
 
 describe('test (1): every control on the face writes the model or says why it cannot', () => {
@@ -71,26 +77,34 @@ describe('test (1): every control on the face writes the model or says why it ca
     });
   }
 
-  it('flowWaveform: one live choice, Constant (plan GP12): its binding is what the delivered breath runs on; Descending stops the knob with its reason (GP13)', () => {
+  it('flowWaveform: Descending (the device\'s initial waveform, research/57 T-26) and Constant, both live (plan GP12, GP13; piece V2)', () => {
     const { d, c, k } = setup();
+    expect(c.cfg.flowPattern).toBe('ramp0');
     expect(SETTINGS.flowWaveform!.write(0, c.cfg)).toEqual({ flowPattern: 'square' });
-    c.write({ flowPattern: 'decel' }, 'tool');
+    expect(SETTINGS.flowWaveform!.write(1, c.cfg)).toEqual({ flowPattern: 'ramp0' });
     run(d, 15);
-    const decel = c.record()!.peakFlowLpm;
-    c.write(SETTINGS.flowWaveform!.write(0, c.cfg));
+    // the ramp's peak is twice the mean flow, 60 · VT / Ti, less its first half step (the ramp is sampled at mid-step)
+    const mean = (60 * c.cfg.vt) / 1000 / c.cfg.itime;
+    expect(c.record()!.peakFlowLpm).toBeGreaterThan(1.9 * mean);
+    knobSet(k, 'key:flowWaveform', -1);
+    expect(c.cfg.flowPattern).toBe('square');
     run(d, 15);
-    expect(c.record()!.peakFlowLpm).not.toBeCloseTo(decel, 1);
-    k.press('key:flowWaveform');
-    k.turn(1);
-    expect(k.note()).toBe('descending');
+    expect(Math.abs(c.record()!.peakFlowLpm - mean)).toBeLessThan(0.05 * mean);
+    expect(k.note()).toBeNull();
   });
 
-  it('psv and expSens are drawn only in a scenario\'s PSV row, unavailable (they belong to PSV/CPAP, V2)', () => {
+  it('psv and expSens are live in PSV/CPAP only (research/57 D-03); a scenario\'s PSV without a backup keeps the simulator\'s reason', () => {
     const { c } = setup();
-    for (const id of ['psv', 'expSens']) for (const mode of ['VC', 'PC', 'PRVC', 'PSV'] as const) expect(settingState(id, { ...c.cfg, mode })).not.toBe('live');
+    for (const id of ['psv', 'expSens']) {
+      for (const mode of ['VC', 'PC', 'PRVC'] as const) expect(settingState(id, { ...c.cfg, mode })).not.toBe('live');
+      expect(settingState(id, { ...c.cfg, mode: 'PSV', backupMode: 'VC' })).toBe('live');
+      expect(settingState(id, { ...c.cfg, mode: 'PSV', backupMode: 'off' })).toEqual({ reason: 'simMode' });
+    }
   });
 
-  const ALARM: Record<string, [number, string]> = { pmax: [-25, 'pmax'], vtHi: [-25, 'vtHigh'], vtLo: [30, 'vtLow'], mvHi: [-500, 'mvHigh'], mvLo: [500, 'mvLow'], fHi: [-25, 'fHigh'] };
+  // pmax: 40 → 12 cmH2O. Since piece V2 the starting waveform is the descending ramp (research/57 T-26), whose breath
+  // peaks near 14.5 cmH2O at the starting settings (15 with V1's constant flow): a limit of 15 is no longer reached
+  const ALARM: Record<string, [number, string]> = { pmax: [-28, 'pmax'], vtHi: [-25, 'vtHigh'], vtLo: [30, 'vtLow'], mvHi: [-500, 'mvHigh'], mvLo: [500, 'mvLow'], fHi: [-25, 'fHigh'] };
   for (const [lim, [steps, alarm]] of Object.entries(ALARM)) {
     it(`limit ${lim}: changed with the knob, the model raises ${alarm}`, () => {
       const { d, c, k } = setup();
@@ -134,7 +148,7 @@ describe('test (1): every control on the face writes the model or says why it ca
         else expect(stops, `${wid} row ${i}`).toContain(i);
       });
     }
-    for (const name of ['VCV', 'PCV', 'PRVC'] as const) {
+    for (const name of ['VCV', 'PCV', 'PRVC', 'PSV/CPAP'] as const) {
       const { c, k } = setup();
       if (name === 'VCV') c.chooseMode('PCV');
       choose(k, name);
@@ -165,7 +179,11 @@ describe('test (5): the frame carries the device\'s name', () => {
     expect(modeName(c.cfg)).toBe('VCV');
     choose(k, 'PCV');
     expect(toVentFrame(c.vs as never, modeName(c.cfg)).mode).toBe('PCV');
-    c.scenario('earlyCycle'); // a PSV scenario: the simulator's state words
+    // a PSV scenario: with the device's backup armed (its starting VCV, research/57 T-40) it is the device's PSV/CPAP
+    // (piece V2); with the backup off it is the simulator's own PSV, in the simulator's words
+    c.scenario('earlyCycle');
+    expect(modeName(c.cfg)).toBe('PSV/CPAP');
+    c.write({ backupMode: 'off' }, 'tool');
     expect(modeName(c.cfg)).toBe('PSV (simulator scenario)');
     // a link patch as the host's hand-over sends it (views/vent.ts cockpitPatch): VC with no label
     Object.assign(c.vs.cfg, { mode: 'VC', modeLabel: null, vt: 450 });
@@ -187,5 +205,77 @@ describe('test (5): the frame carries the device\'s name', () => {
     c.d.onControl?.();
     expect(c.cfg.itime).toBeCloseTo(1.0, 9);
     expect(c.cfg.vcFlow).toBeCloseTo(30, 9);
+  });
+});
+
+describe('piece V2: the Backup ventilation window and the apnoea backup on the face (research/57 T-37 to T-41, A-26, A-45)', () => {
+  const openBackup = (k: Knob) => {
+    k.press('side:menu');
+    k.push(); // Backup ventilation, the menu's first row that can be used (P-03)
+  };
+
+  it('the window edits a draft: Accept applies it (T-41), Esc returns to the previous values', () => {
+    const { c, k } = setup();
+    expect(c.cfg.backupMode).toBe('VC');
+    expect(c.cfg.apneaTime).toBe(15);
+    openBackup(k);
+    expect(k.windows().at(-1)!.id).toBe('backup');
+    k.push(); // Ventilation Modes
+    k.turn(1); // VCV → PCV
+    k.push();
+    k.turn(1); // Apnea time
+    k.push();
+    k.turn(3); // 15 → 30 s
+    k.push();
+    expect(c.cfg.backupMode).toBe('VC'); // nothing applied before Accept
+    expect(k.windowCfg('backup')).toMatchObject({ backupMode: 'PC', apneaTime: 30 });
+    k.press('under:esc');
+    expect(k.windows().at(-1)!.id).toBe('menu');
+    expect(c.cfg).toMatchObject({ backupMode: 'VC', apneaTime: 15 });
+    k.push(); // open it again: the previous values
+    expect(k.windowCfg('backup')).toMatchObject({ backupMode: 'VC', apneaTime: 15 });
+    k.push();
+    k.turn(1);
+    k.push();
+    k.turn(1);
+    k.push();
+    k.turn(3);
+    k.push();
+    k.turn(5); // to the last stop, Accept (Backup in SIMV/APRV is not a stop)
+    k.push();
+    expect(c.cfg).toMatchObject({ backupMode: 'PC', apneaTime: 30 });
+    expect(k.windows().map((w) => w.id)).toEqual(['menu']);
+  });
+
+  it('PSV/CPAP: the patient stops breathing; after the apnoea time the backup ventilates and Apnea is raised; breathing again ends both', () => {
+    const { d, c, k } = setup();
+    choose(k, 'PSV/CPAP');
+    expect(c.cfg.mode).toBe('PSV');
+    expect(modeName(c.cfg)).toBe('PSV/CPAP');
+    expect(k.note()).toBe('psvPressureCycle');
+    c.write({ pmus: 6, spontRate: 14 }, 'tool');
+    run(d, 30);
+    expect(c.vs.backupBreath).toBeUndefined();
+    expect(c.alarms().active.map((a) => a.id)).not.toContain('apnea');
+    c.write({ pmus: 0 }, 'tool');
+    run(d, 30);
+    expect(c.vs.backupBreath).toBe('VC');
+    expect(c.alarms().active.map((a) => a.id)).toContain('apnea');
+    // the backup's VCV breaths deliver the set VT (the face's set Ti owns their flow, settle)
+    expect(Math.abs(c.measured().VTE - c.cfg.vt)).toBeLessThan(0.05 * c.cfg.vt);
+    c.write({ pmus: 6 }, 'tool');
+    run(d, 15);
+    expect(c.vs.backupBreath).toBeUndefined();
+    expect(c.alarms().active.map((a) => a.id)).not.toContain('apnea');
+  });
+
+  it('Pmax: a breath reaching the maximum pressure is ended (research/57 A-32), not held at it', () => {
+    const { d, c } = setup();
+    expect(c.cfg.pmaxAction).toBe('cycle');
+    c.write({ vt: 900, prvcTarget: 900, compliance: 20 }, 'tool'); // 900 mL at 20 mL/cmH2O: far above Pmax
+    run(d, 20);
+    expect(c.record()!.ti).toBeLessThan(c.cfg.itime - 0.1); // ended before its set Ti
+    expect(c.measured().PIP).toBeLessThanOrEqual(c.cfg.pmax + 1);
+    expect(c.alarms().active.map((a) => a.id)).toContain('pmax');
   });
 });

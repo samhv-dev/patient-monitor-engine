@@ -106,7 +106,9 @@ describe('the BIS-type reader on the engine\'s course (C26–C30)', { timeout: 9
     expect(v('surgical depth', 'bis')).toBeGreaterThan(v('burst suppression', 'bis'));
     expect(v('emergence', 'bis')).toBeGreaterThan(v('surgical depth', 'bis'));
   });
-  it.fails('C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3) — measured 85.6 vs 83.5: the β ratio (sedation component) is −10.9 dB vs −12.3 dB and the general score never wins (40–47 Hz concentration −20.1 dB)', () => {
+  // Was an expected failure until brief 172 (85.6 vs 83.5): the generator kept too much power above 25 Hz at depth. With
+  // the measured high-frequency fall (spectra.ts HF_SLOPE_GA, HF_CORNER_HZ) it reads 51.1 vs 63.6.
+  it('C26: surgical depth (propofol 3.5 + fentanyl) below loss of responsiveness (propofol 3)', () => {
     expect(v('loss of responsiveness', 'bis')).toBeGreaterThan(v('surgical depth', 'bis'));
   });
   it('awake reads high (toward 100: full book p. 2169; RAM98 Fig. 16A: 93.8)', () => {
@@ -122,11 +124,11 @@ describe('the BIS-type reader on the engine\'s course (C26–C30)', { timeout: 9
     expect(v('surgical depth', 'bisSr')).toBe(0);
     expect(v('burst suppression', 'bisSr')).toBeGreaterThan(0);
   });
-  // The cause, from Table 1's mixer: the sedation score cannot fall below Eo − Emax = 104.4 − 49.4 = 55 (l. 46), so
-  // 40–60 needs the general score, which lies in 40–60 only for a 40–47 Hz power concentration of ≈ −31.2 to −25.7 dB
-  // (l. 47–48); the engine's signal at surgical depth gives −20.1 dB (−5.1 awake): its 40–47 Hz power stays too high
-  // against the whole spectrum, and the sedation score (β ratio −10.9 dB → 85.6) is the lower one.
-  it.fails('C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149) — measured 85.6: the 40–47 Hz power concentration −20.1 dB, not the ≈ −31 to −26 dB the general score needs (Connor 2022 Table 1 l. 47–48)', () => {
+  // Was an expected failure until brief 172 (measured 85.6): the 40–47 Hz power concentration at depth was −20.1 dB, and
+  // the general score lies in 40–60 only for ≈ −31.2 to −25.7 dB (Connor 2022 Table 1 l. 47–48). The generator's
+  // spectrum above 25 Hz now follows the measured GA spectra (Akeju 2014 Fig. 3C; Purdon 2015 Fig. 3A), chosen from them
+  // and not from this index: the concentration reads −27.6 dB and the index 51.1.
+  it('C27: surgical depth (propofol + fentanyl, no stimulus) within 40–60 (Ch36 Table 36.4, p. 1149)', () => {
     expect(v('surgical depth', 'bis')).toBeGreaterThanOrEqual(40);
     expect(v('surgical depth', 'bis')).toBeLessThanOrEqual(60);
   });
@@ -136,8 +138,9 @@ describe('the BIS-type reader on the engine\'s course (C26–C30)', { timeout: 9
   });
   // Higher means by at least the one point the index is shown in [ENG: display]. The cause: every component is a ratio
   // of powers (dB differences), so the generator's lower amplitude at 80 y cancels, and its flatter slope moves the
-  // ratios by about half a point here.
-  it.fails('C28: at the cortex\'s own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) — measured 89.31 vs 88.78', () => {
+  // ratios by a fraction of a point here (0.53 before brief 172; 0.18 after it: at the cortex's own LOR the
+  // high-frequency fall is half on, the same at both ages, and its exponent is aged as κ is).
+  it.fails('C28: at the cortex\'s own loss of responsiveness the index is higher at 80 y than at 40 y ("paradox of age", Ch36 p. 1145, Table 36.3) — measured 87.08 vs 86.90', () => {
     expect((AT_LOR[80] as number) - (AT_LOR[40] as number)).toBeGreaterThanOrEqual(1);
   });
   it('the bispectral term is measured (RAM98 Eq 8): the mean bicoherence is a number at every depth (recorded, in no index)', () => {
