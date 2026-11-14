@@ -1,5 +1,5 @@
 // Plan pump-rack-tci.md C2, end to end through the classroom relay as a process of its own (`node relay/bin.ts`, the kit
-// runs the bundled bin), on port 10021 (this piece's range): a host session on a REAL engine joins it over a WebSocket,
+// runs the bundled bin), on port 10021 or PME_RELAY_TEST_PORT (a machine's own range): a host session on a REAL engine joins it over a WebSocket,
 // a pump tablet's socket signs in on the learner PIN, loads a stock propofol syringe on channel 1, programs it, runs it
 // at 20 mL/h and gives a 2 mL bolus. What is pinned is the host ENGINE's own state afterwards, not only the acks: the
 // `drugs` event's pump channel runs at 20 mL/h with its volume falling, and the patient's propofol total is the bolus's
@@ -19,7 +19,7 @@ import { waitFor } from '../helpers.ts';
 
 const S = 'PMR234';
 const LEARNER_PIN = '582913';
-const PORT = 10021;
+const PORT = Number(process.env.PME_RELAY_TEST_PORT) || 10021;
 const here = (p: string) => resolve(import.meta.dirname, p);
 const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
 const readFolder = (dir: string, skip: string[] = []) =>
