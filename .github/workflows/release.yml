@@ -2,8 +2,8 @@ name: release
 
 # Stage 8b. Runs when the ORCHESTRATOR pushes a `v*` tag on main (RELEASE.md; executors never tag). Rebuilds the
 # tagged commit, re-runs the release checks and publishes a GitHub release with the single-file IIFE, the file://
-# ventilator + monitor embed and the API reference attached. Tests stay in ci.yml (fast/slow split) and
-# validation.yml; this workflow does not replace them.
+# ventilator + monitor embed, the API reference and the two classroom kit zips (kit-build.yml) attached. Tests stay in
+# ci.yml (fast/slow split) and validation.yml; this workflow does not replace them.
 on:
   push:
     tags: ['v*']
@@ -17,12 +17,24 @@ on:
         type: boolean
         default: true
 
-permissions:
-  contents: write
+# Each job states its own: the kit is built with read access, only the release job can write (it creates the release).
+permissions: {}
 
 jobs:
+  # the classroom kit zips, built and checked once (relay, servers, site tree); names carry the version
+  kit:
+    uses: ./.github/workflows/kit-build.yml
+    permissions:
+      contents: read
+    with:
+      naming: release
+      ref: ${{ github.sha }}
+
   release:
+    needs: kit
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -53,12 +65,17 @@ jobs:
             node_modules/.bin/playwright test apps/demo/e2e/iife-smoke.e2e.ts apps/demo/e2e/vent-embed.e2e.ts
       - run: pnpm pack-smoke "$RUNNER_TEMP/pack-smoke"
       - run: pnpm docs:api
+      - uses: actions/download-artifact@v4 # the kit job's pme-classroom-kit-$V.zip and pme-classroom-kit-windows-$V.zip
+        with:
+          name: kit-zips
+          path: release/
       - name: Assemble the release assets
         run: |
           set -euo pipefail
           V="$GITHUB_REF_NAME"
           [ "$GITHUB_REF_TYPE" = tag ] || V="v$(node -p "require('./packages/renderer/package.json').version")" # dry run off a branch
           mkdir -p release
+          test -f "release/pme-classroom-kit-$V.zip" && test -f "release/pme-classroom-kit-windows-$V.zip"
           cp packages/renderer/dist/patient-monitor.iife.js packages/renderer/dist/patient-monitor.iife.js.map LICENSE NOTICES.md release/
           zip -qr release/LICENSES.zip LICENSES   # the full third-party texts, beside the standalone IIFE
           # build-embed.mjs already put LICENSE, NOTICES.md and LICENSES/ into the embed folder: refuse a zip without them
@@ -71,7 +88,7 @@ jobs:
           awk -v v="${V#v}" 'index($0, "## [" v "]") == 1 {on = 1; next} /^## \[/ || /^\[[^]]+\]: / {on = 0} on' CHANGELOG.md > release/NOTES.md
           test -s release/NOTES.md
           (cd release && sha256sum patient-monitor.iife.js patient-monitor.iife.js.map "ventilator-monitor-embed-$V.zip" "api-reference-$V.zip" \
-            LICENSES.zip LICENSE NOTICES.md > SHA256SUMS.txt)
+            "pme-classroom-kit-$V.zip" "pme-classroom-kit-windows-$V.zip" LICENSES.zip LICENSE NOTICES.md > SHA256SUMS.txt)
       - name: Upload the assets (dry run only; nothing is published)
         if: ${{ inputs.dry_run }}
         uses: actions/upload-artifact@v4
@@ -88,5 +105,6 @@ jobs:
           PRE=""; case "$V" in *-*) PRE="--prerelease" ;; esac   # v1.0.0-rc.1 → a GitHub pre-release (Q8)
           gh release create "$V" --verify-tag $PRE --title "patient-monitor-engine $V" --notes-file release/NOTES.md \
             release/patient-monitor.iife.js release/patient-monitor.iife.js.map \
-            "release/ventilator-monitor-embed-$V.zip" "release/api-reference-$V.zip" release/LICENSES.zip \
+            "release/ventilator-monitor-embed-$V.zip" "release/api-reference-$V.zip" \
+            "release/pme-classroom-kit-$V.zip" "release/pme-classroom-kit-windows-$V.zip" release/LICENSES.zip \
             release/SHA256SUMS.txt release/LICENSE release/NOTICES.md
