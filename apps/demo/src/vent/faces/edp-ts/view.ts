@@ -4,7 +4,7 @@
 // without a single line of behaviour in the product. Every word here is a face.json word or reason, or a number.
 import { modeName, type VentConfig } from '@pme/ventilator';
 import type { Cockpit } from '../../core/cockpit.ts';
-import { CONTROLS, formatIe, LIMITS, ROWS, SETTINGS, settingState, WINDOWS, type Ctl, type Row, type WindowId } from './controls.ts';
+import { CONTROLS, faceMode, formatIe, LIMITS, ROWS, SETTINGS, settingState, WINDOWS, type Ctl, type Row, type WindowId } from './controls.ts';
 import { dec, L, LAYOUT, num, word, type Leaf, type ReasonId, type WordId } from './data.ts';
 import type { Knob } from './knob.ts';
 import { alarmText } from './modes.ts';
@@ -72,7 +72,7 @@ function windowView(c: Cockpit, knob: Knob, id: WindowId, focus: number): Window
     if (r.kind === 'mode-off') return void entries.push({ ...base, unsim: r.reason });
     if (r.kind === 'off') return void entries.push({ ...base, unsim: r.reason, ...(r.value ? { value: W(r.value) } : {}), ...(r.more ? { more: true } : {}) });
     if (r.kind === 'open') return void entries.push({ ...base, more: true });
-    if (r.kind === 'mode') return void entries.push(base);
+    if (r.kind === 'mode' || r.kind === 'accept') return void entries.push(base);
     if (r.kind === 'limits') {
       if (r.off) return void entries.push({ ...base, unsim: r.off.reason });
       const cells = r.cells.map((cell) => {
@@ -86,13 +86,17 @@ function windowView(c: Cockpit, knob: Knob, id: WindowId, focus: number): Window
     // a setting edited in the window (Inspiratory pause, research/57 T-28)
     const s = SETTINGS[r.setting]!;
     const sel = knob.pending.key === `row:${r.setting}`;
-    const st = settingState(r.setting, c.cfg);
-    const f = s.format(sel ? (knob.pending.value as number) : s.read(c.cfg), c.cfg);
-    const u = s.unit(c.cfg);
+    const wc = knob.windowCfg(id); // the Backup window shows its draft (research/57 T-41)
+    const st = settingState(r.setting, wc);
+    const f = s.format(sel ? (knob.pending.value as number) : s.read(wc), wc);
+    const u = s.unit(wc);
     entries.push({ ...base, value: `${f === null ? W('off') : f}${u ? ` ${W(u)}` : ''}`, valueSel: sel, unsim: typeof st === 'object' ? st.reason : null });
   });
   return { id, title: W(def.title), entries, footer: def.footer ? W('footer') : null };
 }
+
+/** The top-left block's backup (research/57 R-05, R-06): the kind armed in PSV/CPAP, otherwise OFF. */
+const backupWord = (c: Cfg): string => (faceMode(c) === 'PSV/CPAP' ? W(c.backupMode === 'PC' ? 'backupPCV' : 'backupVCV') : W('backupOff'));
 
 /** The live View: the cockpit's model and the knob's state, as V1 drew them. */
 export function viewOf(c: Cockpit, knob: Knob, now: Date = new Date()): View {
@@ -129,7 +133,7 @@ export function viewOf(c: Cockpit, knob: Knob, now: Date = new Date()): View {
   const alarm = act[0] ? { text: alarmText(act[0].id) ?? '', priority: act[0].priority } : null;
 
   return {
-    category: W('adl'), mode: modeName(cfg), backup: W('backupOff'), date: fmtDate(now), time: fmtTime(now),
+    category: W('adl'), mode: modeName(cfg), backup: backupWord(cfg), date: fmtDate(now), time: fmtTime(now),
     top,
     tags: {
       fTotal: { hi: lim('fHi'), side: 'hi' }, vt: { hi: lim('vtHi'), lo: lim('vtLo'), side: 'both' }, ve: { hi: lim('mvHi'), lo: lim('mvLo'), side: 'both' },
