@@ -14,7 +14,10 @@ on:
   workflow_dispatch:
     inputs:
       args:
-        description: 'extra flags for pnpm validate (e.g. --quick)'
+        # --quick grades the morphology rows on 4 recorded windows instead of all of them: a smoke run, not the gate. Its
+        # recorded medians and so its bands differ from the full run's, and it can exit 1 where the full run passes (run
+        # 43235126118: 5 morphology rows red on --quick, green or yellow on the full run 43224580647).
+        description: 'extra flags for pnpm validate (empty = the gated run; --quick = a smoke run that can gate red)'
         required: false
         default: ''
   pull_request:
