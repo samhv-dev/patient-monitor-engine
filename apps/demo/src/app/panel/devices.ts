@@ -6,10 +6,13 @@
 // pause) is shown disabled with the reason, and every refused alarm action is said in a toast.
 // On the host, the "Learner controls on the monitor" switch (moved here from the Scenario tab when Instructor v2 became
 // the only instructor view, plan retire-instructor-v1 G1): one body, so v2's Devices sheet and today's tab both carry it.
+// EEG plan E12, Q9 (the owner, 12 November: "the EEG should go into devices as a device"): after the sensors, the EEG
+// device's artefact switches (panel/eeg.ts), shown only while an EEG device is on.
 import type { SensorId } from '@pme/engine-core';
 import { alarmCaps, alarmRefusal, noPauseReason } from '../alarm-caps.ts';
 import { alarmLine } from '../alarms.ts';
 import { describeCommand, SENSORS } from '../describe.ts';
+import { eegGroup } from './eeg.ts';
 import { nibpStartCommand } from '../patients.ts';
 import { LEVEL_MARK, LEVEL_NAME } from '../shell.ts';
 import { button, clock, h, select, setText, toast, toggle } from '../ui.ts';
@@ -117,8 +120,12 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   host?.onLearner((on) => learnerToggle?.set(on));
   const learnerRow = learnerToggle ? h('div', { class: 'row' }, learnerToggle, h('span', { class: 'hint' }, 'Charge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.')) : null;
 
+  // ---- the EEG device's artefacts (EEG plan E12, Q9), only while an EEG device is on ----
+  const eeg = eegGroup(link);
+
   c.onRefresh(() => {
     scales.refresh();
+    eeg.refresh();
     followSkin();
     followSensors();
     const a = link.alarms;
@@ -145,6 +152,6 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   });
 
   return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, pauseWhy, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
-    remoteHint, sensors, h('h3', {}, 'NIBP'), nibp, h('h3', {}, 'Pressure scales'), scales.el,
+    remoteHint, sensors, eeg.el, h('h3', {}, 'NIBP'), nibp, h('h3', {}, 'Pressure scales'), scales.el,
     learnerRow ? h('h3', {}, 'Learner controls') : null, learnerRow);
 }
