@@ -458,6 +458,7 @@ None recorded.
 | [`session/host-ff-next-phase.test.ts`](../../packages/controller/test/session/host-ff-next-phase.test.ts) | 0 | 0 |
 | [`session/host-instructor.test.ts`](../../packages/controller/test/session/host-instructor.test.ts) | 0 | 0 |
 | [`session/host-learner-defib.test.ts`](../../packages/controller/test/session/host-learner-defib.test.ts) | 0 | 0 |
+| [`session/host-learner-paused.test.ts`](../../packages/controller/test/session/host-learner-paused.test.ts) | 0 | 0 |
 | [`session/host-learner.test.ts`](../../packages/controller/test/session/host-learner.test.ts) | 0 | 0 |
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 0 | 0 |
 | [`session/host-pump-relay.test.ts`](../../packages/controller/test/session/host-pump-relay.test.ts) | 0 | 0 |
