@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` aec539b9 (Merge pull request #447 from samhv-dev/eeg-e12b-artefact-controls), built 2026-11-14T20:26:51.251Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/aec539b947c7ef80eeea3ad0ee00597ddc7d19e8
+The built teaching app of `main` 9333199e (Merge pull request #443 from samhv-dev/remote-l14-no-dose-while-paused), built 2026-11-14T23:26:53.758Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/9333199e87fa2a77b58bd90fd12960d8835c197f
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
