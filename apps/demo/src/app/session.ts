@@ -9,9 +9,9 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, PumpKind, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpDevices, PumpKind, RelayDevice } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
-import { loadShippedFormulary } from './formulary.ts';
+import { loadShippedFormulary, loadShippedPumpDevices } from './formulary.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -82,6 +82,11 @@ export class AppSession {
   readonly driver: ScenarioDriver;
   /** The same-screen instructor panel's controller (in-process hub, R7). */
   readonly panel: ControllerSession;
+  /** L14: every learner give the host refused because the case was paused (the host's Log line). */
+  onNotGiven(fn: (n: NotGiven) => void): () => void {
+    this.notGivenFns.add(fn);
+    return () => void this.notGivenFns.delete(fn);
+  }
   /** The name Room setup gave a device key (R7's remembered layout), or null: the record's and the Log's (brief 164). */
   deviceName(key: string): string | null {
     return readLayout(store)[key]?.name ?? null;
@@ -165,6 +170,7 @@ export class AppSession {
   /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
   instructors = 0;
   private readonly instructorFns = new Set<(n: number) => void>();
+  private readonly notGivenFns = new Set<(n: NotGiven) => void>();
   private serve: InstructorServe | null = null;
   private feedTimer: ReturnType<typeof setInterval> | null = null;
   private feedLast = ''; // The last body sent (JSON): a body is sent only when it changed
@@ -183,6 +189,8 @@ export class AppSession {
   eegModel: string | null;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
   formulary: Formulary | null = null;
+  /** C2: the shipped pump device profiles, once loaded (every pump command is refused until then). */
+  pumpDevices: PumpDevices | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
@@ -271,7 +279,18 @@ export class AppSession {
       // made from (loaded once, below; null until then), and each staged preparation into the /2 record
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
+      // pump rack C2: the room's rack (Room setup, A1) and the reference pumps' profiles; a pump tablet signs in on the
+      // learner PIN, and its commands are checked against these (both read at every hello and command)
+      pumpRack: () => this.pumpRack,
+      pumpDevices: () => this.pumpDevices,
       onPreparation: (p) => this.driver.recordPreparation(p),
+      // L14: a learner's give refused while the case was paused: an attempt in the record (and the /2 administrations, not
+      // accepted), and a Log line (main.ts hands it to the Link)
+      onNotGiven: (n) => {
+        this.driver.recordNotGiven(n.command, n.reason); // first: the record copies the runner's administrations with its row
+        this.record.notGiven(n);
+        for (const fn of [...this.notGivenFns]) fn(n);
+      },
       deviceName: (key) => readLayout(store)[key]?.name ?? null, // L9: the instructor's card names the remote as Room setup did
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
@@ -288,6 +307,7 @@ export class AppSession {
     // once and every second after, with the reason, until a new engine runs (the mount's newTimeline)
     el.addEventListener('pme-monitor-failed', this.onFailed);
     if (o.learnerPin) void loadShippedFormulary().then((f) => void (this.formulary = f));
+    if (o.learnerPin) void loadShippedPumpDevices().then((d) => void (this.pumpDevices = d));
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
     this.bc = createBroadcastChannelTransport(this.code);
