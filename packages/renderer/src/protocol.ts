@@ -72,6 +72,8 @@ export type FromWorker =
   // FX-11a: the worker is working through a long run (a fast-forward step, a catch-up)
   | { type: 'progress' }
   | { type: 'error'; message: string; reqId?: number } // reqId when a request failed inside the worker
+  // Brief 195: the engine threw while it stepped and has stopped for good (engine.worker.ts `stop`); `message`: the error's
+  | { type: 'stopped'; message: string }
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
   | { type: 'restored'; reqId: number; error?: string }
   | { type: 'capture12'; reqId: number; capture?: Capture12; error?: string }

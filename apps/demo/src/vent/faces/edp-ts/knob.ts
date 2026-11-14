@@ -42,6 +42,8 @@ export interface Knob {
   shown(): Cfg;
   /** The bottom row's mode. */
   rowMode(): FaceMode;
+  /** The configuration a window's rows show: its draft for a window that has one (the Backup window, T-41). */
+  windowCfg(id: WindowId): Cfg;
   ctrl(): boolean;
   /** The alarm test's step now (Ctrl + Alarm Limits with no alarm active, research/57 H-21): the priority whose lamp and
    *  tone are shown in turn, or null when no test runs. */
@@ -68,6 +70,8 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   let wins: Win[] = [];
   let confirming: string | null = null;
   let edits: Partial<VentConfig> = {};
+  /** The open draft window's edits, applied by its Accept row, dropped by Esc (research/57 T-41). */
+  let wedits: Partial<VentConfig> = {};
   let ctrl = false;
   let note: { r: ReasonId; until: number } | null = null;
   let menuPresses = 0;
@@ -85,11 +89,13 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   const live: Target = { cfg: () => c.cfg, apply: (p) => c.write(p) };
   const draft: Target = { cfg: draftCfg, apply: (p) => void Object.assign(edits, p) };
   const target = () => (confirming ? draft : live);
+  const wdraft: Target = { cfg: () => ({ ...c.cfg, ...wedits }), apply: (p) => void Object.assign(wedits, p) };
+  const windowCfg = (id: WindowId): Cfg => (WINDOWS[id].draft ? wdraft.cfg() : c.cfg);
 
   const items = (id: WindowId): Item[] => {
     const out: Item[] = [];
     WINDOWS[id].rows.forEach((r: Row, i) => {
-      if (r.kind === 'mode' || r.kind === 'open') out.push({ row: i });
+      if (r.kind === 'mode' || r.kind === 'open' || r.kind === 'accept') out.push({ row: i });
       else if (r.kind === 'setting' && settingState(r.setting, c.cfg) === 'live') out.push({ row: i });
       else if (r.kind === 'limits') for (const cell of r.cells) out.push({ row: i, cell });
     });
@@ -104,6 +110,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     pending.cancel();
     confirming = null;
     edits = {};
+    wedits = {};
     wins = [{ id, focus: 0 }];
   };
   const activate = (w: Win) => {
@@ -116,7 +123,14 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
       wins = at >= 0 ? wins.slice(0, at + 1) : [...wins, { id: row.window, focus: 0 }];
       return;
     }
-    if (row.kind === 'setting') select(`row:${row.setting}`, SETTINGS[row.setting]!, live);
+    if (row.kind === 'accept') {
+      // research/57 T-41: Accept applies the window's values and closes it
+      if (Object.keys(wedits).length) c.write(wedits);
+      wedits = {};
+      wins = wins.slice(0, -1);
+      return;
+    }
+    if (row.kind === 'setting') select(`row:${row.setting}`, SETTINGS[row.setting]!, WINDOWS[w.id].draft ? wdraft : live);
     if (row.kind === 'limits' && it.cell) select(`tag:${it.cell}`, LIMITS[it.cell]!, live);
   };
   const commit = () => {
@@ -127,6 +141,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     wins = [];
     c.chooseMode(name);
     if (Object.keys(e).length) c.write(e);
+    if (name === 'PSV/CPAP') say('psvPressureCycle'); // what the simulated PSV/CPAP breath ends on (research/57 M-06, M-07)
   };
 
   const k: Knob = {
@@ -136,6 +151,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     confirming: () => confirming,
     shown: draftCfg,
     rowMode: () => faceMode(draftCfg()),
+    windowCfg,
     ctrl: () => ctrl,
     alarmTest: () => {
       if (testFrom === null) return null;
@@ -183,7 +199,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
         testFrom = null;
         if (pending.key !== null) pending.cancel();
         else if (confirming) { confirming = null; edits = {}; }
-        else wins.pop();
+        else if (wins.pop() && !wins.some((x) => WINDOWS[x.id].draft)) wedits = {}; // T-41: back to the previous values
         ctrl = false;
         note = null;
       } else if (ctl.action === 'knobPress') k.push();
