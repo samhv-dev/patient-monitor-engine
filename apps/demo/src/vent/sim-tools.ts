@@ -11,9 +11,13 @@ export interface SimTools {
   open(): void;
   close(): void;
   stop(): void;
+  /** A face's own section at the end of the drawer (the EDP-TS face's "Show what is not simulated yet", brief 159):
+   *  rendered each time the drawer is built; the returned function removes it. */
+  addSection?(render: () => HTMLElement): () => void;
 }
 
 export function mountSimTools(c: Cockpit): SimTools {
+  const sections = new Set<() => HTMLElement>();
   const S = c.cfg;
   const num = S as unknown as Record<NumKey, number>;
   const bool = S as unknown as Record<BoolKey, boolean>;
@@ -72,6 +76,7 @@ export function mountSimTools(c: Cockpit): SimTools {
     R.append(dTog('uip', 'Upper Inflection'));
     if (S.uip) R.append(dSld('uipThresh', 'UIP Threshold', 20, 40, 1, 'cmH₂O'));
     R.append(el('div', { class: 'hr' }), dTog('showP01', 'Show P0.1'));
+    for (const s of sections) R.append(el('div', { class: 'hr' }), s());
     dc.append(L, R);
   }
   function buildAsync() {
@@ -92,5 +97,5 @@ export function mountSimTools(c: Cockpit): SimTools {
   });
   buildDrawer();
   buildAsync();
-  return { open, close, stop: off };
+  return { open, close, stop: off, addSection: (r) => (sections.add(r), () => void sections.delete(r)) };
 }

@@ -14,7 +14,7 @@ import type { AppSession } from '../session.ts';
 import type { View } from '../shell.ts';
 import { REPO } from '../about.ts';
 import { button, confirmDialog, h, toast } from '../ui.ts';
-import { builderPage } from '../builder/page.ts';
+import { builderPage, type RunDraft } from '../builder/page.ts';
 
 /** The 3 November demonstration's two cases, pinned first (owner, 24 October). */
 export const DEMO_CARDS: readonly string[] = ['showcase-mh', 'showcase-haemorrhage'];
@@ -24,6 +24,8 @@ export interface ScenariosDeps {
   session: Pick<AppSession, 'live'>;
   /** The app's one load (main.ts): replaces the patient, starts the case and notes it in Recent. */
   loadScenario(card: ScenarioCard): boolean;
+  /** B6: the builder's Run in place (builder/run-panel.ts `DraftRun.run`); absent: the builder offers no Run. */
+  runDraft?: RunDraft;
 }
 
 const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
@@ -100,7 +102,7 @@ export function scenariosView(d: ScenariosDeps): View {
 
   // ---------------------------------------------------------------------------------------------------------- builder
   // B2 (docs/plans/scenario-builder.md): the builder's page, in place of the stub that explained the /1 format
-  const builder = builderPage();
+  const builder = builderPage(undefined, undefined, d.runDraft && { run: d.runDraft, live: () => d.session.live });
 
   const el = h('section', { class: 'console scenarios', 'aria-labelledby': 'scen-h' }, main, library, builder.el);
   const show = (sub: string) => {

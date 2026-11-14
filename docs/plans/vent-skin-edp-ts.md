@@ -646,6 +646,26 @@ its marks the bezel is plain. The README's affiliation sentence, applied to READ
 
 > - **Not affiliated with any monitor or ventilator manufacturer.** The `-like` skins and the ventilator's Hamilton-style look evoke a general look. The planned EDP-TS ventilator face ([plan](docs/plans/vent-skin-edp-ts.md)) is named after the device at the clinical owner's ruling, to match the machine his residents use; no maker's logo or mark is drawn, and no logos or trade dress elsewhere.
 
+**The look, amended by piece VF (brief 159, after the owner saw V1's face: "it is not realistic. I provided picture and
+I want it to be as realistic to realworld version as possible").** The sentence "the face draws from plain shapes"
+(above and mock-up m1) is replaced by this standard:
+1. **The photographs decide what they show**: the look, the colours, the positions and proportions, the words, the
+   order of the entries and the pictograms' subjects (research/57 §16, rows P-01 to P-65, measured on the photographs
+   rectified to the LCD's 800 × 600 grid). The photographs never enter the repository and nothing of them is embedded:
+   the face is drawn (HTML, CSS, inline SVG pictograms of my own drawing, one module entry per subject).
+2. **The note decides what the photographs do not show** (a window, a state or a mode not photographed keeps the
+   manual's words and numbers, drawn in the photographed style).
+3. **What neither shows is an engineering choice, marked `eng`** in `face.json` with its reason.
+For anything a photograph shows, this also replaces the reading of VQ7 by which the manual's wording won: the mode
+windows are titled "Operative Modes" and ordered as photographed (P-01, P-02; X-01 keeps the manual's form).
+Unchanged: English only; no maker's name or mark (the housing is plain where the device carries one); "ADL", the mode
+name and "Backup" are screen content; the affiliation line and the "Simulator" handle stay outside the drawn device.
+The device is drawn on ONE fixed design grid (the housing 1080 × 820 design px, the LCD at (120, 55)) and scaled as a
+whole; nothing reflows between a tablet and a wall display. A control the simulator does not honour yet is drawn as
+the device draws it, nothing is written on the device about it, and pressing it shows the reason in the resident's
+words in the simulator's strip outside the device (the owner's answer on this is pending; the other answer, marking
+them on the device, is the default of the drawer's switch "Show what is not simulated yet").
+
 When V1 merges, "planned" goes and the link points at the face. **Provenance:** a research note (piece VR) transcribes
 §2 into `research/` with tags (`documented` for manual facts by page, `measured` for colours and proportions from the
 photographs, `inferred`, `eng` for the Rise Time steps and the tone pitches); `face.json`'s every word, colour and
@@ -1002,6 +1022,6 @@ have persian settings inside" (§6).
 `docs/plans/vent-skin-edp-ts/mockup/`: `m1-main` (the main screen in SIMV(VCV)+PSV, Exp. Sensitiv. selected),
 `m2-modes` (Operative Modes and Other Operative modes, unbuilt modes unavailable), `m3-alarms` (a high-priority alarm
 and the Alarm settings window), `m4-menu` (Menu and Ventilatory adjuncts with the N rows unavailable), each with its
-PNG at 1180 × 870. Drawn from plain shapes and `face.css`'s proposed tokens with the app's own font tokens
+PNG at 1180 × 870. **Superseded by the built face (piece VF, brief 159; §5's amended standard).** Drawn from plain shapes and `face.css`'s proposed tokens with the app's own font tokens
 (`app.css`); no photograph, frame or manual page is used. Their `README.txt` says what is product and what is
 illustrative.
