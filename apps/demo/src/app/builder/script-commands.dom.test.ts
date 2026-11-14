@@ -142,7 +142,9 @@ describe('the same input, the same command: the builder’s form and the sheet�
   });
 
   it('brief 208 (ruling 1): the form\'s groups name the sheets as the dock does: "CPR", no longer "Defib · CPR"', () => {
-    expect(SHEET_GROUPS.map(([g]) => g)).toEqual(['Airway (Airway sheet)', 'Breathing (Airway sheet)', 'Oxygen (Airway sheet)', 'Defibrillator (CPR sheet)', 'Pacing (CPR sheet)', 'CPR (CPR sheet)', 'Sensors (Devices sheet)', 'NIBP (Devices sheet)']);
+    // the groups that name a sheet (main has since added groups that name none: TCI, lungs ventilated, recruitment, labs)
+    expect(SHEET_GROUPS.map(([g]) => g).filter((g) => g.endsWith(' sheet)'))).toEqual(['Airway (Airway sheet)', 'Breathing (Airway sheet)', 'Oxygen (Airway sheet)', 'Defibrillator (CPR sheet)', 'Pacing (CPR sheet)', 'CPR (CPR sheet)', 'Sensors (Devices sheet)', 'NIBP (Devices sheet)', 'Lung condition (Airway sheet)']);
+    expect(SHEET_GROUPS.some(([g]) => g.includes('Defib · CPR'))).toBe(false);
   });
 
   it('CPR sheet: charge and shock at an energy, disarm, synchronised on and off, the pacer, CPR started and stopped', async () => {
