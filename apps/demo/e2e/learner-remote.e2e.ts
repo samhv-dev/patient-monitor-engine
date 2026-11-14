@@ -370,7 +370,8 @@ test("L8 (LQ4): a phone changes and stops the instructor's infusion and changes 
 // had no line for it, and a laptop give after it was reported lost. These follow his steps on the laptop's own screens:
 // the dose is in the ENGINE's drugs (not only an ack), the record row and the Log sheet's line name the phone, a give
 // from the laptop's Drug sheet after it is applied and logged, and both again when the Give arrives while the laptop's
-// tab is hidden (the session pauses itself then: hidden-tab.ts). Free roam (no card) and on a card.
+// tab is hidden (the session pauses itself then: hidden-tab.ts; since L14 the Give waits for the resume). Free roam (no
+// card) and on a card.
 type DrugsW = { __drugs: string[] };
 /** Every drug the laptop's engine reports, from its own events (not the acks). */
 const engineDrugs = (page: Page) => page.evaluate(() => (window as unknown as DrugsW).__drugs);
@@ -390,7 +391,7 @@ const tabHidden = (page: Page, hidden: boolean) => page.evaluate((h) => {
   document.dispatchEvent(new Event('visibilitychange'));
 }, hidden);
 for (const card of [null, 'showcase-mh-v2']) {
-  test(`brief 164 (${card ?? 'free roam'}): a phone's Give reaches the laptop's engine, record and Log; a laptop give after it and a Give while the laptop's tab is hidden too`, async ({ page, browser, browserName }) => {
+  test(`brief 164 (${card ?? 'free roam'}): a phone's Give reaches the laptop's engine, record and Log; a laptop give after it, and a Give around the laptop's hidden tab (it waits for the resume)`, async ({ page, browser, browserName }) => {
     test.setTimeout(240_000);
     await classroom();
     const KEY = 'bed3remote01';
@@ -414,16 +415,21 @@ for (const card of [null, 'showcase-mh-v2']) {
     await laptopGive(page, 'epineph');
     await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('epinephrine');
     await expect.poll(() => logLines(page, 'instructor'), { timeout: 10_000 }).toContain('Epinephrine 10 µg IV');
-    // (c) the laptop's tab hidden: the session pauses; the phone's Give is applied on the paused clock, and logged
-    // (a preparation's time runs on the case clock, which stands still while paused: it is made ready before the hide)
+    // (c) the laptop's tab hidden: the session pauses (hidden-tab.ts). Since L14 (the owner's ruling on N117: no learner
+    // dose while the case is paused) the phone's Give cannot be used then and says why; shown again, the session resumes
+    // and the phone's Give is applied and logged (a preparation's time runs on the case clock, which stands still while
+    // paused: it is made ready before the hide)
     await prepareOn(p, [{ search: 'midazolam', drug: 'midazolam', product: 'hypnovel-5mg-ml', amount: 1 }], null);
     const second = p.locator('.lr-item').nth(1);
     await expect(second.locator('.lr-state')).toHaveText(/^Ready/, { timeout: 15_000 });
     await tabHidden(page, true);
     await expect.poll(() => page.evaluate(() => (window as unknown as HostW & { __pmeApp: { link: { ctl: { hostPaused: boolean } } } }).__pmeApp.link.ctl.hostPaused), { timeout: 10_000 }).toBe(true);
+    await expect(second.locator('.lr-give-btn')).toBeDisabled({ timeout: 10_000 });
+    await expect(p.locator('.lr-tray .lr-paused')).toBeVisible();
+    await tabHidden(page, false);
+    await expect(second.locator('.lr-give-btn')).toBeEnabled({ timeout: 10_000 });
     await second.locator('.lr-give-btn').click();
     await expect(second.locator('.lr-said')).toHaveText(/^Given 1 mL at \d\d:\d\d$/, { timeout: 10_000 });
-    await tabHidden(page, false);
     await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('midazolam');
     await expect.poll(() => logLines(page, 'learner'), { timeout: 10_000 }).toEqual(['Midazolam 5 mg IV (learner remote: bed 3 remote)', 'Ephedrine 50 mg IV (learner remote: bed 3 remote)']);
     await laptopGive(page, 'phenyl');

@@ -237,9 +237,9 @@ test("accessibility: the learner remote's PIN form and signed-in page, and the R
 });
 
 // Plan pump-rack-tci.md A1: the pump tablet at a 10-inch tablet's landscape size (§5: 1280 px), dark and light, with
-// the 44 px touch targets: the learner-PIN form, then the rack with A2's channel controls. The host grants the tablet on
-// the learner PIN (A2 wired C2's admission into the app); a syringe and a drip channel are loaded through the
-// instructor's own command path (E1's `pump` event), to audit the rack as the tablet draws it, with one flow open.
+// the 44 px touch targets: the learner-PIN form, then the rack with A2's channel controls. The host signs the tablet in on
+// the learner PIN (C2); the instructor's own command path (E1's `pump` event) loads a syringe and a drip channel, to audit
+// the rack as the tablet draws it, with one flow open.
 test('accessibility: the pump tablet\'s PIN form and its rack of syringe and drip channels at a tablet size', async ({ browser }) => {
   test.setTimeout(150_000);
   const dir = mkdtempSync(join(tmpdir(), 'a1-'));
@@ -276,9 +276,9 @@ test('accessibility: the pump tablet\'s PIN form and its rack of syringe and dri
         for (const d of x) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
         await p.locator('.ip-peer-go').click();
       };
-      // (the wrong-PIN words are pump/page.dom.test.ts's)
+      // (the wrong-PIN state is mobile-learner.e2e.ts's; its words are pump/page.dom.test.ts's)
       if (theme === 'dark') found.push(...(await focusWalk(p, 16)).map((f) => `pump form focus: ${f}`));
-      await typePin(pin); // A2: the host grants it on the learner PIN (C2's admission, wired into the app)
+      await typePin(pin); // the host grants it (C2)
       await expect(p.locator('.pump-face')).toHaveCount(4);
       await expect(p.locator('.pump-face[data-ch="2"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
       await expect(p.locator('.pump-face[data-ch="1"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });

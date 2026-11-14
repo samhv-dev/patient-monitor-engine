@@ -44,6 +44,7 @@ export const DOCS_TESTS = {
 /** Test files that name a document path in code without reading the repository's copy, each with the reason. */
 export const NOT_READERS = {
   'apps/demo/src/app/teach2/drug-sheet.dom.test.ts': "asserts the drug sheet's text names docs/model/endocrine-thermal.md",
+  'packages/controller/test/relay/kit-site.test.ts': 'README.md and NOTICES.md are files of a fake kit and site tree it writes; it reads scripts/showcase/site/README.md, not a document',
   'packages/controller/test/relay/kit-windows.test.ts': 'README.md is a file inside a zip the test builds',
   'packages/skins/test/grid.test.ts': 'NOTES.md is named in a test title',
   'packages/validation/test/check-licences.test.ts': 'NOTICES.md is in an expected error message; the NOTICES text is a literal',

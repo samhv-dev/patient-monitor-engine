@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEngine, type Command, type DispatchResult, type EngineEvent } from '@pme/engine-core';
 import { HostSession, PUMP_REASONS, UNKNOWN_ROLE, type HostSessionOptions, type HostTarget } from '../../src/session/host-session.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { createStamper, LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type AppliedResolution, type ManagedTransport, type WireEvent, type WireMessage } from '../../src/protocol.ts';
+import { createStamper, LEARNER_ISSUED_BY, PAUSED_REFUSAL, PUMP_ISSUED_BY, type AppliedResolution, type ManagedTransport, type WireEvent, type WireMessage } from '../../src/protocol.ts';
 import { loadFormulary } from '../../src/formulary/load.ts';
 import type { Formulary, FormularyFiles } from '../../src/formulary/types.ts';
 import { loadPumpDevices, type PumpDevices } from '../../src/pump-devices.ts';
@@ -366,6 +366,27 @@ describe('C2, D9: a remote and the Drug sheet change a drug on its one channel, 
     const stop = lr.command({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: 0 });
     expect(await ack(x.got, stop)).toMatchObject({ accepted: true });
     expect(applied(x.panelGot, stop)?.event).toMatchObject({ kind: 'pump', action: 'stop', ch: 1 });
+  });
+
+  it('L14 kept on the D9 path: while the case is paused a remote\'s `infusion set` of a drug on its one channel is refused `paused`, nothing reaches the engine; after the resume it changes the channel', async () => {
+    const notGiven: unknown[] = [];
+    const y = setup({ onNotGiven: (n) => void notGiven.push(n) });
+    const p = await pumpIn(y);
+    await propofolChannel(p, 1);
+    expect((await p.send({ action: 'rate', ch: 1, rate: 20, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 1 })).accepted).toBe(true);
+    const remote = await remoteIn(y);
+    expect((await ack(y.panelGot, y.laptop.command({ type: 'time', action: 'pause' }))).accepted).toBe(true);
+    const before = y.tg.got.length;
+    const id = remote.command({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: 25 });
+    expect(await ack(y.got, id)).toMatchObject({ accepted: false, code: 'paused', reason: PAUSED_REFUSAL });
+    expect(y.tg.got.length).toBe(before);
+    expect(applied(y.panelGot, id)).toBeUndefined();
+    expect(notGiven).toEqual([expect.objectContaining({ from: 'lr.1', reason: PAUSED_REFUSAL, command: expect.objectContaining({ issuedBy: LEARNER_ISSUED_BY, by: REMOTE_KEY, event: expect.objectContaining({ kind: 'pump', action: 'rate', ch: 1, rate: 25 }) }) })]);
+    expect((await ack(y.panelGot, y.laptop.command({ type: 'time', action: 'resume' }))).accepted).toBe(true);
+    const after = remote.command({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: 25 });
+    expect(await ack(y.got, after)).toMatchObject({ accepted: true });
+    expect(applied(y.panelGot, after)?.event).toMatchObject({ kind: 'pump', action: 'rate', ch: 1, rate: 25 });
   });
 
   it('on two channels it is refused, with the channels named, and nothing reaches the engine', async () => {

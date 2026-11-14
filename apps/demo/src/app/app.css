@@ -470,6 +470,12 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
    Debrief, and neither it nor a toast prints, from any view. */
 .app[data-route='debrief'] .ff-banner { display: none; }
 @media print { .ff-banner, .toasts { display: none !important; } }
+/* Brief 195: the simulation has stopped (engine-stopped.ts). Over every view, the monitor's too, until a new engine runs;
+   alarm red is the patient's, so the warning accent of an 'alert' toast. */
+.engine-stopped { position: fixed; top: calc(var(--chrome-bottom, 0px) + var(--s-4)); left: 50%; transform: translateX(-50%); z-index: 50; width: min(40rem, calc(100vw - 2 * var(--s-4))); max-height: calc(100vh - 2 * var(--s-4)); overflow: auto; padding: var(--s-4); background: var(--bezel-3); color: var(--text-strong); border: 1px solid var(--line-strong); border-left: 4px solid var(--danger); border-radius: var(--r-control); box-shadow: 0 6px 24px rgb(0 0 0 / 0.45); }
+.engine-stopped h2 { margin: 0 0 var(--s-2); }
+.engine-stopped-way { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-2) var(--s-4); align-items: start; margin-top: var(--s-4); }
+@media (max-width: 34rem) { .engine-stopped-way { grid-template-columns: 1fr; } }
 .ff-group { display: inline-flex; align-items: center; gap: var(--s-1); }
 
 /* FU-11 (owner ruling Q3): the learner monitor's status and its own Sound / Silence, under the monitor */
@@ -1070,6 +1076,9 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .lr-holds:empty, .lr-conc:empty, .lr-said:empty, .lr-cannot:empty, .lr-time:empty, .lr-state:empty, .lr-ontop:empty, .lr-tray-cleared:empty { display: none; }
 .lr-time, .lr-state, .lr-said, .lr-cannot { margin: 0; }
 .lr-cannot, .lr-said { color: var(--warn); font-weight: 600; }
+/* L14: the case is paused: the phone's drug controls say why they cannot be used */
+.lr-paused { margin: 0; padding: var(--s-2) var(--s-3); border-left: 4px solid var(--warn); border-radius: var(--r-control); background: var(--bezel-3); font-weight: 600; }
+.lr-paused[hidden] { display: none; }
 .lr-tray-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
 .lr-item { display: grid; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-card); background: var(--bezel-2); }
 .lr-item-title { margin: 0; font-weight: 600; color: var(--text-strong); }
