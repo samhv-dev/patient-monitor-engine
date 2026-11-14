@@ -281,3 +281,59 @@ test("E7 through a relay in its own process: the room's BIS-type reader on the p
     await relay.close();
   }
 });
+
+// EEG E8: the Entropy reader, the same two ways as E7. The phone's window wears the Entropy face and shows the host
+// engine's own SE (and RE) at each reading; SE falls after propofol on the host. SE reads windows of 15.36–60.16 s
+// (Viertiö-Oja 2004 p. 158), so it moves slowly and scatters little; 10 points under the lowest awake reading is the
+// drug's effect (awake SE ≈ 69, surgical depth ≈ 29 on the engine's course, test/engine/eeg-entropy-course.test.ts)
+// [ENG: test].
+const SE: Idx = { id: 'se', digits: 0 };
+const SE_DROP = 10;
+/** The reader's longest window (60.16 s, SE below 2 Hz) full before the awake readings. Runs the host at ×4 to get there. */
+async function entropyWarm(page: Page, p: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'time', action: 'scale', value: 4 }));
+  await expect.poll(async () => Number(await p.locator('.depth-window').getAttribute('data-t')), { timeout: 90_000 }).toBeGreaterThan(64);
+  await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'time', action: 'scale', value: 1 }));
+}
+const ENTROPY_LABEL = 'Entropy-type SE and RE, computed from published components';
+test('E8: Room setup chooses the Entropy reader; the phone shows the host\'s own SE, and it falls after propofol on the host', async ({ page, browser, browserName }) => {
+  test.setTimeout(240_000);
+  const relay = await startRelay({ port: relayPort(0), host: '127.0.0.1', staticDir: staticDir(), remoteRoles: 'viewer' });
+  try {
+    const ws = `ws://127.0.0.1:${relay.port}/`;
+    const code = await host(page, ws, 'generic', SE);
+    await page.evaluate(() => (location.hash = '#/room'));
+    const sel = page.locator('.room-depth select');
+    await expect(sel.locator('option[value="entropy"]')).toHaveText(ENTROPY_LABEL);
+    await sel.selectOption('entropy');
+    await page.evaluate(() => (location.hash = '#/teach2'));
+    const p = await depthPhone(browser, browserName, code, ws);
+    await expect(p.locator('.depth-window')).toHaveAttribute('data-model', 'entropy', { timeout: 15_000 });
+    await expect(p.locator('.depth-label')).toHaveText(ENTROPY_LABEL);
+    await entropyWarm(page, p);
+    const awake = await sameAsHost(p, page, 5, SE);
+    const after = await bolusMoves(page, p, Math.min(...awake), SE, SE_DROP);
+    console.log(`[E8] ${browserName}: awake SE ${awake.join(', ')} → ${after} after propofol (the host's own value each read)`);
+    await p.context().close();
+  } finally {
+    await relay.close();
+  }
+});
+
+test("E8 through a relay in its own process: the room's Entropy reader on the phone is the host's, and propofol moves it", async ({ page, browser, browserName }) => {
+  test.setTimeout(240_000);
+  const relay = await processRelay(relayPort(5));
+  try {
+    const ws = `ws://127.0.0.1:${relay.port}/`;
+    const code = await host(page, ws, 'entropy', SE);
+    const p = await depthPhone(browser, browserName, code, ws);
+    await expect(p.locator('.depth-window')).toHaveAttribute('data-model', 'entropy');
+    await entropyWarm(page, p);
+    const awake = await sameAsHost(p, page, 5, SE);
+    const after = await bolusMoves(page, p, Math.min(...awake), SE, SE_DROP);
+    console.log(`[E8] ${browserName} (relay process): awake SE ${awake.join(', ')} → ${after} after propofol`);
+    await p.context().close();
+  } finally {
+    await relay.close();
+  }
+});
