@@ -4,6 +4,7 @@
 // grade() are F3's. The shared types at the end are fixed here so F2 and F3 can be built in parallel.
 import type { PkRoute } from '@pme/engine-core';
 import type { Finding } from '../formulary/findings.ts';
+import type { Remaining } from '../formulary/remaining.ts';
 import type { RunnerInput } from './runner.ts';
 import type { DebriefHints, DocCommand, Op, ScenarioDoc, VitalVar } from './types.ts';
 
@@ -179,7 +180,31 @@ export interface ScenarioDocV2 extends Header {
 
 /** One entry of the phase timeline: the phase, when it was entered and left, and the rule that fired ('initial' for the
  *  initial phase). */
-export interface PhaseEntry { id: string; t: number; exitT?: number; rule: string }
+export interface PhaseEntry {
+  id: string; t: number; exitT?: number; rule: string;
+  /** Plan scenario-builder.md §6 (B6): each leaf of the rule that fired as it read on that tick (absent on the initial
+   *  entry and in a state written before B6), so "What fired, and why" reads the runner's record, recomputing nothing. */
+  why?: LeafRead[];
+}
+
+/** One leaf of an entry rule as the runner read it at the entry (B6). `value`: the variable's truth, a slope's mmHg/min
+ *  (or unit/min) from the ring, an unchanged leaf's spread in %, a phase hold's seconds held; absent while none was
+ *  read. `met`: the leaf's own truth (under a `not`, `not: true`, the leaf before the negation). */
+export interface LeafRead {
+  key: string;
+  leaf: 'value' | 'slope' | 'unchanged' | 'visited' | 'signal' | 'phaseEntered' | 'hold';
+  variable: string;
+  op?: string;
+  threshold?: number;
+  value?: number;
+  /** A value leaf's hold, a slope or unchanged leaf's window, s; with the seconds held (a window: the seconds the ring spans). */
+  forS?: number;
+  heldS?: number;
+  met: boolean;
+  not?: true;
+  /** A phase hold kept running by D1's latch (the team's change answered the rise) though its rule read false. */
+  latched?: true;
+}
 
 /** A true/false edge of a named rule (a phase rule, an anchor, a precondition, a conditional repeat, an outcome): grade() reads these instead of the values' history. */
 export interface RuleEdge { rule: string; t: number; value: boolean }
@@ -200,10 +225,20 @@ export interface PrepRecord {
   remaining: number;
   activeAmount: number;
   unit: string;
+  /** L13 (the Debrief reads the preparation from the record alone): every drug in it as the host made it (`concentration`
+   *  above is one drug's). Absent on a record made before L13. */
+  actives?: Array<{ drugId: string; amount: number; unit: string; perMl: number }>;
+  /** L13: when it was ready, from the formulary's sourced preparation times (`src`), or `gap: 'LQ7'` where no source
+   *  gives one (ready at once). Absent before L13. */
+  ready?: { atS: number; gap: 'LQ7' | null; src: string[] };
+  /** L13: what `remaining` rests on, as remaining.ts said at the give: the stability row's source (null: none applies),
+   *  whether the age was past the source's last point, and the formulary's words where the source gives no quantity
+   *  ("loss not modelled", LQ8). Absent before L13. */
+  basis?: { src: string | null; beyondData: boolean; note: Remaining['note'] };
 }
 /** A preparation as staged (`prep stage`, §4 D3): its record without a give's own figures, with the device that staged it
  *  (`by`, whose own id space `id` is in) and the sim time. Graded whether or not it is ever delivered. */
-export interface StagedPrep extends Omit<PrepRecord, 'remaining' | 'activeAmount' | 'unit'> {
+export interface StagedPrep extends Omit<PrepRecord, 'remaining' | 'activeAmount' | 'unit' | 'basis'> {
   by: string;
   t: number;
 }
@@ -301,6 +336,8 @@ export interface PhaseRunnerState {
   edges: RuleEdge[];
   /** The script entries fired (ids): each fires once. */
   fired: string[];
+  /** The sim time each script entry fired, by id (B6's log); absent until the first, so an older state is the same. */
+  firedT?: Record<string, number>;
   /** Seconds each phase's entry rule has held without a break (its `holdS`), by phase id. */
   holdFor?: Record<string, number>;
   /** A phase whose running hold an `unchanged` leaf's break latched (the team's change answered the rise: the hold runs

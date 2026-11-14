@@ -71,3 +71,56 @@ export function edgeFrequency(psd: readonly number[], dfHz: number, lo: number, 
   }
   return hi;
 }
+
+// ── Shared by the named readers (EEG plan E7–E11) ─────────────────────────────────────────────────────────────────
+// Functions a source NAMES without defining (Connor 2022 Table 1 calls MATLAB's `blackman`, `baseline` (its own line
+// 57: a least-squares line), `butter`); each is written here from its standard definition, not from any code, and is
+// tested against that definition (test/l3/eeg-devices/bis-type.test.ts). Named, not defined, in the source.
+
+/** MATLAB's symmetric Blackman window of n points: 0.42 − 0.5·cos(2πi/(n−1)) + 0.08·cos(4πi/(n−1)) (the window's
+ * definition; Connor 2022 Table 1 l. 37 names it, Rampil 1998 p. 1000 says the BIS epoch is Blackman-windowed). */
+export function blackman(n: number): number[] {
+  return Array.from({ length: n }, (_, i) => 0.42 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1)) + 0.08 * Math.cos((4 * Math.PI * i) / (n - 1)));
+}
+
+/** x minus its least-squares straight line (Connor 2022 Table 1 l. 57 `baseline`: the fit of [1, i] to x). */
+export function detrend(x: ArrayLike<number>): number[] {
+  const n = x.length;
+  let si = 0, sx = 0, sii = 0, six = 0;
+  for (let i = 1; i <= n; i++) {
+    const v = x[i - 1] as number;
+    si += i; sx += v; sii += i * i; six += i * v;
+  }
+  const den = n * sii - si * si;
+  const b = den !== 0 ? (n * six - si * sx) / den : 0;
+  const a = (sx - b * si) / n;
+  return Array.from({ length: n }, (_, i) => (x[i] as number) - (a + b * (i + 1)));
+}
+
+/** The second-order Butterworth high-pass at fcHz for a sample rate fs (MATLAB `butter(2, fc/(fs/2), 'high')`, the
+ * bilinear transform with the cut-off pre-warped: |H| = 1/√2 at fc, 0 at 0 Hz, 1 at fs/2): b, a with a0 = 1. */
+export function butterHighpass2(fcHz: number, fs: number): { b: [number, number, number]; a: [number, number] } {
+  const k = Math.tan((Math.PI * fcHz) / fs);
+  const q = Math.SQRT2 * k;
+  const n = 1 / (1 + q + k * k);
+  return { b: [n, -2 * n, n], a: [2 * (k * k - 1) * n, (1 - q + k * k) * n] };
+}
+
+/** The DFT of v (already windowed) at bins 0 … kMax: re, im. Same tables as psdOf; N·(kMax+1) multiply-adds. */
+export function dftOf(v: readonly number[], kMax: number): { re: number[]; im: number[] } {
+  const n = v.length;
+  const { cos, sin } = table(n);
+  const re = new Array<number>(kMax + 1);
+  const im = new Array<number>(kMax + 1);
+  for (let k = 0; k <= kMax; k++) {
+    let a = 0;
+    let b = 0;
+    for (let i = 0, j = 0; i < n; i++, j = (j + k) % n) {
+      a += (v[i] as number) * (cos[j] as number);
+      b -= (v[i] as number) * (sin[j] as number);
+    }
+    re[k] = a;
+    im[k] = b;
+  }
+  return { re, im };
+}

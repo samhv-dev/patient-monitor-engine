@@ -251,7 +251,7 @@ test("R4: the QR's address opens the instrument picker; one tap gives today's le
   const pick = p.locator('.join-pick');
   await expect(pick.getByRole('heading', { level: 1 })).toHaveText('Choose what this screen shows');
   await expect(pick.locator('.join-code .code')).toHaveText(code);
-  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Learner remote', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
+  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Learner remote', 'Infusion pumps', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
   const learnerBtn = pick.locator('.join-card[data-show="learner"] button');
   await expect(learnerBtn).toBeFocused(); // preselected: one tap
   expect(hellos).toEqual([]); // the picker follows nothing until the tap
@@ -394,5 +394,104 @@ test('L6: the Learner remote card opens the learner-PIN form; the learner PIN fr
   // "Change" goes back to the picker, which marks the last choice
   await p.locator('.lr-change a').click();
   await expect(p.locator('.join-card[data-show="remote"] .st.on')).toHaveText('Last on this device');
+  await ctx.close();
+});
+
+// A1 (plan pump-rack-tci.md §2, §4 D1, §5, §8; PQ10 = B): the QR's picker offers "Infusion pumps" in the owner's words;
+// its Show here opens the learner-PIN form at #/pump (nothing said on the wire before the PIN); the learner PIN says hello
+// as `{role: 'pump', show: 'pump', device, pin}` through the classroom relay (the guard and C1's relay pass it). The host
+// grants a pump in C2, not yet: the tablet says so after 10 s. To show the rack in a browser before C2, the test then
+// issues the grant ITSELF through the host's own grant method (HostSession.grant, standing in for C2's admission; the
+// product does not grant a pump yet, and this is not a sign-in path), and the instructor's own command path loads two
+// channels (the engine's `pump` event, E1; C2 will build these from the tablet's commands): channel 1 a REMIFENTANIL
+// syringe programmed as propofol (§8's mismatch), channel 3 a drip bag. The tablet shows Room setup's channels and
+// kinds, a change on Room setup at once, each face's programme, and never the contents.
+// PME_A1_SHOTS=<dir>: the card and the rack are saved there as PNG (for the PR; CI sets none).
+test('A1: the Infusion pumps card opens #/pump; its learner PIN says hello as `pump`; before C2 the host does not sign it in; granted, the rack shows Room setup\'s channels and the programme, never the contents', async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const code = await instructor(page, 'showcase-induction', { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, pumpRack: ['syringe', 'syringe', 'drip', 'syringe'] });
+  const learnerPin = (await page.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, hasTouch: true }); // a 10-inch tablet, landscape (§5)
+  const p = await ctx.newPage();
+  const hellos: Array<Record<string, unknown>> = [];
+  const refused: string[] = [];
+  p.on('websocket', (w) => {
+    w.on('framesent', (f) => {
+      const m = JSON.parse(String(f.payload)) as Record<string, unknown>;
+      if (m.kind === 'hello') hellos.push(m);
+    });
+    w.on('framereceived', (f) => void (/"relay":"error"/.test(String(f.payload)) && refused.push(String(f.payload))));
+  });
+  const shots = process.env.PME_A1_SHOTS;
+  await p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws())}#/pick`);
+  const card = p.locator('.join-card[data-show="pump"]');
+  await expect(card.locator('h2')).toHaveText('Infusion pumps');
+  await expect(card.locator('p').first()).toHaveText("A rack of syringe and drip pumps for infusions and TCI. Everything you set is recorded under this tablet's name.");
+  if (shots) await card.screenshot({ path: `${shots}/155-${browserName}-card.png` });
+  await card.locator('button').click();
+  await expect(p).toHaveURL(new RegExp(`\\?join=${code}&relay=[^#]+#/pump$`));
+  const form = p.locator('.ip-peer-form');
+  await expect(form.getByRole('heading', { level: 1 })).toHaveText('Infusion pumps');
+  await expect(form.getByLabel('Learner PIN')).toBeVisible();
+  expect(hellos).toEqual([]);
+  for (const d of learnerPin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+  await p.locator('.ip-peer-go').click();
+  await expect.poll(() => hellos.length).toBeGreaterThan(0);
+  const key = (await p.evaluate(() => localStorage.getItem('pme.device'))) as string;
+  for (const m of hellos) expect(m).toMatchObject({ role: 'pump', show: 'pump', device: key, pin: learnerPin });
+  // Before C2 the host welcomes the tablet (it follows) but does not grant it: said in words, the form again
+  await expect(p.locator('.ip-peer-error')).toHaveText("The instructor's computer did not sign this tablet in: its app does not take pump tablets yet.", { timeout: 20_000 });
+  expect(refused).toEqual([]); // the relay refused nothing: the hello passed the guard and the relay
+  expect(p.url()).not.toContain(learnerPin);
+
+  // The rack in a browser: sign in again, and the TEST grants it through the host's own grant method (not a product path)
+  type PumpW = { __pmePumpPage: { follower(): { peerId: string } | null } };
+  type HostG = { __pmeApp: { session: { relay: unknown; host: { grant(t: unknown, to: string, granted: boolean): void } } } };
+  for (const d of learnerPin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+  await p.locator('.ip-peer-go').click();
+  const from = await p.waitForFunction(() => (window as unknown as PumpW).__pmePumpPage.follower()?.peerId ?? null).then((h) => h.jsonValue() as Promise<string>);
+  await page.evaluate((to) => { const s = (window as unknown as HostG).__pmeApp.session; s.host.grant(s.relay, to, true); }, from);
+  await expect(p.locator('.pump-status')).toHaveText(`Signed in as the room's infusion pumps · ${code}`);
+  const faces = p.locator('.pump-face');
+  await expect(faces).toHaveCount(4);
+  expect(await faces.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.kind))).toEqual(['syringe', 'syringe', 'drip', 'syringe']);
+  // no monitor on the tablet, and none of its sound
+  await expect(p.locator('.stage')).toBeHidden();
+  await expect(p.getByRole('button', { name: /^Sound|Silence/ })).toHaveCount(0);
+  // the instructor's own command path loads channel 1 (a mismatch) and channel 3 (a drip bag), E1's `pump` event
+  const send = (event: Record<string, unknown>) => page.evaluate((e) => (window as unknown as W).__pmeApp.link.send({ type: 'applyEvent', event: e }), { kind: 'pump', ...event });
+  const steps: Array<Record<string, unknown>> = [
+    { action: 'load', ch: 1, channel: 'syringe', contents: { drugId: 'remifentanil', concentration: { amount: 50, unit: 'mcg', perMl: 1 }, volumeMl: 50 }, syringeMl: 50 },
+    { action: 'program', ch: 1, drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
+    { action: 'rate', ch: 1, rate: 20, unit: 'mL/h' },
+    { action: 'start', ch: 1 },
+    { action: 'load', ch: 3, channel: 'drip', contents: { drugId: 'norepinephrine', concentration: { amount: 4, unit: 'mg', perMl: 250 }, volumeMl: 250 } },
+    { action: 'program', ch: 3, drugId: 'norepinephrine', concentration: { amount: 4, unit: 'mg', perMl: 250 }, set: 20 },
+    { action: 'rate', ch: 3, rate: 30, unit: 'drops/min', limitMl: 100 },
+    { action: 'start', ch: 3 },
+  ];
+  // the engine checks a pump event against the channels as they are, and applies it a tick later: each step is sent
+  // once the one before it has applied (a refused send applies nothing, so sending it again is safe)
+  for (const e of steps) await expect.poll(async () => (await send(e)).accepted, { message: JSON.stringify(e), timeout: 10_000, intervals: [200] }).toBe(true);
+  const one = p.locator('.pump-face[data-ch="1"]');
+  const three = p.locator('.pump-face[data-ch="3"]');
+  // the faces follow the engine's 1 Hz `drugs` event: each channel is awaited running before its fields are read
+  await expect(one).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
+  await expect(three).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
+  await expect(one.locator('[data-face="programmed"]')).toHaveText('Propofol 10 mg/mL');
+  await expect(one.locator('[data-field="rate"] dd')).toHaveText('20 mL/h');
+  await expect(one.locator('[data-field="dose"] dd')).toHaveText('200 mg/h');
+  await expect(three.locator('[data-face="programmed"]')).toHaveText('Norepinephrine 4 mg in 250 mL');
+  await expect(three.locator('[data-field="rate"] dd')).toHaveText('30 drops/min');
+  await expect(three.locator('[data-field="rateOther"] dd')).toHaveText('90 mL/h');
+  await expect(three.locator('[data-field="limit"] dd')).toHaveText('100 mL');
+  // the contents of channel 1's syringe are nowhere in the tablet's page (§8)
+  expect(await p.content()).not.toMatch(/remifentanil|50 µg|mcg/i);
+  // a change on Room setup reaches the tablet at once: five channels, the fifth a drip
+  await page.evaluate(() => (window as unknown as { __pmeApp: { session: { setPumpRack(k: string[]): void } } }).__pmeApp.session.setPumpRack(['syringe', 'syringe', 'drip', 'syringe', 'drip']));
+  await expect(faces).toHaveCount(5);
+  await expect(p.locator('.pump-rack')).toHaveAttribute('data-rows', '2');
+  if (shots) await p.screenshot({ path: `${shots}/155-${browserName}-rack.png`, fullPage: true });
   await ctx.close();
 });

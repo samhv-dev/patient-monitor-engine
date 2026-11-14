@@ -83,8 +83,8 @@ export interface A11yFinding {
  * instructor panel and the instructor phone's PIN form and Room card on a touch screen), accessible names (1.3.1/4.1.2), text contrast (1.4.3) from the rendered
  * colours, horizontal scroll (1.4.10) and clipped labels (brief §11.2), one h1 per view and a main landmark.
  */
-export function audit(page: Page, o: { touchPanel: boolean }): Promise<A11yFinding[]> {
-  return page.evaluate(({ touchPanel }) => {
+export function audit(page: Page, o: { touchPanel: boolean; drawnDevice?: string }): Promise<A11yFinding[]> {
+  return page.evaluate(({ touchPanel, drawnDevice }) => {
     const out: Array<{ rule: string; what: string }> = [];
     const visible = (el: Element) => {
       const r = el.getBoundingClientRect();
@@ -138,6 +138,11 @@ export function audit(page: Page, o: { touchPanel: boolean }): Promise<A11yFindi
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const el = n.parentElement;
       if (!el || seen.has(el) || !n.textContent?.trim() || !visible(el) || el.closest('.stage, .sr-only, [disabled], option, .qr')) continue;
+      // ONE narrow exemption, contrast only (brief 159): the drawn picture of a real device (the EDP-TS ventilator's
+      // housing and screen) keeps the device's own photographed colours, small white-on-blue words included; bending
+      // them to 4.5:1 would make the picture unlike the machine the resident will use. Everything outside it (the
+      // simulator's strip, the handle, the drawer) stays under the full rule, and targets and names hold inside it too.
+      if (drawnDevice && el.closest(drawnDevice)) continue;
       seen.add(el);
       const cs = getComputedStyle(el);
       const fg = rgb(cs.color);

@@ -45,7 +45,11 @@ describe('PhaseRunner: the leaves on truth, each at its edge', () => {
     expect(r.stateId).toBe('a');
     r.advance(3, [truth({ etco2: 45.001 })]);
     expect(r.stateId).toBe('b');
-    expect(r.phases).toEqual([{ id: 'a', t: 0, exitT: 3, rule: 'initial' }, { id: 'b', t: 3, rule: 'enter:b' }]);
+    expect(r.phases).toEqual([
+      { id: 'a', t: 0, exitT: 3, rule: 'initial' },
+      // B6: the entry keeps the leaf as it read on that tick (entry-reads.test.ts)
+      { id: 'b', t: 3, rule: 'enter:b', why: [{ key: 'phase:b', leaf: 'value', variable: 'etco2', op: '>', threshold: 45, value: 45.001, met: true }] },
+    ]);
     const ge = new PhaseRunner(ab({ value: { var: 'etco2', op: '>=', value: 45 } }));
     ge.start(0);
     ge.advance(1, [truth({ etco2: 44.999 })]);
@@ -266,7 +270,7 @@ describe('PhaseRunner: the timeline, the record and the edges are state', () => 
     r.start(0);
     for (let i = 1; i <= 1400; i++) r.advance(i, [truth({ hr: i % 2 ? 120 : 80 })]);
     expect(r.phases.length).toBe(500);
-    expect(r.phases.at(-1)).toEqual({ id: 'a2', t: 1400, rule: 'enter:a2' });
+    expect(r.phases.at(-1)).toMatchObject({ id: 'a2', t: 1400, rule: 'enter:a2' }); // B6 adds the entry's leaf reads
     expect(r.history.length).toBe(200);
     const b = r.edges.filter((e) => e.rule === 'phase:b');
     expect(b.length).toBeLessThanOrEqual(PhaseRunner.EDGES_PER_RULE);
