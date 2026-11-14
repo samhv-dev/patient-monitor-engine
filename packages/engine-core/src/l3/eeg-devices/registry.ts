@@ -1,10 +1,11 @@
 // EEG plan D8: the registry of EEG devices, one spec row each (like the room's defibrillator models): the device's
 // label, update interval and every constant with its tag (docs/model/monitor.md lists them), and its reader —
 // create(fsHz) and read(state, samples, impedanceKOhm) → readings, nothing else (the device boundary, plan §5).
-// `device eeg model <id>` accepts these ids only. The BIS-type reader is E7; Entropy, Narcotrend and PSI readers join as their
+// `device eeg model <id>` accepts these ids only. The BIS-type reader is E7, the Entropy reader E8; Narcotrend and PSI readers join as their
 // sources are approved (the owner's Q1 A, Q2 A).
 import type { EegDeviceSpec, EegReading } from '../../types-eeg.ts';
 import { BIS_TYPE_SPEC, bisTypeRead, createBisType, type BisTypeState } from './bis-type.ts';
+import { createEntropy, ENTROPY_SPEC, entropyRead, type EntropyState } from './entropy.ts';
 import { createGeneric, genericRead, GENERIC_SPEC, type GenericState } from './generic.ts';
 
 export interface EegDevice<S> {
@@ -13,9 +14,10 @@ export interface EegDevice<S> {
   read(state: S, samples: ArrayLike<number>, impedanceKOhm: readonly number[]): EegReading[];
 }
 
-export const EEG_DEVICES: { generic: EegDevice<GenericState>; bisType: EegDevice<BisTypeState> } = {
+export const EEG_DEVICES: { generic: EegDevice<GenericState>; bisType: EegDevice<BisTypeState>; entropy: EegDevice<EntropyState> } = {
   generic: { spec: GENERIC_SPEC, create: createGeneric, read: genericRead },
   bisType: { spec: BIS_TYPE_SPEC, create: createBisType, read: bisTypeRead }, // E7: Connor 2022 + Rampil 1998 (the owner's sources)
+  entropy: { spec: ENTROPY_SPEC, create: createEntropy, read: entropyRead }, // E8: Viertiö-Oja 2004 (the maker's published description)
 };
 
 export type EegModelId = keyof typeof EEG_DEVICES;
