@@ -60,6 +60,9 @@ export interface Preparation {
 
 export type PrepareResult = Preparation | { ok: false; refused: Refusal; why: string };
 
+/** What the record and the Debrief say for a gap of the preparation's own figures (LQ7, ruled 9 November: ready at once). */
+export const GAP_WORDS: Readonly<Record<'LQ7', string>> = Object.freeze({ LQ7: 'no source for the preparation time' });
+
 const no = (refused: Refusal, why: string): PrepareResult => ({ ok: false, refused, why });
 
 /** The preparation made from `components` in `diluent` (none: drawn as it is) at `simT` seconds, or why not. */

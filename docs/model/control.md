@@ -51,7 +51,7 @@ transports (`src/protocol.ts`).
 |---|---|
 | [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
 | [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
-| [`preparations.ts:132`](../../packages/controller/src/session/preparations.ts#L132) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
+| [`preparations.ts:135`](../../packages/controller/src/session/preparations.ts#L135) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
 
 ## State
 
@@ -276,6 +276,7 @@ transports (`src/protocol.ts`).
 | `holds` | [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts) | Does the rule hold now? `rank` is the store its value leaves read (3 truth, 2 displayed). |
 | `matches` | [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | Does a clinical event satisfy an `event` trigger? kind equal, min* filters as lower bounds, the rest exact. |
 | `resolveRhythm` | [`scenario/standins.ts`](../../packages/controller/src/scenario/standins.ts) | The rhythm to send for `id` on an engine that knows `known`: |
+| `eventRefusal` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | The engine's reason for refusing a card's event of one of ENGINE_CHECKED_KINDS, in its own words; |
 | `validateScenario` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | Validate an unknown value as a scenario document: |
 | `describe` | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | One-line human description of a command, for logs. |
 | `bolusDrugOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The drug a command gives as a bolus, else null. |
@@ -385,6 +386,7 @@ None recorded.
 | [`panel/scenario-tab.dom.test.ts`](../../packages/controller/test/panel/scenario-tab.dom.test.ts) | 0 | 0 |
 | [`panel/staging.test.ts`](../../packages/controller/test/panel/staging.test.ts) | 0 | 0 |
 | [`protocol.test.ts`](../../packages/controller/test/protocol.test.ts) | 0 | 0 |
+| [`relay/kit-site.test.ts`](../../packages/controller/test/relay/kit-site.test.ts) | 0 | 0 |
 | [`relay/kit-store.test.ts`](../../packages/controller/test/relay/kit-store.test.ts) | 0 | 0 |
 | [`relay/kit-windows.test.ts`](../../packages/controller/test/relay/kit-windows.test.ts) | 0 | 0 |
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
@@ -408,6 +410,7 @@ None recorded.
 | [`scenario/concentration-vars.test.ts`](../../packages/controller/test/scenario/concentration-vars.test.ts) | 0 | 0 |
 | [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 0 | 0 |
 | [`scenario/entry-reads.test.ts`](../../packages/controller/test/scenario/entry-reads.test.ts) | 0 | 0 |
+| [`scenario/event-kinds.test.ts`](../../packages/controller/test/scenario/event-kinds.test.ts) | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |
 | [`scenario/host-scenario.test.ts`](../../packages/controller/test/scenario/host-scenario.test.ts) | 0 | 0 |
@@ -435,6 +438,7 @@ None recorded.
 | [`session/fx2-no-silent-hang.test.ts`](../../packages/controller/test/session/fx2-no-silent-hang.test.ts) | 0 | 0 |
 | [`session/host-boundary.test.ts`](../../packages/controller/test/session/host-boundary.test.ts) | 0 | 0 |
 | [`session/host-drug-lock.test.ts`](../../packages/controller/test/session/host-drug-lock.test.ts) | 0 | 0 |
+| [`session/host-engine-stopped.test.ts`](../../packages/controller/test/session/host-engine-stopped.test.ts) | 0 | 0 |
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-ff-next-phase.test.ts`](../../packages/controller/test/session/host-ff-next-phase.test.ts) | 0 | 0 |

@@ -177,6 +177,11 @@ describe('the follower\'s instrument hashes (R4, §4 D7)', () => {
     expect(instrumentOf('#/depth/')).toBe('depth');
     expect(hashOf('depth')).toBe('#/depth');
     for (const h of ['#/depth/x', '#/depths']) expect(instrumentOf(h), h).toBe('learner');
+    // A1 (plan pump-rack-tci.md §4 D1): the pump tablet's page
+    expect(instrumentOf('#/pump')).toBe('pump');
+    expect(instrumentOf('#/pump/')).toBe('pump');
+    expect(instrumentOf('#/pump/x')).toBe('learner');
+    expect(hashOf('pump')).toBe('#/pump');
     // L6: the learner action remote's page, and back
     expect(instrumentOf('#/remote/learner')).toBe('remote');
     expect(instrumentOf('#/remote/learner/')).toBe('remote');
