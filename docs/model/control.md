@@ -399,6 +399,7 @@ None recorded.
 | [`panel/scenario-tab.dom.test.ts`](../../packages/controller/test/panel/scenario-tab.dom.test.ts) | 0 | 0 |
 | [`panel/staging.test.ts`](../../packages/controller/test/panel/staging.test.ts) | 0 | 0 |
 | [`protocol.test.ts`](../../packages/controller/test/protocol.test.ts) | 0 | 0 |
+| [`relay/kit-site.test.ts`](../../packages/controller/test/relay/kit-site.test.ts) | 0 | 0 |
 | [`relay/kit-store.test.ts`](../../packages/controller/test/relay/kit-store.test.ts) | 0 | 0 |
 | [`relay/kit-windows.test.ts`](../../packages/controller/test/relay/kit-windows.test.ts) | 0 | 0 |
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
@@ -451,6 +452,7 @@ None recorded.
 | [`session/fx2-no-silent-hang.test.ts`](../../packages/controller/test/session/fx2-no-silent-hang.test.ts) | 0 | 0 |
 | [`session/host-boundary.test.ts`](../../packages/controller/test/session/host-boundary.test.ts) | 0 | 0 |
 | [`session/host-drug-lock.test.ts`](../../packages/controller/test/session/host-drug-lock.test.ts) | 0 | 0 |
+| [`session/host-engine-stopped.test.ts`](../../packages/controller/test/session/host-engine-stopped.test.ts) | 0 | 0 |
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-ff-next-phase.test.ts`](../../packages/controller/test/session/host-ff-next-phase.test.ts) | 0 | 0 |

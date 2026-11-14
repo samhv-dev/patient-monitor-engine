@@ -17,6 +17,8 @@ const html = readFileSync(resolve(import.meta.dirname, '../../../../vent-hamilto
 const body = (html.split('<body>')[1] as string).split('<script')[0] as string;
 const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
 const NUMERIC = /^[-+\d.:/ ]+$/;
+/** A window's value with its unit (research/57 T-40 "Apnea time 15 s"): a number and a sourced unit word. */
+const withUnit = (t: string) => { const m = /^([-+\d.:/]+) (.+)$/.exec(t); return m !== null && ALLOWED.has(m[2]!); };
 
 const mount = (d: VentDriver) => mountFace(d, faceFromLocation({ search: '?face=edp-ts' }), { linked: false });
 const texts = (): string[] => {
@@ -36,13 +38,13 @@ describe('the EDP-TS face', () => {
     const d = createVentDriver(null);
     const ui = mount(d);
     const seen = new Set<string>();
-    const check = (state: string) => { for (const t of texts()) { seen.add(t); expect(ALLOWED.has(t) || NUMERIC.test(t), `${state}: "${t}"`).toBe(true); } };
+    const check = (state: string) => { for (const t of texts()) { seen.add(t); expect(ALLOWED.has(t) || NUMERIC.test(t) || withUnit(t), `${state}: "${t}"`).toBe(true); } };
     check('running');
     expect(document.querySelector('main.edp h1')?.textContent).toBe('EDP-TS');
     click('[data-ctl="side:mode"]'); check('mode window');
     expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Operative Modes']);
     expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['VCV', 'PCV', 'PSV/CPAP', 'SIMV(PCV)+PSV', 'SIMV(VCV)+PSV', 'Noninvasive (NIV)', 'Other Operative modes']);
-    wheel(2); knobPress();
+    wheel(3); knobPress(); // PSV/CPAP is a knob stop since piece V2
     // the second window takes the first one's place, as photographed (IMG_1545; V1 drew both side by side)
     expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Operative Modes']);
     expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['MMV+PSV', 'PSV+VT Assured', 'APRV', 'PRVC', 'Other Operative modes']);
@@ -53,6 +55,18 @@ describe('the EDP-TS face', () => {
     expect(d.vs.cfg.mode).toBe('PRVC');
     for (let i = 0; i < 3; i++) { click('[data-ctl="side:menu"]'); check(`menu ×${i + 1}`); }
     click('[data-ctl="under:esc"]'); click('[data-ctl="under:esc"]');
+    // piece V2: Menu → Backup ventilation, as the manual draws it (research/57 T-40)
+    click('[data-ctl="side:menu"]'); knobPress(); check('backup window');
+    expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Backup ventilation']);
+    expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['Ventilation Modes', 'Apnea time', 'Backup in SIMV/APRV', 'Accept']);
+    expect(document.querySelector('.edp-win')!.textContent).toContain('VCV');
+    expect(document.querySelector('.edp-win')!.textContent).toContain('15 s');
+    click('[data-ctl="under:esc"]'); click('[data-ctl="under:esc"]');
+    // PSV/CPAP: its bottom row (D-03) and the backup in the top-left block (R-05)
+    click('[data-ctl="side:mode"]'); wheel(2); knobPress(); knobPress(); check('PSV/CPAP');
+    expect(d.vs.cfg.mode).toBe('PSV');
+    expect(document.querySelector('.edp-tl .mn')!.textContent).toBe('PSV/CPAP');
+    expect(document.querySelector('.edp-tl .bk')!.textContent).toBe('Backup: VCV');
     click('[data-ctl="side:alarmLimits"]'); check('alarm settings');
     click('[data-ctl="under:esc"]');
     click('[data-ctl="key:peep"]'); wheel(3); check('pending');
@@ -90,7 +104,7 @@ describe('the EDP-TS face', () => {
     expect(['tag:pLo', 'tag:peepHi', 'tag:o2Hi', 'tag:o2Lo'].map((id) => document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent)).toEqual(['5', '20.0', '60', '40']);
     click('[data-ctl="side:mode"]');
     const off = [...document.querySelectorAll<HTMLElement>('.edp-entry[aria-disabled="true"]')].map((e) => [e.textContent, why(e)]);
-    expect(off).toEqual([['PSV/CPAP', 'PSV/CPAP is not simulated yet'], ['SIMV(PCV)+PSV', 'SIMV modes are not simulated yet'], ['SIMV(VCV)+PSV', 'SIMV modes are not simulated yet'], ['Noninvasive (NIV)', 'NIV is not simulated yet']]);
+    expect(off).toEqual([['SIMV(PCV)+PSV', 'SIMV modes are not simulated yet'], ['SIMV(VCV)+PSV', 'SIMV modes are not simulated yet'], ['Noninvasive (NIV)', 'NIV is not simulated yet']]);
     ui.stop();
   });
 

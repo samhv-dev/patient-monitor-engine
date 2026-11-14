@@ -37,6 +37,7 @@ export function resetPhysics(vs: VentState): void {
   vs.hold = null;
   vs.pendingHold = null;
   vs.lastBreathT = vs.p.t; // Stage V
+  if (vs.backupBreath !== undefined) delete vs.backupBreath; // plan V2
 }
 
 export function setMode(vs: VentState, m: VentMode): void {
@@ -83,6 +84,10 @@ export function runScenario(vs: VentState, id: string): void {
 
 const spontActive = (c: VentConfig) => c.spont || c.mode === 'PSV' || c.mode === 'PAV' || c.reverseTrig;
 const vcTi = (c: VentConfig) => c.vt / 1000 / Math.max(0.05, c.vcFlow / 60);
+/** Plan V2: the device's apnoea backup is armed (PSV with a backup kind set; research/57 O-18, T-37). */
+const backupArmed = (c: VentConfig) => c.mode === 'PSV' && (c.backupMode ?? 'off') !== 'off';
+/** The kind of the breath in progress: a backup breath runs as its stamped kind, every other breath as the set mode. */
+const breathKind = (vs: VentState): VentMode => (vs.backupBreath !== undefined && backupArmed(vs.cfg) ? vs.backupBreath : vs.cfg.mode);
 
 function updateSpontaneous(vs: VentState): void {
   const c = vs.cfg;
@@ -116,28 +121,40 @@ function currentPmus(vs: VentState): number {
 
 const rampTo = (vs: VentState, target: number) => target * Math.min(1, easeShape(vs.p.phaseT / Math.max(0.02, vs.cfg.riseTime), 'halfcos'));
 
-function controller(vs: VentState): void {
+/** Sets this step's targets; returns whether a pressure mode's target reached past `pmax` (plan V2, `pmaxAction`). */
+function controller(vs: VentState): boolean {
   const c = vs.cfg;
   const p = vs.p;
   const peep = c.peep;
+  let over = false;
+  const limit = (above: number) => {
+    if (above > c.pmax - peep) over = true;
+    return Math.min(above, c.pmax - peep);
+  };
   if (p.phase === 'insp') {
-    if (c.mode === 'VC') {
+    const m = breathKind(vs);
+    if (m === 'VC') {
       const Ti = vcTi(c);
       const mean = c.vcFlow / 60;
       if (c.flowPattern === 'square') vs.flowTarget = mean;
+      // plan V2, the EDP-TS descending ramp (manual p. 43): 2·mean at 0, linear to 0 at Ti. Sampled at the step's
+      // midpoint, so each 5 ms step carries the ramp's exact integral over it and the breath delivers mean·Ti = VT.
+      else if (c.flowPattern === 'ramp0') vs.flowTarget = 2 * mean * Math.max(0, 1 - (p.phaseT + DT / 2) / Ti);
       else vs.flowTarget = mean * (4 / 3 - (2 / 3) * clamp(p.phaseT / Ti, 0, 1));
-    } else if (c.mode === 'PC') p.targetPaw = peep + Math.min(rampTo(vs, c.pc), c.pmax - peep);
-    else if (c.mode === 'PRVC') p.targetPaw = peep + Math.min(rampTo(vs, p.prvcPressure), c.pmax - peep);
-    else if (c.mode === 'PSV') p.targetPaw = peep + Math.min(rampTo(vs, c.ps), c.pmax - peep);
-    else if (c.mode === 'PAV') {
+    } else if (m === 'PC') p.targetPaw = peep + limit(rampTo(vs, c.pc));
+    else if (m === 'PRVC') p.targetPaw = peep + limit(rampTo(vs, p.prvcPressure));
+    else if (m === 'PSV') p.targetPaw = peep + limit(rampTo(vs, c.ps));
+    else if (m === 'PAV') {
       const g = c.pavAssist / 100;
       const as = g * (recoilPressure(c, p.V) + c.resistance * Math.max(0, p.Q));
+      if (as > c.pmax - peep) over = true;
       p.targetPaw = peep + clamp(as, 0, c.pmax - peep);
     }
   } else {
     p.targetPaw = peep;
     vs.flowTarget = 0;
   }
+  return over;
 }
 
 function patientTriggers(vs: VentState): boolean {
@@ -157,7 +174,8 @@ function patientTriggers(vs: VentState): boolean {
   return sP >= -c.presTrig;
 }
 
-export function startInspiration(vs: VentState, mandatory: boolean): void {
+/** `backup`: plan V2, a backup breath of that kind (mandatory; it leaves the apnoea clock where it is). */
+export function startInspiration(vs: VentState, mandatory: boolean, backup?: 'VC' | 'PC'): void {
   const p = vs.p;
   p.measured.autoPEEP = Math.max(0, recoilPressure(vs.cfg, p.V));
   p.phase = 'insp';
@@ -173,7 +191,11 @@ export function startInspiration(vs: VentState, mandatory: boolean): void {
   if (!mandatory) p.lastPtT = p.t;
   p.markers.push({ t: p.t, type: mandatory ? 'mand' : 'pt' });
   if (p.markers.length > 60) p.markers.shift();
-  vs.lastBreathT = p.t; // Stage V: apnoea clock
+  if (backup !== undefined) vs.backupBreath = backup; // plan V2: the apnoea clock runs on from the patient's last breath
+  else {
+    if (vs.backupBreath !== undefined) delete vs.backupBreath;
+    vs.lastBreathT = p.t; // Stage V: apnoea clock
+  }
 }
 
 function startExpiration(vs: VentState): void {
@@ -194,33 +216,45 @@ function startExpiration(vs: VentState): void {
   p.shown = { ...p.measured };
 }
 
-function advancePhase(vs: VentState): void {
+/**
+ * `pmaxHit`: plan V2, this step's pressure reached past `pmax` with `pmaxAction: 'cycle'`; `stepPeak`, the highest
+ * airway pressure of this step's sub-steps (the breath's PIP includes the pressure that reached the limit, so the
+ * model's `pmax` alarm, High Pressure, is raised by the breath it ended: research/57 A-32).
+ */
+function advancePhase(vs: VentState, pmaxHit: boolean, stepPeak: number): void {
   const c = vs.cfg;
   const p = vs.p;
   p.phaseT += DT;
   p.breathT += DT;
   const mp = 60 / Math.max(4, c.rate);
   const isSpont = c.mode === 'PSV' || c.mode === 'PAV';
-  if (p.phase === 'insp') {
+  if (p.phase === 'insp' && pmaxHit) {
+    // plan V2 (manual p. 95, research/57 A-32): the expiratory valve opens to bring the pressure down to PEEP: the
+    // breath ends now, with no inspiratory pause and no inspiratory hold (an armed hold waits for the next breath)
+    p.measured.PLAT = c.peep + recoilPressure(c, p.V);
+    p.pipCur = Math.max(p.pipCur || 0, stepPeak);
+    startExpiration(vs);
+  } else if (p.phase === 'insp') {
     let cyc = false;
-    const Ti = c.mode === 'VC' ? vcTi(c) : c.itime;
-    if (c.mode === 'VC') {
+    const m = breathKind(vs);
+    const Ti = m === 'VC' ? vcTi(c) : c.itime;
+    if (m === 'VC') {
       // Correction C1 (Stage V): v1.9 compared the ABSOLUTE lung volume (vtDelivered = V) with VT, so trapped gas
       // shortened every breath and capped auto-PEEP; a volume-controlled breath delivers VT on top of trapped gas.
       if (p.V - p.breathVstart >= c.vt || p.phaseT >= Ti) cyc = true;
-    } else if (c.mode === 'PC' || c.mode === 'PRVC') {
+    } else if (m === 'PC' || m === 'PRVC') {
       if (p.phaseT >= c.itime) cyc = true;
-    } else if (c.mode === 'PSV') {
+    } else if (m === 'PSV') {
       p.peakInspFlow = Math.max(p.peakInspFlow, p.Q);
       if (p.Q <= p.peakInspFlow * (c.cycleOff / 100) && p.phaseT > 0.15) cyc = true;
       if (p.phaseT > 3) cyc = true;
-    } else if (c.mode === 'PAV') {
+    } else if (m === 'PAV') {
       if (p.Pmus <= 0.2 && p.phaseT > 0.2) cyc = true;
       if (p.phaseT > 3) cyc = true;
     }
     if (cyc) {
       p.measured.PLAT = c.peep + recoilPressure(c, p.V);
-      if (c.pause > 0 && c.mode === 'VC') {
+      if (c.pause > 0 && m === 'VC') {
         p.phase = 'pause';
         p.phaseT = 0;
       } else startExpiration(vs);
@@ -242,9 +276,18 @@ function advancePhase(vs: VentState): void {
       md = true;
     }
     if (p.phaseT >= minEx && patientTriggers(vs)) tg = true;
-    if (isSpont && p.breathT >= Math.max(mp, 6)) {
+    const armed = backupArmed(c);
+    if (isSpont && !armed && p.breathT >= Math.max(mp, 6)) {
       tg = true;
       md = true;
+    }
+    // plan V2 (manual pp. 49–50; research/57 T-38, A-26, A-45): no patient breath for the apnoea time starts the backup;
+    // its next breaths come at the set rate; a patient trigger on the same step wins and ends the backup
+    let bk: 'VC' | 'PC' | undefined;
+    if (armed && !tg && p.t - vs.lastBreathT >= c.apneaTime && (vs.backupBreath === undefined || p.breathT >= mp)) {
+      tg = true;
+      md = true;
+      bk = c.backupMode as 'VC' | 'PC';
     }
     if (vs.pendingHold === 'exp' && p.phaseT > 0.3) {
       vs.hold = 'exp';
@@ -252,7 +295,7 @@ function advancePhase(vs: VentState): void {
       p.measured.autoPEEP = Math.max(0, recoilPressure(c, p.V));
       return;
     }
-    if (tg) startInspiration(vs, md);
+    if (tg) startInspiration(vs, md, bk);
   }
 }
 
@@ -295,7 +338,9 @@ export function stepVent(vs: VentState): void {
   const open = vs.circuit === 'disconnected'; // Stage V: the lung empties to the room, the vent reads 0
   updateSpontaneous(vs);
   p.Pmus = currentPmus(vs);
-  controller(vs);
+  let over = controller(vs);
+  const kind = breathKind(vs);
+  let stepPeak = -Infinity; // plan V2: read only when a breath is ended at pmax
   for (let s = 0; s < SUBSTEPS; s++) {
     const dt = DT / SUBSTEPS;
     const recoil = recoilPressure(c, p.V);
@@ -307,10 +352,11 @@ export function stepVent(vs: VentState): void {
     } else if (vs.hold) {
       Q = 0;
       p.Paw = peep + recoil;
-    } else if (p.phase === 'insp' && c.mode === 'VC') {
+    } else if (p.phase === 'insp' && kind === 'VC') {
       Q = vs.flowTarget;
       p.Paw = peep + recoil + Q * R_in - p.Pmus;
       if (p.Paw > c.pmax) {
+        over = true;
         p.Paw = c.pmax;
         Q = (p.Paw - peep - recoil + p.Pmus) / R_in;
       }
@@ -331,6 +377,7 @@ export function stepVent(vs: VentState): void {
     p.Q = Q;
     p.Palv = Palv;
     p.t += dt;
+    if (p.Paw > stepPeak) stepPeak = p.Paw;
   }
   if (c.cardiac) {
     const osc = Math.sin(2 * Math.PI * (c.hr / 60) * p.t);
@@ -338,7 +385,7 @@ export function stepVent(vs: VentState): void {
     p.Paw += osc * 0.15;
   }
   if (p.phase === 'insp') p.vtDelivered = p.V;
-  if (!vs.hold) advancePhase(vs);
+  if (!vs.hold) advancePhase(vs, over && c.pmaxAction === 'cycle', stepPeak);
   updateMeasurements(vs);
   displaySample(vs);
   vs.n++;
