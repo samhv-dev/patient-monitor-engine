@@ -1,7 +1,7 @@
 // One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same
 // verb as the button). Engine ids never reach these lines: targets through the glossary, drugs by the library's name,
 // conditions and rhythms by their catalogue labels.
-import { DRUGS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
+import { DRUGS, EEG_DEVICES, LUNG_CONDITIONS, RHYTHM_IDS, type EegModelId } from '@pme/engine-core';
 import { unitText } from './drugs.ts';
 import { drugName, lungLabel } from './glossary.ts';
 import { showVital, vitalLabel, vitalOf } from './vitals.ts';
@@ -96,6 +96,17 @@ function event(e: Any): string {
   }
 }
 
+/** An EEG device command (Room setup's device, the instructor's artefact switches) in words. */
+function eegLine(a: Any): string {
+  const v = a.value;
+  if (a.action === 'on') return 'EEG device on';
+  if (a.action === 'off') return 'EEG device off';
+  if (a.action === 'model') return `EEG device: ${EEG_DEVICES[String(v) as EegModelId]?.spec.label ?? String(v)}`;
+  if (a.action === 'impedance') return Array.isArray(v) ? `EEG electrodes ${v.join(' · ')} kΩ` : `EEG electrodes ${String(v)} kΩ each`;
+  if (a.action === 'ecgPickup') return `EEG ECG pickup ${v ? 'on' : 'off'}`;
+  return 'Device setting changed';
+}
+
 /** `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); the Log then names it. */
 export function describeCommand(c: Any, step?: string): string {
   switch (c.type) {
@@ -138,6 +149,7 @@ export function describeCommand(c: Any, step?: string): string {
       if (a.device === 'nibp') return a.action === 'start' ? 'NIBP measurement started' : 'NIBP setting changed';
       if (a.device === 'alarm') return a.action === 'silence' ? 'Alarm sound silenced' : a.action === 'pause' ? 'Alarms paused' : a.action === 'ack' ? 'Alarms acknowledged' : a.action === 'enableAll' ? 'All alarms on' : 'Alarm setting changed';
       if (a.device === 'monitor') return 'Monitor setting changed';
+      if (a.device === 'eeg') return eegLine(a); // EEG plan E12, Q9
       return 'Device setting changed';
     }
     default:
