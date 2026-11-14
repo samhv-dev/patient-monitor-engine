@@ -142,6 +142,7 @@ export class AppSession {
   private readonly listeners = new Set<(e: EngineEvent) => void>();
   private readonly appFns = new Set<(e: EngineEvent) => void>();
   private readonly mountFns = new Set<(m: MonitorHandle) => void>();
+  private readonly onFailed = (e: Event): void => this.host.engineStopped((e as CustomEvent<{ reason: string }>).detail.reason);
   private readonly scaleFns = new Set<(k: number) => void>();
   private offMon: (() => void) | null = null;
   private lastT = 0;
@@ -283,6 +284,9 @@ export class AppSession {
       },
     });
     this.host = hs;
+    // Brief 195: the monitor stopped (`pme-monitor-failed`, bubbling from its canvas): the host tells every follower at
+    // once and every second after, with the reason, until a new engine runs (the mount's newTimeline)
+    el.addEventListener('pme-monitor-failed', this.onFailed);
     if (o.learnerPin) void loadShippedFormulary().then((f) => void (this.formulary = f));
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
@@ -713,6 +717,7 @@ export class AppSession {
   }
 
   destroy(): void {
+    this.el.removeEventListener('pme-monitor-failed', this.onFailed);
     clearInterval(this.pollTimer);
     if (this.feedTimer !== null) clearInterval(this.feedTimer);
     if (this.briefingTimer !== null) clearTimeout(this.briefingTimer);
