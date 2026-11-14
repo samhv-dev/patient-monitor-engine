@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` 4024e854 (Merge pull request #467 from samhv-dev/ci-validation-soak-two-jobs), built 2026-11-14T19:40:53.954Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/4024e854f8fe09bcc149ed00eb98bb3440cae98c
+The built teaching app of `main` aec539b9 (Merge pull request #447 from samhv-dev/eeg-e12b-artefact-controls), built 2026-11-14T20:26:51.251Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/aec539b947c7ef80eeea3ad0ee00597ddc7d19e8
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
