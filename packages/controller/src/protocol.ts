@@ -8,6 +8,7 @@ import type {
   DoseUnit,
   EngineEvent,
   LabPanelId,
+  LungClinicalEvent,
   NumericId,
   PatientSnapshot,
   PkClinicalEvent,
@@ -61,9 +62,11 @@ type CommandBase = {
 /**
  * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`
  * only): the drug model's units, routes (`PkRoute`), `overS` and `concentrationPct`, and its kinds `infusion`, `tci` and
- * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`).
+ * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`); the lung
+ * model's `lungCondition`, `mainstem` and `recruit` (types-lung.ts, brief 174).
  */
 export type ClinicalEvent =
+  | LungClinicalEvent
   | {
       kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit;
       route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number;
@@ -180,6 +183,13 @@ export type PumpCommand = { type: 'pump'; ch: number } & (
   | { action: 'start' | 'stop' | 'unload' }
   | { action: 'purge'; volumeMl: number }
 );
+/**
+ * Plan pump-rack-tci.md A1 (§5, PQ1 = C, PQ2 = B): the kind of each channel of the room's pump rack, in channel order, as
+ * Room setup sets it (1 to PUMP_LIMITS.channels channels). It rides the host's `style` event (`pumps`), as the room's
+ * defibrillator model does, so a pump tablet builds its rack from it at every hello and every change.
+ */
+export const PUMP_KINDS = ['syringe', 'drip'] as const;
+export type PumpKind = (typeof PUMP_KINDS)[number];
 /** A syringe or bag to load (D2 item 1): a preparation by the device that made it and its id, or a stock item's id. */
 export type PumpSource = { prep: { device: string; id: string } } | { stock: string };
 /** The patient typed into the pump for TCI (D6): what the TCI sets read (engine-core tci-sets TciCovariate). */
@@ -261,13 +271,19 @@ export type ExtraEvent =
    */
   | { type: 'cockpit'; t: SimSeconds; tick: Tick; off?: true }
   /**
+   * Brief 195: the host's engine has stopped (an error while it stepped: the monitor's `pme-monitor-failed`), and why.
+   * The host session sends it at once and then once a second, from its own timer, until a new engine runs (a restart's
+   * `timeline`): a follower hears that the host is here and its simulation has stopped, not the silence of a host gone.
+   */
+  | { type: 'engineStopped'; t: SimSeconds; tick: Tick; reason: string }
+  /**
    * The instructor's monitor style, for a phone on the relay (the second screen has its own same-browser style channel).
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
    * Presentation only. `ibp` (E130): the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale), so a
    * phone draws the instructor's range.
    */
   // `defib` (Room plan R5): the room's defibrillator model, which a defibrillator window wears the look of (null: none)
-  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; replay?: true }
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; pumps?: PumpKind[]; replay?: true }
   /**
    * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
    * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
@@ -327,10 +343,10 @@ export type WireEvent = EngineEvent | ExtraEvent;
  * The events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor (`state`),
  * the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward (ViewerSync; the
  * follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the Ventilator view's
- * `cockpit` notice, the instructor's monitor `style` and the card's Case `briefing`. The relay sends a viewer on the network only these (at ×8 the
+ * `cockpit` notice, the instructor's monitor `style`, the card's Case `briefing` and the host's `engineStopped`. The relay sends a viewer on the network only these (at ×8 the
  * rest — measurements, alarm and organ status its own engine computes — was 4/5 of a phone's traffic).
  */
-export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style', 'briefing']);
+export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style', 'briefing', 'engineStopped']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
 export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }>;
 
@@ -348,10 +364,11 @@ export interface AppliedResolution {
 
 /**
  * What a follower device shows, named on its hello (plan room-and-instruments.md §4 D1): the learner monitor (phone,
- * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot. Legal with `role:
- * 'viewer'` or `'defib'` only (guard.ts; R5c); the ventilator is a role of its own (R8a), never an instrument here.
+ * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot, and the infusion-pump rack
+ * (pump-rack-tci.md A1, a tablet). Legal with `role: 'viewer'`, `'defib'` or `'learner'` (guard.ts; R5c), and `'pump'`
+ * with `role: 'pump'` only; the ventilator is a role of its own (R8a), never an instrument here.
  */
-export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth'] as const;
+export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth', 'pump'] as const;
 export type Instrument = (typeof INSTRUMENTS)[number];
 
 /**

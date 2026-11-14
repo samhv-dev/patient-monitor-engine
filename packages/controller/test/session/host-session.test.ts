@@ -108,6 +108,24 @@ describe('HostSession', () => {
     expect(types.has('toneCancel')).toBe(false);
   });
 
+  it("EEG plan E12 (D3): never forwards an EEG device's display (eegReading: its raw samples); its numerics go out as every measurement does", async () => {
+    // Before E12 the host queued `eegReading` like any event, the wire guard refused the batch it was in (its raw samples,
+    // 125 a reading) and every event of that flush was lost: with an EEG device on, a follower missed the host's commands
+    const { host, command, of, events } = setup();
+    command({ type: 'device', action: { device: 'eeg', action: 'on' } });
+    await waitFor(() => of('ack').length === 1);
+    expect(of('ack')[0]!.accepted).toBe(true);
+    host.advance(5000);
+    await sleep(10);
+    command({ type: 'setTarget', variable: 'hr', value: 90 });
+    await waitFor(() => events().filter((e) => e.type === 'commandApplied').length === 2);
+    host.advance(1000);
+    await sleep(10);
+    const types = new Set(events().map((e) => e.type));
+    expect(types.has('eegReading' as never)).toBe(false);
+    expect(events().some((e) => e.type === 'measurement' && 'sef' in (e as { values: object }).values)).toBe(true);
+  });
+
   it('batches the events of one frame into one message', async () => {
     const { host, of } = setup();
     host.advance(3000); // one synchronous burst = one "frame"

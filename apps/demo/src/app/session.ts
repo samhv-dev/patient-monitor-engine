@@ -9,7 +9,8 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, NotGiven, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
+import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
@@ -146,6 +147,7 @@ export class AppSession {
   private readonly listeners = new Set<(e: EngineEvent) => void>();
   private readonly appFns = new Set<(e: EngineEvent) => void>();
   private readonly mountFns = new Set<(m: MonitorHandle) => void>();
+  private readonly onFailed = (e: Event): void => this.host.engineStopped((e as CustomEvent<{ reason: string }>).detail.reason);
   private readonly scaleFns = new Set<(k: number) => void>();
   private offMon: (() => void) | null = null;
   private lastT = 0;
@@ -179,14 +181,22 @@ export class AppSession {
   /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
+  /** A1 (plan pump-rack-tci.md §5): the room's pump rack, each channel's kind (site.ts pumpRack), sent to the pump tablet
+   *  on the style event. */
+  pumpRack: PumpKind[];
+  /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
+   *  patient mount, or null: no EEG device (none switched on). */
+  eegModel: string | null;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
   formulary: Formulary | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[] }) {
     this.el = el;
     this.defibModel = o.defibModel ?? null;
+    this.eegModel = o.eegModel ?? null;
+    this.pumpRack = [...(o.pumpRack ?? DEFAULT_SITE.pumpRack)];
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -287,6 +297,9 @@ export class AppSession {
       },
     });
     this.host = hs;
+    // Brief 195: the monitor stopped (`pme-monitor-failed`, bubbling from its canvas): the host tells every follower at
+    // once and every second after, with the reason, until a new engine runs (the mount's newTimeline)
+    el.addEventListener('pme-monitor-failed', this.onFailed);
     if (o.learnerPin) void loadShippedFormulary().then((f) => void (this.formulary = f));
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
@@ -541,8 +554,15 @@ export class AppSession {
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
-  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null } {
-    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel }; // R5: the window's look
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null; pumps: PumpKind[] } {
+    // R5: the window's look; A1: the room's pump rack, for the pump tablet
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel, pumps: [...this.pumpRack] };
+  }
+
+  /** Room setup's pump rack (A1): kept here, and sent to the pump tablet at once on the style event (as the defibrillator model). */
+  setPumpRack(kinds: PumpKind[]): void {
+    this.pumpRack = [...kinds];
+    for (const f of this.skinFns) f(this.skin, this.theme);
   }
 
   private ibp: IbpScales = {};
@@ -598,6 +618,25 @@ export class AppSession {
   private sendDefibModel(): void {
     if (!this.defibModel || this.perf8) return; // the frame gate's layout is not a room's
     void this.panel.send({ type: 'device', action: { device: 'defib', action: 'model', value: this.defibModel } } as never);
+  }
+
+  /**
+   * Room setup's depth-of-anaesthesia device (EEG plan E12). A model switches the patient's EEG on and chooses its
+   * reader now, through the host's command path (every follower replays both, so a depth window's own engine reads the
+   * same samples, D3), and at every patient mount after; null switches it off now and sends nothing at a mount.
+   */
+  setEegModel(model: string | null): void {
+    const was = this.eegModel;
+    this.eegModel = model;
+    if (model) this.sendEegModel();
+    else if (was && !this.perf8) void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'off' } } as never);
+  }
+
+  /** `on` first: the engine refuses a model while the EEG is off (validateEegCommand). */
+  private sendEegModel(): void {
+    if (!this.eegModel || this.perf8) return;
+    void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'on' } } as never);
+    void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'model', value: this.eegModel } } as never);
   }
 
   enableSound(): Promise<void> {
@@ -691,6 +730,7 @@ export class AppSession {
   }
 
   destroy(): void {
+    this.el.removeEventListener('pme-monitor-failed', this.onFailed);
     clearInterval(this.pollTimer);
     if (this.feedTimer !== null) clearInterval(this.feedTimer);
     if (this.briefingTimer !== null) clearTimeout(this.briefingTimer);
@@ -764,6 +804,7 @@ export class AppSession {
     if (this.paused) m.pause();
     if (this.soundOn) void m.enableSound();
     this.sendDefibModel(); // a new engine starts with no model: the room's again (R5b)
+    this.sendEegModel(); // and with no EEG: the room's depth device again (E12)
     for (const fn of this.mountFns) fn(m);
   }
 }

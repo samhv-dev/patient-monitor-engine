@@ -222,8 +222,12 @@ const LEFT_MAX = 1000;
  */
 export const MESSAGE_BUDGET_BYTES = 128 * 1024;
 export const EVENTS_PER_MESSAGE = 200;
-/** Events that stay on the host: audio is scheduled locally by every monitor from its own engine. */
-const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel']);
+/**
+ * Events that stay on the host: audio is scheduled locally by every monitor from its own engine; an EEG device's
+ * display (`eegReading`: its raw samples and spectrogram column) is drawn by every follower from its own engine's
+ * EEG, which reads the same samples (EEG plan D3: no EEG sample crosses the wire; the wire guard refuses them).
+ */
+const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel', 'eegReading']);
 const TICK_S = 0.02;
 /** A viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every
  *  resync) [ENG: network]. */
@@ -295,6 +299,8 @@ export class HostSession {
   /** R15: staged deliveries whose items are arriving (by batch id), held until all n are here. */
   private readonly held = new Map<string, { n: number; items: Array<{ t: ManagedTransport; cmd: WireCommand; from: string; receivedAt: number }>; timer: ReturnType<typeof setTimeout> | null }>();
   private engineState = false;
+  /** Brief 195: why the engine stopped (null: it runs); said at once and by the 1 Hz timer until a new engine runs. */
+  private stopped: string | null = null;
   private readonly offEngine: () => void;
   private readonly timer: ReturnType<typeof setInterval> | null;
   private bookmarkN = 0;
@@ -568,6 +574,7 @@ export class HostSession {
     this.pushing.clear();
     this.infusions.clear();
     if (cause === 'restart') {
+      this.stopped = null; // a new engine runs (a stopped one cannot restore a bookmark: its restore rejects)
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
       // The old engine's lead and filter choices are not the new monitor's
@@ -578,8 +585,24 @@ export class HostSession {
     this.flush();
   }
 
-  /** Emit a `state` event (brief §7.3). Target-derived until the engine emits its own (engine request E1). */
+  /**
+   * Brief 195: the target's engine has stopped (the monitor's `pme-monitor-failed`, with its reason). Every peer is told
+   * now and then once a second (emitState), independently of the engine's own events, which have ended: a follower tells
+   * a stopped simulation from a host that has gone. A new engine (newTimeline 'restart') ends it.
+   */
+  engineStopped(reason: string): void {
+    this.stopped = reason;
+    this.emitState();
+    this.flush();
+  }
+
+  /** Emit a `state` event (brief §7.3). Target-derived until the engine emits its own (engine request E1). While the
+   *  engine is stopped, the stopped notice instead (one small message a second). */
   emitState(): void {
+    if (this.stopped !== null) {
+      const { tick, simT } = this.o.target.now();
+      return this.queue({ type: 'engineStopped', t: simT, tick, reason: this.stopped });
+    }
     if (this.engineState) return;
     const { tick, simT } = this.o.target.now();
     const values: Partial<Record<StateVar, number>> = {};
