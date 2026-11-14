@@ -26,12 +26,8 @@ export const TRAY_REDRAW_MS = 250;
 export const NOTICE_TONE = { hz: 880, ms: 150, gapMs: 100, gain: 0.2 } as const;
 
 /** The finding's kind, as the phone says it after the notice. */
-export const FINDING_WORDS: Readonly<Record<Finding['kind'], string>> = {
-  incompatible: 'Incompatible',
-  conditional: 'Compatible only under conditions',
-  notTested: 'Not tested together',
-  wrongDiluent: 'Diluent not listed in the label',
-};
+import { FINDING_WORDS } from '../prep-words.ts';
+export { FINDING_WORDS }; // L13: one DOM-free place for a finding's words
 
 export const TRAY_WORDS = {
   title: 'Tray',
