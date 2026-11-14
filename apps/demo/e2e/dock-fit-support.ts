@@ -59,6 +59,29 @@ export const sheetFootBlocked = (page: Page): Promise<string[]> => page.evaluate
     const hit = document.elementFromPoint(x, y);
     if (!hit || !(el === hit || el.contains(hit))) out.push(`${what} under ${hit instanceof HTMLElement ? hit.className || hit.tagName : 'nothing'}`);
   }
+  // brief 226: a centre test misses a button cut by the sheet's own edge (the sheet clips what overflows it) and a hint
+  // drawn under a button (a text is not a control): every footer button and hint lies wholly inside the sheet, a hint
+  // holds its own text, and no two of them overlap
+  const sheet = s.getBoundingClientRect();
+  const items = [...s.querySelectorAll<HTMLElement>('.ip2-sheet-foot button, .ip2-sheet-foot select, .ip2-sheet-foot .ip2-sheet-hint, .ip2-sheet-foot .ip2-onset > :first-child')].filter((e) => {
+    const r = e.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' && !!e.textContent?.trim();
+  });
+  const name = (e: HTMLElement) => `"${(e.textContent || e.getAttribute('aria-label') || e.tagName).trim().slice(0, 40)}"`;
+  for (const e of items) {
+    const r = e.getBoundingClientRect();
+    if (r.left < sheet.left - 0.5 || r.right > sheet.right + 0.5 || r.bottom > sheet.bottom + 0.5) out.push(`${name(e)} cut by the sheet's edge`);
+    if (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1) {
+      if (e.matches('.ip2-sheet-hint')) out.push(`${name(e)} does not hold its own text`);
+    }
+  }
+  for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+    const a = items[i] as HTMLElement, b = items[j] as HTMLElement;
+    if (a.contains(b) || b.contains(a)) continue;
+    const p = a.getBoundingClientRect(), q = b.getBoundingClientRect();
+    const w = Math.min(p.right, q.right) - Math.max(p.left, q.left), hh = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
+    if (w > 0.5 && hh > 0.5) out.push(`${name(a)} × ${name(b)} overlap (${Math.round(w)} px)`);
+  }
   return out;
 });
 
