@@ -70,7 +70,7 @@ describe('E12: the depth-of-anaesthesia window', { timeout: 90_000 }, () => {
     Object.assign(net.v, { t: 0, paused: true, rate: 1 });
     host.clear();
     he = createEngine({ seed: 7, device: { skin: 'saadat-like' } });
-    he.on((e) => void (e.type === 'measurement' && (e.values.sef || e.values.bis) && host.set(e.t, e.values)), ['measurement']);
+    he.on((e) => void (e.type === 'measurement' && (e.values.sef || e.values.bis || e.values.se) && host.set(e.t, e.values)), ['measurement']);
     const target = { dispatch: (c: Command) => he.dispatch(c), snapshot: () => he.snapshot(), restore: (s: never) => he.restore(s), on: (fn: (e: EngineEvent) => void) => he.on(fn), now: () => he.now(), time: () => {} };
     const hs = new HostSession({ session: CODE, target, stateIntervalMs: 0 });
     hs.addTransport((net.hub as { connect(): ManagedTransport }).connect());
@@ -166,6 +166,28 @@ describe('E12: the depth-of-anaesthesia window', { timeout: 90_000 }, () => {
       expect(w.last?.values.bis?.value, `at ${tk}`).toBe(h?.bis?.value);
       expect(text('.depth-tile[data-id="bis"] .v')).toBe(h?.bis?.value?.toFixed(0));
       expect(text('.depth-tile[data-id="bisSr"] .v')).toBe(h?.bisSr?.value?.toFixed(0));
+      await run(1);
+    }
+  });
+
+  it('E8: the room chose the Entropy reader: its own face, the host\'s own SE and RE at each reading, the Q8 label', async () => {
+    await eeg('on');
+    await eeg('model', 'entropy');
+    await run(1);
+    await join();
+    await run(6);
+    expect(offShown()).toBe(false);
+    expect(w.el.dataset.model).toBe('entropy');
+    expect(text('.depth-label')).toBe('Entropy-type SE and RE, computed from published components');
+    expect(text('.depth-note')).toBe(DEPTH_WORDS.entropyNote);
+    for (let k = 0; k < 3; k++) {
+      const tk = Number(w.el.dataset.t);
+      const h = host.get(tk);
+      expect(h?.se, `the host read at ${tk}`).toBeDefined();
+      expect(w.last?.values.se?.value, `at ${tk}`).toBe(h?.se?.value);
+      expect(text('.depth-tile[data-id="se"] .v')).toBe(h?.se?.value?.toFixed(0));
+      expect(text('.depth-tile[data-id="re"] .v')).toBe(h?.re?.value?.toFixed(0));
+      expect(text('.depth-tile[data-id="reSe"] .v')).toBe(h?.reSe?.value?.toFixed(0));
       await run(1);
     }
   });
