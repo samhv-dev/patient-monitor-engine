@@ -3,7 +3,7 @@
 // `types-pk.ts` and the blood plan). Kinds and ids the engine does not know yet (a drug infusion before the drug
 // model merges) are still sent: the engine's rejection reason lands in the change log, so the rail needs no edit
 // when a module lands.
-import type { PatientProfile } from '@pme/engine-core';
+import type { LabPanelId, PatientProfile } from '@pme/engine-core';
 
 /** A Command without id/issuedBy/atTick (the page stamps those). */
 export type Body = { type: string } & Record<string, unknown>;
@@ -72,8 +72,8 @@ export const lungCondition = (id: string, severity: number, side: '' | 'L' | 'R'
 export const mainstem = (ventilated: 'both' | 'left' | 'right'): Body => ev({ kind: 'mainstem', ventilated });
 /** A recruitment manoeuvre. */
 export const recruit = (pressureCmH2O: number, durationS: number): Body => ev({ kind: 'recruit', pressureCmH2O, durationS });
-/** "send ABG" (or VBG): the panel is frozen now and a `labResult` event follows after the turnaround. */
-export const lab = (panel: 'abg' | 'vbg'): Body => ev({ kind: 'lab', panel });
+/** "send ABG" (or VBG, or the laboratory's chemistry or coagulation panel): the panel is frozen now and a `labResult` event follows after the turnaround. */
+export const lab = (panel: LabPanelId): Body => ev({ kind: 'lab', panel });
 export const ventilation = (source: string, rr: number, vtMl: number, peep: number, fio2: number): Body =>
   ev(source === 'ventilator' || source === 'bvm' ? { kind: 'ventilation', source, rr, vtMl, peep, fio2 } : { kind: 'ventilation', source });
 export const rhythm = (id: string): Body => ({ type: 'setRhythm', rhythm: id });

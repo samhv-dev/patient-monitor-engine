@@ -4,6 +4,43 @@
 in it is ruled until the owner answers §10 and the orchestrator reviews the pieces. No product code, test, card or kit
 file was changed while writing it.
 
+### State on 12 November 2026
+
+*Added 12 Nov 2026 (brief 190, a record of the night of 11–12 November; no design, cell, band or number below it was
+changed). Sources: the hand-over notes of briefs 165, 167, 171 and 183 and the orchestrator's rulings N109, N110,
+N120, N128, N135, N138–N140 and "Narcotrend = C". Each piece's own dated note says more.*
+
+| Piece | PR | State | What it waits for |
+|---|---|---|---|
+| E0 baseline | PR 316 | merged 8 Nov | — |
+| E1 + E2 cortical state, spectra | PR 318 (and PR 355, the registry seams) | merged 8 Nov | — |
+| E3 + E4 generator, artefacts | PR 320 | merged 8 Nov | — |
+| E5 + E6 generic reader, device layer | PR 322 | merged 8 Nov | — |
+| E12 depth window | PR 424 | open (draft), in the merge chain | its turn; Q9's controls are not in it (E12b) |
+| E12b the instructor's artefact controls (Q9) | PR 447, branch `eeg-e12b-artefact-controls` | open (draft) | its gate; PR 424 first (its base) |
+| E7 BIS-type reader | PR 427 | open (draft), in the merge queue | PR 424 first (its base); the run-in question (Q13); C27's miss waits on PR 437; N138 is read against it when the root-cause piece reports |
+| E8 Entropy reader | PR 433 | open (draft), **not accepted** | the root-cause piece for the WebKit follower stall (N138); its validation run; PRs 424 and 427 first (its base); the rate question (Q12) |
+| E9 Narcotrend reader | none | **NOT BUILT** (owner, 12 Nov: dropped from the build list) | the maker's answer with a method that may be published (P-18) |
+| E10 four-channel montage | none | not started | after E8 in the order of readers; the PSI montage (P-19) |
+| E11 PSI reader | none | not started | P-19: the two supplied papers read for a computable method |
+| E13 acceptance, docs | none | not started | the readers that merge |
+| Generator: high-frequency spectrum under propofol (N128 = A) | PR 437 | open (draft) | its gate; it moves E7's and E8's course numbers (whichever merges second re-records them) |
+| Engine: `restore()` keeps the snapshot's seed (N109) | PR 445 | open (draft) | its CI and validation runs |
+
+**Order of readers as it now stands (12 Nov 2026):** BIS-type (E7), Entropy (E8), then the montage (E10) and the
+Patient State Index (E11) when its source allows. Narcotrend (E9) is off the list (§7 E9).
+
+**Open findings that belong to this plan (12 Nov 2026)**, each with where it was found and what it waits for:
+
+| Id | Finding | Found in | Waits for |
+|---|---|---|---|
+| N138 | On WebKit the depth window (the follower) stood still in `apps/demo/e2e/depth-window.e2e.ts`: "the window's `data-t` stayed at **27.528 s** for 90 s, although the host was set to ×4" (E8 case, line 299); the E7 case (line 243) timed out waiting on the host's reading at the window's time. Both passed only on retry. | PR 433's CI run 43111160670, webkit shard 3/3 (hand-over 171) | the root-cause piece now running (brief 187); PR 433 is not accepted until it reports |
+| N139 | The engine's cortex blunts all stimulus arousal under remifentanil 0.1 µg/kg/min: "arousal 0.015 in the engine", so C31 shows no shift | PR 433's course test (Entropy C31) | a generator piece |
+| N140 | The awake trace's eye blinks dominate the low-frequency power: awake SE 69, with "54 % of R_low's power … below 4 Hz" | PR 433's course test (Entropy C26) | a generator piece; the module's blink rejection is unpublished (Viertiö-Oja 2004 p. 160) |
+| C28 (Entropy) | The age effect reads the wrong way: "50.5 at 80 y vs 63.9 at 40 y" at the cortex's own loss of responsiveness | PR 433's course test | "Not verified which part of the trace carries the extra slow power" (PR 433) |
+| N120 | Today's signal has no designed coupling between frequencies: bicoherence ≈ 0.165 at every depth | PR 427's course test | the clinical generator; the bispectral term enters no index (§7 E7) |
+| N109 | A follower's EEG differed from the host's when the EEG was switched on after the follower joined: `engine.restore()` ignored the snapshot's seed | hand-over 165 (E12) | PR 445 |
+
 **Why this stage exists.** The owner ruled on 5 November (Room plan Q7, `docs/plans/room-and-instruments.md` §10 Q7
 and §9a): depth-of-anaesthesia monitors are several (BIS, Entropy, Narcotrend, SedLine/PSI and others), each with its
 own method; each must be a selectable instrument in the room and each must work from its true mechanism. All of them
@@ -158,6 +195,19 @@ Anti-goals (a piece that does one of these is rejected)
   Miller's spectrograms show (Ch36 p. 1139, Fig. 36.3 legend: "50-Hz waves furthest"). If the owner's BIS source needs
   an EMG band above 62.5 Hz, the channel moves to 500 Hz (`[OWNER P-6]`); the generator is rate-agnostic. A
   four-channel frontal–posterior montage is E10, needed by PSI only.
+  - *Note, 12 Nov 2026 (P-6, from PRs 427 and 433):* the premise that a reader would need a band above the 125-Hz
+    channel's 62.5-Hz limit does not hold for either reader built. SE and RE both end at 47 Hz (Viertiö-Oja 2004
+    p. 158: RE "from 0.8 Hz to 47 Hz"); the BIS-type reader's bands end at 47 Hz too (Connor 2022 Table 1; Rampil 1998
+    Table 2), "so every band either paper uses is in the signal" (PR 427). What 125 Hz cannot carry is three parts of
+    the Entropy module: its burst-suppression artefact band ("a 75-Hz high-pass at 200 Hz", p. 159), its cautery check
+    ("66–86 Hz", p. 160) and its ECG and pacer subtraction ("rests on 400-Hz sampling", p. 160). None of the three is
+    published whole either (the burst-suppression threshold and filter orders, the subtraction method: not given), so
+    none is built. The makers' own rates differ from 125 Hz: openibis "must be 128 Hz" (Connor 2022 Table 1 l. 2), the
+    Narcotrend front end 128 Hz, the Entropy module 400 Hz (p. 155). Put to the owner as Q12 (§10); D2 stands until he
+    rules.
+- *Note, 12 Nov 2026 (D3):* the follower identity did not hold when the EEG was switched on after a follower had
+  joined: `engine.restore()` kept the restoring engine's seed and ignored the snapshot's (N109, found in E12). PR 445
+  (open) makes restore adopt the snapshot's seed.
 - **D3. Determinism.** The generator draws from the engine's seeded streams (`seedStream(seed, 'eeg')`, as
   `pipeline.ts:101` seeds the TOF device), so a follower's EEG is sample-identical to the host's and no EEG sample ever
   crosses the wire (the room plan's follower rule).
@@ -404,6 +454,21 @@ touch:** skins' JSON (the mapping is in the formatter). **Gate:** common + the r
 - [ ] **Displays:** index, SR, (EMG and SQI only if P-16 defines them from the signal); label per Q8.
 **Acceptance:** C26–C30 for BIS. **Must not touch:** other readers. **Gate:** common.
 
+*Note, 12 Nov 2026 (E7 state):* built in **PR 427** (open, draft, in the merge queue; based on PR 424's branch) from
+the owner's two papers, Connor 2022 (openibis, Table 1, followed line by line) and Rampil 1998 (the sub-parameters and
+the bispectrum, which "enters no index"). Course on today's generator (40 y; hand-over 167, PR 427): awake 97.2,
+sedation 87.2, loss of responsiveness 83.5, surgical depth **85.6**, burst suppression 0. Why surgical depth reads high:
+"in Connor's mixer 40–60 needs the 40–47 Hz power concentration at about −31 to −26 dB and the engine's signal only
+reaches −20.1 dB" — the generator's high-frequency power stays too high under deep propofol (Miller: "a marked fall of
+beta and gamma", Ch36 p. 1139). The cause is the generator, not the reader (N128). **The owner ruled on 12 November
+(N128 = A):** the generator's high-frequency spectrum under deep anaesthesia is corrected from published measured
+spectra, a sourced number, never a fit to the index: **PR 437** (open). Bicoherence ≈ 0.165 at every depth: no phase
+coupling in today's signal, as N120 expected. Not built, because neither paper defines them: EMG and SQI. Rampil's
+SynchFastSlow cannot be computed as defined: its denominator area (40–47 Hz on both axes) lies at f1 + f2 ≥ 80 Hz,
+above half of the 128 Hz the paper names, where the bispectrum is not defined (Rampil 1998 p. 994; PR 427). The
+run-in: "the first ~30 s after switch-on, the index rests on few epochs and scatters (90, 67, 93 seen)"; "Connor
+excluded the first 120 s as buffer run-in (p. 4)" (hand-over 167): put to the owner as Q13 (§10).
+
 ### E8: Entropy reader — State and Response Entropy (plan 6 h · 0.8–1.0 executor-h)
 
 **Depends on:** E6; Q2. **Files:** `l3/eeg-devices/entropy.ts`, tests, a registry row.
@@ -417,6 +482,20 @@ touch:** skins' JSON (the mapping is in the formatter). **Gate:** common + the r
   follows from the two bands once P-17 is set.
 **Acceptance:** C26–C28, C31 for Entropy. **Gate:** common.
 
+*Note, 12 Nov 2026 (E8 state; P-6, P-17):* built in **PR 433** (open, draft, **not accepted**) from Viertiö-Oja 2004
+(Acta Anaesthesiol Scand 48:154–161) only, every constant with its page; the scale curve F read off the paper's Fig. 7.
+The plan's premise above, "RE's reaching into the EMG range" as a reason for a faster channel (P-6), does not hold for
+the published method: **SE and RE both end at 47 Hz** (p. 158), below the 125-Hz channel's 62.5-Hz limit, so both are
+computable whole on this channel. What the channel cannot supply: the module's burst-suppression detection (its
+artefact band is a 75-Hz high-pass at 200 Hz, p. 159), its cautery check (66–86 Hz, p. 160) and its ECG and pacer
+subtraction (400-Hz sampling, p. 160). And the paper does not publish: the burst-suppression rule ("a fixed threshold",
+no value; the filters' orders), the blink and movement rejection (p. 160: the stationarity test's characteristics and
+rule sets not given), the Cn_limit value (p. 160), the windows between the two named ends (p. 155), the update interval,
+and the on-screen component counts (the module's SE tops at 91, p. 159; the reader's grid gives a higher top, an
+expected failure, not tuned). So no BSR is shown by this reader. Course (PR 433), SE/RE: awake 69/85, sedation 64/67,
+loss of responsiveness 35/37, surgical 29/29, burst suppression 19/21. Not accepted until the root-cause piece for the
+WebKit follower stall (N138) reports; the rate question is Q12 (§10).
+
 ### E9: Narcotrend reader — the stage classification (plan 8 h · 1.0–1.3 executor-h)
 
 **Depends on:** E6; Q2. **Files:** `l3/eeg-devices/narcotrend.ts`, tests, a registry row.
@@ -425,6 +504,38 @@ touch:** skins' JSON (the mapping is in the formatter). **Gate:** common + the r
 - Everything about the method — the stages and substages, their features and thresholds, the 0–100 index — is
   `[OWNER P-18]` (the maker's or its validation papers; not in Miller). Without it, E9 is not built.
 **Acceptance:** C26–C28 for Narcotrend (direction). **Gate:** common.
+
+*Note, 12 Nov 2026: **E9, Narcotrend: NOT BUILT.*** The owner ruled on 12 November: dropped from the build list now; he
+writes to the maker; it returns to the list if they answer with a method that may be published (the project is open
+source, so only a publishable method can be used). Brief 183 read six sources in three rounds and stopped each time,
+nothing built (hand-over 183; N135):
+
+| Source | What it gives |
+|---|---|
+| Kreuer S, Wilhelm W. The Narcotrend monitor. Best Pract Res Clin Anaesthesiol 2006;20:111–119 (the review) | the stage-to-index table (Table 1, p. 113); 128 samples/s, 12-bit, 0.5–45 Hz (p. 116); the 20 s segment classified every 5 s (p. 116); clinical index values (Table 2, p. 117). Features, discriminant functions, suppression criteria, smoothing: "in words" only |
+| Schultz B et al. Der Narcotrend-Monitor. Anaesthesist 2003;52:1143–1148 (German) | the POOL of features tried in development (relative band powers, median, SEF95, spectral entropy, autoregressive parameters; p. 1144), not the selected subset; the classifier's type (multivariate, class probabilities for A–E; p. 1145); stage F by a verbal rule only ("Anteil und Intensität der … Suppressionslinien", pp. 1146–1147); the smoothing's form, not its weights (p. 1147); age-specific power limits named, not given (p. 1147); F1 = 4–0 (Tabelle 1, p. 1147) |
+| Schultz B, Grouven U, Schultz A. Biomed Tech 2002;47:9–13 | the visual stage definitions and their band edges (pp. 9–10), not stated as the classifier's; "dynamical weights are used for smoothing" (p. 12), none given; automatic vs visual agreement 92 % within one substage, PK 0.90 (p. 11) |
+| Kreuer S et al. Anesthesiology 2003;99:34–41, Appendix "Narcotrend Algorithm" (pp. 40–41) | the same description as the 2003 German paper, in English; no coefficients |
+| Kreuer S et al. Br J Anaesth 2004;93:235–240 | cross-device sigmoid fits of the Narcotrend index against the BIS monitor's index and suppression ratio (p. 237), e.g. "a burst suppression ratio of 40% is related to a median BIS value of 25 but to a median Narcotrend index value of 12" (p. 239); F1 as "1–4" (Table 2, p. 237), called observed in its own study |
+| Schultz A, Grouven U, Beger FA, Schultz B. Biomed Tech 2004;49:38–42 | a one-page method at the same level (p. 39, Fig. 1: boxes only); 128 samples/s, a 0.5 Hz high-pass, a 45 Hz low-pass "and a 50 or 60 Hz notch filter" (p. 39), filter orders not given; the cerebrogram's smoothed value "every 20 seconds" (p. 39); F1 = 4–0 (Table 1, p. 39) |
+
+**Unpublished across all six:** the classifier's features and how each is computed; the discriminant functions (form
+and coefficients, or class means, covariances, priors); the index's place inside a stage's range, and how E2 is
+assigned; the suppression-segment definition and the stage-F function; the "sufficient similarity" threshold; the
+smoothing (number of epochs, weights); the background parameters and the learned amplitude range; the artefact and age
+rules; the filter orders, and whether the method depends on exactly 128 Hz.
+
+**Sourced and kept** (for a later reader, or as acceptance numbers):
+- the stage-to-index table, with **F1 = 4–0** by the developers' own papers (Schultz 2003 Tabelle 1 p. 1147; Schultz
+  2004 Table 1 p. 39); the review and Kreuer 2004 print "1–4";
+- the front end: 128 samples/s, 12-bit, 0.5–45 Hz, notch 50 or 60 Hz;
+- the 20 s epoch, classified every 5 s;
+- **Kreuer 2004's figures as acceptance numbers, never as a method** (a fit between two devices is not the device's
+  method); also the review's Table 2 index values (baseline 94.4 ± 5.6; loss of verbal response 80.1 ± 6.8; loss of
+  eyelash reflex 71.8 ± 8.9).
+
+P-18 stays open (§10.1). Without the maker's answer, no reader carries the Narcotrend name (Q8: "by their name only if
+their published method is used whole"), and none is relabelled from another reader's numbers.
 
 ### E10: Four-channel montage (plan 6 h · 0.8–1.0 executor-h)
 
@@ -445,6 +556,16 @@ touch:** skins' JSON (the mapping is in the formatter). **Gate:** common + the r
   built.
 **Acceptance:** C26–C28, C33. **Gate:** common.
 
+*Note, 12 Nov 2026 (P-19):* two papers are supplied for PSI and are in the library:
+`library/sources/papers/eeg/drover-ortega-2006-patient-state-index-bprca.pdf` and
+`library/sources/papers/eeg/prichep-2004-patient-state-index-bja.pdf` (confirmed present; not yet read for this
+plan). For E10 and E11 to be buildable under the PSI name (Q8), they would have to contain, between them: the montage
+(the electrode sites, E10); which quantitative EEG features enter the index, from which channels and bands, and how each
+is computed (epoch, spectral estimator); the combining function with its coefficients (or an equivalent stated
+classifier); the transform to the 0–100 scale; the suppression and artefact rules; and the smoothing and update
+interval. Where a part is missing, the piece stops at it, as E9 did. The reading is the next piece after E8 in the
+order of readers.
+
 ### E12: The depth window in the room (plan 7 h · 0.9–1.2 executor-h)
 
 **Depends on:** E6 and one reader merged; room plan **R3, R4, R7** merged (the `show:'depth'` hello field, the picker,
@@ -458,6 +579,15 @@ setup's model choice (as R5b does for the defibrillator), e2e `depth-window.e2e.
 **Acceptance:** e2e 3/3 local runs on chromium and webkit: a phone picks Depth, sees the host's device, the index
 moves after a propofol bolus on the host; the room table shows `show:'depth'`. **Must not touch:** the relay, the
 guard beyond R3's fields. **Gate:** common + the touched e2e.
+
+*Note, 12 Nov 2026 (E12 state):* built in **PR 424** (open, draft, in the merge chain): the picker card opens `#/depth`;
+Room setup chooses Off or one of the registry's readers; the host sends `device eeg on`, then `model <id>` (`on` must
+come first: the engine refuses `model` while the EEG is off). The instructor's artefact controls (Q9, ruled into E12
+on 6 November) were **left out of PR 424** (its brief did not carry them, N110) and are being built separately:
+**E12b, PR 447**, branch `eeg-e12b-artefact-controls` (open). Found while building it: the follower's EEG differed from
+the host's when the EEG was switched on after the follower joined, because `engine.restore()` ignored the snapshot's
+seed (N109): **PR 445** (open). On WebKit the follower stood still in this piece's e2e file during PR 433's run (N138,
+in the state table at the top).
 
 ### E13: Acceptance suite, known misses, docs (plan 6 h · 0.8–1.0 executor-h, last)
 
@@ -514,6 +644,19 @@ direction-only until the owner rules.
 Cells C27, C29 and C31 depend on the reader's algorithm and run only for readers whose placeholders the owner has
 approved.
 
+*Misses recorded beside the cells, 12 Nov 2026* (measured on today's generator in the readers' course tests, written
+as expected failures in PRs 427 and 433; **no cell above was changed**, nothing tuned):
+
+| Cell | Reader | Measured | Cause as reported |
+|---|---|---|---|
+| C26 | BIS-type | the order of loss of responsiveness and surgical depth reversed by 2 points (83.5 vs 85.6) | the generator's 40–47 Hz power at depth (N128) |
+| C26 | Entropy | awake SE 69, not above 80 | the awake trace's blinks (N140); the module's blink rejection unpublished |
+| C27 | BIS-type | 85.6 at surgical depth, not 40–60 | the 40–47 Hz power concentration reaches −20.1 dB; 40–60 needs about −31 to −26 dB; PR 437 (N128 = A) |
+| C27 | Entropy | original 0.482 (SE 29) at surgical depth; Viertiö-Oja 2004 gives no 40–60-type target ("adequate hypnosis and emergence" between 0.5 and 1.0 on the original scale, p. 159) | 78 % of R_low's power below 4 Hz |
+| C28 | BIS-type | 89.31 vs 88.78: not reproduced (under one displayed point) | not established |
+| C28 | Entropy | 50.5 at 80 y vs 63.9 at 40 y: the wrong way | not verified |
+| C31 | Entropy | no shift | stimulus arousal 0.015 under remifentanil 0.1 µg/kg/min (N139) |
+
 ## 8. Partition, merge order, CI load
 
 ```
@@ -547,6 +690,10 @@ Ten PRs (the lean cut of `research/42` §2.3: one PR per file chain; tests first
 - **CI:** engine PRs (1–3, 10) run the engine's slow groups and the validation workflow; app PRs (4, 9) the browser
   suites. The run length after PR #279 (ci-faster: shards, documents-only path) was not measured for this plan;
   `research/42` §1.2's median before it was 61 min and ≈ 409 runner-minutes a run.
+- *Note, 12 Nov 2026 (order):* PRs 1–4 merged on 8 November (PRs 316, 318, 320, 322). The readers' order now is
+  BIS-type (PR 427), Entropy (PR 433), then the montage and PSI (row 8) when P-19's papers allow; row 7 (Narcotrend)
+  is off the build list by the owner's ruling of 12 November (§7 E9). E12 (row 9) was built before the first reader
+  merged and is the base of PRs 427 and 433 (PR 424).
 - **Merge order:** 1, 2, 3, 4, then 5/6/7/8 as their sources arrive, 9, 10. Files shared: `types.ts` (PRs 3, 4, 8),
   `registry.ts` (PRs 4–8), `numerics-neuro.ts` (PR 4 only).
 
@@ -608,6 +755,37 @@ Saadat BFA module's manual with the department; P-20 stays open until then.
 11. **Which device is the Saadat monitor's BFA module** (BFI%, BS%, SQI%, EMG%)? Default: unknown (P-20); its SQI% and
     EMG% stay blank.
 
+*Note, 12 Nov 2026 (Q9):* the ruling above puts the instructor's artefact controls into E12; the default text of
+question 9 is superseded by it. PR 424 left them out; they are E12b, PR 447 (§7 E12).
+
+*Questions added 12 Nov 2026, for the owner (not decided):*
+
+12. **Does the EEG channel stay at 125 Hz?** (P-6)
+    - *Plain explanation:* the plan kept a faster channel open in case a device needed frequencies above 62.5 Hz. The
+      two readers built need nothing above 47 Hz: Entropy's SE and RE both end at 47 Hz (Viertiö-Oja 2004 p. 158), and
+      the BIS-type reader's bands end at 47 Hz too. What 125 Hz cannot carry is three parts of the Entropy module: its
+      burst-suppression detection (a 75-Hz high-pass at 200 Hz, p. 159), its cautery check (66–86 Hz, p. 160) and its
+      ECG and pacer subtraction (400-Hz sampling, p. 160). But none of the three could be built at any rate, because
+      the paper does not publish their rules (the burst-suppression threshold, the filters' orders, the subtraction
+      method). The makers' own rates (BIS openibis and Narcotrend 128 Hz, Entropy 400 Hz) differ from 125 Hz; at
+      125 Hz both readers keep the same frequency bins as the paper (0.5 Hz and 0.52 Hz).
+    - *Options:* **A** keep 125 Hz; the three Entropy parts stay unbuilt and listed as unpublished; the question
+      re-opens only if a source gives a rule that needs a band above 62.5 Hz. **B** move the channel to 500 Hz (an
+      existing engine rate; the generator is rate-agnostic, D2) now, so that a future detector has the band; it gains
+      no published method today, and its cost (the EEG baselines re-recorded, the readers' work per second) is not
+      measured. **C** 128 Hz to match openibis and the Narcotrend front end: not an engine rate today, and it gives
+      Entropy none of the three parts either.
+    - *Proposal:* A.
+13. **What does the BIS-type reader show in its first seconds after switch-on?** (E7)
+    - *Plain explanation:* in the first ~30 s the index rests on few epochs and scatters (90, 67, 93 were seen,
+      hand-over 167). Connor 2022 excluded the first 120 s of each recording as buffer run-in (p. 4); that is how the
+      paper analysed its data, not a stated device behaviour. Neither supplied paper says what the real monitor shows
+      while its buffers fill.
+    - *Options:* **A** show the index from the first reading, as built (the scatter is visible). **B** show no index
+      until the reader's own windows have filled (openibis's 30-s components and 63-s suppression ratio, Connor 2022
+      Table 1). **C** show no index for the first 120 s, as Connor excluded them.
+    - *Proposal:* B, until a manual of the real monitor says what it shows at switch-on.
+
 ### 10.1 Placeholders for the owner
 
 | Id | What | Plan default | Where it would come from |
@@ -632,6 +810,24 @@ Saadat BFA module's manual with the department; P-20 stays open until then.
 | P-18 | Narcotrend stages and features | not built | the maker or its validation papers |
 | P-19 | PSI montage, features, scale | not built | the maker |
 | P-20 | The Saadat BFA module's device | unknown | the department |
+
+*Notes to the placeholders, 12 Nov 2026:*
+- **P-6:** the premise does not hold for the two readers built (both end at 47 Hz); the rate is Q12.
+- **P-16:** the owner's two papers, Connor 2022 and Rampil 1998; E7 built in PR 427 (EMG and SQI not defined by
+  either, so not built).
+- **P-17:** the source used is Viertiö-Oja 2004; E8 built in PR 433; what the paper leaves unpublished is listed at §7 E8.
+- **P-18: stays open.** Six sources read (§7 E9); E9 is not built and is off the build list until the maker answers. A
+  source would have to supply exactly: (1) which EEG features the classifier uses and how each is computed (spectral
+  estimator, AR model order); (2) the discriminant functions, form and coefficients (or class means, covariances,
+  priors) for stages A–E1; (3) how the classifier's output places an index value inside a stage's range, and how E2
+  is assigned; (4) the suppression-segment definition (amplitude limit, minimum duration), its "intensity", and the
+  function from proportion and intensity to the index in E2, F0 and F1; (5) the "sufficient similarity" or
+  uncertainty threshold for withholding a classification; (6) the smoothing: number of preceding epochs, weights, and
+  their dependence on background parameters, history and artefacts, and the cerebrogram's 20 s smoothing; (7) the
+  background parameters and the learned per-recording amplitude range (update rule, width); (8) the artefact rules,
+  including the age-specific signal-power limits, and any other age adaptation; (9) the filter orders and types, and
+  whether the method depends on exactly 128 Hz.
+- **P-19:** two papers supplied (§7 E11); what they would have to contain is listed there.
 
 ## 11. Self-review against the codebase (42da0eef) and the sources
 

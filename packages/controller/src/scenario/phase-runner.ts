@@ -29,7 +29,7 @@ import { compare } from './runner.ts';
 import { ruleConcentrations, type ConcentrationVar } from './concentration.ts';
 import { EPS, holds, namedRules, slopePerMin, spreadPct, walkLeaves, windowOf, type NamedRule, type RuleCtx } from './rules.ts';
 import type { DocCommand } from './types.ts';
-import type { Administration, AnyRule, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry, StagedPrep } from './types-v2.ts';
+import type { Administration, AnyRule, LeafRead, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry, StagedPrep } from './types-v2.ts';
 
 export type PhaseRunnerEffect =
   | {
@@ -247,7 +247,7 @@ export class PhaseRunner {
       const held = (id: string) => (this.s.holdFor?.[id] ?? 0) >= (this.byId.get(id)?.holdS ?? 0) - EPS;
       const to = (this.state().next ?? []).find((id) => id !== this.s.stateId && now.get(`phase:${id}`) && held(id));
       if (to !== undefined) {
-        out = this.enter(t, to, `enter:${to}`);
+        out = this.enter(t, to, `enter:${to}`, this.reads(to)); // read before the entry resets the phase's references
         // a display clock on a phase's entry (phaseEntered) reads the timeline: re-read it now, so it rises at the entry
         for (const nr of this.entryRules) {
           const v = holds(nr.rule, nr.name, nr.rank, this.ctx);
@@ -458,7 +458,57 @@ export class PhaseRunner {
     }
   }
 
-  private enter(t: number, id: string, rule: string): PhaseRunnerEffect[] {
+  /**
+   * B6: the leaves of `id`'s entry rule as they read now (the tick it fired, before enter() resets the references and the
+   * latch), and its hold. Each leaf through `holds`, the one function the rule itself went through, with the number it
+   * read: the truth, the ring's slope or spread, the seconds held.
+   */
+  private reads(id: string): LeafRead[] {
+    const phase = this.byId.get(id);
+    if (!phase?.enter) return [];
+    const out: LeafRead[] = [];
+    const visit = (r: AnyRule, key: string, not: boolean): void => {
+      if ('all' in r) return r.all.forEach((x, i) => visit(x, `${key}.${i}`, not));
+      if ('any' in r) return r.any.forEach((x, i) => visit(x, `${key}.${i}`, not));
+      if ('not' in r) return visit(r.not, `${key}.0`, !not);
+      const met = holds(r, key, 3, this.ctx);
+      const base = { key, met, ...(not ? { not: true as const } : {}) };
+      if ('value' in r) {
+        const { var: variable, op, value: threshold, forS = 0 } = r.value;
+        const v = this.s.truth[variable]?.v;
+        out.push({ ...base, leaf: 'value', variable, op, threshold, ...(v !== undefined ? { value: v } : {}), ...(forS > 0 ? { forS, heldS: this.s.trueFor[key] ?? 0 } : {}) });
+      } else if ('slope' in r) {
+        const win = windowOf(this.s.rings[r.slope.var] ?? [], r.slope.overS);
+        const v = win.full ? slopePerMin(win.samples) : undefined;
+        out.push({ ...base, leaf: 'slope', variable: r.slope.var, op: r.slope.op, threshold: r.slope.perMin, ...(v !== undefined ? { value: v } : {}), forS: r.slope.overS, heldS: win.coveredS });
+      } else if ('unchanged' in r) {
+        const u = r.unchanged;
+        let v: number | undefined;
+        if (u.since) {
+          const now = this.s.truth[u.var]?.v;
+          const ref = this.s.phaseRef?.[u.var];
+          v = now !== undefined && ref !== undefined ? spreadPct([[0, now], [1, ref]]) : undefined;
+          out.push({ ...base, leaf: 'unchanged', variable: u.var, op: '<=', threshold: u.withinPct, ...(v !== undefined ? { value: v } : {}) });
+        } else {
+          const win = windowOf(this.s.rings[u.var] ?? [], u.overS);
+          v = win.full ? spreadPct(win.samples) : undefined;
+          out.push({ ...base, leaf: 'unchanged', variable: u.var, op: '<=', threshold: u.withinPct, ...(v !== undefined ? { value: v } : {}), forS: u.overS, heldS: win.coveredS });
+        }
+      } else if ('visited' in r) out.push({ ...base, leaf: 'visited', variable: r.visited });
+      else if ('phaseEntered' in r) out.push({ ...base, leaf: 'phaseEntered', variable: r.phaseEntered });
+      else if ('signal' in r) out.push({ ...base, leaf: 'signal', variable: r.signal });
+    };
+    visit(phase.enter, `phase:${id}`, false);
+    const holdS = phase.holdS ?? 0;
+    if (holdS > 0) {
+      const heldS = this.s.holdFor?.[id] ?? 0;
+      const latched = this.s.latched?.[id] === true;
+      out.push({ key: `phase:${id}:hold`, leaf: 'hold', variable: id, op: '>=', threshold: holdS, value: heldS, met: heldS >= holdS - EPS, ...(latched ? { latched: true as const } : {}) });
+    }
+    return out;
+  }
+
+  private enter(t: number, id: string, rule: string, why?: LeafRead[]): PhaseRunnerEffect[] {
     const prev = this.s.phases.at(-1);
     if (prev && prev.exitT === undefined) prev.exitT = t;
     this.s.stateId = id;
@@ -469,7 +519,7 @@ export class PhaseRunner {
     this.refs();
     this.entered++;
     const transitionId = rule === 'initial' ? undefined : rule;
-    this.s.phases.push({ id, t, rule });
+    this.s.phases.push({ id, t, rule, ...(why ? { why } : {}) });
     if (this.s.phases.length > PHASES_MAX) this.s.phases.splice(0, this.s.phases.length - PHASES_MAX);
     const h = { t, stateId: id, ...(transitionId ? { transitionId } : {}) };
     this.s.history.push(h);
@@ -491,6 +541,7 @@ export class PhaseRunner {
 
   private fireOne(t: number, e: ScriptEntry, anchor: string, group?: string): PhaseRunnerEffect {
     this.s.fired.push(e.id);
+    (this.s.firedT ??= {})[e.id] = t;
     this.log.push({ op: 'script', t, scriptId: e.id, anchor });
     return { kind: 'commands', batch: ++this.s.batch, reason: 'script', cardSet: true, scriptId: e.id, ...(group !== undefined ? { group } : {}), commands: e.commands.map(strip) };
   }

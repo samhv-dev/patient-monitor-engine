@@ -235,7 +235,7 @@ describe('Room', () => {
       ['weak', 'Phone 1', 'Learner monitor', 'slow', '420 ms', '3 s ago'],
       ['stable', 'Phone 2', 'Instructor remote', 'signing in', '25 ms', '2 s ago'],
       ['stable', 'Phone 3', 'Instructor remote', 'granted', '22 ms', '2 s ago'],
-      ['weak', 'Phone 4', 'Depth of anaesthesia', 'Not available yet', '—', '11 s ago'],
+      ['weak', 'Phone 4', 'Depth of anaesthesia', 'missed a heartbeat', '—', '11 s ago'], // E12: a depth window is a follower like the others
       ['stable', 'Phone 5', 'Remote', 'connected', '9 ms', 'now'],
       ['stable', 'Phone 6', 'Defibrillator', 'connected', '9 ms', 'now'],
       ['stable', 'Phone 7', 'Defibrillator', 'connected', '11 ms', 'now'],
@@ -393,28 +393,31 @@ describe('Room', () => {
       ['monitor', 'Patient monitor', 'This window', ['New window']],
       ['defib', 'Defibrillator', 'Not open', ['New window']],
       ['vent', 'Ventilator', 'On this computer', ['Open here', 'New window']], // R8d: and a window of its own
-      ['depth', 'Depth of anaesthesia', 'Coming later', []],
+      ['depth', 'Depth of anaesthesia', 'Not open', ['New window']], // E12
       ['iabp', 'Intra-aortic balloon pump', 'Coming later', []],
     ]);
     expect(v.el.querySelector('.room-openers [data-show="vent"] a')?.getAttribute('href')).toBe('#/vent');
     (v.el.querySelector('.room-openers [data-show="learner"] button') as HTMLButtonElement).click();
     (v.el.querySelector('.room-openers [data-show="monitor"] button') as HTMLButtonElement).click();
     (v.el.querySelector('.room-openers [data-show="defib"] button') as HTMLButtonElement).click();
-    expect(opened).toEqual(['http://127.0.0.1:5173/?follow=ABC234#/monitor', 'http://127.0.0.1:5173/?follow=ABC234#/monitor/wide', 'http://127.0.0.1:5173/?follow=ABC234#/defib']);
+    (v.el.querySelector('.room-openers [data-show="depth"] button') as HTMLButtonElement).click();
+    expect(opened).toEqual(['http://127.0.0.1:5173/?follow=ABC234#/monitor', 'http://127.0.0.1:5173/?follow=ABC234#/monitor/wide', 'http://127.0.0.1:5173/?follow=ABC234#/defib', 'http://127.0.0.1:5173/?follow=ABC234#/depth']);
     local.hello('win-2', 'viewer', 'learner');
     local.hello('win-3', 'viewer', 'monitor');
     local.hello('win-4', 'viewer', 'defib');
+    local.hello('win-5', 'viewer', 'depth');
     expect(cards().slice(0, 3).map((c) => c.querySelector('.st')?.textContent)).toEqual(['Window 2', 'This window · Window 3', 'Window 4']);
+    expect(cards().find((c) => c.dataset.show === 'depth')?.querySelector('.st')?.textContent).toBe('Window 5');
     // kept for "Reopen that layout" the next time
-    expect(JSON.parse(localStorage.getItem('pme.roomWindows')!)).toEqual({ learner: 1, monitor: 1, defib: 1 });
+    expect(JSON.parse(localStorage.getItem('pme.roomWindows')!)).toEqual({ learner: 1, monitor: 1, defib: 1, depth: 1 });
     v.leave?.();
     v.el.remove();
     const next = setup();
-    expect(next.v.el.querySelector('.room-last')?.textContent).toMatch(/^Last time in this room: 1 monitor window, 1 defibrillator window and 1 learner monitor window on this computer; /);
+    expect(next.v.el.querySelector('.room-last')?.textContent).toMatch(/^Last time in this room: 1 monitor window, 1 defibrillator window, 1 depth of anaesthesia window and 1 learner monitor window on this computer; /);
     const reopen = next.v.el.querySelector('.room-reopen') as HTMLButtonElement;
     expect(reopen.hidden).toBe(false);
     reopen.click();
-    expect(next.opened).toEqual(['http://127.0.0.1:5173/?follow=ABC234#/monitor/wide', 'http://127.0.0.1:5173/?follow=ABC234#/defib', 'http://127.0.0.1:5173/?follow=ABC234#/monitor']);
+    expect(next.opened).toEqual(['http://127.0.0.1:5173/?follow=ABC234#/monitor/wide', 'http://127.0.0.1:5173/?follow=ABC234#/defib', 'http://127.0.0.1:5173/?follow=ABC234#/depth', 'http://127.0.0.1:5173/?follow=ABC234#/monitor']);
     expect(reopen.hidden).toBe(true);
     next.v.leave?.();
   });
