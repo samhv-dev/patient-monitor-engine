@@ -17,7 +17,7 @@
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type WireEvent } from '@pme/controller';
+import { asV1, isV2, LEARNER_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type NotGiven, type WireEvent } from '@pme/controller';
 import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
@@ -58,6 +58,9 @@ export interface Row {
   /** A `learner` row (L4, LQ4): an infusion change's replaced rate, and who had set it (a device key or the laptop,
    *  phone or card), as the host wrote it on the command. */
   replaced?: { rate: number; rateUnit: string; by: string };
+  /** A `learner` row (L14): an attempt the host refused before dispatch, with its reason (PAUSED_REFUSAL): not a dose,
+   *  so it carries no `dose`, no `ev` and no `prepId` (the Debrief's totals, rules and preparations never count it). */
+  notGiven?: string;
   /** A bookmark row (Instructor v2 marks): the mark's kind, and the note the instructor wrote with it. */
   markKind?: Exclude<MarkKind, 'stage'>;
   note?: string;
@@ -282,6 +285,18 @@ export class RunRecord {
     if (ev?.kind === 'condition' && Number(ev.severity) > 0) row.ev = `condition:${String(ev.id)}`;
     if (ev?.kind === 'airway') row.ev = `airway:${String(ev.state)}`;
     this.add(row);
+  }
+
+  /** L14: a learner's give the host refused because the case was paused (host-session.ts onNotGiven): the attempt, who
+   *  made it and why, at the case time it arrived. */
+  notGiven(n: NotGiven): void {
+    const c = n.command as unknown as Record<string, unknown>;
+    const by = typeof c.by === 'string' ? c.by : undefined;
+    const name = by !== undefined ? this.deviceName(by) : null;
+    this.add({ t: n.t, kind: 'learner', text: `${describeCommand(c)} not given: ${n.reason}`, remote: true, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), notGiven: n.reason });
+    // the runner's administrations now hold the attempt (AppSession records it there first); a paused clock sends no
+    // sample, so the once-a-second copy would not carry it until the case resumed
+    this.copy();
   }
 
   /**

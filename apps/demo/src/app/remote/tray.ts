@@ -14,6 +14,7 @@ import type { PkRoute } from '@pme/engine-core';
 import { drugName } from '../glossary.ts';
 import { button, clock, h, seg, select, setText, stepper, type Stepper } from '../ui.ts';
 import type { FollowerCommand } from '../views/follower.ts';
+import { hostPause } from '../views/follower-status.ts';
 import { CONTAINER_WORDS, mmss, perMlText, sourceText, type BenchChoice } from './bench.ts';
 
 /** The routes a bolus from a syringe takes on the bench [ENG: ui; the engine's injection routes, PkRoute, without the inhaled, nebulised and perineural ones a syringe on this tray is not given by]. */
@@ -56,6 +57,8 @@ export const TRAY_WORDS = {
   deliver: 'Deliver the tray',
   deliverHint: 'Gives every ready syringe at once. A syringe of two drugs is given on its own.',
   cleared: 'The case started again on the instructor’s computer: the tray was cleared.',
+  /** L14 (N117 ruled B): the host gives no learner's drug while the case is paused. */
+  paused: 'The case is paused: nothing can be given until it resumes. You can still prepare.',
   notice: 'A concern about this preparation',
   noticeAt: (t: number) => `Raised at ${clock(t)}`,
 } as const;
@@ -150,13 +153,15 @@ export function trayView(o: TrayOptions): Tray {
   /** A give's (or a discard's) command id → the preparation and what it asked for. */
   const pending = new Map<string, { item: Item; what: 'give' | 'discard'; label: string }>();
   let link: TrayLink | null = null;
+  let pause = hostPause(); // L14: the host's pause as this phone follows it (its "(paused)" mark reads the same)
   let sounded = 0;
   const listEl = h('ul', { class: 'lr-tray-list', 'aria-label': TRAY_WORDS.title });
   const emptyEl = h('p', { class: 'hint lr-tray-empty' }, TRAY_WORDS.empty);
   const cleared = h('p', { class: 'hint lr-tray-cleared', role: 'status' });
+  const pausedNote = h('p', { class: 'lr-paused', role: 'status', hidden: true }, TRAY_WORDS.paused);
   const deliverBtn = button(TRAY_WORDS.deliver, () => deliverTray(), 'primary lr-deliver');
   const deliverHint = h('p', { class: 'hint' }, TRAY_WORDS.deliverHint);
-  const el = h('section', { class: 'lr-tray', 'aria-label': TRAY_WORDS.title }, h('h2', { class: 'lr-h2' }, TRAY_WORDS.title), cleared, emptyEl, listEl, h('div', { class: 'lr-actions' }, deliverBtn), deliverHint);
+  const el = h('section', { class: 'lr-tray', 'aria-label': TRAY_WORDS.title }, h('h2', { class: 'lr-h2' }, TRAY_WORDS.title), cleared, pausedNote, emptyEl, listEl, h('div', { class: 'lr-actions' }, deliverBtn), deliverHint);
   el.addEventListener('pointerdown', () => sound.unlock(), { capture: true });
 
   const names = (c: BenchChoice) => c.components.map((x) => {
@@ -217,7 +222,7 @@ export function trayView(o: TrayOptions): Tray {
   }
 
   function give(it: Item, group?: { id: string; n: number }): void {
-    if (!link || !it.view) return;
+    if (!link || !it.view || pause.paused) return;
     const v = it.give.part.value === 'all' ? 'all' : it.give.ml.value;
     const over = it.give.over.value;
     const id = link.command({
@@ -271,7 +276,7 @@ export function trayView(o: TrayOptions): Tray {
       setText(it.state, '');
       it.state.dataset.state = it.refused ? 'refused' : 'sent';
     }
-    it.give.btn.disabled = !v || v.leftMl <= 0;
+    it.give.btn.disabled = !v || v.leftMl <= 0 || pause.paused;
     it.give.box.hidden = !v && !it.refused;
     it.give.btn.hidden = it.refused;
     for (const x of [it.give.part, it.give.route.parentElement as HTMLElement, it.give.over.el.parentElement as HTMLElement]) x.hidden = it.refused;
@@ -282,7 +287,8 @@ export function trayView(o: TrayOptions): Tray {
     for (const it of items.values()) drawItem(it);
     emptyEl.hidden = items.size > 0;
     const n = trayable().length;
-    deliverBtn.disabled = n === 0;
+    deliverBtn.disabled = n === 0 || pause.paused;
+    pausedNote.hidden = !pause.paused;
     deliverBtn.hidden = deliverHint.hidden = items.size === 0;
   }
 
@@ -348,8 +354,11 @@ export function trayView(o: TrayOptions): Tray {
 
   function attach(l: TrayLink): () => void {
     link = l;
+    pause = hostPause();
     const off = l.onMessage((m) => {
+      pause.onMessage(m);
       if (m.kind === 'ack') return onAck(m.commandId, m.accepted, m.reason);
+      if (m.kind === 'snapshot') return draw(); // the end of a welcome: the host's pause as it stands
       if (m.kind !== 'event') return;
       for (const e of m.body) {
         if (e.type === 'timeline') clear();
