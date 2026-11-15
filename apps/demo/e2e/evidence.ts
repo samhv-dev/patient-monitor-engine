@@ -16,7 +16,11 @@
 //
 // While on, every context gets an init script that records, in each frame, the last 300 pointer, click, wheel and key
 // events that reached the frame's window (capture phase, passive: it changes nothing), so a failure shows whether the
-// test's clicks and wheel turns arrived.
+// test's clicks and wheel turns arrived. The same script watches every plain press (a click or a tap, not a drag): a press
+// whose pressed node (the text node under the pointer when the press is over words, else the element) is taken out of
+// the page before its release (removed, replaced, or removed and put back) or whose release lands on another node gets
+// no click (the text node's case in WebKit), so each such press is reported to the fixture, which lists it in the
+// test's annotations ('lost-press') and, with PME_E2E_PRESS_LOG=<dir>, writes one JSON line per press there.
 //
 // On by default in CI; PME_E2E_EVIDENCE=1 turns it on locally, PME_E2E_EVIDENCE=0 off (also in CI).
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -40,6 +44,7 @@ async function readCounters(): Promise<Record<string, unknown>> {
     __pmeLearnerRemote?: unknown;
     __vent?: { vs?: { cfg?: unknown; p?: { breathCount?: number; phase?: string; t?: number; measured?: unknown } } };
     __pmeInputs?: Array<{ type: string; on: string; atMs: number; trusted: boolean }>;
+    __pmeLostPresses?: LostPress[];
   };
   const w = window as unknown as W;
   const now = performance.now();
@@ -101,25 +106,70 @@ async function readCounters(): Promise<Record<string, unknown>> {
     })) : null,
     vent: await safe(() => vent(w)),
     inputs: inputs(w),
+    lostPresses: w.__pmeLostPresses ?? null,
     framedPages: framed.length ? framed : null,
   };
 }
 
-/** In every frame of every context while evidence is on: the input events that reached the frame's window. */
+/** A plain press that got no click: its node was taken out before the release, or the release landed elsewhere. */
+export interface LostPress { how: 'removed' | 'released elsewhere'; down: string; up: string; heldMs: number; url: string }
+
+/** In every frame of every context while evidence is on: the input events that reached the frame's window, and every
+ *  plain press that could not become a click. */
 function recordInputs(): void {
   const log: Array<{ type: string; on: string; atMs: number; trusted: boolean }> = [];
   Object.defineProperty(window, '__pmeInputs', { value: log, configurable: true });
-  const on = (e: Event) => {
-    const t = e.target instanceof Element ? e.target : null;
-    const ctl = t?.closest('[data-ctl]')?.getAttribute('data-ctl');
-    return ctl ?? (t ? `${t.tagName.toLowerCase()}${typeof t.className === 'string' && t.className ? `.${t.className.trim().split(/\s+/)[0]}` : ''}` : String(e.target));
+  const name = (t: EventTarget | null) => {
+    const e = t instanceof Element ? t : null;
+    const ctl = e?.closest('[data-ctl]')?.getAttribute('data-ctl');
+    return ctl ?? (e ? `${e.tagName.toLowerCase()}${typeof e.className === 'string' && e.className ? `.${e.className.trim().split(/\s+/)[0]}` : ''}` : String(t));
   };
+  const on = (e: Event) => name(e.target);
   for (const type of ['pointerdown', 'pointerup', 'click', 'wheel', 'keydown']) {
     addEventListener(type, (e) => {
       log.push({ type, on: on(e), atMs: e.timeStamp, trusted: e.isTrusted });
       if (log.length > 300) log.splice(0, log.length - 300);
     }, { capture: true, passive: true });
   }
+  const lost: LostPress[] = [];
+  Object.defineProperty(window, '__pmeLostPresses', { value: lost, configurable: true });
+  const DRAG_PX = 4; // a pointer that travels further between press and release is a drag, not a click [ENG: test]
+  let down: { t: Node; el: Element; x: number; y: number; at: number; gone: boolean; moved: boolean } | null = null;
+  // the pressed node: the text node when the press is over its words (WebKit holds the press there), else the element
+  const pressed = (el: Element, x: number, y: number): Node => {
+    const n = document.caretRangeFromPoint?.(x, y)?.startContainer;
+    if (n?.nodeType !== Node.TEXT_NODE || !el.contains(n)) return el;
+    const r = document.createRange();
+    r.selectNodeContents(n);
+    return [...r.getClientRects()].some((b) => x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) ? n : el;
+  };
+  const seen = (rs: MutationRecord[]) => {
+    if (down && !down.gone) for (const r of rs) for (const n of r.removedNodes) if (n === down.t || n.contains(down.t)) down.gone = true;
+  };
+  const mo = new MutationObserver(seen);
+  const opts = { capture: true, passive: true };
+  addEventListener('pointerdown', (e) => {
+    if (!e.isPrimary || !(e.target instanceof Element)) return;
+    down = { t: pressed(e.target, e.clientX, e.clientY), el: e.target, x: e.clientX, y: e.clientY, at: e.timeStamp, gone: false, moved: false };
+    mo.observe(document, { childList: true, subtree: true });
+  }, opts);
+  addEventListener('pointermove', (e) => {
+    if (down && e.isPrimary && Math.hypot(e.clientX - down.x, e.clientY - down.y) > DRAG_PX) down.moved = true;
+  }, opts);
+  addEventListener('pointercancel', () => ((down = null), mo.disconnect()), opts);
+  addEventListener('pointerup', (e) => {
+    if (!down || !e.isPrimary) return;
+    seen(mo.takeRecords());
+    mo.disconnect();
+    const d = down;
+    down = null;
+    // a captured pointer's release goes to the capturing element whatever is under it
+    const captured = e.target instanceof Element && e.target.hasPointerCapture(e.pointerId);
+    if (d.moved || (!d.gone && (captured || e.target === d.el))) return;
+    const row: LostPress = { how: d.gone ? 'removed' : 'released elsewhere', down: `${name(d.el)}${d.t === d.el ? '' : ' (its words)'}`, up: name(e.target), heldMs: Math.round(e.timeStamp - d.at), url: location.href };
+    lost.push(row);
+    (window as unknown as { __pmeLostPress?: (r: LostPress) => void }).__pmeLostPress?.(row);
+  }, opts);
 }
 
 const timed = <T,>(p: Promise<T>, ms: number, what: string): Promise<T> =>
@@ -206,11 +256,23 @@ function openedAt(): string {
 const openedBy = new Map<BrowserContext | Page, string>();
 /** Contexts that already carry the input recorder. */
 const recording = new WeakSet<BrowserContext>();
+/** Where the lost presses of the current test go (the fixture sets it for the length of each test). */
+let lostSink: ((r: LostPress) => void) | null = null;
 const record = async (c: BrowserContext) => {
   if (!evidenceOn() || recording.has(c)) return;
   recording.add(c);
+  await c.exposeBinding('__pmeLostPress', (_src, r: LostPress) => lostSink?.(r));
   await c.addInitScript(recordInputs);
 };
+
+/** The lost presses of a test: in its annotations, and one JSON line each in PME_E2E_PRESS_LOG when that is set. */
+function reportLost(testInfo: TestInfo, lost: readonly LostPress[]): void {
+  for (const r of lost) testInfo.annotations.push({ type: 'lost-press', description: `${r.how}: pressed ${r.down}, released ${r.up} after ${r.heldMs} ms (${r.url.replace(/^https?:\/\/[^/]+/, '')})` });
+  const dir = process.env.PME_E2E_PRESS_LOG;
+  if (!dir || !lost.length) return;
+  mkdirSync(dir, { recursive: true });
+  appendFileSync(join(dir, `presses-${testInfo.parallelIndex}-${process.pid}.jsonl`), lost.map((r) => JSON.stringify({ file: testInfo.titlePath[0], title: testInfo.titlePath.slice(1).join(' › '), project: testInfo.project.name, retry: testInfo.retry, status: testInfo.status, ...r })).join('\n') + '\n');
+}
 
 /** For the length of the test: what the test opens is recorded with its line, and new contexts carry the recorder. */
 function watchOpening(browser: Browser, earlier: Set<BrowserContext>): () => void {
@@ -289,6 +351,8 @@ export const test = base.extend<{ _evidence: void }>({
       const stale = [...leftByEarlierTests].filter((c) => browser.contexts().includes(c));
       if (stale.length && process.env.PME_E2E_LEAKS !== 'keep') throw new Error(`${stale.length} browser context(s) of a finished test still open at the start of this one`);
       const on = evidenceOn();
+      const lost: LostPress[] = [];
+      lostSink = (r) => void lost.push(r);
       const unwatch = watchOpening(browser, earlier);
       let done: Promise<void> | null = null;
       const capture = () => (done ??= collect(browser, earlier, testInfo).catch((e) => void testInfo.annotations.push({ type: 'evidence', description: `not written: ${String(e)}` })));
@@ -306,6 +370,8 @@ export const test = base.extend<{ _evidence: void }>({
         left = await tidy(browser, earlier, earlierPages, testInfo);
       } finally {
         unwatch();
+        lostSink = null;
+        reportLost(testInfo, lost);
       }
       // a passing test that left something open fails, with the lines that opened it
       if (left.length && passed(testInfo) && !onPurpose(testInfo)) {

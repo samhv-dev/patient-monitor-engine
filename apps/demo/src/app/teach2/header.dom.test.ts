@@ -3,7 +3,8 @@
 // session bar sends (plan IP4, answer 9): both are mounted on one fake Link and pressed control by control; the commands
 // sent are compared deep-equal, and the toasts too. The header's Sound switch and Room code are the top bar's.
 import { ScenarioView, type AckResult, type CommandInput } from '@pme/controller';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { disturbed } from '../keep.testing.ts';
 import type { Link } from '../link.ts';
 import { mountSessionBar } from '../sessionbar.ts';
 import { FF_SKIPS, mountFastForward } from './ff.ts';
@@ -23,7 +24,7 @@ function fakeLink(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1',
     },
     onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)),
   } as unknown as Link;
-  return { link, ctl, sent, take: () => sent.splice(0) };
+  return { link, ctl, sent, take: () => sent.splice(0), emit: () => fns.forEach((fn) => fn()) };
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
@@ -218,5 +219,35 @@ describe('Instructor v2 header: the learner preparations count (L9)', () => {
     preps.apply({ news: 'notice', prep: { ...prep, notice: { shownAt: 75 } } }, 75);
     hd.refresh();
     expect(count.hidden).toBe(true);
+  });
+});
+
+describe('a repaint keeps every control a press can rest on', () => {
+  it('Instructor v2: a repaint keeps the pill, the Sound switch and the Room link as they are under a held press, also while the clock ticks', async () => {
+    const f = fakeLink();
+    const v2 = mountHeader(f.link, { soundOn: () => false, toggleSound: () => undefined, code: 'QFBAWA', phones: () => 3 });
+    document.body.append(v2.el);
+    offs.push(v2.destroy);
+    const held = ['.ip2-pill', '.ip2-sound', '.ip2-room'].map((q) => v2.el.querySelector(q)!);
+    const time = v2.el.querySelector('.ip2-pill-time')!;
+    const before = time.textContent;
+    expect(await disturbed(held, () => ((f.link as { simT: number }).simT = 61, v2.refresh()))).toEqual([]);
+    expect(time.textContent).not.toBe(before);
+  });
+
+  it('the phone\'s session bar: a repaint keeps the mode badge and the pause button as they are under a held press', async () => {
+    const f = fakeLink();
+    const bar = document.createElement('div');
+    document.body.append(bar);
+    offs.push(mountSessionBar(bar, f.link));
+    const clockEl = bar.querySelector('.clock')!;
+    await vi.waitFor(() => expect(clockEl.textContent).toBe('00:00'));
+    const held = [...bar.querySelectorAll('.mode-badge, button.btn')];
+    const repaint = async () => {
+      (f.link as { simT: number }).simT = 61;
+      f.emit();
+      await vi.waitFor(() => expect(clockEl.textContent).toBe('01:01'));
+    };
+    expect(await disturbed(held, repaint)).toEqual([]);
   });
 });

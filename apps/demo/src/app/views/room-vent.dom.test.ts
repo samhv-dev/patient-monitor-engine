@@ -5,6 +5,7 @@
 // window and for a tablet the relay lists with the `ventilator` role.
 import type { ManagedTransport, RelayDevice, TransportStatus } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
+import { disturbed } from '../keep.testing.ts';
 import { deviceRows } from '../room-status.ts';
 import { roomView } from './room.ts';
 
@@ -54,5 +55,19 @@ describe("R8d: the ventilator's own screen on Room setup", () => {
     vent = { window: 'handed over', device: null };
     v.draw();
     expect(row()).toContain('handed over');
+  });
+
+  it('a redraw keeps every opener on "Open on this computer" and the focus as they are, also when a card\'s state changes', async () => {
+    let vent: { window: 'driving' | 'handed over' | null; device: 'driving' | 'handed over' | null } = { window: null, device: null };
+    const v = roomView({ ...base, vent: () => vent });
+    document.body.replaceChildren(v.el);
+    const held = [...v.el.querySelectorAll('.room-openers button, .room-openers a')];
+    expect(held.length).toBeGreaterThan(3);
+    (held[0] as HTMLElement).focus();
+    const chip = () => v.el.querySelector('.room-openers .join-card[data-show="vent"] .st')!;
+    expect(chip().textContent).toBe('On this computer');
+    expect(await disturbed(held, () => v.draw())).toEqual([]);
+    expect(await disturbed(held, () => ((vent = { window: 'driving', device: null }), v.draw()))).toEqual([]);
+    expect([chip().textContent, chip().className]).toEqual(['Window · driving', 'st on']);
   });
 });
