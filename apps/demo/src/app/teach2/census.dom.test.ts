@@ -34,10 +34,15 @@ const HAEM2 = anyShowcaseDoc('showcase-haemorrhage-v2') as AnyScenarioDoc;
  * the allow-list: a shape either side gains alone fails it. The measured set as P0 recorded it (amended 2026-10-30, the
  * orchestrator's rulings): `scenario pause` / `resume` are v2's cue box's "Hold the stage timer" (retire-instructor-v1
  * G2; today's Scenario tab's "Hold the timer" before it); `applyEvent` is every ClinicalEvent kind the Drug, Airway,
- * Defib · CPR, Vitals, Devices and Patient bodies send. Instructor v2 alone sends every shape of the union (the plan's
+ * CPR (once Defib · CPR), Patient (Vitals & rhythm, Patient & events), Devices bodies send. Instructor v2 alone sends every shape of the union (the plan's
  * condition for retiring today's view, kept as this test's equality).
  */
-const PLAN_S2: readonly string[] = [...INSTRUCTOR_COMMANDS].sort();
+/** Brief 208 (the owner's ruling of 12 November, "why should one hold a value against physiology in a modeled run?"):
+ *  the shapes the host's allow-list keeps for an instructor that the laptop's Instructor view no longer sends. `pin` is
+ *  sent by the instructor phone's Vitals tab (views/remote.ts mounts today's panel), by a card's script and by the
+ *  scenario builder's phase editor; the protocol, the allow-list and the scenario format are not changed by that piece. */
+const NOT_FROM_THE_LAPTOP: readonly string[] = ['pin'];
+const PLAN_S2: readonly string[] = [...INSTRUCTOR_COMMANDS].filter((x) => !NOT_FROM_THE_LAPTOP.includes(x)).sort();
 
 /** §2's refusals that are command shapes: no Instructor view may send them. */
 const PLAN_S2_REFUSED: readonly string[] = ['scenario load', 'setFactor', 'setModifiers', 'externalDrive', 'time step'];
@@ -330,6 +335,9 @@ describe('the command census of the laptop\'s Instructor view (P0)', () => {
     expect(loads.length).toBeGreaterThan(0);
     expect(shapes.filter((s) => PLAN_S2_REFUSED.includes(s)), 'a refused shape is sent').toEqual([]);
     expect(shapes).toEqual(PLAN_S2);
+    // brief 208: every shape set aside is still one the host allows, and the laptop sends none of them
+    expect(NOT_FROM_THE_LAPTOP.filter((x) => !INSTRUCTOR_COMMANDS.has(x))).toEqual([]);
+    expect(shapes.filter((x) => NOT_FROM_THE_LAPTOP.includes(x)), 'a hold sent from the laptop').toEqual([]);
     // retire-instructor-v1: v2 alone sends every shape of the union (v2 ⊇ the union: the crawl is v2's only, so the
     // equality above is that condition; kept as its own line so the condition is named)
     const ofV2 = new Set(sent.filter((x) => x.view === 'v2').map((x) => x.shape));
