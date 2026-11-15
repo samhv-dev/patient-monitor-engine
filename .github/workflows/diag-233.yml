@@ -64,7 +64,7 @@ jobs:
           apps/demo/e2e/audit-remote.e2e.ts
           apps/demo/e2e/audit-snapshot.e2e.ts
           LIST
-          sed -i 's/^ *//' "$RUNNER_TEMP/list.txt"; cat "$RUNNER_TEMP/list.txt"
+          sed -i -e 's/^ *//' -e 's%^apps/demo/e2e/%%' "$RUNNER_TEMP/list.txt"; cat "$RUNNER_TEMP/list.txt"
           pnpm exec playwright test --project=webkit --test-list "$RUNNER_TEMP/list.txt" --trace=on --reporter=list; echo "shard exit $?"
           exit 0
         env:
