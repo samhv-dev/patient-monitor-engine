@@ -2,7 +2,7 @@
 // and keys, never the app hook — so a broken path shows as a failure. Each must finish in < 30 s; the times are
 // written to the test annotations for the gate note. The same five tasks are the script for the owner's timed usability run.
 // Chromium only (a heavy evidence run, CI amendment rules).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { closeSheets, deliver, openApp, sheet, startVite } from './app-support.ts';
 
@@ -28,19 +28,29 @@ test('five instructor tasks, each under 30 s', async ({ page, browserName }) => 
   // E125: the free-run patient's page opens the Instructor view (Instructor v2)
   await openApp(page, base, '#/patient', { warmMs: 3000 });
 
-  // Task 3 runs first: holding and returning a value needs MODELED physiology, and the ACLS case runs MANUAL.
-  await timed('3. Hold SpO₂ at 85 %, then return it to the model', async () => {
+  // Task 3 runs first: it needs the free-run patient (MODELED), and the ACLS case runs MANUAL. Brief 208 (the owner's
+  // ruling of 12 November): a MODELED run holds no value, so the task is the ruling's two ways: in MODELED the row says
+  // how SpO₂ changes (through its cause, or MANUAL); in MANUAL Set it to 85 %, then MODELED again.
+  await timed('3. SpO₂ to 85 %: MODELED says how; MANUAL sets it; back to MODELED', async () => {
     await page.click('text=Open the instructor view');
     const vitals = await sheet(page, 'vitals');
     const row = vitals.locator('[data-var=spo2]');
+    await expect(row).toContainText('change it through its cause (drugs, fluids, an event) or switch to MANUAL');
+    await expect(row.getByRole('button', { name: 'Set', exact: true })).toBeHidden();
+    await expect(row.getByRole('button', { name: 'Return to model', exact: true })).toBeHidden();
+    const mode = (await sheet(page, 'patient')).getByRole('group', { name: 'Physiology', exact: true });
+    await mode.getByRole('button', { name: 'MANUAL', exact: true }).click();
+    await expect(mode.getByRole('button', { name: 'MANUAL', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await sheet(page, 'vitals');
+    await expect(row.getByRole('button', { name: 'Set', exact: true })).toBeVisible({ timeout: 10_000 });
     await row.locator('input').fill('85');
     await row.locator('input').dispatchEvent('change');
-    await row.locator('button', { hasText: 'Set' }).click();
+    await row.getByRole('button', { name: 'Set', exact: true }).click();
     await deliver(page); // v2's Deliver: the staged footer's Commit (Ctrl+Enter), which v2 gives no key
-    await expect(row.locator('.chip')).toContainText(/Held|Model override/, { timeout: 10_000 });
-    await row.locator('button', { hasText: 'Return to model' }).click();
-    await deliver(page);
-    await expect(row.locator('.chip')).toBeHidden({ timeout: 10_000 });
+    await expect(row.locator('.now')).toHaveText('85', { timeout: 10_000 });
+    await (await sheet(page, 'patient')).getByRole('group', { name: 'Physiology', exact: true }).getByRole('button', { name: 'MODELED', exact: true }).click();
+    await sheet(page, 'vitals');
+    await expect(row.getByRole('button', { name: 'Set', exact: true })).toBeHidden({ timeout: 10_000 });
   });
 
   await timed('1. Load the ACLS VF case', async () => {

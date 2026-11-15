@@ -8,6 +8,7 @@ import type { PumpPanelRow } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { faceRow, type FaceRow } from './face-row.ts';
 import { FACE_LABELS, faceModel, faceView, type FaceProfiles } from './face.ts';
+import { disturbed } from '../keep.testing.ts';
 import { rackView } from './rack.ts';
 
 /** A propofol 10 mg/mL syringe channel at 20 mL/h, 12 mL in, 38 mL left: E1's row as the `drugs` event carries it. */
@@ -223,6 +224,18 @@ describe("the rack: n channels and their kinds from Room setup's setting (PQ1 = 
     r.setKinds(['syringe']);
     expect(r.el.querySelectorAll('.pump-face')).toHaveLength(1);
     expect(r.el.dataset.rows).toBe('1');
+  });
+
+  it('a repeated setting, or a channel added, keeps every face and every button in its actions slot under a held press', async () => {
+    const r = rackView({ profiles: PROFILES });
+    document.body.append(r.el);
+    r.setKinds(['syringe', 'drip']);
+    for (const c of r.channels()) c.actions.append(Object.assign(document.createElement('button'), { textContent: `Start ${c.ch}` }));
+    const held = [...r.el.querySelectorAll('.pump-face, .pf-actions button')];
+    expect(await disturbed(held, () => r.setKinds(['syringe', 'drip']))).toEqual([]);
+    expect(await disturbed(held, () => r.setKinds(['syringe', 'drip', 'syringe']))).toEqual([]);
+    expect(r.el.querySelectorAll('.pump-face')).toHaveLength(3);
+    r.el.remove();
   });
 
   it("matches the engine's rows by channel; a channel the engine has not made is Not loaded", () => {

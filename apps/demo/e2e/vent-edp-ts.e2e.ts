@@ -4,17 +4,14 @@
 // the mean airway pressure and the PEEP of the ventilator frames it drives the patient with (its resp driver's state,
 // read from its snapshot).
 // Run: pnpm exec playwright test apps/demo/e2e/vent-edp-ts.e2e.ts
-import { resolve } from 'node:path';
-import { expect, test, type FrameLocator, type Page } from '@playwright/test';
-import { createServer, type ViteDevServer } from 'vite';
+import { expect, test, type FrameLocator, type Page } from './evidence.ts';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => vite?.close());
 
@@ -53,10 +50,33 @@ test('EDP-TS face: PCV chosen with the knob, PEEP changed, the monitor\'s airway
   const vent = () => page.evaluate(() => { const c = (document.getElementById('vent') as Any).contentWindow.__vent.vs.cfg; return { mode: c.mode as string, peep: c.peep as number, modeLabel: c.modeLabel as string }; });
   expect(await vent()).toMatchObject({ mode: 'PC', modeLabel: 'PCV' });
 
-  // the airway before: the monitor's engine follows the set PEEP
-  await expect.poll(async () => (await engineAirway(page))?.peep, { timeout: 15_000 }).toBe(await vent().then((c) => c.peep));
-  const before = (await engineAirway(page))!;
+  // Both airway readings are taken at points defined in SIMULATED time. The engine's mean airway pressure is the mean of
+  // the alveolar pressure of the frames over the last breath cycle (engine-core resp/driver.ts: the last Ti + Te, here
+  // 5 s). A reading is taken once, after the change it compares, one complete breath cycle has ended (breath k + 1 ran
+  // from its start to the start of breath k + 2) and breath k + 2 has ended its inspiration: the window then lies
+  // inside breaths k + 1 and k + 2. k is the model's breath counter (the e2e hook `__vent`) at the change. Read straight
+  // after the change, the window still holds the breath before it: since piece V2 the EDP-TS VCV starts with the
+  // descending ramp (research/57 T-26), whose mean is above PCV's, and a VCV inspiration in "before" decided the result.
+  const st = () => page.evaluate(() => {
+    const w = (document.getElementById('vent') as Any).contentWindow.__vent;
+    return { n: w.vs.p.breathCount as number, phase: w.vs.p.phase as string, t: w.vs.p.t as number, rate: w.vs.cfg.rate as number, ti: w.vs.cfg.itime as number, engineT: (window as Any).__link.simT as number, behind: (window as Any).__link.pm.behindS() as number };
+  });
+  await page.evaluate(() => { (window as Any).__behindMax = 0; document.addEventListener('pme-monitor-behind', (e) => { (window as Any).__behindMax = Math.max((window as Any).__behindMax, (e as CustomEvent).detail.behindS); }, true); });
+  const s0 = await st();
+  // The wall-clock bound only guards against a hung page: the suite's rule for waits on simulated time (vent-embed.e2e.ts
+  // `until`, orchestrator ruling, 8b review): the simulated span still to run at x1 real time, plus 60 s of slack. The
+  // span here is at most two breath periods (the next breath may be one period away) and one Ti.
+  const spanS = 2 * (60 / s0.rate) + s0.ti;
+  const guardMs = spanS * 1000 + 60_000;
+  test.setTimeout(120_000 + 2 * guardMs); // the test's own 120 s plus the two guarded waits, by the same rule
+  const settled = async (k: number) => {
+    await page.waitForFunction((k) => { const p = (document.getElementById('vent') as Any).contentWindow.__vent.vs.p; return p.breathCount >= k + 2 && p.phase === 'exp'; }, k, { timeout: guardMs, polling: 100 });
+  };
+  const w0 = Date.now();
+  await settled(s0.n);
   const peep0 = (await vent()).peep;
+  const before = (await engineAirway(page))!;
+  expect(before.peep).toBe(peep0);
 
   // PEEP: select, turn 5, not applied until the press (research/57 O-01)
   await f.locator('[data-ctl="key:peep"]').click();
@@ -65,8 +85,97 @@ test('EDP-TS face: PCV chosen with the knob, PEEP changed, the monitor\'s airway
   expect((await vent()).peep).toBe(peep0);
   await knobPress(f);
   expect((await vent()).peep).toBe(peep0 + 5);
+  const s1 = await st();
 
-  await expect.poll(async () => (await engineAirway(page))?.peep, { timeout: 15_000 }).toBe(peep0 + 5);
-  await expect.poll(async () => (await engineAirway(page))!.meanPaw, { timeout: 30_000 }).toBeGreaterThan(before.meanPaw + 3);
+  await settled(s1.n);
+  const after = (await engineAirway(page))!;
+  const s2 = await st();
+  const wallS = (Date.now() - w0) / 1000;
+  console.log(`vent-edp-ts ${JSON.stringify({
+    browser: test.info().project.name, wallS: Number(wallS.toFixed(2)),
+    ventSimS: Number((s2.t - s0.t).toFixed(2)), engineSimS: Number((s2.engineT - s0.engineT).toFixed(2)),
+    ventSimPerWall: Number(((s2.t - s0.t) / wallS).toFixed(3)), engineSimPerWall: Number(((s2.engineT - s0.engineT) / wallS).toFixed(3)),
+    behindS: [s0.behind, s1.behind, s2.behind].map((b) => Number(b.toFixed(2))), behindEventMaxS: await page.evaluate(() => (window as Any).__behindMax as number),
+    before: before.meanPaw, after: after.meanPaw, rise: Number((after.meanPaw - before.meanPaw).toFixed(3)),
+  })}`);
+  // In PCV the airway pressure is PEEP plus the set PC (vent.ts controller), and the alveolar pressure is PEEP plus the
+  // recoil of a tidal volume that the unchanged driving pressure keeps the same: both phases rise by the PEEP step, so
+  // the model gives +5 cmH2O; the test asks for more than 3, as V1 wrote it
+  expect(after.peep).toBe(peep0 + 5);
+  expect(after.meanPaw).toBeGreaterThan(before.meanPaw + 3);
   expect(errs).toEqual([]);
 });
+
+// Brief 202 (V3 on the redrawn face): an alarm raised by the MODEL, seen on the face as the device shows it. The
+// Pressure Limits max key turned below the breath's peak: the model raises High Pressure (research/57 A-32, no delay);
+// the High lamp flashes (H-06) and the message box shows the device's words on red (R-16, R-17; S-01, S-02); the silence
+// key pauses the sound only (A-20), said outside the device; the limit set back: the message goes at once (A-19), the
+// lamp stays lit, steady (A-16), until Esc (H-25).
+test('EDP-TS face: High Pressure from the model, its lamp and message, silenced, cleared and reset with Esc', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errs: string[] = [];
+  page.on('pageerror', (e) => errs.push(String(e)));
+  await page.setViewportSize({ width: 1400, height: 820 });
+  await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
+  await expect(page.locator('main.edp')).toBeVisible({ timeout: 20_000 });
+  const lamp = (w: string) => page.locator(`.edp-lamp[data-lamp="${w}"]`);
+  const box = page.locator('.edp-alarm');
+  const cfg = () => page.evaluate(() => (window as Any).__vent.vs.cfg.pmax as number);
+  const peak = () => page.evaluate(() => (window as Any).__vent.vs.p.measured.PIP as number);
+  await expect.poll(peak, { timeout: 20_000 }).toBeGreaterThan(10);
+
+  // the limit under the peak: select the key, turn, press (research/57 O-01)
+  const pmax0 = await cfg();
+  const steps = pmax0 - Math.max(10, Math.floor((await peak()) - 5));
+  await page.locator('[data-ctl="tag:pmax"]').click();
+  await knobTurnPage(page, -steps);
+  await page.locator('.edp-knob').click();
+  expect(await cfg()).toBe(pmax0 - steps);
+  await expect(box).toHaveText('High Pressure', { timeout: 15_000 });
+  await expect(box).toHaveClass(/high/);
+  await expect(lamp('high')).toHaveAttribute('data-state', 'fast');
+  await expect(lamp('inop')).toHaveAttribute('data-state', 'off');
+
+  // silenced: the device unchanged, the seconds left in the simulator's strip
+  await page.locator('[data-ctl="side:silence"]').click();
+  await expect(page.locator('.edp-strip .sil')).toHaveText(/^Alarm sound paused: (30|29) s$/);
+  await expect(box).toHaveText('High Pressure');
+  await expect(lamp('high')).toHaveAttribute('data-state', 'fast');
+
+  // the limit back: the message goes, the lamp stays lit steady until Esc
+  await page.locator('[data-ctl="tag:pmax"]').click();
+  await knobTurnPage(page, steps);
+  await page.locator('.edp-knob').click();
+  expect(await cfg()).toBe(pmax0);
+  await expect(box).toBeHidden({ timeout: 15_000 });
+  await expect(lamp('high')).toHaveAttribute('data-state', 'steady');
+  await page.locator('[data-ctl="under:esc"]').click();
+  await expect(lamp('high')).toHaveAttribute('data-state', 'off');
+  expect(errs).toEqual([]);
+});
+// A press is a press however long it is held: the face repaints at least every 250 ms, and a repaint must not take the
+// node under a held pointer away, or the browser dispatches no click (WebKit for a replaced text node; every browser
+// for a replaced element). The key and a window row, each held across repaints.
+test('EDP-TS face: a key and a window row held across a repaint still take the press', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 820 });
+  await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
+  await expect(page.locator('main.edp')).toBeVisible({ timeout: 20_000 });
+  const hold = async (sel: string) => {
+    const b = (await page.locator(sel).boundingBox())!;
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(600); // the press held: two repaints or more
+    await page.mouse.up();
+  };
+  await hold('[data-ctl="tag:pmax"] .tv');
+  await expect(page.locator('[data-ctl="tag:pmax"]')).toHaveClass(/\bsel\b/);
+  await page.locator('[data-ctl="under:esc"]').click();
+  await page.locator('[data-ctl="side:mode"]').click();
+  await expect(page.locator('.edp-win .t').first()).toHaveText('Operative Modes');
+  await hold('.edp-win .edp-entry:nth-child(3) .lbl');
+  await expect(page.locator('.edp-win.conf')).toContainText('Mode PCV');
+});
+
+async function knobTurnPage(p: Page, n: number) {
+  for (let i = 0; i < Math.abs(n); i++) await p.locator('.edp-knob').dispatchEvent('wheel', { deltaY: n > 0 ? -100 : 100 });
+}

@@ -3,7 +3,7 @@
 // the monitor, off it altogether (monitor-return-controls.e2e.ts). #32 — a paused session puts PAUSED over the
 // monitor, never in print. #14 — a scenario's NIBP cuff cycles from Load (the Saadat default, AUTO every 5 min); the
 // tile showed "/" for the whole case.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, pillV2, startVite } from './app-support.ts';
 

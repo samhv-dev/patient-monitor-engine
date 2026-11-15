@@ -1,6 +1,6 @@
 // FU-11 Task E4 (external review F03–F05, F09; browser audit BA01–BA05): "Return here" restores the patient AND the
 // screen — the session clock, the trends and the waveforms go back with it.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, sheet, speedV2, startVite } from './app-support.ts';
 

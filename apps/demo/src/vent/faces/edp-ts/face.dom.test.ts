@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createVentDriver, type VentDriver } from '@pme/ventilator';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { liveWrites } from '../../../app/keep.testing.ts';
 import { faceFromLocation, mountFace } from '../index.ts';
 import FACE from './face.json';
 
@@ -17,6 +18,8 @@ const html = readFileSync(resolve(import.meta.dirname, '../../../../vent-hamilto
 const body = (html.split('<body>')[1] as string).split('<script')[0] as string;
 const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
 const NUMERIC = /^[-+\d.:/ ]+$/;
+/** A window's value with its unit (research/57 T-40 "Apnea time 15 s"): a number and a sourced unit word. */
+const withUnit = (t: string) => { const m = /^([-+\d.:/]+) (.+)$/.exec(t); return m !== null && ALLOWED.has(m[2]!); };
 
 const mount = (d: VentDriver) => mountFace(d, faceFromLocation({ search: '?face=edp-ts' }), { linked: false });
 const texts = (): string[] => {
@@ -36,13 +39,13 @@ describe('the EDP-TS face', () => {
     const d = createVentDriver(null);
     const ui = mount(d);
     const seen = new Set<string>();
-    const check = (state: string) => { for (const t of texts()) { seen.add(t); expect(ALLOWED.has(t) || NUMERIC.test(t), `${state}: "${t}"`).toBe(true); } };
+    const check = (state: string) => { for (const t of texts()) { seen.add(t); expect(ALLOWED.has(t) || NUMERIC.test(t) || withUnit(t), `${state}: "${t}"`).toBe(true); } };
     check('running');
     expect(document.querySelector('main.edp h1')?.textContent).toBe('EDP-TS');
     click('[data-ctl="side:mode"]'); check('mode window');
     expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Operative Modes']);
     expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['VCV', 'PCV', 'PSV/CPAP', 'SIMV(PCV)+PSV', 'SIMV(VCV)+PSV', 'Noninvasive (NIV)', 'Other Operative modes']);
-    wheel(2); knobPress();
+    wheel(3); knobPress(); // PSV/CPAP is a knob stop since piece V2
     // the second window takes the first one's place, as photographed (IMG_1545; V1 drew both side by side)
     expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Operative Modes']);
     expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['MMV+PSV', 'PSV+VT Assured', 'APRV', 'PRVC', 'Other Operative modes']);
@@ -53,6 +56,18 @@ describe('the EDP-TS face', () => {
     expect(d.vs.cfg.mode).toBe('PRVC');
     for (let i = 0; i < 3; i++) { click('[data-ctl="side:menu"]'); check(`menu ×${i + 1}`); }
     click('[data-ctl="under:esc"]'); click('[data-ctl="under:esc"]');
+    // piece V2: Menu → Backup ventilation, as the manual draws it (research/57 T-40)
+    click('[data-ctl="side:menu"]'); knobPress(); check('backup window');
+    expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Backup ventilation']);
+    expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['Ventilation Modes', 'Apnea time', 'Backup in SIMV/APRV', 'Accept']);
+    expect(document.querySelector('.edp-win')!.textContent).toContain('VCV');
+    expect(document.querySelector('.edp-win')!.textContent).toContain('15 s');
+    click('[data-ctl="under:esc"]'); click('[data-ctl="under:esc"]');
+    // PSV/CPAP: its bottom row (D-03) and the backup in the top-left block (R-05)
+    click('[data-ctl="side:mode"]'); wheel(2); knobPress(); knobPress(); check('PSV/CPAP');
+    expect(d.vs.cfg.mode).toBe('PSV');
+    expect(document.querySelector('.edp-tl .mn')!.textContent).toBe('PSV/CPAP');
+    expect(document.querySelector('.edp-tl .bk')!.textContent).toBe('Backup: VCV');
     click('[data-ctl="side:alarmLimits"]'); check('alarm settings');
     click('[data-ctl="under:esc"]');
     click('[data-ctl="key:peep"]'); wheel(3); check('pending');
@@ -78,19 +93,60 @@ describe('the EDP-TS face', () => {
     ui.stop();
   });
 
+  it('a repaint keeps every node a press can rest on: a held key, tile or window row still gets its click', () => {
+    // A click is dispatched only when the press and the release land on the same node: a node replaced under a held
+    // pointer loses the press (WebKit for a text node; every browser for an element), so a repaint that changes
+    // nothing must replace nothing that can be pressed.
+    const d = createVentDriver(null);
+    const ui = mount(d);
+    const repaint = () => { click('[data-ctl="under:ctrl"]'); click('[data-ctl="under:ctrl"]'); };
+    const under = (): Node[] => [
+      ...['[data-ctl="tag:pmax"] .tv', '[data-ctl="key:peep"] .v', '[data-ctl="key:peep"] .u', '[data-ctl="key:peep"] .n'].map((q) => document.querySelector(q)!.firstChild!),
+      document.querySelector('.edp-tile.pict .v svg')!,
+    ];
+    const held = under();
+    expect(held.every((n) => n !== null)).toBe(true);
+    repaint();
+    under().forEach((n, i) => expect(n, `node ${i}`).toBe(held[i]));
+    click('[data-ctl="side:mode"]');
+    const rows = [...document.querySelectorAll('.edp-win .edp-entry')];
+    expect(rows.length).toBeGreaterThan(0);
+    repaint();
+    const after = [...document.querySelectorAll('.edp-win .edp-entry')];
+    expect(after.length).toBe(rows.length);
+    after.forEach((r, i) => expect(r).toBe(rows[i]));
+    ui.stop();
+  });
+
+  it('the alarm box and the two status lines are written only when their text changes', async () => {
+    const d = createVentDriver(null);
+    const ui = mount(d);
+    d.vs.cfg.pmax = 10;
+    let ms = 0;
+    for (let i = 0; i < 100; i++) d.frame((ms += 100));
+    click('[data-ctl="right:nebulizer"]'); // a reason in the strip
+    click('[data-ctl="side:silence"]'); // the silenced countdown
+    const live = ['.edp-alarm', '.edp-strip .why', '.edp-strip .sil'].map((q) => document.querySelector(q)!);
+    expect(live.map((e) => e.textContent!.length > 0)).toEqual([true, true, true]);
+    const repaint = () => { click('[data-ctl="under:ctrl"]'); click('[data-ctl="under:ctrl"]'); };
+    expect(await liveWrites(live, repaint)).toEqual([0, 0, 0]);
+    ui.stop();
+  });
+
   it('every control not honoured yet is drawn as the device draws it, marked unavailable and described with its reason', () => {
     const ui = mount(createVentDriver(null));
     const why = (b: HTMLElement) => document.getElementById(b.getAttribute('aria-describedby') ?? '')?.textContent ?? '';
-    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl="side:silence"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
+    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
       expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
       expect(why(b), b.dataset.ctl).toMatch(/not simulated yet|not modelled|cannot be changed yet/);
       expect(b.dataset.unsim, b.dataset.ctl).toBeTruthy();
     }
-    // the tags not simulated show the manual's initial limits (research/57 L-02, L-08, L-13), as the device would
-    expect(['tag:pLo', 'tag:peepHi', 'tag:o2Hi', 'tag:o2Lo'].map((id) => document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent)).toEqual(['5', '20.0', '60', '40']);
+    // V3 turned these on: the device's limits (research/57 L-02, L-13, L-08), live, and the silence key
+    for (const [id, v] of [['tag:pLo', '5'], ['tag:peepHi', '20.0'], ['tag:o2Hi', '60'], ['tag:o2Lo', '40']]) expect(document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent).toBe(v);
+    for (const id of ['tag:pLo', 'tag:peepHi', 'tag:o2Hi', 'tag:o2Lo', 'side:silence']) expect(document.querySelector(`[data-ctl="${id}"]`)!.getAttribute('aria-disabled'), id).not.toBe('true');
     click('[data-ctl="side:mode"]');
     const off = [...document.querySelectorAll<HTMLElement>('.edp-entry[aria-disabled="true"]')].map((e) => [e.textContent, why(e)]);
-    expect(off).toEqual([['PSV/CPAP', 'PSV/CPAP is not simulated yet'], ['SIMV(PCV)+PSV', 'SIMV modes are not simulated yet'], ['SIMV(VCV)+PSV', 'SIMV modes are not simulated yet'], ['Noninvasive (NIV)', 'NIV is not simulated yet']]);
+    expect(off).toEqual([['SIMV(PCV)+PSV', 'SIMV modes are not simulated yet'], ['SIMV(VCV)+PSV', 'SIMV modes are not simulated yet'], ['Noninvasive (NIV)', 'NIV is not simulated yet']]);
     ui.stop();
   });
 

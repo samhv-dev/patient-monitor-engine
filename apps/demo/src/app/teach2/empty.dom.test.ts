@@ -104,6 +104,8 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     r.key('Escape');
     r.key('1');
     expect(r.shown('.ip2-ff')).toBe(true);
+    r.key('Escape'); // brief 208: Free roam opened the Patient sheet; the first Esc closes it, Free roam stays
+    expect(r.shown('.ip2-ff')).toBe(true);
     r.key('Escape');
     expect(r.shown('.ip2-ff')).toBe(false);
     r.key('2');
@@ -163,6 +165,42 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
       open = null;
       document.body.replaceChildren();
     }
+  });
+
+  it('brief 208 (ruling 6b = A): Free roam begins with the Patient sheet open over ACTION, on "Vitals & rhythm"; it stays until the instructor closes it and does not come back by itself; a card does not open it', () => {
+    for (const how of ['press', 'key'] as const) {
+      const r = use(rig());
+      expect(r.q('.ip2-sheets .ip2-sheet:not([hidden])'), 'no sheet on the three cards').toBeNull();
+      if (how === 'press') (cardsShown(r)[0] as HTMLButtonElement).click();
+      else r.key('1');
+      const sheets = () => [...r.v.el.querySelectorAll<HTMLElement>('.ip2-sheets .ip2-sheet:not([hidden])')].map((x) => x.dataset.sheet);
+      expect(sheets()).toEqual(['patient']);
+      expect(r.text('.ip2-sheets .ip2-sheet:not([hidden]) [role=tab][aria-selected="true"]')).toBe('Vitals & rhythm');
+      expect(r.q('.ip2-dock-tools .ip2-tool[data-sheet="patient"]')?.getAttribute('aria-pressed')).toBe('true');
+      // ACTION's Free roam fold is still drawn under the sheet (the sheet covers it; the Log sheet and the Debrief read the same)
+      expect(r.shown('.ip2-offcard')).toBe(true);
+      // repaints do not close it, and Esc closes the sheet first (not Free roam)
+      r.v.enter?.('');
+      expect(sheets()).toEqual(['patient']);
+      r.key('Escape');
+      expect(sheets()).toEqual([]);
+      expect(r.shown('.ip2-offcard'), 'still Free roam').toBe(true);
+      r.v.enter?.('');
+      expect(sheets(), 'it does not come back by itself').toEqual([]);
+      // another sheet opened and closed: nothing comes back either
+      r.key('d');
+      expect(sheets()).toEqual(['drug']);
+      r.key('Escape');
+      expect(sheets()).toEqual([]);
+      open?.destroy();
+      open = null;
+      document.body.replaceChildren();
+    }
+    // a case: the Patient sheet is a dock tool like the others (nothing opens by itself)
+    const r = use(rig());
+    r.key('2');
+    (r.all('.ip2-case-list > li > .ip2-row')[0] as HTMLButtonElement).click();
+    expect(r.q('.ip2-sheets .ip2-sheet:not([hidden])')).toBeNull();
   });
 
   it('Scenario library (Browse or 2): the case list, the two demonstrations first; a row loads its card and the steps appear', () => {

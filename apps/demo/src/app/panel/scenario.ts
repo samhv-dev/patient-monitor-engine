@@ -6,7 +6,7 @@ import { LIBRARY, cardOf, type ScenarioCard } from '../scenarios.ts';
 import { CATEGORIES } from '../scenario-meta.ts';
 import { drugWords } from '../glossary.ts';
 import { countdown, transitionText } from '../triggers.ts';
-import { button, clock, confirmDialog, h, keepOrder, setText, toast } from '../ui.ts';
+import { button, clock, confirmDialog, h, keepOrder, keyed, setText, toast } from '../ui.ts';
 import { scenarioCard } from '../cards.ts';
 import { bookmark } from '../commands.ts';
 import type { PanelCtx } from './ctx.ts';
@@ -84,20 +84,11 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     else moved();
   };
 
-  // The dropped press: the strip, "What happens next" and the bookmarks were rebuilt on every repaint, so a press whose
-  // down and up straddled one landed on a removed button and never happened (WebKit seen). Each item is kept by its key
-  // and updated in place; only an item whose place changed is moved (keepOrder).
+  // The strip, "What happens next" and the bookmarks: each item is kept by its key and updated in place; only an item
+  // whose place changed is moved (keepOrder).
   const stateItems = new Map<string, { li: HTMLElement; cur: boolean | null }>();
   const nextItems = new Map<string, { li: HTMLElement; text: HTMLElement; left: HTMLElement }>();
   const markItems = new Map<string, HTMLElement>();
-  const keyed = <T>(m: Map<string, T>, keys: readonly string[], make: (k: string) => T): T[] => {
-    for (const k of [...m.keys()]) if (!keys.includes(k)) m.delete(k);
-    return keys.map((k) => {
-      let x = m.get(k);
-      if (x === undefined) m.set(k, (x = make(k)));
-      return x;
-    });
-  };
 
   c.onRefresh(() => {
     const doc = sv.doc;
@@ -135,7 +126,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     keepOrder(strip, sItems.map((x) => x.li));
     const t = sv.timeInState(link.simT);
     setText(inState, clock(t));
-    hold.textContent = sv.paused ? 'Resume the timer' : 'Hold the timer';
+    setText(hold, sv.paused ? 'Resume the timer' : 'Hold the timer');
     const cur = sv.current();
     const trs = cur?.transitions ?? [];
     // keyed by the state, the transition and its button's label: the button is made once and pressed by that label

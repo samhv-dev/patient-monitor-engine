@@ -6,18 +6,16 @@
 // Chromium only (≈ 2 min of wall time per skin at × 4).
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
-import { createServer, type ViteDevServer } from 'vite';
+import { expect, test, type Page } from './evidence.ts';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/fu-5' : '../../../test-results/gate-shots/fu-5'); // FU-11 K1: evidence only on request
 test.use({ viewport: { width: 1000, height: 660 }, deviceScaleFactor: 0.8 });
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
   mkdirSync(out, { recursive: true });
 });
 test.afterAll(async () => vite?.close());

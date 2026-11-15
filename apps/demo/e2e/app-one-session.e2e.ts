@@ -1,7 +1,7 @@
 // Stage 9: one document, one engine session. Switching views never restarts the engine (sim time keeps rising, the
 // monitor host element is the same node), the scenario deep link still works, and a Remote in another page of the same
 // browser pairs by code and moves the host's patient.
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { go, openApp, startVite } from './app-support.ts';
 

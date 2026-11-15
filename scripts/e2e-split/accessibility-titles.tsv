@@ -1,0 +1,20 @@
+chromium	accessibility: laptop 1280×800
+chromium	accessibility: iPad portrait 820×1180
+chromium	accessibility: the instructor phone's PIN form and the Room's instructor card
+chromium	accessibility: the learner remote's PIN form and signed-in page, and the Room's learner PIN
+chromium	accessibility: the pump tablet's PIN form and its rack of syringe and drip channels at a tablet size
+chromium	accessibility: the learner remote's Drugs tab with the bench open and a tray of two
+chromium	accessibility: the EDP-TS ventilator face
+chromium	accessibility: the learner preparations card on the laptop dock and on the instructor phone
+chromium	accessibility: the learner remote's Infusions tab with a syringe to start and two running infusions
+chromium	accessibility: the learner remote's Labs tab with a pending sample and a flagged result
+webkit	accessibility: laptop 1280×800
+webkit	accessibility: iPad portrait 820×1180
+webkit	accessibility: the instructor phone's PIN form and the Room's instructor card
+webkit	accessibility: the learner remote's PIN form and signed-in page, and the Room's learner PIN
+webkit	accessibility: the pump tablet's PIN form and its rack of syringe and drip channels at a tablet size
+webkit	accessibility: the learner remote's Drugs tab with the bench open and a tray of two
+webkit	accessibility: the EDP-TS ventilator face
+webkit	accessibility: the learner preparations card on the laptop dock and on the instructor phone
+webkit	accessibility: the learner remote's Infusions tab with a syringe to start and two running infusions
+webkit	accessibility: the learner remote's Labs tab with a pending sample and a flagged result

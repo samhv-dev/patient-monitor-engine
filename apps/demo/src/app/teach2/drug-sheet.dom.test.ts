@@ -4,6 +4,7 @@
 // `pressStep` does (answer 10's uncontested half); and the INTERIM rule for a typed dose that differs from the pinned
 // step's: two buttons, "Give the card's step (2.5 mg/kg)" = pressStep and "Give <dose> off the card" = today's bolus,
 // with "the card's dose is 2.5 mg/kg", and Enter never picks between them.
+import { disturbed } from '../keep.testing.ts';
 import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ClinicalLogEntry, Link } from '../link.ts';
@@ -135,6 +136,19 @@ describe('Drug sheet: the card\'s open steps, pinned', () => {
     ]);
     const tags = [...r.frame.left.querySelectorAll('[aria-label="Card steps"] .ip2-pick-tag')].map((t) => t.textContent);
     expect(tags).toEqual(['card step 1', 'card step 3', 'card step 3', 'card step 4']);
+  });
+
+  it('a repaint keeps every pick button and its tag as they are under a held press, while a lock counts down in the tag', async () => {
+    const r = rig();
+    const at = r.link as unknown as { simT: number; ctl: { gives?: unknown } };
+    at.ctl.gives = { lock: (id: string, t: number) => (id === 'dantrolene' ? { agoS: t, leftS: 10 - t } : null) };
+    at.simT = 1;
+    r.sheet.refresh();
+    const held = [...r.frame.left.querySelectorAll('.ip2-pick')];
+    const tag = r.frame.left.querySelector('.ip2-pick[data-key^="step:1:"] .ip2-pick-tag')!;
+    expect(tag.textContent).toBe('card step 1 · given 0:01 ago · 9 s left');
+    expect(await disturbed(held, () => ((at.simT = 2), r.sheet.refresh()))).toEqual([]);
+    expect(tag.textContent).toBe('card step 1 · given 0:02 ago · 8 s left');
   });
 
   it('a pinned step at the card\'s dose: one Give, which presses the step exactly as pressStep does', async () => {
