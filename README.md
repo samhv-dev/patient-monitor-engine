@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` 9333199e (Merge pull request #443 from samhv-dev/remote-l14-no-dose-while-paused), built 2026-11-14T23:26:53.758Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/9333199e87fa2a77b58bd90fd12960d8835c197f
+The built teaching app of `main` 19786f9f (Merge pull request #421 from samhv-dev/pump-c2-host-applies-pump-commands), built 2026-11-15T00:04:26.141Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/19786f9f2813656998be3a09b72390bb91a2f0b4
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
