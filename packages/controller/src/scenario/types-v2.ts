@@ -4,6 +4,7 @@
 // grade() are F3's. The shared types at the end are fixed here so F2 and F3 can be built in parallel.
 import type { PkRoute } from '@pme/engine-core';
 import type { Finding } from '../formulary/findings.ts';
+import type { Remaining } from '../formulary/remaining.ts';
 import type { RunnerInput } from './runner.ts';
 import type { DebriefHints, DocCommand, Op, ScenarioDoc, VitalVar } from './types.ts';
 
@@ -224,10 +225,20 @@ export interface PrepRecord {
   remaining: number;
   activeAmount: number;
   unit: string;
+  /** L13 (the Debrief reads the preparation from the record alone): every drug in it as the host made it (`concentration`
+   *  above is one drug's). Absent on a record made before L13. */
+  actives?: Array<{ drugId: string; amount: number; unit: string; perMl: number }>;
+  /** L13: when it was ready, from the formulary's sourced preparation times (`src`), or `gap: 'LQ7'` where no source
+   *  gives one (ready at once). Absent before L13. */
+  ready?: { atS: number; gap: 'LQ7' | null; src: string[] };
+  /** L13: what `remaining` rests on, as remaining.ts said at the give: the stability row's source (null: none applies),
+   *  whether the age was past the source's last point, and the formulary's words where the source gives no quantity
+   *  ("loss not modelled", LQ8). Absent before L13. */
+  basis?: { src: string | null; beyondData: boolean; note: Remaining['note'] };
 }
 /** A preparation as staged (`prep stage`, §4 D3): its record without a give's own figures, with the device that staged it
  *  (`by`, whose own id space `id` is in) and the sim time. Graded whether or not it is ever delivered. */
-export interface StagedPrep extends Omit<PrepRecord, 'remaining' | 'activeAmount' | 'unit'> {
+export interface StagedPrep extends Omit<PrepRecord, 'remaining' | 'activeAmount' | 'unit' | 'basis'> {
   by: string;
   t: number;
 }
@@ -237,10 +248,19 @@ export interface Administration {
   seq: number;
   /** The applied tick × 0.02 s (a staged batch: its own tick). */
   t: number;
-  /** `learner`: a learner's device (a remote or the defibrillator window), its device key in `by`. */
-  source: 'action' | 'sheet' | 'cache' | 'remote' | 'panel' | 'script' | 'learner';
-  /** The learner's device key (plan learner-action-remote.md §6). */
+  /** `learner`: a learner's device (a remote or the defibrillator window), its device key in `by`. `pump`: the pump
+   *  tablet (plan pump-rack-tci.md C2), its device key in `by`. */
+  source: 'action' | 'sheet' | 'cache' | 'remote' | 'panel' | 'script' | 'learner' | 'pump';
+  /** The learner's device key (plan learner-action-remote.md §6), or the pump tablet's. */
   by?: string;
+  /** A pump channel's act (pump-rack-tci.md C2, §7): its channel, whoever pressed (the tablet, or a remote's or the Drug
+   *  sheet's change routed to it, D9). Its drug is the channel's TRUE contents (what the patient received). */
+  channel?: number;
+  /** A pump bolus's seconds at the device's rapid rate (PQ3 = A): kept for the Debrief, never `overS`, so the bolus is
+   *  graded as a bolus with no "over N s" line. */
+  bolusS?: number;
+  /** §8: the act gave the contents of a channel whose contents and programme differ (grade(): a `pump` violation). */
+  mismatch?: { contents: string; programmed: string };
   /** An A press (F6 stamps it on the command). */
   actionId?: string;
   kind: 'drug' | 'infusion' | 'tci' | 'vaporiser' | 'fluid' | 'ventilation' | 'cpr' | 'defib' | 'airway' | 'procedure' | 'sample' | 'communication' | 'physical';

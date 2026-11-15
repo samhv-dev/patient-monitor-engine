@@ -47,9 +47,25 @@ pneumothorax, sepsis, anaphylaxis, a haemorrhage — are not profile: send them 
 Each state has an `id`, a `label`, optional `notes`, `onEnter`/`onExit` command lists and `transitions`. Commands are
 the engine's (`setRhythm`, `setTarget` with a `ramp`, `pin`/`release`, `setFactor`, `setMode`, `setModifiers`,
 `applyEvent` with an event `kind` — `drug`, `fluid`, `bleed`, `airway`, `airwayDevice`, `ventilation`, `preoxygenate`,
-`vaporiser`, `cpr`, `defib`, `pacer`, `line`, `surgical`, `stimulus`, `condition`, `neuroProfile` —, `attachSensor`,
-`device`). `$comment` is allowed on the document, states, transitions and commands and is
-never interpreted.
+`vaporiser`, `infusion`, `cpr`, `defib`, `pacer`, `line`, `surgical`, `stimulus`, `condition`, `neuroProfile`,
+`lungCondition`, `tci`, `mainstem`, `recruit`, `lab` —, `attachSensor`, `device`). `$comment` is allowed on the document,
+states, transitions and commands and is never interpreted.
+
+The schema checks an event's `kind` only. For the last five kinds the validator also asks the engine's own validation
+hook, so a card is refused at load, at the command's path and in the engine's words, for exactly what the engine would
+refuse at run time (the numbers live once, in the engine):
+
+| `kind` | Fields | Checked by |
+|---|---|---|
+| `lungCondition` | `id` (the lung catalogue's ids), `severity` (0 removes it), `side` (`L`/`R`, for a sided condition), optional `recruitFrac`, `ageMin` | the lung model, `validateRespCommand` (`l2/resp/pipeline.ts`) |
+| `tci` | `drugId` (a drug with a TCI model), `mode` (`plasma`/`effect`), `target` (in the drug's concentration unit), optional `model` (a TCI set of that drug), `maxRateMlH`, `opioids` | the drug model, `validatePkCommand` on a fresh patient (`l2/pk/pipeline.ts`) |
+| `mainstem` | `ventilated`: `both`, `left` or `right` (the tube in one mainstem bronchus) | the lung model, `validateRespCommand` |
+| `recruit` | `pressureCmH2O`, `durationS` (a recruitment manoeuvre) | the lung model, `validateRespCommand` |
+| `lab` | `panel` (`abg`, `vbg`, `chem`, `coag`), optional `turnaroundS`, `analyser` | the blood model, `validateBloodCommand` (`l2/blood/pipeline.ts`) |
+
+A TCI the validator accepts can still be refused at run time when a TCI of that drug is already running on another set
+or other patient data (the engine's `TCI_LOCKED`: stop it with target 0 first); the run's record shows the refusal. The builder's Script section offers the five: a lung condition
+with the Airway sheet's conditions, severities and sides, and the other four as the physiology console sends them.
 
 In **MANUAL** mode you script the numbers: a bleed is `setTarget` on `sbp`/`dbp`/`hr` with ramps. In **MODELED** mode
 you apply the cause (`applyEvent` `bleed`, a `drug`, a `condition`) and the physiology produces the numbers — check the
@@ -414,6 +430,17 @@ diluent that the stocked product's label does not list, or an admixture that the
 delivered, and "not modelled" otherwise. A preparation with none of these findings is "ok". A card's own
 contraindications have no `source`. A run that staged nothing has no `preparations`. The author writes nothing for any
 of this.
+
+**Pump channels: who pressed, and a syringe that differs from its programme** (plan pump-rack-tci.md C2, §7, §8). A
+press of the pump tablet is recorded with `source: "pump"`, the tablet's device key as `by` and its `channel`; a
+remote's or the Drug sheet's change that the host routed to a channel keeps its own source, with the `channel`. The drug
+is what the syringe or bag truly holds. A pump bolus is graded as a bolus (PQ3 = A): it satisfies `rate: { "bolus": true }`
+with no "over N s" line, and its seconds at the pump's rapid rate are kept as `bolusS` for the Debrief. A rate, a start
+and a stop are the channel's infusion at that rate (0 when stopped); a TCI target is a `tci`; a load, a programme, a purge
+and an unload give no administration. A channel whose contents and programme differ (another drug, or the same drug at
+another concentration than its label) is a **violation** with `source: "pump"` for every act that gave its contents (an
+infusion above 0, a start, a bolus, a TCI target), with harm "modelled": the engine delivered the true contents. The
+author writes nothing for any of this.
 
 **Other fields.**
 

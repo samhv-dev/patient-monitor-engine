@@ -34,8 +34,8 @@ is v2's stage strip, and "Drugs & fluids" is the Drug sheet.*
 5. The view with a case: the header (patient line, **MODELED**, the card's title, the clock pill, the speed box
    ×1 ×2 ×4 ×8, Sound, Room code); the stage strip (the current stage outlined); STATE (the cue box with the in-stage
    clock and **Hold the stage timer**, the Fast forward box, the learners' monitor at a reduced size); ACTION (one row
-   per open step); the dock (the sheets **Drug** · **Airway** · **Defib · CPR** · **Vitals** · **Devices** ·
-   **Patient** · **Log**, the three marks, **Debrief**). A sheet stages what it sets; **Deliver** sends it, with its
+   per open step); the dock (the sheets **Drug** · **Airway** · **CPR** · **Patient** (two tabs: **Vitals & rhythm**,
+   **Patient & events**) · **Devices** · **Log**, the three marks, **Debrief**). A sheet stages what it sets; **Deliver** sends it, with its
    **Onset** (now, or over 30 s, 1, 2 or 5 min). Choose **×4** in the speed box → toast "Speed ×4".
 6. Next case: either reload the page (Cmd-R; every rehearsal case here used a fresh load) or Load another card from the
    library: the library asks "Load this scenario?" (**Load scenario** or **Keep the current case**) while a case runs.

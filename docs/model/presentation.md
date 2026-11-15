@@ -48,12 +48,13 @@ renderer, audio and skin contracts.
 
 | Where | Relation |
 |---|---|
+| [`site.ts:78`](../../apps/demo/src/app/site.ts#L78) | PQ1 = C, the owner's ruling (research/00-orchestrator-rulings.md, 9 November 16:00): "1–8, default 4". All syringe |
 | [`vitals.ts:11`](../../apps/demo/src/app/vitals.ts#L11) | Display = engine value × scale. |
 | [`meta.ts:9`](../../apps/demo/src/physiology-console/meta.ts#L9) | Displayed = raw × scale (e.g. mmHg·s/mL → dyn·s/cm⁵). |
 | [`model.ts:29`](../../apps/demo/src/physiology-console/model.ts#L29) | Raw engine values; `unit` is the display unit and display = raw × scale. |
-| [`controls.ts:27`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L27) | The set I:E on the knob's axis u: 1:E is u = 1 − E, I:1 is u = I − 1 (1:1 is 0; one step is 0.1 of either side). |
-| [`controls.ts:66`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L66) | In VC the model's Ti is VT / flow: the face's settle() turns this set Ti into vcFlow = 60 · VT / Ti (plan GM1) |
-| [`modes.ts:47`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L47) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
+| [`controls.ts:33`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L33) | The set I:E on the knob's axis u: 1:E is u = 1 − E, I:1 is u = I − 1 (1:1 is 0; one step is 0.1 of either side). |
+| [`controls.ts:72`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L72) | In VC the model's Ti is VT / flow: the face's settle() turns this set Ti into vcFlow = 60 · VT / Ti (plan GM1) |
+| [`modes.ts:59`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L59) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
 | [`clock-map.ts:2`](../../packages/audio/src/clock-map.ts#L2) | wallMs(t) = anchorWall + (t − anchorSim) · 1000 / timeScale |
 | [`clock-map.ts:3`](../../packages/audio/src/clock-map.ts#L3) | audioTime(wallMs) = contextTime + (wallMs − performanceTime) / 1000   (AudioContext.getOutputTimestamp) |
 | [`pitch-maps.ts:1`](../../packages/audio/src/profiles/pitch-maps.ts#L1) | Pulse-tone pitch maps (brief §3.6; research 03 §3.6, 05 §2.5): f = baseHz · 2^(−(100 − SpO2)·s/12). |
@@ -170,12 +171,30 @@ renderer, audio and skin contracts.
 |---|---|---|---|---|
 | `CPU_WINDOW_MS` | `2000` | ms | — | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). They run only while Home is on screen. What each one measures, exactly: - Engine: the median time of one 20-ms engine tick, measured by engine-bench.worker.ts on the same engine build in a background thread of this page (the monitor's own worker has no timing hook). Updated every 5 s. - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); a browser without it (Safari, Firefox) has no Memory tile (MUI-17). The workers' heaps (the monitor's engine among them) are not in it. - CPU, this app: the MAIN THREAD's busy fraction over the last 2 s, in % of one core. Busy time = the long tasks a `PerformanceObserver` reports (`longtask`, every task of 50 ms or more, exact) + the frame overruns seen by requestAnimationFrame (an interval longer than 1.5 frames counts its excess over one frame as busy) that no long task already covers. Short tasks that delay no frame are not seen, and the monitor's engine and drawing run in their own worker thread, so this is the instructor page's own load, not the whole browser's. MUI-17: the owner's 2 s (it was 5 s: a change of load took 5 s to show). 2 s holds 120 frames at 60 Hz, so one frame's overrun (16.7 ms) moves the tile by 0.8 % — finer than the whole-percent it prints. |
 
+### [`apps/demo/src/app/panel/eeg.ts`](../../apps/demo/src/app/panel/eeg.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `LOOSE_ELECTRODE_KOHM` | `20` | — | [ENG: control; an electrode lifted off the skin: well over the 5 kΩ limit of the generic reader (Ch36 p. 1145 gives 5 or 8 kΩ by device), so every device's quality flag reads it] | The loose electrode's impedance, kΩ [ENG: control; an electrode lifted off the skin: well over the 5 kΩ limit of the generic reader (Ch36 p. 1145 gives 5 or 8 kΩ by device), so every device's quality flag reads it]. |
+
 ### [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `SAVE_MS` | `1000` | ms | [ENG: ui; measured 2026-10-25] | How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed. Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG: ui; measured 2026-10-25]. |
 | `MAX_AGE_MS` | `6 * 3600000` | ms | [ENG: ui] | An older position is another day's run, not this one's [ENG: ui]. |
+
+### [`apps/demo/src/app/pump/page.ts`](../../apps/demo/src/app/pump/page.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `PUMP_GIVE_UP_MS` | `10000` | ms | [ENG: ui; P7's 10 s] | As the learner remote (P7 §1): an older kit's relay refuses the hello, or the host never answers [ENG: ui; P7's 10 s]. |
+
+### [`apps/demo/src/app/pump/purge.ts`](../../apps/demo/src/app/pump/purge.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `PURGE_MAX_ML` | `2` | mL | [ENG: ui; plan D7, until the operator manuals give the purge volume limit] | D7: the most this face purges at once [ENG: ui; plan D7, until the operator manuals give the purge volume limit]. |
 
 ### [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts)
 
@@ -204,6 +223,12 @@ renderer, audio and skin contracts.
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `FEED_MS` | `1000` | ms | — | The view feed's period (plan instructor-peer-role.md §6: at most once a second, and only on a change). |
+
+### [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `DEFAULT_PUMP_CHANNELS` | `4` | — | research/00 | PQ1 = C, the owner's ruling (research/00-orchestrator-rulings.md, 9 November 16:00): "1–8, default 4". All syringe channels by default, a plan decision (§5, ENG: ui): a TIVA tower is syringes; Room setup turns any channel into drip. |
 
 ### [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts)
 
@@ -476,6 +501,8 @@ renderer, audio and skin contracts.
 | `readCardFile` | [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A file's text as a card the builder can open. |
 | `place` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Every line of a validation result on its field, errors first, each list in the validator's order. |
 | `checker` | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | Validation on every change: |
+| `convertV1` | [`apps/demo/src/app/builder/convert.ts`](../../apps/demo/src/app/builder/convert.ts) | A valid /1 card as a /2 draft, and a flag for each beat with no exact /2 form (nothing is put in a flagged place). |
+| `flagCovers` | [`apps/demo/src/app/builder/convert.ts`](../../apps/demo/src/app/builder/convert.ts) | Whether a validator line (`<path>: |
 | `debriefSection` | [`apps/demo/src/app/builder/debrief-editor.ts`](../../apps/demo/src/app/builder/debrief-editor.ts) | The Debrief hints section: |
 | `handoutSection` | [`apps/demo/src/app/builder/debrief-editor.ts`](../../apps/demo/src/app/builder/debrief-editor.ts) | The Handout questions section: |
 | `draftRefusalText` | [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts) | What the author reads when a write was refused (the draft is then as it was before that write). |
@@ -498,6 +525,8 @@ renderer, audio and skin contracts.
 | `renamePhase` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | Phase `i` renamed to `to`, and every mention of its old id with it (the `next` lists, `visited`, `phaseEntered`, `phases`, `inPhases`, the `phase:<id>` anchors): |
 | `idFromLabel` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | An id for a new phase from its label ("Late signs" → "lateSigns"), made unique with a number. |
 | `instructorWords` | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | ------------------------------------------------------------------------------------------- Instructor v2's words What Instructor v2 will show for phase `i`, produced by its own functions: |
+| `portCheckLine` | [`apps/demo/src/app/builder/port.ts`](../../apps/demo/src/app/builder/port.ts) | The port check's line for a draft whose card or original has one of `ids`. |
+| `originFlags` | [`apps/demo/src/app/builder/port.ts`](../../apps/demo/src/app/builder/port.ts) | The converter's flags of a /1 library card (none for another origin, or a card no longer in the library). |
 | `runRefusals` | [`apps/demo/src/app/builder/run-panel.ts`](../../apps/demo/src/app/builder/run-panel.ts) | The validator's refusals of a draft as a run would see them (and the builder's own: |
 | `leafWords` | [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | A leaf as the runner read it, in words: |
 | `whatFired` | [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | The log, newest first. |
@@ -539,6 +568,8 @@ renderer, audio and skin contracts.
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
 | `openersAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card author's openers (D9) on this run: |
 | `handoutQuestionsAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card's handout questions (D16) whose anchor happened on the kept course, in the card's order, each with its anchor's time; |
+| `remoteKeys` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The learner remotes' device keys in the order the run first names them (a give's, then the remote whose rate it replaced), then `more` (L13: |
+| `remoteWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A learner remote by its device key: |
 | `learnerWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The who line of a learner defibrillator press (Room plan R5d): |
 | `first` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The first kept row of `want` (or of any of a list) at or after `from`, or null. |
 | `eventWords` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | An event in words, for a reason line ("the alarm Apnoea (no CO₂ breaths)", "epinephrine", "SpO₂ below 90 %"). |
@@ -552,6 +583,7 @@ renderer, audio and skin contracts.
 | `gradesOf` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A /2 run's grades: |
 | `stringAnchorAt` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | When a string anchor happened on a /2 run (grade()'s reading: |
 | `report3` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The report of a /2 run (null: |
+| `preparationsOf` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | L13: the learner remotes' preparations, from the record alone (the /2 runner's staged preparations and its administrations, each give's `prep` the host's record of it): |
 | `marks` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Every mark (bookmark) of the run in order, with its kind and note when it has them; |
 | `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug (mass doses in mg; |
 | `facts` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The measured facts of the kept course, in a fixed order; |
@@ -562,6 +594,7 @@ renderer, audio and skin contracts.
 | `findDrugs` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Search by name, id or another name ("noradr" finds norepinephrine). |
 | `perKg` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | "0.1 µg/kg/min = 7 µg/min" for this patient's weight; |
 | `lockLabel` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | A drug's lock as its rows read it (the owner's ruling of 5 November 2026: |
+| `stoppedNotice` | [`apps/demo/src/app/engine-stopped.ts`](../../apps/demo/src/app/engine-stopped.ts) | The notice, in `root`; |
 | `conditionCommand` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | The engine command that starts (severity > 0) or stops (0) an acute event. |
 | `activeText` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | "Cardiac tamponade (severe)", for the session bar and the Patient tab. |
 | `fastForwardDoneLines` | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | The two lines of the banner after a fast-forward, worded here only: |
@@ -608,6 +641,7 @@ renderer, audio and skin contracts.
 | `busyFraction` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | The busy fraction (0–1) of the main thread over [now − windowMs, now] (method above). |
 | `memoryMb` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | This page's JS heap in MB, or null where the browser does not say (only Chromium has `performance.memory`). |
 | `oxygenBlock` | [`apps/demo/src/app/oxygen.ts`](../../apps/demo/src/app/oxygen.ts) | Why the oxygen control is off now, or null when it may act: |
+| `eegGroup` | [`apps/demo/src/app/panel/eeg.ts`](../../apps/demo/src/app/panel/eeg.ts) | The Devices sheet's EEG group: |
 | `describeIbpScale` | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | The mode and the numbers in words. |
 | `ibpScalesControl` | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | The control; |
 | `nibpStartCommand` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | O2 (research/34 §8 O2): |
@@ -620,6 +654,28 @@ renderer, audio and skin contracts.
 | `readPosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | The position to restore on this page, or null — and a position that is not this page's is dropped: |
 | `keepPositions` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Take the running case's position every `every` ms while a library card runs (not while a fast-forward runs, a restore is under way or the tab is hidden — a hidden tab pauses itself, and that pause is |
 | `restorePosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | After a reload: |
+| `sourceText` | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | A source as the phone names it (the finding after the notice, a product's label). |
+| `sourcesText` | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). |
+| `bolusUnits` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The units a bolus may be given in on a channel: |
+| `bolusHint` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The rapid rate the bolus runs at, from the SP-500 profile for the loaded syringe size, and the volume gap. |
+| `mountFlows` | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | The flows on every channel of `rack`, sending through `link` (a granted pump tablet's follower). |
+| `casePatientOf` | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | The case patient as a follower engine's snapshot holds it (the drug model's patient: |
+| `pumpLink` | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | The flows' link on a granted pump tablet's follower (its learner-PIN peer's command), or null when it has none. |
+| `shippedPumpDevices` | [`apps/demo/src/app/pump/devices.ts`](../../apps/demo/src/app/pump/devices.ts) | The shipped device profiles, or null when they break their source rules (said once on the console). |
+| `faceProfilesOf` | [`apps/demo/src/app/pump/devices.ts`](../../apps/demo/src/app/pump/devices.ts) | What the generic face reads of them (D12): |
+| `faceRow` | [`apps/demo/src/app/pump/face-row.ts`](../../apps/demo/src/app/pump/face-row.ts) | The channel's face fields of an engine row: |
+| `faceLayout` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | A channel's layout. |
+| `faceNum` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | A number for the face: |
+| `faceModel` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | The face's model of one channel (no DOM): |
+| `faceView` | [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | One channel's face. |
+| `num` | [`apps/demo/src/app/pump/form.ts`](../../apps/demo/src/app/pump/form.ts) | A typed number, or null (empty or not a finite number). |
+| `loadChoices` | [`apps/demo/src/app/pump/load.ts`](../../apps/demo/src/app/pump/load.ts) | What a channel of `kind` may load: |
+| `pumpRefusalWords` | [`apps/demo/src/app/pump/page.ts`](../../apps/demo/src/app/pump/page.ts) | What the tablet says for a refusal: |
+| `pumpDrugs` | [`apps/demo/src/app/pump/program.ts`](../../apps/demo/src/app/pump/program.ts) | The pump's drug list: |
+| `purgeHints` | [`apps/demo/src/app/pump/purge.ts`](../../apps/demo/src/app/pump/purge.ts) | The purge's rate from the device profile, the face's limit, and where the volume goes (D7). |
+| `doseRateUnits` | [`apps/demo/src/app/pump/rate.ts`](../../apps/demo/src/app/pump/rate.ts) | The dose-rate units a channel offers for its programmed drug (engine RateUnit; |
+| `rateUnits` | [`apps/demo/src/app/pump/rate.ts`](../../apps/demo/src/app/pump/rate.ts) | Every unit the Rate form offers on a channel: |
+| `rateHints` | [`apps/demo/src/app/pump/rate.ts`](../../apps/demo/src/app/pump/rate.ts) | The device's range for this channel and unit, from its profile (the face's words for its gaps). |
 | `encodeQr` | [`apps/demo/src/app/qr.ts`](../../apps/demo/src/app/qr.ts) | The symbol as rows of booleans (true = dark), without the quiet zone. |
 | `qrSvg` | [`apps/demo/src/app/qr.ts`](../../apps/demo/src/app/qr.ts) | The symbol as an SVG element with a 4-module quiet zone, black on white. |
 | `railClock` | [`apps/demo/src/app/rail.ts`](../../apps/demo/src/app/rail.ts) | { time: "21:48", day: |
@@ -628,7 +684,6 @@ renderer, audio and skin contracts.
 | `noteRecent` | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | A card was loaded: |
 | `recognisedNote` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The note a press sends on `doc` (null: |
 | `recognisedButton` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The button (`cls` its classes where it sits): |
-| `sourceText` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A source as the phone names it (the finding after the notice, a product's label). |
 | `productWords` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A product as the bench names it: |
 | `benchView` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | The bench: the search, then the product and its amount, the diluent and volume, the container, the preview, "Put on the tray". |
 | `drugsMenu` | [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | The Drugs tab: |
@@ -664,6 +719,8 @@ renderer, audio and skin contracts.
 | `range` | [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | Extremes of a field over [t0, t1] (finite values only). |
 | `pvcEvents` | [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | The PVC events in [t0, t1): |
 | `bands` | [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | The bands: every number a card promises sits in [lo, hi], taken from the measured prototype ± a stated tolerance. |
+| `twinRun` | [`apps/demo/src/app/showcase/twin.ts`](../../apps/demo/src/app/showcase/twin.ts) | The /1 card and its /2 port run side by side on the press path to `untilS`, and their differences. |
+| `portCheckWords` | [`apps/demo/src/app/showcase/twin.ts`](../../apps/demo/src/app/showcase/twin.ts) | The port check's words (§7.3): |
 | `headerHasRoom` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | Whether this skin's header carries the line (the two-row header; |
 | `simLine` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | The line for the monitor in `stage` (its strip is placed in the stage, above the monitor). |
 | `defibDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A model's energies as the panel offers them; |
@@ -693,12 +750,14 @@ renderer, audio and skin contracts.
 | `mountFinish` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | Mount the pane into `el` (inside ACTION); |
 | `mountHeader` | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The view's session bar on `link`; |
 | `mountKeys` | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The view's keyboard on the document, answering only while `el` is shown. |
+| `hostLabsSource` | [`apps/demo/src/app/teach2/labs-sheet.ts`](../../apps/demo/src/app/teach2/labs-sheet.ts) | The host's source (the laptop's AppSession): |
+| `labsSheet` | [`apps/demo/src/app/teach2/labs-sheet.ts`](../../apps/demo/src/app/teach2/labs-sheet.ts) | Fill `frame` (the sheets slot's frame for 'labs') from `book`; |
 | `whatText` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | What was staged, in the host's figures: |
-| `sourcesText` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). |
 | `mountLearnerPreps` | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | The card on `link` (the laptop's Link or the phone's). |
 | `pressAction` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | A pme-scenario/2 A press (plan F6, design §10): |
 | `pressStep` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Press the step labelled `label`: |
 | `judge` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Record the judged objective `text` (its words as the card writes them) as met: |
+| `mountPumpMismatch` | [`apps/demo/src/app/teach2/pump-mismatch.ts`](../../apps/demo/src/app/teach2/pump-mismatch.ts) | The card on the laptop's `link`; |
 | `firstT` | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | The first time `want` (or any of a list) happened at or after `from`, as the debrief reads it; |
 | `classify` | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | The board of the current stage. |
 | `liveGrades` | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | The live grades of a /2 run (design §8.3: |
@@ -742,6 +801,8 @@ renderer, audio and skin contracts.
 | `handoutQuestions` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | The handout's "Questions to think about" (D16, Decision 14): |
 | `hintsSection` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | "From the card's author" (D9; |
 | `genericFace` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The generic processed-EEG face (EEG plan E5's "Processed EEG (generic)"): |
+| `bisTypeFace` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The BIS-type face (EEG plan E7, the BIS-type reader l3/eeg-devices/bis-type.ts): |
+| `entropyFace` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The Entropy face (EEG plan E8, the Entropy reader l3/eeg-devices/entropy.ts): |
 | `mountDepthWindow` | [`apps/demo/src/app/views/depth.ts`](../../apps/demo/src/app/views/depth.ts) | The window in `parent` (the follower's stage, over its monitor): |
 | `sectionRows` | [`apps/demo/src/app/views/explore.ts`](../../apps/demo/src/app/views/explore.ts) | The rows of one Explore section for the model's current state: |
 | `phoneStyle` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | The style a PHONE wears — the instructor's (it comes in the follow stream), upright. |
@@ -781,6 +842,8 @@ renderer, audio and skin contracts.
 | `applyTokens` | [`apps/demo/src/vent/faces/edp-ts/device.ts`](../../apps/demo/src/vent/faces/edp-ts/device.ts) | The face's colours, fonts and lane colours as custom properties on an element (face.json → CSS). |
 | `fitDevice` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The device scaled as a whole to the space it is given above the strip (R19: |
 | `drawTraces` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The lanes and loops of the cockpit's buffer: |
+| `train` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | One train of a priority: |
+| `audioPackagePlayer` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The player through the project's audio package (@pme/audio): |
 | `viewOf` | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | The live View: |
 | `faceFromLocation` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | `?face=<id>`; |
 | `mountFace` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The cockpit on the driver, the simulator's tools, and the face on both; |
@@ -882,7 +945,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -899,6 +962,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/anchors.ts`](../../apps/demo/src/app/builder/anchors.ts) | The anchors of the builder's last sections (docs/plans/scenario-builder.md §5.2; piece B5): where a script entry fires (`on`), where an outcome's window opens (`anchor`), and the run event a debrief opener or a handout q |
 | [`apps/demo/src/app/builder/card-file.ts`](../../apps/demo/src/app/builder/card-file.ts) | A card as a file (docs/plans/scenario-builder.md §8, "Export and import as files"; piece B2): a draft leaves the browser as its card JSON, `<id>.json`, the format a library card has (`JSON.stringify(card, null, 2)` and a |
 | [`apps/demo/src/app/builder/checks.ts`](../../apps/demo/src/app/builder/checks.ts) | The builder's validation (docs/plans/scenario-builder.md §5.1, §5.5; piece B1): the controller's own validator, run on the document the form would write, so the author sees exactly what a load would see; debounced, so ty |
+| [`apps/demo/src/app/builder/convert.ts`](../../apps/demo/src/app/builder/convert.ts) | The /1 → /2 converter (docs/plans/scenario-builder.md §7.2, piece B7): a pure function from a valid `pme-scenario/1` card to a `pme-scenario/2` draft and a list of flags. |
 | [`apps/demo/src/app/builder/debrief-editor.ts`](../../apps/demo/src/app/builder/debrief-editor.ts) | The builder's Debrief hints and Handout questions sections (docs/plans/scenario-builder.md §5.2; piece B5): the card author's words for the instructor's Debrief page 2 (`debriefHints.show`, `.openers`) and the questions |
 | [`apps/demo/src/app/builder/drafts.ts`](../../apps/demo/src/app/builder/drafts.ts) | The builder's layer 1 (docs/plans/scenario-builder.md §8; piece B2): every draft card kept in THIS browser, with its local snapshots, in the pattern the Debrief archive uses since #370 (archive.ts): each body (the card's |
 | [`apps/demo/src/app/builder/fields.ts`](../../apps/demo/src/app/builder/fields.ts) | The path → field map (docs/plans/scenario-builder.md §5.1, piece B1): the validator reports `<json path>: <what is wrong>` (validate.ts), and the builder shows each line at the field the path names, found by prefix: `/ph |
@@ -907,9 +971,10 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/page.ts`](../../apps/demo/src/app/builder/page.ts) | The scenario builder's page (docs/plans/scenario-builder.md §5, §8, mock-up 01-builder-main; piece B2), in place of the stub that explained the /1 format. |
 | [`apps/demo/src/app/builder/phase-editor.ts`](../../apps/demo/src/app/builder/phase-editor.ts) | The builder's Phases section (docs/plans/scenario-builder.md §5.3, mock-up 02-phase-editor; piece B3): the course of the case, one phase open at a time. |
 | [`apps/demo/src/app/builder/phases.ts`](../../apps/demo/src/app/builder/phases.ts) | The phase editor's model (docs/plans/scenario-builder.md §5.3, piece B3): what a phase rule may read and how it reads in words, the rule tree's edits, where a phase sits in the card's course, and a phase id's rename. |
+| [`apps/demo/src/app/builder/port.ts`](../../apps/demo/src/app/builder/port.ts) | The builder's port-check line (docs/plans/scenario-builder.md §7.1, §7.3; piece B7): what a draft that came from a library card says about its port. |
 | [`apps/demo/src/app/builder/run-panel.ts`](../../apps/demo/src/app/builder/run-panel.ts) | Run in place (docs/plans/scenario-builder.md §6, mock-up 04-run-in-place; piece B6). |
 | [`apps/demo/src/app/builder/run.ts`](../../apps/demo/src/app/builder/run.ts) | Run in place (docs/plans/scenario-builder.md §6, mock-up 04-run-in-place; piece B6): the two pure parts of the run panel, DOM-free so B7's twin run and a headless harness can read them too. |
-| [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The Script section's commands from the Airway, Defib · CPR and Devices sheets (docs/plans/scenario-builder.md §5.2; piece 162, finding N83 of B5): an airway state, who breathes with the bag's or the ventilator's settings |
+| [`apps/demo/src/app/builder/script-commands.ts`](../../apps/demo/src/app/builder/script-commands.ts) | The Script section's commands from the Airway, CPR and Devices sheets (docs/plans/scenario-builder.md §5.2; piece 162, finding N83 of B5): an airway state, who breathes with the bag's or the ventilator's settings, oxygen |
 | [`apps/demo/src/app/builder/script-editor.ts`](../../apps/demo/src/app/builder/script-editor.ts) | The builder's Script section (docs/plans/scenario-builder.md §5.2; piece B5): what the card does itself, card-set and never graded. |
 | [`apps/demo/src/app/builder/sections.ts`](../../apps/demo/src/app/builder/sections.ts) | The builder's first three sections (docs/plans/scenario-builder.md §5.2; piece B2): Header and story, Patient and sensors, Case briefing. |
 | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Reading a scenario card for Instructor v2 (E127, docs/plans/instructor-panel-redesign.md §3.2, §3.4, §7): the stages of the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, ju |
@@ -923,6 +988,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same verb as the button). |
 | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | The dose picker's data (research/13 brief §7 "Dose picker"). |
 | [`apps/demo/src/app/engine-bench.worker.ts`](../../apps/demo/src/app/engine-bench.worker.ts) | Home's "Engine · ms per tick" tile (E125). |
+| [`apps/demo/src/app/engine-stopped.ts`](../../apps/demo/src/app/engine-stopped.ts) | Brief 195: the instructor's page when its simulation has stopped (the monitor's `pme-monitor-failed`: an error while the engine stepped, a worker that crashed, or one the watchdog found dead). |
 | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | Acute events (showcase additions): the engine's systemic conditions an instructor starts and stops during a case — tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the re |
 | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | While the host fast-forwards, the window dims and blurs behind one centred panel — a double chevron in a ring of its colour, the two blinking together, "FAST FORWARD · 5 MIN" in amber in the monitor's typeface, a thin pr |
 | [`apps/demo/src/app/formulary.ts`](../../apps/demo/src/app/formulary.ts) | Plan learner-action-remote.md L4: the laptop's copy of the formulary layer, for the host's learner preparations. |
@@ -955,6 +1021,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/panel/defib.ts`](../../apps/demo/src/app/panel/defib.ts) | Defib, pacing & CPR (research/13 §4.3 item 5). |
 | [`apps/demo/src/app/panel/devices.ts`](../../apps/demo/src/app/panel/devices.ts) | Devices & alarms (research/13 §4.3 item 6). |
 | [`apps/demo/src/app/panel/drugs.ts`](../../apps/demo/src/app/panel/drugs.ts) | Drugs & fluids (research/13 brief §7 "Dose picker"): find a drug by name (or another name: "noradrenaline"), pick a preset or type a dose, see the absolute dose for this patient's weight, then Give (applies now: a bolus |
+| [`apps/demo/src/app/panel/eeg.ts`](../../apps/demo/src/app/panel/eeg.ts) | EEG artefacts (EEG plan E12, Q9). |
 | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | E130: the IBP1 (arterial) and IBP2 (venous) lane scales, per channel: Fixed (the skin's own), a Range the instructor types within 0–200 mmHg, or Auto (judged every 30 s of sim time from discrete ranges, renderer ibp-scal |
 | [`apps/demo/src/app/panel/log.ts`](../../apps/demo/src/app/panel/log.ts) | Log (research/13 §4.3 item 8): the debrief view — every instructor, learner, scenario and alarm event with the sim time, filters, notes and bookmarks, and CSV/JSON export. |
 | [`apps/demo/src/app/panel/panel.ts`](../../apps/demo/src/app/panel/panel.ts) | The instructor panel (research/13 §4.3, brief §7): eight tabs in the order they are used, the staged-changes footer (the controller pages' stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), ke |
@@ -963,6 +1030,20 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/panel/vitals.ts`](../../apps/demo/src/app/panel/vitals.ts) | Vitals & rhythm (research/13 §4.3 item 2): one row per target — glossary label with its tooltip, the live value, a stepper in clinical units, and the model state as a chip (CAE Maestro's flags): MODELED (wave), held by t |
 | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | Patient profiles for the Start screen and the Patient tab (brief §4.9 "one Patient card"). |
 | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | A reload must not lose the running case (UI review 2026-10-24 #1: a reload mid-card came back as "No scenario", the default patient, 00:05). |
+| [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | Plan learner-action-remote.md L13: how the app names a preparation's findings and their sources, in one DOM-free place, so the learner's tray (L7), the instructor's card (L9) and the Debrief (L13) say the same words for |
+| [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | Plan pump-rack-tci.md A2, Bolus (§4 D2 item 5, §5; PQ3 = A): a bolus from a syringe channel, as a volume or as a dose the host converts with the PROGRAMMED concentration (what the pump believes it gives; the patient rece |
+| [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | Plan pump-rack-tci.md A2 (§4 D2, §5 "Buttons", §8): the channel controls on each face of the rack, and the one place a flow's command leaves the tablet. |
+| [`apps/demo/src/app/pump/devices.ts`](../../apps/demo/src/app/pump/devices.ts) | Plan pump-rack-tci.md D12 (S1's profiles) for the app, and finding N125: the shipped device profiles (packages/controller/pump-devices/, every file but its JSON Schema), checked by the same rules as the CI's source check |
+| [`apps/demo/src/app/pump/face-row.ts`](../../apps/demo/src/app/pump/face-row.ts) | The one door from the follower engine to the pump face (plan pump-rack-tci.md A1; §8 and the anti-goal "Truth on the pump"): the engine's channel row (E1, PumpPanelRow) carries the syringe's or bag's TRUE contents beside |
+| [`apps/demo/src/app/pump/face.ts`](../../apps/demo/src/app/pump/face.ts) | The generic pump face (plan pump-rack-tci.md A1, §5): one component for both channel kinds, one per channel of the rack. |
+| [`apps/demo/src/app/pump/form.ts`](../../apps/demo/src/app/pump/form.ts) | Plan pump-rack-tci.md A2: what the channel flows share — the shape of a flow, what it is given, and the small form helpers every flow's fields are made with (each field labelled, each read by its name). |
+| [`apps/demo/src/app/pump/load.ts`](../../apps/demo/src/app/pump/load.ts) | Plan pump-rack-tci.md A2, Load (§4 D2 item 1, §8): put a syringe on a syringe channel or a bag on a drip channel. |
+| [`apps/demo/src/app/pump/page.ts`](../../apps/demo/src/app/pump/page.ts) | The pump page (plan pump-rack-tci.md A1; §4 D1, §7): a tablet that picked "Infusion pumps" on the instrument picker opens `?join=CODE#/pump`. |
+| [`apps/demo/src/app/pump/program.ts`](../../apps/demo/src/app/pump/program.ts) | Plan pump-rack-tci.md A2, Program (§4 D2 item 2, §8): the learner tells the pump what it is running — a drug from the pump's drug list and its concentration, and on a drip channel the IV set's drops/mL (the OT-701's set |
+| [`apps/demo/src/app/pump/purge.ts`](../../apps/demo/src/app/pump/purge.ts) | Plan pump-rack-tci.md A2, Purge (§4 D7, §5): prime the line, or push the line's volume. |
+| [`apps/demo/src/app/pump/rack.ts`](../../apps/demo/src/app/pump/rack.ts) | The rack (plan pump-rack-tci.md A1, §5; PQ1 = C): as many channels as the instructor chose on Room setup (1–8), each of the kind chosen there (syringe or drip), side by side as on an anaesthesia tower: four across, five |
+| [`apps/demo/src/app/pump/rate.ts`](../../apps/demo/src/app/pump/rate.ts) | Plan pump-rack-tci.md A2, Rate (§4 D2 item 3, D12): run the channel at a rate in mL/h, a dose rate in the programme's unit (the host converts it with the PROGRAMMED concentration, as a real pump does), or, on a drip chan |
+| [`apps/demo/src/app/pump/tci.ts`](../../apps/demo/src/app/pump/tci.ts) | Plan pump-rack-tci.md A2, TCI (§4 D2 item 4, D3, D6; §6): target-controlled infusion on a syringe channel. |
 | [`apps/demo/src/app/qr.ts`](../../apps/demo/src/app/qr.ts) | — |
 | [`apps/demo/src/app/rail.ts`](../../apps/demo/src/app/rail.ts) | The workflow rail (E125, owner's mockups of 26 October): the app's navigation in the order of a teaching session — Home; before the session Room, Scenarios, Patient; during it Instructor (today's view or v2, chosen in Se |
 | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | The Scenarios page's "Recent" (E125): the last three library cards loaded in this browser, newest first. |
@@ -984,6 +1065,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/sessionbar.ts`](../../apps/demo/src/app/sessionbar.ts) | The session bar (research/13 brief §5, §7): patient one-liner, the MODELED / MANUAL / "n held" badge (a popover dialog lists held values with "Return to model"), the scenario's state and time, sim speed and pause, a book |
 | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | The app frame (research/13 brief §4, §7 "App shell / top bar"): the workflow rail (rail.ts, E125) or, on a hostless Remote, the top bar's view switcher; the top bar's always-visible state (alarm count in the skin's colou |
 | [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | Runs a showcase card on a bare engine the way the app does (engine seed 7, the document's mode, truth at 1 Hz, the patient's sensors; apps/demo/src/app/session.ts loadScenario) and presses the card's OWN buttons on a scr |
+| [`apps/demo/src/app/showcase/twin.ts`](../../apps/demo/src/app/showcase/twin.ts) | The twin run (docs/plans/scenario-builder.md §7.3, piece B7): a /1 card and its /2 port on the same patient and seed (harness.ts runCard: engine seed 7, the card's own seed for its runner), the /1 card pressed by its but |
 | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | "SIMULATION · not a clinical monitor" on every monitor surface (the owner, 26 October: the Monitor view, the learner monitor window, a learner's phone), never on the instructor's pages. |
 | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and alarm defaults, and the shell's units and speed. |
 | [`apps/demo/src/app/staging.ts`](../../apps/demo/src/app/staging.ts) | Stage, then commit with one chosen transition (research/13-ui-simulator-benchmarks "Top 8" #1: Gaumard UNI's Apply panel, SimPad PLUS "Set transition time", Infirmary Integrated's Apply/Reset + auto-apply opt-out). |
@@ -1001,9 +1083,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | "Finish the case" in Instructor v2 (the owner's board "Finish 2", approved 30 October). |
 | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The Instructor v2 session bar (design §3.1; the owner's final layout, board "Option G"; answer 9). |
 | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The Instructor v2 keyboard (design §3.1, §3.4, §4; answer 16): Space pauses and resumes through the clock pill (from the page, an ACTION row, a header, Fast forward or dock button; elsewhere it is the focused control's o |
+| [`apps/demo/src/app/teach2/labs-sheet.ts`](../../apps/demo/src/app/teach2/labs-sheet.ts) | Plan learner-action-remote.md L15 (§4 D6; LQ13 ruled B, 9 November: a remote sees its own samples, the laptop sees every result): the laptop's Labs sheet in Instructor v2. |
 | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | Plan learner-action-remote.md L9 (§4 D7; LQ3 ruled 9 November): what the learner remotes have prepared, as the INSTRUCTOR sees it, on the laptop's dock (Instructor v2) and on the instructor's phone (views/remote.ts mount |
 | [`apps/demo/src/app/teach2/prep-board.ts`](../../apps/demo/src/app/teach2/prep-board.ts) | Plan learner-action-remote.md L9 (§4 D7): the instructor's copy of the learner remotes' preparations, as the Link keeps it from the host's `prep` news addressed to the host's own id (the laptop's Link and the instructor |
 | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Instructor v2 (E127): the two presses of the ACTION list, sending exactly what today's Scenario tab sends. |
+| [`apps/demo/src/app/teach2/pump-mismatch.ts`](../../apps/demo/src/app/teach2/pump-mismatch.ts) | Plan pump-rack-tci.md §8 (PQ8 = A, the owner's ruling, as LQ3 for the learner preparations): a pump channel whose syringe or bag and programme differ is the instructor's finding at once — a card on the laptop's dock, bes |
 | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | Instructor v2, the ACTION rows classified live (design §3.4, §3.5; answers 4–8, 20). |
 | [`apps/demo/src/app/teach2/sheet.ts`](../../apps/demo/src/app/teach2/sheet.ts) | Instructor v2, the sheet frame (design §4, board "Proposal v11"; plan IP7): every sheet has the same shape. |
 | [`apps/demo/src/app/teach2/sheets.ts`](../../apps/demo/src/app/teach2/sheets.ts) | Instructor v2, the sheets slot (design §3.6, §4; board "Proposal v11"; plan IP7; answers 11, 13–16). |
@@ -1070,6 +1154,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/validation/bedside.ts`](../../apps/demo/src/validation/bedside.ts) | Saadat bedside checklist page (research/06 §7). |
 | [`apps/demo/src/validation/perf.ts`](../../apps/demo/src/validation/perf.ts) | Performance gate page: an 8-lane monitor (ECG II, V5, aVR, ABP, pleth, CVP, CO2, resp) with a ventilated patient. |
 | [`apps/demo/src/validation/review.ts`](../../apps/demo/src/validation/review.ts) | Blind realism review page (brief §9 steps 2–3, 6). |
+| [`apps/demo/src/vent/core/alarms-view.ts`](../../apps/demo/src/vent/core/alarms-view.ts) | The cockpit core's alarm view (plan vent-skin-edp-ts.md §4.3, piece V3): a face's alarm profile applied to the model's alarm CONDITIONS (ventAlarms), stepped on sim time so a test drives it with the driver's clock. |
 | [`apps/demo/src/vent/core/cockpit.ts`](../../apps/demo/src/vent/core/cockpit.ts) | The ventilator cockpit's core (plan vent-skin-edp-ts.md §4.3, piece V0): the logic every face needs, moved out of the Hamilton front end, knowing nothing of any look. |
 | [`apps/demo/src/vent/core/pending.ts`](../../apps/demo/src/vent/core/pending.ts) | Select-turn-press (plan vent-skin-edp-ts.md §2.4, §4.3; built in V0 for the EDP-TS face of V1, which the Hamilton face never uses): touch a setting's key, turn the knob, press it to apply. |
 | [`apps/demo/src/vent/core/record.ts`](../../apps/demo/src/vent/core/record.ts) | The breath record (plan vent-skin-edp-ts.md §4.3, §3.3 GD1, GD2, GD6; piece V1): what a ventilator reports of the last COMPLETE breath, from the 5 ms steps: peak inspiratory flow, Ti (with a pause or an inspiratory hold, |
@@ -1085,6 +1170,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/vent/faces/edp-ts/knob.ts`](../../apps/demo/src/vent/faces/edp-ts/knob.ts) | The EDP-TS face's ONE knob-navigation mechanism (plan vent-skin-edp-ts.md §2.4; research/57 H-10, H-25, H-26, O-01 to O-16), pure and DOM-free so it is tested headless (knob.test.ts) and every window of every later piece |
 | [`apps/demo/src/vent/faces/edp-ts/modes.ts`](../../apps/demo/src/vent/faces/edp-ts/modes.ts) | The EDP-TS face's modes and its spec for the cockpit core (plan vent-skin-edp-ts.md §3.3 GM1, GM2, GM10; piece V1): the three modes the model runs under the device's names, the bottom row each shows (research/57 D-01, D- |
 | [`apps/demo/src/vent/faces/edp-ts/pictograms.ts`](../../apps/demo/src/vent/faces/edp-ts/pictograms.ts) | The EDP-TS face's pictograms (brief 159, R7, R8, R11, R12, R15, R18): ONE entry per subject the photographs show (research/57 P-07 to P-17), each my own drawing of that subject in inline SVG, never a trace of the device' |
+| [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The EDP-TS face's alarm tones (plan vent-skin-edp-ts.md V3, GA16; VQ6), made by the app itself: no sound file. |
 | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | What the EDP-TS screen and housing show at one moment (brief 159): a plain-data View. |
 | [`apps/demo/src/vent/faces/hamilton/face.ts`](../../apps/demo/src/vent/faces/hamilton/face.ts) | The Hamilton-style face: the v1.9 Hamilton-style front end (ventilator-sim-hamilton.html "UI" block), ported to TypeScript and rendering from @pme/ventilator instead of page globals. |
 | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The ventilator's faces (plan vent-skin-edp-ts.md §4.3, §4.5): the registry, the choice from the address, and the mount every page uses (vent-hamilton.html in its three link modes, and the embed). |
@@ -1163,7 +1249,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 |---|---|---|
 | [`apps/demo/e2e/alarm-off-label.e2e.ts`](../../apps/demo/e2e/alarm-off-label.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/apnoea-alarm-latched.e2e.ts`](../../apps/demo/e2e/apnoea-alarm-latched.e2e.ts) | 0 | 0 |
-| [`apps/demo/e2e/app-accessibility.e2e.ts`](../../apps/demo/e2e/app-accessibility.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-learner-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-learner-phone.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-pump.e2e.ts`](../../apps/demo/e2e/app-accessibility-pump.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-ventilator.e2e.ts`](../../apps/demo/e2e/app-accessibility-ventilator.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/app-accessibility-views.e2e.ts`](../../apps/demo/e2e/app-accessibility-views.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-glossary.e2e.ts`](../../apps/demo/e2e/app-glossary.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-instructor-tasks.e2e.ts`](../../apps/demo/e2e/app-instructor-tasks.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-one-session.e2e.ts`](../../apps/demo/e2e/app-one-session.e2e.ts) | 0 | 0 |
@@ -1194,12 +1284,14 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/controller-pages.e2e.ts`](../../apps/demo/e2e/controller-pages.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/controller-screens.e2e.ts`](../../apps/demo/e2e/controller-screens.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/debrief.e2e.ts`](../../apps/demo/e2e/debrief.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/depth-artefacts.e2e.ts`](../../apps/demo/e2e/depth-artefacts.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/depth-window.e2e.ts`](../../apps/demo/e2e/depth-window.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/device-layer-page.e2e.ts`](../../apps/demo/e2e/device-layer-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/drug-evidence-page.e2e.ts`](../../apps/demo/e2e/drug-evidence-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/drug-pkpd-page.e2e.ts`](../../apps/demo/e2e/drug-pkpd-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/eeg-generic-tile.e2e.ts`](../../apps/demo/e2e/eeg-generic-tile.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/engine-stopped-said.e2e.ts`](../../apps/demo/e2e/engine-stopped-said.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/evidence-tidy.e2e.ts`](../../apps/demo/e2e/evidence-tidy.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
@@ -1215,9 +1307,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/laptop-labs.e2e.ts`](../../apps/demo/e2e/laptop-labs.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-labs.e2e.ts`](../../apps/demo/e2e/learner-labs.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/learner-paused.e2e.ts`](../../apps/demo/e2e/learner-paused.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-remote.e2e.ts`](../../apps/demo/e2e/learner-remote.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mechanism-tree.e2e.ts`](../../apps/demo/e2e/mechanism-tree.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mobile-learner.e2e.ts`](../../apps/demo/e2e/mobile-learner.e2e.ts) | 0 | 0 |
@@ -1232,6 +1326,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/physiology-console-mechanics.e2e.ts`](../../apps/demo/e2e/physiology-console-mechanics.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/physiology-console.e2e.ts`](../../apps/demo/e2e/physiology-console.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/press-across-repaint.e2e.ts`](../../apps/demo/e2e/press-across-repaint.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/pump-rack.e2e.ts`](../../apps/demo/e2e/pump-rack.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/reload-keeps-case.e2e.ts`](../../apps/demo/e2e/reload-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/resolution-fit.e2e.ts`](../../apps/demo/e2e/resolution-fit.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/respiratory-evidence-page.e2e.ts`](../../apps/demo/e2e/respiratory-evidence-page.e2e.ts) | 0 | 0 |
@@ -1252,6 +1347,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/skins-page.e2e.ts`](../../apps/demo/e2e/skins-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/sound-toggle.e2e.ts`](../../apps/demo/e2e/sound-toggle.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/stage-group-one-tick.e2e.ts`](../../apps/demo/e2e/stage-group-one-tick.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/teach2-dock-fit.e2e.ts`](../../apps/demo/e2e/teach2-dock-fit.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-panes.e2e.ts`](../../apps/demo/e2e/teach2-fit-panes.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-stages.e2e.ts`](../../apps/demo/e2e/teach2-fit-stages.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-strip.e2e.ts`](../../apps/demo/e2e/teach2-fit-strip.e2e.ts) | 0 | 0 |
@@ -1283,6 +1379,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/anchors.test.ts`](../../apps/demo/src/app/builder/anchors.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/card-file.test.ts`](../../apps/demo/src/app/builder/card-file.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/checks.test.ts`](../../apps/demo/src/app/builder/checks.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/convert.test.ts`](../../apps/demo/src/app/builder/convert.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/drafts.test.ts`](../../apps/demo/src/app/builder/drafts.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/end-sections.dom.test.ts`](../../apps/demo/src/app/builder/end-sections.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/fields.test.ts`](../../apps/demo/src/app/builder/fields.test.ts) | 0 | 0 |
@@ -1291,6 +1388,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/builder/page.dom.test.ts`](../../apps/demo/src/app/builder/page.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/phase-editor.dom.test.ts`](../../apps/demo/src/app/builder/phase-editor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/phases.test.ts`](../../apps/demo/src/app/builder/phases.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/builder/port.dom.test.ts`](../../apps/demo/src/app/builder/port.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/run-panel.dom.test.ts`](../../apps/demo/src/app/builder/run-panel.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/run.test.ts`](../../apps/demo/src/app/builder/run.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/builder/script-commands.dom.test.ts`](../../apps/demo/src/app/builder/script-commands.dom.test.ts) | 0 | 0 |
@@ -1303,14 +1401,17 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/cuff-start-notice.dom.test.ts`](../../apps/demo/src/app/cuff-start-notice.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-compat.test.ts`](../../apps/demo/src/app/debrief-compat.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-moments.test.ts`](../../apps/demo/src/app/debrief-moments.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/debrief-preparations.test.ts`](../../apps/demo/src/app/debrief-preparations.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief.test.ts`](../../apps/demo/src/app/debrief.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/defib-model-session.dom.test.ts`](../../apps/demo/src/app/defib-model-session.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/defib-model-sync.test.ts`](../../apps/demo/src/app/defib-model-sync.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/describe-eeg.test.ts`](../../apps/demo/src/app/describe-eeg.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-lab.test.ts`](../../apps/demo/src/app/describe-lab.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-ventilation.test.ts`](../../apps/demo/src/app/describe-ventilation.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/drugs.test.ts`](../../apps/demo/src/app/drugs.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/eeg-model-session.dom.test.ts`](../../apps/demo/src/app/eeg-model-session.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/engine-stopped.dom.test.ts`](../../apps/demo/src/app/engine-stopped.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/events.test.ts`](../../apps/demo/src/app/events.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-cockpit.test.ts`](../../apps/demo/src/app/fast-forward-cockpit.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
@@ -1327,7 +1428,9 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/instrument-sync.dom.test.ts`](../../apps/demo/src/app/instrument-sync.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/kit-store.test.ts`](../../apps/demo/src/app/kit-store.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/learner-paused.test.ts`](../../apps/demo/src/app/learner-paused.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-others.test.ts`](../../apps/demo/src/app/link-others.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/link-pump.test.ts`](../../apps/demo/src/app/link-pump.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/graph.test.ts`](../../apps/demo/src/app/mechanisms/graph.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/labels.test.ts`](../../apps/demo/src/app/mechanisms/labels.test.ts) | 0 | 0 |
@@ -1337,20 +1440,29 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/panel/airway.dom.test.ts`](../../apps/demo/src/app/panel/airway.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/defib.dom.test.ts`](../../apps/demo/src/app/panel/defib.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/devices.dom.test.ts`](../../apps/demo/src/app/panel/devices.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/eeg-artefacts-engine.test.ts`](../../apps/demo/src/app/panel/eeg-artefacts-engine.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/eeg.dom.test.ts`](../../apps/demo/src/app/panel/eeg.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/ibp-scales.dom.test.ts`](../../apps/demo/src/app/panel/ibp-scales.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/panel-load-tab.dom.test.ts`](../../apps/demo/src/app/panel/panel-load-tab.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/scenario.dom.test.ts`](../../apps/demo/src/app/panel/scenario.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/patients.test.ts`](../../apps/demo/src/app/patients.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/position.dom.test.ts`](../../apps/demo/src/app/position.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/pump-rack-session.dom.test.ts`](../../apps/demo/src/app/pump-rack-session.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/pump/devices.dom.test.ts`](../../apps/demo/src/app/pump/devices.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/pump/face.dom.test.ts`](../../apps/demo/src/app/pump/face.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/pump/flows.dom.test.ts`](../../apps/demo/src/app/pump/flows.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/pump/page.dom.test.ts`](../../apps/demo/src/app/pump/page.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/qr.test.ts`](../../apps/demo/src/app/qr.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/readers-v2.dom.test.ts`](../../apps/demo/src/app/readers-v2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/recognised.dom.test.ts`](../../apps/demo/src/app/recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/record-pump.test.ts`](../../apps/demo/src/app/record-pump.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/bench.dom.test.ts`](../../apps/demo/src/app/remote/bench.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/infusions.dom.test.ts`](../../apps/demo/src/app/remote/infusions.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/labs.dom.test.ts`](../../apps/demo/src/app/remote/labs.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/remote/paused.dom.test.ts`](../../apps/demo/src/app/remote/paused.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/remote/tray.dom.test.ts`](../../apps/demo/src/app/remote/tray.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |
@@ -1367,6 +1479,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) | 2 | 0 |
 | [`apps/demo/src/app/showcase/mh-v1-v2-table.slow.test.ts`](../../apps/demo/src/app/showcase/mh-v1-v2-table.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/mh-v2-card.test.ts`](../../apps/demo/src/app/showcase/mh-v2-card.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/showcase/ports.slow.test.ts`](../../apps/demo/src/app/showcase/ports.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 1 | 0 |
 | [`apps/demo/src/app/sim-clock-monotonic.dom.test.ts`](../../apps/demo/src/app/sim-clock-monotonic.dom.test.ts) | 0 | 0 |
@@ -1390,9 +1503,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/integration.dom.test.ts`](../../apps/demo/src/app/teach2/integration.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/judged-offer.dom.test.ts`](../../apps/demo/src/app/teach2/judged-offer.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/keys.dom.test.ts`](../../apps/demo/src/app/teach2/keys.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/labs-sheet.dom.test.ts`](../../apps/demo/src/app/teach2/labs-sheet.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/learner-preps.dom.test.ts`](../../apps/demo/src/app/teach2/learner-preps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/marks-note.dom.test.ts`](../../apps/demo/src/app/teach2/marks-note.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/press.dom.test.ts`](../../apps/demo/src/app/teach2/press.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/pump-mismatch.dom.test.ts`](../../apps/demo/src/app/teach2/pump-mismatch.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/rows-stay.dom.test.ts`](../../apps/demo/src/app/teach2/rows-stay.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/rows.test.ts`](../../apps/demo/src/app/teach2/rows.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/sheets.dom.test.ts`](../../apps/demo/src/app/teach2/sheets.dom.test.ts) | 0 | 0 |
@@ -1413,6 +1528,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/debrief-marks-course.dom.test.ts`](../../apps/demo/src/app/views/debrief-marks-course.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-moments-print.dom.test.ts`](../../apps/demo/src/app/views/debrief-moments-print.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-oxygen.dom.test.ts`](../../apps/demo/src/app/views/debrief-oxygen.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-preparations.dom.test.ts`](../../apps/demo/src/app/views/debrief-preparations.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-pressures.dom.test.ts`](../../apps/demo/src/app/views/debrief-pressures.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-print-symbols.dom.test.ts`](../../apps/demo/src/app/views/debrief-print-symbols.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-recognised.dom.test.ts`](../../apps/demo/src/app/views/debrief-recognised.dom.test.ts) | 0 | 0 |
@@ -1426,6 +1542,8 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/follower-pause.test.ts`](../../apps/demo/src/app/views/follower-pause.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-pill.dom.test.ts`](../../apps/demo/src/app/views/follower-pill.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/follower-stopped.dom.test.ts`](../../apps/demo/src/app/views/follower-stopped.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/follower-stopped.test.ts`](../../apps/demo/src/app/views/follower-stopped.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/learner-baseline.dom.test.ts`](../../apps/demo/src/app/views/learner-baseline.dom.test.ts) | 0 | 0 |
@@ -1436,6 +1554,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/room-defib.dom.test.ts`](../../apps/demo/src/app/views/room-defib.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-depth.dom.test.ts`](../../apps/demo/src/app/views/room-depth.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-instructor.dom.test.ts`](../../apps/demo/src/app/views/room-instructor.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/room-pumps.dom.test.ts`](../../apps/demo/src/app/views/room-pumps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-vent.dom.test.ts`](../../apps/demo/src/app/views/room-vent.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/teach2.dom.test.ts`](../../apps/demo/src/app/views/teach2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/vent-handover.dom.test.ts`](../../apps/demo/src/app/views/vent-handover.dom.test.ts) | 0 | 0 |
@@ -1450,15 +1569,20 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/physiology-console/organs.test.ts`](../../apps/demo/src/physiology-console/organs.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/sparkline.test.ts`](../../apps/demo/src/physiology-console/sparkline.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/view.dom.test.ts`](../../apps/demo/src/physiology-console/view.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/core/alarms-view.test.ts`](../../apps/demo/src/vent/core/alarms-view.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/cockpit.test.ts`](../../apps/demo/src/vent/core/cockpit.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/pending.test.ts`](../../apps/demo/src/vent/core/pending.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/record.test.ts`](../../apps/demo/src/vent/core/record.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/device-link.dom.test.ts`](../../apps/demo/src/vent/device-link.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/alarm-signals.dom.test.ts`](../../apps/demo/src/vent/faces/edp-ts/alarm-signals.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/controls.test.ts`](../../apps/demo/src/vent/faces/edp-ts/controls.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/face.dom.test.ts`](../../apps/demo/src/vent/faces/edp-ts/face.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/knob.test.ts`](../../apps/demo/src/vent/faces/edp-ts/knob.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/link.test.ts`](../../apps/demo/src/vent/faces/edp-ts/link.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/provenance.test.ts`](../../apps/demo/src/vent/faces/edp-ts/provenance.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/tones-player.test.ts`](../../apps/demo/src/vent/faces/edp-ts/tones-player.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/hamilton/face.dom.test.ts`](../../apps/demo/src/vent/faces/hamilton/face.dom.test.ts) | 0 | 0 |
 | [`alarm-bursts.test.ts`](../../packages/audio/test/alarm-bursts.test.ts) | 0 | 0 |
 | [`alarm-sounder.test.ts`](../../packages/audio/test/alarm-sounder.test.ts) | 0 | 0 |
@@ -1485,6 +1609,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`endo-panel.test.ts`](../../packages/renderer/test/endo-panel.test.ts) | 0 | 0 |
 | [`fast-forward.test.ts`](../../packages/renderer/test/fast-forward.test.ts) | 0 | 0 |
 | [`flash-contrast.test.ts`](../../packages/renderer/test/flash-contrast.test.ts) | 0 | 0 |
+| [`frame-error-stops.test.ts`](../../packages/renderer/test/frame-error-stops.test.ts) | 0 | 0 |
 | [`fx24-restore-history.test.ts`](../../packages/renderer/test/fx24-restore-history.test.ts) | 0 | 0 |
 | [`fx25-co2-attach.test.ts`](../../packages/renderer/test/fx25-co2-attach.test.ts) | 0 | 0 |
 | [`grid-layout.test.ts`](../../packages/renderer/test/grid-layout.test.ts) | 0 | 0 |

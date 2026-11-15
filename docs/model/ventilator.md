@@ -56,7 +56,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | [`mechanics.ts:2`](../../packages/ventilator/src/mechanics.ts#L2) | for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil |
 | [`mechanics.ts:54`](../../packages/ventilator/src/mechanics.ts#L54) | the alveolar pressure (PEEP) by E = pleural − 5.44 − PEEP; the lung is then collapsed at end-expiration and every |
 | [`catalogue.ts:4`](../../packages/ventilator/src/pathology/catalogue.ts#L4) | plateau = PEEP + autoPEEP + VT/C, driving pressure = VT/C, peak − plateau = R_insp × 1 L/s; `signature` bands are the |
-| [`vent.ts:347`](../../packages/ventilator/src/vent.ts#L347) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
+| [`vent.ts:394`](../../packages/ventilator/src/vent.ts#L394) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
 
 ## State
 
@@ -74,6 +74,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `circuit` | `'connected' \| 'disconnected'` | Stage V addition: circuit disconnected at the Y-piece. |
 | `lastBreathT` | `number` | Stage V addition: last time a breath started (apnoea alarm). |
 | `silenceUntil` | `number` | — |
+| `backupBreath` | `'VC' \| 'PC'` | Plan V2: the breath in progress (or the last one) is a backup breath of this kind, stamped when it starts; absent otherwise. Backup breaths do not move `lastBreathT`, so the apnoea clock (and the `apnea` alarm) runs from the patient's last breath while the backup ventilates (manual p. 49: the time after the last spontaneous breath). |
 
 ## Parameters
 
@@ -154,12 +155,13 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `mechanicsToVent` | [`pathology/mechanics.ts`](../../packages/ventilator/src/pathology/mechanics.ts) | The row's lung as the ventilator's single compartment — the same mapping lungState uses (lung-input.ts). |
 | `referenceRun` | [`pathology/mechanics.ts`](../../packages/ventilator/src/pathology/mechanics.ts) | Run the row at its reference settings for 60 s (VC, square flow, 0.3 s pause, no pressure limit). |
 | `resetPhysics` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | v1.9 `resetPhysics` (the Reset button; |
+| `startInspiration` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | `backup`: plan V2, a backup breath of that kind (mandatory; |
 | `stepVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | One 5 ms step (v1.9 `stepPhysics`). |
 | `advanceVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Step until the vent clock reaches sim time `t` (s). |
 | `toggleHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | --- front-panel actions (v1.9 rail buttons) ------------------------------------------------------------- Insp/Exp hold: |
 | `manualBreath` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Manual breath: |
 
-Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `createLinkedSim`, `profileOf`, `createVentDriver`, `applyLungState`, `easeShape`, `createVent`, `setMode`, `loadPreset`, `runScenario`, `startInspiration`, `setCircuit`.
+Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `createLinkedSim`, `profileOf`, `createVentDriver`, `applyLungState`, `easeShape`, `createVent`, `setMode`, `loadPreset`, `runScenario`, `setCircuit`.
 
 ## Source files
 
@@ -186,6 +188,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| o2High is raised on the oxygen the device's cell reads (A-44): IMG_1542 shows 43 % read at a set 40 %, so a high limit of 42 is crossed | not raised, as the model has no oxygen sensor and its O2 alarms compare the SET 40 % | — | not audited | — | [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) |
 | bronchospasm 1 at 20 min | at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 | — | MIS-SPECIFIED ([audit row 110](../../docs/validation/target-audit/30-target-audit.md#row-110)) | match the link's vcFlow/pause to the engine's Ti (the file's own V.1 TODO), then keep 3 / 3 / 2 % / 10 % | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) |
 | RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found; brief 87] (the auto-PEEP papers give the direction, not the size) | −12.5 | brief 87 | not audited | — | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
@@ -197,6 +200,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 
 | File | Expected failures | Skipped |
 |---|---|---|
+| [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) | 1 | 0 |
 | [`alarms-frame.test.ts`](../../packages/ventilator/test/alarms-frame.test.ts) | 0 | 0 |
 | [`catalogue-md.test.ts`](../../packages/ventilator/test/catalogue-md.test.ts) | 0 | 0 |
 | [`determinism.test.ts`](../../packages/ventilator/test/determinism.test.ts) | 0 | 0 |
@@ -213,12 +217,14 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link-restore.test.ts`](../../packages/ventilator/test/link-restore.test.ts) | 0 | 0 |
 | [`lung-input.test.ts`](../../packages/ventilator/test/lung-input.test.ts) | 0 | 0 |
 | [`mechanics.test.ts`](../../packages/ventilator/test/mechanics.test.ts) | 0 | 0 |
+| [`options-off.test.ts`](../../packages/ventilator/test/options-off.test.ts) | 0 | 0 |
 | [`pathology-consistency.test.ts`](../../packages/ventilator/test/pathology-consistency.test.ts) | 0 | 0 |
 | [`pathology-signature.test.ts`](../../packages/ventilator/test/pathology-signature.test.ts) | 0 | 0 |
 | [`pleural.test.ts`](../../packages/ventilator/test/pleural.test.ts) | 1 | 0 |
 | [`ports.test.ts`](../../packages/ventilator/test/ports.test.ts) | 0 | 0 |
 | [`reference.test.ts`](../../packages/ventilator/test/reference.test.ts) | 0 | 0 |
 | [`relay-port.test.ts`](../../packages/ventilator/test/relay-port.test.ts) | 0 | 0 |
+| [`v2-options.test.ts`](../../packages/ventilator/test/v2-options.test.ts) | 0 | 0 |
 | [`vc-flow-parity.test.ts`](../../packages/ventilator/test/vc-flow-parity.test.ts) | 0 | 0 |
 | [`vent-basics.test.ts`](../../packages/ventilator/test/vent-basics.test.ts) | 0 | 0 |
 | [`vent-corrections.test.ts`](../../packages/ventilator/test/vent-corrections.test.ts) | 0 | 0 |

@@ -5,7 +5,7 @@ import type { RelayDevice } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
 import { forgetRoom, lastTime, LAYOUT_KEY, MAX_DEVICES, noteDevices, readLayout, readWindows, rename, windowsOf, WINDOWS_KEY, writeLayout, writeWindows } from './room-layout.ts';
 import { ROOM_CODE_KEY } from './room-code.ts';
-import type { PeerSeen } from './room-status.ts';
+import { showingOf, type PeerSeen } from './room-status.ts';
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -68,5 +68,12 @@ describe('the remembered layout', () => {
     expect(lastTime({ a: { name: null, show: 'learner', lastSeen: 1 }, b: { name: 'X', show: 'learner', lastSeen: 1 }, c: { name: null, show: 'monitor', lastSeen: 1 } }, { monitor: 1, learner: 2 }))
       .toBe('Last time in this room: 1 monitor window and 2 learner monitor windows on this computer; 3 devices (2 learner monitors, 1 monitor).');
     expect(lastTime({}, { learner: 1 })).toBe('Last time in this room: 1 learner monitor window on this computer.');
+  });
+
+  it('A1 (pump-rack-tci.md): a pump tablet is named as one, in the table and in "Last time"', () => {
+    expect(showingOf('pump', null)).toBe('Infusion pumps');
+    expect(showingOf('pump', 'pump')).toBe('Infusion pumps');
+    expect(showingOf('viewer', 'pump')).toBe('Infusion pumps');
+    expect(lastTime({ a: { name: null, show: 'pump', lastSeen: 1 }, b: { name: null, show: 'pump', lastSeen: 1 } }, {})).toBe('Last time in this room: 2 devices (2 pump tablets).');
   });
 });

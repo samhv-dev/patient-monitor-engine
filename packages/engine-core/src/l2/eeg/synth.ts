@@ -14,6 +14,7 @@
 // pages; research/43 = research/43-eeg-sources-review.md.
 import { normal, uniform, type Sfc32State } from '../../rng/sfc32.ts';
 import type { EegPeakName, EegSpectrum } from '../../types-eeg.ts';
+import { aperiodicDb } from './spectra.ts';
 import { SUPP_ESTABLISHED } from './state.ts';
 
 // --- blocks (Ch35 p. 1106) ---
@@ -141,7 +142,7 @@ function slotPsd(s: SynthState, spec: EegSpectrum): number[][] {
   const peaks = PEAKS.map((name) => spec.peaks.find((p) => p.name === name));
   for (let k = 1; k < s.H; k++) {
     const f = (k * s.fs) / s.N;
-    const bg = lin(spec.aperiodic.offsetDb - 10 * spec.aperiodic.slope * Math.log10(f));
+    const bg = lin(aperiodicDb(spec.aperiodic, f));
     const pk = peaks.map((p) => (p ? lin(p.powerDb) * Math.exp(-((f - p.fHz) ** 2) / (2 * p.widthHz ** 2)) : 0));
     if (f < FF_SPLIT_HZ) (out[0] as number[])[k] = bg + pk.reduce((a, b) => a + b, 0);
     else {

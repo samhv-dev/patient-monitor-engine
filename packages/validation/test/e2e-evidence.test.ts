@@ -13,18 +13,18 @@ const root = resolve(import.meta.dirname, '../../..');
 const e2e = join(root, 'apps/demo/e2e');
 
 describe('e2e evidence on a failed attempt (brief 194)', () => {
-  it('every e2e spec imports its test from the evidence fixture (directly or through audit-fixture.ts)', () => {
+  it('every e2e spec imports its test from the evidence fixture (directly or through audit-fixture.ts / app-accessibility-support.ts)', () => {
     const specs = readdirSync(e2e).filter((f) => f.endsWith('.e2e.ts'));
     expect(specs.length).toBeGreaterThan(50);
     const bad = specs.filter((f) => {
       const src = readFileSync(join(e2e, f), 'utf8');
       const direct = /^import\s+(?!type\b)[^;]*from\s+'@playwright\/test'/m.test(src); // a value import, `test` among them
-      const fixture = /from\s+'\.\/(evidence\.ts|audit-fixture)'/.test(src);
+      const fixture = /from\s+'\.\/(evidence\.ts|audit-fixture|app-accessibility-support\.ts)'/.test(src);
       return direct || !fixture;
     });
     expect(bad, "import { test, expect, … } from './evidence.ts' (it re-exports all of '@playwright/test')").toEqual([]);
     // the shared fixtures that define or hook tests build on it too
-    for (const f of ['audit-fixture.ts', 'teach2-fit-support.ts']) expect(readFileSync(join(e2e, f), 'utf8')).toMatch(/from '\.\/evidence\.ts'/);
+    for (const f of ['audit-fixture.ts', 'teach2-fit-support.ts', 'app-accessibility-support.ts']) expect(readFileSync(join(e2e, f), 'utf8')).toMatch(/from '\.\/evidence\.ts'/);
   });
 
   it("the retry report names the failed attempt's folder, where its evidence is", () => {

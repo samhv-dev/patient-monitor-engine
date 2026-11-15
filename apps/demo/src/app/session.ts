@@ -9,8 +9,10 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
+import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
+import { shippedPumpDevices } from './pump/devices.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -81,6 +83,11 @@ export class AppSession {
   readonly driver: ScenarioDriver;
   /** The same-screen instructor panel's controller (in-process hub, R7). */
   readonly panel: ControllerSession;
+  /** L14: every learner give the host refused because the case was paused (the host's Log line). */
+  onNotGiven(fn: (n: NotGiven) => void): () => void {
+    this.notGivenFns.add(fn);
+    return () => void this.notGivenFns.delete(fn);
+  }
   /** The name Room setup gave a device key (R7's remembered layout), or null: the record's and the Log's (brief 164). */
   deviceName(key: string): string | null {
     return readLayout(store)[key]?.name ?? null;
@@ -141,6 +148,7 @@ export class AppSession {
   private readonly listeners = new Set<(e: EngineEvent) => void>();
   private readonly appFns = new Set<(e: EngineEvent) => void>();
   private readonly mountFns = new Set<(m: MonitorHandle) => void>();
+  private readonly onFailed = (e: Event): void => this.host.engineStopped((e as CustomEvent<{ reason: string }>).detail.reason);
   private readonly scaleFns = new Set<(k: number) => void>();
   private offMon: (() => void) | null = null;
   private lastT = 0;
@@ -163,6 +171,7 @@ export class AppSession {
   /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
   instructors = 0;
   private readonly instructorFns = new Set<(n: number) => void>();
+  private readonly notGivenFns = new Set<(n: NotGiven) => void>();
   private serve: InstructorServe | null = null;
   private feedTimer: ReturnType<typeof setInterval> | null = null;
   private feedLast = ''; // The last body sent (JSON): a body is sent only when it changed
@@ -173,6 +182,9 @@ export class AppSession {
   /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
    *  null: none sent (the monitor style's own defibrillator values). */
   defibModel: string | null;
+  /** A1 (plan pump-rack-tci.md §5): the room's pump rack, each channel's kind (site.ts pumpRack), sent to the pump tablet
+   *  on the style event. */
+  pumpRack: PumpKind[];
   /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
    *  patient mount, or null: no EEG device (none switched on). */
   eegModel: string | null;
@@ -181,10 +193,11 @@ export class AppSession {
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[] }) {
     this.el = el;
     this.defibModel = o.defibModel ?? null;
     this.eegModel = o.eegModel ?? null;
+    this.pumpRack = [...(o.pumpRack ?? DEFAULT_SITE.pumpRack)];
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -265,7 +278,18 @@ export class AppSession {
       // made from (loaded once, below; null until then), and each staged preparation into the /2 record
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
+      // pump-rack-tci.md A2 (C2's hand-over): the room's rack as Room setup sets it, and the shipped device profiles
+      // (S1, N125), so the host grants a pump tablet on the learner PIN and checks each of its commands against them
+      pumpRack: () => this.pumpRack,
+      pumpDevices: () => shippedPumpDevices(),
       onPreparation: (p) => this.driver.recordPreparation(p),
+      // L14: a learner's give refused while the case was paused: an attempt in the record (and the /2 administrations, not
+      // accepted), and a Log line (main.ts hands it to the Link)
+      onNotGiven: (n) => {
+        this.driver.recordNotGiven(n.command, n.reason); // first: the record copies the runner's administrations with its row
+        this.record.notGiven(n);
+        for (const fn of [...this.notGivenFns]) fn(n);
+      },
       deviceName: (key) => readLayout(store)[key]?.name ?? null, // L9: the instructor's card names the remote as Room setup did
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
@@ -278,6 +302,9 @@ export class AppSession {
       },
     });
     this.host = hs;
+    // Brief 195: the monitor stopped (`pme-monitor-failed`, bubbling from its canvas): the host tells every follower at
+    // once and every second after, with the reason, until a new engine runs (the mount's newTimeline)
+    el.addEventListener('pme-monitor-failed', this.onFailed);
     if (o.learnerPin) void loadShippedFormulary().then((f) => void (this.formulary = f));
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
@@ -532,8 +559,15 @@ export class AppSession {
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
-  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null } {
-    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel }; // R5: the window's look
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null; pumps: PumpKind[] } {
+    // R5: the window's look; A1: the room's pump rack, for the pump tablet
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel, pumps: [...this.pumpRack] };
+  }
+
+  /** Room setup's pump rack (A1): kept here, and sent to the pump tablet at once on the style event (as the defibrillator model). */
+  setPumpRack(kinds: PumpKind[]): void {
+    this.pumpRack = [...kinds];
+    for (const f of this.skinFns) f(this.skin, this.theme);
   }
 
   private ibp: IbpScales = {};
@@ -701,6 +735,7 @@ export class AppSession {
   }
 
   destroy(): void {
+    this.el.removeEventListener('pme-monitor-failed', this.onFailed);
     clearInterval(this.pollTimer);
     if (this.feedTimer !== null) clearInterval(this.feedTimer);
     if (this.briefingTimer !== null) clearTimeout(this.briefingTimer);

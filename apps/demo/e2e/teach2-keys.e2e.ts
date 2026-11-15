@@ -39,14 +39,27 @@ test('keys: 1–9 press the rows, letters open and close sheets, Esc closes firs
   await expect.poll(() => stateOf(page), { timeout: 10_000 }).toBe('treating');
   expect(await page.evaluate(() => (window as unknown as W).__pmeApp.link.log.some((x) => x.text === 'Scenario event'))).toBe(true);
 
-  // letters: D opens and closes the Drug sheet; A, F and V open theirs; Esc closes the open sheet
+  // letters: D opens and closes the Drug sheet; A, F and V open theirs (F the CPR sheet, V the Patient sheet on "Vitals &
+  // rhythm": brief 208); Esc closes the open sheet
   await page.keyboard.press('d');
   await expect(sheet(page, 'Drug')).toBeVisible();
   await page.keyboard.press('d');
   await expect(sheet(page, 'Drug')).toBeHidden();
-  for (const [k, name] of [['a', 'Airway'], ['f', 'Defib · CPR'], ['v', 'Vitals']] as const) {
+  for (const [k, name] of [['a', 'Airway'], ['f', 'CPR'], ['v', 'Patient']] as const) {
     await page.keyboard.press(k);
     await expect(sheet(page, name)).toBeVisible();
+    if (k === 'v') {
+      // the second tab by keyboard (the frame's tab row: WAI-ARIA arrow keys), then V again lands on the first
+      const tabs = sheet(page, name).getByRole('tab');
+      await expect(tabs).toHaveText(['Vitals & rhythm', 'Patient & events']);
+      await tabs.first().focus();
+      await page.keyboard.press('ArrowRight');
+      await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+      await expect(tabs.nth(1)).toBeFocused();
+      await expect(sheet(page, name).getByRole('button', { name: 'Restart patient', exact: true })).toBeVisible();
+      await page.keyboard.press('v');
+      await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+    }
     await page.keyboard.press('Escape');
     await expect(sheet(page, name)).toBeHidden();
   }
@@ -118,15 +131,19 @@ test('a past stage returns to its start (the owner\'s ruling on answer 3, his re
 // Defect N26 (brief 103) was the session clock under load: the 250 ms frame clamp ran the body slow, so the onset (sim
 // time) crawled against the wall. Brief 105 fixed the clock (owed ticks caught up within a frame budget, a BEHIND state
 // when they cannot be) and runs the bar from the engine's apply tick; the tag came off with it.
-test('the onset of a staged delivery (retire-instructor-v1 G3): a held value delivered "Over 1 min" moves the Vitals progress bar and arrives 60 ± 2 s of simulated time later', async ({ page }) => {
+test('the onset of a staged delivery (retire-instructor-v1 G3): a MANUAL target delivered "Over 1 min" moves the Vitals progress bar and arrives 60 ± 2 s of simulated time later', async ({ page }) => {
   test.setTimeout(150_000);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openApp(page, base, '#/teach2', { warmMs: 1500 }); // the default patient, MODELED: Set holds the value (a pin)
+  // brief 208 (the owner's ruling of 12 November): a MODELED run holds no value, so the onset is measured on a MANUAL
+  // target (Set stages `setTarget` with the onset as its ramp; G3's held value took the same ramp)
+  await openApp(page, base, '#/teach2', { warmMs: 1500 });
   type S = { __pmeApp: { link: { simT: number; log: Array<{ simT: number; text: string }>; ctl: { state: { mode: string; values: Record<string, number>; control: Record<string, string> } | null } } } };
   await page.waitForFunction(() => !!(window as unknown as S).__pmeApp.link.ctl.state, null, { timeout: 30_000 });
+  expect((await send(page, { type: 'setMode', mode: 'manual' })).accepted).toBe(true);
+  await page.waitForFunction(() => (window as unknown as S).__pmeApp.link.ctl.state?.mode === 'manual', null, { timeout: 10_000 });
   await page.locator('body').click({ position: { x: 700, y: 5 } });
   await page.keyboard.press('v');
-  const vitals = sheet(page, 'Vitals');
+  const vitals = sheet(page, 'Patient');
   await expect(vitals).toBeVisible();
   const row = vitals.locator('[data-var="hr"]');
   await row.locator('input').fill('140');

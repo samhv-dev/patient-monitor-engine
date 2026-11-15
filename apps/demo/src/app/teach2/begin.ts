@@ -110,9 +110,16 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
     return h('button', { type: 'button', class: `ip2-begin-card${primary ? ' ip2-begin-primary' : ''}`, 'data-way': id, 'aria-keyshortcuts': String(n), onclick: act },
       ico, h('span', { class: 'ip2-begin-text' }, h('span', { class: 'ip2-begin-title' }, title), h('span', { class: 'ip2-begin-line' }, line)), h('span', { class: 'ip2-begin-btn' }, btn));
   };
+  // Free roam begins with the Patient sheet open over ACTION, on "Vitals & rhythm" (the owner's ruling 6b = A of 12
+  // November, brief 208); it stays until the instructor closes it, and nothing reopens it (during a case it is a dock
+  // tool like the others). ACTION's fold of what was given lies under it; the Log sheet and the Debrief hold the same.
+  const free = () => {
+    go('free');
+    ctx.openSheet('vitals');
+  };
   // the archive (board "Finish 2"): the card opens the Debrief view's Archive section; its button reads the count
   const ways: Array<[() => void, HTMLElement]> = [
-    [() => go('free'), card('free', 1, 'Free roam', 'The default patient with every tool, nothing scripted, nothing graded; the Log and the Debrief still record it all.', 'Start', () => go('free'))],
+    [free, card('free', 1, 'Free roam', 'The default patient with every tool, nothing scripted, nothing graded; the Log and the Debrief still record it all.', 'Start', free)],
     [() => go('cases'), card('library', 2, 'Scenario library', `${LIBRARY.length} cards. Pick one and this pane becomes its stages and steps.`, 'Browse', () => go('cases'), true)],
     [openArchive, card('archive', 3, 'Debrief archive', 'Every saved run: resident, card, time, objectives and score. Open one, print it, or compare residents on the same card.', 'Open · 0', openArchive)],
   ];

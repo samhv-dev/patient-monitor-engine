@@ -103,6 +103,24 @@ describe('BFA from the EEG device (E6)', () => {
     expect(bfaReading(stale).label).toBeUndefined();
     expect(formatBfa(stale, 'SR', '---')).toEqual({ main: '45', sub: 'SR 1' });
   });
+  it('the BIS-type reader (E7): its index (no decimal) under the label BIS-type, its BSR on the sub-line; the newest reader wins after a change of reader', () => {
+    expect(formatBfa({ bis: m(47.4, 10), bisSr: m(0, 10) }, 'SR', '---')).toEqual({ main: '47', sub: 'SR 0', label: 'BIS-type' });
+    // the room switched generic → BIS-type at 50 s: the generic's last values stay in the map, older
+    const switched = { sef: m(14, 50), eegSr: m(0, 50), bis: m(55, 60.5), bisSr: m(2, 60.5) };
+    expect(formatBfa(switched, 'BS%', '---')).toEqual({ main: '55', sub: 'BS% 2', label: 'BIS-type' });
+    // and back: the generic is newer
+    expect(bfaReading({ ...switched, sef: m(12, 70), eegSr: m(0, 70) }).label).toBe('SEF');
+    expect(modulePresent('BFA', { bis: m(40, 100), bisSr: m(0, 100) }, 104)).toBe(true);
+  });
+  it('the Entropy reader (E8): SE (no decimal) under the label Entropy-type SE, RE on the sub-line in place of an SR it does not compute; the newest reader wins', () => {
+    expect(formatBfa({ se: m(44.2, 10), re: m(51, 10) }, 'SR', '---')).toEqual({ main: '44', sub: 'RE 51', label: 'Entropy-type SE' });
+    expect(formatBfa({ se: m(null, 10), re: m(null, 10) }, 'BS%', '---')).toEqual({ main: '---', sub: 'RE ---', label: 'Entropy-type SE' });
+    expect(bfaReading({ se: m(44, 10), re: m(51, 10) }).sr).toBeUndefined(); // a skin's BS% part stays blank: no BSR built
+    const switched = { bis: m(55, 50), bisSr: m(2, 50), se: m(40, 60.16), re: m(42, 60.16) };
+    expect(bfaReading(switched).label).toBe('Entropy-type SE');
+    expect(bfaReading({ ...switched, bis: m(50, 70), bisSr: m(0, 70) }).label).toBe('BIS-type');
+    expect(modulePresent('BFA', { se: m(40, 100), re: m(45, 100) }, 104)).toBe(true);
+  });
   it('the module is present while the EEG device publishes (5 s)', () => {
     expect(modulePresent('BFA', { sef: m(14, 100), eegSr: m(0, 100) }, 104)).toBe(true);
     expect(modulePresent('BFA', { sef: m(14, 100), eegSr: m(0, 100) }, 106)).toBe(false);

@@ -5,11 +5,18 @@
 export type VentMode = 'VC' | 'PC' | 'PRVC' | 'PSV' | 'PAV';
 export type Shape = 'linear' | 'smoothstep' | 'halfcos' | 'exp';
 export type VentPhase = 'insp' | 'pause' | 'exp';
+/**
+ * VC flow: constant; v1.9's `decel` (4/3 → 2/3 of the mean flow); `ramp0`, the EDP-TS descending ramp, linear from its
+ * maximum to zero at Ti (EDP-TS manual p. 43; research/57 T-26; plan GP13), so its peak is twice the mean flow.
+ */
+export type FlowPattern = 'square' | 'decel' | 'ramp0';
+/** The kind of the backup breaths (EDP-TS manual p. 49, research/57 T-37), or no device backup ('off'). */
+export type BackupMode = 'off' | 'VC' | 'PC';
 
 export interface VentConfig {
   mode: VentMode; peep: number; rate: number; itime: number; fio2: number; riseTime: number;
   trigType: 'flow' | 'pressure'; flowTrig: number; presTrig: number;
-  vt: number; vcFlow: number; flowPattern: 'square' | 'decel'; pause: number; pc: number; prvcTarget: number;
+  vt: number; vcFlow: number; flowPattern: FlowPattern; pause: number; pc: number; prvcTarget: number;
   ps: number; cycleOff: number; pmax: number; pavAssist: number;
   sex: '' | 'male' | 'female'; height: number; compliance: number; resistance: number;
   spont: boolean; spontRate: number; pmus: number; responsiveness: number;
@@ -25,7 +32,31 @@ export interface VentConfig {
   modeLabel: string | null;
   /** Carried from v1.9, where they are settings without behaviour (sigh, TRC, apnoea backup): kept unwired. */
   sigh: boolean; trc: boolean; trcPct: number; apneaTime: number; backup: boolean; backupRate: number;
+  /**
+   * Plan V2 options (brief 157), the EDP-TS device's breath behaviours. Each is OPTIONAL and absent from DEFAULT_CONFIG:
+   * absent is off, and with every one off the model is v1.9's port bit for bit (test/options-off.test.ts).
+   * `backupMode`: in PSV, no patient breath for `apneaTime` s starts mandatory breaths of this kind at its own settings
+   * until the patient triggers again (manual pp. 49–50; research/57 T-37, T-38, A-26, A-45); it replaces the 6 s
+   * safety breath. 'off' (or absent): the 6 s rule as before.
+   * `pmaxAction`: 'cap' (absent) limits Paw at `pmax` as before; 'cycle' ends the breath when the pressure would pass
+   * `pmax`, the expiratory valve opening to PEEP (manual p. 95, research/57 A-32; plan GA2).
+   */
+  backupMode?: BackupMode; pmaxAction?: 'cap' | 'cycle';
   almMVlo: number; almMVhi: number; almFlo: number; almFhi: number; almVTlo: number; almVThi: number;
+  /**
+   * The EDP-TS alarm limits (plan vent-skin-edp-ts.md V3, research/57 §10b), OPTIONAL: an alarm whose limit is absent is
+   * not evaluated, so the v1.9 configuration (the Hamilton-style face, the reference scenarios) raises none of them and
+   * its cfg keeps exactly its v1.9 keys. A face that has these alarms writes their limits (its starting settings).
+   * - `almPlo`: minimum inspiratory pressure, cmH2O (`lowPressure`: the last breath's peak under it; L-02, A-35);
+   * - `almContHiP`: cmH2O above the set PEEP (`contHighPressure`: the airway pressure above PEEP + this; how long it
+   *   must last, 15 s, is the face's alarm delay; L-15, A-31);
+   * - `almPeepHi`: High PEEP, cmH2O (`highPeep`: the end-expiratory pressure the caller measured above it; L-13, A-49);
+   * - `almO2hi` / `almO2lo`: oxygen concentration, % (`o2High` / `o2Low`: the set oxygen, the model having no oxygen
+   *   sensor, outside them; L-08, A-44).
+   */
+  almPlo?: number; almContHiP?: number; almPeepHi?: number; almO2hi?: number; almO2lo?: number;
+  /** The device's alarm sound volume, % (research/57 E-10). A face setting: the model makes no sound. Optional, as above. */
+  alarmVolume?: number;
   _preset?: string | null;
 }
 
@@ -61,8 +92,20 @@ export interface VentState {
   /** Stage V addition: last time a breath started (apnoea alarm). */
   lastBreathT: number;
   silenceUntil: number;
+  /**
+   * Plan V2: the breath in progress (or the last one) is a backup breath of this kind, stamped when it starts; absent
+   * otherwise. Backup breaths do not move `lastBreathT`, so the apnoea clock (and the `apnea` alarm) runs from the
+   * patient's last breath while the backup ventilates (manual p. 49: the time after the last spontaneous breath).
+   */
+  backupBreath?: 'VC' | 'PC';
 }
 
 export type VentAlarmId =
-  | 'pmax' | 'mvHigh' | 'mvLow' | 'vtHigh' | 'vtLow' | 'fHigh' | 'fLow' | 'intrinsicPeep' | 'disconnection' | 'apnea';
-export interface VentAlarm { id: VentAlarmId; text: string; priority: 'high' | 'medium' }
+  | 'pmax' | 'mvHigh' | 'mvLow' | 'vtHigh' | 'vtLow' | 'fHigh' | 'fLow' | 'intrinsicPeep' | 'disconnection' | 'apnea'
+  // the EDP-TS alarms the v1.9 model did not have (plan V3); raised only when their optional limit is set
+  | 'lowPressure' | 'contHighPressure' | 'highPeep' | 'o2High' | 'o2Low';
+/** `low` is a face's priority (the EDP-TS has three, research/57 A-02); the model itself raises high and medium only. */
+export interface VentAlarm { id: VentAlarmId; text: string; priority: 'high' | 'medium' | 'low' }
+/** What the caller measured that the model does not: the EDP-TS's PEEP, the mean airway pressure of the last 50 ms of
+ *  expiration (research/57 R-23), which the cockpit core's breath record keeps. */
+export interface AlarmObs { peepEnd?: number }
