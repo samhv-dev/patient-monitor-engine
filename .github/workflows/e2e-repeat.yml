@@ -1,0 +1,130 @@
+name: e2e-repeat
+
+# Brief 194: repeat ONE e2e spec on ONE browser in CI's own container, retries 0, and keep the evidence of every failing
+# repetition (each repetition is a first attempt, so each failure keeps its trace, every page's screenshot, counters and
+# console: playwright.config.ts `trace`, apps/demo/e2e/evidence.ts). Started by hand only (Actions → e2e-repeat → Run
+# workflow, or `gh workflow run e2e-repeat.yml -f spec=… -f browser=webkit -f repeat=10`); no schedule, no pull request.
+# It never gates anything: a red run means at least one repetition failed. CONTRIBUTING.md, "Reading the evidence of
+# a retry-only pass".
+on:
+  workflow_dispatch:
+    inputs:
+      spec:
+        description: 'The spec, from the repository root (apps/demo/e2e/<name>.e2e.ts; or apps/demo/e2e/proof/<name>.proof.ts)'
+        required: true
+        type: string
+      grep:
+        description: "Optional: only the tests whose title matches (Playwright's --grep)"
+        required: false
+        default: ''
+        type: string
+      browser:
+        description: 'The browser project'
+        required: true
+        default: webkit
+        type: choice
+        options: [webkit, chromium]
+      repeat:
+        description: 'How many times (1-20)'
+        required: true
+        default: '5'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-repeat-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # The container tag is the Playwright the lockfile installs (as ci.yml's renderer job reads it)
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      playwright: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          v=$(node -p "require('./package.json').devDependencies['@playwright/test']")
+          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+  repeat:
+    needs: version
+    name: e2e-repeat (${{ inputs.browser }} ×${{ inputs.repeat }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.version.outputs.playwright }}-noble
+      options: --ipc=host
+    env:
+      SPEC: ${{ inputs.spec }}
+      GREP: ${{ inputs.grep }}
+      BROWSER: ${{ inputs.browser }}
+      REPEAT: ${{ inputs.repeat }}
+    steps:
+      - uses: actions/checkout@v4
+      # The inputs reach the shell as environment variables only, and are checked before use
+      - name: check the inputs
+        run: |
+          printf '%s' "$SPEC" | grep -Eq '^apps/demo/e2e/([A-Za-z0-9._-]+\.e2e\.ts|proof/[A-Za-z0-9._-]+\.proof\.ts)$' || { echo "::error::spec must be apps/demo/e2e/<name>.e2e.ts (or proof/<name>.proof.ts), got '$SPEC'"; exit 1; }
+          [ -f "$SPEC" ] || { echo "::error::no such spec: $SPEC"; exit 1; }
+          printf '%s' "$REPEAT" | grep -Eq '^[0-9]+$' && [ "$REPEAT" -ge 1 ] && [ "$REPEAT" -le 20 ] || { echo "::error::repeat must be 1-20, got '$REPEAT'"; exit 1; }
+          case "$BROWSER" in webkit|chromium) ;; *) echo "::error::browser must be webkit or chromium"; exit 1 ;; esac
+          echo "$SPEC on $BROWSER, $REPEAT times, retries 0${GREP:+, tests matching '$GREP'}"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        timeout-minutes: 5
+      # Only the specs that load a build need one (as ci.yml's renderer job makes it)
+      - name: the renderer IIFE and the ventilator embed, for the specs that load them
+        if: ${{ contains(inputs.spec, 'iife-') || contains(inputs.spec, 'vent-embed') }}
+        run: |
+          pnpm --filter "@pme/renderer^..." build
+          pnpm --filter @pme/renderer build
+          pnpm --filter @pme/demo build
+      - id: e2e
+        name: the spec, repeated (retries 0)
+        run: |
+          set -- --project="$BROWSER" --repeat-each="$REPEAT" --retries=0 --reporter=list,json
+          [ -z "$GREP" ] || set -- "$@" --grep "$GREP"
+          pnpm test:e2e "$@" "$SPEC"
+        env:
+          CI: '1'
+          PME_E2E_PROOF: '1' # lets the spec be the evidence proof (apps/demo/e2e/proof/); a normal spec is unaffected
+          PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-repeat.json
+      - name: repetitions passed and failed
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
+        run: |
+          [ -f playwright-report-repeat.json ] || { echo "::error::no JSON report"; exit 1; }
+          node scripts/ci/e2e-report.mjs quarantine playwright-report-repeat.json | cut -f1 | sort | uniq -c > "$RUNNER_TEMP/n.txt"
+          { echo "### e2e-repeat: $SPEC on $BROWSER, ×$REPEAT, retries 0"; echo; echo '```'; cat "$RUNNER_TEMP/n.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/n.txt"
+      - name: evidence of the failed repetitions
+        id: evidence
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
+        run: |
+          n=$(find test-results -path '*/evidence/index.json' 2>/dev/null | wc -l)
+          t=$(find test-results -name 'trace.zip' 2>/dev/null | wc -l)
+          echo "count=$((n + t))" >> "$GITHUB_OUTPUT"
+          echo "failed repetitions with evidence: $n; traces: $t"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.evidence.outputs.count != '' && steps.evidence.outputs.count != '0' }}
+        continue-on-error: true
+        timeout-minutes: 5
+        with:
+          name: e2e-repeat-evidence-${{ inputs.browser }}-${{ github.run_id }}
+          path: |
+            playwright-report-repeat.json
+            test-results/**/trace.zip
+            test-results/**/evidence/**
+            test-results/**/test-failed-*.png
+            test-results/**/error-context.md
+          if-no-files-found: ignore
+          retention-days: 30

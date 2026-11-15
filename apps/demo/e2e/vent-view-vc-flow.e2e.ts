@@ -1,7 +1,7 @@
 // FU-11 Task H5: the app's Ventilator view runs VC at the monitor ventilator's flow for its VT and rate (I:E 1:2, no
 // pause), and follows a rate change — the cockpit's preset 60 L/min + 0.3 s pause delivered half the volume in severe
 // bronchospasm (the parity is unit-tested in packages/ventilator/test/vc-flow-parity.test.ts).
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

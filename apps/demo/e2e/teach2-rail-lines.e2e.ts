@@ -5,7 +5,7 @@
 // strip's status line, live (the strip's 40-px status line goes: 115 px, then 75). Both are measured, so they follow the strip whatever height it takes. The owner, 1 November: the rail's Home is centred on
 // the strip's row (the chips, or the "No case loaded" box), measured the same way, also at 1280 × 800 (it sat 9 px
 // under the row, 49 px during the briefing).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

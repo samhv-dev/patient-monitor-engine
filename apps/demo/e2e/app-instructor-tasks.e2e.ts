@@ -2,7 +2,7 @@
 // and keys, never the app hook — so a broken path shows as a failure. Each must finish in < 30 s; the times are
 // written to the test annotations for the gate note. The same five tasks are the script for the owner's timed usability run.
 // Chromium only (a heavy evidence run, CI amendment rules).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { closeSheets, deliver, openApp, sheet, startVite } from './app-support.ts';
 

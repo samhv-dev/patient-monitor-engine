@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 
 const smokeUrl = pathToFileURL(resolve(import.meta.dirname, 'iife-smoke.html')).href;
 
