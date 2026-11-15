@@ -6,7 +6,7 @@
 // Nothing is refused. PME_KIT_BASE=<url> runs it against a built kit instead of the dev server.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 import { app, pressPath, to, type W } from './mh-v2-path.ts';

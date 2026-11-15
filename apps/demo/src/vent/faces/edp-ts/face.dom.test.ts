@@ -92,6 +92,31 @@ describe('the EDP-TS face', () => {
     ui.stop();
   });
 
+  it('a repaint keeps every node a press can rest on: a held key, tile or window row still gets its click', () => {
+    // A click is dispatched only when the press and the release land on the same node: a node replaced under a held
+    // pointer loses the press (WebKit for a text node; every browser for an element), so a repaint that changes
+    // nothing must replace nothing that can be pressed.
+    const d = createVentDriver(null);
+    const ui = mount(d);
+    const repaint = () => { click('[data-ctl="under:ctrl"]'); click('[data-ctl="under:ctrl"]'); };
+    const under = (): Node[] => [
+      ...['[data-ctl="tag:pmax"] .tv', '[data-ctl="key:peep"] .v', '[data-ctl="key:peep"] .u', '[data-ctl="key:peep"] .n'].map((q) => document.querySelector(q)!.firstChild!),
+      document.querySelector('.edp-tile.pict .v svg')!,
+    ];
+    const held = under();
+    expect(held.every((n) => n !== null)).toBe(true);
+    repaint();
+    under().forEach((n, i) => expect(n, `node ${i}`).toBe(held[i]));
+    click('[data-ctl="side:mode"]');
+    const rows = [...document.querySelectorAll('.edp-win .edp-entry')];
+    expect(rows.length).toBeGreaterThan(0);
+    repaint();
+    const after = [...document.querySelectorAll('.edp-win .edp-entry')];
+    expect(after.length).toBe(rows.length);
+    after.forEach((r, i) => expect(r).toBe(rows[i]));
+    ui.stop();
+  });
+
   it('every control not honoured yet is drawn as the device draws it, marked unavailable and described with its reason', () => {
     const ui = mount(createVentDriver(null));
     const why = (b: HTMLElement) => document.getElementById(b.getAttribute('aria-describedby') ?? '')?.textContent ?? '';

@@ -1,7 +1,7 @@
 // FX-18: single-key shortcuts fired while typing in the Debrief notes (a contenteditable div): `i` toggled the
 // instructor view and swallowed the letter. Typing "mini" there now reads "mini" and leaves the view alone; `i` with
 // nothing focused on the Monitor still opens the instructor view. Both browsers.
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

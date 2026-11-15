@@ -15,7 +15,7 @@
 // PME_A2_SHOTS=<dir>: each flow's form is saved there as PNG (for the PR; CI sets none).
 import { spawn, type ChildProcess } from 'node:child_process';
 import { resolve } from 'node:path';
-import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type BrowserContext, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, sheet, startVite } from './app-support.ts';
 import { DOCK_SIZES as SIZES, dockBlocked, dockOverlaps, sheetFootBlocked, sheetFootCount } from './dock-fit-support.ts';

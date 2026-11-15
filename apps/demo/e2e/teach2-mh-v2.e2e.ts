@@ -16,7 +16,7 @@
 // and the patient's course moves with them), and the 08:05 pause (485.4–486.0 s) read Early signs in three of five. It
 // reads Latent or Early signs. 08:45 is pinned: Early signs is entered by 08:08 and Treated comes at 09:58.
 // PME_KIT_BASE=<url> runs it against a built kit (F11) instead of the dev server.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 import { app, END_S, openMhV2, PATH, pressPath, to, type W } from './mh-v2-path.ts';

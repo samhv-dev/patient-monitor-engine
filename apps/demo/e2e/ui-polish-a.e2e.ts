@@ -6,7 +6,7 @@
 // retired with it: #5 to teach2-fit-stages.e2e.ts / teach2-fit-panes.e2e.ts / teach2-fit-strip.e2e.ts (every open step
 // a row, long titles wrap in the box), #8 to teach2-fit-strip.e2e.ts ("a toast rests on the dock"), E128 to
 // teach2-fit-panes.e2e.ts ("Instructor v2 with no case fits 1440 × 900": a Load hands the pane to ACTION).
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { debriefLinkV2, ffV2, openApp, startVite } from './app-support.ts';
 

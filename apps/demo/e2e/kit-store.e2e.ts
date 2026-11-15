@@ -13,7 +13,7 @@
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { lanAddresses } from '../../../packages/controller/relay/http.ts';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
