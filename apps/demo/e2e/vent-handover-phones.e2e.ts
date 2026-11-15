@@ -122,4 +122,5 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
     expect(within(after.spo2, onVent.spo2, 3), `SpO2 ${after.spo2} vs ${onVent.spo2} on the cockpit`).toBe(true);
     expect(within(after.ppeak, onVent.ppeak, 5), `peak pressure ${after.ppeak} vs ${onVent.ppeak} on the cockpit`).toBe(true);
   }
+  await f.context().close();
 });

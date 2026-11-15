@@ -3,7 +3,8 @@
 import { mkdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from './evidence.ts';
-import { createServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -13,10 +14,7 @@ const demo = (page: Page, name: string) => page.evaluate((n) => (window as unkno
 const waitSim = (page: Page, t: number) => page.waitForFunction((t) => (window as unknown as { __pme6: Hook }).__pme6.simT() >= t, t, { timeout: 900_000 });
 
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => vite?.close());
 

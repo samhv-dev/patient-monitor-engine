@@ -2,17 +2,14 @@
 // vent-link.html (BroadcastChannel, iframe): breaths reach the monitor, lungState reaches the ventilator,
 // disconnection alarms on both sides, and the COPD demonstration lowers MAP.
 // Run: PW_SYSTEM_CHROME=1 pnpm exec playwright test apps/demo/e2e/vent-link.e2e.ts
-import { resolve } from 'node:path';
 import { expect, test, type Page } from './evidence.ts';
-import { createServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => vite?.close());
 

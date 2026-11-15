@@ -1,8 +1,8 @@
 // Stage 6a browser checks: host + remote + viewer over BroadcastChannel, the relay (WebSocket) and WebRTC,
 // in one browser context. Starts its own Vite dev server and relay on free ports.
-import { resolve } from 'node:path';
 import { expect, test, type Page } from './evidence.ts';
-import { createServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 
 // Headless Chrome cannot resolve the mDNS (.local) host candidates it hands out, so WebRTC on localhost needs
@@ -16,10 +16,7 @@ let relayUrl = '';
 test.beforeAll(async () => {
   relay = await startRelay({ port: 0, host: '127.0.0.1' });
   relayUrl = `ws://127.0.0.1:${relay.port}/`;
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => {
   await vite?.close();

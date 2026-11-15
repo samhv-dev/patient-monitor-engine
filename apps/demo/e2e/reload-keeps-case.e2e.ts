@@ -100,6 +100,7 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   await page.waitForTimeout(3000);
   expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.doc)).toBeNull();
   await expect(bar).toHaveText('No case loaded');
+  await phone.context().close();
 });
 
 // The owner's board "Finish 2" (approved 30 October): "Save and restart the case" saves the debrief to the browser's

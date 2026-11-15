@@ -187,6 +187,8 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(status).toBeHidden();
   await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
   await expect(g.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
+  await f.context().close();
+  await g.context().close();
 });
 
 // Debrief 2, D13b: a card written in English with the owner-read Persian (`briefing.textFa`), the host set to Persian
@@ -227,4 +229,5 @@ test('D13b: the host in Persian sends a card\'s textFa; the host and one phone s
   expect(await page.evaluate((d) => (window as unknown as W).__pmeApp.session.loadScenario(d).ok, { ...card, id: 'showcase-mh-textfa-e2e-en' })).toBe(true);
   await expect(layer(page)).toHaveAttribute('lang', 'en', { timeout: 10_000 });
   await expect(layer(page).locator('.cb-p').first()).toHaveText(brief.text.split('\n\n')[0] as string);
+  await f.context().close();
 });

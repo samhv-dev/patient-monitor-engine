@@ -11,7 +11,8 @@ import { mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { expect, test, type Page } from './evidence.ts';
-import { build, preview, type PreviewServer } from 'vite';
+import { build, type PreviewServer } from 'vite';
+import { startVitePreview } from './app-support.ts';
 
 let server: PreviewServer;
 let outDir = '';
@@ -25,9 +26,7 @@ test.beforeAll(async () => {
   outDir = mkdtempSync(join(tmpdir(), 'pme-console-build-'));
   const input = { 'physiology-console': resolve(root, 'dev/physiology-console.html') }; // this page only
   await build({ root, configFile, logLevel: 'error', build: { outDir, emptyOutDir: true, rollupOptions: { input } } });
-  server = await preview({ root, configFile, logLevel: 'error', build: { outDir }, preview: { port: 0, host: '127.0.0.1' } });
-  const addr = server.httpServer.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ server, base } = await startVitePreview({ root, configFile, build: { outDir } }));
   mkdirSync(out, { recursive: true });
 });
 test.afterAll(async () => {

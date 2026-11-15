@@ -1,17 +1,14 @@
 // Stage 8a: the blind review page loads a bundle, draws a clip, records two answers and downloads them.
 // Run: PW_SYSTEM_CHROME=1 pnpm exec playwright test apps/demo/e2e/validation-review.e2e.ts
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { expect, test } from './evidence.ts';
-import { createServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => vite?.close());
 

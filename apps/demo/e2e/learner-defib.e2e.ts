@@ -123,6 +123,8 @@ test('the defibrillator window charges and shocks the free-roam patient; nothing
     const lines = (await timeline.allInnerTexts()).map((r) => r.replace(/\s+/g, ' ').trim());
     expect(lines[0]).toMatch(/^\d\d:\d\d Learner Charge 120 J at \d\d:\d\d, by Defibrillator \(bed 2\)$/);
     expect(lines[1]).toMatch(/^\d\d:\d\d Learner Shock 120 J at \d\d:\d\d, by Defibrillator \(bed 2\)$/);
+    await ctx.close();
+    await phone.context().close();
   } finally {
     await relay.close();
   }
