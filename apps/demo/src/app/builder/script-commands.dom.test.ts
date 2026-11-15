@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // Piece 162 (finding N83 of B5; docs/plans/scenario-builder.md 搂5.2): the Script section adds and edits the Airway,
-// Defib 路 CPR and Devices sheets' commands. (1) For the same input, the builder's form and the sheet's own controls
+// CPR ("Defib 路 CPR" until brief 208) and Devices sheets' commands. (1) For the same input, the builder's form and the sheet's own controls
 // produce EQUAL commands (both call the sheet's builders; this proves it through the DOM of each). (2) The form's limits
 // are the sheet's steppers' limits, read from the sheet's DOM, and a number outside them is refused in place. (3) Every
 // command of the library that the form can say is read into it and built back to the same command, and an untouched
@@ -28,7 +28,7 @@ import { CHECK_DELAY_MS } from './checks.ts';
 import { Drafts, type Body } from './drafts.ts';
 import { docOf, formOf } from './form.ts';
 import { builderPage, SAVE_DELAY_MS } from './page.ts';
-import { edited, seedOf } from './script-commands.ts';
+import { edited, seedOf, SHEET_GROUPS } from './script-commands.ts';
 import { CARD_SET, scriptSection } from './script-editor.ts';
 
 type Rec = Record<string, unknown>;
@@ -141,7 +141,13 @@ describe('the same input, the same command: the builder鈥檚 form and the sheet鈥
     }
   });
 
-  it('Defib 路 CPR sheet: charge and shock at an energy, disarm, synchronised on and off, the pacer, CPR started and stopped', async () => {
+  it('brief 208 (ruling 1): the form\'s groups name the sheets as the dock does: "CPR", no longer "Defib 路 CPR"', () => {
+    // the groups that name a sheet (main has since added groups that name none: TCI, lungs ventilated, recruitment, labs)
+    expect(SHEET_GROUPS.map(([g]) => g).filter((g) => g.endsWith(' sheet)'))).toEqual(['Airway (Airway sheet)', 'Breathing (Airway sheet)', 'Oxygen (Airway sheet)', 'Defibrillator (CPR sheet)', 'Pacing (CPR sheet)', 'CPR (CPR sheet)', 'Sensors (Devices sheet)', 'NIBP (Devices sheet)', 'Lung condition (Airway sheet)']);
+    expect(SHEET_GROUPS.some(([g]) => g.includes('Defib 路 CPR'))).toBe(false);
+  });
+
+  it('CPR sheet: charge and shock at an energy, disarm, synchronised on and off, the pacer, CPR started and stopped', async () => {
     const s = sheetRig(defibTab);
     s.step('Energy (J)', 150);
     s.btns('Charge')[0]!.click();

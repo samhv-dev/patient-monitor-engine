@@ -18,6 +18,7 @@ import { resolve } from 'node:path';
 import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, sheet, startVite } from './app-support.ts';
+import { DOCK_SIZES as SIZES, dockBlocked, dockOverlaps, sheetFootBlocked, sheetFootCount } from './dock-fit-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -139,48 +140,6 @@ async function flow(p: Page, ch: number, id: string, fill: (form: ReturnType<Pag
 }
 const said = (p: Page, ch: number) => p.locator(`.pump-face[data-ch="${ch}"] .pf-said`);
 
-/** The visible footer buttons of the open sheet `id` (its primary buttons) whose centre is not the button itself. */
-const footBlocked = (page: Page, id: string) => page.evaluate((sid) => {
-  const out: string[] = [];
-  for (const el of document.querySelectorAll<HTMLElement>(`.ip2-sheets .ip2-sheet[data-sheet=${sid}]:not([hidden]) .ip2-sheet-foot button`)) {
-    const r = el.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
-    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    if (!hit || !(el === hit || el.contains(hit))) out.push(`"${(el.textContent ?? '').trim().slice(0, 40)}" under ${hit instanceof HTMLElement ? hit.className || hit.tagName : 'nothing'}`);
-  }
-  return out;
-}, id);
-/** The laptop sizes the dock is measured at (the gate's four). */
-const SIZES = [{ width: 1280, height: 720 }, { width: 1280, height: 800 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }];
-/** The dock's visible controls (its tools, marks, links and both cards' buttons) whose centre is not the control itself. */
-const dockBlocked = (page: Page) => page.evaluate(() => {
-  const out: string[] = [];
-  for (const el of document.querySelectorAll<HTMLElement>('.ip2-dock button, .ip2-dock a[href], .ip2-dock summary, .ip2-dock input, .ip2-dock select')) {
-    const r = el.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
-    const box = (el.closest('.ip2-lp, .ip2-pm') ?? el).getBoundingClientRect(); // scrolled out of a card's own box: hidden by it, not covered
-    const x = r.left + r.width / 2, y = r.top + r.height / 2;
-    if (y < box.top || y > box.bottom) continue;
-    const hit = document.elementFromPoint(x, y);
-    if (!hit || !(el === hit || el.contains(hit))) out.push(`${el.className || el.tagName} "${(el.textContent ?? '').trim().slice(0, 30)}" under ${hit instanceof HTMLElement ? hit.className || hit.tagName : 'nothing'}`);
-  }
-  return out;
-});
-/** Pairs of the dock's visible controls whose boxes overlap (by more than half a pixel each way). */
-const dockOverlaps = (page: Page) => page.evaluate(() => {
-  const els = [...document.querySelectorAll<HTMLElement>('.ip2-dock button, .ip2-dock a[href], .ip2-dock summary')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
-  const out: string[] = [];
-  for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
-    const a = els[i]!, b = els[j]!;
-    if (a.contains(b) || b.contains(a)) continue;
-    const p = a.getBoundingClientRect(), q = b.getBoundingClientRect();
-    const w = Math.min(p.right, q.right) - Math.max(p.left, q.left), hh = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
-    if (w > 0.5 && hh > 0.5) out.push(`"${(a.textContent ?? a.getAttribute('aria-label') ?? '').trim().slice(0, 20)}" × "${(b.textContent ?? b.getAttribute('aria-label') ?? '').trim().slice(0, 20)}"`);
-  }
-  return out;
-});
-/** How many footer buttons the open sheet `id` shows (so the check above is not vacuous). */
-const footCount = (page: Page, id: string) => page.locator(`.ip2-sheets .ip2-sheet[data-sheet=${id}]:not([hidden]) .ip2-sheet-foot button:visible`).count();
 
 test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in the host engine; the record and the Log name the tablet and channel; a mismatched load shows the instructor's card; every sheet's primary button stays clickable", async ({ page, browser, browserName }) => {
   test.setTimeout(240_000);
@@ -296,16 +255,19 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   await expect(page.locator('.ip2-dock .ip2-lp')).toBeVisible();
   for (const size of SIZES) {
     await page.setViewportSize(size);
+    // every sheet of the dock (brief 208: Vitals and Patient are the Patient sheet's two tabs, each opened in turn); the
+    // checks are the shared ones of dock-fit-support.ts (brief 226: a footer's buttons and hints inside the sheet too)
     for (const id of ['airway', 'defib', 'vitals', 'devices', 'patient', 'log', 'drug'] as const) {
       await sheet(page, id);
+      await page.waitForTimeout(300); // the sheet's slide-in (180 ms) has ended
       const at = `${id} sheet at ${size.width}×${size.height}`;
-      expect.soft(await footBlocked(page, id), `the ${at}: its primary buttons`).toEqual([]);
-      if (id === 'drug') expect.soft(await footCount(page, id), `the Drug sheet shows its footer at ${size.width}×${size.height}`).toBeGreaterThan(0);
+      expect.soft(await sheetFootBlocked(page), `the ${at}: its primary buttons`).toEqual([]);
+      expect.soft(await sheetFootCount(page), `the ${at} shows its footer`).toBeGreaterThan(0);
       expect.soft(await dockBlocked(page), `the dock's controls, the ${at}`).toEqual([]);
       expect.soft(await dockOverlaps(page), `the dock's controls overlapping, the ${at}`).toEqual([]);
       if (process.env.PME_A2_SHOTS && id === 'drug') await page.waitForTimeout(600).then(() => page.screenshot({ path: `${process.env.PME_A2_SHOTS}/201-dock-${size.width}x${size.height}-${browserName}.png` }));
     }
-    expect(await page.locator('.ip2-dock button:visible, .ip2-dock a[href]:visible').count()).toBeGreaterThanOrEqual(13); // seven tools, the marks, Recognised, Debrief and the cards' controls
+    expect(await page.locator('.ip2-dock button:visible, .ip2-dock a[href]:visible').count()).toBeGreaterThanOrEqual(12); // six tools (brief 208: Vitals and Patient are one, so one fewer than main's 13), the marks, Recognised, Debrief and the cards' controls
   }
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(card).toBeVisible();

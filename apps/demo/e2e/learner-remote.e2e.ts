@@ -493,18 +493,20 @@ for (const which of ['clean', 'incompatible'] as const) {
     for (const size of SIZES) {
       await page.setViewportSize(size);
       // every sheet of the dock (C2's merge of PR 423: all seven, the Drug sheet last for the press below)
+      // brief 208: Vitals and Patient are the Patient sheet's two tabs (data-sheet "patient"), each opened in turn
       for (const id of ['airway', 'defib', 'vitals', 'devices', 'patient', 'log', 'drug'] as const) {
         await sheet(page, id);
+        const sid = id === 'vitals' ? 'patient' : id;
         if (id === 'drug') {
           const d = page.locator('.ip2-sheets .ip2-sheet[data-sheet=drug]');
           await d.locator('input.ip2-drug-search').fill('epineph');
           await page.keyboard.press('Enter');
           await d.locator('.ip2-presets button.ip2-preset').first().click();
         }
-        expect.soft(await covered(page, `.ip2-sheets .ip2-sheet[data-sheet=${id}]:not([hidden])`, '.ip2-dock'), `${id} sheet at ${size.width}×${size.height}`).toEqual([]);
+        expect.soft(await covered(page, `.ip2-sheets .ip2-sheet[data-sheet=${sid}]:not([hidden])`, '.ip2-dock'), `${id} sheet at ${size.width}×${size.height}`).toEqual([]);
         expect.soft(await covered(page, '.ip2-dock .ip2-lp', '.ip2-sheets'), `the card at ${size.width}×${size.height} with the ${id} sheet open`).toEqual([]);
         // the sheet's primary buttons (its footer: Deliver and its own) are each the element at their own centre, whatever lies over them
-        expect.soft(await footBlocked(page, id), `the ${id} sheet's primary buttons at ${size.width}×${size.height}`).toEqual([]);
+        expect.soft(await footBlocked(page, sid), `the ${id} sheet's primary buttons at ${size.width}×${size.height}`).toEqual([]);
         // the dock's own controls stay on their one row under the card
         const mids = await page.locator('.ip2-dock > :not(.ip2-lp)').evaluateAll((es) => es.map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => Math.round(r.top + r.height / 2)));
         expect.soft(Math.max(...mids) - Math.min(...mids), `the dock's controls on one row at ${size.width}×${size.height}`).toBeLessThanOrEqual(2);
