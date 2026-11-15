@@ -140,7 +140,7 @@ describe('E130 Devices tab: IBP1 / IBP2 scale control', () => {
 
   it('Instructor v2: the Devices sheet shows the same control', () => {
     const { host, set } = fakeHost();
-    const body = SHEETS.find((s) => s.id === 'devices')?.body as (c: PanelCtx) => HTMLElement;
+    const body = SHEETS.find((s) => s.id === 'devices')?.tabs[0]?.[2] as (c: PanelCtx) => HTMLElement;
     const r = rig(host, body);
     r.mode('IBP1', 'Auto').click();
     expect(set.at(-1)).toEqual({ IBP1: { mode: 'auto' } });
