@@ -260,12 +260,20 @@ export function createDevice(h: DeviceHandlers): Device {
   dev.append(knob);
 
   // ---- painting a View ----
+  // A click needs its press and its release on one node, so a repaint never replaces a node a press can rest on when
+  // nothing it shows has changed: a key's text is written into its own text node (WebKit treats a replaced text node
+  // as another node), a pictogram and a window are rebuilt only when they change (every browser does so for an element).
+  const setText = (e: Element, s: string) => {
+    const t = e.firstChild;
+    if (t instanceof Text && !t.nextSibling) { if (t.data !== s) t.data = s; } else e.textContent = s;
+  };
+  let winKey = '';
   const setUnsim = (b: HTMLElement, r: ReasonId | null) => (r ? describe(b, r) : undescribe(b));
   const paintTag = (els: TagEls, t: TagView) => {
     for (const which of ['hi', 'lo'] as const) {
       const b = els[which], lv = t[which];
       if (!b || !lv) continue;
-      (b.querySelector('.tv') as HTMLElement).textContent = lv.text;
+      setText(b.querySelector('.tv')!, lv.text);
       b.classList.toggle('sel', lv.sel);
       setUnsim(b, lv.unsim);
       b.setAttribute('aria-label', `${b.dataset.name} ${lv.text}`);
@@ -284,6 +292,9 @@ export function createDevice(h: DeviceHandlers): Device {
   };
   const paintWindow = (v: View) => {
     const w = v.window;
+    const key = w ? JSON.stringify(w) : '';
+    if (key === winKey) return;
+    winKey = key;
     if (!w) return void winHost.replaceChildren();
     const box = gv<Box>(G.win);
     const win = place(el('div', { class: `edp-win${w.id === 'confirm' ? ' conf' : ''}`, role: 'dialog', 'aria-label': w.title }), box);
@@ -344,10 +355,13 @@ export function createDevice(h: DeviceHandlers): Device {
     if (key !== rowKey) { rowKey = key; buildTiles(v); }
     v.tiles.forEach((t, i) => {
       const k = tiles[i]!;
-      if (typeof t.value === 'string') k.v.textContent = t.value;
-      else k.v.replaceChildren(picto(t.value.picto, t.value.o));
-      k.u.textContent = t.unit;
-      k.n.textContent = t.label;
+      if (typeof t.value === 'string') { delete k.v.dataset.picto; setText(k.v, t.value); }
+      else {
+        const pk = `${t.value.picto} ${t.value.o ?? ''}`;
+        if (k.v.dataset.picto !== pk) { k.v.dataset.picto = pk; k.v.replaceChildren(picto(t.value.picto, t.value.o)); }
+      }
+      setText(k.u, t.unit);
+      setText(k.n, t.label);
       k.b.classList.toggle('sel', t.sel);
       k.b.classList.toggle('dim', t.dim);
       if (t.unsim) describe(k.b, t.unsim);

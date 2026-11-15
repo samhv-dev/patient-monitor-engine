@@ -164,4 +164,5 @@ test('UI-A #10 Saadat skin on a phone held upright (390 × 844): the BFI/EtAA ro
   console.log(`UI-A #10 ${browserName} phone 390x844: ${r.boxes.length} ink boxes; ${bad.length} faults\n${bad.join('\n')}`);
   expect(r.boxes.map((b) => b.t)).toEqual(expect.arrayContaining(['BFI%', 'BS%', 'SQI%', 'EMG%', 'EtAA']));
   expect(bad).toEqual([]);
+  await f.context().close();
 });
