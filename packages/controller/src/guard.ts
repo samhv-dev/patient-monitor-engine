@@ -152,8 +152,12 @@ const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib', 'learner', 
 const DEVICE_WITH: ReadonlySet<unknown> = SHOWS_WITH;
 /** Whether a hello's `show` fits its role (A1): the pump rack is shown by a `pump` only, and a `pump` shows nothing else. */
 const showFits = (role: unknown, show: unknown): boolean => (role === 'pump') === (show === 'pump');
-/** The roles whose hello proves a PIN (the instructor's, or for `learner` and `pump` the learner PIN); all but the first must carry one. */
-const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump']);
+/**
+ * The roles whose hello proves a PIN (the instructor's, or for `learner`, `pump` and `defib` the learner PIN); the
+ * ventilator, the learner remote and the pump must carry one. `defib` (defibrillator plan R1): MAY, and is then
+ * held pending until the host's grant (relay/server.ts); with none it is the window of R5c, its two presses only.
+ */
+const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump', 'defib']);
 
 const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
 const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);
