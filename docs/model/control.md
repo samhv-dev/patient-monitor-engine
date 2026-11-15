@@ -247,6 +247,8 @@ transports (`src/protocol.ts`).
 | `commandShape` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). |
 | `instructorMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). |
 | `learnerDefibMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, bare), else the reason it is refused (R5c). |
+| `defibShape` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | The table's key of a command: |
+| `learnerDefibM2May` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when an ADMITTED `defib` peer may send `c` (a shape of LEARNER_DEFIB_M2, its own fields only), else the reason. |
 | `learnerMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted `learner` peer may send `c` (one of LEARNER_COMMANDS, with its own fields only), else the reason it is refused (§4 D2). |
 | `pumpMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted `pump` peer may send `c` (one of PUMP_COMMANDS on a channel, with its own fields only), else the reason it is refused (§4 D2). |
 | `newSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random 6-character session code (31^6 ≈ 8.9e8 codes). |
@@ -388,6 +390,7 @@ None recorded.
 | [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
 | [`index.test.ts`](../../packages/controller/test/index.test.ts) | 0 | 0 |
+| [`learner-defib-m2.test.ts`](../../packages/controller/test/learner-defib-m2.test.ts) | 0 | 0 |
 | [`panel/controls-follow-shock.dom.test.ts`](../../packages/controller/test/panel/controls-follow-shock.dom.test.ts) | 0 | 0 |
 | [`panel/controls-follow.dom.test.ts`](../../packages/controller/test/panel/controls-follow.dom.test.ts) | 0 | 0 |
 | [`panel/controls.test.ts`](../../packages/controller/test/panel/controls.test.ts) | 0 | 0 |
@@ -405,6 +408,8 @@ None recorded.
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
 | [`relay/peer-left.test.ts`](../../packages/controller/test/relay/peer-left.test.ts) | 0 | 0 |
 | [`relay/relay-classroom.test.ts`](../../packages/controller/test/relay/relay-classroom.test.ts) | 0 | 0 |
+| [`relay/relay-defib-m2-host.test.ts`](../../packages/controller/test/relay/relay-defib-m2-host.test.ts) | 0 | 0 |
+| [`relay/relay-defib-m2.test.ts`](../../packages/controller/test/relay/relay-defib-m2.test.ts) | 0 | 0 |
 | [`relay/relay-defib.test.ts`](../../packages/controller/test/relay/relay-defib.test.ts) | 0 | 0 |
 | [`relay/relay-devices.test.ts`](../../packages/controller/test/relay/relay-devices.test.ts) | 0 | 0 |
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 0 | 0 |
