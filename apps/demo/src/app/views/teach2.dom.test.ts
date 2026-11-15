@@ -51,7 +51,8 @@ describe('Instructor v2 frame', () => {
     expect(v.el.querySelector('.ip2-cue')?.hasAttribute('data-stub')).toBe(false);
     expect(v.el.querySelector('.ip2-action-body .ip2-list')).not.toBeNull();
     expect(v.el.querySelector('.ip2-sheets')?.hasAttribute('data-stub')).toBe(false);
-    // brief 208 (the owner's rulings of 12 November): Vitals and Patient are one tool, so six tools until Labs enters
+    // brief 208 (the owner's rulings of 12 November): Vitals and Patient are one tool; this rig has no host, so no Labs
+    // (the host's seventh tool, PR 451: labs-sheet.dom.test.ts and teach2-dock-fit.e2e.ts count it)
     expect([...v.el.querySelectorAll('.ip2-dock-tools .ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'CPR', 'Patient', 'Devices', 'Log']);
     expect(() => v.openSheet('no-such-sheet')).not.toThrow();
     v.enter?.('');
