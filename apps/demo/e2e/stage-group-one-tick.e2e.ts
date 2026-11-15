@@ -4,7 +4,7 @@
 // while the host submits E126's rhythm check (cpr off + VF, one stage group), as the scenario runner does; both
 // commands must land on one tick. The worker answers in order, so the busy step delays both. On Instructor v2 (the one
 // instructor view since #323; `#/teach` now opens it).
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

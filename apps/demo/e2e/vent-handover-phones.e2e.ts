@@ -7,7 +7,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { devices, expect, test, type Browser, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, startVite } from './app-support.ts';
@@ -122,4 +122,5 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
     expect(within(after.spo2, onVent.spo2, 3), `SpO2 ${after.spo2} vs ${onVent.spo2} on the cockpit`).toBe(true);
     expect(within(after.ppeak, onVent.ppeak, 5), `peak pressure ${after.ppeak} vs ${onVent.ppeak} on the cockpit`).toBe(true);
   }
+  await f.context().close();
 });

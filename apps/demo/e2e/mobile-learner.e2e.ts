@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { devices, expect, test, type Browser, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle, type RelayOptions } from '../../../packages/controller/relay/server.ts';
 import { ffV2, openApp, pillV2, speedV2, startVite } from './app-support.ts';
@@ -178,6 +178,7 @@ test("the Room page's QR, then a phone follows in the instructor's style through
   await expect.poll(() => f.evaluate(() => (window as unknown as { __pmeFollower: { sync: { lastFastForward: unknown } } }).__pmeFollower.sync.lastFastForward !== null)).toBe(true);
   expect(await page.evaluate(() => (window as unknown as W).__pmeApp.link.simT)).toBeGreaterThan(t0 + 120);
   await same(f, page);
+  await f.context().close();
 });
 
 test('while the Ventilator view drives the patient the phone holds; it follows again once the view closes', async ({ page, browser, browserName }) => {
@@ -211,6 +212,7 @@ test('while the Ventilator view drives the patient the phone holds; it follows a
   await page.evaluate(() => (location.hash = '#/vent'));
   await expect(f.locator('.learner-hold')).toBeVisible({ timeout: 10_000 });
   await expect(status(f)).toHaveText('The ventilator is on the main screen: this monitor waits until it closes');
+  await f.context().close();
 });
 
 test('a relay restart, a full session and a relay the phone cannot reach', { tag: '@known-flaky' }, async ({ page, browser, browserName }) => {
@@ -232,6 +234,8 @@ test('a relay restart, a full session and a relay the phone cannot reach', { tag
   // a phone on another network: it waits, then says what to check
   const lost = await phone(browser, browserName, code, 'ws://127.0.0.1:9/');
   await expect(status(lost)).toHaveText("Waiting for the instructor: this phone cannot reach the instructor's laptop. Is it on the classroom Wi-Fi?", { timeout: 15_000 });
+  await f.context().close();
+  await lost.context().close();
 });
 
 test("R4: the QR's address opens the instrument picker; one tap gives today's learner monitor, saying what it shows; #/monitor/wide is landscape and follows", async ({ page, browser, browserName }) => {

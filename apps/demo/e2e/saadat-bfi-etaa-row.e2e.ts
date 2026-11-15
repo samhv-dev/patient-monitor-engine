@@ -8,7 +8,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { devices, expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, startVite, TEACH2 } from './app-support.ts';
@@ -164,4 +164,5 @@ test('UI-A #10 Saadat skin on a phone held upright (390 × 844): the BFI/EtAA ro
   console.log(`UI-A #10 ${browserName} phone 390x844: ${r.boxes.length} ink boxes; ${bad.length} faults\n${bad.join('\n')}`);
   expect(r.boxes.map((b) => b.t)).toEqual(expect.arrayContaining(['BFI%', 'BS%', 'SQI%', 'EMG%', 'EtAA']));
   expect(bad).toEqual([]);
+  await f.context().close();
 });

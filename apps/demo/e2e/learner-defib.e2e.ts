@@ -11,7 +11,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay } from '../../../packages/controller/relay/server.ts';
 import { openApp, startVite } from './app-support.ts';
@@ -123,6 +123,8 @@ test('the defibrillator window charges and shocks the free-roam patient; nothing
     const lines = (await timeline.allInnerTexts()).map((r) => r.replace(/\s+/g, ' ').trim());
     expect(lines[0]).toMatch(/^\d\d:\d\d Learner Charge 120 J at \d\d:\d\d, by Defibrillator \(bed 2\)$/);
     expect(lines[1]).toMatch(/^\d\d:\d\d Learner Shock 120 J at \d\d:\d\d, by Defibrillator \(bed 2\)$/);
+    await ctx.close();
+    await phone.context().close();
   } finally {
     await relay.close();
   }
