@@ -5,6 +5,7 @@
 // Persian (plan §6, VQ10). The maker is named in face.json's provenance and the docs, never drawn. OUTSIDE the drawn
 // device: the simulator's strip (why a control does nothing yet, in a resident's words: brief 159, R20) and the
 // "Simulator" handle that opens the instructor's tools; the drawer gains the switch that marks what is not simulated.
+import { unlockAudio, type AudioOut } from '@pme/audio';
 import type { Cockpit } from '../../core/cockpit.ts';
 import type { FaceEnv, FaceModule } from '../../core/types.ts';
 import { $, el } from '../../dom.ts';
@@ -14,6 +15,7 @@ import { applyTokens, createDevice, type Device } from './device.ts';
 import css from './face.css?inline';
 import { createKnob, type Knob } from './knob.ts';
 import { EDP_SPEC } from './modes.ts';
+import { audioPackagePlayer, createAlarmSound, gainOf, train } from './tones.ts';
 import { viewOf } from './view.ts';
 
 const SIM_WORD = 'Simulator'; // an app string outside the device (plan §6): Persian only through the app's table (env.translate)
@@ -139,11 +141,13 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
 
   // OUTSIDE the device: the simulator's strip (the reason, the Simulator handle) and the reasons for assistive technology
   const why = el('span', { class: 'why', role: 'status' });
+  // the alarm sound silenced, with the seconds left (A-20): said here, outside the device, as no source shows it on it (S-06)
+  const sil = el('span', { class: 'sil', role: 'status' });
   const handle = el('button', { class: 'edp-simhandle', type: 'button' }) as HTMLButtonElement;
   handle.textContent = SIM_WORD;
   void env.translate?.(SIM_WORD).then((t) => { if (t) handle.textContent = t; }).catch(() => {});
   handle.onclick = () => tools.open();
-  const strip = el('div', { class: 'edp-strip' }, why, handle);
+  const strip = el('div', { class: 'edp-strip' }, why, sil, handle);
   body.append(strip, d.reasons);
 
   // the drawer's switch: marks every control not simulated yet (off by default; face state only, never written to cfg,
@@ -160,12 +164,38 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   fit();
   addEventListener('resize', fit);
 
+  // the tones (V3, research/57 A-09, A-10, A-18), through @pme/audio: its context is made in the first user gesture on
+  // the page (browsers start audio only there); until then the face is silent, as a device whose sound is not yet on
+  let stopped = false;
+  let out: AudioOut | null = null;
+  let snd: ReturnType<typeof createAlarmSound> | null = null;
+  const vol = () => c.cfg.alarmVolume ?? 50;
+  const gesture = () => {
+    removeEventListener('pointerdown', gesture, true);
+    removeEventListener('keydown', gesture, true);
+    void unlockAudio().then((o) => { if (stopped) o.close(); else { out = o; snd = createAlarmSound(audioPackagePlayer(o)); } }).catch(() => {});
+  };
+  addEventListener('pointerdown', gesture, true);
+  addEventListener('keydown', gesture, true);
+  let testStep: string | null = null;
+
   const render = () => {
-    d.paint(viewOf(c, knob));
+    const v = viewOf(c, knob);
+    d.paint(v);
     const r = knob.note();
     why.textContent = r ? reason(r) : '';
+    sil.textContent = v.silencedS > 0 ? `${reason('silenced')}: ${Math.ceil(v.silencedS - 1e-9)} s` : '';
+    const s = c.alarms().signals;
+    if (s && snd) snd.update(s, vol(), performance.now());
+    // the alarm test: each priority's tone once, with its lamp (H-21)
+    const step = knob.alarmTest();
+    if (step !== testStep) { testStep = step; if (step && out) audioPackagePlayer(out)(train(step, 'active'), gainOf(vol())); }
   };
-  const offs = [knob.onChange(render), c.onChange(() => render())];
+  const offs = [knob.onChange(render), c.onChange(() => render()), c.onAlarm((e) => {
+    const s = c.alarms().signals;
+    if (s && snd) snd.event(e, s, vol());
+    render(); // a lamp lights or goes steady the moment the core signals it, not at the next repaint
+  })];
   render();
   let lastRender = 0;
   return {
@@ -174,7 +204,11 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
       drawTraces(d, c.buf);
     },
     stop() {
+      stopped = true;
       for (const off of offs) off();
+      removeEventListener('pointerdown', gesture, true);
+      removeEventListener('keydown', gesture, true);
+      out?.close();
       offSwitch?.();
       removeEventListener('resize', fit);
       strip.remove();

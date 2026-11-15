@@ -2,6 +2,11 @@
 // stepper in clinical units, and the model state as a chip (CAE Maestro's flags): MODELED (wave), held by the
 // instructor (pin, accent), changing (progress bar under the row: REALITi's trend arc), forced by the model (override).
 // In MODELED mode "Set" holds the value (a pin) and "Return to model" releases it; in MANUAL "Set" moves the target.
+// With `holds: false` (the laptop's Patient sheet; the owner's ruling of 12 November, brief 208: "why should one hold a
+// value against physiology in a modeled run?") a MODELED row the model computes shows its live value and the line that
+// says how to change it, with no stepper, no Set and no "Return to model"; a row the model does not compute (`direct`)
+// stays settable, and MANUAL is unchanged. A value something else held (a card's script, the phone, the builder's
+// phase) shows "Held" and the release of that row only; "Return all to the model" is not offered.
 import type { ControlFlag } from '@pme/controller';
 import { rhythmGroups, rhythmLabel } from '../rhythms.ts';
 import { button, glossLabel, h, PIN_SVG, setText, stepper, WAVE_SVG, type Stepper } from '../ui.ts';
@@ -14,6 +19,7 @@ const FLAG_TEXT: Readonly<Record<ControlFlag, string>> = { modeled: 'Model', pin
 export function vitalsTab(c: PanelCtx): HTMLElement {
   const { link, staging } = c;
   const mode = () => link.ctl.state?.mode ?? 'manual';
+  const holds = c.holds !== false;
 
   // ---- rhythm picker ----
   const rsel = h('select', { class: 'input', id: 'vt-rhythm' });
@@ -49,7 +55,7 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
     }, 'ghost small');
     const bar = h('div', { class: 'progress', role: 'progressbar', 'aria-label': `${shortOf(s)} change in progress`, 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('i'));
     // MODELED: the model computes this value and a hold would not move it (measured), so the row says how to change it
-    const note = h('p', { class: 'hint', hidden: true }, 'Follows the model: change it with drugs, fluids or bleeding, or switch to MANUAL.');
+    const note = h('p', { class: 'hint', hidden: true }, holds ? 'Follows the model: change it with drugs, fluids or bleeding, or switch to MANUAL.' : 'Follows the model: change it through its cause (drugs, fluids, an event) or switch to MANUAL.');
     const row = h('div', { class: 'param', 'data-var': s.v },
       h('div', { class: 'lbl' }, glossLabel(s.n), chip), h('span', { class: 'nowwrap' }, now, h('span', { class: 'unit' }, s.unit)),
       h('div', { class: 'edit' }, st.el, set, release), note, bar);
@@ -77,15 +83,18 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
     // just connected does not know the mode yet, and staging a target where a pin was meant held nothing
     const known = st !== null && st !== undefined;
     for (const r of rows) {
-      const owned = !!r.s.modelOwned && m === 'modeled';
+      // the model computes it: today, a value the engine overrides anyway; with holds off, every value but a direct one
+      const owned = m === 'modeled' && (holds ? !!r.s.modelOwned : !r.s.direct);
       r.set.disabled = !known || owned;
       r.release.disabled = !known;
       r.st.el.hidden = owned;
       r.set.hidden = owned;
       r.note.hidden = !owned;
     }
-    setText(modeNote, !known ? 'Waiting for the monitor\'s state before a value can be set.' : m === 'modeled' ? 'MODELED: the body sets these values. Setting one holds it until you return it to the model.' : 'MANUAL: every value is what you set, with the onset chosen below.');
-    releaseAll.hidden = m !== 'modeled';
+    setText(modeNote, !known ? 'Waiting for the monitor\'s state before a value can be set.' : m === 'modeled'
+      ? (holds ? 'MODELED: the body sets these values. Setting one holds it until you return it to the model.' : 'MODELED: the body computes these values. Change one through its cause, or switch to MANUAL.')
+      : 'MANUAL: every value is what you set, with the onset chosen below.');
+    releaseAll.hidden = m !== 'modeled' || !holds;
     setText(rnow, link.ctl.rhythm ? rhythmLabel(link.ctl.rhythm) : '--');
     for (const r of rows) {
       const v = st?.values[r.s.v];
@@ -103,6 +112,7 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
       r.chip.innerHTML = shown === 'pinned' ? PIN_SVG : shown === 'modeled' ? WAVE_SVG : '';
       r.chip.append(FLAG_TEXT[shown]);
       r.release.hidden = !(m === 'modeled' && !r.s.direct && (flag === 'pinned' || flag === 'ramping' || (flag === 'override' && !!r.s.modelOwned)));
+      if (!holds && !r.release.hidden) r.note.hidden = true; // held: the row says "Held" and offers its release instead
       r.row.dataset.staged = String(staging.has(`v-${r.s.v}`));
       const ramp = link.ramps.get(r.s.v);
       const p = ramp ? Math.max(0, Math.min(1, (link.simT - ramp.t0) / ramp.dur)) : 1; // sim time from the engine's apply tick (brief 105)

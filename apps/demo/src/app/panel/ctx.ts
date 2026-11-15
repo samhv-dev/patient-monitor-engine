@@ -17,4 +17,8 @@ export interface PanelCtx {
   loadScenario?(card: ScenarioCard): boolean;
   /** Move to another tab (the alarm count opens Devices & alarms). */
   goTab(id: string): void;
+  /** False on the laptop's Instructor sheets (the owner's ruling of 12 November, brief 208: no hold in a modelled run):
+   *  in MODELED a value the model computes is changed through its cause, never held. Absent (today's panel, which the
+   *  instructor phone mounts): a MODELED Set holds the value. */
+  holds?: boolean;
 }

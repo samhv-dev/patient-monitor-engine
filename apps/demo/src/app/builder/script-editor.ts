@@ -3,7 +3,7 @@
 // an action, a time after the start; only this card's phases and actions) and sends its commands. A new command comes
 // from B4's command form (action-editor.ts `commandForm`: the Drug sheet's drugs, fluids and vaporisers) with the
 // card-set events the library's scripts use (a condition, the Drug sheet's blood loss, a rhythm; the console's own
-// builders), so the builder writes the commands the app itself sends. Piece 162 adds the Airway, Defib · CPR and Devices
+// builders), so the builder writes the commands the app itself sends. Piece 162 adds the Airway, CPR and Devices
 // sheets' commands (script-commands.ts) and an Edit for every command the form builds back exactly (`seedOf`); a command
 // of another kind is kept as the card has it, read in the app's words, and can be reordered or removed. Every control
 // edits the form in place and calls `changed()`; an entry is written only complete (an id, an anchor, a command), and its
