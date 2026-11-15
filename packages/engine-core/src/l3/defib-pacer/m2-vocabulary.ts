@@ -203,8 +203,9 @@ const IDLE_CONFIG: M2Config = {
 };
 
 const IDLE: M2State = {
-  // the selector at DEFIB: the window has always been on and Manual Defib is what it does today [ENG: device; choice until E1]
-  power: { selector: 'defib', offSinceS: null, ac: true, battery: { level: 5, state: 'ok' }, selfTest: 'none' }, // ac and battery [ENG: device; placeholder until E9b, DQ14]
+  // switched off, as a unit stands in the room before the case: the resident turns it on, and that power-up is one after
+  // a long time off (m2.ts turnSelector); a start that states the unit is on turns the selector once the model has applied
+  power: { selector: 'off', offSinceS: null, ac: true, battery: { level: 5, state: 'ok' }, selfTest: 'none' }, // ac and battery [ENG: device; placeholder until E9b, DQ14]
   defibMode: 'manual',
   patientType: 'adult', // [ENG: device; choice until E1, which reads the patient]
   topLead: 'pads', // Manual Defib's default top trace is Pads/Paddles [G 6-7]

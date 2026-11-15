@@ -135,7 +135,7 @@ export interface M2Effect {
  * - To OFF: disarm [G 1-13]; Sync off and the power-off clock started [ENG: device; choice, the guide does not say
  *   Sync survives a power cycle; a powered-off unit has no Sync].
  * - To MONITOR: disarm [G 1-13]. To PACER: the guide lists no disarm.
- * - Back on from OFF after OFF_MEMORY_S or more: the patient settings reset — the patient type to Adult [ENG: device;
+ * - Back on from OFF after OFF_MEMORY_S or more, or for the first time in the case: the patient settings reset — the patient type to Adult [ENG: device;
  *   placeholder, the guide names no configured power-up patient type], the energy to Shock 1, the escalation back on
  *   as configured [G 14-6] ("disables auto energy escalation until the unit is turned off for greater than 30 seconds
  *   and then turned back on"), and the Manual/AED mode to the configured start mode (DQ4) [G 12-2], [G 14-2].
@@ -155,7 +155,7 @@ export function turnSelector(m: M2State, to: M2Selector, t: number): M2Effect {
   if (from === 'off') {
     const offS = m.power.offSinceS;
     m.power.offSinceS = null;
-    if (offS !== null && t - offS >= OFF_MEMORY_S - 1e-9) {
+    if (offS === null || t - offS >= OFF_MEMORY_S - 1e-9) {
       m.patientType = 'adult';
       m.defibMode = m.config.startMode;
       m.escalation = { next: 1, on: m.config.escalation.on };

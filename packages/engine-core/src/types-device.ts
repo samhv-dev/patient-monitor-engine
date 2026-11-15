@@ -190,7 +190,7 @@ export interface M2Status {
   /** E1, E9b. */
   power: {
     selector: M2Selector;
-    /** When the selector went to OFF (power-off memory [G 3-1]), null while on. */
+    /** When the selector went to OFF (power-off memory [G 3-1]); null while on, and while off since before the case. */
     offSinceS: SimSeconds | null;
     ac: boolean;
     /** Battery level 1–5 and state [G 2-6]; level null with no battery. */
