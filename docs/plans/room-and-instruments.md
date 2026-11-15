@@ -233,6 +233,17 @@ Anti-goals (a piece that does one of these is rejected)
   Shock is never disabled by the window: a shock without a charge is refused by the device
   (`defib.ts:57`, "defibrillator is not charged"), not by a panel lock. The role is admitted by the room code alone,
   with no PIN, because the power it carries is exactly the two presses a learner at a real defibrillator has.
+  **Amended 12 November 2026 (defibrillator plan `docs/plans/defibrillator-zoll-m2.md` §5.1, DQ6 = A; written in its
+  E0).** In a room whose defibrillator is the ZOLL M2 the role carries what a resident does at the device: the mode
+  selector, patient type, energy select from the model's list, Charge, Shock pressed and released, Disarm, Sync,
+  Analyze, the Manual/AED switch, the pacer's mode, rate and output and 4:1 pressed and released, the M2's own Alarm
+  Control and limits and settings, NIBP, CO2 on and zero, code marker, print, and the connections drawer (pads with
+  type, placement and contact; paddles; internal handles; the ECG cable; the sensors; the test plug; DQ5 = A). The
+  commands are the engine's `applyEvent defib`, `applyEvent pacer set` and `device defib <action>` of E0's vocabulary
+  (`packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts`). Never: `preselect`, the pacer's `fault`, the M2's
+  `config`, `setTarget`, time, scenario, drugs, the bedside monitor's alarms, `device defib model`. Because the power
+  is no longer two presses, **the role is admitted with the learner PIN**, as the learner action remote is. Until the
+  allow-list piece (R1) lands the role's list stays Charge and Shock, admitted as above.
 - **D7. Hashes for the instruments.** On a follower page: `#/monitor` (today's; upright on `?join=`, landscape on
   `?follow=`), `#/monitor/wide` (landscape over the relay), `#/defib`, `#/pick` (the ventilator's own page is R8d's). The same hashes work on
   `?follow=` (this computer) and `?join=` (the relay). `router.ts` `ROUTES` is the host's list (`router.ts:5`) and

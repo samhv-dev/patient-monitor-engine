@@ -46,7 +46,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | engine-runtime | 11 | 2 |
 | **All** | 1142 | 432 |
 
-## The ten effector expressions with the most factors (of 1694)
+## The ten effector expressions with the most factors (of 1695)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

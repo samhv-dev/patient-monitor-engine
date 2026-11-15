@@ -33,7 +33,7 @@ function charge(e: MonitorEngine, ev: EngineEvent[], energyJ?: number): { energy
 
 describe('R5a: the defibrillator model (device layer)', () => {
   it('ships the generic model only, and its spec is the fallback the bedside skins use, equal to zoll-like.json\'s blocks', () => {
-    expect(Object.keys(DEFIB_MODELS)).toEqual(['generic']);
+    expect(Object.keys(DEFIB_MODELS)).toEqual(['generic', 'zoll-m2']); // E0 (brief 179) adds the ZOLL M2; this test's subject stays the generic model
     const g = DEFIB_MODELS.generic!;
     const zoll = deviceProfile('zoll-like');
     expect(g.defib).toEqual(FALLBACK_DEFIB);

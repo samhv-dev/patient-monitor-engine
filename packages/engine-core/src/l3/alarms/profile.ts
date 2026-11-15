@@ -5,6 +5,7 @@ import type { AgeBand, AlarmLevel } from '../../types-device.ts';
 import type { NumericId } from '../../types.ts';
 import { FALLBACK_DEFIB } from '../defib-pacer/defib.ts';
 import { FALLBACK_PACER } from '../defib-pacer/pacer.ts';
+import { M2_AED_SEQUENCE_J, M2_ENERGIES_J, M2_ESCALATION_J, M2_NAME, M2_PACER_GRID, ZOLL_M2_DEFIB, ZOLL_M2_PACER } from '../defib-pacer/m2-vocabulary.ts';
 
 /** Skin limit key → the measured numeric it watches and its display labels (IEC-style / Saadat-like). */
 export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: string; upper: string; gas?: boolean }>> = {
@@ -125,6 +126,18 @@ export interface DefibModel {
   defib: NonNullable<DeviceProfile['defib']>;
   pacer: NonNullable<DeviceProfile['pacer']>;
   hrDashesWhilePacing: boolean;
+  /** The model's name in refusals (absent: the generic model). */
+  name?: string;
+  /** The energies the model offers, J; absent = any 1–360 J (the generic model). */
+  energiesJ?: readonly number[];
+  /** Auto escalation's Shock 1/2/3 energies by the device's patient type (E1 runs it). */
+  escalationJ?: { readonly adult: readonly number[]; readonly pediatric: readonly number[] };
+  /** The AED's Shock 1/2/3 energies by patient type (E5 runs it). */
+  aedSequenceJ?: { readonly adult: readonly number[]; readonly pediatric: readonly number[] };
+  /** Pacer steps: rate and output on a grid, the lowest output above 0 (0 = paused). */
+  pacerGrid?: { readonly ratePpm: number; readonly mA: number; readonly mAMin: number };
+  /** The model takes the ZOLL M2 command vocabulary (m2-vocabulary.ts) and carries `deviceStatus.m2`. */
+  m2?: true;
 }
 
 /**
@@ -135,11 +148,19 @@ export interface DefibModel {
  * they carry (energies and ready timeout documented, research/05 §2.6, brief §6.5; no published charge time: the 7 s /
  * 200 J rule, unverified; pacer ranges, 0 mA default, the +10/−5 mA step and demand mode documented, research/05 §2.6;
  * the 70 ppm default assumed, no ZOLL default given; no pause rate given, so PAUSE drops the output to 0 mA; HR stays
- * shown while pacing, PACING_HR_DASHES being the LIFEPAK-like skin's alone). The department's own machine joins later
- * as a skin with its own sourced blocks, and one line here.
+ * shown while pacing, PACING_HR_DASHES being the LIFEPAK-like skin's alone). The department's own machine, the ZOLL M2
+ * (owner's ruling of 12 November; defibrillator plan E0), joins as `zoll-m2` with its guide's limits and its own command
+ * vocabulary (m2-vocabulary.ts); no Room setup choice offers it until R4.
  */
 export const DEFIB_MODELS: Readonly<Record<string, DefibModel>> = {
   generic: { defib: FALLBACK_DEFIB, pacer: FALLBACK_PACER, hrDashesWhilePacing: false },
+  // The ZOLL M2 (plan docs/plans/defibrillator-zoll-m2.md, E0; owner's ruling of 12 November): its guide's limits, every
+  // number with its page in m2-vocabulary.ts. Its behaviour arrives piece by piece (E1…E9b); the HR stays shown while
+  // pacing (no dashes rule in the guide's pacer chapter) [ENG: device; placeholder until E6].
+  'zoll-m2': {
+    defib: ZOLL_M2_DEFIB, pacer: ZOLL_M2_PACER, hrDashesWhilePacing: false, name: M2_NAME,
+    energiesJ: M2_ENERGIES_J, escalationJ: M2_ESCALATION_J, aedSequenceJ: M2_AED_SEQUENCE_J, pacerGrid: M2_PACER_GRID, m2: true,
+  },
 };
 
 const numberOr = (v: unknown): number | null => (typeof v === 'number' ? v : null);
