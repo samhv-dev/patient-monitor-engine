@@ -157,6 +157,39 @@ describe('Devices & alarms: the sensors as the monitor has them (UI review #27)'
   });
 });
 
+// EEG plan E12, Q9: the owner ruled on 12 November that "the EEG should go into devices as a device". The EEG device's
+// artefact switches (panel/eeg.ts, eeg.dom.test.ts) are a group of this sheet, after the sensors and before the NIBP,
+// shown only while the engine's state reports an EEG device; the sheet's one repaint shows and hides it.
+describe('Devices & alarms: the EEG device\'s artefacts (EEG plan E12, Q9)', () => {
+  beforeEach(() => document.body.replaceChildren());
+  it('hidden with no EEG device; shown after the sensors and before the NIBP while one is on; hidden again when it goes', () => {
+    const r = rig('saadat-like');
+    const group = r.el.querySelector('[data-group="eeg"]') as HTMLElement;
+    expect(group.hidden).toBe(true);
+    const heads = [...r.el.querySelectorAll('h3')].map((x) => x.textContent);
+    expect(heads.indexOf('EEG device: artefacts')).toBe(heads.indexOf('Sensors') + 1);
+    expect(heads.indexOf('NIBP')).toBe(heads.indexOf('EEG device: artefacts') + 1);
+    (r.link.ctl as unknown as { state: unknown }).state = { eeg: { model: 'generic', impedanceKOhm: [2, 2, 2], ecgPickup: false } };
+    r.refresh();
+    expect(group.hidden).toBe(false);
+    expect(r.btn('Loose electrode').getAttribute('aria-pressed')).toBe('false');
+    // the group adds no status line: the alarm status stays the sheet's one live status beside the IBP modes
+    // (fx4-alarm-pause.e2e.ts reads it as the one `p[role=status]` without `data-ibp-now`; CI run 43215422398)
+    expect(r.el.querySelectorAll('p[role=status]:not([data-ibp-now])')).toHaveLength(1);
+    (r.link.ctl as unknown as { state: unknown }).state = {};
+    r.refresh();
+    expect(group.hidden).toBe(true);
+  });
+  it("a switch sends the engine's own command at once", async () => {
+    const r = rig('saadat-like');
+    (r.link.ctl as unknown as { state: unknown }).state = { eeg: { model: 'generic', impedanceKOhm: [2, 2, 2], ecgPickup: false } };
+    r.refresh();
+    r.btn('ECG pickup').click();
+    await settle();
+    expect(r.sent).toEqual([{ type: 'device', action: { device: 'eeg', action: 'ecgPickup', value: true } }]);
+  });
+});
+
 // UI review #28: the list read "No active alarms" for the first ≈ 0.5 s after the tab opened while the bar showed
 // "!!! ART M low +4": the tab painted at the next throttled repaint, so it showed what it had when last open. It now
 // paints as it opens.
