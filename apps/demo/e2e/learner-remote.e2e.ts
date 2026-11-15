@@ -17,7 +17,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type BrowserContext, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, sheet, startVite } from './app-support.ts';
@@ -370,7 +370,8 @@ test("L8 (LQ4): a phone changes and stops the instructor's infusion and changes 
 // had no line for it, and a laptop give after it was reported lost. These follow his steps on the laptop's own screens:
 // the dose is in the ENGINE's drugs (not only an ack), the record row and the Log sheet's line name the phone, a give
 // from the laptop's Drug sheet after it is applied and logged, and both again when the Give arrives while the laptop's
-// tab is hidden (the session pauses itself then: hidden-tab.ts). Free roam (no card) and on a card.
+// tab is hidden (the session pauses itself then: hidden-tab.ts; since L14 the Give waits for the resume). Free roam (no
+// card) and on a card.
 type DrugsW = { __drugs: string[] };
 /** Every drug the laptop's engine reports, from its own events (not the acks). */
 const engineDrugs = (page: Page) => page.evaluate(() => (window as unknown as DrugsW).__drugs);
@@ -390,7 +391,7 @@ const tabHidden = (page: Page, hidden: boolean) => page.evaluate((h) => {
   document.dispatchEvent(new Event('visibilitychange'));
 }, hidden);
 for (const card of [null, 'showcase-mh-v2']) {
-  test(`brief 164 (${card ?? 'free roam'}): a phone's Give reaches the laptop's engine, record and Log; a laptop give after it and a Give while the laptop's tab is hidden too`, async ({ page, browser, browserName }) => {
+  test(`brief 164 (${card ?? 'free roam'}): a phone's Give reaches the laptop's engine, record and Log; a laptop give after it, and a Give around the laptop's hidden tab (it waits for the resume)`, async ({ page, browser, browserName }) => {
     test.setTimeout(240_000);
     await classroom();
     const KEY = 'bed3remote01';
@@ -414,16 +415,21 @@ for (const card of [null, 'showcase-mh-v2']) {
     await laptopGive(page, 'epineph');
     await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('epinephrine');
     await expect.poll(() => logLines(page, 'instructor'), { timeout: 10_000 }).toContain('Epinephrine 10 µg IV');
-    // (c) the laptop's tab hidden: the session pauses; the phone's Give is applied on the paused clock, and logged
-    // (a preparation's time runs on the case clock, which stands still while paused: it is made ready before the hide)
+    // (c) the laptop's tab hidden: the session pauses (hidden-tab.ts). Since L14 (the owner's ruling on N117: no learner
+    // dose while the case is paused) the phone's Give cannot be used then and says why; shown again, the session resumes
+    // and the phone's Give is applied and logged (a preparation's time runs on the case clock, which stands still while
+    // paused: it is made ready before the hide)
     await prepareOn(p, [{ search: 'midazolam', drug: 'midazolam', product: 'hypnovel-5mg-ml', amount: 1 }], null);
     const second = p.locator('.lr-item').nth(1);
     await expect(second.locator('.lr-state')).toHaveText(/^Ready/, { timeout: 15_000 });
     await tabHidden(page, true);
     await expect.poll(() => page.evaluate(() => (window as unknown as HostW & { __pmeApp: { link: { ctl: { hostPaused: boolean } } } }).__pmeApp.link.ctl.hostPaused), { timeout: 10_000 }).toBe(true);
+    await expect(second.locator('.lr-give-btn')).toBeDisabled({ timeout: 10_000 });
+    await expect(p.locator('.lr-tray .lr-paused')).toBeVisible();
+    await tabHidden(page, false);
+    await expect(second.locator('.lr-give-btn')).toBeEnabled({ timeout: 10_000 });
     await second.locator('.lr-give-btn').click();
     await expect(second.locator('.lr-said')).toHaveText(/^Given 1 mL at \d\d:\d\d$/, { timeout: 10_000 });
-    await tabHidden(page, false);
     await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('midazolam');
     await expect.poll(() => logLines(page, 'learner'), { timeout: 10_000 }).toEqual(['Midazolam 5 mg IV (learner remote: bed 3 remote)', 'Ephedrine 50 mg IV (learner remote: bed 3 remote)']);
     await laptopGive(page, 'phenyl');
@@ -454,6 +460,17 @@ const covered = (page: Page, scope: string, over: string) => page.evaluate(([sel
   }
   return out;
 }, [scope, over] as const);
+/** The visible footer buttons of the open sheet `id` (its primary buttons, sheet.ts) whose centre is not the button itself. */
+const footBlocked = (page: Page, id: string) => page.evaluate((sid) => {
+  const out: string[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>(`.ip2-sheets .ip2-sheet[data-sheet=${sid}]:not([hidden]) .ip2-sheet-foot button`)) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit || !(el === hit || el.contains(hit))) out.push(`"${(el.textContent ?? '').trim().slice(0, 40)}" under ${hit instanceof HTMLElement ? hit.className || hit.tagName : 'nothing'}`);
+  }
+  return out;
+}, id);
 for (const which of ['clean', 'incompatible'] as const) {
   test(`brief 164 (the staging card, ${which}): no open sheet's control lies under the dock's card, at the laptop sizes; the Drug sheet's Give gives`, async ({ page, browser, browserName }) => {
     test.setTimeout(240_000);
@@ -475,16 +492,21 @@ for (const which of ['clean', 'incompatible'] as const) {
     await expect(control).toBeVisible();
     for (const size of SIZES) {
       await page.setViewportSize(size);
-      for (const id of ['airway', 'defib', 'devices', 'drug'] as const) {
+      // every sheet of the dock (C2's merge of PR 423: all seven, the Drug sheet last for the press below)
+      // brief 208: Vitals and Patient are the Patient sheet's two tabs (data-sheet "patient"), each opened in turn
+      for (const id of ['airway', 'defib', 'vitals', 'devices', 'patient', 'log', 'drug'] as const) {
         await sheet(page, id);
+        const sid = id === 'vitals' ? 'patient' : id;
         if (id === 'drug') {
           const d = page.locator('.ip2-sheets .ip2-sheet[data-sheet=drug]');
           await d.locator('input.ip2-drug-search').fill('epineph');
           await page.keyboard.press('Enter');
           await d.locator('.ip2-presets button.ip2-preset').first().click();
         }
-        expect.soft(await covered(page, `.ip2-sheets .ip2-sheet[data-sheet=${id}]:not([hidden])`, '.ip2-dock'), `${id} sheet at ${size.width}×${size.height}`).toEqual([]);
+        expect.soft(await covered(page, `.ip2-sheets .ip2-sheet[data-sheet=${sid}]:not([hidden])`, '.ip2-dock'), `${id} sheet at ${size.width}×${size.height}`).toEqual([]);
         expect.soft(await covered(page, '.ip2-dock .ip2-lp', '.ip2-sheets'), `the card at ${size.width}×${size.height} with the ${id} sheet open`).toEqual([]);
+        // the sheet's primary buttons (its footer: Deliver and its own) are each the element at their own centre, whatever lies over them
+        expect.soft(await footBlocked(page, sid), `the ${id} sheet's primary buttons at ${size.width}×${size.height}`).toEqual([]);
         // the dock's own controls stay on their one row under the card
         const mids = await page.locator('.ip2-dock > :not(.ip2-lp)').evaluateAll((es) => es.map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => Math.round(r.top + r.height / 2)));
         expect.soft(Math.max(...mids) - Math.min(...mids), `the dock's controls on one row at ${size.width}×${size.height}`).toBeLessThanOrEqual(2);

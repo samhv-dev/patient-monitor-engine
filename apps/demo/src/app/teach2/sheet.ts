@@ -3,6 +3,10 @@
 // the staging tray ("Staged · n", shared by every sheet), and a footer with the primary button(s): Deliver bottom left,
 // the sheet's own primary bottom right. The frame slides up over ACTION only (the sheets layer, teach2.css); STATE stays
 // in view. It is a non-modal dialog: the keys of the view keep working behind it (digits press the ACTION rows).
+// The group tabs are a WAI-ARIA tab row (brief 208): one tab in the Tab order (roving tabindex), ArrowRight and
+// ArrowLeft move to the next and the previous tab (wrapping), Home and End to the first and the last, and the tab that
+// gets the focus is chosen at once (automatic activation: every sheet's panels are already built). Each tab has the id
+// `ip2-sheet-<sheet>-tab-<group>`, so a panel can name it (aria-labelledby) and the tab its panel (aria-controls).
 import { h, setText } from '../ui.ts';
 
 export interface SheetFrame {
@@ -16,7 +20,7 @@ export interface SheetFrame {
   deliverSlot: HTMLElement;
   /** The sheet's own primary buttons and hint (bottom right). */
   primary: HTMLElement;
-  /** Draw the group tabs; `onSelect` is called with a group's id when one is chosen. */
+  /** Draw the group tabs; `onSelect` is called with a group's id when one is chosen (a press, or an arrow key). */
   groups(list: ReadonlyArray<[string, string]>, current: string, onSelect: (id: string) => void): void;
   readonly isOpen: boolean;
   open(): void;
@@ -29,6 +33,18 @@ export function sheetFrame(o: { id: string; name: string; hint: string; onClose(
   const head = h('div', { class: 'ip2-sheet-head' },
     h('h2', { class: 'ip2-sheet-name', id: `ip2-sheet-${o.id}-h` }, o.name), h('span', { class: 'ip2-spacer' }), h('span', { class: 'ip2-sheet-hint' }, o.hint), close);
   const tabs = h('div', { class: 'ip2-sheet-tabs', role: 'tablist', 'aria-label': `${o.name} groups` });
+  let choose: (id: string) => void = () => undefined;
+  tabs.addEventListener('keydown', (e) => {
+    const list = [...tabs.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+    const at = list.indexOf(e.target as HTMLButtonElement);
+    if (at < 0 || e.altKey || e.ctrlKey || e.metaKey) return;
+    const to = e.key === 'ArrowRight' ? (at + 1) % list.length : e.key === 'ArrowLeft' ? (at - 1 + list.length) % list.length : e.key === 'Home' ? 0 : e.key === 'End' ? list.length - 1 : -1;
+    if (to < 0) return;
+    e.preventDefault();
+    const t = list[to] as HTMLButtonElement;
+    t.focus();
+    if (to !== at || t.getAttribute('aria-selected') !== 'true') choose(t.dataset.group as string);
+  });
   const left = h('div', { class: 'ip2-sheet-left' });
   const right = h('div', { class: 'ip2-sheet-right' });
   const tray = h('div', { class: 'ip2-sheet-tray' });
@@ -40,11 +56,12 @@ export function sheetFrame(o: { id: string; name: string; hint: string; onClose(
   return {
     id: o.id, el, left, right, tray, deliverSlot, primary,
     groups: (list, current, onSelect) => {
+      choose = onSelect;
       tabs.hidden = !list.length;
       const want = list.map(([id]) => id).join('|');
       if (tabs.dataset.ids !== want) {
         tabs.dataset.ids = want;
-        tabs.replaceChildren(...list.map(([id, label]) => h('button', { type: 'button', role: 'tab', class: 'ip2-sheet-tab', 'data-group': id, onclick: () => onSelect(id) }, label)));
+        tabs.replaceChildren(...list.map(([id, label]) => h('button', { type: 'button', role: 'tab', class: 'ip2-sheet-tab', id: `ip2-sheet-${o.id}-tab-${id}`, 'data-group': id, onclick: () => choose(id) }, label)));
       }
       for (const b of tabs.querySelectorAll<HTMLButtonElement>('[role=tab]')) {
         b.setAttribute('aria-selected', String(b.dataset.group === current));

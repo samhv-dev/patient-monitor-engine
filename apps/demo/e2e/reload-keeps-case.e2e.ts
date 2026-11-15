@@ -4,7 +4,7 @@
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { devices, expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, speedV2, startVite } from './app-support.ts';
@@ -100,6 +100,7 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   await page.waitForTimeout(3000);
   expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.doc)).toBeNull();
   await expect(bar).toHaveText('No case loaded');
+  await phone.context().close();
 });
 
 // The owner's board "Finish 2" (approved 30 October): "Save and restart the case" saves the debrief to the browser's

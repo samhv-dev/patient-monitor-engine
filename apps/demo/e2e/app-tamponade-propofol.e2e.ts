@@ -3,7 +3,7 @@
 // (pulseless: stroke volume under 6 mL for 5 s — the fu4 page's rule is < 5 mL, but in the app's default adult the
 // stroke volume settles on its 5.2 mL floor, i.e. no output, measured) within 5 simulated minutes at ×4 (the host's top speed).
 // Chromium only (a long evidence run, CI amendment rules).
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { deliver, openApp, sheet, speedV2, startVite } from './app-support.ts';
 

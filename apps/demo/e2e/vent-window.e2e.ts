@@ -12,7 +12,7 @@
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { devices, expect, test, type Browser, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, startVite } from './app-support.ts';
@@ -106,6 +106,7 @@ test('the laptop window: the Room opener opens the cockpit in its own window, it
   expect(await f.evaluate(() => (window as unknown as W).__pmeFollower.sync!.resyncs) - held, 'one resync when the hold ends, then none').toBeLessThanOrEqual(1);
   expect((await patient(page)).source).toBe('ventilator');
   await expect(ventRow(page)).toContainText('handed over');
+  await f.context().close();
 });
 
 test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wrong PIN is refused; 5 s offline hands over within 1 s, back online it signs in again; the PIN stays secret', async ({ page, browser, browserName }) => {
@@ -269,4 +270,6 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
   for (const name of roomFiles) expect(readFileSync(join(stateDir, name), 'utf8').includes(PIN), name).toBe(false);
   expect(learner.frames.length).toBeGreaterThan(0);
   expect(learner.frames.filter((x) => x.includes('"pin"') || x.includes(`"${PIN}"`))).toEqual([]);
+  await learner.p.context().close();
+  await tctx.close();
 });

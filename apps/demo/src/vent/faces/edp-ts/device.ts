@@ -6,11 +6,12 @@
 // apart: live (the device's look), faint on the DEVICE (`.dim`: the device itself greys it, research/57 R-34, R-36), and
 // not simulated yet (`data-unsim`: drawn exactly as live, nothing written on the device; aria-disabled with the reason
 // as its description; the drawer's switch overlays a mark).
+import { setText } from '../../../app/keep.ts';
 import { el } from '../../dom.ts';
 import { CONTROLS, type Ctl, type WindowId } from './controls.ts';
 import { DATA, LAYOUT, num, reason, word, type Leaf, type ReasonId, type WordId } from './data.ts';
 import { picto, type PictoId } from './pictograms.ts';
-import type { LimitView, TagView, View } from './view.ts';
+import type { LampState, LimitView, TagView, View } from './view.ts';
 
 type Box = [number, number, number, number];
 const G = DATA.layout.grid;
@@ -202,7 +203,7 @@ export function createDevice(h: DeviceHandlers): Device {
   type TileEls = { b: HTMLButtonElement; v: HTMLElement; u: HTMLElement; n: HTMLElement };
   let tiles: TileEls[] = [];
 
-  // ---- the alarm box and the window layer (R-16; P-19, P-30) ----
+  // ---- the alarm box (R-16, R-17; placed and drawn as the manual's screen picture, S-01, S-02) and the window layer (P-19, P-30) ----
   const alarmBox = place(el('div', { class: 'edp-alarm', role: 'alert' }), gv<Box>(G.alarmBox));
   alarmBox.hidden = true;
   const winHost = el('div', { class: 'edp-winhost' });
@@ -210,8 +211,9 @@ export function createDevice(h: DeviceHandlers): Device {
 
   // ---- the housing (H-01 to H-31; P-14 to P-17, P-31 to P-35) ----
   const lampsX = gv<number>(G.lampsX), [lampW, lampH] = gv<[number, number]>(G.lampSize), lampY = gv<number[]>(G.lampY);
-  const lamp = (cls: string, y: number) => place(el('div', { class: `edp-lamp ${cls}` }), [lampsX, y, lampW, lampH]);
-  const lampInop = lamp('tri', lampY[0]!), lampHigh = lamp('tri', lampY[1]!), lampMed = lamp('circ', lampY[2]!);
+  const lamp = (cls: string, which: string, y: number) => place(el('div', { class: `edp-lamp ${cls}`, 'data-lamp': which, 'data-state': 'off' }), [lampsX, y, lampW, lampH]);
+  const lampInop = lamp('tri', 'inop', lampY[0]!), lampHigh = lamp('tri', 'high', lampY[1]!), lampMed = lamp('circ', 'med', lampY[2]!);
+  describe(lampInop, 'ventInop'); // the model has no technical fault (plan GA14): drawn unlit, as photographed (S-04)
   const legend = (wd: WordId, box: Box, cls = '') => place(el('div', { class: `edp-legend ${cls}`.trim() }, W(wd)), box);
   dev.append(
     legend('alarmSignals', [lampsX - 40, gv<number>(G.signalsY) - 6, 80, 26], 'r'),
@@ -259,12 +261,14 @@ export function createDevice(h: DeviceHandlers): Device {
   dev.append(knob);
 
   // ---- painting a View ----
+  // a pictogram and a window are rebuilt only when they change (app/keep.ts)
+  let winKey = '';
   const setUnsim = (b: HTMLElement, r: ReasonId | null) => (r ? describe(b, r) : undescribe(b));
   const paintTag = (els: TagEls, t: TagView) => {
     for (const which of ['hi', 'lo'] as const) {
       const b = els[which], lv = t[which];
       if (!b || !lv) continue;
-      (b.querySelector('.tv') as HTMLElement).textContent = lv.text;
+      setText(b.querySelector('.tv')!, lv.text);
       b.classList.toggle('sel', lv.sel);
       setUnsim(b, lv.unsim);
       b.setAttribute('aria-label', `${b.dataset.name} ${lv.text}`);
@@ -283,6 +287,9 @@ export function createDevice(h: DeviceHandlers): Device {
   };
   const paintWindow = (v: View) => {
     const w = v.window;
+    const key = w ? JSON.stringify(w) : '';
+    if (key === winKey) return;
+    winKey = key;
     if (!w) return void winHost.replaceChildren();
     const box = gv<Box>(G.win);
     const win = place(el('div', { class: `edp-win${w.id === 'confirm' ? ' conf' : ''}`, role: 'dialog', 'aria-label': w.title }), box);
@@ -315,6 +322,16 @@ export function createDevice(h: DeviceHandlers): Device {
     winHost.replaceChildren(win);
   };
 
+  /** A lamp lit (VF's look, as photographed: P-15, C-12, C-13) or unlit (P-58); flashing fast or slow (H-06) for a period
+   *  of face.json's (eng), lit for its first half; steady for a low alarm or a remaining signal (A-16). */
+  const paintLamp = (e: HTMLElement, st: LampState, on: string) => {
+    e.dataset.state = st;
+    e.classList.toggle(on, st !== 'off');
+    e.classList.toggle('flash-fast', st === 'fast');
+    e.classList.toggle('flash-slow', st === 'slow');
+    const per = st === 'fast' ? num(LAYOUT.lampFastS) : st === 'slow' ? num(LAYOUT.lampSlowS) : 0;
+    e.style.animationDuration = per ? `${per}s` : '';
+  };
   const paint = (v: View) => {
     cat.textContent = v.category; mode.textContent = v.mode; backup.textContent = v.backup; date.textContent = v.date; time.textContent = v.time;
     v.top.forEach((t, i) => { topV[i]!.v.textContent = t.v; topV[i]!.cell.classList.toggle('dim', t.dim); });
@@ -333,10 +350,13 @@ export function createDevice(h: DeviceHandlers): Device {
     if (key !== rowKey) { rowKey = key; buildTiles(v); }
     v.tiles.forEach((t, i) => {
       const k = tiles[i]!;
-      if (typeof t.value === 'string') k.v.textContent = t.value;
-      else k.v.replaceChildren(picto(t.value.picto, t.value.o));
-      k.u.textContent = t.unit;
-      k.n.textContent = t.label;
+      if (typeof t.value === 'string') { delete k.v.dataset.picto; setText(k.v, t.value); }
+      else {
+        const pk = `${t.value.picto} ${t.value.o ?? ''}`;
+        if (k.v.dataset.picto !== pk) { k.v.dataset.picto = pk; k.v.replaceChildren(picto(t.value.picto, t.value.o)); }
+      }
+      setText(k.u, t.unit);
+      setText(k.n, t.label);
       k.b.classList.toggle('sel', t.sel);
       k.b.classList.toggle('dim', t.dim);
       if (t.unsim) describe(k.b, t.unsim);
@@ -346,10 +366,10 @@ export function createDevice(h: DeviceHandlers): Device {
     for (const b of rkeys) b.classList.toggle('dim', v.rightDim.includes(b.dataset.ctl!));
     paintWindow(v);
     alarmBox.hidden = !v.alarm;
-    if (v.alarm) { alarmBox.className = `edp-alarm ${v.alarm.priority}`; alarmBox.textContent = v.alarm.text; }
-    lampInop.classList.toggle('on-high', v.lamps.inop);
-    lampHigh.classList.toggle('on-high', v.lamps.high);
-    lampMed.classList.toggle('on-med', v.lamps.med);
+    if (v.alarm) { alarmBox.className = `edp-alarm ${v.alarm.priority}`; setText(alarmBox, v.alarm.text); }
+    paintLamp(lampInop, v.lamps.inop, 'on-high');
+    paintLamp(lampHigh, v.lamps.high, 'on-high');
+    paintLamp(lampMed, v.lamps.med, 'on-med');
     knob.classList.toggle('lit', v.ring);
     ctrlKey?.classList.toggle('lit', v.ctrl);
   };

@@ -1,7 +1,7 @@
 // The app (research/13 brief §4–§5): one document, one engine session for every view. A document opened at
 // #/remote is a Remote instead: it pairs to a monitor on another device and never starts an engine.
 import './app.css';
-import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controller';
+import { attachReveal, normalizeSessionCode, RevealGesture, type Formulary } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
@@ -36,8 +36,11 @@ import { mountFastForward } from './fast-forward.ts';
 import { watchHiddenTab } from './hidden-tab.ts';
 import { mountDepthWindow } from './views/depth.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
+import { stoppedNotice } from './engine-stopped.ts';
 import { deviceKey, pickerView } from './views/join.ts';
 import { pumpPageView } from './pump/page.ts';
+import { mountFlows, pumpLink } from './pump/controls.ts';
+import { faceProfilesOf, shippedPumpDevices } from './pump/devices.ts';
 import { learnerRemoteView } from './views/learner-remote.ts';
 import { drugsMenu } from './remote/drugs.ts';
 import { infusionsLink, infusionsView } from './remote/infusions.ts';
@@ -141,12 +144,22 @@ if (follow && shows === 'pick') {
 } else if (follow && shows === 'pump') {
   // A1 (plan pump-rack-tci.md §4 D1): the pump tablet. Its learner-PIN form first; at sign-in the follower, whose every
   // hello says `{role: 'pump', show: 'pump', device, pin}` (the PIN from the page's memory); granted, the rack. No monitor
-  // and none of its sound. The device profiles (D12) join when S1 has merged: until then the faces say so (null)
+  // and none of its sound. The faces read S1's shipped device profiles (D12; N125: they were given none before A2)
+  const devices = shippedPumpDevices();
   const page = pumpPageView({
     code: follow,
     stage: shell.stage,
-    profiles: null,
+    profiles: faceProfilesOf(devices),
     follow: (code, bar, pin) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), pin, sound: false }),
+  });
+  // A2: the channel flows on each face, sending through the granted follower; the stock list is the formulary's (S1)
+  let formulary: Formulary | null = null;
+  void loadShippedFormulary().then((f) => void (formulary = f));
+  page.onSignedIn((f) => {
+    const link = pumpLink(f, deviceKey());
+    if (!link) return;
+    const flows = mountFlows(page.rack, link, { devices, formulary: () => formulary });
+    return () => flows.destroy();
   });
   shell.add(page);
   shell.start();
@@ -227,16 +240,32 @@ if (follow && shows === 'pick') {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
+  session.onNotGiven((n) => link.notGiven(n)); // L14: a learner's give refused while paused is a Log line
   // B6 (scenario-builder.md §6): the builder's run in place, a draft on this computer's session beside Instructor v2
   const draft = draftRun({ link, root: shell.root, drafts });
   // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed
   // is read from this Link by Instructor v2's functions
   session.serveInstructors({ note: (text, kind, t, ev) => link.note(text, kind, t, ev), feed: () => feedOf(link) });
-  // A monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the console
-  // for the gate note's diagnostics
+  // A monitor whose engine stopped is final (no fallback) — say so and name the way out; the reason goes to the console
+  // for the gate note's diagnostics. Brief 195: and the reason to the instructor, in a notice that stays until a new
+  // engine runs (engine-stopped.ts) with the two ways on and what each keeps, and into the log (the session itself tells
+  // the phones: AppSession's own listener)
+  const stopped = stoppedNotice(shell.root, {
+    restart: () => {
+      const inCase = session.caseDoc() !== null;
+      const r = session.restartPatient();
+      if (!r.ok) return toast(`The patient could not restart: ${r.reason}`, 'alert');
+      link.note(inCase ? 'Patient restarted: the case starts again from 0:00' : 'Patient restarted', 'system');
+    },
+    reload: () => location.reload(),
+  });
+  session.onMount(() => stopped.hide()); // a new engine runs
   shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {
-    console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
+    const reason = (e as CustomEvent<{ reason: string }>).detail.reason;
+    console.error('monitor failed:', reason);
     toast('The monitor stopped — Restart the patient', 'alert');
+    link.note(`The simulation stopped: ${reason}`, 'system');
+    stopped.show(reason, session.caseDoc() !== null);
   });
   // FX-11a: the watchdog warns first — a busy or starved worker is slow, not dead, and catches up by itself
   shell.monitorHost.addEventListener('pme-monitor-slow', () => toast('The monitor is slow to answer: the computer is busy. It catches up by itself.'));

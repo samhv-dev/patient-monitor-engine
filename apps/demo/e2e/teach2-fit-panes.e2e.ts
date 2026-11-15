@@ -4,7 +4,7 @@
 // shard is set by one ≈ 27-min file; the three files are balanced by their CI times.
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import { openApp } from './app-support.ts';
 import { app, ffToPhase, to } from './mh-v2-path.ts';
 import { measure, send, serveApp, tileFindings, type W } from './teach2-fit-support.ts';
@@ -91,6 +91,12 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip\'s
   await page.waitForTimeout(2500);
   const free = await measure(page);
   const freeLabels = await laneTextOverlaps(page);
+  // brief 208 (ruling 6b = A): Free roam began with the Patient sheet open over ACTION; the first Esc closes it (Esc
+  // closes the open sheet first), the second leaves Free roam for the cards
+  await expect(page.locator('.ip2-sheets .ip2-sheet:not([hidden])')).toHaveAttribute('data-sheet', 'patient');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.ip2-sheets .ip2-sheet:not([hidden])')).toHaveCount(0);
+  await expect(page.locator('.ip2-ff')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('.ip2-ff')).toBeHidden();
   const report = { browser: browserName, page: m.page, view: m.view, action: m.action, pane: m.pane, layout, tiles, labels: labels.touching, freePane: free.pane, freeLabels: freeLabels.touching };

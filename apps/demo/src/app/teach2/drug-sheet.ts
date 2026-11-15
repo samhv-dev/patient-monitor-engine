@@ -16,7 +16,7 @@ import { describeCommand } from '../describe.ts';
 import { DRUG_LIST, doseUnits, findDrugs, lockLabel, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { clock, h, seg, setText, stepper, toast } from '../ui.ts';
+import { clock, h, keepOrder, seg, setText, stepper, toast } from '../ui.ts';
 import type { Cache } from './cache.ts';
 import { pressStep } from './press.ts';
 import { boardOf } from './feed.ts';
@@ -191,8 +191,7 @@ export function drugSheet(frame: SheetFrame, o: { link: Link; weightKg(): number
       b.setAttribute('aria-pressed', String(chosen?.key === it.key));
       return b;
     });
-    const kids = [...into.children];
-    if (kids.length !== want.length || kids.some((k, i) => k !== want[i])) into.replaceChildren(...want);
+    keepOrder(into, want);
   };
   /** The latest item behind each key (a pinned step's timer changes; its button stays). */
   const items = new Map<string, Item>();

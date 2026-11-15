@@ -30,6 +30,11 @@ export interface FollowerInput {
   paused: boolean;
   /** Wall ms since the host's last `cockpit` event (Infinity: never). */
   cockpitAgoMs: number;
+  /**
+   * Brief 195: the host said its simulation has stopped (`engineStopped`, once a second while it lasts), and no new
+   * engine has run since (a `timeline`, or a reloaded page's hello). Absent: false.
+   */
+  stopped?: boolean;
 }
 
 export interface FollowerView {
@@ -39,6 +44,9 @@ export interface FollowerView {
   /** Hold the monitor still: the Ventilator view drives the patient and this monitor cannot follow it. */
   hold: boolean;
 }
+
+/** Brief 195: a host still here whose simulation has stopped (an error while its engine stepped). */
+export const ENGINE_STOPPED = "The instructor's simulation has stopped with an error: waiting for the instructor to restart it";
 
 /** Said under a phone's monitor when the instructor's style has no upright (phone) layout. */
 export const NO_PHONE_LAYOUT = 'This monitor style has no phone layout: showing the default style';
@@ -81,6 +89,8 @@ export function hostPause(): { readonly paused: boolean; onMessage(m: WireMessag
   };
 }
 
+const NOT_ANSWERING = "The instructor's monitor is not answering";
+
 export function followerStatus(i: FollowerInput): FollowerView {
   const no = (text: string): FollowerView => ({ text, ok: false, hold: false });
   if (i.net && i.refused?.code === 'full') return no('This session is full: please watch the main screen');
@@ -88,8 +98,11 @@ export function followerStatus(i: FollowerInput): FollowerView {
   if (i.sync === 'incompatible') return no(i.net ? 'This phone has another version of the simulator: scan the code again' : 'This window runs another version: reload both windows');
   if (i.net && !i.opened && i.sinceStartMs > UNREACHABLE_MS) return no("Waiting for the instructor: this phone cannot reach the instructor's laptop. Is it on the classroom Wi-Fi?");
   if (i.net && i.opened && i.transport !== 'open') return no('Connection lost: reconnecting…');
+  // Brief 195: a stopped host says so every second, so its silence (or the relay's word) means it has gone; it sends no
+  // snapshot, so a phone that joined after the stop is never synced and is told the same
+  if (i.stopped) return no(i.hostAway || i.heardAgoMs >= HOST_SILENT_MS ? NOT_ANSWERING : ENGINE_STOPPED);
   if (i.sync !== 'synced') return no(`Waiting for the instructor's monitor ${i.code}…`);
-  if (i.hostAway || (!i.paused && i.heardAgoMs >= HOST_SILENT_MS)) return no("The instructor's monitor is not answering");
+  if (i.hostAway || (!i.paused && i.heardAgoMs >= HOST_SILENT_MS)) return no(NOT_ANSWERING);
   if (i.net && i.cockpitAgoMs < COCKPIT_QUIET_MS) return { text: 'The ventilator is on the main screen: this monitor waits until it closes', ok: true, hold: true };
   return { text: `Following session ${i.code}${i.paused ? ' (paused)' : ''}`, ok: true, hold: false };
 }

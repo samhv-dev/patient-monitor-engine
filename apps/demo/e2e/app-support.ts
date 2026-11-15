@@ -1,18 +1,49 @@
 // Stage 9 e2e support (not a test file: testMatch is *.e2e.ts): the Vite server, the app hook, route helpers and the
 // in-page audits (engine-id scan, accessibility checks) shared by the stage9-*.e2e.ts files.
+import { createServer as netServer, type AddressInfo } from 'node:net';
 import { resolve } from 'node:path';
-import type { Page } from '@playwright/test';
-import { createServer, type ViteDevServer } from 'vite';
+import type { Locator, Page } from '@playwright/test';
+import { createServer, preview, type InlineConfig, type PreviewServer, type ViteDevServer } from 'vite';
 
-export async function startVite(): Promise<{ vite: ViteDevServer; base: string }> {
-  // PME_E2E_PORT: a fixed port per Playwright worker (that port + TEST_PARALLEL_INDEX), for a machine whose runs must keep
-  // to a port range; unset, the system picks a free one
+/** A port the operating system hands out now (listen on 0, read it, release it). */
+async function osPort(): Promise<number> {
+  const s = netServer();
+  await new Promise<void>((r) => s.listen(0, '127.0.0.1', r));
+  const { port } = s.address() as AddressInfo;
+  await new Promise<void>((r) => s.close(() => r()));
+  return port;
+}
+
+async function e2ePort(offset = 0): Promise<number> {
   const fixed = Number(process.env.PME_E2E_PORT) || 0;
-  const port = fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) : 0;
-  const vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port, strictPort: !!fixed, host: '127.0.0.1' }, logLevel: 'error' });
+  return fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) + offset : await osPort();
+}
+
+/**
+ * The ONE way an e2e file starts a Vite server (packages/validation/test/e2e-servers.test.ts keeps every file
+ * on it). Each server gets its own port, held strictly: Vite 6 reads a port of 0 as "5173, or the next free one", so
+ * before this every file's server took 5173 in turn and a page a test left open reloaded onto the next file's server.
+ * The port: PME_E2E_PORT + the worker's parallel index (+ `portOffset`) when that variable is set (a machine whose runs
+ * keep to an assigned range), otherwise one the operating system hands out. `strictPort`: a port taken meanwhile fails
+ * the start loudly instead of sharing. `config` is merged over the app's own (vite.config.ts); its `server` keeps the
+ * port and host given here.
+ */
+export async function startVite(config: InlineConfig = {}, o: { portOffset?: number } = {}): Promise<{ vite: ViteDevServer; base: string }> {
+  const port = await e2ePort(o.portOffset);
+  const vite = await createServer({
+    root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), logLevel: 'error',
+    ...config,
+    server: { ...config.server, port, strictPort: true, host: '127.0.0.1' },
+  });
   await vite.listen();
-  const addr = vite.httpServer?.address();
-  return { vite, base: `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}` };
+  return { vite, base: `http://127.0.0.1:${port}` };
+}
+
+/** The same for a `vite preview` server of a build (`config` names the build's outDir): its own port, strictly held. */
+export async function startVitePreview(config: InlineConfig): Promise<{ server: PreviewServer; base: string }> {
+  const port = await e2ePort();
+  const server = await preview({ logLevel: 'error', ...config, preview: { ...config.preview, port, strictPort: true, host: '127.0.0.1' } });
+  return { server, base: `http://127.0.0.1:${port}` };
 }
 
 /** Open the app, optionally with a site profile, and wait for the session and real warm-up time (brief §11.1). */
@@ -21,6 +52,30 @@ export async function openApp(page: Page, base: string, hash = '#/', o: { site?:
   await page.goto(`${base}/${hash}`);
   await page.waitForFunction(() => '__pmeApp' in window);
   if (o.warmMs) await page.waitForTimeout(o.warmMs);
+}
+
+/**
+ * Press `loc` over its first words, hold it while `repaint` happens, release: the hold is the input under test (a
+ * click only lands when its press and release meet the same node, and WebKit takes the text node under the pointer as
+ * that node).
+ */
+export async function holdAcross(page: Page, loc: Locator, repaint: () => Promise<unknown>): Promise<void> {
+  await page.evaluate(() => document.fonts.ready); // a late font moves the words from under the pointer
+  await loc.scrollIntoViewIfNeeded();
+  const at = await loc.evaluate((e) => {
+    const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
+    const r = document.createRange();
+    r.selectNodeContents(w.nextNode() as Node);
+    const b = r.getClientRects()[0] as DOMRect;
+    const x = b.left + b.width / 2;
+    const y = b.top + b.height / 2;
+    return e.contains(document.elementFromPoint(x, y)) ? { x, y } : null;
+  });
+  if (!at) throw new Error('the press would not start on the control');
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  await repaint();
+  await page.mouse.up();
 }
 
 export async function go(page: Page, hash: string, settleMs = 700): Promise<void> {
@@ -211,14 +266,25 @@ export async function ffV2(page: Page, min: 2 | 5): Promise<void> {
   await page.locator('.ip2-ff').getByRole('button', { name: `Fast forward by ${min} min`, exact: true }).click();
 }
 
+/** A dock sheet, or one of the Patient sheet's two tabs: since brief 208 (the owner's ruling of 12 November) 'vitals' is
+ *  the Patient sheet on "Vitals & rhythm" and 'patient' the same sheet on "Patient & events". */
 export type SheetId = 'drug' | 'airway' | 'defib' | 'vitals' | 'devices' | 'patient' | 'log';
+/** The tab of the Patient sheet a SheetId names. */
+const PATIENT_TABS: Partial<Record<SheetId, string>> = { vitals: 'Vitals & rhythm', patient: 'Patient & events' };
 
-/** Open the dock's sheet `id` (today's tab of the same body) if it is not open; the open sheet's locator. */
+/** Open the dock's sheet `id` (today's tab of the same body) if it is not open, on its tab; the open sheet's locator. */
 export async function sheet(page: Page, id: SheetId) {
-  const tool = page.locator(`.ip2-dock-tools button.ip2-tool[data-sheet=${id}]`);
+  const sid = id === 'vitals' ? 'patient' : id;
+  const tool = page.locator(`.ip2-dock-tools button.ip2-tool[data-sheet=${sid}]`);
   if ((await tool.getAttribute('aria-pressed')) !== 'true') await tool.click();
-  const s = page.locator(`.ip2-sheets .ip2-sheet[data-sheet=${id}]`);
+  const s = page.locator(`.ip2-sheets .ip2-sheet[data-sheet=${sid}]`);
   await s.waitFor();
+  const name = PATIENT_TABS[id];
+  if (name) {
+    const t = s.getByRole('tab', { name, exact: true });
+    if ((await t.getAttribute('aria-selected')) !== 'true') await t.click();
+    await s.locator('[role=tabpanel]:not([hidden])').filter({ has: page.locator(id === 'vitals' ? '[data-var]' : '[data-event]') }).waitFor();
+  }
   return s;
 }
 
