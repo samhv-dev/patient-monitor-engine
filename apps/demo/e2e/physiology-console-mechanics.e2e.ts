@@ -4,7 +4,7 @@
 // Run: PME_SHOTS=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/physiology-console-mechanics.e2e.ts --project=chromium (shots)
 import { mkdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;

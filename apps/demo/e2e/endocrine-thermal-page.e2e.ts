@@ -1,7 +1,7 @@
 // Stage 7e page smoke: the MH scenario runs, the endo panel fills from the 1 Hz event, EtCO2/temperature move, the
 // dantrolene button is accepted by 7g. ≈ 2.5 min of ×4 simulation: Chromium only (G7g/G7x rule for long e2e runs).
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;

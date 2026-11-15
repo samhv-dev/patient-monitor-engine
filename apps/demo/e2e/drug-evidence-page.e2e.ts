@@ -1,7 +1,7 @@
 // FU-7 evidence page smoke (plan Task 20 Step 2): the page loads, panel 1 (pure math) draws and panel 2's engine run
 // starts without page errors. The full four-panel run and the gate PNGs are scripts/fu7-shots.mjs (Chromium only).
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;

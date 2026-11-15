@@ -6,7 +6,7 @@
 // Run: PW_SYSTEM_CHROME=1 LAT_N=200 pnpm exec playwright test apps/demo/e2e/controller-latency.e2e.ts
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 

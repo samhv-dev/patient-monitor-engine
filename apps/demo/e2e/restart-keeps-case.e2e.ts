@@ -4,7 +4,7 @@
 // bookmarks stay listed, and "Return here" goes back into the case. On Instructor v2 (the one instructor view since
 // #323): the header's title names the case, the dock's mark saves the bookmark, the Patient sheet holds "Restart
 // patient", the Log sheet lists the marks with "Return here".
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, sheet, startVite } from './app-support.ts';
 

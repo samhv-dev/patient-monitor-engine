@@ -4,7 +4,7 @@
 // entry and the action it opened. The draft is in neither the library, the imported cards nor Recent. An edit in the
 // builder does not change the run until "Apply my edits and restart". The three widths are captured for the PR.
 import { writeFileSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

@@ -2,7 +2,7 @@
 // AVNRT, bupivacaine LAST → VF. Run: node apps/demo/scripts/drug-pkpd-shots.mjs (headless system Chrome).
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;
