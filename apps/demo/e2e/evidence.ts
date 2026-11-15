@@ -176,7 +176,9 @@ async function collect(browser: Browser, earlier: Set<BrowserContext>, testInfo:
  * Brief 236: a test that would otherwise PASS and leaves one open FAILS after the tidy-up, naming the test and the lines
  * that opened each context or page (the fixture wraps browser.newContext / newPage, and newPage of the contexts that
  * existed before the test, for the length of the test). A test that failed or was skipped is only tidied: its own error
- * is the finding, and it usually failed before its close.
+ * is the finding, and it usually failed before its close. A test that leaves one open ON PURPOSE (evidence-tidy.e2e.ts,
+ * which proves the tidy-up) says so with the annotation { type: 'leaves-open' }: it is tidied and logged, never failed.
+ * apps/demo/e2e/proof/leak-and-vent-evidence.proof.ts shows the failure.
  * PME_E2E_LEAKS=keep leaves them open (to measure the old behaviour) and fails nothing; PME_E2E_LEAK_LOG=<dir> writes one
  * JSON line per test that left something open (leaks-<worker>.jsonl), with each page's state when PME_E2E_LEAKS=keep.
  */
@@ -234,8 +236,8 @@ function watchOpening(browser: Browser, earlier: Set<BrowserContext>): () => voi
   };
 }
 
-/** The test function and hooks ran clean (test.fail() included: its leak then counts as its expected failure). */
-const passed = (t: TestInfo) => t.errors.length === 0 && t.status === 'passed';
+const passed = (t: TestInfo) => !failed(t) && t.status !== 'skipped';
+const onPurpose = (t: TestInfo) => t.annotations.some((a) => a.type === 'leaves-open');
 
 async function tidy(browser: Browser, earlier: Set<BrowserContext>, earlierPages: Set<Page>, testInfo: TestInfo): Promise<string[]> {
   const contexts = browser.contexts().filter((c) => !earlier.has(c));
@@ -255,7 +257,7 @@ async function tidy(browser: Browser, earlier: Set<BrowserContext>, earlierPages
       }), (e) => ({ error: String(e).slice(0, 120) }))))
     : [];
   leakLog(testInfo, {
-    file: testInfo.titlePath[0], title: testInfo.titlePath.slice(1).join(' › '), retry: testInfo.retry, status: testInfo.status, expected: testInfo.expectedStatus,
+    file: testInfo.titlePath[0], title: testInfo.titlePath.slice(1).join(' › '), retry: testInfo.retry, status: testInfo.status, ...(onPurpose(testInfo) ? { onPurpose: true } : passed(testInfo) && !keep ? { failsTheTest: true } : {}),
     contexts: contexts.length, pages: pages.length, openInWorker: browser.contexts().length, closed: !keep,
     urls: pages.map((p, i) => ({ url: p.url().replace(/^https?:\/\/[^/]+/, ''), ...(state[i] ?? {}) })),
     openedAt: left,
@@ -305,7 +307,7 @@ export const test = base.extend<{ _evidence: void }>({
         unwatch();
       }
       // brief 236: a passing test that left something open fails, with the lines that opened it
-      if (left.length && passed(testInfo)) {
+      if (left.length && passed(testInfo) && !onPurpose(testInfo)) {
         throw new Error(`"${testInfo.titlePath.slice(1).join(' › ')}" ended with ${left.length} thing(s) it opened still open (closed now by apps/demo/e2e/evidence.ts); close each before the test ends:\n${left.map((l) => `  - ${l}`).join('\n')}`);
       }
     },
