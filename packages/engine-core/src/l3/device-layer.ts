@@ -98,6 +98,14 @@ export interface DeviceHost {
 
 const modelOf = (d: DeviceState): DefibModel | undefined => (d.defibModel ? DEFIB_MODELS[d.defibModel] : undefined);
 const defibSpec = (d: DeviceState): DefibSpec => modelOf(d)?.defib ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
+/**
+ * The shock outcome's reference energy (plan S8, piece E1a): the first-shock energy of the room's defibrillator for the
+ * patient type, so a correct paediatric dose is not scored as a low-energy adult shock. On the M2, 120 J adult and
+ * 50 J paediatric, Shock 1 [G 14-4], from the M2 state's patient type. A model without a patient type (generic, or no
+ * model: the skin's spec) has no paediatric mode, so it keeps its adult energy as before E1a; the monitor's age band
+ * belongs to the bedside monitor's alarm profile, not to the defibrillator (DQ3 = A).
+ */
+export const outcomeReferenceJ = (d: DeviceState): number => (d.m2?.patientType === 'pediatric' ? defibSpec(d).energyPaedJ : defibSpec(d).energyAdultJ);
 const pacerSpec = (d: DeviceState): PacerSpec => modelOf(d)?.pacer ?? d.alarms.profile.pacer ?? FALLBACK_PACER;
 /**
  * The model's HR-while-pacing rule onto the device profile (row 58): the alarm conditions (conditions.ts) and the
@@ -245,7 +253,7 @@ function deliverShock(d: DeviceState, host: DeviceHost, atS: number, synced: boo
     // The shock's state context, duck-typed from the host (absent = the state-free table); the rhythm id selects the
     // cardioversion curve
     const st = host.shockState?.() ?? {};
-    outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: defibSpec(d).energyAdultJ, vfDurationS, onTPeak, rhythmId: host.rhythmId, ...st }, rng);
+    outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: outcomeReferenceJ(d), vfDurationS, onTPeak, rhythmId: host.rhythmId, ...st }, rng);
   }
   d.pending = null;
   switch (outcome) {
