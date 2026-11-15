@@ -10,7 +10,7 @@
 // main when this was written; the helper counts its buttons once it is. The dock has seven tools on the laptop (the host):
 // Labs (PR 451, brief 232) is the seventh, after Log, and its sheet is measured like the others.
 // PME_208_SHOTS=<folder> writes a picture of each step there for the owner.
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 import { DOCK_SIZES, dockBlocked, dockOverlaps, sheetFootBlocked, sheetFootCount, sheetRows } from './dock-fit-support.ts';

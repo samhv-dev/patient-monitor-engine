@@ -4,7 +4,7 @@
 // (instructor, monitor, Explore, Ventilator, a second screen); no tone inside it, one two-tone cue at its end; the
 // two-line banner, the clinical log and the trends hold the span; a latched fast-forward alarm clears on the next
 // acknowledge; the Ventilator view's cockpit ventilates the patient through a span.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { ffV2, openApp, speedV2, startVite } from './app-support.ts';
 

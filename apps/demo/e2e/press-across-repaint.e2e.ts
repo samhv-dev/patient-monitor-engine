@@ -12,7 +12,7 @@
 // of sim time (drug-lock.ts), so twenty presses of "Start surgery" (rocuronium) a few seconds apart were refused by
 // design ("given 3 s ago by the card"). A drug-free step keeps the test's purpose — a press across a forced repaint
 // takes — without waiting out the lock, and without a fast-forward (paced to ≈ 10 s of wall time, twenty would not fit).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 

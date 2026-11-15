@@ -4,19 +4,14 @@
 // its default view (the trigger and 4 generations, the folds), which fits one screen at 1440 × 900 without scrolling and
 // prints on one A4 page; "+n" draws more, "path to" ART M leaves a route on each trigger, and the whole tree (the T1
 // pins) is one button away.
-import { expect, test } from '@playwright/test';
-import { resolve } from 'node:path';
-import { createServer, type ViteDevServer } from 'vite';
-import { openApp } from './app-support.ts';
+import { expect, test } from './evidence.ts';
+import type { ViteDevServer } from 'vite';
+import { openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
-// PME_E2E_PORT: a fixed port for a local run inside an assigned range; 0 (any free port) otherwise, as startVite does
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: Number(process.env.PME_E2E_PORT ?? 0), host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => vite?.close());
 

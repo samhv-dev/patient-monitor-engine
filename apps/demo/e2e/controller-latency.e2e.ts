@@ -6,8 +6,9 @@
 // Run: PW_SYSTEM_CHROME=1 LAT_N=200 pnpm exec playwright test apps/demo/e2e/controller-latency.e2e.ts
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
-import { createServer, type ViteDevServer } from 'vite';
+import { expect, test, type Page } from './evidence.ts';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 
 test.setTimeout(600_000);
@@ -21,10 +22,7 @@ let relayUrl = '';
 test.beforeAll(async () => {
   relay = await startRelay({ port: 0, host: '127.0.0.1' });
   relayUrl = `ws://127.0.0.1:${relay.port}/`;
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => {
   await vite?.close();

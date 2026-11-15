@@ -1,7 +1,7 @@
 // FU-11 Task E3b (R50 F1): "Return here" while the Ventilator view drives the patient — the cockpit keeps ventilating
 // the restored patient. Before: frames were stamped on the old timeline and no clock reached the cockpit; the replayed
 // interval ran SpO2 91 → 64 where the first run had 95 → 92.
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, speedV2, startVite } from './app-support.ts';
 
