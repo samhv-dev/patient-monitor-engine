@@ -147,7 +147,7 @@ describe('E1: the Mode Selector [G 2-4] and the power-off memory [G 1-23], [G 3-
     expect([st(ev).patientType, energy(ev), st(ev).escalation]).toEqual(['adult', 120, { next: 1, on: true }]);
   });
 
-  it('the start mode (DQ4, default Manual) is read at a power-up after 30 s off; within 30 s the last mode is kept [G 12-2], [G 14-2]', () => {
+  it('the start mode (default Manual) is read at a power-up after 30 s off; within 30 s the last mode is kept [G 12-2], [G 14-2]', () => {
     const { e, ev } = room();
     expect(st(ev).defibMode).toBe('manual');
     ok(e, config({ startMode: 'aed' }));
@@ -201,7 +201,7 @@ describe('E1: the patient type [G 14-2], [G 14-3], [G 14-4]', () => {
     expect([energy(ev), st(ev).escalation]).toEqual([50, { next: 1, on: true }]);
   });
 
-  it('the configured levels (DQ18) are the ones selected', () => {
+  it('the configured levels are the ones selected', () => {
     const { e, ev } = room();
     ok(e, config({ escalation: { on: true, adult: [150, 200, 200], pediatric: [30, 50, 70] } }));
     ok(e, patientType('pediatric'));
@@ -261,7 +261,7 @@ describe('E1: the automatic energy escalation [G 14-3], [G 14-4], [G 14-6], [G 1
     expect(st(ev).escalation.on).toBe(false);
   });
 
-  it('configured off (DQ18), the energy stays at Shock 1 until the operator changes it', () => {
+  it('configured off, the energy stays at Shock 1 until the operator changes it', () => {
     const { e, ev } = room();
     ok(e, config({ escalation: { on: false, adult: [120, 150, 200], pediatric: [50, 70, 85] } }));
     ok(e, selector('off'));
@@ -295,7 +295,7 @@ describe('E1: the disarm rules [G 1-13], [G 14-6], [G 14-7], [G 14-13]', () => {
 });
 
 describe('E1: the ready time-out and the tones [G 14-7], [G 14-13], [G 1-13], [G A-7], [G 12-7]', () => {
-  it('the configured ready time-out (DQ17: 60 s by default, 15–60 s) disarms the unit, and the ready tone ends with it', () => {
+  it('the configured ready time-out (60 s by default, 15–60 s) disarms the unit, and the ready tone ends with it', () => {
     for (const s of [60, 15]) {
       const { e, ev } = room();
       if (s !== 60) ok(e, config({ readyTimeoutS: s }));

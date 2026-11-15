@@ -5,7 +5,7 @@
 // (ZOLL M2 Operator's Guide, REF 9650-000873-01 Rev. C). The state lives in E0's M2State fields (power, defibMode,
 // patientType, topLead, escalation, held.panel, config); this module reads and changes them and tells the device layer
 // what the defibrillator must do (select an energy, disarm). A rule the guide does not state is a marked placeholder
-// ([ENG: device; placeholder …]) and is put to the owner as a question.
+// ([ENG: device; placeholder …]).
 import type { LeadId } from '../../types.ts';
 import type { DefibEvent, M2LeadName, M2PatientType, M2Selector } from '../../types-device.ts';
 import { INTERNAL_START_J, panelShockReason, therapyOf } from './connections.ts';
@@ -85,7 +85,7 @@ export function topLeadFor(m: M2State): M2Lead {
   }
 }
 
-/** The configured Shock 1, 2, 3 levels for the patient type [G 14-3], [G 14-4] (DQ18). */
+/** The configured Shock 1, 2, 3 levels for the patient type [G 14-3], [G 14-4]. */
 export const levelsOf = (m: M2State): readonly [number, number, number] => m.config.escalation[m.patientType];
 
 /**
@@ -138,7 +138,7 @@ export interface M2Effect {
  * - Back on from OFF after OFF_MEMORY_S or more, or for the first time in the case: the patient settings reset — the patient type to Adult [ENG: device;
  *   placeholder, the guide names no configured power-up patient type], the energy to Shock 1, the escalation back on
  *   as configured [G 14-6] ("disables auto energy escalation until the unit is turned off for greater than 30 seconds
- *   and then turned back on"), and the Manual/AED mode to the configured start mode (DQ4) [G 12-2], [G 14-2].
+ *   and then turned back on"), and the Manual/AED mode to the configured start mode [G 12-2], [G 14-2].
  * - The top trace takes the new mode's default [G 6-7].
  */
 export function turnSelector(m: M2State, to: M2Selector, t: number): M2Effect {

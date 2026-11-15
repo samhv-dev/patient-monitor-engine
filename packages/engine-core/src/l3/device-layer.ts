@@ -103,7 +103,7 @@ export interface DeviceHost {
 }
 
 const modelOf = (d: DeviceState): DefibModel | undefined => (d.defibModel ? DEFIB_MODELS[d.defibModel] : undefined);
-/** The defibrillator's spec; on the M2, with its configured ready time-out (DQ17) [G 14-13], [G 1-13] (E1). */
+/** The defibrillator's spec; on the M2, with its configured ready time-out [G 14-13], [G 1-13] (E1). */
 const defibSpec = (d: DeviceState): DefibSpec => {
   const s = modelOf(d)?.defib ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
   return d.m2 ? { ...s, readyTimeoutS: d.m2.config.readyTimeoutS } : s;

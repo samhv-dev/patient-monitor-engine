@@ -185,9 +185,9 @@ export function validateM2Command(action: string, value: unknown, isM2: boolean)
 export type M2State = Omit<M2Status, 'config'> & { config: M2Config };
 
 const IDLE_CONFIG: M2Config = {
-  startMode: 'manual', // DQ4 = C, default Manual (owner, 12 November); a Room setup choice
-  readyTimeoutS: 60, // DQ17 (owner, 12 November): 60 s, the value chapter 1 names [G 1-13]; configurable 15–60 s [G 14-13]
-  escalation: { on: true, adult: [120, 150, 200], pediatric: [50, 70, 85] }, // levels [G 14-4]; on: DQ18 (owner, 12 November)
+  startMode: 'manual', // a configurable default; a Room setup choice
+  readyTimeoutS: 60, // 60 s, the value chapter 1 names [G 1-13]; configurable 15–60 s [G 14-13]
+  escalation: { on: true, adult: [120, 150, 200], pediatric: [50, 70, 85] }, // levels [G 14-4]; on: a configurable default [G 14-3]
   aedEnergies: { adult: [120, 150, 200], pediatric: [50, 70, 85] }, // [G 12-6]
   cprAtStart: false, // the default starts with analysis [G 12-6] (DQ19)
   cprPeriodS: 120, // [G 12-9]
@@ -205,7 +205,7 @@ const IDLE_CONFIG: M2Config = {
 const IDLE: M2State = {
   // switched off, as a unit stands in the room before the case: the resident turns it on, and that power-up is one after
   // a long time off (m2.ts turnSelector); a start that states the unit is on turns the selector once the model has applied
-  power: { selector: 'off', offSinceS: null, ac: true, battery: { level: 5, state: 'ok' }, selfTest: 'none' }, // ac and battery [ENG: device; placeholder until E9b, DQ14]
+  power: { selector: 'off', offSinceS: null, ac: true, battery: { level: 5, state: 'ok' }, selfTest: 'none' }, // ac and battery [ENG: device; placeholder until E9b]
   defibMode: 'manual',
   patientType: 'adult', // [ENG: device; choice until E1, which reads the patient]
   topLead: 'pads', // Manual Defib's default top trace is Pads/Paddles [G 6-7]
