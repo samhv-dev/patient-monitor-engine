@@ -152,7 +152,7 @@ describe("the hello's `show` and `device` (plan room-and-instruments.md §4 D1, 
 // learner (no PIN), and may send exactly two command shapes: Charge and Shock, the room's model choosing the energy.
 describe('the learner defibrillator role (plan room-and-instruments.md R5c)', () => {
   const hello = (role: string, extra: Record<string, unknown> = {}) => ({ ...stamp({ kind: 'hello', role: 'viewer' }), role, ...extra });
-  // Defibrillator plan R1 (DQ6 = A, ruled 12 November 2026): the screen may now prove the LEARNER PIN in its hello, as the
+  // Defibrillator plan R1: the screen may now prove the LEARNER PIN in its hello, as the
   // learner remote does; without one it is today's window (its two presses). A PIN is 4 to 8 digits, as everywhere.
   it('a `defib` hello is legal alone, with show and device, and with a learner PIN of 4 to 8 digits', () => {
     expect(parseWireMessage(hello('defib'))).toMatchObject({ kind: 'hello', role: 'defib' });

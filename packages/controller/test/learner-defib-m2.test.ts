@@ -1,5 +1,4 @@
-// Plan defibrillator-zoll-m2.md §5.1, piece R1 (DQ5 = A, DQ6 = A, ruled 12 November 2026): what an ADMITTED learner
-// defibrillator screen (the learner PIN proved, the host's grant) may send — exactly the ZOLL M2's own controls of §5.1,
+// Plan defibrillator-zoll-m2.md §5.1, piece R1: what an ADMITTED learner defibrillator screen (the learner PIN proved, the host's grant) may send — exactly the ZOLL M2's own controls of §5.1,
 // as E0 froze them (engine-core m2-vocabulary.ts M2_COMMANDS), and nothing an instructor does. The list is held complete
 // in both directions: every §5.1 control has its shape in the table, the table holds nothing §5.1 does not give, and every
 // `device defib` action of the vocabulary is classified, so a key added later fails here until someone classifies it.
@@ -17,7 +16,8 @@ const dev = (action: string, value?: unknown, extra: object = {}) =>
   cmd({ type: 'device', action: { device: 'defib', action, ...(value === undefined ? {} : { value }) }, ...extra });
 
 /**
- * Plan §5.1 "Allowed", item by item, with the wire shape each rides (E0's vocabulary: energy, charge, disarm and sync stay
+ * Plan §5.1 "Allowed", item by item, and the learner's keys §5.1 adds that the vocabulary carries (Lead), with the wire
+ * shape each rides (E0's vocabulary: energy, charge, disarm and sync stay
  * `applyEvent defib`, the pacer's mode, rate and output `applyEvent pacer`, the rest `device defib <action>`).
  */
 const SECTION_5_1: ReadonlyArray<[string, readonly string[]]> = [
@@ -39,6 +39,7 @@ const SECTION_5_1: ReadonlyArray<[string, readonly string[]]> = [
   ['code marker', ['device defib codeMarker']],
   ['print', ['device defib print']],
   ["the connections drawer's pads and paddles", ['device defib connect']],
+  ["Lead (the top trace's source)", ['device defib lead']],
 ];
 
 /** One legal command of every shape in the table (values as E0's validators take them). */
@@ -64,6 +65,7 @@ const EXAMPLES: Readonly<Record<string, CommandInput>> = {
   'device defib print': dev('print', 'press'),
   'device defib connect': dev('connect', { pads: { type: 'adult', placement: 'anteriorPosterior', contact: 'good' } }),
   'device defib setting': dev('setting', { nibpMode: 'auto', nibpIntervalMin: 5 }),
+  'device defib lead': dev('lead', 'II'),
 };
 
 describe('the admitted learner defibrillator: the table is §5.1, both ways (plan defibrillator-zoll-m2.md R1)', () => {
@@ -93,7 +95,7 @@ describe('the admitted learner defibrillator: the table is §5.1, both ways (pla
     expect(learnerDefibM2May(ev({ kind: 'pacer', mode: 'demand', mA: 62 }))).toBeNull();
   });
 
-  it('connect is the learner\'s (DQ5 = A): the instructor\'s override is the laptop\'s own path and never crosses the relay', () => {
+  it('connect is the learner\'s: the instructor\'s override is the laptop\'s own path and never crosses the relay', () => {
     // nothing on the wire tells the two apart, and nothing needs to: the instructor's own commands go from the laptop
     // (a controller, or the granted instructor phone), never through a `defib` socket
     for (const value of [{ ecgCable: '5' }, { spo2: true, nibp: true }, { therapy: 'externalPaddles', paddles: { pediPlates: false, shockButtons: true, contact: 'good' } }, { ecgLeadsOff: true }])
@@ -112,7 +114,7 @@ describe('the admitted learner defibrillator: the table is §5.1, both ways (pla
       ['pacer with no mode', ev({ kind: 'pacer', mA: 60 })],
       ['device defib model', dev('model', 'generic')],
       ['device defib config', dev('config', { readyTimeoutS: 30 })],
-      ['device defib unknown', dev('lead', 'II')],
+      ['device defib faults, the instructor\'s', dev('faults', { lowBattery: true })],
       ['the bedside monitor\'s alarms', cmd({ type: 'device', action: { device: 'alarm', action: 'silence' } })],
       ['the bedside monitor\'s skin', cmd({ type: 'device', action: { device: 'monitor', action: 'skin', value: 'philips' } })],
       ['a device action that is not an object', cmd({ type: 'device', action: 'selector' })],

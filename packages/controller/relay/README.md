@@ -129,7 +129,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   refused ones included [ENG: network; a charge and a shock per cycle, with a margin for double taps]; the 5th within a sliding
   second closes it (`too-many-tries`, close 4028). The host checks the allow-list again itself (R5d).
 - **The defibrillator screen with the learner PIN** (`hello {role:'defib', pin}`, docs/plans/defibrillator-zoll-m2.md
-  §5.1, piece R1; DQ6 = A, ruled 12 November 2026: the screen that operates the room's ZOLL M2 is admitted with the
+  §5.1, piece R1: the screen that operates the room's ZOLL M2 is admitted with the
   learner PIN). It is admitted as the learner remote is (the per-address wrong-PIN limits, a learner's place) and is
   PENDING until the host's `grant`: every command is `forbidden` until then, and a denial closes it. Granted, a command
   goes to the host only if `learnerDefibM2May` passes it: the shapes of `LEARNER_DEFIB_M2` (energy, charge, shock,

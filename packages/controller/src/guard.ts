@@ -154,7 +154,7 @@ const DEVICE_WITH: ReadonlySet<unknown> = SHOWS_WITH;
 const showFits = (role: unknown, show: unknown): boolean => (role === 'pump') === (show === 'pump');
 /**
  * The roles whose hello proves a PIN (the instructor's, or for `learner`, `pump` and `defib` the learner PIN); the
- * ventilator, the learner remote and the pump must carry one. `defib` (defibrillator plan R1, DQ6 = A): MAY, and is then
+ * ventilator, the learner remote and the pump must carry one. `defib` (defibrillator plan R1): MAY, and is then
  * held pending until the host's grant (relay/server.ts); with none it is the window of R5c, its two presses only.
  */
 const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump', 'defib']);

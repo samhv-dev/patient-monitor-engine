@@ -12,7 +12,7 @@
 // Plan room-and-instruments.md R5c: a `defib` socket (the learner defibrillator window) joins as a learner does, from
 // another device and with no PIN, in a learner's place, and receives what a viewer receives; of its commands only
 // LEARNER_DEFIB_COMMANDS (Charge and Shock, bare) go to the host, any other is `forbidden`, more than 4 a second close it.
-// Defibrillator plan R1 (docs/plans/defibrillator-zoll-m2.md §5.1, DQ6 = A): a `defib` hello that carries the LEARNER PIN is
+// Defibrillator plan R1 (docs/plans/defibrillator-zoll-m2.md §5.1): a `defib` hello that carries the LEARNER PIN is
 // admitted as a learner remote is (the wrong-PIN limits, a learner's place), PENDING until the host's grant: every command
 // `forbidden` until then; granted, only the ZOLL M2's own controls (learnerDefibM2May) go to the host, any other is
 // `forbidden`, more than DEFIB_M2_PER_S a second close it; it still receives a viewer's frames. A socket keeps how its
@@ -667,7 +667,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           if (m.role === 'instructor' && count(room, (p) => p.role === 'instructor') >= INSTRUCTOR_PLACES) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} has no instructor place free`);
           if (!mayHello(address)) return tooMany(ws, m.role);
         } else if (onLearnerPin(m.role) || (m.role === 'defib' && m.pin !== undefined)) {
-          // L3 (D9), C1 (§7), defibrillator R1 (DQ6): the wrong-PIN limits first, as an instructor's; then a learner's place, as a phone's
+          // L3 (D9), C1 (§7), defibrillator R1: the wrong-PIN limits first, as an instructor's; then a learner's place, as a phone's
           if (blocked(address)) return refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many wrong PINs from this device: wait a minute');
           if (count(room, follows) >= maxPeers) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} is full (${maxPeers})`);
           if (!mayHello(address)) return tooMany(ws, m.role);

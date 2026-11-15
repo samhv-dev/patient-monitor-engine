@@ -1,4 +1,4 @@
-// Defibrillator plan R1 (docs/plans/defibrillator-zoll-m2.md §5.1, §4.3; DQ6 = A, ruled 12 November 2026): a `defib`
+// Defibrillator plan R1 (docs/plans/defibrillator-zoll-m2.md §5.1, §4.3): a `defib`
 // socket whose hello carries the LEARNER PIN is held PENDING, as the learner remote and the pump are, until the host's
 // grant; nothing it commands reaches the host before. Granted, it may send the ZOLL M2's own controls (LEARNER_DEFIB_M2,
 // learnerDefibM2May) and nothing else, under a cap derived from the face's fastest legitimate use. Until piece R2 the

@@ -439,7 +439,7 @@ export type VentLinkKind = VentLinkBody['kind'];
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
   // `pin`: only with role 'instructor', 'ventilator', 'learner', 'pump' or 'defib' (the ventilator, learner and pump must
-  // carry one; a learner's, a pump's and a defibrillator's is the LEARNER PIN: defibrillator plan R1, DQ6 = A), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role
+  // carry one; a learner's, a pump's and a defibrillator's is the LEARNER PIN: defibrillator plan R1), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role
   // 'viewer', 'defib' or 'learner', and `device` alone with 'pump' (guard.ts; plan room-and-instruments.md §4 D1, R8a, R5c;
   // learner-action-remote.md §4 D1, L3; pump-rack-tci.md C1)
   | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
@@ -582,8 +582,8 @@ export const M2_DEVICE_ACTION_CLASS: Readonly<Record<string, 'learner' | 'refuse
   config: 'roomSetup',
   selector: 'learner', patientType: 'learner', defibMode: 'learner', shockButton: 'learner', analyze: 'learner',
   fourToOne: 'learner', alarmControl: 'learner', alarmLimit: 'learner', nibp: 'learner', co2: 'learner',
-  codeMarker: 'learner', print: 'learner', setting: 'learner',
-  // DQ5 = A: the learner connects the patient (pads, paddles, the ECG cable, the sensors). The instructor's override is
+  codeMarker: 'learner', print: 'learner', setting: 'learner', lead: 'learner',
+  // The learner connects the patient (pads, paddles, the ECG cable, the sensors). The instructor's override is
   // the laptop's own path (a controller, or the granted instructor phone) and never crosses a `defib` socket, so the wire
   // has nothing to tell apart
   connect: 'learner',
@@ -593,7 +593,7 @@ export interface DefibM2Shape { section: string; on: 'event' | 'action'; keys: r
 const defibPress = (section: string, extra: readonly string[] = []): DefibM2Shape => ({ section, on: 'event', keys: ['kind', 'action', ...extra], need: extra });
 const m2Key = (section: string, value = true): DefibM2Shape => ({ section, on: 'action', keys: value ? ['device', 'action', 'value'] : ['device', 'action'], need: value ? ['value'] : [] });
 /**
- * The shapes an admitted `defib` peer (the learner PIN proved, the host's grant; DQ6 = A) may send: exactly the controls
+ * The shapes an admitted `defib` peer (the learner PIN proved, the host's grant) may send: exactly the controls
  * plan §5.1 gives the learner, as E0's vocabulary carries them. Energy, Charge, Disarm and Sync stay `applyEvent defib`;
  * the pacer's mode, rate and output `applyEvent pacer` (no `pause`: §5.1 does not give it, the M2 pauses at 0 mA
  * [G 1-11]; no `fault`: the instructor's, which the engine's PacerEvent takes and the ClinicalEvent type here does not
@@ -611,6 +611,7 @@ export const LEARNER_DEFIB_M2: Readonly<Record<string, DefibM2Shape>> = {
   'applyEvent pacer': { section: 'pacer mode/rate/output/start', on: 'event', keys: ['kind', 'action', 'mode', 'ratePpm', 'mA'], need: ['mode'] },
   'device defib selector': m2Key('mode selector'),
   'device defib patientType': m2Key('patient type'),
+  'device defib lead': m2Key("Lead (the top trace's source)"),
   'device defib defibMode': m2Key('Manual/AED switch'),
   'device defib shockButton': m2Key('shock down/up'),
   'device defib analyze': m2Key('Analyze', false),
