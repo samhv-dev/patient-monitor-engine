@@ -153,6 +153,29 @@ test('EDP-TS face: High Pressure from the model, its lamp and message, silenced,
   await expect(lamp('high')).toHaveAttribute('data-state', 'off');
   expect(errs).toEqual([]);
 });
+// A press is a press however long it is held: the face repaints at least every 250 ms, and a repaint must not take the
+// node under a held pointer away, or the browser dispatches no click (WebKit for a replaced text node; every browser
+// for a replaced element). The key and a window row, each held across repaints.
+test('EDP-TS face: a key and a window row held across a repaint still take the press', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 820 });
+  await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
+  await expect(page.locator('main.edp')).toBeVisible({ timeout: 20_000 });
+  const hold = async (sel: string) => {
+    const b = (await page.locator(sel).boundingBox())!;
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(600); // the press held: two repaints or more
+    await page.mouse.up();
+  };
+  await hold('[data-ctl="tag:pmax"] .tv');
+  await expect(page.locator('[data-ctl="tag:pmax"]')).toHaveClass(/\bsel\b/);
+  await page.locator('[data-ctl="under:esc"]').click();
+  await page.locator('[data-ctl="side:mode"]').click();
+  await expect(page.locator('.edp-win .t').first()).toHaveText('Operative Modes');
+  await hold('.edp-win .edp-entry:nth-child(3) .lbl');
+  await expect(page.locator('.edp-win.conf')).toContainText('Mode PCV');
+});
+
 async function knobTurnPage(p: Page, n: number) {
   for (let i = 0; i < Math.abs(n); i++) await p.locator('.edp-knob').dispatchEvent('wheel', { deltaY: n > 0 ? -100 : 100 });
 }
