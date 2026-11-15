@@ -187,6 +187,7 @@ test('a defibrillator window on this computer and one over the relay show "120 J
     expect((await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })).accepted).toBe(true);
     await Promise.all([local, phone].map((w) => expect(w.locator('.defib-readout')).toHaveText('120 J CHARGING', { timeout: 1000 })));
     await Promise.all([local, phone].map((w) => expect(w.locator('.defib-readout')).toHaveText('120 J READY', { timeout: 10_000 })));
+    await phone.context().close();
   } finally {
     await relay.close();
   }

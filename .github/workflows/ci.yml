@@ -237,7 +237,7 @@ jobs:
 
   # fix-ci-webkit-3: one e2e job per browser (was one step running both on one 2-vCPU runner, so each browser's
   # wall-clock-sensitive tests ran beside the other's load). Retries stay at 2 (playwright.config.ts, CI).
-  # ci-faster: each gating suite runs in shards (Playwright --shard, by file; every e2e server binds port 0 and
+  # ci-faster: each gating suite runs in shards (Playwright --shard, by file; each e2e server has its own port and
   # each shard is its own machine; WebKit keeps workers: 1 inside its shard). Each shard uploads its own report and runs
   # the retry-only check on it; the e2e-count job proves the shards together ran every test (research/42 §1.4 b). The
   # quarantine stays one job. Three shards then, not four: the shard that got teach2-fit.e2e.ts (≈ 18 min alone) set the

@@ -3,17 +3,14 @@
 // words and their order as photographed (research/57 P-01 to P-03), the selected tile (P-13), the ring and lamps (P-06,
 // P-15), on the 800 × 600 screen of the fixed design grid (P-20), with no page error.
 // Run: pnpm exec playwright test apps/demo/e2e/vent-edp-ts-stills.e2e.ts
-import { resolve } from 'node:path';
 import { expect, test } from './evidence.ts';
-import { createServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => vite?.close());
 

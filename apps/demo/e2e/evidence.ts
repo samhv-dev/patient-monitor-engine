@@ -6,11 +6,17 @@
 // a relay the pages depend on), this writes into the attempt's output folder, for each page of each browser context
 // still open:
 //   evidence/<n>-<role>.json         the application's own diagnostic counters, read twice 1 s apart (what still moves),
-//                                    with the page's URL, visibility, focus and status lines
+//                                    with the page's URL, visibility, focus and status lines; on a ventilator page
+//                                    (or a page that frames one) the ventilator's settings and breath state (its e2e
+//                                    hook window.__vent); and the input events each frame received (below)
 //   evidence/<n>-<role>.console.txt  the page's console (Playwright keeps the last 200 messages) and its page errors
 //   evidence/index.json              the pages, and any page that could not be read and why
 // The Playwright trace of the same attempt (every context, merged by Playwright into trace.zip) comes from the config's
 // `trace` option (playwright.config.ts). A passing attempt does nothing here: no read, no file.
+//
+// While on, every context gets an init script that records, in each frame, the last 300 pointer, click, wheel and key
+// events that reached the frame's window (capture phase, passive: it changes nothing), so a failure shows whether the
+// test's clicks and wheel turns arrived.
 //
 // On by default in CI; PME_E2E_EVIDENCE=1 turns it on locally, PME_E2E_EVIDENCE=0 off (also in CI).
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -32,6 +38,8 @@ async function readCounters(): Promise<Record<string, unknown>> {
     __pmeApp?: { frames?: number[]; session?: { code?: string; simNow?(): number; host?: { stats?: object }; followers?: number; devices?: unknown[] | null; relay?: Link | null; bc?: Link; diag?: object; monitor?: Mon | null; last?: Record<string, { t?: number }> } };
     __pmeFollower?: { peerId?: string; transport?: Link; monitor?: Mon; sync?: { status?: string; resyncs?: number; lagS?: number; beatDriftMs?: number; fastForward?: unknown } | null };
     __pmeLearnerRemote?: unknown;
+    __vent?: { vs?: { cfg?: unknown; p?: { breathCount?: number; phase?: string; t?: number; measured?: unknown } } };
+    __pmeInputs?: Array<{ type: string; on: string; atMs: number; trusted: boolean }>;
   };
   const w = window as unknown as W;
   const now = performance.now();
@@ -57,6 +65,17 @@ async function readCounters(): Promise<Record<string, unknown>> {
   const app = w.__pmeApp;
   const s = app?.session;
   const f = w.__pmeFollower;
+  // the ventilator's own e2e hook: its settings and where the breath is (read only)
+  const vent = (x: W) => x.__vent?.vs ? { cfg: x.__vent.vs.cfg ?? null, breath: x.__vent.vs.p ? { n: x.__vent.vs.p.breathCount, phase: x.__vent.vs.p.phase, t: x.__vent.vs.p.t, measured: x.__vent.vs.p.measured } : null } : null;
+  const inputs = (x: W) => x.__pmeInputs ? { count: x.__pmeInputs.length, last: x.__pmeInputs.slice(-80).map((e) => ({ type: e.type, on: e.on, agoMs: Math.round(now - e.atMs), trusted: e.trusted })) } : null;
+  const framed = [...document.querySelectorAll('iframe')].map((fr) => {
+    try {
+      const x = fr.contentWindow as unknown as W | null;
+      return x && (x.__vent || x.__pmeInputs) ? { frame: fr.id || fr.src, vent: vent(x), inputs: inputs(x) } : null;
+    } catch (e) {
+      return { frame: fr.id || fr.src, error: String(e) };
+    }
+  }).filter((x) => x !== null);
   return {
     url: location.href,
     title: document.title,
@@ -64,7 +83,7 @@ async function readCounters(): Promise<Record<string, unknown>> {
     perfNowMs: Math.round(now),
     visibility: document.visibilityState,
     focus: document.hasFocus(),
-    role: s ? 'host' : f ? 'follower' : w.__pmeLearnerRemote ? 'learner-remote' : app ? 'app' : 'page',
+    role: s ? 'host' : f ? 'follower' : w.__pmeLearnerRemote ? 'learner-remote' : app ? 'app' : w.__vent ? 'vent' : 'page',
     statusPills: [...document.querySelectorAll('.status-pill')].map((e) => e.textContent),
     toasts: [...document.querySelectorAll('.toast')].map((e) => e.textContent),
     frames: app?.frames ? { count: app.frames.length, lastIntervalsMs: app.frames.slice(-10).map((x) => Math.round(x)) } : null,
@@ -80,7 +99,27 @@ async function readCounters(): Promise<Record<string, unknown>> {
       link: link(f.transport),
       monitor: await monitor(f.monitor),
     })) : null,
+    vent: await safe(() => vent(w)),
+    inputs: inputs(w),
+    framedPages: framed.length ? framed : null,
   };
+}
+
+/** In every frame of every context while evidence is on: the input events that reached the frame's window. */
+function recordInputs(): void {
+  const log: Array<{ type: string; on: string; atMs: number; trusted: boolean }> = [];
+  Object.defineProperty(window, '__pmeInputs', { value: log, configurable: true });
+  const on = (e: Event) => {
+    const t = e.target instanceof Element ? e.target : null;
+    const ctl = t?.closest('[data-ctl]')?.getAttribute('data-ctl');
+    return ctl ?? (t ? `${t.tagName.toLowerCase()}${typeof t.className === 'string' && t.className ? `.${t.className.trim().split(/\s+/)[0]}` : ''}` : String(e.target));
+  };
+  for (const type of ['pointerdown', 'pointerup', 'click', 'wheel', 'keydown']) {
+    addEventListener(type, (e) => {
+      log.push({ type, on: on(e), atMs: e.timeStamp, trusted: e.isTrusted });
+      if (log.length > 300) log.splice(0, log.length - 300);
+    }, { capture: true, passive: true });
+  }
 }
 
 const timed = <T,>(p: Promise<T>, ms: number, what: string): Promise<T> =>
@@ -135,8 +174,14 @@ async function collect(browser: Browser, earlier: Set<BrowserContext>, testInfo:
  * worker's browser for every later test: follower pages reconnecting to relays that had closed, engines still ticking.
  * Not tracked: contexts of another browser the test launched itself (chromium.launch, launchPersistentContext), and
  * what a beforeAll opens (its file's afterAll owns it).
- * PME_E2E_LEAKS=keep leaves them open (to measure the old behaviour); PME_E2E_LEAK_LOG=<dir> writes one JSON line per
- * test that left something open (leaks-<worker>.jsonl), with each page's state when PME_E2E_LEAKS=keep.
+ * A test that would otherwise PASS and leaves one open FAILS after the tidy-up, naming the test and the lines
+ * that opened each context or page (the fixture wraps browser.newContext / newPage, and newPage of the contexts that
+ * existed before the test, for the length of the test). A test that failed or was skipped is only tidied: its own error
+ * is the finding, and it usually failed before its close. A test that leaves one open ON PURPOSE (evidence-tidy.e2e.ts,
+ * which proves the tidy-up) says so with the annotation { type: 'leaves-open' }: it is tidied and logged, never failed.
+ * apps/demo/e2e/proof/leak-and-vent-evidence.proof.ts shows the failure.
+ * PME_E2E_LEAKS=keep leaves them open (to measure the old behaviour) and fails nothing; PME_E2E_LEAK_LOG=<dir> writes one
+ * JSON line per test that left something open (leaks-<worker>.jsonl), with each page's state when PME_E2E_LEAKS=keep.
  */
 const leakLog = (testInfo: TestInfo, row: Record<string, unknown>) => {
   const dir = process.env.PME_E2E_LEAK_LOG;
@@ -148,10 +193,62 @@ const leakLog = (testInfo: TestInfo, row: Record<string, unknown>) => {
 /** Contexts a finished test left open in this worker (closing failed, or PME_E2E_LEAKS=keep); the next test fails on one. */
 const leftByEarlierTests = new Set<BrowserContext>();
 
-async function tidy(browser: Browser, earlier: Set<BrowserContext>, earlierPages: Set<Page>, testInfo: TestInfo): Promise<void> {
+/** Where the test opened a context or page: the call's frames in apps/demo/e2e (this file left out), innermost first. */
+function openedAt(): string {
+  const at = (new Error().stack ?? '').split('\n').slice(1)
+    .map((l) => /([^\s(]*\/apps\/demo\/e2e\/[^\s():]+):(\d+):\d+/.exec(l))
+    .filter((m): m is RegExpExecArray => m !== null && !m[1]!.endsWith('/evidence.ts'))
+    .map((m) => `${m[1]!.split('/apps/demo/e2e/')[1]}:${m[2]}`);
+  return at.length ? [...new Set(at)].slice(0, 3).join(' ← ') : 'a line outside apps/demo/e2e';
+}
+
+/** Contexts and pages opened during the current test, with the lines that opened them. */
+const openedBy = new Map<BrowserContext | Page, string>();
+/** Contexts that already carry the input recorder. */
+const recording = new WeakSet<BrowserContext>();
+const record = async (c: BrowserContext) => {
+  if (!evidenceOn() || recording.has(c)) return;
+  recording.add(c);
+  await c.addInitScript(recordInputs);
+};
+
+/** For the length of the test: what the test opens is recorded with its line, and new contexts carry the recorder. */
+function watchOpening(browser: Browser, earlier: Set<BrowserContext>): () => void {
+  type Fn = (...a: never[]) => Promise<unknown>;
+  const undo: Array<() => void> = [];
+  const wrap = <T extends object>(o: T, name: 'newContext' | 'newPage', after: (made: BrowserContext | Page) => Promise<void>) => {
+    const own = Object.prototype.hasOwnProperty.call(o, name);
+    const real = (o as Record<string, Fn>)[name]!;
+    (o as Record<string, Fn>)[name] = async function (this: unknown, ...a: never[]) {
+      const at = openedAt();
+      const made = (await real.apply(this, a)) as BrowserContext | Page;
+      if (!openedBy.has(made)) openedBy.set(made, at);
+      await after(made);
+      return made;
+    };
+    undo.push(() => (own ? ((o as Record<string, Fn>)[name] = real) : delete (o as Record<string, Fn>)[name]));
+  };
+  wrap(browser, 'newContext', (c) => record(c as BrowserContext));
+  wrap(browser, 'newPage', async () => undefined);
+  for (const c of earlier) wrap(c, 'newPage', async () => undefined);
+  return () => {
+    for (const u of undo.reverse()) u();
+    openedBy.clear();
+  };
+}
+
+const passed = (t: TestInfo) => !failed(t) && t.status !== 'skipped';
+const onPurpose = (t: TestInfo) => t.annotations.some((a) => a.type === 'leaves-open');
+
+async function tidy(browser: Browser, earlier: Set<BrowserContext>, earlierPages: Set<Page>, testInfo: TestInfo): Promise<string[]> {
   const contexts = browser.contexts().filter((c) => !earlier.has(c));
   const pages = [...contexts.flatMap((c) => c.pages()), ...[...earlier].flatMap((c) => c.pages()).filter((p) => !earlierPages.has(p))];
-  if (contexts.length === 0 && pages.length === 0) return;
+  if (contexts.length === 0 && pages.length === 0) return [];
+  // each leftover as the test made it: a context with its pages, or a page alone in a context opened before the test
+  const left = [
+    ...contexts.map((c) => `a browser context opened at ${openedBy.get(c.pages()[0] ?? c) ?? openedBy.get(c) ?? 'an unrecorded line'}${c.pages().length ? ` (${c.pages().map((p) => p.url().replace(/^https?:\/\/[^/]+/, '')).join(', ')})` : ''}`),
+    ...pages.filter((p) => !contexts.includes(p.context())).map((p) => `a page opened at ${openedBy.get(p) ?? 'an unrecorded line'} (${p.url().replace(/^https?:\/\/[^/]+/, '')})`),
+  ];
   const keep = process.env.PME_E2E_LEAKS === 'keep';
   const state = keep && process.env.PME_E2E_LEAK_LOG
     ? await Promise.all(pages.map((p) => timed(p.evaluate(readCounters), 1500, 'read').then((r) => ({
@@ -161,19 +258,29 @@ async function tidy(browser: Browser, earlier: Set<BrowserContext>, earlierPages
       }), (e) => ({ error: String(e).slice(0, 120) }))))
     : [];
   leakLog(testInfo, {
-    file: testInfo.titlePath[0], title: testInfo.titlePath.slice(1).join(' › '), retry: testInfo.retry, status: testInfo.status,
+    file: testInfo.titlePath[0], title: testInfo.titlePath.slice(1).join(' › '), retry: testInfo.retry, status: testInfo.status, ...(onPurpose(testInfo) ? { onPurpose: true } : passed(testInfo) && !keep ? { failsTheTest: true } : {}),
     contexts: contexts.length, pages: pages.length, openInWorker: browser.contexts().length, closed: !keep,
     urls: pages.map((p, i) => ({ url: p.url().replace(/^https?:\/\/[^/]+/, ''), ...(state[i] ?? {}) })),
+    openedAt: left,
   });
-  if (keep) return void contexts.forEach((c) => leftByEarlierTests.add(c));
+  if (keep) {
+    contexts.forEach((c) => leftByEarlierTests.add(c));
+    return [];
+  }
   await Promise.all([
     ...contexts.map((c) => c.close({ reason: 'the test that opened it has ended (apps/demo/e2e/evidence.ts)' }).catch(() => undefined)),
     ...pages.filter((p) => !contexts.includes(p.context())).map((p) => p.close().catch(() => undefined)),
   ]);
   for (const c of contexts) if (browser.contexts().includes(c)) leftByEarlierTests.add(c);
+  return left;
 }
 
 export const test = base.extend<{ _evidence: void }>({
+  // the page fixture's own context records its inputs too (when it was not already made through the wrapper below)
+  context: async ({ context }, use) => {
+    await record(context);
+    await use(context);
+  },
   _evidence: [
     async ({ browser }, use, testInfo) => {
       const earlier = new Set(browser.contexts());
@@ -182,6 +289,7 @@ export const test = base.extend<{ _evidence: void }>({
       const stale = [...leftByEarlierTests].filter((c) => browser.contexts().includes(c));
       if (stale.length && process.env.PME_E2E_LEAKS !== 'keep') throw new Error(`${stale.length} browser context(s) of a finished test still open at the start of this one`);
       const on = evidenceOn();
+      const unwatch = watchOpening(browser, earlier);
       let done: Promise<void> | null = null;
       const capture = () => (done ??= collect(browser, earlier, testInfo).catch((e) => void testInfo.annotations.push({ type: 'evidence', description: `not written: ${String(e)}` })));
       // At the end of the test function, before afterEach hooks (Playwright's own failure screenshot runs at the same
@@ -189,11 +297,20 @@ export const test = base.extend<{ _evidence: void }>({
       const hooks = (testInfo as unknown as { _onDidFinishTestFunctionCallbacks?: Set<() => Promise<void>> })._onDidFinishTestFunctionCallbacks;
       const atEnd = async () => void (on && failed(testInfo) && (await capture()));
       hooks?.add(atEnd);
-      await use();
-      hooks?.delete(atEnd);
-      await atEnd();
-      // after the evidence and after afterEach hooks: what this test opened is closed
-      await tidy(browser, earlier, earlierPages, testInfo);
+      let left: string[];
+      try {
+        await use();
+        hooks?.delete(atEnd);
+        await atEnd();
+        // after the evidence and after afterEach hooks: what this test opened is closed
+        left = await tidy(browser, earlier, earlierPages, testInfo);
+      } finally {
+        unwatch();
+      }
+      // a passing test that left something open fails, with the lines that opened it
+      if (left.length && passed(testInfo) && !onPurpose(testInfo)) {
+        throw new Error(`"${testInfo.titlePath.slice(1).join(' › ')}" ended with ${left.length} thing(s) it opened still open (closed now by apps/demo/e2e/evidence.ts); close each before the test ends:\n${left.map((l) => `  - ${l}`).join('\n')}`);
+      }
     },
     { auto: true, box: true, timeout: 30_000 },
   ],
