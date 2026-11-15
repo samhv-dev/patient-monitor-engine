@@ -1,6 +1,7 @@
 // Defibrillator plan E4a (§3.4.3): the sample feed every signal analyser reads — a named lead after the monitor's
 // front end (artefacts, lead-off, mains), committed samples only, its state in the pipeline state so it clones with the
-// look-ahead, snapshots and replays on followers exactly. Plus the tests every engine piece carries (plan §6).
+// look-ahead and replays on followers exactly; raw samples, so never in the snapshot. Plus the tests every engine piece
+// carries (plan §6).
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../../src/engine.ts';
 import { ecgFrontEnd } from '../../../src/l2/ecg/ecg-gen.ts';
@@ -89,29 +90,17 @@ describe('the tests every engine piece carries (plan §6)', () => {
     }
   };
 
-  it('the snapshot round trip keeps the feed (through JSON), and the restored engine continues with the same samples', () => {
+  it('the snapshot carries no feed sample; the restored engine refills it from the frontier and then holds the same samples', () => {
     const a = createEngine({ seed: 21 });
     course(a, 6);
     const snap = JSON.parse(JSON.stringify(a.snapshot()));
+    expect(Object.keys((snap.state as { st: Record<string, unknown> }).st)).not.toContain('feed');
     const b = createEngine({ seed: 21 });
     b.restore(snap);
-    expect(seg(b)).toEqual(seg(a));
-    course(a, 10);
-    course(b, 10);
-    expect(seg(b)).toEqual(seg(a));
-  });
-
-  it('a snapshot without the feed (an older bookmark) restores with an empty feed that holds a segment again after 3 s', () => {
-    const a = createEngine({ seed: 21 });
-    a.advanceTo(5);
-    const snap = a.snapshot();
-    const st = (snap.state as { st: Record<string, unknown> }).st;
-    delete st.feed;
-    const b = createEngine({ seed: 21 });
-    b.restore(snap);
+    expect(feedOf(b).committedN).toBe(feedOf(a).committedN);
     expect(feedOf(b).segment()).toBeNull();
-    b.advanceTo(8.02);
-    a.advanceTo(8.02);
+    course(a, 6 + FEED_S + 0.02);
+    course(b, 6 + FEED_S + 0.02);
     expect(seg(b)).toEqual(seg(a));
   });
 

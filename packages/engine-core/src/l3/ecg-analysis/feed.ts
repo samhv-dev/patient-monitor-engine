@@ -1,9 +1,10 @@
 // The ECG analysis feed (defibrillator plan §3.4.3, piece E4a): the samples a device's analysis sees — one named lead
 // after the monitor's front end (electrodes, artefacts, lead-off, mains; engine.ts `ecgFrontEnd`), before any display
-// or detection filter, so each analyser applies its own band (the AED's 1–30 Hz, features.ts). The state is plain
-// JSON-safe data inside the pipeline state, beside the QRS detector's: it is cloned with the look-ahead as that is,
-// it is in the snapshot, and a follower replaying the commands rebuilds it exactly. It draws no randomness. The
-// committed state's feed holds committed samples only: the look-ahead writes into its own clone.
+// or detection filter, so each analyser applies its own band (the AED's 1–30 Hz, features.ts). The state lives in
+// the pipeline state, beside the QRS detector's, so it is cloned with the look-ahead as that is, and a follower
+// replaying the commands rebuilds it exactly. It is raw samples, so it stays out of the snapshot (no sample crosses the
+// wire): a restored engine starts it empty at the frontier and holds a segment one segment later. It draws no
+// randomness. The committed state's feed holds committed samples only: the look-ahead writes into its own clone.
 import type { LeadId } from '../../types.ts';
 import { SEGMENT_S } from './features.ts';
 

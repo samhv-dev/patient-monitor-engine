@@ -547,13 +547,14 @@ class Engine implements MonitorEngine {
 
   // --- snapshot --------------------------------------------------------------------------------
   snapshot(): PatientSnapshot {
+    const { feed: _feed, ...st } = this.st; // The analysis feed is raw samples, which never cross the wire; restore() starts it empty
     return {
       schema: 'pme-snapshot/1',
       engineVersion: this.version,
       seed: this.seed,
       tick: this.tick,
       // The device layer's `dev`; the pending stage groups and a JSON-safe encoding (snapshot-codec.ts)
-      state: encodeState({ st: this.st, queue: this.queue, mainsHz: this.mainsHz, dev: this.dev, groups: [...this.groupTicks].filter(([, at]) => at > this.tick) }),
+      state: encodeState({ st, queue: this.queue, mainsHz: this.mainsHz, dev: this.dev, groups: [...this.groupTicks].filter(([, at]) => at > this.tick) }),
     };
   }
   restore(s: PatientSnapshot): void {
@@ -578,7 +579,7 @@ class Engine implements MonitorEngine {
     data.st.blood ??= createBloodState(undefined); // Absent in older snapshots
     data.st.neuro ??= createNeuroState(undefined, seed); // Absent in older snapshots
     data.st.rng.ectopyHazard ??= seedStream(seed, 'ectopyHazard'); // E133's stream, absent in older snapshots
-    data.st.feed ??= createEcgFeed(DETECTION_LEAD, ECG_RATE, data.st.n); // E4a's feed, absent in older snapshots: empty until a segment is held
+    data.st.feed = createEcgFeed(DETECTION_LEAD, ECG_RATE, data.st.n); // Empty at the frontier, like every sample buffer: it holds a segment 3 s later
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
