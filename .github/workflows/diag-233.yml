@@ -1,0 +1,39 @@
+# DIAGNOSTIC (brief 233; branch diag-233-vent-knob-webkit only, never merged): vent-edp-ts.e2e.ts:117 on CI's WebKit
+# (the WPE port in the Playwright image), retries off, a trace of every attempt, and a probe that logs each step's state
+# and every input event the page received. One job, one worker.
+name: diag-233
+on:
+  push:
+    branches: [diag-233-vent-knob-webkit]
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host --ulimit core=0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        timeout-minutes: 5
+      - name: the test as CI runs it, then the probe (5 times each, no retries, traces on)
+        run: |
+          set +e
+          pnpm exec playwright test --project=webkit --workers=1 --retries=0 --repeat-each=5 --trace=on --reporter=list apps/demo/e2e/vent-edp-ts.e2e.ts; echo "real exit $?"
+          pnpm exec playwright test --project=webkit --workers=1 --retries=0 --repeat-each=5 --reporter=list --output=test-results-probe apps/demo/e2e/zz-probe-233.e2e.ts; echo "probe exit $?"
+          exit 0
+        env:
+          CI: '1'
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: diag-233
+          path: |
+            test-results/
+            test-results-probe/
+          if-no-files-found: warn
