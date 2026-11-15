@@ -5,6 +5,7 @@
 // against what is programmed; nothing on it changes the channel (D10, PQ9 = A). Once shown, it says when.
 import type { PumpMismatchNews } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
+import { disturbed, liveWrites } from '../keep.testing.ts';
 import { mountPumpMismatch, MISMATCH_CARD_WORDS } from './pump-mismatch.ts';
 
 const finding = (o: Partial<PumpMismatchNews> = {}): PumpMismatchNews => ({
@@ -56,5 +57,23 @@ describe("the instructor's pump-mismatch card (§8, PQ8 = A)", () => {
     s.link.pumpFindings.set(3, finding({ ch: 3, kind: 'drip', device: 'unnamed0001' }));
     s.changed();
     expect(card.el.querySelector('.ip2-pm-what')?.textContent).toMatch(/^Channel 3 \(pump tablet\): bag and programme differ\. /);
+  });
+
+  it('a change to one channel\'s finding leaves the other cards as they are: their Show button and their shown line', async () => {
+    const s = stub();
+    const card = mountPumpMismatch(s.link as never);
+    document.body.append(card.el);
+    s.link.pumpFindings.set(1, finding({ ch: 1 }));
+    s.link.pumpFindings.set(2, finding({ ch: 2, notice: { shownAt: 320 } }));
+    s.link.pumpFindings.set(3, finding({ ch: 3 }));
+    s.changed();
+    const show = card.el.querySelector('.ip2-pm-card[data-ch="1"] .ip2-pm-show')!;
+    const shown = card.el.querySelector('.ip2-pm-card[data-ch="2"] .ip2-pm-shown')!;
+    const change = async () => {
+      s.link.pumpFindings.set(3, finding({ ch: 3, since: 400 }));
+      expect(await disturbed([show], s.changed)).toEqual([]);
+    };
+    expect(await liveWrites([shown], change)).toEqual([0]);
+    card.el.remove();
   });
 });

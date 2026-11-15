@@ -10,7 +10,9 @@ import type { DispatchResult } from '@pme/engine-core';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { loadShippedFormulary } from '../formulary.ts';
 import { Link } from '../link.ts';
+import { disturbed, liveWrites } from '../keep.testing.ts';
 import { mountLearnerPreps, PREPS_WORDS } from './learner-preps.ts';
+import { PrepBoard } from './prep-board.ts';
 
 const S = 'LPC234';
 const LEARNER_PIN = '582913';
@@ -186,3 +188,30 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     await until(() => r.laptop.preps.entries.length === 0 && r.phone.preps.entries.length === 0, 'the boards emptied');
   });
 });
+
+describe('a change to one preparation leaves the other cards as they are', () => {
+  it('their Show buttons and their shown lines stay the same nodes, and the shown line is not written again', async () => {
+    const preps = new PrepBoard();
+    const fns = new Set<() => void>();
+    const link = { preps, onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)), send: async () => ({ accepted: true }) } as unknown as Link;
+    const prep = (id: string, notice: { shownAt: number } | null = null) => ({
+      id, by: KEY, t: 60, actives: [], volumeMl: 11, leftMl: 11, diluent: null, container: 'syringe-pp' as const, notice, givenAt: null,
+      ready: { atS: 60, src: [], gap: null }, findings: [{ kind: 'incompatible' as const, drugId: 'sodiumBicarbonate', against: 'admixture' as const, other: 'epinephrine', statement: 'x', src: null }],
+    });
+    preps.apply({ news: 'made', prep: prep('p1') } as never, 60);
+    preps.apply({ news: 'made', prep: prep('p2', { shownAt: 70 }) } as never, 60);
+    preps.apply({ news: 'made', prep: prep('p3') } as never, 60);
+    const card = mountLearnerPreps(link, { formulary: () => null });
+    closers.push(card.destroy);
+    document.body.append(card.el);
+    const show = card.el.querySelector('.ip2-lp-card[data-prep="p1"] .ip2-lp-show')!;
+    const shown = card.el.querySelector('.ip2-lp-card[data-prep="p2"] .ip2-lp-shown')!;
+    const change = async () => {
+      preps.apply({ news: 'notice', prep: prep('p3', { shownAt: 90 }) } as never, 90);
+      expect(await disturbed([show], () => card.refresh())).toEqual([]);
+    };
+    expect(await liveWrites([shown], change)).toEqual([0]);
+    expect(card.el.querySelector('.ip2-lp-card[data-prep="p3"] .ip2-lp-shown')).not.toBeNull();
+  });
+});
+

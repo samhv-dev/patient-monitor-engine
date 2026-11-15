@@ -13,7 +13,7 @@ import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { FINDING_WORDS, NO_SOURCE, NO_STATEMENT, sourcesText } from '../prep-words.ts';
 import type { BoardEntry } from './prep-board.ts';
-import { clock, h, setText, toast } from '../ui.ts';
+import { clock, h, keepOrder, keyed, setText, toast } from '../ui.ts';
 import './learner-preps.css';
 
 /** The card's words (English chrome: the owner rules the words; keys, so a translation table can hold them). */
@@ -75,6 +75,7 @@ export function mountLearnerPreps(link: Link, o: { formulary(): Formulary | null
   const el = h('section', { class: `ip2-lp${o.inline ? ' ip2-lp-inline' : ''}`, 'aria-label': PREPS_WORDS.title, hidden: true }, list, clean);
   const pending = new Set<string>(); // presses sent and not answered
   let drawn = '';
+  const cards = new Map<string, HTMLElement>();
 
   const press = async (e: BoardEntry): Promise<void> => {
     const key = `${e.prep.by}|${e.prep.id}`;
@@ -110,12 +111,14 @@ export function mountLearnerPreps(link: Link, o: { formulary(): Formulary | null
     const all = link.preps?.entries ?? []; // a test's partial Link has no board
     const flagged = all.filter((e) => e.prep.findings.length > 0);
     const plain = all.filter((e) => e.prep.findings.length === 0 && e.discardedAt === null);
-    // redrawn only when what it shows changed: a button under the pointer or the focus stays the same element
+    // redrawn only when what it shows changed, and then only the cards that changed: a button under the pointer or the
+    // focus, and a shown line, stay the same nodes
     const sig = JSON.stringify([all, [...pending], f !== null]);
     if (sig === drawn) return;
     drawn = sig;
     el.hidden = flagged.length === 0 && plain.length === 0;
-    list.replaceChildren(...flagged.map((e) => card(e, f)));
+    const keys = flagged.map((e) => JSON.stringify([e, pending.has(`${e.prep.by}|${e.prep.id}`), f !== null]));
+    keepOrder(list, keyed(cards, keys, (_, i) => card(flagged[i] as BoardEntry, f)));
     clean.hidden = plain.length === 0;
     setText(cleanSum, PREPS_WORDS.clean(plain.length));
     cleanList.replaceChildren(...plain.map((e) => h('li', { class: 'ip2-lp-clean-row', 'data-prep': e.prep.id },

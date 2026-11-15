@@ -8,6 +8,7 @@ import { instructorMay } from '@pme/controller';
 import { PhaseRunner, ScenarioDriver, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { importedCards, LIBRARY, scenarioById } from '../scenarios.ts';
 import type { Link } from '../link.ts';
+import { liveWrites } from '../keep.testing.ts';
 import { draftRun, runRefusals } from './run-panel.ts';
 
 const MH2 = LIBRARY.find((c) => c.id === 'showcase-mh-v2')!.doc as unknown as ScenarioDocV2;
@@ -109,5 +110,13 @@ describe('Run in place: the draft never enters the library or the wire as an id'
     saved.doc = { ...structuredClone(DRAFT), title: 'My MH draft, edited' };
     await vi.waitFor(() => expect(why()).toMatch(/^This phase has no mark yet/), { timeout: 3000 }); // the stand-in driver placed none
     expect(btn().disabled).toBe(true);
+  });
+
+  it('its live line is written only when what it says changes', async () => {
+    const { d, root } = rig();
+    d.run('d1', DRAFT);
+    const why = root.querySelector('.sb-run-why')!;
+    await vi.waitFor(() => expect(why.textContent).toBe('No edits since this run started.'));
+    expect(await liveWrites([why], () => dispatchEvent(new Event('hashchange')))).toEqual([0]);
   });
 });

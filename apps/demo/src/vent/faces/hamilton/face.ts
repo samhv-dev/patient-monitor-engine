@@ -8,6 +8,7 @@
 import { clamp, HAMILTON_MODES, pbw, type VentConfig, type VentMode } from '@pme/ventilator';
 import type { Cockpit } from '../../core/cockpit.ts';
 import type { BoolKey, FaceModule, FaceSpec, ModeEntry, NumKey, Range } from '../../core/types.ts';
+import { setText } from '../../../app/keep.ts';
 import { $, el } from '../../dom.ts';
 import type { SimTools } from '../../sim-tools.ts';
 
@@ -45,11 +46,11 @@ function mountHamiltonFace(c: Cockpit, tools: SimTools): { draw(ts: number): voi
 
   // ---- header ----
   function syncHeader() {
-    $('mnMain').textContent = c.modeName();
+    setText($('mnMain'), c.modeName());
     const b = c.alarms().banner;
     const a = $('alarmBanner');
     a.className = b.cls;
-    a.textContent = b.cls === 'silenced' ? `🔕 ${b.text}` : b.text;
+    setText(a, b.cls === 'silenced' ? `🔕 ${b.text}` : b.text);
   }
   // ---- numeric monitoring ----
   function buildNums() {

@@ -3,6 +3,7 @@
 // happy-dom test drives it with a real engine on the main thread and the page with mountMonitor.
 import type { EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import { RHYTHM_IDS } from '@pme/engine-core';
+import { setText } from '../app/keep.ts';
 import * as A from './actions.ts';
 import { fmtDelta, fmtValue } from './format.ts';
 import { ConsoleModel, type Row } from './model.ts';
@@ -177,9 +178,6 @@ export function mountConsole(root: HTMLElement, host: ConsoleHost, o: { autoBase
     (tr.querySelector('.u') as HTMLElement).textContent = r.meta.unit;
     const cv = tr.querySelector('canvas') as HTMLCanvasElement;
     return { tr, v: tr.querySelector('.v') as HTMLElement, b: tr.querySelector('.b') as HTMLElement, d: tr.querySelector('.d') as HTMLElement, cv, g: cv.getContext('2d') };
-  };
-  const setText = (el: HTMLElement, s: string) => {
-    if (el.textContent !== s) el.textContent = s;
   };
 
   function refresh(): void {

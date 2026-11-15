@@ -5,7 +5,7 @@
 // projected (face-row.ts). A channel the engine holds loaded keeps the engine's kind, whatever Room setup says, and one
 // beyond the chosen count stays on view: a running infusion with no face would be the worse failure (refusing the
 // change on Room setup is the host's, C2).
-import { h, setText } from '../ui.ts';
+import { h, keepOrder, setText } from '../ui.ts';
 import type { FaceRow } from './face-row.ts';
 import { FACE_LABELS, faceView, type ChannelKind, type FaceLabels, type FaceProfiles, type FaceView } from './face.ts';
 
@@ -83,7 +83,7 @@ export function rackView(o: { profiles: FaceProfiles | null; labels?: FaceLabels
       const s = slot(ch);
       s.face.setKind(kinds?.[ch - 1] ?? s.row?.kind ?? 'syringe');
     }
-    grid.replaceChildren(...chs.map((ch) => slot(ch).face.el));
+    keepOrder(grid, chs.map((ch) => slot(ch).face.el));
     el.dataset.rows = String(Math.max(1, Math.ceil(chs.length / PER_ROW)));
     el.dataset.channels = String(chs.length);
   };

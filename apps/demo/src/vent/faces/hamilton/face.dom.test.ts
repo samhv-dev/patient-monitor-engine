@@ -11,8 +11,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createVentDriver, type VentDriver } from '@pme/ventilator';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
+import { disturbed } from '../../../app/keep.testing.ts';
+import { createCockpit } from '../../core/cockpit.ts';
+import { mountSimTools } from '../../sim-tools.ts';
 import { faceFromLocation, mountFace } from '../index.ts';
+import { hamiltonFace } from './face.ts';
 
 const mount = (d: VentDriver): { stop(): void } => mountFace(d, faceFromLocation({ search: '' }), { linked: false });
 
@@ -162,4 +166,28 @@ it('the Hamilton-style face builds the base commit DOM (fixture captured from mo
   const want = JSON.parse(readFileSync(FIXTURE, 'utf8')) as Record<string, unknown>;
   expect(Object.keys(now)).toEqual(Object.keys(want));
   for (const k of Object.keys(want)) expect(now[k], k).toEqual(want[k]);
+});
+
+it('a repaint keeps the alarm banner and the mode name as they are under a held press, also while the text changes', async () => {
+  // the waveforms draw on canvases happy-dom cannot paint: a context that accepts every call
+  const any: unknown = new Proxy(() => undefined, { get: () => any, apply: () => any, set: () => true });
+  const canvas = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(any as never);
+  document.body.innerHTML = body;
+  const d = createVentDriver(null, 'normal');
+  const c = createCockpit(d, hamiltonFace.spec, { linked: false });
+  const tools = mountSimTools(c);
+  const ui = hamiltonFace.mount(c, tools);
+  const banner = document.getElementById('alarmBanner') as HTMLElement;
+  const held = [banner, document.getElementById('mnMain') as HTMLElement];
+  ui.draw(0);
+  expect(await disturbed(held, () => ui.draw(16))).toEqual([]);
+  banner.click();
+  ui.draw(32);
+  const before = banner.textContent;
+  expect(await disturbed(held, () => ((d.vs.silenceUntil -= 1), ui.draw(48)))).toEqual([]);
+  expect(banner.textContent).not.toBe(before);
+  ui.stop();
+  tools.stop();
+  c.stop();
+  canvas.mockRestore();
 });

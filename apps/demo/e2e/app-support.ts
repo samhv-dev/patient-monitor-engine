@@ -2,7 +2,7 @@
 // in-page audits (engine-id scan, accessibility checks) shared by the stage9-*.e2e.ts files.
 import { createServer as netServer, type AddressInfo } from 'node:net';
 import { resolve } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { createServer, preview, type InlineConfig, type PreviewServer, type ViteDevServer } from 'vite';
 
 /** A port the operating system hands out now (listen on 0, read it, release it). */
@@ -52,6 +52,30 @@ export async function openApp(page: Page, base: string, hash = '#/', o: { site?:
   await page.goto(`${base}/${hash}`);
   await page.waitForFunction(() => '__pmeApp' in window);
   if (o.warmMs) await page.waitForTimeout(o.warmMs);
+}
+
+/**
+ * Press `loc` over its first words, hold it while `repaint` happens, release: the hold is the input under test (a
+ * click only lands when its press and release meet the same node, and WebKit takes the text node under the pointer as
+ * that node).
+ */
+export async function holdAcross(page: Page, loc: Locator, repaint: () => Promise<unknown>): Promise<void> {
+  await page.evaluate(() => document.fonts.ready); // a late font moves the words from under the pointer
+  await loc.scrollIntoViewIfNeeded();
+  const at = await loc.evaluate((e) => {
+    const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
+    const r = document.createRange();
+    r.selectNodeContents(w.nextNode() as Node);
+    const b = r.getClientRects()[0] as DOMRect;
+    const x = b.left + b.width / 2;
+    const y = b.top + b.height / 2;
+    return e.contains(document.elementFromPoint(x, y)) ? { x, y } : null;
+  });
+  if (!at) throw new Error('the press would not start on the control');
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  await repaint();
+  await page.mouse.up();
 }
 
 export async function go(page: Page, hash: string, settleMs = 700): Promise<void> {

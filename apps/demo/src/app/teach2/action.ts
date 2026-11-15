@@ -13,7 +13,7 @@ import { asV1, bolusDrugOf, isV2 } from '@pme/controller';
 import { lockLabel } from '../drugs.ts';
 import type { Link } from '../link.ts';
 import { stagesOf } from '../card-read.ts';
-import { clock, h, keepOrder, setText } from '../ui.ts';
+import { clock, h, keepOrder, keyed, setText } from '../ui.ts';
 import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressAction, pressStep } from './press.ts';
@@ -126,27 +126,25 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   el.replaceChildren(wrap);
 
   const pills = new Map<string, Pill>();
-  const laterPills = new Map<string, Pill>();
   const groups = new Map<string, Group>();
   let docV = -1;
   /** The stages' short names (the strip's chips) and full labels, for Finished's titles. */
   let names = new Map<string, string>();
   let labels = new Map<string, string>();
 
-  /** Keep each row's element and its list item across repaints; move only the rows whose place changed (keepOrder). */
-  const sync = (into: HTMLElement, cache: Map<string, Pill>, rows: readonly LiveRow[], inFinished: boolean, keyFn: (r: LiveRow) => string) => {
-    const want: HTMLElement[] = [];
-    const seen = new Set<string>();
-    for (const live of rows) {
-      const k = keyFn(live);
-      seen.add(k);
-      let p = cache.get(k);
-      if (!p) cache.set(k, (p = pill(live, inFinished)));
-      paint(p, live);
-      want.push(p.li);
+  /** Each row's element and list item are kept across repaints by its key, also when it moves from one list to another
+   *  (the open list and "Not due now" share one cache); only the rows whose place changed are moved. */
+  const sync = (cache: Map<string, Pill>, inFinished: boolean, keyFn: (r: LiveRow) => string, ...lists: Array<[HTMLElement, readonly LiveRow[]]>) => {
+    const all = lists.flatMap(([, rows]) => rows);
+    const made = keyed(cache, all.map(keyFn), (_, i) => pill(all[i] as LiveRow, inFinished));
+    let i = 0;
+    for (const [into, rows] of lists) {
+      keepOrder(into, rows.map((live) => {
+        const p = made[i++] as Pill;
+        paint(p, live);
+        return p.li;
+      }));
     }
-    for (const k of [...cache.keys()]) if (!seen.has(k)) cache.delete(k);
-    keepOrder(into, want);
   };
 
   /** Finished, grouped (the owner's report of 30 October): one group per stage visit, titled with the stage's name and
@@ -167,7 +165,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
         g = { li: h('li', { class: 'ip2-fin-group' }, h('div', { class: 'ip2-fin-head', title: labels.get(r0.stage) ?? name }, `${name} · ${clock(r0.entered)}`), list), rows: list, pills: new Map() };
         groups.set(k, g);
       }
-      sync(g.rows, g.pills, rs, true, (r) => `${keyOf(r)}|${r.look}|${r.at}`);
+      sync(g.pills, true, (r) => `${keyOf(r)}|${r.look}|${r.at}`, [g.rows, rs]);
       want.push(g.li);
     }
     for (const k of [...groups.keys()]) if (!by.has(k)) groups.delete(k);
@@ -177,7 +175,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const setDigits = (rows: readonly LiveRow[]) => {
     for (let n = 1; n <= 9; n++) {
       const live = rows.find((r) => r.row.kind !== 'auto' && r.row.n === n && r.look !== 'waiting');
-      const p = live ? (pills.get(keyOf(live)) ?? laterPills.get(keyOf(live))) : undefined;
+      const p = live ? pills.get(keyOf(live)) : undefined;
       keys.digit(n, p ? () => press(p) : null);
     }
   };
@@ -227,8 +225,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       // the host's board (feed.ts: the host's own, its feed's on a remote; a remote without one reads what it has)
       const board = boardOf(link) as Board;
       const rest = board.later ?? [];
-      sync(list, pills, board.list, false, keyOf);
-      sync(laterList, laterPills, rest, false, keyOf);
+      sync(pills, false, keyOf, [list, board.list], [laterList, rest]);
       syncFinished(board.finished);
       setDigits([...board.list, ...rest]);
       later.hidden = !rest.length;
@@ -239,9 +236,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     delete wrap.dataset.format;
-    sync(laterList, laterPills, [], false, keyOf);
     if (!doc || !stateId) {
-      sync(list, pills, [], false, keyOf);
+      sync(pills, false, keyOf, [list, []], [laterList, []]);
       syncFinished([]);
       setDigits([]);
       if (sv.doc) return;
@@ -253,7 +249,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     const board = boardOf(link) as Board;
-    sync(list, pills, board.list, false, keyOf);
+    sync(pills, false, keyOf, [list, board.list], [laterList, []]);
     syncFinished(board.finished);
     setDigits(board.list);
     setText(finSummary, `Finished steps · ${board.finished.length}`);
