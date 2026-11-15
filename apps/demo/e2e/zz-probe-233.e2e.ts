@@ -64,6 +64,8 @@ test('probe 233', async ({ page }) => {
   await st('after knob click');
   const pageEv = await page.evaluate(() => (window as Any).__ev as string[]);
   const got = await cfg();
+  mark(`contexts ${JSON.stringify(page.context().browser()?.contexts().map((c) => c.pages().map((pg) => pg.url())))}`);
+  mark(`ws ${JSON.stringify(wsLog)}`);
   console.log(`probe233 ${got === pmax0 - steps ? 'OK' : 'LOST'} ${JSON.stringify(ev)}`);
   console.log(`probe233-events ${JSON.stringify(pageEv.filter((x) => !x.includes(' wheel ')))} wheels=${pageEv.filter((x) => x.includes(' wheel ')).length} firstWheel=${pageEv.find((x) => x.includes(' wheel '))}`);
   expect(got).toBe(pmax0 - steps);

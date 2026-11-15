@@ -8,7 +8,7 @@ on:
 jobs:
   webkit:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     container:
       image: mcr.microsoft.com/playwright:v1.63.0-noble
       options: --ipc=host --ulimit core=0
@@ -21,11 +21,51 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         timeout-minutes: 5
-      - name: the test as CI runs it, then the probe (5 times each, no retries, traces on)
+      - name: the failing main shard's files in order, the probe after vent-edp-ts (retries as CI, traces on)
         run: |
           set +e
-          pnpm exec playwright test --project=webkit --workers=1 --retries=0 --repeat-each=5 --trace=on --reporter=list apps/demo/e2e/vent-edp-ts.e2e.ts; echo "real exit $?"
-          pnpm exec playwright test --project=webkit --workers=1 --retries=0 --repeat-each=5 --reporter=list --output=test-results-probe apps/demo/e2e/zz-probe-233.e2e.ts; echo "probe exit $?"
+          # run 2: the file list of main run 43661180988's e2e (webkit 2/3), where :117 failed all three attempts, in its
+          # order, with the probe right after vent-edp-ts.e2e.ts; retries as CI; a trace of every attempt
+          cat > "$RUNNER_TEMP/list.txt" <<'LIST'
+          apps/demo/e2e/apnoea-alarm-latched.e2e.ts
+          apps/demo/e2e/app-accessibility.e2e.ts
+          apps/demo/e2e/app-instructor-tasks.e2e.ts
+          apps/demo/e2e/builder-action-editor.e2e.ts
+          apps/demo/e2e/builder-local-store.e2e.ts
+          apps/demo/e2e/circulation-page.e2e.ts
+          apps/demo/e2e/controller-pages.e2e.ts
+          apps/demo/e2e/device-layer-page.e2e.ts
+          apps/demo/e2e/drug-pkpd-page.e2e.ts
+          apps/demo/e2e/engine-stopped-said.e2e.ts
+          apps/demo/e2e/fx24-follower-after-fast-forward.e2e.ts
+          apps/demo/e2e/fx4-alarm-pause.e2e.ts
+          apps/demo/e2e/ibp-scales.e2e.ts
+          apps/demo/e2e/iife-smoke.e2e.ts
+          apps/demo/e2e/kit-store.e2e.ts
+          apps/demo/e2e/learner-remote.e2e.ts
+          apps/demo/e2e/mobile-learner.e2e.ts
+          apps/demo/e2e/monitor-worker-stopped.e2e.ts
+          apps/demo/e2e/oxygen-by-mask.e2e.ts
+          apps/demo/e2e/pacer-overlay-device-tab.e2e.ts
+          apps/demo/e2e/physiology-console-mechanics.e2e.ts
+          apps/demo/e2e/resolution-fit.e2e.ts
+          apps/demo/e2e/room-code.e2e.ts
+          apps/demo/e2e/saadat-grid-layout.e2e.ts
+          apps/demo/e2e/session-pause-label.e2e.ts
+          apps/demo/e2e/skins-page.e2e.ts
+          apps/demo/e2e/stage-group-one-tick.e2e.ts
+          apps/demo/e2e/teach2-fit-panes.e2e.ts
+          apps/demo/e2e/validation-review.e2e.ts
+          apps/demo/e2e/vent-edp-ts-stills.e2e.ts
+          apps/demo/e2e/vent-edp-ts.e2e.ts
+          apps/demo/e2e/zz-probe-233.e2e.ts
+          apps/demo/e2e/vent-handover-phones.e2e.ts
+          apps/demo/e2e/vent-window.e2e.ts
+          apps/demo/e2e/audit-remote.e2e.ts
+          apps/demo/e2e/audit-snapshot.e2e.ts
+          LIST
+          sed -i 's/^ *//' "$RUNNER_TEMP/list.txt"; cat "$RUNNER_TEMP/list.txt"
+          pnpm exec playwright test --project=webkit --test-list "$RUNNER_TEMP/list.txt" --trace=on --reporter=list; echo "shard exit $?"
           exit 0
         env:
           CI: '1'
