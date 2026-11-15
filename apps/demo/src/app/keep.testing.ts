@@ -4,12 +4,15 @@
 
 const who = (c: Element): string => `${c.tagName.toLowerCase()}${c.className && typeof c.className === 'string' ? `.${c.className.trim().split(/\s+/).join('.')}` : ''} "${(c.textContent ?? '').trim().slice(0, 40)}"`;
 
+/** The tops of the trees the nodes are in: the document, or the root of a tree not yet in the page. */
+const tops = (nodes: readonly Node[]): Set<Node> => new Set(nodes.map((n) => n.getRootNode()));
+
 export async function disturbed(controls: readonly Element[], repaint: () => unknown): Promise<string[]> {
   if (!controls.length) throw new Error('no controls to hold');
   const root = controls[0]!.ownerDocument;
   const recs: MutationRecord[] = [];
   const mo = new MutationObserver((rs) => void recs.push(...rs));
-  mo.observe(root, { childList: true, subtree: true });
+  for (const top of tops(controls)) mo.observe(top, { childList: true, subtree: true });
   const focused = root.activeElement;
   await repaint();
   recs.push(...mo.takeRecords());
@@ -27,7 +30,7 @@ export async function liveWrites(regions: readonly Element[], repaint: () => unk
   const hits = (e: Element, r: MutationRecord) => e === r.target || e.contains(r.target) || [...r.removedNodes].some((x) => x === e || x.contains(e));
   const count = (rs: MutationRecord[]) => rs.forEach((r) => regions.forEach((e, i) => void (hits(e, r) && (n[i] = (n[i] ?? 0) + 1))));
   const mo = new MutationObserver(count);
-  mo.observe(regions[0]!.ownerDocument, { childList: true, characterData: true, subtree: true });
+  for (const top of tops(regions)) mo.observe(top, { childList: true, characterData: true, subtree: true });
   await repaint();
   count(mo.takeRecords());
   mo.disconnect();
