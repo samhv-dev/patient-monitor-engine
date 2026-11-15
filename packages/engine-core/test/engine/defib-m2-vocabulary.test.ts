@@ -7,7 +7,7 @@ import { createEngine } from '../../src/engine.ts';
 import { DEFIB_MODELS } from '../../src/l3/alarms/profile.ts';
 import { M2_COMMANDS, M2_ENERGIES_J, M2_IDLE_STATUS, M2_LIMIT_KEYS, NOT_M2 } from '../../src/l3/defib-pacer/m2-vocabulary.ts';
 import type { Command, EngineEvent, MonitorEngine } from '../../src/types.ts';
-import { cmd, devRig } from '../helpers/device.ts';
+import { cmd, devRig, setDefibModel } from '../helpers/device.ts';
 
 type Status = Extract<EngineEvent, { type: 'deviceStatus' }>;
 const lastStatus = (ev: EngineEvent[]) => ev.filter((x): x is Status => x.type === 'deviceStatus').pop()!;
@@ -16,10 +16,10 @@ const m2 = (action: string, value?: unknown): Command => cmd({ type: 'device', a
 const defib = (action: string, extra: Record<string, unknown> = {}) => cmd({ type: 'applyEvent', event: { kind: 'defib', action, ...extra } as never });
 const pacer = (extra: Record<string, unknown>) => cmd({ type: 'applyEvent', event: { kind: 'pacer', action: 'set', mode: 'fixed', ...extra } as never });
 
-/** An engine whose room has the given model, advanced to 1 s. */
-function room(m: string | null, skin = 'saadat-like'): { e: MonitorEngine; ev: EngineEvent[] } {
+/** An engine whose room has the given model, advanced to 1 s; an M2 switched on unless `on` is false. */
+function room(m: string | null, skin = 'saadat-like', on = true): { e: MonitorEngine; ev: EngineEvent[] } {
   const r = devRig(skin);
-  if (m) expect(r.e.dispatch(model(m)).accepted).toBe(true);
+  if (m) setDefibModel(r.e, m, on);
   r.e.advanceTo(1);
   return r;
 }
@@ -180,11 +180,11 @@ describe('E0: the frozen vocabulary', () => {
 
 describe('E0: deviceStatus.m2', () => {
   it('carries every field at its idle value on zoll-m2, and is absent on generic and with no model', () => {
-    const z = room('zoll-m2');
+    const z = room('zoll-m2', 'saadat-like', false);
     z.e.advanceTo(2.5);
     expect(lastStatus(z.ev).m2).toEqual(M2_IDLE_STATUS);
     expect(M2_IDLE_STATUS).toMatchObject({
-      power: { selector: 'defib', offSinceS: null }, defibMode: 'manual', patientType: 'adult', escalation: { next: 1, on: true },
+      power: { selector: 'off', offSinceS: null }, defibMode: 'manual', patientType: 'adult', escalation: { next: 1, on: true },
       held: { panel: false, apex: false, sternum: false, internal: false, fourToOne: false, alarmControl: false },
       aed: { phase: 'idle', verdict: null, untilS: null, shockIndex: 1 }, messages: [], lastDelivery: null,
       connections: { mfc: true, therapy: 'pads' },
@@ -212,8 +212,8 @@ describe('E0: deviceStatus.m2', () => {
     const script: Command[] = [m2('patientType', 'pediatric'), m2('connect', { pads: PADS }), m2('config', { readyTimeoutS: 30 }), defib('selectEnergy', { energyJ: 150 }), m2('shockButton', { phase: 'down', button: 'panel' })];
     const run = () => {
       const r = devRig('saadat-like');
-      expect(r.e.dispatch(model('zoll-m2')).accepted).toBe(true);
-      r.e.advanceTo(0.5);
+      setDefibModel(r.e, 'zoll-m2');
+      r.e.advanceTo(1);
       for (const c of script) expect(r.e.dispatch(c).accepted).toBe(true);
       r.e.advanceTo(3);
       return r;
@@ -228,10 +228,10 @@ describe('E0: deviceStatus.m2', () => {
     restored.restore(host.e.snapshot());
     restored.advanceTo(5);
     host.e.advanceTo(5);
-    // idle but for the poor-contact pads E2a now applies and the message they give [G 14-9], and E1's patient type,
-    // configuration and held panel SHOCK button
+    // idle but switched on, and for the poor-contact pads E2a now applies and the message they give [G 14-9], and E1's
+    // patient type, configuration and held panel SHOCK button
     expect(lastStatus(rev).m2).toEqual({
-      ...M2_IDLE_STATUS, patientType: 'pediatric', config: { ...M2_IDLE_STATUS.config, readyTimeoutS: 30 }, held: { ...M2_IDLE_STATUS.held, panel: true },
+      ...M2_IDLE_STATUS, power: { ...M2_IDLE_STATUS.power, selector: 'defib' }, patientType: 'pediatric', config: { ...M2_IDLE_STATUS.config, readyTimeoutS: 30 }, held: { ...M2_IDLE_STATUS.held, panel: true },
       connections: { ...M2_IDLE_STATUS.connections, pads: PADS }, messages: ['Attach Pads'],
     });
     expect(lastStatus(rev)).toEqual(lastStatus(host.ev));

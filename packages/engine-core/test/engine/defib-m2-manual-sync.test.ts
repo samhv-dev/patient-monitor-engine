@@ -11,7 +11,7 @@ import { M2_LEADS, M2_TONES, OFF_MEMORY_S, readyToneSplit, syncLeadOf } from '..
 import { createM2State } from '../../src/l3/defib-pacer/m2-vocabulary.ts';
 import { createSyncState, syncStep } from '../../src/l3/defib-pacer/sync.ts';
 import type { Command, EngineEvent, MonitorEngine } from '../../src/types.ts';
-import { cmd, devRig, markers } from '../helpers/device.ts';
+import { cmd, devRig, markers, setDefibModel } from '../helpers/device.ts';
 
 type Status = Extract<EngineEvent, { type: 'deviceStatus' }>;
 type Tone = Extract<EngineEvent, { type: 'tone' }>;
@@ -32,7 +32,7 @@ const PADDLES = { therapy: 'externalPaddles', paddles: { pediPlates: false, shoc
 /** An M2 (or generic) room, advanced to 1 s. */
 function room(m: string | null = 'zoll-m2', opts: Parameters<typeof devRig>[1] = {}): { e: MonitorEngine; ev: EngineEvent[] } {
   const r = devRig('saadat-like', opts);
-  if (m) expect(r.e.dispatch(model(m)).accepted).toBe(true);
+  if (m) setDefibModel(r.e, m);
   r.e.advanceTo(1);
   return r;
 }
@@ -60,6 +60,29 @@ const energy = (ev: EngineEvent[]) => lastStatus(ev).defib!.energyJ;
 const st = (ev: EngineEvent[]) => lastStatus(ev).m2!;
 
 describe('E1: the Mode Selector [G 2-4] and the power-off memory [G 1-23], [G 3-1]', () => {
+  it('the M2 starts switched off: no therapy until it is turned on, and that first power-up applies the configured start mode', () => {
+    const { e, ev } = devRig('saadat-like');
+    ok(e, model('zoll-m2'));
+    e.advanceTo(0.05);
+    ok(e, config({ startMode: 'aed' }));
+    e.advanceTo(1);
+    expect(st(ev).power).toMatchObject({ selector: 'off', offSinceS: null });
+    expect(e.dispatch(defib('charge')).reason).toBe('the Mode Selector is at OFF (turn it to DEFIB)');
+    ok(e, selector('defib'));
+    after(e, 0.1);
+    expect([st(ev).power.selector, st(ev).defibMode, st(ev).patientType, energy(ev)]).toEqual(['defib', 'aed', 'adult', 120]);
+  });
+
+  it('a start that states the unit is on turns the selector once the model has applied, as the device settings at start are sent', () => {
+    const { e, ev } = devRig('saadat-like');
+    ok(e, model('zoll-m2'));
+    e.advanceTo(0.05);
+    ok(e, selector('defib'));
+    e.advanceTo(1);
+    expect(st(ev).power).toMatchObject({ selector: 'defib', offSinceS: null });
+    chargeReady(e, ev);
+  });
+
   it('OFF powers the unit off: offSinceS set, a charged unit disarms [G 1-13], and therapy is refused until it is on again', () => {
     const { e, ev } = room();
     chargeReady(e, ev);
@@ -520,8 +543,8 @@ describe('E1: the generic model, the snapshot and the follower', () => {
   it('the snapshot round trip keeps the selector, the power-off clock, the patient type, the escalation and the top lead; a follower replaying the commands holds the same state and outcome', () => {
     const run = () => {
       const r = devRig('saadat-like', { patient: { rhythm: { id: 'sinus', opts: { rateBpm: 80 } } } });
-      ok(r.e, model('zoll-m2'));
-      r.e.advanceTo(0.5);
+      setDefibModel(r.e, 'zoll-m2');
+      r.e.advanceTo(1);
       for (const c of [patientType('pediatric'), config({ syncAfterShock: true, readyTimeoutS: 20 }), connect({ ecgCable: '3' }), lead('II'), defib('syncOn'), defib('charge')]) ok(r.e, c);
       r.e.advanceTo(8);
       ok(r.e, panel('down'));

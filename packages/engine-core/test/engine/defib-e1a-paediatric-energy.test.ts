@@ -12,7 +12,7 @@ import { createM2State } from '../../src/l3/defib-pacer/m2-vocabulary.ts';
 import { LOW_ENERGY_FRACTION } from '../../src/l3/defib-pacer/outcome.ts';
 import type { M2PatientType } from '../../src/types-device.ts';
 import type { Command, EngineEvent, MonitorEngine, PatientSnapshot } from '../../src/types.ts';
-import { cmd, devRig } from '../helpers/device.ts';
+import { cmd, devRig, setDefibModel } from '../helpers/device.ts';
 
 type Status = Extract<EngineEvent, { type: 'deviceStatus' }>;
 const lastStatus = (ev: EngineEvent[]) => ev.filter((x): x is Status => x.type === 'deviceStatus').pop()!;
@@ -23,8 +23,8 @@ const TERMINATED = new Set(['asystole', 'pea', 'rosc']);
 /** A zoll-m2 room in VF at 1 s, its snapshot with the given patient type in the M2's state. */
 function vfSnapshot(seed: number, type: M2PatientType): PatientSnapshot {
   const r = devRig('saadat-like', { seed });
-  expect(r.e.dispatch(model('zoll-m2')).accepted).toBe(true);
   r.e.dispatch(cmd({ type: 'setRhythm', rhythm: 'vfCoarse' }));
+  setDefibModel(r.e, 'zoll-m2');
   r.e.advanceTo(1);
   const s = structuredClone(r.e.snapshot());
   (s.state as { dev: { m2: { patientType: M2PatientType } } }).dev.m2.patientType = type;

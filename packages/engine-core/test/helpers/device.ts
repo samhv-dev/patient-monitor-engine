@@ -16,6 +16,19 @@ export function devRig(skin: string, opts: Omit<EngineOptions, 'device'> & { age
   return { e, ev };
 }
 
+/** The room's defibrillator model, set now. A ZOLL M2 starts switched off: unless `on` is false it is then switched on
+ * as the resident's first step, once the model has applied (a command is validated at dispatch). */
+export function setDefibModel(e: MonitorEngine, model: string, on = true): void {
+  const send = (action: Record<string, unknown>) => {
+    const r = e.dispatch(cmd({ type: 'device', action: { device: 'defib', ...action } }));
+    if (!r.accepted) throw new Error(r.reason);
+  };
+  send({ action: 'model', value: model });
+  if (model !== 'zoll-m2' || !on) return;
+  e.advanceTo(e.now().simT + 0.5);
+  send({ action: 'selector', value: 'defib' });
+}
+
 export const alarmsOf = (ev: EngineEvent[], id?: string, state?: Alarm['state']): Alarm[] =>
   ev.filter((x): x is Alarm => x.type === 'alarm' && x.level !== undefined && (!id || x.id === id) && (!state || x.state === state));
 export const beats = (ev: EngineEvent[]): Beat[] => ev.filter((x): x is Beat => x.type === 'beat');

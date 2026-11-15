@@ -7,7 +7,7 @@ import { createEngine } from '../../src/engine.ts';
 import { connectionMessages, INTERNAL_MAX_J, INTERNAL_START_J, MSG, messagePriority } from '../../src/l3/defib-pacer/connections.ts';
 import { createM2State, M2_IDLE_STATUS } from '../../src/l3/defib-pacer/m2-vocabulary.ts';
 import type { Command, EngineEvent, MonitorEngine } from '../../src/types.ts';
-import { cmd, devRig, markers } from '../helpers/device.ts';
+import { cmd, devRig, markers, setDefibModel } from '../helpers/device.ts';
 
 type Status = Extract<EngineEvent, { type: 'deviceStatus' }>;
 const statuses = (ev: EngineEvent[]) => ev.filter((x): x is Status => x.type === 'deviceStatus');
@@ -27,7 +27,7 @@ const INTERNAL = (dischargeButton = true, contact = 'good') => ({ therapy: 'inte
 /** An M2 (or generic) room, advanced to 1 s. */
 function room(m: string | null = 'zoll-m2', opts: Parameters<typeof devRig>[1] = {}): { e: MonitorEngine; ev: EngineEvent[] } {
   const r = devRig('saadat-like', opts);
-  if (m) expect(r.e.dispatch(model(m)).accepted).toBe(true);
+  if (m) setDefibModel(r.e, m);
   r.e.advanceTo(1);
   return r;
 }
@@ -327,6 +327,7 @@ describe('E2a: internal handles [G 14-18], [G 14-19], [G 2-4]', () => {
 describe('E2a: which messages show, and their priority (appendix C)', () => {
   const state = (patch: (s: ReturnType<typeof createM2State>) => void) => {
     const s = createM2State();
+    s.power.selector = 'defib'; // switched on (it starts off)
     patch(s);
     return s;
   };
@@ -392,8 +393,8 @@ describe('E2a: the generic model, the snapshot and the follower', () => {
     const script: Command[] = [connect(PADDLES()), defib('charge'), button('apex', 'down')];
     const run = () => {
       const r = devRig('saadat-like');
-      ok(r.e, model('zoll-m2'));
-      r.e.advanceTo(0.5);
+      setDefibModel(r.e, 'zoll-m2');
+      r.e.advanceTo(1);
       for (const c of script) ok(r.e, c);
       r.e.advanceTo(3);
       return r;
