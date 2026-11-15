@@ -9,6 +9,7 @@ import type { LineSensorState } from '../types-hemo.ts';
 import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, StateVar } from '../types.ts';
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
+import { createAlarmInstance, instanceBlock, stepInstance, type AlarmInstance, type AlarmOwner } from './alarms/instance.ts';
 import { DEFIB_MODELS, deviceProfile, skinBand, type DefibModel } from './alarms/profile.ts';
 import { afterShock, applyDefib, createDefib, FALLBACK_DEFIB, stepDefib, validateDefib, type DefibSpec, type DefibState } from './defib-pacer/defib.ts';
 import { drawOutcome, shockClass, T_PEAK_WINDOW_S, type ShockOutcome } from './defib-pacer/outcome.ts';
@@ -60,6 +61,9 @@ export interface DeviceState {
   /** The ZOLL M2's own state (plan E0), present only while the room's model is one with the M2 vocabulary; absent
    * otherwise, so the generic model's state and snapshot are unchanged. */
   m2?: M2State;
+  /** The alarm instances a device owns beside the bedside monitor's `alarms`/`inputs` (plan E7a, DQ3 = A): the M2's,
+   * present with `m2`, idle until E7b gives it a profile; absent otherwise, so the generic model's state is unchanged. */
+  ownAlarms?: Partial<Record<AlarmOwner, AlarmInstance>>;
   sync: SyncState;
   pending: PendingRhythm | null;
   lastBeat: { t: number; qtMs: number } | null;
@@ -104,6 +108,14 @@ const defibSpec = (d: DeviceState): DefibSpec => {
   const s = modelOf(d)?.defib ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
   return d.m2 ? { ...s, readyTimeoutS: d.m2.config.readyTimeoutS } : s;
 };
+/**
+ * The shock outcome's reference energy (plan S8, piece E1a): the first-shock energy of the room's defibrillator for the
+ * patient type, so a correct paediatric dose is not scored as a low-energy adult shock. On the M2, 120 J adult and
+ * 50 J paediatric, Shock 1 [G 14-4], from the M2 state's patient type. A model without a patient type (generic, or no
+ * model: the skin's spec) has no paediatric mode, so it keeps its adult energy as before E1a; the monitor's age band
+ * belongs to the bedside monitor's alarm profile, not to the defibrillator (DQ3 = A).
+ */
+export const outcomeReferenceJ = (d: DeviceState): number => (d.m2?.patientType === 'pediatric' ? defibSpec(d).energyPaedJ : defibSpec(d).energyAdultJ);
 const pacerSpec = (d: DeviceState): PacerSpec => modelOf(d)?.pacer ?? d.alarms.profile.pacer ?? FALLBACK_PACER;
 /**
  * The model's HR-while-pacing rule onto the device profile (row 58): the alarm conditions (conditions.ts) and the
@@ -243,8 +255,14 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
     // device disarms, defib.ts selectEnergy)
     d.defibModel = a.value;
     // the M2's own state, idle, while the model carries it (setting the M2 again starts it afresh)
-    if (modelOf(d)?.m2) d.m2 = createM2State();
-    else delete d.m2;
+    // with its own alarm instance (E7a)
+    if (modelOf(d)?.m2) {
+      d.m2 = createM2State();
+      d.ownAlarms = { defib: createAlarmInstance(t) };
+    } else {
+      delete d.m2;
+      delete d.ownAlarms;
+    }
     applyDefib(d.defib, { kind: 'defib', action: 'selectEnergy', energyJ: defibSpec(d).energyAdultJ }, t, defibSpec(d), out);
     // and its pacer (row 58): a pacer that is off takes the model's default rate and output, as a new device does
     // (createPacer); a running pacer keeps what the clinician set
@@ -319,7 +337,7 @@ function deliverShock(d: DeviceState, host: DeviceHost, atS: number, synced: boo
     // The shock's state context, duck-typed from the host (absent = the state-free table); the rhythm id selects the
     // cardioversion curve
     const st = host.shockState?.() ?? {};
-    outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: defibSpec(d).energyAdultJ, vfDurationS, onTPeak, rhythmId: host.rhythmId, ...st }, rng);
+    outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: outcomeReferenceJ(d), vfDurationS, onTPeak, rhythmId: host.rhythmId, ...st }, rng);
   }
   d.pending = null;
   switch (outcome) {
@@ -442,12 +460,16 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
   if (host.temp === 'on') inp.tempSeen = true;
   inp.pacing = d.pacer.mode !== 'off';
   stepAlarms(d.alarms, t, buildConditions(d.alarms, inp, t), out);
+  // the devices' own instances (E7a): the same rules, their own inputs, published only in their owner's status
+  const own = d.ownAlarms?.defib;
+  const ownChanged = own ? stepInstance(own, t) : false;
   // device status on change and at 1 Hz
   const df = d.defib;
   const pc = d.pacer;
   if (d.m2) d.m2.messages = connectionMessages(d.m2, df.state, pc); // the M2's connection messages (E2a)
-  if (statusChanged(d) || t - d.lastStatusT >= STATUS_EVERY_S - 1e-9) {
+  if (statusChanged(d) || ownChanged || t - d.lastStatusT >= STATUS_EVERY_S - 1e-9) {
     d.lastStatusT = t;
+    if (d.m2 && own) d.m2.alarm = instanceBlock(own, t);
     out.push({
       type: 'deviceStatus', t,
       defib: { energyJ: df.energyJ, state: df.state, sync: df.sync, readyAt: df.readyAt, shocks: df.shocks, lastShock: df.lastShock },

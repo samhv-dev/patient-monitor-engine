@@ -10,7 +10,7 @@
 // shard is set by one ≈ 27-min file; the three files are balanced by their CI times.
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import { openApp } from './app-support.ts';
 import { measure, mhV2Fit, send, serveApp, tileFindings, type W } from './teach2-fit-support.ts';
 

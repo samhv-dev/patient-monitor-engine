@@ -2,7 +2,7 @@
 // saved the debrief and then did nothing: the app's hook (main.ts finish.restart, now teach2/finish.ts restartSameCard)
 // found the card through the /1 runner only. Now the same /2 card loads again from 0:00 at its first phase, with a new
 // phase runner (no takings), as a /1 card does (reload-keeps-case.e2e.ts, "Finish the case"), and the archive has the run.
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 import { app, openMhV2, pressPath } from './mh-v2-path.ts';

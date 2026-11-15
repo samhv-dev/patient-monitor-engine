@@ -6,6 +6,7 @@
 // apart: live (the device's look), faint on the DEVICE (`.dim`: the device itself greys it, research/57 R-34, R-36), and
 // not simulated yet (`data-unsim`: drawn exactly as live, nothing written on the device; aria-disabled with the reason
 // as its description; the drawer's switch overlays a mark).
+import { setText } from '../../../app/keep.ts';
 import { el } from '../../dom.ts';
 import { CONTROLS, type Ctl, type WindowId } from './controls.ts';
 import { DATA, LAYOUT, num, reason, word, type Leaf, type ReasonId, type WordId } from './data.ts';
@@ -260,12 +261,14 @@ export function createDevice(h: DeviceHandlers): Device {
   dev.append(knob);
 
   // ---- painting a View ----
+  // a pictogram and a window are rebuilt only when they change (app/keep.ts)
+  let winKey = '';
   const setUnsim = (b: HTMLElement, r: ReasonId | null) => (r ? describe(b, r) : undescribe(b));
   const paintTag = (els: TagEls, t: TagView) => {
     for (const which of ['hi', 'lo'] as const) {
       const b = els[which], lv = t[which];
       if (!b || !lv) continue;
-      (b.querySelector('.tv') as HTMLElement).textContent = lv.text;
+      setText(b.querySelector('.tv')!, lv.text);
       b.classList.toggle('sel', lv.sel);
       setUnsim(b, lv.unsim);
       b.setAttribute('aria-label', `${b.dataset.name} ${lv.text}`);
@@ -284,6 +287,9 @@ export function createDevice(h: DeviceHandlers): Device {
   };
   const paintWindow = (v: View) => {
     const w = v.window;
+    const key = w ? JSON.stringify(w) : '';
+    if (key === winKey) return;
+    winKey = key;
     if (!w) return void winHost.replaceChildren();
     const box = gv<Box>(G.win);
     const win = place(el('div', { class: `edp-win${w.id === 'confirm' ? ' conf' : ''}`, role: 'dialog', 'aria-label': w.title }), box);
@@ -344,10 +350,13 @@ export function createDevice(h: DeviceHandlers): Device {
     if (key !== rowKey) { rowKey = key; buildTiles(v); }
     v.tiles.forEach((t, i) => {
       const k = tiles[i]!;
-      if (typeof t.value === 'string') k.v.textContent = t.value;
-      else k.v.replaceChildren(picto(t.value.picto, t.value.o));
-      k.u.textContent = t.unit;
-      k.n.textContent = t.label;
+      if (typeof t.value === 'string') { delete k.v.dataset.picto; setText(k.v, t.value); }
+      else {
+        const pk = `${t.value.picto} ${t.value.o ?? ''}`;
+        if (k.v.dataset.picto !== pk) { k.v.dataset.picto = pk; k.v.replaceChildren(picto(t.value.picto, t.value.o)); }
+      }
+      setText(k.u, t.unit);
+      setText(k.n, t.label);
       k.b.classList.toggle('sel', t.sel);
       k.b.classList.toggle('dim', t.dim);
       if (t.unsim) describe(k.b, t.unsim);
@@ -357,7 +366,7 @@ export function createDevice(h: DeviceHandlers): Device {
     for (const b of rkeys) b.classList.toggle('dim', v.rightDim.includes(b.dataset.ctl!));
     paintWindow(v);
     alarmBox.hidden = !v.alarm;
-    if (v.alarm) { alarmBox.className = `edp-alarm ${v.alarm.priority}`; alarmBox.textContent = v.alarm.text; }
+    if (v.alarm) { alarmBox.className = `edp-alarm ${v.alarm.priority}`; setText(alarmBox, v.alarm.text); }
     paintLamp(lampInop, v.lamps.inop, 'on-high');
     paintLamp(lampHigh, v.lamps.high, 'on-high');
     paintLamp(lampMed, v.lamps.med, 'on-med');

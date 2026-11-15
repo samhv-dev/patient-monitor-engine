@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createVentDriver, type VentDriver } from '@pme/ventilator';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { liveWrites } from '../../../app/keep.testing.ts';
 import { faceFromLocation, mountFace } from '../index.ts';
 import FACE from './face.json';
 
@@ -89,6 +90,46 @@ describe('the EDP-TS face', () => {
     expect(document.querySelector('.edp-alarm')!.className).toContain('high');
     // nothing about the simulator is written on the device (R20)
     for (const t of seen) expect(t, t).not.toMatch(/piece|simulated|modelled/);
+    ui.stop();
+  });
+
+  it('a repaint keeps every node a press can rest on: a held key, tile or window row still gets its click', () => {
+    // A click is dispatched only when the press and the release land on the same node: a node replaced under a held
+    // pointer loses the press (WebKit for a text node; every browser for an element), so a repaint that changes
+    // nothing must replace nothing that can be pressed.
+    const d = createVentDriver(null);
+    const ui = mount(d);
+    const repaint = () => { click('[data-ctl="under:ctrl"]'); click('[data-ctl="under:ctrl"]'); };
+    const under = (): Node[] => [
+      ...['[data-ctl="tag:pmax"] .tv', '[data-ctl="key:peep"] .v', '[data-ctl="key:peep"] .u', '[data-ctl="key:peep"] .n'].map((q) => document.querySelector(q)!.firstChild!),
+      document.querySelector('.edp-tile.pict .v svg')!,
+    ];
+    const held = under();
+    expect(held.every((n) => n !== null)).toBe(true);
+    repaint();
+    under().forEach((n, i) => expect(n, `node ${i}`).toBe(held[i]));
+    click('[data-ctl="side:mode"]');
+    const rows = [...document.querySelectorAll('.edp-win .edp-entry')];
+    expect(rows.length).toBeGreaterThan(0);
+    repaint();
+    const after = [...document.querySelectorAll('.edp-win .edp-entry')];
+    expect(after.length).toBe(rows.length);
+    after.forEach((r, i) => expect(r).toBe(rows[i]));
+    ui.stop();
+  });
+
+  it('the alarm box and the two status lines are written only when their text changes', async () => {
+    const d = createVentDriver(null);
+    const ui = mount(d);
+    d.vs.cfg.pmax = 10;
+    let ms = 0;
+    for (let i = 0; i < 100; i++) d.frame((ms += 100));
+    click('[data-ctl="right:nebulizer"]'); // a reason in the strip
+    click('[data-ctl="side:silence"]'); // the silenced countdown
+    const live = ['.edp-alarm', '.edp-strip .why', '.edp-strip .sil'].map((q) => document.querySelector(q)!);
+    expect(live.map((e) => e.textContent!.length > 0)).toEqual([true, true, true]);
+    const repaint = () => { click('[data-ctl="under:ctrl"]'); click('[data-ctl="under:ctrl"]'); };
+    expect(await liveWrites(live, repaint)).toEqual([0, 0, 0]);
     ui.stop();
   });
 

@@ -219,6 +219,8 @@ None recorded.
 
 | File | Expected failures | Skipped |
 |---|---|---|
+| [`engine/defib-e1a-paediatric-energy.test.ts`](../../packages/engine-core/test/engine/defib-e1a-paediatric-energy.test.ts) | 0 | 0 |
+| [`engine/defib-e7a-alarm-instance.test.ts`](../../packages/engine-core/test/engine/defib-e7a-alarm-instance.test.ts) | 0 | 0 |
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
 | [`engine/defib-m2-connections.test.ts`](../../packages/engine-core/test/engine/defib-m2-connections.test.ts) | 0 | 0 |
 | [`engine/defib-m2-manual-sync.test.ts`](../../packages/engine-core/test/engine/defib-m2-manual-sync.test.ts) | 0 | 0 |

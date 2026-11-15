@@ -13,7 +13,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { devices, expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, sheet } from './app-support.ts';
 import { startVite } from './app-support.ts';

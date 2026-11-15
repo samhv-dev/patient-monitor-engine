@@ -5,7 +5,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay } from '../../../packages/controller/relay/server.ts';
 import { openApp, speedV2, startVite } from './app-support.ts';
@@ -187,6 +187,7 @@ test('a defibrillator window on this computer and one over the relay show "120 J
     expect((await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })).accepted).toBe(true);
     await Promise.all([local, phone].map((w) => expect(w.locator('.defib-readout')).toHaveText('120 J CHARGING', { timeout: 1000 })));
     await Promise.all([local, phone].map((w) => expect(w.locator('.defib-readout')).toHaveText('120 J READY', { timeout: 10_000 })));
+    await phone.context().close();
   } finally {
     await relay.close();
   }

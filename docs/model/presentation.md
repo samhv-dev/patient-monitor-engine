@@ -624,6 +624,10 @@ renderer, audio and skin contracts.
 | `learnerPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | L4: the learner PIN — the same keeping as the instructor's (four digits drawn at first use [ENG: |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `defibWords` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | R5d: a refusal of the window's press, in the device's words. |
+| `liveWrites` | [`apps/demo/src/app/keep.testing.ts`](../../apps/demo/src/app/keep.testing.ts) | How many changes a repaint made to each live region: |
+| `setText` | [`apps/demo/src/app/keep.ts`](../../apps/demo/src/app/keep.ts) | Writes `s` as the text of `at`, into its existing text node; |
+| `keyed` | [`apps/demo/src/app/keep.ts`](../../apps/demo/src/app/keep.ts) | One item per key from `cache`, made once by `make` and kept while its key is wanted; |
+| `keepOrder` | [`apps/demo/src/app/keep.ts`](../../apps/demo/src/app/keep.ts) | Puts `into`'s children in the order of `want`. |
 | `storeBase` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Where the store is: |
 | `kitWhere` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Where the work is kept, for a page's store line ("Kept …"), in the same words wherever the app says it. |
 | `kitOffLine` | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | Why the kit's folder is not written, with the way out, or '' when it is. |
@@ -772,7 +776,7 @@ renderer, audio and skin contracts.
 | `transitionText` | [`apps/demo/src/app/triggers.ts`](../../apps/demo/src/app/triggers.ts) | "a shock of at least 150 J → ROSC (30 % chance, else stays)". |
 | `countdown` | [`apps/demo/src/app/triggers.ts`](../../apps/demo/src/app/triggers.ts) | Seconds left for a time trigger, or null. |
 | `h` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Element builder: |
-| `keepOrder` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | "ⓘ" button that shows a glossary entry's long name, unit and normal range. |
+| `tip` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | "ⓘ" button that shows a glossary entry's long name, unit and normal range. |
 | `glossLabel` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | A glossary label with its tooltip, by glossary number. |
 | `seg` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Segmented control: |
 | `stepper` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | − value + with a unit in the accessible name; |
@@ -829,6 +833,7 @@ renderer, audio and skin contracts.
 | `ventScreens` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8d: whether the laptop's ventilator window and the granted tablet drive the patient now (null: |
 | `serveRemoteCockpit` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8c: the host drives from the granted remote cockpit (HostSession onVent / onVentilator) exactly as the view does: |
 | `serveWindowCockpit` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8d: the cockpit in a window of this computer (Room setup's "Ventilator in a new window": |
+| `defibFace` | [`apps/demo/src/defib/faces/index.ts`](../../apps/demo/src/defib/faces/index.ts) | The face a room's defibrillator model is drawn with, and the skin the window's monitor wears (defibSkin's). |
 | `describe` | [`apps/demo/src/physiology-console/actions.ts`](../../apps/demo/src/physiology-console/actions.ts) | One line for the change log. |
 | `foldEvent` | [`apps/demo/src/physiology-console/flatten.ts`](../../apps/demo/src/physiology-console/flatten.ts) | Fold one engine event into `out`. |
 | `autoDigits` | [`apps/demo/src/physiology-console/format.ts`](../../apps/demo/src/physiology-console/format.ts) | Decimals by magnitude when the metadata has none: |
@@ -945,7 +950,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `disturbed`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `createDefibCore`, `createPending`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -1000,6 +1005,8 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/i18n/lang.ts`](../../apps/demo/src/app/i18n/lang.ts) | The host's language for learner-facing text (plan Decision 15): the Debrief page's switch (D13) and the language a card's Briefing is sent in (D13b). |
 | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | The instructor phone's PIN (plan instructor-peer-role.md §1, Q2): kept on the laptop only, in the app's store (localStorage `pme.instructorPin`), four random digits drawn at first use, changed on the Room page. |
 | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | Which skin an instrument wears, and what the defibrillator window reads out (Room plan R5, §4 D5). |
+| [`apps/demo/src/app/keep.testing.ts`](../../apps/demo/src/app/keep.testing.ts) | For DOM tests: which of the controls a repaint disturbed under a held press. |
+| [`apps/demo/src/app/keep.ts`](../../apps/demo/src/app/keep.ts) | Repainting in place. A browser sends `click` only when a press and its release land on the same node, so a repaint never replaces, removes or re-inserts a node a press or the focus can rest on unless what it stands for c |
 | [`apps/demo/src/app/kit-store.ts`](../../apps/demo/src/app/kit-store.ts) | The kit store from the page's side (docs/plans/scenario-builder.md §8 layer 2; the owner's ruling of 10 November 2026): when the app runs from a kit started on Node.js, the kit's server keeps the clinicians' work as plai |
 | [`apps/demo/src/app/learner-actions.ts`](../../apps/demo/src/app/learner-actions.ts) | The learner action bar: what the team at the bedside does. |
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
@@ -1119,6 +1126,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/validate.ts`](../../apps/demo/src/app/views/validate.ts) | Validate (research/13 §4.7): the three validation-harness tools as tabs in the bench theme. |
 | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | Ventilator (research/13 §4.6): the Stage V cockpit beside THIS session's monitor, linked both ways over the Stage V link (a direct same-origin frame port since FX-1). |
 | [`apps/demo/src/app/vitals.ts`](../../apps/demo/src/app/vitals.ts) | The instructor's targets (engine StateVars) in clinical units: glossary label, display scale, step and range. |
+| [`apps/demo/src/defib/core/core.ts`](../../apps/demo/src/defib/core/core.ts) | The defibrillator window's core (plan docs/plans/defibrillator-zoll-m2.md §3.1 C7, §4.2, piece F0): the logic every face needs, knowing nothing of any look, as the ventilator's cockpit core is for its faces. |
+| [`apps/demo/src/defib/core/pending.ts`](../../apps/demo/src/defib/core/pending.ts) | The Trim Knob's pending value (plan defibrillator-zoll-m2.md §4.2, §2.1 D16): select a field, turn the knob, press it to send [G 2-4], [G 2-16]. |
+| [`apps/demo/src/defib/core/types.ts`](../../apps/demo/src/defib/core/types.ts) | The defibrillator window's core types (plan docs/plans/defibrillator-zoll-m2.md §3.1 C7, §4.2, piece F0). |
+| [`apps/demo/src/defib/faces/generic/face.ts`](../../apps/demo/src/defib/faces/generic/face.ts) | The generic defibrillator face (plan defibrillator-zoll-m2.md §4.2, piece F0): today's window (Room plan R5, R5d), moved onto the core with no change in what it shows or sends. |
+| [`apps/demo/src/defib/faces/index.ts`](../../apps/demo/src/defib/faces/index.ts) | The defibrillator's faces (plan defibrillator-zoll-m2.md §4.2, piece F0): the registry and the room model → face mapping (what instrument.ts defibSkin decided alone before: the skin stays its, the face is added here). |
 | [`apps/demo/src/dev/arrest-evidence.ts`](../../apps/demo/src/dev/arrest-evidence.ts) | Arrest evidence page: seven scripted scenarios on the philips-like skin, for inspection before the owner tests again. |
 | [`apps/demo/src/dev/blood-acid-base.ts`](../../apps/demo/src/dev/blood-acid-base.ts) | Blood and acid–base page: blood, acid–base, electrolytes and O2 delivery. |
 | [`apps/demo/src/dev/circulation.ts`](../../apps/demo/src/dev/circulation.ts) | Circulation page: a profile picker, lesions, drugs, events, CPR, IABP/LVAD, a PV-loop view and a chamber-pressure view. |
@@ -1292,6 +1304,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/eeg-generic-tile.e2e.ts`](../../apps/demo/e2e/eeg-generic-tile.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/engine-stopped-said.e2e.ts`](../../apps/demo/e2e/engine-stopped-said.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/evidence-tidy.e2e.ts`](../../apps/demo/e2e/evidence-tidy.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fast-forward-main-thread.e2e.ts`](../../apps/demo/e2e/fast-forward-main-thread.e2e.ts) | 0 | 0 |
@@ -1426,6 +1439,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/instructor-pin.test.ts`](../../apps/demo/src/app/instructor-pin.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument-sync.dom.test.ts`](../../apps/demo/src/app/instrument-sync.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/keep.dom.test.ts`](../../apps/demo/src/app/keep.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/kit-store.test.ts`](../../apps/demo/src/app/kit-store.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/learner-paused.test.ts`](../../apps/demo/src/app/learner-paused.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-others.test.ts`](../../apps/demo/src/app/link-others.test.ts) | 0 | 0 |
@@ -1558,6 +1572,9 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/views/teach2.dom.test.ts`](../../apps/demo/src/app/views/teach2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/vent-handover.dom.test.ts`](../../apps/demo/src/app/views/vent-handover.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/vent-remote.dom.test.ts`](../../apps/demo/src/app/views/vent-remote.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/defib/core/core.test.ts`](../../apps/demo/src/defib/core/core.test.ts) | 0 | 0 |
+| [`apps/demo/src/defib/faces/generic/face.dom.test.ts`](../../apps/demo/src/defib/faces/generic/face.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/defib/faces/index.dom.test.ts`](../../apps/demo/src/defib/faces/index.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/actions.test.ts`](../../apps/demo/src/physiology-console/actions.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/flatten.test.ts`](../../apps/demo/src/physiology-console/flatten.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/format.test.ts`](../../apps/demo/src/physiology-console/format.test.ts) | 0 | 0 |

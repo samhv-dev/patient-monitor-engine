@@ -4,7 +4,7 @@
 // 1024×768. With PME_SHOTS=1 (Chromium) it writes the gate screenshots to docs/gates/showcase-hotfix/.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { shot8 } from './indexed-png.ts';
 import { deliver, openApp, sheet, startVite, tab, TEACH2 } from './app-support.ts';

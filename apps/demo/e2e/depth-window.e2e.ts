@@ -14,7 +14,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { devices, expect, test, type Browser, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay } from '../../../packages/controller/relay/server.ts';
 import { openApp, startVite } from './app-support.ts';

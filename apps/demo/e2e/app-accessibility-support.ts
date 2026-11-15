@@ -8,10 +8,10 @@
 // landmark, and a visible focus indicator on the first 25 tab stops.
 // Not a test file (testMatch is *.e2e.ts). The audits themselves (audit, focusWalk) live in app-support.ts.
 import type { ViteDevServer } from 'vite';
-import { test } from '@playwright/test';
+import { test } from './evidence.ts';
 import { startVite } from './app-support.ts';
 
-export { expect, test, type Page } from '@playwright/test';
+export { expect, test, type Page } from './evidence.ts';
 export { startRelay } from '../../../packages/controller/relay/server.ts';
 export { audit, closeSheets, EXPLORE, focusWalk, go, openApp, sheet, type SheetId, TABS, tab, TEACH2 } from './app-support.ts';
 

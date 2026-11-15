@@ -4,17 +4,14 @@
 // the mean airway pressure and the PEEP of the ventilator frames it drives the patient with (its resp driver's state,
 // read from its snapshot).
 // Run: pnpm exec playwright test apps/demo/e2e/vent-edp-ts.e2e.ts
-import { resolve } from 'node:path';
-import { expect, test, type FrameLocator, type Page } from '@playwright/test';
-import { createServer, type ViteDevServer } from 'vite';
+import { expect, test, type FrameLocator, type Page } from './evidence.ts';
+import type { ViteDevServer } from 'vite';
+import { startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  ({ vite, base } = await startVite());
 });
 test.afterAll(async () => vite?.close());
 
@@ -156,6 +153,29 @@ test('EDP-TS face: High Pressure from the model, its lamp and message, silenced,
   await expect(lamp('high')).toHaveAttribute('data-state', 'off');
   expect(errs).toEqual([]);
 });
+// A press is a press however long it is held: the face repaints at least every 250 ms, and a repaint must not take the
+// node under a held pointer away, or the browser dispatches no click (WebKit for a replaced text node; every browser
+// for a replaced element). The key and a window row, each held across repaints.
+test('EDP-TS face: a key and a window row held across a repaint still take the press', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 820 });
+  await page.goto(`${base}/vent-hamilton.html?face=edp-ts`);
+  await expect(page.locator('main.edp')).toBeVisible({ timeout: 20_000 });
+  const hold = async (sel: string) => {
+    const b = (await page.locator(sel).boundingBox())!;
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(600); // the press held: two repaints or more
+    await page.mouse.up();
+  };
+  await hold('[data-ctl="tag:pmax"] .tv');
+  await expect(page.locator('[data-ctl="tag:pmax"]')).toHaveClass(/\bsel\b/);
+  await page.locator('[data-ctl="under:esc"]').click();
+  await page.locator('[data-ctl="side:mode"]').click();
+  await expect(page.locator('.edp-win .t').first()).toHaveText('Operative Modes');
+  await hold('.edp-win .edp-entry:nth-child(3) .lbl');
+  await expect(page.locator('.edp-win.conf')).toContainText('Mode PCV');
+});
+
 async function knobTurnPage(p: Page, n: number) {
   for (let i = 0; i < Math.abs(n); i++) await p.locator('.edp-knob').dispatchEvent('wheel', { deltaY: n > 0 ? -100 : 100 });
 }

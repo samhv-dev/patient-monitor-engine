@@ -15,9 +15,9 @@
 // PME_A2_SHOTS=<dir>: each flow's form is saved there as PNG (for the PR; CI sets none).
 import { spawn, type ChildProcess } from 'node:child_process';
 import { resolve } from 'node:path';
-import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type BrowserContext, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
-import { openApp, sheet, startVite } from './app-support.ts';
+import { holdAcross, openApp, sheet, startVite } from './app-support.ts';
 import { DOCK_SIZES as SIZES, dockBlocked, dockOverlaps, sheetFootBlocked, sheetFootCount } from './dock-fit-support.ts';
 
 let vite: ViteDevServer;
@@ -281,3 +281,19 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   await ctx.close();
   await remote.ctx.close();
 });
+
+test('the pump tablet: a channel button held while Room setup adds a channel takes', async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  await relayProcess();
+  const { code, pin } = await laptop(page);
+  const { ctx, p } = await pumpTablet(browser, code, pin);
+  await page.evaluate(() => (location.hash = '#/room'));
+  const count = page.locator('select[data-pumps="count"]');
+  await holdAcross(p, p.locator('.pump-face[data-ch="1"] .pf-btn[data-flow="load"]'), async () => {
+    await count.selectOption('5');
+    await expect(p.locator('.pump-face')).toHaveCount(5);
+  });
+  await expect(p.locator('.pump-face[data-ch="1"] .pf-flow[data-flow="load"]')).toBeVisible();
+  await ctx.close();
+});
+
