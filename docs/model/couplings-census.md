@@ -42,9 +42,9 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | pharmacology | 34 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
-| defib-pacer | 25 | 6 |
+| defib-pacer | 27 | 6 |
 | engine-runtime | 11 | 2 |
-| **All** | 1142 | 432 |
+| **All** | 1144 | 432 |
 
 ## The ten effector expressions with the most factors (of 1695)
 
