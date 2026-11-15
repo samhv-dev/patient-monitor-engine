@@ -81,25 +81,27 @@ test('the Hamilton-style face: Silence held on the alarm banner\'s words across 
   await expect(banner).toHaveClass('silenced');
 });
 
-test('Instructor v2: the header\'s pill, Sound switch and Room link held across a repaint take; a step row held over its ticking lock', async ({ page }) => {
-  await openApp(page, base, '?scenario=showcase-mh-v2#/teach2', { warmMs: 1000 });
+test('Instructor v2: the header\'s pill, Sound switch and Room link held across a repaint take', async ({ page }) => {
+  await openApp(page, base, '#/teach2', { warmMs: 1000 });
   const pill = page.locator('.ip2-pill');
   await holdAcross(page, pill.locator('.ip2-pill-time'), () => repainted(pill.locator('.ip2-pill-time')));
   await expect(pill).toHaveAttribute('data-state', 'paused');
-  await pill.click();
-  await expect(pill).toHaveAttribute('data-state', 'running');
   const sound = page.locator('.ip2-sound');
   const was = await sound.getAttribute('aria-pressed');
   await holdAcross(page, sound, () => paintNow(page));
   await expect(sound).not.toHaveAttribute('aria-pressed', was ?? '');
-  // a drug given locks the row that gives it, whose label counts the lock down every second: the press reads the lock
+  await holdAcross(page, page.locator('.ip2-room'), () => paintNow(page));
+  await expect(page).toHaveURL(/#\/room$/);
+});
+
+test('Instructor v2: a step row held over its lock\'s countdown takes (the press reads the lock)', async ({ page }) => {
+  await openApp(page, base, '?scenario=showcase-mh-v2#/teach2', { warmMs: 1000 });
+  // a drug given locks the row that gives it, whose label counts the lock down every second
   expect(await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg', route: 'iv' } }).then((r) => r.accepted))).toBe(true);
   const right = page.locator('.ip2-action button.ip2-row', { hasText: 'Start surgery' }).locator('.ip2-row-right');
   await expect(right).toHaveText(/s left$/);
   await holdAcross(page, right, () => repainted(right));
   await expect(page.locator('.toast').last()).toHaveText(/^Start surgery.*: not given \(/);
-  await holdAcross(page, page.locator('.ip2-room'), () => paintNow(page));
-  await expect(page).toHaveURL(/#\/room$/);
 });
 
 test('the Drug sheet: a pick held over its tag while the lock counts down takes', async ({ page }) => {

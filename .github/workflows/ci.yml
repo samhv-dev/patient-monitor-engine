@@ -322,6 +322,12 @@ jobs:
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.report }}.json
           PME_E2E_LEAK_LOG: e2e-leaks # brief 194: what each test left open (the fixture closes it)
+          PME_E2E_PRESS_LOG: e2e-presses # each plain press whose node was taken out before its release, or released elsewhere
+      - name: presses that could get no click
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
+        run: |
+          node scripts/ci/e2e-presses.mjs e2e-presses | tee "$RUNNER_TEMP/presses.txt"
+          { echo "### e2e: presses that could get no click"; echo; echo '```'; cat "$RUNNER_TEMP/presses.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # Brief 194: the contexts and pages tests left open when they ended, which apps/demo/e2e/evidence.ts then closed
       - name: contexts and pages left open by tests (closed by the e2e fixture)
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
