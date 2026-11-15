@@ -50,6 +50,22 @@ describe("the host's Log names a command another device had applied", () => {
     link.close();
   });
 
+  it("a pump tablet's press (pump rack C2): the channel's act, named by the tablet's Room-setup name, as a learner's line", async () => {
+    const { link, applied } = host({ ...hostStub, deviceName: (k: string) => (k === 'pumptab0001' ? 'bed 2 pumps' : null) } as unknown as AppSession);
+    const rate = { type: 'applyEvent', event: { kind: 'pump', ch: 2, action: 'rate', rate: 30, unit: 'mL/h' }, pump: { ch: 2 } };
+    applied({ ...rate, issuedBy: 'pump', by: 'pumptab0001' });
+    applied({ type: 'applyEvent', event: { kind: 'pump', ch: 1, action: 'bolus', volumeMl: 2, rateMlH: 800 }, pump: { ch: 1 }, issuedBy: 'pump', by: 'pumptab0002' });
+    // a remote's change routed to the channel (D9) stays the remote's line, naming the channel
+    applied({ ...rate, issuedBy: 'learner', by: 'unnamed00001' });
+    await tick();
+    expect(link.log.map((e) => [e.simT, e.kind, e.text])).toEqual([
+      [30, 'learner', 'Channel 2: rate 30 mL/h (pump tablet: bed 2 pumps)'],
+      [30, 'learner', 'Channel 1: bolus 2 mL (pump tablet)'],
+      [30, 'learner', 'Channel 2: rate 30 mL/h (learner remote)'],
+    ]);
+    link.close();
+  });
+
   it("not this link's own command (logged with its ack), a replay, a cockpit frame, the card's own or the ventilator's", async () => {
     const { link, applied } = host();
     applied({ ...ephedrine, issuedBy: 'controller:x' }, {}, `${link.ctl.peerId}-1`);

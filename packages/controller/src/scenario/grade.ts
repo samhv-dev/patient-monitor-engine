@@ -69,8 +69,9 @@ export interface ActionGrade {
 }
 export interface OutcomeGrade { id: string; text: string; grade: 'reached' | 'not reached' | 'pending'; t?: number }
 /** A violation: a card's contraindication (`action` its action's id), or, `source: 'formulary'`, a delivered preparation
- *  the formulary finds wrong (`action` = `prep:<id>`). Absent `source`: the card's. */
-export interface Violation { t: number; seq: number; action: string; text: string; harm: 'modelled' | 'not modelled'; source?: 'card' | 'formulary' }
+ *  the formulary finds wrong (`action` = `prep:<id>`), or, `source: 'pump'` (pump-rack-tci.md §8), a pump channel that
+ *  delivered while its contents and programme differed (`action` = `pump:<channel>`). Absent `source`: the card's. */
+export interface Violation { t: number; seq: number; action: string; text: string; harm: 'modelled' | 'not modelled'; source?: 'card' | 'formulary' | 'pump' }
 /** A preparation as the formulary grades it (§6): `deviation` staged wrong, `violation` delivered wrong, else `ok`. */
 export interface PrepGrade { prepId: string; t: number; by: string; drugId: string; findings: Finding[]; delivered: boolean; grade: 'ok' | 'deviation' | 'violation' }
 /** The grades of a run: the actions (a team act the instructor observes is a record action among them: judged rows are
@@ -474,6 +475,12 @@ export function grade(
   for (const a of gives) {
     const bad = a.prep!.findings.filter(graded);
     if (bad.length) violations.push({ t: a.t, seq: a.seq, action: `prep:${a.prep!.id}`, text: bad.map(findingWords).join('; '), harm: a.prep!.remaining < 1 - EPS ? 'modelled' : 'not modelled', source: 'formulary' });
+  }
+  // §8 "Grading": a mismatched channel that delivered, one violation per accepted act that gave its contents; the harm is
+  // modelled (the engine delivered the true contents, D4)
+  for (const a of team) {
+    if (!a.mismatch || !a.result.accepted || (a.kind === 'infusion' && !((a.rate ?? 0) > 0))) continue;
+    violations.push({ t: a.t, seq: a.seq, action: `pump:${a.channel ?? 0}`, text: `channel ${a.channel ?? 0}: ${a.mismatch.contents} programmed as ${a.mismatch.programmed}`, harm: 'modelled', source: 'pump' });
   }
   violations.sort((x, y) => x.t - y.t || x.seq - y.seq);
 

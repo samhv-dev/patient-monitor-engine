@@ -12,6 +12,7 @@ import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type Any
 import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
+import { shippedPumpDevices } from './pump/devices.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -277,6 +278,10 @@ export class AppSession {
       // made from (loaded once, below; null until then), and each staged preparation into the /2 record
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
+      // pump-rack-tci.md A2 (C2's hand-over): the room's rack as Room setup sets it, and the shipped device profiles
+      // (S1, N125), so the host grants a pump tablet on the learner PIN and checks each of its commands against them
+      pumpRack: () => this.pumpRack,
+      pumpDevices: () => shippedPumpDevices(),
       onPreparation: (p) => this.driver.recordPreparation(p),
       // L14: a learner's give refused while the case was paused: an attempt in the record (and the /2 administrations, not
       // accepted), and a Log line (main.ts hands it to the Link)
