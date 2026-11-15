@@ -93,6 +93,18 @@ describe('E1: the Mode Selector [G 2-4] and the power-off memory [G 1-23], [G 3-
     ok(e, defib('charge'));
   });
 
+  it('PACER refuses Charge and Shock, the panel SHOCK too, as MONITOR does; the other defibrillator controls stay', () => {
+    const { e, ev } = room();
+    chargeReady(e, ev);
+    ok(e, selector('pacer'));
+    after(e, 0.1);
+    for (const c of [defib('shock'), defib('charge')]) expect(e.dispatch(c).reason).toBe('the Mode Selector is at PACER (turn it to DEFIB)');
+    ok(e, panel('down'));
+    after(e, 0.1);
+    expect(lastStatus(ev).defib!.shocks).toBe(0);
+    for (const c of [defib('selectEnergy', { energyJ: 150 }), defib('syncOn'), defib('disarm')]) ok(e, c);
+  });
+
   it(`off for less than ${OFF_MEMORY_S} s keeps every setting; ${OFF_MEMORY_S} s or more resets the patient settings (energy, patient type, escalation) to their defaults`, () => {
     expect(OFF_MEMORY_S).toBe(30); // [G 1-23], [G 3-1]
     const { e, ev } = room();
