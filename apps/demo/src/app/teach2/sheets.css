@@ -1,7 +1,7 @@
 /* Instructor v2: the sheets, the staging tray, the dock's tools and note field (design §3.6, §4; board "Proposal v11").
    The tokens are teach2.css's. Every class is `ip2-*` (plan's selector rule). A sheet slides up over ACTION only: it sits
    in the sheets layer (grid area `action`, teach2.css), which lets every press through where no sheet is open. */
-.ip2-sheet { position: absolute; inset: 14px 20px 0 8px; display: grid; grid-template-rows: 40px auto minmax(0, 1fr) auto 60px; grid-template-columns: minmax(0, 1fr); min-height: 0; border: 1px solid var(--ip2-control); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--ip2-bar); box-shadow: 0 -12px 40px rgb(0 0 0 / 0.6); overflow: hidden; animation: ip2-sheet-in 180ms ease-out; }
+.ip2-sheet { position: absolute; inset: 14px 20px 0 8px; display: grid; grid-template-rows: 40px auto minmax(0, 1fr) auto minmax(60px, auto); grid-template-columns: minmax(0, 1fr); min-height: 0; container-type: inline-size; border: 1px solid var(--ip2-control); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--ip2-bar); box-shadow: 0 -12px 40px rgb(0 0 0 / 0.6); overflow: hidden; animation: ip2-sheet-in 180ms ease-out; }
 .ip2-sheet[hidden] { display: none; }
 .ip2-sheet:focus { outline: none; }
 .ip2-sheet:focus-visible { outline: 2px solid var(--ip2-blue); outline-offset: -2px; }
@@ -82,10 +82,19 @@
 /* the tray's chip, scoped: the strip's chips share the class name and their state looks are state.css's */
 .ip2-tray-items > .ip2-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--ip2-control); border-radius: 6px; font-size: 13px; white-space: nowrap; }
 .ip2-chip-x { border: 0; background: transparent; color: var(--ip2-muted); cursor: pointer; }
-.ip2-sheet-foot { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 14px; border-top: 1px solid var(--ip2-line); background: var(--ip2-bar); }
-.ip2-sheet-deliver { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.ip2-onset.field { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--ip2-muted); } /* the onset beside Deliver (G3) */
-.ip2-onset .input { width: auto; height: 34px; padding: 0 8px; border: 1px solid var(--ip2-control); border-radius: 6px; background: var(--ip2-page); color: var(--ip2-text); font: inherit; }
+/* brief 226: the footer's buttons keep their width (Deliver lay over the hint, Give was cut by the sheet's edge at 1280
+   and 1440 px): the plain hint takes what is left and wraps; the Drug sheet's key line ("Enter gives now · S adds to the
+   cache", also the Give button's aria-keyshortcuts) gives way below 800 px of sheet; if the buttons still do not fit,
+   the sheet's own buttons move to a second row rather than leave the sheet */
+.ip2-sheet-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; padding: 10px 14px; border-top: 1px solid var(--ip2-line); background: var(--ip2-bar); }
+.ip2-sheet-foot > .ip2-spacer { display: none; }
+.ip2-sheet-foot > .ip2-sheet-primary { flex: none; margin-left: auto; }
+.ip2-sheet-foot > .ip2-sheet-primary.ip2-sheet-hint { flex: 1 1 0; justify-content: flex-end; text-align: right; }
+@container (max-width: 800px) { .ip2-foot-line { display: none; } }
+.ip2-sheet-deliver { flex: none; display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.ip2-onset.field { flex: none; display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--ip2-muted); } /* the onset beside Deliver (G3) */
+/* brief 208: the Onset select keeps its natural width (it shrank to "Nc" at 1280 px); the sheet's hint wraps instead */
+.ip2-onset .input { flex: none; width: auto; height: 34px; padding: 0 8px; border: 1px solid var(--ip2-control); border-radius: 6px; background: var(--ip2-page); color: var(--ip2-text); font: inherit; }
 .ip2-sheet-primary, .ip2-gives { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .ip2-foot-line { max-width: 22ch; text-align: right; line-height: 1.3; }
 .ip2-foot-line:empty { display: none; }
@@ -107,7 +116,7 @@
 .ip2-staged { color: var(--ip2-muted); }
 .ip2-staged:not([data-count='0']) { border-color: var(--ip2-blue); color: var(--ip2-blue-text); font-weight: 600; }
 .ip2-note { display: flex; }
-.ip2-note-field { width: 200px; height: 36px; }
+.ip2-note-field { width: 100%; min-width: 96px; height: 36px; } /* 200 px at most, 96 px at least: teach2.css */
 
 /* L15: the Labs sheet: every sample of the case as a card in a column; the result table is the phone's (app.css .lr-lab),
    in Instructor v2's tokens: a flagged value in the warning colour and a critical one in the danger colour, each with its

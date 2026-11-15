@@ -1,7 +1,7 @@
 // One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same
 // verb as the button). Engine ids never reach these lines: targets through the glossary, drugs by the library's name,
 // conditions and rhythms by their catalogue labels.
-import { DRUGS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
+import { DRUGS, EEG_DEVICES, LUNG_CONDITIONS, RHYTHM_IDS, type EegModelId } from '@pme/engine-core';
 import { unitText } from './drugs.ts';
 import { drugName, lungLabel } from './glossary.ts';
 import { showVital, vitalLabel, vitalOf } from './vitals.ts';
@@ -28,6 +28,8 @@ export const CONDITIONS: Readonly<Record<string, string>> = {
 export const SENSORS: Readonly<Record<string, string>> = {
   ecg: 'ECG leads', spo2: 'SpO₂ probe', nibp: 'NIBP cuff', abp: 'Arterial line', cvp: 'CVP line', pap: 'PA catheter', co2: 'CO₂ sampling line', temp: 'Temperature probe',
 };
+/** A lab sample's panel in words (the engine's LAB_PANELS), as LAB_SENT names it; the builder's Script names its items with them. */
+export const LAB_PANEL_WORDS: Readonly<Record<string, string>> = { abg: 'Arterial blood gas', vbg: 'Venous blood gas', chem: 'Chemistry sample', coag: 'Coagulation sample' };
 /** One line per panel a sample may ask for (engine-core types-blood.ts LabPanelId). */
 const LAB_SENT: Readonly<Record<string, string>> = {
   abg: 'Arterial blood gas sent', vbg: 'Venous blood gas sent', chem: 'Chemistry sample sent', coag: 'Coagulation sample sent',
@@ -36,6 +38,42 @@ const AIRWAY: Readonly<Record<string, string>> = {
   patent: 'patent', obstructed: 'obstructed', apnoea: 'apnoeic', disconnected: 'disconnected', oesophageal: 'tube in the oesophagus',
   endobronchial: 'tube endobronchial', bronchospasm: 'bronchospasm',
 };
+
+/** "10 mg/mL" with the drug's own words for its unit. */
+const conc = (c: unknown): string => {
+  const k = (c ?? {}) as Any;
+  return `${+(num(k.amount) / num(k.perMl)).toFixed(3)} ${unitText(String(k.unit))}/mL`;
+};
+/**
+ * A pump channel's act (plan pump-rack-tci.md C2): the engine's `pump` event as the host applied it. The line names the
+ * channel and what the event says; who pressed it is the record row's (`kind`, `by`).
+ */
+function pumpLine(e: Any): string {
+  const ch = `Channel ${e.ch}`;
+  const k = (e.contents ?? {}) as Any;
+  switch (e.action) {
+    case 'load':
+      return `${ch}: ${e.channel === 'drip' ? 'bag' : `${e.syringeMl} mL syringe`} of ${drug(k.drugId)} ${conc(k.concentration)} loaded (${+num(k.volumeMl).toFixed(2)} mL)`;
+    case 'program':
+      return `${ch} programmed: ${drug(e.drugId)} ${conc(e.concentration)}${e.set !== undefined ? `, ${e.set} drops/mL set` : ''}`;
+    case 'rate':
+      return `${ch}: rate ${e.rate} ${unitText(String(e.unit))}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
+    case 'tci':
+      return num(e.target) > 0 ? `${ch}: TCI ${e.setId}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${e.target}` : `${ch}: TCI stopped`;
+    case 'bolus':
+      return e.volumeMl !== undefined ? `${ch}: bolus ${e.volumeMl} mL` : `${ch}: bolus ${(e.dose as Any | undefined)?.amount} ${unitText(String((e.dose as Any | undefined)?.unit))}`;
+    case 'purge':
+      return `${ch}: purge ${e.volumeMl} mL`;
+    case 'start':
+      return `${ch} started`;
+    case 'stop':
+      return `${ch} stopped`;
+    case 'unload':
+      return `${ch} unloaded`;
+    default:
+      return `${ch} changed`;
+  }
+}
 
 function event(e: Any): string {
   switch (e.kind) {
@@ -87,11 +125,24 @@ function event(e: Any): string {
     case 'lab':
       // the panel that was sent (L10a: the gas panels on the room's analyser, chemistry and coagulation to the laboratory)
       return LAB_SENT[String(e.panel)] ?? 'Clinical event';
+    case 'pump':
+      return pumpLine(e);
     case 'mainstem':
       return e.ventilated === 'both' ? 'Both lungs ventilated' : `Only the ${e.ventilated} lung ventilated`;
     default:
       return 'Clinical event';
   }
+}
+
+/** An EEG device command (Room setup's device, the instructor's artefact switches) in words. */
+function eegLine(a: Any): string {
+  const v = a.value;
+  if (a.action === 'on') return 'EEG device on';
+  if (a.action === 'off') return 'EEG device off';
+  if (a.action === 'model') return `EEG device: ${EEG_DEVICES[String(v) as EegModelId]?.spec.label ?? String(v)}`;
+  if (a.action === 'impedance') return Array.isArray(v) ? `EEG electrodes ${v.join(' · ')} kΩ` : `EEG electrodes ${String(v)} kΩ each`;
+  if (a.action === 'ecgPickup') return `EEG ECG pickup ${v ? 'on' : 'off'}`;
+  return 'Device setting changed';
 }
 
 /** `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); the Log then names it. */
@@ -136,6 +187,7 @@ export function describeCommand(c: Any, step?: string): string {
       if (a.device === 'nibp') return a.action === 'start' ? 'NIBP measurement started' : 'NIBP setting changed';
       if (a.device === 'alarm') return a.action === 'silence' ? 'Alarm sound silenced' : a.action === 'pause' ? 'Alarms paused' : a.action === 'ack' ? 'Alarms acknowledged' : a.action === 'enableAll' ? 'All alarms on' : 'Alarm setting changed';
       if (a.device === 'monitor') return 'Monitor setting changed';
+      if (a.device === 'eeg') return eegLine(a); // EEG plan E12, Q9
       return 'Device setting changed';
     }
     default:

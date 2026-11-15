@@ -221,7 +221,7 @@ describe('the Labs tool in the dock', () => {
   it('is the last tool on the host, opens the Labs sheet over ACTION, and lists what was drawn before it was first opened', () => {
     const s = source({ k1: 'bed 1 remote' });
     const r = rig(s.src);
-    expect([...r.tools.querySelectorAll('.ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'Defib · CPR', 'Vitals', 'Devices', 'Patient', 'Log', 'Labs']);
+    expect([...r.tools.querySelectorAll('.ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'CPR', 'Patient', 'Devices', 'Log', 'Labs']);
     s.draw(100, 'abg', 'learner', { by: 'k1' }); // before the sheet is built
     s.result('abg', 100 * TICK_S, ABG);
     (r.tools.querySelector('[data-sheet="labs"]') as HTMLButtonElement).click();
@@ -231,6 +231,31 @@ describe('the Labs tool in the dock', () => {
     expect(open.querySelectorAll('.ip2-lab')).toHaveLength(1);
     expect(open.querySelector('.ip2-lab-who')?.textContent).toBe(LAB_SHEET_WORDS.by('bed 1 remote'));
     r.ctx.openSheet('drug');
+    expect(open.hidden).toBe(true);
+  });
+
+  it('follows the dock\'s conventions: no letter, "Esc closes", no tab row, the shared tray and Deliver, Esc and its tool', () => {
+    const r = rig(source({}).src);
+    const tool = r.tools.querySelector('[data-sheet="labs"]') as HTMLButtonElement;
+    expect(tool.hasAttribute('aria-keyshortcuts')).toBe(false);
+    expect(tool.title).toBe('Labs');
+    tool.click();
+    const open = r.layer.querySelector<HTMLElement>('.ip2-sheet[data-sheet="labs"]') as HTMLElement;
+    expect(open.hidden).toBe(false);
+    expect(tool.getAttribute('aria-pressed')).toBe('true');
+    expect(document.activeElement).toBe(open);
+    expect(open.querySelector('.ip2-sheet-head .ip2-sheet-hint')?.textContent).toBe('Esc closes');
+    expect((open.querySelector('.ip2-sheet-tabs') as HTMLElement).hidden).toBe(true);
+    expect(open.querySelector('.ip2-sheet-foot .ip2-sheet-primary')?.textContent).toBe(LAB_SHEET_WORDS.primary);
+    expect(open.querySelector('.ip2-sheet-foot .ip2-deliver')).not.toBeNull();
+    expect(open.querySelector('.ip2-sheet-tray .ip2-tray-count')).not.toBeNull();
+    open.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(open.hidden).toBe(true);
+    expect(tool.getAttribute('aria-pressed')).toBe('false');
+    expect(document.activeElement).toBe(tool);
+    tool.click();
+    expect(open.hidden).toBe(false);
+    tool.click(); // a tool without tabs: its second press closes it
     expect(open.hidden).toBe(true);
   });
 

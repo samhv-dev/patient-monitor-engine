@@ -8,8 +8,11 @@
 //   be changed before the press (O-15) into a draft the press commits with the mode;
 // - Ctrl lights until the next press or Esc; Ctrl + Oxygen steps by 10 (H-22); on a "*" row whose Ctrl step the manual
 //   does not give (O-05) the step stays and the reason says so;
-// - Menu pressed again: Ventilatory adjuncts, then Tools, then the main menu (H-10).
-// A pressed control that is not honoured yet shows its reason in the message bar for a few seconds.
+// - Menu pressed again: Ventilatory adjuncts, then Tools, then the main menu (H-10);
+// - the alarm keys (V3): the silence key's presses (H-09, A-20); Esc also resets the lamps of the alarms that have
+//   ended (H-25); Ctrl + Alarm Limits: the help of the active alarm, or with none active the alarm test (H-21, A-06).
+// A pressed control that is not honoured yet shows its reason for a few seconds (since VF in the simulator's strip
+// outside the device, never on it: brief 159, R20).
 import type { VentConfig } from '@pme/ventilator';
 import type { Cockpit } from '../../core/cockpit.ts';
 import { createPending, type Pending } from '../../core/pending.ts';
@@ -23,6 +26,9 @@ type Cfg = Readonly<VentConfig>;
 /** A row's focusable part: the row itself, or one limit cell of it. */
 export interface Item { row: number; cell?: string }
 export interface Win { id: WindowId; focus: number }
+/** One step of the alarm test: each priority's lamp and tone in turn, high first (plan GA18) [eng: face.json layout.alarmTestStepS]. */
+export type AlarmTestStep = 'high' | 'medium' | 'low';
+const TEST_STEPS: readonly AlarmTestStep[] = ['high', 'medium', 'low'];
 
 export interface Knob {
   readonly pending: Pending;
@@ -36,9 +42,17 @@ export interface Knob {
   shown(): Cfg;
   /** The bottom row's mode. */
   rowMode(): FaceMode;
+  /** The configuration a window's rows show: its draft for a window that has one (the Backup window, T-41). */
+  windowCfg(id: WindowId): Cfg;
   ctrl(): boolean;
-  /** The reason the message bar shows now, or null. */
+  /** The alarm test's step now (Ctrl + Alarm Limits with no alarm active, research/57 H-21): the priority whose lamp and
+   *  tone are shown in turn, or null when no test runs. */
+  alarmTest(): AlarmTestStep | null;
+  /** The reason the simulator's strip shows now, or null. */
   note(): ReasonId | null;
+  /** Show a reason for a drawn thing that is not a control of the table (a window's row not simulated yet, VF R20).
+   *  It moves nothing: no window, no focus, no value. */
+  explain(r: ReasonId): void;
   /** A touch on a control of the table (`key:vt`, `tag:pmax`, `side:mode`, `right:freeze`, …). */
   press(id: string): void;
   /** A touch on a window's row (the screen is a touch screen, research/57 R-01): focus it and press. */
@@ -56,9 +70,12 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   let wins: Win[] = [];
   let confirming: string | null = null;
   let edits: Partial<VentConfig> = {};
+  /** The open draft window's edits, applied by its Accept row, dropped by Esc (research/57 T-41). */
+  let wedits: Partial<VentConfig> = {};
   let ctrl = false;
   let note: { r: ReasonId; until: number } | null = null;
   let menuPresses = 0;
+  let testFrom: number | null = null;
   let selSetting: Setting & { ctrl?: number | ReasonId; ends?: SettingCtl['ends'] } | null = null;
   const subs = new Set<() => void>();
   const changed = () => { for (const fn of [...subs]) fn(); };
@@ -72,11 +89,13 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   const live: Target = { cfg: () => c.cfg, apply: (p) => c.write(p) };
   const draft: Target = { cfg: draftCfg, apply: (p) => void Object.assign(edits, p) };
   const target = () => (confirming ? draft : live);
+  const wdraft: Target = { cfg: () => ({ ...c.cfg, ...wedits }), apply: (p) => void Object.assign(wedits, p) };
+  const windowCfg = (id: WindowId): Cfg => (WINDOWS[id].draft ? wdraft.cfg() : c.cfg);
 
   const items = (id: WindowId): Item[] => {
     const out: Item[] = [];
     WINDOWS[id].rows.forEach((r: Row, i) => {
-      if (r.kind === 'mode' || r.kind === 'open') out.push({ row: i });
+      if (r.kind === 'mode' || r.kind === 'open' || r.kind === 'accept') out.push({ row: i });
       else if (r.kind === 'setting' && settingState(r.setting, c.cfg) === 'live') out.push({ row: i });
       else if (r.kind === 'limits') for (const cell of r.cells) out.push({ row: i, cell });
     });
@@ -91,6 +110,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     pending.cancel();
     confirming = null;
     edits = {};
+    wedits = {};
     wins = [{ id, focus: 0 }];
   };
   const activate = (w: Win) => {
@@ -103,7 +123,14 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
       wins = at >= 0 ? wins.slice(0, at + 1) : [...wins, { id: row.window, focus: 0 }];
       return;
     }
-    if (row.kind === 'setting') select(`row:${row.setting}`, SETTINGS[row.setting]!, live);
+    if (row.kind === 'accept') {
+      // research/57 T-41: Accept applies the window's values and closes it
+      if (Object.keys(wedits).length) c.write(wedits);
+      wedits = {};
+      wins = wins.slice(0, -1);
+      return;
+    }
+    if (row.kind === 'setting') select(`row:${row.setting}`, SETTINGS[row.setting]!, WINDOWS[w.id].draft ? wdraft : live);
     if (row.kind === 'limits' && it.cell) select(`tag:${it.cell}`, LIMITS[it.cell]!, live);
   };
   const commit = () => {
@@ -114,6 +141,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     wins = [];
     c.chooseMode(name);
     if (Object.keys(e).length) c.write(e);
+    if (name === 'PSV/CPAP') say('psvPressureCycle'); // what the simulated PSV/CPAP breath ends on (research/57 M-06, M-07)
   };
 
   const k: Knob = {
@@ -123,8 +151,15 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     confirming: () => confirming,
     shown: draftCfg,
     rowMode: () => faceMode(draftCfg()),
+    windowCfg,
     ctrl: () => ctrl,
+    alarmTest: () => {
+      if (testFrom === null) return null;
+      const i = Math.floor((now() - testFrom) / (num(LAYOUT.alarmTestStepS) * 1000));
+      return TEST_STEPS[i] ?? null;
+    },
     note: () => (note && now() < note.until ? note.r : null),
+    explain(r) { say(r); changed(); },
     press(id) {
       const ctl = CONTROLS.find((x) => x.id === id);
       if (!ctl) return;
@@ -138,9 +173,18 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
           target().apply(s.again(target().cfg())); // Sens touched twice: flow ↔ pressure (research/57 O-06)
         }
         select(id, s, target());
-      } else if (ctl.kind === 'limit') select(id, LIMITS[ctl.limit]!, live);
-      else if (ctl.action === 'mode') openOnly('modes');
-      else if (ctl.action === 'alarmLimits') openOnly('alarms');
+      } else if (ctl.kind === 'limit') {
+        const L = LIMITS[ctl.limit]!;
+        select(id, L, live);
+        if (L.note) say(L.note);
+      } else if (ctl.action === 'mode') openOnly('modes');
+      else if (ctl.action === 'alarmLimits' && ctrl) {
+        // research/57 H-21, A-06: with an alarm active, its causes and remedies (not in the simulator yet); else the test
+        ctrl = false;
+        if (c.alarms().signals?.message) say('alarmHelp');
+        else testFrom = now();
+      } else if (ctl.action === 'alarmLimits') openOnly('alarms');
+      else if (ctl.action === 'silence') c.silence();
       else if (ctl.action === 'menu') {
         menuPresses = wins[0]?.id === 'menu' && !confirming ? (menuPresses % 3) + 1 : 1;
         openOnly('menu');
@@ -148,10 +192,14 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
         if (menuPresses === 3) wins.push({ id: 'tools', focus: 0 });
       } else if (ctl.action === 'ctrl') ctrl = !ctrl;
       else if (ctl.action === 'esc') {
-        // research/57 H-25: cancels the operation; closes the window
+        // research/57 H-25: resets the lamps of the alarms that have ended; cancels the operation; closes the window
+        // [inferred: the manual lists Esc's four functions, not their order; one press does the lamp reset and the first
+        // of the others that applies]
+        c.esc();
+        testFrom = null;
         if (pending.key !== null) pending.cancel();
         else if (confirming) { confirming = null; edits = {}; }
-        else wins.pop();
+        else if (wins.pop() && !wins.some((x) => WINDOWS[x.id].draft)) wedits = {}; // T-41: back to the previous values
         ctrl = false;
         note = null;
       } else if (ctl.action === 'knobPress') k.push();

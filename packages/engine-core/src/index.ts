@@ -30,6 +30,15 @@ export { DRUG_BUS_NEUTRAL } from './types-pk.ts';
 export type { PkState, DrugInst } from './l2/pk/pipeline.ts';
 export { IV_ROUTES, routeHonoured } from './l2/pk/pipeline.ts'; // the validator, the record and the Drug sheet ask the engine
 export { concUnit } from './l2/pk/pipeline.ts'; // DC1: the unit of a drug row's panel cp/ce, which a /2 phase rule reads
+// pump-rack-tci.md A2: the TCI-set registry, read-only, for the pump tablet's TCI flow (it offers only the sets registered here)
+export { TCI_SETS, NO_KE0_REFUSAL } from './l2/pk/tci-sets/index.ts';
+export type { TciSet, TciSetMeta } from './l2/pk/tci-sets/types.ts';
+// The engine's own validation hooks for a card's scripted event (brief 174): the scenario validator asks the engine
+// whether it takes a lung condition, a mainstem, a recruitment (resp), a lab sample (blood) or a TCI (pk, on a fresh
+// patient's drug model), so each field's type, unit and range is written once, here, where the engine refuses it.
+export { createPkState, validatePkCommand } from './l2/pk/pipeline.ts';
+export { validateRespCommand } from './l2/resp/pipeline.ts';
+export { validateBloodCommand } from './l2/blood/pipeline.ts';
 export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // demo/controller drug pickers
 export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence page: the onset shapes (gamma vs chain)
 export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor
@@ -37,4 +46,5 @@ export type * from './types-truth.ts';
 export type * from './types-neuro.ts';
 export type * from './types-eeg.ts';
 export { EEG_DEVICES, EEG_MODEL_IDS, type EegModelId } from './l3/eeg-devices/registry.ts'; // the EEG devices' spec rows (the developer page, the renderer's strip)
+export { EEG_ELECTRODES, EEG_IMPEDANCE_DEFAULT_KOHM } from './l2/eeg/pipeline.ts'; // E12 (Q9): the instructor's electrode switch sends them back
 export { pruneTruth, TRUTH_LIMITS } from './truth.ts';

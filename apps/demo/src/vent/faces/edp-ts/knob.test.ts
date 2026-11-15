@@ -108,7 +108,7 @@ describe('select, turn, press (test 4)', () => {
     const { c, k } = setup();
     const before = JSON.stringify(c.cfg);
     k.press('right:standby');
-    expect(k.note()).toBe('v5');
+    expect(k.note()).toBe('standby'); // VF: one resident reason per control (brief 159, R20); V1 said 'v5'
     expect(JSON.stringify(c.cfg)).toBe(before);
   });
 });
@@ -189,7 +189,7 @@ describe('Menu and Alarm Limits (research/57 H-10, A-21)', () => {
   it('Alarm Limits: the knob reaches each limit cell and edits it', () => {
     const { c, k } = setup();
     k.press('side:alarmLimits');
-    k.turn(1); // pmax → vtHi
+    k.turn(2); // pmax → pLo (V3) → vtHi
     k.push();
     expect(k.pending.key).toBe('tag:vtHi');
     k.turn(-5);

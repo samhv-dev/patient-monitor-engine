@@ -90,15 +90,62 @@ describe('the control table and the windows name real reasons and gap rows', () 
 
 describe('the face draws no colour, word or number of its own', () => {
   const src = (f: string) => readFileSync(resolve(import.meta.dirname, f), 'utf8');
-  it('face.css: colours only through the custom properties face.ts sets from face.json', () => {
+  it('face.css: colours only through the custom properties face.ts sets from face.json (and the font token)', () => {
     const css = src('face.css').replace(/\/\*[\s\S]*?\*\//g, '');
-    expect(css.match(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/g) ?? []).toEqual([]);
-    for (const [, name] of css.matchAll(/var\(--edp-([a-zA-Z]+)\)/g)) expect((FACE.colours as Record<string, unknown>)[name as string], name).toBeDefined();
+    expect(css.match(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|color-mix\(/g) ?? []).toEqual([]);
+    // every --edp-* name (hyphens included, so a typo cannot slip past) is a face.json colour, or the font token
+    for (const [, name] of css.matchAll(/var\(--edp-([a-zA-Z0-9-]+)\)/g)) expect(name === 'font' || (FACE.colours as Record<string, unknown>)[name as string] !== undefined, name).toBe(true);
   });
-  it('face.ts: no string literal shown on the face (words come from face.json through word() and reason())', () => {
-    const ts = src('face.ts');
-    // canvas text and DOM text: every fillText and every text node argument is a word(), a number, or a format
+  // VF (brief 159): the drawing is split over face.ts, device.ts (the housing and screen), view.ts (what they show) and
+  // pictograms.ts (one drawing per subject); none of them holds a colour, and none writes canvas text of its own
+  it.each(['face.ts', 'device.ts', 'view.ts', 'pictograms.ts'])('%s: no colour literal, no canvas text', (f) => {
+    const ts = src(f);
     expect(ts.match(/fillText\('/g) ?? []).toEqual([]);
-    expect(ts.match(/#[0-9a-fA-F]{6}\b/g) ?? []).toEqual([]);
+    expect(ts.match(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|color-mix\(/g) ?? []).toEqual([]);
+  });
+  it('every region box of the design grid is a measured (or reasoned eng) leaf, inside the device or the screen', () => {
+    const G = FACE.layout.grid as Record<string, { v: unknown; p: string }>;
+    for (const [k, l] of Object.entries(G)) expect(['measured', 'documented', 'eng'], k).toContain(l.p);
+    const box = (k: string) => G[k]!.v as number[];
+    for (const k of ['head', 'topLeft', 'msg', 'left', 'win', 'alarmBox']) { const [x, y, w, h] = box(k); expect(x! >= 0 && y! >= 0 && x! + w! <= 800 && y! + h! <= 600, k).toBe(true); }
+    for (const k of ['face', 'frame']) { const [x, y, w, h] = box(k); expect(x! + w! <= (G.devW!.v as number) && y! + h! <= (G.devH!.v as number), k).toBe(true); }
+  });
+});
+
+// Brief 202 (V3 on the redrawn face): every word, colour and position the alarm signals add cites a photograph, a page
+// of the manual (research/57 rows), or is a marked choice; and the face's provenance says plainly that the oxygen
+// alarms read the SET oxygen (finding N111: the model has no oxygen sensor).
+describe('the alarm signals: their sources', () => {
+  const L = (o: unknown) => o as { v: unknown; p: string; src: string; why?: string };
+  it('the message box: placed and coloured as the manual\'s screen picture shows it (F p. 17, Figure 3-5: S-01, S-02)', () => {
+    expect(L(FACE.layout.grid.alarmBox)).toMatchObject({ p: 'documented', src: 'research/57 S-01' });
+    expect(L(FACE.colours.alarmHighInk)).toMatchObject({ p: 'documented', src: 'research/57 S-02' });
+    // the figure shows a high alarm only: the medium/low box's words are a choice (S-07)
+    expect(L(FACE.colours.alarmMedInk).p).toBe('eng');
+    expect(ROWS.get('S-01')).toBe('F');
+    expect(ROWS.get('S-06'), 'the silenced state on the device: in no source').toBe('GAP');
+  });
+  it('the lamps: lit and unlit colours measured on the photographs; flash periods a marked choice (H-06 says fast and slow only)', () => {
+    for (const k of ['lampHigh', 'lampMed', 'lampOff'] as const) expect(L(FACE.colours[k]).p, k).toBe('measured');
+    for (const k of ['lampFastS', 'lampSlowS'] as const) { expect(L(FACE.layout[k]).p, k).toBe('eng'); expect(L(FACE.layout[k]).why, k).toMatch(/half/); }
+  });
+  it('the lamps unlit and lit as photographed (round 2): a flat unlit lamp at its measured contrast to the bezel (S-10), an even lit fill with its glow outward and no pale centre (S-11)', () => {
+    expect(L(FACE.colours.lampUnlit)).toMatchObject({ p: 'measured', src: 'research/57 S-10, P-51' });
+    expect(ROWS.get('S-10')).toBe('meas');
+    expect(ROWS.get('S-11')).toBe('meas');
+    const css = readFileSync(resolve(import.meta.dirname, 'face.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const lampRules = css.split('\n').filter((l) => l.includes('.edp-lamp')).join('\n');
+    expect(lampRules).not.toMatch(/radial-gradient|box-shadow/);
+    expect(lampRules).toMatch(/var\(--edp-lampUnlit\)/);
+    expect(lampRules).toMatch(/drop-shadow\(/);
+  });
+  it('the simulator\'s words outside the device: the silenced state and the Vent Inop lamp\'s reason', () => {
+    expect(L(FACE.reasons.silenced).p).toBe('sim');
+    expect(L(FACE.reasons.ventInop)).toMatchObject({ p: 'sim', src: 'plan GA14' });
+  });
+  it('N111 in plain words: the O2 alarms compare the SET oxygen, there is no oxygen sensor', () => {
+    expect(FACE.$about).toMatch(/no oxygen sensor/);
+    expect(FACE.$about).toMatch(/SET Oxygen/);
+    expect(L(FACE.reasons.o2Set).v).toMatch(/SET Oxygen/);
   });
 });
