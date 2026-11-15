@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createVentDriver, type VentDriver } from '@pme/ventilator';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { liveWrites } from '../../../app/keep.testing.ts';
 import { faceFromLocation, mountFace } from '../index.ts';
 import FACE from './face.json';
 
@@ -114,6 +115,21 @@ describe('the EDP-TS face', () => {
     const after = [...document.querySelectorAll('.edp-win .edp-entry')];
     expect(after.length).toBe(rows.length);
     after.forEach((r, i) => expect(r).toBe(rows[i]));
+    ui.stop();
+  });
+
+  it('the alarm box and the two status lines are written only when their text changes', async () => {
+    const d = createVentDriver(null);
+    const ui = mount(d);
+    d.vs.cfg.pmax = 10;
+    let ms = 0;
+    for (let i = 0; i < 100; i++) d.frame((ms += 100));
+    click('[data-ctl="right:nebulizer"]'); // a reason in the strip
+    click('[data-ctl="side:silence"]'); // the silenced countdown
+    const live = ['.edp-alarm', '.edp-strip .why', '.edp-strip .sil'].map((q) => document.querySelector(q)!);
+    expect(live.map((e) => e.textContent!.length > 0)).toEqual([true, true, true]);
+    const repaint = () => { click('[data-ctl="under:ctrl"]'); click('[data-ctl="under:ctrl"]'); };
+    expect(await liveWrites(live, repaint)).toEqual([0, 0, 0]);
     ui.stop();
   });
 

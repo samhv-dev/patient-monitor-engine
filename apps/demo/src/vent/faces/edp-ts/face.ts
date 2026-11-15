@@ -8,6 +8,7 @@
 import { unlockAudio, type AudioOut } from '@pme/audio';
 import type { Cockpit } from '../../core/cockpit.ts';
 import type { FaceEnv, FaceModule } from '../../core/types.ts';
+import { setText } from '../../../app/keep.ts';
 import { $, el } from '../../dom.ts';
 import type { SimTools } from '../../sim-tools.ts';
 import { DATA, LAYOUT, num, reason, word, type Leaf } from './data.ts';
@@ -183,8 +184,8 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
     const v = viewOf(c, knob);
     d.paint(v);
     const r = knob.note();
-    why.textContent = r ? reason(r) : '';
-    sil.textContent = v.silencedS > 0 ? `${reason('silenced')}: ${Math.ceil(v.silencedS - 1e-9)} s` : '';
+    setText(why, r ? reason(r) : '');
+    setText(sil, v.silencedS > 0 ? `${reason('silenced')}: ${Math.ceil(v.silencedS - 1e-9)} s` : '');
     const s = c.alarms().signals;
     if (s && snd) snd.update(s, vol(), performance.now());
     // the alarm test: each priority's tone once, with its lamp (H-21)

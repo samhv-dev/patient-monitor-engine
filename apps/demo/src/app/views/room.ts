@@ -318,27 +318,46 @@ export function roomView(d: RoomDeps): RoomView {
     if (d.open) d.open(url);
     else window.open(url, '_blank', 'noopener,width=1280,height=800');
   };
-  const drawCards = (rs: readonly DeviceRow[]) => {
-    cards.replaceChildren(...OPENERS.map((o) => {
-      const w = PICKER_WORDS.cards.find((c) => c.show === o.show);
-      const title = o.title ?? w?.title ?? o.show;
-      if (o.show === 'learner' || o.show === 'monitor' || o.show === 'defib' || o.show === 'depth') {
-        const show = o.show;
-        const names = [...(show === 'monitor' ? ['This window'] : []), ...windowNames(show, rs)];
-        return instrumentCard({ show, title, chip: names.length ? names.join(' · ') : 'Not open', on: names.length > 0, text: o.text, foot: o.foot,
-          actions: [button('New window', () => openWindow(show), 'small', { 'aria-label': `${title} in a new window` })] });
-      }
-      if (o.show === 'vent') {
-        const v = d.vent?.();
-        const on = v?.window === 'driving' ? 'Window · driving' : v?.device === 'driving' ? 'Tablet · driving' : 'On this computer';
-        return instrumentCard({ show: 'vent', title, chip: on, on: on !== 'On this computer', text: o.text, foot: o.foot, actions: [
+  // each card is made once; a redraw writes only its state chip, so an opener under a press or the focus stays
+  type Chip = (rs: readonly DeviceRow[]) => { text: string; on: boolean };
+  const openers = OPENERS.map((o): { el: HTMLElement; chip: Chip | null } => {
+    const w = PICKER_WORDS.cards.find((c) => c.show === o.show);
+    const title = o.title ?? w?.title ?? o.show;
+    if (o.show === 'learner' || o.show === 'monitor' || o.show === 'defib' || o.show === 'depth') {
+      const show = o.show;
+      return {
+        el: instrumentCard({ show, title, chip: '', text: o.text, foot: o.foot, actions: [button('New window', () => openWindow(show), 'small', { 'aria-label': `${title} in a new window` })] }),
+        chip: (rs) => {
+          const names = [...(show === 'monitor' ? ['This window'] : []), ...windowNames(show, rs)];
+          return { text: names.length ? names.join(' · ') : 'Not open', on: names.length > 0 };
+        },
+      };
+    }
+    if (o.show === 'vent') {
+      return {
+        el: instrumentCard({ show: 'vent', title, chip: '', text: o.text, foot: o.foot, actions: [
           h('a', { class: 'btn small', href: hrefOf('vent') }, 'Open here'),
           // `noopener`, as the other windows: its own process; the link is the room code's BroadcastChannel
           button('New window', () => (d.open ?? ((u: string) => void window.open(u, '_blank', 'noopener,width=1280,height=800')))(ventWindowUrl(d.code, location.pathname)), 'small', { 'aria-label': `${title} in a new window` }),
-        ] });
-      }
-      return instrumentCard({ show: o.show, title, chip: w?.chip ?? '', text: o.text, foot: o.foot, actions: [] });
-    }));
+        ] }),
+        chip: () => {
+          const v = d.vent?.();
+          const on = v?.window === 'driving' ? 'Window · driving' : v?.device === 'driving' ? 'Tablet · driving' : 'On this computer';
+          return { text: on, on: on !== 'On this computer' };
+        },
+      };
+    }
+    return { el: instrumentCard({ show: o.show, title, chip: w?.chip ?? '', text: o.text, foot: o.foot, actions: [] }), chip: null };
+  });
+  cards.append(...openers.map((o) => o.el));
+  const drawCards = (rs: readonly DeviceRow[]) => {
+    for (const o of openers) {
+      if (!o.chip) continue;
+      const c = o.chip(rs);
+      const st = o.el.querySelector('.st') as HTMLElement;
+      setText(st, c.text);
+      st.classList.toggle('on', c.on);
+    }
   };
   const lastLine = h('p', { class: 'room-last' });
   const reopen = button('Reopen that layout', () => {

@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { ScenarioView, type AnyScenarioDoc, type CommandInput } from '@pme/controller';
 import type { Administration, PhaseEntry, PhaseHold, RuleEdge } from '@pme/controller/scenario';
+import { disturbed } from '../keep.testing.ts';
 import type { Link } from '../link.ts';
 import { anyShowcaseDoc } from '../showcase/harness.ts';
 import { mount as mountAction } from './action.ts';
@@ -274,5 +275,43 @@ describe('Instructor v2: "name MH" is a record action (judged rows retired, the 
     const done = board({ phaseId: 'earlySigns', t: 483, simT: 500, takings: { nameMh: 1 }, run: { phases: EARLY, admin: [SAID] } });
     expect(done.row).toMatchObject({ kind: 'step', look: 'taken', right: 'met 08:12' });
     expect(done.finished).toBe(0);
+  });
+});
+
+describe('Instructor v2: a repaint keeps every ACTION row a press can rest on', () => {
+  const title = (r: Element) => r.querySelector('.ip2-row-title')?.textContent ?? '';
+  const openRows = (el: Element) => [...el.querySelectorAll<HTMLElement>('.ip2-rows:not(.ip2-finished-list) .ip2-row')];
+
+  it('the rows stay the same nodes, text nodes included, while their "due" countdown ticks', async () => {
+    const EARLY: PhaseEntry[] = [{ id: 'baseline', t: 0, rule: 'start' }, { id: 'latent', t: 377, exitT: 483, rule: 'enter:latent' }, { id: 'earlySigns', t: 483, rule: 'enter:earlySigns' }];
+    const r = rig({ simT: 490, run: { phases: EARLY } });
+    (r.sv.stateId = 'earlySigns'), (r.sv.enteredT = 483);
+    const el = document.createElement('div');
+    document.body.append(el);
+    const slot = mountAction(el, r.ctx);
+    slot.refresh();
+    const named = () => openRows(el).find((x) => /^Name malignant hyperthermia/.test(title(x)))!;
+    expect(named().querySelector('.ip2-row-right')?.textContent).toBe('due 1:53');
+    const tick = () => { (r.link as { simT: number }).simT = 491; (r.link.ctl as { simT: number }).simT = 491; slot.refresh(); };
+    expect(await disturbed(openRows(el), tick)).toEqual([]);
+    expect(named().querySelector('.ip2-row-right')?.textContent).toBe('due 1:52');
+    el.remove();
+  });
+
+  it('a row that moves between the open list and "Not due now" is the same button', () => {
+    const admin: Administration[] = [];
+    const takings: Record<string, number> = {};
+    const r = rig({ simT: 400, takings, run: { admin, edges: ANCHOR } });
+    const el = document.createElement('div');
+    const slot = mountAction(el, r.ctx);
+    slot.refresh();
+    const intubate = () => [...el.querySelectorAll('button.ip2-row')].find((x) => title(x).startsWith('Intubate'))!;
+    const before = intubate();
+    expect(before.closest('.ip2-later-list')).toBeNull();
+    admin.push({ seq: 1, t: 300, source: 'action', actionId: 'intubate', kind: 'airway', result: { accepted: true } });
+    takings.intubate = 1;
+    slot.refresh();
+    expect(intubate().closest('.ip2-later-list')).not.toBeNull();
+    expect(intubate()).toBe(before);
   });
 });

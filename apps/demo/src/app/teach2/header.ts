@@ -86,9 +86,10 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     // brief 105: a busy computer leaves the engine behind real time; the pill says so (it catches up by itself)
     const b = link.host?.behindS?.() ?? 0; // a test's partial host has none
     const behind = !paused && b > BEHIND_REPORT_S;
-    pill.dataset.state = paused ? 'paused' : 'running';
+    const state = paused ? 'paused' : 'running';
+    if (pill.dataset.state !== state) pillIcon.innerHTML = paused ? STOP_SVG : PLAY_SVG;
+    pill.dataset.state = state;
     pill.toggleAttribute('data-behind', behind);
-    pillIcon.innerHTML = paused ? STOP_SVG : PLAY_SVG;
     setText(pillWord, paused ? 'PAUSED' : behind ? 'BEHIND' : 'RUNNING');
     setText(pillTime, clock(link.simT));
     const behindText = `The simulation is ${b.toFixed(1)} s behind real time: the computer is busy. It catches up by itself.`;
@@ -114,16 +115,21 @@ export function mountHeader(link: Link, top?: TopControls): Header {
   // top bar's does (main.ts, Room plan R7; the owner, 8 Nov 2026: the pill shows the room's code, so it leads to the Room
   // page everywhere; the Remote's pairing stays one tap away from the Room page)
   const sound = top ? h('button', { type: 'button', class: 'ip2-topctl ip2-sound', 'aria-pressed': 'false', onclick: () => void Promise.resolve(top.toggleSound()).finally(() => refresh()) }) : null;
-  const room = top ? h('a', { class: 'ip2-topctl ip2-room', href: hrefOf('room') }) : null;
+  const soundWord = h('span', {});
+  sound?.insertAdjacentHTML('afterbegin', SOUND_SVG);
+  sound?.append(soundWord);
+  const roomCode = h('span', { class: 'ip2-room-code' });
+  const roomPhones = document.createTextNode('');
+  const room = top ? h('a', { class: 'ip2-topctl ip2-room', href: hrefOf('room') }, 'Room ', roomCode, roomPhones) : null;
   const drawTop = () => {
     if (!top || !sound || !room) return;
     const on = top.soundOn();
     sound.setAttribute('aria-pressed', String(on));
-    sound.innerHTML = `${SOUND_SVG}<span>${on ? 'Sound on' : 'Sound off'}</span>`;
+    setText(soundWord, on ? 'Sound on' : 'Sound off');
     const n = top.phones();
     const phones = `${n} ${n === 1 ? 'phone' : 'phones'}`;
-    room.innerHTML = '';
-    room.append('Room ', h('span', { class: 'ip2-room-code' }, top.code), ` · ${phones}`);
+    setText(roomCode, top.code);
+    setText(roomPhones, ` · ${phones}`);
     room.setAttribute('aria-label', `Room code ${top.code.split('').join(' ')}, ${phones}: Room setup`);
   };
 

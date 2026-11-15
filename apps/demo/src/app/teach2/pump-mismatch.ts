@@ -9,7 +9,7 @@ import type { PumpMismatchNews } from '@pme/controller';
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { clock, h, setText, toast } from '../ui.ts';
+import { clock, h, keepOrder, keyed, setText, toast } from '../ui.ts';
 import './pump-mismatch.css';
 
 /** The card's words (English chrome; keys, so a translation table can hold them: A4). */
@@ -35,27 +35,30 @@ export interface PumpMismatchCard {
 export function mountPumpMismatch(link: Pick<Link, 'pumpFindings' | 'onChange' | 'host'>): PumpMismatchCard {
   const list = h('ul', { class: 'ip2-pm-list' });
   const el = h('section', { class: 'ip2-pm', 'aria-label': MISMATCH_CARD_WORDS.title, hidden: true }, list);
+  const card = (f: PumpMismatchNews, name: string | null): HTMLElement => {
+    const who = name ? `${MISMATCH_CARD_WORDS.tablet}: ${name}` : MISMATCH_CARD_WORDS.tablet;
+    const what = MISMATCH_CARD_WORDS.what(f.ch, who, f.kind, conc(f.contents.drugId, f.label), conc(f.programmed.drugId, f.programmed.concentration));
+    const control = f.notice
+      ? h('p', { class: 'ip2-pm-shown', role: 'status' }, MISMATCH_CARD_WORDS.shownAt(f.notice.shownAt))
+      : h('button', { type: 'button', class: 'ip2-pm-show', 'data-ch': String(f.ch), onclick: () => {
+        if (!link.host?.host.showPumpNotice(f.ch)) toast(MISMATCH_CARD_WORDS.notShown, 'alert');
+      } }, MISMATCH_CARD_WORDS.show);
+    const li = h('li', { class: 'ip2-pm-card', 'data-ch': String(f.ch), 'data-kind': f.kind }, h('p', { class: 'ip2-pm-what' }), control);
+    setText(li.querySelector('.ip2-pm-what') as HTMLElement, what);
+    return li;
+  };
+  // a card is remade only when its own finding changes: the others' buttons and shown lines stay the same nodes
+  const cards = new Map<string, HTMLElement>();
   let drawn = '';
   const draw = () => {
     const all = [...(link.pumpFindings?.values() ?? [])] // a test's partial Link has none
       .sort((a, b) => a.ch - b.ch);
     const sig = JSON.stringify(all);
-    if (sig === drawn) return; // a button under the pointer stays the same element
+    if (sig === drawn) return;
     drawn = sig;
     el.hidden = all.length === 0;
-    list.replaceChildren(...all.map((f) => {
-      const name = link.host?.deviceName(f.device) ?? null;
-      const who = name ? `${MISMATCH_CARD_WORDS.tablet}: ${name}` : MISMATCH_CARD_WORDS.tablet;
-      const what = MISMATCH_CARD_WORDS.what(f.ch, who, f.kind, conc(f.contents.drugId, f.label), conc(f.programmed.drugId, f.programmed.concentration));
-      const control = f.notice
-        ? h('p', { class: 'ip2-pm-shown', role: 'status' }, MISMATCH_CARD_WORDS.shownAt(f.notice.shownAt))
-        : h('button', { type: 'button', class: 'ip2-pm-show', 'data-ch': String(f.ch), onclick: () => {
-          if (!link.host?.host.showPumpNotice(f.ch)) toast(MISMATCH_CARD_WORDS.notShown, 'alert');
-        } }, MISMATCH_CARD_WORDS.show);
-      const li = h('li', { class: 'ip2-pm-card', 'data-ch': String(f.ch), 'data-kind': f.kind }, h('p', { class: 'ip2-pm-what' }), control);
-      setText(li.querySelector('.ip2-pm-what') as HTMLElement, what);
-      return li;
-    }));
+    const names = all.map((f) => link.host?.deviceName(f.device) ?? null);
+    keepOrder(list, keyed(cards, all.map((f, i) => JSON.stringify([f, names[i]])), (_, i) => card(all[i] as PumpMismatchNews, names[i] ?? null)));
   };
   const off = link.onChange(draw);
   draw();

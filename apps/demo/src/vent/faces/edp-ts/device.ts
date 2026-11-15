@@ -6,6 +6,7 @@
 // apart: live (the device's look), faint on the DEVICE (`.dim`: the device itself greys it, research/57 R-34, R-36), and
 // not simulated yet (`data-unsim`: drawn exactly as live, nothing written on the device; aria-disabled with the reason
 // as its description; the drawer's switch overlays a mark).
+import { setText } from '../../../app/keep.ts';
 import { el } from '../../dom.ts';
 import { CONTROLS, type Ctl, type WindowId } from './controls.ts';
 import { DATA, LAYOUT, num, reason, word, type Leaf, type ReasonId, type WordId } from './data.ts';
@@ -260,13 +261,7 @@ export function createDevice(h: DeviceHandlers): Device {
   dev.append(knob);
 
   // ---- painting a View ----
-  // A click needs its press and its release on one node, so a repaint never replaces a node a press can rest on when
-  // nothing it shows has changed: a key's text is written into its own text node (WebKit treats a replaced text node
-  // as another node), a pictogram and a window are rebuilt only when they change (every browser does so for an element).
-  const setText = (e: Element, s: string) => {
-    const t = e.firstChild;
-    if (t instanceof Text && !t.nextSibling) { if (t.data !== s) t.data = s; } else e.textContent = s;
-  };
+  // a pictogram and a window are rebuilt only when they change (app/keep.ts)
   let winKey = '';
   const setUnsim = (b: HTMLElement, r: ReasonId | null) => (r ? describe(b, r) : undescribe(b));
   const paintTag = (els: TagEls, t: TagView) => {
@@ -371,7 +366,7 @@ export function createDevice(h: DeviceHandlers): Device {
     for (const b of rkeys) b.classList.toggle('dim', v.rightDim.includes(b.dataset.ctl!));
     paintWindow(v);
     alarmBox.hidden = !v.alarm;
-    if (v.alarm) { alarmBox.className = `edp-alarm ${v.alarm.priority}`; alarmBox.textContent = v.alarm.text; }
+    if (v.alarm) { alarmBox.className = `edp-alarm ${v.alarm.priority}`; setText(alarmBox, v.alarm.text); }
     paintLamp(lampInop, v.lamps.inop, 'on-high');
     paintLamp(lampHigh, v.lamps.high, 'on-high');
     paintLamp(lampMed, v.lamps.med, 'on-med');

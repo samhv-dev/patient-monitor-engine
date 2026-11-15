@@ -23,6 +23,7 @@ export const SPEEDS: readonly string[] = ['1', '2', '4', '8'];
 export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   const who = h('span', { class: 'who num' });
   const badge = h('button', { type: 'button', class: 'mode-badge', 'aria-haspopup': 'dialog' });
+  const badgeWord = document.createTextNode('');
   const scen = h('span', { class: 'scen' });
   const t = h('span', { class: 'clock num', 'aria-label': 'Simulation time' });
   const speed = seg<string>('Simulation speed', SPEEDS.map((k) => [k, `×${k}`] as [string, string]), '1', (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)));
@@ -33,7 +34,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     paused = !paused;
     asking++;
     void link.send({ type: 'time', action: paused ? 'pause' : 'resume' }).finally(() => (asking--, draw()));
-    pause.textContent = paused ? 'Resume' : 'Pause';
+    setText(pause, paused ? 'Resume' : 'Pause');
     pause.setAttribute('aria-pressed', String(paused));
   }, 'small');
   pause.setAttribute('aria-pressed', 'false');
@@ -72,9 +73,12 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     setText(who, [base, ...activeText(link.conditions)].filter(Boolean).join(' · ')); // Task 26: the acute events running
     const m = link.ctl.state?.mode ?? host?.mode ?? 'manual';
     const n = m === 'modeled' ? held().length : 0;
+    if (badge.dataset.mode !== m) {
+      badge.innerHTML = m === 'modeled' ? WAVE_SVG : PIN_SVG;
+      badge.append(badgeWord);
+    }
     badge.dataset.mode = m;
-    badge.innerHTML = m === 'modeled' ? WAVE_SVG : PIN_SVG;
-    badge.append(m === 'modeled' ? (n ? `MODELED, ${n} held` : 'MODELED') : 'MANUAL');
+    setText(badgeWord, m === 'modeled' ? (n ? `MODELED, ${n} held` : 'MODELED') : 'MANUAL');
     badge.setAttribute('aria-label', `Physiology mode ${m === 'modeled' ? 'MODELED' : 'MANUAL'}${n ? `, ${n} values held by you` : ''}: show details`);
     const sv = link.ctl.scenario;
     // label(): a /1 state's label (as stateLabel()) or a /2 phase's
@@ -88,7 +92,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     if (speed.value !== k && SPEEDS.includes(k)) speed.set(k);
     if (!asking && paused !== link.ctl.hostPaused) {
       paused = link.ctl.hostPaused;
-      pause.textContent = paused ? 'Resume' : 'Pause';
+      setText(pause, paused ? 'Resume' : 'Pause');
       pause.setAttribute('aria-pressed', String(paused));
     }
   }, 500);

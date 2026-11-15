@@ -10,6 +10,7 @@ import type { ClinicalLogEntry, Link } from '../link.ts';
 import type { PanelCtx } from '../panel/ctx.ts';
 import { scenarioTab } from '../panel/scenario.ts';
 import { showcaseDoc } from '../showcase/harness.ts';
+import { disturbed } from '../keep.testing.ts';
 import { keepOrder } from '../ui.ts';
 import { mount } from './action.ts';
 import type { Teach2Ctx } from './ctx.ts';
@@ -39,7 +40,7 @@ function rig(doc: ScenarioDoc, stateId: string) {
   document.body.replaceChildren(today, v2el);
   refreshToday();
   slot.refresh();
-  return { today, v2el, refreshToday, slot };
+  return { sv, today, v2el, refreshToday: () => refreshToday(), slot };
 }
 const rows = (el: HTMLElement) => [...el.querySelectorAll<HTMLElement>('.ip2-rows:not(.ip2-finished-list) .ip2-row')];
 
@@ -70,6 +71,15 @@ describe('the dropped press: nodes under a press stay across repaints', () => {
     const b2 = [...r.today.querySelectorAll('ul.next button')];
     expect(b2).toEqual(b1);
     b2.forEach((b, i) => expect(b).toBe(b1[i]));
+  });
+
+  it('the phone\'s scenario panel: "Hold the timer" and the other buttons stay as they are under a held press, also when its words change', async () => {
+    const r = rig(MH, 'intubated');
+    const held = [...r.today.querySelectorAll('button')];
+    const hold = held.find((b) => b.textContent === 'Hold the timer')!;
+    expect(await disturbed(held, () => r.refreshToday())).toEqual([]);
+    expect(await disturbed(held, () => ((r.sv.paused = true), r.refreshToday()))).toEqual([]);
+    expect(hold.textContent).toBe('Resume the timer');
   });
 
   it('keepOrder moves only what changed place', () => {
