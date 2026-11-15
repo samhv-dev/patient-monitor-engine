@@ -9,9 +9,10 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpDevices, PumpKind, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
-import { loadShippedFormulary, loadShippedPumpDevices } from './formulary.ts';
+import { loadShippedFormulary } from './formulary.ts';
+import { shippedPumpDevices } from './pump/devices.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -189,8 +190,6 @@ export class AppSession {
   eegModel: string | null;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
   formulary: Formulary | null = null;
-  /** C2: the shipped pump device profiles, once loaded (every pump command is refused until then). */
-  pumpDevices: PumpDevices | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
@@ -279,10 +278,10 @@ export class AppSession {
       // made from (loaded once, below; null until then), and each staged preparation into the /2 record
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
       formulary: () => this.formulary,
-      // pump rack C2: the room's rack (Room setup, A1) and the reference pumps' profiles; a pump tablet signs in on the
-      // learner PIN, and its commands are checked against these (both read at every hello and command)
+      // pump-rack-tci.md A2 (C2's hand-over): the room's rack as Room setup sets it, and the shipped device profiles
+      // (S1, N125), so the host grants a pump tablet on the learner PIN and checks each of its commands against them
       pumpRack: () => this.pumpRack,
-      pumpDevices: () => this.pumpDevices,
+      pumpDevices: () => shippedPumpDevices(),
       onPreparation: (p) => this.driver.recordPreparation(p),
       // L14: a learner's give refused while the case was paused: an attempt in the record (and the /2 administrations, not
       // accepted), and a Log line (main.ts hands it to the Link)
@@ -307,7 +306,6 @@ export class AppSession {
     // once and every second after, with the reason, until a new engine runs (the mount's newTimeline)
     el.addEventListener('pme-monitor-failed', this.onFailed);
     if (o.learnerPin) void loadShippedFormulary().then((f) => void (this.formulary = f));
-    if (o.learnerPin) void loadShippedPumpDevices().then((d) => void (this.pumpDevices = d));
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
     this.bc = createBroadcastChannelTransport(this.code);

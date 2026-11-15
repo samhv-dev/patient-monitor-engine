@@ -237,9 +237,9 @@ test("accessibility: the learner remote's PIN form and signed-in page, and the R
 });
 
 // Plan pump-rack-tci.md A1: the pump tablet at a 10-inch tablet's landscape size (§5: 1280 px), dark and light, with
-// the 44 px touch targets: the learner-PIN form, then the rack. The host signs the tablet in on the learner PIN (C2), and
-// the instructor's own command path (E1's `pump` event) loads a syringe and a drip channel, to audit the rack as the
-// tablet draws it.
+// the 44 px touch targets: the learner-PIN form, then the rack with A2's channel controls. The host signs the tablet in on
+// the learner PIN (C2); the instructor's own command path (E1's `pump` event) loads a syringe and a drip channel, to audit
+// the rack as the tablet draws it, with one flow open.
 test('accessibility: the pump tablet\'s PIN form and its rack of syringe and drip channels at a tablet size', async ({ browser }) => {
   test.setTimeout(150_000);
   const dir = mkdtempSync(join(tmpdir(), 'a1-'));
@@ -283,6 +283,10 @@ test('accessibility: the pump tablet\'s PIN form and its rack of syringe and dri
       await expect(p.locator('.pump-face[data-ch="2"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
       await expect(p.locator('.pump-face[data-ch="1"]')).toHaveAttribute('data-state', 'running', { timeout: 20_000 });
       found.push(...(await audit(p, { touchPanel: true })).map((f) => `pump rack ${theme} ${f.rule}: ${f.what}`));
+      // A2: a flow's form open on a face (TCI, the longest: the set, the mode, the target and the patient)
+      await p.locator('.pump-face[data-ch="1"] .pf-btn[data-flow="tci"]').click();
+      await expect(p.locator('.pump-face[data-ch="1"] .pf-flow[data-flow="tci"]')).toBeVisible();
+      found.push(...(await audit(p, { touchPanel: true })).map((f) => `pump TCI form ${theme} ${f.rule}: ${f.what}`));
       if (theme === 'dark') found.push(...(await focusWalk(p, 12)).map((f) => `pump rack focus: ${f}`));
       await tablet.close();
     }
