@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` fc25fde5 (Merge pull request #475 from samhv-dev/press-survives-repaint), built 2026-11-15T11:19:12.868Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/fc25fde5971609e62f6f99403fd5ac3ae0aaa855
+The built teaching app of `main` a6ad3c46 (Merge pull request #458 from samhv-dev/defib-e7a-second-alarm-instance), built 2026-11-15T11:54:44.234Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/a6ad3c464016a2e27a881267aacc32316f4f753c
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
