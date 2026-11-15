@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` f7a18df1 (Merge pull request #420 from samhv-dev/vent-v3-alarm-scheme), built 2026-11-15T01:06:58.883Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/f7a18df1113a77b2c71054c6e9073751bf4ee626
+The built teaching app of `main` 464cd2d8 (Merge pull request #471 from samhv-dev/e2e-accessibility-one-file-per-area), built 2026-11-15T02:09:48.428Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/464cd2d8f39ffb7593cc2c97657364ea511f97d6
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
