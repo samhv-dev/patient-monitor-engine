@@ -2,7 +2,7 @@
 // — the header in the wave column, the wave column at 64.1 % of the width, the bottom strip — which happy-dom cannot
 // lay out. A Settings switch saadat-like → philips-like → saadat-like must give the columns layout back (full-width
 // header, no strip, the canvas beside 180 px tile columns) and then the grid again, with nothing left over.
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { go, openApp, startVite } from './app-support.ts';
 

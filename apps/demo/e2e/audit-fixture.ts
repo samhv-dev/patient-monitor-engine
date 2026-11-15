@@ -1,6 +1,6 @@
 // FU-11: the external browser audit's shared fixture (research/17; installed unchanged from audit-fixture.ts): a Vite
 // server on apps/demo with configFile false and a one-element page; the tests import the packages' sources by /@fs.
-import {test as base,expect} from '@playwright/test';
+import {test as base,expect} from './evidence.ts';
 import {createServer} from 'vite';
 import {resolve} from 'node:path';
 import {tmpdir} from 'node:os';

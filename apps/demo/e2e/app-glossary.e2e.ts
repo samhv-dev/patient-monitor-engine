@@ -2,7 +2,7 @@
 // Instructor v2 sheet, every Explore section and a Remote document (its join form and every tab) and fails on any raw
 // engine id in the text, aria-labels, titles or placeholders (the monitor interior, iframes, Explore's collapsed
 // "Model internals", Developer and titles that quote the monitor's own alarm text are exempt).
-import { expect, test } from '@playwright/test';
+import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { closeSheets, EXPLORE, go, openApp, scanEngineIds, sheet, type SheetId, startVite, TABS, tab } from './app-support.ts';
 

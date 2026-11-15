@@ -1,7 +1,7 @@
 // Stage 6a browser checks: host + remote + viewer over BroadcastChannel, the relay (WebSocket) and WebRTC,
 // in one browser context. Starts its own Vite dev server and relay on free ports.
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import { createServer, type ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 

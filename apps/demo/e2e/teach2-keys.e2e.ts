@@ -4,7 +4,7 @@
 // alarm count and the `i` key go to the Instructor view's Devices sheet; and once, end to end, a
 // past stage of the strip returns to its start (press, the inline box's Return, the driver's stage mark restored, the
 // stage back; no dialog).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { go, openApp, startVite } from './app-support.ts';
 
