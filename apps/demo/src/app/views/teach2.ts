@@ -22,7 +22,9 @@ import { mountFastForward } from '../teach2/ff.ts';
 import { mountFinish, type FinishHooks } from '../teach2/finish.ts';
 import { mountHeader, type TopControls } from '../teach2/header.ts';
 import { mountKeys } from '../teach2/keys.ts';
+import { hostLabsSource } from '../teach2/labs-sheet.ts';
 import { mountLearnerPreps } from '../teach2/learner-preps.ts';
+import { mountPumpMismatch } from '../teach2/pump-mismatch.ts';
 import { mount as mountSheets } from '../teach2/sheets.ts';
 import { mount as mountStrip } from '../teach2/strip.ts';
 
@@ -54,12 +56,15 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   // L9 (LQ3): the learner remotes' preparations, over the dock: a card at once for a finding, with its one control
   const preps = mountLearnerPreps(link, { formulary: () => link.host?.formulary ?? null });
   dock.el.prepend(preps.el);
+  // pump-rack-tci.md §8 (PQ8 = A): a pump channel whose syringe and programme differ, a card at once with its one control
+  const mismatch = mountPumpMismatch(link);
+  dock.el.prepend(mismatch.el);
   const el = h('section', { class: 'ip2', 'aria-labelledby': 'ip2-h' },
     h('h1', { id: 'ip2-h', class: 'sr-only' }, 'Instructor v2'), header.el, strip, statePanel, state, ff.el, alarms.el, action, sheets, dock.el);
 
   const keys = mountKeys(el, { link, togglePause: header.togglePause });
   const begin = beginState(() => paintNow());
-  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, loadScenario: o.loadScenario };
+  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, loadScenario: o.loadScenario, ...(link.host?.panelTransport ? { labs: hostLabsSource(link.host) } : {}) }; // a test's stand-in host has no transport: no Labs
   // The sheets mount first: they set ctx.openSheet
   const slots: Slot[] = [mountSheets(sheets, ctx), mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(actionBody, ctx)];
   openAlarms = () => ctx.openSheet('devices');
@@ -100,6 +105,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
       keys.destroy();
       header.destroy();
       preps.destroy();
+      mismatch.destroy();
       for (const s of slots) s.destroy();
       finish.destroy();
     },
