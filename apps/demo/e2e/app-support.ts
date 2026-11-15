@@ -20,7 +20,7 @@ async function e2ePort(offset = 0): Promise<number> {
 }
 
 /**
- * The ONE way an e2e file starts a Vite server (brief 236; packages/validation/test/e2e-servers.test.ts keeps every file
+ * The ONE way an e2e file starts a Vite server (packages/validation/test/e2e-servers.test.ts keeps every file
  * on it). Each server gets its own port, held strictly: Vite 6 reads a port of 0 as "5173, or the next free one", so
  * before this every file's server took 5173 in turn and a page a test left open reloaded onto the next file's server.
  * The port: PME_E2E_PORT + the worker's parallel index (+ `portOffset`) when that variable is set (a machine whose runs

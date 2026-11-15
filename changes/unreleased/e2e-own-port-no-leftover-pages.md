@@ -8,7 +8,6 @@
 - **A test that leaves a browser context or page open now fails** (the shared fixture `apps/demo/e2e/evidence.ts`),
   naming the test and the lines that opened each one; the fixture still closes them. The tests that had left them open
   close them themselves.
-- **The evidence of a failed attempt says what a ventilator face held** (selection, the knob's pending value, open
-  windows and drafts, the time since the selection, what the knob's handlers received) and which pointer, click, wheel
-  and key events each page received. The EDP-TS face gains a read-only read-out for it (`window.__pmeVentFace`), never
-  drawn; no behaviour changes.
+- **The evidence of a failed attempt says which pointer, click, wheel and key events each frame received** (a passive
+  recorder the e2e fixture installs) and, on a ventilator page, its settings and breath state from the existing e2e
+  hook. Nothing in the app changes.

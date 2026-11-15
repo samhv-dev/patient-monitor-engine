@@ -13,7 +13,6 @@ import type { SimTools } from '../../sim-tools.ts';
 import { DATA, LAYOUT, num, reason, word, type Leaf } from './data.ts';
 import { applyTokens, createDevice, type Device } from './device.ts';
 import css from './face.css?inline';
-import { WINDOWS } from './controls.ts';
 import { createKnob, type Knob } from './knob.ts';
 import { EDP_SPEC } from './modes.ts';
 import { audioPackagePlayer, createAlarmSound, gainOf, train } from './tones.ts';
@@ -112,17 +111,7 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   const screenHost = $('screen');
   const saved = [...screenHost.childNodes];
 
-  // e2e evidence (brief 236): what the knob's own handlers received, for the read-out below; counting changes nothing
-  const got = { wheel: 0, turned: 0, pointerdown: 0, pointerup: 0, pushed: 0, presses: [] as Array<{ id: string; atMs: number; selected: string | null }> };
-  const d = createDevice({
-    press: (id) => {
-      knob.press(id);
-      got.presses.push({ id, atMs: performance.now(), selected: knob.pending.key });
-      if (got.presses.length > 20) got.presses.shift();
-    },
-    touch: (w, i) => knob.touchRow(w, i),
-    explain: (r) => knob.explain(r),
-  });
+  const d = createDevice({ press: (id) => knob.press(id), touch: (w, i) => knob.touchRow(w, i), explain: (r) => knob.explain(r) });
   const root = el('main', { class: 'edp', 'aria-label': word('faceName') });
   root.append(el('h1', { class: 'edp-sr' }, word('faceName')), d.dev);
   screenHost.replaceChildren(root);
@@ -130,12 +119,11 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   // the knob: wheel, a drag around it, a press; arrows and Enter when focused (the device: turn, press: research/57 H-26)
   const knobEl = d.knob;
   let angle = 0;
-  const turn = (n: number) => { got.turned += n; angle += n * num(LAYOUT.knobDetentDeg); d.knobMark.style.transform = `rotate(${angle}deg)`; knob.turn(n); };
-  const push = () => { got.pushed++; knob.push(); };
-  knobEl.addEventListener('wheel', (e) => { got.wheel++; e.preventDefault(); turn(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+  const turn = (n: number) => { angle += n * num(LAYOUT.knobDetentDeg); d.knobMark.style.transform = `rotate(${angle}deg)`; knob.turn(n); };
+  knobEl.addEventListener('wheel', (e) => { e.preventDefault(); turn(e.deltaY < 0 ? 1 : -1); }, { passive: false });
   let drag: { a: number; moved: boolean } | null = null;
   const angleOf = (e: PointerEvent) => { const r = knobEl.getBoundingClientRect(); return (Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180) / Math.PI; };
-  knobEl.addEventListener('pointerdown', (e) => { got.pointerdown++; drag = { a: angleOf(e), moved: false }; knobEl.setPointerCapture?.(e.pointerId); });
+  knobEl.addEventListener('pointerdown', (e) => { drag = { a: angleOf(e), moved: false }; knobEl.setPointerCapture?.(e.pointerId); });
   knobEl.addEventListener('pointermove', (e) => {
     if (!drag) return;
     let dd = angleOf(e) - drag.a;
@@ -144,29 +132,12 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
     const det = num(LAYOUT.knobDetentDeg);
     if (Math.abs(dd) >= det) { const n = Math.trunc(dd / det); turn(n); drag.a += n * det; drag.moved = true; }
   });
-  knobEl.addEventListener('pointerup', () => { got.pointerup++; if (drag && !drag.moved) push(); drag = null; });
+  knobEl.addEventListener('pointerup', () => { if (drag && !drag.moved) knob.push(); drag = null; });
   knobEl.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); turn(1); }
     else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); turn(-1); }
-    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); push(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); knob.push(); }
   });
-
-  // e2e evidence (brief 236): a read-only read-out of what the knob holds, read by apps/demo/e2e/evidence.ts when a test
-  // fails; never drawn, writes nothing (reading the selection drops one whose 15 s have passed, as the next repaint would)
-  const readOut = () => {
-    const now = performance.now();
-    const sel = [...got.presses].reverse().find((p) => p.selected !== null);
-    return {
-      selected: knob.pending.key, pendingValue: knob.pending.value, turnedAway: knob.pending.changed,
-      sinceSelectionMs: knob.pending.key !== null && sel ? Math.round(now - sel.atMs) : null,
-      windows: knob.windows().map((w) => ({ id: w.id, focus: w.focus, draft: WINDOWS[w.id].draft === true })),
-      confirmingMode: knob.confirming(), ctrl: knob.ctrl(), note: knob.note(),
-      handled: { ...got, presses: got.presses.map((p) => ({ id: p.id, agoMs: Math.round(now - p.atMs), selected: p.selected })) },
-      cfg: { ...c.cfg },
-    };
-  };
-  const hookHost = window as unknown as { __pmeVentFace?: typeof readOut };
-  hookHost.__pmeVentFace = readOut;
 
   // OUTSIDE the device: the simulator's strip (the reason, the Simulator handle) and the reasons for assistive technology
   const why = el('span', { class: 'why', role: 'status' });
@@ -234,7 +205,6 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
     },
     stop() {
       stopped = true;
-      if (hookHost.__pmeVentFace === readOut) delete hookHost.__pmeVentFace;
       for (const off of offs) off();
       removeEventListener('pointerdown', gesture, true);
       removeEventListener('keydown', gesture, true);

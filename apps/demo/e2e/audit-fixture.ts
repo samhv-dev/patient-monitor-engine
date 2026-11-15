@@ -1,6 +1,6 @@
 // FU-11: the external browser audit's shared fixture (research/17; installed unchanged from audit-fixture.ts): a Vite
 // server on apps/demo with configFile false and a one-element page; the tests import the packages' sources by /@fs.
-// Brief 236: the server starts through app-support.ts's startVite like every e2e server (its own port, strictly held); with
+// The server starts through app-support.ts's startVite like every e2e server (its own port, strictly held); with
 // PME_E2E_PORT set, this worker-wide server takes the ports after the per-file servers' (offset by the worker count).
 import {test as base,expect} from './evidence.ts';
 import {startVite} from './app-support.ts';

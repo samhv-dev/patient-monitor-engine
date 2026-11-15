@@ -1,4 +1,4 @@
-// Brief 236: every e2e server on its own port. Vite 6 reads `server: { port: 0 }` as "5173, or the next free one", so
+// Every e2e server on its own port. Vite 6 reads a port of 0 as "5173, or the next free one", so
 // when each e2e file started Vite itself every file's server took 5173 in turn, and a page a test left open reloaded
 // onto the next file's server. apps/demo/e2e/app-support.ts's startVite / startVitePreview are now the only way an e2e
 // file starts a Vite server: a port the operating system hands out (or PME_E2E_PORT + the worker's index), strictly
@@ -30,7 +30,7 @@ function viteValues(src: string): string[] {
   return out;
 }
 
-describe('e2e servers on their own ports (brief 236)', () => {
+describe('e2e servers on their own ports', () => {
   it('no e2e file but app-support.ts starts a Vite server itself (createServer, preview or the whole module)', () => {
     const all = files(e2e);
     expect(all.length).toBeGreaterThan(100);

@@ -6,9 +6,9 @@
 // a relay the pages depend on), this writes into the attempt's output folder, for each page of each browser context
 // still open:
 //   evidence/<n>-<role>.json         the application's own diagnostic counters, read twice 1 s apart (what still moves),
-//                                    with the page's URL, visibility, focus and status lines; on a ventilator face page
-//                                    (or a page that frames one) what its knob holds (window.__pmeVentFace, brief 236);
-//                                    and the input events the page received (below)
+//                                    with the page's URL, visibility, focus and status lines; on a ventilator page
+//                                    (or a page that frames one) the ventilator's settings and breath state (its e2e
+//                                    hook window.__vent); and the input events each frame received (below)
 //   evidence/<n>-<role>.console.txt  the page's console (Playwright keeps the last 200 messages) and its page errors
 //   evidence/index.json              the pages, and any page that could not be read and why
 // The Playwright trace of the same attempt (every context, merged by Playwright into trace.zip) comes from the config's
@@ -16,7 +16,7 @@
 //
 // While on, every context gets an init script that records, in each frame, the last 300 pointer, click, wheel and key
 // events that reached the frame's window (capture phase, passive: it changes nothing), so a failure shows whether the
-// test's clicks and wheel turns arrived (brief 236).
+// test's clicks and wheel turns arrived.
 //
 // On by default in CI; PME_E2E_EVIDENCE=1 turns it on locally, PME_E2E_EVIDENCE=0 off (also in CI).
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -38,8 +38,7 @@ async function readCounters(): Promise<Record<string, unknown>> {
     __pmeApp?: { frames?: number[]; session?: { code?: string; simNow?(): number; host?: { stats?: object }; followers?: number; devices?: unknown[] | null; relay?: Link | null; bc?: Link; diag?: object; monitor?: Mon | null; last?: Record<string, { t?: number }> } };
     __pmeFollower?: { peerId?: string; transport?: Link; monitor?: Mon; sync?: { status?: string; resyncs?: number; lagS?: number; beatDriftMs?: number; fastForward?: unknown } | null };
     __pmeLearnerRemote?: unknown;
-    __vent?: unknown;
-    __pmeVentFace?: () => unknown;
+    __vent?: { vs?: { cfg?: unknown; p?: { breathCount?: number; phase?: string; t?: number; measured?: unknown } } };
     __pmeInputs?: Array<{ type: string; on: string; atMs: number; trusted: boolean }>;
   };
   const w = window as unknown as W;
@@ -66,11 +65,13 @@ async function readCounters(): Promise<Record<string, unknown>> {
   const app = w.__pmeApp;
   const s = app?.session;
   const f = w.__pmeFollower;
+  // the ventilator's own e2e hook: its settings and where the breath is (read only)
+  const vent = (x: W) => x.__vent?.vs ? { cfg: x.__vent.vs.cfg ?? null, breath: x.__vent.vs.p ? { n: x.__vent.vs.p.breathCount, phase: x.__vent.vs.p.phase, t: x.__vent.vs.p.t, measured: x.__vent.vs.p.measured } : null } : null;
   const inputs = (x: W) => x.__pmeInputs ? { count: x.__pmeInputs.length, last: x.__pmeInputs.slice(-80).map((e) => ({ type: e.type, on: e.on, agoMs: Math.round(now - e.atMs), trusted: e.trusted })) } : null;
   const framed = [...document.querySelectorAll('iframe')].map((fr) => {
     try {
       const x = fr.contentWindow as unknown as W | null;
-      return x && (x.__pmeVentFace || x.__pmeInputs) ? { frame: fr.id || fr.src, ventFace: x.__pmeVentFace ? x.__pmeVentFace() : null, inputs: inputs(x) } : null;
+      return x && (x.__vent || x.__pmeInputs) ? { frame: fr.id || fr.src, vent: vent(x), inputs: inputs(x) } : null;
     } catch (e) {
       return { frame: fr.id || fr.src, error: String(e) };
     }
@@ -98,7 +99,7 @@ async function readCounters(): Promise<Record<string, unknown>> {
       link: link(f.transport),
       monitor: await monitor(f.monitor),
     })) : null,
-    ventFace: w.__pmeVentFace ? await safe(() => w.__pmeVentFace!()) : null,
+    vent: await safe(() => vent(w)),
     inputs: inputs(w),
     framedPages: framed.length ? framed : null,
   };
@@ -173,7 +174,7 @@ async function collect(browser: Browser, earlier: Set<BrowserContext>, testInfo:
  * worker's browser for every later test: follower pages reconnecting to relays that had closed, engines still ticking.
  * Not tracked: contexts of another browser the test launched itself (chromium.launch, launchPersistentContext), and
  * what a beforeAll opens (its file's afterAll owns it).
- * Brief 236: a test that would otherwise PASS and leaves one open FAILS after the tidy-up, naming the test and the lines
+ * A test that would otherwise PASS and leaves one open FAILS after the tidy-up, naming the test and the lines
  * that opened each context or page (the fixture wraps browser.newContext / newPage, and newPage of the contexts that
  * existed before the test, for the length of the test). A test that failed or was skipped is only tidied: its own error
  * is the finding, and it usually failed before its close. A test that leaves one open ON PURPOSE (evidence-tidy.e2e.ts,
@@ -306,7 +307,7 @@ export const test = base.extend<{ _evidence: void }>({
       } finally {
         unwatch();
       }
-      // brief 236: a passing test that left something open fails, with the lines that opened it
+      // a passing test that left something open fails, with the lines that opened it
       if (left.length && passed(testInfo) && !onPurpose(testInfo)) {
         throw new Error(`"${testInfo.titlePath.slice(1).join(' › ')}" ended with ${left.length} thing(s) it opened still open (closed now by apps/demo/e2e/evidence.ts); close each before the test ends:\n${left.map((l) => `  - ${l}`).join('\n')}`);
       }

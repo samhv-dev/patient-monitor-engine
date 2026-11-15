@@ -1,6 +1,6 @@
 // Brief 194 (b): a context and a page a test opens and leaves open are closed when that test ends (the fixture in
 // evidence.ts), so the next test starts without them. The first test leaves both open on purpose; the second fails if
-// either is still open. No app, no server: two blank pages. Since brief 236 a test that leaves one open fails (the
+// either is still open. No app, no server: two blank pages. A test that leaves one open fails (the
 // fixture names the line that opened it; apps/demo/e2e/proof/leak-and-vent-evidence.proof.ts shows it), so the first
 // test says it leaves them open on purpose.
 import { expect, test, type BrowserContext, type Page } from './evidence.ts';

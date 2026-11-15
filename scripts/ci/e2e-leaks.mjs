@@ -5,7 +5,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// Brief 236: a test that leaves one open on purpose (annotation 'leaves-open': evidence-tidy.e2e.ts, which proves the
+// A test that leaves one open on purpose (annotation 'leaves-open': evidence-tidy.e2e.ts, which proves the
 // tidy-up) is listed apart and not counted; any other passing test that leaves one open now fails.
 const dir = process.argv[2];
 const all = dir && existsSync(dir)
