@@ -103,13 +103,15 @@ const SELECTOR_WORD: Record<M2Selector, string> = { off: 'OFF', monitor: 'MONITO
 
 /**
  * A defibrillator event the Mode Selector does not allow, or undefined. OFF: the unit is powered off [G 2-4], [G 1-13].
- * MONITOR: physiological monitoring only [G 2-4]; turning to it disarms [G 1-13]. In PACER the guide does not say
- * whether the defibrillator charges, so nothing is refused there [ENG: device; placeholder, defibrillation from Pacer
- * mode is not stated]. The instructor's pre-selection is not a device control and is never refused.
+ * MONITOR: physiological monitoring only [G 2-4]; turning to it disarms [G 1-13]. PACER: the guide describes
+ * defibrillation only at DEFIB, so Charge and Shock are refused there and the other defibrillator controls are not
+ * [ENG: device; placeholder, defibrillation from Pacer mode is not stated]. The instructor's pre-selection is not a
+ * device control and is never refused.
  */
 export function selectorRefusal(m: M2State, ev: DefibEvent): string | undefined {
   const s = m.power.selector;
-  if (ev.action === 'preselect' || s === 'defib' || s === 'pacer') return undefined;
+  if (ev.action === 'preselect' || s === 'defib') return undefined;
+  if (s === 'pacer' && ev.action !== 'charge' && ev.action !== 'shock') return undefined;
   return `the Mode Selector is at ${SELECTOR_WORD[s]} (turn it to DEFIB)`; // [ENG: device; choice, the refusal's words]
 }
 
