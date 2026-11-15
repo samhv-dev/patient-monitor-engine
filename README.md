@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` 99edad96 (Merge pull request #455 from samhv-dev/defib-e2a-patient-connections), built 2026-11-15T08:24:48.646Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/99edad9650d28770965443c6c945d3c4c6d72010
+The built teaching app of `main` 90d03014 (Merge pull request #457 from samhv-dev/defib-f0-core-generic-face), built 2026-11-15T09:11:04.107Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/90d030144a56f75a4b93f03c3fde70138ff48630
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
