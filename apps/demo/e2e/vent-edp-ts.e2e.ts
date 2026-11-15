@@ -11,7 +11,7 @@ import { createServer, type ViteDevServer } from 'vite';
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
+  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: Number(process.env.PME_E2E_PORT ?? 0), strictPort: !!process.env.PME_E2E_PORT, host: '127.0.0.1' }, logLevel: 'error' });
   await vite.listen();
   const addr = vite.httpServer?.address();
   base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
@@ -130,9 +130,21 @@ test('EDP-TS face: High Pressure from the model, its lamp and message, silenced,
   // the limit under the peak: select the key, turn, press (research/57 O-01)
   const pmax0 = await cfg();
   const steps = pmax0 - Math.max(10, Math.floor((await peak()) - 5));
+  const snap = (step: string) => page.evaluate((step) => {
+    const D = (window as Any).__d237, k = D.knob;
+    const tag = document.querySelector('[data-ctl="tag:pmax"]')!, kn = document.querySelector('.edp-knob')!;
+    const r = kn.getBoundingClientRect(), rt = tag.getBoundingClientRect();
+    return { step, now: Math.round(performance.now()), key: k.pending.key, val: k.pending.value, ch: k.pending.changed, tagSel: tag.classList.contains('sel'), tagText: tag.textContent, lit: kn.classList.contains('lit'), pmax: (window as Any).__vent.vs.cfg.pmax, knobBox: [r.left, r.top, r.width, r.height], tagBox: [rt.left, rt.top, rt.width, rt.height], wins: k.windows().length, nLog: D.log.length };
+  }, step);
+  const snaps = [await snap('before')];
   await page.locator('[data-ctl="tag:pmax"]').click();
+  snaps.push(await snap('afterKey'));
   await knobTurnPage(page, -steps);
+  snaps.push(await snap('afterTurn'));
   await page.locator('.edp-knob').click();
+  snaps.push(await snap('afterPress'));
+  const dlog = await page.evaluate(() => { const D = (window as Any).__d237; return { log: D.log.filter((e: Any) => e.ev !== 'mousemove' || true), renders: D.renders }; });
+  console.log(`D237 ${JSON.stringify({ title: test.info().title, repeat: test.info().repeatEachIndex, snaps, ...dlog })}`);
   expect(await cfg()).toBe(pmax0 - steps);
   await expect(box).toHaveText('High Pressure', { timeout: 15_000 });
   await expect(box).toHaveClass(/high/);

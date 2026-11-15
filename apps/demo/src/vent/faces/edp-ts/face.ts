@@ -18,6 +18,8 @@ import { EDP_SPEC } from './modes.ts';
 import { audioPackagePlayer, createAlarmSound, gainOf, train } from './tones.ts';
 import { viewOf } from './view.ts';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Any = any;
 const SIM_WORD = 'Simulator'; // an app string outside the device (plan §6): Persian only through the app's table (env.translate)
 const UNSIM_WORD = 'Show what is not simulated yet'; // the drawer's switch (brief 159, R20), an app string
 
@@ -111,6 +113,17 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   const screenHost = $('screen');
   const saved = [...screenHost.childNodes];
 
+  // DIAG 237 (diagnostic branch only, never merged): every input event and every knob call, with the knob's state
+  const D: Any = ((window as Any).__d237 = { log: [] as unknown[], knob });
+  const st = () => ({ key: knob.pending.key, val: knob.pending.value, ch: knob.pending.changed });
+  const tg = (e: Event) => { const t = e.target as Element | null; if (!t || !(t as Element).closest) return String(t && (t as Node).nodeName); const c = t.closest('[data-ctl]'); return (c ? c.getAttribute('data-ctl') : t.nodeName) + '/' + (t as Element).className; };
+  for (const ty of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'mousedown', 'mousemove', 'mouseup', 'click', 'wheel', 'touchstart', 'touchend', 'focusin', 'focusout', 'gotpointercapture', 'lostpointercapture', 'keydown', 'blur', 'focus', 'visibilitychange'])
+    addEventListener(ty, (e) => { const p = e as PointerEvent; D.log.push({ ev: ty, ts: Math.round(e.timeStamp * 10) / 10, now: Math.round(performance.now() * 10) / 10, tg: tg(e), x: p.clientX, y: p.clientY, tr: e.isTrusted, btn: p.button, bs: p.buttons, pid: p.pointerId, pt: p.pointerType, ...st() }); }, true);
+  for (const m of ['press', 'turn', 'push', 'touchRow', 'explain'] as const) {
+    const o = (knob as Any)[m];
+    (knob as Any)[m] = (...a: unknown[]) => { const b = st(); const r = o(...a); D.log.push({ call: m, a, now: Math.round(performance.now() * 10) / 10, before: b, after: st() }); return r; };
+  }
+  D.renders = [] as number[];
   const d = createDevice({ press: (id) => knob.press(id), touch: (w, i) => knob.touchRow(w, i), explain: (r) => knob.explain(r) });
   const root = el('main', { class: 'edp', 'aria-label': word('faceName') });
   root.append(el('h1', { class: 'edp-sr' }, word('faceName')), d.dev);
@@ -171,15 +184,17 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   let snd: ReturnType<typeof createAlarmSound> | null = null;
   const vol = () => c.cfg.alarmVolume ?? 50;
   const gesture = () => {
+    D.log.push({ gesture: Math.round(performance.now() * 10) / 10 });
     removeEventListener('pointerdown', gesture, true);
     removeEventListener('keydown', gesture, true);
-    void unlockAudio().then((o) => { if (stopped) o.close(); else { out = o; snd = createAlarmSound(audioPackagePlayer(o)); } }).catch(() => {});
+    void unlockAudio().then((o) => { D.log.push({ unlocked: Math.round(performance.now() * 10) / 10 }); if (stopped) o.close(); else { out = o; snd = createAlarmSound(audioPackagePlayer(o)); } }).catch(() => {});
   };
   addEventListener('pointerdown', gesture, true);
   addEventListener('keydown', gesture, true);
   let testStep: string | null = null;
 
   const render = () => {
+    D.renders.push(Math.round(performance.now()));
     const v = viewOf(c, knob);
     d.paint(v);
     const r = knob.note();
