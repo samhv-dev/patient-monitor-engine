@@ -91,7 +91,7 @@ import { VF_CONFIRM_S } from './l3/alarms/conditions.ts';
 import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts';
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts';
 import { lastCycleBefore } from './l2/resp/driver.ts';
-import { advanceOrgans, applyOrgansCommand, createOrgansState, ICP_RATE, organChannelActive, rebaselineOrgans, validateOrgansCommand, type OrganChannel, type OrgansCtx, type OrgansState } from './l2/organs/pipeline.ts';
+import { advanceOrgans, applyOrgansCommand, createOrgansState, ICP_RATE, organChannelActive, rebaselineOrgans, upgradeOrgans, validateOrgansCommand, type OrganChannel, type OrgansCtx, type OrgansState } from './l2/organs/pipeline.ts';
 import { pruneTruth } from './truth.ts';
 import { decodeState, encodeState } from './snapshot-codec.ts';
 
@@ -576,6 +576,7 @@ class Engine implements MonitorEngine {
       data.st.organs = createOrgansState(undefined, data.st.l1); // Absent in older snapshots
       rebaselineOrgans(data.st.organs, this.organsCtx(data.st));
     }
+    upgradeOrgans(data.st.organs);
     data.st.blood ??= createBloodState(undefined); // Absent in older snapshots
     data.st.neuro ??= createNeuroState(undefined, seed); // Absent in older snapshots
     data.st.rng.ectopyHazard ??= seedStream(seed, 'ectopyHazard'); // E133's stream, absent in older snapshots
@@ -1291,14 +1292,13 @@ class Engine implements MonitorEngine {
   /** What the EEG reads (l2/eeg/pipeline.ts): the drug bus, the neuro and organ models' last published state, the ECG
    * model's artefact state and the heart's own VCG (for the ECG pickup). Read only. */
   private eegCtx(ps: PipelineState): EegCtx {
-    const v = ps.organs.view;
     const bx = this.bufs.get('vcgX') as RingBuffer;
     const by = this.bufs.get('vcgY') as RingBuffer;
     const bz = this.bufs.get('vcgZ') as RingBuffer;
     const endo = (ps as unknown as { endo?: { cascade?: { macF?: number } } }).endo;
     return {
       bus: ps.pk.bus, ageY: ps.neuro.ageY, stimulus: ps.neuro.stim.level, antinoc: ps.neuro.antinoc, t1: ps.neuro.last.tof.t1,
-      tube: ps.neuro.airway === 'ett', cbfRel: ps.organs.brain.cbfRel, hb: v?.hb ?? 14, sao2: v?.sao2 ?? 0.97, pao2: v?.pao2 ?? 95,
+      tube: ps.neuro.airway === 'ett', metabolic: ps.organs.brain.energy.cortex.metabolic,
       tempC: ps.resp.temp.tc, macF: endo?.cascade?.macF ?? 1, art: ps.mods.artefact, mainsHz: this.mainsHz,
       ecgMvAt: (tS) => {
         const n = Math.round(tS * ECG_RATE);
