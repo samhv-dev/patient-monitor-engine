@@ -60,6 +60,7 @@ renderer, audio and skin contracts.
 | [`modes.ts:59`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L59) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
 | [`clock-map.ts:2`](../../packages/audio/src/clock-map.ts#L2) | wallMs(t) = anchorWall + (t − anchorSim) · 1000 / timeScale |
 | [`clock-map.ts:3`](../../packages/audio/src/clock-map.ts#L3) | audioTime(wallMs) = contextTime + (wallMs − performanceTime) / 1000   (AudioContext.getOutputTimestamp) |
+| [`clock-map.ts:6`](../../packages/audio/src/clock-map.ts#L6) | wallMs(r) = anchorWall + (r − anchorRun) · 1000 |
 | [`pitch-maps.ts:1`](../../packages/audio/src/profiles/pitch-maps.ts#L1) | Pulse-tone pitch maps (brief §3.6; research 03 §3.6, 05 §2.5): f = baseHz · 2^(−(100 − SpO2)·s/12). |
 | [`calibration.ts:2`](../../packages/renderer/src/calibration.ts#L2) | x = (simT · mm_s · px_mm) mod laneWidth |
 | [`calibration.ts:3`](../../packages/renderer/src/calibration.ts#L3) | Default calibration: 96 CSS px per inch = 3.78 CSS px/mm [05 §3.1] until the user calibrates. |
@@ -1263,6 +1264,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`apps/demo/e2e/alarm-off-label.e2e.ts`](../../apps/demo/e2e/alarm-off-label.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/alarm-sound-real-time.e2e.ts`](../../apps/demo/e2e/alarm-sound-real-time.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/apnoea-alarm-latched.e2e.ts`](../../apps/demo/e2e/apnoea-alarm-latched.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-accessibility-learner-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-learner-phone.e2e.ts) | 0 | 0 |
