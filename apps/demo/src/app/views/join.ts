@@ -19,6 +19,9 @@ import { h } from '../ui.ts';
 
 type Store = { get(k: string): string | null; set(k: string, v: string): void };
 type Shown = 'learner' | 'monitor' | 'remote' | 'depth' | 'pump' | 'defib';
+/** The defibrillator window's line, here and on Room setup's opener: what the window has (Charge, Shock, the rhythm). */
+export const DEFIB_LINE = "The room's defibrillator: charge and shock, with the patient's rhythm.";
+
 type Card = { show: Shown | 'vent' | 'iabp'; title: string; chip: string; text: string; foot: string; action: boolean };
 
 /**
@@ -50,7 +53,7 @@ export const PICKER_WORDS = {
     { show: 'depth', title: 'Depth of anaesthesia', chip: 'Ready', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device.", foot: 'A phone, a tablet or a second screen', action: true },
     // Q8: a console needs a balloon-pressure wave the engine does not compute (§9)
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
-    { show: 'defib', title: 'Defibrillator', chip: 'Ready', text: "The room's defibrillator: energy, charge, shock and sync, with the patient's rhythm.", foot: 'Sideways on a tablet', action: true },
+    { show: 'defib', title: 'Defibrillator', chip: 'Ready', text: DEFIB_LINE, foot: 'Sideways on a tablet', action: true },
   ] satisfies Card[] as Card[],
 };
 
