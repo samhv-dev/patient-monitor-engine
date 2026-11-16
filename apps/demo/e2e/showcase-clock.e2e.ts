@@ -1,7 +1,7 @@
 // Showcase hotfix (rehearsal 2026-10-04): after "Choose another scenario" → Load, the patient restarts on a new engine
 // whose sim time starts at 0. The session clock and the scenario's time in state must restart near 00:00 and count
 // up, not stay frozen at the previous case's high-water time while the vital signs move.
-import { expect, test } from './evidence.ts';
+import { expect, test, type Route } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, speedV2, startVite } from './app-support.ts';
 
@@ -11,6 +11,8 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
 type App = { __pmeApp: { session: { simNow(): number }; link: { simT: number; ctl: { scenario: { doc: { id: string } | null; timeInState(t: number): number } } } } };
+/** The engine worker's entry module on the dev server. */
+const WORKER = /engine\.worker\.ts\?worker_file/;
 const seconds = (s: string): number => {
   const m = /(\d+):(\d\d)\s*$/.exec(s.trim());
   return m ? Number(m[1]) * 60 + Number(m[2]) : Number.NaN;
@@ -30,6 +32,9 @@ test('loading another scenario restarts the session clock and the time in state,
   await expect.poll(async () => seconds(await clockText()), { timeout: 40_000, intervals: [500] }).toBeGreaterThan(60);
   const before = await page.evaluate(() => (window as unknown as App).__pmeApp.link.simT);
 
+  // the Load's new monitor loads its engine worker slowly: its first module is held until the test lets it go
+  const held: Route[] = [];
+  await page.context().route(WORKER, (r) => void held.push(r));
   // v2 has no in-panel library: another scenario is loaded from the Scenarios library, which asks before replacing
   await page.evaluate(() => (location.hash = '#/scenarios/library'));
   await page.locator('[data-view=scenarios]').getByRole('button', { name: 'Load Anaphylaxis under anaesthesia', exact: true }).click();
@@ -53,6 +58,7 @@ test('loading another scenario restarts the session clock and the time in state,
     .poll(() => page.evaluate(() => { const a = (window as unknown as App).__pmeApp; return Math.abs(a.link.simT - a.session.simNow()); }), { timeout: 10_000 })
     .toBeLessThan(2);
   expect(after.inState).toBeLessThan(15);
+  expect(held.length).toBeGreaterThan(0);
 
   // …and it counts up: the bar's clock and the scenario's time in state both advance
   const c1 = seconds(await clockText());
@@ -63,4 +69,6 @@ test('loading another scenario restarts the session clock and the time in state,
   expect(c2).toBeGreaterThan(c1);
   expect(s2).toBeGreaterThan(s1);
   expect(c2).toBeLessThan(40);
+  await page.context().unroute(WORKER);
+  for (const r of held) await r.continue();
 });
