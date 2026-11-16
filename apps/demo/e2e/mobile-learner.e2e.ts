@@ -255,7 +255,7 @@ test("R4: the QR's address opens the instrument picker; one tap gives today's le
   const pick = p.locator('.join-pick');
   await expect(pick.getByRole('heading', { level: 1 })).toHaveText('Choose what this screen shows');
   await expect(pick.locator('.join-code .code')).toHaveText(code);
-  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Learner remote', 'Infusion pumps', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
+  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Learner remote', 'Infusion pumps', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump', 'Defibrillator']);
   const learnerBtn = pick.locator('.join-card[data-show="learner"] button');
   await expect(learnerBtn).toBeFocused(); // preselected: one tap
   expect(hellos).toEqual([]); // the picker follows nothing until the tap
@@ -293,15 +293,24 @@ test("R4: the QR's address opens the instrument picker; one tap gives today's le
   await ctx.close();
 });
 
-test('R4: the picker is one column on a 375 px phone and three across at 1280 px', async ({ browser }) => {
-  for (const [width, cols] of [[375, 1], [1280, 3]] as const) {
+test('R4: the picker is one column on a 375 px phone, two on a 768 px tablet, three across at 1024 and 1280 px; no card overlaps another', async ({ browser }, testInfo) => {
+  for (const [width, cols] of [[375, 1], [768, 2], [1024, 3], [1280, 3]] as const) {
     const ctx = await browser.newContext({ viewport: { width, height: 800 } });
     const p = await ctx.newPage();
     await p.goto(`${base}/?join=ABC234&relay=${encodeURIComponent('ws://127.0.0.1:9/')}#/pick`);
-    const tops = await p.locator('.join-card').evaluateAll((cs) => cs.map((c) => Math.round(c.getBoundingClientRect().top)));
+    const boxes = await p.locator('.join-card').evaluateAll((cs) => cs.map((c) => c.getBoundingClientRect().toJSON() as DOMRect));
+    const tops = boxes.map((b) => Math.round(b.top));
     expect(tops.filter((t) => t === tops[0]).length, `${width} px`).toBe(cols);
+    for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1))
+      expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top, `${width} px: cards ${i} and another overlap`).toBe(true);
     expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width} px`).toBe(true);
     for (const b of await p.locator('.join-card button').all()) expect(((await b.boundingBox())!).height, `${width} px`).toBeGreaterThanOrEqual(44);
+    if (width === 375 || width === 1024) {
+      const path = testInfo.outputPath(`picker-${width}.png`);
+      await p.setViewportSize({ width, height: await p.locator('.join-pick').evaluate((e) => e.scrollHeight) }); // every card in the picture
+      await p.screenshot({ path, animations: 'disabled' });
+      await testInfo.attach(`picker at ${width} px`, { path, contentType: 'image/png' });
+    }
     await ctx.close();
   }
 });

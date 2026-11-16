@@ -18,12 +18,12 @@ import { store as appStore } from '../store.ts';
 import { h } from '../ui.ts';
 
 type Store = { get(k: string): string | null; set(k: string, v: string): void };
-type Shown = 'learner' | 'monitor' | 'remote' | 'depth' | 'pump';
-type Card = { show: Shown | 'vent' | 'depth' | 'iabp'; title: string; chip: string; text: string; foot: string; action: boolean };
+type Shown = 'learner' | 'monitor' | 'remote' | 'depth' | 'pump' | 'defib';
+type Card = { show: Shown | 'vent' | 'iabp'; title: string; chip: string; text: string; foot: string; action: boolean };
 
 /**
  * The picker's words, m5's where the product does what they say (the owner rules the final words; the PR lists each
- * change from m5). Not offered yet: the Defibrillator (once R5 merges) and the Instructor remote (once P7 merges).
+ * change from m5).
  */
 export const PICKER_WORDS = {
   title: 'Choose what this screen shows',
@@ -50,6 +50,7 @@ export const PICKER_WORDS = {
     { show: 'depth', title: 'Depth of anaesthesia', chip: 'Ready', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device.", foot: 'A phone, a tablet or a second screen', action: true },
     // Q8: a console needs a balloon-pressure wave the engine does not compute (§9)
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
+    { show: 'defib', title: 'Defibrillator', chip: 'Ready', text: "The room's defibrillator: energy, charge, shock and sync, with the patient's rhythm.", foot: 'Sideways on a tablet', action: true },
   ] satisfies Card[] as Card[],
 };
 
@@ -59,8 +60,7 @@ export const PICKER_WORDS = {
  * spectrogram band and a value box, no number or word.
  */
 const PIC: Record<CardShow, string> = {
-  // Room setup's Defibrillator opener (R7; the picker does not offer it): a screen with a rhythm line, an energy dial and
-  // a shock button, no number or word
+  // a screen with a rhythm line, an energy dial and a shock button, no number or word
   defib: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="8" y="8" width="184" height="84" rx="6" fill="#111" stroke="#2a3340"/><rect x="16" y="16" width="112" height="52" rx="3" fill="#0b0e12" stroke="#2a3340"/><polyline points="20,44 40,44 46,28 52,60 58,44 82,44 88,30 94,58 100,44 124,44" fill="none" stroke="#5fd99b" stroke-width="2"/><circle cx="160" cy="38" r="16" fill="none" stroke="#3a4656" stroke-width="3"/><rect x="146" y="64" width="28" height="14" rx="3" fill="#d9534f"/><rect x="16" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="46" y="74" width="24" height="10" rx="2" fill="#263142"/></svg>',
   monitor: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="6" y="6" width="188" height="88" rx="6" fill="#111" stroke="#2a3340"/><polyline points="14,40 40,40 48,22 56,58 64,40 90,40 98,30 104,50 110,40 150,40 158,24 166,56 174,40 190,40" fill="none" stroke="#5fd99b" stroke-width="2"/><polyline points="14,76 60,76 70,64 80,76 120,76 130,64 140,76 190,76" fill="none" stroke="#5db7ff" stroke-width="2"/></svg>',
   vent: '<svg viewBox="0 0 200 100" aria-hidden="true"><rect x="10" y="8" width="180" height="84" rx="6" fill="#111" stroke="#2a3340"/><rect x="18" y="16" width="110" height="52" rx="3" fill="#0b0e12" stroke="#2a3340"/><path d="M22 60 L40 60 L46 30 L60 30 L66 60 L84 60 L90 30 L104 30 L110 60 L126 60" fill="none" stroke="#f0c75e" stroke-width="2"/><circle cx="160" cy="42" r="16" fill="none" stroke="#3a4656" stroke-width="3"/><rect x="18" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="48" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="78" y="74" width="24" height="10" rx="2" fill="#263142"/><rect x="146" y="70" width="28" height="12" rx="2" fill="#5fd99b"/></svg>',
@@ -86,7 +86,7 @@ export function deviceKey(s: Store = appStore): string {
   return key;
 }
 
-export type CardShow = Card['show'] | 'defib';
+export type CardShow = Card['show'];
 
 /**
  * One instrument card (m5): its drawing, title, status chip, one line, and a foot line with its actions. The picker
