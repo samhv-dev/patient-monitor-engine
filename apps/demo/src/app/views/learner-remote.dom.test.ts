@@ -51,9 +51,10 @@ const { DEFAULT_SITE } = await import('../site.ts');
 
 const link = () => net.links.at(-1) as Link;
 /** The host's side of the latest link: its hello, its grant to the phone's hello `from`, the relay's error frame. */
-const host = () => {
+/** `id`: the host page's peer id (a reloaded page has a new one). */
+const host = (id = 'host-aaaaaa') => {
   const l = link();
-  const stamp = createStamper(CODE, 'host-aaaaaa', () => Date.now());
+  const stamp = createStamper(CODE, id, () => Date.now());
   const send = (b: WireBody) => [...l.msg].forEach((fn) => fn(stamp(b)));
   const phoneFrom = () => [...l.sent].reverse().find((m) => m.kind === 'hello')?.from as string;
   return {
@@ -264,11 +265,12 @@ describe('L7: the learner remote sends under its hello\'s id, and hands each gra
     expect(m.q('.lr-status')?.textContent).toBe(LEARNER_WORDS.signingInAgain);
     host().relayError('forbidden', 'the learner remote is not signed in'); // a press in that second: not an older kit
     expect(m.form().hidden).toBe(true);
-    host().hello();
+    const reloaded = host('host-bbbbbb');
+    reloaded.hello();
     const hellos = () => link().sent.filter((x) => x.kind === 'hello');
     await vi.waitFor(() => expect(hellos().at(-1)).toMatchObject({ role: 'learner', device: DEVICE, ticket }));
     for (const x of hellos().slice(1)) expect(x).not.toHaveProperty('pin');
-    host().grant(true, undefined, `ABCDEFGH.${'d'.repeat(22)}`);
+    reloaded.grant(true, undefined, `ABCDEFGH.${'d'.repeat(22)}`);
     expect(m.q('.lr-status')?.textContent).toBe(LEARNER_WORDS.signedIn(CODE)); // the words went away
     expect(gone).not.toHaveBeenCalled(); // the menus kept this follower: its tray, its samples
     expect(link().sent.filter((x) => JSON.stringify(x).includes(`"pin":"${PIN}"`))).toHaveLength(1); // the first hello only

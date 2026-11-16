@@ -110,6 +110,7 @@ describe('P6: the view feed and the note path', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'performance', 'Date', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     net.peers.length = 0;
     net.sent.length = 0;
+    sessionStorage.clear(); // the host's book of signed-in devices is the tab's: each case is a new tab
     pin.v = PIN;
     document.body.replaceChildren();
     el = document.createElement('div');
@@ -134,6 +135,9 @@ describe('P6: the view feed and the note path', () => {
     const link = new Link(ctl, transport, null);
     closers.push(() => (link.close(), ctl.close(), transport.close()));
     await vi.advanceTimersByTimeAsync(50);
+    await settle();
+    // the host answers once its SHA-256 of the ticket it hands on is done (crypto.subtle: real work, not a timer)
+    for (let i = 0; i < 100 && ctl.access.state === 'pending'; i++) await new Promise((r) => setImmediate(r));
     await settle();
     return { ctl, link };
   }

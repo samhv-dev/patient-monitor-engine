@@ -54,9 +54,10 @@ const { DEFAULT_SITE } = await import('../site.ts');
 const { store } = await import('../store.ts');
 
 const link = () => net.links.at(-1) as Link;
-const host = () => {
+/** `id`: the host page's peer id (a reloaded page has a new one). */
+const host = (id = 'host-aaaaaa') => {
   const l = link();
-  const stamp = createStamper(CODE, 'host-aaaaaa', () => Date.now());
+  const stamp = createStamper(CODE, id, () => Date.now());
   const send = (b: WireBody) => [...l.msg].forEach((fn) => fn(stamp(b)));
   const tabletFrom = () => [...l.sent].reverse().find((m) => m.kind === 'hello')?.from as string;
   return {
@@ -238,14 +239,15 @@ describe('refusals, in words', () => {
     host().rejoined();
     expect(m.q<HTMLElement>('.pump-signed').hidden).toBe(false);
     expect(m.q('.pump-status')?.textContent).toBe(PUMP_WORDS.signingInAgain);
-    host().hello();
+    const reloaded = host('host-bbbbbb');
+    reloaded.hello();
     const hellos = () => link().sent.filter((x) => x.kind === 'hello');
     await vi.waitFor(() => expect(hellos().at(-1)).toMatchObject({ role: 'pump', ticket }));
     expect(hellos().at(-1)).not.toHaveProperty('pin');
-    host().grant(true, undefined, `ABCDEFGH.${'d'.repeat(22)}`);
+    reloaded.grant(true, undefined, `ABCDEFGH.${'d'.repeat(22)}`);
     expect(m.q('.pump-status')?.textContent).toBe(PUMP_WORDS.signedIn(CODE));
-    host().rejoined();
-    host().grant(false, TICKET_REASONS.newSession);
+    reloaded.rejoined();
+    host('host-cccccc').grant(false, TICKET_REASONS.newSession);
     expect(m.form().hidden).toBe(false);
     expect(m.words()).toBe(PUMP_WORDS.newSession);
   });
