@@ -1,8 +1,9 @@
 // ControllerSession against a hand-driven fake host on the in-process hub.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ControllerSession, describe as describeCmd } from '../../src/session/controller-session.ts';
+import { SignInCredential } from '../../src/session/sign-in-credential.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { createStamper, type WireMessage } from '../../src/protocol.ts';
+import { createStamper, REJOINED, RELAY_PEER, type WireMessage } from '../../src/protocol.ts';
 import { RELAY_CLOSE, RELAY_RETRY_CLOSE } from '../../src/transport/relay-frames.ts';
 import { createWebSocketTransport } from '../../src/transport/websocket.ts';
 import { FakeWebSocket } from '../fakes/fake-websocket.ts';
@@ -28,6 +29,7 @@ class ManualTransport extends TransportBase {
 
 const S = 'CTL234';
 const host = createStamper(S, 'host-1');
+const TICKET = `ABCDEFGH.${'b'.repeat(22)}`;
 
 describe('ControllerSession', () => {
   it('says hello on open, fills id and issuedBy, and resolves on ack with an RTT', async () => {
@@ -182,7 +184,7 @@ const NOT_CONFIRMED = "Not confirmed: no answer from the instructor's computer. 
 describe('ControllerSession as the instructor (plan P5)', () => {
   it("with role 'instructor' and a pin, every open says the instructor hello with the PIN", () => {
     const t = new ManualTransport();
-    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-a', role: 'instructor', pin: () => PIN });
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-a', role: 'instructor', credential: new SignInCredential(PIN) });
     t.set('open');
     t.set('connecting');
     t.set('open');
@@ -193,7 +195,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
   it('access goes pending → granted → revoked, or pending → denied, with its reason, and onChange fires', () => {
     const t = new ManualTransport();
-    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-b', role: 'instructor', pin: () => PIN });
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-b', role: 'instructor', credential: new SignInCredential(PIN) });
     t.set('open');
     expect(s.access).toEqual({ state: 'pending' });
     let changes = 0;
@@ -210,7 +212,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
     s.close();
 
     const t2 = new ManualTransport();
-    const d = new ControllerSession({ session: S, transport: t2, peerId: 'ins-c', role: 'instructor', pin: () => '1111' });
+    const d = new ControllerSession({ session: S, transport: t2, peerId: 'ins-c', role: 'instructor', credential: new SignInCredential('1111') });
     t2.set('open');
     let dChanges = 0;
     d.onChange(() => dChanges++);
@@ -222,7 +224,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
   it('commands are held, not sent, until granted, then go in order', async () => {
     const t = new ManualTransport();
-    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-d', role: 'instructor', pin: () => PIN, resendMs: 10, answerTimeoutMs: 30 });
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-d', role: 'instructor', credential: new SignInCredential(PIN), resendMs: 10, answerTimeoutMs: 30 });
     t.set('open');
     const p1 = s.send({ type: 'setTarget', variable: 'hr', value: 90 });
     const p2 = s.send({ type: 'setRhythm', rhythm: 'afib' });
@@ -240,7 +242,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
   it('`from` is <peerId>.<n> and changes on every open, while command ids keep <peerId>-<n>', () => {
     const t = new ManualTransport();
-    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-e', role: 'instructor', pin: () => PIN });
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-e', role: 'instructor', credential: new SignInCredential(PIN) });
     t.set('open');
     expect(hellos(t)[0]?.from).toBe('ins-e.1');
     expect(s.from).toBe('ins-e.1');
@@ -263,7 +265,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
   it('a host hello from a NEW host id answers every pending command locally; the same host id re-saying hello still re-sends', async () => {
     const t = new ManualTransport();
-    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-f', role: 'instructor', pin: () => PIN });
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-f', role: 'instructor', credential: new SignInCredential(PIN) });
     t.set('open');
     t.inject(host({ kind: 'hello', role: 'host' }));
     t.inject(host({ kind: 'grant', to: 'ins-f.1', granted: true }));
@@ -284,7 +286,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
   it("the timeout's reason reads 'not confirmed' for the instructor only; a controller's is unchanged", async () => {
     const t = new ManualTransport();
-    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-g', role: 'instructor', pin: () => PIN, resendMs: 10, answerTimeoutMs: 40 });
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-g', role: 'instructor', credential: new SignInCredential(PIN), resendMs: 10, answerTimeoutMs: 40 });
     t.set('open');
     t.inject(host({ kind: 'grant', to: 'ins-g.1', granted: true }));
     expect(await s.send({ type: 'time', action: 'pause' })).toMatchObject({ accepted: false, reason: NOT_CONFIRMED });
@@ -300,8 +302,8 @@ describe('ControllerSession as the instructor (plan P5)', () => {
     class Bc extends ManualTransport {
       override readonly kind = 'broadcastChannel' as never;
     }
-    expect(() => new ControllerSession({ session: S, transport: new Bc(), role: 'instructor', pin: () => PIN })).toThrow(/never a BroadcastChannel/);
-    expect(() => new ControllerSession({ session: S, transport: new ManualTransport(), role: 'instructor' })).toThrow(/needs a pin/);
+    expect(() => new ControllerSession({ session: S, transport: new Bc(), role: 'instructor', credential: new SignInCredential(PIN) })).toThrow(/never a BroadcastChannel/);
+    expect(() => new ControllerSession({ session: S, transport: new ManualTransport(), role: 'instructor' })).toThrow(/needs a credential/);
   });
 
   describe('over the relay socket', () => {
@@ -315,7 +317,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
     it('a close with 4010 (id taken) is retried on the next connection with the next `from`', () => {
       const t = createWebSocketTransport(opts);
-      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-w', role: 'instructor', pin: () => PIN });
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-w', role: 'instructor', credential: new SignInCredential(PIN) });
       FakeWebSocket.last.open();
       expect(sent(FakeWebSocket.last)[0]).toMatchObject({ kind: 'hello', role: 'instructor', pin: PIN, from: 'ins-w.1' });
       FakeWebSocket.last.close(RELAY_RETRY_CLOSE.idTaken, 'peer id ins-w.1 is taken');
@@ -330,7 +332,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
     it('a close with denied (4013) sets access denied with the reason and stops reconnecting', () => {
       const t = createWebSocketTransport(opts);
-      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-x', role: 'instructor', pin: () => '1111' });
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-x', role: 'instructor', credential: new SignInCredential('1111') });
       let changes = 0;
       s.onChange(() => changes++);
       FakeWebSocket.last.open();
@@ -348,7 +350,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
     it("a revoked instructor stays revoked when the relay's denied close follows the host's grant", () => {
       const t = createWebSocketTransport(opts);
-      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-y', role: 'instructor', pin: () => PIN });
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-y', role: 'instructor', credential: new SignInCredential(PIN) });
       FakeWebSocket.last.open();
       FakeWebSocket.last.receive(host({ kind: 'grant', to: 'ins-y.1', granted: true }));
       FakeWebSocket.last.receive(host({ kind: 'grant', to: 'ins-y.1', granted: false, reason: 'taken over by another phone' }));
@@ -363,7 +365,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
     // laptop after a Wi-Fi blip included (same host id). The phone signs in again before its commands go again.
     it('F1: a same-host-id hello after a relay-side ungrant ends granted with the command delivered', async () => {
       const t = createWebSocketTransport(opts);
-      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-h', role: 'instructor', pin: () => PIN });
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-h', role: 'instructor', credential: new SignInCredential(PIN) });
       const ws = FakeWebSocket.last;
       ws.open();
       ws.receive(host({ kind: 'hello', role: 'host' }));
@@ -393,21 +395,23 @@ describe('ControllerSession as the instructor (plan P5)', () => {
       t.close();
     });
 
-    it("F1: the relay's explicit grant false on a host readmit (revoked) still leads to a re-hello on the host's hello", async () => {
+    it("F1: the relay's notice on a host readmit is no refusal: pending, and the hello goes again on the host's hello with the ticket, not the PIN", async () => {
       const t = createWebSocketTransport(opts);
-      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-i', role: 'instructor', pin: () => PIN });
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-i', role: 'instructor', credential: new SignInCredential(PIN) });
       const ws = FakeWebSocket.last;
       ws.open();
       ws.receive(host({ kind: 'hello', role: 'host' }));
-      ws.receive(host({ kind: 'grant', to: 'ins-i.1', granted: true }));
-      ws.receive(host({ kind: 'grant', to: 'ins-i.1', granted: false, reason: "the instructor's computer reconnected; signing in again" }));
-      expect(s.access).toEqual({ state: 'revoked', reason: "the instructor's computer reconnected; signing in again" });
+      ws.receive(host({ kind: 'grant', to: 'ins-i.1', granted: true, ticket: TICKET }));
+      ws.receive(createStamper(S, RELAY_PEER)({ kind: 'grant', to: 'ins-i.1', granted: false, reason: REJOINED }));
+      expect(s.access).toEqual({ state: 'pending', reason: REJOINED });
       const p = s.send({ type: 'time', action: 'pause' });
       const cmds = () => sent(ws).filter((m): m is Cmd => m.kind === 'command');
       expect(cmds()).toHaveLength(0); // held: not signed in
       const signIns = sent(ws).filter((m) => m.kind === 'hello').length;
       ws.receive(host({ kind: 'hello', role: 'host' })); // the same laptop, back
       expect(sent(ws).filter((m) => m.kind === 'hello')).toHaveLength(signIns + 1);
+      expect(sent(ws).filter((m) => m.kind === 'hello').at(-1)).toMatchObject({ role: 'instructor', ticket: TICKET });
+      expect(sent(ws).filter((m) => m.kind === 'hello').at(-1)).not.toHaveProperty('pin');
       expect(s.access).toEqual({ state: 'pending' });
       expect(cmds()).toHaveLength(0); // the hello goes before the commands
       ws.receive(host({ kind: 'grant', to: 'ins-i.1', granted: true }));
@@ -422,7 +426,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
     // or the `denied` / `too-many-tries` frames, end the link.
     it('F2: a forbidden frame on a real WsTransport leaves the link open, and a later grant works', async () => {
       const t = createWebSocketTransport(opts);
-      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-j', role: 'instructor', pin: () => PIN });
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-j', role: 'instructor', credential: new SignInCredential(PIN) });
       const ws = FakeWebSocket.last;
       ws.open();
       ws.receive(host({ kind: 'grant', to: 'ins-j.1', granted: true }));
@@ -445,7 +449,7 @@ describe('ControllerSession as the instructor (plan P5)', () => {
 
     it('a close with tooManyTries (4028) sets a reason and stops', () => {
       const t = createWebSocketTransport(opts);
-      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-z', role: 'instructor', pin: () => '1111' });
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-z', role: 'instructor', credential: new SignInCredential('1111') });
       FakeWebSocket.last.open();
       FakeWebSocket.last.receive({ relay: 'error', code: 'too-many-tries', message: 'too many wrong PINs: wait a minute' });
       FakeWebSocket.last.close(RELAY_CLOSE.tooManyTries, 'too many wrong PINs: wait a minute');

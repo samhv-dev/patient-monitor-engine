@@ -71,7 +71,7 @@ vi.mock('@pme/renderer', async () => {
   };
 });
 
-const { ControllerSession, VIEWER_EVENTS } = await import('@pme/controller');
+const { ControllerSession, SignInCredential, VIEWER_EVENTS } = await import('@pme/controller');
 const { AppSession } = await import('../session.ts');
 const { Link } = await import('../link.ts');
 const { boardOf, feedOf } = await import('./feed.ts');
@@ -130,7 +130,7 @@ describe('P6: the view feed and the note path', () => {
   /** An instructor phone that signs in with `p` now (a page opened or reloaded: a fresh session and Link). */
   async function phone(p = PIN) {
     const transport = (await import('@pme/controller')).createWebSocketTransport({ url: 'ws://relay.test/' });
-    const ctl = new ControllerSession({ session: CODE, transport, role: 'instructor', pin: () => p });
+    const ctl = new ControllerSession({ session: CODE, transport, role: 'instructor', credential: new SignInCredential(p) });
     const link = new Link(ctl, transport, null);
     closers.push(() => (link.close(), ctl.close(), transport.close()));
     await vi.advanceTimersByTimeAsync(50);

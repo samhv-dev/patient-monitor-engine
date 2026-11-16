@@ -17,7 +17,8 @@
 // remote says hello as `learner` with the learner PIN, its `prep stage` is `forbidden` while pending and, once the host
 // grants it, reaches the host byte for byte, while its `applyEvent drug` with a forged `by` and an instructor's
 // `time pause` are `forbidden` and never reach the host (its next `prep deliver` is the host's next command) (learner
-// remote L3); a pump tablet says hello as `pump` with the learner PIN, its `pump load` is `forbidden` while pending and,
+// remote L3), the host's grant carries a sign-in ticket to it and its next hello, proving that ticket and no PIN,
+// reaches the host byte for byte; a pump tablet says hello as `pump` with the learner PIN, its `pump load` is `forbidden` while pending and,
 // once the host grants it, reaches the host byte for byte, while a raw `applyEvent pump` and a `pump load` that carries a
 // `concentration` are `forbidden` and never reach the host (its next `pump start` is the host's next command) (pump rack
 // C1); the relay is still running; then the relay is stopped and the port is free again.
@@ -262,8 +263,11 @@ async function frames(port, proc, steps, state) {
   learner.ws.send(lrnCmd(2, { id: 'kit-lrn-early', type: 'prep', action: 'stage', prep }));
   const early = await learnerRefusal('the refusal of a pending learner prep');
   if (early?.code !== 'forbidden') throw new Error(`a pending learner's prep was not refused: ${JSON.stringify(early)}`);
-  host.ws.send(wire('grant', 'kit-check-host-0123456789abcdef', 5, { to: LRN_ID, granted: true }));
-  for (let f = null; f?.kind !== 'grant'; ) f = JSON.parse(await learner.next('the grant at the learner'));
+  const KIT_TICKET = `kitcheck.${'t'.repeat(22)}`;
+  host.ws.send(wire('grant', 'kit-check-host-0123456789abcdef', 5, { to: LRN_ID, granted: true, ticket: KIT_TICKET }));
+  let lrnGrant = null;
+  while (lrnGrant?.kind !== 'grant') lrnGrant = JSON.parse(await learner.next('the grant at the learner'));
+  if (lrnGrant.ticket !== KIT_TICKET) throw new Error(`the host's ticket did not reach the learner remote: ${JSON.stringify(lrnGrant)}`);
   const stageCmd = lrnCmd(3, { id: 'kit-lrn-stage', type: 'prep', action: 'stage', prep });
   learner.ws.send(stageCmd);
   const stageGot = await hostNext('the learner prep stage', (f) => f.kind === 'command');
@@ -277,7 +281,12 @@ async function frames(port, proc, steps, state) {
   learner.ws.send(lrnCmd(6, { id: 'kit-lrn-deliver', type: 'prep', action: 'deliver', prepId: 'kitprep1', volumeMl: 5, route: 'iv' }));
   const afterNo = JSON.parse(await hostNext('the learner prep deliver', (f) => f.kind === 'command'));
   if (afterNo.body?.id !== 'kit-lrn-deliver') throw new Error(`the host's next command after the refused ones: ${JSON.stringify(afterNo)}`);
-  step(`learner remote: pending, its prep was refused (${early.code}); granted, its prep stage (${Buffer.byteLength(stageCmd)} bytes) reached the host byte for byte; its applyEvent drug with a forged by and a time pause were refused (${drugNo.code}, ${pauseNo.code}) and never reached the host`);
+  // its next hello proves the host's ticket instead of the PIN (session/sign-in-book.ts), and reaches the host as sent
+  const ticketHello = wire('hello', LRN_ID, 7, { role: 'learner', show: 'learner', device: 'kitlearner01', ticket: KIT_TICKET });
+  learner.ws.send(ticketHello);
+  const ticketGot = await hostNext('the learner ticket hello', (f) => f.kind === 'hello' && f.from === LRN_ID);
+  if (ticketGot !== ticketHello) throw new Error(`the learner's ticket hello differs at the host: ${ticketGot}`);
+  step(`learner remote: pending, its prep was refused (${early.code}); granted (with the host's ticket), its prep stage (${Buffer.byteLength(stageCmd)} bytes) reached the host byte for byte; its applyEvent drug with a forged by and a time pause were refused (${drugNo.code}, ${pauseNo.code}) and never reached the host; its hello with the ticket, no PIN, reached the host byte for byte`);
   // Pump rack C1: the learner PIN signs the pump in as it does the learner remote; granted, D2's shapes reach the host
   const PMP_ID = 'kit-check-pump';
   const tablet = socket(port, proc);
