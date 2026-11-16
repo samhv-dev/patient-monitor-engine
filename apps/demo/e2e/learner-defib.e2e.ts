@@ -1,7 +1,7 @@
 // Room plan R5d: the learner defibrillator window presses Charge and Shock, and the host applies them as the
 // instructor's own. A free-roam patient, the room's generic defibrillator (120 J adult: defib.ts FALLBACK_DEFIB); the
 // instructor sets VF; the window — a device over the relay (`?join=`, the in-process relay as mobile-learner.e2e.ts runs
-// it), named "bed 2" in Room setup — first shocks with no charge (refused in the device's words, nothing in the window
+// it) that chose Defibrillator on the room's picker, named "bed 2" in Room setup — first shocks with no charge (refused in the device's words, nothing in the window
 // blocks it), then charges and shocks. A forged `applyEvent drug` and a `time pause` on the window's own socket are
 // refused and change nothing on the host; a learner phone (a viewer) still cannot command; the phone sees the shock as
 // a follower does (its own engine counts it). The Debrief's timeline names the device: "Shock 120 J at mm:ss, by
@@ -58,11 +58,14 @@ test('the defibrillator window charges and shocks the free-roam patient; nothing
     const ctx = await page.context().browser()!.newContext();
     await ctx.addInitScript((k) => localStorage.setItem('pme.device', k), KEY);
     const win = await ctx.newPage();
-    await win.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/defib`);
+    // the room's QR opens the picker; its Defibrillator card opens the window on this device
+    await win.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/pick`);
+    await Promise.all([win.waitForEvent('load'), win.locator('.join-card[data-show="defib"]').getByRole('button', { name: 'Show here' }).click()]);
     const phone = await (await page.context().browser()!.newContext()).newPage();
     await phone.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/monitor`);
     for (const w of [win, phone]) await synced(w);
     await expect(win.locator('.defib-readout')).toHaveText('120 J', { timeout: 10_000 });
+    await expect(win).toHaveTitle('Defibrillator: patient monitor simulator');
     // the phone counts shocks from its own engine, as a follower sees everything the host applied
     await phone.evaluate(() => (window as unknown as FolW).__pmeFollower.monitor.viewerClock().then((c) => c.on((e) => void ((window as unknown as FolW).__shocks = e.defib?.shocks ?? 0), ['deviceStatus'])));
 
@@ -102,6 +105,7 @@ test('the defibrillator window charges and shocks the free-roam patient; nothing
       const local = await page.context().newPage();
       await local.goto(`${base}/?follow=${code}#/defib`);
       await synced(local);
+      await expect(local).toHaveTitle('Defibrillator: patient monitor simulator');
       await local.evaluate(() => {
         const w = window as unknown as { __acks: Array<{ accepted: boolean; reason?: string }>; __pmeFollower: { transport: { onMessage(fn: (m: { kind: string; commandId?: string; accepted?: boolean; reason?: string }) => void): void } } };
         w.__acks = [];

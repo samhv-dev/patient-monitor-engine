@@ -82,9 +82,9 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 | [`nmb.ts:103`](../../packages/engine-core/src/l2/neuro/nmb.ts#L103) | force = w^g / (w^g + (1 - w)^g) — exactly 1 at or above `hi`, exactly 0 at or below `lo`, one half at the midpoint. |
 | [`nmb.ts:113`](../../packages/engine-core/src/l2/neuro/nmb.ts#L113) | The DIAPHRAGM's non-depolarising force from its receptors' free fraction. Competitive occupancy p = u/(1 + u), u = |
 | [`outputs.ts:18`](../../packages/engine-core/src/l2/neuro/outputs.ts#L18) | 0–1.5 thermoregulatory depth = hypnotic MAC-equivalents (Sessler: thresholds fall linearly with concentration) [FIT: MAC-equivalent thermoregulatory depth scale; scale; brief research/44 L2-38]. |
-| [`spont.ts:6`](../../packages/engine-core/src/l2/neuro/spont.ts#L6) | Winter's expected PaCO2 = 1.5·HCO3 + 8 (Albert, Dell & Winters 1967; ±2) — HCO3 from the blood model's |
-| [`spont.ts:7`](../../packages/engine-core/src/l2/neuro/spont.ts#L7) | blood.core.ab.hco3 (24 without it → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic |
-| [`spont.ts:10`](../../packages/engine-core/src/l2/neuro/spont.ts#L10) | drive: the lung model's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with the neuro model's |
+| [`spont.ts:7`](../../packages/engine-core/src/l2/neuro/spont.ts#L7) | Winter's expected PaCO2 = 1.5·HCO3 + 8 (Albert, Dell & Winters 1967; ±2) — HCO3 from the blood model's |
+| [`spont.ts:8`](../../packages/engine-core/src/l2/neuro/spont.ts#L8) | blood.core.ab.hco3 (24 without it → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic |
+| [`spont.ts:11`](../../packages/engine-core/src/l2/neuro/spont.ts#L11) | drive: the lung model's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with the neuro model's |
 | [`types-eeg.ts:94`](../../packages/engine-core/src/types-eeg.ts#L94) | Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz; above `hfCornerHz` |
 
 ## Couplings
@@ -503,6 +503,8 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `diaphragmVtCapMl` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The tidal volume a partly blocked diaphragm can move in one SUSTAINED breath, mL — 35 mL (VT_EFFORT_ML_KG) at the first effort, a resting VT at DIAPH_EFFECTIVE, the chemical ceiling at full strength ( |
 | `winterPaco2` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | Winter's expected PaCO2 in metabolic acidosis (mmHg). |
 | `paco2SetPoint` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The chemoreflex set point: |
+| `stepBrainstem` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | One step (`dtS`, the drive's SPONT_DT_S by default) of the brainstem's perfusion state on the drive's record: |
+| `brainstemGate` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The gates on a breathing pattern whose resting VT is `vt0`, from the state stepBrainstem keeps: |
 | `tofStep` | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | Called every neuro step (0.1 s) with the TRUE reading; |
 
 Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `opioidFentEq`, `depth`, `neuroResp`, `ec50Multipliers`, `hypokalaemiaMult`, `neuroOutputs`, `createNeuroState`, `createSpontDrive`, `stepSpontDrive`, `createTofDevice`, `validateTofAction`, `tofAction`.
