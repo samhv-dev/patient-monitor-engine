@@ -856,8 +856,8 @@ export class HostSession {
   private async verifyLearner(t: ManagedTransport, from: string, pin: string | undefined, ticket: string | undefined, device: string | undefined, role: 'learner' | 'pump' = 'learner'): Promise<void> {
     const want = this.o.learnerPin?.() ?? null;
     const instructor = this.o.instructorPin?.() ?? null;
-    this.learners.get(t)?.delete(from); // its own hello proves the PIN again, or it is no longer granted
-    const deny = (reason: string) => this.grant(t, from, false, reason);
+    // its own hello proves the PIN (or its ticket) again, or it is no longer granted
+    const deny = (reason: string) => (this.learners.get(t)?.delete(from), this.grant(t, from, false, reason));
     // C2 (§7): a pump tablet is admitted exactly as a learner remote, on the learner PIN, where the room has a rack
     if (role === 'pump' && !this.o.pumpRack?.()) return deny(PUMP_REASONS.noPump);
     if (want === null) return deny(role === 'pump' ? PUMP_REASONS.noPump : LEARNER_REASONS.noRemote);
