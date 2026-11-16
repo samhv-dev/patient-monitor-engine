@@ -1318,6 +1318,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/instrument-reload.e2e.ts`](../../apps/demo/e2e/instrument-reload.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/laptop-labs.e2e.ts`](../../apps/demo/e2e/laptop-labs.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
@@ -1428,6 +1429,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/fast-forward-cockpit.test.ts`](../../apps/demo/src/app/fast-forward-cockpit.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-panel.dom.test.ts`](../../apps/demo/src/app/fast-forward-panel.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/follower-address.dom.test.ts`](../../apps/demo/src/app/follower-address.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-beep-gate.test.ts`](../../apps/demo/src/app/follower-beep-gate.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/formulary.test.ts`](../../apps/demo/src/app/formulary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 0 | 0 |
