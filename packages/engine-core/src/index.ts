@@ -4,6 +4,7 @@ export * from './clock/clock.ts';
 export * from './rng/sfc32.ts';
 export { RingBuffer } from './buffers/ring.ts';
 export { createEngine, BEEP_DELAY_S } from './engine.ts';
+export { decodeState, encodeState } from './snapshot-codec.ts';
 export { RHYTHMS, RHYTHM_IDS } from './l2/ecg/rhythms.ts';
 export { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 export { ecgVocabulary, type EcgVocabulary } from './l2/ecg/vocabulary.ts';

@@ -447,10 +447,10 @@ function mountHamiltonFace(c: Cockpit, tools: SimTools): { draw(ts: number): voi
     if (viewMode === 'cockpit') updatePanels();
   }));
   const syncAll = () => { buildWaves(); buildNums(); buildRail(); syncHeader(); };
-  // A remote patch (link page, demo), a mode, a preset or a scenario redraws the knobs and sheets; a patient setting of the
+  // A remote patch (link page, demo), a restore, a mode, a preset or a scenario redraws the knobs and sheets; a patient setting of the
   // simulator's drawer redraws the dials (the drawer redraws itself); this face's own controls have repainted already
   const off = c.onChange((ch) => {
-    if (ch.source === 'remote' || ch.source === 'mode' || ch.source === 'preset' || ch.source === 'scenario') syncAll();
+    if (ch.source === 'remote' || ch.source === 'restore' || ch.source === 'mode' || ch.source === 'preset' || ch.source === 'scenario') syncAll();
     else if (ch.source === 'tool' && ch.keys.some((k) => typeof S[k] === 'number')) { numsDirty = true; buildRail(); }
   });
   function draw() {

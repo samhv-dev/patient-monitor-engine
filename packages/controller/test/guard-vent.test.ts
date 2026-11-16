@@ -24,8 +24,8 @@ const cmds = (ms: LinkMsg[]) => ms.filter((m): m is Extract<LinkMsg, { kind: 'cm
 const types = (m: Extract<LinkMsg, { kind: 'cmds' }>) => m.cmds.map((c) => c.type).join(',');
 
 describe('the captured link (what the guard is tested on)', () => {
-  it('holds every kind both sides send: cmds from the cockpit; lungState, clock, run and time from the monitor', () => {
-    expect(kinds(normal.fromVent)).toEqual(['cmds']);
+  it('holds every kind both sides send: cmds and state from the cockpit; lungState, clock, run and time from the monitor', () => {
+    expect(kinds(normal.fromVent)).toEqual(['cmds', 'state']);
     expect(kinds(normal.toVent)).toEqual(['clock', 'lungState', 'run', 'time']);
     expect(new Set(cmds(normal.fromVent).map(types))).toEqual(new Set(['externalDrive', 'applyEvent,externalDrive']));
     expect(types(cmds(shock.fromVent)[0]!)).toBe('setTarget,setTarget,setTarget,setTarget,externalDrive');
@@ -68,6 +68,30 @@ describe('the guard passes every captured body inside a `vent`', () => {
     expect(parseWireMessage(JSON.stringify(vent(settings)))).toMatchObject({ kind: 'vent', body: { kind: 'settings' } });
     expect(bytes(settings)).toBeLessThan(VENT_LIMITS.bytes);
     expect(parseWireMessage(toVent({ v: 1, kind: 'control', patch: { peep: 8 }, circuit: 'disconnected', profile: 'ards-mild' }))).not.toBeNull();
+  });
+});
+
+describe("the cockpit's state and its restore inside a `vent`", () => {
+  const state = () => structuredClone(normal.fromVent.filter((m) => m.kind === 'state').at(-1)!) as Extract<LinkMsg, { kind: 'state' }>;
+  const lung = () => structuredClone(normal.toVent.find((m) => m.kind === 'lungState')!) as Extract<LinkMsg, { kind: 'lungState' }>;
+  const restore = () => ({ v: 1, kind: 'restore', epoch: 'm3k2.1', state: state().state, lung: lung().ev, allowed: 400, upTo: 330 });
+
+  it(`a state, a restore with its lungState, and the answer pass, within VENT_LIMITS.stateBytes (${VENT_LIMITS.stateBytes})`, () => {
+    expect(parseWireMessage(JSON.stringify(vent(state())))).toMatchObject({ body: { kind: 'state' } });
+    expect(parseWireMessage(JSON.stringify(toVent(restore())))).toMatchObject({ body: { kind: 'restore' } });
+    expect(parseWireMessage(JSON.stringify(vent({ v: 1, kind: 'restored', epoch: 'm3k2.1', loaded: true })))).not.toBeNull();
+    expect(bytes(restore())).toBeLessThan(VENT_LIMITS.stateBytes * 0.75);
+  });
+
+  it('a state over the limit, a restore without its epoch, an answer without `loaded`, or a long epoch on a cmds are refused', () => {
+    const big = state();
+    (big.state as { body: unknown }).body = 'x'.repeat(VENT_LIMITS.stateBytes);
+    expect(parseWireMessage(JSON.stringify(vent(big)))).toBeNull();
+    const { epoch: _e, ...noEpoch } = restore();
+    expect(parseWireMessage(JSON.stringify(toVent(noEpoch)))).toBeNull();
+    expect(parseWireMessage(JSON.stringify(vent({ v: 1, kind: 'restored', epoch: 'm3k2.1' })))).toBeNull();
+    const c = { ...structuredClone(cmds(normal.fromVent).at(-1)!), epoch: 'e'.repeat(VENT_LIMITS.epoch + 1) };
+    expect(parseWireMessage(JSON.stringify(vent(c)))).toBeNull();
   });
 });
 

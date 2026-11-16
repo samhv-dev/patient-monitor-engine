@@ -356,6 +356,7 @@ class Engine implements MonitorEngine {
   private readonly sections = new Map<EcgFilterMode, Biquad[]>();
   private groupTicks = new Map<string, number>(); // stageGroup → tick (brief §4.9); in the snapshot
   private dev: DeviceState; // Alarms, defibrillator, pacer (brief §6.4–§6.5)
+  private devices: Partial<Record<'ventilator', unknown>> = {}; // `deviceState`: opaque, in the snapshot
   private readonly devOpts: EngineOptions['device']; // For restoring older snapshots
   private readonly truthEvery: number; // Ticks between truth events, 0 = off
 
@@ -507,6 +508,12 @@ class Engine implements MonitorEngine {
     } catch {
       return { accepted: false, tick: this.tick, reason: 'a command must be plain data (no functions or class instances)' };
     }
+    if (cmd.type === 'deviceState') {
+      if (cmd.source !== 'ventilator') return { accepted: false, tick: this.tick, reason: "deviceState source must be 'ventilator'" };
+      if (cmd.state === null || cmd.state === undefined) delete this.devices[cmd.source];
+      else this.devices[cmd.source] = cmd.state;
+      return { accepted: true, tick: this.tick };
+    }
     const reason = this.validate(cmd);
     let tick = Math.max(cmd.atTick ?? this.tick + 1, this.tick + 1);
     if (reason) return { accepted: false, tick: this.tick, reason };
@@ -554,7 +561,10 @@ class Engine implements MonitorEngine {
       seed: this.seed,
       tick: this.tick,
       // The device layer's `dev`; the pending stage groups and a JSON-safe encoding (snapshot-codec.ts)
-      state: encodeState({ st, queue: this.queue, mainsHz: this.mainsHz, dev: this.dev, groups: [...this.groupTicks].filter(([, at]) => at > this.tick) }),
+      state: encodeState({
+        st, queue: this.queue, mainsHz: this.mainsHz, dev: this.dev, groups: [...this.groupTicks].filter(([, at]) => at > this.tick),
+        ...(Object.keys(this.devices).length > 0 ? { devices: { ...this.devices } } : {}), // absent without one: the snapshot is unchanged
+      }),
     };
   }
   restore(s: PatientSnapshot): void {
@@ -565,7 +575,7 @@ class Engine implements MonitorEngine {
     // or damaged) keeps this engine's own: the running streams still continue from the state, and a stream started
     // later cannot be the host's, because nothing in that snapshot says what the host's seed was.
     const seed = Number.isInteger(s.seed) && s.seed >= 0 && s.seed <= 0xffffffff ? s.seed : this.seed;
-    const data = decodeState(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState; groups?: Array<[string, number]> };
+    const data = decodeState(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState; groups?: Array<[string, number]>; devices?: Partial<Record<'ventilator', unknown>> };
     data.st.pk ??= createPkState(pkPatientOf(undefined)); // Absent in older snapshots
     data.st.pkHooks ??= createHookState();
     data.st.endo ??= createEndoState(undefined, 70); // Absent in older snapshots
@@ -589,6 +599,7 @@ class Engine implements MonitorEngine {
     this.queue = data.queue;
     this.groupTicks = new Map(data.groups ?? []); // The bookmark's pending groups, never the discarded future's
     this.dev = data.dev ?? createDevice(this.devOpts?.skin, this.devOpts?.ageBand);
+    this.devices = data.devices ?? {}; // Absent in older snapshots and in those taken without one
     this.syncCo2Sampler();
     this.tick = s.tick;
     this.syncLaneBuffers();
@@ -599,6 +610,7 @@ class Engine implements MonitorEngine {
     for (const b of this.bufs.values()) b.clear(); // The discarded timeline's samples are not history
     const simT = this.now().simT;
     this.emit({ type: 'toneCancel', after: simT }); // a different timeline: every tone after now is void
+    for (const [source, state] of Object.entries(this.devices)) this.emit({ type: 'deviceState', t: simT, source: source as 'ventilator', state: structuredClone(state) });
     this.posted.clear();
     this.committedDet = [];
     this.dirtyFromN = Number.POSITIVE_INFINITY;

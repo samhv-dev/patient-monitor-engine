@@ -16,19 +16,47 @@
 //   vent → monitor: { kind: 'settings' }  the cockpit's settings, for a hand-over to the engine's own ventilator when a
 //                                         cockpit on another device goes (plan room-and-instruments.md §4 D9, R8a;
 //                                         sent from R8c on; over the relay, inside the controller's `vent` message)
+//   vent → monitor: { kind: 'state' }     the ventilator's whole state after tick `tick`, whenever it changed; the
+//                                         monitor keeps it in the engine (`deviceState`), so a bookmark holds it
+//   monitor → vent: { kind: 'restore' }   the engine went back to a bookmark holding that state: load it, and make
+//                                         at once, unsent, the ticks up to `upTo` that the restored engine already has
+//   vent → monitor: { kind: 'restored' }  the answer, loaded or not; its later messages carry the restore's `epoch`
 import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
 import type { VentConfig } from '../types.ts';
 import type { LungStateEvent } from '../lung-input.ts';
 import type { ProfileId } from './profiles.ts';
+import type { VentSnapshot } from './vent-driver.ts';
 
 export type LinkMsg =
-  | { v: 1; kind: 'cmds'; tick: number; cmds: Command[] }
+  | { v: 1; kind: 'cmds'; tick: number; cmds: Command[]; epoch?: string }
   | { v: 1; kind: 'lungState'; ev: LungStateEvent }
   | { v: 1; kind: 'clock'; ventTick: number }
   | { v: 1; kind: 'run'; ventTick: number }
   | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
   | { v: 1; kind: 'control'; patch?: Partial<VentConfig>; circuit?: 'connected' | 'disconnected'; profile?: ProfileId }
-  | { v: 1; kind: 'settings'; cfg: VentConfig };
+  | { v: 1; kind: 'settings'; cfg: VentConfig }
+  | { v: 1; kind: 'state'; tick: number; epoch?: string; state: VentSnapshot }
+  | { v: 1; kind: 'restore'; epoch: string; state: VentSnapshot; lung: LungStateEvent | null; allowed: number; upTo: number }
+  | { v: 1; kind: 'restored'; epoch: string; loaded: boolean };
+
+/**
+ * What the engine holds of the ventilator driving it (a `deviceState` command; restored as a `deviceState` event): the
+ * ventilator's state, the link's own (the tick offset, the last ventilator tick the engine has, the clock it published)
+ * and the last lungState sent. The engine's queue holds the frames up to `link.lastTick`; the state may be older (a
+ * report comes after its frames), and the ventilator then makes those ticks again, which the link does not send twice.
+ */
+export interface LinkRecord {
+  v: 1;
+  vent: VentSnapshot;
+  link: { offset: number | null; lastTick: number; allowed: number; engTick: number };
+  lung: LungStateEvent | null;
+}
+
+/** How a restore ended at the ventilator: it loaded the state, it could not (it drives on with its own), no answer. */
+export type RestoreOutcome = 'loaded' | 'refused' | 'silent';
+
+export const isLinkRecord = (r: unknown): r is LinkRecord =>
+  typeof r === 'object' && r !== null && (r as LinkRecord).v === 1 && (r as LinkRecord).vent?.v === 1 && typeof (r as LinkRecord).link === 'object';
 
 export interface LinkPort {
   post(m: LinkMsg): void;
@@ -143,6 +171,11 @@ export const MAX_AHEAD_TICKS = 75;
 /** A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then
  *  takes over, as when the cockpit is closed), wall ms [ENG: network]. */
 export const RUN_TIMEOUT_MS = 2000;
+/** A ventilator that has not taken a restore is sent it again at most this often while it sends, wall ms [ENG: ui]. */
+export const RESTORE_REPOST_MS = 250;
+
+let epochs = 0;
+const newEpoch = () => `${Date.now().toString(36)}.${++epochs}`;
 
 /** The link's detach function; also `runTo`, the fast-forward's lockstep with the cockpit. */
 export type LinkDetach = (() => void) & {
@@ -151,6 +184,8 @@ export type LinkDetach = (() => void) & {
    * engine runs there. Resolves at once when the link has not learnt its offset yet (no cockpit ventilates).
    */
   runTo(engTick: number): Promise<void>;
+  /** The last restore the ventilator was sent (null: none yet): resolves when it ventilates the restored patient, or not. */
+  restoring(): Promise<RestoreOutcome> | null;
 };
 
 /**
@@ -168,16 +203,114 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
   let allowed = -Infinity;
   let engTick = 0;
   let waiter: { ventTick: number; done: () => void } | null = null; // A fast-forward step waits for frames
+  let vent: VentSnapshot | null = null; // The ventilator's last state: null for one that sends none
+  let lung: LungStateEvent | null = null;
+  let detached = false;
+  let dirty = false;
+  /** The record goes to the engine once per task in which it changed, so a snapshot taken in any later task holds it. */
+  const touch = () => {
+    if (vent === null || dirty) return;
+    dirty = true;
+    queueMicrotask(() => {
+      dirty = false;
+      if (vent === null || detached) return;
+      const state: LinkRecord = { v: 1, vent, link: { offset, lastTick, allowed, engTick }, lung };
+      try {
+        void Promise.resolve(mon.dispatch({ id: 'vent-state', issuedBy: 'ventilator', type: 'deviceState', source: 'ventilator', state })).catch(() => {});
+      } catch {
+        // an engine that refuses it keeps the record it had
+      }
+    });
+  };
+  /** A restore sent and not yet answered: the ventilator's messages from before it are not heard. */
+  let awaiting: { msg: Extract<LinkMsg, { kind: 'restore' }>; at: number } | null = null;
+  /** The ticks the restored engine already holds, which the restored ventilator makes again. */
+  let dropTo = -1;
+  /** The last restore's end (it settles once; a later restore starts another). */
+  let outcome: { p: Promise<RestoreOutcome>; settle: (o: RestoreOutcome) => void } | null = null;
+  const settle = (o: RestoreOutcome) => outcome?.settle(o);
+  const relearn = () => {
+    offset = null;
+    allowed = -Infinity;
+    learning = false;
+    gen++;
+  };
+  const restore = (r: LinkRecord) => {
+    settle('silent');
+    offset = r.link.offset;
+    lastTick = r.link.lastTick;
+    allowed = r.link.allowed;
+    engTick = r.link.engTick;
+    learning = false;
+    vent = r.vent;
+    lung = r.lung;
+    dropTo = r.link.lastTick;
+    let s: (o: RestoreOutcome) => void = () => {};
+    const p = new Promise<RestoreOutcome>((res) => {
+      const timer = setTimeout(() => s('silent'), RUN_TIMEOUT_MS);
+      s = (o) => {
+        clearTimeout(timer);
+        s = () => {};
+        res(o);
+      };
+    });
+    outcome = { p, settle: (o) => s(o) };
+    const msg = {
+      v: 1, kind: 'restore', epoch: newEpoch(), state: r.vent, lung: r.lung, upTo: dropTo,
+      allowed: Number.isFinite(allowed) ? allowed : Math.max(dropTo, r.vent.tick) + 2 * LEAD_TICKS,
+    } as const;
+    awaiting = { msg, at: Date.now() };
+    touch();
+    port.post(msg);
+  };
+  /** Whether a message of the ventilator is not heard: one from before the restore it has not taken yet. */
+  const fenced = (m: Extract<LinkMsg, { kind: 'cmds' | 'state' | 'restored' }>): boolean => {
+    if (!awaiting) return m.kind === 'restored';
+    if (m.kind === 'restored') {
+      if (m.epoch !== awaiting.msg.epoch) return true;
+      awaiting = null;
+      if (!m.loaded) {
+        dropTo = -1;
+        relearn();
+        settle('refused');
+      }
+      return true;
+    }
+    if (m.epoch === undefined) {
+      // a ventilator that cannot take a restore drives on from its own state, as before
+      awaiting = null;
+      dropTo = -1;
+      relearn();
+      settle('refused');
+      return false;
+    }
+    if (m.epoch === awaiting.msg.epoch) return false;
+    if (Date.now() - awaiting.at >= RESTORE_REPOST_MS) {
+      awaiting.at = Date.now();
+      port.post(awaiting.msg);
+    }
+    return true;
+  };
   const publishClock = () => {
     if (offset === null) return;
     const allow = engTick - offset + MAX_AHEAD_TICKS;
     if (allow >= allowed + 2) {
       allowed = allow;
+      touch();
       port.post({ v: 1, kind: 'clock', ventTick: allow });
     }
   };
   const offPort = port.onMessage((m) => {
-    if (m.kind === 'cmds') {
+    if ((m.kind === 'cmds' || m.kind === 'state' || m.kind === 'restored') && fenced(m)) return;
+    if (m.kind === 'state') {
+      vent = m.state;
+      touch();
+    } else if (m.kind === 'cmds') {
+      if (m.tick <= dropTo) return;
+      if (dropTo >= 0) {
+        dropTo = -1;
+        settle('loaded');
+      }
       if (m.tick < lastTick) {
         offset = null;
         allowed = -Infinity;
@@ -185,6 +318,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
         gen++;
       }
       lastTick = m.tick;
+      touch();
       const w = waiter !== null && m.tick >= waiter.ventTick ? waiter : null; // Released after these dispatches
       for (const c of m.cmds) {
         const at = offset === null ? undefined : m.tick + offset;
@@ -211,6 +345,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
             offset = r.tick - m.tick + LEAD_TICKS;
             learning = false;
             engTick = Math.max(engTick, r.tick - 1);
+            touch();
             publishClock();
           } else if (at !== undefined && r.tick > at) {
             // FX-1: the offset this frame needed, not the current offset plus its lateness. A burst of late frames is
@@ -218,6 +353,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
             // 14 s); the clock limit then held the cockpit until the engine's 5 s drive watchdog declared apnoea. For a
             // single late frame the two rules agree.
             offset = Math.max(offset ?? 0, r.tick - m.tick);
+            touch();
           }
         }, (err: unknown) => failed(err instanceof Error ? err.message : String(err)));
       }
@@ -229,6 +365,10 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
     }
   });
   const offEng = mon.on((e) => {
+    if (e.type === 'deviceState') {
+      if (e.source === 'ventilator' && isLinkRecord(e.state)) restore(e.state);
+      return;
+    }
     const tk = 't' in e ? Math.floor(e.t / 0.02 + 1e-6) : 0; // every event but toneCancel carries sim time
     if (e.type === 'toneCancel' && e.ids === undefined) {
       // The engine was RESTORED (its restore marker: a toneCancel without ids; a new engine re-attaches instead). The
@@ -253,14 +393,21 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
     }
     if (tk > engTick) {
       engTick = tk;
+      touch();
       publishClock();
     }
-    if (e.type === 'lungState') port.post({ v: 1, kind: 'lungState', ev: e });
+    if (e.type === 'lungState') {
+      lung = e;
+      touch();
+      port.post({ v: 1, kind: 'lungState', ev: e });
+    }
   });
   const detach = () => {
+    detached = true;
     offPort();
     offEng();
     waiter?.done();
+    settle('silent');
   };
   return Object.assign(detach, {
     runTo(eng: number): Promise<void> {
@@ -282,5 +429,6 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
         port.post({ v: 1, kind: 'run', ventTick });
       });
     },
+    restoring: () => outcome?.p ?? null,
   });
 }

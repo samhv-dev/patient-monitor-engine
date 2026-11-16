@@ -291,7 +291,7 @@ export const EVENTS_PER_MESSAGE = 200;
  * display (`eegReading`: its raw samples and spectrogram column) is drawn by every follower from its own engine's
  * EEG, which reads the same samples (EEG plan D3: no EEG sample crosses the wire; the wire guard refuses them).
  */
-const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel', 'eegReading']);
+const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel', 'eegReading', 'deviceState']);
 const TICK_S = 0.02;
 /** A viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every
  *  resync) [ENG: network]. */

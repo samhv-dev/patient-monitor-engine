@@ -77,6 +77,7 @@ describe('FX-1: a restore while the cockpit is at its clock limit', () => {
     d.frame(0);
     await run(100);
     const snap = e.snapshot();
+    const snapT = e.now().simT;
     await run(500);
     d.scale = 4; // one long animation frame at ×4: the cockpit runs to its clock limit and stops there
     ms += 500;
@@ -89,7 +90,7 @@ describe('FX-1: a restore while the cockpit is at its clock limit', () => {
     e.restore(snap);
     await run(100);
     expect(clocks.length, 'a clock after the restore').toBeGreaterThan(clocksBefore);
-    expect(d.simT()).toBeGreaterThan(atLimit + 1); // the cockpit kept ventilating
+    expect(d.simT()).toBeGreaterThan(snapT + 1); // the cockpit went back with the patient and kept ventilating
     const late = scheduled.slice(5);
     expect(late.length).toBeGreaterThan(20);
     for (const s of late) expect(s.at - s.engine).toBeLessThanOrEqual(LEAD_TICKS + 2);

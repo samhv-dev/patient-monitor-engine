@@ -15,7 +15,8 @@
 import type { Command } from '@pme/engine-core';
 import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
 import {
-  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, isLinkRecord, LEAD_TICKS, snapshotSettings, type CockpitSettings, type LinkPort,
+  type LinkRecord, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
 import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
@@ -115,6 +116,31 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     });
     p.post({ v: 1, kind: 'time', action: 'resume' });
   };
+  /** The engine's own ventilator takes the patient with `s` on `atTick`; the engine then holds no cockpit's state. */
+  const toEngine = async (s: CockpitSettings, atTick: number) => {
+    const event = { kind: 'ventilation', source: 'ventilator', ...engineVentilation(s.cfg, s.measured) };
+    const r = await session.host.submit({ id: `vent-handover-${Date.now()}`, issuedBy: 'ventilator', type: 'applyEvent', event, atTick } as never);
+    if (r.accepted) void session.monitor?.dispatch({ id: 'vent-state', issuedBy: 'ventilator', type: 'deviceState', source: 'ventilator', state: null } as Command);
+    return r;
+  };
+  /**
+   * A return to a bookmark that holds the cockpit driving then: the cockpit linked now takes it back (its link sends it),
+   * and the patient's clock stands until it ventilates the restored patient or RUN_TIMEOUT_MS passed. With none linked,
+   * the engine's own ventilator takes the patient with the bookmark's settings after the cockpit's last frame, as when a
+   * cockpit goes.
+   */
+  const restored = (r: LinkRecord) => {
+    const taking = driving ? session.ventLink?.restoring() : null;
+    if (taking) return void session.holdClock(taking);
+    const s = snapshotSettings(r.vent);
+    if (s) void toEngine(s, r.link.offset === null ? 0 : r.link.lastTick + r.link.offset + 1);
+  };
+  session.onMount((m) => m.on((e) => {
+    if (e.type === 'deviceState' && e.source === 'ventilator' && isLinkRecord(e.state)) {
+      const r = e.state;
+      queueMicrotask(() => restored(r)); // after the link heard it too
+    }
+  }));
   const desk: CockpitDesk = {
     get driving() {
       return driving;
@@ -162,8 +188,7 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
         link(c); // Its settings cannot be read: it drives on (FU-11 H6), as before E128
         return (off(), last);
       }
-      const event = { kind: 'ventilation', source: 'ventilator', ...engineVentilation(s.cfg, s.measured) };
-      const r = await session.host.submit({ id: `vent-handover-${Date.now()}`, issuedBy: 'ventilator', type: 'applyEvent', event, atTick: last + 1 } as never);
+      const r = await toEngine(s, last + 1);
       if (!still()) return undefined;
       if (!r.accepted) {
         console.warn('ventilator hand-over refused:', r.reason);
@@ -215,6 +240,7 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, o:
   const linkPort: LinkPort = {
     post: (m) => {
       if (m.kind === 'clock' || m.kind === 'run') topTick = Math.max(topTick, m.ventTick);
+      if (m.kind === 'restore') last = snapshotSettings(m.state) ?? last; // a silence hand-over gives the bookmark's
       port.post(m);
     },
     onMessage: (fn) => port.onMessage(fn),

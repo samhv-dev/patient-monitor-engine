@@ -25,7 +25,9 @@ export const WIRE_LIMITS = {
  * plan's 4 ("3 plus a spare" counted one stand-in), which would drop the first tick of anaphylaxis and air embolism.
  * `bytes`: a `vent` body's largest JSON [ENG: network; that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
  */
-export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16 } as const;
+export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16, stateBytes: 8 * 1024, epoch: 32 } as const;
+// `stateBytes`: a `state` or `restore` body, the cockpit's whole state [ENG: network; 4.3 KB measured, 5 KB with the
+// lungState a restore carries]; it goes once a second at most. `epoch`: the restore id's length (port.ts newEpoch, < 20).
 // `batch` (R8c): the most `cmds` one relay-port message packs [ENG: network; at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
 // 16 holds two windows, an animation frame that came late]; `bytes` bounds it too (a steady tick is 0.25 KB).
 
@@ -170,8 +172,11 @@ function ventCommandOk(c: unknown): boolean {
   return c.type === 'setTarget' && typeof c.variable === 'string' && typeof c.value === 'number';
 }
 /** Whether a `vent` body is one of the ventilator link's messages, within VENT_LIMITS (plan R8a). */
+const epochOk = (e: unknown) => typeof e === 'string' && e.length <= VENT_LIMITS.epoch;
 const cmdsOk = (b: unknown): boolean =>
-  isObj(b) && b.v === 1 && b.kind === 'cmds' && Number.isInteger(b.tick) && Array.isArray(b.cmds) && b.cmds.length <= VENT_LIMITS.cmds && b.cmds.every(ventCommandOk);
+  isObj(b) && b.v === 1 && b.kind === 'cmds' && Number.isInteger(b.tick) && Array.isArray(b.cmds) && b.cmds.length <= VENT_LIMITS.cmds && b.cmds.every(ventCommandOk)
+  && (b.epoch === undefined || epochOk(b.epoch));
+const ventStateOk = (s: unknown): boolean => isObj(s) && s.v === 1 && Number.isInteger(s.tick) && (s.face === null || typeof s.face === 'string') && 'body' in s;
 const isNum = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
 const isPos = (x: unknown) => isNum(x) && (x as number) > 0;
 const isId = (x: unknown) => typeof x === 'string' && ITEM_ID_RE.test(x);
@@ -260,6 +265,16 @@ function ventBodyOk(b: unknown): boolean {
     case 'settings':
       if (!isObj(b.cfg) || (b.hidden !== undefined && typeof b.hidden !== 'boolean')) return false;
       if (b.measured !== undefined && !(isObj(b.measured) && isNum(b.measured.RR) && isNum(b.measured.VTE))) return false;
+      break;
+    case 'state':
+      if (!Number.isInteger(b.tick) || (b.epoch !== undefined && !epochOk(b.epoch)) || !ventStateOk(b.state)) return false;
+      return utf8Bytes(JSON.stringify(b)) <= VENT_LIMITS.stateBytes;
+    case 'restore':
+      if (!epochOk(b.epoch) || !ventStateOk(b.state) || !isNum(b.allowed) || !Number.isInteger(b.upTo)) return false;
+      if (b.lung !== null && !(isObj(b.lung) && b.lung.type === 'lungState')) return false;
+      return utf8Bytes(JSON.stringify(b)) <= VENT_LIMITS.stateBytes;
+    case 'restored':
+      if (!epochOk(b.epoch) || typeof b.loaded !== 'boolean') return false;
       break;
     default:
       return false;

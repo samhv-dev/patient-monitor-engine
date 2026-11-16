@@ -8,8 +8,8 @@ import {
   setMode, silenceAlarms, toggleHold, ventAlarms,
   type Measured, type PresetId, type VentAlarm, type VentConfig, type VentDriver, type VentPhase, type VentPhysics, type VentState,
 } from '@pme/ventilator';
-import { createAlarmView, type AlarmEvent, type AlarmSignals } from './alarms-view.ts';
-import { createRecorder } from './record.ts';
+import { createAlarmView, type AlarmEvent, type AlarmSignals, type AlarmViewState } from './alarms-view.ts';
+import { createRecorder, type RecorderState } from './record.ts';
 import type { BreathRecord, Change, ChangeSource, FaceSpec, NumKey } from './types.ts';
 
 export interface SampleBuffers {
@@ -146,6 +146,21 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     if (source !== 'remote' && (keys.includes('vcFlow') || keys.includes('pause'))) matched = false;
   };
 
+  // The ventilator's snapshot holds what this core adds to it: what decides the next frames (matched flow) and what the
+  // device signals (the breath record and the alarm view). The display buffers belonged to the discarded run.
+  d.ext = {
+    face: face.id,
+    save: () => ({ matched, rec: rec.save(), view: view?.save() ?? null }),
+    load(x) {
+      const s = x as { matched: boolean; rec: RecorderState; view: AlarmViewState | null };
+      matched = s.matched;
+      rec.load(s.rec);
+      if (view && s.view) view.load(s.view);
+      clearBuf();
+      emit('restore', Object.keys(S) as Array<keyof VentConfig>);
+    },
+  };
+
   const profiled = (a: VentAlarm[]): VentAlarm[] => (prof ? a.filter((x) => !prof.show || prof.show.includes(x.id)).map((x) => ({ ...x, priority: prof.priority?.[x.id] ?? x.priority })) : a);
 
   let raf = 0;
@@ -211,6 +226,7 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
       if (raf) cancelAnimationFrame(raf); // headless (no start), there is no frame to cancel
       d.onStep = undefined;
       d.onControl = undefined;
+      d.ext = undefined;
       d.frame = frame;
       changes.clear();
       steps.clear();

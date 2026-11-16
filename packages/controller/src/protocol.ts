@@ -421,7 +421,7 @@ export type VentCommand =
  * The cockpit's configuration (`control`'s patch, `settings`) stays opaque here.
  */
 export type VentLinkBody =
-  | { v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[] }
+  | { v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[]; epoch?: string }
   | { v: 1; kind: 'lungState'; ev: Extract<EngineEvent, { type: 'lungState' }> }
   | { v: 1; kind: 'clock'; ventTick: number }
   | { v: 1; kind: 'run'; ventTick: number }
@@ -433,7 +433,14 @@ export type VentLinkBody =
    * R8c: the `cmds` of 20 ms of the cockpit's wall time in one message (`packages/ventilator` link/relay-port.ts): 400 a
    * second at ×8 would close its socket at the relay's 120. Never a link message of its own: the far port unpacks it.
    */
-  | { v: 1; kind: 'batch'; msgs: Array<{ v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[] }> };
+  | { v: 1; kind: 'batch'; msgs: Array<{ v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[]; epoch?: string }> }
+  /** The cockpit's whole state (`VentSnapshot`, opaque here) for the host's bookmarks; the host's `restore` of it after a
+   *  return to a bookmark, and the cockpit's answer. */
+  | { v: 1; kind: 'state'; tick: number; epoch?: string; state: VentStateBody }
+  | { v: 1; kind: 'restore'; epoch: string; state: VentStateBody; lung: Extract<EngineEvent, { type: 'lungState' }> | null; allowed: number; upTo: number }
+  | { v: 1; kind: 'restored'; epoch: string; loaded: boolean };
+/** `packages/ventilator`'s VentSnapshot, structurally. */
+export interface VentStateBody { v: 1; face: string | null; tick: number; body: unknown }
 export type VentLinkKind = VentLinkBody['kind'];
 
 /** Brief §7.5, exactly. */
