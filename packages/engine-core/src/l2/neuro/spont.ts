@@ -1,7 +1,8 @@
 // MODELED spontaneous breathing: the lung model's chemoreflex drive, work of breathing and fatigue
 // (l2/lung/drive.ts: drive(), pti(), stepFatigue()) set the rate and tidal volume of spontaneous cycles in MODELED
 // mode, with the neuro model's depression on top. MANUAL keeps the instructor's rr/vt × the neuro model's multipliers
-// (driverCtx). Re-evaluated at 1 Hz on the gas grid; plain data (snapshots, look-ahead clone).
+// (driverCtx), through the same brainstem-perfusion gate (stepBrainstem, brainstemGate). Re-evaluated at 1 Hz on the
+// gas grid; plain data (snapshots, look-ahead clone).
 //   set point: the resting PaCO2 the MANUAL etco2 calibration placed (paco2Rest), lowered in metabolic acidosis to
 //     Winter's expected PaCO2 = 1.5·HCO3 + 8 (Albert, Dell & Winters 1967; ±2) — HCO3 from the blood model's
 //     blood.core.ab.hco3 (24 without it → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic
@@ -145,6 +146,52 @@ export interface SpontInputs {
   jDrive?: number; // Acute PE severity (the lung's `pe` spec) — J-receptor drive
 }
 
+/** What the brainstem's perfusion lets through of a breathing pattern: a rate ceiling, the reopening gate and the
+ * pulseless withdrawal (rate factors), a VT ceiling. */
+export interface BrainstemGate {
+  rateCap: number;
+  gate: number;
+  pulse: number;
+  vtCap: number;
+}
+
+/**
+ * One step (`dtS`, the drive's SPONT_DT_S by default) of the brainstem's perfusion state on the drive's record:
+ * seconds unperfused (CBF below BRAINSTEM_CBF_MIN or no flow), the reopening gate after a spell past GASP_ONSET_S, and
+ * seconds pulseless (the engine's own determination: a pulseless rhythm flag or a no-beat rhythm, which covers an
+ * instructor-commanded VF without an arrest state).
+ */
+export function stepBrainstem(s: SpontDrive, x: Pick<SpontInputs, 'noFlow' | 'cbfRel' | 'pulseless'>, dtS = SPONT_DT_S): void {
+  const unperfused = x.noFlow === true || (x.cbfRel !== undefined && x.cbfRel < BRAINSTEM_CBF_MIN);
+  if (unperfused) s.anoxS = (s.anoxS ?? 0) + dtS;
+  else if (s.anoxS !== undefined) {
+    if (s.anoxS > GASP_ONSET_S) s.gate = 0; // a gasping or apnoeic brainstem recovers over GATE_REOPEN_S
+    delete s.anoxS;
+  }
+  if ((s.anoxS ?? 0) <= GASP_ONSET_S && s.gate !== undefined && !unperfused) {
+    s.gate = Math.min(1, s.gate + dtS / GATE_REOPEN_S);
+    if (s.gate >= 1) delete s.gate;
+  }
+  if (x.pulseless) s.plS = (s.plS ?? 0) + dtS;
+  else if (s.plS !== undefined) delete s.plS;
+}
+
+/**
+ * The gates on a breathing pattern whose resting VT is `vt0`, from the state stepBrainstem keeps: past GASP_ONSET_S
+ * unperfused, gasps (rate ≤ GASP_RR, VT ≤ GASP_VT_FRAC × vt0) fading to apnoea by GASP_END_S; after reperfusion the rate
+ * × the reopening gate; while pulseless, the effort withdrawn over the arrest declaration's NO_FLOW_S window.
+ */
+export function brainstemGate(s: Pick<SpontDrive, 'anoxS' | 'gate' | 'plS'>, vt0: number): BrainstemGate {
+  const pulse = s.plS === undefined ? 1 : Math.max(0, 1 - s.plS / NO_FLOW_S);
+  const anox = s.anoxS ?? 0;
+  if (anox <= GASP_ONSET_S) return { rateCap: Infinity, gate: s.gate ?? 1, pulse, vtCap: Infinity };
+  const fade = Math.max(0, 1 - (anox - GASP_ONSET_S) / (GASP_END_S - GASP_ONSET_S));
+  return { rateCap: GASP_RR * fade, gate: 1, pulse, vtCap: GASP_VT_FRAC * vt0 * fade };
+}
+
+/** A breathing rate through the brainstem's gates. */
+export const gatedRate = (g: BrainstemGate, rr: number): number => Math.min(rr, g.rateCap) * g.gate * g.pulse;
+
 export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   if (x.t + 1e-9 < s.nextT) return;
   s.nextT = x.t + SPONT_DT_S;
@@ -175,42 +222,15 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
     // A fading (non-depolarising) block lets the diaphragm make efforts long before it can move a breath
     if ((n.diaNd ?? 0) > 0) vt = Math.min(vt, diaphragmVtCapMl(strength, n.diaNd ?? 0, x.ibwKg ?? 70));
   }
-  // Brainstem-perfusion gate
-  const unperfused = x.noFlow === true || (x.cbfRel !== undefined && x.cbfRel < BRAINSTEM_CBF_MIN);
-  if (unperfused) s.anoxS = (s.anoxS ?? 0) + SPONT_DT_S;
-  else if (s.anoxS !== undefined) {
-    if (s.anoxS > GASP_ONSET_S) s.gate = 0; // a gasping or apnoeic brainstem recovers over GATE_REOPEN_S
-    delete s.anoxS;
-  }
-  const anox = s.anoxS ?? 0;
-  // The brainstem's output (brief 93): the muscle effort below is the neural effort × what the perfusion gates let out
-  let brainstem = 1;
-  if (anox > GASP_ONSET_S) {
-    const fade = Math.max(0, 1 - (anox - GASP_ONSET_S) / (GASP_END_S - GASP_ONSET_S));
-    const vtNeural = (s.effort ?? 0) * x.vt0; // the neural VT, before any neuromuscular cap
-    rr = Math.min(rr, GASP_RR * fade);
-    rrNeural = Math.min(rrNeural, GASP_RR * fade);
-    vt = Math.min(vt, GASP_VT_FRAC * x.vt0 * fade);
-    if (fade <= 0) rr = vt = rrNeural = 0;
-    brainstem = vtNeural > 0 ? Math.min(1, (GASP_VT_FRAC * x.vt0 * fade) / vtNeural) : 0; // a gasp is a small effort, fading
-  } else if (s.gate !== undefined) {
-    if (!unperfused) s.gate = Math.min(1, s.gate + SPONT_DT_S / GATE_REOPEN_S);
-    rr *= s.gate;
-    rrNeural *= s.gate;
-    brainstem = s.gate;
-    if (s.gate >= 1) delete s.gate;
-  }
-  // The patient's inspiratory effort — spontaneous and ventilator-triggering — is withdrawn while the circulation is
-  // PULSELESS (the engine's own determination: a pulseless rhythm flag or a no-beat rhythm, which covers an
-  // instructor-commanded VF without an arrest state), ramped to zero over the arrest declaration's NO_FLOW_S window and
-  // restored when the circulation returns.
-  if (x.pulseless) s.plS = (s.plS ?? 0) + SPONT_DT_S;
-  else if (s.plS !== undefined) delete s.plS;
-  if (s.plS !== undefined) {
-    rr *= Math.max(0, 1 - s.plS / NO_FLOW_S);
-    rrNeural *= Math.max(0, 1 - s.plS / NO_FLOW_S);
-    brainstem *= Math.max(0, 1 - s.plS / NO_FLOW_S);
-  }
+  stepBrainstem(s, x);
+  const g = brainstemGate(s, x.vt0);
+  const vtNeural = (s.effort ?? 0) * x.vt0; // the neural VT, before any neuromuscular cap
+  rr = gatedRate(g, rr);
+  rrNeural = gatedRate(g, rrNeural);
+  vt = Math.min(vt, g.vtCap);
+  // The brainstem's output (brief 93): the muscle effort below is the neural effort × what the perfusion gates let out;
+  // a gasp is a small effort, fading
+  const brainstem = (Number.isFinite(g.vtCap) ? (vtNeural > 0 ? Math.min(1, g.vtCap / vtNeural) : 0) : g.gate) * g.pulse;
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;
