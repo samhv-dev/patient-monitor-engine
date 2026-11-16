@@ -53,8 +53,8 @@ reads it for the tick order, the ventilator link and the events it emits.
 | [`driver.ts:17`](../../packages/engine-core/src/l2/resp/driver.ts#L17) | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
 | [`driver.ts:77`](../../packages/engine-core/src/l2/resp/driver.ts#L77) | the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p. |
 | [`driver.ts:442`](../../packages/engine-core/src/l2/resp/driver.ts#L442) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
-| [`pipeline.ts:437`](../../packages/engine-core/src/l2/resp/pipeline.ts#L437) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
-| [`pipeline.ts:492`](../../packages/engine-core/src/l2/resp/pipeline.ts#L492) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
+| [`pipeline.ts:454`](../../packages/engine-core/src/l2/resp/pipeline.ts#L454) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
+| [`pipeline.ts:509`](../../packages/engine-core/src/l2/resp/pipeline.ts#L509) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
 ## Couplings
 
@@ -71,7 +71,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `breathing.drive.depression` | `neuro.resp.totalDep` → `resp.spont.ve` (V̇E (MV)) | − · factor | UNTAGGED | — | — | The neuro model's ventilatory depression scales the spontaneous drive (apnoea below its threshold). |
 | `breathing.drive.rate` | `neuro.resp.totalDep` → `resp.spont.rr` (RR (spont)) | − · factor | UNTAGGED | — | — | The same depression on the rate. |
 | `breathing.drive.co2` | `resp.co2.pf` (PaCO₂) → `resp.spont.ve` (V̇E (MV)) | + · gain | UNTAGGED | `CO2_SLOPE` = 1.5, `APNOEA_OFFSET` = 4 | — | The hypercapnic ventilatory response, CO2_SLOPE L/min/mmHg above the apnoeic threshold. |
-| `breathing.drive.brainstem` | `organs.brain.cbfRel` → `resp.spont.ve` (V̇E (MV)) | + · threshold | UNTAGGED | — | — | The respiratory gate closes as brainstem flow falls (the organs' CBF, one step late). |
+| `breathing.drive.brainstem` | `organs.brain.cbfRel` → `resp.spont.ve` (V̇E (MV)) | + · threshold | UNTAGGED | — | — | The respiratory gate closes as brainstem flow falls (the organs' CBF, one step late): on the chemoreflex drive in MODELED, on the instructor's rr/vt in MANUAL. |
 
 ## State
 
@@ -279,6 +279,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | [`l2/resp/blood-view.test.ts`](../../packages/engine-core/test/l2/resp/blood-view.test.ts) | 0 | 0 |
 | [`l2/resp/capno-deadspace.test.ts`](../../packages/engine-core/test/l2/resp/capno-deadspace.test.ts) | 0 | 0 |
 | [`l2/resp/driver.test.ts`](../../packages/engine-core/test/l2/resp/driver.test.ts) | 0 | 0 |
+| [`l2/resp/manual-brainstem-gate.test.ts`](../../packages/engine-core/test/l2/resp/manual-brainstem-gate.test.ts) | 0 | 0 |
 | [`l2/resp/pipeline.test.ts`](../../packages/engine-core/test/l2/resp/pipeline.test.ts) | 0 | 0 |
 | [`l2/resp/vent-frame-ext.test.ts`](../../packages/engine-core/test/l2/resp/vent-frame-ext.test.ts) | 0 | 0 |
 | [`types-resp.test.ts`](../../packages/engine-core/test/types-resp.test.ts) | 0 | 0 |
