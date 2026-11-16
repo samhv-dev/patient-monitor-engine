@@ -54,7 +54,7 @@ export const GATE_DOCS: ValidationDoc[] = [
   })),
   gate({
     id: 'g3-cpr-etco2', title: 'CPR EtCO2 at the default learner quality (R39 item 2)', durationS: 240, requires: ['3.1'],
-    // the R39-2 rig (docs/gates/stage-3.1.md): CPR with a bag at 10/min; a patient in VF makes no breath of his own
+    // the band's source rig (docs/gates/stage-3.1.md): CPR with a bag at 10/min; a patient in VF makes no breath of his own
     actions: [{ t: 30, command: c({ type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' }) }, { t: 40, command: ev({ kind: 'cpr', active: true, rate: 110 }) }, { t: 40, command: ev({ kind: 'ventilation', source: 'bvm', rr: 10, vtMl: 500, fio2: 1 }) }],
     segments: [seg('cpr', 120, 240, range('etco2', 'numeric:etco2', 'mean', 17, 23, 'R39-2: default quality 0.8 → ≈ 20 mmHg'))],
   }),

@@ -228,7 +228,7 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   rr = gatedRate(g, rr);
   rrNeural = gatedRate(g, rrNeural);
   vt = Math.min(vt, g.vtCap);
-  // The brainstem's output (brief 93): the muscle effort below is the neural effort × what the perfusion gates let out;
+  // The brainstem's output: the muscle effort below is the neural effort × what the perfusion gates let out;
   // a gasp is a small effort, fading
   const brainstem = (Number.isFinite(g.vtCap) ? (vtNeural > 0 ? Math.min(1, g.vtCap / vtNeural) : 0) : g.gate) * g.pulse;
   s.rr = rr;
