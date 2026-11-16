@@ -21,9 +21,9 @@ test.skip(({ browserName }) => browserName === 'webkit' && !!process.env.CI, 'FA
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-type Sync = { status: string; resyncs: number; beatDriftMs: number; lagS: number };
+type Sync = { status: string; resyncs: number; lastResync: string | null; beatDriftMs: number; lagS: number };
 type W = { __pmeFollower: { sync: Sync | null }; __pmeApp: { session: { code: string; simNow(): number; restart(s: unknown): void; spec: unknown }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
-const sync = (f: Page) => f.evaluate(() => { const s = (window as unknown as W).__pmeFollower.sync as Sync; return { status: s.status, resyncs: s.resyncs, drift: s.beatDriftMs, lag: s.lagS }; });
+const sync = (f: Page) => f.evaluate(() => { const s = (window as unknown as W).__pmeFollower.sync as Sync; return { status: s.status, resyncs: s.resyncs, cause: s.lastResync, drift: s.beatDriftMs, lag: s.lagS }; });
 const tiles = (p: Page) => p.evaluate(() => [...document.querySelectorAll('.pme-stile')].map((e) => `${(e as HTMLElement).dataset.param}:${e.querySelector('[data-pme="v"]')?.textContent}`).join(' '));
 // two windows refresh their numerics on their own frames, so the comparison waits for one moment where every tile agrees
 const same = (f: Page, p: Page) => expect.poll(async () => (await tiles(f)) === (await tiles(p)) || `${await tiles(f)} | ${await tiles(p)}`, { timeout: 10_000, intervals: [100] }).toBe(true);
@@ -132,7 +132,8 @@ test('it follows while the Ventilator view drives the patient (the link\'s comma
   const f = await follow(page, 'showcase-bronchospasm', browserName);
   await page.evaluate(() => (location.hash = '#/vent'));
   await page.waitForTimeout(30_000);
-  expect(await sync(f)).toMatchObject({ status: 'synced', resyncs: 0, drift: 0 });
+  const s = await sync(f);
+  expect(s, JSON.stringify(s)).toMatchObject({ status: 'synced', resyncs: 0, drift: 0 });
   await same(f, page);
 });
 

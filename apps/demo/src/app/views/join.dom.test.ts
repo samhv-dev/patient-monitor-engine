@@ -57,6 +57,8 @@ const WORDS = {
     // EEG plan E12: the room's depth-of-anaesthesia device on this screen (`#/depth`)
     { show: 'depth', title: 'Depth of anaesthesia', chip: 'Ready', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device.", foot: 'A phone, a tablet or a second screen', action: true },
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
+    // the room's defibrillator window (`#/defib`), the Room page's line for it; it signs in with no PIN
+    { show: 'defib', title: 'Defibrillator', chip: 'Ready', text: "The room's defibrillator: charge and shock, with the patient's rhythm.", foot: 'Sideways on a tablet', action: true },
   ],
 };
 
@@ -95,10 +97,9 @@ describe('the instrument picker at #/pick (R4)', () => {
     }
   });
 
-  it('Defibrillator and Instructor remote are not offered yet (R5 and P7 have not merged)', () => {
+  it('Instructor remote is not offered; nothing on the picker asks for a PIN', () => {
     const el = pickerView({ code: CODE, store: memory(), go: () => {} });
     const titles = cards(el).map((c) => c.querySelector('h2')?.textContent);
-    expect(titles).not.toContain('Defibrillator');
     expect(titles).not.toContain('Instructor remote');
     expect(el.textContent).not.toMatch(/tick what they noticed|SQI|EMG|BIS/);
     // R8d, L6: a PIN is named on the cards that sign in with one only (the Ventilator, the Learner remote), never asked for here
@@ -170,7 +171,7 @@ describe('the instrument picker at #/pick (R4)', () => {
   });
 
   it('a stored value that is not an instrument this device can show preselects the learner monitor', () => {
-    for (const bad of ['iabp', 'vent', 'defib', 'x', ''])
+    for (const bad of ['iabp', 'vent', 'x', ''])
       expect(cards(pickerView({ code: CODE, store: memory({ instrument: bad }), go: () => {} }))[0]?.dataset.selected, bad).toBe('true');
   });
 
@@ -195,6 +196,23 @@ describe('the instrument picker at #/pick (R4)', () => {
     const next = pickerView({ code: CODE, store, go: () => {} }).querySelector('.join-card[data-show="depth"]') as HTMLElement;
     expect(next.dataset.selected).toBe('true');
     expect(next.querySelector('.st')?.textContent).toBe(WORDS.lastHere);
+  });
+
+  it("the Defibrillator's Show here opens #/defib on this page and is remembered on this device", () => {
+    const store = memory();
+    const go = vi.fn();
+    const el = pickerView({ code: CODE, store, go, open: () => expect.unreachable('the defibrillator window is this page') });
+    const defib = el.querySelector('.join-card[data-show="defib"]') as HTMLElement;
+    expect(defib.querySelector('.join-pic')?.textContent).toBe('');
+    (defib.querySelector('button') as HTMLButtonElement).click();
+    expect(go).toHaveBeenCalledExactlyOnceWith('#/defib');
+    expect(store.m.get('instrument')).toBe('defib');
+    const again = vi.fn();
+    const next = pickerView({ code: CODE, store, go: again, parent: document.body }).querySelector('.join-card[data-show="defib"]') as HTMLElement;
+    expect(next.dataset.selected).toBe('true');
+    expect(next.querySelector('.st')?.textContent).toBe(WORDS.lastHere);
+    expect(document.activeElement).toBe(next.querySelector('button'));
+    expect(again).not.toHaveBeenCalled();
   });
 
   it('the balloon pump card has no action; it says why in its chip', () => {

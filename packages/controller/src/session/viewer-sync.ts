@@ -42,6 +42,7 @@ export interface ViewerTarget {
 }
 
 export type ViewerStatus = 'waiting' | 'synced' | 'incompatible';
+export type ResyncCause = 'link open' | 'asked' | 'host hello' | 'timeline' | 'fast-forward end' | 'late command' | 'refused command' | 'beat drift';
 
 export interface ViewerSyncOptions {
   session: string;
@@ -65,6 +66,8 @@ export class ViewerSync {
   readonly peerId: string;
   status: ViewerStatus = 'waiting';
   resyncs = 0;
+  /** Why the last fresh snapshot was asked for. */
+  lastResync: ResyncCause | null = null;
   /** Last measured |viewer beat − host beat| for the same seq, ms (0 when mirrored exactly). */
   beatDriftMs = 0;
   /** Wall-clock lag behind the host's anchored now, s (≈ delayS when locked). */
@@ -84,7 +87,6 @@ export class ViewerSync {
   private helloAt = -Infinity; // FX-2: wall ms of the last hello
   private helloWaitMs = HELLO_AGAIN_MS; // FX-2: how long the next hello waits for its snapshot
   private replays: Command[] = [];
-  private early: Command[] = [];
   private anchor: { simT: number; wallMs: number } | null = null;
   private hostPaused = false;
   private hostFastForward = false; // The host is fast-forwarding — wait, then take a fresh snapshot
@@ -103,7 +105,7 @@ export class ViewerSync {
     o.target.setPaused(true);
     this.offs = [
       o.transport.onStatus((s) => {
-        if (s === 'open') this.requestSync();
+        if (s === 'open') this.requestSync('link open');
       }),
       o.transport.onMessage((m) => this.onMessage(m)),
       o.target.on((e) => {
@@ -146,18 +148,18 @@ export class ViewerSync {
 
   /** Start again from a fresh snapshot of the host (a phone that held while it could not follow). */
   resync(): void {
-    this.requestSync(true);
+    this.requestSync('asked', true);
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
   /** `newTimeline`: the host's clock may have gone back — the old anchor must not steer the restored engine (F04, BA04). */
-  private requestSync(newTimeline = false): void {
+  private requestSync(cause: ResyncCause, newTimeline = false): void {
     if (newTimeline) this.anchor = null;
     if (this.status === 'synced') this.resyncs++;
+    this.lastResync = cause;
     this.awaiting = true;
     this.helloWaitMs = HELLO_AGAIN_MS;
     this.replays = [];
-    this.early = [];
     if (this.status !== 'incompatible') this.status = 'waiting';
     this.o.target.setPaused(true);
     this.hello();
@@ -177,7 +179,7 @@ export class ViewerSync {
       // are forgotten here; the sticky time commands it replays to our hello set them again
       this.hostRate = 1;
       this.hostPaused = false;
-      return this.requestSync(true);
+      return this.requestSync('host hello', true);
     }
     if (m.kind === 'snapshot') return this.onSnapshot(m.body);
     if (m.kind === 'event') for (const e of m.body) this.onEvent(e);
@@ -192,15 +194,11 @@ export class ViewerSync {
     }
     for (const c of this.replays) this.o.target.dispatch(c); // lane chrome only: restore() replaces engine state
     this.o.target.restore(s);
-    let refused = false;
-    for (const c of this.early) if ((c.atTick ?? 0) > s.tick && !this.o.target.dispatch(c).accepted) refused = true;
     this.replays = [];
-    this.early = [];
     this.hostBeats.clear();
     this.localBeats.clear();
     this.anchor ??= { simT: s.tick * TICK_S, wallMs: this.now() };
     this.status = 'synced';
-    if (refused) this.requestSync(); // an early command this engine refused (as in onEvent): ask again
   }
 
   private onEvent(e: WireEvent): void {
@@ -209,7 +207,7 @@ export class ViewerSync {
     if (e.type === 'timeline') {
       this.hostFastForward = false; // A fast-forward ends with its timeline
       this.fastForward = null;
-      return this.requestSync(true);
+      return this.requestSync('timeline', true);
     }
     if (e.type === 'fastForward') {
       // The host runs minutes in seconds — this viewer waits (paused) and then starts again from the host's snapshot at
@@ -218,7 +216,7 @@ export class ViewerSync {
       this.fastForward = e.phase === 'start' ? { fromT: e.fromT, toT: e.toT } : null;
       if (e.phase === 'end') {
         this.lastFastForward = fastForwardDone(e);
-        this.requestSync(true); // Task 6: drops the pre-span anchor; the end snapshot (or the next state) re-anchors at now
+        this.requestSync('fast-forward end', true); // Task 6: drops the pre-span anchor; the end snapshot (or the next state) re-anchors at now
       }
       return;
     }
@@ -273,18 +271,17 @@ export class ViewerSync {
       if (this.awaiting) this.replays.push(m);
       return;
     }
-    if (this.awaiting) {
-      this.early.push(m);
-      return;
-    }
+    // The host sends its snapshot after every command it had applied or queued when it took it, on this same ordered
+    // channel: one heard before the snapshot is already in it (applied, or queued for its tick)
+    if (this.awaiting) return;
     if (this.status !== 'synced' || this.mirrored.has(e.commandId)) return;
-    if ((m.atTick ?? 0) <= this.o.target.tick()) return this.requestSync(); // too late to mirror exactly
+    if ((m.atTick ?? 0) <= this.o.target.tick()) return this.requestSync('late command'); // too late to mirror exactly
     this.mirrored.add(e.commandId);
     if (this.mirrored.size > 256) this.mirrored.delete(this.mirrored.values().next().value as string);
     // A command the host applied that this engine refuses cannot be mirrored exactly either: this engine validates it
     // now, ahead of its tick, before the commands still queued for earlier ticks have applied (a pump's Start a moment
     // after its TCI target, pump-rack-tci.md A2), so the two engines would part. A fresh snapshot carries it
-    if (!this.o.target.dispatch(m).accepted) this.requestSync();
+    if (!this.o.target.dispatch(m).accepted) this.requestSync('refused command');
   }
 
   /** Blend a new host anchor: small disagreements are smoothed, big ones reset [ENG: network]. */
@@ -306,7 +303,7 @@ export class ViewerSync {
     this.beatDriftMs = Math.abs(h - l) * 1000;
     this.hostBeats.delete(seq);
     this.localBeats.delete(seq);
-    if (this.status === 'synced' && this.beatDriftMs > BEAT_TOLERANCE_S * 1000) this.requestSync();
+    if (this.status === 'synced' && this.beatDriftMs > BEAT_TOLERANCE_S * 1000) this.requestSync('beat drift');
     for (const map of [this.hostBeats, this.localBeats]) if (map.size > 64) map.delete(map.keys().next().value as number);
   }
 }
