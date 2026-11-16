@@ -14,6 +14,8 @@ export interface View {
   el: HTMLElement;
   /** The light "bench" palette (Explore, Validate, Developer, Settings). */
   bench?: boolean;
+  /** The document title's name, where it is not the route's (a follower's instrument). */
+  title?: string;
   enter?(sub: string): void;
   leave?(): void;
 }
@@ -47,9 +49,12 @@ export class Shell {
   private readonly routeFns = new Set<(r: Route) => void>();
   /** A hostless Remote or a follower: the stage and the session bar keep what the constructor set. */
   private readonly fixedFrame: boolean;
+  /** A follower page is one instrument: its one view, whatever its address. */
+  private readonly follower: boolean;
 
   constructor(parent: HTMLElement, o: { hostless: boolean; follower?: boolean }) {
     this.fixedFrame = o.hostless || !!o.follower;
+    this.follower = !!o.follower;
     // The top bar lists views on a hostless Remote only (Settings); the host's pages are on the rail, and a
     // second-screen learner monitor shows the monitor alone
     const navIds = (id: RouteId) => o.hostless && id === 'settings';
@@ -109,7 +114,7 @@ export class Shell {
       prev.leave?.();
       prev.el.hidden = true;
     }
-    const v = this.views.get(r.id) ?? this.views.get('home');
+    const v = this.views.get(r.id) ?? (this.follower ? this.views.values().next().value : this.views.get('home'));
     if (!v) return;
     this.route = { id: v.id, sub: r.id === v.id ? r.sub : '' };
     this.main.dataset.route = v.id;
@@ -127,7 +132,7 @@ export class Shell {
       else a.removeAttribute('aria-current');
     }
     this.rail?.mark(v.id);
-    const title = NAV.find(([id]) => id === v.id)?.[1] ?? (v.id === 'remote' ? 'Remote' : '');
+    const title = v.title ?? NAV.find(([id]) => id === v.id)?.[1] ?? (v.id === 'remote' ? 'Remote' : '');
     document.title = title ? `${title}: patient monitor simulator` : 'Patient monitor simulator';
     for (const fn of this.routeFns) fn(this.route);
   }
