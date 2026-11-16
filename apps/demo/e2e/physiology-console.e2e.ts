@@ -3,10 +3,8 @@
 // positive. Screenshots (JPEG clips, ≤ 60 KB each) for the gate note.
 // Run: PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/physiology-console.e2e.ts
 // Served from a production build of this page (`vite build` + `vite preview`), not the dev server: the claim below is a
-// property of the shipped product (the truth tree crosses the worker boundary). On the dev server the worker loads its
-// own copy of the module graph one request per module (278–1875 ms to 'ready' on an idle Mac), close to the renderer's
-// 2 s READY_TIMEOUT_MS; on the CI runner it sometimes lost and the page fell back to the main thread (run 41808357837:
-// "render path main"). The built worker is one inline bundle, which is what a user runs.
+// property of the shipped product (the truth tree crosses the worker boundary): the built worker is one inline bundle,
+// which is what a user runs.
 import { mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -56,7 +54,7 @@ test('physiology console: monitor + organ tree; phenylephrine → one log entry,
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 900 });
-  // The worker's time from construction to its 'ready' message, printed with the render path (READY_TIMEOUT_MS is 2 s)
+  // The worker's time from construction to its 'ready' message, printed with the render path
   await page.addInitScript(() => {
     const W = window.Worker;
     window.Worker = class extends W {
