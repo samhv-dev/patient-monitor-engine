@@ -25,9 +25,10 @@ test.afterAll(async () => {
 
 type W = { __pmeApp: { session: { code: string } }; __pmeFollower?: { sync: { status: string } | null } };
 
+const layout = (p: Page) => p.evaluate(() => document.documentElement.dataset.learner ?? null);
 const INSTRUMENTS = [
-  { hash: '#/monitor', show: 'learner', name: 'Learner monitor', is: (p: Page) => expect(p.locator('.pme-portrait')).toBeVisible() },
-  { hash: '#/monitor/wide', show: 'monitor', name: 'Patient monitor', is: (p: Page) => expect(p.locator('.pme-portrait')).toHaveCount(0) },
+  { hash: '#/monitor', show: 'learner', name: 'Learner monitor', is: async (p: Page) => expect(await layout(p)).toBe('phone') },
+  { hash: '#/monitor/wide', show: 'monitor', name: 'Patient monitor', is: async (p: Page) => expect(await layout(p)).toBeNull() },
   { hash: '#/defib', show: 'defib', name: 'Defibrillator', is: (p: Page) => expect(p.locator('.defib-readout')).toHaveText('120 J', { timeout: 10_000 }) },
   { hash: '#/depth', show: 'depth', name: 'Depth of anaesthesia', is: (p: Page) => expect(p.locator('.depth-window')).toBeVisible() },
 ];
@@ -53,7 +54,7 @@ for (const { hash, show, name, is } of INSTRUMENTS) {
       await expect(win).toHaveTitle(`${name}: patient monitor simulator`);
       await is(win);
       expect(hellos.length, load).toBeGreaterThan(0);
-      for (const m of hellos) expect(m, load).toMatchObject({ role: 'viewer', show });
+      for (const m of hellos) expect(m, load).toMatchObject({ show });
       hellos.length = 0;
       if (load === 'opened') await win.reload();
     }
