@@ -78,10 +78,10 @@ const S9_WASHOUT = (() => {
 const S9_DISPLAY_LAG_S = 5 + 60 / S9_VENT.rr;
 
 const S = 'brief §4.9';
-/** Untreated VF: all ventilatory activity had stopped by 6 min (Zuercher 2010, BMC Cardiovasc Disord 10:36, PMID 20691123,
- * 61 swine); in people gasping falls with time from collapse, 20 % → 7 % of witnessed arrests as EMS arrival goes from
- * < 7 to > 9 min (Bobrow 2008, Circulation 118:2550, PMID 19029463). */
-const ARREST_BREATHING = 'Zuercher 2010 (PMID 20691123); Bobrow 2008 (PMID 19029463)';
+/** Untreated VF: "In the absence of therapy, all ventilatory activity stopped 6 minutes after VF cardiac arrest"
+ * (Zuercher 2010, BMC Cardiovasc Disord 10:36, PMID 20691123, 61 swine) [ABS]; in people gasping "decreases rapidly with
+ * time" (Bobrow 2008, Circulation 118:2550, PMID 19029463) [ABS]. */
+const ARREST_BREATHING = 'Zuercher 2010 (PMID 20691123) [ABS]; Bobrow 2008 (PMID 19029463) [ABS]';
 const T7 = 'tables §7';
 
 export const SANITY_DOCS: ValidationDoc[] = [
@@ -156,14 +156,13 @@ export const SANITY_DOCS: ValidationDoc[] = [
   ...(['manual', 'modeled'] as const).map((mode) => doc({
     id: `s9b-vf-breathing-${mode}`, title: `Witnessed VF, spontaneously breathing, nothing done (${mode.toUpperCase()})`, source: ARREST_BREATHING, durationS: 480, mode,
     actions: [at(60, { type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' } as DocCommand), at(180, { type: 'setTarget', variable: 'rr', value: 20 } as DocCommand)],
-    segments: [seg('base', 0, 60, gt('breathing', 'event:breath', 'count', 8, 'a breathing patient before the arrest (RR 15)')),
-      seg('six-min', 420, 480, lt('apnoea', 'event:breath', 'count', 1, `${ARREST_BREATHING}: no breath 6–7 min into untreated VF, although the instructor's rate is raised to 20 at +2 min`))],
+    segments: [seg('base', 0, 60, gt('breathing', 'event:breath', 'count', 8, 'a breathing patient before the arrest [P: rig check on the set RR 15, not a physiological band]')),
+      seg('six-min', 420, 480, lt('apnoea', 'event:breath', 'count', 1, `${ARREST_BREATHING}: no breath 6–7 min into untreated VF ("all ventilatory activity stopped 6 minutes after VF"), although the instructor's rate is raised to 20 at +2 min`))],
   })),
   doc({
     id: 's9c-vf-rosc-breathing', title: 'VF for 2 min, then the circulation returns: breathing comes back (MANUAL)', source: 'Jørgensen 1997', durationS: 840, mode: 'manual',
     actions: [at(60, { type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' } as DocCommand), at(180, { type: 'setRhythm', rhythm: 'sinus', when: 'now' } as DocCommand)],
-    segments: [seg('arrest', 150, 180, lt('apnoea', 'event:breath', 'count', 1, `${ARREST_BREATHING}: apnoea 90–120 s into untreated VF`)),
-      seg('back', 780, 840, gt('breathing-back', 'event:breath', 'count', 4, 'Jørgensen 1997 (Resuscitation 35:9, PMID 9259054, 111 resuscitations): spontaneous respiratory movements are the first brain function to return after the circulation does [P: the 10-min window is the document\'s length; the source gives the order of return, not its time]'))],
+    segments: [seg('back', 780, 840, gt('breathing-back', 'event:breath', 'count', 4, 'Jørgensen 1997 (Resuscitation 35:9, PMID 9259054, 111 resuscitations) [ABS]: "spontaneous respiratory movements were either present or were the first function to return" [P: the 10-min window is the document\'s length and > 4 breaths a minute is "breathing" at the set RR 15; the source gives the order of return, not its time or rate]'))],
   }),
   // --- tables §7 checks 10–25 (Stage 7) -----------------------------------------------------------------------
   doc({
