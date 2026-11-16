@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` cc06bc26 (Merge pull request #469 from samhv-dev/defib-e4a-ecg-analysis-core), built 2026-11-15T23:58:04.094Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/cc06bc26bf5afcfd2a599fc43e875d75faa388ef
+The built teaching app of `main` 4d8e7742 (Merge pull request #470 from samhv-dev/defib-r1-learner-role), built 2026-11-16T00:21:15.739Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/4d8e77427cbbae95dad646661bef4b59b310ead6
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
