@@ -3,7 +3,7 @@
 // (or frame); the runner answers with effects — command batches to dispatch and `scenario` events to publish.
 // Semantics (docs/plans/stage-6b-scenario-runner.md "Decisions"):
 // - Timers are accumulators of sim time while the scenario is not paused: stateT (afterS), scenarioT (atScenarioS),
-//   and one "continuously true for" counter per vital leaf (forS). The interval since the last call is credited
+//   and one "continuously true for" counter per vital or rhythm leaf (forS). The interval since the last call is credited
 //   with the values held BEFORE this call's inputs, so the result does not depend on how often advance() is called.
 // - Events (applyEvent) latch from state entry until consumed by the transition they fire; vitals and sensors are
 //   levels. Transitions are tried in document order; the first that holds fires; at most one per call.
@@ -21,7 +21,9 @@ export type RunnerInput =
   | { kind: 'clinical'; event: ClinicalEvent }
   /** Values by variable. rank: 3 engine `state` (truth), 2 `measurement` (displayed), 1 a target the host accepted. */
   | { kind: 'values'; rank: 1 | 2 | 3; values: Record<string, number> }
-  | { kind: 'sensor'; sensor: SensorId; state: string };
+  | { kind: 'sensor'; sensor: SensorId; state: string }
+  /** The rhythm id the engine draws (its `state` event's `rhythm.id`). */
+  | { kind: 'rhythm'; id: string };
 
 export type RunnerEffect =
   | { kind: 'commands'; batch: number; reason: 'start' | 'transition' | 'goto'; commands: DocCommand[] }
@@ -56,6 +58,8 @@ export interface RunnerState {
   trueFor: Record<string, number>;
   values: Record<string, { v: number; rank: number; t: number }>;
   sensors: Record<string, string>;
+  /** The rhythm the engine last reported (absent until its first `state` event). */
+  rhythm?: string;
   enteredT: number;
   history: Array<{ t: number; stateId: string; transitionId?: string }>;
 }
@@ -82,6 +86,19 @@ export interface VitalHold {
   fraction: number;
 }
 
+/** One `rhythm` leaf of the current state's transitions as the rule reads it now: the rhythm it waits for, the one the
+ *  engine draws, and how far its hold has run. A copy; reading it changes nothing. */
+export interface RhythmHold {
+  transitionId: string;
+  key: string;
+  id: string;
+  current: string | undefined;
+  met: boolean;
+  heldS: number;
+  forS: number;
+  fraction: number;
+}
+
 const EPS = 1e-6;
 /** A lower-rank source takes over a variable once the higher one has been silent this long [ENG: scenario]. */
 const STALE_S = 5;
@@ -100,12 +117,17 @@ export class ScenarioRunner {
   readonly log: RunLogEntry[] = [];
   private s: RunnerState;
   private readonly states = new Map<string, ScenarioState>();
+  /** Whether any transition reads the rhythm (a card that does not is fed no rhythm, its run log as before). */
+  readonly readsRhythm: boolean;
   private entered = 0; // state entries by this instance (not a stay; not in RunnerState, so a restore does not rewind it)
 
   constructor(doc: ScenarioDoc, opts: { seed?: number } = {}) {
     this.doc = doc;
     this.seed = (opts.seed ?? doc.seed ?? 1) >>> 0;
     for (const st of doc.states) this.states.set(st.id, st);
+    let reads = false;
+    for (const st of doc.states) for (const tr of st.transitions ?? []) walk(tr.when, tr.id, (w) => (reads ||= 'rhythm' in w));
+    this.readsRhythm = reads;
     const sensors: Record<string, string> = {};
     for (const [k, v] of Object.entries(doc.patient?.sensors ?? {})) if (v !== undefined) sensors[k] = v;
     this.s = {
@@ -169,7 +191,7 @@ export class ScenarioRunner {
     const at = this.log.length;
     this.sync(t);
     for (const i of inputs) this.take(t, i);
-    this.trackVitals(0);
+    this.trackHolds(0);
     const out = this.s.paused ? [] : this.evaluate(t);
     if (inputs.length || out.length) this.log.splice(at, 0, { op: 'advance', t, inputs: structuredClone(inputs) });
     return out;
@@ -232,6 +254,21 @@ export class ScenarioRunner {
     return out;
   }
 
+  /** Every `rhythm` leaf of the current state, in document order, with its hold progress (read-only). */
+  rhythmHolds(): RhythmHold[] {
+    const out: RhythmHold[] = [];
+    for (const tr of this.state().transitions ?? []) {
+      walk(tr.when, tr.id, (w, key) => {
+        if (!('rhythm' in w)) return;
+        const { id, forS = 0 } = w.rhythm;
+        const met = this.s.rhythm === id;
+        const heldS = met ? (this.s.trueFor[key] ?? 0) : 0;
+        out.push({ transitionId: tr.id, key, id, current: this.s.rhythm, met, heldS, forS, fraction: forS > 0 ? Math.min(1, heldS / forS) : met ? 1 : 0 });
+      });
+    }
+    return out;
+  }
+
   /** The value a vital trigger would read now (for the panel and tests). */
   value(name: string): number | undefined {
     return this.s.values[name]?.v;
@@ -248,12 +285,13 @@ export class ScenarioRunner {
     if (this.s.paused) return;
     this.s.stateT += dt;
     this.s.scenarioT += dt;
-    this.trackVitals(dt);
+    this.trackHolds(dt);
   }
 
   private take(t: number, i: RunnerInput): void {
     if (i.kind === 'clinical') this.s.latched.push({ seq: ++this.s.seq, event: i.event });
     else if (i.kind === 'sensor') this.s.sensors[i.sensor] = i.state;
+    else if (i.kind === 'rhythm') this.s.rhythm = i.id;
     else {
       for (const [k, v] of Object.entries(i.values)) {
         if (!Number.isFinite(v)) continue;
@@ -265,16 +303,20 @@ export class ScenarioRunner {
     }
   }
 
-  /** Walk every vital leaf of the current state: add dt while true, reset to 0 when false. */
-  private trackVitals(dt: number): void {
+  /** Walk every vital and rhythm leaf of the current state: add dt while true, reset to 0 when false. */
+  private trackHolds(dt: number): void {
     for (const tr of this.state().transitions ?? []) {
       walk(tr.when, tr.id, (w, key) => {
-        if (!('vital' in w)) return;
-        const cur = this.s.values[w.vital.var]?.v;
-        const ok = cur !== undefined && compare(cur, w.vital.op, w.vital.value);
+        if (!('vital' in w) && !('rhythm' in w)) return;
+        const ok = 'vital' in w ? this.vitalMet(w.vital) : this.s.rhythm === w.rhythm.id;
         this.s.trueFor[key] = ok ? (this.s.trueFor[key] ?? 0) + dt : 0;
       });
     }
+  }
+
+  private vitalMet(v: { var: string; op: Op; value: number }): boolean {
+    const cur = this.s.values[v.var]?.v;
+    return cur !== undefined && compare(cur, v.op, v.value);
   }
 
   private evaluate(t: number): RunnerEffect[] {
@@ -308,11 +350,8 @@ export class ScenarioRunner {
     const no = { ok: false, events: [] };
     if ('afterS' in w) return { ok: this.s.stateT >= w.afterS - EPS, events: [] };
     if ('atScenarioS' in w) return { ok: this.s.scenarioT >= w.atScenarioS - EPS, events: [] };
-    if ('vital' in w) {
-      const cur = this.s.values[w.vital.var]?.v;
-      const ok = cur !== undefined && compare(cur, w.vital.op, w.vital.value) && (this.s.trueFor[key] ?? 0) >= (w.vital.forS ?? 0) - EPS;
-      return { ok, events: [] };
-    }
+    if ('vital' in w) return { ok: this.vitalMet(w.vital) && this.heldFor(key, w.vital.forS), events: [] };
+    if ('rhythm' in w) return { ok: this.s.rhythm === w.rhythm.id && this.heldFor(key, w.rhythm.forS), events: [] };
     if ('event' in w) {
       const hit = this.s.latched.find((e) => !used.has(e.seq) && matches(e.event, w.event));
       if (!hit) return no;
@@ -344,6 +383,10 @@ export class ScenarioRunner {
     return no;
   }
 
+  private heldFor(key: string, forS = 0): boolean {
+    return (this.s.trueFor[key] ?? 0) >= forS - EPS;
+  }
+
   private stay(t: number, transitionId: string, by: ScenarioEntry): RunnerEffect {
     this.log.push({ op: 'enter', t, stateId: this.s.stateId, transitionId });
     this.pushHistory({ t, stateId: this.s.stateId, transitionId });
@@ -361,7 +404,7 @@ export class ScenarioRunner {
     this.s.latched = [];
     this.s.pressed = [];
     this.s.trueFor = {};
-    this.trackVitals(0);
+    this.trackHolds(0);
     this.log.push({ op: 'enter', t, stateId: to, ...(transitionId ? { transitionId } : {}) });
     this.pushHistory({ t, stateId: to, ...(transitionId ? { transitionId } : {}) });
     const out: RunnerEffect[] = [];

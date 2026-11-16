@@ -23,7 +23,7 @@ import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEv
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
 import { PhaseRunner, type PhaseRunnerEffect } from './phase-runner.ts';
 import { bolusDrugOf } from '../session/drug-lock.ts';
-import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
+import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type RhythmHold, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
 import { isV2, type AnyScenarioDoc, type DocCommand, type ScenarioState } from './types.ts';
@@ -363,6 +363,11 @@ export class ScenarioDriver {
     return this.cur?.vitalHolds() ?? [];
   }
 
+  /** The /1 card's `rhythm` rules of the current state with their hold progress (a /2 card has none). */
+  rhythmHolds(): RhythmHold[] {
+    return this.cur instanceof ScenarioRunner ? this.cur.rhythmHolds() : [];
+  }
+
   /**
    * Where the run stands now, as a bookmark would hold it — or null when no position is consistent at this moment: no
    * scenario, a state's commands still on their way to the monitor, an event the runner has not yet read, or a new
@@ -583,8 +588,8 @@ export class ScenarioDriver {
       const values: Record<string, number> = {};
       for (const [k, v] of Object.entries(w.values)) if (typeof v === 'number') values[k] = v;
       this.pending.push({ kind: 'values', rank: 3, values });
-      // the rhythm id the state event already carries, for a PhaseRunner only (truthInputs adds F4's truths below)
-      if (this.cur instanceof PhaseRunner && w.rhythm?.id) this.pending.push({ kind: 'rhythm', id: w.rhythm.id });
+      const readsRhythm = this.cur instanceof PhaseRunner || (this.cur instanceof ScenarioRunner && this.cur.readsRhythm);
+      if (readsRhythm && w.rhythm?.id) this.pending.push({ kind: 'rhythm', id: w.rhythm.id });
     }
     if (this.cur instanceof PhaseRunner) {
       this.pending.push(...truthInputs(w)); // F4: a /2 runner only
@@ -602,7 +607,7 @@ export class ScenarioDriver {
 
 /** The input kinds a /1 runner takes. */
 function v1Input(i: RunnerInputV2): i is RunnerInput {
-  return i.kind === 'clinical' || i.kind === 'values' || i.kind === 'sensor';
+  return i.kind === 'clinical' || i.kind === 'values' || i.kind === 'sensor' || i.kind === 'rhythm';
 }
 
 const MASS = /^(mcg|mg|g)$/;
