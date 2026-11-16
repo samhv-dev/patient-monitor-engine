@@ -69,7 +69,7 @@ $('sound').addEventListener('click', async () => {
     outputLatency: out.outputLatency,
     play: (tone, when) => createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(resolved.audio.alarm.profile), toneSet: resolved.skin.defib?.toneSet ?? 'zoll-like' })(tone, when),
   });
-  sched.clock.setAnchor({ simT: 0, perfMs: t0, timeScale: 1 });
+  sched.clock.setAnchor({ simT: 0, perfMs: t0, timeScale: 1, runS: 0 });
   sched.start();
   buildSounder();
   setInterval(() => sounder?.pump(simNow()), 25);
@@ -125,7 +125,7 @@ async function renderTiming(profileId: string, level: AlarmLevel, seconds: numbe
   const profile = getAlarmProfile(profileId);
   const ov = skinId ? overrides(resolveSkin(skinId)) : {};
   const fake = {
-    clock: { timeScale: 1 },
+    clock: { timeScale: 1, simToRun: (t: number) => t, runToSim: (r: number) => r }, // ×1 from 0: run time is sim time
     enqueue: (t: ToneRequest) => void playAlarmPulse(ctx, ctx.destination, t.t, t as AlarmToneRequest, profile.harmonicsDb, profile.rampMs),
     cancel: () => undefined,
   };

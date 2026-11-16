@@ -33,6 +33,9 @@ renderer, audio and skin contracts.
   (`apps/demo/src/physiology-console/meta.ts`, `apps/demo/src/app/vitals.ts`).
 - Clock mapping: wallMs(t) = anchorWall + (t − anchorSim)·1000/timeScale and audioTime = contextTime + (wallMs −
   performanceTime)/1000 (`packages/audio/src/clock-map.ts`; web.dev "A tale of two clocks").
+- Alarm bursts and their repeat are placed on run time, the case's running wall time (paused time excluded):
+  wallMs(r) = anchorWall + (r − anchorRun)·1000, so a speed change moves no burst and a pause holds them; whether an
+  alarm sounds still follows sim time (`packages/audio/src/alarm-sounder.ts`, `packages/audio/src/alarm-bursts.ts`).
 - A 25 ms timer schedules every tone due in the next 100 ms; a late tone plays at once, and a QRS tone is dropped only
   if it would sound more than 150 ms after its R wave (`packages/audio/src/scheduler.ts`).
 - The QRS/pulse beep is 60 ms, sine plus second harmonic, at a fixed 880 Hz or pitched by SpO2 as

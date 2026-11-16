@@ -2,9 +2,10 @@
 // train holds is the manual's (research/57 A-09, A-10, A-18): high 10 pulses in two groups of 5, medium 3, low 1; when
 // the cause ends high 5, medium 3, low none; only the highest priority sounds; silence pauses the audio only (A-20).
 // What a pulse sounds like (pitch, length, gaps, how often a train repeats, the gain) is not in the manual (A-11): face.json
-// `tones` tags each `eng` until the owner's recording. Pure: `createAlarmSound` decides WHEN a train starts and hands it
-// to a player; `audioPackagePlayer` plays it through @pme/audio (brief 202).
-import { playAlarmPulse, type AudioOut } from '@pme/audio';
+// `tones` tags each `eng` until the owner's recording. Pure: `createAlarmSound` decides WHEN a train starts (the
+// monitor's burst schedule, on the wall clock) and hands it to a player; `audioPackagePlayer` plays it through @pme/audio
+// (brief 202).
+import { BurstSchedule, playAlarmPulse, type AudioOut } from '@pme/audio';
 import type { AlarmEvent, AlarmSignals } from '../../core/alarms-view.ts';
 import { DATA, num } from './data.ts';
 
@@ -37,16 +38,17 @@ export interface AlarmSound {
 }
 export function createAlarmSound(play: (pulses: Pulse[], gain: number) => void): AlarmSound {
   let playing: Priority | null = null;
-  let nextAt = 0;
+  let bursts: BurstSchedule | null = null;
   return {
     update(s, vol, nowMs) {
       const pr = s.silencedS > 0 ? null : s.sounding;
       if (pr === null) { playing = null; return; }
-      if (pr !== playing || nowMs >= nextAt) {
+      const nowS = nowMs / 1000;
+      if (pr !== playing || !bursts) {
         playing = pr;
-        nextAt = nowMs + num(T[pr].repeatS) * 1000;
-        play(train(pr, 'active'), gainOf(vol));
+        bursts = new BurstSchedule(nowS, num(T[pr].repeatS));
       }
+      if (bursts.take(nowS, nowS).length > 0) play(train(pr, 'active'), gainOf(vol));
     },
     event(e, s, vol) {
       if (e.kind !== 'ended' || s.silencedS > 0) return;

@@ -17,7 +17,7 @@ function rig(profile: AlarmSoundProfile, o: { windowSilence?: boolean } = {}) {
       return { stop: () => undefined };
     },
   });
-  sched.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1 });
+  sched.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1, runS: 0 });
   const sounder = new AlarmSounder(sched, profile);
   const bridge = new AlarmAudioBridge(sounder, () => 1, o);
   const run = (t: number) => {
