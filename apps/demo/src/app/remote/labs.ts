@@ -8,12 +8,14 @@
 // matched to this phone's draw by its panel and draw tick; it is shown at the event, by the renderer's `mountLabPanel`,
 // flagged against its sourced ranges and marked at the Kost list's critical limits. A sample another phone or the
 // instructor drew is never shown (LQ13, B); the engine's 1 Hz `labs` truth is never read. Earlier results stay listed,
-// the latest draw first. A restart or a bookmark restore (the host's `timeline` event) clears the list.
+// the latest draw first. A restart or a bookmark restore (the host's `timeline` event) clears the list. While the case is
+// paused (the host's pause as the tray follows it) no sample can be sent, as no drug can be given.
 import type { WireMessage } from '@pme/controller';
 import { ANALYSER_IDS, sectionFor, TICK_S, turnaroundFor, type AnalyserId, type EngineEvent, type LabPanelId, type LabValues } from '@pme/engine-core';
 import { mountLabPanel } from '@pme/renderer';
 import { button, clock, h, setText } from '../ui.ts';
 import type { Follower, FollowerCommand } from '../views/follower.ts';
+import { hostPause } from '../views/follower-status.ts';
 
 /** The panels a learner may send (controller protocol.ts LEARNER_LAB_PANELS), with the words on their buttons. */
 export const LAB_SENDS: ReadonlyArray<{ panel: LabPanelId; label: string }> = [
@@ -33,6 +35,8 @@ export const LABS_WORDS = {
   sending: 'Sent to the instructor’s computer…',
   sent: (what: string) => `${what}: drawn`,
   notSent: (why: string) => `Not sent: ${why}`,
+  /** The host draws no learner's sample while the case is paused, as it gives no drug (tray.ts TRAY_WORDS.paused). */
+  paused: 'The case is paused: no sample can be drawn until it resumes.',
   drawn: (what: string, t: number) => `${what} drawn ${clock(t)}`,
   /** The turnaround is the machine's or the laboratory's own time: the walk or the transport has no source and is not added (L10a). */
   expected: (t: number, where: string, kind: 'poc' | 'laboratory') => `Result expected ${clock(t)} (${where}, ${kind === 'poc' ? 'analyser time only' : 'laboratory time only, transport not included'})`,
@@ -85,17 +89,19 @@ export function labsView(): Labs {
   const pending = new Map<string, LabPanelId>();
   const samples: Sample[] = [];
   let link: LabsLink | null = null;
+  let pause = hostPause();
 
   const said = h('p', { class: 'lr-said lr-lab-said', role: 'status' });
   const list = h('ul', { class: 'lr-tray-list lr-lab-list', 'aria-label': LABS_WORDS.samplesTitle });
   const empty = h('p', { class: 'hint lr-lab-empty' }, LABS_WORDS.empty);
+  const pausedNote = h('p', { class: 'lr-paused', role: 'status', hidden: true }, LABS_WORDS.paused);
   const sends = LAB_SENDS.map((s) => button(s.label, () => send(s.panel), 'primary lr-lab-send', { 'data-panel': s.panel }));
   const el = h('div', { class: 'lr-labs' },
-    h('section', { class: 'lr-inf-section', 'aria-label': LABS_WORDS.sendTitle }, h('h2', { class: 'lr-h2' }, LABS_WORDS.sendTitle), h('div', { class: 'lr-lab-sends' }, ...sends), said),
+    h('section', { class: 'lr-inf-section', 'aria-label': LABS_WORDS.sendTitle }, h('h2', { class: 'lr-h2' }, LABS_WORDS.sendTitle), pausedNote, h('div', { class: 'lr-lab-sends' }, ...sends), said),
     h('section', { class: 'lr-inf-section', 'aria-label': LABS_WORDS.samplesTitle }, h('h2', { class: 'lr-h2' }, LABS_WORDS.samplesTitle), empty, list, h('p', { class: 'hint lr-lab-ranges' }, LABS_WORDS.ranges)));
 
   function send(panel: LabPanelId): void {
-    if (!link) return;
+    if (!link || pause.paused) return;
     pending.set(link.command({ type: 'applyEvent', event: { kind: 'lab', panel } }), panel);
     setText(said, LABS_WORDS.sending);
   }
@@ -164,6 +170,11 @@ export function labsView(): Labs {
     draw(s);
   }
 
+  function drawPause(): void {
+    pausedNote.hidden = !pause.paused;
+    for (const b of sends) b.disabled = pause.paused;
+  }
+
   function clear(): void {
     samples.length = 0;
     pending.clear();
@@ -174,7 +185,11 @@ export function labsView(): Labs {
 
   function attach(l: LabsLink): () => void {
     link = l;
+    pause = hostPause();
+    drawPause();
     const offMsg = l.onMessage((m) => {
+      pause.onMessage(m);
+      drawPause();
       if (m.kind === 'ack') return onAck(m.commandId, m.accepted, m.tick, m.reason);
       if (m.kind !== 'event') return;
       for (const e of m.body) {
