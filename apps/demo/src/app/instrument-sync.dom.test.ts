@@ -185,6 +185,29 @@ describe('R0: the learner monitor of a `?join=` address without a hash', () => {
     expect(document.documentElement.dataset.learner).toBe('phone');
     vi.doUnmock('./views/follower.ts');
   });
+
+  it('a `?join=CODE#/defib` page follows as the defibrillator, and its document title says Defibrillator', async () => {
+    const calls: Array<{ code: string; show: unknown }> = [];
+    vi.resetModules();
+    vi.doMock('./views/follower.ts', async (orig) => {
+      const real = await orig<typeof import('./views/follower.ts')>();
+      return {
+        ...real,
+        mountFollower: (_s: unknown, _site: unknown, code: string, _bar: unknown, _net: unknown, o: { show: unknown }) => {
+          calls.push({ code, show: o.show });
+          return { monitor: { skin: null, latchAlarms: () => {} }, style: { skin: 'saadat-like', theme: '' }, sync: null, transport: {}, destroy: () => {} };
+        },
+      };
+    });
+    document.body.innerHTML = '<div id="app"></div>';
+    delete document.documentElement.dataset.learner;
+    history.replaceState(null, '', '/?join=KKQB2N#/defib');
+    await import('./main.ts');
+    expect(calls).toEqual([{ code: 'KKQB2N', show: 'defib' }]);
+    expect(document.title).toBe('Defibrillator: patient monitor simulator');
+    expect(document.documentElement.dataset.learner).toBeUndefined();
+    vi.doUnmock('./views/follower.ts');
+  });
 });
 
 type M = Awaited<ReturnType<typeof measure>>;

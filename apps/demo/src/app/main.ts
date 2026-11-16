@@ -190,6 +190,7 @@ if (follow && shows === 'pick') {
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
+  if (defibWindow) document.title = `${what}: patient monitor simulator`;
   Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
 } else if (moved) {
   document.body.replaceChildren(h('main', { class: 'host-moved' },

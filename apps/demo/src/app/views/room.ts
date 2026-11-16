@@ -28,7 +28,7 @@ import type { View } from '../shell.ts';
 import { DEFIB_CHOICES, defibDefaults, EEG_CHOICES, pacerDefaults } from '../site.ts';
 import { store as appStore } from '../store.ts';
 import { button, h, select, setText } from '../ui.ts';
-import { instrumentCard, PICKER_WORDS, type CardShow } from './join.ts';
+import { DEFIB_LINE, instrumentCard, PICKER_WORDS, type CardShow } from './join.ts';
 import type { InstructorPin } from '../instructor-pin.ts';
 import { pinHold, type InstructorRoomCard } from './room-instructor.ts';
 
@@ -159,7 +159,7 @@ export const ROOM_LEGEND = `Weak: a ping over ${WEAK_PING_MS} ms, or a device th
 const OPENERS: Array<{ show: CardShow; title?: string; text: string; foot: string }> = [
   { show: 'learner', text: 'A window that follows the patient monitor, as the phones do.', foot: 'A second screen or the projector' },
   { show: 'monitor', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style, the whole screen.", foot: 'A second screen or the projector' },
-  { show: 'defib', title: 'Defibrillator', text: "The room's defibrillator: energy, charge, shock and sync, with the patient's rhythm.", foot: 'A second screen or a tablet' },
+  { show: 'defib', title: 'Defibrillator', text: DEFIB_LINE, foot: 'A second screen or a tablet' },
   { show: 'vent', text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'The Ventilator view, or a window of its own' },
   { show: 'depth', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device, chosen below.", foot: 'A second screen or a tablet' },
   { show: 'iabp', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release' },
