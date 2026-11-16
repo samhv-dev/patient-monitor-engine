@@ -17,7 +17,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => vite?.close());
 
 type Ev = { type: string; t: number; kind?: string; data?: Record<string, unknown>; values?: Record<string, { value: number | null }> };
-type Hook = { ready: boolean; send(c: Record<string, unknown>): Promise<{ accepted: boolean }>; events: Ev[] };
+type Hook = { ready: boolean; pm: { renderPath: Promise<string> }; send(c: Record<string, unknown>): Promise<{ accepted: boolean }>; events: Ev[] };
 const hook = (p: Page) => p.evaluate(() => (window as unknown as { __pme4b: Hook }).__pme4b.events.length);
 const send = (p: Page, c: Record<string, unknown>) => p.evaluate((c) => (window as unknown as { __pme4b: Hook }).__pme4b.send(c), c);
 const events = (p: Page, type: string, kind?: string) =>
@@ -26,6 +26,7 @@ const events = (p: Page, type: string, kind?: string) =>
 async function open(page: Page, skin: string) {
   await page.goto(`${base}/dev/device-layer.html?skin=${skin}`);
   await page.waitForFunction(() => (window as unknown as { __pme4b?: { ready: boolean } }).__pme4b?.ready === true);
+  await page.evaluate(() => (window as unknown as { __pme4b: Hook }).__pme4b.pm.renderPath); // a slow worker start is waited for
   await expect.poll(() => hook(page)).toBeGreaterThan(0);
 }
 
