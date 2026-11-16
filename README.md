@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` bf3f0481 (Merge pull request #481 from samhv-dev/batch/1116-2120-477-479), built 2026-11-16T18:55:26.860Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/bf3f04816e4a8171b1bd2e0d2b7ace88d3c5c520
+The built teaching app of `main` 44eb3151 (Merge pull request #480 from samhv-dev/picker-defibrillator-card), built 2026-11-16T19:25:52.015Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/44eb3151a1edaa7722886051240a7560232ccab4
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
