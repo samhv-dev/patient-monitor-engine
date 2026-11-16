@@ -53,8 +53,10 @@ owner's questions (§9).
 
 **`BrainEnergy`, new file `packages/engine-core/src/l2/brain/energy.ts`, a field of `BrainState`
 (`l2/brain/model.ts`), stepped inside `stepBrain` on the brain's 10 Hz grid.** It holds one entry per compartment,
-`cortex` and `brainstem`, each `{ store, fn, debt }`. It publishes, on the organ view, per compartment: `delivery`,
-`fn`, `debt` and `metabolic` (= the EEG's present definition, §1.3).
+`cortex` and `brainstem`, each `{ store, fn, debt }` once built. It publishes, on the organ view, per compartment:
+`delivery`, `fn`, `debt` and, for the cortex, `metabolic` (= the EEG's present definition, §1.3). The cortex entry
+arrives in B1; the brainstem entry arrives in B5 as a relocation of the breathing gate's present state and becomes
+`{ store, fn, debt }` only in B7 (§6).
 
 Why here:
 - **Flow and O2 delivery already live here.** `stepBrain` already computes the delivery/demand ratio for PbtO2 and
@@ -109,20 +111,31 @@ Per compartment c, at each 10 Hz step:
    ÷ the resting whole-brain O2 use CMRO2_0 × BRAIN_G / 100, all existing constants in `l2/brain/params.ts`
    (60 mL × 0.185 mL/mL × 0.42 ≈ 4.7 mL O2 ÷ 46 mL/min ≈ 6 s) [INF: the derivation; the tissue's dissolved O2 and the
    phosphocreatine buffer are not in it, WANTED]. Its validation is end to end (§2.1, cell A1): VF onset → isoelectric
-   at 11 ± 2 s. Today, with no store, the engine reaches it at +14 s through the circulation's own decay (MAP 54 at
-   +4 s, CBF 0.25 at +12 s); a store on top can only make it later. If A1 then misses, the cause is the circulation's
-   decay of flow after arrest, and it is reported as such; **the store is never sized to meet the cell**.
-4. **Demand** `M_c` = drug × temperature CMRO2 (`b.cmro2Rel`, unchanged) × (basal + functional × fn), functional share
-   ≈ 0.3 (Hofmeijer 2012 [ABS]: ≈ 30 % of the brain's energy goes to synaptic transmission) [INF: the share applied to
-   the drain and the debt; the full text is WANTED for the split's exact value]. A silent brain therefore drains its
-   store and accrues debt more slowly; a cold or drug-depressed brain more slowly still.
+   at 11 ± 2 s. **This cell is red on main today**: with no store the engine reaches isoelectric at +14 s, and a store
+   on top can only make it later. The miss is upstream, in the circulation's decay of flow after arrest: de Vries
+   records MAP below 30 and middle-cerebral flow velocity 0 at once, where the engine has MAP 54 at +4 s and CBF 0.25 at
+   +12 s. That is outside this plan; it is reported in the hand-over, not planned here. **The store is never sized to
+   meet the cell.** The store is therefore also tested on its own (unit cell, B6a): a step of cortex delivery from 1 to 0
+   → isoelectric at 11 ± 2 s (de Vries's condition, flow velocity 0 at once). If the derived 6 s misses it, the miss is
+   reported with the derivation, not tuned.
+4. **Demand** `M_c` = `b.cmro2Rel` (drug × temperature, unchanged) × (1 − F_eff × (1 − fn)), with
+   F_eff = max(0, F − (1 − cmro2Mult)): the share of demand that electrical silence removes, less what the drugs have
+   already removed, so a drug-silenced brain is not reduced twice. **F is one value, shared with the one the engine
+   already uses**: `neuroOutputs` puts a burst-suppressed brain's CMRO2 at 0.45 (the engine's tables: −50–60 % at burst
+   suppression), so F = 0.55 is moved into one named constant read by both. Hofmeijer 2012 [ABS] (≈ 30 % of the energy
+   to synaptic transmission) is consistent in direction but is a different quantity (synaptic only), so it does not set
+   F. **[P]: F's value rests on the tables' row, whose primary source is not read here (WANTED: the CMRO2 at an
+   isoelectric EEG).** A silent brain therefore drains its store and accrues debt more slowly; a cold brain more slowly
+   still.
 5. **Debt** `Q_c` (dimensionless, ischaemic dose in "seconds of full demand unmet"): accrues at `M_c` × (1 − fn) while
    the store is empty; is 0 exactly in any patient whose delivery never fell below the abnormal level.
 6. **Recovery:** after delivery returns above the abnormal level, function is capped at `fnCap(Q_c)`, and Q_c is repaid
-   at a rate that rises with delivery. The two sourced ends (§2.6): after seconds of no flow the cortex is back in
-   17 ± 9 s (single-shock ICD test) and 22 ± 12 s (multiple shocks) (de Vries 1998 [ABS]); after arrests of about
-   15–20 min, continuous EEG within 12 h predicts a good outcome (Ruijter 2019 [FT]) and awakening comes at a median
-   46 h from collapse (Elmer 2023 [FT]). **The curve between the ends is not in any source read: [P], an owner
+   at a rate that rises with delivery. The two sourced ends (§2.3): after seconds of no flow the cortex is back in
+   17 ± 9 s (single-shock ICD test) and 22 ± 12 s (multiple shocks) (de Vries 1998 [ABS]; the VF duration of a test is
+   not in the abstract); after a resuscitated arrest of hours-scale injury, continuous EEG within 12 h predicts a good
+   outcome (Ruijter 2019 [FT]; arrest duration not read) and awakening comes at a median 46 h from collapse in a cohort
+   whose total arrest time (collapse to return of circulation, CPR included, sedated and temperature-managed patients)
+   was a median 19 min (Elmer 2023 [FT]; no-flow time not reported). **The curve between the ends is not in any source read: [P], an owner
    question (Q2).**
 7. **Lasting injury** (the patient who does not wake) is the EEG plan's injury state, which this plan names as an
    attachment on the debt (§7), not a variable invented here.
@@ -135,9 +148,9 @@ level, so `fn` = 1 and `metabolic` = 0 bit for bit; nothing new moves (the regre
 | Reader | Reads | Present value, and what it becomes |
 |---|---|---|
 | EEG cortex (`l2/eeg/state.ts` `cortexStep`) | cortex `metabolic` | `metabolic` is no longer computed inside `cortexStep` from `do2Rel`; the cortex takes it from the organ view through `CortexInputs`. **The holdable input stays in `CortexInputs`** (a field `metabolic`, with `do2Rel` kept only as the pattern table's way to state it), so the MANUAL-depth plan's `ischaemic-slowing` and `ischaemic-loss` patterns still hold a value in the vector and `cortexStep`'s derivation of `metSupp` and `suppress` is unchanged. |
-| Consciousness (`l2/neuro/depth.ts`) | cortex `fn`, through `NeuroEnv` (as `neuroglycopenia` arrives) | A new ischaemic term in the consciousness level `hypnotic`, sized so that loss of consciousness comes with the first EEG slowing (van Dijk 2014 [ABS]: loss of consciousness in the first slow phase; flattening only with deeper hypoperfusion): the term is `metabolic ÷ METABOLIC_SLOW_SHARE` in hypnotic units, so `hypnotic` reaches 1 within the slowing phase, before any voltage is lost, and adds to the drugs' level as `GLYCO_U` adds neuroglycopenia. [INF: LOC placed inside the slow phase by van Dijk; the slope is the existing slow share, no new number.] Miller Ch10 p. 211 places symptoms at CBF about 30 mL/100 g/min, above the EEG's 20: if the owner wants consciousness to go before the EEG slows, that is a sourced shift of the onset, not a new constant. |
-| The present index (`di`, `sr`, BFA sensor only) | the same term | The displayed index and SR include the ischaemic term (a separate output beside `diRaw`). **`diRaw` itself, which feeds `neuroOutputs` (`cmro2Mult`, the MAP set-shift) and the drive's sedation term, stays drug-only and unchanged**: the depth plan's ruling keeps the index → physiology coupling exactly as it is until its own piece moves it, and ischaemic demand reduction is the energy state's own functional share (§1.3.4), never counted again through `cmro2Mult`. |
-| EEG artefacts (`l2/eeg/artefacts.ts` `emgLevel`, blinks) | the neuro model's consciousness ramp (`loc`) beside the cortex's `lor` | Frontalis tone and blinks follow consciousness: `w = 1 − clamp01(max(lor, isch))`, with `isch` the same ischaemic term the neuro model uses (one function in `energy.ts`, two readers). Blinks need consciousness and the brainstem (Magliacano 2021 [ABS]; van Dijk 2014 [ABS]). The readers then compute index and SR from the signal; nothing is set. |
+| Consciousness (`l2/neuro/depth.ts`) | cortex `fn`, through `NeuroEnv` (as `neuroglycopenia` arrives) | A new ischaemic term in the consciousness level `hypnotic`, placed inside the EEG's slow phase (van Dijk 2014 [ABS]: loss of consciousness in the first slow phase; flattening only with deeper hypoperfusion). The working form is `isch = metabolic ÷ METABOLIC_SLOW_SHARE` in hypnotic units, which puts loss of consciousness at delivery ≈ 0.32, before any voltage is lost; it adds to the drugs' level as `GLYCO_U` adds neuroglycopenia. **[P]: the onset rests on a [FIT] constant (`METABOLIC_SLOW_SHARE`), not on a source; where loss of consciousness falls is a clinical call, Q4.** Miller Ch10 p. 211 places symptoms at CBF about 30 mL/100 g/min, above the EEG's 20. |
+| The present index (`di`, `sr`, BFA sensor only) | the same term, and the cortex's metabolic suppression | Adding the term to the index's `u` cannot show a flat brain: at fn = 0 the formula gives an index ≈ 25 and SR ≈ 20. So the displayed SR is `max(drug SR, 100 × metSupp)` (the cortex's ischaemic suppressed-time fraction, the quantity SR is defined to measure), and the displayed index is the lower of the drug index and the index the formula's own SR relation gives at that SR (`base = 30 − 25 × SR/100`, so SR 100 → 5) [ENG: the present formula's own SR–index relation inverted; no new number]. A separate output beside `diRaw`. **`diRaw` itself, which feeds `neuroOutputs` (`cmro2Mult`, the MAP set-shift) and the drive's sedation term, stays drug-only and unchanged**: the depth plan's ruling keeps the index → physiology coupling exactly as it is until its own piece moves it, and ischaemic demand reduction is the energy state's own functional share (§1.3.4), never counted again through `cmro2Mult`. |
+| EEG artefacts (`l2/eeg/artefacts.ts` `emgLevel`, blinks) | the neuro model's consciousness ramp (`loc`) beside the cortex's `lor` | Frontalis tone and blinks follow consciousness: `w = 1 − clamp01(lor + isch)`, the same additive rule the neuro model uses for `hypnotic`, with `isch` the same ischaemic term (one function in `energy.ts`, two readers). The arousal term (`EMG_AROUSAL`) and the tube term are gated by the same `w`. Blinks need consciousness and the brainstem (Magliacano 2021 [ABS]; van Dijk 2014 [ABS]). The readers then compute index and SR from the signal; nothing is set. |
 | Breathing gate (`l2/neuro/spont.ts` `stepBrainstem`) | brainstem `fn`, `debt` | First re-expressed with identical output (piece B5): the present anoxia timer `anoxS` becomes the brainstem compartment's state, and the gate's existing constants (the ruled gasp onset, gasp end, rate and VT ceilings, reopening time) become its parameters. Only after the owner's ruling (Q1) are the gasp phase and the reopening re-sourced, and the pulseless withdrawal over `NO_FLOW_S` retired (it is a second mechanism for the same effect once the brainstem's own function exists). Until then the withdrawal stays. |
 
 Consumers of consciousness, and which get the ischaemic term:
@@ -148,6 +161,13 @@ Consumers of consciousness, and which get the ischaemic term:
 - the ventilator "buck" condition (`l2/resp/pipeline.ts`, `n.loc < 0.5`): yes, through `loc`.
 - `diRaw` → `cmro2Mult`, `mapSetShiftMmHg`, the drive's sedation term `(60 − di)/20`, `awarenessRisk`: **no** (above).
 - The anaesthesia event's `conscious` and the displayed `di`/`sr`: yes.
+- `movement` (a stimulus with `hypEq` < 1 and T1 > 0.25): it reads the drug-only `hypEq`, so a laryngoscopy during CPR
+  would make a flat-brained patient move. **Yes**: movement also needs cortex `fn` above the failure level, and later
+  the brainstem's (spinal reflex movement in brain death is outside this plan).
+- The arousal EMG (`EMG_AROUSAL`) and the present index's EMG rise (`EMG_RISE` × stimulus × T1): **yes**, gated as the
+  awake tone is.
+- `stress` (the sympathetic response to a stimulus, read by the endocrine model): **not yet**; it belongs to the
+  brainstem's function and is gated in B7. Until then a stimulus during an arrest still raises it (stated gap).
 
 Order inside a pass: the neuro model steps before the organs (`engine.ts`: neuro, resp, organs, haemodynamics, EEG).
 Consciousness and the breathing gate therefore read the brain state one pass late (one 10 Hz brain step or less), as
@@ -162,8 +182,10 @@ the breathing gate reads CBF today. The EEG steps after the organs and reads the
    critical-CBF study); if found, it changes `fnSS` by a sourced factor, in its own piece.
 2. **The functional share does not reach flow–metabolism coupling.** `targetCbf` keeps `cmro2Rel` (drug × temperature)
    exactly. A silent brain lowering its own target flow, which lowers delivery, which keeps it silent, is a latch; its
-   real counterpart, post-ischaemic hypoperfusion, is a named attachment (§7). Test: hypoxaemia to PaO2 35 and back,
-   anaemia to Hb 5 and back, MAP 40 for 60 s and back: function returns to 1 and debt to 0 (no latch).
+   real counterpart, post-ischaemic hypoperfusion, is a named attachment (§7). Test, with the points chosen by
+   delivery (hypoxaemia at PaO2 35 keeps delivery above 1 through `o2Factor`, so it would test nothing): MAP lowered
+   until cortex delivery is 0.30 for 60 s and restored; Hb lowered until delivery is 0.35 and restored; PaO2 lowered
+   until delivery is 0.35 and restored. Each time function returns to 1 and debt to 0 (no latch).
 3. **One function, two readers for the ischaemic unresponsiveness** (neuro's `hypnotic` and the EEG artefacts' gate).
    The drug side is already held twice today (neuro's `hypnotic` and the cortex's `lor`, both from LOC C50s); this plan
    does not widen that and the hand-over names it.
@@ -183,11 +205,12 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
 | A1 | EEG slowing, then isoelectric | cortex store drains, `fn` falls through the slow share then to 0 | Clute 1990 [ABS]: change in 88 % of 93 arrests, mean 10.2 s after the last normal beat, mostly slowing and attenuation; de Vries 1998 [ABS]: fast activity falls, slow rises, isoelectric at 11 ± 2 s; Pana 2016 [ABS], review of 39 studies: EEG lost < 30 s | cell: raw EEG < 5 µV (cortex part) by VF + 9…13 s end to end; must-hold < 30 s |
 | A2 | Loss of consciousness | the ischaemic term at the slowing onset | van Dijk 2014 [ABS] (69 tilt syncopes, 1 s video-EEG): LOC in the first slow phase; Pana 2016 [ABS]: LOC within 30 s; Aminoff 1988 [ABS]: ICD-test VT/VF of 15–126 s gave definite LOC in 15 of 22 episodes; Rossen 1943 (time to LOC on arrest of cerebral flow) WANTED | `flags.conscious` false by the A1 slowing onset; band ≤ 30 s |
 | A3 | Frontalis tone, blinks, movement, response to command gone | artefacts and movement follow consciousness | Miller Ch36 p. 1142 (frontalis EMG falls with loss of consciousness, the engine's own source for `EMG_AWAKE`); Magliacano 2021 [ABS]; van Dijk 2014 [ABS] | EMG and blinks 0 once unconscious; movement follows the existing `movement` rule only while conscious |
-| A4 | Processed index and SR | computed by each reader from the now near-flat signal | Kurita 2012 [ABS] (15 swine, isoflurane): BIS fell suddenly at MAP 22 ± 3 and was isoelectric before resuscitation; Aprea 2014 [ABS] (one calf): BIS 0, SR 100 in asystole | cell: BIS-type SR > 80 and index < 20 by VF + 60 s (the readers' own suppression detection; band from Kurita/Aprea direction, [P] on the exact numbers) |
+| A4 | Processed index and SR | computed by each reader from the now near-flat signal | Kurita 2012 [ABS] (15 swine, isoflurane): BIS fell suddenly at MAP 22 ± 3 and was isoelectric before resuscitation; Aprea 2014 [ABS] (one calf): BIS 0, SR 100 in asystole | cell: BIS-type SR > 80 and index < 20 by VF + 90 s. The reader's burst-suppression rate runs over the previous 63 s (`bis-type.ts` `bsrWindowS`), so with the cortex isoelectric from about +14 s the window is full of silence only after about +77 s; "+60 s" would be unreachable by the reader's own definition. Direction from Kurita/Aprea; the exact numbers [P] |
 | A5 | Myoclonus / tonic activity at onset | **attachment, not built here** (§7) | Lempert 1994 [ABS]: myoclonus in 38 of 42 complete syncopes (90 %), LOC 12.1 ± 4.4 s; Aminoff 1988 [ABS]: tonic activity or twitching in 10 of 22 ICD-test episodes; van Dijk 2014 [ABS]: jerks need a slow, not flat, cortex | named; the slow-phase window is the state's (fn between slow and flat) |
-| A6 | Breathing: continued, then gasps, then apnoea | brainstem compartment; today's ruled gate first | the ruling: gasps from 30 s, VT ≤ 0.3 × rest, apnoea by 2 min, plus the pulseless withdrawal to 0 over 60 s. Sources: Zuercher 2010 [ABS] (61 swine): normal pattern ≈ 10/min through the first minute, gasping in minutes 2–5, all activity gone by 6 min; Lin 2023 [ABS] (pigs): gasps 2–5/min with VT 0.62 ± 0.19 L, larger than baseline; Clark 1992 [ABS]: agonal respirations in 55 % of witnessed and 56 % of VF arrests; Bobrow 2008 [ABS]: gasping in 33 % at EMS arrival, falling with time | **The ruling and the sources differ**: the sources show breathing continuing for about a minute and gasps lasting minutes with LARGE tidal volumes; the engine shows almost no gasp (the withdrawal takes the rate to 0 within 60 s, the gasp ceiling is reached for a few seconds). Q1. |
+| A6 | Breathing: continued, then gasps, then apnoea | brainstem compartment; today's ruled gate first | the ruling: gasps from 30 s, VT ≤ 0.3 × rest, apnoea by 2 min, plus the pulseless withdrawal to 0 over 60 s. Sources: Zuercher 2010 [FT] (61 isoflurane-anaesthetised swine): all 61 kept a normal breathing pattern at ≈ 10/min through the first minute; in minutes 2–5 gasping in 23–82 % of the animals at fewer than 3 gasps/min; none at 6 min (0 of 16); Lin 2023 [ABS] (pigs): gasps 2–5/min with VT 0.62 ± 0.19 L, larger than baseline; Clark 1992 [ABS]: agonal respirations in 55 % of witnessed and 56 % of VF arrests; Bobrow 2008 [ABS]: gasping in 33 % at EMS arrival, falling with time | **The ruling and the sources differ**: the sources show breathing continuing for about a minute and slow gasps (under 3/min in swine, 2–5/min with a large VT in pigs) lasting minutes; the engine shows almost no gasp (the withdrawal takes the rate to 0 within 60 s, the gasp ceiling is reached for a few seconds). Q1. |
 | A7 | Pupils and brainstem reflexes | **not shown**: `neuroOutputs.pupilMm` is published only, read by nothing on the monitor (it appears only in the demo's glossary) | Jørgensen 1997 [ABS] (order of recovery) | attachment (§7) |
-| A8 | CPR at partial flow | the same state at delivery ≈ 0.30–0.47 (measured CBF 0.30–0.40) | Kurita 2012 [ABS], Aprea 2014 [ABS] and two case reports (Azim 2004, Jung 2013 [ABS]): BIS rises during CPR; Hossmann 1988 [ABS] (cats, after 1 h of ischaemia): EEG recovery almost always with recirculation CBF > 40 mL/100 g/min; Losasso 1992 (EEG during asystole and CPR, humans) WANTED | with no debt (B1–B4): today's result, a normal cortex once delivery > 0.40. With the debt (B6): function capped while debt remains; repayment at CPR flow is **in conflict** between the BIS-rise reports and Hossmann's 40 (one species, one hour of ischaemia, recirculation not CPR). Stated, not chosen: Q2. |
+| A8 | CPR at partial flow | the same state at delivery ≈ 0.30–0.47 (measured CBF 0.30–0.40) | Kurita 2012 [ABS], Aprea 2014 [ABS] and two case reports (Azim 2004, Jung 2013 [ABS]): BIS rises during CPR; Hossmann 1988 [ABS] (cats, after 1 h of ischaemia): EEG recovery almost always with recirculation CBF > 40 mL/100 g/min; Losasso 1992 (EEG during asystole and CPR, humans) WANTED | **After B3 and before B6b the patient wakes under CPR**: in the measured course (c) cortex delivery passes 0.32 about 60 s into compressions and 0.40 by about 4 min, so consciousness returns, the awake EMG and blinks return and the index reads ≈ 97, under compressions. This is a known miss recorded in B4; it stays for good if Q2 is answered B. With the debt (B6b): function capped while debt remains; repayment at CPR flow is **in conflict** between the BIS-rise reports and Hossmann's 40 mL/100 g/min (cats, after 1 h of ischaemia, recirculation not CPR; the fraction of the cat's own normal flow is not in the abstract). Stated, not chosen: Q2. The BIS-rise reports are also confounded by the compression artefact on the EEG, which the engine does not draw (§7). |
+| A9 | Breathing under CPR | brainstem compartment at CPR delivery (B7) | Zuercher 2010, Crit Care Res Pract [FT] (swine): gasping during continuous chest compressions and during 30:2 CPR, more gasps after short than after long untreated VF, more with continuous compressions | today: no gasp under CPR (the pulseless withdrawal holds the effort at 0 while pulseless). After B7 (Q1 = B): gasps resume under compressions as brainstem delivery returns, fewer after a long untreated phase |
 
 ### 2.2 Gradual falls: hypotension, hypoxaemia, anaemia, hypoglycaemia, hypothermia
 
@@ -198,7 +221,11 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
 - **Hypoxaemia:** CBF rises below PaO2 60 (`o2Factor`, ×2 at 30); delivery falls only once that compensation is spent,
   then the EEG slows and is abolished (Miller Ch35 p. 1126) — exactly through `D = CBF × CaO2`. Unchanged physics;
   consciousness is new.
-- **Anaemia:** CaO2 falls, CBF compensation through viscosity is not in the engine [P: absent, named].
+- **Anaemia:** CaO2 falls, and the engine has no CBF rise with anaemia (`targetCbf` has no Hb term) [P: absent,
+  named attachment]. So delivery reaches the working loss-of-consciousness level (0.32) at Hb ≈ 4.3 g/dL with normal
+  flow (0.32 × 18.5 mL/dL = 1.34 × Hb × 0.97 + 0.29), and **after B2 a haemorrhage patient becomes unconscious from
+  anaemia alone at that Hb**, earlier than a patient whose flow rises would. B2 lists every existing row whose delivery
+  falls below 0.40 (haemorrhage, haemodilution, hypoxaemia, shock) before claiming that no row moves.
 - **Hypoglycaemia:** today a separate hypnotic term (`GLYCO_U` 1.2 [FIT], glucose 60 → 30 mg/dL). Under this structure
   glucose is the second substrate of the same state: `fnSS` takes min(O2 supply, glucose supply), with EEG slowing at
   about 40 mg/dL and suppression below 20 mg/dL (Miller Ch10 p. 219, the EEG plan's U7). Piece B8 moves it and retires
@@ -216,11 +243,11 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
 
 | # | What | Source | Course in this plan |
 |---|---|---|---|
-| R1 | Brief arrest (ICD testing, seconds): EEG back | de Vries 1998 [ABS]: 17 ± 9 s single-shock, 22 ± 12 s multiple-shock; cerebral O2 uptake lags the EEG | cell (B6): after 20–40 s of VF, cortex back to fn > 0.9 at 17 ± 9 s after the circulation returns; longer than the measured 9–10 s today |
+| R1 | Brief arrest (ICD testing, seconds): EEG back | de Vries 1998 [ABS]: 17 ± 9 s single-shock, 22 ± 12 s multiple-shock; cerebral O2 uptake lags the EEG | cell (B6b): after a single-shock-test arrest (its VF duration is not in the abstract: [P] on the arrest length the cell uses, stated in the piece), cortex back to fn > 0.9 at 17 ± 9 s after the circulation returns; longer than the measured 9–10 s today |
 | R2 | Order of recovery | Jørgensen 1997 [ABS] (111 resuscitations): breathing first, then pupillary light reflex, cough and swallowing, then the ciliospinal reflex; consciousness last | brainstem debt is repaid before the cortex's (its smaller vulnerability, B7); cell: breathing returns before consciousness after any arrest that silenced both |
 | R3 | The EEG's course after a long arrest | Jørgensen & Holm 1998 [ABS] (231): intermittent activity, then continuous delta → theta → alpha, over hours to days; Geocadin 2002 [ABS] (rats, 5 or 7 min asphyxia): more bursting in the first 30–40 min in good-outcome animals; Jia 2008 [ABS] (rats, 7 min): EEG recovers through periodic bursting from isoelectricity, burst frequency higher in the first 90 min with hypothermia, earlier return of continuous activity | `fnCap(Q)` rises from 0 through a burst-suppression range (the EEG cortex's existing suppression drives the bursting) to continuous; the hours scale is [P], Q2 |
 | R4 | Outcome by the EEG at 12 and 24 h | Ruijter 2019 [FT] (850 patients): generalized suppression (< 10 µV) or synchronous patterns with ≥ 50 % suppression from 6 h onward invariably meant poor outcome; continuous patterns at 12 h predicted good outcome (sensitivity 0.50, specificity 0.91); Westhall 2016 [FT] (103 of the TTM trial): a highly malignant EEG (suppression, suppression with periodic discharges, burst suppression) after rewarming meant poor outcome in all; a benign EEG in 1 % of poor outcomes | validation bands for the injury attachment (§7), not built in this plan's pieces |
-| R5 | Awakening | Elmer 2023 [FT] (1 002 + 166 comatose patients with cEEG): awakening = following commands, median 46 h [IQR 33–88] and 65 h [46–123] from collapse at the two centres; arrest durations 19 [11–29] and 15 [10–30] min | the far end of Q2's curve |
+| R5 | Awakening | Elmer 2023 [FT] (1 002 + 166 comatose patients with cEEG): awakening = following commands, median 46 h [IQR 33–88] and 65 h [46–123] from collapse at the two centres; total arrest time (collapse to return of circulation, CPR included) 19 [11–29] and 15 [10–30] min, no-flow time not reported; sedation and temperature control standard | the far end of Q2's curve |
 | R6 | Hypothermia after return | Jia 2006 [ABS] (rats, 7 and 9 min asphyxia, 33 °C for 12 h): better qEEG recovery and 72-h deficit scores with hypothermia; Jia 2008 [ABS]; Westhall 2016 [FT]: patterns' prognostic value not changed by 33 vs 36 °C | demand falls with temperature; the repayment rate's temperature dependence is [P] in Q2 |
 | R7 | Breathing after return | the ruling: the gate reopens over 2 min (ruling "1–3 min"); the MANUAL gate (the merged repair) applies it in MANUAL | B5 re-expresses it unchanged; B7 makes it a function of brainstem debt once Q1/Q2 rule |
 | R8 | The patient who does not wake | Ruijter 2019 [FT], Westhall 2016 [FT], Elmer 2023 [FT]; mechanism (synaptic failure becoming lasting) Hofmeijer 2012 [ABS] | the injury state on the debt (§7); Q3 decides whether it is in this plan |
@@ -285,10 +312,11 @@ automated reading with a bot check and were not used. **No file was downloaded.*
 | Aminoff et al. 1988, Ann Intern Med 108:791 (PMID 3369769) | [ABS] | LOC and motor activity in ICD-test VT/VF |
 | Kurita et al. 2012, J Trauma Acute Care Surg 72:1614 (PMID 22695430) | [ABS] | BIS falls suddenly at MAP 22 ± 3; isoelectric before CPR |
 | Aprea et al. 2014 (PMID 24400814); Azim 2004 (PMID 15144304); Jung 2013 (PMID 23372890) | [ABS] | BIS 0/SR 100 in asystole; BIS rises during CPR |
-| Hossmann 1988, Crit Care Med (PMID 3139367) | [ABS] | recovery needs recirculation CBF > 40; temperature, pH, glucose influence it; barbiturates did not help |
+| Hossmann 1988, Crit Care Med (PMID 3139367) | [ABS] | recovery needs recirculation CBF > 40 mL/100 g/min (cats; their own normal flow not stated); temperature, pH, glucose influence it; barbiturates did not help |
 | Hofmeijer & van Putten 2012, Stroke (PMID 22207505) | [ABS] | ≈ 30 % of energy to synaptic transmission; synaptic failure first, may persist |
 | Ching et al. 2012, PNAS (PMC3286963) | [FT-part]: main text; the SI (time constants, the K-ATP gating form) not read | ATP-gated suppression: production at 50 % of baseline gives burst-suppression ratio ≈ 0.5, 30 % ≈ 0.75; bursts and suppressions of 4–10 s; ATP recovers during suppression. The mechanism the EEG plan's metabolic burst-suppression piece names; this plan's `fn` is its input |
-| Zuercher et al. 2010, BMC Cardiovasc Disord 10:36 (PMID 20691123) | [ABS] | breathing ≈ 10/min in minute 1 of VF; gasping minutes 2–5; nothing by 6 min |
+| Zuercher et al. 2010, BMC Cardiovasc Disord 10:36 (PMC2928171) | [FT] (searched by phrase) | all 61 breathing at ≈ 10/min in minute 1 of VF; gasping in 23–82 % at < 3/min in minutes 2–5; 0 of 16 at 6 min |
+| Zuercher et al. 2010, Crit Care Res Pract (PMC2951081) | [FT] (searched by phrase) | gasping during continuous compressions and 30:2 CPR; more after short untreated VF |
 | Lin et al. 2023, Shock 59:948 (PMID 37018832); Clark 1992 (PMID 1443844); Bobrow 2008 (PMID 19029463) | [ABS] (as read for the measurement) | gasp rate and VT; incidence |
 | Jørgensen 1997 (PMID 9259054); Jørgensen & Holm 1998 (PMID 9571727) | [ABS] | order of recovery; EEG course over hours to days |
 | Geocadin et al. 2002, Resuscitation (PMID 12413758); Jia et al. 2006, Brain Res (PMID 16919609); Jia et al. 2008, Resuscitation (PMID 18597914) | [ABS] | bursting recovery in the first 30–90 min; hypothermia's effect |
@@ -321,83 +349,103 @@ value under `packages/engine-core/src/**`); the regression rows (`eeg-baseline.j
 organ and sanity rows) byte-identical unless the piece says which row moves and why, attributed to that piece. Plan
 hours are estimates.
 
-**Order.** B1 structure → B2 consciousness → B3 artefacts and readers → B4 arrest cells → B5 brainstem moved (no change)
-→ B6 cortex store and debt (Q2) → B7 brainstem re-sourced (Q1, Q2) → B8 glucose. B2–B5 need no ruling and do not wait
-behind B6.
+**Order.** B1 structure → B2 consciousness (Q4) → B3 artefacts and readers → B4 arrest cells → B5 brainstem relocated
+→ B6a cortex store → B6b cortex debt (Q2) → B7 brainstem re-sourced (Q1, Q2; BLOCKED on a source) → B8 glucose.
+B1, B3, B4, B5 and B6a need no ruling; B2 needs only Q4, which is a short answer.
 
-### B1. The structure: the brain energy state, moved, with no change (plan 8 h · 1.0–1.3 executor-h). Advisor: design.
-- **What:** `l2/brain/energy.ts` with `BrainEnergy` and the two compartments; `brainDo2Rel`, `DO2_EEG_ABNORMAL`,
+### B1. The structure: the cortex's energy entry, moved, with no change (plan 8 h · 1.0–1.3 executor-h). Advisor: design.
+- **What:** `l2/brain/energy.ts` with `BrainEnergy` and its cortex entry; `brainDo2Rel`, `DO2_EEG_ABNORMAL`,
   `DO2_EEG_LOST`, `METABOLIC_SLOW_SHARE` and the `metabolic` formula move from `l2/eeg/state.ts`; the organ view
-  publishes per compartment `delivery`, `fn`, `metabolic`; `CortexInputs` takes `metabolic` (the holdable field) and
-  `cortexStep` uses it; `eegCtx` passes it. Store clamped full and debt 0 in this piece (no store, no debt yet): the
-  state is `fn = fnSS(D)` exactly.
+  publishes the cortex's `delivery`, `fn`, `metabolic`; `CortexInputs` takes `metabolic` (the holdable field) and
+  `cortexStep` uses it; `eegCtx` passes it. No store, no debt, no brainstem entry: `fn = fnSS(D)` exactly.
 - **Tests:** `metabolic` bit-identical to main for a delivery sweep 0…1.2 (unit); the measurement's four courses
-  reproduce main's EEG cortex columns exactly (one headless test, MANUAL and MODELED); snapshot round trip with the new
-  field; the couplings census regenerated (`neuro.eeg.cortex.metabolic` now reads the organ state).
+  reproduce main's EEG cortex columns exactly (one headless test, MANUAL and MODELED); snapshot round trip; the
+  couplings census regenerated (`neuro.eeg.cortex.metabolic` now reads the organ state).
 - **Must not change:** any value, in any patient, ischaemic included. `eeg-baseline.json` byte-identical.
 - **Owner ruling:** none.
 
-### B2. Consciousness from the cortex's function (plan 8 h · 1.0–1.3 executor-h). Advisor: none.
-- **What:** `NeuroEnv` carries cortex `fn`; `depth()` adds the ischaemic term to `hypnotic` and to a displayed-index
-  output beside `diRaw`; `diRaw` and `neuroOutputs` unchanged; the consumers of §1.4 read it as listed.
-- **Tests:** unit: `hypnotic` reaches 1 at `metabolic` = `METABOLIC_SLOW_SHARE` with no drug; drug-only `diRaw` unchanged for every existing depth test. Cells:
-  A2 (unconscious by the slowing onset, ≤ 30 s; van Dijk, Pana); CBF 0.3 for 5 min → unconscious, recovers on
-  reperfusion (no latch, §1.5.2). Regression: no non-ischaemic row moves; the MODELED arrest's breathing may move
-  through `loc` (wakefulness drive) — the piece reports by how much, and the s9b/s9c rows must stay green.
+### B2. Consciousness from the cortex's function (plan 9 h · 1.1–1.5 executor-h). Advisor: none.
+- **What:** `NeuroEnv` carries the cortex's `fn` and `metabolic`; `depth()` adds the ischaemic term to `hypnotic` and
+  produces the displayed index and SR of §1.4; `diRaw` and `neuroOutputs` unchanged; `movement` and the index's EMG
+  rise gated (§1.4 consumer list).
+- **Tests:** unit: the onset Q4 rules; drug-only `diRaw` unchanged for every existing depth test; the displayed index
+  at fn = 0 is 5 with SR 100. Cells: A2 (unconscious by the ruled onset, ≤ 30 s; van Dijk, Pana); the no-latch set of
+  §1.5.2. Regression: the piece first lists every existing row with cortex delivery below 0.40 (haemorrhage,
+  haemodilution, hypoxaemia, shock, §2.2 anaemia) and states which move; the MODELED arrest's breathing may move through
+  `loc` (wakefulness drive), by how much is reported, and the s9b/s9c rows must stay green.
 - **Must not change:** `cmro2Mult`, the MAP set-shift, the drive's sedation term, `awarenessRisk`.
-- **Owner ruling:** none.
+- **Owner ruling:** Q4 (where loss of consciousness falls).
 
 ### B3. The EEG artefacts and the readers follow consciousness (plan 6 h · 0.8–1.0 executor-h). Advisor: none.
-- **What:** `emgLevel` and the blink gate take `max(lor, isch)` from the same function as B2.
-- **Tests:** unit: EMG 0 and no blinks with `isch` = 1 at `lor` 0; `eeg-baseline.json` byte-identical (no ischaemia in
-  it). Cells: A3; A4 (BIS-type SR > 80 and index < 20 by VF + 60 s; Entropy SE and the present index fall likewise;
-  Kurita 2012, Aprea 2014 directions, the exact numbers [P]).
+- **What:** `emgLevel` and the blink gate take `lor + isch` (the additive rule of B2), with the arousal and tube terms
+  gated by the same weight.
+- **Tests:** unit: EMG 0 and no blinks with `isch` = 1 at `lor` 0; `eeg-baseline.json` byte-identical. Cells: A3; A4
+  (BIS-type SR > 80 and index < 20 by VF + 90 s, given its 63-s window; Entropy SE falls likewise).
 - **Must not change:** the readers' algorithms (`l3/eeg-devices/`).
 - **Owner ruling:** none. Depends on B2.
 
 ### B4. The arrest validation cells (plan 5 h · 0.6–0.8 executor-h). Advisor: none.
 - **What:** sanity rows in `packages/validation/suites/sanity/` for the witnessed-VF course in both modes: A1 end to end
-  (isoelectric by VF + 9…13 s; must-hold < 30 s), A2, A4, and course (d)'s instant recovery recorded as a known miss
-  until B6.
-- **Tests:** the rows themselves; `docs/validation/known-misses.md` regenerated.
+  (isoelectric by VF + 9…13 s; must-hold < 30 s) **recorded as a known miss** (red on main through the circulation's
+  decay, §1.3.3), A2, A4; known misses for course (d)'s instant recovery and for course (c)'s waking under CPR (A8)
+  until B6b.
+- **Tests:** the rows; `docs/validation/known-misses.md` regenerated.
 - **Owner ruling:** none.
 
-### B5. The breathing gate reads the brainstem compartment, with identical output (plan 8 h · 1.0–1.3 executor-h). Advisor: design.
-- **What:** `stepBrainstem`'s `anoxS` and `gate` become the brainstem compartment's state; the ruled constants become
-  its parameters; the brainstem's `fnSS` keeps today's gate threshold (`BRAINSTEM_CBF_MIN` 0.2 and no-flow). The
+### B5. The breathing gate's state relocated into the brainstem entry (plan 6 h · 0.8–1.0 executor-h). Advisor: none.
+- **What:** a relocation only. `anoxS` and `gate` move from `SpontDrive` into `BrainEnergy.brainstem`, keeping their
+  meaning, their 1 Hz cadence and their read point (still stepped by `stepBrainstem` in the resp pipeline, reading
+  `organs.brain.cbfRel` and the no-flow flag); the ruled constants keep their values. This is **not** yet the
+  `{ store, fn, debt }` form: a CBF threshold with a 1 Hz timer is a different mechanism, and B7 replaces it. The
   pulseless withdrawal (`plS`, `NO_FLOW_S`) is untouched.
 - **Tests:** the s9b and s9c rows and `manual-brainstem-gate.test.ts` unchanged; MODELED and MANUAL arrest breathing
-  bit-identical to main; snapshot round trip.
+  bit-identical to main; snapshot round trip (the state's new home, with a reader for old snapshots).
 - **Must not change:** any breathing value.
+- **Owner ruling:** none. If the orchestrator prefers, B5 folds into B7; it is kept separate so that B7's PR changes
+  values only.
+
+### B6a. The cortex's O2 store (plan 7 h · 0.9–1.2 executor-h). Advisor: design.
+- **What:** the derived store (§1.3.3) and the demand of §1.3.4 with the one shared F (moving `neuroOutputs`' 0.45 into
+  the shared constant without changing its value).
+- **Tests:** unit: non-ischaemic patients bit-identical (store full); the store's size computed from the named constants
+  (no new literal); the zero-flow step cell (isoelectric at 11 ± 2 s; de Vries), reported as met or missed by the
+  derivation, never tuned. Cells: A1 end to end again (expected later than main's +14 s; stays a known miss with its
+  upstream cause).
+- **Must not change:** `targetCbf`, `cmro2Rel`, `cmro2Mult`'s value, PbtO2, SjvO2.
 - **Owner ruling:** none.
 
-### B6. The cortex's store and debt: onset delay and duration-dependent recovery (plan 14 h · 1.8–2.3 executor-h). Advisor: design.
-- **What:** the derived store (§1.3.3), the functional share of demand (§1.3.4), the debt and `fnCap` (§1.3.5–6) as Q2
-  rules.
-- **Tests:** unit: non-ischaemic patients bit-identical (store full, debt exactly 0); a store derived from the named
-  constants (no new literal). Cells: A1 end to end again (with the store; if it misses through the circulation's
-  decay, reported as such, never tuned); R1 (17 ± 9 s after 20–40 s of VF; de Vries); longer arrest → longer
-  recovery, monotonic; colder → less debt for the same arrest; the no-latch set (§1.5.2). The 2-min course (d) moves
-  from the known misses to green or to a stated [P] band per Q2.
+### B6b. The cortex's debt: recovery that depends on the arrest (plan 10 h · 1.3–1.7 executor-h). Advisor: design.
+- **What:** debt and `fnCap` (§1.3.5–6) as Q2 rules.
+- **Tests:** unit: debt exactly 0 in every non-ischaemic patient. Cells: R1 (17 ± 9 s; de Vries, with the arrest length
+  stated as [P]); longer arrest → longer recovery, monotonic; colder → less debt for the same arrest; course (c)'s
+  waking under CPR moves to whatever Q2 rules; the no-latch set again. The 2-min course (d) moves from the known misses
+  to green or to a stated [P] band per Q2. The PR states what a session shows after a 5-minute arrest.
 - **Must not change:** `targetCbf`, `cmro2Rel`, PbtO2, SjvO2.
 - **Owner ruling: Q2 before it starts.**
 
-### B7. The brainstem re-sourced: continued breathing, gasps and their return (plan 12 h · 1.5–2.0 executor-h). Advisor: design.
-- **What:** per Q1: the brainstem's own store, thresholds and debt; the gasp phase from its partial function with the
-  sourced rate and VT; the pulseless withdrawal retired; reopening from the brainstem's debt (breathing back before
-  consciousness, R2).
-- **Tests:** per Q1: Zuercher (breathing ≈ 10/min in minute 1; gasps in minutes 2–5; apnoea by 6 min), Lin (gasp VT
-  larger than rest), R2 (breathing before consciousness); the s9b/s9c rows re-banded only to their own sources.
+### B7. The brainstem re-sourced: continued breathing, gasps and their return (plan 14 h · 1.8–2.3 executor-h). Advisor: design.
+- **What:** per Q1: the brainstem's own `{ store, fn, debt }` replacing B5's timer; the gasp phase from its partial
+  function with the sourced rate and VT; gasps under CPR (A9); the pulseless withdrawal retired; reopening from the
+  brainstem's debt (breathing back before consciousness, R2); `stress` gated by the brainstem's `fn`.
+- **BLOCKED on a source** as well as on Q1: no source read gives the brainstem's delivery thresholds or its tolerance in
+  seconds relative to the cortex (§5 WANTED). Built without one, its numbers would be fitted to Zuercher's time course,
+  which the rules forbid.
+- **Tests:** per Q1: Zuercher BMC [FT] (≈ 10/min in minute 1; gasping in 23–82 % at < 3/min in minutes 2–5; none at
+  6 min), Lin (gasp VT larger than rest), Zuercher CCRP [FT] (gasps under compressions, fewer after long untreated VF),
+  R2 (breathing before consciousness); the s9b/s9c rows re-banded only to their own sources.
 - **Owner ruling: Q1 (and Q2 for the reopening) before it starts.**
 
 ### B8. Glucose as the second substrate (plan 8 h · 1.0–1.3 executor-h). Advisor: none.
-- **What:** `fnSS` = min(O2 term, glucose term) with the Ch10 p. 219 thresholds; `GLYCO_U` and its term in `depth()`
-  retired; the neuroglycopenia flag kept as the endocrine model's output.
+- **What:** `fnSS` = min(O2 term, glucose term) with the Ch10 p. 219 thresholds; `GLYCO_U`'s **consciousness** term
+  in `hypnotic` retired in favour of the state. `GLYCO_U` is also in the index's `u`, which feeds `diRaw` →
+  `cmro2Mult`: removing it there would move a frozen physiology coupling, so the index part stays until the depth
+  plan's own piece moves the index → physiology coupling. B8 says so in its PR.
 - **Tests:** the hypoglycaemia rows: glucose 40 → slowing, < 20 → suppressed, unconscious below the slowing; the
-  existing hypoglycaemia consciousness tests (moved by attribution to this piece if their numbers change).
-- **Owner ruling:** none (an engineering consolidation); the moved rows are named in its PR.
+  existing hypoglycaemia consciousness tests (moved by attribution to this piece if their numbers change); `cmro2Mult`
+  in hypoglycaemia unchanged.
+- **Owner ruling:** none.
 
-Total ≈ 69 plan hours (8.6–11.5 executor-hours), estimates.
+Total ≈ 73 plan hours (9.1–12.2 executor-hours), estimates.
 
 ---
 
@@ -409,6 +457,9 @@ Total ≈ 69 plan hours (8.6–11.5 executor-hours), estimates.
 - **Pupils and brainstem reflexes:** the brainstem compartment's `fn` and debt; needs a display and the order of
   Jørgensen 1997 as its test.
 - **The CNS ischaemic response:** `organs.absent.brainstemToHub` reading the brainstem's `fn`.
+- **The EEG's compression artefact during CPR** (it confounds the BIS-rise reports, A8).
+- **Anaemia's CBF rise** (`targetCbf` has no Hb term; §2.2).
+- **The circulation's flow decay after arrest** (A1's upstream miss, §1.3.3): the circulation's own plan.
 - **Post-ischaemic hypoperfusion; anaesthetic-specific critical CBF; regional flow (V0); hypothermic loss of
   consciousness; the EEG plan's metabolic burst suppression** (Ching 2012) reading `fn`.
 
@@ -432,27 +483,31 @@ Total ≈ 69 plan hours (8.6–11.5 executor-hours), estimates.
 
 ## 9. Questions for the owner
 
-1. **Should the first minute of an arrest show continued breathing and then minutes of large gasps, as the sources
-   do, instead of today's rule?**
+1. **Should the first minute of an arrest show continued breathing and then minutes of slow gasps, as the sources do,
+   instead of today's rule?**
    Today: gasps from 30 s with a small tidal volume, apnoea by 2 min, and the patient's effort withdrawn to zero over
-   the first minute, so almost no gasp is ever seen. The sources: swine keep breathing normally (≈ 10/min) through
-   the first minute of VF, gasp in minutes 2–5 and stop by 6 min; pig gasps are larger than a normal breath; more than
-   half of witnessed VF arrests in people show agonal breaths.
+   the first minute, so almost no gasp is ever seen, and none under CPR. The sources: all 61 swine kept breathing
+   normally (≈ 10/min) through the first minute of VF; in minutes 2–5, 23–82 % gasped at fewer than 3 a minute; none by
+   6 min; gasps came back under chest compressions; pig gasps are larger than a normal breath; more than half of
+   witnessed VF arrests in people show agonal breaths.
    - (A) Keep today's rule.
    - (B) Re-source it from these studies in piece B7: continued breathing in minute 1, gasps in minutes 2–5 with their
-     rate and size, apnoea by 6 min, and the effort withdrawal retired.
+     rate and size, gasps under CPR, apnoea by 6 min, and the effort withdrawal retired. B7 also waits for a source on
+     how much longer the brainstem tolerates no flow than the cortex.
 
    **Proposal B.**
 2. **How long should the brain take to come back after the circulation returns, for arrests between a few seconds and
-   twenty minutes?**
-   The sources give only the two ends: after seconds of VF the EEG is back in about 20 s; after arrests of 15–20 min,
-   patients who do well have a continuous EEG by 12 h and wake at a median of about two days. Nothing read gives the
-   curve between, nor whether CPR-level flow repays the debt (BIS rises during CPR in case reports; in cats recovery
-   needed a flow above 80 % of normal).
-   - (A) Build the debt with the two sourced ends as cells and a marked placeholder curve between them (smooth and
-     rising with the arrest's length and falling with cooling), and keep looking for the source.
-   - (B) Build the onset only (B1–B5); recovery stays instant and is a declared known miss until a source for the middle
-     is found.
+   twenty minutes, and does CPR-level flow bring it back?**
+   The sources give only the two ends: after an ICD test's seconds of VF the EEG is back in about 20 s; patients
+   resuscitated after a median 19 min (CPR included, then sedated and cooled) who do well have a continuous EEG by 12 h
+   and wake at a median of about two days. Nothing read gives the curve between. Whether CPR flow repays the debt is in
+   conflict: BIS rises during CPR in case reports, while in cats recovery needed a flow of 40 mL/100 g/min.
+   Until this is ruled, the simulated patient **wakes under CPR**: about a minute into compressions the brain's oxygen
+   delivery passes the level at which consciousness returns, and the depth monitor reads ≈ 97.
+   - (A) Build the debt with the two sourced ends as cells and a marked placeholder curve between them (smooth, rising
+     with the arrest's length, falling with cooling), with CPR flow repaying it only slowly; keep looking for the source.
+   - (B) Build the onset only (to B6a); recovery stays instant, and waking under CPR stays, as declared known misses until
+     a source for the middle is found.
    - (C) As A, but the instructor sets the expected outcome of an arrest (wakes / slow / does not wake) as a case
      parameter instead of a curve.
 
@@ -463,6 +518,20 @@ Total ≈ 69 plan hours (8.6–11.5 executor-hours), estimates.
    It needs the malignant patterns (suppression, burst suppression with identical bursts) that last for hours, and a
    rule for when injury becomes permanent, which no source read gives as a mechanism.
    - (A) Left to the EEG plan, which reads this plan's debt.
-   - (B) Added here as a piece after B6.
+   - (B) Added here as a piece after B6b.
 
    **Proposal A.**
+4. **When the brain's blood supply falls, at what point does the patient lose consciousness?**
+   The sources say consciousness goes in the first slow phase of the EEG, before it flattens; the textbook puts symptoms
+   at a flow of about 30 mL/100 g/min (60 % of normal) and EEG slowing at about 20 (40 %). The engine's EEG divides the
+   range between slowing and flattening at a fitted midpoint.
+   - (A) Inside the slow phase (at about a third of normal oxygen delivery: well into the EEG's slowing, before the
+     voltage goes). This uses the EEG's fitted midpoint, marked as such.
+   - (B) At the first EEG slowing (40 % of normal delivery).
+   - (C) At the textbook's symptom level (60 % of normal flow), before the EEG changes.
+
+   One consequence for every answer: the engine does not raise brain flow in anaemia, so an anaemic patient at a
+   normal blood pressure loses consciousness at Hb ≈ 4.3 g/dL under A, ≈ 5.5 under B and ≈ 8.3 under C.
+
+   **Proposal A**, because it is the one that keeps loss of consciousness inside the slow phase the sources describe
+   and needs no new number.
