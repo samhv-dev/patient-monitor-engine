@@ -196,6 +196,7 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | `validatePacer` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | `grid`: the room's model's rate and output steps (plan E0: |
 | `tcpSpec` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | The TCP modifier for this pacer state. |
 | `syncStep` | [`l3/defib-pacer/sync.ts`](../../packages/engine-core/src/l3/defib-pacer/sync.ts) | Feed samples [st.n, end] read from the VCG X/Y/Z channels; |
+| `stepEnergy` | [`l3/defib-pacer/x-series.ts`](../../packages/engine-core/src/l3/defib-pacer/x-series.ts) | The next energy on a device's list from `energyJ`, upward (dir 1) or downward (dir −1); |
 
 Exported without a doc comment: `createDefib`, `createM2State`, `cardioversionSinus`, `createPacer`, `applyPacer`, `createSyncState`.
 
@@ -210,6 +211,7 @@ Exported without a doc comment: `createDefib`, `createM2State`, `cardioversionSi
 | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | Post-shock rhythm (brief §6.5 "Post-shock rhythm" table; research 03 §1.8–§1.9): a scenario rule or the instructor's pre-selection wins; otherwise the outcome is drawn from the `outcome` PRNG stream. |
 | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | Transcutaneous pacer device (brief §6.5 "Pacer (TCP)"; research/05 §2.6): mode, rate, output, pause, and the instructor faults. |
 | [`l3/defib-pacer/sync.ts`](../../packages/engine-core/src/l3/defib-pacer/sync.ts) | Defibrillator sync detector (brief §6.5 "Sync": a marker on every detected R; the shock on the next R within ≤ 60 ms). |
+| [`l3/defib-pacer/x-series.ts`](../../packages/engine-core/src/l3/defib-pacer/x-series.ts) | The generic defibrillator's energies: those of the ZOLL X Series, the source its defaults carry. |
 
 ## Known misses
 
@@ -222,6 +224,7 @@ None recorded.
 | [`engine/defib-e1a-paediatric-energy.test.ts`](../../packages/engine-core/test/engine/defib-e1a-paediatric-energy.test.ts) | 0 | 0 |
 | [`engine/defib-e7a-alarm-instance.test.ts`](../../packages/engine-core/test/engine/defib-e7a-alarm-instance.test.ts) | 0 | 0 |
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
+| [`engine/defib-generic-energies.test.ts`](../../packages/engine-core/test/engine/defib-generic-energies.test.ts) | 0 | 0 |
 | [`engine/defib-m2-connections.test.ts`](../../packages/engine-core/test/engine/defib-m2-connections.test.ts) | 0 | 0 |
 | [`engine/defib-m2-manual-sync.test.ts`](../../packages/engine-core/test/engine/defib-m2-manual-sync.test.ts) | 0 | 0 |
 | [`engine/defib-m2-vocabulary.test.ts`](../../packages/engine-core/test/engine/defib-m2-vocabulary.test.ts) | 0 | 0 |
