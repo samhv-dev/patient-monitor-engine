@@ -88,7 +88,8 @@ const vcTi = (c: VentConfig) => c.vt / 1000 / Math.max(0.05, c.vcFlow / 60);
 /** Plan V2: the device's apnoea backup is armed (PSV with a backup kind set; research/57 O-18, T-37). */
 const backupArmed = (c: VentConfig) => c.mode === 'PSV' && (c.backupMode ?? 'off') !== 'off';
 /** The kind of the breath in progress: a backup breath runs as its stamped kind, every other breath as the set mode. */
-const breathKind = (vs: VentState): VentMode => (vs.backupBreath !== undefined && backupArmed(vs.cfg) ? vs.backupBreath : vs.cfg.mode);
+/** The kind of the breath in progress (the controller it runs): a backup breath its stamped kind, any other the set mode. */
+export const breathKind = (vs: VentState): VentMode => (vs.backupBreath !== undefined && backupArmed(vs.cfg) ? vs.backupBreath : vs.cfg.mode);
 
 function updateSpontaneous(vs: VentState): void {
   const c = vs.cfg;
@@ -353,7 +354,7 @@ export function stepVent(vs: VentState): void {
       p.Paw = 0;
     } else if (vs.hold) {
       Q = 0;
-      p.Paw = peep + recoil;
+      p.Paw = peep + recoil - (c.holdEffort ? p.Pmus : 0);
     } else if (p.phase === 'insp' && kind === 'VC') {
       Q = vs.flowTarget;
       p.Paw = peep + recoil + Q * R_in - p.Pmus;
@@ -418,6 +419,12 @@ export function releaseHold(vs: VentState): void {
   if (b === undefined) return;
   delete vs.heldBreath;
   startInspiration(vs, b.mandatory, b.backup);
+}
+/** Ends a hold, or the arming of one, and gives no breath: the breath an end-expiratory hold held back is dropped. */
+export function cancelHold(vs: VentState): void {
+  vs.hold = null;
+  vs.pendingHold = null;
+  if (vs.heldBreath !== undefined) delete vs.heldBreath;
 }
 /** Manual breath: a patient-type (non-mandatory) breath, only from expiration. */
 export function manualBreath(vs: VentState): void {

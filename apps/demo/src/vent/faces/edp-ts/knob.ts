@@ -110,7 +110,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   const changed = () => { for (const fn of [...subs]) fn(); };
   const say = (r: ReasonId) => { note = { r, until: now() + num(LAYOUT.reasonMs) }; };
   const screen = createScreen();
-  const tests = c.holds ? createManoeuvres(c, () => { say('testDone'); changed(); }) : null;
+  const tests = c.holds ? createManoeuvres(c, (r) => { say(r); changed(); }) : null;
   let scaleSel: { q: Q; scale: Scale } | null = null;
   let page = 0;
   let helpArmed = false;
@@ -136,7 +136,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   const items = (id: WindowId): Item[] => {
     const out: Item[] = [];
     WINDOWS[id].rows.forEach((r: Row, i) => {
-      if (r.kind === 'mode' || r.kind === 'open' || r.kind === 'accept' || r.kind === 'layout' || r.kind === 'test' || r.kind === 'reading' || r.kind === 'toggle') out.push({ row: i });
+      if (r.kind === 'mode' || r.kind === 'open' || r.kind === 'accept' || r.kind === 'layout' || r.kind === 'test' || r.kind === 'toggle') out.push({ row: i });
       else if (r.kind === 'setting' && settingState(r.setting, c.cfg) === 'live') out.push({ row: i });
       else if (r.kind === 'limits') for (const cell of r.cells) out.push({ row: i, cell });
     });
@@ -168,11 +168,10 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     }
     if (row.kind === 'layout') { screen.layout = row.layout; wins = []; return; }
     if (row.kind === 'test') {
-      if (!tests?.allowed()) return say('testModes');
-      if (tests.start(row.test)) say('testRunning');
+      if (!tests?.allowed(row.test)) return say('testModes');
+      if (tests.start(row.test)) say(row.test === 'p01' ? 'p01Effort' : 'testRunning');
       return;
     }
-    if (row.kind === 'reading') return say(row.note);
     if (row.kind === 'toggle') { screen.autoscale = !screen.autoscale; return; }
     if (row.kind === 'accept') {
       // research/57 T-41: Accept applies the window's values and closes it
@@ -257,23 +256,24 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
       else if (ctl.action === 'saveLoop') saveLoop(screen, c.buf, new Date());
       else if (ctl.action === 'help') { helpArmed = true; say('helpOn'); }
       else if (ctl.action === 'manualInsp' && ctrl) { ctrl = false; say('deepBreath'); } // Ctrl + Manual Insp.: the deep breath (H-16, H-17)
-      else if (ctl.action === 'manualInsp') c.manualBreath(true);
+      else if (ctl.action === 'manualInsp') { if (!c.manualBreath(true)) say('manualHold'); }
       else if (ctl.action === 'lock') { if (locked()) isLocked = false; } // a press unlocks; locking takes the 2 s hold
       else if (ctl.action === 'scale') { pending.cancel(); scaleSel = { q: id.slice(6) as Q, scale: { ...screen.scale[id.slice(6) as Q] } }; }
       else if (ctl.action === 'esc') {
         // research/57 H-25: resets the lamps of the alarms that have ended; cancels the operation; closes the window
         // [inferred: the manual lists Esc's four functions, not their order; one press does the lamp reset and the first
         // of the others that applies]
+        note = null; // a reason shown goes; the cancelled test says so below
         c.esc();
         testFrom = null;
         if (pending.key !== null) pending.cancel();
+        else if (tests?.running()) tests.cancel(); // H-25: Esc cancels the running operation
         else if (scaleSel) scaleSel = null; // K-11: Esc cancels a scale's change
         else if (confirming) { confirming = null; edits = {}; }
         else if (helpArmed) helpArmed = false;
         else if (wins.length) { if (wins.pop() && !wins.some((x) => WINDOWS[x.id].draft)) wedits = {}; } // T-41: back to the previous values
         else if (c.frozen) c.toggleFreeze(); // Y-03: Esc leaves Freeze (p. 40)
         ctrl = false;
-        note = null;
       } else if (ctl.action === 'knobPress') k.push();
       changed();
     },
@@ -319,7 +319,8 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     },
     down(id) {
       if (helpArmed) return k.press(id);
-      if (id === 'under:inspExpPause' && !c.holds?.key(true)) say('pauseModes');
+      const held = id === 'under:inspExpPause' ? c.holds?.key(true) ?? 'mode' : true;
+      if (held !== true) say(held === 'busy' ? 'pauseBusy' : 'pauseModes');
       if (id === 'under:lock') { if (locked()) { isLocked = false; lockDownAt = null; } else lockDownAt = now(); }
       changed();
     },

@@ -47,8 +47,9 @@ export const INIT: Partial<VentConfig> = {
   vt: v(S.vt.init) * 1000, prvcTarget: v(S.vt.init) * 1000, itime: v(S.ti.init), rate: v(S.f.init), peep: v(S.peep.init),
   trigType: 'flow', flowTrig: v(S.sensFlow.init), presTrig: v(S.sensPres.init), fio2: v(S.oxygen.init),
   flowPattern: 'ramp0', pause: v(S.pause.init),
-  // the expiratory hold at the end of expiration (research/57 K-15, H-19)
-  expHoldAt: 'end', pc: v(S.pcv.init), ps: v(S.psv.init), cycleOff: v(S.expSens.init),
+  // the expiratory hold at the end of expiration, and the patient's effort seen on a held airway (research/57 K-15,
+  // H-19, K-19)
+  expHoldAt: 'end', holdEffort: true, pc: v(S.pcv.init), ps: v(S.psv.init), cycleOff: v(S.expSens.init),
   riseTime: v(S.riseTime.init),
   pmax: v(L.pmax.init), almVThi: v(L.vtHi.init) * 1000, almVTlo: v(L.vtLo.init) * 1000, almMVhi: v(L.mvHi.init), almMVlo: v(L.mvLo.init),
   almFhi: v(L.fHi.init), apneaTime: v(S.apnea.init), sweepSec: v(DATA.layout.sweepS),
@@ -110,6 +111,8 @@ export const MECHANICS: MechanicsSpec = {
   holdModes: (M.holdModes as Leaf<MechanicsSpec['holdModes']>).v,
   breathsAveraged: num(M.breathsAveraged),
   tcexpWindow: (M.tcexpWindow as Leaf<[number, number]>).v,
+  tcexpMinSamples: num(M.tcexpMinSamples),
+  resultsDependOn: (M.resultsDependOn as Leaf<MechanicsSpec['resultsDependOn']>).v,
 };
 
 export const EDP_SPEC: FaceSpec = {

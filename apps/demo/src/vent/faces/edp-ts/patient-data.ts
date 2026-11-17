@@ -4,7 +4,7 @@
 import type { Cockpit } from '../../core/cockpit.ts';
 import { breathRate, dynamicCompliance, minuteVolume } from '../../core/mechanics.ts';
 import { faceMode } from './controls.ts';
-import { DATA, dec, num, word, type ReasonId, type WordId } from './data.ts';
+import { DATA, dec, num, word, type Leaf, type ReasonId, type WordId } from './data.ts';
 import type { Manoeuvres } from './manoeuvres.ts';
 
 export interface DataRow { word: WordId; value: string; unit: WordId | null; unsim: ReasonId | null }
@@ -14,8 +14,15 @@ const n = num(DATA.mechanics.breathsAveraged);
 const fx = (v: number, d: keyof typeof DATA.layout.dec) => (Number.isFinite(v) ? v.toFixed(dec(d)) : word('dashes'));
 const row = (w: WordId, unit: WordId | null, f: (c: Cockpit, m: Manoeuvres) => string): Row => (c, m) => ({ word: w, value: f(c, m), unit, unsim: null });
 const off = (w: WordId, r: ReasonId): Row => () => ({ word: w, value: word('dashes'), unit: null, unsim: r });
-/** The last `n` breaths of a kind, or none until there are that many (N-07 to N-09: "the last 3"). */
-const full = (c: Cockpit, spont: boolean) => { const b = c.breaths(spont); return b.length >= n ? b : []; };
+const SPONT_MODES = (DATA.mechanics.spontModes as Leaf<string[]>).v;
+/**
+ * The last `n` breaths of a kind, or none until there are that many (N-07 to N-09: "the last 3"); the spontaneous ones
+ * only in a mode that gives them (a value not active in the mode shows ---, N-03).
+ */
+const full = (c: Cockpit, spont: boolean) => {
+  const b = c.breaths(spont);
+  return b.length >= n && (!spont || SPONT_MODES.includes(c.cfg.mode)) ? b : [];
+};
 const psvCpap = (c: Cockpit) => faceMode(c.cfg) === 'PSV/CPAP';
 
 const COMMON: Row[] = [

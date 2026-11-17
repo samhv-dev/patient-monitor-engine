@@ -93,7 +93,7 @@ function windowView(c: Cockpit, knob: Knob, id: WindowId, focus: number): Window
     if (r.kind === 'off') return void entries.push({ ...base, unsim: r.reason, ...(r.value ? { value: W(r.value) } : {}), ...(r.more ? { more: true } : {}) });
     if (r.kind === 'open') return void entries.push({ ...base, more: true });
     if (r.kind === 'mode' || r.kind === 'accept' || r.kind === 'layout') return void entries.push(base);
-    if (r.kind === 'test' || r.kind === 'reading') return void entries.push({ ...base, value: testValue(c, knob, r.kind === 'test' ? r.test : null) });
+    if (r.kind === 'test') return void entries.push({ ...base, value: testValue(knob, r.test) });
     if (r.kind === 'toggle') return void entries.push({ ...base, value: W(knob.screen.autoscale ? 'yes' : 'no') });
     if (r.kind === 'limits') {
       if (r.off) return void entries.push({ ...base, unsim: r.off.reason });
@@ -127,16 +127,24 @@ const withUnit = (v: string, u: WordId | null) => (u && v !== dashes ? `${v} ${W
 const dataText = (d: DataRow) => withUnit(d.value, d.unit);
 const fxd = (v: number, d: keyof typeof DATA.layout.dec) => (Number.isFinite(v) ? v.toFixed(dec(d)) : dashes);
 /** A test's result at the right of its row (research/57 E-14, K-15 to K-17, K-19), "---" before it has run. */
-function testValue(c: Cockpit, knob: Knob, t: TestId | null): string {
+function testValue(knob: Knob, t: TestId): string {
   const m = knob.tests;
   if (!m) return dashes;
   if (t === 'autoPeep') return withUnit(fxd(m.values().autoPeep, 'pdAutoPeep'), 'uCmH2O');
   if (t === 'complRes') return withUnit(fxd(m.values().cst, 'pdC'), 'uMlCm');
   if (t === 'trapped') return withUnit(fxd(m.trappedMl(), 'pdVol'), 'uMl');
-  return withUnit(fxd(c.measured().P01, 'pdP01'), 'uCmH2O');
+  return withUnit(fxd(m.p01(), 'pdP01'), 'uCmH2O');
 }
+/** A face.json value by its path ("mechanics.lockHoldS"): a help text names its numbers so, never repeats them. */
+const valueAt = (path: string): string => {
+  const leaf = path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], DATA) as Leaf<number> | undefined;
+  if (leaf?.v === undefined) throw new Error(`face.json has no value ${path}`);
+  return String(leaf.v);
+};
+/** A text with its {path} numbers filled from face.json. */
+export const filled = (text: string): string => text.replace(/\{([\w.]+)\}/g, (_, p: string) => valueAt(p));
 /** A control's help, in the project's words (face.json help; plan GX8). */
-export const helpText = (id: string | null): string => (id ? ((DATA.help as Record<string, Leaf<string> | undefined>)[id]?.v ?? '') : '');
+export const helpText = (id: string | null): string => (id ? filled((DATA.help as Record<string, Leaf<string> | undefined>)[id]?.v ?? '') : '');
 
 /**
  * The curves' screen: the screen chosen, the scales (autoscaled to the buffers when autoscale is on, or as set by hand,

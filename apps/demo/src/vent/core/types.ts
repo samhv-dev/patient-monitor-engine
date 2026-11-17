@@ -78,7 +78,9 @@ export interface BreathRecord {
   pmax: number;
   /** How long the inspiratory flow lasted (Ti without a pause or a hold), s. */
   tiFlow: number;
-  /** A spontaneous (support) breath, not a mandatory or backup one. */
+  /** The breath's own kind, the controller it ran (the model's `breathKind`): a backup breath its backup kind. */
+  kind: VentMode;
+  /** A spontaneous (support) breath: one the patient's effort shapes and ends, not a mandatory or backup one. */
   spont: boolean;
   /** The expiratory time constant from the flow–volume curve, s (NaN when it cannot be read). */
   tcexp: number;
@@ -97,8 +99,11 @@ export interface HoldResult {
   /** The set PEEP and mode it was made at. */
   peep: number;
   mode: VentMode;
-  /** An inspiratory hold: the breath it held (its volume, peak pressure and flow time). */
-  breath?: { vtMl: number; pmax: number; tiFlow: number };
+  /**
+   * An inspiratory hold: the breath it held (its start, volume, peak pressure and flow time), the measured PEEP of the
+   * breath before it, and its expiration's time constant once that breath is complete (NaN until then).
+   */
+  breath?: { t0: number; vtMl: number; pmax: number; tiFlow: number; peepBefore: number; tcexp: number };
 }
 
 /** The device's manoeuvres and measurements: the face's numbers, each sourced in its data. */
@@ -111,6 +116,10 @@ export interface MechanicsSpec {
   breathsAveraged: number;
   /** The share of the exhaled volume whose flow–volume slope gives the expiratory time constant, [from, to]. */
   tcexpWindow: readonly [number, number];
+  /** The fewest samples in that window the slope is read from. */
+  tcexpMinSamples: number;
+  /** The settings the hold results depend on: writing one forgets them. */
+  resultsDependOn: ReadonlyArray<keyof VentConfig>;
 }
 
 export interface FaceSpec {

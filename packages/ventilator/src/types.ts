@@ -48,6 +48,12 @@ export interface VentConfig {
    * manual pp. 98–99, research/57 K-15; its Insp/Exp Pause key, H-18, H-19). Optional, absent from DEFAULT_CONFIG.
    */
   expHoldAt?: 'end';
+  /**
+   * A held airway carries the patient's effort: with no flow the equation of motion gives Paw = PEEP + recoil − Pmus,
+   * so an effort during a hold shows as its pressure swing (the EDP-TS's occlusions, research/57 K-15, K-19). Absent:
+   * v1.9's hold, which does not see the effort. Optional, absent from DEFAULT_CONFIG.
+   */
+  holdEffort?: boolean;
   almMVlo: number; almMVhi: number; almFlo: number; almFhi: number; almVTlo: number; almVThi: number;
   /**
    * The EDP-TS alarm limits (plan vent-skin-edp-ts.md V3, research/57 §10b), OPTIONAL: an alarm whose limit is absent is

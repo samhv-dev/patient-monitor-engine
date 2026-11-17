@@ -57,8 +57,11 @@ export interface Cockpit {
   readonly frozen: boolean;
   toggleFreeze(): void;
   hold(kind: 'insp' | 'exp'): void;
-  /** One breath at the set parameters, from expiration; `mandatory`: counted as the device's, not the patient's. */
-  manualBreath(mandatory?: boolean): void;
+  /**
+   * One breath at the set parameters, from expiration; `mandatory`: counted as the device's, not the patient's. False
+   * (nothing given) while a hold runs or waits: its breath could not flow, or would stack on the held volume.
+   */
+  manualBreath(mandatory?: boolean): boolean;
   reset(): void;
 
   /** A setting from the face's control, clamped and stepped to the face's range; returns the value stored. */
@@ -99,7 +102,7 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   const P = vs.p;
   const BUF = { p: [] as number[], f: [] as number[], v: [] as number[], t: [] as number[], ph: [] as VentPhase[], vb: [] as number[] };
   const mech = face.mechanics;
-  const rec = createRecorder(mech && { perKind: mech.breathsAveraged, tcexpWindow: mech.tcexpWindow });
+  const rec = createRecorder(mech && { perKind: mech.breathsAveraged, tcexpWindow: mech.tcexpWindow, tcexpMinSamples: mech.tcexpMinSamples });
   if (face.init) Object.assign(S, face.init);
   let frozen = false;
   const changes = new Set<(c: Change) => void>();
@@ -115,6 +118,8 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   };
   const emit = (source: ChangeSource, keys: ReadonlyArray<keyof VentConfig> = []) => {
     const all = settle(keys);
+    if (all.includes('mode')) rec.clear(true); // the breaths of each kind are the mode's (research/57 N-03, N-07, N-08)
+    holds?.settings(all);
     for (const fn of [...changes]) fn({ source, keys: all });
   };
   settle([]); // the face's starting state is settled too (VC's flow from its set Ti)
@@ -130,7 +135,12 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   const view = prof ? createAlarmView(prof) : null;
 
   let holds: Holds | null = null;
+  /** A reset or a new patient: the breaths and the hold results were the previous patient's. */
+  const forget = () => { rec.clear(); holds?.forget(); };
+  let breaths = P.breathCount;
   d.onStep = () => {
+    if (P.breathCount < breaths) forget(); // the model's physics was reset elsewhere (a link, a new patient)
+    breaths = P.breathCount;
     rec.step(vs);
     holds?.step();
     view?.step(P.t, conditions(), S); // every step, frozen or not: a freeze stops the display, not the alarms
@@ -172,11 +182,13 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     toggleFreeze() { frozen = !frozen; emit('action'); },
     hold(kind) { toggleHold(vs, kind); emit('action'); },
     manualBreath(mandatory = false) {
+      if (vs.hold || vs.pendingHold) return false;
       if (mandatory && P.phase === 'exp') startInspiration(vs, true);
       else manualBreath(vs);
       emit('action');
+      return true;
     },
-    reset() { resetPhysics(vs); clearBuf(); emit('action'); },
+    reset() { resetPhysics(vs); clearBuf(); forget(); emit('action'); },
     set(key, value, source = 'face') {
       const r = face.ranges[key];
       const v = r ? clamp(Math.round(value / r[2]) * r[2], r[0], r[1]) : value;
@@ -201,8 +213,8 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
       emit('mode', ['mode', 'modeLabel', ...(Object.keys({ ...m.patch, ...carried }) as Array<keyof VentConfig>)]);
       return true;
     },
-    preset(id) { loadPreset(vs, id); syncBase(); emit('preset'); },
-    scenario(id) { runScenario(vs, id); clearBuf(); emit('scenario'); },
+    preset(id) { loadPreset(vs, id); syncBase(); forget(); emit('preset'); },
+    scenario(id) { runScenario(vs, id); clearBuf(); forget(); emit('scenario'); },
     alarms: () => (view ? { banner: bannerText(vs), active: profiled(conditions()), signals: view.signals(P.t) } : { banner: bannerText(vs), active: profiled(ventAlarms(vs)) }),
     silence() {
       if (view && prof?.silenceS?.length) silenceAlarms(vs, view.silence(P.t));

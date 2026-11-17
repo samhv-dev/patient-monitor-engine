@@ -331,8 +331,6 @@ export type Row =
   | { kind: 'layout'; word: WordId; layout: LayoutId }
   /** A respiratory-mechanics test, started by the knob's press (research/57 E-14). */
   | { kind: 'test'; word: WordId; test: TestId }
-  /** A value the window shows, measured with no test (P0.1, research/57 K-19; plan GX14). */
-  | { kind: 'reading'; word: WordId; note: ReasonId }
   /** A Yes/No of the face (Tools → Autoscale, research/57 E-06, K-12). */
   | { kind: 'toggle'; word: WordId; toggle: 'autoscale' };
 
@@ -432,7 +430,7 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
     { kind: 'test', word: 'complRes', test: 'complRes' },
     { kind: 'test', word: 'trappedVol', test: 'trapped' },
     { kind: 'off', word: 'svc', reason: 'effort', gap: 'GX16' },
-    { kind: 'reading', word: 'p01', note: 'p01Effort' },
+    { kind: 'test', word: 'p01', test: 'p01' },
     { kind: 'off', word: 'pvFlex', reason: 'pvFlex', gap: 'GX15' },
     { kind: 'off', word: 'pimax', reason: 'effort', gap: 'GX16' },
     { kind: 'off', word: 'vdvt', reason: 'vdvt', gap: 'GX17' },
