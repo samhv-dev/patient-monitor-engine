@@ -116,12 +116,12 @@ export function doseMl(dose: { amount: number; unit: DoseUnit }, c: Pick<HostCha
 }
 
 /** The SP-500's figures for the loaded syringe size, or why there are none. */
-function syringeOf(sp: Sp500Profile, c: HostChannel | undefined): Sp500Profile['syringes'][number] | string {
+function syringeOf(sp: Sp500Profile, c: Pick<HostChannel, 'syringeMl'> | undefined): Sp500Profile['syringes'][number] | string {
   const s = c?.syringeMl != null ? sp.syringes.find((x) => x.ml === c.syringeMl) : undefined;
   return s ?? `load a syringe first: the ${deviceName(sp)}'s rates are per syringe size (${list(sp.syringes.map((x) => x.ml))} mL)`;
 }
 /** The OT-701's figures for the programmed IV set, or why there are none. */
-function setOf(ot: Ot701Profile, c: HostChannel | undefined): Ot701Profile['sets'][number] | string {
+function setOf(ot: Ot701Profile, c: Pick<HostChannel, 'set'> | undefined): Ot701Profile['sets'][number] | string {
   const s = c?.set != null ? ot.sets.find((x) => x.dropsPerMl === c.set) : undefined;
   return s ?? `program the IV set first: the ${deviceName(ot)}'s rates are per set (${list(ot.sets.map((x) => x.dropsPerMl))} drops/mL)`;
 }
@@ -272,34 +272,49 @@ export function translatePump(cmd: PumpCommand, x: PumpContext): PumpTranslated 
   }
 }
 
-/** The device range a rate must fall in (D2 item 3, D12), in the profile's own figures, or null when it does. */
-export function rateRefusal(rate: number, unit: RateUnit | 'drops/min', kind: ChannelKind, c: HostChannel | undefined, devices: PumpDevices, weightKg?: number): string | null {
-  const ch = c ?? { programmed: null, set: null, kind };
+/** A channel's mL/h range (and, on a drip channel, drops/min range) for its loaded syringe or programmed set, in the
+ * profile's own figures and words (D2 item 3, D12). */
+export interface RateRange {
+  min: number;
+  max: number;
+  step: number;
+  words: string;
+  dropsMin: { min: number; max: number; words: string } | null;
+}
+
+/** The range every rate on a channel is checked against, whoever sends it; or why the channel has none yet. */
+export function rateRange(kind: ChannelKind, c: Pick<HostChannel, 'syringeMl' | 'set'> | undefined, devices: PumpDevices): RateRange | string {
   if (kind === 'syringe') {
     const sp = devices['sp-500'];
     const s = syringeOf(sp, c);
     if (typeof s === 'string') return s;
-    const ml = rateMlH(rate, unit, ch, weightKg);
-    if (typeof ml === 'string') return ml;
-    const words = `the ${deviceName(sp)} runs ${s.rate.min}–${s.rate.max} mL/h with a ${s.ml} mL syringe, in ${sp.rateStep.step} mL/h steps`;
-    if (ml < s.rate.min - STEP_EPS || ml > s.rate.max + STEP_EPS) return `${fix(ml)} mL/h: ${words}`;
-    if (unit === 'mL/h' && !onStep(rate, sp.rateStep.step)) return `${rate} mL/h: ${words}`;
-    return null;
+    const step = sp.rateStep.step;
+    return { min: s.rate.min, max: s.rate.max, step, words: `the ${deviceName(sp)} runs ${s.rate.min}–${s.rate.max} mL/h with a ${s.ml} mL syringe, in ${step} mL/h steps`, dropsMin: null };
   }
   const ot = devices['ot-701'];
   const s = setOf(ot, c);
   if (typeof s === 'string') return s;
   // the factory range ("standard", ot-701.json factory); the narrow range waits for the manual (narrowRange gap)
   const r = s.standard;
-  if (unit === 'drops/min') {
-    if (rate < r.dropsMin.min || rate > r.dropsMin.max) return `${rate} drops/min: the ${deviceName(ot)} runs ${r.dropsMin.min}–${r.dropsMin.max} drops/min with a ${s.dropsPerMl} drops/mL set`;
-    return null; // the drops/min step is a gap until the manual (dropsStep)
+  const step = ot.rateStep.step;
+  return {
+    min: r.mlH.min, max: r.mlH.max, step, words: `the ${deviceName(ot)} runs ${r.mlH.min}–${r.mlH.max} mL/h with a ${s.dropsPerMl} drops/mL set, in ${step} mL/h steps`,
+    dropsMin: { min: r.dropsMin.min, max: r.dropsMin.max, words: `the ${deviceName(ot)} runs ${r.dropsMin.min}–${r.dropsMin.max} drops/min with a ${s.dropsPerMl} drops/mL set` },
+  };
+}
+
+/** Why a rate falls outside its channel's range (rateRange), or null when it does not. */
+export function rateRefusal(rate: number, unit: RateUnit | 'drops/min', kind: ChannelKind, c: HostChannel | undefined, devices: PumpDevices, weightKg?: number): string | null {
+  const r = rateRange(kind, c, devices);
+  if (typeof r === 'string') return r;
+  if (unit === 'drops/min' && r.dropsMin) {
+    const d = r.dropsMin;
+    return rate < d.min || rate > d.max ? `${rate} drops/min: ${d.words}` : null; // the drops/min step is a gap until the manual (dropsStep)
   }
-  const ml = rateMlH(rate, unit, ch, weightKg);
+  const ml = rateMlH(rate, unit, c ?? { programmed: null, set: null, kind }, weightKg);
   if (typeof ml === 'string') return ml;
-  const words = `the ${deviceName(ot)} runs ${r.mlH.min}–${r.mlH.max} mL/h with a ${s.dropsPerMl} drops/mL set, in ${ot.rateStep.step} mL/h steps`;
-  if (ml < r.mlH.min - STEP_EPS || ml > r.mlH.max + STEP_EPS) return `${fix(ml)} mL/h: ${words}`;
-  if (unit === 'mL/h' && !onStep(rate, ot.rateStep.step)) return `${rate} mL/h: ${words}`;
+  if (ml < r.min - STEP_EPS || ml > r.max + STEP_EPS) return `${fix(ml)} mL/h: ${r.words}`;
+  if (unit === 'mL/h' && !onStep(rate, r.step)) return `${rate} mL/h: ${r.words}`;
   return null;
 }
 
