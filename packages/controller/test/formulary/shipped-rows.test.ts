@@ -99,6 +99,11 @@ describe('N73: a reconstituted dantrolene vial holds what its label states', () 
   });
   it('every reconstituted product of the layer says what its label states after reconstitution', () => {
     const powders = Object.values(F.drugs).flatMap((e) => e.products.filter((p) => p.reconstitute).map((p) => [p.id, p.reconstitute!.final] as const));
-    expect(powders).toEqual([['dantrium-iv-20mg', { stated: false, src: 'emc-1097' }], ['agilus-120mg', { volumeMl: 22.6, src: 'emc-15912' }]]);
+    const ultiva = { perMl: 1, src: 'dailymed-ultiva' };
+    expect(powders).toEqual([
+      ['dantrium-iv-20mg', { stated: false, src: 'emc-1097' }], ['agilus-120mg', { volumeMl: 22.6, src: 'emc-15912' }],
+      ['ultiva-1mg', ultiva], ['ultiva-2mg', ultiva], ['ultiva-5mg', ultiva],
+      ['vecuronium-10mg', { volumeMl: 10, src: 'dailymed-vecuronium' }],
+    ]);
   });
 });

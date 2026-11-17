@@ -1,0 +1,57 @@
+{
+  "drugId": "norepinephrine",
+  "products": [
+    {
+      "id": "levophed-1mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 1,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-levophed"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "dailymed-levophed"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-levophed"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-levophed"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-levophed"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "dailymed-levophed"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-levophed"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

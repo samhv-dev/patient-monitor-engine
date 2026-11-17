@@ -128,6 +128,39 @@ test('L7: on the MH card a learner prepares dantrolene in water on the phone, se
   await ctx.close();
 });
 
+test('on the witnessed-VF card a learner prepares amiodarone 300 mg in 5 % dextrose on the phone and gives it; the record holds 300 mg', async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const KEY = 'bed1remote01';
+  const { code, pin } = await laptop(page, 'acls-vf-witnessed', { [KEY]: 'bed 1 remote' });
+  const { p, ctx } = await phone(browser, browserName, code, pin, KEY);
+  // two 150 mg vials (6 mL of 50 mg/mL) made up to 20 mL with the label's one diluent
+  await p.locator('.lr-search').fill('amiodarone');
+  await p.locator('.lr-pick[data-drug="amiodarone"]').click();
+  await p.locator('.lr-product[data-product="amiodarone-50mg-ml"]').click();
+  await p.locator('.lr-drawn-row[data-product="amiodarone-50mg-ml"] .stepper input').fill('6');
+  await p.locator('.lr-drawn-row[data-product="amiodarone-50mg-ml"] .stepper input').dispatchEvent('change');
+  await expect(p.locator('.lr-diluent select optgroup').first()).toHaveAttribute('label', 'Listed in the label');
+  await p.locator('.lr-diluent select').selectOption('dextrose5');
+  await p.locator('.lr-diluent .stepper input').fill('14');
+  await p.locator('.lr-diluent .stepper input').dispatchEvent('change');
+  await expect(p.locator('.lr-holds')).toHaveText('Amiodarone 15 mg/mL · 20 mL');
+  await p.locator('.lr-stage').click();
+  const item = p.locator('.lr-item').first();
+  await expect(item.locator('.lr-conc-source')).toHaveText("From the instructor’s computer", { timeout: 10_000 });
+  await expect(item.locator('.lr-conc')).toHaveText('Amiodarone 15 mg/mL · 20 mL');
+  // the label gives no preparation time: ready at once, and it says so (LQ7)
+  await expect(item.locator('.lr-state')).toHaveText('Ready · preparation time: no source');
+  const [id] = await trayIds(p);
+  await item.locator('.lr-give-btn').click();
+  await expect(item.locator('.lr-said')).toHaveText(/^Given 20 mL at \d\d:\d\d$/, { timeout: 10_000 });
+  await expect.poll(async () => (await rows(page)).filter((r) => r.ev === 'drug:amiodarone' && r.kind === 'learner').length, { timeout: 10_000 }).toBe(1);
+  const row = (await rows(page)).find((r) => r.ev === 'drug:amiodarone' && r.kind === 'learner')!;
+  // no stability row: the whole amount reaches the patient ("loss not known", r = 1)
+  expect(row).toMatchObject({ by: KEY, prepId: id, dose: { drugId: 'amiodarone', unit: 'mg', dose: 300 } });
+  await ctx.close();
+});
+
 test("L7: a second learner phone cannot see the first's tray", async ({ page, browser, browserName }) => {
   test.setTimeout(180_000);
   await classroom();

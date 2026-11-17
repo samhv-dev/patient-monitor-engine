@@ -17,6 +17,8 @@ const FOLDER = join(pkg, 'formulary');
 const PACKAGES = resolve(pkg, '..');
 /** A formulary file larger than this is not an entry (a class C entry is a few kB): an extract would be (rule 6) [ENG: test]. */
 const MAX_FILE_BYTES = 32 * 1024;
+/** The citation index grows by one short source per label, each string capped by rule 6: it is not an entry. */
+const INDEX = 'sources.json';
 
 /** Every file under `dir` (relative path), skipping node_modules and build output. */
 function walk(dir: string, root = dir): string[] {
@@ -38,7 +40,7 @@ function folderProblems(dir: string): string[] {
     const out: string[] = [];
     if (!f.endsWith('.json') && !f.endsWith('/.gitkeep') && f !== '.gitkeep') out.push(`${f}: only JSON entries live in the formulary (no PDF, no extracted text)`);
     if (head === '%PDF-') out.push(`${f}: a PDF`);
-    if (statSync(p).size > MAX_FILE_BYTES) out.push(`${f}: ${statSync(p).size} bytes, more than an entry (${MAX_FILE_BYTES})`);
+    if (f !== INDEX && statSync(p).size > MAX_FILE_BYTES) out.push(`${f}: ${statSync(p).size} bytes, more than an entry (${MAX_FILE_BYTES})`);
     return out;
   });
 }

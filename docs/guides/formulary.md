@@ -48,7 +48,8 @@ library without a file and without a line in `pending.json` fails the build.
    gap (`{ "gap": "LQ7" }`: the preparation is ready at once and the Debrief says "no source for the preparation
    time"); a strength, a reconstitution or a diluent's content may not, because the bench cannot deliver without it.
 5. The drug files and `pending.json` together are exactly the 61 injectable ids, with no id in both.
-6. Every string is at most 200 characters, and the folder holds JSON entries only, none larger than 32 kB.
+6. Every string is at most 200 characters, and the folder holds JSON entries only, none larger than 32 kB (the
+   citation index `sources.json` excepted: it grows by one short source per label).
 
 What no check can prove is that an entry says what its source says. Every entry is read against its sources by a
 second reader before its batch merges, and the batch's pull request lists each entry with the reader's "agrees" or
