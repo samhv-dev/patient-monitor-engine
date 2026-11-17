@@ -21,7 +21,7 @@
         "amount": 5,
         "unit": "mg",
         "perVial": false,
-        "src": "dailymed-bupivacaine"
+        "src": "dailymed-sensorcaine-mpf"
       },
       "prepTime": {
         "gap": "LQ7"
