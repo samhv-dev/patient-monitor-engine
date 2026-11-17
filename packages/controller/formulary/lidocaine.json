@@ -8,7 +8,7 @@
         "amount": 10,
         "unit": "mg",
         "perVial": false,
-        "src": "dailymed-lidocaine"
+        "src": "dailymed-lidocaine-ansyr"
       },
       "prepTime": {
         "gap": "LQ7"
@@ -21,7 +21,7 @@
         "amount": 20,
         "unit": "mg",
         "perVial": false,
-        "src": "dailymed-lidocaine"
+        "src": "dailymed-lidocaine-ansyr"
       },
       "prepTime": {
         "gap": "LQ7"
@@ -31,33 +31,33 @@
   "diluents": [
     {
       "id": "saline",
-      "listed": true,
-      "src": "dailymed-lidocaine"
+      "listed": false,
+      "src": "dailymed-lidocaine-ansyr"
     },
     {
       "id": "dextrose5",
       "listed": false,
-      "src": "dailymed-lidocaine"
+      "src": "dailymed-lidocaine-ansyr"
     },
     {
       "id": "water",
       "listed": false,
-      "src": "dailymed-lidocaine"
+      "src": "dailymed-lidocaine-ansyr"
     },
     {
       "id": "ringerLactate",
       "listed": false,
-      "src": "dailymed-lidocaine"
+      "src": "dailymed-lidocaine-ansyr"
     },
     {
       "id": "dextrose5Saline",
       "listed": false,
-      "src": "dailymed-lidocaine"
+      "src": "dailymed-lidocaine-ansyr"
     },
     {
       "id": "dextrose4Saline018",
       "listed": false,
-      "src": "dailymed-lidocaine"
+      "src": "dailymed-lidocaine-ansyr"
     }
   ],
   "admixtures": [],

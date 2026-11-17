@@ -335,6 +335,8 @@ transports (`src/protocol.ts`).
 | `rackRefusal` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | Why Room setup's rack `next` cannot replace the present one: |
 | `routedToChannel` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | D9: a remote's or the Drug sheet's rate for a drug that runs on exactly one channel (and no channel-less infusion), as that channel's `pump rate` (or `pump stop` at 0), checked against its device. |
 | `pumpWire` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The command a translated pump action becomes (the instructor's own `applyEvent`, through command()). |
+| `defibRefusal` | [`session/room-refusal.ts`](../../packages/controller/src/session/room-refusal.ts) | Why the defibrillator's model cannot change now, from its last status, or null: |
+| `depthRefusal` | [`session/room-refusal.ts`](../../packages/controller/src/session/room-refusal.ts) | Why the depth device cannot be switched off or replaced now, naming each window reading it, or null: |
 | `backoffDelay` | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Delay before reconnect attempt `attempt` (0-based): |
 | `createBroadcastChannelTransport` | [`transport/broadcast-channel.ts`](../../packages/controller/src/transport/broadcast-channel.ts) | — |
 | `createInProcessHub` | [`transport/in-process.ts`](../../packages/controller/src/transport/in-process.ts) | — |
@@ -396,6 +398,7 @@ transports (`src/protocol.ts`).
 | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The host end of every transport (brief §3.7, R7): it owns the engine. |
 | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Plan learner-action-remote.md L4 (§4 D3, D7, D8; §7.1; LQ3, LQ4, LQ7–LQ9): the host's table of the preparations its learner remotes staged, and the translation of a remote's `prep deliver`, `prep infuse` and `infusion se |
 | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | Plan pump-rack-tci.md C2 (§4 D2, D4, D7, D9, D12; §7, §8): the host's side of the pump tablet. |
+| [`session/room-refusal.ts`](../../packages/controller/src/session/room-refusal.ts) | Room setup's settings that would remove or replace a device in use: the host's words for each refusal. |
 | [`session/sign-in-book.ts`](../../packages/controller/src/session/sign-in-book.ts) | The host's book of signed-in devices: a device admitted on a PIN is handed a one-time ticket, and the next time it says hello (a new socket, or this page reloaded) it proves the ticket instead of the PIN and is handed th |
 | [`session/sign-in-credential.ts`](../../packages/controller/src/session/sign-in-credential.ts) | What a signing-in device proves in its hello: the PIN typed into its form until the host hands it a ticket (sign-in-book.ts), then that ticket alone. |
 | [`session/viewer-sync.ts`](../../packages/controller/src/session/viewer-sync.ts) | Viewer role (brief §3.7): a second monitor that runs its OWN engine and never receives samples. |
@@ -418,6 +421,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`formulary/label-diluents.test.ts`](../../packages/controller/test/formulary/label-diluents.test.ts) | 0 | 0 |
 | [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
 | [`formulary/shipped-rows.test.ts`](../../packages/controller/test/formulary/shipped-rows.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
@@ -505,6 +509,7 @@ None recorded.
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 0 | 0 |
 | [`session/host-pump-relay.test.ts`](../../packages/controller/test/session/host-pump-relay.test.ts) | 0 | 0 |
 | [`session/host-pump.test.ts`](../../packages/controller/test/session/host-pump.test.ts) | 0 | 0 |
+| [`session/host-room-refusal.test.ts`](../../packages/controller/test/session/host-room-refusal.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |
 | [`session/host-sign-in-order.test.ts`](../../packages/controller/test/session/host-sign-in-order.test.ts) | 0 | 0 |
@@ -514,6 +519,7 @@ None recorded.
 | [`session/host-time.test.ts`](../../packages/controller/test/session/host-time.test.ts) | 0 | 0 |
 | [`session/host-ventilator.test.ts`](../../packages/controller/test/session/host-ventilator.test.ts) | 0 | 0 |
 | [`session/learner-baseline.test.ts`](../../packages/controller/test/session/learner-baseline.test.ts) | 0 | 0 |
+| [`session/paused-at-start.test.ts`](../../packages/controller/test/session/paused-at-start.test.ts) | 0 | 0 |
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |
 | [`session/sign-in-book.test.ts`](../../packages/controller/test/session/sign-in-book.test.ts) | 0 | 0 |
 | [`session/timeline-reset.test.ts`](../../packages/controller/test/session/timeline-reset.test.ts) | 0 | 0 |
