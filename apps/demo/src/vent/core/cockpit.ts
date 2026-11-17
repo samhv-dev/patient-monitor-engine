@@ -5,10 +5,11 @@
 // Freeze freezes the DISPLAY only (the buffers stop; the physics keeps running, as on a real ventilator).
 import {
   bannerText, clamp, DT, loadPreset, lungBaseOf, manualBreath, modeName, monitorMatchedFlow, resetPhysics, runScenario,
-  setMode, silenceAlarms, toggleHold, ventAlarms,
+  setMode, silenceAlarms, startInspiration, toggleHold, ventAlarms,
   type Measured, type PresetId, type VentAlarm, type VentConfig, type VentDriver, type VentPhase, type VentPhysics, type VentState,
 } from '@pme/ventilator';
 import { createAlarmView, type AlarmEvent, type AlarmSignals } from './alarms-view.ts';
+import { createHolds, type Holds } from './holds.ts';
 import { createRecorder } from './record.ts';
 import type { BreathRecord, Change, ChangeSource, FaceSpec, NumKey } from './types.ts';
 
@@ -48,11 +49,19 @@ export interface Cockpit {
   readonly buf: SampleBuffers;
   /** V1: the last complete breath (live while the display is frozen), or null before the first. */
   record(): BreathRecord | null;
+  /** The last complete breaths of one kind (spontaneous or not), as many as the face's mechanics average; oldest first. */
+  breaths(spont: boolean): readonly BreathRecord[];
+  /** The held Insp/Exp Pause key and the tests' occlusions (holds.ts); null for a face without mechanics. */
+  readonly holds: Holds | null;
   clearBuf(): void;
   readonly frozen: boolean;
   toggleFreeze(): void;
   hold(kind: 'insp' | 'exp'): void;
-  manualBreath(): void;
+  /**
+   * One breath at the set parameters, from expiration; `mandatory`: counted as the device's, not the patient's. False
+   * (nothing given) while a hold runs or waits: its breath could not flow, or would stack on the held volume.
+   */
+  manualBreath(mandatory?: boolean): boolean;
   reset(): void;
 
   /** A setting from the face's control, clamped and stepped to the face's range; returns the value stored. */
@@ -92,7 +101,8 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   const S = vs.cfg;
   const P = vs.p;
   const BUF = { p: [] as number[], f: [] as number[], v: [] as number[], t: [] as number[], ph: [] as VentPhase[], vb: [] as number[] };
-  const rec = createRecorder();
+  const mech = face.mechanics;
+  const rec = createRecorder(mech && { perKind: mech.breathsAveraged, tcexpWindow: mech.tcexpWindow, tcexpMinSamples: mech.tcexpMinSamples });
   if (face.init) Object.assign(S, face.init);
   let frozen = false;
   const changes = new Set<(c: Change) => void>();
@@ -108,6 +118,8 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   };
   const emit = (source: ChangeSource, keys: ReadonlyArray<keyof VentConfig> = []) => {
     const all = settle(keys);
+    if (all.includes('mode')) rec.clear(true); // the breaths of each kind are the mode's (research/57 N-03, N-07, N-08)
+    holds?.settings(all);
     for (const fn of [...changes]) fn({ source, keys: all });
   };
   settle([]); // the face's starting state is settled too (VC's flow from its set Ti)
@@ -122,8 +134,15 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   const conditions = () => ventAlarms(vs, { peepEnd: rec.last()?.peepEnd });
   const view = prof ? createAlarmView(prof) : null;
 
+  let holds: Holds | null = null;
+  /** A reset or a new patient: the breaths and the hold results were the previous patient's. */
+  const forget = () => { rec.clear(); holds?.forget(); };
+  let breaths = P.breathCount;
   d.onStep = () => {
+    if (P.breathCount < breaths) forget(); // the model's physics was reset elsewhere (a link, a new patient)
+    breaths = P.breathCount;
     rec.step(vs);
+    holds?.step();
     view?.step(P.t, conditions(), S); // every step, frozen or not: a freeze stops the display, not the alarms
     if (frozen) return;
     BUF.p.push(P.dispPaw); BUF.f.push(P.dispFlowLpm); BUF.v.push(P.V); BUF.t.push(P.t); BUF.ph.push(P.phase); BUF.vb.push(Math.max(0, P.V - P.breathVstart));
@@ -156,12 +175,20 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     lungLinked: () => d.core.lung.last !== null,
     buf: BUF,
     record: () => rec.last(),
+    breaths: (s) => rec.breaths(s),
+    get holds() { return holds; },
     clearBuf,
     get frozen() { return frozen; },
     toggleFreeze() { frozen = !frozen; emit('action'); },
     hold(kind) { toggleHold(vs, kind); emit('action'); },
-    manualBreath() { manualBreath(vs); emit('action'); },
-    reset() { resetPhysics(vs); clearBuf(); emit('action'); },
+    manualBreath(mandatory = false) {
+      if (vs.hold || vs.pendingHold) return false;
+      if (mandatory && P.phase === 'exp') startInspiration(vs, true);
+      else manualBreath(vs);
+      emit('action');
+      return true;
+    },
+    reset() { resetPhysics(vs); clearBuf(); forget(); emit('action'); },
     set(key, value, source = 'face') {
       const r = face.ranges[key];
       const v = r ? clamp(Math.round(value / r[2]) * r[2], r[0], r[1]) : value;
@@ -186,8 +213,8 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
       emit('mode', ['mode', 'modeLabel', ...(Object.keys({ ...m.patch, ...carried }) as Array<keyof VentConfig>)]);
       return true;
     },
-    preset(id) { loadPreset(vs, id); syncBase(); emit('preset'); },
-    scenario(id) { runScenario(vs, id); clearBuf(); emit('scenario'); },
+    preset(id) { loadPreset(vs, id); syncBase(); forget(); emit('preset'); },
+    scenario(id) { runScenario(vs, id); clearBuf(); forget(); emit('scenario'); },
     alarms: () => (view ? { banner: bannerText(vs), active: profiled(conditions()), signals: view.signals(P.t) } : { banner: bannerText(vs), active: profiled(ventAlarms(vs)) }),
     silence() {
       if (view && prof?.silenceS?.length) silenceAlarms(vs, view.silence(P.t));
@@ -216,5 +243,6 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
       steps.clear();
     },
   };
+  holds = mech ? createHolds(vs, rec, mech, () => emit('action')) : null;
   return c;
 }

@@ -3,7 +3,7 @@
 // the device's starting settings (§6, §10b), the invariants the core restores after any change (settle), and the alarm
 // profile (the device's names, priorities, delays and latching, §10a and §10c; the core's alarm view applies it, V3).
 import type { VentConfig } from '@pme/ventilator';
-import type { AlarmProfile, FaceSpec, ModeEntry } from '../../core/types.ts';
+import type { AlarmProfile, FaceSpec, MechanicsSpec, ModeEntry } from '../../core/types.ts';
 import { backupOn, faceMode, SETTINGS, type FaceMode } from './controls.ts';
 export { ROWS } from './controls.ts';
 import { DATA, L, num, S, word, type Leaf } from './data.ts';
@@ -46,7 +46,10 @@ export const INIT: Partial<VentConfig> = {
   mode: 'VC', modeLabel: LABELS.VCV, backupMode: 'VC', pmaxAction: 'cycle',
   vt: v(S.vt.init) * 1000, prvcTarget: v(S.vt.init) * 1000, itime: v(S.ti.init), rate: v(S.f.init), peep: v(S.peep.init),
   trigType: 'flow', flowTrig: v(S.sensFlow.init), presTrig: v(S.sensPres.init), fio2: v(S.oxygen.init),
-  flowPattern: 'ramp0', pause: v(S.pause.init), pc: v(S.pcv.init), ps: v(S.psv.init), cycleOff: v(S.expSens.init),
+  flowPattern: 'ramp0', pause: v(S.pause.init),
+  // the expiratory hold at the end of expiration, and the patient's effort seen on a held airway (research/57 K-15,
+  // H-19, K-19)
+  expHoldAt: 'end', holdEffort: true, pc: v(S.pcv.init), ps: v(S.psv.init), cycleOff: v(S.expSens.init),
   riseTime: v(S.riseTime.init),
   pmax: v(L.pmax.init), almVThi: v(L.vtHi.init) * 1000, almVTlo: v(L.vtLo.init) * 1000, almMVhi: v(L.mvHi.init), almMVlo: v(L.mvLo.init),
   almFhi: v(L.fHi.init), apneaTime: v(S.apnea.init), sweepSec: v(DATA.layout.sweepS),
@@ -101,6 +104,17 @@ export const ALARM_PROFILE: AlarmProfile = {
 };
 export const alarmText = (id: string): string | null => alarms[id]?.text.v ?? null;
 
+const M = DATA.mechanics;
+/** The holds and the averages (research/57 H-18, H-20, N-07 to N-10). */
+export const MECHANICS: MechanicsSpec = {
+  holdMaxS: { insp: num(M.holdInspMaxS), exp: num(M.holdExpMaxS) },
+  holdModes: (M.holdModes as Leaf<MechanicsSpec['holdModes']>).v,
+  breathsAveraged: num(M.breathsAveraged),
+  tcexpWindow: (M.tcexpWindow as Leaf<[number, number]>).v,
+  tcexpMinSamples: num(M.tcexpMinSamples),
+  resultsDependOn: (M.resultsDependOn as Leaf<MechanicsSpec['resultsDependOn']>).v,
+};
+
 export const EDP_SPEC: FaceSpec = {
   id: 'edp-ts',
   label: word('faceName'),
@@ -110,4 +124,5 @@ export const EDP_SPEC: FaceSpec = {
   alarmProfile: ALARM_PROFILE,
   init: INIT,
   settle,
+  mechanics: MECHANICS,
 };

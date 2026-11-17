@@ -8,13 +8,18 @@
 // as its description; the drawer's switch overlays a mark).
 import { setText } from '../../../app/keep.ts';
 import { el } from '../../dom.ts';
-import { CONTROLS, type Ctl, type WindowId } from './controls.ts';
+import { CONTROLS, scaleCtl, type Ctl, type WindowId } from './controls.ts';
 import { DATA, LAYOUT, num, reason, word, type Leaf, type ReasonId, type WordId } from './data.ts';
 import { picto, type PictoId } from './pictograms.ts';
-import type { LampState, LimitView, TagView, View } from './view.ts';
+import type { Q } from './screen.ts';
+import type { GraphicsView, LampState, LimitView, TagView, View } from './view.ts';
+
+/** The keys that act while held, not on a click (research/57 H-12, H-19). */
+const HELD = new Set(['under:inspExpPause', 'under:lock']);
 
 type Box = [number, number, number, number];
 const G = DATA.layout.grid;
+const minHit = (G.minHit as Leaf<number>).v;
 const gv = <T>(l: unknown): T => (l as Leaf<T>).v;
 const W = (id: WordId) => word(id);
 const ctl = (id: string): Ctl => CONTROLS.find((x) => x.id === id) as Ctl;
@@ -24,6 +29,9 @@ export interface DeviceHandlers {
   press(id: string): void;
   touch(win: WindowId, item: number): void;
   explain(r: ReasonId): void;
+  /** A held key pressed down, and released (Insp/Exp Pause, the padlock: research/57 H-12, H-19). */
+  down(id: string): void;
+  up(id: string): void;
 }
 export interface Device {
   /** The drawn device (housing and screen), devW × devH design px before face.ts scales it. */
@@ -33,8 +41,9 @@ export interface Device {
   /** The reasons as descriptions for assistive technology (outside the device: the caller puts it in the page). */
   reasons: HTMLElement;
   paint(v: View): void;
-  lanes: Array<{ cv: HTMLCanvasElement; lo: number; hi: number; key: 'p' | 'v' | 'f' }>;
-  loops: Array<{ cv: HTMLCanvasElement; x: 'p' | 'v'; y: 'v' | 'f' }>;
+  /** The curves and loops of the screen now painted, with their axes (rebuilt when the screen or a scale changes). */
+  lanes: Array<{ cv: HTMLCanvasElement; lo: number; hi: number; key: Q }>;
+  loops: Array<{ cv: HTMLCanvasElement; x: Q; y: Q; xr: [number, number]; yr: [number, number] }>;
 }
 
 export function createDevice(h: DeviceHandlers): Device {
@@ -84,7 +93,7 @@ export function createDevice(h: DeviceHandlers): Device {
   // ---- the alarm-limit tags (R-11, R-12, L-17; P-09, P-23) ----
   const tagY = gv<number>(G.tagY), tagH = gv<number>(G.tagH);
   type TagEls = { box: HTMLElement; hi?: HTMLElement; lo?: HTMLElement };
-  /** A drawn tag at `box`; its one or two limits are buttons whose hit box is at least 26 design px high. */
+  /** A drawn tag at `box`; its one or two limits are buttons whose hit box is at least minHit design px high. */
   const tagAt = (box: Box, t: TagView, name: string, cls = '') => {
     const d = place(el('div', { class: `edp-tag ${cls}`.trim() }, picto('step', t.side)), box);
     scr.append(d);
@@ -94,7 +103,7 @@ export function createDevice(h: DeviceHandlers): Device {
       const two = t.hi && t.lo;
       const [bx, by, bw, bh] = box;
       const tv = el('span', { class: 'tv' });
-      const hit: Box = two ? (which === 'hi' ? [bx, by - 14, bw, bh / 2 + 14] : [bx, by + bh / 2, bw, bh / 2 + 14]) : [bx, by - Math.max(0, (26 - bh) / 2), bw, Math.max(26, bh)];
+      const hit: Box = two ? (which === 'hi' ? [bx, by - 14, bw, bh / 2 + 14] : [bx, by + bh / 2, bw, bh / 2 + 14]) : [bx, by - Math.max(0, (minHit - bh) / 2), bw, Math.max(minHit, bh)];
       const b = place(button('edp-limit', lv.ctl, tv), hit);
       // the value sits on its line of the drawn tag: high on the first, low on the second (one value: the first)
       // a left-column key (Pressure Limits): the value large, above its symbol (high) or below it (low), as photographed
@@ -137,8 +146,13 @@ export function createDevice(h: DeviceHandlers): Device {
   }
   const leftTagY = (n: string) => leftRows.find(([, w]) => w === n)![0];
 
-  // ---- the three curves and the two loops (R-26 to R-31; P-11, P-12, P-26, P-27) ----
-  const scaleX = gv<number>(G.scaleX), scaleW = gv<number>(G.scaleW), laneX = gv<number>(G.laneX), laneW = gv<number>(G.laneW), laneH = gv<number>(G.laneH), timeH = gv<number>(G.timeH);
+  // ---- the curves and loops of the chosen screen (R-26 to R-31; P-11, P-12, P-26, P-27; K-10, K-11) ----
+  // rebuilt when the screen or a scale changes; a scale strip is the touch key of its quantity's axis numbers (K-11)
+  const curves = el('div', { class: 'edp-curves' });
+  scr.append(curves);
+  const laneScaleW = gv<number>(G.scaleW), loopScaleW = num(DATA.graphics.scaleW), timeH = gv<number>(G.timeH);
+  const TITLE: Record<Q, WordId> = { p: 'paw', v: 'vtL', f: 'flowL' };
+  const DEC: Record<Q, number> = { p: 0, v: 1, f: 0 };
   const labelsOn = (host: HTMLElement, labels: number[], lo: number, hi: number, axis: 'y' | 'x', decimals: number) => {
     for (const v of labels) {
       const f = (axis === 'y' ? hi - v : v - lo) / (hi - lo);
@@ -147,51 +161,70 @@ export function createDevice(h: DeviceHandlers): Device {
       host.append(s);
     }
   };
-  const pawLo = num(LAYOUT.pawMin), pawHi = num(LAYOUT.pawMax), vtLo = num(LAYOUT.vtMin), vtHi = num(LAYOUT.vtMax), fLo = num(LAYOUT.flowMin), fHi = num(LAYOUT.flowMax);
-  const LANES: Array<['p' | 'v' | 'f', WordId, number, number, number[], number]> = [
-    ['p', 'paw', pawLo, pawHi, gv<number[]>(LAYOUT.pawLabels), 0], ['v', 'vtL', vtLo, vtHi, gv<number[]>(G.vtLabels), 1], ['f', 'flowL', fLo, fHi, gv<number[]>(G.flowLabels), 0]];
-  const lanes = LANES.map(([key, title, lo, hi, labels, d], i) => {
-    const y = gv<number[]>(G.laneY)[i]!;
-    const sc = place(el('div', { class: 'edp-scale' }), [scaleX, y, scaleW, laneH]);
-    labelsOn(sc, labels, lo, hi, 'y', d);
-    const cv = el('canvas') as HTMLCanvasElement;
-    const panel = place(el('div', { class: 'edp-panel' }, cv, el('span', { class: 'lt' }, W(title)), el('span', { class: 's' }, W('secs'))), [laneX, y, laneW, laneH]);
-    const ts = place(el('div', { class: 'edp-time' }), [scaleX, y + laneH, laneX - scaleX + laneW, timeH]);
-    const tl2 = el('div', { class: 'tl' });
-    place(tl2, [laneX - scaleX, 0, laneW, timeH]);
-    labelsOn(tl2, gv<number[]>(G.timeLabels), 0, num(LAYOUT.sweepS), 'x', 0);
-    ts.append(tl2);
-    scr.append(sc, panel, ts);
-    return { cv, lo, hi, key };
-  });
-  const loopScaleX = gv<number>(G.loopScaleX), loopX = gv<number>(G.loopX), loopW = gv<number>(G.loopW);
-  const LOOPS: Array<['p' | 'v', 'v' | 'f', WordId, WordId, number[], number, number, number, number[], number, number, number]> = [
-    ['p', 'v', 'vtL', 'paw', gv<number[]>(G.vtLabels), vtLo, vtHi, 1, gv<number[]>(G.loopPLabels), pawLo, pawHi, 0],
-    ['v', 'f', 'flowL', 'vtL', gv<number[]>(G.flowLabels), fLo, fHi, 0, gv<number[]>(G.loopVLabels), vtLo, vtHi, 1]];
-  const loops = LOOPS.map(([xk, yk, ytitle, xtitle, ylab, ylo, yhi, yd, xlab, xlo, xhi, xd], i) => {
-    const y = gv<number[]>(G.loopY)[i]!, lh = gv<number[]>(G.loopH)[i]!;
-    const sc = place(el('div', { class: 'edp-scale' }), [loopScaleX, y, loopX - loopScaleX, lh]);
-    labelsOn(sc, ylab, ylo, yhi, 'y', yd);
-    const cv = el('canvas') as HTMLCanvasElement;
-    // the axis names as photographed: the y name right of the zero axis at the top, the x name at the right on the zero line
-    const zx = ((0 - xlo) / (xhi - xlo)) * loopW, zy = ((yhi - 0) / (yhi - ylo)) * lh;
-    const yt = el('span', { class: 'lt' }, W(ytitle)); yt.style.left = `${zx + 8}px`;
-    const xt = el('span', { class: 'lx' }, W(xtitle)); xt.style.top = `${zy + 2}px`;
-    const panel = place(el('div', { class: 'edp-panel loop' }, cv, yt, xt), [loopX, y, loopW, lh]);
-    const ts = place(el('div', { class: 'edp-time' }), [loopScaleX, y + lh, loopX - loopScaleX + loopW, timeH]);
-    const tl2 = place(el('div', { class: 'tl' }), [loopX - loopScaleX, 0, loopW, timeH]);
-    labelsOn(tl2, xlab, xlo, xhi, 'x', xd);
-    ts.append(tl2);
-    scr.append(sc, panel, ts);
-    return { cv, x: xk, y: yk };
-  });
+  const lanes: Device['lanes'] = [];
+  const loops: Device['loops'] = [];
+  let dataRows: HTMLElement | null = null;
+  let curvesKey = '';
+  const scaleKeys: HTMLElement[] = [];
+  const strip = (q: Q, cls: string, box: Box) => {
+    const b = place(button(cls, scaleCtl(q)), box);
+    b.setAttribute('aria-label', W(TITLE[q]));
+    b.dataset.q = q;
+    scaleKeys.push(b);
+    return b;
+  };
+  const buildCurves = (g: GraphicsView) => {
+    curves.replaceChildren();
+    lanes.length = loops.length = scaleKeys.length = 0;
+    dataRows = null;
+    const A = g.axes;
+    for (const pn of g.panels) {
+      const [x, y, w, h] = pn.box;
+      if (pn.kind === 'lane') {
+        const a = A[pn.key];
+        const sc = strip(pn.key, 'edp-scale', [x - laneScaleW, y, laneScaleW, h]);
+        labelsOn(sc, a.labels, a.lo, a.hi, 'y', DEC[pn.key]);
+        const cv = el('canvas') as HTMLCanvasElement;
+        const panel = place(el('div', { class: 'edp-panel' }, cv, el('span', { class: 'lt' }, W(TITLE[pn.key])), el('span', { class: 's' }, W('secs'))), [x, y, w, h]);
+        const ts = place(el('div', { class: 'edp-time' }), [x - laneScaleW, y + h, laneScaleW + w, timeH]);
+        const tl = place(el('div', { class: 'tl' }), [laneScaleW, 0, w, timeH]);
+        labelsOn(tl, gv<number[]>(G.timeLabels), 0, num(LAYOUT.sweepS), 'x', 0);
+        ts.append(tl);
+        curves.append(sc, panel, ts);
+        lanes.push({ cv, lo: a.lo, hi: a.hi, key: pn.key });
+      } else if (pn.kind === 'loop') {
+        const ax = A[pn.x], ay = A[pn.y];
+        const sc = strip(pn.y, 'edp-scale', [x - loopScaleW, y, loopScaleW, h]);
+        labelsOn(sc, ay.labels, ay.lo, ay.hi, 'y', DEC[pn.y]);
+        const cv = el('canvas') as HTMLCanvasElement;
+        // the axis names as photographed: the y name right of the zero axis at the top, the x name at the right on the zero line
+        const zx = ((0 - ax.lo) / (ax.hi - ax.lo)) * w, zy = ((ay.hi - 0) / (ay.hi - ay.lo)) * h;
+        const yt = el('span', { class: 'lt' }, W(TITLE[pn.y])); yt.style.left = `${zx + 8}px`;
+        const xt = el('span', { class: 'lx' }, W(TITLE[pn.x])); xt.style.top = `${zy + 2}px`;
+        const panel = place(el('div', { class: 'edp-panel loop' }, cv, yt, xt, el('span', { class: 'ref' }, g.refAt)), [x, y, w, h]);
+        const ts = place(el('div', { class: 'edp-time' }), [x - loopScaleW, y + h, loopScaleW + w, timeH]);
+        const tl = place(el('div', { class: 'tl' }), [loopScaleW, 0, w, timeH]);
+        labelsOn(tl, [...ax.labels].reverse(), ax.lo, ax.hi, 'x', DEC[pn.x]);
+        ts.append(tl);
+        // the x axis's numbers: a touch key over the drawn strip, as high as a finger needs (the strip is 12 px)
+        const hit = Math.max(timeH, minHit);
+        const xk = strip(pn.x, 'edp-axis-hit', [x, y + h + timeH / 2 - hit / 2, w, hit]);
+        xk.dataset.strip = 'x';
+        curves.append(sc, panel, ts, xk);
+        loops.push({ cv, x: pn.x, y: pn.y, xr: [ax.lo, ax.hi], yr: [ay.lo, ay.hi] });
+      } else {
+        dataRows = place(el('div', { class: 'edp-data' }), [x, y, w, h]);
+        curves.append(dataRows);
+      }
+    }
+  };
 
   // ---- the pictogram column (R-33; P-07, P-28) ----
   const RIGHT: Array<[string, PictoId]> = [['right:graphics', 'graphics'], ['right:freeze', 'freeze'], ['right:respMech', 'respMech'], ['right:saveLoop', 'saveLoop'], ['right:nebulizer', 'nebulizer'], ['right:help', 'help'], ['right:standby', 'standby']];
   const rkeys = RIGHT.map(([id, p], i) => {
     const x = ctl(id);
     const b = place(button('edp-rkey', id, picto(p)), [gv<number>(G.rkeyX), gv<number>(G.rkeyY0) + i * gv<number>(G.rkeyPitch), gv<number>(G.rkeyW), gv<number>(G.rkeyH)]);
-    if (x.kind === 'unavailable' && x.word) b.setAttribute('aria-label', W(x.word));
+    if ((x.kind === 'unavailable' || x.kind === 'action') && x.word) b.setAttribute('aria-label', W(x.word));
     scr.append(b);
     return b;
   });
@@ -237,11 +270,28 @@ export function createDevice(h: DeviceHandlers): Device {
   const sk = gv<Array<[number, number, number, number, string]>>(G.sideKeys)[1]!;
   dev.append(legend('silence', [sk[0] - 10, gv<number>(G.silenceTextY), sk[2] + 20, 14], 'c'));
   let ctrlKey: HTMLElement | null = null;
+  const underKeys: HTMLElement[] = [];
+  /** A key that acts while held: down on the pointer or Space/Enter, up on their release (or the pointer lost). */
+  const holdable = (b: HTMLElement, id: string) => {
+    b.onclick = null;
+    let isDown = false;
+    const down = () => { if (!isDown) { isDown = true; h.down(id); } };
+    const up = () => { if (isDown) { isDown = false; h.up(id); } };
+    b.addEventListener('pointerdown', (e) => { b.setPointerCapture?.(e.pointerId); down(); });
+    b.addEventListener('pointerup', up);
+    b.addEventListener('pointercancel', up);
+    b.addEventListener('lostpointercapture', up);
+    b.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) down(); } });
+    b.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
+    b.addEventListener('blur', up);
+  };
   for (const [x, y, w, hh, id] of gv<Array<[number, number, number, number, string]>>(G.underKeys)) {
     const x2 = ctl(id);
     const inner = id === 'under:lock' ? picto('padlock') : el('span', { class: 'kw' }, x2.kind !== 'setting' && x2.kind !== 'limit' && x2.word ? W(x2.word) : '');
     const b = place(button('edp-hkey', id, el('span', { class: 'cap' }, inner)), [x - 6, y - 6, w + 12, hh + 12]);
-    if (id === 'under:lock') b.setAttribute('aria-label', reason('lock'));
+    if (id === 'under:lock') b.setAttribute('aria-label', W('screenLock'));
+    if (HELD.has(id)) holdable(b, id);
+    underKeys.push(b);
     if (id === 'under:ctrl') ctrlKey = b;
     dev.append(b);
   }
@@ -300,9 +350,18 @@ export function createDevice(h: DeviceHandlers): Device {
       (win.firstChild as HTMLElement).append(...(first ?? []).flatMap((t, i) => (i ? [' ', el('span', {}, t)] : [el('span', {}, t)])));
       for (const ln of rest) win.append(el('p', {}, ...ln));
     }
-    const y0 = gv<number>(G.winEntryY0), eh = gv<number>(G.winEntryH), ep = gv<number>(G.winEntryPitch), inset = gv<number>(G.winEntryInset);
+    if (w.page) win.append(el('span', { class: 'pg' }, w.page)); // the page number at the top right (N-02)
+    if (w.text) win.append(el('p', { class: 'help' }, w.text));
+    // Patient's Data's rows are read, not chosen: a compact pitch, no knob stop
+    const read = w.page !== undefined;
+    const y0 = gv<number>(G.winEntryY0), eh = gv<number>(read ? G.dataEntryH : G.winEntryH), ep = gv<number>(read ? G.dataEntryPitch : G.winEntryPitch), inset = gv<number>(G.winEntryInset);
     w.entries.forEach((e, i) => {
       const at: Box = [inset, y0 + i * ep, box[2] - 2 * inset, eh];
+      if (read) {
+        const r = place(el('div', { class: 'edp-entry data' }, el('span', { class: 'lbl' }, e.label), el('span', { class: 'val' }, e.value ?? '')), at);
+        if (e.unsim) describe(r, e.unsim);
+        return void win.append(r);
+      }
       if (e.cells) {
         const r = place(el('div', { class: 'edp-entry cells' }, el('span', { class: 'lbl' }, e.label)), at);
         for (const c of e.cells as Array<LimitView & { item: number; focus: boolean }>) {
@@ -320,6 +379,15 @@ export function createDevice(h: DeviceHandlers): Device {
     });
     if (w.footer) win.append(place(el('div', { class: 'ft' }, w.footer), [0, gv<number>(G.winFootY), box[2], 16]));
     winHost.replaceChildren(win);
+  };
+
+  /** Patient's Data beside the curves (the "Curves and Patient's Data" screen, K-10): its first page's rows. */
+  let dataKey = '';
+  const paintData = (host: HTMLElement, rows: NonNullable<View['data']>) => {
+    const k = JSON.stringify(rows);
+    if (k === dataKey && host.childElementCount) return;
+    dataKey = k;
+    host.replaceChildren(...rows.map((r) => el('div', { class: 'dr' }, el('span', { class: 'lbl' }, r.label), el('span', { class: 'val' }, r.value))));
   };
 
   /** A lamp lit (VF's look, as photographed: P-15, C-12, C-13) or unlit (P-58); flashing fast or slow (H-06) for a period
@@ -363,7 +431,16 @@ export function createDevice(h: DeviceHandlers): Device {
       else if (t.dim) { undescribe(k.b); k.b.setAttribute('aria-disabled', 'true'); }
       else undescribe(k.b);
     });
-    for (const b of rkeys) b.classList.toggle('dim', v.rightDim.includes(b.dataset.ctl!));
+    for (const b of rkeys) { b.classList.toggle('dim', v.rightDim.includes(b.dataset.ctl!)); b.classList.toggle('lit', v.lit.includes(b.dataset.ctl!)); }
+    for (const b of underKeys) if (b !== ctrlKey) b.classList.toggle('lit', v.lit.includes(b.dataset.ctl!));
+    const ck = JSON.stringify([v.graphics.panels, v.graphics.axes, v.graphics.refAt]);
+    if (ck !== curvesKey) { curvesKey = ck; buildCurves(v.graphics); }
+    for (const b of scaleKeys) {
+      const on = v.graphics.axes[b.dataset.q as Q].sel;
+      b.classList.toggle('sel', on);
+      if (b.dataset.strip === 'x') b.previousElementSibling?.classList.toggle('sel', on); // the drawn strip under it
+    }
+    if (dataRows) paintData(dataRows, v.data ?? []);
     paintWindow(v);
     alarmBox.hidden = !v.alarm;
     if (v.alarm) { alarmBox.className = `edp-alarm ${v.alarm.priority}`; setText(alarmBox, v.alarm.text); }

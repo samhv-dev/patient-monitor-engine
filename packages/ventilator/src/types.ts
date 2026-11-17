@@ -42,6 +42,18 @@ export interface VentConfig {
    * `pmax`, the expiratory valve opening to PEEP (manual p. 95, research/57 A-32; plan GA2).
    */
   backupMode?: BackupMode; pmaxAction?: 'cap' | 'cycle';
+  /**
+   * When an armed expiratory hold closes the valves. Absent: 0.3 s into expiration. 'end': at the end of
+   * expiration, on the step the next breath would start (the EDP-TS auto-PEEP manoeuvre, an end-expiratory occlusion:
+   * manual pp. 98–99, research/57 K-15; its Insp/Exp Pause key, H-18, H-19). Optional, absent from DEFAULT_CONFIG.
+   */
+  expHoldAt?: 'end';
+  /**
+   * A held airway carries the patient's effort: with no flow the equation of motion gives Paw = PEEP + recoil − Pmus,
+   * so an effort during a hold shows as its pressure swing (the EDP-TS's occlusions, research/57 K-15, K-19). Absent:
+   * the held airway does not see the effort. Optional, absent from DEFAULT_CONFIG.
+   */
+  holdEffort?: boolean;
   almMVlo: number; almMVhi: number; almFlo: number; almFhi: number; almVTlo: number; almVThi: number;
   /**
    * The EDP-TS alarm limits (plan vent-skin-edp-ts.md V3, research/57 §10b), OPTIONAL: an alarm whose limit is absent is
@@ -98,6 +110,11 @@ export interface VentState {
    * patient's last breath while the backup ventilates (manual p. 49: the time after the last spontaneous breath).
    */
   backupBreath?: 'VC' | 'PC';
+  /**
+   * An expiratory hold at the end of expiration (`expHoldAt: 'end'`) holds back the breath that was about to start:
+   * this is that breath, given at once when the hold is released (the occlusion ends where inspiration begins).
+   */
+  heldBreath?: { mandatory: boolean; backup?: 'VC' | 'PC' };
 }
 
 export type VentAlarmId =

@@ -38,6 +38,7 @@ export function resetPhysics(vs: VentState): void {
   vs.pendingHold = null;
   vs.lastBreathT = vs.p.t; // Stage V
   if (vs.backupBreath !== undefined) delete vs.backupBreath; // plan V2
+  if (vs.heldBreath !== undefined) delete vs.heldBreath;
 }
 
 export function setMode(vs: VentState, m: VentMode): void {
@@ -87,7 +88,8 @@ const vcTi = (c: VentConfig) => c.vt / 1000 / Math.max(0.05, c.vcFlow / 60);
 /** Plan V2: the device's apnoea backup is armed (PSV with a backup kind set; research/57 O-18, T-37). */
 const backupArmed = (c: VentConfig) => c.mode === 'PSV' && (c.backupMode ?? 'off') !== 'off';
 /** The kind of the breath in progress: a backup breath runs as its stamped kind, every other breath as the set mode. */
-const breathKind = (vs: VentState): VentMode => (vs.backupBreath !== undefined && backupArmed(vs.cfg) ? vs.backupBreath : vs.cfg.mode);
+/** The kind of the breath in progress (the controller it runs): a backup breath its stamped kind, any other the set mode. */
+export const breathKind = (vs: VentState): VentMode => (vs.backupBreath !== undefined && backupArmed(vs.cfg) ? vs.backupBreath : vs.cfg.mode);
 
 function updateSpontaneous(vs: VentState): void {
   const c = vs.cfg;
@@ -289,10 +291,11 @@ function advancePhase(vs: VentState, pmaxHit: boolean, stepPeak: number): void {
       md = true;
       bk = c.backupMode as 'VC' | 'PC';
     }
-    if (vs.pendingHold === 'exp' && p.phaseT > 0.3) {
+    if (vs.pendingHold === 'exp' && (c.expHoldAt === 'end' ? tg : p.phaseT > 0.3)) {
       vs.hold = 'exp';
       vs.pendingHold = null;
       p.measured.autoPEEP = Math.max(0, recoilPressure(c, p.V));
+      if (c.expHoldAt === 'end') vs.heldBreath = { mandatory: md, ...(bk ? { backup: bk } : {}) };
       return;
     }
     if (tg) startInspiration(vs, md, bk);
@@ -351,7 +354,7 @@ export function stepVent(vs: VentState): void {
       p.Paw = 0;
     } else if (vs.hold) {
       Q = 0;
-      p.Paw = peep + recoil;
+      p.Paw = peep + recoil - (c.holdEffort ? p.Pmus : 0);
     } else if (p.phase === 'insp' && kind === 'VC') {
       Q = vs.flowTarget;
       p.Paw = peep + recoil + Q * R_in - p.Pmus;
@@ -402,8 +405,26 @@ export function advanceVent(vs: VentState, t: number, onStep?: (vs: VentState) =
 // --- front-panel actions (v1.9 rail buttons) -------------------------------------------------------------
 /** Insp/Exp hold: arm on the next cycle point; pressing again releases. */
 export function toggleHold(vs: VentState, kind: 'insp' | 'exp'): void {
-  if (vs.hold) vs.hold = null;
+  if (vs.hold) releaseHold(vs);
   else vs.pendingHold = kind;
+}
+/**
+ * Ends a hold, or the arming of one, at once (a held key released, or held to the device's longest hold); an
+ * end-expiratory hold gives the breath it held back.
+ */
+export function releaseHold(vs: VentState): void {
+  vs.hold = null;
+  vs.pendingHold = null;
+  const b = vs.heldBreath;
+  if (b === undefined) return;
+  delete vs.heldBreath;
+  startInspiration(vs, b.mandatory, b.backup);
+}
+/** Ends a hold, or the arming of one, and gives no breath: the breath an end-expiratory hold held back is dropped. */
+export function cancelHold(vs: VentState): void {
+  vs.hold = null;
+  vs.pendingHold = null;
+  if (vs.heldBreath !== undefined) delete vs.heldBreath;
 }
 /** Manual breath: a patient-type (non-mandatory) breath, only from expiration. */
 export function manualBreath(vs: VentState): void {

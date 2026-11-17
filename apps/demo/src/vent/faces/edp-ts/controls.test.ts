@@ -211,7 +211,8 @@ describe('test (5): the frame carries the device\'s name', () => {
 describe('piece V2: the Backup ventilation window and the apnoea backup on the face (research/57 T-37 to T-41, A-26, A-45)', () => {
   const openBackup = (k: Knob) => {
     k.press('side:menu');
-    k.push(); // Backup ventilation, the menu's first row that can be used (P-03)
+    k.turn(1); // Backup ventilation, the menu's second row (P-03)
+    k.push();
   };
 
   it('the window edits a draft: Accept applies it (T-41), Esc returns to the previous values', () => {

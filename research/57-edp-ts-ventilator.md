@@ -450,6 +450,9 @@ Table 13-8 ("*" in the step column means Ctrl gives larger or smaller steps, row
 | K-24 | Trend parameters | p. 109 lists 12: Peak pressure, PEEP, Respiratory rate, Peak flow, Tidal Volume, Minute Volume, CTexp, ETCO2, VTCO2, Dynamic compliance, O2 concentration, Mean pressure; p. 110 says each row is one of 9 | M p. 109; M p. 110 | M |
 | K-25 | Intrahospital transport | ventilation with oxygen only, from a cylinder; Menu → Intra hospital → Yes; off when air is reconnected or with No; a low-priority alarm | M p. 62 | M |
 | K-26 | Transport: alarms switched off | p. 62: the low oxygen pressure alarm and the no-power alarm; p. 97: Low air pressure and Loss of power | M p. 62; M p. 97 | M |
+| K-27 | Inspiratory and expiratory resistance, defined | the difference in pressure needed to make the inspiratory and the expiratory flow; the resistance to the flow through the patient's airway, the breathing tubes and the ventilator; the compliance and the resistance are measured by the one test | M p. 99 | M |
+| K-28 | Compliance and resistance, the figure | Figure 10-2: the test run on volume-controlled breaths whose inspiratory flow is rectangular (constant); the pauses marked by two arrows, an end-expiratory and an end-inspiratory one; its window lists Cdyn, Cst, Ri, Re | F p. 101 | F |
+| K-29 | Compliance and resistance: the flow and the modes | not in the manual: it names no flow waveform and no mode for the test, and does not say whether the device changes the breath's flow for it | M pp. 99–101 (searched) | GAP |
 
 ## 12. Specifications the face or the model may need
 

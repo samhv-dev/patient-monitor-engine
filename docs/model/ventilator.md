@@ -56,7 +56,8 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | [`mechanics.ts:2`](../../packages/ventilator/src/mechanics.ts#L2) | for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil |
 | [`mechanics.ts:54`](../../packages/ventilator/src/mechanics.ts#L54) | the alveolar pressure (PEEP) by E = pleural − 5.44 − PEEP; the lung is then collapsed at end-expiration and every |
 | [`catalogue.ts:4`](../../packages/ventilator/src/pathology/catalogue.ts#L4) | plateau = PEEP + autoPEEP + VT/C, driving pressure = VT/C, peak − plateau = R_insp × 1 L/s; `signature` bands are the |
-| [`vent.ts:394`](../../packages/ventilator/src/vent.ts#L394) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
+| [`types.ts:52`](../../packages/ventilator/src/types.ts#L52) | A held airway carries the patient's effort: with no flow the equation of motion gives Paw = PEEP + recoil − Pmus, |
+| [`vent.ts:397`](../../packages/ventilator/src/vent.ts#L397) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
 
 ## State
 
@@ -75,6 +76,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `lastBreathT` | `number` | Stage V addition: last time a breath started (apnoea alarm). |
 | `silenceUntil` | `number` | — |
 | `backupBreath` | `'VC' \| 'PC'` | Plan V2: the breath in progress (or the last one) is a backup breath of this kind, stamped when it starts; absent otherwise. Backup breaths do not move `lastBreathT`, so the apnoea clock (and the `apnea` alarm) runs from the patient's last breath while the backup ventilates (manual p. 49: the time after the last spontaneous breath). |
+| `heldBreath` | `{ mandatory: boolean; backup?: 'VC' \| 'PC' }` | An expiratory hold at the end of expiration (`expHoldAt: 'end'`) holds back the breath that was about to start: this is that breath, given at once when the hold is released (the occlusion ends where inspiration begins). |
 
 ## Parameters
 
@@ -175,6 +177,8 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `stepVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | One 5 ms step (v1.9 `stepPhysics`). |
 | `advanceVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Step until the vent clock reaches sim time `t` (s). |
 | `toggleHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | --- front-panel actions (v1.9 rail buttons) ------------------------------------------------------------- Insp/Exp hold: |
+| `releaseHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Ends a hold, or the arming of one, at once (a held key released, or held to the device's longest hold); |
+| `cancelHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Ends a hold, or the arming of one, and gives no breath: |
 | `manualBreath` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Manual breath: |
 | `setCircuit` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | — |
 
@@ -221,6 +225,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | [`catalogue-md.test.ts`](../../packages/ventilator/test/catalogue-md.test.ts) | 0 | 0 |
 | [`determinism.test.ts`](../../packages/ventilator/test/determinism.test.ts) | 0 | 0 |
 | [`effort-parity.test.ts`](../../packages/ventilator/test/effort-parity.test.ts) | 0 | 0 |
+| [`exp-hold-end.test.ts`](../../packages/ventilator/test/exp-hold-end.test.ts) | 0 | 0 |
 | [`fast-forward-run.test.ts`](../../packages/ventilator/test/fast-forward-run.test.ts) | 0 | 0 |
 | [`fidelity.test.ts`](../../packages/ventilator/test/fidelity.test.ts) | 0 | 0 |
 | [`fx1-frame-port.test.ts`](../../packages/ventilator/test/fx1-frame-port.test.ts) | 0 | 0 |

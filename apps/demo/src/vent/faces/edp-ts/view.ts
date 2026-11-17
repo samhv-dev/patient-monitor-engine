@@ -3,12 +3,16 @@
 // photographed states (a mode the model does not run yet, a selected tile, an open window) without the model and
 // without a single line of behaviour in the product. Every word here is a face.json word or reason, or a number.
 import { modeName, type VentConfig } from '@pme/ventilator';
-import type { Cockpit } from '../../core/cockpit.ts';
+import type { Cockpit, SampleBuffers } from '../../core/cockpit.ts';
 import { CONTROLS, faceMode, formatIe, LIMITS, ROWS, SETTINGS, settingState, WINDOWS, type Ctl, type Row, type WindowId } from './controls.ts';
-import { dec, L, LAYOUT, num, word, type Leaf, type ReasonId, type WordId } from './data.ts';
+import { DATA, dec, filled, L, LAYOUT, num, word, type Leaf, type ReasonId, type WordId } from './data.ts';
+export { filled } from './data.ts';
 import type { Knob } from './knob.ts';
+import type { TestId } from './manoeuvres.ts';
 import { alarmText } from './modes.ts';
+import { dataPage, PAGES, type DataRow } from './patient-data.ts';
 import type { PictoId } from './pictograms.ts';
+import { autoscaled, labelsOf, LAYOUTS, rangeOf, refLoop, type Panel, type Q, type SavedLoop, type Scale, type Screen } from './screen.ts';
 
 type Cfg = Readonly<VentConfig>;
 export type Side = 'hi' | 'lo' | 'both';
@@ -23,7 +27,15 @@ export interface LimitView { ctl: string; text: string; sel: boolean; unsim: Rea
 export interface TileView { ctl: string; value: string | { picto: PictoId; o?: string }; unit: string; label: string; sel: boolean; dim: boolean; unsim: ReasonId | null }
 /** A window's entry (research/57 P-19): its words, a value at its right or a "+", whether the knob is on it. */
 export interface EntryView { label: string; value?: string; more?: boolean; focus: boolean; unsim: ReasonId | null; item: number; cells?: LimitView[]; valueSel?: boolean }
-export interface WindowView { id: WindowId | 'confirm'; title: string; entries: EntryView[]; footer: string | null; lines?: string[][] }
+export interface WindowView {
+  id: WindowId | 'confirm'; title: string; entries: EntryView[]; footer: string | null; lines?: string[][];
+  /** A help text (the Help window); the page number at the top right (Patient's Data, research/57 N-02). */
+  text?: string; page?: string;
+}
+/** A quantity's axis: its range, its seven labels, and whether its scale is selected (research/57 K-11). */
+export interface AxisView { lo: number; hi: number; labels: number[]; sel: boolean }
+/** The curves' screen (research/57 K-10): its panels, each quantity's axis, the reference loop and when it was saved. */
+export interface GraphicsView { panels: Panel[]; axes: Record<Q, AxisView>; ref: SavedLoop | null; refAt: string }
 
 export interface View {
   category: string; mode: string; backup: string; date: string; time: string;
@@ -44,6 +56,11 @@ export interface View {
   /** The knob's ring: lit while a selection or a window is active (research/57 P-06). */
   ring: boolean;
   ctrl: boolean;
+  graphics: GraphicsView;
+  /** Patient's Data beside the curves (the "Curves and Patient's Data" screen), or null. */
+  data: Array<{ label: string; value: string }> | null;
+  /** The keys drawn lit: Freeze while frozen, Insp/Exp Pause while it holds, "?" while it waits, the padlock while locked. */
+  lit: string[];
 }
 
 const W = (id: WordId) => word(id);
@@ -76,7 +93,9 @@ function windowView(c: Cockpit, knob: Knob, id: WindowId, focus: number): Window
     if (r.kind === 'mode-off') return void entries.push({ ...base, unsim: r.reason });
     if (r.kind === 'off') return void entries.push({ ...base, unsim: r.reason, ...(r.value ? { value: W(r.value) } : {}), ...(r.more ? { more: true } : {}) });
     if (r.kind === 'open') return void entries.push({ ...base, more: true });
-    if (r.kind === 'mode' || r.kind === 'accept') return void entries.push(base);
+    if (r.kind === 'mode' || r.kind === 'accept' || r.kind === 'layout') return void entries.push(base);
+    if (r.kind === 'test') return void entries.push({ ...base, value: testValue(knob, r.test) });
+    if (r.kind === 'toggle') return void entries.push({ ...base, value: W(knob.screen.autoscale ? 'yes' : 'no') });
     if (r.kind === 'limits') {
       if (r.off) return void entries.push({ ...base, unsim: r.off.reason });
       const cells = r.cells.map((cell) => {
@@ -96,7 +115,58 @@ function windowView(c: Cockpit, knob: Knob, id: WindowId, focus: number): Window
     const u = s.unit(wc);
     entries.push({ ...base, value: `${f === null ? W('off') : f}${u ? ` ${W(u)}` : ''}`, valueSel: sel, unsim: typeof st === 'object' ? st.reason : null });
   });
-  return { id, title: W(def.title), entries, footer: def.footer ? W('footer') : null };
+  const v: WindowView = { id, title: W(def.title), entries, footer: def.footer ? W('footer') : null };
+  if (def.pages && knob.tests) {
+    v.entries = dataPage(c, knob.tests, knob.page()).map((d, i) => ({ label: W(d.word), value: dataText(d), focus: false, item: -1 - i, unsim: d.unsim }));
+    v.page = `${knob.page() + 1}/${PAGES.length}`;
+  }
+  if (def.text) v.text = helpText(knob.helpFor());
+  return v;
+}
+
+const withUnit = (v: string, u: WordId | null) => (u && v !== dashes ? `${v} ${W(u)}` : v);
+const dataText = (d: DataRow) => withUnit(d.value, d.unit);
+const fxd = (v: number, d: keyof typeof DATA.layout.dec) => (Number.isFinite(v) ? v.toFixed(dec(d)) : dashes);
+/** A test's result at the right of its row (research/57 E-14, K-15 to K-17, K-19), "---" before it has run. */
+function testValue(knob: Knob, t: TestId): string {
+  const m = knob.tests;
+  if (!m) return dashes;
+  if (t === 'autoPeep') return withUnit(fxd(m.values().autoPeep, 'pdAutoPeep'), 'uCmH2O');
+  if (t === 'complRes') return withUnit(fxd(m.values().cst, 'pdC'), 'uMlCm');
+  if (t === 'trapped') return withUnit(fxd(m.trappedMl(), 'pdVol'), 'uMl');
+  return withUnit(fxd(m.p01(), 'pdP01'), 'uCmH2O');
+}
+/** A control's help, in the project's words (face.json help; plan GX8). */
+export const helpText = (id: string | null): string => (id ? filled((DATA.help as Record<string, Leaf<string> | undefined>)[id]?.v ?? '') : '');
+
+/**
+ * The curves' screen: the screen chosen, the scales (autoscaled to the buffers when autoscale is on, or as set by hand,
+ * or the one the knob is turning), the reference loop.
+ */
+export function graphicsOf(sc: Screen, buf?: SampleBuffers, sel: { q: Q; scale: Scale } | null = null): GraphicsView {
+  const set = sc.autoscale && buf ? autoscaled(buf, num(LAYOUT.sweepS)) : sc.scale;
+  const axes = {} as Record<Q, AxisView>;
+  for (const q of ['p', 'v', 'f'] as const) {
+    const s = sel?.q === q ? sel.scale : set[q];
+    const [lo, hi] = rangeOf(q, s);
+    axes[q] = { lo, hi, labels: labelsOf(q, s), sel: sel?.q === q };
+  }
+  const ref = refLoop(sc);
+  return { panels: LAYOUTS[sc.layout]!.panels, axes, ref, refAt: ref ? `${fmtDate(ref.at)} ${fmtTime(ref.at)}` : '' };
+}
+
+/**
+ * Plateau, with a pause or a hold only (research/57 R-21): the pressure held now, else the last inspiratory hold's
+ * through the rest of its breath [inferred: the manual names when it is measured, not how long it stays], else VCV's
+ * pause plateau.
+ */
+function plateauText(c: Cockpit, fx: (v: number | undefined, n: number) => string): string {
+  const h = c.holds;
+  const st = h?.state();
+  if (st?.kind === 'insp' && st.since !== null) return fx(c.p.Paw, dec('mPlateau'));
+  const last = h?.last('insp');
+  if (last && last.t >= c.p.t - c.p.breathT) return fx(last.paw, dec('mPlateau')); // breathT: since this breath started, frozen while held
+  return c.cfg.mode === 'VC' && c.cfg.pause > 0 ? fx(c.measured().PLAT, dec('mPlateau')) : '';
 }
 
 /** The top-left block's backup (research/57 R-05, R-06): the kind armed in PSV/CPAP, otherwise OFF. */
@@ -159,8 +229,7 @@ export function viewOf(c: Cockpit, knob: Knob, now: Date = new Date()): View {
     lung: c.p.lastPtT !== null && c.p.t - c.p.lastPtT < num(LAYOUT.lungIconS),
     left: {
       peak: fx(m.PIP, dec('mPeak')), trach: '',
-      // Plateau: with a pause or a hold only (research/57 R-21)
-      plateau: cfg.mode === 'VC' && cfg.pause > 0 ? fx(m.PLAT, dec('mPlateau')) : '',
+      plateau: plateauText(c, fx),
       mean: fx(m.Pmean, dec('mMean')), peep: fx(r?.peepEnd, dec('mPeep')),
     },
     tiles,
@@ -171,8 +240,14 @@ export function viewOf(c: Cockpit, knob: Knob, now: Date = new Date()): View {
     // Vent Inop never lights: the model has no technical fault (plan GA14)
     lamps,
     silencedS: s?.silencedS ?? 0,
-    ring: ws.length > 0 || conf !== null || knob.pending.key !== null,
+    ring: ws.length > 0 || conf !== null || knob.pending.key !== null || knob.scaleSel() !== null,
     ctrl: knob.ctrl(),
+    graphics: graphicsOf(knob.screen, c.buf, knob.scaleSel()),
+    data: knob.screen.layout === 'curvesData' && knob.tests ? dataPage(c, knob.tests, 0).map((d) => ({ label: W(d.word), value: dataText(d) })) : null,
+    lit: [
+      ...(c.frozen ? ['right:freeze'] : []), ...(c.holds?.state()?.by === 'key' ? ['under:inspExpPause'] : []),
+      ...(knob.helpArmed() ? ['right:help'] : []), ...(knob.locked() ? ['under:lock'] : []),
+    ],
   };
 }
 

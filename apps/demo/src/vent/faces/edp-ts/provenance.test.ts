@@ -5,10 +5,16 @@
 // a `measured` one only colour samples (meas), an `eng` one says why, and a `sim` one (the simulator's own words) cites
 // the plan. The face's stylesheet holds no colour of its own (face.ts sets them from face.json), and every gap and reason
 // the control table names exists.
+import type { VentMode } from '@pme/ventilator';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CONTROLS, WINDOWS } from './controls.ts';
+import { helpId } from './knob.ts';
+import { labelsOf } from './screen.ts';
+import { MODE_WORD, reason, type ReasonId } from './data.ts';
+import { MODES } from './modes.ts';
+import { filled } from './view.ts';
 import FACE from './face.json';
 
 const root = resolve(import.meta.dirname, '../../../../../..');
@@ -85,6 +91,78 @@ describe('the control table and the windows name real reasons and gap rows', () 
         if (r.kind === 'limits' && r.off) { expect(reasons[r.off.reason]).toBeDefined(); expect(GAPS.has(r.off.gap)).toBe(true); }
       }
     }
+  });
+});
+
+describe('the help texts (research/57 K-14, H-21; plan GX8)', () => {
+  const help = FACE.help as Record<string, unknown>;
+  it('every control of the table and every alarm the face shows has its help, in the simulator\'s words', () => {
+    for (const c of CONTROLS) expect(help[helpId(c.id)], c.id).toBeDefined();
+    for (const id of Object.keys(FACE.alarms)) expect(help[`alarm:${id}`], id).toBeDefined();
+    for (const [k, l] of Object.entries(help)) expect((l as { p: string }).p, k).toBe('sim');
+  });
+  it('a help text writes none of the face\'s numbers: it names them by their path in face.json, filled when shown', () => {
+    for (const [k, l] of Object.entries(help)) {
+      const t = (l as { v: string }).v;
+      expect(t.replace(/\{[\w.]+\}/g, '').replace(/\b(?:P0\.1|O2|CO2|ETCO2|VD\/VT)\b/g, ''), k).not.toMatch(/\d/);
+      expect(() => filled(t), k).not.toThrow();
+    }
+    expect(filled((FACE.help['under:inspExpPause'] as { v: string }).v)).toContain(`at most ${FACE.mechanics.holdInspMaxS.v} s`);
+  });
+  it('the reasons that name a mode list or a number read it from face.json: the pause key\'s, each test\'s, P0.1\'s', () => {
+    const R = FACE.reasons as Record<string, { v: string }>;
+    const T = FACE.mechanics.testModes as Record<string, { v: string[] }>;
+    const cases: Array<[string, string, string[]]> = [['pauseModes', 'mechanics.holdModes', FACE.mechanics.holdModes.v],
+      ...Object.keys(T).map((id) => [`modes:${id}`, `mechanics.testModes.${id}`, T[id]!.v] as [string, string, string[]])];
+    for (const [id, path, modes] of cases) {
+      expect(R[id]!.v, id).toContain(`{${path}}`);
+      expect(R[id]!.v.replace(/\{[\w.]+\}/g, ''), id).not.toMatch(/\b(?:VCV|PCV|PRVC|PSV)\b/);
+      for (const m of modes) expect(reason(id as ReasonId), id).toContain(FACE.words[MODE_WORD[m as VentMode]!].v);
+    }
+    expect(R.p01Effort!.v).toContain('{mechanics.p01WindowS}');
+  });
+  it('the device\'s name of each model mode is the one its mode entry carries', () => {
+    for (const [name, e] of Object.entries(MODES)) expect(MODE_WORD[e.mode], name).toBe(name);
+  });
+});
+
+describe('the tests\' modes (research/57 K-15 to K-17, K-19)', () => {
+  it('each test\'s modes cite the row that lists them, or are a marked choice with its reason', () => {
+    const T = FACE.mechanics.testModes as Record<string, { v: string[]; p: string; src: string; why?: string }>;
+    expect(T.autoPeep).toMatchObject({ p: 'documented', src: 'research/57 K-15' });
+    expect(T.trapped).toMatchObject({ p: 'documented', src: 'research/57 K-17' });
+    for (const id of ['complRes', 'p01']) { expect(T[id]!.p, id).toBe('eng'); expect(T[id]!.why, id).toBeTruthy(); }
+    // the rows cited as documented list exactly these modes
+    for (const [row, l] of [['K-15', T.autoPeep!], ['K-17', T.trapped!]] as const) {
+      const line = note.split('\n').find((x) => x.startsWith(`| ${row} |`))!;
+      expect(line, row).toMatch(/VCV, PCV, PRVC/);
+      expect(l.v).toEqual(['VC', 'PC', 'PRVC']);
+    }
+  });
+});
+
+describe('the screens of the Graphics window and the scales (research/57 K-10 to K-13)', () => {
+  it('every panel of every screen lies in the curves\' area of the photographed screen, between the left column and the pictogram column', () => {
+    const G = FACE.layout.grid as Record<string, { v: unknown }>;
+    const left = (G.left!.v as number[])[2]!, right = G.rkeyX!.v as number, top = (G.win!.v as number[])[1]!, bottom = G.tileY!.v as number;
+    for (const [id, l] of Object.entries(FACE.graphics.layouts)) {
+      for (const pn of (l as { v: { panels: Array<{ kind: string; box: number[] }> } }).v.panels) {
+        const [x, y, w, h] = pn.box as [number, number, number, number];
+        // a curve or a loop carries its scale strip at its left and its time or axis strip under it
+        const axes = pn.kind !== 'data';
+        const sx = axes ? (FACE.layout.grid.scaleW.v as number) : 0, th = axes ? (G.timeH!.v as number) : 0;
+        expect(x - sx >= left && x + w <= right && y >= top && y + h + th <= bottom, `${id} ${pn.box}`).toBe(true);
+      }
+    }
+  });
+  it('the starting scales are the photographed ones, and their labels the photographed labels (R-27 to R-29, P-11, P-12)', () => {
+    const S = FACE.graphics.scales, I = FACE.graphics.scaleInit.v;
+    expect(S.paw.v[I.paw]).toEqual([-7, 35]);
+    expect(S.vol.v[I.vol]).toEqual([-0.2, 1.0]);
+    expect(S.flow.v[I.flow]).toEqual([-60, 60]);
+    expect(labelsOf('p', { idx: I.paw, shift: 0 })).toEqual(FACE.layout.pawLabels.v);
+    expect(labelsOf('v', { idx: I.vol, shift: 0 })).toEqual([...(FACE.layout.grid.loopVLabels.v as number[])].reverse());
+    expect(labelsOf('f', { idx: I.flow, shift: 0 })).toEqual(FACE.layout.grid.flowLabels.v);
   });
 });
 
