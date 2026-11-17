@@ -101,6 +101,18 @@ describe("R8d: the ventilator device's sign-in over the relay", () => {
     expect(heard).toEqual([{ v: 1, kind: 'clock', ventTick: 20 }]);
   });
 
+  it("keeps the room's face from the host's grant; a grant that names none keeps the last; before any, none", () => {
+    const d = start();
+    const r = links[0] as Relay;
+    r.setStatus('open');
+    expect(d.face).toBeNull();
+    const stamp = createStamper(CODE, 'host-h1');
+    r.deliver(stamp({ kind: 'grant', to: host(r).from(), granted: true, face: 'edp-ts' }));
+    expect([d.state, d.face]).toEqual(['granted', 'edp-ts']);
+    host(r).grant(true);
+    expect(d.face).toBe('edp-ts');
+  });
+
   it('a wrong PIN, a take-over, a PIN change or too many tries end the link with the reason', () => {
     for (const [granted, reason, state] of [[false, INSTRUCTOR_REASONS.wrongPin, 'denied'], [true, INSTRUCTOR_REASONS.takenOver, 'revoked'], [true, INSTRUCTOR_REASONS.pinChanged, 'revoked']] as const) {
       const d = start();

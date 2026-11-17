@@ -62,6 +62,8 @@ const CONCENTRATION_UNITS: Readonly<Record<PumpConcentration['unit'], true>> = {
 export const PIN_RE = /^[0-9]{4,8}$/;
 /** A sign-in ticket (sign-in-book.ts): the book's id, a dot, 16 random bytes in base64url. */
 export const TICKET_RE = /^[A-Za-z0-9_-]{8}\.[A-Za-z0-9_-]{22}$/;
+/** A ventilator face id in a grant. */
+const FACE_RE = /^[a-z0-9-]{1,32}$/;
 
 /** A device's own key on a viewer's hello: 8 to 16 lower-case ASCII letters or digits (plan room-and-instruments.md §4 D1). */
 export const DEVICE_RE = /^[a-z0-9]{8,16}$/;
@@ -315,6 +317,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
     case 'grant':
       if (typeof m.to !== 'string' || typeof m.granted !== 'boolean' || (m.reason !== undefined && typeof m.reason !== 'string')) return null;
       if (m.ticket !== undefined && (m.granted !== true || typeof m.ticket !== 'string' || !TICKET_RE.test(m.ticket))) return null;
+      if (m.face !== undefined && (m.granted !== true || typeof m.face !== 'string' || !FACE_RE.test(m.face))) return null;
       break;
     case 'event':
       if (!Array.isArray(m.body) || !m.body.every((e) => e !== null && typeof e === 'object' && typeof (e as { type?: unknown }).type === 'string')) return null;
