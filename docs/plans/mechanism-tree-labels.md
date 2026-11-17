@@ -2,9 +2,9 @@
 
 The mechanism tree page (`#/explore/mechanisms`, plan [mechanism-tree.md](mechanism-tree.md) pieces T1 and T1b) names
 every node by the clinical label below, never by its engine key (the key stays in the node's tooltip). The table holds
-every node the coupling registry names (`packages/engine-core/src/couplings/`): **153 nodes**, of which
+every node the coupling registry names (`packages/engine-core/src/couplings/`): **154 nodes**, of which
 **31** carry the clinical glossary's label unchanged (`apps/demo/src/app/glossary.ts`, From = glossary) and
-**122** were written for the tree (From = tree).
+**123** were written for the tree (From = tree).
 
 Every row is a draft until the clinical owner reads it: `reviewed` is `false` on every row, and the page shows the line
 "labels under the owner's review" while any label it draws is unreviewed. To record a review, set `reviewed` (or
@@ -130,6 +130,7 @@ A unit "×" is a factor (1 = no change); "fraction" and "0–1" are dimensionles
 | `endo.core.hormones.surge` | Stimulus surge | 0–1 | Sympathetic surge from noxious stimulation (laryngoscopy, intubation, incision). | glossary | false |
 | `endo.core.hormones.symp` | Sympathetic stress activity | 0–1 | Sympathetic stress activity from hypercapnia and the stress response. | tree | false |
 | `organs.brain.cbfRel` | Cerebral blood flow (relative to rest) | × | Brain blood flow relative to normal: autoregulated, pressure-passive outside its limits. | tree | false |
+| `organs.brain.energy.brainstem` | Brainstem perfusion state | — | How long the brainstem has been without blood flow, and how far breathing has reopened since the flow returned. | tree | false |
 | `organs.brain.energy.cortex.metabolic` | Cortical energy failure | 0–1 | The share of the cortex's function lost because its oxygen delivery is below what it needs (0 normal, 1 none left). | tree | false |
 | `organs.brain.cpp` | Cerebral perfusion pressure | mmHg | Mean arterial pressure at head height minus the intracranial (or cerebral venous) pressure. | tree | false |
 | `organs.brain.cush.drive` | Cushing response drive | 0–1 | The brainstem's pressor drive when cerebral perfusion pressure stays low. | tree | false |

@@ -15,7 +15,7 @@ describe('the respiratory gas step reads the blood view', () => {
       const l1 = createL1State();
       const rs = createRespState(undefined, l1, 1);
       const blood: BloodView = { odc: ODC14, coFactor: 1, co2LoadMlMin: 0 };
-      const ctx: RespCtx = { l1, hemo: createHemoState(undefined, l1, 75), rhythm: ps.rhythm, hr: ps.hr, ...(after ? { blood } : {}) };
+      const ctx: RespCtx = { l1, hemo: createHemoState(undefined, l1, 75), rhythm: ps.rhythm, hr: ps.hr, brainstem: {}, ...(after ? { blood } : {}) };
       advanceResp(rs, ctx, Math.round(62.5 * 5), () => {});
       Object.assign(blood, after);
       advanceResp(rs, ctx, Math.round(62.5 * 65), () => {});

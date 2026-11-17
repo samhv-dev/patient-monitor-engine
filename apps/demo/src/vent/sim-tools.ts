@@ -1,7 +1,8 @@
 // The simulator's own tools (plan vent-skin-edp-ts.md §4.3): the patient drawer (presets, the lung, the patient's
 // effort) and the asynchrony examples. They are the instructor's tools, not the device's, the same under every face.
-// V0 lifts them out of the Hamilton front end unchanged, on the drawer markup vent-hamilton.html already has; the
-// "Simulator" handle outside the device's bezel comes with the second face (V1).
+// V0 lifts them out of the Hamilton front end unchanged; the
+// "Simulator" handle outside the device's bezel comes with the second face (V1). A ventilator linked to a room mounts
+// none of it: the patient there is the room's.
 import { PRESETS, SCENARIOS, type PresetId } from '@pme/ventilator';
 import type { Cockpit } from './core/cockpit.ts';
 import type { BoolKey, NumKey } from './core/types.ts';
@@ -16,7 +17,19 @@ export interface SimTools {
   addSection?(render: () => HTMLElement): () => void;
 }
 
+/** The drawer, appended to the page by the tools: a page without them (a ventilator in a room) has none of it. */
+function drawerMarkup(): HTMLElement {
+  const drawer = el('div', { id: 'drawer' },
+    el('div', { class: 'dh' }, el('h2', {}, 'Patient & Scenarios'), el('button', { class: 'closebtn', id: 'closeDrawer' }, 'Close')),
+    el('div', { class: 'dcols', id: 'dcols' }),
+    el('div', { class: 'async' }, el('div', { class: 't' }, 'Asynchrony examples'), el('div', { class: 'btns', id: 'asyncBtns' })));
+  drawer.toggleAttribute('inert', true); // closed, it is off screen: out of the Tab order and the accessibility tree
+  document.body.append(drawer);
+  return drawer;
+}
+
 export function mountSimTools(c: Cockpit): SimTools {
+  const drawer = drawerMarkup();
   const sections = new Set<() => HTMLElement>();
   const S = c.cfg;
   const num = S as unknown as Record<NumKey, number>;
@@ -88,8 +101,14 @@ export function mountSimTools(c: Cockpit): SimTools {
       w.append(b);
     });
   }
-  const open = () => { buildDrawer(); $('drawer').classList.add('on'); $('scrim').classList.add('on'); };
-  const close = () => { $('drawer').classList.remove('on'); $('scrim').classList.remove('on'); };
+  let opener: Element | null = null;
+  const open = () => { opener = document.activeElement; buildDrawer(); drawer.classList.add('on'); drawer.toggleAttribute('inert', false); $('scrim').classList.add('on'); };
+  const close = () => {
+    if (drawer.contains(document.activeElement)) { (document.activeElement as HTMLElement).blur(); (opener as HTMLElement | null)?.focus?.(); }
+    drawer.classList.remove('on');
+    drawer.toggleAttribute('inert', true);
+    $('scrim').classList.remove('on');
+  };
   $('closeDrawer').onclick = close;
   const off = c.onChange((ch) => {
     if (ch.source === 'remote' || ch.source === 'mode' || ch.source === 'preset' || ch.source === 'scenario') buildDrawer();

@@ -3,7 +3,7 @@
 export * from './types.ts';
 export type * from './types-v2.ts';
 export { validateScenario, formatAjvError, eventRefusal, ENGINE_CHECKED_KINDS, SCENARIO_SCHEMA, SCENARIO_SCHEMA_V2, type ValidationResult, type ValidateOptions } from './validate.ts';
-export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry, type VitalHold } from './runner.ts';
+export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry, type RhythmHold, type VitalHold } from './runner.ts';
 export { PhaseRunner, type PhaseRunnerEffect, type PhaseRunLogEntry, type PhaseHold } from './phase-runner.ts';
 export { concentrationVar, ruleConcentrations, CONCENTRATION_VAR, type ConcentrationVar, type ConcentrationInfo } from './concentration.ts';
 export { namedRules, holds, walkLeaves, windowOf, slopePerMin, spreadPct, type NamedRule, type RuleCtx } from './rules.ts';
