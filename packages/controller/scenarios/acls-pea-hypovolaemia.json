@@ -19,7 +19,8 @@
       "onEnter": [ { "type": "setTarget", "variable": "hr", "value": 142, "ramp": { "durationS": 120, "curve": "linear" } } ],
       "transitions": [
         { "id": "fluidEarly", "label": "Early volume", "to": "stabilised", "when": { "event": { "kind": "fluid", "minVolumeMl": 1000 } } },
-        { "id": "losePulse", "label": "Lose pulse now", "to": "pea", "when": { "any": [ { "afterS": 150 }, { "manual": { "label": "Lose pulse now" } } ] } }
+        { "id": "losePulse", "label": "Lose pulse now", "to": "pea", "when": { "any": [ { "all": [ { "afterS": 150 }, { "rhythm": { "id": "sinusTachy" } } ] }, { "manual": { "label": "Lose pulse now" } } ] },
+          "src": "PLACEHOLDER: the case's pacing; no source read gives 150 s from ward tachycardia to the loss of pulse." }
       ]
     },
     {
@@ -27,7 +28,8 @@
       "onEnter": [ { "type": "setRhythm", "rhythm": "sinusTachy", "opts": { "rateBpm": 128, "pulseless": true }, "when": "now" } ],
       "transitions": [
         { "id": "volumeEpi", "label": "Volume + epinephrine", "to": "rosc", "when": { "all": [ { "event": { "kind": "fluid", "minVolumeMl": 500 } }, { "event": { "kind": "drug", "drugId": "epinephrine" } } ] }, "probability": 0.6 },
-        { "id": "brady", "label": "Slowing (agonal)", "to": "peaBrady", "when": { "afterS": 300 } },
+        { "id": "brady", "label": "Slowing (agonal)", "to": "peaBrady", "when": { "rhythm": { "id": "sinusTachy", "forS": 300 } },
+          "src": "PLACEHOLDER: no source read gives 5 min of PEA before it slows." },
         { "id": "roscPea", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
       ]
     },
@@ -35,7 +37,8 @@
       "id": "peaBrady", "label": "Slow PEA",
       "onEnter": [ { "type": "setRhythm", "rhythm": "avb3Wide", "opts": { "rateBpm": 32, "pulseless": true }, "when": "now" } ],
       "transitions": [
-        { "id": "toAsys", "label": "Asystole", "to": "asystole", "when": { "afterS": 180 } },
+        { "id": "toAsys", "label": "Asystole", "to": "asystole", "when": { "rhythm": { "id": "avb3Wide", "forS": 180 } },
+          "src": "PLACEHOLDER: no source read gives 3 min of slow PEA before asystole." },
         { "id": "roscLate", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
       ]
     },

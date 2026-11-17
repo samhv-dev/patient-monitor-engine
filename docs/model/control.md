@@ -50,7 +50,7 @@ transports (`src/protocol.ts`).
 | Where | Relation |
 |---|---|
 | [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
-| [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
+| [`types.ts:108`](../../packages/controller/src/scenario/types.ts#L108) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
 | [`preparations.ts:135`](../../packages/controller/src/session/preparations.ts#L135) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
 
 ## State
@@ -75,6 +75,7 @@ transports (`src/protocol.ts`).
 | `trueFor` | `Record<string, number>` | — |
 | `values` | `Record<string, { v: number; rank: number; t: number }>` | — |
 | `sensors` | `Record<string, string>` | — |
+| `rhythm` | `string` | The rhythm the engine last reported (absent until its first `state` event). |
 | `enteredT` | `number` | — |
 | `history` | `Array<{ t: number; stateId: string; transitionId?: string }>` | — |
 
