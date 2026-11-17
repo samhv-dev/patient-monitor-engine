@@ -18,6 +18,11 @@ const fentanyl: NotGiven = {
   from: 'lr.1', reason: PAUSED_REFUSAL, t: 75,
 };
 
+const abg: NotGiven = {
+  command: { id: 'lr-8', issuedBy: 'learner', by: KEY, type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } } as unknown as WireCommand,
+  from: 'lr.1', reason: PAUSED_REFUSAL, t: 80,
+};
+
 describe('L14: a learner give refused while paused, on the host', () => {
   it("the record keeps the attempt as a learner row naming the phone, the drug and dose, and 'not given: the case was paused'", () => {
     const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names);
@@ -40,6 +45,19 @@ describe('L14: a learner give refused while paused, on the host', () => {
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(fentanyl);
     expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (learner remote: bed 2 remote) not given: the case was paused' }]);
+    link.close();
+  });
+
+  it("a sample refused while paused: the record and the Log say it was not drawn, with the phone and the reason", () => {
+    const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names);
+    r.notGiven(abg);
+    expect(r.data.rows).toEqual([{ t: 80, kind: 'learner', text: 'Arterial blood gas not drawn: the case was paused', remote: true, by: KEY, name: 'bed 2 remote', notGiven: PAUSED_REFUSAL }]);
+    const hub = createInProcessHub();
+    const t: ManagedTransport = hub.connect();
+    const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
+    const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
+    link.notGiven(abg);
+    expect(link.log).toEqual([{ simT: 80, kind: 'learner', text: 'Arterial blood gas (learner remote: bed 2 remote) not drawn: the case was paused' }]);
     link.close();
   });
 });
