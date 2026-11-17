@@ -92,6 +92,13 @@ const sync = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeFollowe
 // phone held upright keeps the skin's order, so the same tiles and values appear in a different DOM order
 const tiles = (p: Page) => p.evaluate(() => [...document.querySelectorAll('.pme-stile')].map((e) => `${(e as HTMLElement).dataset.param}:${e.querySelector('[data-pme="v"]')?.textContent}`).sort().join(' '));
 const same = (f: Page, p: Page) => expect.poll(async () => (await tiles(f)) === (await tiles(p)) || `${await tiles(f)} | ${await tiles(p)}`, { timeout: 15_000, intervals: [100] }).toBe(true);
+/** The learner remote's strip shows a subset of the tiles (LEARNER_STRIP): each it shows equals the instructor's. */
+const sameShown = (strip: Page, p: Page) => expect.poll(async () => {
+  const a = await tiles(strip);
+  const shown = new Set(a.split(' ').map((t) => t.split(':')[0]));
+  const b = (await tiles(p)).split(' ').filter((t) => shown.has(t.split(':')[0])).join(' ');
+  return a === b || `${a} | ${b}`;
+}, { timeout: 15_000, intervals: [100] }).toBe(true);
 const status = (p: Page) => p.locator('.follower-bar .status-pill');
 const styleOf = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeFollower.style.skin);
 
@@ -370,7 +377,7 @@ test('L6: the Learner remote card opens the learner-PIN form; the learner PIN fr
   for (const m of hellos) expect(m).toMatchObject({ role: 'learner', show: 'learner', device: key, pin: learnerPin });
   // the monitor follows, as a strip over the tabs, upright
   await expect(p.locator('.pme-portrait')).toBeVisible();
-  await same(p, page);
+  await sameShown(p, page);
   await expect(p.locator('.lr-bar .status-pill')).toHaveText(`Following session ${code}`);
   const tabs = p.getByRole('tab');
   await expect(tabs).toHaveText(['Drugs', 'Infusions', 'Labs']);
