@@ -260,7 +260,7 @@ describe('TCI (D2 item 4, D6, §6): the registered sets for the programmed drug,
     t.set(t.inp(2, 'ageY'), '95');
     expect(t.hints(2)).toMatch(/Age 95 y is outside the population Schnider \(propofol\) was studied in \(26–81 y/);
     expect(t.hints(2)).toContain('patient limits not set from the manual');
-    expect(t.hints(2)).toContain('target range not set from the manual');
+    expect(t.hints(2)).toContain('target step not set from the manual');
     for (const [k, v] of [['weightKg', '70'], ['heightCm', '170'], ['target', '4']] as const) t.set(t.inp(2, k), v);
     t.send(2);
     expect(t.sent).toEqual([]); // the sex is the learner's to choose: none is assumed
