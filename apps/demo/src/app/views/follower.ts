@@ -25,7 +25,8 @@
 //    (`publishStyle` on the instructor's page). Presentation only, not the session wire. `ibp` (E130): the IBP1/IBP2
 //    lane scales; the follower's monitor draws them (AUTO judges the same range from the same samples).
 //  - Sound: per window (mount option `audioSilence: 'window'`): the follower's own Sound and
-//    "Silence here"; nothing about sound crosses either channel.
+//    "Silence here"; nothing about sound crosses either channel. Of this browser's pages of the session only one sounds
+//    (its own channel `pme.sound.<CODE>`, sound-seat.ts).
 //  - A PHONE over the relay (`?join=<CODE>`): the same contract on a
 //    WebSocket to `pme-relay`. The relay sends a viewer only VIEWER_EVENTS (protocol.ts) and a hello's replays only to
 //    the peers awaiting a snapshot; it refuses a phone past the session's limit (`full`, no retry) and any role but
@@ -45,6 +46,7 @@ import { createDefibCore } from '../../defib/core/core.ts';
 import type { DefibStatusIn } from '../../defib/core/types.ts';
 import { DEFIB_FACES, defibFace } from '../../defib/faces/index.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
+import { soundSeat, soundWords } from '../sound-seat.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
 import { followerStatus, hostPause, phoneStyle } from './follower-status.ts';
 
@@ -208,10 +210,12 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   const transport = defib ? asOnePeer(said, 'defib') : instrument?.credential ? asOnePeer(said) : said;
   const peerId = newPeerId('view'); // the sync's id, which the window's presses (and a learner remote's commands) share (asOnePeer)
   const status = h('span', { class: 'status-pill', role: 'status' }, `Waiting for the instructor's monitor ${code}…`);
-  // On and off again, this window only
-  const drawSound = () => ((sound.textContent = monitor.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
-  const sound = button('Sound off', () => (monitor.soundOn ? (monitor.disableSound(), drawSound()) : void monitor.enableSound().then(drawSound)), 'small sound');
+  // On and off again; of this browser's pages of the session, only the last switched on sounds (sound-seat.ts)
+  const seat = soundSeat(code, defib ? 'the defibrillator window' : 'the learner monitor', () => monitor.disableSound());
+  const drawSound = () => ((sound.textContent = soundWords(monitor.soundOn, seat.elsewhere)), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
+  const sound = button('Sound off', () => (monitor.soundOn ? (monitor.disableSound(), seat.off()) : void monitor.enableSound().then(() => seat.on())), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
+  seat.onChange(drawSound);
   // Silence here quiets THIS window's alarm sound only (by the skin's rule); the instructor's Silence does not quiet
   // it, and this one sends nothing to the session
   const hush = button('Silence here', () => {
@@ -354,6 +358,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   }
   const draw = setInterval(drawStatus, 500);
   function destroy(): void {
+    seat.close();
     upright?.removeEventListener('change', onTurn);
     offDraw();
     offReadout();
