@@ -21,7 +21,7 @@ export interface BrainInputs {
   cvp: number; // mmHg
   paco2: number; pao2: number; sao2: number; // mmHg, mmHg, fraction
   hb: number; // g/dL
-  hbRef: number; // g/dL, the patient's own normal (the blood model's band default) [ENG: the brain's flow is relative to it]
+  hbRef: number; // g/dL, the patient's own normal (the blood model's band default) [ENG: control] (the brain's flow is relative to it)
   tempC: number;
   drugs: BrainDrugs; // anaesthetic CMRO2 multiplier and direct vasodilation (organs/inputs.ts: neuro/drugs, or INTERIM fallback)
   osm?: number | null; // The blood model's plasma effective osmolality, mOsm/kg (absent/null without the blood model)
