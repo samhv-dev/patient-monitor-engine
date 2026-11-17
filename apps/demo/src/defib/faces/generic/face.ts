@@ -1,6 +1,6 @@
 // The generic defibrillator face (plan defibrillator-zoll-m2.md §4.2, piece F0): the readout (the energy, then CHARGING
 // or READY, and SYNC) on the stage; energy select down and up along the room model's list, Charge and Shock, always
-// enabled (the host's device decides, Q5 ruled 5 November), with the device's words for a refusal under them, in the
+// enabled (the host's device decides), with the device's words for a refusal under them, in the
 // bar. Energy select stops at the list's ends; an energy changed while charging or charged disarms on the device, and
 // the readout shows it. A press goes once; a lost one is pressed again, as on the device. It has no quick keys, no menu
 // and no Trim Knob. Each key reports its pointer-down and pointer-up to the core as well as its click (the M2's
