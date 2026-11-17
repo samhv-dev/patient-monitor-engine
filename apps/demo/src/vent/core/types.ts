@@ -118,7 +118,8 @@ export interface Change {
 /** A face: its spec, and the module that builds its DOM on a cockpit and draws each frame. */
 export interface FaceModule {
   spec: FaceSpec;
-  mount(c: Cockpit, tools: SimTools, env?: FaceEnv): { draw(ts: number): void; stop(): void };
+  /** `tools` is null on a ventilator linked to a room: the face offers no way to them. */
+  mount(c: Cockpit, tools: SimTools | null, env?: FaceEnv): { draw(ts: number): void; stop(): void };
 }
 
 /** What the page gives a face (V1): the app's translation of an app string OUTSIDE the device (the "Simulator" handle,

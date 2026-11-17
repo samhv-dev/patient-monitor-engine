@@ -23,7 +23,7 @@ function fakeCtx() {
 describe('playBeep', () => {
   it('returns a handle whose stop() silences a beep that is already scheduled', () => {
     const { ctx, calls } = fakeCtx();
-    const h = playBeep(ctx, {} as AudioNode, 5, 880);
+    const h = playBeep(ctx, {} as AudioNode, 5, 880, 0.04);
     expect(calls[0]).toBe('osc.start 5');
     expect(calls).toHaveLength(2); // start + the scheduled stop
     h.stop();
@@ -47,11 +47,17 @@ describe('the beep length caps at 60 % of the wall-clock beat interval (beats ne
     expect(beepMsAt(Number.NaN, 4)).toBe(100);
   });
 
-  it('playBeep plays the given length (the fast-forward cue keeps the default)', () => {
+  it('playBeep plays the given length, 100 ms by default', () => {
     const { ctx, calls } = fakeCtx();
     expect(playBeep(ctx, {} as AudioNode, 5, 1245, 0.25, 60).endsAt).toBeCloseTo(5.07, 12);
     expect(Number(calls[1]!.replace('osc.stop ', ''))).toBeCloseTo(5.07, 12);
     expect(beepEnvelope(0.5, 60).at(-1)).toEqual([0.06, 0]);
-    expect(playBeep(ctx, {} as AudioNode, 5, 660).endsAt).toBeCloseTo(5.11, 12);
+    expect(playBeep(ctx, {} as AudioNode, 5, 660, 0.25).endsAt).toBeCloseTo(5.11, 12);
+  });
+});
+
+describe('the beep level', () => {
+  it('has no default: every caller passes its gain', () => {
+    expect(playBeep.length).toBe(5); // ctx, dest, when, freqHz, gain; only the length has a default
   });
 });

@@ -16,6 +16,7 @@ const net = vi.hoisted(() => ({
   engines: [] as unknown[],
   dispatched: [] as Array<{ id: string; type: string; tick: number; accepted: boolean; event?: Record<string, unknown> }>,
   dropped: 0,
+  warned: [] as unknown[][],
 }));
 
 vi.mock('@pme/controller', async (orig) => {
@@ -132,7 +133,7 @@ function tagged<P extends { post(m: never): void }>(port: P, tag: string): P {
 }
 
 /** A remote cockpit on another device: its socket to the relay, its hello with `pin`, and after its grant the cockpit. */
-async function remote(id: string, pin = PIN) {
+async function remote(id: string, pin = PIN, profile = 'normal') {
   const sock = ctl.__end(net.relay, 'websocket');
   const got: WireMessage[] = [];
   sock.onMessage((m) => got.push(m));
@@ -145,7 +146,7 @@ async function remote(id: string, pin = PIN) {
   const granted = got.some((m) => m.kind === 'grant' && m.to === id && m.granted);
   let d: ReturnType<typeof createVentDriver> | null = null;
   const port = tagged(createRelayPort(ventWireOver(sock as never, st as never, { self: id }), { settings: () => (d ? { cfg: d.vs.cfg, measured: { RR: d.vs.p.measured.RR, VTE: d.vs.p.measured.VTE } } : null) }), id);
-  d = createVentDriver(port, 'normal');
+  d = createVentDriver(port, profile);
   const timer = setInterval(() => (d as NonNullable<typeof d>).frame(performance.now()), 1000 / 60);
   const stop = () => {
     clearInterval(timer);
@@ -188,6 +189,7 @@ beforeEach(async () => {
   net.engines.length = 0;
   net.dispatched.length = 0;
   net.dropped = 0;
+  net.warned.length = 0;
   document.body.replaceChildren();
   const el = document.createElement('div');
   document.body.append(el);
@@ -420,7 +422,8 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
 
 describe("the remote cockpit's alarms reach the instructor", () => {
   const pmax = { id: 'pmax' as const, text: 'High pressure (Pmax)', priority: 'high' as const, silenced: false };
-  it("each change goes through the relay's guard to the host, which sends it as `ventAlarms` at the engine's time of that tick; its hand-over ends them", async () => {
+  it("each change goes through the relay's guard and the room's guarded port to the host, which sends it as `ventAlarms` at the engine's time of that tick; a kind not in the room's table is still refused; its hand-over ends them", async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation((...a: unknown[]) => void net.warned.push(a));
     const heard: Array<Extract<WireEvent, { type: 'ventAlarms' }>> = [];
     let timelineT = -1;
     s.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => (e.type === 'ventAlarms' && heard.push(e), e.type === 'timeline' && (timelineT = e.t)))));
@@ -435,6 +438,10 @@ describe("the remote cockpit's alarms reach the instructor", () => {
     v.d.reportAlarms([{ ...pmax, silenced: true }]);
     await vi.advanceTimersByTimeAsync(100);
     expect(heard.at(-1)?.active).toEqual([{ ...pmax, silenced: true }]);
+    v.port.post({ v: 1, kind: 'time', action: 'pause' });
+    await vi.advanceTimersByTimeAsync(100);
+    const refused = net.warned.filter((x) => x[0] === 'vent link rejected').map((x) => x[1]);
+    expect(refused).toEqual(['time']); // the alarms passed the room's table; the clock did not
     const late = phone(); // a peer that says hello now hears what is on
     await vi.advanceTimersByTimeAsync(100);
     expect(events(late).filter((e) => e.type === 'ventAlarms').at(-1)).toMatchObject({ active: [{ ...pmax, silenced: true }] });
@@ -447,5 +454,27 @@ describe("the remote cockpit's alarms reach the instructor", () => {
     await settle();
     expect(heard.at(-1)?.active).toEqual([]);
     expect(net.dropped).toBe(0);
+    warn.mockRestore();
+  });
+});
+
+describe("a room's ventilator drives the patient with its breaths and its circuit only", () => {
+  it("its patient-changing commands and its clock are refused with a reason and logged; its breaths drive", async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation((...a: unknown[]) => void net.warned.push(a));
+    // a device page opened with a shock profile's address: its link core sends the profile's stand-in targets first
+    const v = await remote('vent-a.1', PIN, 'anaphylaxis-bronchospasm');
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(frames('vent-a.1').length).toBeGreaterThan(100);
+    v.port.post({ v: 1, kind: 'time', action: 'pause' });
+    const at = simNow();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(simNow()).toBeGreaterThan(at); // the session was not paused
+    expect(net.dispatched.filter((d) => d.id.startsWith('vent-a.1') && d.type !== 'externalDrive')).toEqual([]);
+    const refused = net.warned.filter((a) => a[0] === 'vent link rejected').map((a) => [a[1], a[2]]);
+    expect(refused).toEqual([
+      ...['sbp', 'dbp', 'cvp', 'hr'].map(() => ['setTarget', "a ventilator in a room may not send setTarget: the patient is the room's"]),
+      ['time', "a ventilator in a room may not send 'time'"],
+    ]);
+    warn.mockRestore();
   });
 });

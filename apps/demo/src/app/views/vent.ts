@@ -15,7 +15,7 @@
 import { TICK_S, type Command } from '@pme/engine-core';
 import { VENTILATOR_REASONS, type VentLinkBody, type VentScreen } from '@pme/controller';
 import {
-  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkDetach, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, roomVentMonitor, roomVentPort, type CockpitSettings, type LinkDetach, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
 import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
@@ -104,17 +104,20 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     if (driving) desk.unlink();
     driving = c;
     session.ventRemote = c.remote;
-    const p = c.port;
+    // the cockpit drives the room's patient with its breaths and its circuit only, and reports its alarms (room-guard.ts)
+    const refused = (what: string, why?: string) => console.warn('vent link rejected', what, why);
+    const p = roomVentPort(c.port, refused);
     session.ventTick = -1;
-    // the driving cockpit's alarms, at the engine time of the ventilator tick they were shown on
-    offAlarms = p.onMessage((msg) => {
+    // the driving cockpit's alarms, at the engine time of the ventilator tick they were shown on (through the same table;
+    // a refusal is logged once, by the link's port)
+    offAlarms = roomVentPort(c.port, () => undefined).onMessage((msg) => {
       if (msg.kind !== 'alarms') return;
       const tick = detach?.engineTick(msg.tick) ?? null;
       session.ventAlarms(c.screen, msg.alarms, tick === null ? session.simNow() : tick * TICK_S);
     });
     offAttach = session.onMount((m) => {
       detach?.();
-      const l = attachMonitorToLink(session.linked(m), p, (cmd, r) => console.warn('vent link rejected', cmd.type, r));
+      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), p, (cmd, r) => refused(cmd.type, r));
       detach = l;
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
       // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,

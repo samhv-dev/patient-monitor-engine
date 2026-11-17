@@ -14,7 +14,7 @@ describe('respiratory pipeline', () => {
     const rs = createRespState({ sensors: { co2: 'on' } }, l1, 1);
     const hemo = createHemoState(undefined, l1, 75);
     const idx: Record<string, number[]> = { co2: [], resp: [] };
-    advanceResp(rs, { l1, hemo, rhythm: { id: 'sinus', records: [] }, hr: constantRamp(75) }, 625, (ch, m) => idx[ch]!.push(m));
+    advanceResp(rs, { l1, hemo, rhythm: { id: 'sinus', records: [] }, hr: constantRamp(75), brainstem: {} }, 625, (ch, m) => idx[ch]!.push(m));
     expect(idx.co2![0]).toBe(0);
     expect(idx.co2![idx.co2!.length - 1]).toBe(625);
     expect(idx.resp).toHaveLength(626);

@@ -499,11 +499,12 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `diaphragmVtCapMl` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The tidal volume a partly blocked diaphragm can move in one SUSTAINED breath, mL — 35 mL (VT_EFFORT_ML_KG) at the first effort, a resting VT at DIAPH_EFFECTIVE, the chemical ceiling at full strength ( |
 | `winterPaco2` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | Winter's expected PaCO2 in metabolic acidosis (mmHg). |
 | `paco2SetPoint` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The chemoreflex set point: |
-| `stepBrainstem` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | One step (`dtS`, the drive's SPONT_DT_S by default) of the brainstem's perfusion state on the drive's record: |
-| `brainstemGate` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The gates on a breathing pattern whose resting VT is `vt0`, from the state stepBrainstem keeps: |
+| `stepBrainstem` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | One step (`dtS`, the drive's SPONT_DT_S by default) of the brainstem's perfusion state: |
+| `brainstemGate` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The gates on a breathing pattern whose resting VT is `vt0`, from the state stepBrainstem keeps (`b`, and `plS` on the drive's record): |
+| `stepSpontDrive` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | One 1 Hz step of the drive; |
 | `tofStep` | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | Called every neuro step (0.1 s) with the TRUE reading; |
 
-Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `opioidFentEq`, `depth`, `neuroResp`, `ec50Multipliers`, `hypokalaemiaMult`, `neuroOutputs`, `createNeuroState`, `createSpontDrive`, `stepSpontDrive`, `createTofDevice`, `validateTofAction`, `tofAction`.
+Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `opioidFentEq`, `depth`, `neuroResp`, `ec50Multipliers`, `hypokalaemiaMult`, `neuroOutputs`, `createNeuroState`, `createSpontDrive`, `createTofDevice`, `validateTofAction`, `tofAction`.
 
 ## Source files
 
