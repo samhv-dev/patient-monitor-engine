@@ -58,7 +58,7 @@ export const transports = {
 export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT, STOCK_FILE } from './formulary/load.ts';
 export type * from './formulary/types.ts';
 // Plan pump-rack-tci.md D12, S1: the reference pumps' device profiles (pump-devices/), their source check and loader
-export { checkPumpDevices, loadPumpDevices, PUMP_DEVICE_IDS, MAX_DEVICE_TEXT } from './pump-devices.ts';
+export { checkPumpDevices, loadPumpDevices, PUMP_DEVICE_IDS, MAX_DEVICE_TEXT, sp5TciMaxRateMlH } from './pump-devices.ts';
 export type * from './pump-devices.ts';
 // the range a channel's rate is checked against on the host, which every screen that offers a rate for a channel reads
 export { rateRange, type RateRange } from './session/pump-host.ts';

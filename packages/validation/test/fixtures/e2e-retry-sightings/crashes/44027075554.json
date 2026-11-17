@@ -1,0 +1,17 @@
+{
+ "failedAt": 287755,
+ "signs": [
+  {
+   "signature": "webkit-internal-error",
+   "text": "Failed to load resource: WebKit encountered an internal error",
+   "url": "(from the trace)",
+   "at": 58288
+  },
+  {
+   "signature": "webkit-internal-error",
+   "text": "Failed to load resource: WebKit encountered an internal error",
+   "url": "(from the trace)",
+   "at": 58288
+  }
+ ]
+}

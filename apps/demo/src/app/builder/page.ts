@@ -518,13 +518,15 @@ export function builderPage(store: Drafts = defaultDrafts, kit: KitStore = defau
     h('p', { class: 'console-sub' }, 'This browser has no draft at this address. Drafts are kept per browser: one made in another browser, or before this site’s data was cleared, is not here.'));
 
   const el = h('div', { class: 'sb-root' }, start, editor, missing);
-  let showing: 'start' | 'editor' | 'missing' = 'start';
+  let showing: 'start' | 'editor' | 'missing' | null = null;
   const showOnly = (w: typeof showing) => {
     showing = w;
     start.hidden = w !== 'start';
     editor.hidden = w !== 'editor';
     missing.hidden = w !== 'missing';
   };
+  // nothing shows until enter has drawn it: a start page shown before its drafts are drawn moves under a press
+  showOnly(null);
   // a reload or a closed tab within the 300 ms: the change goes to the store's rescue slot synchronously (an IndexedDB
   // write started now may not land before the page is gone), and the next open takes it back
   addEventListener('pagehide', () => {

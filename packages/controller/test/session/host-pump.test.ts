@@ -14,7 +14,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEngine, type Command, type DispatchResult, type EngineEvent } from '@pme/engine-core';
 import { HostSession, PUMP_REASONS, UNKNOWN_ROLE, type HostSessionOptions, type HostTarget } from '../../src/session/host-session.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { createStamper, LEARNER_ISSUED_BY, PAUSED_REFUSAL, PUMP_ISSUED_BY, type AppliedResolution, type ManagedTransport, type WireEvent, type WireMessage } from '../../src/protocol.ts';
+import { createStamper, LEARNER_ISSUED_BY, PAUSED_REFUSAL, PUMP_ISSUED_BY, type AppliedResolution, type ManagedTransport, type PumpCommand, type WireEvent, type WireMessage } from '../../src/protocol.ts';
+import { translatePump, type HostChannel } from '../../src/session/pump-host.ts';
 import { loadFormulary } from '../../src/formulary/load.ts';
 import type { Formulary, FormularyFiles } from '../../src/formulary/types.ts';
 import { loadPumpDevices, type PumpDevices } from '../../src/pump-devices.ts';
@@ -218,9 +219,8 @@ describe('C2: each D2 shape lands as one `applyEvent pump`, filed by the pump, w
     expect((await go({ action: 'stop', ch: 1 })).pump).toMatchObject({ infusion: { rate: 0 } });
     const patient = { ageY: 40, weightKg: 70, heightCm: 170, sex: 'm' };
     expect(await go({ action: 'tci', ch: 1, setId: 'eleveld', mode: 'effect', target: 3, patient: { ...patient, opioids: true } })).toMatchObject({
-      event: { action: 'tci', setId: 'eleveld', mode: 'effect', target: 3, patient, opioids: true },
+      event: { action: 'tci', setId: 'eleveld', mode: 'effect', target: 3, patient, opioids: true, maxRateMlH: 1500 }, // the 50 mL syringe's maximum (sp5-tci.json TM-01)
     });
-    expect(applied(x.panelGot, sent.at(-1) as string)?.event).not.toHaveProperty('maxRateMlH'); // the SP5's ceiling is a gap: the engine's holds
     expect((await go({ action: 'tci', ch: 1, setId: 'eleveld', mode: 'effect', target: 4, patient: { ...patient, opioids: true } })).pump).toMatchObject({ replaced: [{ what: 'tci', target: 3, by: PUMP_KEY }] });
     await go({ action: 'unload', ch: 1 });
     // one engine event per press, each the pump's
@@ -274,6 +274,61 @@ describe('C2: each D2 shape lands as one `applyEvent pump`, filed by the pump, w
       expect(await p.send(body), JSON.stringify(body)).toMatchObject({ accepted: true });
       engine.advanceTo(engine.now().simT + 0.2);
     }
+  });
+});
+
+describe('a TCI channel runs no faster than the SP5 family\'s maximum for its loaded syringe (sp5-tci.json tci.maxRate)', () => {
+  const tci = { type: 'pump', ch: 1, action: 'tci', setId: 'eleveld', mode: 'effect', patient: { ageY: 40, weightKg: 70, heightCm: 170, sex: 'm' } } as const;
+  const channel = (syringeMl: number | null): HostChannel => ({
+    ch: 1, kind: 'syringe', syringeMl, contents: null, programmed: null, set: null, rate: null, tci: null, running: false, by: {}, mismatch: null,
+  });
+  const translated = (syringeMl: number | null, target: number) =>
+    translatePump({ ...tci, target } as PumpCommand, { rack: ['syringe'], devices: DEVICES, formulary: SHIPPED, channels: new Map([[1, channel(syringeMl)]]), prep: () => undefined, simT: 0 });
+
+  it('the event carries the maximum of each syringe size the family lists; no syringe is refused; a stop carries none', () => {
+    const sizes = DEVICES['sp5-tci'].rate.bySyringe;
+    expect(sizes.map((s) => s.ml)).toEqual([5, 10, 20, 30, 50, 60]);
+    for (const s of sizes) expect(translated(s.ml, 3), `${s.ml} mL`).toMatchObject({ ok: true, event: { maxRateMlH: s.max } });
+    expect(translated(null, 3)).toEqual({ ok: false, why: "load a syringe first: the Mindray BeneFusion SP5 TCI's TCI rate limit is per syringe size (5, 10, 20, 30, 50 and 60 mL)" });
+    const stop = translated(null, 0);
+    expect(stop.ok && stop.event).not.toHaveProperty('maxRateMlH');
+  });
+
+  it.each([
+    ['propofol-10mg-ml-50ml', 50, 1500],
+    ['propofol-10mg-ml-20ml', 20, 400],
+  ])('on the real engine, %s: the rate reaches and never passes the %s mL syringe\'s %s mL/h, and the patient receives the volume × 10 mg/mL', async (stock, ml, max) => {
+    const engine = createEngine({ seed: 7 });
+    const seen: number[] = [];
+    let last: Extract<EngineEvent, { type: 'drugs' }> | null = null;
+    engine.on((e) => {
+      if (e.type !== 'drugs') return;
+      last = e;
+      const ch = e.pumps?.find((c) => c.ch === 1);
+      if (ch) seen.push(ch.rateMlH);
+    });
+    const t: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => undefined };
+    const x = setup({ target: t });
+    const p = await pumpIn(x);
+    for (const body of [
+      { action: 'load', ch: 1, syringe: { stock } },
+      { action: 'program', ch: 1, drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
+      { ...tci, target: 6 },
+      { action: 'start', ch: 1 },
+    ]) {
+      expect(await p.send(body), JSON.stringify(body)).toMatchObject({ accepted: true });
+      engine.advanceTo(engine.now().simT + 0.2);
+    }
+    // 60 s at most at the ceiling: the 20 mL syringe gives 6.7 mL, the 50 mL one 25 mL, neither runs empty
+    engine.advanceTo(engine.now().simT + 60);
+    const ch = (last as Extract<EngineEvent, { type: 'drugs' }> | null)?.pumps?.find((c) => c.ch === 1);
+    expect(ch).toMatchObject({ mode: 'tci', syringeMl: ml });
+    // the engine chooses mg/min and converts back to mL/h: equal to the ceiling to the last floating-point digits
+    expect(Math.max(...seen)).toBeCloseTo(max, 9); // a Ce step of 6 µg/mL asks for more than any syringe's maximum
+    expect(seen.every((r) => r <= max * (1 + 1e-12))).toBe(true);
+    const propofol = (last as Extract<EngineEvent, { type: 'drugs' }> | null)?.drugs.find((r) => r.id === 'propofol');
+    expect(propofol!.totalAmount).toBeCloseTo(ch!.infusedMl * 10, 6);
+    expect(ch!.infusedMl).toBeGreaterThan(0);
   });
 });
 
