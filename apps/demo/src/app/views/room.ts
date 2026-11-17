@@ -63,6 +63,9 @@ export interface RoomDeps {
   open?: (url: string) => void;
   /** For tests: what "New room code" does once confirmed (default: store it and reload this page under it). */
   renew?: (code: string) => void;
+  /** "Forget the room" signs every phone and tablet out (HostSession.forgetSignIns): resolves once the host has. The app
+   *  always gives it; a test of another card may leave it out. */
+  signOut?: () => Promise<void>;
   /** The instructor phone's card (room-instructor.ts, plan instructor-peer-role.md P7), in the `#room-instructor` slot. */
   instructor?: InstructorRoomCard;
   /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
@@ -90,6 +93,14 @@ export const PUMP_ROOM_WORDS = {
   kind: { syringe: 'Syringe', drip: 'Drip' } satisfies Record<PumpKind, string>,
   hint: 'Each channel is a syringe pump or a drip pump. A change reaches a signed-in pump tablet at once.',
 };
+
+/** "Forget the room": its line, its dialog and what it says once done. */
+export const FORGET_WORDS = {
+  hint: 'Forgetting the room clears the device names and the windows, and signs every phone and tablet out; the code and the PINs stay.',
+  ask: 'Forget the room?',
+  body: 'Every phone and tablet signed in with a PIN is signed out: each shows its sign-in form and needs the PIN again. The device names and the windows kept for the next time are cleared. The room code and the PINs stay, and a screen that follows without a PIN (a learner monitor, a depth window) keeps following.',
+  said: (code: string) => `Forgotten: the device names and the windows, and every phone and tablet is signed out. The room code ${code} and the PINs stay.`,
+} as const;
 
 export const LEARNER_PIN_WORDS = {
   heading: 'Learner remotes',
@@ -374,15 +385,25 @@ export function roomView(d: RoomDeps): RoomView {
     setText(lastLine, before.line ?? 'Nothing was kept from an earlier time in this room: the names you give the devices and the windows you open are kept for the next time.');
     reopen.hidden = !((before.windows.learner ?? 0) + (before.windows.monitor ?? 0) + (before.windows.defib ?? 0) + (before.windows.depth ?? 0));
   };
-  const forget = button('Forget the room', () => {
+  const forgetNo = button('Keep the room', () => forgetAsk.close(), 'small');
+  const forgetYes = button('Forget the room', () => {
+    forgetAsk.close();
     forgetRoom(kept);
     layout = {};
     before.windows = {};
     before.line = null;
-    setText(said, `Forgotten: the device names and the windows. The room code ${d.code} stays.`);
+    const done = d.signOut?.() ?? Promise.resolve();
+    d.instructor?.forgetting(done);
+    void done.then(draw);
+    setText(said, FORGET_WORDS.said(d.code));
     drawLast();
     draw();
-  }, 'small room-forget');
+  }, 'primary small room-forget-yes');
+  const forgetAsk = h('dialog', { class: 'room-forget-ask', 'aria-labelledby': 'room-forget-h' },
+    h('h2', { id: 'room-forget-h' }, FORGET_WORDS.ask),
+    h('p', {}, FORGET_WORDS.body),
+    h('div', { class: 'room-renew-acts' }, forgetNo, forgetYes));
+  const forget = button('Forget the room', () => forgetAsk.showModal(), 'small room-forget');
 
   // ------------------------------------------------------------------------------------------------- the room code
   const renewNo = button(`Keep ${d.code}`, () => ask.close(), 'small');
@@ -406,7 +427,7 @@ export function roomView(d: RoomDeps): RoomView {
       h('span', {}, 'Room code ', h('b', { class: 'room-code-now', 'aria-label': `Code ${d.code.split('').join(' ')}` }, d.code), ' — it stays until you make a new one.'),
       button('New room code', () => ask.showModal(), 'small room-renew-open')),
     h('div', { class: 'room-code-row' }, lastLine, reopen),
-    h('div', { class: 'room-code-row' }, h('span', { class: 'hint' }, 'Forgetting the room clears the device names and the windows, not the code.'), forget),
+    h('div', { class: 'room-code-row' }, h('span', { class: 'hint' }, FORGET_WORDS.hint), forget),
     said);
   const computer = h('section', { class: 'room-card room-computer', 'aria-labelledby': 'room-pc-h' },
     h('h2', { id: 'room-pc-h' }, 'Open on this computer'), cards,
@@ -504,7 +525,7 @@ export function roomView(d: RoomDeps): RoomView {
         h('div', {}, h('h1', { id: 'room-h' }, 'Room setup'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
       h('div', { class: 'room-cols' }, join, connected),
-      computer, ...(defibCard ? [defibCard] : []), ...(depthCard ? [depthCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask);
+      computer, ...(defibCard ? [defibCard] : []), ...(depthCard ? [depthCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask, forgetAsk);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');

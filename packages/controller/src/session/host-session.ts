@@ -217,10 +217,11 @@ export const LEARNER_REASONS = {
   noFormulary: 'this computer has no formulary loaded yet',
   full: `this remote holds ${PREPS_PER_DEVICE} preparations: discard one first`,
 } as const;
-/** What the host answers a device that proved a ticket it cannot admit (with the role's PIN changed and taken over). */
+/** What the host answers a device that proved a ticket it cannot admit, or that it signed out with every ticket (with the role's PIN changed and taken over). */
 export const TICKET_REASONS = {
   newSession: "the instructor's computer started a new session",
   used: 'this sign-in was already used or is not known',
+  roomForgotten: "the instructor's computer forgot the room",
 } as const;
 /** C2 (pump-rack-tci.md §7): what the host answers a pump tablet (with the learner remote's wrong PIN and PIN changed). */
 export const PUMP_REASONS = {
@@ -478,9 +479,22 @@ export class HostSession {
   /** L4 (§4 D9): the learner PIN changed: every granted learner remote is revoked (each signs in again), in order as instructorPinChanged. */
   learnerPinChanged(): Promise<void> {
     return this.inOrder(() => {
-      for (const [t, m] of this.learners) for (const from of m.keys()) this.grant(t, from, false, LEARNER_REASONS.pinChanged);
+      this.revokeLearners(LEARNER_REASONS.pinChanged);
       this.o.signIns?.void((c) => c.role === 'learner' || c.role === 'pump', LEARNER_REASONS.pinChanged);
-      this.learners.clear();
+    });
+  }
+
+  /**
+   * "Forget the room" on the instructor's Room page: every signed-in device of every role is signed out and every ticket
+   * voided, in order as a PIN change, so a sign-in check still pending is revoked too. The PINs are not changed; a
+   * follower that needs no sign-in is untouched. No frame a peer sends leads here.
+   */
+  forgetSignIns(): Promise<void> {
+    return this.inOrder(() => {
+      this.revoke('instructor', TICKET_REASONS.roomForgotten);
+      this.revoke('ventilator', TICKET_REASONS.roomForgotten);
+      this.revokeLearners(TICKET_REASONS.roomForgotten);
+      this.o.signIns?.void(() => true, TICKET_REASONS.roomForgotten);
     });
   }
 
@@ -845,6 +859,12 @@ export class HostSession {
     if (!h) return;
     this.grant(h.t, h.from, false, reason);
     this.setHolder(role, null);
+  }
+
+  /** Tell every granted learner remote and pump tablet it is no longer granted, and forget them. */
+  private revokeLearners(reason: string): void {
+    for (const [t, m] of this.learners) for (const from of m.keys()) this.grant(t, from, false, reason);
+    this.learners.clear();
   }
 
   /**

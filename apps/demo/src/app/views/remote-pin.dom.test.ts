@@ -4,10 +4,10 @@
 // sign-in and on leave; each state has its words (signing in, signed in, wrong PIN, too many tries, taken over, the PIN
 // changed, the computer restarted, a kit that does not answer after 10 s). The relay is a fake link the test drives
 // with the host's own frames.
-import { createStamper, INSTRUCTOR_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
+import { createStamper, INSTRUCTOR_REASONS, TICKET_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SITE } from '../site.ts';
-import { GIVE_UP_MS, PHONE_WORDS, remoteView } from './remote.ts';
+import { GIVE_UP_MS, PHONE_WORDS, refusalWords, remoteView } from './remote.ts';
 import { carried } from '../address.testing.ts';
 
 const CODE = 'AB2CD3';
@@ -256,6 +256,16 @@ describe('the states and their words', () => {
     b.h.hello();
     b.h.grant(false, INSTRUCTOR_REASONS.noPhone);
     expect(b.f.words()).toBe(PHONE_WORDS.noPhone);
+  });
+
+  it('the room forgotten on the laptop: the form again, in its own words; the ventilator tablet says the same', () => {
+    const a = signIn();
+    a.h.hello();
+    a.h.grant(true);
+    a.h.grant(false, TICKET_REASONS.roomForgotten);
+    expect(a.f.q<HTMLElement>('.ip-peer-form').hidden).toBe(false);
+    expect(a.f.words()).toBe("The instructor's computer forgot the room. Enter the PIN to sign in again.");
+    expect(refusalWords({ reason: TICKET_REASONS.roomForgotten }, '--:--')).toBe(a.f.words()); // hamilton-page.ts
   });
 
   it('computer restarted: a host hello from a new id says so, the phone signs in again by itself and stays mounted', () => {

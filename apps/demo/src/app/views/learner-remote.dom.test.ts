@@ -201,6 +201,13 @@ describe("the learner remote's page (L6)", () => {
     expect(m.stage.hidden).toBe(true);
     expect(m.q<HTMLElement>('.lr-signed').hidden).toBe(true);
     expect(stored()).not.toContain(PIN);
+    // signed in, then the room forgotten on the laptop: the form again, in its own words
+    await m.signIn();
+    host().grant(true);
+    host().grant(false, TICKET_REASONS.roomForgotten);
+    expect(m.words()).toBe("The instructor's computer forgot the room. Enter the learner PIN to sign in again.");
+    expect(m.form().hidden).toBe(false);
+    expect(m.stage.hidden).toBe(true);
   });
 });
 

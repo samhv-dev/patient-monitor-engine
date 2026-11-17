@@ -231,6 +231,15 @@ describe('refusals, in words', () => {
     expect(m.words()).toBe(PUMP_WORDS.noRemote);
   });
 
+  it('signed in, then the room forgotten on the instructor\'s computer: the form again, in its own words', async () => {
+    const m = mount();
+    await m.signIn();
+    host().grant(true);
+    host().grant(false, TICKET_REASONS.roomForgotten);
+    expect(m.form().hidden).toBe(false);
+    expect(m.words()).toBe("The instructor's computer forgot the room. Enter the learner PIN to sign in again.");
+  });
+
   it("the instructor's computer reconnects: the rack stays, the tablet says it signs in again, and its next hello proves the ticket", async () => {
     const m = mount();
     await m.signIn();

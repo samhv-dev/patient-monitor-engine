@@ -347,6 +347,7 @@ if (follow && shows === 'pick') {
     },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
+    signOut: () => session.host.forgetSignIns(),
   });
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario, runDraft: (id, doc) => draft.run(id, doc) }));

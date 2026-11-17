@@ -48,6 +48,7 @@ export const LEARNER_WORDS = {
   pinChanged: "The learner PIN was changed on the instructor's computer. Enter the new learner PIN.",
   takenOver: 'This sign-in was taken by another device. Enter the learner PIN to sign in again.',
   newSession: "The instructor's computer started a new session. Enter the learner PIN to sign in again.",
+  roomForgotten: "The instructor's computer forgot the room. Enter the learner PIN to sign in again.",
   notRenewed: "This phone's sign-in could not be renewed. Enter the learner PIN to sign in again.",
   noRemote: "The instructor's computer does not take a learner remote.",
   samePins: "The instructor's computer cannot take a learner remote until it draws a new learner PIN. Ask the instructor.",
@@ -74,6 +75,7 @@ export function learnerRefusalWords(a: { reason?: string; code?: string }): stri
   if (a.reason === LEARNER_REASONS.samePins) return LEARNER_WORDS.samePins;
   if (a.reason === INSTRUCTOR_REASONS.takenOver) return LEARNER_WORDS.takenOver;
   if (a.reason === TICKET_REASONS.newSession) return LEARNER_WORDS.newSession;
+  if (a.reason === TICKET_REASONS.roomForgotten) return LEARNER_WORDS.roomForgotten;
   if (a.reason === TICKET_REASONS.used) return LEARNER_WORDS.notRenewed;
   return `Not signed in: ${a.reason ?? "the instructor's computer refused the phone"}.`;
 }

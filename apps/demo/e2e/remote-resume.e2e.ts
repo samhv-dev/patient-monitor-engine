@@ -2,7 +2,8 @@
 // remote, the pump tablet, the instructor's phone and the ventilator's own page each stay on their page, and their next
 // hello proves the ticket the host handed them (no PIN, no keystroke); the Room page shows the returning device as the
 // same row. And the case that must ask: the learner PIN changed while a phone was away; back, it asks for the new PIN
-// and says why. Every device runs through the in-process classroom relay, as mobile-learner.e2e.ts runs it.
+// and says why; and "Forget the room" on the Room page signs it out, in its own words, with the learner PIN unchanged.
+// Every device runs through the in-process classroom relay, as mobile-learner.e2e.ts runs it.
 // PME_E2E_PORT and PME_E2E_RELAY_PORT (+ the worker's index) keep Vite and the relay inside a machine's port range.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -188,6 +189,26 @@ test('the learner PIN changed while a phone was away and the laptop reloaded: ba
   await expect(d.p.locator('.ip-peer-error')).toHaveText("The learner PIN was changed on the instructor's computer. Enter the new learner PIN.");
   await provedTicketOnly(d.hellos, before);
   await typePin(d.p, changed as string);
+  await expect(d.p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`, { timeout: 20_000 });
+  await d.ctx.close();
+});
+
+test('"Forget the room" signs the learner remote out: it shows its form and says why; the same learner PIN signs it in again', async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const { code, learnerPin } = await laptop(page, '#/room');
+  const d = await deviceContext(browser, { phone: browserName === 'webkit' ? 'iPhone 13' : 'Pixel 7' });
+  await d.p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws())}#/remote/learner`);
+  await typePin(d.p, learnerPin);
+  await expect(d.p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`, { timeout: 20_000 });
+  await page.locator('.room-forget').click();
+  await expect(page.locator('dialog.room-forget-ask')).toContainText('Every phone and tablet signed in with a PIN is signed out');
+  await expect(d.p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`); // asked first
+  await page.locator('.room-forget-yes').click();
+  await expect(d.p.locator('.ip-peer-form')).toBeVisible({ timeout: 20_000 });
+  await expect(d.p.locator('.ip-peer-error')).toHaveText("The instructor's computer forgot the room. Enter the learner PIN to sign in again.");
+  expect(await page.evaluate(() => localStorage.getItem('pme.learnerPin'))).toBe(learnerPin);
+  await typePin(d.p, learnerPin);
   await expect(d.p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`, { timeout: 20_000 });
   await d.ctx.close();
 });
