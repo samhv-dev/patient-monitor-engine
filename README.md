@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` 8f8e17d4 (Merge pull request #510 from samhv-dev/batch/1117-1353-507-500), built 2026-11-17T12:20:51.577Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/8f8e17d493f9dde6f41addc7cc8abed0be976901
+The built teaching app of `main` 068c7130 (Merge pull request #517 from samhv-dev/batch/1117-1431-506-498), built 2026-11-17T14:41:28.142Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/068c7130fd3c34512fa665afa6f0773583dfbaa2
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
