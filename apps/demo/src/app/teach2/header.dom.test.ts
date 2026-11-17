@@ -163,6 +163,21 @@ describe('Instructor v2 header: the same commands as the session bar', () => {
     expect([...v2.el.children].map((c) => c.className.split(' ')[0])).toEqual(['ip2-who', 'ip2-mode', 'ip2-title', 'ip2-preps-count', 'ip2-spacer', 'ip2-pill', 'ip2-fanwrap', 'ip2-head-div', 'ip2-topctl', 'ip2-topctl']);
   });
 
+  it('the Sound switch says which page of this browser plays the sound, as soon as another page takes or gives it up', () => {
+    const f = fakeLink();
+    let elsewhere: string | null = null;
+    let told = () => {};
+    const v2 = mountHeader(f.link, { soundOn: () => false, soundElsewhere: () => elsewhere, onSound: (fn) => ((told = fn), () => (told = () => {})), toggleSound: () => {}, code: 'QFBAWA', phones: () => 0 });
+    offs.push(v2.destroy);
+    const sound = v2.el.querySelector('.ip2-sound') as HTMLButtonElement;
+    elsewhere = 'the learner monitor';
+    told();
+    expect([sound.getAttribute('aria-pressed'), sound.textContent]).toEqual(['false', 'Sound off: playing in the learner monitor']);
+    elsewhere = null;
+    told();
+    expect(sound.textContent).toBe('Sound off');
+  });
+
   it('the pill and the speed box follow the host (a pause or speed set elsewhere)', () => {
     const r = both();
     r.ctl.hostPaused = true;

@@ -72,9 +72,14 @@ describe('the dose-rate line (L8)', () => {
     expect(doseUnitOf('fentanyl', 'mcg')).toBe('mcg/kg/min');
     // 10 mL/h × 10 mg/mL = 100 mg/h = 1666.7 µg/min; ÷ 64 kg = 26.0 µg/kg/min
     expect(doseRateText('propofol', (10 * 10) / 60, 'mg', 64)).toBe('26 µg/kg/min for 64 kg');
-    expect(doseRateText('propofol', (10 * 10) / 60, 'mg', null)).toBe(`1670 µg/min (${INFUSION_WORDS.noWeight})`);
+    expect(doseRateText('propofol', (10 * 10) / 60, 'mg', null)).toBe(`1667 µg/min (${INFUSION_WORDS.noWeight})`); // the pump face's number form
     // epinephrine: the formulary's mg, the engine's µg, prescribed µg/kg/min
     expect(doseRateText('epinephrine', (6 * 0.016) / 60, 'mg', 80)).toBe('0.02 µg/kg/min for 80 kg');
+  });
+
+  it('a rate is never written in exponent form, however small', () => {
+    expect(INFUSION_WORDS.mlH(3.9e-12)).toBe('0.0000000000039 mL/h');
+    expect(INFUSION_WORDS.started(0.05)).toBe('Started at 0.05 mL/h');
   });
 
   it("reads the weight from the engine's own snapshot (the drug model's patient)", () => {

@@ -1,5 +1,6 @@
 // Look-ahead tone scheduler (brief §3.6): a 25 ms timer schedules every tone due in the next 100 ms on
-// the audio clock. Tones are also tried the moment they arrive.
+// the audio clock. Tones are also tried the moment they arrive. A tone is placed by its sim time, or by its run time
+// (ClockMap) when it must keep its wall-clock spacing at any speed (alarm patterns).
 // Lateness policy:
 // - a late tone plays at once (a QRS beep is a DETECTION event, as on a real monitor);
 // - `now − when` includes the output device's latency (`when` is output-mapped through getOutputTimestamp),
@@ -20,6 +21,8 @@ const FORGET_AFTER_S = 2; // keep played ids this long after their voice ends, f
 
 export interface ToneRequest {
   t: number; // sim seconds
+  /** Run seconds (ClockMap) to start at instead of t: the tone keeps its wall time when the speed changes. */
+  runT?: number;
   id: string;
   kind: string;
   freqHz?: number;
@@ -88,7 +91,6 @@ export class ToneScheduler {
     if (this.live.has(tone.id)) return; // already queued or played
     this.live.set(tone.id, { t: tone.t, at: Number.NaN, handle: null });
     this.queue.push(tone);
-    this.queue.sort((a, b) => a.t - b.t);
     this.pump();
   }
 
@@ -135,11 +137,11 @@ export class ToneScheduler {
     const now = this.deps.audioNow();
     // Forget a tone only after its voice has ended (a 60 s ready tone outlives the 2 s dedupe window)
     for (const [id, l] of this.live) if ((l.handle?.endsAt ?? l.at) + FORGET_AFTER_S < now) this.live.delete(id);
-    while (this.queue.length > 0) {
-      const tone = this.queue[0] as ToneRequest;
-      const when = this.deps.perfToAudio(this.clock.simToPerfMs(tone.t));
-      if (when > now + LOOKAHEAD_S) break;
-      this.queue.shift();
+    // sim-time and run-time tones fall out of one order when the speed changes: each is judged on its own audio time
+    const timed = this.queue.map((tone) => ({ tone, when: this.deps.perfToAudio(tone.runT !== undefined ? this.clock.runToPerfMs(tone.runT) : this.clock.simToPerfMs(tone.t)) }));
+    const due = timed.filter((d) => d.when <= now + LOOKAHEAD_S).sort((a, b) => a.when - b.when);
+    this.queue = timed.filter((d) => d.when > now + LOOKAHEAD_S).map((d) => d.tone);
+    for (const { tone, when } of due) {
       const entry: ToneLogEntry = { id: tone.id, kind: tone.kind, simT: tone.t, when, lateS: 0, dropped: false };
       if (tone.refT !== undefined) entry.refT = tone.refT;
       const excess = Math.max(0, now - when - this.outputLatencyS);

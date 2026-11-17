@@ -35,8 +35,8 @@ import { bolusDrugOf, givenByOf, type DrugLock, lockReason, RecentGives } from '
 import type { Formulary } from '../formulary/types.ts';
 import type { PumpDevices } from '../pump-devices.ts';
 import {
-  channelsRunning, concText, mismatched, noteApplied, onPumpsWords, pumpWire, routedToChannel, translatePump,
-  type ChannelKind, type HostChannel, type PumpContext, type PumpTranslated,
+  channelsRunning, concText, mismatched, noteApplied, onPumpsWords, pumpWire, rackRefusal, routedToChannel, translatePump,
+  type ChannelInUse, type ChannelKind, type HostChannel, type PumpContext, type PumpTranslated,
 } from './pump-host.ts';
 import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
 import type { SignInBook, TicketRole } from './sign-in-book.ts';
@@ -361,6 +361,8 @@ export class HostSession {
   private readonly learners = new Map<ManagedTransport, Map<string, { pin: string; device: string; role: 'learner' | 'pump'; chain?: string }>>();
   /** C2: what the host applied to each pump channel (pump-host.ts; never a volume, D4), by channel number. */
   private readonly pumpChannels = new Map<number, HostChannel>();
+  /** The engine's pump channels as its last `drugs` event showed them: a restored bookmark brings back channels the host's table no longer holds. */
+  private pumpRows: ReadonlyArray<{ ch: number; kind: ChannelKind; state: string }> = [];
   private learnerDenied: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong learner PINs (no lockout)
   /** L4 (§4 D3): the preparations the learner remotes staged, by device key and the device's own id. */
   private readonly preps = new Map<string, Map<string, HostPrep>>();
@@ -408,6 +410,7 @@ export class HostSession {
     this.stamp = createStamper(o.session, this.peerId, this.now);
     this.offEngine = o.target.on((e) => {
       if (e.type === ('state' as EngineEvent['type'])) this.engineState = true; // the engine emits its own (E1)
+      if (e.type === 'drugs') this.pumpRows = e.pumps ?? [];
       // C2 (D8): End, Empty Container or Infusion Complete stopped the channel: it no longer runs its drug (D9)
       if ((e.type as string) === 'pumpAlarm') {
         const c = this.pumpChannels.get((e as unknown as { ch: number }).ch);
@@ -703,6 +706,7 @@ export class HostSession {
     this.infusions.clear();
     this.pumpChannels.clear(); // C2: the channels are the old engine's (D4)
     if (cause === 'restart') {
+      this.pumpRows = [];
       this.stopped = null; // a new engine runs (a stopped one cannot restore a bookmark: its restore rejects)
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
@@ -1080,6 +1084,18 @@ export class HostSession {
     const out = translatePump(c as unknown as PumpCommand, x);
     if (!out.ok) return refuse(out.why);
     return this.learnerApply(t, from, only(pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, by }, out)), null, refuse);
+  }
+
+  /**
+   * Why Room setup's pump rack `next` is refused (pump-host.ts rackRefusal), or null: it removes or changes no channel in
+   * use. The host's table answers for a channel it applied an event to (it is newer than the engine's 1 Hz rows); the
+   * engine's rows for the others.
+   */
+  pumpRackRefusal(next: readonly ChannelKind[]): string | null {
+    const inUse: ChannelInUse[] = [];
+    for (const c of this.pumpChannels.values()) if (c.contents) inUse.push({ ch: c.ch, kind: c.kind, running: c.running });
+    for (const r of this.pumpRows) if (!this.pumpChannels.has(r.ch) && r.state !== 'notLoaded') inUse.push({ ch: r.ch, kind: r.kind, running: r.state === 'running' });
+    return rackRefusal(next, inUse);
   }
 
   /** C2: what translatePump reads, or why no pump command can be taken now. */

@@ -33,6 +33,9 @@ renderer, audio and skin contracts.
   (`apps/demo/src/physiology-console/meta.ts`, `apps/demo/src/app/vitals.ts`).
 - Clock mapping: wallMs(t) = anchorWall + (t − anchorSim)·1000/timeScale and audioTime = contextTime + (wallMs −
   performanceTime)/1000 (`packages/audio/src/clock-map.ts`; web.dev "A tale of two clocks").
+- Alarm bursts and their repeat are placed on run time, the case's running wall time (paused time excluded):
+  wallMs(r) = anchorWall + (r − anchorRun)·1000, so a speed change moves no burst and a pause holds them; whether an
+  alarm sounds still follows sim time (`packages/audio/src/alarm-sounder.ts`, `packages/audio/src/alarm-bursts.ts`).
 - A 25 ms timer schedules every tone due in the next 100 ms; a late tone plays at once, and a QRS tone is dropped only
   if it would sound more than 150 ms after its R wave (`packages/audio/src/scheduler.ts`).
 - The QRS/pulse beep is 60 ms, sine plus second harmonic, at a fixed 880 Hz or pitched by SpO2 as
@@ -57,6 +60,7 @@ renderer, audio and skin contracts.
 | [`modes.ts:59`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L59) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
 | [`clock-map.ts:2`](../../packages/audio/src/clock-map.ts#L2) | wallMs(t) = anchorWall + (t − anchorSim) · 1000 / timeScale |
 | [`clock-map.ts:3`](../../packages/audio/src/clock-map.ts#L3) | audioTime(wallMs) = contextTime + (wallMs − performanceTime) / 1000   (AudioContext.getOutputTimestamp) |
+| [`clock-map.ts:6`](../../packages/audio/src/clock-map.ts#L6) | wallMs(r) = anchorWall + (r − anchorRun) · 1000 |
 | [`pitch-maps.ts:1`](../../packages/audio/src/profiles/pitch-maps.ts#L1) | Pulse-tone pitch maps (brief §3.6; research 03 §3.6, 05 §2.5): f = baseHz · 2^(−(100 − SpO2)·s/12). |
 | [`calibration.ts:2`](../../packages/renderer/src/calibration.ts#L2) | x = (simT · mm_s · px_mm) mod laneWidth |
 | [`calibration.ts:3`](../../packages/renderer/src/calibration.ts#L3) | Default calibration: 96 CSS px per inch = 3.78 CSS px/mm [05 §3.1] until the user calibrates. |
@@ -442,7 +446,8 @@ renderer, audio and skin contracts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `READY_LATE_MS` | `2000` | ms | [ENG: control] | N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`; `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it: a late worker is still loading, not lost. Until brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at 2.2–6.0 s. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads it one module per request (278–1875 ms on an idle Mac). A worker that fails (an error before 'ready') still hands the monitor to the main thread, and the page says that too (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control]. |
+| `READY_LATE_MS` | `2000` | ms | [ENG: control] | N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`; `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it, up to READY_FINAL_MS: a late worker is still loading, not lost. Until brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at 2.2–6.0 s. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads it one module per request (278–1875 ms on an idle Mac). A worker that fails (an error before 'ready') still hands the monitor to the main thread, and the page says that too (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control]. |
+| `READY_FINAL_MS` | `20000` | ms | [ENG: control] | A worker neither ready nor failed this long after its start is taken as failed: the main thread takes over, as on an error before 'ready' (`pme-monitor-main-thread`), and a later answer from it is ignored. 20 s: over 3× the slowest start measured (6.0 s, dev server under background QoS with 2 test workers), so a legitimate start never reaches it [ENG: control]. |
 | `WORKER_SILENT_MS` | `3000` | ms | [ENG: display] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG: display]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
@@ -733,6 +738,9 @@ renderer, audio and skin contracts.
 | `pacerDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. |
 | `parseSite` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A stored or imported profile; |
 | `setLightScreen` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The rail's light/dark switch (E125): |
+| `soundSeat` | [`apps/demo/src/app/sound-seat.ts`](../../apps/demo/src/app/sound-seat.ts) | This page's seat for session `code`'s sound; |
+| `tciModelName` | [`apps/demo/src/app/tci-names.ts`](../../apps/demo/src/app/tci-names.ts) | "Schnider" for the set `schnider`: |
+| `tciTargetText` | [`apps/demo/src/app/tci-names.ts`](../../apps/demo/src/app/tci-names.ts) | "3 µg/mL": a target of `drugId` in the unit its Cp and Ce are shown in. |
 | `mount` | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
 | `defaultPatient` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The default patient as the board writes it: |
 | `caseList` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The library's cards in the library's order: |
@@ -1078,8 +1086,10 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/sign-ins.ts`](../../apps/demo/src/app/sign-ins.ts) | The host's book of signed-in devices (@pme/controller sign-in-book.ts), kept in this tab's sessionStorage under the session code, as the running case's position is (position.ts): a reload of this page, or the hand-over t |
 | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | "SIMULATION · not a clinical monitor" on every monitor surface (the owner, 26 October: the Monitor view, the learner monitor window, a learner's phone), never on the instructor's pages. |
 | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and alarm defaults, and the shell's units and speed. |
+| [`apps/demo/src/app/sound-seat.ts`](../../apps/demo/src/app/sound-seat.ts) | Which page of this browser plays a session's sound. |
 | [`apps/demo/src/app/staging.ts`](../../apps/demo/src/app/staging.ts) | Stage, then commit with one chosen transition (research/13-ui-simulator-benchmarks "Top 8" #1: Gaumard UNI's Apply panel, SimPad PLUS "Set transition time", Infirmary Integrated's Apply/Reset + auto-apply opt-out). |
 | [`apps/demo/src/app/store.ts`](../../apps/demo/src/app/store.ts) | Per-viewer conveniences in localStorage (research/13 brief §5), wrapped: private windows and previews can throw. |
+| [`apps/demo/src/app/tci-names.ts`](../../apps/demo/src/app/tci-names.ts) | How a TCI model and its target are written on the pump face, the Log and the Debrief: the model by its author's surname, as the SP5 TCI's brochure writes the models it holds (research/84 TB-02); a target with its drug's |
 | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Instructor v2, the ACTION slot (design §3.4, §3.5, board "Proposal v6"; plan IP6; answers 4–8, 20): one list of pills for the current stage, in the card's order (steps, judged objectives numbered on, automatic rows), eac |
 | [`apps/demo/src/app/teach2/alarm-line.ts`](../../apps/demo/src/app/teach2/alarm-line.ts) | Instructor v2, the alarm line under the learners' monitor in STATE (the owner's final layout, board "Option G"): the count and the sounding alarms' words (the alarm table's, as the top bar's count words its top alarm), a |
 | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | Instructor v2 with no case loaded (the owner's board "Empty 5", approved 30 October): which of the three ways to begin ACTION shows (the three cards, the case list, or Free roam), shared by ACTION and the strip through t |
@@ -1263,6 +1273,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`apps/demo/e2e/alarm-off-label.e2e.ts`](../../apps/demo/e2e/alarm-off-label.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/alarm-sound-real-time.e2e.ts`](../../apps/demo/e2e/alarm-sound-real-time.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/apnoea-alarm-latched.e2e.ts`](../../apps/demo/e2e/apnoea-alarm-latched.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-instructor-phone.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-accessibility-learner-phone.e2e.ts`](../../apps/demo/e2e/app-accessibility-learner-phone.e2e.ts) | 0 | 0 |
@@ -1336,6 +1347,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/monitor-return-controls.e2e.ts`](../../apps/demo/e2e/monitor-return-controls.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-worker-busy.e2e.ts`](../../apps/demo/e2e/monitor-worker-busy.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-worker-stopped.e2e.ts`](../../apps/demo/e2e/monitor-worker-stopped.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/one-sounding-page.e2e.ts`](../../apps/demo/e2e/one-sounding-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/organs-page.e2e.ts`](../../apps/demo/e2e/organs-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/oxygen-by-mask.e2e.ts`](../../apps/demo/e2e/oxygen-by-mask.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/pacer-overlay-device-tab.e2e.ts`](../../apps/demo/e2e/pacer-overlay-device-tab.e2e.ts) | 0 | 0 |
@@ -1469,6 +1481,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/position.dom.test.ts`](../../apps/demo/src/app/position.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump-rack-session.dom.test.ts`](../../apps/demo/src/app/pump-rack-session.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/devices.dom.test.ts`](../../apps/demo/src/app/pump/devices.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/pump/face-num.dom.test.ts`](../../apps/demo/src/app/pump/face-num.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/face.dom.test.ts`](../../apps/demo/src/app/pump/face.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/flows.dom.test.ts`](../../apps/demo/src/app/pump/flows.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/page.dom.test.ts`](../../apps/demo/src/app/pump/page.dom.test.ts) | 0 | 0 |
@@ -1505,7 +1518,9 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/sim-clock-monotonic.dom.test.ts`](../../apps/demo/src/app/sim-clock-monotonic.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/sim-clock.dom.test.ts`](../../apps/demo/src/app/sim-clock.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/sound-seat.dom.test.ts`](../../apps/demo/src/app/sound-seat.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/tci-names.test.ts`](../../apps/demo/src/app/tci-names.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/action-parity.dom.test.ts`](../../apps/demo/src/app/teach2/action-parity.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/cache.dom.test.ts`](../../apps/demo/src/app/teach2/cache.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/census.dom.test.ts`](../../apps/demo/src/app/teach2/census.dom.test.ts) | 0 | 0 |
