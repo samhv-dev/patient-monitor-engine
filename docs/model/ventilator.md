@@ -92,6 +92,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `LEAD_TICKS` | `5` | — | — | Frames are scheduled this many engine ticks ahead of the first measured arrival (jitter of one rAF frame). |
 | `MAX_AHEAD_TICKS` | `75` | — | — | The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). |
 | `RUN_TIMEOUT_MS` | `2000` | ms | [ENG: network] | A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then takes over, as when the cockpit is closed), wall ms [ENG: network]. |
+| `RESTORE_REPOST_MS` | `250` | ms | [ENG: ui] | A ventilator that has not taken a restore is sent it again at most this often while it sends, wall ms [ENG: ui]. |
 
 ### [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts)
 
@@ -101,6 +102,8 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `RELAY_BATCH_MAX` | `16` | — | — | The most `cmds` one batch packs (@pme/controller guard.ts VENT_LIMITS.batch). |
 | `RELAY_BODY_BYTES` | `4 * 1024` | — | — | A `vent` body's largest JSON (guard.ts VENT_LIMITS.bytes): a burst over it goes in several batches. |
 | `SETTINGS_MS` | `1000` | ms | — | The cockpit's settings go at least this often, ms (plan R8c: "once a second"). |
+| `RELAY_STATE_MS` | `1000` | ms | [ENG: network; 4.3 KB a second; the link makes again, unsent, the ticks a restored engine already has, so an older state costs no exactness] | The cockpit's state goes at most this often, ms [ENG: network; 4.3 KB a second; the link makes again, unsent, the ticks a restored engine already has, so an older state costs no exactness]. |
+| `RELAY_STATE_BYTES` | `8 * 1024` | — | — | A `state` body's largest JSON (guard.ts VENT_LIMITS.stateBytes). |
 
 ### [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts)
 
@@ -145,6 +148,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `lungConditionsOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | The row's engine lung conditions (Stage V.1): |
 | `createRelayPort` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | `settings`: |
 | `ventWireOver` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The cockpit's wire over its socket to the relay (a @pme/controller ManagedTransport and its stamper): |
+| `snapshotSettings` | [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts) | The settings a snapshot holds, and what it last measured (a hand-over's input), or null when it is not one. |
 | `lungMechanics` | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | One lung (C, R_insp, R_exp, pleural) → the ventilator's single compartment (catalogue rows and lungState alike). |
 | `pbw` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Predicted body weight (kg) from height and sex (Devine; |
 | `recoilPressure` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Elastic recoil (cmH2O above PEEP) at volume v (mL above the PEEP volume). |
@@ -214,6 +218,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) | 0 | 0 |
 | [`link-refused-probe.test.ts`](../../packages/ventilator/test/link-refused-probe.test.ts) | 0 | 0 |
 | [`link-relink.test.ts`](../../packages/ventilator/test/link-relink.test.ts) | 0 | 0 |
+| [`link-restore-record.test.ts`](../../packages/ventilator/test/link-restore-record.test.ts) | 0 | 0 |
 | [`link-restore.test.ts`](../../packages/ventilator/test/link-restore.test.ts) | 0 | 0 |
 | [`lung-input.test.ts`](../../packages/ventilator/test/lung-input.test.ts) | 0 | 0 |
 | [`mechanics.test.ts`](../../packages/ventilator/test/mechanics.test.ts) | 0 | 0 |
