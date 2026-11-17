@@ -85,6 +85,7 @@ No exported `…State` type in this module.
 | `frameBudgetMs` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | The work budget of a frame `wallDeltaMs` after the last one (FRAME_BUDGET_MS–FRAME_BUDGET_MAX_MS). |
 | `runOwed` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | Run the clock's owed ticks within `budgetMs` of wall time; |
 | `restingPatient` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). |
+| `withoutDevices` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | The snapshot without the state of a device that drives the patient (`deviceState`): |
 | `createEngine` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | — |
 | `sfc32Next` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Advance the state in place and return the next uint32. |
 | `seedStream` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Seed one named stream from hash(seed, name), then discard 15 outputs to mix the state. |
