@@ -5,7 +5,7 @@ import { attachReveal, normalizeSessionCode, RevealGesture, type Formulary } fro
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
-import { instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
+import { hashOf, instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
 import { instructorPin, learnerPin, type InstructorPin } from './instructor-pin.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
@@ -37,7 +37,7 @@ import { watchHiddenTab } from './hidden-tab.ts';
 import { mountDepthWindow } from './views/depth.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { stoppedNotice } from './engine-stopped.ts';
-import { deviceKey, pickerView } from './views/join.ts';
+import { deviceKey, pickerView, PICKER_WORDS } from './views/join.ts';
 import { pumpPageView } from './pump/page.ts';
 import { mountFlows, pumpLink } from './pump/controls.ts';
 import { faceProfilesOf, shippedPumpDevices } from './pump/devices.ts';
@@ -73,7 +73,6 @@ const moved = normalizeSessionCode(q.get('moved') ?? '');
 // landscape, the room model's look), `#/depth` the depth-of-anaesthesia window (EEG plan E12), anything else today's
 // learner monitor
 const shows = follow ? instrumentOf(location.hash) : null;
-const defibWindow = shows === 'defib';
 if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 if (follow && shows === 'remote') document.documentElement.dataset.learner = 'remote'; // L6: the monitor strip over the tabs (app.css)
 if (follow && shows === 'pump') document.documentElement.dataset.learner = 'pump'; // A1: the rack, no monitor (app.css)
@@ -101,7 +100,7 @@ if (follow && shows === 'pick') {
   document.title = 'Choose an instrument: patient monitor simulator';
 } else if (follow && shows === 'remote') {
   // L6 (plan learner-action-remote.md §4 D1): the learner action remote. Its learner-PIN form first; at sign-in the
-  // follower, whose every hello says `{role: 'learner', show: 'learner', device, pin}` (the PIN from the page's memory);
+  // follower, whose every hello says `{role: 'learner', show: 'learner', device}` with the PIN, then the host's ticket;
   // granted, the monitor strip, the three tabs and the connection line. The hash stays `#/remote/learner`, so a reload
   // opens the form again (the PIN is typed again: it is kept nowhere)
   let current: ReturnType<typeof mountFollower> | null = null;
@@ -120,8 +119,8 @@ if (follow && shows === 'pick') {
     drugs: drugs.el,
     infusions: infusions.el,
     labs: labs.el,
-    follow: (code, bar, pin) => {
-      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), pin });
+    follow: (code, bar, credential) => {
+      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), credential });
       line.set(f.monitor, f.style, true);
       f.onStyle = (st) => line.set(f.monitor, st, true);
       return (current = f);
@@ -143,14 +142,14 @@ if (follow && shows === 'pick') {
   Object.assign(window, { __pmeLearnerRemote: remote, __pmeLearnerDrugs: drugs, __pmeLearnerInfusions: infusions, __pmeLearnerLabs: labs, __pmeApp: { shell, frames, site } });
 } else if (follow && shows === 'pump') {
   // A1 (plan pump-rack-tci.md §4 D1): the pump tablet. Its learner-PIN form first; at sign-in the follower, whose every
-  // hello says `{role: 'pump', show: 'pump', device, pin}` (the PIN from the page's memory); granted, the rack. No monitor
+  // hello says `{role: 'pump', show: 'pump', device}` with the PIN, then the host's ticket; granted, the rack. No monitor
   // and none of its sound. The faces read S1's shipped device profiles (D12; N125: they were given none before A2)
   const devices = shippedPumpDevices();
   const page = pumpPageView({
     code: follow,
     stage: shell.stage,
     profiles: faceProfilesOf(devices),
-    follow: (code, bar, pin) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), pin, sound: false }),
+    follow: (code, bar, credential) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), credential, sound: false }),
   });
   // A2: the channel flows on each face, sending through the granted follower; the stock list is the formulary's (S1)
   let formulary: Formulary | null = null;
@@ -166,11 +165,12 @@ if (follow && shows === 'pick') {
   document.title = 'Infusion pumps: patient monitor simulator';
   Object.assign(window, { __pmePumpPage: page, __pmeApp: { shell, frames, site } });
 } else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
-  if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
-  // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
-  const what = defibWindow ? 'Defibrillator' : shows === 'depth' ? 'Depth of anaesthesia' : 'Learner monitor';
+  // An address it does not know is the learner monitor's; an instrument's own address is kept, so a reload reopens it
+  if (location.hash !== hashOf(shows)) history.replaceState(null, '', `${location.pathname}${location.search}${hashOf(shows)}`);
+  // Its status and its own Sound / Silence sit under the monitor: the monitor view hides the top bar
+  const what = PICKER_WORDS.cards.find((c) => c.show === shows)?.title ?? '';
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': what });
-  shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
+  shell.add({ id: 'monitor', title: what, el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
   const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { show: shows, device: deviceKey() });
   if (shows === 'depth') {
     // E12: the depth device over its follower's monitor, which is not this screen's instrument (its engine is the
@@ -190,7 +190,6 @@ if (follow && shows === 'pick') {
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
-  if (defibWindow) document.title = `${what}: patient monitor simulator`;
   Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
 } else if (moved) {
   document.body.replaceChildren(h('main', { class: 'host-moved' },
@@ -460,7 +459,7 @@ if (follow && shows === 'pick') {
   const kept = q.get('load') === 'perf8' ? null : readPosition({ code: session.code });
   if (kept && (!deep || deep === kept.cardId)) {
     session.live = true;
-    void restorePosition(kept, session, loadScenario).then((ok) => {
+    void restorePosition(kept, session, link, loadScenario).then((ok) => {
       const text = ok ? `Restored after ${handed ? 'the move from the other tab' : 'reload'}: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after ${handed ? 'the move from the other tab' : 'the reload'}: ${kept.title} starts again`;
       toast(text, 'alert'); // after a reload, on whichever view it landed
       link.note(text, 'system');
@@ -469,7 +468,7 @@ if (follow && shows === 'pick') {
     session.live = true;
     if (!location.hash) location.hash = hrefOf('teach2'); // a deep link to a card opens the Instructor view
   }
-  keepPositions(session);
+  keepPositions(session, link);
   // Another tab took this session (or started it anew): stop hosting it here, and say where it went
   announceHost(session.code, { kept: () => keptItems(), gone: () => (session.destroy(), location.replace(`${location.pathname}?moved=${session.code}`)) });
   shell.start();

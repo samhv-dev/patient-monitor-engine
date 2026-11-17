@@ -10,8 +10,8 @@
 // sheet is first opened is listed; a restart clears it, a return to a bookmark keeps what was drawn before the bookmark
 // and makes a result returned after it pending again (the restored engine returns it once more).
 import { LEARNER_ISSUED_BY, type AppliedResolution, type WireEvent } from '@pme/controller';
-import { ANALYSER_IDS, sectionFor, TICK_S, turnaroundFor, type AnalyserId, type EngineEvent, type LabPanelId, type LabValues } from '@pme/engine-core';
-import { mountLabPanel } from '@pme/renderer';
+import { ANALYSER_IDS, sectionFor, TICK_S, turnaroundFor, type AnalyserId, type AnalyteId, type EngineEvent, type LabPanelId, type LabValues } from '@pme/engine-core';
+import { labLabel, mountLabPanel } from '@pme/renderer';
 import { LAB_SENDS, LABS_WORDS } from '../remote/labs.ts';
 import type { AppSession } from '../session.ts';
 import { clock, h, setText } from '../ui.ts';
@@ -27,6 +27,10 @@ export const LAB_SHEET_WORDS = {
   unnamed: 'a learner remote (no name in Room setup)',
   unknown: 'no one named (the draw is not in this page’s record)',
   primary: 'Results as the analyser returns them; nothing is drawn from this sheet',
+  testsPending: (tests: string) => `Its tests: ${tests}. Which of them the simulator computes is shown with the result.`,
+  allComputed: 'The simulator computes every test of this panel.',
+  someComputed: (missing: string) => `Not computed by the simulator: ${missing}.`,
+  noneComputed: (missing: string) => `The simulator computes none of this panel’s tests: ${missing}.`,
 } as const;
 
 /** What the book reads of the host: its panel transport's wire events, its engine's events, Room setup's names. */
@@ -141,6 +145,21 @@ function stateText(s: LabSample): string {
   return LABS_WORDS.expected(s.drawnAt + (s.turnaroundS ?? turnaroundFor(s.panel, rowId(s.analyser))), row.name, row.kind);
 }
 
+/**
+ * What the sample says of its panel's tests: the row's analytes, and once returned, which of them the result holds (the
+ * engine's result holds exactly the row's analytes it computes, engine-core analysers.ts `panelValues`).
+ */
+function testsLine(s: LabSample): { text: string; computed: 'pending' | 'all' | 'some' | 'none' } {
+  const { section } = sectionFor(s.panel, rowId(s.result?.analyser ?? s.analyser));
+  const names = (keys: readonly AnalyteId[]) => keys.map(labLabel).join(', ');
+  if (!s.result) return { text: LAB_SHEET_WORDS.testsPending(names(section.analytes)), computed: 'pending' };
+  const values = s.result.values;
+  const missing = section.analytes.filter((a) => values[a] === undefined);
+  if (missing.length === 0) return { text: LAB_SHEET_WORDS.allComputed, computed: 'all' };
+  if (missing.length === section.analytes.length) return { text: LAB_SHEET_WORDS.noneComputed(names(missing)), computed: 'none' };
+  return { text: LAB_SHEET_WORDS.someComputed(names(missing)), computed: 'some' };
+}
+
 /** Fill `frame` (the sheets slot's frame for 'labs') from `book`; redrawn when the book changes. */
 export function labsSheet(frame: SheetFrame, book: LabBook): { refresh(): void; destroy(): void } {
   frame.groups([], '', () => undefined);
@@ -154,18 +173,14 @@ export function labsSheet(frame: SheetFrame, book: LabBook): { refresh(): void; 
   const rows = new Map<LabSample, { el: HTMLElement; sig: string }>();
   const fill = (s: LabSample, el: HTMLElement) => {
     const table = h('div', { class: 'lr-lab-result' });
-    const none = h('p', { class: 'hint lr-lab-none' }, LABS_WORDS.noValues);
-    table.hidden = none.hidden = true;
-    if (s.result) {
-      mountLabPanel(table)(s.result.values, `${nameOf(s.panel)}, ${clock(s.drawnAt)}`, s.panel);
-      table.hidden = Object.keys(s.result.values).length === 0;
-      none.hidden = !table.hidden;
-    }
+    table.hidden = !s.result || Object.keys(s.result.values).length === 0;
+    if (s.result) mountLabPanel(table)(s.result.values, `${nameOf(s.panel)}, ${clock(s.drawnAt)}`, s.panel);
+    const tests = testsLine(s);
     el.replaceChildren(
       h('p', { class: 'lr-lab-title' }, LABS_WORDS.drawn(nameOf(s.panel), s.drawnAt)),
       h('p', { class: 'ip2-lab-who' }, LAB_SHEET_WORDS.by(s.who)),
       h('p', { class: 'lr-lab-state', 'data-state': s.result ? 'resulted' : 'pending' }, stateText(s)),
-      table, none);
+      table, h('p', { class: 'hint ip2-lab-tests', 'data-computed': tests.computed }, tests.text));
   };
   const draw = () => {
     const all = book.entries;

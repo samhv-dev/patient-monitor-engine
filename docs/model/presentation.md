@@ -588,6 +588,7 @@ renderer, audio and skin contracts.
 | `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug (mass doses in mg; |
 | `facts` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The measured facts of the kept course, in a fixed order; |
 | `perMinute` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: |
+| `notDoneOf` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: |
 | `describeCommand` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); |
 | `spanText` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A fast-forward's span in words ("5 min", "90 s"). |
 | `doseUnits` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Dose units offered for a drug: |
@@ -650,7 +651,7 @@ renderer, audio and skin contracts.
 | `ibpScalesControl` | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | The control; |
 | `nibpStartCommand` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | O2 (research/34 §8 O2): |
 | `oneLiner` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | The session bar's one-liner: |
-| `keptItems` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | The kept position and stage marks as stored (key → value), for a hand-over to another tab of this browser (host-guard.ts): |
+| `keptItems` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | The kept position, stage marks and book of signed-in devices as stored (key → value), for a hand-over to another tab of this browser (host-guard.ts): |
 | `putKeptItems` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Store a position handed over by another tab (keptItems there); |
 | `savePosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Keep `p` (false when the storage refuses it: |
 | `saveStageMarks` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Keep the stage marks `marks` beside the position of `p` (none: |
@@ -725,6 +726,7 @@ renderer, audio and skin contracts.
 | `bands` | [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | The bands: every number a card promises sits in [lo, hi], taken from the measured prototype ± a stated tolerance. |
 | `twinRun` | [`apps/demo/src/app/showcase/twin.ts`](../../apps/demo/src/app/showcase/twin.ts) | The /1 card and its /2 port run side by side on the press path to `untilS`, and their differences. |
 | `portCheckWords` | [`apps/demo/src/app/showcase/twin.ts`](../../apps/demo/src/app/showcase/twin.ts) | The port check's words (§7.3): |
+| `signInBook` | [`apps/demo/src/app/sign-ins.ts`](../../apps/demo/src/app/sign-ins.ts) | The book for `code`; |
 | `headerHasRoom` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | Whether this skin's header carries the line (the two-row header; |
 | `simLine` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | The line for the monitor in `stage` (its strip is placed in the stage, above the monitor). |
 | `defibDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A model's energies as the panel offers them; |
@@ -1073,6 +1075,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | The app frame (research/13 brief §4, §7 "App shell / top bar"): the workflow rail (rail.ts, E125) or, on a hostless Remote, the top bar's view switcher; the top bar's always-visible state (alarm count in the skin's colou |
 | [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | Runs a showcase card on a bare engine the way the app does (engine seed 7, the document's mode, truth at 1 Hz, the patient's sensors; apps/demo/src/app/session.ts loadScenario) and presses the card's OWN buttons on a scr |
 | [`apps/demo/src/app/showcase/twin.ts`](../../apps/demo/src/app/showcase/twin.ts) | The twin run (docs/plans/scenario-builder.md §7.3, piece B7): a /1 card and its /2 port on the same patient and seed (harness.ts runCard: engine seed 7, the card's own seed for its runner), the /1 card pressed by its but |
+| [`apps/demo/src/app/sign-ins.ts`](../../apps/demo/src/app/sign-ins.ts) | The host's book of signed-in devices (@pme/controller sign-in-book.ts), kept in this tab's sessionStorage under the session code, as the running case's position is (position.ts): a reload of this page, or the hand-over t |
 | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | "SIMULATION · not a clinical monitor" on every monitor surface (the owner, 26 October: the Monitor view, the learner monitor window, a learner's phone), never on the instructor's pages. |
 | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and alarm defaults, and the shell's units and speed. |
 | [`apps/demo/src/app/staging.ts`](../../apps/demo/src/app/staging.ts) | Stage, then commit with one chosen transition (research/13-ui-simulator-benchmarks "Top 8" #1: Gaumard UNI's Apply panel, SimPad PLUS "Set transition time", Infirmary Integrated's Apply/Reset + auto-apply opt-out). |
@@ -1318,6 +1321,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/instrument-reload.e2e.ts`](../../apps/demo/e2e/instrument-reload.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/laptop-labs.e2e.ts`](../../apps/demo/e2e/laptop-labs.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
@@ -1340,6 +1344,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/press-across-repaint.e2e.ts`](../../apps/demo/e2e/press-across-repaint.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/pump-rack.e2e.ts`](../../apps/demo/e2e/pump-rack.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/reload-keeps-case.e2e.ts`](../../apps/demo/e2e/reload-keeps-case.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/remote-resume.e2e.ts`](../../apps/demo/e2e/remote-resume.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/resolution-fit.e2e.ts`](../../apps/demo/e2e/resolution-fit.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/respiratory-evidence-page.e2e.ts`](../../apps/demo/e2e/respiratory-evidence-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/restart-keeps-case.e2e.ts`](../../apps/demo/e2e/restart-keeps-case.e2e.ts) | 0 | 0 |
@@ -1428,6 +1433,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/fast-forward-cockpit.test.ts`](../../apps/demo/src/app/fast-forward-cockpit.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-log.test.ts`](../../apps/demo/src/app/fast-forward-log.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fast-forward-panel.dom.test.ts`](../../apps/demo/src/app/fast-forward-panel.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/follower-address.dom.test.ts`](../../apps/demo/src/app/follower-address.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-beep-gate.test.ts`](../../apps/demo/src/app/follower-beep-gate.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/formulary.test.ts`](../../apps/demo/src/app/formulary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 0 | 0 |
@@ -1442,6 +1448,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/keep.dom.test.ts`](../../apps/demo/src/app/keep.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/kit-store.test.ts`](../../apps/demo/src/app/kit-store.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/learner-paused.test.ts`](../../apps/demo/src/app/learner-paused.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/link-case.dom.test.ts`](../../apps/demo/src/app/link-case.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-others.test.ts`](../../apps/demo/src/app/link-others.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-pump.test.ts`](../../apps/demo/src/app/link-pump.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |

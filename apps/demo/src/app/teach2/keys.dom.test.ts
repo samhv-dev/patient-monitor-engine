@@ -18,7 +18,7 @@ function fakeLink(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1',
   const fns = new Set<() => void>();
   const link = {
     ctl: { scenario: new ScenarioView(), bookmarks: [], simT: 0, state: null, rhythm: null, log: [], send: async () => reply },
-    host: null, alarms: null, simT: 0, log: [], ramps: new Map(),
+    host: null, alarms: null, simT: 0, log: [], sessionLog: [], ramps: new Map(),
     send: async (c: CommandInput) => (sent.push(structuredClone(c)), reply),
     note: () => undefined,
     onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)),

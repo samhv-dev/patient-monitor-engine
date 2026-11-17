@@ -3,6 +3,7 @@
 // each step; CSF displacement, mass lesion, oedema, osmotherapy and head-up posture change the volume; Cushing
 // (cushing.ts) and herniation are states.
 import { createCushing, cushingDMap, stepCushing, type CushingState } from './cushing.ts';
+import { createBrainEnergy, stepBrainEnergy, type BrainEnergy } from './energy.ts';
 import { autoreg, brainOxygen, caO2, cbvRel, co2Factor, NO_DRUGS, o2Factor, tempCmro2, type BrainDrugs } from './flow.ts';
 import { csfDisplacementRate, elastance, icpOfVolume } from './mechanics.ts';
 import {
@@ -40,6 +41,7 @@ export interface BrainState {
   cush: CushingState;
   lowCppS: number;
   herniated: boolean;
+  energy: BrainEnergy;
   // outputs (truths)
   icp: number; cpp: number; mapHead: number; cbfRel: number; cbv: number; cmro2Rel: number; pbto2: number; sjvo2: number; elast: number;
 }
@@ -65,13 +67,14 @@ export function brainParams(conditions: readonly { id: string; severity?: number
 export function createBrain(p: BrainParams, inp: BrainInputs): BrainState {
   const b: BrainState = {
     t: 0, p, mass: 0, massRate: 0, oedema: 0, csfDisp: 0, osm: [], headUpDeg: 0, g: 0, paco2Ref: inp.paco2, mapBase: inp.map, // adapted to the patient's own PaCO2
-    cush: createCushing(), lowCppS: 0, herniated: false,
+    cush: createCushing(), lowCppS: 0, herniated: false, energy: createBrainEnergy(),
     icp: p.icp0, cpp: inp.map - p.icp0, mapHead: inp.map, cbfRel: 1, cbv: CBV0_ML, cmro2Rel: 1, pbto2: 25, sjvo2: 0.65, elast: 0,
   };
   // start at rest: conductance at its target so t = 0 is a steady state
   b.g = targetCbf(b, inp, b.cpp) / Math.max(1, b.cpp);
   solve(b, inp, 0);
   b.mapBase = inp.map;
+  stepBrainEnergy(b.energy, supplyOf(b, inp));
   return b;
 }
 
@@ -157,6 +160,12 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
   const o = brainOxygen(r, inp.sao2, inp.pao2);
   b.pbto2 = o.pbto2;
   b.sjvo2 = o.sjvo2;
+  stepBrainEnergy(b.energy, supplyOf(b, inp));
+}
+
+/** The supply the energy state reads: this step's flow and the blood gases it was computed with. */
+function supplyOf(b: BrainState, inp: BrainInputs) {
+  return { cbfRel: b.cbfRel, hb: inp.hb, sao2: inp.sao2, pao2: inp.pao2 };
 }
 
 export { cushingDMap, CPP_REF, NO_DRUGS };

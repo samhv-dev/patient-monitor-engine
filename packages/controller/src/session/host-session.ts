@@ -39,6 +39,7 @@ import {
   type ChannelKind, type HostChannel, type PumpContext, type PumpTranslated,
 } from './pump-host.ts';
 import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
+import type { SignInBook, TicketRole } from './sign-in-book.ts';
 import {
   deliverPrep, infusePrep, instructorView, learnerView, prepRecord, PREPS_PER_DEVICE, setInfusion, stagePrep, stagedOf,
   type HostPrep, type InstructorPrepNews, type InstructorPrepView, type LearnerPrepNews, type PrepNewsKind, type Running, type Translated,
@@ -154,6 +155,12 @@ export interface HostSessionOptions {
    * nor it the instructor's. Absent or null: every learner remote is denied. Never logged, never sent.
    */
   learnerPin?: () => string | null;
+  /**
+   * The book of signed-in devices (sign-in-book.ts): each grant hands on a one-time ticket, and a device that proves its
+   * ticket is admitted again without its PIN (after this page's reload too, when the book is kept). Absent: every grant
+   * is on a PIN, as before, and a ticket is refused.
+   */
+  signIns?: SignInBook;
   /** L4: the formulary layer every preparation is made from (null while it loads). Absent or null: a `prep stage` is refused. */
   formulary?: () => Formulary | null;
   /** L4 (§6): a preparation as staged, for the scenario driver's record (ScenarioDriver.recordPreparation). */
@@ -175,12 +182,12 @@ export interface HostSessionOptions {
   phaseMark?: () => string | null;
   /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
   deviceName?: (key: string) => string | null;
-  /** L14: a learner device's drug the host did NOT give because the case was paused, one call per drug (the host's Log
-   *  and record show the attempt; nothing reached the engine). */
+  /** L14: a learner device's act on the patient (a drug, a sample) the host did NOT carry out because the case was paused,
+   *  one call per act (the host's Log and record show the attempt; nothing reached the engine). */
   onNotGiven?: (n: NotGiven) => void;
 }
 
-/** L14: what the host refused to give (as it built it for the engine: the drug, the dose, `by` and `prepId`), who sent it,
+/** L14: what the host refused (as it built it for the engine: the drug and dose or the sample, `by`, `prepId`), who sent it,
  *  why (PAUSED_REFUSAL) and the case time it arrived at. */
 export interface NotGiven {
   command: WireCommand;
@@ -208,6 +215,11 @@ export const LEARNER_REASONS = {
   notSignedIn: 'the learner remote is not signed in',
   noFormulary: 'this computer has no formulary loaded yet',
   full: `this remote holds ${PREPS_PER_DEVICE} preparations: discard one first`,
+} as const;
+/** What the host answers a device that proved a ticket it cannot admit (with the role's PIN changed and taken over). */
+export const TICKET_REASONS = {
+  newSession: "the instructor's computer started a new session",
+  used: 'this sign-in was already used or is not known',
 } as const;
 /** C2 (pump-rack-tci.md §7): what the host answers a pump tablet (with the learner remote's wrong PIN and PIN changed). */
 export const PUMP_REASONS = {
@@ -263,6 +275,8 @@ interface Gathered {
 }
 /** An engine command (time and scenario commands are the host's own, never part of a group's one dispatch). */
 const groupable = (c: WireCommand): boolean => c.type !== 'time' && c.type !== 'scenario';
+/** One learner command that acts on the patient as it is (a sample, a channel's rate), as learnerApply takes it. */
+const only = (c: WireCommand): Translated => ({ ok: true, cmds: [c], volumeMl: 0 });
 
 /** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG: network]. */
 export const STAGE_LEAD_TICKS = 3;
@@ -313,7 +327,11 @@ export const FF_PHASE_STOP = 'the next phase began';
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
 /** The roles that sign in with the instructor's PIN, each in its own single place (P3; R8c). */
 type SignsIn = 'instructor' | 'ventilator';
-type Holder = { t: ManagedTransport; from: string; pin: string };
+type Holder = { t: ManagedTransport; from: string; pin: string; chain?: string };
+/** A ticket hello's answer: the chain it proved and the ticket handed on, or why it is refused. */
+type Redeemed = { chain: string; ticket: string } | { reason: string };
+/** What a hello proved: a ticket (Redeemed), or the PIN (`{}`: a first ticket is drawn), or nothing (`reason`). */
+type Proof = Redeemed | Record<string, never>;
 /** The ack's words when a fast-forward runs: a controller's command waits for nothing. */
 const FF_REFUSAL = 'the simulation is fast-forwarding; try again when it ends';
 
@@ -340,7 +358,7 @@ export class HostSession {
   private readonly signedIn: Record<SignsIn, Holder | null> = { instructor: null, ventilator: null };
   /** L4: the granted learner remotes, each by (transport, from), with the learner PIN it proved and its device key; C2:
    *  the granted pump tablets beside them (`role`), on the same PIN. */
-  private readonly learners = new Map<ManagedTransport, Map<string, { pin: string; device: string; role: 'learner' | 'pump' }>>();
+  private readonly learners = new Map<ManagedTransport, Map<string, { pin: string; device: string; role: 'learner' | 'pump'; chain?: string }>>();
   /** C2: what the host applied to each pump channel (pump-host.ts; never a volume, D4), by channel number. */
   private readonly pumpChannels = new Map<number, HostChannel>();
   private learnerDenied: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong learner PINs (no lockout)
@@ -442,6 +460,7 @@ export class HostSession {
   instructorPinChanged(): void {
     this.revoke('instructor', INSTRUCTOR_REASONS.pinChanged);
     this.revoke('ventilator', INSTRUCTOR_REASONS.pinChanged);
+    this.o.signIns?.void((c) => c.role === 'instructor' || c.role === 'ventilator', INSTRUCTOR_REASONS.pinChanged);
   }
 
   /** Wrong learner PINs in the last DENIAL_WINDOW_MS, at most DENIAL_RECORD_MAX (no host lockout; the relay limits tries). */
@@ -454,6 +473,7 @@ export class HostSession {
   /** L4 (§4 D9): the learner PIN changed: every granted learner remote is revoked at once (each signs in again). */
   learnerPinChanged(): void {
     for (const [t, m] of this.learners) for (const from of m.keys()) this.grant(t, from, false, LEARNER_REASONS.pinChanged);
+    this.o.signIns?.void((c) => c.role === 'learner' || c.role === 'pump', LEARNER_REASONS.pinChanged);
     this.learners.clear();
   }
 
@@ -542,7 +562,7 @@ export class HostSession {
     return true;
   }
 
-  /** L14: the case is paused (a learner device's drug is refused until it resumes). */
+  /** L14: the case is paused (a learner device's act on the patient is refused until it resumes). */
   get paused(): boolean {
     return this.pausedNow;
   }
@@ -738,8 +758,54 @@ export class HostSession {
     else this.o.onVentilator?.(h ? h.from : null);
   }
 
-  private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string): void {
-    t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}) }));
+  private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string, ticket?: string): void {
+    t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}), ...(ticket !== undefined ? { ticket } : {}) }));
+  }
+
+  /** A device admitted on its PIN: a new chain of tickets, when the host keeps a book. */
+  private async firstTicket(role: TicketRole, device: string | null, from: string): Promise<Partial<Extract<Redeemed, { chain: string }>>> {
+    return this.o.signIns ? this.o.signIns.issue(role, device, from) : {};
+  }
+
+  /**
+   * A hello that proves a ticket instead of a PIN. The current ticket admits, and the next is handed on (the same one
+   * again to the socket that holds it: a hello said again before its grant arrived). The ticket it replaced admits
+   * only the peer id it was handed to, until that socket leaves; from anyone else it is a copy: the chain admits no
+   * more, and whoever holds it is signed out.
+   */
+  private async redeem(t: ManagedTransport, from: string, ticket: string, role: TicketRole, device: string | null): Promise<Redeemed> {
+    const book = this.o.signIns;
+    const f = book ? await book.find(ticket) : 'other-book';
+    if (f === 'other-book' || !book) return { reason: TICKET_REASONS.newSession };
+    if (!f || f.chain.role !== role || f.chain.device !== device) return { reason: TICKET_REASONS.used };
+    const c = f.chain;
+    if (c.void) return { reason: c.void };
+    if (!f.current && c.from !== from) {
+      book.void((x) => x.id === c.id, TICKET_REASONS.used);
+      this.dropChain(c.id, TICKET_REASONS.used);
+      return { reason: TICKET_REASONS.used };
+    }
+    const held = this.holdersOf(c.id).some((x) => x.t === t && x.from === from);
+    const again = held ? book.current(c.id) : undefined;
+    return again !== undefined ? { chain: c.id, ticket: again } : book.issue(role, device, from, c.id);
+  }
+
+  /** The sockets granted under `chain` now. */
+  private holdersOf(chain: string): Array<{ t: ManagedTransport; from: string }> {
+    const out: Array<{ t: ManagedTransport; from: string }> = [];
+    for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.chain === chain) out.push(this.signedIn[r] as Holder);
+    for (const [t, m] of this.learners) for (const [from, g] of m) if (g.chain === chain) out.push({ t, from });
+    return out;
+  }
+
+  /** Sign out every socket granted under `chain` but `keep`, telling each `reason`. */
+  private dropChain(chain: string, reason: string, keep?: { t: ManagedTransport; from: string }): void {
+    for (const x of this.holdersOf(chain)) {
+      if (keep && x.t === keep.t && x.from === keep.from) continue;
+      this.grant(x.t, x.from, false, reason);
+      this.learners.get(x.t)?.delete(x.from);
+      for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === x.t && this.signedIn[r]?.from === x.from) this.setHolder(r, null);
+    }
   }
 
   /** Tell the role's holder it is no longer granted, and forget it. */
@@ -754,28 +820,33 @@ export class HostSession {
    * An instructor or ventilator hello: verify its PIN and answer with a grant, before the welcome (the relay routes by
    * it). Each role has its own single place (option B within it: the newest right PIN takes over that role only, R8c).
    */
-  private verify(t: ManagedTransport, from: string, pin: string | undefined, role: SignsIn): void {
+  private async verify(t: ManagedTransport, from: string, pin: string | undefined, ticket: string | undefined, role: SignsIn): Promise<void> {
     // R8c: an app that drives from no remote cockpit takes no ventilator, whatever the PIN
     const want = role === 'ventilator' && !this.o.onVent ? null : (this.o.instructorPin?.() ?? null);
-    const h = this.signedIn[role];
-    const isHolder = h?.t === t && h.from === from;
+    const isHolder = () => this.signedIn[role]?.t === t && this.signedIn[role]?.from === from;
     const learnerPin = this.o.learnerPin?.() ?? null;
     if (want !== null && learnerPin !== null && samePin(want, learnerPin)) {
-      if (isHolder) this.setHolder(role, null);
+      if (isHolder()) this.setHolder(role, null);
       return this.grant(t, from, false, LEARNER_REASONS.samePins); // L4: the learner PIN never opens this role
     }
-    if (want === null || pin === undefined || !samePin(pin, want)) {
-      if (want !== null) this.denials.push(this.now());
+    const none = role === 'instructor' ? INSTRUCTOR_REASONS.noPhone : VENTILATOR_REASONS.noVentilator;
+    const r: Proof = want === null ? { reason: none } : ticket !== undefined ? await this.redeem(t, from, ticket, role, null) : pin !== undefined && samePin(pin, want) ? {} : { reason: INSTRUCTOR_REASONS.wrongPin };
+    if ('reason' in r || want === null) {
+      const reason = 'reason' in r ? r.reason : none;
+      if (reason === INSTRUCTOR_REASONS.wrongPin || reason === TICKET_REASONS.used) this.denials.push(this.now());
       if (this.denials.length > DENIAL_RECORD_MAX) this.denials.splice(0, this.denials.length - DENIAL_RECORD_MAX);
       this.instructorDenials(); // prunes the window
-      if (isHolder) this.setHolder(role, null); // its own hello no longer proves the PIN
-      const none = role === 'instructor' ? INSTRUCTOR_REASONS.noPhone : VENTILATOR_REASONS.noVentilator;
-      this.grant(t, from, false, want === null ? none : INSTRUCTOR_REASONS.wrongPin);
-      return;
+      if (isHolder()) this.setHolder(role, null); // its own hello no longer proves the PIN
+      return this.grant(t, from, false, reason);
     }
-    if (!isHolder && h) this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
-    this.grant(t, from, true);
-    this.setHolder(role, { t, from, pin: want });
+    const next = 'chain' in r ? r : await this.firstTicket(role, null, from);
+    const h = this.signedIn[role];
+    if (h && !isHolder()) {
+      this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
+      if (h.chain !== undefined && h.chain !== next.chain) this.o.signIns?.void((c) => c.id === h.chain, INSTRUCTOR_REASONS.takenOver);
+    }
+    this.grant(t, from, true, undefined, next.ticket);
+    this.setHolder(role, { t, from, pin: want, ...(next.chain !== undefined ? { chain: next.chain } : {}) });
     if (role === 'instructor') this.instructorPreps(); // L9: a phone that signs in (or again) sees what was already staged
   }
 
@@ -784,26 +855,29 @@ export class HostSession {
    * Many remotes may be granted at once; each is (transport, from), with the device key its gives are filed under. A
    * hello under the host's own peer id is refused: the instructor's copy of a preparation's news is addressed to it.
    */
-  private verifyLearner(t: ManagedTransport, from: string, pin: string | undefined, device: string | undefined, role: 'learner' | 'pump' = 'learner'): void {
+  private async verifyLearner(t: ManagedTransport, from: string, pin: string | undefined, ticket: string | undefined, device: string | undefined, role: 'learner' | 'pump' = 'learner'): Promise<void> {
     const want = this.o.learnerPin?.() ?? null;
     const instructor = this.o.instructorPin?.() ?? null;
-    this.learners.get(t)?.delete(from); // its own hello proves the PIN again, or it is no longer granted
-    const deny = (reason: string) => this.grant(t, from, false, reason);
+    // its own hello proves the PIN (or its ticket) again, or it is no longer granted
+    const deny = (reason: string) => (this.learners.get(t)?.delete(from), this.grant(t, from, false, reason));
     // C2 (§7): a pump tablet is admitted exactly as a learner remote, on the learner PIN, where the room has a rack
     if (role === 'pump' && !this.o.pumpRack?.()) return deny(PUMP_REASONS.noPump);
     if (want === null) return deny(role === 'pump' ? PUMP_REASONS.noPump : LEARNER_REASONS.noRemote);
     if (instructor !== null && samePin(want, instructor)) return deny(LEARNER_REASONS.samePins);
-    if (pin === undefined || !samePin(pin, want) || from === this.peerId) {
-      this.learnerDenied.push(this.now());
+    const r: Proof = from === this.peerId ? { reason: INSTRUCTOR_REASONS.wrongPin } : ticket !== undefined ? await this.redeem(t, from, ticket, role, device ?? null) : pin !== undefined && samePin(pin, want) ? {} : { reason: INSTRUCTOR_REASONS.wrongPin };
+    if ('reason' in r) {
+      if (r.reason === INSTRUCTOR_REASONS.wrongPin || r.reason === TICKET_REASONS.used) this.learnerDenied.push(this.now());
       if (this.learnerDenied.length > DENIAL_RECORD_MAX) this.learnerDenied.splice(0, this.learnerDenied.length - DENIAL_RECORD_MAX);
       this.learnerDenials(); // prunes the window
-      return deny(INSTRUCTOR_REASONS.wrongPin);
+      return deny(r.reason);
     }
     if (device === undefined) return deny(role === 'pump' ? PUMP_REASONS.noDevice : LEARNER_REASONS.noDevice);
+    const next = 'chain' in r ? r : await this.firstTicket(role, device, from);
+    if (next.chain !== undefined) this.dropChain(next.chain, INSTRUCTOR_REASONS.takenOver, { t, from }); // one device per chain
     let m = this.learners.get(t);
     if (!m) this.learners.set(t, (m = new Map()));
-    m.set(from, { pin: want, device, role });
-    this.grant(t, from, true);
+    m.set(from, { pin: want, device, role, ...(next.chain !== undefined ? { chain: next.chain } : {}) });
+    this.grant(t, from, true, undefined, next.ticket);
     if (role === 'pump') this.queue({ type: 'prep', t: this.o.target.now().simT, to: from, body: this.labels() }); // what it may load (§8)
   }
 
@@ -844,6 +918,7 @@ export class HostSession {
     p?.devices.delete(from);
     p?.left.add(from);
     this.learners.get(t)?.delete(from); // L4: a socket under its id signs in again
+    this.o.signIns?.left(from);
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
     if (this.silentVents.get(from) === t) this.silentVents.delete(from); // its socket is gone: nothing more can come from it
@@ -879,9 +954,9 @@ export class HostSession {
     }
     // R5d: the defibrillator window follows as a viewer does (a second screen of this computer gets the cockpit's frames)
     if (m.kind === 'hello' && (m.role === 'viewer' || m.role === 'defib' || m.role === 'learner' || m.role === 'pump')) this.viewerSeenAt = this.now();
-    if (m.kind === 'hello' && (m.role === 'instructor' || m.role === 'ventilator')) this.verify(t, m.from, m.pin, m.role);
-    if (m.kind === 'hello' && m.role === 'learner') this.verifyLearner(t, m.from, m.pin, m.device);
-    if (m.kind === 'hello' && m.role === 'pump') this.verifyLearner(t, m.from, m.pin, m.device, 'pump'); // C2 (§7)
+    if (m.kind === 'hello' && (m.role === 'instructor' || m.role === 'ventilator')) await this.verify(t, m.from, m.pin, m.ticket, m.role);
+    if (m.kind === 'hello' && m.role === 'learner') await this.verifyLearner(t, m.from, m.pin, m.ticket, m.device);
+    if (m.kind === 'hello' && m.role === 'pump') await this.verifyLearner(t, m.from, m.pin, m.ticket, m.device, 'pump'); // C2 (§7)
     if (m.kind === 'hello' && m.role === 'ventilator') return; // R8c: it follows nothing (no welcome, no snapshot)
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
     // R8c: only the granted ventilator's link messages reach the app, while its PIN holds
@@ -1007,8 +1082,7 @@ export class HostSession {
     if (!out.ok) return Promise.resolve(refuse(out.why));
     const { id, issuedBy, by, stageGroup, batch } = base as WireCommand & { by?: string };
     const wire = pumpWire({ id, issuedBy, ...(by !== undefined ? { by } : {}), ...(stageGroup !== undefined ? { stageGroup } : {}), ...(batch !== undefined ? { batch } : {}) }, out as Extract<PumpTranslated, { ok: true }>);
-    if (issuedBy === LEARNER_ISSUED_BY && this.pausedNow) return Promise.resolve(this.notGiven(t, from, [wire])); // L14 on the D9 path
-    return this.command(t, wire, from);
+    return issuedBy === LEARNER_ISSUED_BY ? this.learnerApply(t, from, only(wire), null, refuse) : this.command(t, wire, from);
   }
 
   /** D9 for the laptop's Drug sheet and the instructor phone's: an `applyEvent infusion` of a drug on a pump channel. */
@@ -1021,11 +1095,11 @@ export class HostSession {
   }
 
   /**
-   * L4 (§4 D3): a granted learner remote's command. A sample goes to the engine as it is. A `prep` stage or discard is
-   * the host's own table (acked, never dispatched: no commandApplied, so no follower applies it). A delivery, an infusion
-   * from a preparation and an infusion change become the instructor's `applyEvent drug` / `infusion`, with every
-   * quantity computed here from the formulary, and go through `command()`: the drug lock, staged delivery, the engine's
-   * validation and the record are the laptop's own. Each is filed `issuedBy: 'learner'`, `by` = the device key, `prepId`.
+   * L4 (§4 D3): a granted learner remote's command. A sample goes to the engine as it is, an act on the patient like a
+   * give. A `prep` stage or discard is the host's own table (acked, never dispatched: no commandApplied, so no follower
+   * applies it). A delivery, an infusion from a preparation and an infusion change become the instructor's `applyEvent
+   * drug` / `infusion`, with every quantity computed here from the formulary. Every act goes through learnerApply, then
+   * `command()`: the pause, the drug lock, staged delivery, the engine's validation and the record are the laptop's own. Each is filed `issuedBy: 'learner'`, `by` = the device key, `prepId`.
    */
   private async learnerCommand(t: ManagedTransport, from: string, by: string, c: WireCommand, refuse: (reason: string) => void): Promise<void> {
     const prior = this.seen.get(c.id);
@@ -1035,7 +1109,7 @@ export class HostSession {
     }
     if (this.ff) return refuse(FF_REFUSAL);
     const base = { id: c.id, issuedBy: LEARNER_ISSUED_BY, by, ...(c.stageGroup !== undefined ? { stageGroup: c.stageGroup } : {}), ...(c.batch !== undefined ? { batch: c.batch } : {}) } as WireCommand;
-    if (c.type === 'applyEvent') return this.command(t, { ...c, issuedBy: LEARNER_ISSUED_BY, by }, from);
+    if (c.type === 'applyEvent') return this.learnerApply(t, from, only({ ...c, issuedBy: LEARNER_ISSUED_BY, by }), null, refuse);
     const { simT } = this.o.target.now();
     if (c.type === 'infusion') return this.toChannel(t, from, base, c.drugId, c.rateMlH, 'mL/h', refuse) ?? this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
     if (c.type !== 'prep' || c.action === 'notice') return refuse('not a learner command'); // learnerMay admitted none other
@@ -1067,10 +1141,11 @@ export class HostSession {
     return this.learnerApply(t, from, infusePrep(f, h, c, withPrep, simT, this.infusions), h, refuse);
   }
 
-  /** Apply a learner command's translation: refused as a whole, or every command through `command()` (one stage group). */
+  /** A learner's act on the patient (a give, an infusion, a sample): refused as a whole, by the pause too, or every
+   *  command through `command()` (one stage group). */
   private async learnerApply(t: ManagedTransport, from: string, out: Translated, h: HostPrep | null, refuse: (reason: string) => void): Promise<void> {
     if (!out.ok) return refuse(out.why);
-    if (this.pausedNow) return this.notGiven(t, from, out.cmds); // L14 (N117 ruled B): no drug while the case is paused
+    if (this.pausedNow) return this.notGiven(t, from, out.cmds); // L14: no act on the patient while the case is paused
     // a preparation of two drugs is given whole or not at all: a locked drug refuses the delivery before any dose goes
     const now = this.o.target.now();
     const first = out.cmds[0] as WireCommand;
@@ -1081,9 +1156,9 @@ export class HostSession {
   }
 
   /**
-   * L14: refuse a learner's give because the case is paused — one ack (`code: 'paused'`), kept for a resend, nothing
+   * L14: refuse a learner's act because the case is paused — one ack (`code: 'paused'`), kept for a resend, nothing
    * dispatched (the engine's queue, the drug lock, the preparation's volume and the record of gives are untouched), and
-   * each drug it would have given to the host's own screens (onNotGiven), as the attempt it was.
+   * each drug or sample it would have given or drawn to the host's own screens (onNotGiven), as the attempt it was.
    */
   private notGiven(t: ManagedTransport, from: string, cmds: WireCommand[]): void {
     const now = this.o.target.now();

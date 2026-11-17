@@ -40,6 +40,15 @@ export const OER0 = 0.33; // (Fick on tables [P] values: SjvO2 ≈ 0.65, textboo
 export const OER_MAX = 0.75; // (tables §5.3 `erMax` 0.6–0.75) extraction ceiling (tables §5.3 `erMax` range 0.6–0.75, top end: the brain extracts more than the body)
 export const Q10_BRAIN = 0.07; // CMRO2 −7 %/°C, tables `q10Brain` [P]
 export const HB_DEFAULT = 14; // g/dL without the blood model (the gas model's HB_G_DL)
+// The cortex's energy thresholds on O2 delivery (Miller 10th ed. chapter 35, printed pages)
+/** The EEG turns abnormal at CBF 20 of 50 mL/100 g/min (Miller Ch35 p. 1122) — read as O2 DELIVERY relative to normal,
+ * so hypoxaemia acts only once flow compensation is exhausted (Ch35 p. 1126) [INF]. */
+export const DO2_EEG_ABNORMAL = 20 / 50;
+/** Cellular survival threatened at CBF 12 mL/100 g/min (Miller Ch35 p. 1122): the voltage is gone. */
+export const DO2_EEG_LOST = 12 / 50;
+/** The share of `metabolic` that only slows (voltage preserved) before the voltage goes (Ch35 p. 1105: "first slowing
+ * with preserved voltage, then loss of voltage") [FIT: half; src Miller Ch35 p. 1105 gives the order, not the share]. */
+export const METABOLIC_SLOW_SHARE = 0.5;
 export const HEAD_HEIGHT_CM = 25; // tragus above the heart at 90° head-up [FIT: intracranial volume–pressure fit; brief research/44 L2-11]; 30° → 12.5 cm → MAP_head −9.2
 /** Venous/CSF volume that leaves the skull at 30° head-up [FIT: intracranial volume–pressure fit; brief research/44 L2-11]: ICP 20 → 14.4 at PVI 20 (tables: −5.6 mmHg). */
 export const HEADUP_VOL_ML_30 = 2.9;

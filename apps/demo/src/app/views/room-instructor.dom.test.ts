@@ -3,7 +3,7 @@
 // the button is held (pointer or keyboard); Change the PIN draws a new one and revokes the signed-in phone (P3's revoke,
 // observed on a real HostSession whose phone is a real instructor ControllerSession); the row says the phone's state
 // and since when; the second QR code is the phone's address and carries no PIN.
-import { ControllerSession, createInProcessHub, HostSession, INSTRUCTOR_REASONS, type HostTarget } from '@pme/controller';
+import { ControllerSession, SignInCredential, createInProcessHub, HostSession, INSTRUCTOR_REASONS, type HostTarget } from '@pme/controller';
 import { createEngine } from '@pme/engine-core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { instructorPin, type PinStore } from '../instructor-pin.ts';
@@ -47,7 +47,7 @@ function laptop(o: { relay?: string | null } = {}) {
   document.body.replaceChildren(card.el);
   const phone = (typed: string) => {
     const t = hub.connect();
-    const ctl = new ControllerSession({ session: CODE, transport: t, role: 'instructor', pin: () => typed, issuedBy: 'remote' });
+    const ctl = new ControllerSession({ session: CODE, transport: t, role: 'instructor', credential: new SignInCredential(typed), issuedBy: 'remote' });
     closers.push(() => ctl.close());
     return ctl;
   };

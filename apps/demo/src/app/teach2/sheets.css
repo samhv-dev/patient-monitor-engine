@@ -122,7 +122,7 @@
    in Instructor v2's tokens: a flagged value in the warning colour and a critical one in the danger colour, each with its
    arrow or the word "critical" as well, never colour alone */
 .ip2-lab-list { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.ip2-lab-list:empty, .ip2-lab-empty[hidden], .ip2-lab .lr-lab-result[hidden], .ip2-lab .lr-lab-none[hidden] { display: none; }
+.ip2-lab-list:empty, .ip2-lab-empty[hidden], .ip2-lab .lr-lab-result[hidden] { display: none; }
 .ip2-lab { display: flex; flex-direction: column; gap: 4px; max-width: 760px; padding: 10px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); font-size: 13px; }
 .ip2-lab p { margin: 0; }
 .ip2-lab .lr-lab-title { font-weight: 600; color: var(--ip2-text); }

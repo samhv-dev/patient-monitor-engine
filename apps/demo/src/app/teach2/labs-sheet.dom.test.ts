@@ -140,7 +140,45 @@ describe("the laptop's Labs sheet (L15)", () => {
     m.result('coag', 100 * TICK_S, {}); // no sample of that panel at that tick: shown, with no one named, never dropped
     expect(m.rows()).toHaveLength(4);
     expect(m.rows().find((r) => r.dataset.panel === 'coag')?.querySelector('.ip2-lab-who')?.textContent).toBe(LAB_SHEET_WORDS.by(LAB_SHEET_WORDS.unknown));
-    expect(m.rows().find((r) => r.dataset.panel === 'coag')?.querySelector('.lr-lab-none')?.hasAttribute('hidden')).toBe(false);
+    expect(m.rows().find((r) => r.dataset.panel === 'coag')?.querySelector('.ip2-lab-tests')?.getAttribute('data-computed')).toBe('none');
+  });
+
+  it('each sample states which of its panel\'s tests the simulator computes, from its row and its result; no line contradicts a row', () => {
+    const m = sheet();
+    const gasTests = ANALYSERS.abl825.sections[0]!.analytes;
+    m.draw(100, 'abg', 'instructor');
+    m.draw(200, 'coag', 'instructor');
+    m.draw(300, 'chem', 'instructor');
+    m.draw(400, 'vbg', 'instructor', { event: { analyser: 'abl837' } });
+    const line = (panel: LabPanelId) => m.rows().find((r) => r.dataset.panel === panel)?.querySelector('.ip2-lab-tests') as HTMLElement;
+    const shown = (panel: LabPanelId) => [...(m.rows().find((r) => r.dataset.panel === panel)?.querySelectorAll('tbody th') ?? [])].map((th) => th.textContent);
+    // pending: the row's tests, no claim yet on which are computed
+    expect(line('coag').getAttribute('data-computed')).toBe('pending');
+    expect(line('coag').textContent).toBe(LAB_SHEET_WORDS.testsPending('INR, PT, APTT, Fibrinogen, Platelets'));
+    expect(line('chem').textContent).toBe(LAB_SHEET_WORDS.testsPending('Na, K, Cl, Total calcium, Mg, Glucose, Creatinine, CK'));
+    // computed: every test of the row returned
+    m.result('abg', 100 * TICK_S, Object.fromEntries(gasTests.map((a) => [a, 1])));
+    expect(line('abg').getAttribute('data-computed')).toBe('all');
+    expect(line('abg').textContent).toBe(LAB_SHEET_WORDS.allComputed);
+    // not computed: an empty result, every test named, no table
+    m.result('coag', 200 * TICK_S, {});
+    expect(line('coag').getAttribute('data-computed')).toBe('none');
+    expect(line('coag').textContent).toBe(LAB_SHEET_WORDS.noneComputed('INR, PT, APTT, Fibrinogen, Platelets'));
+    expect(shown('coag')).toEqual([]);
+    expect(m.rows().find((r) => r.dataset.panel === 'coag')?.querySelector('.lr-lab-result')?.hasAttribute('hidden')).toBe(true);
+    // mixed: the table holds the computed tests, the line names exactly the others
+    m.result('chem', 300 * TICK_S, { na: 141, k: 4.1, cl: 103, mg: 0.85, glucose: 100 });
+    expect(line('chem').getAttribute('data-computed')).toBe('some');
+    expect(line('chem').textContent).toBe(LAB_SHEET_WORDS.someComputed('Total calcium, Creatinine, CK'));
+    expect(shown('chem')).toEqual(['Na', 'K', 'Cl', 'Mg', 'Glucose']);
+    // the row the host put on the sample decides: the ABL837 also names creatinine, bilirubin and HbF
+    m.result('vbg', 400 * TICK_S, ABG, 'abl837');
+    expect(line('vbg').textContent).toBe(LAB_SHEET_WORDS.someComputed('HHb, Creatinine, Bilirubin, HbF'));
+    // no line names a test its table shows
+    for (const r of m.rows()) {
+      const named = /: (.*)\.$/.exec(r.querySelector('.ip2-lab-tests')?.textContent ?? '')?.[1]?.split(', ') ?? [];
+      for (const th of r.querySelectorAll('tbody th')) expect(named, `${r.dataset.panel}`).not.toContain(th.textContent);
+    }
   });
 
   it('2. the 1 Hz `labs` truth and the `truth` event are never read (every property read of them is recorded)', () => {
