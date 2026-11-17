@@ -112,6 +112,8 @@ export class ControllerSession {
   /** The host's simulation speed and pause, from its applied `time` commands (sticky replays included). */
   timeScale = 1;
   hostPaused = false;
+  /** The host's engine has not run since it began: it began while the host was paused, and no resume has come since. */
+  pausedAtStart = false;
   /** The host's lock on a drug just given (drug-lock.ts), read from the applied commands every device receives. */
   readonly gives = new RecentGives();
   /** The host's fast-forward while it runs (null otherwise), and the last one that ended. */
@@ -383,6 +385,7 @@ export class ControllerSession {
       this.gives.clear(); // as the host's (its clock starts again)
       if (e.cause !== 'restore') this.scenario.reset();
       this.fastForward = null; // A fast-forward ends with its timeline
+      this.pausedAtStart = this.hostPaused;
       return;
     }
     if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t); // monotonic within one timeline
@@ -409,6 +412,7 @@ export class ControllerSession {
       const c = res?.command;
       if (c?.type === 'time' && c.action === 'scale' && typeof c.value === 'number') this.timeScale = c.value;
       if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) this.hostPaused = c.action === 'pause';
+      if (c?.type === 'time' && c.action === 'resume') this.pausedAtStart = false;
       // A late joiner learns a running fast-forward from the sticky jump (its atTick = where it began)
       if (c?.type === 'time' && c.action === 'jump' && res?.replay && typeof c.value === 'number') this.fastForward = { fromT: (c.atTick ?? e.tick) * 0.02, toT: (c.atTick ?? e.tick) * 0.02 + c.value };
       // The driver's own stage marks are not the instructor's bookmarks (the marks list shows the instructor's only)

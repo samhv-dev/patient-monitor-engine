@@ -322,3 +322,28 @@ describe("the case's lines of the instructor's log across a reload", () => {
     link.close();
   }, 60_000);
 });
+
+describe('a paused position across a reload', () => {
+  beforeEach(() => sessionStorage.clear());
+
+  it('the host pauses before the case loads, so the restored case begins paused and no tick runs before the pause', async () => {
+    const a = page();
+    a.load(a.card);
+    await a.run(1);
+    await a.goto('induced');
+    (a.s as { paused: boolean }).paused = true;
+    const stop = keepPositions(a.s, { log: [] }, 5);
+    for (let i = 0; i < 200 && !sessionStorage.getItem('pme.position'); i++) await new Promise((r) => setTimeout(r, 5));
+    stop();
+    const kept = readPosition({ code: 'KKQB2N' }) as Position;
+    expect(kept.paused).toBe(true);
+
+    const b = page();
+    const sent: Array<Record<string, unknown>> = [];
+    const send = b.s.panel.send.bind(b.s.panel);
+    (b.s.panel as { send: typeof send }).send = (c) => (sent.push(c as Record<string, unknown>), send(c));
+    expect(await restorePosition(kept, b.s, { resumeCase: () => undefined }, (c) => (sent.push({ type: 'scenario', action: 'load' }), b.load(c)))).toBe(true);
+    expect(sent.map((c) => `${c.type} ${c.action}`)).toEqual(['time pause', 'scenario load', 'scenario restoreBookmark']);
+    expect(b.driver.runner?.stateId).toBe('induced');
+  }, 60_000);
+});
