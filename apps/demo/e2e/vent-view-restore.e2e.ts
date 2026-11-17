@@ -1,6 +1,7 @@
-// FU-11 Task E3b (R50 F1): "Return here" while the Ventilator view drives the patient — the cockpit keeps ventilating
-// the restored patient. Before: frames were stamped on the old timeline and no clock reached the cockpit; the replayed
-// interval ran SpO2 91 → 64 where the first run had 95 → 92.
+// "Return here" while the Ventilator view drives the patient: the ventilator goes back with the patient (its settings,
+// its breath, its state), so the replayed minute is the first one. Compared: every measurement and lungState event the
+// engine emits over the 70 s after the bookmark's own tick (the restore marker says which), in both runs. They are the
+// engine's events, not tiles read on a poll, so nothing of the page's sampling stands between them: they must be equal.
 import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, speedV2, startVite } from './app-support.ts';
@@ -10,53 +11,72 @@ let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-type W = { __pmeApp: { session: { simNow(): number }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
-const simNow = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeApp.session.simNow());
-const tile = (p: Page, param: string) => p.evaluate((x) => Number(document.querySelector(`.pme-stile[data-param="${x}"] [data-pme="v"]`)?.textContent), param);
-// fix-main-webkit (orchestrator ruling): the comparison means something only while the cockpit actually ventilates the
-// patient. On CI's headless WebKit the ×4 cockpit took over late or not at all (CO2 tile empty in the first pass), so the
-// bookmark held a patient the cockpit had not yet ventilated and the replay diverged (or both passes compared empty
-// tiles). Precondition, not band: EtCO2 > 20 on two consecutive readings, within 60 s of wall time.
-const ventilating = async (p: Page, when: string) => {
-  let run = 0;
-  await expect
-    .poll(async () => (run = (await tile(p, 'CO2')) > 20 ? run + 1 : 0), {
-      timeout: 60_000,
-      intervals: [250],
-      message: `the cockpit never ventilated the patient (EtCO2 > 20 on two consecutive readings) within 60 s ${when}`,
-    })
-    .toBeGreaterThanOrEqual(2);
-  return simNow(p);
+type Ev = { type: string; t: number; ids?: string[]; after?: number; breathing?: { source?: string } };
+type W = {
+  __pmeApp: {
+    session: {
+      onMount(fn: (m: { on(fn: (e: Ev) => void): () => void }) => void): () => void;
+      ventLink: { restoring(): Promise<string> | null } | null;
+    };
+    link: { send(c: unknown): Promise<{ accepted: boolean; tick: number }> };
+  };
+  __events: string[][];
+  __marks: number[];
+  __source: string;
 };
-const at = async (p: Page, t: number) => {
-  await expect.poll(() => simNow(p), { timeout: 60_000, intervals: [250] }).toBeGreaterThanOrEqual(t);
-  return { spo2: await tile(p, 'SpO2'), co2: await tile(p, 'CO2') };
-};
+const WINDOW_S = 70;
+const send = (p: Page, action: 'bookmark' | 'restoreBookmark') =>
+  p.evaluate((a) => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: a, target: 'vent' }), action);
+/** The newest event time of run `run` (0: first, 1: after the return). */
+const newest = (p: Page, run: number) => p.evaluate((r) => {
+  const last = (window as unknown as W).__events[r]?.at(-1);
+  return last ? (JSON.parse(last) as Ev).t : -1;
+}, run);
+const reach = (p: Page, run: number, t: number) => expect.poll(() => newest(p, run), { timeout: 120_000, intervals: [250] }).toBeGreaterThanOrEqual(t);
+const between = (all: string[], from: number, to: number) => all.filter((j) => {
+  const t = (JSON.parse(j) as Ev).t;
+  return t > from + 1e-9 && t <= to + 1e-9;
+});
 
-// FX-1: the CI WebKit drop-outs (EtCO2 0 or 14 mid-replay, the old fallback skip) were product defects in the link, now
-// fixed: messages to the cockpit iframe held for seconds (a direct frame port now), a burst of late frames moving the
-// offset once per frame, and a restore that left a cockpit sitting at its clock limit without a clock for good. Runs on
-// WebKit locally and on CI Chromium. On CI's Linux WebKit only it stays skipped, for a different reason: there the page
-// itself crashed in 3–7 of 18 runs of this flow soon after "Return here" (PR #58 runs 38212560444, 38214428810; also
-// before FX-1, run 38203086536), so a first-attempt pass cannot be had there. That crash is finding F-FX1-1.
-test('after "Return here" on the Ventilator view the replayed minute matches the first one', { tag: '@known-flaky' }, async ({ page, browserName }) => {
-  test.skip(browserName === 'webkit' && !!process.env.CI, 'FX-1 finding F-FX1-1: CI Linux WebKit page crash after "Return here" in this ×4 Ventilator-view flow');
-  test.setTimeout(180_000);
+test('after "Return here" on the Ventilator view the replayed minute is the first one', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit' && !!process.env.CI, 'CI Linux WebKit: the page itself crashes after "Return here" in this ×4 Ventilator-view flow');
+  test.setTimeout(300_000);
   await openApp(page, base, '?scenario=showcase-bronchospasm#/teach2', { warmMs: 1500 });
+  await page.evaluate(() => {
+    const w = window as unknown as W;
+    w.__events = [[]];
+    w.__marks = [];
+    w.__source = '';
+    w.__pmeApp.session.onMount((m) => m.on((e) => {
+      if (e.type === 'toneCancel' && e.ids === undefined && e.after !== undefined) {
+        w.__marks.push(e.after); // the engine's restore marker: a new run, from this time
+        w.__events.push([]);
+      }
+      if (e.type === 'state') w.__source = e.breathing?.source ?? '';
+      if (e.type === 'measurement' || e.type === 'lungState') w.__events.at(-1)!.push(JSON.stringify(e));
+    }));
+  });
   await speedV2(page, 4);
   await page.evaluate(() => (location.hash = '#/vent'));
-  await at(page, 30);
-  const b = Math.ceil(await ventilating(page, 'before the bookmark')); // ≥ 30 s: the bookmark holds a ventilated patient
-  await at(page, b);
-  await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: 'bookmark', target: 'vent' }));
-  const first = [await at(page, b + 40), await at(page, b + 70)];
-  await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: 'restoreBookmark', target: 'vent' }));
-  await expect.poll(() => simNow(page), { timeout: 5_000 }).toBeLessThan(b + 10);
-  expect(await ventilating(page, 'after "Return here"'), 'the cockpit ventilated the restored patient only after the comparison window opened').toBeLessThan(b + 40);
-  const again = [await at(page, b + 40), await at(page, b + 70)];
-  console.log('vent restore', JSON.stringify({ first, again }));
-  for (let i = 0; i < 2; i++) {
-    expect(Math.abs((again[i]?.spo2 ?? 0) - (first[i]?.spo2 ?? 0))).toBeLessThanOrEqual(3);
-    expect(Math.abs((again[i]?.co2 ?? 0) - (first[i]?.co2 ?? 0))).toBeLessThanOrEqual(4);
-  }
+  // the bookmark holds a patient the cockpit ventilates: its frames drive the engine (the 1 Hz `state` says `external`)
+  await expect.poll(() => page.evaluate(() => (window as unknown as W).__source), { timeout: 60_000, message: 'the cockpit never ventilated the patient' }).toBe('external');
+  const ack = await send(page, 'bookmark');
+  expect(ack.accepted).toBe(true);
+  await reach(page, 0, ack.tick * 0.02 + WINDOW_S + 5);
+  expect((await send(page, 'restoreBookmark')).accepted).toBe(true);
+  await expect.poll(() => page.evaluate(() => (window as unknown as W).__marks.length), { timeout: 10_000 }).toBe(1);
+  // the cockpit's answer to the return, as its link settled it
+  const outcome = () => page.evaluate(async () => {
+    const p = (window as unknown as W).__pmeApp.session.ventLink?.restoring();
+    return p ? await p : 'pending';
+  });
+  await expect.poll(outcome, { timeout: 10_000, message: 'the cockpit took the bookmark back' }).toBe('loaded');
+  const at = await page.evaluate(() => (window as unknown as W).__marks.at(-1)!);
+  await reach(page, 1, at + WINDOW_S);
+  const [first, again] = await page.evaluate(() => (window as unknown as W).__events.slice(0, 2));
+  const a = between(first!, at, at + WINDOW_S);
+  const b = between(again!, at, at + WINDOW_S);
+  console.log('vent restore', JSON.stringify({ at, events: a.length, differing: b.filter((x, i) => x !== a[i]).length }));
+  expect(a.length).toBeGreaterThan(WINDOW_S);
+  expect(b).toEqual(a);
 });

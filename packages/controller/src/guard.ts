@@ -1,6 +1,6 @@
 // Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope
 // validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel).
-import { INSTRUMENTS, NOTE_EVENTS, type WireMessage } from './protocol.ts';
+import { HOST_ONLY_COMMANDS, INSTRUMENTS, NOTE_EVENTS, type WireMessage } from './protocol.ts';
 import type { DoseUnit, PkRoute, PumpConcentration, RateUnit } from '@pme/engine-core';
 
 export const WIRE_LIMITS = {
@@ -25,7 +25,11 @@ export const WIRE_LIMITS = {
  * plan's 4 ("3 plus a spare" counted one stand-in), which would drop the first tick of anaphylaxis and air embolism.
  * `bytes`: a `vent` body's largest JSON [ENG: network; that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
  */
-export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16 } as const;
+export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16, stateBytes: 8 * 1024, epoch: 32, lungs: 4 } as const;
+// `stateBytes`: a `state` or `restore` body, the cockpit's whole state [ENG: network; 4.3 KB measured, 5 KB with the
+// lungState a restore carries]; it goes once a second at most. `epoch`: the restore id's length (port.ts newEpoch, < 20).
+// `lungs`: the lungStates a restore carries, those after the state's tick [ENG: network; 1 a second, a state at most one
+// second old over the relay and lungStates at most MAX_AHEAD_TICKS (1.5 s) ahead: 3].
 // `batch` (R8c): the most `cmds` one relay-port message packs [ENG: network; at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
 // 16 holds two windows, an animation frame that came late]; `bytes` bounds it too (a steady tick is 0.25 KB).
 
@@ -175,8 +179,11 @@ function ventCommandOk(c: unknown): boolean {
   return c.type === 'setTarget' && typeof c.variable === 'string' && typeof c.value === 'number';
 }
 /** Whether a `vent` body is one of the ventilator link's messages, within VENT_LIMITS (plan R8a). */
+const epochOk = (e: unknown) => typeof e === 'string' && e.length <= VENT_LIMITS.epoch;
 const cmdsOk = (b: unknown): boolean =>
-  isObj(b) && b.v === 1 && b.kind === 'cmds' && Number.isInteger(b.tick) && Array.isArray(b.cmds) && b.cmds.length <= VENT_LIMITS.cmds && b.cmds.every(ventCommandOk);
+  isObj(b) && b.v === 1 && b.kind === 'cmds' && Number.isInteger(b.tick) && Array.isArray(b.cmds) && b.cmds.length <= VENT_LIMITS.cmds && b.cmds.every(ventCommandOk)
+  && (b.epoch === undefined || epochOk(b.epoch));
+const ventStateOk = (s: unknown): boolean => isObj(s) && s.v === 1 && Number.isInteger(s.tick) && (s.face === null || typeof s.face === 'string') && 'body' in s;
 const isNum = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
 const isPos = (x: unknown) => isNum(x) && (x as number) > 0;
 const isId = (x: unknown) => typeof x === 'string' && ITEM_ID_RE.test(x);
@@ -250,7 +257,7 @@ function ventBodyOk(b: unknown): boolean {
       if (!Array.isArray(b.msgs) || b.msgs.length === 0 || b.msgs.length > VENT_LIMITS.batch || !b.msgs.every(cmdsOk)) return false;
       break;
     case 'lungState':
-      if (!isObj(b.ev) || b.ev.type !== 'lungState') return false;
+      if (!isObj(b.ev) || b.ev.type !== 'lungState' || (b.atTick !== undefined && !Number.isInteger(b.atTick))) return false;
       break;
     case 'clock':
     case 'run':
@@ -265,6 +272,17 @@ function ventBodyOk(b: unknown): boolean {
     case 'settings':
       if (!isObj(b.cfg) || (b.hidden !== undefined && typeof b.hidden !== 'boolean')) return false;
       if (b.measured !== undefined && !(isObj(b.measured) && isNum(b.measured.RR) && isNum(b.measured.VTE))) return false;
+      break;
+    case 'state':
+      if (!Number.isInteger(b.tick) || (b.epoch !== undefined && !epochOk(b.epoch)) || !ventStateOk(b.state)) return false;
+      return utf8Bytes(JSON.stringify(b)) <= VENT_LIMITS.stateBytes;
+    case 'restore':
+      if (!epochOk(b.epoch) || !ventStateOk(b.state) || !isNum(b.allowed) || !Number.isInteger(b.upTo)) return false;
+      if (!Array.isArray(b.lungs) || b.lungs.length > VENT_LIMITS.lungs) return false;
+      if (!b.lungs.every((l) => isObj(l) && isObj(l.ev) && l.ev.type === 'lungState' && (l.at === null || Number.isInteger(l.at)))) return false;
+      return utf8Bytes(JSON.stringify(b)) <= VENT_LIMITS.stateBytes;
+    case 'restored':
+      if (!epochOk(b.epoch) || typeof b.loaded !== 'boolean') return false;
       break;
     default:
       return false;
@@ -305,6 +323,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
     case 'command': {
       const b = m.body as Record<string, unknown> | null;
       if (!b || typeof b !== 'object' || typeof b.id !== 'string' || typeof b.type !== 'string' || typeof b.issuedBy !== 'string') return null;
+      if (HOST_ONLY_COMMANDS.has(b.type)) return null;
       if (b.type === 'note' && ((b.kind !== 'note' && b.kind !== 'marker') || typeof b.text !== 'string' || b.text.length > WIRE_LIMITS.noteChars)) return null;
       if (b.type === 'note' && b.ev !== undefined && !(NOTE_EVENTS as readonly unknown[]).includes(b.ev)) return null; // a known tag only
       if ((b.type === 'prep' || b.type === 'infusion') && !prepBodyOk(b)) return null; // L3: a learner's shapes, typed

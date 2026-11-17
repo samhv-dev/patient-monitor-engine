@@ -4,7 +4,7 @@
 // order, exactly as they were posted. The rate is measured here on a fake clock with a real cockpit.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  attachMonitorToLink, createRelayPort, createVentDriver, createVent, RELAY_BATCH_MAX, RELAY_BATCH_MS, RELAY_BODY_BYTES, SETTINGS_MS, ventWireOver,
+  attachMonitorToLink, createRelayPort, createVentDriver, createVent, RELAY_BATCH_MAX, RELAY_BATCH_MS, RELAY_BODY_BYTES, RELAY_STATE_BYTES, RELAY_STATE_MS, SETTINGS_MS, ventWireOver,
   type LinkMsg, type VentWire, type VentWireBody,
 } from '../src/index.ts';
 import { createEngine, type Command, type DispatchResult, type EngineEvent } from '@pme/engine-core';
@@ -81,8 +81,16 @@ describe('the relay port batches the cockpit\'s `cmds` per 20 ms of wall time (R
     // one flush per 20 ms of wall time at most (a burst larger than one body goes as several bodies of one flush)
     const flushes = [...new Set(r.withCmds.map((s) => s.at))];
     for (let i = 1; i < flushes.length; i++) expect((flushes[i] as number) - (flushes[i - 1] as number)).toBeGreaterThanOrEqual(RELAY_BATCH_MS);
-    for (const s of r.up) expect(JSON.stringify(s.body).length).toBeLessThanOrEqual(RELAY_BODY_BYTES);
+    for (const s of r.up) expect(JSON.stringify(s.body).length).toBeLessThanOrEqual(s.body.kind === 'state' ? RELAY_STATE_BYTES : RELAY_BODY_BYTES);
     for (const s of r.up) if (s.body.kind === 'batch') expect(s.body.msgs.length).toBeLessThanOrEqual(RELAY_BATCH_MAX);
+    // the cockpit's state: its newest, once a second at most, after the cmds posted before it
+    const states = r.up.filter((s) => s.body.kind === 'state');
+    expect(states.length).toBeGreaterThanOrEqual(9);
+    for (let i = 1; i < states.length; i++) expect(states[i]!.at - states[i - 1]!.at).toBeGreaterThanOrEqual(RELAY_STATE_MS);
+    for (const st of states) {
+      const before = r.up.filter((s) => s.at <= st.at && r.up.indexOf(s) < r.up.indexOf(st)).flatMap((s) => cmdsOf(s.body));
+      expect((st.body as Extract<LinkMsg, { kind: 'state' }>).tick).toBeLessThanOrEqual(before.at(-1)?.tick ?? 0);
+    }
     console.log(`R8c batching ×8: ${r.posted.length} ticks in 10 s → ${r.withCmds.length} messages (${(r.withCmds.length / 10).toFixed(1)}/s, peak ${r.peak} in a second; ${new Set(r.withCmds.map((s) => s.at)).size} flushes)`);
   }, 60_000);
 

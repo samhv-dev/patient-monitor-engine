@@ -3,6 +3,7 @@
 // ONE granted ventilator (R8b). The cockpit sends one `cmds` per ventilator tick — 50 a second at ×1, 400 at ×8 — and the
 // relay closes a socket past 120 `vent` a second, so this port packs the `cmds` of each 20 ms of WALL time into one
 // `batch` (50 a second at most, at any speed); the far port hands them on one by one, in order, as they were posted.
+// The cockpit's `state` (4.3 KB) goes at most once every RELAY_STATE_MS, its newest, after the cmds posted before it.
 // Everything else goes at once (after the cmds posted before it). On the cockpit side it also sends the cockpit's
 // settings, on every change and once a second (the host's hand-over takes them; the message is also its heartbeat), and
 // says when its page is hidden. Typed structurally: this package does not depend on @pme/controller.
@@ -17,8 +18,14 @@ export const RELAY_BATCH_MAX = 16;
 export const RELAY_BODY_BYTES = 4 * 1024;
 /** The cockpit's settings go at least this often, ms (plan R8c: "once a second"). */
 export const SETTINGS_MS = 1000;
+/** The cockpit's state goes at most this often, ms [ENG: network; 4.3 KB, 17 KB a second; a state this old at ×8 is
+ *  100 ticks, which the link makes again unsent, and leaves room for RECORD_LUNGS_MAX lungStates after it]. */
+export const RELAY_STATE_MS = 250;
+/** A `state` body's largest JSON (guard.ts VENT_LIMITS.stateBytes). */
+export const RELAY_STATE_BYTES = 8 * 1024;
 
 type Cmds = Extract<LinkMsg, { kind: 'cmds' }>;
+type State = Extract<LinkMsg, { kind: 'state' }>;
 /** What the host hands over with: the cockpit's settings and what it last measured (a PSV/PAV rate and volume). */
 export interface CockpitSettings {
   cfg: VentConfig;
@@ -48,6 +55,17 @@ export function createRelayPort(wire: VentWire, o: { settings?: () => CockpitSet
   const fns = new Set<(m: LinkMsg) => void>();
   let held: Cmds[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let state: State | null = null;
+  let stateTimer: ReturnType<typeof setTimeout> | null = null;
+  let stateAt = -Infinity;
+  const sendState = () => {
+    stateTimer = null;
+    if (!state || closed) return;
+    flush();
+    stateAt = Date.now();
+    wire.send(state);
+    state = null;
+  };
   let hidden = false;
   let closed = false;
   let sentSettings = '';
@@ -94,6 +112,11 @@ export function createRelayPort(wire: VentWire, o: { settings?: () => CockpitSet
         timer ??= setTimeout(flush, RELAY_BATCH_MS);
         return;
       }
+      if (m.kind === 'state') {
+        state = m;
+        stateTimer ??= setTimeout(sendState, Math.max(0, stateAt + RELAY_STATE_MS - Date.now()));
+        return;
+      }
       flush(); // in order: the cmds posted before it first
       wire.send(m);
     },
@@ -112,6 +135,7 @@ export function createRelayPort(wire: VentWire, o: { settings?: () => CockpitSet
       if (closed) return;
       flush();
       closed = true;
+      if (stateTimer !== null) clearTimeout(stateTimer);
       if (every !== null) clearInterval(every);
       off();
       fns.clear();

@@ -15,7 +15,8 @@
 import type { Command } from '@pme/engine-core';
 import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
 import {
-  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, roomVentMonitor, roomVentPort, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, isLinkRecord, LEAD_TICKS, roomVentMonitor, roomVentPort, snapshotSettings,
+  type CockpitSettings, type LinkPort, type LinkRecord, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
 import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
@@ -108,7 +109,9 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
       detach();
       // the cockpit drives the room's patient with its breaths and its circuit only (room-guard.ts)
       const refused = (what: string, why?: string) => console.warn('vent link rejected', what, why);
-      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r));
+      // its state for the room's bookmarks is the link's own record, written past the room's guard (port.ts LinkOptions)
+      const keep = (state: LinkRecord | null) => session.linked(m).dispatch({ id: 'vent-state', issuedBy: 'ventilator', type: 'deviceState', source: 'ventilator', state } as Command);
+      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r), { keep });
       detach = l;
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
       // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,
@@ -118,6 +121,38 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     });
     p.post({ v: 1, kind: 'time', action: 'resume' });
   };
+  /** The engine's own ventilator takes the patient with `s` on `atTick`; the engine then holds no cockpit's state. */
+  const toEngine = async (s: CockpitSettings, atTick: number) => {
+    const event = { kind: 'ventilation', source: 'ventilator', ...engineVentilation(s.cfg, s.measured) };
+    const r = await session.host.submit({ id: `vent-handover-${Date.now()}`, issuedBy: 'ventilator', type: 'applyEvent', event, atTick } as never);
+    if (r.accepted) void session.monitor?.dispatch({ id: 'vent-state', issuedBy: 'ventilator', type: 'deviceState', source: 'ventilator', state: null } as Command);
+    return r;
+  };
+  /**
+   * A return to engine tick `tick`, to a bookmark that holds the cockpit driving then. The patient's clock stands until
+   * the return has ended in one of two ways: the cockpit linked now has taken the bookmark back and ventilates the
+   * restored patient, or the engine's own ventilator has the patient, with the bookmark's settings, on the tick after
+   * the bookmark's last frame (no cockpit linked, or one that could not or did not take it back in RUN_TIMEOUT_MS; it is
+   * then unlinked, as at any hand-over). The clock stands until that hand-over has reached the engine, so its tick is
+   * the bookmark's, never the wall clock's.
+   */
+  const restored = (r: LinkRecord, tick: number) => {
+    const s = snapshotSettings(r.vent);
+    const at = Math.max(tick + 1, r.link.offset === null ? 0 : r.link.lastTick + r.link.offset + 1);
+    const engine = async () => void (s && (await toEngine(s, at)));
+    const taking = driving ? session.ventLink?.restoring() : null;
+    void session.holdClock(taking ? taking.then((o) => {
+      if (o === 'loaded') return undefined;
+      desk.unlink();
+      return engine();
+    }) : engine());
+  };
+  session.onMount((m) => m.on((e) => {
+    if (e.type !== 'deviceState' || e.source !== 'ventilator') return;
+    const tick = Math.round(e.t / 0.02);
+    const r = e.state;
+    if (isLinkRecord(r, tick)) queueMicrotask(() => restored(r, tick)); // after the link heard it too
+  }));
   const desk: CockpitDesk = {
     get driving() {
       return driving;
@@ -165,8 +200,7 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
         link(c); // Its settings cannot be read: it drives on (FU-11 H6), as before E128
         return (off(), last);
       }
-      const event = { kind: 'ventilation', source: 'ventilator', ...engineVentilation(s.cfg, s.measured) };
-      const r = await session.host.submit({ id: `vent-handover-${Date.now()}`, issuedBy: 'ventilator', type: 'applyEvent', event, atTick: last + 1 } as never);
+      const r = await toEngine(s, last + 1);
       if (!still()) return undefined;
       if (!r.accepted) {
         console.warn('ventilator hand-over refused:', r.reason);
@@ -218,6 +252,7 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, o:
   const linkPort: LinkPort = {
     post: (m) => {
       if (m.kind === 'clock' || m.kind === 'run') topTick = Math.max(topTick, m.ventTick);
+      if (m.kind === 'restore') last = snapshotSettings(m.state) ?? last; // a silence hand-over gives the bookmark's
       port.post(m);
     },
     onMessage: (fn) => port.onMessage(fn),

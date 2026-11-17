@@ -45,6 +45,18 @@ export interface AlarmView {
   /** The silence key pressed at `t`: the seconds of silence from `t` it gives. */
   silence(t: number): number;
   onEvent(fn: (e: AlarmEvent) => void): () => void;
+  /** Its state, for the ventilator's snapshot (VentExtension), and back. */
+  save(): AlarmViewState;
+  load(s: AlarmViewState): void;
+}
+
+export interface AlarmViewState {
+  pending: Array<[Id, number]>;
+  sig: AlarmSignal[];
+  lastT: number;
+  silFrom: number;
+  silUntil: number;
+  presses: number;
 }
 
 const RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
@@ -118,5 +130,13 @@ export function createAlarmView(prof: AlarmProfile): AlarmView {
       return silUntil - t;
     },
     onEvent: (fn) => (subs.add(fn), () => void subs.delete(fn)),
+    save: () => ({ pending: [...pending], sig: [...sig.values()].map((x) => ({ ...x })), lastT, silFrom, silUntil, presses }),
+    load(x) {
+      pending.clear();
+      for (const [id, t] of x.pending) pending.set(id, t);
+      sig.clear();
+      for (const a of x.sig) sig.set(a.id, { ...a });
+      ({ lastT, silFrom, silUntil, presses } = x);
+    },
   };
 }
