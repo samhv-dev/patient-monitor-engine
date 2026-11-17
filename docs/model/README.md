@@ -26,6 +26,6 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Ventilator](ventilator.md) | 17 | 29 | 7 |
 | [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 25 | 20 | 0 |
 | [Control: commands, transports, scenarios](control.md) | 56 | 116 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 295 | 445 | 4 |
+| [Presentation: renderer, audio, skins, the app](presentation.md) | 298 | 449 | 4 |
 | [Validation harness](validation-harness.md) | 62 | 55 | 0 |
 | [Whole-patient scenario suites](integration.md) | 0 | 1 | 8 |

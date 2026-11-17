@@ -590,7 +590,8 @@ renderer, audio and skin contracts.
 | `report3` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The report of a /2 run (null: |
 | `preparationsOf` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | L13: the learner remotes' preparations, from the record alone (the /2 runner's staged preparations and its administrations, each give's `prep` the host's record of it): |
 | `marks` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Every mark (bookmark) of the run in order, with its kind and note when it has them; |
-| `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug (mass doses in mg; |
+| `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug, from the kept rows. |
+| `givenLines` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The Debrief's line of each drug given, and the live "Given so far": |
 | `facts` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The measured facts of the kept course, in a fixed order; |
 | `perMinute` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: |
 | `notDoneOf` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: |
@@ -657,6 +658,11 @@ renderer, audio and skin contracts.
 | `eegGroup` | [`apps/demo/src/app/panel/eeg.ts`](../../apps/demo/src/app/panel/eeg.ts) | The Devices sheet's EEG group: |
 | `describeIbpScale` | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | The mode and the numbers in words. |
 | `ibpScalesControl` | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | The control; |
+| `channelsOf` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The channels to show: |
+| `channelLines` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | A channel's lines, in the order they are shown. |
+| `togetherLines` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The information lines of the rack: |
+| `pumpsView` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The view on `link`: |
+| `pumpsTab` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The view as a panel tab body (the phone's Pumps tab, the laptop's Pumps sheet). |
 | `nibpStartCommand` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | O2 (research/34 §8 O2): |
 | `oneLiner` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | The session bar's one-liner: |
 | `keptItems` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | The kept position, stage marks and book of signed-in devices as stored (key → value), for a hand-over to another tab of this browser (host-guard.ts): |
@@ -669,6 +675,9 @@ renderer, audio and skin contracts.
 | `restorePosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | After a reload: |
 | `sourceText` | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | A source as the phone names it (the finding after the notice, a product's label). |
 | `sourcesText` | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). |
+| `pumpAlarmsOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | Every alarm the channel rows list. |
+| `clearedBy` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | The alarms a command on a channel clears, of those standing on it (the engine's applyPump). |
+| `pumpCommandOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | A pump command's channel and action, from a command as the host applied it; |
 | `bolusUnits` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The units a bolus may be given in on a channel: |
 | `bolusHint` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The rapid rate the bolus runs at, from the SP-500 profile for the loaded syringe size, and the volume gap. |
 | `mountFlows` | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | The flows on every channel of `rack`, sending through `link` (a granted pump tablet's follower). |
@@ -697,6 +706,7 @@ renderer, audio and skin contracts.
 | `noteRecent` | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | A card was loaded: |
 | `recognisedNote` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The note a press sends on `doc` (null: |
 | `recognisedButton` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The button (`cls` its classes where it sits): |
+| `offPumpInfusions` | [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The drugs whose infusion or TCI off the pumps runs at the end of the kept rows (each drug's last such command). |
 | `productWords` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A product as the bench names it: |
 | `benchView` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | The bench: the search, then the product and its amount, the diluent and volume, the container, the preview, "Put on the tray". |
 | `drugsMenu` | [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | The Drugs tab: |
@@ -964,7 +974,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `disturbed`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `createDefibCore`, `createPending`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `pulseTone`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `disturbed`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `runningLines`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `pumpAlarmText`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `mountPumpAlarmCard`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `createDefibCore`, `createPending`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `pulseTone`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -1049,11 +1059,13 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/panel/log.ts`](../../apps/demo/src/app/panel/log.ts) | Log (research/13 §4.3 item 8): the debrief view — every instructor, learner, scenario and alarm event with the sim time, filters, notes and bookmarks, and CSV/JSON export. |
 | [`apps/demo/src/app/panel/panel.ts`](../../apps/demo/src/app/panel/panel.ts) | The instructor panel (research/13 §4.3, brief §7): eight tabs in the order they are used, the staged-changes footer (the controller pages' stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), ke |
 | [`apps/demo/src/app/panel/patient.ts`](../../apps/demo/src/app/panel/patient.ts) | Patient (research/13 §4.9): the one patient card — who the patient is, MODELED or MANUAL, and "Restart patient", which asks first and says what resets (drugs, fluids, ventilation; a running case starts again from 0:00, F |
+| [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The instructor's view of the pump rack: every channel as the engine holds it, read-only. |
 | [`apps/demo/src/app/panel/scenario.ts`](../../apps/demo/src/app/panel/scenario.ts) | Scenario (research/13 §4.3 item 1; the simulator sweep's top patterns 4 and 5): before a run, the library as cards (story, patient, duration, objectives) filtered by category; during a run, the state strip with the curre |
 | [`apps/demo/src/app/panel/vitals.ts`](../../apps/demo/src/app/panel/vitals.ts) | Vitals & rhythm (research/13 §4.3 item 2): one row per target — glossary label with its tooltip, the live value, a stepper in clinical units, and the model state as a chip (CAE Maestro's flags): MODELED (wave), held by t |
 | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | Patient profiles for the Start screen and the Patient tab (brief §4.9 "one Patient card"). |
 | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | A reload must not lose the running case (UI review 2026-10-24 #1: a reload mid-card came back as "No scenario", the default patient, 00:05). |
 | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | Plan learner-action-remote.md L13: how the app names a preparation's findings and their sources, in one DOM-free place, so the learner's tray (L7), the instructor's card (L9) and the Debrief (L13) say the same words for |
+| [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | The pump channels' alarms as the instructor's screens read them. |
 | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | Plan pump-rack-tci.md A2, Bolus (§4 D2 item 5, §5; PQ3 = A): a bolus from a syringe channel, as a volume or as a dose the host converts with the PROGRAMMED concentration (what the pump believes it gives; the patient rece |
 | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | Plan pump-rack-tci.md A2 (§4 D2, §5 "Buttons", §8): the channel controls on each face of the rack, and the one place a flow's command leaves the tablet. |
 | [`apps/demo/src/app/pump/devices.ts`](../../apps/demo/src/app/pump/devices.ts) | Plan pump-rack-tci.md D12 (S1's profiles) for the app, and finding N125: the shipped device profiles (packages/controller/pump-devices/, every file but its JSON Schema), checked by the same rules as the CI's source check |
@@ -1113,6 +1125,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | Plan learner-action-remote.md L9 (§4 D7; LQ3 ruled 9 November): what the learner remotes have prepared, as the INSTRUCTOR sees it, on the laptop's dock (Instructor v2) and on the instructor's phone (views/remote.ts mount |
 | [`apps/demo/src/app/teach2/prep-board.ts`](../../apps/demo/src/app/teach2/prep-board.ts) | Plan learner-action-remote.md L9 (§4 D7): the instructor's copy of the learner remotes' preparations, as the Link keeps it from the host's `prep` news addressed to the host's own id (the laptop's Link and the instructor |
 | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Instructor v2 (E127): the two presses of the ACTION list, sending exactly what today's Scenario tab sends. |
+| [`apps/demo/src/app/teach2/pump-alarm-card.ts`](../../apps/demo/src/app/teach2/pump-alarm-card.ts) | The pump channels' standing alarms on the instructor's screens, mounted with the page (not with the Pumps sheet, which is built when first opened), so an alarm is seen and announced the moment the engine raises it: a car |
 | [`apps/demo/src/app/teach2/pump-mismatch.ts`](../../apps/demo/src/app/teach2/pump-mismatch.ts) | Plan pump-rack-tci.md §8 (PQ8 = A, the owner's ruling, as LQ3 for the learner preparations): a pump channel whose syringe or bag and programme differ is the instructor's finding at once — a card on the laptop's dock, bes |
 | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | Instructor v2, the ACTION rows classified live (design §3.4, §3.5; answers 4–8, 20). |
 | [`apps/demo/src/app/teach2/sheet.ts`](../../apps/demo/src/app/teach2/sheet.ts) | Instructor v2, the sheet frame (design §4, board "Proposal v11"; plan IP7): every sheet has the same shape. |
@@ -1339,6 +1352,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/instructor-pumps.e2e.ts`](../../apps/demo/e2e/instructor-pumps.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/instrument-reload.e2e.ts`](../../apps/demo/e2e/instrument-reload.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/laptop-labs.e2e.ts`](../../apps/demo/e2e/laptop-labs.e2e.ts) | 0 | 0 |
@@ -1473,6 +1487,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/learner-paused.test.ts`](../../apps/demo/src/app/learner-paused.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-case.dom.test.ts`](../../apps/demo/src/app/link-case.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-others.test.ts`](../../apps/demo/src/app/link-others.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/link-pump-alarms.test.ts`](../../apps/demo/src/app/link-pump-alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-pump.test.ts`](../../apps/demo/src/app/link-pump.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/graph.test.ts`](../../apps/demo/src/app/mechanisms/graph.test.ts) | 0 | 0 |
@@ -1487,6 +1502,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/panel/eeg.dom.test.ts`](../../apps/demo/src/app/panel/eeg.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/ibp-scales.dom.test.ts`](../../apps/demo/src/app/panel/ibp-scales.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/panel-load-tab.dom.test.ts`](../../apps/demo/src/app/panel/panel-load-tab.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/pumps.dom.test.ts`](../../apps/demo/src/app/panel/pumps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/scenario.dom.test.ts`](../../apps/demo/src/app/panel/scenario.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/patients.test.ts`](../../apps/demo/src/app/patients.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/position.dom.test.ts`](../../apps/demo/src/app/position.dom.test.ts) | 0 | 0 |
@@ -1500,6 +1516,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/readers-v2.dom.test.ts`](../../apps/demo/src/app/readers-v2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/recognised.dom.test.ts`](../../apps/demo/src/app/recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/record-delivered.test.ts`](../../apps/demo/src/app/record-delivered.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-pump.test.ts`](../../apps/demo/src/app/record-pump.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
