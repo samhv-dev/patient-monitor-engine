@@ -1,10 +1,10 @@
 {
-  "about": "Words with which Playwright or the browser says that the browser, or one of its processes, went away under a test. An e2e attempt whose error contains one, or during which a page's console or page error showed one (apps/demo/e2e/evidence.ts records them), ended in a browser crash (scripts/ci/e2e-report.mjs). Only wordings seen in this repository's CI are listed, each with a run where it was seen.",
+  "about": "Words with which Playwright or the browser says that the browser, or one of its processes, went away under a test, as scripts/ci/e2e-report.mjs reads them. `alone`: true when the words prove a browser crash by themselves; false when Playwright also says them without any crash (a page, context or browser the test or its teardown closed), so they count only beside a sign that is sufficient alone, in the same attempt and before its failure. Only wordings seen in this repository's CI are listed, each with a run where it was seen.",
   "signatures": [
-    { "name": "target-closed", "text": "Target page, context or browser has been closed", "seen": "ci run 44035184955, teach2-fit-stages.e2e.ts:86 (locator.isVisible)" },
-    { "name": "target-crashed", "text": "Target crashed", "seen": "ci run 44035184955, teach2-fit-stages.e2e.ts:86 (after the page closed)" },
-    { "name": "page-crashed", "text": "Page crashed", "seen": "ci run 42123206703, reload-keeps-case.e2e.ts:110 (page.reload)" },
-    { "name": "network-process-crashed", "text": "Network process crashed", "seen": "ci run 44035867305, sim-line.e2e.ts:63 (the page's WebSocket errors)" },
-    { "name": "webkit-internal-error", "text": "WebKit encountered an internal error", "seen": "ci run 44061053044, kit-store.e2e.ts:136 (page.reload)" }
+    { "name": "target-closed", "text": "Target page, context or browser has been closed", "alone": false, "seen": "ci run 44035184955, teach2-fit-stages.e2e.ts:86 (locator.isVisible)" },
+    { "name": "target-crashed", "text": "Target crashed", "alone": true, "seen": "ci run 44045161565, learner-remote.e2e.ts:192 (page.evaluate)" },
+    { "name": "page-crashed", "text": "Page crashed", "alone": true, "seen": "ci run 42123206703, reload-keeps-case.e2e.ts:110 (page.reload)" },
+    { "name": "network-process-crashed", "text": "Network process crashed", "alone": true, "seen": "ci run 44035867305, sim-line.e2e.ts:63 (the page's WebSocket errors)" },
+    { "name": "webkit-internal-error", "text": "WebKit encountered an internal error", "alone": true, "seen": "ci run 44061053044, kit-store.e2e.ts:136 (page.reload)" }
   ]
 }

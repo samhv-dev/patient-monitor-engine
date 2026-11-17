@@ -9,43 +9,54 @@
 //
 // A retry-only pass is
 //   known — the test is tagged @known-flaky: never fails the job;
-//   crash — every attempt before the pass ended in a browser crash (browser-crash.json): its error names a crash, or the
-//           browser said so on a page of the test during the attempt (the attempt's "evidence browser crashes"
-//           attachment, apps/demo/e2e/evidence.ts). Counted and reported; fails the job on Chromium only;
-//   new   — anything else (an assertion, a time-out, a crash followed by an assertion): fails the job.
+//   crash — every attempt before the pass ended in a browser crash (below). Counted and reported; fails the job on
+//           Chromium only;
+//   new   — anything else: fails the job.
+// An attempt ended in a browser crash when a crash sign that is sufficient ALONE (`alone` in browser-crash.json: "Target
+// crashed", "Page crashed", "Network process crashed", "WebKit encountered an internal error", and Playwright's page
+// crash event) came before its failure. Order: the attempt's errors in the order Playwright reports them (the first is
+// the one that ended the test function, or the time-out), and the evidence record's signs (apps/demo/e2e/evidence.ts),
+// each timed and all before the record's `failedAt`, the moment the test function ended. So:
+//   - an error that is sufficient alone, as the first error, is a crash;
+//   - otherwise a recorded sign that is sufficient alone, timed at or before `failedAt`, is a crash: the first error
+//     (an assertion, a time-out, a lost page) came after the browser had crashed;
+//   - "Target page, context or browser has been closed" (`alone: false`) is never enough: Playwright says it of any page
+//     the test or its teardown closed. Without a sufficient sign before the failure the attempt is a failure;
+//   - an assertion or a time-out first, with no recorded sign before it, is a failure, whatever errors follow it.
 import { appendFileSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const CRASHES = JSON.parse(readFileSync(new URL('./browser-crash.json', import.meta.url), 'utf8')).signatures;
 /** The crash signature `text` contains, or undefined. */
-export const crashSignature = (text) => CRASHES.find((s) => text.includes(s.text))?.name;
+const signatureOf = (text) => CRASHES.find((s) => text.includes(s.text));
 /** At or above this many crashes in one job the summary carries a notice; it fails nothing. */
 export const CRASH_NOTICE_AT = 3;
 /** The browsers on which a crash retry does not fail the job. */
 const CRASH_TOLERATED = new Set(['webkit']);
 
 const ANSI = /\u001b\[[0-9;]*m/g;
-const messages = (r) => [...(r.errors ?? []), ...(r.error ? [r.error] : [])].map((e) => String(e.message ?? e.value ?? '').replace(ANSI, ''));
+const messages = (r) => (r.errors?.length ? r.errors : r.error ? [r.error] : []).map((e) => String(e.message ?? e.value ?? '').replace(ANSI, ''));
 
-/** What the browser said about crashes during an attempt (the evidence fixture's record), or [] when none was kept. */
+/** The evidence fixture's record of what the browser said during the attempt: { failedAt, signs }, or null. */
 function recorded(r, base) {
   const a = (r.attachments ?? []).find((x) => x.name === 'evidence browser crashes' && x.path);
-  if (!a) return [];
+  if (!a) return null;
   try {
     return JSON.parse(readFileSync(resolve(base, a.path), 'utf8'));
   } catch {
-    return [];
+    return null;
   }
 }
 
-/** The crash signature an attempt ended in, or null when it ended in anything else. */
+/** The sufficient crash sign an attempt ended in, or null when it ended in anything else. */
 export function attemptCrash(r, base = '.') {
-  for (const m of messages(r)) {
-    const s = crashSignature(m);
-    if (s) return s;
-  }
-  return recorded(r, base)[0]?.signature ?? null;
+  const first = signatureOf(messages(r)[0] ?? '');
+  if (first?.alone) return first.name;
+  const rec = recorded(r, base);
+  const before = (rec?.signs ?? []).filter((x) => typeof x.at === 'number' && typeof rec.failedAt === 'number' && x.at <= rec.failedAt);
+  const sign = before.map((x) => CRASHES.find((s) => s.name === x.signature)).find((s) => s?.alone);
+  return sign ? sign.name : null;
 }
 
 /** One `specs[].tests[]` entry: null unless it passed only on a retry, else { kind, signature? }. */

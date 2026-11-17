@@ -264,12 +264,14 @@ re-harvests the known-flaky list. The workflow comment above the step names this
 
 An untagged test that passes only on a retry fails its e2e job, on Chromium and on WebKit, with one exception on WebKit:
 a retry whose every earlier attempt ended in a **browser crash** is counted and reported apart and does not fail the
-job. An attempt ended in a browser crash when its error contains one of the wordings in `scripts/ci/browser-crash.json`
-("Target page, context or browser has been closed", "Target crashed", "Page crashed", "Network process crashed",
-"WebKit encountered an internal error"), or when a page of the test said one in its console or page errors during the
-attempt (`apps/demo/e2e/evidence.ts` records them across navigations into the attempt's `evidence/browser-crashes.json`).
-A crash followed by an assertion or a time-out on the next attempt fails the job; so does a page that stops answering
-with no crash said before the attempt failed. The step summary lists the crash retries under their own heading with
+job. An attempt ended in a browser crash only when a crash sign that is sufficient alone came before its failure
+(`scripts/ci/browser-crash.json`, field `alone`): "Target crashed", "Page crashed", "Network process crashed" or "WebKit
+encountered an internal error" as the attempt's first error, or said by a page of the test (console, page error, or
+Playwright's page crash event) before the test function ended (`apps/demo/e2e/evidence.ts` records them, timed, across
+navigations, in the attempt's `evidence/browser-crashes.json`). "Target page, context or browser has been closed" is
+never enough alone: Playwright says it of any page the test or its teardown closed. An assertion or a time-out with no
+sufficient sign before it fails the job, whatever errors follow it, and so does a crash followed by an assertion or a
+time-out on the next attempt. The step summary lists the crash retries under their own heading with
 their count, one `::warning` each, and a `::notice` when one job has three or more. `scripts/ci/e2e-report.mjs gate`
 implements it; `packages/validation/test/e2e-retry-gate.test.ts` checks it, on a fixture of nine WebKit retry-only
 passes of 2026-11-17 among others.

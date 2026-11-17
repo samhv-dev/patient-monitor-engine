@@ -11,9 +11,11 @@
 //                                    hook window.__vent); and the input events each frame received (below)
 //   evidence/<n>-<role>.console.txt  the page's console (Playwright keeps the last 200 messages) and its page errors
 //   evidence/index.json              the pages, and any page that could not be read and why
-//   evidence/browser-crashes.json    every console line or page error, on any page of the test and across its
-//                                    navigations, that names a browser crash (scripts/ci/browser-crash.json), which
-//                                    scripts/ci/e2e-report.mjs reads to tell a crash from a failure
+//   evidence/browser-crashes.json    { failedAt, signs }: every console line, page error or page crash event, on any
+//                                    page of the test and across its navigations, that names a browser crash
+//                                    (scripts/ci/browser-crash.json), each with its time, up to failedAt (the moment the
+//                                    test function ended); scripts/ci/e2e-report.mjs reads it to tell a crash from a
+//                                    failure
 // The Playwright trace of the same attempt (every context, merged by Playwright into trace.zip) comes from the config's
 // `trace` option (playwright.config.ts). A passing attempt does nothing here: no read, no file.
 //
@@ -36,7 +38,7 @@ export const evidenceOn = (): boolean => (process.env.PME_E2E_EVIDENCE ? process
 
 const CRASHES = (JSON.parse(readFileSync(resolve(import.meta.dirname, '../../../scripts/ci/browser-crash.json'), 'utf8')) as { signatures: Array<{ name: string; text: string }> }).signatures;
 /** A browser crash a page of the test reported: its signature, its words, the page's address then. */
-export interface CrashSeen { signature: string; text: string; url: string }
+export interface CrashSeen { signature: string; text: string; url: string; at: number }
 
 const READ_MS = 3000; // one read of one page; a page whose main thread is stuck answers nothing [ENG: test]
 const APART_MS = 1000; // the second read, to show what still advances [ENG: test]
@@ -188,8 +190,9 @@ const failed = (t: TestInfo) => t.errors.length > 0 || (t.status !== undefined &
 async function collect(browser: Browser, earlier: Set<BrowserContext>, testInfo: TestInfo, crashes: readonly CrashSeen[]): Promise<void> {
   const dir = testInfo.outputPath('evidence');
   mkdirSync(dir, { recursive: true });
-  // first, so it is kept however the pages answer the reads below
-  writeFileSync(join(dir, 'browser-crashes.json'), JSON.stringify(crashes, null, 1));
+  // first, so it is kept however the pages answer the reads below; what the browser says from here on is not the attempt's
+  const failedAt = Date.now();
+  writeFileSync(join(dir, 'browser-crashes.json'), JSON.stringify({ failedAt, signs: crashes.filter((c) => c.at <= failedAt) }, null, 1));
   testInfo.attachments.push({ name: 'evidence browser crashes', path: join(dir, 'browser-crashes.json'), contentType: 'application/json' });
   const pages: Array<{ page: Page; context: number; earlier: boolean }> = [];
   browser.contexts().forEach((c, i) => c.pages().forEach((page) => pages.push({ page, context: i, earlier: earlier.has(c) })));
@@ -273,7 +276,7 @@ let crashSink: ((r: CrashSeen) => void) | null = null;
 const watchCrashes = (p: Page) => {
   const seen = (text: string) => {
     const s = CRASHES.find((x) => text.includes(x.text));
-    if (s) crashSink?.({ signature: s.name, text: text.slice(0, 300), url: p.url() });
+    if (s) crashSink?.({ signature: s.name, text: text.slice(0, 300), url: p.url(), at: Date.now() });
   };
   p.on('console', (m) => seen(m.text()));
   p.on('pageerror', (e) => seen(e.message));

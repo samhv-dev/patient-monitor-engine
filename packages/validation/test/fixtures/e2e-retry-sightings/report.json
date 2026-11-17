@@ -1,11 +1,14 @@
 {
+ "config": {
+  "version": "1.63.0"
+ },
  "suites": [
   {
    "specs": [
     {
      "file": "builder-end-sections.e2e.ts",
      "line": 47,
-     "title": "builder B5: a handout question, an opener, a line to show an (ci run 44003911554)",
+     "title": "builder B5: a handout question, an opener, a line to show and the script edited by keyboard, kept across a reload, exported (ci run 44003911554)",
      "tags": [],
      "tests": [
       {
@@ -15,11 +18,28 @@
         {
          "retry": 0,
          "status": "failed",
+         "duration": 8808,
+         "startTime": "2026-11-17T02:52:21.752Z",
          "errors": [
           {
-           "message": "Error: expect(page).toHaveURL(expected) failed"
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-end-sections.e2e.ts",
+            "column": 22,
+            "line": 52
+           },
+           "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:35619/?session=TCAU49#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:35619/?session=TCAU49#/scenarios/builder\"\u001b[22m\n\n\n  50 |   await openApp(page, base, '#/scenarios/builder');\n  51 |   await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();\n> 52 |   await expect(page).toHaveURL(/#\\/scenarios\\/builder\\/d[0-9a-z]+$/);\n     |                      ^\n  53 |\n  54 |   // left alone: the four sections opened, the export is the library card's bytes with the copy's id\n  55 |   for (const s of [/^Script/, /^Outcomes/, /^Debrief hints/, /^Handout questions/]) await section(page, s);\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-end-sections.e2e.ts:52:22"
           }
          ],
+         "error": {
+          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:35619/?session=TCAU49#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:35619/?session=TCAU49#/scenarios/builder\"\u001b[22m\n",
+          "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:35619/?session=TCAU49#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:35619/?session=TCAU49#/scenarios/builder\"\u001b[22m\n\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-end-sections.e2e.ts:52:22",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-end-sections.e2e.ts",
+           "column": 22,
+           "line": 52
+          },
+          "snippet": "\u001b[0m \u001b[90m 50 |\u001b[39m   \u001b[36mawait\u001b[39m openApp(page\u001b[33m,\u001b[39m base\u001b[33m,\u001b[39m \u001b[32m'#/scenarios/builder'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Open a copy of Malignant hyperthermia (phases)'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 52 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 53 |\u001b[39m\n \u001b[90m 54 |\u001b[39m   \u001b[90m// left alone: the four sections opened, the export is the library card's bytes with the copy's id\u001b[39m\n \u001b[90m 55 |\u001b[39m   \u001b[36mfor\u001b[39m (\u001b[36mconst\u001b[39m s \u001b[36mof\u001b[39m [\u001b[35m/^Script/\u001b[39m\u001b[33m,\u001b[39m \u001b[35m/^Outcomes/\u001b[39m\u001b[33m,\u001b[39m \u001b[35m/^Debrief hints/\u001b[39m\u001b[33m,\u001b[39m \u001b[35m/^Handout questions/\u001b[39m]) \u001b[36mawait\u001b[39m section(page\u001b[33m,\u001b[39m s)\u001b[33m;\u001b[39m\u001b[0m"
+         },
          "attachments": [
           {
            "name": "evidence browser crashes",
@@ -31,6 +51,8 @@
         {
          "retry": 1,
          "status": "passed",
+         "duration": 8579,
+         "startTime": "2026-11-17T02:52:31.255Z",
          "errors": [],
          "attachments": []
         }
@@ -41,7 +63,7 @@
     {
      "file": "builder-action-editor.e2e.ts",
      "line": 40,
-     "title": "builder B4: a drug action of the MH card edited by keyboard, (ci run 44054484447)",
+     "title": "builder B4: a drug action of the MH card edited by keyboard, kept across a reload, exported as the expected card (ci run 44054484447)",
      "tags": [],
      "tests": [
       {
@@ -51,11 +73,28 @@
         {
          "retry": 0,
          "status": "failed",
+         "duration": 9009,
+         "startTime": "2026-11-17T09:23:58.513Z",
          "errors": [
           {
-           "message": "Error: expect(page).toHaveURL(expected) failed"
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts",
+            "column": 22,
+            "line": 45
+           },
+           "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:42959/?session=PDU7ZV#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:42959/?session=PDU7ZV#/scenarios/builder\"\u001b[22m\n\n\n  43 |   await openApp(page, base, '#/scenarios/builder');\n  44 |   await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();\n> 45 |   await expect(page).toHaveURL(/#\\/scenarios\\/builder\\/d[0-9a-z]+$/);\n     |                      ^\n  46 |   await page.getByRole('button', { name: /^Actions/ }).focus();\n  47 |   await page.keyboard.press('Enter');\n  48 |\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts:45:22"
           }
          ],
+         "error": {
+          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:42959/?session=PDU7ZV#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:42959/?session=PDU7ZV#/scenarios/builder\"\u001b[22m\n",
+          "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:42959/?session=PDU7ZV#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:42959/?session=PDU7ZV#/scenarios/builder\"\u001b[22m\n\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts:45:22",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts",
+           "column": 22,
+           "line": 45
+          },
+          "snippet": "\u001b[0m \u001b[90m 43 |\u001b[39m   \u001b[36mawait\u001b[39m openApp(page\u001b[33m,\u001b[39m base\u001b[33m,\u001b[39m \u001b[32m'#/scenarios/builder'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Open a copy of Malignant hyperthermia (phases)'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/^Actions/\u001b[39m })\u001b[33m.\u001b[39mfocus()\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mpress(\u001b[32m'Enter'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m\u001b[0m"
+         },
          "attachments": [
           {
            "name": "evidence browser crashes",
@@ -67,261 +106,8 @@
         {
          "retry": 1,
          "status": "passed",
-         "errors": [],
-         "attachments": []
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "file": "sim-line.e2e.ts",
-     "line": 63,
-     "title": "the line is on the Monitor view and the learner window, neve (ci run 43991982650)",
-     "tags": [],
-     "tests": [
-      {
-       "projectName": "webkit",
-       "status": "flaky",
-       "results": [
-        {
-         "retry": 0,
-         "status": "failed",
-         "errors": [
-          {
-           "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F#/teach2\"]; pages [\"http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F&session=BU7G47#/room\"]"
-          }
-         ],
-         "attachments": [
-          {
-           "name": "evidence browser crashes",
-           "contentType": "application/json",
-           "path": "crashes/43991982650.json"
-          }
-         ]
-        },
-        {
-         "retry": 1,
-         "status": "passed",
-         "errors": [],
-         "attachments": []
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "file": "sim-line.e2e.ts",
-     "line": 63,
-     "title": "the line is on the Monitor view and the learner window, neve (ci run 44035867305)",
-     "tags": [],
-     "tests": [
-      {
-       "projectName": "webkit",
-       "status": "flaky",
-       "results": [
-        {
-         "retry": 0,
-         "status": "failed",
-         "errors": [
-          {
-           "message": "Error: page.waitForFunction: Timeout 15000ms exceeded.\nat #/scenarios; loads [\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F#/teach2\",\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]; pages [\"http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]"
-          }
-         ],
-         "attachments": [
-          {
-           "name": "evidence browser crashes",
-           "contentType": "application/json",
-           "path": "crashes/44035867305.json"
-          }
-         ]
-        },
-        {
-         "retry": 1,
-         "status": "passed",
-         "errors": [],
-         "attachments": []
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "file": "kit-store.e2e.ts",
-     "line": 136,
-     "title": "kit store, debriefs: a saved debrief is a file in user-data; (ci run 44061053044)",
-     "tags": [],
-     "tests": [
-      {
-       "projectName": "webkit",
-       "status": "flaky",
-       "results": [
-        {
-         "retry": 0,
-         "status": "failed",
-         "errors": [
-          {
-           "message": "Error: page.reload: WebKit encountered an internal error\nCall log:\n  - waiting for navigation until \"load\""
-          }
-         ],
-         "attachments": [
-          {
-           "name": "evidence browser crashes",
-           "contentType": "application/json",
-           "path": "crashes/44061053044.json"
-          }
-         ]
-        },
-        {
-         "retry": 1,
-         "status": "passed",
-         "errors": [],
-         "attachments": []
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "file": "kit-store.e2e.ts",
-     "line": 46,
-     "title": "kit store: Ctrl+S keeps the card in the user-data folder; a  (ci run 43977237726)",
-     "tags": [],
-     "tests": [
-      {
-       "projectName": "webkit",
-       "status": "flaky",
-       "results": [
-        {
-         "retry": 0,
-         "status": "timedOut",
-         "errors": [
-          {
-           "message": "Test timeout of 120000ms exceeded."
-          },
-          {
-           "message": "Error: page.waitForFunction: Test timeout of 120000ms exceeded."
-          }
-         ],
-         "attachments": [
-          {
-           "name": "evidence browser crashes",
-           "contentType": "application/json",
-           "path": "crashes/43977237726.json"
-          }
-         ]
-        },
-        {
-         "retry": 1,
-         "status": "passed",
-         "errors": [],
-         "attachments": []
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "file": "teach2-fit-stages.e2e.ts",
-     "line": 86,
-     "title": "Instructor v2 fits 1440 × 900 on the /2 MH card at recoverin (ci run 44035184955)",
-     "tags": [],
-     "tests": [
-      {
-       "projectName": "webkit",
-       "status": "flaky",
-       "results": [
-        {
-         "retry": 0,
-         "status": "failed",
-         "errors": [
-          {
-           "message": "Error: locator.isVisible: Target page, context or browser has been closed\nCall log:\n    - checking visibility of locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: locator('.ip2-row-title').filter({ hasText: 'Preoxygenate: 100 % O₂ by face mask' }) }).first()"
-          }
-         ],
-         "attachments": [
-          {
-           "name": "evidence browser crashes",
-           "contentType": "application/json",
-           "path": "crashes/44035184955.json"
-          }
-         ]
-        },
-        {
-         "retry": 1,
-         "status": "passed",
-         "errors": [],
-         "attachments": []
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "file": "depth-artefacts.e2e.ts",
-     "line": 141,
-     "title": "through a relay in its own process: the instructor's loose e (ci run 44015852066)",
-     "tags": [],
-     "tests": [
-      {
-       "projectName": "webkit",
-       "status": "flaky",
-       "results": [
-        {
-         "retry": 0,
-         "status": "failed",
-         "errors": [
-          {
-           "message": "Error: Timeout 5000ms exceeded while waiting on the predicate"
-          }
-         ],
-         "attachments": [
-          {
-           "name": "evidence browser crashes",
-           "contentType": "application/json",
-           "path": "crashes/44015852066.json"
-          }
-         ]
-        },
-        {
-         "retry": 1,
-         "status": "passed",
-         "errors": [],
-         "attachments": []
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "file": "learner-remote.e2e.ts",
-     "line": 192,
-     "title": "L9: the instructor sees the staging on the laptop dock and t (ci run 44045161565)",
-     "tags": [],
-     "tests": [
-      {
-       "projectName": "webkit",
-       "status": "flaky",
-       "results": [
-        {
-         "retry": 0,
-         "status": "failed",
-         "errors": [
-          {
-           "message": "Error: expect(locator).toHaveText(expected) failed"
-          }
-         ],
-         "attachments": [
-          {
-           "name": "evidence browser crashes",
-           "contentType": "application/json",
-           "path": "crashes/44045161565.json"
-          }
-         ]
-        },
-        {
-         "retry": 1,
-         "status": "passed",
+         "duration": 7755,
+         "startTime": "2026-11-17T09:24:08.309Z",
          "errors": [],
          "attachments": []
         }
@@ -332,7 +118,7 @@
     {
      "file": "builder-action-editor.e2e.ts",
      "line": 40,
-     "title": "builder B4: a drug action of the MH card edited by keyboard, (ci run 44029616512)",
+     "title": "builder B4: a drug action of the MH card edited by keyboard, kept across a reload, exported as the expected card (ci run 44029616512)",
      "tags": [],
      "tests": [
       {
@@ -342,11 +128,28 @@
         {
          "retry": 0,
          "status": "failed",
+         "duration": 7832,
+         "startTime": "2026-11-17T06:23:42.799Z",
          "errors": [
           {
-           "message": "Error: expect(page).toHaveURL(expected) failed"
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts",
+            "column": 22,
+            "line": 45
+           },
+           "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:36833/?session=9T7N3G#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:36833/?session=9T7N3G#/scenarios/builder\"\u001b[22m\n\n\n  43 |   await openApp(page, base, '#/scenarios/builder');\n  44 |   await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();\n> 45 |   await expect(page).toHaveURL(/#\\/scenarios\\/builder\\/d[0-9a-z]+$/);\n     |                      ^\n  46 |   await page.getByRole('button', { name: /^Actions/ }).focus();\n  47 |   await page.keyboard.press('Enter');\n  48 |\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts:45:22"
           }
          ],
+         "error": {
+          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:36833/?session=9T7N3G#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:36833/?session=9T7N3G#/scenarios/builder\"\u001b[22m\n",
+          "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:36833/?session=9T7N3G#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:36833/?session=9T7N3G#/scenarios/builder\"\u001b[22m\n\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts:45:22",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-action-editor.e2e.ts",
+           "column": 22,
+           "line": 45
+          },
+          "snippet": "\u001b[0m \u001b[90m 43 |\u001b[39m   \u001b[36mawait\u001b[39m openApp(page\u001b[33m,\u001b[39m base\u001b[33m,\u001b[39m \u001b[32m'#/scenarios/builder'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Open a copy of Malignant hyperthermia (phases)'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/^Actions/\u001b[39m })\u001b[33m.\u001b[39mfocus()\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mpress(\u001b[32m'Enter'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m\u001b[0m"
+         },
          "attachments": [
           {
            "name": "evidence browser crashes",
@@ -358,6 +161,8 @@
         {
          "retry": 1,
          "status": "passed",
+         "duration": 5126,
+         "startTime": "2026-11-17T06:23:51.104Z",
          "errors": [],
          "attachments": []
         }
@@ -368,7 +173,7 @@
     {
      "file": "builder-phase-editor.e2e.ts",
      "line": 36,
-     "title": "builder B3: a phase rule of the MH card edited by keyboard,  (ci run 44000311605)",
+     "title": "builder B3: a phase rule of the MH card edited by keyboard, kept across a reload, exported as the expected card (ci run 44000311605)",
      "tags": [],
      "tests": [
       {
@@ -378,11 +183,28 @@
         {
          "retry": 0,
          "status": "failed",
+         "duration": 9227,
+         "startTime": "2026-11-17T02:15:26.495Z",
          "errors": [
           {
-           "message": "Error: expect(page).toHaveURL(expected) failed"
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-phase-editor.e2e.ts",
+            "column": 22,
+            "line": 41
+           },
+           "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:42297/?session=Z3CBBE#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:42297/?session=Z3CBBE#/scenarios/builder\"\u001b[22m\n\n\n  39 |   await openApp(page, base, '#/scenarios/builder');\n  40 |   await page.getByRole('button', { name: 'Open a copy of Malignant hyperthermia (phases)' }).click();\n> 41 |   await expect(page).toHaveURL(/#\\/scenarios\\/builder\\/d[0-9a-z]+$/);\n     |                      ^\n  42 |   await page.getByRole('button', { name: /^Phases/ }).click();\n  43 |\n  44 |   // left alone: every phase opened, the export is the library card's bytes with the copy's id\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-phase-editor.e2e.ts:41:22"
           }
          ],
+         "error": {
+          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:42297/?session=Z3CBBE#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:42297/?session=Z3CBBE#/scenarios/builder\"\u001b[22m\n",
+          "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:42297/?session=Z3CBBE#/scenarios/builder\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"en\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:42297/?session=Z3CBBE#/scenarios/builder\"\u001b[22m\n\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-phase-editor.e2e.ts:41:22",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/builder-phase-editor.e2e.ts",
+           "column": 22,
+           "line": 41
+          },
+          "snippet": "\u001b[0m \u001b[90m 39 |\u001b[39m   \u001b[36mawait\u001b[39m openApp(page\u001b[33m,\u001b[39m base\u001b[33m,\u001b[39m \u001b[32m'#/scenarios/builder'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Open a copy of Malignant hyperthermia (phases)'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 41 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/#\\/scenarios\\/builder\\/d[0-9a-z]+$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 42 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/^Phases/\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m 43 |\u001b[39m\n \u001b[90m 44 |\u001b[39m   \u001b[90m// left alone: every phase opened, the export is the library card's bytes with the copy's id\u001b[39m\u001b[0m"
+         },
          "attachments": [
           {
            "name": "evidence browser crashes",
@@ -394,6 +216,8 @@
         {
          "retry": 1,
          "status": "passed",
+         "duration": 6918,
+         "startTime": "2026-11-17T02:15:36.452Z",
          "errors": [],
          "attachments": []
         }
@@ -404,7 +228,7 @@
     {
      "file": "sim-line.e2e.ts",
      "line": 63,
-     "title": "the line is on the Monitor view and the learner window, neve (ci run 43994852807)",
+     "title": "the line is on the Monitor view and the learner window, never on the instructor pages; no footer on a monitor (ci run 43991982650)",
      "tags": [],
      "tests": [
       {
@@ -414,11 +238,138 @@
         {
          "retry": 0,
          "status": "failed",
+         "duration": 8599,
+         "startTime": "2026-11-17T01:11:30.636Z",
          "errors": [
           {
-           "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F#/teach2\"]; pages [\"http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F&session=8HCR7D#/scenarios\"]"
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts",
+            "column": 13,
+            "line": 87
+           },
+           "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F#/teach2\"]; pages [\"http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F&session=BU7G47#/room\"]\n\n  85 |     // that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.\n  86 |     await go(page, r).catch((e: Error) => {\n> 87 |       throw new Error(`${e.message}\\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`);\n     |             ^\n  88 |     });\n  89 |     await expect.poll(() => page.evaluate((line) => document.body.innerText.includes(line), LINE), { message: r }).toBe(false);\n  90 |   }\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:87:13\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:86:5"
           }
          ],
+         "error": {
+          "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F#/teach2\"]; pages [\"http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F&session=BU7G47#/room\"]",
+          "stack": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F#/teach2\"]; pages [\"http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F&session=BU7G47#/room\"]\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:87:13\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:86:5",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts",
+           "column": 13,
+           "line": 87
+          },
+          "snippet": "\u001b[0m \u001b[90m 85 |\u001b[39m     \u001b[90m// that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.\u001b[39m\n \u001b[90m 86 |\u001b[39m     \u001b[36mawait\u001b[39m go(page\u001b[33m,\u001b[39m r)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m((e\u001b[33m:\u001b[39m \u001b[33mError\u001b[39m) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 87 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m`${e.message}\\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 88 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 89 |\u001b[39m     \u001b[36mawait\u001b[39m expect\u001b[33m.\u001b[39mpoll(() \u001b[33m=>\u001b[39m page\u001b[33m.\u001b[39mevaluate((line) \u001b[33m=>\u001b[39m document\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39minnerText\u001b[33m.\u001b[39mincludes(line)\u001b[33m,\u001b[39m \u001b[33mLINE\u001b[39m)\u001b[33m,\u001b[39m { message\u001b[33m:\u001b[39m r })\u001b[33m.\u001b[39mtoBe(\u001b[36mfalse\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 90 |\u001b[39m   }\u001b[0m"
+         },
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/43991982650.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 7465,
+         "startTime": "2026-11-17T01:11:39.921Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "sim-line.e2e.ts",
+     "line": 63,
+     "title": "the line is on the Monitor view and the learner window, never on the instructor pages; no footer on a monitor (ci run 44035867305)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "duration": 23394,
+         "startTime": "2026-11-17T07:18:56.598Z",
+         "errors": [
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts",
+            "column": 13,
+            "line": 87
+           },
+           "message": "Error: page.waitForFunction: Timeout 15000ms exceeded.\nat #/scenarios; loads [\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F#/teach2\",\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]; pages [\"http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]\n\n  85 |     // that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.\n  86 |     await go(page, r).catch((e: Error) => {\n> 87 |       throw new Error(`${e.message}\\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`);\n     |             ^\n  88 |     });\n  89 |     await expect.poll(() => page.evaluate((line) => document.body.innerText.includes(line), LINE), { message: r }).toBe(false);\n  90 |   }\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:87:13\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:86:5"
+          }
+         ],
+         "error": {
+          "message": "Error: page.waitForFunction: Timeout 15000ms exceeded.\nat #/scenarios; loads [\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F#/teach2\",\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]; pages [\"http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]",
+          "stack": "Error: page.waitForFunction: Timeout 15000ms exceeded.\nat #/scenarios; loads [\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F#/teach2\",\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]; pages [\"http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:87:13\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:86:5",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts",
+           "column": 13,
+           "line": 87
+          },
+          "snippet": "\u001b[0m \u001b[90m 85 |\u001b[39m     \u001b[90m// that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.\u001b[39m\n \u001b[90m 86 |\u001b[39m     \u001b[36mawait\u001b[39m go(page\u001b[33m,\u001b[39m r)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m((e\u001b[33m:\u001b[39m \u001b[33mError\u001b[39m) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 87 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m`${e.message}\\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 88 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 89 |\u001b[39m     \u001b[36mawait\u001b[39m expect\u001b[33m.\u001b[39mpoll(() \u001b[33m=>\u001b[39m page\u001b[33m.\u001b[39mevaluate((line) \u001b[33m=>\u001b[39m document\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39minnerText\u001b[33m.\u001b[39mincludes(line)\u001b[33m,\u001b[39m \u001b[33mLINE\u001b[39m)\u001b[33m,\u001b[39m { message\u001b[33m:\u001b[39m r })\u001b[33m.\u001b[39mtoBe(\u001b[36mfalse\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 90 |\u001b[39m   }\u001b[0m"
+         },
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44035867305.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 8324,
+         "startTime": "2026-11-17T07:19:20.759Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "sim-line.e2e.ts",
+     "line": 63,
+     "title": "the line is on the Monitor view and the learner window, never on the instructor pages; no footer on a monitor (ci run 43994852807)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "duration": 11685,
+         "startTime": "2026-11-17T01:48:57.356Z",
+         "errors": [
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts",
+            "column": 13,
+            "line": 87
+           },
+           "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F#/teach2\"]; pages [\"http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F&session=8HCR7D#/scenarios\"]\n\n  85 |     // that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.\n  86 |     await go(page, r).catch((e: Error) => {\n> 87 |       throw new Error(`${e.message}\\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`);\n     |             ^\n  88 |     });\n  89 |     await expect.poll(() => page.evaluate((line) => document.body.innerText.includes(line), LINE), { message: r }).toBe(false);\n  90 |   }\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:87:13\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:86:5"
+          }
+         ],
+         "error": {
+          "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F#/teach2\"]; pages [\"http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F&session=8HCR7D#/scenarios\"]",
+          "stack": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F#/teach2\"]; pages [\"http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F&session=8HCR7D#/scenarios\"]\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:87:13\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts:86:5",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/sim-line.e2e.ts",
+           "column": 13,
+           "line": 87
+          },
+          "snippet": "\u001b[0m \u001b[90m 85 |\u001b[39m     \u001b[90m// that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.\u001b[39m\n \u001b[90m 86 |\u001b[39m     \u001b[36mawait\u001b[39m go(page\u001b[33m,\u001b[39m r)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m((e\u001b[33m:\u001b[39m \u001b[33mError\u001b[39m) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 87 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m`${e.message}\\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 88 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 89 |\u001b[39m     \u001b[36mawait\u001b[39m expect\u001b[33m.\u001b[39mpoll(() \u001b[33m=>\u001b[39m page\u001b[33m.\u001b[39mevaluate((line) \u001b[33m=>\u001b[39m document\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39minnerText\u001b[33m.\u001b[39mincludes(line)\u001b[33m,\u001b[39m \u001b[33mLINE\u001b[39m)\u001b[33m,\u001b[39m { message\u001b[33m:\u001b[39m r })\u001b[33m.\u001b[39mtoBe(\u001b[36mfalse\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 90 |\u001b[39m   }\u001b[0m"
+         },
          "attachments": [
           {
            "name": "evidence browser crashes",
@@ -430,6 +381,115 @@
         {
          "retry": 1,
          "status": "passed",
+         "duration": 9413,
+         "startTime": "2026-11-17T01:49:10.134Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "kit-store.e2e.ts",
+     "line": 136,
+     "title": "kit store, debriefs: a saved debrief is a file in user-data; a cleared browser reads it back and opens it; Clear moves the file to removed (ci run 44061053044)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "duration": 7594,
+         "startTime": "2026-11-17T10:09:53.531Z",
+         "errors": [
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/kit-store.e2e.ts",
+            "column": 14,
+            "line": 152
+           },
+           "message": "Error: page.reload: WebKit encountered an internal error\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n\n\n  150 |   expect(file).toMatchObject({ schema: 'pme-archive-entry/1', id: saved.id, resident, debrief: { schema: 'pme-debrief/2' } });\n  151 |   await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/debrief`);\n> 152 |   await page.reload();\n      |              ^\n  153 |   await page.waitForFunction(() => '__pmeApp' in window);\n  154 |   await expect(arcCount(page)).toHaveText(/ · kept in this browser and in this kit’s user-data folder$/);\n  155 |   await expect(page.locator('#db-archive .db-arc-kit')).toBeHidden();\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/kit-store.e2e.ts:152:14"
+          }
+         ],
+         "error": {
+          "message": "Error: page.reload: WebKit encountered an internal error\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n",
+          "stack": "Error: page.reload: WebKit encountered an internal error\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/kit-store.e2e.ts:152:14",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/kit-store.e2e.ts",
+           "column": 14,
+           "line": 152
+          },
+          "snippet": "\u001b[0m \u001b[90m 150 |\u001b[39m   expect(file)\u001b[33m.\u001b[39mtoMatchObject({ schema\u001b[33m:\u001b[39m \u001b[32m'pme-archive-entry/1'\u001b[39m\u001b[33m,\u001b[39m id\u001b[33m:\u001b[39m saved\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m resident\u001b[33m,\u001b[39m debrief\u001b[33m:\u001b[39m { schema\u001b[33m:\u001b[39m \u001b[32m'pme-debrief/2'\u001b[39m } })\u001b[33m;\u001b[39m\n \u001b[90m 151 |\u001b[39m   \u001b[36mawait\u001b[39m openApp(page\u001b[33m,\u001b[39m base\u001b[33m,\u001b[39m \u001b[32m`?relay=${encodeURIComponent(ws())}#/debrief`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 152 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mreload()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 153 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m \u001b[32m'__pmeApp'\u001b[39m \u001b[36min\u001b[39m window)\u001b[33m;\u001b[39m\n \u001b[90m 154 |\u001b[39m   \u001b[36mawait\u001b[39m expect(arcCount(page))\u001b[33m.\u001b[39mtoHaveText(\u001b[35m/ · kept in this browser and in this kit’s user-data folder$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 155 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'#db-archive .db-arc-kit'\u001b[39m))\u001b[33m.\u001b[39mtoBeHidden()\u001b[33m;\u001b[39m\u001b[0m"
+         },
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44061053044.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 7058,
+         "startTime": "2026-11-17T10:10:01.603Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "kit-store.e2e.ts",
+     "line": 46,
+     "title": "kit store: Ctrl+S keeps the card in the user-data folder; a cleared browser and another browser find it there (ci run 43977237726)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "timedOut",
+         "duration": 121201,
+         "startTime": "2026-11-16T23:16:48.577Z",
+         "errors": [
+          {
+           "message": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+          },
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/kit-store.e2e.ts",
+            "column": 14,
+            "line": 87
+           },
+           "message": "Error: page.waitForFunction: Test timeout of 120000ms exceeded.\n\n  85 |   await openApp(page, base, builder());\n  86 |   await page.reload();\n> 87 |   await page.waitForFunction(() => '__pmeApp' in window);\n     |              ^\n  88 |   await expect(page.locator('.sb-drafts')).toContainText('No drafts in this browser yet');\n  89 |   const kept = page.locator('.sb-kit-cards .scen-item').filter({ hasText: id });\n  90 |   await expect(kept).toContainText('MH, kept in the kit, edited');\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/kit-store.e2e.ts:87:14"
+          }
+         ],
+         "error": {
+          "message": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m",
+          "stack": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+         },
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/43977237726.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 7129,
+         "startTime": "2026-11-16T23:18:50.289Z",
          "errors": [],
          "attachments": []
         }
@@ -440,7 +500,7 @@
     {
      "file": "archive-beyond-localstorage.e2e.ts",
      "line": 40,
-     "title": "N39: the archive outgrows a full localStorage; an earlier bu (ci run 44027075554)",
+     "title": "N39: the archive outgrows a full localStorage; an earlier build's debriefs move to IndexedDB; Finish the case still saves (ci run 44027075554)",
      "tags": [],
      "tests": [
       {
@@ -450,14 +510,25 @@
         {
          "retry": 0,
          "status": "timedOut",
+         "duration": 241333,
+         "startTime": "2026-11-17T05:55:01.084Z",
          "errors": [
           {
-           "message": "Test timeout of 240000ms exceeded."
+           "message": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m"
           },
           {
-           "message": "Error: page.waitForFunction: Test timeout of 240000ms exceeded."
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/archive-beyond-localstorage.e2e.ts",
+            "column": 14,
+            "line": 108
+           },
+           "message": "Error: page.waitForFunction: Test timeout of 240000ms exceeded.\n\n  106 |   // 5. a reload keeps them all; a migrated and a new debrief open from the archive\n  107 |   await page.reload();\n> 108 |   await page.waitForFunction(() => '__pmeApp' in window);\n      |              ^\n  109 |   expect(await arc(page, (a) => a.list().length)).toBe(27);\n  110 |   await page.evaluate(() => (location.hash = '#/debrief/archive/old1'));\n  111 |   await expect(page.locator('.db-viewing')).toHaveText(/^Saved debrief 1: Dr Old One · Malignant hyperthermia, saved at \\d\\d:\\d\\d\\. Back to the current run$/);\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/archive-beyond-localstorage.e2e.ts:108:14"
           }
          ],
+         "error": {
+          "message": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m",
+          "stack": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m"
+         },
          "attachments": [
           {
            "name": "evidence browser crashes",
@@ -469,6 +540,8 @@
         {
          "retry": 1,
          "status": "passed",
+         "duration": 10899,
+         "startTime": "2026-11-17T05:59:03.154Z",
          "errors": [],
          "attachments": []
         }
@@ -479,7 +552,7 @@
     {
      "file": "archive-beyond-localstorage.e2e.ts",
      "line": 40,
-     "title": "N39: the archive outgrows a full localStorage; an earlier bu (ci run 44022905539)",
+     "title": "N39: the archive outgrows a full localStorage; an earlier build's debriefs move to IndexedDB; Finish the case still saves (ci run 44022905539)",
      "tags": [],
      "tests": [
       {
@@ -489,14 +562,25 @@
         {
          "retry": 0,
          "status": "timedOut",
+         "duration": 241279,
+         "startTime": "2026-11-17T05:32:35.231Z",
          "errors": [
           {
-           "message": "Test timeout of 240000ms exceeded."
+           "message": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m"
           },
           {
-           "message": "Error: page.waitForFunction: Test timeout of 240000ms exceeded."
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/archive-beyond-localstorage.e2e.ts",
+            "column": 14,
+            "line": 108
+           },
+           "message": "Error: page.waitForFunction: Test timeout of 240000ms exceeded.\n\n  106 |   // 5. a reload keeps them all; a migrated and a new debrief open from the archive\n  107 |   await page.reload();\n> 108 |   await page.waitForFunction(() => '__pmeApp' in window);\n      |              ^\n  109 |   expect(await arc(page, (a) => a.list().length)).toBe(27);\n  110 |   await page.evaluate(() => (location.hash = '#/debrief/archive/old1'));\n  111 |   await expect(page.locator('.db-viewing')).toHaveText(/^Saved debrief 1: Dr Old One · Malignant hyperthermia, saved at \\d\\d:\\d\\d\\. Back to the current run$/);\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/archive-beyond-localstorage.e2e.ts:108:14"
           }
          ],
+         "error": {
+          "message": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m",
+          "stack": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m"
+         },
          "attachments": [
           {
            "name": "evidence browser crashes",
@@ -508,6 +592,219 @@
         {
          "retry": 1,
          "status": "passed",
+         "duration": 9707,
+         "startTime": "2026-11-17T05:36:37.170Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "teach2-fit-stages.e2e.ts",
+     "line": 86,
+     "title": "Instructor v2 fits 1440 × 900 on the /2 MH card at recovering: no scroll, every open action a row, no row disabled (ci run 44035184955)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "duration": 40958,
+         "startTime": "2026-11-17T07:11:47.938Z",
+         "errors": [
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/mh-v2-path.ts",
+            "column": 32,
+            "line": 92
+           },
+           "message": "Error: locator.isVisible: Target page, context or browser has been closed\nCall log:\n\u001b[2m    - checking visibility of locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: locator('.ip2-row-title').filter({ hasText: 'Preoxygenate: 100 % O₂ by face mask' }) }).first()\u001b[22m\n\n\n   at mh-v2-path.ts:92\n\n  90 |     const fold = page.locator('.ip2-action details.ip2-later');\n  91 |     await row.waitFor({ state: 'visible', timeout: 1000 }).catch(() => undefined);\n> 92 |     const opened = !(await row.isVisible()) && (await fold.count()) > 0 && !(await fold.evaluate((d) => (d as HTMLDetailsElement).open));\n     |                                ^\n  93 |     if (opened) await fold.locator('summary').click();\n  94 |     await expect(row, `${title} in ACTION at ${t} s (phase ${(await app(page)).stateId})`).toBeVisible();\n  95 |     const at = (await app(page)).simT;\n    at pressPath (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/mh-v2-path.ts:92:32)\n    at mhV2Fit (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/teach2-fit-support.ts:165:3)\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/teach2-fit-stages.e2e.ts:88:5"
+          }
+         ],
+         "error": {
+          "message": "Error: locator.isVisible: Target page, context or browser has been closed\nCall log:\n\u001b[2m    - checking visibility of locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: locator('.ip2-row-title').filter({ hasText: 'Preoxygenate: 100 % O₂ by face mask' }) }).first()\u001b[22m\n",
+          "stack": "Error: locator.isVisible: Target page, context or browser has been closed\nCall log:\n\u001b[2m    - checking visibility of locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: locator('.ip2-row-title').filter({ hasText: 'Preoxygenate: 100 % O₂ by face mask' }) }).first()\u001b[22m\n\n    at pressPath (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/mh-v2-path.ts:92:32)\n    at mhV2Fit (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/teach2-fit-support.ts:165:3)\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/teach2-fit-stages.e2e.ts:88:5",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/mh-v2-path.ts",
+           "column": 32,
+           "line": 92
+          },
+          "snippet": "   at mh-v2-path.ts:92\n\n\u001b[0m \u001b[90m 90 |\u001b[39m     \u001b[36mconst\u001b[39m fold \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.ip2-action details.ip2-later'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 91 |\u001b[39m     \u001b[36mawait\u001b[39m row\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m1000\u001b[39m })\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(() \u001b[33m=>\u001b[39m undefined)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 92 |\u001b[39m     \u001b[36mconst\u001b[39m opened \u001b[33m=\u001b[39m \u001b[33m!\u001b[39m(\u001b[36mawait\u001b[39m row\u001b[33m.\u001b[39misVisible()) \u001b[33m&&\u001b[39m (\u001b[36mawait\u001b[39m fold\u001b[33m.\u001b[39mcount()) \u001b[33m>\u001b[39m \u001b[35m0\u001b[39m \u001b[33m&&\u001b[39m \u001b[33m!\u001b[39m(\u001b[36mawait\u001b[39m fold\u001b[33m.\u001b[39mevaluate((d) \u001b[33m=>\u001b[39m (d \u001b[36mas\u001b[39m \u001b[33mHTMLDetailsElement\u001b[39m)\u001b[33m.\u001b[39mopen))\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 93 |\u001b[39m     \u001b[36mif\u001b[39m (opened) \u001b[36mawait\u001b[39m fold\u001b[33m.\u001b[39mlocator(\u001b[32m'summary'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m 94 |\u001b[39m     \u001b[36mawait\u001b[39m expect(row\u001b[33m,\u001b[39m \u001b[32m`${title} in ACTION at ${t} s (phase ${(await app(page)).stateId})`\u001b[39m)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 95 |\u001b[39m     \u001b[36mconst\u001b[39m at \u001b[33m=\u001b[39m (\u001b[36mawait\u001b[39m app(page))\u001b[33m.\u001b[39msimT\u001b[33m;\u001b[39m\u001b[0m"
+         },
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44035184955.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 144070,
+         "startTime": "2026-11-17T07:12:29.380Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "depth-artefacts.e2e.ts",
+     "line": 141,
+     "title": "through a relay in its own process: the instructor's loose electrode degrades the tablet's depth quality as the host engine's, and off restores it (ci run 44015852066)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "duration": 36868,
+         "startTime": "2026-11-17T04:18:14.017Z",
+         "errors": [
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts",
+            "column": 130,
+            "line": 120
+           },
+           "message": "Error: Timeout 5000ms exceeded while waiting on the predicate\n\n  118 |     imp: document.querySelector('.depth-tile[data-id=\"eegImp\"] .v')?.textContent ?? '',\n  119 |   }));\n> 120 |   await expect.poll(() => page.evaluate((t) => (window as unknown as HostW).__hostQ?.[t] !== undefined, r.t), { timeout: 5000 }).toBe(true);\n      |                                                                                                                                  ^\n  121 |   const f = await page.evaluate((t) => (window as unknown as HostW).__hostQ?.[t] as Flags, r.t);\n  122 |   return { ...r, host: f.invalid ? 'invalid' : f.questionable ? 'questionable' : 'good' };\n  123 | }\n    at quality (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts:120:130)\n    at shows (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts:129:15)\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts:172:5"
+          }
+         ],
+         "error": {
+          "message": "Error: Timeout 5000ms exceeded while waiting on the predicate",
+          "stack": "Error: Timeout 5000ms exceeded while waiting on the predicate\n    at quality (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts:120:130)\n    at shows (/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts:129:15)\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts:172:5",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/depth-artefacts.e2e.ts",
+           "column": 130,
+           "line": 120
+          },
+          "snippet": "\u001b[0m \u001b[90m 118 |\u001b[39m     imp\u001b[33m:\u001b[39m document\u001b[33m.\u001b[39mquerySelector(\u001b[32m'.depth-tile[data-id=\"eegImp\"] .v'\u001b[39m)\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mtextContent \u001b[33m?\u001b[39m\u001b[33m?\u001b[39m \u001b[32m''\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 119 |\u001b[39m   }))\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 120 |\u001b[39m   \u001b[36mawait\u001b[39m expect\u001b[33m.\u001b[39mpoll(() \u001b[33m=>\u001b[39m page\u001b[33m.\u001b[39mevaluate((t) \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m \u001b[33mHostW\u001b[39m)\u001b[33m.\u001b[39m__hostQ\u001b[33m?\u001b[39m\u001b[33m.\u001b[39m[t] \u001b[33m!==\u001b[39m undefined\u001b[33m,\u001b[39m r\u001b[33m.\u001b[39mt)\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                                                                                                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 121 |\u001b[39m   \u001b[36mconst\u001b[39m f \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mevaluate((t) \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m \u001b[33mHostW\u001b[39m)\u001b[33m.\u001b[39m__hostQ\u001b[33m?\u001b[39m\u001b[33m.\u001b[39m[t] \u001b[36mas\u001b[39m \u001b[33mFlags\u001b[39m\u001b[33m,\u001b[39m r\u001b[33m.\u001b[39mt)\u001b[33m;\u001b[39m\n \u001b[90m 122 |\u001b[39m   \u001b[36mreturn\u001b[39m { \u001b[33m...\u001b[39mr\u001b[33m,\u001b[39m host\u001b[33m:\u001b[39m f\u001b[33m.\u001b[39minvalid \u001b[33m?\u001b[39m \u001b[32m'invalid'\u001b[39m \u001b[33m:\u001b[39m f\u001b[33m.\u001b[39mquestionable \u001b[33m?\u001b[39m \u001b[32m'questionable'\u001b[39m \u001b[33m:\u001b[39m \u001b[32m'good'\u001b[39m }\u001b[33m;\u001b[39m\n \u001b[90m 123 |\u001b[39m }\u001b[0m"
+         },
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44015852066.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 17940,
+         "startTime": "2026-11-17T04:18:54.389Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "learner-remote.e2e.ts",
+     "line": 192,
+     "title": "L9: the instructor sees the staging on the laptop dock and the phone, and the phone's press shows the notice on the learner's phone once (ci run 44045161565)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "duration": 38206,
+         "startTime": "2026-11-17T08:30:42.064Z",
+         "errors": [
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/learner-remote.e2e.ts",
+            "column": 45,
+            "line": 218
+           },
+           "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what')\nExpected pattern: \u001b[32m/^Bed 2 remote staged Sodium bicarbonate 8\\.4 % 10 mmol \\+ Epinephrine 1 mg, one syringe, 11 mL$/\u001b[39m\nReceived string:  \u001b[31m\"\"\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what')\u001b[22m\n\n\n  216 |   const onPhone = ip.locator(`.ip2-lp-inline .ip2-lp-card[data-prep=\"${id}\"]`);\n  217 |   for (const c of [onLaptop, onPhone]) {\n> 218 |     await expect(c.locator('.ip2-lp-what')).toHaveText(/^Bed 2 remote staged Sodium bicarbonate 8\\.4 % 10 mmol \\+ Epinephrine 1 mg, one syringe, 11 mL$/, { timeout: 5_000 });\n      |                                             ^\n  219 |     await expect(c.locator('.ip2-lp-finding[data-kind=\"incompatible\"]').first()).toContainText(/^Incompatible: .+\\(Stabilis .+; Trissel 2013 .+ agrees\\)$/);\n  220 |     await expect(c.getByRole('button', { name: 'Show the incompatibility notice to the learner' })).toBeVisible();\n  221 |   }\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/learner-remote.e2e.ts:218:45"
+          }
+         ],
+         "error": {
+          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what')\nExpected pattern: \u001b[32m/^Bed 2 remote staged Sodium bicarbonate 8\\.4 % 10 mmol \\+ Epinephrine 1 mg, one syringe, 11 mL$/\u001b[39m\nReceived string:  \u001b[31m\"\"\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what')\u001b[22m\n",
+          "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what')\nExpected pattern: \u001b[32m/^Bed 2 remote staged Sodium bicarbonate 8\\.4 % 10 mmol \\+ Epinephrine 1 mg, one syringe, 11 mL$/\u001b[39m\nReceived string:  \u001b[31m\"\"\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.ip2-dock .ip2-lp-card[data-prep=\"8ybhlgs0\"]').locator('.ip2-lp-what')\u001b[22m\n\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/learner-remote.e2e.ts:218:45",
+          "location": {
+           "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/learner-remote.e2e.ts",
+           "column": 45,
+           "line": 218
+          },
+          "snippet": "\u001b[0m \u001b[90m 216 |\u001b[39m   \u001b[36mconst\u001b[39m onPhone \u001b[33m=\u001b[39m ip\u001b[33m.\u001b[39mlocator(\u001b[32m`.ip2-lp-inline .ip2-lp-card[data-prep=\"${id}\"]`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 217 |\u001b[39m   \u001b[36mfor\u001b[39m (\u001b[36mconst\u001b[39m c \u001b[36mof\u001b[39m [onLaptop\u001b[33m,\u001b[39m onPhone]) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 218 |\u001b[39m     \u001b[36mawait\u001b[39m expect(c\u001b[33m.\u001b[39mlocator(\u001b[32m'.ip2-lp-what'\u001b[39m))\u001b[33m.\u001b[39mtoHaveText(\u001b[35m/^Bed 2 remote staged Sodium bicarbonate 8\\.4 % 10 mmol \\+ Epinephrine 1 mg, one syringe, 11 mL$/\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 219 |\u001b[39m     \u001b[36mawait\u001b[39m expect(c\u001b[33m.\u001b[39mlocator(\u001b[32m'.ip2-lp-finding[data-kind=\"incompatible\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoContainText(\u001b[35m/^Incompatible: .+\\(Stabilis .+; Trissel 2013 .+ agrees\\)$/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 220 |\u001b[39m     \u001b[36mawait\u001b[39m expect(c\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Show the incompatibility notice to the learner'\u001b[39m }))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 221 |\u001b[39m   }\u001b[0m"
+         },
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44045161565.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 11011,
+         "startTime": "2026-11-17T08:31:21.035Z",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "vent-window.e2e.ts",
+     "line": 84,
+     "title": "the laptop window: the Room opener opens the cockpit in its own window, it drives, closing it hands over, the phones hold then follow (ci run 42656928762)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "timedOut",
+         "duration": 240015,
+         "startTime": "2026-11-09T17:05:43.643Z",
+         "errors": [
+          {
+           "message": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m"
+          },
+          {
+           "location": {
+            "file": "/__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/vent-window.e2e.ts",
+            "column": 51,
+            "line": 90
+           },
+           "message": "Error: browserContext.waitForEvent: Test timeout of 240000ms exceeded.\n\n  88 |   const { p: f } = await phone(browser, browserName, code);\n  89 |\n> 90 |   const [win] = await Promise.all([page.context().waitForEvent('page'), page.getByRole('button', { name: 'Ventilator in a new window' }).click()]);\n     |                                                   ^\n  91 |   await win.waitForLoadState();\n  92 |   expect(new URL(win.url()).search).toBe(`?link=${code}`);\n  93 |   await win.waitForFunction(() => '__vent' in window);\n    at /__w/patient-monitor-engine/patient-monitor-engine/apps/demo/e2e/vent-window.e2e.ts:90:51"
+          }
+         ],
+         "error": {
+          "message": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m",
+          "stack": "\u001b[31mTest timeout of 240000ms exceeded.\u001b[39m"
+         },
+         "attachments": []
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "duration": 12802,
+         "startTime": "2026-11-09T17:09:44.313Z",
          "errors": [],
          "attachments": []
         }

@@ -1,12 +1,17 @@
-[
- {
-  "signature": "webkit-internal-error",
-  "text": "Failed to load resource: WebKit encountered an internal error",
-  "url": "(from the trace)"
- },
- {
-  "signature": "webkit-internal-error",
-  "text": "Failed to load resource: WebKit encountered an internal error",
-  "url": "(from the trace)"
- }
-]
+{
+ "failedAt": 347063,
+ "signs": [
+  {
+   "signature": "webkit-internal-error",
+   "text": "Failed to load resource: WebKit encountered an internal error",
+   "url": "(from the trace)",
+   "at": 123539
+  },
+  {
+   "signature": "webkit-internal-error",
+   "text": "Failed to load resource: WebKit encountered an internal error",
+   "url": "(from the trace)",
+   "at": 123539
+  }
+ ]
+}
