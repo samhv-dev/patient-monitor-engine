@@ -6,6 +6,11 @@ import { expect, test, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 
+test.skip(
+  ({ browserName }) => browserName === 'webkit' && !!process.env.CI,
+  "headless WebKit's AudioContext clock does not run on the CI runner, so its scheduler is tens of seconds late with every beat tone (fx16-follower-beep-gate.e2e.ts, pulse-tone-level.e2e.ts); macOS WebKit and CI Chromium run it",
+);
+
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
