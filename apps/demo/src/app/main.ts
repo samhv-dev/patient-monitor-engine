@@ -333,9 +333,16 @@ if (follow && shows === 'pick') {
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
     // E12: the room's depth-of-anaesthesia device, kept with the site profile and switched on in the patient's engine
     depth: { model: () => site.eegModel, choose: (m) => ((site.eegModel = m), saveSite(site), session.setEegModel(m)) },
-    // A1 (plan pump-rack-tci.md §5): the room's pump rack, kept with the site profile (so a restart keeps it) and sent to
-    // the pump tablet on the style event
-    pumps: { kinds: () => site.pumpRack, choose: (k) => ((site.pumpRack = k), saveSite(site), session.setPumpRack(k)) },
+    // A1 (plan pump-rack-tci.md §5): the room's pump rack, sent to the pump tablet on the style event and kept with the
+    // site profile (so a restart keeps it); a rack the host refuses is neither
+    pumps: {
+      kinds: () => site.pumpRack,
+      choose: (k) => {
+        const refused = session.setPumpRack(k);
+        if (!refused) (site.pumpRack = k), saveSite(site);
+        return refused;
+      },
+    },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
