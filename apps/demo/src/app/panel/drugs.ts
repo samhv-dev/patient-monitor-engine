@@ -117,7 +117,8 @@ export function drugsTab(c: PanelCtx): HTMLElement {
   const runList = h('ul', { class: 'infusions' });
   const items = new Map<string, HTMLElement>();
   const drawRunning = () => {
-    const others = (link.runningLines() ?? []).filter((x) => !(running.has(x.drugId) && x.pumps === 0)).map((x) => x.text);
+    const others = (link.runningLines?.() ?? []) // a test's partial Link has none
+      .filter((x) => !(running.has(x.drugId) && x.pumps === 0)).map((x) => x.text);
     const keys = [...[...running].map(([id, r]) => `own|${id}|${r.rate}|${r.unit}`), ...others.map((t) => `other|${t}`)];
     keepOrder(runList, keyed(items, keys.length ? keys : ['none'], (k) => {
       const [kind, id = ''] = k.split('|');

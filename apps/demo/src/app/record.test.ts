@@ -378,7 +378,7 @@ describe('the run record', () => {
     const copy = JSON.parse(JSON.stringify(r.data));
     expect(copy).toEqual(r.data);
     r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
-    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop', 'recognised', 'rateChange', 'delivered'], devices: {} });
+    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop', 'recognised', 'rateChange', 'given'], devices: {} });
   });
 
   it('on a real host: a bookmark restore keeps the course before it and marks the course after it undone', async () => {
