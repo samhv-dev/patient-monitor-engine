@@ -305,7 +305,8 @@ transports (`src/protocol.ts`).
 | `rateMlH` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | mL/h of a rate as entered, with the PROGRAMMED concentration and the typed weight (as a real pump converts a dose rate, plan D2 item 3; |
 | `doseMl` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | mL of a bolus dose with the PROGRAMMED concentration (and the typed weight). |
 | `translatePump` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | A pump's command → the engine's `pump` event with the host's metadata (`meta`: |
-| `rateRefusal` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The device range a rate must fall in (D2 item 3, D12), in the profile's own figures, or null when it does. |
+| `rateRange` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The range every rate on a channel is checked against, whoever sends it; |
+| `rateRefusal` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | Why a rate falls outside its channel's range (rateRange), or null when it does not. |
 | `mismatched` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | A channel's contents and programme differ (§8): |
 | `noteApplied` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | An APPLIED `pump` event (accepted by the engine) into the host's table, by `by` (a device key, or the sender's drug-lock.ts GivenBy) at sim time `t`. |
 | `channelsRunning` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The channels on which `drugId` runs now (its contents are that drug and it is started), by channel number (D9). |
