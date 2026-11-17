@@ -268,6 +268,7 @@ None recorded.
 | [`check-licences.test.ts`](../../packages/validation/test/check-licences.test.ts) | 0 | 0 |
 | [`check-notices.test.ts`](../../packages/validation/test/check-notices.test.ts) | 0 | 0 |
 | [`check-size.test.ts`](../../packages/validation/test/check-size.test.ts) | 0 | 0 |
+| [`ci-affected.test.ts`](../../packages/validation/test/ci-affected.test.ts) | 0 | 0 |
 | [`coupling-seams.test.ts`](../../packages/validation/test/coupling-seams.test.ts) | 0 | 0 |
 | [`couplings.test.ts`](../../packages/validation/test/couplings.test.ts) | 0 | 0 |
 | [`datasets/manifest.test.ts`](../../packages/validation/test/datasets/manifest.test.ts) | 0 | 0 |

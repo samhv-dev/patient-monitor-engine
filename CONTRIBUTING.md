@@ -12,7 +12,7 @@ pnpm install
 pnpm typecheck
 PME_TEST_SET=fast pnpm test                       # what CI's three unit jobs run
 PME_TEST_SET=perf pnpm --filter @pme/validation exec vitest run   # the tick benchmark, alone (CI's build job)
-PME_TEST_SET=slow pnpm --filter @pme/engine-core test   # the multi-sim-hour set (CI's test-slow job)
+PME_TEST_SET=slow pnpm --filter @pme/engine-core test   # the multi-sim-hour set (CI's test-slow jobs, slow-a … slow-l)
 pnpm build && pnpm check-notices && pnpm check-licences && pnpm check-size
 pnpm test:e2e                                      # Playwright; PW_SYSTEM_CHROME=1 uses your installed Chrome
 ```
@@ -20,8 +20,15 @@ pnpm test:e2e                                      # Playwright; PW_SYSTEM_CHROM
 CI runs the Chromium e2e suite in four shards and the WebKit one in three (each set's `shards` in
 `scripts/ci/e2e-sets.mjs`, which the e2e matrix is built from), each given its files by `scripts/ci/e2e-shard-plan.mjs`
 from the per-file durations in the last green main run's reports (longest first onto the least-loaded shard), or by
-Playwright's own `--shard` when no such report can be read. The plan is made once per run, in the renderer job, and
+Playwright's own `--shard` when no such report can be read. The plan is made once per run, in the changes job, and
 every shard of a set reads that one plan, so the shards never split a set two ways.
+
+A pull request runs the jobs its change can reach in the package graph (`scripts/ci/affected.mjs`; the rule in words is
+at the top of `.github/workflows/ci.yml`): a change to the demo, for one, skips `unit (core)` and the engine's slow groups.
+Main, the merge runner's `batch/*` branches, a `run-validation` label and any change to the engine, the controller's
+scenario code, a workflow, a script or a root config run every job. When you add a cross-package import,
+`packages/validation/test/ci-affected.test.ts` fails until `GRAPH` in that script names the edge. The check to read is
+`verdict`.
 
 ### Reading the evidence of a retry-only pass
 

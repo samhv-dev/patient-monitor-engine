@@ -47,6 +47,7 @@ export const NOT_READERS = {
   'packages/controller/test/relay/kit-site.test.ts': 'README.md and NOTICES.md are files of a fake kit and site tree it writes; it reads scripts/showcase/site/README.md, not a document',
   'packages/controller/test/relay/kit-windows.test.ts': 'README.md is a file inside a zip the test builds',
   'packages/skins/test/grid.test.ts': 'NOTES.md is named in a test title',
+  'packages/validation/test/ci-affected.test.ts': 'document paths are inputs of the CI path rule; it reads none',
   'packages/validation/test/check-licences.test.ts': 'NOTICES.md is in an expected error message; the NOTICES text is a literal',
   'packages/validation/test/check-notices.test.ts': 'writes its own NOTICES.md in a temporary folder',
   'packages/validation/test/check-size.test.ts': "'README.md' is a path in a list the test passes to findWasm",

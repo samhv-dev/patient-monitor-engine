@@ -18,46 +18,134 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # What the PR changes (research/42 §1.4 a, d2): code at all (if not, the docs job alone runs) and the engine or the
-  # root config (if not, the engine's slow groups skip). On main every job runs.
+  # A run does the work its change can affect (scripts/ci/affected.mjs, from the workspace's package graph). In words:
+  # - EVERY job runs on a push to main, on the nightly, manual and tag runs (their own sets, below), on the merge
+  #   runner's batch/* branches, on a pull request labelled run-validation, and on a pull request that changes the engine
+  #   (engine-core, skins), the controller's scenario code, a workflow, a script, the lockfile, a root config, or a path
+  #   the rule does not place.
+  # - Any other pull request skips only the jobs whose packages it cannot reach: `unit (core)` and the engine's slow
+  #   groups. A pull request of documents only runs the docs job alone.
+  # - The label is read when the run starts; added later, it takes effect on the next push.
+  # A skipped job reports as skipped. The `verdict` job is the check a merge reads: it fails when a job the plan expected
+  # did not succeed or one it left out did not skip.
+  # This job also builds the renderer IIFE and the embed every e2e shard loads, and the shard plan they share.
   changes:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.f.outputs.code }}
-      engine: ${{ steps.f.outputs.engine }}
+      expect: ${{ steps.f.outputs.expect }}
       nightly: ${{ steps.f.outputs.nightly }}
       e2e_matrix: ${{ steps.e2e.outputs.matrix }}
+      playwright: ${{ steps.playwright.outputs.version }}
+      shard_plan: ${{ steps.plan.outputs.plan }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2 # the PR's merge commit and its base parent
       - id: f
+        env:
+          EVENT: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
-          # nightly: the schedule, a manual dispatch or a tag push run the 'nightly' e2e sets only (brief 218)
-          nightly=false; case "${{ github.event_name }}:${{ github.ref }}" in schedule:*|workflow_dispatch:*|push:refs/tags/*) nightly=true ;; esac
-          echo "nightly=$nightly"; echo "nightly=$nightly" >> "$GITHUB_OUTPUT"
-          if [ "${{ github.event_name }}" != pull_request ]; then echo "code=true" >> "$GITHUB_OUTPUT"; echo "engine=true" >> "$GITHUB_OUTPUT"; exit 0; fi
-          git diff --name-only HEAD^1 HEAD > "$RUNNER_TEMP/files.txt"; cat "$RUNNER_TEMP/files.txt"
-          code=false; grep -qvE '^(docs/|[^/]+\.md$|CITATION\.cff$)' "$RUNNER_TEMP/files.txt" && code=true
-          engine=false; grep -qE '^(packages/(engine-core|skins)/|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|package\.json$|tsconfig[^/]*\.json$|vitest\.workspace\.ts$|\.github/workflows/)' "$RUNNER_TEMP/files.txt" && engine=true
-          echo "code=$code engine=$engine"
-          echo "code=$code" >> "$GITHUB_OUTPUT"; echo "engine=$engine" >> "$GITHUB_OUTPUT"
+          # nightly: the schedule, a manual dispatch or a tag push run the 'nightly' e2e sets only
+          nightly=false; case "$EVENT:${{ github.ref }}" in schedule:*|workflow_dispatch:*|push:refs/tags/*) nightly=true ;; esac
+          echo "nightly=$nightly" >> "$GITHUB_OUTPUT"
+          : > "$RUNNER_TEMP/files.txt"
+          if [ "$EVENT" = pull_request ]; then git diff --name-only HEAD^1 HEAD > "$RUNNER_TEMP/files.txt"; cat "$RUNNER_TEMP/files.txt"; fi
+          NIGHTLY=$nightly node scripts/ci/affected.mjs plan "$RUNNER_TEMP/files.txt" > "$RUNNER_TEMP/plan.txt" 2>> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/plan.txt" | tee -a "$GITHUB_OUTPUT"
       # The e2e matrix, one row per shard, from scripts/ci/e2e-sets.mjs: the one place each set's shard count is set (the
-      # shard plan and e2e-count read it there too), and which run carries it: 'pr' (PRs, pushes to main) or 'nightly'.
+      # shard plan and the e2e count read it there too), and which run carries it: 'pr' (PRs, pushes to main) or 'nightly'.
       - id: e2e
         run: |
           m=$(node scripts/ci/e2e-sets.mjs matrix ${{ steps.f.outputs.nightly == 'true' && 'nightly' || 'pr' }}); echo "$m"
           echo "matrix=$m" >> "$GITHUB_OUTPUT"
       - run: node scripts/ci/markers.mjs # [ENG: kind] / [FIT: target; src | brief] markers and their counts (docs/DESIGN-BRIEF.md)
-      # brief 218: every step of the old one-job validation workflow is in its `validate` or `soak` job, each job's triggers named
+      # every step of the old one-job validation workflow is in its `validate` or `soak` job, each job's triggers named
       - run: node scripts/ci/validation-steps.mjs
+      # The renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads it from
+      # file://; every other e2e page runs on a Vite dev server from source), so they start without waiting for the unit
+      # tests in the build job.
+      - uses: pnpm/action-setup@v4
+        if: steps.f.outputs.code == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.f.outputs.code == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: steps.f.outputs.code == 'true'
+      # The e2e jobs' container tag is the Playwright the lockfile installs, so a Playwright bump moves the image with it
+      # (and an unknown version fails at "Initialize containers", not after an hour)
+      - name: Playwright version from the lockfile
+        id: playwright
+        if: steps.f.outputs.code == 'true'
+        run: |
+          v=$(pnpm exec playwright --version | awk '{print $2}')
+          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      # e2e shards by recorded duration: the latest green run of this workflow on main (a push: a nightly run on main
+      # carries only the quarantine's report), whose e2e reports balance the shards (scripts/ci/e2e-shard-plan.mjs). The
+      # plan is made here, once, and every e2e shard reads it, so the shards of a set always split the same way (research/41
+      # row 64: planned in each shard, one shard's failed download of one report gave it its own split, and 174 WebKit
+      # tests ran against 165 listed, run 42284321017). Any failure leaves the plan empty, and every shard uses
+      # Playwright's --shard.
+      - name: the last green main run (its e2e reports balance the e2e shards)
+        id: durations
+        if: steps.f.outputs.code == 'true'
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          echo "last green main run: ${id:-none}"
+          echo "run=$id" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4 # every set's reports from that run
+        if: steps.f.outputs.code == 'true' && steps.durations.outputs.run != ''
+        continue-on-error: true
+        timeout-minutes: 3
+        with:
+          pattern: e2e-report-*
+          path: .e2e-main-reports
+          run-id: ${{ steps.durations.outputs.run }}
+          github-token: ${{ github.token }}
+      - name: the e2e shard plan (one per set, read by every shard)
+        id: plan
+        if: steps.f.outputs.code == 'true'
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          d=.e2e-main-reports; [ -d "$d" ] || d=none
+          plan=$(node scripts/ci/e2e-shard-plan.mjs plan "$d")
+          echo "plan=$plan" >> "$GITHUB_OUTPUT"
+      - run: pnpm --filter "@pme/renderer^..." build # the renderer's workspace dependencies first (its tsconfig.build.json reads their dist/types)
+        if: steps.f.outputs.code == 'true'
+      - run: pnpm --filter @pme/renderer build
+        if: steps.f.outputs.code == 'true'
+      - uses: actions/upload-artifact@v4
+        if: steps.f.outputs.code == 'true'
+        with:
+          name: patient-monitor-iife
+          path: packages/renderer/dist/patient-monitor.iife.js
+          if-no-files-found: error
+      - run: pnpm --filter @pme/demo build # writes apps/demo/dist/embed/ (the file:// ventilator + monitor embed)
+        if: steps.f.outputs.code == 'true'
+      - uses: actions/upload-artifact@v4 # the file:// ventilator + monitor embed
+        if: steps.f.outputs.code == 'true'
+        with:
+          name: ventilator-monitor-embed
+          path: apps/demo/dist/embed/
+          if-no-files-found: error
 
-  # Documents-only PRs (docs/, root *.md, CITATION.cff): every unit-test file that reads a document
-  # (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts keeps that list complete) and the NOTICES
-  # and licence checks, nothing else. No e2e test reads docs/ (research/42 §1.4 a).
+  # Every unit-test file that reads a document (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts
+  # keeps that list complete) and the NOTICES and licence checks: alone on a pull request of documents only, and beside
+  # the other jobs when a pull request that does not run every job also changes a document (the readers in unit (core)
+  # may then be skipped). No e2e test reads docs/ (research/42 §1.4 a).
   docs:
     needs: changes
-    if: needs.changes.outputs.code == 'false'
+    if: fromJSON(needs.changes.outputs.expect).docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -72,9 +160,12 @@ jobs:
       - run: pnpm check-notices
       - run: pnpm check-licences
 
+  # The checks, the builds and @pme/ventilator's unit tests (≈ 9 min) in one job, so the ventilator's tests take no runner
+  # of their own.
   build:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.nightly != 'true'
+    if: fromJSON(needs.changes.outputs.expect).build
+    name: build and unit (ventilator)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,23 +179,23 @@ jobs:
       - name: slow groups are disjoint, cover SLOW and are all in the test-slow matrix
         working-directory: packages/engine-core
         run: |
-          groups="slow-a slow-b slow-c slow-d slow-e slow-f slow-g slow-h slow-i slow-j slow-k slow-l slow-m"
+          groups="slow-a slow-b slow-c slow-d slow-e slow-f slow-g slow-h slow-i slow-j slow-k slow-l"
           for g in slow $groups; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
-          for g in $groups; do grep -Eq "^ +group: \[.*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the test-slow matrix"; exit 1; }; done
+          for g in $groups; do grep -Eq "^ +lanes: \[.*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the test-slow matrix"; exit 1; }; done
           cd "$RUNNER_TEMP"
           sort $(printf '%s.txt ' $groups) | uniq -d > both.txt
           if [ -s both.txt ]; then echo "in two slow groups:"; cat both.txt; exit 1; fi
           sort -u $(printf '%s.txt ' $groups) | diff slow.txt -
-      - name: the showcase halves are disjoint, are together the showcase set, and are in the test-slow matrix
+      - name: the showcase halves are disjoint, are together the showcase set, and are in the showcase job
         working-directory: apps/demo
         run: |
           for g in showcase showcase-a showcase-b; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
-          for g in showcase-a showcase-b; do grep -Eq "^ +group: \[.*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the test-slow matrix"; exit 1; }; done
+          for g in showcase-a showcase-b; do grep -Eq "lanes\.mjs @pme/demo .*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the showcase job"; exit 1; }; done
           cd "$RUNNER_TEMP"
           sort showcase-a.txt showcase-b.txt | uniq -d > both.txt
           if [ -s both.txt ]; then echo "in both showcase halves:"; cat both.txt; exit 1; fi
           sort -u showcase-a.txt showcase-b.txt | diff showcase.txt -
-      # The unit tests run in the `unit` job (three runners, no dependency order); this job keeps the checks.
+      # The other unit tests run in the unit jobs (no dependency order); this job keeps the checks and the ventilator's.
       # The tick benchmark, alone on the runner (the fast set leaves it out): inside `pnpm test` the other suites' load
       # pushed its p50 over 6 ms with the engine unchanged. `vitest run` without --passWithNoTests, so a set that
       # matches no file fails instead of passing empty.
@@ -112,6 +203,10 @@ jobs:
         run: pnpm --filter @pme/validation exec vitest run --reporter=dot
         env:
           PME_TEST_SET: perf
+      - name: unit (ventilator)
+        run: pnpm --filter @pme/ventilator test
+        env:
+          PME_TEST_SET: fast
       - run: pnpm build
       - run: pnpm check-notices
       - run: pnpm check-licences # Stage 8b: allow-listed licences; shipped packages named in NOTICES with their LICENSES/ texts
@@ -123,19 +218,19 @@ jobs:
       - name: kit classroom relay smoke test
         run: node scripts/showcase/make-bundle.mjs "$RUNNER_TEMP/kit" > "$RUNNER_TEMP/kit-build.log" && node scripts/showcase/check-relay.mjs "$RUNNER_TEMP/kit"
 
-  # The unit tests (the fast set; the slow engine set and the showcase cards are in test-slow), in four parallel jobs:
-  # `pnpm -r test` ran the packages in dependency order (engine-core → controller → validation → demo, ≈ 31–43 min),
-  # though every test runs from source and none needs another package's tests first (research/42 §1.2, §1.4 d3).
-  # brief 218: `rest` (26 min of tests, 22–31 min a job on 12 November) is split in two. Vitest's per-package durations,
-  # mean of three runs (43186437413, 43199909378, 43185270151): engine-core 10.4 min, validation 8.1, demo 6.3,
-  # renderer 1.5, skins 0.1, audio 0.0, so `core` ≈ 12.0 and `rest` ≈ 14.4 min of tests.
+  # The unit tests (the fast set; the slow engine set and the showcase cards are in test-slow and showcase), one job per
+  # part, no dependency order: every test runs from source and none needs another package's tests first (research/42
+  # §1.2, §1.4 d3). @pme/ventilator's are in the build job. One package at a time inside a part (each Vitest run already
+  # uses every core; with pnpm's default of four at once, renderer's real-engine tests timed out at 30 s), and every
+  # package runs even after one fails, so each reports its counts. `rest` is every package no other part names (today
+  # validation and demo), by exclusion, so a new package is never left out.
   unit:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.nightly != 'true'
+    if: fromJSON(needs.changes.outputs.expect).unit
     strategy:
       fail-fast: false
       matrix:
-        part: [controller, ventilator, core, rest]
+        part: [controller, rest]
     name: unit (${{ matrix.part }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -151,27 +246,18 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @pme/controller test
         if: matrix.part == 'controller'
-      - run: pnpm --filter @pme/ventilator test
-        if: matrix.part == 'ventilator'
-      # One package at a time (each Vitest run already uses every core; with pnpm's default of four at once, renderer's
-      # real-engine tests timed out at 30 s on the first run of this job), in no dependency order, and every package runs
-      # even after one fails, so each reports its counts. `core`: engine-core, renderer, skins, audio. `rest`: every
-      # other package (today validation and demo), by exclusion, so a new package is never left out.
-      - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter @pme/engine-core --filter @pme/renderer --filter @pme/skins --filter @pme/audio test
-        if: matrix.part == 'core'
       - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter '!@pme/controller' --filter '!@pme/ventilator' --filter '!@pme/engine-core' --filter '!@pme/renderer' --filter '!@pme/skins' --filter '!@pme/audio' test
         if: matrix.part == 'rest'
 
-  # fix-ci-webkit-3: the renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads
-  # it from file://; every other e2e page runs on a Vite dev server from source), so they start without waiting for the
-  # unit tests in the build job.
-  renderer:
+  # engine-core, renderer, skins and audio: a job of its own, so a change that reaches none of them skips it.
+  unit-core:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: fromJSON(needs.changes.outputs.expect).unit_core
+    name: unit (core)
     runs-on: ubuntu-latest
-    outputs:
-      playwright: ${{ steps.playwright.outputs.version }}
-      shard_plan: ${{ steps.plan.outputs.plan }}
+    timeout-minutes: 45
+    env:
+      PME_TEST_SET: fast
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -180,72 +266,19 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # ci-stabilise: the e2e jobs' container tag is the Playwright the lockfile installs, so a Playwright bump moves
-      # the image with it (and an unknown version fails at "Initialize containers", not after an hour)
-      - name: Playwright version from the lockfile
-        id: playwright
-        run: |
-          v=$(pnpm exec playwright --version | awk '{print $2}')
-          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
-          echo "version=$v" >> "$GITHUB_OUTPUT"
-      # e2e shards by recorded duration: the latest green run of this workflow on main (a push: a nightly run on main
-      # carries only the quarantine's report, brief 218), whose e2e reports balance the
-      # shards (scripts/ci/e2e-shard-plan.mjs). The plan is made here, once, and every e2e shard reads it, so the shards
-      # of a set always split the same way (research/41 row 64: planned in each shard, one shard's failed download of
-      # one report gave it its own split, and 174 WebKit tests ran against 165 listed, run 42284321017). Any failure
-      # leaves the plan empty, and every shard uses Playwright's --shard.
-      - name: the last green main run (its e2e reports balance the e2e shards)
-        id: durations
-        continue-on-error: true
-        timeout-minutes: 2
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
-          echo "last green main run: ${id:-none}"
-          echo "run=$id" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@v4 # every set's reports from that run
-        if: steps.durations.outputs.run != ''
-        continue-on-error: true
-        timeout-minutes: 3
-        with:
-          pattern: e2e-report-*
-          path: .e2e-main-reports
-          run-id: ${{ steps.durations.outputs.run }}
-          github-token: ${{ github.token }}
-      - name: the e2e shard plan (one per set, read by every shard)
-        id: plan
-        continue-on-error: true
-        timeout-minutes: 3
-        run: |
-          d=.e2e-main-reports; [ -d "$d" ] || d=none
-          plan=$(node scripts/ci/e2e-shard-plan.mjs plan "$d")
-          echo "plan=$plan" >> "$GITHUB_OUTPUT"
-      - run: pnpm --filter "@pme/renderer^..." build # Stage 8b: the renderer's workspace dependencies first (its tsconfig.build.json reads their dist/types)
-      - run: pnpm --filter @pme/renderer build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: patient-monitor-iife
-          path: packages/renderer/dist/patient-monitor.iife.js
-          if-no-files-found: error
-      - run: pnpm --filter @pme/demo build # Stage 8b: writes apps/demo/dist/embed/ (the file:// ventilator + monitor embed)
-      - uses: actions/upload-artifact@v4 # Stage 8b: the file:// ventilator + monitor embed
-        with:
-          name: ventilator-monitor-embed
-          path: apps/demo/dist/embed/
-          if-no-files-found: error
+      - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter @pme/engine-core --filter @pme/renderer --filter @pme/skins --filter @pme/audio test
 
   # fix-ci-webkit-3: one e2e job per browser (was one step running both on one 2-vCPU runner, so each browser's
   # wall-clock-sensitive tests ran beside the other's load). Retries stay at 2 (playwright.config.ts, CI).
   # ci-faster: each gating suite runs in shards (Playwright --shard, by file; each e2e server has its own port and
   # each shard is its own machine; WebKit keeps workers: 1 inside its shard). Each shard uploads its own report and runs
-  # the retry-only check on it; the e2e-count job proves the shards together ran every test (research/42 §1.4 b). The
+  # the retry-only check on it; the verdict job's e2e count proves the shards together ran every test (research/42 §1.4 b). The
   # quarantine stays one job. Three shards then, not four: the shard that got teach2-fit.e2e.ts (≈ 18 min alone) set the
   # floor, which three already reach. That file is now three (teach2-fit-stages, -panes, -strip); Playwright fills a
   # shard with a contiguous run of files by test count, so the three adjacent files still shared one shard. So each
   # shard's files now come from scripts/ci/e2e-shard-plan.mjs: per-file durations from the last green main run's
   # reports of the same set, longest first onto the least-loaded shard; Playwright's --shard when there is no usable
-  # report. The plan is made once, in the renderer job, and every shard reads it (research/41 row 64). The e2e-count
+  # report. The plan is made once, in the changes job, and every shard reads it (research/41 row 64). The e2e count
   # job's proof is unchanged (it sums the shard reports, however the files were split).
   # ci-shard4: Chromium in four shards. Balanced by duration, its three still each held ≈ 34 recorded min over two workers,
   # ≈ 17 min of tests plus set-up = 20.3–20.4 min wall; four put each near 13 min of tests. WebKit stays at three (≈ 16.4
@@ -259,8 +292,8 @@ jobs:
   # (docs/gates/stage-14.md, "Temporary relaxation"; docs/guides/known-deviations.md, "Browser tests that passed only on
   # a retry").
   e2e:
-    needs: [changes, renderer]
-    if: needs.changes.outputs.code == 'true'
+    needs: changes
+    if: fromJSON(needs.changes.outputs.expect).e2e
     strategy:
       fail-fast: false
       # rows { browser, set, grep, report, shard, of }, one per shard of each set of scripts/ci/e2e-sets.mjs
@@ -270,7 +303,7 @@ jobs:
     timeout-minutes: 60
     continue-on-error: ${{ matrix.set == 'known-flaky' }} # the quarantine never fails the run
     container:
-      image: mcr.microsoft.com/playwright:v${{ needs.renderer.outputs.playwright }}-noble
+      image: mcr.microsoft.com/playwright:v${{ needs.changes.outputs.playwright }}-noble
       # --ipc=host: Playwright's Docker guidance for Chromium (the default 64 MB /dev/shm crashes it). --ulimit core=0
       # (brief 203): the runner pipes cores to systemd-coredump with no size limit, which held a crashed ≈ 700 MB WebKit
       # web process in its exit for minutes, so its page answered nothing and Playwright never said "Target crashed";
@@ -299,12 +332,12 @@ jobs:
         with:
           name: ventilator-monitor-embed
           path: apps/demo/dist/embed
-      # This shard's files from the run's one plan (the renderer job's, balanced by recorded duration; the whole plan is
+      # This shard's files from the run's one plan (the changes job's, balanced by recorded duration; the whole plan is
       # in that job's log), or Playwright's count-based --shard when the plan has none for this set, for every shard alike.
       - name: shard plan (by recorded duration; Playwright's --shard if none)
         id: plan
         env:
-          E2E_SHARD_PLAN: ${{ needs.renderer.outputs.shard_plan }}
+          E2E_SHARD_PLAN: ${{ needs.changes.outputs.shard_plan }}
         run: |
           if [ ${{ matrix.of }} -gt 1 ] && node scripts/ci/e2e-shard-plan.mjs pick ${{ matrix.report }} ${{ matrix.shard }} > "$RUNNER_TEMP/shard-files.txt" 2> "$RUNNER_TEMP/plan.txt"; then
             echo "args=--test-list $RUNNER_TEMP/shard-files.txt" >> "$GITHUB_OUTPUT"
@@ -338,7 +371,7 @@ jobs:
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         with:
           name: e2e-report-${{ matrix.report }}-${{ matrix.shard }}of${{ matrix.of }}
-          # the evidence of failed attempts goes in its own artifact below, so the reports the shard plan and e2e-count
+          # the evidence of failed attempts goes in its own artifact below, so the reports the shard plan and the e2e count
           # download stay as small as before
           path: |
             playwright-report-${{ matrix.report }}.json
@@ -440,15 +473,16 @@ jobs:
             fi
           fi
 
-  # The shards together ran every test: per set of this run, the summed totals of its shards' reports equal
-  # `playwright test --list` on the same tree (scripts/ci/e2e-count.mjs). A PR or main push checks the gating sets; the
-  # nightly run checks the quarantine (brief 218); a difference fails either. On a PR it no longer waits for the
-  # quarantine, which is not in a PR's matrix.
-  e2e-count:
-    needs: [changes, e2e]
-    if: ${{ !cancelled() && needs.changes.outputs.code == 'true' }}
+  # The showcase cards' scenario tests (apps/demo/vite.config.ts), its two halves at once on one runner, each in its own
+  # Vitest process with its files one at a time (scripts/ci/lanes.mjs). `vitest run` without the package script's
+  # --passWithNoTests, so a set that matches no file fails instead of passing empty. They run on every code change: they
+  # also run @pme/controller and the demo's debrief.
+  showcase:
+    needs: changes
+    if: fromJSON(needs.changes.outputs.expect).showcase
+    name: showcase (showcase-a, showcase-b)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -457,28 +491,22 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: e2e-report-*
-          path: reports
-      - run: node scripts/ci/e2e-count.mjs reports ${{ needs.changes.outputs.nightly == 'true' && 'nightly' || 'pr' }}
+      - run: node scripts/ci/lanes.mjs @pme/demo showcase-a showcase-b
 
+  # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core (packages/engine-core/vite.config.ts SLOW),
+  # kept apart from the unit job so their long synchronous stretches cannot starve the Vitest worker RPC there. Twelve
+  # groups of ≈ 16 min of tests each, two at once on one runner, each in its own Vitest process with its files one at a
+  # time, as it would run alone (scripts/ci/lanes.mjs). The runner has 4 vCPUs; the per-tick CPU budgets among these
+  # files measured 3× to 150× under their limits on a runner of their own. On a pull request they run only when the
+  # change reaches engine-core (the changes job).
   test-slow:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.nightly != 'true'
-    # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
-    # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
-    # cannot starve the Vitest worker RPC there. Thirteen file groups, one job each (brief 218), packed on the per-file CI
-    # mean of three runs of 12 November to ≈ 17.5 min of tests each (packages/engine-core/vite.config.ts); nine groups
-    # of ≈ 33 min each until then.
-    # On a PR the thirteen engine groups run only when the engine, the skins or the root config change (the changes job;
-    # engine-core's only workspace dependency is @pme/skins); main runs them all. The showcase cards, split in two
-    # halves (apps/demo/vite.config.ts), run on every code PR: they also run @pme/controller and the demo's debrief.
+    if: fromJSON(needs.changes.outputs.expect).test_slow
     strategy:
       fail-fast: false
       matrix:
-        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, slow-j, slow-k, slow-l, slow-m, showcase-a, showcase-b]
-    name: test-slow (${{ matrix.group }})
+        lanes: ['slow-a slow-b', 'slow-c slow-d', 'slow-e slow-f', 'slow-g slow-h', 'slow-i slow-j', 'slow-k slow-l']
+    name: test-slow (${{ matrix.lanes }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -489,13 +517,39 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @pme/engine-core test
-        if: ${{ !startsWith(matrix.group, 'showcase') && needs.changes.outputs.engine == 'true' }}
+      - run: node scripts/ci/lanes.mjs @pme/engine-core ${{ matrix.lanes }}
+
+  # The check a merge reads. First the e2e count: per set of this run, the summed totals of its shards' reports equal
+  # `playwright test --list` on the same tree (scripts/ci/e2e-count.mjs); a PR or main push checks the gating sets, the
+  # nightly run the quarantine, and a difference fails either. Then every job against the plan of the changes job
+  # (scripts/ci/verdict.mjs): one the plan expected that did not succeed, or one it left out that did not skip, fails.
+  verdict:
+    needs: [changes, docs, build, unit, unit-core, e2e, showcase, test-slow]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        if: needs.changes.result == 'success' && fromJSON(needs.changes.outputs.expect).e2e
+      - uses: actions/setup-node@v4
+        if: needs.changes.result == 'success' && fromJSON(needs.changes.outputs.expect).e2e
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: needs.changes.result == 'success' && fromJSON(needs.changes.outputs.expect).e2e
+      - uses: actions/download-artifact@v4
+        if: needs.changes.result == 'success' && fromJSON(needs.changes.outputs.expect).e2e
+        with:
+          pattern: e2e-report-*
+          path: reports
+      - name: e2e count (the shards together ran every test)
+        if: needs.changes.result == 'success' && fromJSON(needs.changes.outputs.expect).e2e
+        run: node scripts/ci/e2e-count.mjs reports ${{ needs.changes.outputs.nightly == 'true' && 'nightly' || 'pr' }}
+      - name: every job against the plan
+        if: ${{ !cancelled() }}
         env:
-          PME_TEST_SET: ${{ matrix.group }}
-      # Stage 11: the showcase cards' scenario tests (apps/demo vite.config.ts); `vitest run` without the package
-      # script's --passWithNoTests, so a set that matches no file fails instead of passing empty
-      - run: pnpm --filter @pme/demo exec vitest run
-        if: startsWith(matrix.group, 'showcase')
-        env:
-          PME_TEST_SET: ${{ matrix.group }}
+          NEEDS: ${{ toJSON(needs) }}
+          EXPECT: ${{ needs.changes.outputs.expect }}
+        run: node scripts/ci/verdict.mjs
