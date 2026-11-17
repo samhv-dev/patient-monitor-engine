@@ -6,7 +6,7 @@
 import { createStamper, type ManagedTransport, type TransportStatus, type WireEvent, type WireMessage } from '@pme/controller';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const net = vi.hoisted(() => ({ sent: [] as unknown[], msg: new Set<(m: unknown) => void>() }));
+const net = vi.hoisted(() => ({ sent: [] as unknown[], msg: new Set<(m: unknown) => void>(), engine: new Set<(e: unknown) => void>() }));
 
 vi.mock('@pme/controller', async (orig) => {
   const real = await orig<typeof import('@pme/controller')>();
@@ -31,7 +31,7 @@ vi.mock('@pme/renderer', async () => {
       return {
         skin: resolveSkin(o.skin),
         dispatch: () => Promise.resolve({ accepted: true, tick: ++tick }),
-        on: () => () => {},
+        on: (fn: (e: unknown) => void) => (net.engine.add(fn), () => void net.engine.delete(fn)),
         snapshot: () => Promise.resolve({}),
         restore: () => Promise.resolve(),
         advance: () => Promise.resolve({ tick, simT: tick * 0.02 }),
@@ -60,6 +60,7 @@ describe("A1: the host sends the room's pump rack on its style event", () => {
     s.destroy();
     net.sent.length = 0;
     net.msg.clear();
+    net.engine.clear();
   });
 
   it("answers a tablet's hello with the rack, and sends every change", async () => {
@@ -73,5 +74,19 @@ describe("A1: the host sends the room's pump rack on its style event", () => {
     await settle();
     expect(styles().at(-1)?.pumps).toEqual(['drip']);
     expect(s.pumpRack).toEqual(['drip']);
+  });
+
+  it("a rack that removes a running channel is the host's to refuse: its words come back, and the tablet's rack is unchanged", async () => {
+    s = new AppSession(document.createElement('div'), { spec, mode: 'modeled' }, { skin: 'saadat-like', theme: '', code: 'KKQB2N', relay: 'ws://relay.test/', pumpRack: ['syringe', 'syringe', 'syringe', 'syringe'] });
+    await settle();
+    const pumps = [1, 2, 3, 4].map((ch) => ({ ch, kind: 'syringe', state: ch === 3 ? 'running' : 'notLoaded' }));
+    for (const fn of net.engine) fn({ type: 'drugs', t: 1, drugs: [], volatile: null, macTotal: 0, pumps });
+    const sent = styles().length;
+    expect(s.setPumpRack(['syringe', 'syringe'])).toBe('Channel 3 is running: stop it first.');
+    await settle();
+    expect(styles().length).toBe(sent);
+    expect(s.pumpRack).toEqual(['syringe', 'syringe', 'syringe', 'syringe']);
+    expect(s.setPumpRack(['syringe', 'syringe', 'syringe'])).toBeNull();
+    expect(s.pumpRack).toEqual(['syringe', 'syringe', 'syringe']);
   });
 });

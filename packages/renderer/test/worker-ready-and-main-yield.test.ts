@@ -96,7 +96,7 @@ const size = { cssW: 800, cssH: 300, dpr: 1 };
 describe('N48: a late worker is waited for and said; a failed one is said', () => {
   it('a worker not ready after READY_LATE_MS: the page is told, the monitor keeps waiting, and runs on the worker when it is ready', async () => {
     vi.useFakeTimers();
-    const { createHost, READY_LATE_MS } = await import('../src/worker-host.ts');
+    const { createHost, READY_FINAL_MS, READY_LATE_MS } = await import('../src/worker-host.ts');
     const canvas = new FakeCanvas();
     let host: { path: Promise<string> } | null = null;
     void createHost(canvas as unknown as HTMLCanvasElement, size, {}, 'auto', () => {}).then((h) => (host = h));
@@ -115,7 +115,9 @@ describe('N48: a late worker is waited for and said; a failed one is said', () =
     const ready = fired('pme-monitor-worker-ready');
     expect(ready).toHaveLength(1);
     expect(ready[0]!.detail).toMatchObject({ path: 'worker-raf' });
+    await vi.advanceTimersByTimeAsync(READY_FINAL_MS);
     expect(fired('pme-monitor-main-thread')).toHaveLength(0);
+    expect(w.terminated).toBe(false);
   });
 
   it('a monitor destroyed while its worker still loads ends the load, and nothing takes over on the main thread', async () => {
@@ -157,6 +159,77 @@ describe('N48: a late worker is waited for and said; a failed one is said', () =
     expect(m[0]!.on).toBe(canvas.replacedBy); // on the canvas the page shows, which bubbles to its listeners
     expect(m[0]!.detail).toEqual({ reason: 'module failed to load' });
     host.destroy();
+  });
+});
+
+describe('a worker that never answers: the main thread takes over at READY_FINAL_MS, as on an error', () => {
+  const cmd = { id: 'c', issuedBy: 'test', type: 'setRhythm', rhythm: 'sinus', when: 'now' } as never;
+  const silentStart = async () => {
+    vi.useFakeTimers();
+    const { createHost, READY_FINAL_MS } = await import('../src/worker-host.ts');
+    const canvas = new FakeCanvas();
+    const events: unknown[] = [];
+    let host: Awaited<ReturnType<typeof createHost>> | null = null;
+    void createHost(canvas as unknown as HTMLCanvasElement, size, { engine: { seed: 1 } }, 'auto', (_a, e) => void events.push(...e)).then((h) => (host = h));
+    return { canvas, events, w: FakeWorker.last as FakeWorker, READY_FINAL_MS, host: () => host };
+  };
+
+  it('silent up to the limit: still waiting; at the limit: the fresh canvas runs the monitor on the main thread and says why', async () => {
+    const { canvas, events, w, READY_FINAL_MS, host } = await silentStart();
+    await vi.advanceTimersByTimeAsync(READY_FINAL_MS - 1);
+    expect(host()).toBeNull();
+    expect(w.terminated).toBe(false);
+    expect(fired('pme-monitor-main-thread')).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(1);
+    const h = host()!;
+    expect(h).not.toBeNull();
+    expect(await h.path).toBe('main');
+    expect(w.terminated).toBe(true);
+    expect(h.canvas).toBe(canvas.replacedBy);
+    const m = fired('pme-monitor-main-thread');
+    expect(m).toHaveLength(1);
+    expect(m[0]!.on).toBe(canvas.replacedBy);
+    expect(m[0]!.detail).toEqual({ reason: `not ready after ${READY_FINAL_MS / 1000} s` });
+    expect(fired('pme-monitor-worker-late')).toHaveLength(1); // the 2 s notice came first, as before
+    await expect(h.command(cmd)).resolves.toMatchObject({ accepted: true }); // the session goes on, as after an error
+    for (let i = 0; i < 5; i++) {
+      await vi.advanceTimersByTimeAsync(250);
+      flushFrames();
+    }
+    expect(events.length).toBeGreaterThan(0); // the engine's events (alarms, tones, the follower's feed) reach the page
+    h.destroy();
+  });
+
+  it('a worker that answers after the limit is ignored: one drawer, one notice, the monitor stays on the main thread', async () => {
+    const { canvas, events, w, READY_FINAL_MS, host } = await silentStart();
+    await vi.advanceTimersByTimeAsync(READY_FINAL_MS);
+    const h = host()!;
+    const late = { type: 'late-worker-event' };
+    w.answer({ type: 'ready', path: 'worker-raf' });
+    w.answer({ type: 'events', anchor: {}, events: [late] } as unknown as FromWorker);
+    w.onerror?.({ message: 'late' } as ErrorEvent);
+    await vi.advanceTimersByTimeAsync(READY_FINAL_MS);
+    expect(await h.path).toBe('main');
+    expect(host()).toBe(h);
+    expect(events).not.toContain(late); // its messages were not read
+    expect(fired('pme-monitor-worker-ready')).toHaveLength(0);
+    expect(fired('pme-monitor-main-thread')).toHaveLength(1);
+    expect((canvas.replacedBy as FakeCanvas).replacedBy).toBeNull(); // the main thread's canvas is the one shown
+    h.destroy();
+  });
+
+  it('an error before the limit hands over once; the limit passing later changes nothing', async () => {
+    const { READY_FINAL_MS, w, host } = await silentStart();
+    w.answer({ type: 'error', message: 'module failed to load' } as FromWorker);
+    await vi.advanceTimersByTimeAsync(0);
+    const h = host()!;
+    expect(await h.path).toBe('main');
+    await vi.advanceTimersByTimeAsync(READY_FINAL_MS);
+    const m = fired('pme-monitor-main-thread');
+    expect(m).toHaveLength(1);
+    expect(m[0]!.detail).toEqual({ reason: 'module failed to load' });
+    expect(host()).toBe(h);
+    h.destroy();
   });
 });
 

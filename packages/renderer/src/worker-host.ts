@@ -14,7 +14,7 @@ export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pau
 
 /**
  * N48 (brief 126): a worker not ready this long after its start is LATE, and the page says so (`pme-monitor-worker-late`;
- * `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it: a late worker is still loading, not lost. Until
+ * `pme-monitor-worker-ready` when it is). The monitor keeps waiting for it, up to READY_FINAL_MS: a late worker is still loading, not lost. Until
  * brief 126 the page fell back to the main thread here for good, in silence, so a busy start decided the render path by
  * a clock (on the dev server under background QoS, 2 workers: 4 of 5 page loads; the one that made it was ready at
  * 1745 ms), and that path froze the page through a fast-forward (N47). Waited for, the same five loads were ready at
@@ -24,6 +24,13 @@ export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pau
  * (`pme-monitor-main-thread`). 2 s: above every idle start measured, so a normal start says nothing [ENG: control].
  */
 export const READY_LATE_MS = 2000;
+/**
+ * A worker neither ready nor failed this long after its start is taken as failed: the main thread takes over, as on an
+ * error before 'ready' (`pme-monitor-main-thread`), and a later answer from it is ignored. 20 s: over 3× the slowest
+ * start measured (6.0 s, dev server under background QoS with 2 test workers), so a legitimate start never reaches it
+ * [ENG: control].
+ */
+export const READY_FINAL_MS = 20_000;
 const HIDDEN_PUMP_MS = 1000;
 /**
  * A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its
@@ -324,6 +331,8 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     });
   };
   let timer: ReturnType<typeof setTimeout> | undefined; // READY_LATE_MS: cleared at 'ready', a failure or destroy
+  let finalTimer: ReturnType<typeof setTimeout> | undefined; // READY_FINAL_MS: likewise
+  const stopTimers = () => (clearTimeout(timer), clearTimeout(finalTimer));
   const path = new Promise<RenderPath>((resolve, reject) => {
     const t0 = performance.now();
     let late = false;
@@ -331,11 +340,12 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
       late = true; // N48: said, and waited for
       canvas.dispatchEvent(new CustomEvent('pme-monitor-worker-late', { bubbles: true, detail: { waitedMs: Math.round(performance.now() - t0) } }));
     }, READY_LATE_MS);
+    finalTimer = setTimeout(() => reject(new Error(`not ready after ${READY_FINAL_MS / 1000} s`)), READY_FINAL_MS);
     worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       heard();
       const m = ev.data;
       if (m.type === 'ready') {
-        clearTimeout(timer);
+        stopTimers();
         ready = true;
         pumping = m.path === 'worker-pump';
         if (late) canvas.dispatchEvent(new CustomEvent('pme-monitor-worker-ready', { bubbles: true, detail: { readyMs: Math.round(performance.now() - t0), path: m.path } }));
@@ -362,12 +372,12 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
       else if (m.type === 'capture12') settle(m.reqId, (r) => (m.capture ? r.resolve(m.capture as never) : r.reject(new Error(m.error ?? 'capture12 failed'))));
       else if (m.reqId !== undefined) settle(m.reqId, (r) => r.reject(new Error(m.message)));
       else if (!ready) {
-        clearTimeout(timer);
+        stopTimers();
         reject(new Error(m.message));
       } else console.error('[pme worker]', m.message);
     };
     worker.onerror = (e) => {
-      clearTimeout(timer);
+      stopTimers();
       reject(new Error(e.message));
       if (ready) fail(new Error(`the monitor's worker failed: ${e.message}`)); // its frame loop does not survive an uncaught error
     };
@@ -418,10 +428,11 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         r.resolve(r.refused() as never);
       }
       fail(new Error('the monitor was destroyed'), false);
-      clearTimeout(timer);
+      stopTimers();
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
       document.removeEventListener('visibilitychange', onVis);
+      worker.onmessage = worker.onerror = worker.onmessageerror = null; // an answer already queued is not read
       worker.terminate();
     },
   };
@@ -429,7 +440,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
 
 /**
  * Create the host. With worker 'auto' it tries the OffscreenCanvas worker and waits for its 'ready' (a late one is said,
- * READY_LATE_MS); if the worker fails before 'ready', the transferred canvas is replaced by a fresh one, the main-thread
+ * READY_LATE_MS); if the worker fails before 'ready', or is still not ready at READY_FINAL_MS, the transferred canvas is replaced by a fresh one, the main-thread
  * path takes over and the fresh canvas fires `pme-monitor-main-thread` (detail { reason }): the page says so.
  */
 export function createHost(
