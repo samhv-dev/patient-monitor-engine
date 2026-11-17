@@ -2,8 +2,9 @@
 // flow–metabolism coupling plus the direct vasodilation of volatiles/ketamine (tables "Anaesthetic and treatment
 // effects"); CBV follows Grubb; PbtO2 and SjvO2 from the delivery/demand ratio.
 import {
-  ANAEMIA_FLOW_HB_MIN, ANAEMIA_FLOW_K, BREAKTHROUGH_PER_MMHG, CPP_REF, CPP_ZERO_FLOW, GRUBB, HB_REF, K_CO2, OER0, OER_MAX,
-  PACO2_MAX, PACO2_MIN, PAO2_CBF_DOUBLE, PAO2_CBF_ONSET, PBTO2_0, PBTO2_EXP, PBTO2_HYPEROXIA, Q10_BRAIN,
+  ANAEMIA_FLOW_HB_MAX, ANAEMIA_FLOW_HB_MIN, ANAEMIA_FLOW_K, BREAKTHROUGH_PER_MMHG, CPP_REF, CPP_ZERO_FLOW,
+  GRUBB, HB_REF, K_CO2, OER0, OER_MAX, PACO2_MAX, PACO2_MIN, PAO2_CBF_DOUBLE, PAO2_CBF_ONSET, PBTO2_0, PBTO2_EXP,
+  PBTO2_HYPEROXIA, Q10_BRAIN,
 } from './params.ts';
 
 /**
@@ -96,9 +97,10 @@ export function caO2(hb: number, sao2: number, pao2: number): number {
 /** Arterial O2 content of the reference state, mL/dL. */
 export const CAO2_REF = caO2(HB_REF, 0.97, 95);
 
-/** Flow factor of the blood's O2 capacity at the reference saturation (Hb, not CaO2: hypoxaemia acts in o2Factor). */
-export function anaemiaFactor(hb: number): number {
-  return (Math.max(ANAEMIA_FLOW_HB_MIN, hb) / HB_REF) ** -ANAEMIA_FLOW_K;
+/** Flow factor of the blood's O2 capacity at the reference saturation (Hb, not CaO2: hypoxaemia acts in o2Factor),
+ * 1 at the patient's own normal Hb, held outside the source's range. */
+export function anaemiaFactor(hb: number, hbRef: number): number {
+  return (Math.min(ANAEMIA_FLOW_HB_MAX, Math.max(ANAEMIA_FLOW_HB_MIN, hb)) / hbRef) ** -ANAEMIA_FLOW_K;
 }
 
 /**

@@ -31,6 +31,7 @@ export interface OrganView {
   map: number; pp: number; cvp: number; coLpm: number;
   paco2: number; pao2: number; sao2: number; tempC: number;
   hb: number; albuminGL: number; bvRel: number;
+  hbRef: number; // The patient's own normal Hb (the blood model's band default; = hb without the blood model)
   osm: number | null; // The blood model's plasma effective osmolality, mOsm/kg (null without the blood model)
   demandRel: number; // The resp pipeline's O2 demand ÷ rest (GA, temperature, fever) — the kidney's reference output
   mannitolMmol: number | null; // The blood model's plasma mannitol, mmol (null without the blood model: the kidney's own depot)
@@ -58,7 +59,7 @@ export interface DrugView {
 /** The blood's seam the organs fill: the urine ABOVE the basal UOP0 (mL/h) and the renal excretion rates, mmol/h. */
 export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number; mannitol?: number } };
 type BloodLike = {
-  core?: { liver?: number; hbfFactor?: number; renal?: RenalSeam; so?: { set?: { k?: number }; mannitol?: number }; out?: { k?: number; na?: number } };
+  core?: { pat?: { hbRef?: number }; liver?: number; hbfFactor?: number; renal?: RenalSeam; so?: { set?: { k?: number }; mannitol?: number }; out?: { k?: number; na?: number } };
   out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number; osm?: number };
 };
 
@@ -159,6 +160,7 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
     sao2: rs.o2.sa,
     tempC: rs.temp.tc,
     hb: num(out?.hb, HB_DEFAULT),
+    hbRef: out ? num(b?.core?.pat?.hbRef, num(out.hb, HB_DEFAULT)) : HB_DEFAULT,
     albuminGL: num(out?.albuminGL, ALBUMIN_DEFAULT),
     bvRel: num(out?.bvRel, bvFallback),
     osm: typeof out?.osm === 'number' && Number.isFinite(out.osm) && out.osm > 0 ? out.osm : null,

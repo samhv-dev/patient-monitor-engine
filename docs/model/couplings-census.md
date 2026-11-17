@@ -36,7 +36,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | gas-exchange | 44 | 12 |
 | breathing | 21 | 8 |
 | blood | 67 | 28 |
-| organs | 143 | 63 |
+| organs | 144 | 63 |
 | endocrine-thermal | 167 | 68 |
 | neuro | 188 | 94 |
 | pharmacology | 34 | 14 |
@@ -44,7 +44,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | alarms | 17 | 0 |
 | defib-pacer | 28 | 6 |
 | engine-runtime | 11 | 2 |
-| **All** | 1148 | 432 |
+| **All** | 1149 | 432 |
 
 ## The ten effector expressions with the most factors (of 1729)
 

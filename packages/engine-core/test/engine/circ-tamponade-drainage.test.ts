@@ -45,18 +45,14 @@ async function arm(opts: { quality: number; rate: number; drain: boolean; fluidM
 }
 
 describe('the drained tamponade comes back on the drainage', { timeout: 900_000 }, () => {
-  let drainedRun: ReturnType<typeof arm> | undefined;
-  const drained = () => (drainedRun ??= arm({ quality: 0.8, rate: 110, drain: true }));
-  it('drainage + standard-quality CPR alone, no fluid and no drug: ROSC, and the pulse holds (main: mean CoPP 14.5, never)', async () => {
-    const a = await drained();
+  it('drainage + standard-quality CPR alone, no fluid and no drug: ROSC within 4 min of the drainage, and the pulse holds (main: mean CoPP 14.5, never)', async () => {
+    const a = await arm({ quality: 0.8, rate: 110, drain: true });
     // eslint-disable-next-line no-console -- the gate note's numbers
     console.log(`FU-7.1 B4 drained, q 0.8 / 110, nothing else: arrest +${a.tArrest} s, mean CoPP ${a.cppMean.toFixed(1)}, max hold ${a.holdMax.toFixed(0)} s, ROSC ${a.rosc < 0 ? 'never' : `+${a.rosc} s`}, pulse held ${a.heldS} s`);
     expect(a.cppMean).toBeGreaterThan(15); // CPP_ROSC: the drainage restores filling from the patient's own reservoir
     expect(a.rosc).toBeGreaterThan(0);
+    expect(a.rosc).toBeLessThanOrEqual(240); // research/26 T4: within ≈ 1–2 min of drainage (band 30 s – 4 min)
     expect(a.heldS).toBeGreaterThanOrEqual(120); // not a one-beat ROSC that re-arrests on a stale RV number
-  });
-  it.fails('drainage + standard-quality CPR alone: ROSC within 4 min of the drainage — measured +250 s', async () => {
-    expect((await drained()).rosc).toBeLessThanOrEqual(240); // research/26 T4: within ≈ 1–2 min of drainage (band 30 s – 4 min)
   });
 
   it('poor compressions do not: at quality 0.4 the CoPP never reaches the threshold (the "less likely" is CPR quality and time, not a draw)', async () => {

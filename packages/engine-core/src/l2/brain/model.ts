@@ -21,6 +21,7 @@ export interface BrainInputs {
   cvp: number; // mmHg
   paco2: number; pao2: number; sao2: number; // mmHg, mmHg, fraction
   hb: number; // g/dL
+  hbRef: number; // g/dL, the patient's own normal (the blood model's band default) [ENG: the brain's flow is relative to it]
   tempC: number;
   drugs: BrainDrugs; // anaesthetic CMRO2 multiplier and direct vasodilation (organs/inputs.ts: neuro/drugs, or INTERIM fallback)
   osm?: number | null; // The blood model's plasma effective osmolality, mOsm/kg (absent/null without the blood model)
@@ -80,7 +81,7 @@ export function createBrain(p: BrainParams, inp: BrainInputs): BrainState {
 
 function targetCbf(b: BrainState, inp: BrainInputs, cpp: number): number {
   const m = inp.drugs.cmro2Mult * tempCmro2(inp.tempC) * inp.drugs.cbfVaso;
-  return autoreg(cpp, b.p.ll, b.p.ul, b.p.ar) * co2Factor(inp.paco2, b.paco2Ref) * o2Factor(inp.pao2) * anaemiaFactor(inp.hb) * m;
+  return autoreg(cpp, b.p.ll, b.p.ul, b.p.ar) * co2Factor(inp.paco2, b.paco2Ref) * o2Factor(inp.pao2) * anaemiaFactor(inp.hb, inp.hbRef) * m;
 }
 
 /** Osmotic brain-water loss (mL, ≥ 0) at time t: Bateman shape normalised to its peak × saturation × Vmax. */

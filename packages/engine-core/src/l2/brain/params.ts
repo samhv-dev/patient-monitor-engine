@@ -40,10 +40,12 @@ export const OER0 = 0.33; // (Fick on tables [P] values: SjvO2 ≈ 0.65, textboo
 export const OER_MAX = 0.75; // (tables §5.3 `erMax` 0.6–0.75) extraction ceiling (tables §5.3 `erMax` range 0.6–0.75, top end: the brain extracts more than the body)
 export const Q10_BRAIN = 0.07; // CMRO2 −7 %/°C, tables `q10Brain` [P]
 export const HB_DEFAULT = 14; // g/dL without the blood model (the gas model's HB_G_DL)
-/** g/dL of the reference state the relative flow and delivery are normalised to (CaO2 at SaO2 0.97, PaO2 95). */
+/** g/dL of the reference state the relative O2 delivery is normalised to (CaO2 at SaO2 0.97, PaO2 95) [P: the brain
+ * model's reference state, not the flow factor's]. */
 export const HB_REF = 14;
 /** Cerebral flow rises as the blood's O2 capacity falls, keeping O2 transport to the brain "within certain limits"
- * (Brown 1985 Brain, PMID 3978400, n 54, Hb 5.7–19.1 g/dL): CBF ∝ (Hb/HB_REF)^−k [INF: the power form]; k from Mühling 1999 (below). */
+ * (Brown 1985 Brain, PMID 3978400, n 54, Hb 5.7–19.1 g/dL): CBF ∝ (Hb/Hb_normal)^−k [INF: the power form], Hb_normal the patient's own
+ * (BrainInputs.hbRef); k from Mühling 1999 (below). */
 export const ANAEMIA_FLOW_SOURCE = {
   study: 'Mühling 1999 Can J Anaesth 46:550 (PMID 10391602), 11 volunteers, isovolaemic haemodilution, TCD (abstract means)',
   hbBefore: 14.5, // g/dL
@@ -57,6 +59,8 @@ export const ANAEMIA_FLOW_K =
 /** Lowest Hb measured with intact systemic oxygenation (Lieberman 2000 Anesthesiology, PMID 10691227, 8 volunteers): the
  * factor is held at its value there [P: no measurement below]. */
 export const ANAEMIA_FLOW_HB_MIN = 4.8;
+/** Highest Hb of the source's range (Brown 1985, 19.1 g/dL): the factor is held at its value there [P: no measurement above]. */
+export const ANAEMIA_FLOW_HB_MAX = 19.1;
 // The cortex's energy thresholds on O2 delivery (Miller 10th ed. chapter 35, printed pages)
 /** The EEG turns abnormal at CBF 20 of 50 mL/100 g/min (Miller Ch35 p. 1122) — read as O2 DELIVERY relative to normal,
  * so hypoxaemia acts only once flow compensation is exhausted (Ch35 p. 1126) [INF]. */

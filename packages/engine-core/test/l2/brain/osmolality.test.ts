@@ -4,7 +4,7 @@ import { NO_DRUGS } from '../../../src/l2/brain/flow.ts';
 import { brainParams, createBrain, stepBrain, type BrainInputs } from '../../../src/l2/brain/model.ts';
 import { OSM_WATER_ML_PER_MOSM } from '../../../src/l2/brain/params.ts';
 
-const REST: BrainInputs = { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, tempC: 37, drugs: NO_DRUGS, osm: 290 };
+const REST: BrainInputs = { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, hbRef: 14, tempC: 37, drugs: NO_DRUGS, osm: 290 };
 const run = (osm: number, secs: number) => {
   const b = createBrain(brainParams(), REST);
   for (let k = 0; k < 600; k++) stepBrain(b, REST, 0.1);

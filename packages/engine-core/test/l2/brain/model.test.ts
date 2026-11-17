@@ -4,7 +4,7 @@ import { drugsOf, NO_ANAESTHESIA, NO_DRUGS } from '../../../src/l2/brain/flow.ts
 import { brainParams, createBrain, giveOsmotherapy, stepBrain, type BrainInputs, type BrainState } from '../../../src/l2/brain/model.ts';
 import { MANNITOL_MOSM_PER_G } from '../../../src/l2/brain/params.ts';
 
-const REST: BrainInputs = { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, tempC: 37, drugs: NO_DRUGS };
+const REST: BrainInputs = { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, hbRef: 14, tempC: 37, drugs: NO_DRUGS };
 function run(b: BrainState, s: number, f: (b: BrainState, inp: BrainInputs, t: number) => void = () => {}): BrainInputs {
   const inp = { ...REST };
   for (let k = 0; k < s * 10; k++) {
