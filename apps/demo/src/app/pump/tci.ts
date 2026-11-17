@@ -81,17 +81,20 @@ function tciFlow(x: FlowInput) {
   const pmaField = field(TCI_WORDS.pma, pma);
   const opioidsField = field(TCI_WORDS.opioids, opioids);
   const hints = h('div', { class: 'pf-hints' });
+  const modelNotes = h('div', { class: 'pf-hints' });
   const chosen = (): TciSet => sets.find((s) => s.meta.id === setSel.value) ?? (sets[0] as TciSet);
   const draw = () => {
     const s = chosen();
     pmaField.hidden = !s.meta.covariates.includes('pmaWeeks');
     opioidsField.hidden = !s.meta.covariates.includes('opioids');
-    const out: string[] = [];
     const held = pumpModel(sp5, s.meta.id);
     const plasmaOnly = !!held && !held.targets.includes('effect-site');
     effect.textContent = plasmaOnly ? TCI_WORDS.plasmaOnly(TCI_WORDS.modes[0][1]) : TCI_WORDS.modes[0][1];
-    if (sp5 && !held) out.push(TCI_WORDS.notHeld(deviceName(sp5), tciModelName(s.meta.id), drugName(drugId), pumpModels(sp5, drugId).map((m) => m.name)));
-    if (sp5 && held && plasmaOnly) out.push(TCI_WORDS.plasmaOnlyHint(deviceName(sp5), held.name));
+    const notes: string[] = [];
+    if (sp5 && !held) notes.push(TCI_WORDS.notHeld(deviceName(sp5), tciModelName(s.meta.id), drugName(drugId), pumpModels(sp5, drugId).map((m) => m.name)));
+    if (sp5 && held && plasmaOnly) notes.push(TCI_WORDS.plasmaOnlyHint(deviceName(sp5), held.name));
+    modelNotes.replaceChildren(...notes.map(hint));
+    const out: string[] = [];
     if (s.meta.ke0.none === true) out.push(NO_KE0_REFUSAL);
     const p = s.meta.population;
     for (const [what, inp, range, unit] of [['Age', age, p.ageY, 'y'], ['Weight', weight, p.weightKg, 'kg'], ['Height', height, p.heightCm, 'cm']] as const) {
@@ -117,15 +120,17 @@ function tciFlow(x: FlowInput) {
     copied.textContent = '';
     draw();
   }) }, TCI_WORDS.copy);
-  const el = h('div', { class: 'pf-fields-in' }, field(TCI_WORDS.set, setSel),
+  const el = h('div', { class: 'pf-fields-in' }, field(TCI_WORDS.set, setSel), modelNotes,
     h('div', { class: 'pf-row' }, field(TCI_WORDS.mode, mode), field(TCI_WORDS.target(unitText(row ? concUnit(row) : '')), target)),
     h('fieldset', { class: 'pf-patient' }, h('legend', {}, TCI_WORDS.patient), copy, copied,
       h('div', { class: 'pf-row' }, field(TCI_WORDS.age, age), field(TCI_WORDS.weight, weight)),
       h('div', { class: 'pf-row' }, field(TCI_WORDS.height, height), field(TCI_WORDS.sex, sex)),
       pmaField, opioidsField),
     hints);
+  modelNotes.id = `${setSel.id}-model`;
   hints.id = `${setSel.id}-hints`;
-  for (const c of [setSel, mode, age]) c.setAttribute('aria-describedby', hints.id);
+  for (const c of [setSel, mode]) c.setAttribute('aria-describedby', modelNotes.id);
+  age.setAttribute('aria-describedby', hints.id);
   el.addEventListener('input', draw);
   el.addEventListener('change', draw);
   draw();

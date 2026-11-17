@@ -172,7 +172,7 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
     expect(sets).not.toContain('minto'); // only the sets registered for the programmed drug
     await form.locator('select[name="setId"]').selectOption('eleveld');
     await expect(form.locator('select[name="setId"] option[value="eleveld"]')).toHaveText('Eleveld (propofol, arterial) · not on this pump');
-    await expect(form.locator('.pf-hints')).toContainText('Mindray BeneFusion SP5 TCI: Eleveld is not on this pump; for Propofol it holds Marsh, Schnider, Kataria (Pedia), and Paedfusor (Pedia)');
+    await expect(form.locator('.pf-hints').first()).toContainText('Mindray BeneFusion SP5 TCI: Eleveld is not on this pump; for Propofol it holds Marsh, Schnider, Kataria (Pedia), and Paedfusor (Pedia)');
     await form.locator('select[name="mode"]').selectOption('effect');
     await form.locator('input[name="target"]').fill('3');
     await form.locator('.pf-copy').click();
