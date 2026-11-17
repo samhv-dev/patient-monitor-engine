@@ -124,6 +124,15 @@ export const SANITY_DOCS: ValidationDoc[] = [
     segments: [seg('apnoea', 180, 900, rng('t90', 'state:spo2', 'firstTBelow', 390, 570, `${S} 6: SaO2 90 % at 8 ± 1.5 min (Benumof)`, { threshold: 90 }))],
   }),
   doc({
+    // the oxygen store as in apnoea: ventilated with oxygen, then the circuit opens and nothing more reaches the patient
+    id: 's6-disconnection-ventilated', title: 'Circuit disconnection after ventilation with oxygen, 70 kg', source: `${S} check 6; gate 3 acc. 3`, durationS: 900,
+    actions: [at(0, ev({ kind: 'thermal', anaesthesia: 'general' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 1, peep: 5 })),
+      at(180, ev({ kind: 'airway', state: 'disconnected' }))],
+    segments: [seg('disconnected', 180, 900,
+      rng('t90', 'state:spo2', 'firstTBelow', 390, 570, `${S} 6: SaO2 90 % at 8 ± 1.5 min (Benumof)`, { threshold: 90 }),
+      rng('capno-apnoea', 'alarm:apnoea-co2', 'firstT', 15, 22, 'gate 3 acc. 3: the capnograph sees no breath: APNEA 20 ± 1 s after the last breath (breath phase adds ≤ 5 s)'))],
+  }),
+  doc({
     id: 's6-apnoea-room-air', title: 'Apnoea on room air, 70 kg', source: 'R39 item 1', durationS: 300,
     actions: [at(0, ev({ kind: 'thermal', anaesthesia: 'general' })), at(60, ev({ kind: 'airway', state: 'apnoea' }))],
     segments: [seg('apnoea', 60, 300,
