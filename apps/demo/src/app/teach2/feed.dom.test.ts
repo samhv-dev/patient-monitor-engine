@@ -71,7 +71,7 @@ vi.mock('@pme/renderer', async () => {
   };
 });
 
-const { ControllerSession, VIEWER_EVENTS } = await import('@pme/controller');
+const { ControllerSession, SignInCredential, VIEWER_EVENTS } = await import('@pme/controller');
 const { AppSession } = await import('../session.ts');
 const { Link } = await import('../link.ts');
 const { boardOf, feedOf } = await import('./feed.ts');
@@ -110,6 +110,7 @@ describe('P6: the view feed and the note path', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'performance', 'Date', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     net.peers.length = 0;
     net.sent.length = 0;
+    sessionStorage.clear(); // the host's book of signed-in devices is the tab's: each case is a new tab
     pin.v = PIN;
     document.body.replaceChildren();
     el = document.createElement('div');
@@ -130,10 +131,14 @@ describe('P6: the view feed and the note path', () => {
   /** An instructor phone that signs in with `p` now (a page opened or reloaded: a fresh session and Link). */
   async function phone(p = PIN) {
     const transport = (await import('@pme/controller')).createWebSocketTransport({ url: 'ws://relay.test/' });
-    const ctl = new ControllerSession({ session: CODE, transport, role: 'instructor', pin: () => p });
+    const ctl = new ControllerSession({ session: CODE, transport, role: 'instructor', credential: new SignInCredential(p) });
     const link = new Link(ctl, transport, null);
     closers.push(() => (link.close(), ctl.close(), transport.close()));
     await vi.advanceTimersByTimeAsync(50);
+    await settle();
+    // the host answers once its SHA-256 of the ticket it hands on is done (crypto.subtle: real work, not a timer)
+    for (let i = 0; i < 100 && ctl.access.state === 'pending'; i++) await new Promise((r) => setImmediate(r));
+    await vi.advanceTimersByTimeAsync(50); // the welcome that follows the grant, as above
     await settle();
     return { ctl, link };
   }

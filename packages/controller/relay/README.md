@@ -100,6 +100,15 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   sent the relay's own `grant {granted:false, reason:"the instructor's computer reconnected; signing in again"}`
   (`from: 'pme-relay'`), so the phone says its hello again on the host's hello; its socket stays open, and it is not a
   wrong PIN.
+- **The sign-in ticket** (`session/sign-in-book.ts`). The host's `grant {granted:true}` may carry `ticket`: the book's
+  id, a dot, 16 random bytes in base64url. It goes to that socket alone, as every grant does. A device of the four
+  roles that sign in (`instructor`, `ventilator`, `learner`, `pump`) then says `hello {ticket}` instead of `pin` (the
+  guard refuses both together), and the host answers it as a PIN hello: a grant with the next ticket, or a refusal
+  with its reason (the PIN changed, taken over, `the instructor's computer started a new session`, `this sign-in was
+  already used or is not known`). The relay treats a ticket hello exactly as a PIN hello: pending until the host's
+  grant, under the per-address limits below, forwarded to the host alone, never logged. A refused ticket of a pending
+  socket counts as a wrong PIN, whatever the reason: a device asked for the PIN again because its PIN was changed
+  meanwhile counts one try, unlike a revoked grant of a socket still granted.
 - **The ventilator socket** (`hello {role:'ventilator', pin}`, plan room-and-instruments.md R8a/R8b, §4 D9: the
   cockpit on another device drives the patient, so it proves the instructor's PIN; a hello without one is refused by
   the guard). It is admitted PENDING from any device, as an instructor is, and the host's `grant` applies to it in the
@@ -240,8 +249,8 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 
 The session code is the only secret — and in a classroom it is on the projector, so there `--remote-roles viewer`
 (the default) lets other devices only follow: commands come from the instructor's laptop alone, or from a phone the
-laptop granted with the PIN, and the host refuses a viewer's command as well. The PIN travels in the instructor's
-hello to the host only; a pending or denied instructor gets what a viewer gets, and guessing is limited per address
+laptop granted with the PIN, and the host refuses a viewer's command as well. The PIN, and the ticket that stands for it
+once a device is admitted, travel in the hello to the host only (the ticket's next one in the grant to that socket only); a pending or denied instructor gets what a viewer gets, and guessing is limited per address
 (above). The relay logs no PIN. A peer id belongs to one live socket per session: when a second socket
 says hello with an id in use (or as a second host), the relay pings the socket that holds it and refuses the newcomer
 if it answers within 3 s (an id: close 4010, which the client retries; another host: close 4009), or closes it and

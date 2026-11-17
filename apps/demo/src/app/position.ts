@@ -14,6 +14,7 @@ import { engineKey } from '@pme/engine-core';
 import type { RunPosition, StageMarkPosition } from '@pme/controller/scenario';
 import { RELOAD_MARK, type KeptRecord } from './record.ts';
 import { cardOf, scenarioById, type ScenarioCard } from './scenarios.ts';
+import { SIGN_INS_KEY } from './sign-ins.ts';
 import type { AppSession } from './session.ts';
 
 /** How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed.
@@ -61,12 +62,12 @@ interface KeptStageMarks {
   marks: StageMarkPosition[];
 }
 type Owner = Pick<Position, 'code' | 'build' | 'engine' | 'cardId'>;
-/** The kept position and stage marks as stored (key → value), for a hand-over to another tab of this browser
- *  (host-guard.ts): sessionStorage is the tab's own, so the other tab cannot read them. */
+/** The kept position, stage marks and book of signed-in devices as stored (key → value), for a hand-over to another tab
+ *  of this browser (host-guard.ts): sessionStorage is the tab's own, so the other tab cannot read them. */
 export function keptItems(s: Storage | null = storage()): Record<string, string> {
   const out: Record<string, string> = {};
   try {
-    for (const k of [KEY, MARKS_KEY]) {
+    for (const k of [KEY, MARKS_KEY, SIGN_INS_KEY]) {
       const v = s?.getItem(k);
       if (typeof v === 'string') out[k] = v;
     }
@@ -78,7 +79,7 @@ export function keptItems(s: Storage | null = storage()): Record<string, string>
 
 /** Store a position handed over by another tab (keptItems there); readPosition then checks it as after a reload. */
 export function putKeptItems(items: Record<string, string>, s: Storage | null = storage()): void {
-  for (const k of [KEY, MARKS_KEY]) {
+  for (const k of [KEY, MARKS_KEY, SIGN_INS_KEY]) {
     const v = items[k];
     try {
       if (typeof v === 'string') s?.setItem(k, v);
