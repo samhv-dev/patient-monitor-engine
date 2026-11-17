@@ -220,7 +220,7 @@
     "arrhythmia.brady": { "tag": "documented", "source": "brief §6.4 (limit-relative, no absolute)" },
     "arrhythmia.freqPvcPerMin": { "tag": "documented", "source": "brief §6.4" },
     "st": { "tag": "eng", "source": "ENG" },
-    "beep.source": { "tag": "documented", "source": "research/05 §2.5; brief §3.6" },
+    "beep.source": { "tag": "documented", "source": "research/05 §2.5; brief §3.6", "note": "In ventricular fibrillation the tone follows the beat detector only on coarse fibrillation and only until the monitor calls VF (the VFIB alarm), then is silent; on fine fibrillation (below the rhythm library's 0.2 mV coarse/fine boundary, FINE_MV) it is silent. The owner's clinical ruling, an engineering value for the device until a recording of a real monitor in VF is in hand: no manual read says what the tone does in VF (research/82 Q1)" },
     "beep.defaultOn": { "tag": "documented", "source": "brief §3.6" },
     "beep.volume": { "tag": "eng", "source": "ENG" },
     "beep.levelDb": { "tag": "eng", "source": "ENG", "note": "no source relates the beep volume steps to the alarm volume steps: a beep step is as loud as the same alarm step at high priority" },

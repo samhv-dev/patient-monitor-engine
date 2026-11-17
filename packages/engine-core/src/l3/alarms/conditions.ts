@@ -9,6 +9,8 @@ import { displayDigits, fixedText, limitText, type FixedAlarmId } from './text.t
 
 /** VF is recognised this long after it starts (a monitor needs a few seconds of analysis) [ENG: device]. */
 export const VF_CONFIRM_S = 3;
+/** Whether the monitor's VF analysis stands at `t` (the VFIB call), VF having started at `vfSince`. */
+export const vfCalled = (vfSince: number | null, t: number): boolean => vfSince !== null && t - vfSince >= VF_CONFIRM_S;
 /** Desaturation alarm delay (brief §6.4: "desaturation (<80%, 20 s)"). */
 export const DESAT_DELAY_S = 20;
 /** A displayed numeric older than this is stale and raises nothing (NIBP excepted: it is episodic) [ENG: device]. */
@@ -253,7 +255,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
   // ECG: technical first; lethal arrhythmias whenever leads are on (they cannot be switched off, brief §6.4.1).
   if (inp.leadsOff) out.push(fixed('ecgLeadsOff', 3, 'technical'));
   else {
-    const vf = inp.vfSince !== null && t - inp.vfSince >= VF_CONFIRM_S;
+    const vf = vfCalled(inp.vfSince, t);
     if (vf) out.push(fixed('VFIB', 1, 'physiological'));
     const since = Math.max(inp.lastQrsT ?? -Infinity, inp.ecgOnSince);
     // Once ASYSTOLE stands, an agonal beat (R–R ≥ AGONAL_RR_S, < 20/min, research/03 §1.5) does not end it — the arrest

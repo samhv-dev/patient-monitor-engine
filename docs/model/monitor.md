@@ -617,6 +617,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | Oscillometric NIBP (brief §4.5, §6.3; research 03 §5): a measurement over sim time, never a readout. |
 | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | Device pressure numerics (brief §4.2 "Numerics (L3)", §6.1; research 03 §2.2): per-beat SBP/DBP = max/min of the DISPLAYED (transducer + 12 Hz filter) waveform between two detected feet; MAP = the INTEGRAL of the beat (n |
 | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | Pulse (upstroke) detector for ABP, PAP and pleth (brief §4.2 "PR from the ABP uses slope-sum upstroke detection"; research 03 §2.2). |
+| [`l3/qrs-tone.ts`](../../packages/engine-core/src/l3/qrs-tone.ts) | Whether a detected QRS sounds the QRS tone. |
 | [`l3/qrs.ts`](../../packages/engine-core/src/l3/qrs.ts) | QRS detector on the DISPLAYED (monitor-filtered) lead (brief §4.1: it never reads the truth list). |
 | [`l3/resp/impedance.ts`](../../packages/engine-core/src/l3/resp/impedance.ts) | Impedance respiration (brief §4.7; research 03 §7): the `resp` channel is chest volume (relative to a 500 mL breath) plus a cardiogenic ripple at the heart rate (5–20 % of a normal breath, band 0.3–2.5 Hz) — and its own |
 | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | SpO2 device chain (brief §4.3 "Device chain (L3)", §6.1; research 03 §3.6–3.7): site SaO2 (after the circulatory dead time, l2/gas/delay.ts) → first-order sensor lag τ 3 s → device bias → moving average → display update |
@@ -661,6 +662,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`engine/hr-agonal-qrs.test.ts`](../../packages/engine-core/test/engine/hr-agonal-qrs.test.ts) | 0 | 0 |
 | [`engine/hr-skin-averaging.test.ts`](../../packages/engine-core/test/engine/hr-skin-averaging.test.ts) | 0 | 0 |
 | [`engine/qrs-tone-pitch.test.ts`](../../packages/engine-core/test/engine/qrs-tone-pitch.test.ts) | 0 | 0 |
+| [`engine/qrs-tone-vf.test.ts`](../../packages/engine-core/test/engine/qrs-tone-vf.test.ts) | 0 | 0 |
 | [`engine/state-sensor-map.test.ts`](../../packages/engine-core/test/engine/state-sensor-map.test.ts) | 0 | 0 |
 | [`l3/capture12-arrest.test.ts`](../../packages/engine-core/test/l3/capture12-arrest.test.ts) | 0 | 0 |
 | [`l3/capture12.test.ts`](../../packages/engine-core/test/l3/capture12.test.ts) | 0 | 0 |
