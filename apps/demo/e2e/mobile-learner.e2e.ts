@@ -12,6 +12,7 @@ import { devices, expect, test, type Browser, type Page } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle, type RelayOptions } from '../../../packages/controller/relay/server.ts';
 import { ffV2, openApp, pillV2, speedV2, startVite } from './app-support.ts';
+import { carried } from '../src/app/address.testing.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -394,7 +395,7 @@ test('L6: the Learner remote card opens the learner-PIN form; the learner PIN fr
   expect(stage.height).toBeLessThan((p.viewportSize()?.height ?? 0) * 0.5); // a strip, not the whole screen
   expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   // the PIN is in no address the page had and in neither of its stores
-  for (const u of [...urls, p.url()]) expect(u).not.toContain(learnerPin);
+  for (const u of [...urls, p.url()]) expect(carried(u)).not.toContain(learnerPin);
   expect(await p.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }))).not.toContain(learnerPin);
   // the laptop: the table lists it as a learner remote, granted; its PIN panel beside the instructor's, behind press-and-hold
   await page.evaluate(() => (location.hash = '#/room'));
@@ -470,7 +471,7 @@ test('A1: the Infusion pumps card opens #/pump; its learner PIN says hello as `p
   // the guard and the relay passed both hellos: no refusal but the host's own answer to the wrong PIN, which the relay
   // carries to the tablet as `denied` (WebKit's frame events do not always report it; the page's words above do)
   expect(refused.map((x) => JSON.parse(x) as Record<string, unknown>).filter((m) => !(m.code === 'denied' && m.message === 'wrong PIN'))).toEqual([]);
-  expect(p.url()).not.toContain(learnerPin);
+  expect(carried(p.url())).not.toContain(learnerPin);
   await expect(p.locator('.pump-status')).toHaveText(`Signed in as the room's infusion pumps · ${code}`);
   const faces = p.locator('.pump-face');
   await expect(faces).toHaveCount(4);
