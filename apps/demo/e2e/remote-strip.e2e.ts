@@ -86,11 +86,12 @@ const geometry = (p: Page) => p.evaluate(() => {
   };
 });
 
-test('the remote strip at phone and tablet sizes: every lane tall enough to read, every tile and value whole, the tabs on screen', async ({ page, browser, browserName }) => {
+test('the remote strip at phone and tablet sizes: every lane tall enough to read, every tile and value whole, the tabs on screen', async ({ page, browser, browserName }, testInfo) => {
   test.setTimeout(180_000);
   const { code, pin } = await classroom(page);
   const { p, ctx } = await phone(browser, browserName, code, pin);
   expect((await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'attachSensor', sensor: 'co2', state: 'on' }))).accepted).toBe(true);
+  const measured: Record<string, number> = {}; // each lane's height, attached for the record
   const styles = [
     { skin: 'saadat-like', tiles: ['HR', 'NIBP', 'IBP1', 'SpO2', 'CO2'] },
     { skin: 'philips-like', tiles: ['HR', 'ART', 'NIBP', 'SpO2', 'CO2'] },
@@ -99,10 +100,12 @@ test('the remote strip at phone and tablet sizes: every lane tall enough to read
     await page.evaluate((skin) => (window as unknown as HostW).__pmeApp.session.setSkin(skin, ''), s.skin);
     await p.waitForFunction((skin) => (window as unknown as PhoneW).__pmeLearnerRemote.follower()?.style.skin === skin, s.skin, { timeout: 15_000, polling: 250 });
     await expect.poll(async () => (await geometry(p)).tiles, { timeout: 15_000 }).toEqual(s.tiles); // the CO2 tile once the sensor's swap reached the phone
+    for (const t of ['HR', 'SpO2']) await expect(p.locator(`.stage .pme-stile[data-param="${t}"] .v`)).toHaveText(/\d/, { timeout: 15_000 }); // the tiles at their full height
     for (const size of SIZES) {
       await p.setViewportSize({ width: size.width, height: size.height });
       const g = await geometry(p);
       const at = `${s.skin} at ${size.name}`;
+      measured[at] = Math.floor(g.laneH);
       expect(g.lanes, at).toEqual(['ECG1', 'PLETH']);
       expect(g.laneH, at).toBeGreaterThanOrEqual(MIN_LANE_PX);
       expect(g.outside, at).toEqual([]);
@@ -111,6 +114,8 @@ test('the remote strip at phone and tablet sizes: every lane tall enough to read
     }
     await p.setViewportSize({ width: 375, height: 812 });
   }
+  writeFileSync(testInfo.outputPath('lane-heights.json'), JSON.stringify(measured, null, 1));
+  await testInfo.attach('lane heights (px)', { path: testInfo.outputPath('lane-heights.json'), contentType: 'application/json' });
   await ctx.close();
 });
 
@@ -126,6 +131,7 @@ test('the remote strip at 375 × 812 in sinus rhythm and in ventricular fibrilla
   });
   const hr = p.locator('.stage .pme-stile[data-param="HR"] .v');
   await expect(hr).toHaveText(/^\d+$/, { timeout: 15_000 });
+  await expect(p.locator('.stage .pme-stile[data-param="SpO2"] .v')).toHaveText(/^\d+$/, { timeout: 15_000 });
   expect((await geometry(p)).lanes).toEqual(['ECG1', 'PLETH']);
   await testInfo.attach('remote strip 375 x 812 sinus', { path: await shot(p, testInfo.outputPath('strip-375x812-sinus-' + browserName + '.png')), contentType: 'image/png' });
 

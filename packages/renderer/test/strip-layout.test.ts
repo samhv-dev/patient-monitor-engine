@@ -42,14 +42,14 @@ describe('strip tiles', () => {
     expect([...ui.tiles.querySelectorAll('.pme-stile')].map((e) => (e as HTMLElement).dataset.param)).toEqual(want);
     expect(want).toContain('CO2');
   });
-  it('a sub-line wraps between its parts only: one unbreakable span per part, the same text', () => {
+  it('a sub-line puts its parts one under another: one span per part, the same text', () => {
     const r = resolveSkin('philips-like', { sensors: { co2: true } });
     const ui = new DeviceUI(document, document.createElement('div'), r, undefined, true, undefined, STRIP.tiles);
     ui.paint(1);
     const sub = ui.tiles.querySelector('.pme-stile[data-param="CO2"] .s') as HTMLElement;
     expect(sub.textContent).toBe('awRR ---  imCO2 ---');
     expect([...sub.querySelectorAll('span')].map((s) => s.textContent)).toEqual(['awRR ---', 'imCO2 ---']);
-    expect(flashCss(r)).toContain('.pme-subset .pme-stile .s>span{white-space:nowrap}');
+    expect(flashCss(r)).toContain('.pme-subset .pme-stile .s>span{display:block}');
   });
   it('a skin switch keeps the strip\'s tiles', () => {
     const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'), undefined, true, undefined, STRIP.tiles);

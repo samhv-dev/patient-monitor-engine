@@ -147,9 +147,9 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)){flex-wrap:wrap;row-gap:2px}',
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4))>.part{flex:1 0 40%}',
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)) .pv:empty{display:none}',
-    // a strip's third-of-a-phone tile: a sub-line too long for one line wraps between its parts, never inside one
+    // a strip's third-of-a-phone tile: its sub-line's parts one under another, a part too long for the tile on two lines
     '.pme-subset .pme-stile .s{white-space:normal}',
-    '.pme-subset .pme-stile .s>span{white-space:nowrap}',
+    '.pme-subset .pme-stile .s>span{display:block}',
     // the rc.3 limit pairs stay off a phone, as the old limits do (review T-12)
     '.pme-portrait .pme-stile.rc3 .lim.a,.pme-portrait .pme-stile.rc3 .lim.b,.pme-portrait .pme-stile.rc3 .lim.c,.pme-portrait .pme-stile.rc3 .part .lim,.pme-portrait .pme-stile.rc3 .limrow{display:none}',
   ].join('\n');
@@ -158,7 +158,7 @@ export function flashCss(r: ResolvedSkin): string {
 /** Between the parts of a tile's sub-line. */
 const SUB_SEPARATOR = '  ';
 
-/** A tile's sub-line ("awRR 12  imCO2 0") as one unbreakable span per part, the parts' own separators between them. */
+/** A tile's sub-line ("awRR 12  imCO2 0") as one span per part, the parts' own separators between them (the same text). */
 function wrapAtParts(doc: Document, sub: string): Array<Node | string> {
   return sub.split(SUB_SEPARATOR).flatMap((part, i) => {
     const span = doc.createElement('span');
