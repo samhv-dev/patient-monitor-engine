@@ -8,6 +8,8 @@ export interface BoardEntry {
   prep: InstructorPrepView;
   /** Case time of the first delivery or infusion from it (null: not given). */
   givenAt: number | null;
+  /** The first use was an infusion started from it, not a delivery. */
+  infused: boolean;
   discardedAt: number | null;
 }
 
@@ -19,8 +21,8 @@ export class PrepBoard {
     const key = `${n.prep.by}|${n.prep.id}`;
     const was = this.m.get(key);
     // the host's own given time (a phone that signed in late gets it too), else the delivery news' time
-    const e: BoardEntry = { prep: n.prep, givenAt: n.prep.givenAt ?? was?.givenAt ?? null, discardedAt: was?.discardedAt ?? null };
-    if ((n.news === 'delivered' || n.news === 'infusing') && e.givenAt === null) e.givenAt = t;
+    const e: BoardEntry = { prep: n.prep, givenAt: n.prep.givenAt ?? was?.givenAt ?? null, infused: was?.infused ?? false, discardedAt: was?.discardedAt ?? null };
+    if ((n.news === 'delivered' || n.news === 'infusing') && e.givenAt === null) Object.assign(e, { givenAt: t, infused: n.news === 'infusing' });
     if (n.news === 'discarded') e.discardedAt = t;
     this.m.set(key, e);
   }

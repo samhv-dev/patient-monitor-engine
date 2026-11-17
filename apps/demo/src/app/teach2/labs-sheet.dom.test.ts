@@ -11,6 +11,7 @@ import { ANALYSERS, LABORATORY, TICK_S, turnaroundFor, type EngineEvent, type La
 import { mountLabPanel } from '@pme/renderer';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Link } from '../link.ts';
+import { RunRecord } from '../record.ts';
 import { LABS_WORDS, labsView } from '../remote/labs.ts';
 import { DEFAULT_SITE } from '../site.ts';
 import type { Teach2Ctx } from './ctx.ts';
@@ -31,14 +32,15 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-/** A stand-in for the host: its panel transport's wire events, its engine's events, Room setup's names. */
+/** A stand-in for the host: its panel transport's wire events, its engine's events, its remotes' names (its record's). */
 function source(names: Record<string, string> = {}) {
+  const record = new RunRecord(() => ({ patient: '', weightKg: 70 }), () => 0, () => null, (key) => names[key] ?? null);
   const wire = new Set<(e: WireEvent) => void>();
   const eng = new Set<(e: EngineEvent) => void>();
   const src: LabsSource = {
     onWire: (fn) => (wire.add(fn), () => void wire.delete(fn)),
     onEngine: (fn) => (eng.add(fn), () => void eng.delete(fn)),
-    deviceName: (key) => names[key] ?? null,
+    remoteName: (key) => record.label(key, 'learner'),
   };
   let n = 0;
   const applied = (tick: number, command: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
@@ -97,7 +99,7 @@ describe("the laptop's Labs sheet (L15)", () => {
     // the latest draw first, as the phone lists its own
     expect(rows.map((r) => r.dataset.panel)).toEqual(['abg', 'coag', 'vbg', 'chem', 'abg']);
     expect(rows.map((r) => r.querySelector('.ip2-lab-who')?.textContent)).toEqual([
-      LAB_SHEET_WORDS.by(LAB_SHEET_WORDS.unnamed), LAB_SHEET_WORDS.by(LAB_SHEET_WORDS.phone), LAB_SHEET_WORDS.by(LAB_SHEET_WORDS.instructor),
+      LAB_SHEET_WORDS.by('Learner remote 2'), LAB_SHEET_WORDS.by(LAB_SHEET_WORDS.phone), LAB_SHEET_WORDS.by(LAB_SHEET_WORDS.instructor),
       LAB_SHEET_WORDS.by(LAB_SHEET_WORDS.card), LAB_SHEET_WORDS.by('bed 3 remote'),
     ]);
     expect(LAB_SHEET_WORDS.instructor).toBe('Instructor');

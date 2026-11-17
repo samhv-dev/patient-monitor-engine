@@ -47,7 +47,7 @@ import {
 /** C2: the LABELS of the room's preparations a pump may load (§8): never their findings. */
 export interface PumpLabels {
   news: 'labels';
-  labels: Array<{ device: string; id: string; container: string; drugId: string; actives: Array<{ drugId: string; amount: number; unit: string; perMl: number }>; volumeMl: number; madeAt: number; readyAt: number }>;
+  labels: Array<{ device: string; name?: string; id: string; container: string; drugId: string; actives: Array<{ drugId: string; amount: number; unit: string; perMl: number }>; volumeMl: number; madeAt: number; readyAt: number }>;
 }
 /** C2 (§8): the instructor's finding: a channel whose contents and programme differ, with whether its notice was shown. */
 export interface PumpMismatchNews {
@@ -173,7 +173,8 @@ export interface HostSessionOptions {
    * `fastForwardToNextPhase` is refused.
    */
   phaseMark?: () => string | null;
-  /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
+  /** The name a person reads for a learner remote's device key (null: none), on the instructor's copy of a preparation's
+   *  news and on the label of a preparation a pump may load; never the key itself. */
   deviceName?: (key: string) => string | null;
   /** L14: a learner device's drug the host did NOT give because the case was paused, one call per drug (the host's Log
    *  and record show the attempt; nothing reached the engine). */
@@ -1137,7 +1138,7 @@ export class HostSession {
   }
 
   private instructorCopy(h: HostPrep): InstructorPrepView {
-    const name = this.o.deviceName?.(h.by) ?? null; // L9: the card says "Bed 2 remote staged", on the laptop and the phone
+    const name = this.o.deviceName?.(h.by) ?? null;
     return { ...instructorView(h), ...(name ? { name } : {}) };
   }
 
@@ -1150,7 +1151,7 @@ export class HostSession {
 
   /**
    * C2 (§8): the LABELS of the preparations a pump may load — every one in a syringe or a bag, of any remote of the room,
-   * with something left: drug, concentration, volume, the maker's device key and the time it was made, never its findings
+   * with something left: drug, concentration, volume, the maker's device key and its name, the time it was made, never its findings
    * (the learner plan's D7 keeps those to the instructor and the maker).
    */
   private labels(): PumpLabels {
@@ -1160,7 +1161,8 @@ export class HostSession {
         const k = h.prep.container;
         if (h.leftMl <= 1e-9 || !(k === 'syringe-pp' || k === 'bag-pvc' || k === 'bag-polyolefin')) continue;
         const a = h.prep.actives;
-        labels.push({ device: h.by, id: h.id, container: k, drugId: a[0]?.drugId ?? '', actives: a.map((x) => ({ drugId: x.drugId, amount: x.perMl, unit: x.unit, perMl: 1 })), volumeMl: h.leftMl, madeAt: h.t, readyAt: h.prep.ready.atS });
+        const name = this.o.deviceName?.(h.by) ?? null;
+        labels.push({ device: h.by, ...(name ? { name } : {}), id: h.id, container: k, drugId: a[0]?.drugId ?? '', actives: a.map((x) => ({ drugId: x.drugId, amount: x.perMl, unit: x.unit, perMl: 1 })), volumeMl: h.leftMl, madeAt: h.t, readyAt: h.prep.ready.atS });
       }
     }
     return { news: 'labels', labels };

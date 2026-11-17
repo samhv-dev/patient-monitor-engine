@@ -9,6 +9,7 @@
 // A relay of an older build sends no `devices`: the page then reads the room as before R7, from the hellos it heard
 // (Weak while a phone said hello in the last RESYNC_MS: joining or catching up) and the relay's count.
 import type { Instrument, RelayDevice, Role } from '@pme/controller';
+import { kindOf, type DeviceKind } from './device-names.ts';
 
 export type RoomLevel = 'stable' | 'weak' | 'down';
 export type RelayState = 'none' | 'open' | 'down';
@@ -28,6 +29,8 @@ export interface PeerSeen {
   role: 'viewer' | 'controller' | 'instructor'; // an instructor phone reads 'Instructor remote'; whether it is signed in is the P7 card's row and the relay's `granted`
   /** What its hello said it shows (R4; null: a window of an older build, a Remote). */
   show: Instrument | null;
+  /** The device key its hello said (a defibrillator window's), or absent. */
+  device?: string;
   firstAt: number;
   /** Wall ms of its last hello (or command). */
   lastAt: number;
@@ -37,13 +40,14 @@ export interface PeerSeen {
 export class PeerLog {
   private readonly peers = new Map<string, PeerSeen>();
 
-  heard(id: string, via: PeerSeen['via'], role: PeerSeen['role'] | null, now: number, show?: Instrument | null): void {
+  heard(id: string, via: PeerSeen['via'], role: PeerSeen['role'] | null, now: number, show?: Instrument | null, device?: string): void {
     const p = this.peers.get(id);
     if (p) {
       p.lastAt = now;
       if (role) p.role = role;
       if (show !== undefined) p.show = show;
-    } else this.peers.set(id, { id, via, role: role ?? 'viewer', show: show ?? null, firstAt: now, lastAt: now });
+      if (device) p.device = device;
+    } else this.peers.set(id, { id, via, role: role ?? 'viewer', show: show ?? null, ...(device ? { device } : {}), firstAt: now, lastAt: now });
   }
 
   /** The relay says `n` devices follow: a phone that left cannot be told from one that is quiet, so the least recently
@@ -134,7 +138,8 @@ export interface KnownDevice {
  * connected"). `devices` null (an older relay): the phones heard since this page opened, and the rest of the relay's
  * count as "before this page opened", as before R7. `ageMs`: how long ago the relay sent `devices`; "last heard" is the
  * device's last answer to a ping as of that frame, plus this (the relay reports at each heartbeat, before its ping, so
- * an answer is heard of one heartbeat later).
+ * an answer is heard of one heartbeat later). `label`: the name every page gives an acting device (device-names.ts); a
+ * learner remote, a pump tablet and a defibrillator window are named by it, any other device "Phone n" or "Window n".
  */
 /** R8d: whether a cockpit drives the patient now ('driving') or has handed it to the engine's ventilator; null: none heard. */
 export type CockpitState = 'driving' | 'handed over' | null;
@@ -144,13 +149,14 @@ export interface VentScreens {
   device: CockpitState;
 }
 
-export function deviceRows(o: { relay: RelayState; phones: number; peers: readonly PeerSeen[]; now: number; devices: readonly RelayDevice[] | null; known?: Readonly<Record<string, KnownDevice>>; ageMs?: number; vent?: VentScreens }): DeviceRow[] {
+export function deviceRows(o: { relay: RelayState; phones: number; peers: readonly PeerSeen[]; now: number; devices: readonly RelayDevice[] | null; known?: Readonly<Record<string, KnownDevice>>; ageMs?: number; vent?: VentScreens; label?: (key: string, kind: DeviceKind) => string }): DeviceRow[] {
   const known = o.known ?? {};
   const base = { id: null, device: null, show: null, named: false } as const;
   const rows: DeviceRow[] = [{ ...base, level: 'stable', name: 'This window', where: '', showing: 'Instructor pages and the monitor', state: '—', ping: '—', heard: 'now' }];
   let w = 1;
+  const named = (key: string | null | undefined, kind: DeviceKind | null): string | null => (key && kind && o.label ? o.label(key, kind) : null);
   for (const x of o.peers.filter((p) => p.via === 'local'))
-    rows.push({ ...base, id: x.id, show: x.show, level: 'stable', name: `Window ${++w}`, where: 'this computer', showing: showingOf(x.role, x.show), state: 'connected', ping: 'this computer', heard: ago(o.now - x.lastAt) });
+    rows.push({ ...base, id: x.id, show: x.show, level: 'stable', name: named(x.device, x.show === 'defib' ? 'defib' : null) ?? `Window ${++w}`, where: 'this computer', showing: showingOf(x.role, x.show), state: 'connected', ping: 'this computer', heard: ago(o.now - x.lastAt) });
   // R8d: the ventilator's window on this computer (BroadcastChannel: no hello, the desk knows it), once it has been heard
   if (o.vent?.window) rows.push({ ...base, level: 'stable', name: 'Ventilator window', where: 'this computer', showing: 'Ventilator', state: o.vent.window, ping: 'this computer', heard: '—' });
   let p = 0;
@@ -163,7 +169,7 @@ export function deviceRows(o: { relay: RelayState; phones: number; peers: readon
       const lvl = deviceLevel(d);
       // R8d: a granted ventilator says whether it drives the patient or has handed it over
       const state = d.role === 'ventilator' && d.granted && o.vent?.device ? o.vent.device : d.role === 'instructor' || d.role === 'ventilator' || d.role === 'learner' || d.role === 'pump' ? (d.granted ? 'granted' : 'signing in') : missed(d) ? 'missed a heartbeat' : lvl === 'weak' ? 'slow' : 'connected';
-      rows.push({ level: lvl, id: d.id, device: d.device, show: d.role === 'viewer' ? d.show : null, name: phone(d.device), named: !!d.device, where: '', showing: showingOf(d.role, d.role === 'viewer' ? d.show : null), state, ping: d.rttMs === null ? '—' : `${d.rttMs} ms`, heard: ago(d.sinceMs + (o.ageMs ?? 0)) });
+      rows.push({ level: lvl, id: d.id, device: d.device, show: d.role === 'viewer' ? d.show : null, name: named(d.device, kindOf(d.role)) ?? phone(d.device), named: !!d.device, where: '', showing: showingOf(d.role, d.role === 'viewer' ? d.show : null), state, ping: d.rttMs === null ? '—' : `${d.rttMs} ms`, heard: ago(d.sinceMs + (o.ageMs ?? 0)) });
     }
     for (const [key, k] of Object.entries(known)) {
       if (here.has(key)) continue;

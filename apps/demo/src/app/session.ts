@@ -18,6 +18,7 @@ import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
 import { RunRecord } from './record.ts';
+import type { DeviceKind } from './device-names.ts';
 import { readLayout } from './room-layout.ts';
 import { store } from './store.ts';
 import { hostLang } from './i18n/lang.ts';
@@ -88,9 +89,13 @@ export class AppSession {
     this.notGivenFns.add(fn);
     return () => void this.notGivenFns.delete(fn);
   }
-  /** The name Room setup gave a device key (R7's remembered layout), or null: the record's and the Log's (brief 164). */
+  /** The name Room setup gave a device key (R7's remembered layout), or null. */
   deviceName(key: string): string | null {
     return readLayout(store)[key]?.name ?? null;
+  }
+  /** The name a person reads for a device (device-names.ts): every page of this host names a device by it. */
+  deviceLabel(key: string, kind: DeviceKind): string {
+    return this.record.label(key, kind);
   }
   /** The panel's end of the in-process hub (the panel taps it for raw events: alarmStatus, deviceStatus). */
   readonly panelTransport: ManagedTransport;
@@ -290,7 +295,7 @@ export class AppSession {
         this.record.notGiven(n);
         for (const fn of [...this.notGivenFns]) fn(n);
       },
-      deviceName: (key) => readLayout(store)[key]?.name ?? null, // L9: the instructor's card names the remote as Room setup did
+      deviceName: (key) => this.deviceLabel(key, 'learner'), // the instructor's card and the pump's bag list name the remote
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
       // R8c: the granted remote cockpit's link messages and its grant, for the Ventilator desk (views/vent.ts)
@@ -320,6 +325,7 @@ export class AppSession {
           if (f.relay !== 'peers') return;
           this.followers = f.peers;
           this.devices = f.devices ?? null;
+          if (f.devices) this.record.heard(f.devices);
           for (const fn of this.followerFns) fn(f.peers, this.devices);
         },
       });

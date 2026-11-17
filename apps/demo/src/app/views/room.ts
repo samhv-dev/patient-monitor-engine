@@ -20,6 +20,7 @@ import { isTyping } from '@pme/controller';
 import { newSessionCode, PUMP_KINDS, PUMP_LIMITS, type ManagedTransport, type PumpKind, type RelayDevice, type WireMessage } from '@pme/controller';
 import { hashOf, qrTarget, relayInfo, ventWindowUrl, type RelayInfo } from '../classroom.ts';
 import { qrSvg } from '../qr.ts';
+import type { DeviceKind } from '../device-names.ts';
 import { keepRoomCode } from '../room-code.ts';
 import { forgetRoom, lastTime, noteDevices, readLayout, readWindows, rename, windowsOf, writeLayout, writeWindows, type Windows } from '../room-layout.ts';
 import { deviceRows, HEARTBEAT_MS, PeerLog, roomStatus, WEAK_PING_MS, type DeviceRow, type PeerSeen, type RelayState, type RoomLevel, type VentScreens } from '../room-status.ts';
@@ -49,6 +50,8 @@ export interface RoomDeps {
   onFollowers(fn: (n: number, devices: RelayDevice[] | null) => void): () => void;
   /** The relay's device table now (R2), or null (an older relay, none yet). */
   devices?: () => RelayDevice[] | null;
+  /** The name every page gives an acting device (AppSession.deviceLabel); absent: the table's own "Phone n". */
+  label?: (key: string, kind: DeviceKind) => string;
   /** The address of a second-screen learner monitor that follows this session (`#/monitor`; the patient monitor's is its `#/monitor/wide`). */
   learnerUrl: string;
   now?: () => number;
@@ -181,7 +184,7 @@ export function roomView(d: RoomDeps): RoomView {
     // (learner-action-remote.md L3) is in the relay's table too; its own row label is L6's
     if (m.kind === 'hello' && m.role === 'defib') {
       if (via !== 'local') return;
-      log.heard(m.from, via, 'viewer', now(), 'defib');
+      log.heard(m.from, via, 'viewer', now(), 'defib', m.device);
     } else if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator' && m.role !== 'defib' && m.role !== 'learner' && m.role !== 'pump') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
     else if (m.kind === 'command') log.heard(m.from, via, 'controller', now());
     else return;
@@ -418,7 +421,7 @@ export function roomView(d: RoomDeps): RoomView {
     status.dataset.level = s.level;
     setText(sTitle, s.title);
     setText(sSub, s.sub);
-    const rs = deviceRows({ relay, phones: d.followers(), peers, now: t, devices, known: layout, ageMs: t - tableAt, ...(d.vent ? { vent: d.vent() } : {}) });
+    const rs = deviceRows({ relay, phones: d.followers(), peers, now: t, devices, known: layout, ageMs: t - tableAt, ...(d.vent ? { vent: d.vent() } : {}), ...(d.label ? { label: d.label } : {}) });
     // a name being typed is not redrawn under the instructor's fingers
     if (!(document.activeElement instanceof HTMLInputElement && rows.contains(document.activeElement))) rows.replaceChildren(...rs.map(row));
     drawCards(rs);

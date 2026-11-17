@@ -12,6 +12,7 @@ import { grade, ruleWords, type Administration, type Anchor, type Grade, type Gr
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
+import { DEVICE_WORDS, keptLabel, type DeviceKind } from './device-names.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf, unitText } from './glossary.ts';
 import { FINDING_WORDS, NO_STATEMENT, sourcesText, sourceText } from './prep-words.ts';
 import { LAB_KEYS, LABS, PRESSURES, TREND, TREND_KEYS, type LabKey, type PressureKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
@@ -38,35 +39,39 @@ export const mmss = (t: number): string => `${String(Math.floor(t / 60)).padStar
 /** Who set a rate a learner's infusion change replaced, when it was not a learner remote (record.ts `Row.replaced.by`). */
 const REPLACED_WHO: Readonly<Record<string, string>> = { laptop: "the instructor's", phone: "the instructor's", card: "the card's" };
 /** The learner remotes' device keys in the order the run first names them (a give's, then the remote whose rate it
- *  replaced), then `more` (L13: the devices that staged a preparation): "Learner remote n" is the n-th. */
-export function remoteKeys(rows: readonly Row[], more: readonly string[] = []): string[] {
+ *  replaced), then `more` (L13: the devices that staged a preparation). */
+function remoteKeys(rows: readonly Row[], more: readonly string[] = []): string[] {
   const ks = rows.filter((x) => x.kind === 'learner' && x.remote).flatMap((x) => [x.by ?? '', ...(x.replaced && !(x.replaced.by in REPLACED_WHO) ? [x.replaced.by] : [])]);
   return [...new Set([...ks, ...more])];
 }
-/** A learner remote by its device key: "Learner remote (bed 2)" by the name Room setup keeps for it now (`names`, the
- *  session's one name source), else the name a row kept, else "Learner remote n" (`keys`, remoteKeys). */
-export function remoteWho(by: string, keys: readonly string[], names: (key: string) => string | null, kept?: string): string {
-  const name = names(by) ?? kept ?? null;
-  return name ? `Learner remote (${name})` : `Learner remote ${keys.indexOf(by) + 1}`;
+/** A kind's device keys in the order the run's rows first name them (a record that kept no numbers). */
+function keysOf(rows: readonly Row[], kind: DeviceKind, more: readonly string[]): string[] {
+  if (kind === 'learner') return remoteKeys(rows, more);
+  return [...new Set(rows.filter((x) => (kind === 'pump' ? x.kind === 'pump' : x.kind === 'learner' && !x.remote) && x.by !== undefined).map((x) => x.by ?? ''))];
 }
 /**
- * The who line of a learner defibrillator press (Room plan R5d): "Shock 200 J at 04:12, by Defibrillator (bed 2)". The
- * device's name is the one Room setup keeps for its key now (R7's remembered layout, `names`), else the one the row kept
- * when it pressed, else "Defibrillator window n": the n-th device key to press in this run. A learner remote's give
- * (L4) reads "…, by Learner remote (bed 2)"; its infusion change (L13, LQ4) also says whose rate it replaced:
- * "…, replacing the instructor's 4 mL/h" (the laptop or the instructor's phone), "the card's", or another remote's.
+ * A device of the run by its key, as every page names it (device-names.ts): the name Room setup keeps for it now
+ * (`names`, the session's), else the name a row kept when it acted (`kept`), else the record's number for it
+ * ("Learner remote 2"). A record made before it kept numbers numbers them in the order its rows first name them
+ * (`more`: further keys after those).
  */
-export function learnerWho(rows: readonly Row[], r: Row, names: (key: string) => string | null): string {
-  if (r.remote) {
-    const keys = remoteKeys(rows);
-    const rep = r.replaced;
-    const whose = rep ? (REPLACED_WHO[rep.by] ?? `${remoteWho(rep.by, keys, names)}'s`) : null;
-    return `${r.text} at ${mmss(r.t)}, by ${remoteWho(r.by ?? '', keys, names, r.name)}${rep ? `, replacing ${whose} ${+rep.rate.toPrecision(3)} ${rep.rateUnit}` : ''}`;
-  }
-  const name = (r.by !== undefined ? names(r.by) : null) ?? r.name ?? null;
-  const keys = [...new Set(rows.filter((x) => x.kind === 'learner' && !x.remote).map((x) => x.by ?? ''))];
-  const who = name ? `Defibrillator (${name})` : `Defibrillator window ${keys.indexOf(r.by ?? '') + 1}`;
-  return `${r.text} at ${mmss(r.t)}, by ${who}`;
+export function deviceWho(d: Pick<RunData, 'rows' | 'devices'>, kind: DeviceKind, by: string, names: (key: string) => string | null, kept?: string, more: readonly string[] = []): string {
+  return names(by) ?? kept ?? keptLabel(d.devices, kind, by) ?? `${DEVICE_WORDS[kind]} ${keysOf(d.rows, kind, more).indexOf(by) + 1}`;
+}
+/**
+ * The who line of a learner's press: "Shock 200 J at 04:12, by Defibrillator window 1", "Propofol 200 mg IV at 05:10,
+ * by bed 2". An infusion change (L13, LQ4) also says whose rate it replaced when another device had set it: "…,
+ * replacing the instructor's rate" (the laptop or the instructor's phone), "the card's" or another remote's. A record
+ * whose text says a change as a start ('rateChange' not kept) gives the replaced rate here: "…, replacing the
+ * instructor's 4 mL/h".
+ */
+export function learnerWho(d: Pick<RunData, 'rows' | 'devices' | 'keeps'>, r: Row, names: (key: string) => string | null): string {
+  if (!r.remote) return `${r.text} at ${mmss(r.t)}, by ${deviceWho(d, 'defib', r.by ?? '', names, r.name)}`;
+  const rep = r.replaced;
+  const said = d.keeps?.includes('rateChange') ?? false;
+  const whose = rep ? (REPLACED_WHO[rep.by] ?? `${deviceWho(d, 'learner', rep.by, names)}'s`) : null;
+  const tail = !rep || (said && rep.by === r.by) ? '' : `, replacing ${whose} ${said ? 'rate' : `${+rep.rate.toPrecision(3)} ${rep.rateUnit}`}`;
+  return `${r.text} at ${mmss(r.t)}, by ${deviceWho(d, 'learner', r.by ?? '', names, r.name)}${tail}`;
 }
 /** A span: "40 s", "2 min 05 s". Rounded to whole seconds before the split, so 119.7 s is "2 min 00 s", never "1 min 60 s" (FX-13). */
 export const span = (s: number): string => {
@@ -497,7 +502,7 @@ export function preparationsOf(d: RunData, names: (key: string) => string | null
   }
   if (!staged.size) return d.rows.some((r) => r.kind === 'learner' && r.remote && r.prepId) ? { rows: [], unrecorded: true } : null;
   const list = [...staged.values()].sort((x, y) => x.t - y.t);
-  const keys = remoteKeys(d.rows, list.map((p) => p.by));
+  const more = list.map((p) => p.by);
   const grades = new Map((gradesOf(d)?.preparations ?? []).map((g) => [key(g.by, g.prepId), g.grade]));
   const rows = list.map((p): PrepRow => {
     const k = key(p.by, p.id);
@@ -523,7 +528,7 @@ export function preparationsOf(d: RunData, names: (key: string) => string | null
     });
     return {
       id: p.id, by: p.by, t: p.t,
-      head: PREP_WORDS.staged(p.t, remoteWho(p.by, keys, names, kept), prepWhat(p, f)),
+      head: PREP_WORDS.staged(p.t, deviceWho(d, 'learner', p.by, names, kept, more), prepWhat(p, f)),
       ready: !p.ready ? null : p.ready.gap ? PREP_WORDS.readyGap(GAP_WORDS[p.ready.gap]) : PREP_WORDS.readyAt(p.ready.atS, p.ready.src.map((s) => sourceText(f?.sources[s], s)).join('; ')),
       findings: p.findings.map((x) => ({ kind: x.kind, text: `${FINDING_WORDS[x.kind]}: ${x.statement ?? NO_STATEMENT} ${sourcesText(x, f)}` })),
       notice: notice ? PREP_WORDS.noticeShown(notice.shownAt) : n ? PREP_WORDS.noticeNot : null,

@@ -1,6 +1,6 @@
 // Plan learner-action-remote.md L15 (§4 D6; LQ13 ruled B, 9 November: a remote sees its own samples, the laptop sees every
 // result): the laptop's Labs sheet in Instructor v2. It lists every sample the host's engine took, by draw time (the latest
-// first, as the phone lists its own), with who drew it: the learner remote by the name Room setup gave it, the instructor,
+// first, as the phone lists its own), with who drew it: the learner remote by its name (device-names.ts), the instructor,
 // the instructor's phone or the scenario card. A sample still in the analyser is pending with its expected time, in the
 // phone's own words (remote/labs.ts LABS_WORDS; the time from the engine's rows, analysers.ts `turnaroundFor`, or the
 // turnaround the host wrote on the event); a returned one is the host engine's `labResult`, shown by the renderer's
@@ -24,24 +24,24 @@ export const LAB_SHEET_WORDS = {
   instructor: 'Instructor',
   phone: 'Instructor’s phone',
   card: 'Scenario card',
-  unnamed: 'a learner remote (no name in Room setup)',
+  unnamed: 'a learner remote',
   unknown: 'no one named (the draw is not in this page’s record)',
   primary: 'Results as the analyser returns them; nothing is drawn from this sheet',
 } as const;
 
-/** What the book reads of the host: its panel transport's wire events, its engine's events, Room setup's names. */
+/** What the book reads of the host: its panel transport's wire events, its engine's events, a learner remote's name. */
 export interface LabsSource {
   onWire(fn: (e: WireEvent) => void): () => void;
   onEngine(fn: (e: EngineEvent) => void): () => void;
-  deviceName(key: string): string | null;
+  remoteName(key: string): string;
 }
 
 /** The host's source (the laptop's AppSession): every source's commands, in order, as the record reads them. */
-export function hostLabsSource(host: Pick<AppSession, 'panelTransport' | 'onEvent' | 'deviceName'>): LabsSource {
+export function hostLabsSource(host: Pick<AppSession, 'panelTransport' | 'onEvent' | 'deviceLabel'>): LabsSource {
   return {
     onWire: (fn) => host.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach(fn))),
     onEngine: (fn) => host.onEvent(fn),
-    deviceName: (key) => host.deviceName(key),
+    remoteName: (key) => host.deviceLabel(key, 'learner'),
   };
 }
 
@@ -88,7 +88,7 @@ export class LabBook {
   }
 
   private who(c: Record<string, unknown>): string {
-    if (c.issuedBy === LEARNER_ISSUED_BY) return (typeof c.by === 'string' ? this.src.deviceName(c.by) : null) ?? LAB_SHEET_WORDS.unnamed;
+    if (c.issuedBy === LEARNER_ISSUED_BY) return typeof c.by === 'string' ? this.src.remoteName(c.by) : LAB_SHEET_WORDS.unnamed;
     if (c.issuedBy === 'scenario') return LAB_SHEET_WORDS.card;
     if (c.issuedBy === 'remote') return LAB_SHEET_WORDS.phone;
     return LAB_SHEET_WORDS.instructor;

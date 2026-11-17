@@ -5,6 +5,7 @@
 import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
 import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, PUMP_ISSUED_BY, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type NotGiven, type PumpMismatchNews, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
+import { DEVICE_WORDS, type DeviceKind } from './device-names.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
 import { PrepBoard } from './teach2/prep-board.ts';
@@ -199,8 +200,8 @@ export class Link {
 
   /**
    * Brief 164: on the host, a command the host applied for ANOTHER device — a learner remote's give, the defibrillator
-   * window's press, a pump tablet's press (C2), the instructor phone's command — is a Log line at the tick it was applied, naming the device (the name
-   * Room setup gave it). This link's own commands are logged with their ack (`send`); a replay, a cockpit frame, the card's
+   * window's press, a pump tablet's press (C2), the instructor phone's command — is a Log line at the tick it was applied, naming the device as
+   * every page names it (device-names.ts). This link's own commands are logged with their ack (`send`); a replay, a cockpit frame, the card's
    * own commands (its state lines say them) and the ventilator's hand-over are not presses.
    */
   private applied(e: Extract<WireEvent, { type: 'commandApplied' }>): void {
@@ -210,10 +211,9 @@ export class Link {
     const text = describeCommand(c);
     if (c.issuedBy === 'remote') return this.add({ simT: e.tick * TICK_S, kind: 'instructor', text: `${text} (instructor's phone)` });
     if (c.issuedBy !== LEARNER_ISSUED_BY && c.issuedBy !== PUMP_ISSUED_BY) return;
-    const name = typeof c.by === 'string' ? this.host.deviceName(c.by) : null;
     // pump-rack-tci.md C2: a pump tablet's press, filed `issuedBy: 'pump'` (its line names the channel: describe.ts)
-    const device = c.issuedBy === PUMP_ISSUED_BY ? 'pump tablet' : c.event?.kind === 'defib' ? 'defibrillator window' : 'learner remote';
-    this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${device}${name ? `: ${name}` : ''})` });
+    const kind: DeviceKind = c.issuedBy === PUMP_ISSUED_BY ? 'pump' : c.event?.kind === 'defib' ? 'defib' : 'learner';
+    this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${this.deviceOf(c.by, kind)})` });
   }
 
   /** L14: on the host, a learner remote's give the host refused because the case was paused (AppSession.onNotGiven):
@@ -221,8 +221,12 @@ export class Link {
    *  `refused`, which the Log sheet prints as "the reason is in the exported log": here it is on screen). */
   notGiven(n: NotGiven): void {
     const c = n.command as unknown as Record<string, unknown>;
-    const name = typeof c.by === 'string' ? this.host?.deviceName(c.by) : null;
-    this.add({ simT: n.t, kind: 'learner', text: `${describeCommand(c)} (learner remote${name ? `: ${name}` : ''}) not given: ${n.reason}` });
+    this.add({ simT: n.t, kind: 'learner', text: `${describeCommand(c)} (${this.deviceOf(c.by, 'learner')}) not given: ${n.reason}` });
+  }
+
+  /** The device `by` as every page names it, or its role's word alone for a command that names no device. */
+  private deviceOf(by: unknown, kind: DeviceKind): string {
+    return typeof by === 'string' && this.host ? this.host.deviceLabel(by, kind) : DEVICE_WORDS[kind].toLowerCase();
   }
 
   private add(x: ClinicalLogEntry): void {

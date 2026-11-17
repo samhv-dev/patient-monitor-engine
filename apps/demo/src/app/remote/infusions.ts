@@ -47,7 +47,7 @@ export const INFUSION_WORDS = {
   thisPhone: 'this phone',
   instructor: 'the instructor',
   card: 'the case card',
-  otherRemote: (key: string) => `another learner remote (${key.slice(0, 4)})`,
+  otherRemote: 'another learner remote',
   sending: 'Sent to the instructor’s computer…',
   started: (ml: number) => `Started at ${fmt(ml)} mL/h`,
   changed: (drug: string, ml: number) => `${drug}: changed to ${fmt(ml)} mL/h`,
@@ -336,7 +336,7 @@ export function infusionsView(o: { now(): number | null }): Infusions {
     const issuedBy = String(c.issuedBy ?? '');
     const by = typeof c.by === 'string' ? c.by : null;
     const who = issuedBy === LEARNER_ISSUED_BY
-      ? by === link?.device ? INFUSION_WORDS.thisPhone : INFUSION_WORDS.otherRemote(by ?? '')
+      ? by === link?.device ? INFUSION_WORDS.thisPhone : INFUSION_WORDS.otherRemote
       : givenByOf(issuedBy) === 'card' ? INFUSION_WORDS.card : INFUSION_WORDS.instructor;
     const k = e.concentration;
     const syringe = k && typeof k.amount === 'number' && typeof k.unit === 'string' && typeof k.perMl === 'number' && k.perMl > 0 ? { perMl: k.amount / k.perMl, unit: k.unit } : null;

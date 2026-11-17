@@ -44,20 +44,26 @@ const conc = (c: unknown): string => {
   const k = (c ?? {}) as Any;
   return `${+(num(k.amount) / num(k.perMl)).toFixed(3)} ${unitText(String(k.unit))}/mL`;
 };
+/** "from 10 to 20 mL/h": a rate change, the unit said once when both rates have it. */
+const fromTo = (was: number, wasUnit: string, rate: unknown, unit: string): string =>
+  wasUnit === unit ? `from ${was} to ${rate} ${unitText(unit)}` : `from ${was} ${unitText(wasUnit)} to ${rate} ${unitText(unit)}`;
 /**
- * A pump channel's act (plan pump-rack-tci.md C2): the engine's `pump` event as the host applied it. The line names the
- * channel and what the event says; who pressed it is the record row's (`kind`, `by`).
+ * A pump channel's act (plan pump-rack-tci.md C2): the engine's `pump` event as the host applied it, with what the host
+ * wrote beside it (`meta`: the channel's true drug, the values the act replaced). The line names the channel, its drug
+ * where it has one, and what the event says; who pressed it is the record row's (`kind`, `by`).
  */
-function pumpLine(e: Any): string {
-  const ch = `Channel ${e.ch}`;
+function pumpLine(e: Any, meta: Any): string {
+  const has = (meta.contents as Any | undefined)?.drugId;
+  const ch = `Channel ${e.ch}${has && (e.action === 'rate' || e.action === 'start' || e.action === 'stop') ? ` (${drug(has)})` : ''}`;
   const k = (e.contents ?? {}) as Any;
+  const was = ((meta.replaced ?? []) as Any[]).find((r) => r.what === 'rate');
   switch (e.action) {
     case 'load':
       return `${ch}: ${e.channel === 'drip' ? 'bag' : `${e.syringeMl} mL syringe`} of ${drug(k.drugId)} ${conc(k.concentration)} loaded (${+num(k.volumeMl).toFixed(2)} mL)`;
     case 'program':
       return `${ch} programmed: ${drug(e.drugId)} ${conc(e.concentration)}${e.set !== undefined ? `, ${e.set} drops/mL set` : ''}`;
     case 'rate':
-      return `${ch}: rate ${e.rate} ${unitText(String(e.unit))}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
+      return `${ch}: rate ${was ? `changed ${fromTo(num(was.rate), String(was.unit), e.rate, String(e.unit))}` : `${e.rate} ${unitText(String(e.unit))}`}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
     case 'tci':
       return num(e.target) > 0 ? `${ch}: TCI ${e.setId}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${e.target}` : `${ch}: TCI stopped`;
     case 'bolus':
@@ -75,12 +81,16 @@ function pumpLine(e: Any): string {
   }
 }
 
-function event(e: Any): string {
+/** `c`: the command the event rode on (a rate change's `replaced`, a pump act's `pump`, as the host wrote them). */
+function event(e: Any, c: Any = {}): string {
   switch (e.kind) {
     case 'drug':
       return `${drug(e.drugId)} ${e.dose} ${unitText(String(e.unit))} ${e.route === 'iv' || e.route === undefined ? 'IV' : String(e.route).toUpperCase()}`;
-    case 'infusion':
-      return num(e.rate) > 0 ? `${drug(e.drugId)} ${e.rate} ${unitText(String(e.unit))} infusion started` : `${drug(e.drugId)} infusion stopped`;
+    case 'infusion': {
+      const was = c.replaced as Any | undefined;
+      if (!(num(e.rate) > 0)) return `${drug(e.drugId)} infusion stopped`;
+      return was ? `${drug(e.drugId)} infusion rate changed ${fromTo(num(was.rate), String(was.rateUnit), e.rate, String(e.unit))}` : `${drug(e.drugId)} ${e.rate} ${unitText(String(e.unit))} infusion started`;
+    }
     case 'tci':
       return num(e.target) > 0 ? `${drug(e.drugId)} target-controlled infusion, ${e.mode === 'effect' ? 'effect-site' : 'plasma'} target ${e.target}` : `${drug(e.drugId)} target-controlled infusion stopped`;
     case 'vaporiser':
@@ -126,7 +136,7 @@ function event(e: Any): string {
       // the panel that was sent (L10a: the gas panels on the room's analyser, chemistry and coagulation to the laboratory)
       return LAB_SENT[String(e.panel)] ?? 'Clinical event';
     case 'pump':
-      return pumpLine(e);
+      return pumpLine(e, (c.pump ?? {}) as Any);
     case 'mainstem':
       return e.ventilated === 'both' ? 'Both lungs ventilated' : `Only the ${e.ventilated} lung ventilated`;
     default:
@@ -179,7 +189,7 @@ export function describeCommand(c: Any, step?: string): string {
       return a === 'pause' ? 'Scenario timer held' : a === 'resume' ? 'Scenario timer running' : 'Scenario event';
     }
     case 'applyEvent':
-      return event((c.event ?? {}) as Any);
+      return event((c.event ?? {}) as Any, c);
     case 'attachSensor':
       return `${SENSORS[String(c.sensor)] ?? 'Sensor'} ${c.state === 'off' || c.state === 'none' ? 'removed' : 'attached'}`;
     case 'device': {

@@ -36,10 +36,11 @@ describe('L14: a learner give refused while paused, on the host', () => {
   it("the host's Log has the line, with the phone's Room-setup name and the reason", () => {
     const hub = createInProcessHub();
     const t: ManagedTransport = hub.connect();
-    const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
+    const record = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names);
+    const host = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner') => record.label(k, kind), record: { note: () => undefined } } as unknown as AppSession;
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(fentanyl);
-    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (learner remote: bed 2 remote) not given: the case was paused' }]);
+    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (bed 2 remote) not given: the case was paused' }]);
     link.close();
   });
 });
