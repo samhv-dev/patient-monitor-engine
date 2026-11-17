@@ -2,7 +2,8 @@
 // opens `?join=CODE#/pump`. As the learner remote (views/learner-remote.ts, L6), whose pattern this is, it asks first for
 // the LEARNER PIN in P7's form; the PIN is held in this page's memory only (never in the address, the history or the
 // tablet's store). At sign-in it mounts the follower, whose every hello says `{role: 'pump', show: 'pump', device, pin}`;
-// the rack shows once the host grants it. The page shows no monitor (a tower's pumps have none: the stage stays hidden)
+// the rack shows once the host grants it, and later hellos prove the host's ticket instead of the PIN: when the
+// instructor's computer reconnects the rack stays, the tablet says it is signing in again, and it signs in by itself. The page shows no monitor (a tower's pumps have none: the stage stays hidden)
 // and carries none of the monitor's sound.
 // What this page owns, and reads from the follower:
 //   - the room's rack setting: the host's `style` event names each channel's kind (`pumps`, Room setup's setting; 1–8
@@ -11,7 +12,7 @@
 //     the programme only. This is the one place the page touches an engine row; the rack and its faces see FaceRows.
 // The host does not yet grant a pump hello (that is C2): until it does, the tablet says after 10 s that the instructor's
 // computer did not sign it in.
-import { INSTRUCTOR_REASONS, LEARNER_REASONS, type RelayFrame, type WireMessage } from '@pme/controller';
+import { INSTRUCTOR_REASONS, isRejoined, LEARNER_REASONS, SignInCredential, TICKET_REASONS, type RelayFrame, type WireMessage } from '@pme/controller';
 import type { EngineEvent } from '@pme/engine-core';
 import type { View } from '../shell.ts';
 import { pumpRackOf } from '../site.ts';
@@ -33,9 +34,13 @@ export const PUMP_WORDS = {
   badPin: 'The learner PIN has 4 to 8 digits.',
   signingIn: "Signing in: waiting for the instructor's computer…",
   signedIn: (code: string) => `Signed in as the room's infusion pumps · ${code}`,
+  signingInAgain: PHONE_WORDS.signingInAgain,
   wrongPin: 'Wrong learner PIN. Enter the learner PIN the instructor reads out.',
   tooManyTries: 'Too many wrong learner PINs from this tablet. Wait a minute, then enter the learner PIN again.',
   pinChanged: "The learner PIN was changed on the instructor's computer. Enter the new learner PIN.",
+  takenOver: 'This sign-in was taken by another device. Enter the learner PIN to sign in again.',
+  newSession: "The instructor's computer started a new session. Enter the learner PIN to sign in again.",
+  notRenewed: "This tablet's sign-in could not be renewed. Enter the learner PIN to sign in again.",
   noRemote: "The instructor's computer does not take a learner PIN yet: it has none set on Room setup.",
   samePins: "The instructor's computer cannot take a pump tablet until it draws a new learner PIN. Ask the instructor.",
   full: 'This room is full: no more devices can join it.',
@@ -56,13 +61,16 @@ export function pumpRefusalWords(a: { reason?: string; code?: string }): string 
   if (a.reason === LEARNER_REASONS.pinChanged) return PUMP_WORDS.pinChanged;
   if (a.reason === LEARNER_REASONS.noRemote) return PUMP_WORDS.noRemote;
   if (a.reason === LEARNER_REASONS.samePins) return PUMP_WORDS.samePins;
+  if (a.reason === INSTRUCTOR_REASONS.takenOver) return PUMP_WORDS.takenOver;
+  if (a.reason === TICKET_REASONS.newSession) return PUMP_WORDS.newSession;
+  if (a.reason === TICKET_REASONS.used) return PUMP_WORDS.notRenewed;
   return `Not signed in: ${a.reason ?? "the instructor's computer refused the tablet"}.`;
 }
 
 export interface PumpPageOptions {
   code: string;
-  /** Mount the follower for `code`, its connection line in `bar`, saying `{role: 'pump', show: 'pump', device, pin: pin()}`. */
-  follow(code: string, bar: HTMLElement, pin: () => string): Follower;
+  /** Mount the follower for `code`, its connection line in `bar`, saying `{role: 'pump', show: 'pump', device}` and the credential's proof. */
+  follow(code: string, bar: HTMLElement, credential: SignInCredential): Follower;
   /** The monitor's region (the shell's stage): hidden on this page. */
   stage?: HTMLElement;
   /** The device profiles (D12, S1); null until S1 has merged: the faces say the profile is not loaded. */
@@ -112,7 +120,7 @@ export function pumpPageView(o: PumpPageOptions): PumpPage {
   function signIn(code: string, pin: string): void {
     live?.stop();
     bar.replaceChildren();
-    const f = o.follow(code, bar, () => pin); // the PIN lives in this closure, and nowhere else
+    const f = o.follow(code, bar, new SignInCredential(pin)); // the PIN lives in the credential until the first ticket, and nowhere else
     let opened = false;
     let hostSeen = false;
     let granted = false;
@@ -137,11 +145,13 @@ export function pumpPageView(o: PumpPageOptions): PumpPage {
         }
         if (m.kind !== 'grant') return;
         if (m.granted) return void ((granted = true), draw());
+        if (isRejoined(m)) return void (setText(status, PUMP_WORDS.signingInAgain), (status.dataset.state = 'pending'));
         refuse(pumpRefusalWords({ ...(m.reason !== undefined ? { reason: m.reason } : {}) }));
       }),
       f.transport.onRelayFrame?.((fr: RelayFrame) => {
         if (fr.relay !== 'error' || fr.code === 'denied') return;
-        if (fr.code === 'too-many-tries' || fr.code === 'full' || fr.code === 'forbidden') refuse(pumpRefusalWords({ code: fr.code, reason: fr.message }));
+        // a command refused while it signs in again after the computer reconnected is not an older kit
+        if (fr.code === 'too-many-tries' || fr.code === 'full' || (fr.code === 'forbidden' && !granted)) refuse(pumpRefusalWords({ code: fr.code, reason: fr.message }));
       }) ?? (() => undefined),
       // The follower engine's channels, the programme only from here on (face-row.ts)
       f.monitor.on((e: EngineEvent) => {

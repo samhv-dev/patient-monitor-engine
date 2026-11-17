@@ -3,13 +3,14 @@
 // a relay the window is a same-browser Remote: a `controller` over the BroadcastChannel, trusted as every window of the
 // laptop's browser is. With a relay (`?relay`, the Room page's instructor QR code) it is the instructor's PHONE (plan
 // instructor-peer-role.md P7): a PIN form with a numeric keypad, then the role `instructor`, which the laptop grants
-// when the PIN matches its own (the Room page shows it behind press-and-hold). The PIN is held in this page's memory
-// only (Q3): the form has no name for it and never submits, so it is never in the address or the history, and the
+// when the PIN matches its own (the Room page shows it behind press-and-hold), handing on a ticket that every later
+// hello proves instead (the instructor's computer reconnecting keeps the panel; it signs in again by itself). The PIN is
+// held in this page's memory until that first ticket only (Q3): the form has no name for it and never submits, so it is never in the address or the history, and the
 // field is cleared at sign-in and when the page is left. The page says each state in words: signing in, wrong PIN,
 // too many tries, taken over by another phone, the PIN changed, the instructor's computer restarted, and a kit that
 // does not answer an instructor after 10 s. Signed in, it mounts today's panel, the placeholder the phone layout
 // replaces. The Remote never runs an engine: it sends commands and reads state, as the controller's remote page does.
-import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, newPeerId, normalizeSessionCode, type Formulary, type ManagedTransport, type WireMessage } from '@pme/controller';
+import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, newPeerId, normalizeSessionCode, SignInCredential, type Formulary, type ManagedTransport, type WireMessage } from '@pme/controller';
 import { PHONE_WORDS, pinForm, refusalWords } from './pin-form.ts';
 import { relayOf } from '../classroom.ts';
 import { loadShippedFormulary } from '../formulary.ts';
@@ -129,7 +130,8 @@ function sameBrowserRemote(o: RemoteOptions): View {
 /**
  * The instructor's phone: the PIN form, then the role `instructor` over the relay. Every sign-in is a new link and a
  * new session (a refused socket is closed by the relay); every refusal tears them down and shows the form again with
- * the reason. The PIN goes from the field into the session's closure at sign-in and the field is emptied.
+ * the reason (the relay's notice that the computer reconnected is none). The PIN goes from the field into the session's
+ * credential at sign-in and the field is emptied.
  */
 function instructorPhone(o: RemoteOptions, relay: string): View {
   const connect = o.connect ?? ((url: string) => createWebSocketTransport({ url, livenessMs: INSTRUCTOR_LIVENESS_MS }));
@@ -164,7 +166,7 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
     setText(err, '');
     history.replaceState(null, '', `${location.pathname}${location.search}#/remote?code=${code}`); // the code only
     const transport = connect(relay);
-    const ctl = new ControllerSession({ session: code, transport, issuedBy: 'remote', role: 'instructor', pin: () => pin });
+    const ctl = new ControllerSession({ session: code, transport, issuedBy: 'remote', role: 'instructor', credential: new SignInCredential(pin) });
     const link = new Link(ctl, transport, null);
     const at = () => clock(link.simT);
     let opened = false;
@@ -179,7 +181,7 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
         if (m.kind !== 'hello' || m.role !== 'host') return;
         hostSeen = true;
         // A host hello from a NEW id is the laptop reloaded: the session has answered the pending presses itself
-        // (controller-session.ts HOST_RESTARTED_REASON, never given to the reloaded case) and signs in again with the PIN it holds
+        // (controller-session.ts HOST_RESTARTED_REASON, never given to the reloaded case) and signs in again with the ticket it holds
         if (hostId !== null && m.from !== hostId) {
           setText(notice, PHONE_WORDS.restarted(at()));
           notice.hidden = false;

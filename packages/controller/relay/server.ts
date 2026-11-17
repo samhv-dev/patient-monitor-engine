@@ -34,7 +34,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { storeRoutes } from './store.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
-import { SESSION_CODE_RE, VIEWER_EVENTS, defibShape, learnerDefibM2May, learnerDefibMay, learnerMay, pumpMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
+import { REJOINED, RELAY_PEER, SESSION_CODE_RE, VIEWER_EVENTS, defibShape, learnerDefibM2May, learnerDefibMay, learnerMay, pumpMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
 import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayDevice, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
@@ -198,9 +198,6 @@ const PIN_WINDOW_MS = 60_000;
  * the wrong-PIN limit and leaves a phone on bad Wi-Fi room for a reconnect every few seconds [ENG: network].
  */
 const HELLO_TRIES = 20;
-/** The `from` of the relay's own WireMessages (the grant false of a host readmit); its seq is the wall clock. */
-const RELAY_FROM = 'pme-relay';
-const REJOINED = "the instructor's computer reconnected; signing in again";
 /**
  * Instructor sockets a room takes besides its learners (plan §1, "one reserved place"): they never count against
  * maxPeersPerRoom, so a full room of learners never shuts the instructor out; two, so a phone taking over (§3, option B)
@@ -599,7 +596,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           if (!pinnedPeer(q) || !q.granted) continue;
           q.granted = false;
           relaySeq = Math.max(relaySeq + 1, Date.now()); // rises across a relay restart too (the phone's sequence filter)
-          raw(q.ws, JSON.stringify({ v: 1, session: r.code, from: RELAY_FROM, seq: relaySeq, sentAt: Date.now(), kind: 'grant', to: q.id, granted: false, reason: REJOINED } satisfies WireMessage));
+          raw(q.ws, JSON.stringify({ v: 1, session: r.code, from: RELAY_PEER, seq: relaySeq, sentAt: Date.now(), kind: 'grant', to: q.id, granted: false, reason: REJOINED } satisfies WireMessage));
           log(`room ${r.code}: ${q.role} ${q.id} signs in again (a new host socket)`);
         }
         for (const q of r.peers) frame(q.ws, peersFrame(r));

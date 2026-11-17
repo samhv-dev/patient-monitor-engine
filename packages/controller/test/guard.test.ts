@@ -221,6 +221,17 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     expect(parseWireMessage(hello('learner', { pin: '4729', device: 'K3X9' }))).toBeNull();
     expect(parseWireMessage(hello('learner', { pin: '4729', show: 'vent' }))).toBeNull();
   });
+  it('a sign-in ticket stands for the PIN on the four roles that sign in, never beside one, and rides a grant only when it grants', () => {
+    const T = `ABCDEFGH.${'a'.repeat(22)}`;
+    for (const role of ['learner', 'pump', 'instructor', 'ventilator']) expect(parseWireMessage(hello(role, { ticket: T })), role).toMatchObject({ role, ticket: T });
+    for (const role of ['viewer', 'controller', 'host', 'defib']) expect(parseWireMessage(hello(role, { ticket: T })), role).toBeNull();
+    expect(parseWireMessage(hello('learner', { ticket: T, pin: '4729' }))).toBeNull();
+    for (const ticket of ['ABCDEFGH', `ABCDEFG.${'a'.repeat(22)}`, `ABCDEFGH.${'a'.repeat(21)}`, `ABCDEFGH.${'a'.repeat(21)}+`, 42]) expect(parseWireMessage(hello('learner', { ticket })), String(ticket)).toBeNull();
+    const grant = (granted: boolean, ticket: unknown) => ({ ...stamp({ kind: 'grant', to: 'lr.1', granted }), ticket });
+    expect(parseWireMessage(grant(true, T))).toMatchObject({ kind: 'grant', granted: true, ticket: T });
+    expect(parseWireMessage(grant(false, T))).toBeNull();
+    expect(parseWireMessage(grant(true, 'not-a-ticket'))).toBeNull();
+  });
   it('a PIN is still refused on a viewer, a controller and a host (the defibrillator screen proves one since defib R1)', () => {
     for (const role of ['viewer', 'controller', 'host']) expect(parseWireMessage(hello(role, { pin: '4729' })), role).toBeNull();
   });

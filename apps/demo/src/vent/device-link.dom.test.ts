@@ -5,7 +5,7 @@
 // A refusal (wrong PIN, taken over, the PIN changed, too many tries) ends the link and says why. The network gone (the
 // browser's `offline`), it drops its socket, so the host hears the silence and hands over; back (`online`) it signs in
 // again with the PIN it holds. The relay is a fake link the test drives with the host's and the relay's frames.
-import { createStamper, INSTRUCTOR_REASONS, VENTILATOR_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
+import { createStamper, INSTRUCTOR_REASONS, REJOINED, RELAY_PEER, SignInCredential, VENTILATOR_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
 import { afterEach, describe, expect, it } from 'vitest';
 import { signInVentilator, type VentDevice } from './device-link.ts';
 
@@ -49,14 +49,20 @@ afterEach(() => {
 });
 
 const start = () => {
-  dev = signInVentilator({ code: CODE, relay: 'ws://relay.test/?e2e-remote', pin: PIN, connect: () => (links.push(fakeRelay()), links.at(-1) as unknown as ManagedTransport) });
+  dev = signInVentilator({ code: CODE, relay: 'ws://relay.test/?e2e-remote', credential: new SignInCredential(PIN), connect: () => (links.push(fakeRelay()), links.at(-1) as unknown as ManagedTransport) });
   return dev;
 };
 const host = (r: Relay) => {
   const stamp = createStamper(CODE, 'host-h1');
   const send = (b: WireBody) => r.deliver(stamp(b));
   const from = () => [...r.sent].reverse().find((m) => m.kind === 'hello')?.from as string;
-  return { from, grant: (granted: boolean, reason?: string) => send({ kind: 'grant', to: from(), granted, ...(reason ? { reason } : {}) }), vent: (to: string | undefined, body: unknown) => send({ kind: 'vent', ...(to ? { to } : {}), body } as never) };
+  return {
+    from,
+    hello: () => send({ kind: 'hello', role: 'host' }),
+    rejoined: () => r.deliver(createStamper(CODE, RELAY_PEER)({ kind: 'grant', to: from(), granted: false, reason: REJOINED })),
+    grant: (granted: boolean, reason?: string, ticket?: string) => send({ kind: 'grant', to: from(), granted, ...(reason ? { reason } : {}), ...(ticket ? { ticket } : {}) }),
+    vent: (to: string | undefined, body: unknown) => send({ kind: 'vent', ...(to ? { to } : {}), body } as never),
+  };
 };
 const hellos = (r: Relay) => r.sent.filter((m) => m.kind === 'hello');
 
@@ -153,6 +159,26 @@ describe("R8d: the ventilator device's sign-in over the relay", () => {
     host(r2).grant(true);
     expect(d.state).toBe('granted');
     expect(d.sender).not.toBe(was);
+  });
+
+  it("the instructor's computer reconnects: the link stays, and on the host's hello it proves the ticket on the same socket, never the PIN", () => {
+    const d = start();
+    const r = links[0] as Relay;
+    r.setStatus('open');
+    const ticket = `ABCDEFGH.${'c'.repeat(22)}`;
+    host(r).grant(true, undefined, ticket);
+    const was = d.sender;
+    host(r).rejoined();
+    expect(d.state).toBe('pending');
+    expect(r.status).toBe('open');
+    expect(hellos(r)).toHaveLength(1); // nothing before the new host's hello
+    host(r).hello();
+    expect(hellos(r).at(-1)).toMatchObject({ role: 'ventilator', ticket });
+    expect(hellos(r).at(-1)).not.toHaveProperty('pin');
+    host(r).grant(true, undefined, `ABCDEFGH.${'d'.repeat(22)}`);
+    expect(d.state).toBe('granted');
+    expect(d.sender).toBe(was);
+    expect(links).toHaveLength(1);
   });
 
   it('closed, it sends nothing more and does not come back online', () => {

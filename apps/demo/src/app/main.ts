@@ -100,7 +100,7 @@ if (follow && shows === 'pick') {
   document.title = 'Choose an instrument: patient monitor simulator';
 } else if (follow && shows === 'remote') {
   // L6 (plan learner-action-remote.md §4 D1): the learner action remote. Its learner-PIN form first; at sign-in the
-  // follower, whose every hello says `{role: 'learner', show: 'learner', device, pin}` (the PIN from the page's memory);
+  // follower, whose every hello says `{role: 'learner', show: 'learner', device}` with the PIN, then the host's ticket;
   // granted, the monitor strip, the three tabs and the connection line. The hash stays `#/remote/learner`, so a reload
   // opens the form again (the PIN is typed again: it is kept nowhere)
   let current: ReturnType<typeof mountFollower> | null = null;
@@ -119,8 +119,8 @@ if (follow && shows === 'pick') {
     drugs: drugs.el,
     infusions: infusions.el,
     labs: labs.el,
-    follow: (code, bar, pin) => {
-      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), pin });
+    follow: (code, bar, credential) => {
+      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), credential });
       line.set(f.monitor, f.style, true);
       f.onStyle = (st) => line.set(f.monitor, st, true);
       return (current = f);
@@ -142,14 +142,14 @@ if (follow && shows === 'pick') {
   Object.assign(window, { __pmeLearnerRemote: remote, __pmeLearnerDrugs: drugs, __pmeLearnerInfusions: infusions, __pmeLearnerLabs: labs, __pmeApp: { shell, frames, site } });
 } else if (follow && shows === 'pump') {
   // A1 (plan pump-rack-tci.md §4 D1): the pump tablet. Its learner-PIN form first; at sign-in the follower, whose every
-  // hello says `{role: 'pump', show: 'pump', device, pin}` (the PIN from the page's memory); granted, the rack. No monitor
+  // hello says `{role: 'pump', show: 'pump', device}` with the PIN, then the host's ticket; granted, the rack. No monitor
   // and none of its sound. The faces read S1's shipped device profiles (D12; N125: they were given none before A2)
   const devices = shippedPumpDevices();
   const page = pumpPageView({
     code: follow,
     stage: shell.stage,
     profiles: faceProfilesOf(devices),
-    follow: (code, bar, pin) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), pin, sound: false }),
+    follow: (code, bar, credential) => mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'pump', role: 'pump', device: deviceKey(), credential, sound: false }),
   });
   // A2: the channel flows on each face, sending through the granted follower; the stock list is the formulary's (S1)
   let formulary: Formulary | null = null;
