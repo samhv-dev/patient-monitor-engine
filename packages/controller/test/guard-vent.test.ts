@@ -74,7 +74,7 @@ describe('the guard passes every captured body inside a `vent`', () => {
 describe("the cockpit's state and its restore inside a `vent`", () => {
   const state = () => structuredClone(normal.fromVent.filter((m) => m.kind === 'state').at(-1)!) as Extract<LinkMsg, { kind: 'state' }>;
   const lung = () => structuredClone(normal.toVent.find((m) => m.kind === 'lungState')!) as Extract<LinkMsg, { kind: 'lungState' }>;
-  const restore = () => ({ v: 1, kind: 'restore', epoch: 'm3k2.1', state: state().state, lung: lung().ev, allowed: 400, upTo: 330 });
+  const restore = () => ({ v: 1, kind: 'restore', epoch: 'm3k2.1', state: state().state, lungs: [{ ev: lung().ev, at: 331 }], allowed: 400, upTo: 330 });
 
   it(`a state, a restore with its lungState, and the answer pass, within VENT_LIMITS.stateBytes (${VENT_LIMITS.stateBytes})`, () => {
     expect(parseWireMessage(JSON.stringify(vent(state())))).toMatchObject({ body: { kind: 'state' } });

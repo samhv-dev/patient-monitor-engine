@@ -49,6 +49,50 @@ describe('the ventilator in the bookmark', () => {
     expect(differing(r.taken)).toEqual([]);
   });
 
+  it('replays the same frames when the lung changes and the ventilator runs further ahead of the engine the second time', { timeout: 60_000 }, async () => {
+    // The ventilator takes each lungState on the tick the link names, so how far ahead of the engine the wall clock let
+    // it run does not change the frames: the first time it keeps level with the engine, the second its frames come at
+    // twice the engine's pace, so it runs at its clock limit
+    const [ventPort, monPort] = createLocalPortPair();
+    const e = createEngine({ seed: 7, patient: PROFILES.normal!.patient });
+    const taken = [new Map<number, string>(), new Map<number, string>()];
+    let pass = 0;
+    attachMonitorToLink({
+      dispatch: (c: Command): DispatchResult => {
+        const r = e.dispatch(c);
+        if (c.type === 'externalDrive' && r.accepted) taken[pass]!.set(r.tick, JSON.stringify(c.frame));
+        return r;
+      },
+      on: (fn: (x: EngineEvent) => void) => e.on(fn),
+    }, monPort);
+    const d = createVentDriver(ventPort, 'normal');
+    let ms = 0;
+    let target = 0;
+    const runTo = async (t: number) => {
+      for (let i = 0; i < 20_000 && e.now().simT < t - 1e-9; i++) {
+        const step = 20;
+        ms += pass === 0 ? step : 2 * step;
+        d.frame(ms);
+        target += step / 1000;
+        e.advanceTo(target);
+        await Promise.resolve();
+      }
+    };
+    d.frame(0);
+    await runTo(20);
+    const snap = e.snapshot();
+    const spasm = { id: 'spasm', issuedBy: 'test', type: 'applyEvent', event: { kind: 'lungCondition', id: 'bronchospasm', severity: 0.8 }, atTick: snap.tick + 250 } as Command;
+    e.dispatch(spasm);
+    await runTo(50);
+    e.restore(snap);
+    target = e.now().simT;
+    pass = 1;
+    e.dispatch(spasm);
+    await runTo(50);
+    expect(taken[1]!.size).toBeGreaterThan(1400);
+    expect(differing(taken)).toEqual([]);
+  });
+
   it('a snapshot taken with no ventilator is unchanged, and restoring it gives none back', async () => {
     const e = createEngine({ seed: 7, patient: PROFILES.normal!.patient });
     e.advanceTo(1);

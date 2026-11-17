@@ -25,9 +25,11 @@ export const WIRE_LIMITS = {
  * plan's 4 ("3 plus a spare" counted one stand-in), which would drop the first tick of anaphylaxis and air embolism.
  * `bytes`: a `vent` body's largest JSON [ENG: network; that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
  */
-export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16, stateBytes: 8 * 1024, epoch: 32 } as const;
+export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16, stateBytes: 8 * 1024, epoch: 32, lungs: 4 } as const;
 // `stateBytes`: a `state` or `restore` body, the cockpit's whole state [ENG: network; 4.3 KB measured, 5 KB with the
 // lungState a restore carries]; it goes once a second at most. `epoch`: the restore id's length (port.ts newEpoch, < 20).
+// `lungs`: the lungStates a restore carries, those after the state's tick [ENG: network; 1 a second, a state at most one
+// second old over the relay and lungStates at most MAX_AHEAD_TICKS (1.5 s) ahead: 3].
 // `batch` (R8c): the most `cmds` one relay-port message packs [ENG: network; at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
 // 16 holds two windows, an animation frame that came late]; `bytes` bounds it too (a steady tick is 0.25 KB).
 
@@ -253,7 +255,7 @@ function ventBodyOk(b: unknown): boolean {
       if (!Array.isArray(b.msgs) || b.msgs.length === 0 || b.msgs.length > VENT_LIMITS.batch || !b.msgs.every(cmdsOk)) return false;
       break;
     case 'lungState':
-      if (!isObj(b.ev) || b.ev.type !== 'lungState') return false;
+      if (!isObj(b.ev) || b.ev.type !== 'lungState' || (b.atTick !== undefined && !Number.isInteger(b.atTick))) return false;
       break;
     case 'clock':
     case 'run':
@@ -274,7 +276,8 @@ function ventBodyOk(b: unknown): boolean {
       return utf8Bytes(JSON.stringify(b)) <= VENT_LIMITS.stateBytes;
     case 'restore':
       if (!epochOk(b.epoch) || !ventStateOk(b.state) || !isNum(b.allowed) || !Number.isInteger(b.upTo)) return false;
-      if (b.lung !== null && !(isObj(b.lung) && b.lung.type === 'lungState')) return false;
+      if (!Array.isArray(b.lungs) || b.lungs.length > VENT_LIMITS.lungs) return false;
+      if (!b.lungs.every((l) => isObj(l) && isObj(l.ev) && l.ev.type === 'lungState' && (l.at === null || Number.isInteger(l.at)))) return false;
       return utf8Bytes(JSON.stringify(b)) <= VENT_LIMITS.stateBytes;
     case 'restored':
       if (!epochOk(b.epoch) || typeof b.loaded !== 'boolean') return false;

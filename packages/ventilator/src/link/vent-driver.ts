@@ -7,8 +7,9 @@ import { decodeState, encodeState } from '@pme/engine-core';
 import { advanceVent, createVent, resetPhysics, setCircuit } from '../vent.ts';
 import type { VentState } from '../types.ts';
 import { createLinkCore, linkEvent, linkTick, patchVent, LINK_TICK_S, type LinkCore } from './core.ts';
-import { LEAD_TICKS, type LinkPort } from './port.ts';
+import { LEAD_TICKS, type LinkPort, type StampedLung } from './port.ts';
 import type { CockpitSettings } from './relay-port.ts';
+import type { LungStateEvent } from '../lung-input.ts';
 import { PROFILES, type ProfileId } from './profiles.ts';
 
 /**
@@ -42,6 +43,8 @@ export interface VentExtension {
 interface Body {
   profile: ProfileId;
   sim: number;
+  /** lungStates received for later ticks, in tick order. */
+  lungs: Array<{ ev: LungStateEvent; at: number }>;
   vs: VentState;
   core: Omit<LinkCore, 'vs' | 'profile'>;
   ext?: unknown;
@@ -93,11 +96,19 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
   let epoch = '';
   let reported = '';
   let quietTo = -1; // ticks made again after a restore: the restored engine has their frames
+  let lungs: Array<{ ev: LungStateEvent; at: number }> = [];
+  /** A lungState goes in on its tick (now, when that tick is past or none was named). */
+  const takeLung = (l: StampedLung) => {
+    if (l.at === null || l.at <= k) return linkEvent(core, l.ev);
+    if (lungs.some((x) => x.ev.t === l.ev.t)) return;
+    lungs = [...lungs, { ev: l.ev, at: l.at }].sort((a, b) => a.at - b.at);
+  };
 
   /** Run the ventilator tick by tick up to sim time `to`, posting each tick's commands. */
   const runTo = (to: number) => {
     while ((k + 1) * LINK_TICK_S <= to + 1e-9) {
       k++;
+      while (lungs.length > 0 && (lungs[0] as { at: number }).at <= k) linkEvent(core, (lungs.shift() as { ev: LungStateEvent }).ev);
       advanceVent(vs, k * LINK_TICK_S, d.onStep);
       const cmds = linkTick(core, LINK_TICK_S);
       if (k > quietTo) port?.post({ v: 1, kind: 'cmds', tick: k, cmds, epoch });
@@ -139,7 +150,7 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
     },
     snapshot() {
       const { vs: _vs, profile: _p, ...rest } = core;
-      const body: Body = { profile: profileId, sim, vs, core: rest, ...(d.ext ? { ext: d.ext.save() } : {}) };
+      const body: Body = { profile: profileId, sim, lungs, vs, core: rest, ...(d.ext ? { ext: d.ext.save() } : {}) };
       return { v: 1, face: d.ext?.face ?? null, tick: k, body: encodeState(body) };
     },
     load(s: VentSnapshot) {
@@ -152,13 +163,14 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
       core = { vs, profile: prof(b.profile), ...b.core };
       k = s.tick;
       sim = b.sim;
+      lungs = b.lungs ?? [];
       if (d.ext && b.ext !== undefined) d.ext.load(b.ext);
       return true;
     },
     dispose: () => off?.(),
   };
   const off = port?.onMessage((m) => {
-    if (m.kind === 'lungState') linkEvent(core, m.ev);
+    if (m.kind === 'lungState') takeLung({ ev: m.ev, at: m.atTick ?? null });
     else if (m.kind === 'clock') allowed = Math.max(allowed, m.ventTick);
     else if (m.kind === 'run') {
       // The engine is about to run past these ticks — produce their frames now, not on the wall clock (fast-forward)
@@ -189,7 +201,7 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
       const loaded = d.load(m.state);
       if (loaded) {
         allowed = m.allowed;
-        if (m.lung) linkEvent(core, m.lung); // applied again: a lungState is absolute, and one may have come after the state
+        for (const l of m.lungs) takeLung(l); // sent after the state was taken: its pending ones are known by their time
         quietTo = m.upTo;
         runTo(m.upTo * LINK_TICK_S);
         sim = Math.max(sim, k * LINK_TICK_S);

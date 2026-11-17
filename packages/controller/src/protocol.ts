@@ -422,7 +422,7 @@ export type VentCommand =
  */
 export type VentLinkBody =
   | { v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[]; epoch?: string }
-  | { v: 1; kind: 'lungState'; ev: Extract<EngineEvent, { type: 'lungState' }> }
+  | { v: 1; kind: 'lungState'; ev: Extract<EngineEvent, { type: 'lungState' }>; atTick?: number }
   | { v: 1; kind: 'clock'; ventTick: number }
   | { v: 1; kind: 'run'; ventTick: number }
   | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
@@ -437,7 +437,7 @@ export type VentLinkBody =
   /** The cockpit's whole state (`VentSnapshot`, opaque here) for the host's bookmarks; the host's `restore` of it after a
    *  return to a bookmark, and the cockpit's answer. */
   | { v: 1; kind: 'state'; tick: number; epoch?: string; state: VentStateBody }
-  | { v: 1; kind: 'restore'; epoch: string; state: VentStateBody; lung: Extract<EngineEvent, { type: 'lungState' }> | null; allowed: number; upTo: number }
+  | { v: 1; kind: 'restore'; epoch: string; state: VentStateBody; lungs: Array<{ ev: Extract<EngineEvent, { type: 'lungState' }>; at: number | null }>; allowed: number; upTo: number }
   | { v: 1; kind: 'restored'; epoch: string; loaded: boolean };
 /** `packages/ventilator`'s VentSnapshot, structurally. */
 export interface VentStateBody { v: 1; face: string | null; tick: number; body: unknown }
