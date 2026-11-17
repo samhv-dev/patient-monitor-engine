@@ -8,6 +8,7 @@ import { setDrugNames } from '../glossary.ts';
 import { DRUG_NAME_SETS, MONITORS, parseSite, saveSite, THEMES, type SiteProfile } from '../site.ts';
 import { button, download, h, seg, select, toast } from '../ui.ts';
 import type { View } from '../shell.ts';
+import { chooseVentFace } from './vent.ts';
 
 /** The Settings view on the site profile. */
 export function settingsView(site: SiteProfile, session: AppSession | null): View {
@@ -45,6 +46,11 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
       skin();
       session?.setDefibModel(site.defibModel); // the room's defibrillator model comes with the profile (R5b)
       session?.setEegModel(site.eegModel); // and its depth-of-anaesthesia device (E12)
+      const refused = session ? chooseVentFace(session, site.ventFace) : null; // and its ventilator face
+      if (refused && session) {
+        site.ventFace = session.ventFace;
+        save(refused);
+      }
     } catch {
       toast('That file is not a site profile');
     }

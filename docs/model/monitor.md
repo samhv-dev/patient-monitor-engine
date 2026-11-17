@@ -88,7 +88,7 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 6 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 6, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -523,7 +523,10 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | Function | File | Doc |
 |---|---|---|
 | `capture12` | [`l3/capture12/capture.ts`](../../packages/engine-core/src/l3/capture12/capture.ts) | Capture the 10 s that end at the engine's current committed time (or at `endT`). |
+| `createCo2Num` | [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts) | — |
 | `co2NumStep` | [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts) | Feed one displayed sample. |
+| `co2Numerics` | [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts) | — |
+| `createDevice` | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | — |
 | `validateDeviceCommand` | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | A rejection reason, undefined (accepted) or null (not a device-layer command). |
 | `applyDeviceCommand` | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | Apply a validated device command at sim time t. |
 | `deviceOnQrs` | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | A committed QRS detection (R time, s). |
@@ -537,7 +540,10 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `autocorrelation` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Temporal regularity of peaks and troughs, "auto-correlation" [G A-34]. |
 | `lzComplexity` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Zhang's complexity measure as [AM] gives it (CPLX): |
 | `measureSegment` | [`l3/ecg-analysis/features.ts`](../../packages/engine-core/src/l3/ecg-analysis/features.ts) | Every measurement of one segment: |
+| `createEcgFeed` | [`l3/ecg-analysis/feed.ts`](../../packages/engine-core/src/l3/ecg-analysis/feed.ts) | — |
 | `feedWrite` | [`l3/ecg-analysis/feed.ts`](../../packages/engine-core/src/l3/ecg-analysis/feed.ts) | Write sample n. |
+| `feedSegment` | [`l3/ecg-analysis/feed.ts`](../../packages/engine-core/src/l3/ecg-analysis/feed.ts) | — |
+| `feedView` | [`l3/ecg-analysis/feed.ts`](../../packages/engine-core/src/l3/ecg-analysis/feed.ts) | — |
 | `cudbSegments` | [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | Non-overlapping 3-s segments of a CUDB record, each wholly inside a VF episode ('[' to ']', or to the record's end when the episode is left open) or a VT interval ('(VT' to the next rhythm mark). |
 | `ptbxlClass` | [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | A PTB-XL record's class from its SCP statements: |
 | `ptbxlSegments` | [`l3/ecg-analysis/rig.ts`](../../packages/engine-core/src/l3/ecg-analysis/rig.ts) | The whole 3-s segments of a PTB-XL record (10 s → from 0, 3 and 6 s). |
@@ -551,6 +557,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `sawtoothDetector` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | l. 39–44: whether the epoch holds a strong sawtooth-shaped K-complex (either direction). |
 | `components` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | The components of l. |
 | `mixer` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | l. 45–53, the mixer; |
+| `createBisType` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | — |
 | `bisTypeRead` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
 | `epochSpectrum` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | ── The bispectral term (RAM98 pp. |
 | `bispectrumAt` | [`l3/eeg-devices/bis-type.ts`](../../packages/engine-core/src/l3/eeg-devices/bis-type.ts) | The bispectrum B (Eq 6) and the bicoherence BIC = B/√RTP (Eqs 7, 8) at the bins (k1, k2), over the epochs given (RAM98 p. |
@@ -560,7 +567,9 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `componentBins` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | The components on the 1.92-s grid (fs, the epoch's N samples): |
 | `stateResponse` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | Eqs 7 and 8 on the original scale: |
 | `windowSpectra` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | SE's and RE's spectra from the periodograms held (rows over the components b.lo … b.hi, newest last): |
+| `createEntropy` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | — |
 | `entropyRead` | [`l3/eeg-devices/entropy.ts`](../../packages/engine-core/src/l3/eeg-devices/entropy.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
+| `createGeneric` | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | — |
 | `genericRead` | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | Read a block of samples (µV) with the electrode impedances (kΩ); |
 | `psdOf` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | One-sided power spectral density of one epoch, µV²/Hz, at k·fs/N for k = 0 … ⌊N/2⌋ (Hann window, mean removed). |
 | `bandPower` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | Power in [lo, hi) Hz, µV² (bins of width dfHz from 0 Hz). |
@@ -570,14 +579,18 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `butterHighpass2` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | The second-order Butterworth high-pass at fcHz for a sample rate fs (MATLAB `butter(2, fc/(fs/2), 'high')`, the bilinear transform with the cut-off pre-warped: |
 | `dftOf` | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | The DFT of v (already windowed) at bins 0 … kMax: |
 | `hrAveragingOf` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | The skin's HR averaging option, or undefined (the default method). |
+| `createHrState` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | — |
 | `hrOnQrs` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | Feed one detected R time (sim seconds). |
 | `hrMeasure` | [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts) | The HR numeric at time t (call once per second); |
+| `createNibpState` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | — |
+| `nibpMeasuring` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | — |
 | `nibpCommand` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | device nibp commands (brief §4.5 "Modes"; |
 | `nibpOnPulse` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | One arterial pulse at the cuff: |
 | `smoothEnvelope` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | Envelope inversion (brief §4.5) by curve fitting, as SuperSTAT-style monitors do: |
 | `invertEnvelope` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | `smoothedH`: |
 | `nibpStep` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | Advance the cuff by dt seconds at time t (called once per 125 Hz sample). |
 | `nibpNextIn` | [`l3/nibp/nibp.ts`](../../packages/engine-core/src/l3/nibp/nibp.ts) | Seconds to the next automatic start, or undefined. |
+| `createWaveNumerics` | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | — |
 | `numericsStep` | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | Feed one displayed sample (absolute index m, 125 Hz). |
 | `isPulsatile` | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | Pulsatile per the Philips rule (≥ 2 fresh beats, amplitude ≥ 3 mmHg — `minAmp`, rate ≥ 25/min). |
 | `pressureNumerics` | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | Sys/dia/mean at time t (call once per second) and whether the line is pulsatile: |
@@ -586,16 +599,23 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `createPulseDet` | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | `floor`: minimum SSF threshold in signal units (ABP 3 mmHg, PAP 1.5 mmHg, pleth 0.03 %) [ENG: |
 | `pulseStep` | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | Feed one sample. |
 | `pulseRate` | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | Pulse rate from foot times (s): |
+| `createQrsState` | [`l3/qrs.ts`](../../packages/engine-core/src/l3/qrs.ts) | — |
 | `qrsPacePulse` | [`l3/qrs.ts`](../../packages/engine-core/src/l3/qrs.ts) | R-51-3: a transcutaneous pacing pulse (paceSpike marker) is at absolute sample `n`. |
 | `qrsPaceGate` | [`l3/qrs.ts`](../../packages/engine-core/src/l3/qrs.ts) | R-51-3 pace-pulse rejection, applied to the detection lead BEFORE the monitor filter (as a monitor's front end does; |
 | `qrsStep` | [`l3/qrs.ts`](../../packages/engine-core/src/l3/qrs.ts) | Feed one displayed-lead sample (mV). |
+| `createImpNum` | [`l3/resp/impedance.ts`](../../packages/engine-core/src/l3/resp/impedance.ts) | — |
 | `impedanceSample` | [`l3/resp/impedance.ts`](../../packages/engine-core/src/l3/resp/impedance.ts) | Impedance sample (arbitrary units, 1 = 500 mL breath) from chest volume and beat times. |
 | `impStep` | [`l3/resp/impedance.ts`](../../packages/engine-core/src/l3/resp/impedance.ts) | `beats`: mechanical beat times, newest last — when given, cycles at the heart's period are cardiac overlay. |
+| `impRr` | [`l3/resp/impedance.ts`](../../packages/engine-core/src/l3/resp/impedance.ts) | — |
 | `plethRr` | [`l3/resp/impedance.ts`](../../packages/engine-core/src/l3/resp/impedance.ts) | Pleth-derived RR (research 03 §7 "RRp"): |
+| `createSpo2` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | — |
 | `deviceBias` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | Device bias: |
+| `stepSpo2` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | — |
+| `spo2Measured` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | — |
 | `spo2PitchHz` | [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): |
-
-Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `createEcgFeed`, `feedSegment`, `feedView`, `createBisType`, `createEntropy`, `createGeneric`, `createHrState`, `createNibpState`, `nibpMeasuring`, `createWaveNumerics`, `createQrsState`, `createImpNum`, `impRr`, `createSpo2`, `stepSpo2`, `spo2Measured`, `createTempNum`, `tempNumStep`, `tempMeasured`.
+| `createTempNum` | [`l3/temp/temp-numerics.ts`](../../packages/engine-core/src/l3/temp/temp-numerics.ts) | — |
+| `tempNumStep` | [`l3/temp/temp-numerics.ts`](../../packages/engine-core/src/l3/temp/temp-numerics.ts) | — |
+| `tempMeasured` | [`l3/temp/temp-numerics.ts`](../../packages/engine-core/src/l3/temp/temp-numerics.ts) | — |
 
 ## Source files
 
