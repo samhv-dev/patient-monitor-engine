@@ -1,0 +1,70 @@
+{
+  "drugId": "cisatracurium",
+  "products": [
+    {
+      "id": "cisatracurium-2mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 2,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-cisatracurium"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "cisatracurium-10mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 10,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-cisatracurium"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "dailymed-cisatracurium"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-cisatracurium"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-cisatracurium"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-cisatracurium"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "dailymed-cisatracurium"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-cisatracurium"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
