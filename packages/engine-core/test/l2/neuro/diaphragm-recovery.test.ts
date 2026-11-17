@@ -24,7 +24,7 @@ function course(drugId: string, dose: number): { min: number; rr: number; vt: nu
   runTo(r, 60, (bus, tMin) => {
     const di = siteBlock(readBus(bus).dia, 'dia', ONE);
     const n = neuroResp({ vent: V0, macVolatile: 0, diaBlock: di.b, diaNd: di.nd + di.dep > 0 ? di.nd / (di.nd + di.dep) : 0, tofr: 0, di: 40, naturalAirway: false, wasApnoeic: true, hypnotic: 1 });
-    stepSpontDrive(s, { ...X, t: tMin * 60, neuro: n });
+    stepSpontDrive(s, { ...X, t: tMin * 60, neuro: n }, {});
     out.push({ min: tMin, rr: s.rr, vt: s.vt });
   });
   return out;

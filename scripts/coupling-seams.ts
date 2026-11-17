@@ -281,7 +281,7 @@ export function effectors(file: string, text: string, constsByFile: Map<string, 
 // ---------- the census ----------
 /** `registry`: seams a coupling-registry row carries (packages/engine-core/src/couplings/, piece R1) and the length of the
  *  committed unregistered list (scripts/couplings.ts keeps it: it may shrink and never grow), printed on the page. */
-export interface Census { seams: Seam[]; effectors: Effector[]; constants: { module: string; exported: number; inEffector: number }[]; registry: { carried: number; unregistered: readonly string[] } }
+export interface Census { seams: Seam[]; effectors: Effector[]; constants: { module: string; exported: number; inEffector: string[] }[]; registry: { carried: number; unregistered: readonly string[] } }
 
 export function census(root: string): Census {
   const read = (f: string) => readFileSync(join(root, f), 'utf8');
@@ -301,7 +301,7 @@ export function census(root: string): Census {
     .map((m) => {
       const mine = new Set(params.filter((p) => modOf(p.file) === m.id).map((p) => `${p.file}#${p.name}`));
       const used = new Set(effs.filter((e) => e.module === m.id).flatMap((e) => e.consts).filter((c) => mine.has(c)));
-      return { module: m.id, exported: mine.size, inEffector: used.size };
+      return { module: m.id, exported: mine.size, inEffector: [...used].sort() };
     })
     .filter((c) => c.exported > 0);
   const carried = new Set(COUPLINGS.flatMap((r) => [...r.from, r.to, ...(r.blockedBy ? [r.blockedBy] : [])].flatMap((x) => x.seams ?? [])));
@@ -309,11 +309,8 @@ export function census(root: string): Census {
   return { seams, effectors: effs, constants, registry };
 }
 
-const KINDS: SeamKind[] = ['ctx', 'ext', 'endo-write', 'bus-read'];
 export function renderCensus(c: Census): string {
   const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\s+/g, ' ');
-  const mods = [...new Set(c.seams.map((s) => s.module))].sort();
-  const n = (m: string | undefined, k: SeamKind | undefined) => c.seams.filter((s) => (!m || s.module === m) && (!k || s.kind === k)).length;
   const rank = (es: Effector[]) => [...es].sort((a, b) => b.factors - a.factors || a.file.localeCompare(b.file) || a.line - b.line).slice(0, 10);
   const at = (x: { file: string; fn: string }) => `${short(x.file)}#${x.fn}`;
   const row = (e: Effector) => `| \`${at(e)}\` | \`${cell(e.lhs)}\` | ${e.op} | ${e.factors} |`;
@@ -325,34 +322,27 @@ export function renderCensus(c: Census): string {
     '     node --experimental-strip-types scripts/coupling-seams.ts -->',
     '',
     'The engine\'s cross-module coupling seams and its effector products and sums, read from the code',
-    '(docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.',
+    '(docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row and every count and total',
+    'are in the output of `node --experimental-strip-types scripts/coupling-seams.ts --json`.',
     '',
-    `Seams (de-duplicated on module, kind and field): ${c.seams.length}; sites: ${c.seams.reduce((a, s) => a + s.sites, 0)}.`,
+    'A seam is carried by a row of the coupling registry (`packages/engine-core/src/couplings/`) or is unregistered: in the',
+    'list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow (a new seam needs a row).',
     '',
-    `Carried by a row of the coupling registry (\`packages/engine-core/src/couplings/\`): ${c.registry.carried}; unregistered: ${c.registry.unregistered.length}`,
-    '(the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).',
-    '',
-    `| Module | ${KINDS.join(' | ')} | All |`, `|---|${KINDS.map(() => '---:').join('|')}|---:|`,
-    ...mods.map((m) => `| ${m} | ${KINDS.map((k) => n(m, k)).join(' | ')} | ${n(m, undefined)} |`),
-    `| **All** | ${KINDS.map((k) => n(undefined, k)).join(' | ')} | ${c.seams.length} |`,
-    '',
-    '## Exported numeric constants inside the module\'s own effector expressions',
-    '',
-    '| Module | Exported numeric constants | Inside an effector product or sum |', '|---|---:|---:|',
-    ...c.constants.map((x) => `| ${x.module} | ${x.exported} | ${x.inEffector} |`),
-    `| **All** | ${c.constants.reduce((a, x) => a + x.exported, 0)} | ${c.constants.reduce((a, x) => a + x.inEffector, 0)} |`,
-    '',
-    `## The ten effector expressions with the most factors (of ${c.effectors.length})`,
+    '## The ten effector expressions with the most factors',
     '',
     '| Where | Assigned | Operator | Factors |', '|---|---|---|---:|',
     ...rank(c.effectors).map(row),
     '',
-    `## The ten products with the most factors (of ${c.effectors.filter((e) => e.op === 'product').length} products)`,
+    '## The ten products with the most factors',
     '',
     '| Where | Assigned | Operator | Factors |', '|---|---|---|---:|',
     ...rank(c.effectors.filter((e) => e.op === 'product')).map(row),
     '',
-    `## Unregistered seams (${c.registry.unregistered.length})`,
+    '## Exported numeric constants inside the module\'s own effector expressions',
+    '',
+    ...c.constants.flatMap((x) => x.inEffector.map((k) => `- ${x.module}: \`${short(k)}\``)),
+    '',
+    '## Unregistered seams',
     '',
     'The seams no coupling-registry row carries yet (piece R2 registers the rest); the list may shrink and never grow.',
     '',

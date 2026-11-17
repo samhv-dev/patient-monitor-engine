@@ -70,7 +70,7 @@ pleth trace comes from; an embedding developer reads it for the per-tick order a
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 5 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 5, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -274,6 +274,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `aorticPressure` | [`l2/hemo/circulation.ts`](../../packages/engine-core/src/l2/hemo/circulation.ts) | Aortic root pressure at time t for state s (used by tests and the aortic-vs-radial check). |
 | `paPressure` | [`l2/hemo/circulation.ts`](../../packages/engine-core/src/l2/hemo/circulation.ts) | Pulmonary artery pressure at time t (3-element: |
 | `restState` | [`l2/hemo/circulation.ts`](../../packages/engine-core/src/l2/hemo/circulation.ts) | A state at rest: |
+| `createCvpState` | [`l2/hemo/cvp.ts`](../../packages/engine-core/src/l2/hemo/cvp.ts) | — |
 | `cvpOnP` | [`l2/hemo/cvp.ts`](../../packages/engine-core/src/l2/hemo/cvp.ts) | An atrial P wave with onset tP (brief §4.2: |
 | `cvpOnBeat` | [`l2/hemo/cvp.ts`](../../packages/engine-core/src/l2/hemo/cvp.ts) | A ventricular beat with R time tR, QRS and QT in ms, preceded by an RR of rr seconds. |
 | `cvpWavesAt` | [`l2/hemo/cvp.ts`](../../packages/engine-core/src/l2/hemo/cvp.ts) | Sum of the wave deviations at time t (mean-corrected). |
@@ -285,6 +286,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `pressureAt` | [`l2/hemo/ejection.ts`](../../packages/engine-core/src/l2/hemo/ejection.ts) | Thoracic-pump pressure pulses (CPR), half-sine of amplitude `qpk` mmHg (the field is reused). |
 | `prunePulses` | [`l2/hemo/ejection.ts`](../../packages/engine-core/src/l2/hemo/ejection.ts) | Drop pulses that ended before time t. |
 | `displayFilter` | [`l2/hemo/line.ts`](../../packages/engine-core/src/l2/hemo/line.ts) | The display low-pass of a skin's IBP filter setting (skin `ibp.filterDefaultHz`: |
+| `createLineState` | [`l2/hemo/line.ts`](../../packages/engine-core/src/l2/hemo/line.ts) | — |
 | `lineActive` | [`l2/hemo/line.ts`](../../packages/engine-core/src/l2/hemo/line.ts) | Whether the channel has a trace at all (brief §6.2: |
 | `lineInput` | [`l2/hemo/line.ts`](../../packages/engine-core/src/l2/hemo/line.ts) | Pressure presented to the transducer at time t, given the patient's pressure at the catheter tip. |
 | `lineDynamics` | [`l2/hemo/line.ts`](../../packages/engine-core/src/l2/hemo/line.ts) | Effective (fn, ζ): |
@@ -298,10 +300,14 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `pepS` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | Weissler PEP ≈ 131 − 0.4·HR ms (brief §4.2; |
 | `lvetS` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | Weissler LVET (men) 413 − 1.7·HR ms, floored at 150 ms like the rhythm engine (research 03 §2.1, §11 #8). |
 | `fFill` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | f_fill(RR) = 1 − exp(−max(0, RR − t_sys)/τ_fill), t_sys = LVET + 0.08 s, τ_fill 0.18 s, normalised to 1 at RR 1 s (brief §4.8; |
+| `ejectionFactor` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | — |
+| `gainCeiling` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | — |
 | `gHyp` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | g_hyp from volumeStatus (brief §4.2 "Respiratory variation"): |
 | `volumeStatusForGHyp` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | Inverse of gHyp (tests and the demo slider). |
+| `breathU` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | — |
 | `respFactor` | [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts) | Per-beat respiratory SV factor (research 03 §2.5): |
 | `circProfileOf` | [`l2/hemo/pipeline.ts`](../../packages/engine-core/src/l2/hemo/pipeline.ts) | PatientProfile → CircProfile (minimal layer; |
+| `createHemoState` | [`l2/hemo/pipeline.ts`](../../packages/engine-core/src/l2/hemo/pipeline.ts) | — |
 | `hemoChannelActive` | [`l2/hemo/pipeline.ts`](../../packages/engine-core/src/l2/hemo/pipeline.ts) | Channels that currently have a trace (brief §6.2: |
 | `cprPressure` | [`l2/hemo/pipeline.ts`](../../packages/engine-core/src/l2/hemo/pipeline.ts) | Unit half-sine compression profile at time t (0 outside the compression phase), × quality. |
 | `pleuralSource` | [`l2/hemo/pipeline.ts`](../../packages/engine-core/src/l2/hemo/pipeline.ts) | The pleural input — the lungs' external source when it has a value, else the resp breath driver, else rest. |
@@ -310,14 +316,17 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `validateHemoCommand` | [`l2/hemo/pipeline.ts`](../../packages/engine-core/src/l2/hemo/pipeline.ts) | --- commands ----------------------------------------------------------------------------------------- Validation hook. |
 | `applyHemoCommand` | [`l2/hemo/pipeline.ts`](../../packages/engine-core/src/l2/hemo/pipeline.ts) | Apply hook. |
 | `isReferenceBeat` | [`l2/hemo/tracker.ts`](../../packages/engine-core/src/l2/hemo/tracker.ts) | Whether a beat may drive the tracker (see header; |
+| `createTracker` | [`l2/hemo/tracker.ts`](../../packages/engine-core/src/l2/hemo/tracker.ts) | — |
 | `trackBeat` | [`l2/hemo/tracker.ts`](../../packages/engine-core/src/l2/hemo/tracker.ts) | Feed one completed beat. |
+| `plethNoise` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | — |
+| `createPlethState` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | — |
 | `plethDelayS` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | Site delay after aortic valve opening (research 03 §2.1: |
 | `toneRatio` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | a2/a1 from systemic resistance: |
+| `addPlethPulse` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | — |
 | `plethShape` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | One pulse shape at u seconds after its origin; |
 | `plethAt` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | Pleth sample at time t. |
+| `prunePleth` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | — |
 | `setPlethSensor` | [`l2/pleth/pleth.ts`](../../packages/engine-core/src/l2/pleth/pleth.ts) | attachSensor spo2 (brief §6.2): |
-
-Exported without a doc comment: `createCvpState`, `createLineState`, `ejectionFactor`, `gainCeiling`, `breathU`, `createHemoState`, `createTracker`, `plethNoise`, `createPlethState`, `addPlethPulse`, `prunePleth`.
 
 ## Source files
 

@@ -49,7 +49,7 @@ too busy to keep real time says so (the clock pill reads BEHIND) instead of runn
 | Where | Relation |
 |---|---|
 | [`clock.ts:1`](../../packages/engine-core/src/clock/clock.ts#L1) | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. |
-| [`engine.ts:700`](../../packages/engine-core/src/engine.ts#L700) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`engine.ts:702`](../../packages/engine-core/src/engine.ts#L702) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
@@ -85,21 +85,22 @@ No exported `…State` type in this module.
 | `frameBudgetMs` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | The work budget of a frame `wallDeltaMs` after the last one (FRAME_BUDGET_MS–FRAME_BUDGET_MAX_MS). |
 | `runOwed` | [`clock/clock.ts`](../../packages/engine-core/src/clock/clock.ts) | Run the clock's owed ticks within `budgetMs` of wall time; |
 | `restingPatient` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). |
+| `createEngine` | [`engine.ts`](../../packages/engine-core/src/engine.ts) | — |
 | `sfc32Next` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Advance the state in place and return the next uint32. |
 | `seedStream` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Seed one named stream from hash(seed, name), then discard 15 outputs to mix the state. |
 | `uniform` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Uniform in [0, 1) with 32 bits of resolution. |
 | `normal` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Standard normal via Box–Muller (one value per call; |
+| `createRng` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | — |
 | `createRngState` | [`rng/sfc32.ts`](../../packages/engine-core/src/rng/sfc32.ts) | Fresh plain-data states for every stream (what the engine keeps in its snapshot-able state). |
 | `encodeState` | [`snapshot-codec.ts`](../../packages/engine-core/src/snapshot-codec.ts) | A deep copy of plain data (objects, arrays, primitives) in which every non-JSON number and `undefined` is a tagged object. |
 | `decodeState` | [`snapshot-codec.ts`](../../packages/engine-core/src/snapshot-codec.ts) | The inverse of encodeState (a deep copy); |
 | `fft` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Small DSP helpers shared by engine tests and the template-extraction scripts (textbook definitions: |
 | `welch` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Welch PSD (Hann window, 50% overlap, per-segment mean removed). |
 | `dominantHz` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Frequency of the maximum of the 5-bin-smoothed Welch PSD within [lo, hi] Hz. |
+| `rms` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | — |
 | `organisation` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Fraction of [lo, hi] Hz power within ±halfWidth Hz of the dominant frequency (organisation index) [ENG: |
 | `lowFraction` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Fraction of [lo, hi] Hz power below `below` Hz. |
 | `hash53` | [`vendor/cyrb53.ts`](../../packages/engine-core/src/vendor/cyrb53.ts) | NOTICE-ID: N-006 cyrb53 (c) 2018 bryc (github.com/bryc), https://github.com/bryc/code/blob/master/jshash/experimental/cyrb53.js Upstream header: |
-
-Exported without a doc comment: `createEngine`, `createRng`, `rms`.
 
 ## Source files
 

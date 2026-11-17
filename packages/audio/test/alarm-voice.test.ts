@@ -38,7 +38,7 @@ describe('alarm voices', () => {
 
   it('createTonePlayer dispatches by kind; unknown kinds play nothing; handles stop', () => {
     const { ctx, calls } = fakeCtx();
-    const play = createTonePlayer(ctx, {} as AudioNode, { profile: IEC_STYLE, toneSet: 'lifepak-like' });
+    const play = createTonePlayer(ctx, {} as AudioNode, { profile: IEC_STYLE, toneSet: 'lifepak-like', beepGain: 0.0446 });
     const h = play({ t: 1, id: 'a', kind: 'alarm', freqHz: 660, durS: 0.2, gain: 0.3 } as never, 1);
     expect(calls).toContain('osc.start 1');
     h?.stop();
@@ -46,6 +46,7 @@ describe('alarm voices', () => {
     play({ t: 1, id: 'c', kind: 'charge', chargeS: 7 } as never, 3);
     expect(calls).toContain('osc.freq.ramp 1000 @10'); // LIFEPAK-like ramping charge tone, 400 → 1000 Hz over 7 s
     expect(play({ t: 1, id: 'q', kind: 'qrs', freqHz: 830 }, 4)).toBeDefined();
+    expect(calls).toContain('env.gain.ramp 0.0446 @4.005'); // the beep at the gain the style gives
     expect(play({ t: 1, id: 'x', kind: 'mystery' }, 5)).toBeUndefined();
   });
   it('harmonic table: 0/−3/−6/−9/−12 dB', () => {
