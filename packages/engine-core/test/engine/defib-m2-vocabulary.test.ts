@@ -47,12 +47,28 @@ const CASES: Record<string, { ok: unknown[]; bad: unknown[] }> = {
   codeMarker: { ok: [{ label: 'Epinephrine' }, { label: 'Intubation' }], bad: ['Epinephrine', { label: '' }, { label: 'x'.repeat(65) }, { label: 7 }, {}] },
   print: { ok: ['press'], bad: ['on'] },
   connect: {
-    ok: [{ mfc: false }, { therapy: 'testPlug' }, { pads: PADS }, { paddles: { pediPlates: true, shockButtons: true, contact: 'good' } }, { internal: { dischargeButton: false, contact: 'good' } }, { ecgCable: '12', ecgLeadsOff: true, spo2: true, nibp: true, co2: true, temp1: true, temp2: false }],
-    bad: [{}, { mfc: 'yes' }, { therapy: 'cable' }, { pads: { ...PADS, contact: 'wet' } }, { pads: { type: 'adult' } }, { pads: { ...PADS, size: 'L' } }, { ecgCable: 4 }, { gel: true }, JSON.parse('{"__proto__":{"mfc":true}}'), 'pads'],
+    ok: [{ mfc: false }, { therapy: 'testPlug' }, { pads: PADS }, { paddles: { pediPlates: true, shockButtons: true, contact: 'good' } }, { internal: { dischargeButton: false, contact: 'good' } }, { ecgCable: '12', ecgLeadsOff: true, spo2: true, nibp: true, co2: true, temp1: true, temp2: false }, { mfcType: 'cprd' }, { paddlesOffAt: 'faceToFace' }, { mfcType: 'plain', paddlesOffAt: 'wells' }, { paddlesOffAt: 'apart' }],
+    bad: [{}, { mfc: 'yes' }, { therapy: 'cable' }, { pads: { ...PADS, contact: 'wet' } }, { pads: { type: 'adult' } }, { pads: { ...PADS, size: 'L' } }, { ecgCable: 4 }, { gel: true }, JSON.parse('{"__proto__":{"mfc":true}}'), 'pads', { mfcType: 'adapter' }, { paddlesOffAt: 'patient' }, { paddlesOffAt: true }],
   },
   setting: {
     ok: [{ nibpMode: 'stat' }, { nibpIntervalMin: 2.5 }, { nibpIntervalMin: 120 }, { spo2Averaging: 'high' }, { ecgFilterHz: 40 }, { paceMarker: false, respImpedance: true }],
     bad: [{}, { nibpMode: 'cont' }, { nibpIntervalMin: 3 }, { nibpIntervalMin: Number.NaN }, { spo2Averaging: 8 }, { ecgFilterHz: 150 }, { paceMarker: 1 }, { sweep: 25 }, { constructor: 1 }],
+  },
+  clear: { ok: ['press'], bad: [undefined, 'on', true] },
+  test30J: { ok: ['press'], bad: [undefined, 30, 'start'] },
+  diag: { ok: ['press'], bad: [undefined, 'on'] },
+  twelveLead: { ok: ['enter', 'acquire', 'exit'], bad: [undefined, 'print', 'Acquire', 12] },
+  brightness: { ok: ['press'], bad: [undefined, 'high', 3] },
+  trend: { ok: ['press'], bad: [undefined, 'open'] },
+  export: { ok: ['press'], bad: [undefined, 'usb'] },
+  faults: {
+    ok: [{ lowBattery: true }, { replaceBattery: false }, { defibDisabled: true, printerOutOfPaper: true }, { shockButtonStuck: true }, { pacerCurrentOutOfTolerance: true, demandPacingDisabled: false }],
+    bad: [{}, { lowBattery: 'yes' }, { battery: true }, { toString: true }, JSON.parse('{"__proto__":{"lowBattery":true}}'), 'lowBattery', true],
+  },
+  impedance: { ok: [{ ohm: 75 }, { ohm: 12 }, { ohm: 400 }, { ohm: null }], bad: [{}, { ohm: 0 }, { ohm: -5 }, { ohm: Number.NaN }, { ohm: Infinity }, { ohm: '75' }, { ohm: 75, side: 'apex' }, 75] },
+  compressions: {
+    ok: [{ depthCm: 5, ratePerMin: 110 }, { depthCm: 1.9, ratePerMin: 50 }, { depthCm: 7.6, ratePerMin: 150 }, null],
+    bad: [undefined, {}, { depthCm: 5 }, { depthCm: 1.8, ratePerMin: 110 }, { depthCm: 7.7, ratePerMin: 110 }, { depthCm: 5, ratePerMin: 49 }, { depthCm: 5, ratePerMin: 151 }, { depthCm: Number.NaN, ratePerMin: 110 }, { depthCm: 5, ratePerMin: 110, quality: 1 }],
   },
   config: {
     ok: [
@@ -130,7 +146,7 @@ describe('E0: per-model energy validation', () => {
 describe('E0: the frozen vocabulary', () => {
   it('declares every command of plan §5.1 and §5.4, each with its piece; the cases here cover each one', () => {
     expect(Object.keys(M2_COMMANDS).sort()).toEqual(Object.keys(CASES).sort());
-    for (const [k, c] of Object.entries(M2_COMMANDS)) expect(c.piece, k).toMatch(/^(E|R)\d/);
+    for (const [k, c] of Object.entries(M2_COMMANDS)) expect(c.piece, k).toMatch(/^(E|R|F)\d/); // Brightness is the face's display mode [G 2-15] (F1)
     expect(M2_LIMIT_KEYS).toEqual(['HR', 'PR', 'SpO2', 'NIBP_S', 'NIBP_D', 'NIBP_M', 'EtCO2', 'FiCO2', 'BR', 'RR', 'T1', 'T2', 'dT']); // [G C-1 to C-9]
   });
 
