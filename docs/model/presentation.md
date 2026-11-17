@@ -66,8 +66,8 @@ renderer, audio and skin contracts.
 | [`calibration.ts:3`](../../packages/renderer/src/calibration.ts#L3) | Default calibration: 96 CSS px per inch = 3.78 CSS px/mm [05 §3.1] until the user calibrates. |
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:911`](../../packages/renderer/src/device-ui.ts#L911) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
-| [`mount.ts:202`](../../packages/renderer/src/mount.ts#L202) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:446`](../../packages/renderer/src/mount.ts#L446) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`mount.ts:205`](../../packages/renderer/src/mount.ts#L205) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
+| [`mount.ts:449`](../../packages/renderer/src/mount.ts#L449) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -946,6 +946,7 @@ renderer, audio and skin contracts.
 | `filterModeFor` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | Engine filter-command value for a skin band: |
 | `formatGain` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | Gain as the lane label prints it (brief §3.8 `ecg.gainLabel`): |
 | `ecgLabel` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | Fill an ECG lane template. |
+| `fitStrip` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | The strip's lanes that each get `minLanePx` of a wave area `waveAreaPx` high: |
 | `legacyPlan` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. |
 | `fitPart` | [`tile-fit.ts`](../../packages/renderer/src/tile-fit.ts) | One part of width `w`, its texts' natural widths and the gap between two texts beside each other. |
 | `fitTile` | [`tile-fit.ts`](../../packages/renderer/src/tile-fit.ts) | A split tile: |
