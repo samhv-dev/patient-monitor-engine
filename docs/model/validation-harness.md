@@ -336,6 +336,7 @@ None recorded.
 | [`docs-honesty.test.ts`](../../packages/validation/test/docs-honesty.test.ts) | 0 | 0 |
 | [`docs-readers.test.ts`](../../packages/validation/test/docs-readers.test.ts) | 0 | 0 |
 | [`e2e-evidence.test.ts`](../../packages/validation/test/e2e-evidence.test.ts) | 0 | 0 |
+| [`e2e-retry-gate.test.ts`](../../packages/validation/test/e2e-retry-gate.test.ts) | 0 | 0 |
 | [`e2e-servers.test.ts`](../../packages/validation/test/e2e-servers.test.ts) | 0 | 0 |
 | [`e2e-shard-plan.test.ts`](../../packages/validation/test/e2e-shard-plan.test.ts) | 0 | 0 |
 | [`ecg-analysis/rig-sets.test.ts`](../../packages/validation/test/ecg-analysis/rig-sets.test.ts) | 0 | 0 |
