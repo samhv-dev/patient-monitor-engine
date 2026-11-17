@@ -25,6 +25,10 @@ export interface ClinicalLogEntry {
 }
 
 const LOG_MAX = 1000;
+/** The kind of device that pressed a learner's or pump's command: a pump tablet's is filed `issuedBy: 'pump'` (its line
+ *  names the channel: describe.ts). */
+const deviceKindOf = (c: { issuedBy?: unknown; event?: unknown }): DeviceKind =>
+  c.issuedBy === PUMP_ISSUED_BY ? 'pump' : (c.event as { kind?: unknown } | undefined)?.kind === 'defib' ? 'defib' : 'learner';
 
 export class Link {
   readonly ctl: ControllerSession;
@@ -243,19 +247,17 @@ export class Link {
     const text = describeCommand(c);
     if (c.issuedBy === 'remote') return this.add({ simT: e.tick * TICK_S, kind: 'instructor', text: `${text} (instructor's phone)` });
     if (c.issuedBy !== LEARNER_ISSUED_BY && c.issuedBy !== PUMP_ISSUED_BY) return;
-    // pump-rack-tci.md C2: a pump tablet's press, filed `issuedBy: 'pump'` (its line names the channel: describe.ts)
-    const kind: DeviceKind = c.issuedBy === PUMP_ISSUED_BY ? 'pump' : c.event?.kind === 'defib' ? 'defib' : 'learner';
-    this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${this.deviceOf(c.by, kind)})` });
+    this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${this.deviceOf(c.by, deviceKindOf(c))})` });
   }
 
-  /** L14: on the host, a learner remote's give or sample the host refused because the case was paused
+  /** L14: on the host, a learner remote's give or sample, or a pump tablet's command, the host refused because the case was paused
    *  (AppSession.onNotGiven): a Log line naming the drug and dose or the sample, the phone as Room setup named it, and
    *  the reason in the line itself (not in `refused`, which the Log sheet prints as "the reason is in the exported log":
    *  here it is on screen). */
   notGiven(n: NotGiven): void {
     const c = n.command as unknown as Record<string, unknown>;
     const { what, not } = notDoneOf(c);
-    this.add({ simT: n.t, kind: 'learner', text: `${what} (${this.deviceOf(c.by, 'learner')}) ${not}: ${n.reason}` });
+    this.add({ simT: n.t, kind: 'learner', text: `${what} (${this.deviceOf(c.by, deviceKindOf(c))}) ${not}: ${n.reason}` });
   }
 
   /** The device `by` as every page names it, or its role's word alone for a command that names no device. */
