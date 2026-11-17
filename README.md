@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` 3c26d8f2 (Merge pull request #499 from samhv-dev/one-sounding-page), built 2026-11-17T06:39:27.856Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/3c26d8f2824331560e70067b7950a7c6d3bc3935
+The built teaching app of `main` 01d1b323 (Merge pull request #488 from samhv-dev/alarm-sound-real-time), built 2026-11-17T07:10:58.146Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/01d1b32374072da9a72052673a73f688ecba05f6
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
