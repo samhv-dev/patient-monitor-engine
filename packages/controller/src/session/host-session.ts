@@ -1312,7 +1312,8 @@ export class HostSession {
   }
 
   /** C2 (§8, PQ8 = A): the mismatch finding of channel `c`, to the host's own screens and granted instructors only. */
-  private mismatchNews(c: HostChannel, device: string, sender: CommandSender | undefined): void {
+  private mismatchNews(c: HostChannel, device: string): void {
+    const sender = c.mismatch?.sender;
     const k = c.contents as NonNullable<HostChannel['contents']>;
     const body: PumpMismatchNews = {
       news: 'pumpMismatch', ch: c.ch, kind: c.kind, device, ...(sender ? { sender } : {}), since: c.mismatch?.since ?? 0, notice: c.mismatch?.notice ?? null,
@@ -1347,8 +1348,9 @@ export class HostSession {
     this.pumpNews({ news: 'channel', row: { t: simT, ch: ch.ch, action: String(e.action), value, by, ...(meta?.replaced ? { replaced: meta.replaced } : {}) } });
     const now = mismatched(ch);
     if (now && (!was || e.action === 'load' || e.action === 'program')) {
-      ch.mismatch = { since: simT, notice: was && e.action !== 'load' && e.action !== 'program' ? was.notice : null };
-      this.mismatchNews(ch, by, (c as { sender?: CommandSender }).sender);
+      const sender = (c as { sender?: CommandSender }).sender;
+      ch.mismatch = { since: simT, notice: was && e.action !== 'load' && e.action !== 'program' ? was.notice : null, ...(sender ? { sender } : {}) };
+      this.mismatchNews(ch, by);
     } else if (!now && was) {
       ch.mismatch = null;
       this.queue({ type: 'prep', t: simT, to: this.peerId, body: { news: 'pumpMismatchCleared', ch: ch.ch } satisfies PumpNews });

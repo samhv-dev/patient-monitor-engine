@@ -37,7 +37,8 @@ export interface HostChannel {
   running: boolean;
   by: { load?: string; programme?: string; rate?: string; tci?: string };
   /** §8: contents and programme differ; the instructor's finding and whether its notice was shown. */
-  mismatch: { since: number; notice: { shownAt: number } | null } | null;
+  /** `sender`: the device whose act made it, when a learner's, a pump tablet's or a defibrillator window's. */
+  mismatch: { since: number; notice: { shownAt: number } | null; sender?: CommandSender } | null;
 }
 
 /** What the pump's command became: the engine's event, or the words it is refused with. */
