@@ -217,9 +217,9 @@ describe('§7.2 row by row', () => {
 // ------------------------------------------------------------------------------------------------- the sixteen cards
 /** §7.2's census: the leaves by kind in each card's `when` (and its objectives), as the plan counts them. */
 const CENSUS: Record<string, { manual: number; event: number; vital: number; afterS: number; probability: number; objectives: number }> = {
-  'acls-bradycardia-unstable': { manual: 2, event: 7, vital: 0, afterS: 2, probability: 2, objectives: 0 },
-  'acls-pea-hypovolaemia': { manual: 3, event: 3, vital: 0, afterS: 3, probability: 1, objectives: 0 },
-  'acls-vf-witnessed': { manual: 5, event: 4, vital: 1, afterS: 3, probability: 2, objectives: 0 },
+  'acls-bradycardia-unstable': { manual: 2, event: 7, vital: 0, afterS: 1, probability: 2, objectives: 0 },
+  'acls-pea-hypovolaemia': { manual: 3, event: 3, vital: 0, afterS: 1, probability: 1, objectives: 0 },
+  'acls-vf-witnessed': { manual: 5, event: 4, vital: 1, afterS: 1, probability: 2, objectives: 0 }, // two of its timers read the rhythm (FINDINGS)
   'depth-awareness': { manual: 0, event: 1, vital: 0, afterS: 1, probability: 0, objectives: 0 },
   'depth-light-anaesthesia': { manual: 0, event: 1, vital: 0, afterS: 1, probability: 0, objectives: 0 },
   'depth-opioid-apnoea': { manual: 1, event: 0, vital: 0, afterS: 0, probability: 0, objectives: 0 },
@@ -251,15 +251,16 @@ const FINDINGS: Record<string, Partial<Record<FlagKind, number>>> = {
   // unreachable: a press offered only in a state reached through a flagged beat (brady's “Loss of capture”, after pacing)
   // manual: vf's “ROSC after epinephrine” is all[event, manual]: no /2 form holds a press that waits on a learner's act
   // bookmark: vf's two authored bookmarks
+  // rhythm: the ACLS, induction and SVT cards' timers read the rhythm they replace (a /2 phase's `rhythm:<id>` signal and its holdS)
   'showcase-induction': { pressScope: 4 },
   'showcase-induction-premed': { pressIntoPhase: 1 },
   'showcase-anaphylaxis': { event: 1, pressIntoPhase: 1 },
   'showcase-tamponade': { pressScope: 4 },
-  'acls-pea-hypovolaemia': { event: 3, pressIntoPhase: 1 },
-  'acls-bradycardia-unstable': { event: 7, pressIntoPhase: 1, unreachable: 1 },
-  'acls-vf-witnessed': { bookmark: 2, event: 4, manual: 1, pressIntoPhase: 2 },
-  'or-induction-hypotension': { event: 5 },
-  'svt-adenosine': { event: 2, pressIntoPhase: 1 },
+  'acls-pea-hypovolaemia': { event: 3, pressIntoPhase: 1, rhythm: 3 },
+  'acls-bradycardia-unstable': { event: 7, pressIntoPhase: 1, unreachable: 1, rhythm: 1 },
+  'acls-vf-witnessed': { bookmark: 2, event: 4, manual: 1, pressIntoPhase: 2, rhythm: 3 },
+  'or-induction-hypotension': { event: 5, rhythm: 1 },
+  'svt-adenosine': { event: 2, pressIntoPhase: 1, rhythm: 2 },
   'depth-awareness': { event: 1 },
   'depth-light-anaesthesia': { event: 1 },
   'nmb-residual-block': { event: 1 },

@@ -261,8 +261,10 @@ export const skinSchema: JsonSchema = {
       source: en(['ECG', 'PLETH', 'HR_SOURCE']),
       defaultOn: bool,
       volume: obj({ min: int(0, 10), max: int(1, 10), default: int(0, 10) }),
+      levelDb: num(-40, 0),
       pitchMap: en(PITCH_MAPS),
       baseHz: num(150, 2000),
+      neutralHz: num(150, 2000),
     }),
     syncMarker: nullable(en(['line', 'triangle-mid-qrs', 'r-above'])),
     defib: nullable(

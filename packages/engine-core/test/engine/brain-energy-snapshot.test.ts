@@ -1,6 +1,8 @@
 // The brain's energy state across a snapshot: a restored engine continues the cortex entry and the EEG's cortex exactly
 // as the unbroken run, and a snapshot without the state (taken before it existed) gets it derived from the brain's own
-// flow and blood gases, not reset to normal.
+// flow and blood gases, not reset to normal. The brainstem entry (the breathing gate's state) continues through an
+// arrest and its return of circulation in both modes, and a snapshot that kept it on the spontaneous drive's record is
+// read by moving it.
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type MonitorEngine, type PatientSnapshot } from '../../src/index.ts';
 
@@ -49,9 +51,57 @@ describe('the brain energy state across a snapshot', () => {
     const live = st(a).organs.brain.energy;
     expect(live.cortex.metabolic).toBeGreaterThan(0);
     const old = structuredClone(snap);
-    delete (old.state as { st: { organs: { brain: { energy?: unknown } } } }).st.organs.brain.energy;
+    const os = (old.state as { st: { organs: { brain: { energy?: { brainstem: object } } }; resp: { spont: object } } }).st;
+    Object.assign(os.resp.spont, os.organs.brain.energy?.brainstem); // where a snapshot of that time kept the gate's state
+    delete os.organs.brain.energy;
     const e = createEngine(OPTS);
     e.restore(old);
     expect(st(e).organs.brain.energy).toEqual(live);
   });
+});
+
+describe('the brainstem entry across a snapshot', () => {
+  const breathing = (e: MonitorEngine) => structuredClone({ brainstem: st(e).organs.brain.energy.brainstem, spont: st(e).resp.spont });
+  /** VF at 10 s; the snapshot at 60 s, gasping; sinus at 70 s, then the gate's reopening. */
+  function rig(mode: 'manual' | 'modeled') {
+    const opts = { ...OPTS, mode };
+    const a = createEngine(opts);
+    a.advanceTo(10);
+    a.dispatch(cmd({ type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' }));
+    a.advanceTo(60);
+    return { a, opts, snap: a.snapshot() };
+  }
+  function onward(e: MonitorEngine) {
+    const at: ReturnType<typeof breathing>[] = [];
+    for (let t = 60.5; t <= 250 + 1e-9; t += 0.5) {
+      e.advanceTo(t);
+      if (Math.abs(t - 70) < 1e-9) e.dispatch(cmd({ type: 'setRhythm', rhythm: 'sinus', when: 'now' }));
+      at.push(breathing(e));
+    }
+    return at;
+  }
+  for (const mode of ['manual', 'modeled'] as const) {
+    it(`${mode}: a restored engine continues the gate's state and the drive bit for bit through the reopening`, () => {
+      const { a, opts, snap } = rig(mode);
+      expect(st(a).organs.brain.energy.brainstem.anoxS).toBeGreaterThan(30);
+      const ref = onward(a);
+      expect(ref.some((r) => r.brainstem.gate !== undefined && r.brainstem.gate > 0)).toBe(true);
+      const e = createEngine(opts);
+      e.restore(snap);
+      expect(onward(e)).toEqual(ref);
+    });
+    it(`${mode}: a snapshot with the gate's state on the drive's record is read by moving it, and continues the same`, () => {
+      const { a, opts, snap } = rig(mode);
+      const live = breathing(a);
+      const ref = onward(a);
+      const old = structuredClone(snap);
+      const os = (old.state as { st: { organs: { brain: { energy: { brainstem?: object } } }; resp: { spont: object } } }).st;
+      Object.assign(os.resp.spont, os.organs.brain.energy.brainstem);
+      delete os.organs.brain.energy.brainstem;
+      const e = createEngine(opts);
+      e.restore(old);
+      expect(breathing(e)).toEqual(live);
+      expect(onward(e)).toEqual(ref);
+    });
+  }
 });

@@ -4,6 +4,7 @@
 import { DRUGS, type StateVar } from '@pme/engine-core';
 import { asV1, type AnyScenarioDoc, type Transition, type When } from '@pme/controller';
 import { drugName, labelOf } from './glossary.ts';
+import { rhythmLabel } from './rhythms.ts';
 import { SENSORS } from './describe.ts';
 import { vitalLabel, vitalOf } from './vitals.ts';
 
@@ -35,6 +36,7 @@ export function whenText(w: When): string {
     return `${(KIND[e.kind] ?? 'An intervention').toLowerCase()}`;
   }
   if ('sensor' in w) return `${SENSORS[w.sensor.sensor] ?? 'a sensor'} ${w.sensor.state === 'off' || w.sensor.state === 'none' ? 'removed' : 'attached'}`;
+  if ('rhythm' in w) return `${rhythmLabel(w.rhythm.id)}${w.rhythm.forS ? ` for ${dur(w.rhythm.forS)}` : ''}`;
   if ('manual' in w) return `you press "${w.manual.label}"`;
   if ('all' in w) return w.all.map(whenText).join(' and ');
   return w.any.map(whenText).join(' or ');

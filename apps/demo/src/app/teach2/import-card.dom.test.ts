@@ -21,7 +21,7 @@ function rig() {
   const ctl = { scenario: sv, state: { mode: 'modeled', values: {}, control: {} }, timeScale: 1, hostPaused: false, fastForward: null, simT: 0, bookmarks: [] };
   const link = {
     ctl, simT: 0, conditions: new Map(), alarms: null, alarmSummary: { level: null, n: 0, top: null }, log: [], ramps: new Map(),
-    host: { spec: SPEC, mode: 'modeled', record: { data: { rows: [] } }, driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [] } },
+    host: { spec: SPEC, mode: 'modeled', record: { data: { rows: [] } }, driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [], rhythmHolds: () => [] } },
     send: async (_c: CommandInput) => reply,
     note: () => undefined,
     onChange: () => () => undefined,
