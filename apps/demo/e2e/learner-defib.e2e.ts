@@ -166,6 +166,7 @@ test("the resident selects 150 J on the window, charges and shocks; the host rec
     await expect.poll(async () => (await hostDefib(page))?.lastShock?.energyJ, { timeout: 5000 }).toBe(150);
     expect((await hostRows(page)).filter((r) => r.startsWith('learner|'))).toEqual(['learner|Energy 150 J|', 'learner|Charge 150 J|', 'learner|Shock 150 J|shock']);
     // the instructor's CPR sheet and the log say what was delivered
+    await page.evaluate(() => (location.hash = '#/teach2')); // the click below waits for the dock to show
     await page.locator('.ip2-dock button.ip2-tool[data-sheet="defib"]').click();
     await expect(page.locator('.ip2-sheet[data-sheet="defib"]')).toContainText('last shock 150 J', { timeout: 10_000 });
     await page.locator('.ip2-dock button.ip2-tool[data-sheet="log"]').click();
