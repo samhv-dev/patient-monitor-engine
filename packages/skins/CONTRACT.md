@@ -43,8 +43,10 @@ objects merge. `r.provenance` is merged the same way, so every leaf of `r.skin` 
 |---|---|---|
 | `audio.alarm.profile` | `getAlarmProfile(id)` → `AlarmSoundProfile` | `'iec-style' \| 'traditional' \| 'saadat'` |
 | `audio.alarm.repeatS`, `lowPulses`, `volume`, `silence` | `new AlarmSounder(scheduler, profile, { overrides })` | the skin's cadence overrides (ZOLL-like 15/30/none, Philips-like 2-pulse INOP) |
-| `audio.beep.pitchMap`, `baseHz` | `pitchHz(map, spo2, baseHz)` → the `freqHz` of a `qrs`/`pulse` tone | `'none'` = fixed pitch |
-| `audio.beep.enabled`, `volume` | whether mount enqueues beep tones; gain | Stage 4b |
+| `audio.beep.pitchMap`, `baseHz` | not read yet: the `freqHz` of a `qrs` tone is the engine's (`spo2PitchHz`) | `'none'` = fixed pitch |
+| `audio.beep.neutralHz` | renderer `beatToneHz`: the pitch of a `qrs` tone that carries no `freqHz` (no valid SpO2) | engineering value per style |
+| `audio.beep.enabled`, `source` | whether mount enqueues beat tones, and which kind (`qrs` for ECG / HR_SOURCE, `pulse` for PLETH) | renderer `pulseTone` |
+| `audio.beep.volume`, `levelDb` | `beepGain(profile.volume, beep)` → `createTonePlayer({ beepGain })` | the alarm volume law over the beep's own steps |
 | `r.skin.defib.toneSet` | `createTonePlayer(ctx, dest, { profile, toneSet })` | charge / chargeReady / shock / nibpDone |
 | (all tone kinds) | `ToneScheduler({ play: createTonePlayer(...) })` | replaces `play: playBeep` in `mount.ts` (RR-6) |
 
