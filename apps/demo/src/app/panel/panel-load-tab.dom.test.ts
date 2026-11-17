@@ -15,7 +15,7 @@ function rig(tab: string) {
   const fns = new Set<() => void>();
   const link = {
     ctl: { scenario: sv, bookmarks: [], simT: 0, state: null, rhythm: null, log: [], send: async () => ({ accepted: true, tick: 0 }) },
-    host: null, alarms: null, simT: 0, log: [], ramps: new Map(),
+    host: null, alarms: null, simT: 0, log: [], sessionLog: [], ramps: new Map(),
     send: async () => ({ accepted: true, tick: 0 }),
     note: () => undefined,
     onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)),

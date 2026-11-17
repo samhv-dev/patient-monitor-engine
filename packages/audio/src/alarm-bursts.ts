@@ -45,5 +45,31 @@ export function volumeGain(v: AlarmSoundProfile['volume'], step: number): number
   return v.maxGain * 10 ** ((-(v.max - s) * v.dbPerStep) / 20);
 }
 
+/**
+ * When an alarm's bursts start, in real seconds: the first when the alarm starts to sound, then one every repeatS
+ * (null: once). A burst found late (the caller slept past it) starts now and the repeat goes on from it, so the ones it
+ * overtook are dropped rather than piled up at one instant.
+ */
+export class BurstSchedule {
+  private nextS: number | null;
+  private readonly repeatS: number | null;
+
+  constructor(startS: number, repeatS: number | null) {
+    this.nextS = startS;
+    this.repeatS = repeatS;
+  }
+
+  /** The starts of the bursts due before untilS, each given once, none before nowS. */
+  take(nowS: number, untilS: number): number[] {
+    const out: number[] = [];
+    while (this.nextS !== null && this.nextS <= untilS) {
+      const at = Math.max(this.nextS, nowS);
+      out.push(at);
+      this.nextS = this.repeatS === null ? null : at + this.repeatS;
+    }
+    return out;
+  }
+}
+
 /** dB → linear amplitude. */
 export const dbToGain = (db: number): number => 10 ** (db / 20);

@@ -124,7 +124,7 @@ describe("the instructor phone's row", () => {
     let n = 1;
     let fire: (k: number) => void = () => undefined;
     const card = instructorRoomCard({
-      code: CODE, relay: 'ws://h/', pin: instructorPin(memory(), () => 1), host: { instructorPinChanged: () => undefined, instructorDenials: () => 0 },
+      code: CODE, relay: 'ws://h/', pin: instructorPin(memory(), () => 1), host: { instructorPinChanged: () => Promise.resolve(), instructorDenials: () => 0 },
       instructors: () => n, onInstructors: (f) => ((fire = f), () => undefined), now: () => new Date(2026, 10, 6, 14, 20).getTime(),
     });
     expect(card.el.querySelector('.ip-peer-state')?.textContent).toBe('Signed in');

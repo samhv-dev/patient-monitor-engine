@@ -22,12 +22,17 @@ export interface ClinicalLogEntry {
   ev?: NoteEvent;
 }
 
+const LOG_MAX = 1000;
+
 export class Link {
   readonly ctl: ControllerSession;
   readonly host: AppSession | null;
   alarms: AlarmStatusEvent | null = null;
   device: DeviceStatusEvent | null = null;
-  readonly log: ClinicalLogEntry[] = [];
+  /** The session's log: it runs on across cases (the Log sheet and its export). */
+  readonly sessionLog: ClinicalLogEntry[] = [];
+  /** Where the running case begins in `sessionLog`: a new body (a 'restart' timeline) starts a case, as it starts a record. */
+  private caseFrom = 0;
   /** Per-target onset in progress (REALITi's trend arc): the panel draws progress from sim time. */
   readonly ramps = new Map<string, { t0: number; dur: number; to: number }>();
   /** Acute events started from this panel (Task 26): id → severity. The engine does not report them, so a Remote sees only its own. */
@@ -178,7 +183,10 @@ export class Link {
       this.ramps.clear();
       this.pumpFindings.clear(); // the host's channels end with the old engine too (host-session newTimeline)
       this.preps.clear(); // the host's preparation table ends with the old engine, a restore's too (host-session newTimeline)
-      if (e.cause !== 'restore') this.conditions.clear();
+      if (e.cause !== 'restore') {
+        this.conditions.clear();
+        this.caseFrom = this.sessionLog.length;
+      }
       this.changed();
     } else if (e.type === 'fastForward') {
       // Where a fast-forward began and ended, and the alarms raised during it (shown, not sounded), with times
@@ -227,11 +235,31 @@ export class Link {
     this.add({ simT: n.t, kind: 'learner', text: `${what} (learner remote${name ? `: ${name}` : ''}) ${not}: ${n.reason}` });
   }
 
+  /** The running case's lines of the session's log. */
+  get log(): readonly ClinicalLogEntry[] {
+    return this.sessionLog.slice(this.caseFrom);
+  }
+
+  /** After a reload: the case's lines kept with its position, up to the restored sim time `t`, ahead of the lines the
+   *  restore itself logged. Not filed into the record again (its own copy came back with it). */
+  resumeCase(kept: readonly ClinicalLogEntry[], t: number): void {
+    this.sessionLog.splice(this.caseFrom, 0, ...kept.filter((x) => x.simT === null || x.simT <= t + 1e-6));
+    this.trim();
+    this.changed();
+  }
+
   private add(x: ClinicalLogEntry): void {
     if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text, x.ev); // Into the debrief
-    this.log.push(x);
-    if (this.log.length > 1000) this.log.splice(0, this.log.length - 1000);
+    this.sessionLog.push(x);
+    this.trim();
     this.changed();
+  }
+
+  private trim(): void {
+    const over = this.sessionLog.length - LOG_MAX;
+    if (over <= 0) return;
+    this.sessionLog.splice(0, over);
+    this.caseFrom = Math.max(0, this.caseFrom - over);
   }
 
   private changed(): void {
