@@ -411,6 +411,9 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     v2.e.advanceTo(tick * 0.02 + 1e-9);
     expect(v2.e.now().tick).toBe(tick);
     expect(frames('vent-a.1').length).toBeGreaterThan(200);
-    expect(v2.e.snapshot()).toEqual(host.snapshot());
+    // the host's engine also holds the cockpit's state for its bookmarks (`devices`); a viewer follows the patient only
+    const patient = (x: ReturnType<typeof host.snapshot>) => ({ ...x, state: { ...(x.state as object), devices: undefined } });
+    expect(patient(v2.e.snapshot())).toEqual(patient(host.snapshot()));
+    expect((host.snapshot().state as { devices?: unknown }).devices).toBeDefined();
   });
 });
