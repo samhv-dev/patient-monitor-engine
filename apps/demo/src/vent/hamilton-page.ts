@@ -6,6 +6,7 @@
 // A window of the instructor's computer (`?link=` without `&via=parent`: Room setup's "New window") says the cockpit's
 // settings once a second and on every change, and whether its page is hidden — as a device's relay port does — so the
 // host hands the patient over with them when the window closes or hides (views/vent.ts serveWindowCockpit).
+import { SignInCredential } from '@pme/controller';
 import { createBroadcastPort, createFramePort, createRelayPort, createVentDriver, PROFILES, SETTINGS_MS, type CockpitSettings, type LinkPort, type ProfileId, type RelayPort, type VentDriver, type VentWire, type VentWireBody } from '@pme/ventilator';
 import { joinCode, relayOf, VENT_HASH } from '../app/classroom.ts';
 import { h, setText } from '../app/ui.ts';
@@ -122,7 +123,7 @@ function devicePage(code: string, relay: string): void {
     for (const off of offDev.splice(0)) off();
     dev?.close();
     setText(form.err, PHONE_WORDS.signingIn);
-    const d = signInVentilator({ code: c, relay, pin }); // the PIN is in the sign-in's closure from here on, nowhere else
+    const d = signInVentilator({ code: c, relay, credential: new SignInCredential(pin) }); // the PIN is in the credential until the first ticket, nowhere else
     dev = d;
     offDev = [d.onChange(draw), d.wire.onBody((b) => {
       for (const fn of [...bodies]) fn(b);

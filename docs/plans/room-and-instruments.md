@@ -441,14 +441,14 @@ PR for the owner, who rules the final words:
 | Ventilator | "Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient." | Card shown with the chip "On the instructor's computer" and no "Show here": its frames do not cross the relay (§3.4) |
 | Depth of anaesthesia | "BIS-style index with SQI and EMG, following the hypnotic effect-site concentration." | Card kept, chip **"Not available yet"**, no action, and one line: "Needs a simulated EEG: planned as an engine stage of its own." (Q7 ruled 5 November; §9a). The picture drops m5's index, SQI, EMG and EEG line: nothing on it the engine computes |
 | Intra-aortic balloon pump | "Timing, augmentation and the arterial trace with the balloon's effect." chip "Coming later", button disabled | As m5: chip "Coming later", no action (Q8; §9) |
-| Defibrillator | "Rhythm strip, energy selection, charge and shock, pacing." | "Rhythm strip, energy selection, charge and shock, pacing", kept with "energy selection" read as the room's model and the instructor's choice: the window has Charge and Shock (Q5 ruled 5 November, R5d), not energy selection. Shown only once R5 has merged |
+| Defibrillator | "Rhythm strip, energy selection, charge and shock, pacing." | "The room's defibrillator: charge and shock, with the patient's rhythm." The window's own line (`views/join.ts` `DEFIB_LINE`, shared with Room setup's opener): the window has Charge and Shock (Q5 ruled 5 November, R5d); the energy is the room's model and the instructor's choice |
 | Learner phones | "Each learner's phone follows the monitor; they tick what they noticed for the debrief." | "Learner monitor: this phone follows the patient monitor." No "tick what they noticed" control exists in the app (no such feature at 8d79f188) |
 | (Instructor remote) | not in m5 | "Run the case from this phone. Needs the instructor's PIN." Shown only once P7 has merged; its action opens P7's PIN form |
 
 m5's foot line "Last time in this room: … Reopen that layout" is a host-side feature: R7 (the remembered layout).
 **Tests first:**
 - dom: `#/pick` shows the m5 cards in m5's order, Learner monitor first, focused and preselected (Q1 ruled 5 November);
-  Defibrillator only once R5 has merged; Depth of anaesthesia always present with "Not available yet" and no action; "Instructor remote" only once P7 has merged,
+  Defibrillator present, with the window's line; Depth of anaesthesia always present with "Not available yet" and no action; "Instructor remote" only once P7 has merged,
   opening P7's address; the Ventilator and the IABP cards have no "Show here" and say why;
 - the card words equal the "Picker's words" column above (one literal in the test, so a wording change is a reviewed
   diff);

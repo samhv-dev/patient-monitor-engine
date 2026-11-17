@@ -17,7 +17,7 @@ export {
 } from './transport/webrtc.ts';
 export { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './transport/backoff.ts';
 export type { RelayDevice, RelayFrame } from './transport/relay-frames.ts';
-export { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, MISMATCH_WORDS, PUMP_REASONS, STAGE_LEAD_TICKS, UNKNOWN_ROLE, VENTILATOR_REASONS, type HostSessionOptions, type HostTarget, type NotGiven, type PumpLabels, type PumpMismatchNews, type PumpNews, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
+export { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, MISMATCH_WORDS, PUMP_REASONS, STAGE_LEAD_TICKS, TICKET_REASONS, UNKNOWN_ROLE, VENTILATOR_REASONS, type HostSessionOptions, type HostTarget, type NotGiven, type PumpLabels, type PumpMismatchNews, type PumpNews, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
 // Plan learner-action-remote.md L4: the host's preparations — what a remote may name as a container, the room temperature
 // the stability rows are read at, and the bodies of the host's `prep` events (L7's tray, L9's instructor card)
 export { PREP_CONTAINERS, PREP_TEMP_C, PREPS_PER_DEVICE, type InstructorPrepNews, type InstructorPrepView, type LearnerPrepNews, type LearnerPrepView, type PrepNewsKind } from './session/preparations.ts';
@@ -67,3 +67,5 @@ export type { Finding, FindingKind } from './formulary/findings.ts';
 export { GAP_WORDS, prepare, type Active, type Preparation, type PrepareResult } from './formulary/prepare.ts';
 // Plan learner-action-remote.md L13: the formulary's words for what r rests on, which the Debrief prints as the record holds them
 export { BEYOND_DATA_WORDS } from './formulary/remaining.ts';
+export { CHAINS_MAX, SignInBook, type BookKeep, type Chain, type TicketRole } from './session/sign-in-book.ts';
+export { SignInCredential } from './session/sign-in-credential.ts';
