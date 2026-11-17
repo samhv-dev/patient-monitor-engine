@@ -60,7 +60,7 @@ describe('the run record', () => {
       [160, 'remote', 'CPR started', 'cpr'],
       [160, 'note', 'Objective met: Confirm ventilation with the capnogram', ''],
     ]);
-    expect(r.data.rows[3]?.dose).toEqual({ drugId: 'epinephrine', dose: 1, unit: 'mg' });
+    expect(r.data.rows[3]?.dose).toEqual({ drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' });
     expect(r.data.doc?.id).toBe('showcase-induction');
   });
 

@@ -30,7 +30,7 @@ describe('C2: the pump rows of the record', () => {
     ]);
     expect(rows[0]?.pump).toEqual({ origin: { stock: 'propofol-10mg-ml-50ml' } });
     expect(rows[2]?.pump).toEqual({ replaced: [{ what: 'rate', rate: 20, unit: 'mL/h', by: KEY }] });
-    expect(rows[3]?.dose).toEqual({ drugId: 'propofol', dose: 20, unit: 'mg' });
+    expect(rows[3]?.dose).toEqual({ drugId: 'propofol', dose: 20, unit: 'mg', overS: 9 });
   });
 
   it('a remote\'s change routed to the channel (D9) is the remote\'s `learner` row on that channel; the laptop\'s is an `action` row', () => {
