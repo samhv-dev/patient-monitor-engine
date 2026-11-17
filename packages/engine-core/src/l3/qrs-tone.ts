@@ -4,7 +4,8 @@ import { vfCalled } from './alarms/conditions.ts';
 
 /**
  * `vfSince`: when the monitor's VF analysis began (null: not VF); `fine`: the fibrillation's amplitude is below the
- * rhythm library's coarse/fine boundary (`FINE_MV`); `refT`: the detected R.
+ * rhythm library's coarse/fine boundary (`FINE_MV`), the generator's own flag standing in for the monitor's amplitude
+ * analysis of the displayed lead [ENG: device]; `refT`: the detected R.
  */
 export const qrsToneSounds = (vfSince: number | null, fine: boolean, refT: number): boolean =>
   vfSince === null || (!fine && !vfCalled(vfSince, refT));
