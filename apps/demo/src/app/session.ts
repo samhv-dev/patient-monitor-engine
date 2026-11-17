@@ -117,7 +117,7 @@ export class AppSession {
   /** A fast-forward holds the monitor's clock (the sim clock estimate stands still between its steps). */
   fastForwarding = false;
   /** The Ventilator view's link (it sets it): a fast-forward steps the cockpit with the engine through it. */
-  ventLink: { runTo(engTick: number): Promise<void>; restoring(): Promise<RestoreOutcome> | null } | null = null;
+  ventLink: { runTo(engTick: number): Promise<void>; restoring(): Promise<RestoreOutcome> | null; complete(s: PatientSnapshot): PatientSnapshot } | null = null;
   /** The Ventilator view is on screen (it sets it): only then does its cockpit hold the phones (UI-A #2). */
   ventShown = false;
   /** R8c: a remote cockpit drives the patient (views/vent.ts sets it): it holds the phones wherever the laptop is. */
@@ -218,7 +218,10 @@ export class AppSession {
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
       dispatchGroup: (cs) => this.need().dispatchAll(cs), // R15: a stage group in one worker message, on one tick
-      snapshot: () => this.need().snapshot(),
+      snapshot: async () => {
+        const s = await this.need().snapshot();
+        return this.ventLink?.complete(s) ?? s; // the cockpit's record up to the snapshot's own tick
+      },
       restore: async (s: PatientSnapshot) => {
         await this.need().restore(s);
         this.lastT = s.tick * TICK_S;

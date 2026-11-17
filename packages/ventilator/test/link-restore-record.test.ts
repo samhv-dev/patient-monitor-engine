@@ -342,3 +342,65 @@ describe('what the link trusts and keeps', () => {
     }
   });
 });
+
+describe('a snapshot taken just after a lungState', () => {
+  it('holds that lungState once completed by the link: the replay is the first run; without it, it is not', { timeout: 120_000 }, async () => {
+    const [ventPort, monPort] = createLocalPortPair();
+    const e = createEngine({ seed: 7, patient: PROFILES.normal!.patient });
+    const taken = [new Map<number, string>(), new Map<number, string>(), new Map<number, string>()];
+    let pass = 0;
+    const link = attachMonitorToLink({
+      dispatch: (c: Command): DispatchResult => {
+        const r = e.dispatch(c);
+        if (c.type === 'externalDrive' && r.accepted) taken[pass]!.set(r.tick, JSON.stringify(c.frame));
+        return r;
+      },
+      on: (fn: (x: EngineEvent) => void) => e.on(fn),
+    }, monPort);
+    let lungStates = 0; // the lungStates that changed the lung's compliance
+    let c = NaN;
+    ventPort.onMessage((m) => {
+      if (m.kind !== 'lungState' || m.ev.complianceMlPerCmH2O === c) return;
+      c = m.ev.complianceMlPerCmH2O;
+      lungStates++;
+    });
+    const d = createVentDriver(ventPort, 'normal');
+    let ms = 0;
+    const step = () => {
+      ms += 20;
+      d.frame(ms);
+      e.advanceTo(e.now().simT + 0.02);
+    };
+    const runTo = async (t: number) => {
+      for (let i = 0; i < 5_000 && e.now().simT < t - 1e-9; i++) {
+        step();
+        await Promise.resolve();
+      }
+    };
+    d.frame(0);
+    await runTo(10);
+    // one lung ventilated from one tick on: a step in the lung, after which lungStates come once a second
+    e.dispatch({ id: 'tube', issuedBy: 'test', type: 'applyEvent', event: { kind: 'mainstem', ventilated: 'right' }, atTick: e.now().tick + 50 } as Command);
+    // the snapshot is taken in the same task as the lungState the change emits: before the link's record has it
+    const seen = lungStates;
+    for (let i = 0; i < 500 && lungStates === seen; i++) {
+      step();
+      if (lungStates === seen) await Promise.resolve();
+    }
+    expect(lungStates).toBeGreaterThan(seen);
+    const raw = e.snapshot();
+    const completed = link.complete(raw);
+    expect(completed).not.toEqual(raw);
+    await Promise.resolve();
+    await runTo(raw.tick * 0.02 + 20);
+    const end = e.now().simT;
+    const replay = async (s: typeof raw, into: number) => {
+      e.restore(s);
+      pass = into;
+      await runTo(end);
+      return [...taken[into]!.keys()].filter((tk) => taken[0]!.has(tk) && taken[into]!.get(tk) !== taken[0]!.get(tk));
+    };
+    expect((await replay(raw, 1)).length).toBeGreaterThan(0);
+    expect(await replay(completed, 2)).toEqual([]);
+  });
+});

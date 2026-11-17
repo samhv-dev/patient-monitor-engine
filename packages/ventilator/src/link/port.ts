@@ -23,7 +23,7 @@
 //   monitor → vent: { kind: 'restore' }   the engine went back to a bookmark holding that state: load it, and make
 //                                         at once, unsent, the ticks up to `upTo` that the restored engine already has
 //   vent → monitor: { kind: 'restored' }  the answer, loaded or not; its later messages carry the restore's `epoch`
-import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
+import { decodeState, encodeState, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
 import type { VentConfig } from '../types.ts';
 import type { LungStateEvent } from '../lung-input.ts';
 import type { ProfileId } from './profiles.ts';
@@ -180,6 +180,12 @@ export type LinkDetach = (() => void) & {
   runTo(engTick: number): Promise<void>;
   /** The last restore the ventilator was sent (null: none yet): resolves when it ventilates the restored patient, or not. */
   restoring(): Promise<RestoreOutcome> | null;
+  /**
+   * `s` with the record it holds brought up to the snapshot's own tick. The engine took the record the link last gave it;
+   * a lungState it emitted after that and before the snapshot reached the link before the snapshot did (one port, in
+   * order) but is in neither the record nor the ventilator's state. It is added, stamped as it was sent.
+   */
+  complete(s: PatientSnapshot): PatientSnapshot;
 };
 
 /**
@@ -205,6 +211,8 @@ export function attachMonitorToLink(
   let waiter: { ventTick: number; done: () => void } | null = null; // A fast-forward step waits for frames
   let vent: VentSnapshot | null = null; // The ventilator's last state: null for one that sends none
   let lungs: StampedLung[] = [];
+  /** The lungStates last sent, whatever a later state pruned: what `complete` may need. */
+  let sentLungs: StampedLung[] = [];
   let detached = false;
   let dirty = false;
   const write = (state: LinkRecord | null) => {
@@ -416,6 +424,7 @@ export function attachMonitorToLink(
     }
     if (e.type === 'lungState') {
       const at = Number.isFinite(allowed) ? allowed + 1 : null;
+      sentLungs = [...sentLungs.slice(1 - 2 * RECORD_LUNGS_MAX), { ev: e, at }];
       if (vent !== null) {
         lungs = [...lungs.filter((l) => l.at !== null), { ev: e, at }];
         if (lungs.length > RECORD_LUNGS_MAX) forget();
@@ -454,5 +463,20 @@ export function attachMonitorToLink(
       });
     },
     restoring: () => outcome?.p ?? null,
+    complete(snap: PatientSnapshot): PatientSnapshot {
+      const st = snap.state as { devices?: { ventilator?: unknown } } | null;
+      const held = st?.devices?.ventilator;
+      if (held === undefined) return snap;
+      const r = decodeState(held) as LinkRecord;
+      if (!isLinkRecord(r, snap.tick)) return snap;
+      const upTo = snap.tick * 0.02 + 1e-9;
+      const late = sentLungs.filter((l) => l.at !== null && l.at > r.vent.tick && l.ev.t <= upTo && !r.lungs.some((x) => x.ev.t === l.ev.t));
+      if (late.length === 0) return snap;
+      const all = [...r.lungs, ...late].sort((a, b) => a.ev.t - b.ev.t);
+      const devices = { ...st!.devices };
+      if (all.length > RECORD_LUNGS_MAX) delete devices.ventilator; // past the bound a record holds: none, as for the link
+      else devices.ventilator = encodeState({ ...r, lungs: all });
+      return { ...snap, state: { ...st, devices } };
+    },
   });
 }
