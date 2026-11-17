@@ -1069,8 +1069,8 @@ export class HostSession {
 
   /**
    * C2 (§7, D2, D12): a granted pump tablet's command. The host resolves what it loads and checks the shape against the
-   * channel's kind and device profile (pump-host.ts), then applies the engine's `pump` event through `command()` — the
-   * drug lock, the engine's validation and the record are the laptop's own — filed `issuedBy: 'pump'`, `by` = the device
+   * channel's kind and device profile (pump-host.ts), then applies the engine's `pump` event through learnerApply — the
+   * pause, the drug lock, the engine's validation and the record are the laptop's own — filed `issuedBy: 'pump'`, `by` = the device
    * key, with the channel and the values it replaced (`pump`, PumpMeta). A resend of an answered id changes nothing.
    */
   private async pumpCommand(t: ManagedTransport, from: string, by: string, c: Extract<WireCommand, { type: 'pump' }>, refuse: (reason: string) => void): Promise<void> {
@@ -1084,7 +1084,7 @@ export class HostSession {
     if (typeof x === 'string') return refuse(x);
     const out = translatePump(c as unknown as PumpCommand, x);
     if (!out.ok) return refuse(out.why);
-    return this.command(t, pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, by }, out), from);
+    return this.learnerApply(t, from, only(pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, by }, out)), null, refuse);
   }
 
   /**
@@ -1186,7 +1186,7 @@ export class HostSession {
     return this.learnerApply(t, from, infusePrep(f, h, c, withPrep, simT, this.infusions), h, refuse);
   }
 
-  /** A learner's act on the patient (a give, an infusion, a sample): refused as a whole, by the pause too, or every
+  /** A learner's act on the patient (a give, an infusion, a sample, a pump channel's command): refused as a whole, by the pause too, or every
    *  command through `command()` (one stage group). */
   private async learnerApply(t: ManagedTransport, from: string, out: Translated, h: HostPrep | null, refuse: (reason: string) => void): Promise<void> {
     if (!out.ok) return refuse(out.why);
