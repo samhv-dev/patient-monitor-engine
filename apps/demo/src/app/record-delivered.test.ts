@@ -8,6 +8,7 @@ import { createEngine, type DrugsEvent, type EngineEvent } from '@pme/engine-cor
 import { describe, expect, it } from 'vitest';
 import { givenLines, givenText } from './debrief.ts';
 import { RunRecord } from './record.ts';
+import { restoredReading, type RestoredReading } from './restored-state.ts';
 
 const PROPOFOL_10 = { amount: 10, unit: 'mg', perMl: 1 };
 const KETAMINE_10 = { amount: 10, unit: 'mg', perMl: 1 };
@@ -20,7 +21,7 @@ function bench(r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }))) {
   e.on((x: EngineEvent) => {
     if (x.type === 'drugs') last = x;
     r.engine(x);
-  }, ['drugs', 'pumpAlarm']);
+  }, ['drugs', 'pumpAlarm', 'pumpRefused']);
   let n = 0;
   let t = 0;
   const run = (s: number) => e.advanceTo((t += s));
@@ -42,7 +43,7 @@ function bench(r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }))) {
     cmd({ kind: 'pump', action: 'program', ch, drugId, concentration: c });
     if (rate) cmd({ kind: 'pump', action: 'rate', ch, rate, unit: 'mL/h' });
   };
-  const bolus = (drugId: string, mg: number, overS?: number) => cmd({ kind: 'drug', drugId, dose: mg, unit: 'mg', route: 'iv', ...(overS ? { overS } : {}) });
+  const bolus = (drugId: string, mg: number, overS?: number, route = 'iv') => cmd({ kind: 'drug', drugId, dose: mg, unit: 'mg', route, ...(overS ? { overS } : {}) });
   /** A bookmark, as the host files it (the host keeps the snapshot; the engine is not told). */
   const mark = (label: string) => {
     r.wire({ type: 'commandApplied', commandId: `mark${label}`, tick: Math.round(t / 0.02), resolved: { command: { id: `mark${label}`, type: 'scenario', action: 'bookmark', target: label } } } as WireEvent);
@@ -54,6 +55,13 @@ function bench(r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }))) {
     r.wire({ type: 'commandApplied', commandId: `back${label}`, tick: Math.round(t / 0.02), resolved: { command: { id: `back${label}`, type: 'scenario', action: 'restoreBookmark', target: label } } } as WireEvent);
     r.wire({ type: 'timeline', t, tick: Math.round(t / 0.02), cause: 'restore' } as WireEvent);
   };
+  /** Send two commands that apply on the same tick (each checked at dispatch against the channels as they are). */
+  const together = (a: Record<string, unknown>, b: Record<string, unknown>) => {
+    const ta = send({ type: 'applyEvent', event: a });
+    send({ type: 'applyEvent', event: b });
+    run(0.04);
+    return ta;
+  };
   /** A reload of the page: this engine takes up another's state at sim time `at`. */
   const adopt = (snap: ReturnType<typeof e.snapshot>, at: number) => {
     e.restore(snap);
@@ -61,7 +69,7 @@ function bench(r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }))) {
   };
   const engineAmount = (id: string) => (last as DrugsEvent | null)?.drugs.find((d) => d.id === id)?.totalAmount ?? 0;
   const line = (id: string) => givenLines(r.data).find((x) => x.drugId === id)?.text;
-  return { e, r, adopt, cmd, run, syringe, bolus, mark, back, engineAmount, line, now: () => t };
+  return { e, r, adopt, together, cmd, run, syringe, bolus, mark, back, engineAmount, line, now: () => t };
 }
 
 /** Propofol 10 mg/mL at `mlH` for `s` seconds, in mg. */
@@ -139,7 +147,7 @@ describe("the drug totals are the engine's own amount given", () => {
     b.cmd({ kind: 'pump', action: 'start', ch: 2 });
     b.run(100);
     expect(b.engineAmount('propofol')).toBeCloseTo(5 * mgAt(36, 100), 1);
-    expect(b.line('ketamine')).toBe('Ketamine: given by an infusion, which the engine keeps no amount of');
+    expect(b.line('ketamine')).toBe('Ketamine: given by an infusion; the engine counts no amount of it');
   });
 
   it('a TCI channel: the engine\'s figure, named an infusion', () => {
@@ -167,6 +175,57 @@ describe("the drug totals are the engine's own amount given", () => {
     expect(b.line('propofol')).toBe('Propofol: 100 mg (1 bolus); 1 bolus after 00:03 (50 mg) not yet in this amount');
     b.run(1);
     expect(b.line('propofol')).toBe('Propofol: 150 mg in all (2 boluses)');
+  });
+
+  it('a dose by a route the engine does not absorb (dantrolene IM): named with its route and amount, outside the amount', () => {
+    const im = bench();
+    im.bolus('dantrolene', 175, undefined, 'im');
+    im.run(2);
+    expect(im.engineAmount('dantrolene')).toBe(0);
+    expect(im.line('dantrolene')).toBe('Dantrolene: given by 1 IM dose (175 mg, not absorbed by the model); the engine counts no amount of it');
+    const both = bench();
+    both.bolus('dantrolene', 175);
+    both.run(2);
+    both.bolus('dantrolene', 175, undefined, 'im');
+    both.run(2);
+    expect(both.engineAmount('dantrolene')).toBe(175);
+    expect(both.line('dantrolene')).toBe('Dantrolene: 175 mg (1 bolus); not counted in this amount: 1 IM dose (175 mg, not absorbed by the model)');
+  });
+
+  it('a bolus over time read while it runs: what has entered so far, and the dose still being given', () => {
+    const b = bench();
+    b.bolus('propofol', 100, 60);
+    b.run(20);
+    const mid = b.engineAmount('propofol');
+    expect(mid).toBeGreaterThan(20);
+    expect(mid).toBeLessThan(40);
+    expect(b.line('propofol')).toBe(`Propofol: ${givenText(mid, 'mg')} so far (1 bolus); 1 bolus still being given at 00:20: 100 mg over 60 s from 00:00`);
+  });
+
+  it('a pump bolus read while it runs: so far, and still being given', () => {
+    const b = bench();
+    b.syringe(1, 'propofol', PROPOFOL_10, 0);
+    b.cmd({ kind: 'pump', action: 'bolus', ch: 1, volumeMl: 2, rateMlH: 800 }, { pump: { ch: 1, contents: { drugId: 'propofol', concentration: PROPOFOL_10 }, bolus: { volumeMl: 2, dose: 20, unit: 'mg', seconds: 9 } } });
+    b.run(5);
+    const mid = b.engineAmount('propofol');
+    expect(mid).toBeGreaterThan(0);
+    expect(mid).toBeLessThan(20);
+    expect(b.line('propofol')).toMatch(new RegExp(`^Propofol: ${givenText(mid, 'mg')} so far \\(1 bolus\\); 1 bolus still being given at 00:0\\d: 20 mg over 9 s from 00:00$`));
+    b.run(6);
+    expect(b.line('propofol')).toBe(`Propofol: ${givenText(b.engineAmount('propofol'), 'mg')} in all (1 bolus)`);
+  });
+
+  it('a return to a bookmark while the case stays paused: the amounts the return restored, with no panel since', () => {
+    const b = bench();
+    b.bolus('propofol', 100);
+    b.run(2);
+    const m = b.mark('Before');
+    b.bolus('propofol', 50);
+    b.run(3);
+    // the host's return: the engine restored, the state it restored given to the record, then the timeline and the row
+    b.r.restoredFrom(restoredReading(m.snap) as RestoredReading);
+    b.back('Before', m); // no b.run: the case is paused, the engine publishes no panel
+    expect(b.line('propofol')).toBe('Propofol: 100 mg in all (1 bolus)');
   });
 
   it('a drug whose amount counts doses only: a pump bolus and an infusion are named as outside it', () => {
@@ -260,6 +319,45 @@ describe("a pump channel's alarm in the record", () => {
     expect(rows[0]?.endT).toBeDefined();
     expect(rows[1]?.endT).toBeUndefined();
     expect((rows[1]?.t ?? 0) - (rows[0]?.endT ?? 0)).toBeLessThan(1);
+  });
+
+  it('a clearing command the engine refuses when it applies: no end, no second raise', () => {
+    const b = bench();
+    drip(b, 1);
+    b.run(70);
+    b.cmd({ kind: 'pump', action: 'rate', ch: 2, rate: 60, unit: 'mL/h', limitMl: 2 });
+    // a new limit back at what it has infused, and a start, on one tick: each passes at dispatch; the start is refused
+    b.together({ kind: 'pump', action: 'rate', ch: 2, rate: 60, unit: 'mL/h', limitMl: 1 }, { kind: 'pump', action: 'start', ch: 2 });
+    b.run(3);
+    expect(alarms(b)).toHaveLength(1);
+    expect(alarms(b)[0]?.endT).toBeUndefined();
+    expect(b.r.data.rows.some((x) => x.text.endsWith('ended'))).toBe(false);
+  });
+
+  it('a return to a bookmark while paused: an alarm of the abandoned course ends at the return, from the restored state', () => {
+    const b = bench();
+    drip(b, 1);
+    b.run(2);
+    const m = b.mark('Before');
+    b.run(70);
+    expect(alarms(b)).toHaveLength(1);
+    const unseen = new RunRecord(() => ({ patient: 'P', weightKg: 70 }));
+    unseen.resume(b.r.keep(), b.now()); // a record that never saw the bookmark (a reload): its alarm stands
+    unseen.restoredFrom(restoredReading(m.snap) as RestoredReading);
+    unseen.wire({ type: 'timeline', t: m.at, tick: Math.round(m.at / 0.02), cause: 'restore' } as WireEvent);
+    expect(unseen.data.rows.filter((x) => x.ev === 'alarm:pump:2:infusionComplete' && x.undone === undefined).every((x) => x.endT !== undefined)).toBe(true);
+  });
+
+  it('an alarm in the second after a load is named by what the load put on the channel', () => {
+    const b = bench();
+    b.cmd({ kind: 'pump', action: 'load', ch: 3, channel: 'syringe', syringeMl: 50, contents: { drugId: 'propofol', concentration: PROPOFOL_10, volumeMl: 0.1 } });
+    b.run(1.2); // a panel: channel 3 holds propofol
+    b.cmd({ kind: 'pump', action: 'unload', ch: 3 });
+    b.cmd({ kind: 'pump', action: 'load', ch: 3, channel: 'syringe', syringeMl: 50, contents: { drugId: 'ketamine', concentration: KETAMINE_10, volumeMl: 0.01 } });
+    b.cmd({ kind: 'pump', action: 'program', ch: 3, drugId: 'ketamine', concentration: KETAMINE_10 });
+    b.cmd({ kind: 'pump', action: 'bolus', ch: 3, volumeMl: 0.01, rateMlH: 800 });
+    b.run(0.3);
+    expect(b.r.data.rows.find((x) => x.ev === 'alarm:pump:3:end')?.text).toBe('Pump channel 3 (Ketamine): End');
   });
 
   it('a mismatched syringe: the alarm names what it holds and its programme', () => {

@@ -8,7 +8,11 @@ import type { DrugPanelRow, DrugsEvent, PumpPanelRow } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { mountPumpAlarmCard } from '../teach2/pump-alarm-card.ts';
 import { PumpAlarmEdges } from '../pump-alarms.ts';
-import { pumpsView, runningLines } from './pumps.ts';
+import { ScenarioView } from '@pme/controller';
+import type { Link } from '../link.ts';
+import { DEFAULT_SITE } from '../site.ts';
+import { mountPanel } from './panel.ts';
+import { pumpsView, runningLines, togetherLines } from './pumps.ts';
 
 const P10 = { amount: 10, unit: 'mg' as const, perMl: 1 };
 const channel = (o: Partial<PumpPanelRow> & { ch: number }): PumpPanelRow => ({
@@ -35,7 +39,7 @@ describe('the pump rack view', () => {
     expect(items[0]?.textContent).toContain('Rate 20 mL/h');
     expect(items[0]?.textContent).toContain('Infused 4 mL · 46 mL left');
     expect(items[2]?.textContent).toContain('Nothing loaded');
-    // TCI: the pump's prediction beside the patient's own (plan §9)
+    // TCI: the pump's prediction beside the patient's own
     expect(items[1]?.textContent).toContain('TCI Eleveld, Ce target 3 µg/mL');
     expect(items[1]?.querySelector('.pumps-tci')?.textContent).toBe("Predicted Cp 2.1 µg/mL · the patient's, all routes: 2.4 µg/mL\nPredicted Ce 2.99 µg/mL · the patient's, all routes: 3.6 µg/mL");
     // a syringe of remifentanil programmed as propofol: the truth, in the alarm colour's class
@@ -93,8 +97,8 @@ describe('the pump alarm card', () => {
     const box = card.el.querySelector('section.ip2-pa') as HTMLElement;
     expect(box.hidden).toBe(true);
     expect(say).not.toBeNull(); // the live region is there before any alarm, so the first one is announced
-    edges.rows([]);
-    edges.rows([channel({ ch: 3, kind: 'drip', state: 'alarm', alarms: ['infusionComplete'] })]);
+    edges.rows([], 1);
+    edges.rows([channel({ ch: 3, kind: 'drip', state: 'alarm', alarms: ['infusionComplete'] })], 2);
     for (const fn of fns) fn();
     expect(box.hidden).toBe(false);
     expect(say.closest('[hidden]')).toBeNull();
@@ -102,9 +106,51 @@ describe('the pump alarm card', () => {
     expect(say.textContent).toBe('Pump channel 3 (Propofol): Infusion Complete');
     (card.el.querySelector('button') as HTMLButtonElement).click();
     expect(opened).toBe(1);
-    edges.rows([channel({ ch: 3, kind: 'drip' })]);
+    edges.rows([channel({ ch: 3, kind: 'drip' })], 3);
     for (const fn of fns) fn();
     expect(box.hidden).toBe(true);
     card.destroy();
+  });
+});
+
+describe('the view on a short sheet and the phone', () => {
+  it('"both hold" is said only of channels that deliver; a stopped channel giving a bolus is named', () => {
+    const stopped = channel({ ch: 2, state: 'paused' });
+    expect(togetherLines([channel({ ch: 1 }), stopped])).toEqual([]);
+    expect(togetherLines([channel({ ch: 1 }), channel({ ch: 2 })])).toEqual(['Channels 1 and 2 both hold Propofol: the patient receives their sum.']);
+    const e = event([stopped], [drug({ id: 'propofol', rate: 13.3, rateUnit: 'mg/min' })]);
+    expect(runningLines(e, new Set()).map((x) => x.text)).toEqual(['Propofol 13.3 mg/min: pump channel 2 giving a bolus or a purge']);
+  });
+
+  it('each channel and the amounts are reached by Tab; a channel coming into alarm is brought into view once on the page', () => {
+    const link = { drugs: event([channel({ ch: 1 }), channel({ ch: 2 })], []), rack: ['syringe', 'syringe'] as const, givenLines: () => ['Propofol: 10 mg in all (an infusion)'] };
+    const v = pumpsView(link);
+    document.body.append(v.el);
+    expect([...v.el.querySelectorAll('.pumps-ch, .pumps-given')].map((x) => x.getAttribute('tabindex'))).toEqual(['0', '0', '0']);
+    const seen: string[] = [];
+    for (const li of v.el.querySelectorAll<HTMLElement>('.pumps-ch')) li.scrollIntoView = () => void seen.push(li.dataset.ch ?? '');
+    link.drugs = event([channel({ ch: 1 }), channel({ ch: 2, state: 'alarm', alarms: ['end'] })], []);
+    v.refresh();
+    v.refresh();
+    expect(seen).toEqual(['2']);
+    v.el.remove();
+  });
+
+  it("the phone's panel: the staging footer stands aside on the read-only Pumps tab while nothing is staged", () => {
+    const link = {
+      ctl: { scenario: new ScenarioView(), bookmarks: [], simT: 0, state: null, rhythm: null, log: [], send: async () => ({ accepted: true, tick: 0 }) },
+      host: null, alarms: null, simT: 0, log: [], sessionLog: [], ramps: new Map(), drugs: null, rack: [], givenLines: () => null,
+      send: async () => ({ accepted: true, tick: 0 }), note: () => undefined, onChange: () => () => undefined,
+    } as unknown as Link;
+    const p = mountPanel(link, { site: DEFAULT_SITE, weightKg: () => 70, tab: 'vitals' });
+    document.body.append(p.el);
+    const footer = p.el.querySelector('footer.stagebar') as HTMLElement;
+    expect(footer.hidden).toBe(false);
+    p.select('pumps');
+    expect(footer.hidden).toBe(true);
+    p.select('drugs');
+    expect(footer.hidden).toBe(false);
+    p.destroy();
+    p.el.remove();
   });
 });

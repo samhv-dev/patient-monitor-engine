@@ -15,11 +15,12 @@ import { CONDITIONS } from './describe.ts';
 import { DEVICE_WORDS, keptLabel, type DeviceKind } from './device-names.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf, unitText } from './glossary.ts';
 import { FINDING_WORDS, NO_STATEMENT, sourcesText, sourceText } from './prep-words.ts';
-import { countsDosesOnly, LAB_KEYS, LABS, PRESSURES, TREND, TREND_KEYS, type LabKey, type PressureKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
+import { absorbed, countsDosesOnly, doseInAmount, LAB_KEYS, LABS, PRESSURES, TREND, TREND_KEYS, type LabKey, type PressureKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 
 /** The pressures a record of Debrief 2 keeps (record.ts `PRESSURES`). */
 export const PRESSURE_KEYS = Object.keys(PRESSURES) as PressureKey[];
 import { objectiveText } from './scenarios.ts';
+import { ROUTE_WORDS } from './builder/actions.ts';
 
 export type Status = 'met' | 'not met' | 'not assessable';
 export interface Verdict {
@@ -567,10 +568,10 @@ function doseSum(rows: readonly Row[], weightKg: number): string {
   return [mass > 0 ? (mass < 1 ? `${round3(mass * 1000)} µg` : `${round3(mass)} mg`) : '', ...[...other].map(([u, v]) => `${round3(v)} ${u}`)].filter(Boolean).join(' + ');
 }
 
-/** Bolus totals per drug, from the kept rows. */
+/** Bolus totals per drug: the kept boluses the engine's amount counts (`doseInAmount`), as the drug list counts them. */
 export function drugTotals(d: RunData): Array<{ drugId: string; n: number; total: string }> {
   const by = new Map<string, Row[]>();
-  for (const r of kept(d)) if (r.dose) by.set(r.dose.drugId, [...(by.get(r.dose.drugId) ?? []), r]);
+  for (const r of kept(d)) if (r.dose && doseInAmount(r)) by.set(r.dose.drugId, [...(by.get(r.dose.drugId) ?? []), r]);
   return [...by].map(([drugId, rows]) => ({ drugId, n: rows.length, total: doseSum(rows, d.weightKg) }));
 }
 
@@ -581,15 +582,17 @@ export const givenText = (v: number, unit: string): string => {
   return mg < 1 ? `${round3(mg * 1000)} µg` : `${round3(mg)} mg`;
 };
 
-
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const boluses = (n: number) => plural(n, 'bolus', 'boluses');
+const routeWord = (r: string) => ROUTE_WORDS[r] ?? r;
 
 /**
  * The Debrief's line of each drug given, and the live "Given so far": the engine's own amount at its last reading on the
- * kept course (`RunData.given`), the boluses that reading includes, whether an infusion ran, and, said in the line, what
- * the amount leaves out: a bolus given after the reading, and for a drug whose amount counts doses only, its pump
- * boluses, infusion or other pump delivery. A record made before 'given' has its bolus totals only.
+ * kept course (`RunData.given`), the boluses that reading counts, whether an infusion ran, and, said in the line, what
+ * the amount leaves out or does not yet hold: a bolus still being given over its time, a bolus given after the reading,
+ * a dose by a route the engine does not absorb, and for a drug whose amount counts doses only, its pump boluses,
+ * infusion or other pump delivery. "In all" only when nothing is left out. A record made before 'given' has its bolus
+ * totals only.
  */
 export function givenLines(d: RunData): Array<{ drugId: string; text: string }> {
   const g = d.given;
@@ -600,25 +603,31 @@ export function givenLines(d: RunData): Array<{ drugId: string; text: string }> 
   return ids.flatMap((id) => {
     const mine = rows.filter((r) => r.dose?.drugId === id);
     const only = countsDosesOnly(id);
-    const counted = only ? mine.filter((r) => r.channel === undefined) : mine;
+    const counted = mine.filter(doseInAmount);
     const read = at === null ? [] : counted.filter((r) => r.t <= at + 1e-6); // a command applied at a reading's tick is in it
-    const after = counted.filter((r) => !read.includes(r));
+    const after = at === null ? [] : counted.filter((r) => !read.includes(r));
+    const running = at === null ? [] : read.filter((r) => (r.dose?.overS ?? 0) > 0 && r.t + (r.dose?.overS ?? 0) > at + 1e-6);
     const amount = g.amounts[id];
     const infusion = g.infusion[id] !== undefined;
-    const pumped = only ? mine.filter((r) => r.channel !== undefined) : [];
-    const outside = only ? [
+    const pumped = only ? mine.filter((r) => r.channel !== undefined && absorbed(id, r.dose?.route)) : [];
+    const byRoute = new Map<string, Row[]>();
+    for (const r of mine) if (!absorbed(id, r.dose?.route)) byRoute.set(r.dose?.route as string, [...(byRoute.get(r.dose?.route as string) ?? []), r]);
+    const outside = [
+      ...[...byRoute].map(([route, rs]) => `${plural(rs.length, `${routeWord(route)} dose`, `${routeWord(route)} doses`)} (${doseSum(rs, d.weightKg)}, not absorbed by the model)`),
       pumped.length ? `${plural(pumped.length, 'pump bolus', 'pump boluses')} (${doseSum(pumped, d.weightKg)})` : '',
-      infusion ? 'an infusion' : '',
-      g.outside[id] !== undefined && !pumped.length && !infusion ? 'a pump delivery' : '',
-    ].filter(Boolean) : [];
+      only && infusion ? 'an infusion' : '',
+      only && g.outside[id] !== undefined && !pumped.length && !infusion ? 'a pump delivery' : '',
+    ].filter(Boolean);
     const has = !!amount && amount.amount > 0;
-    if (!has && !after.length && !outside.length && !infusion) return [];
+    if (!has && !after.length && !outside.length && !infusion && !(at === null && counted.length)) return [];
     const how = [read.length ? boluses(read.length) : '', infusion && !only ? 'an infusion' : ''].filter(Boolean).join(' and ');
+    const whole = !outside.length && !after.length && !running.length;
     const parts = [
       at === null ? 'the engine has not read its amount since the return to the bookmark'
-      : has ? `${givenText(amount.amount, amount.unit)}${outside.length || after.length ? '' : ' in all'}${how ? ` (${how})` : ''}` : '',
-      after.length && at !== null ? `${boluses(after.length)} after ${mmss(at)} (${doseSum(after, d.weightKg)}) not yet in this amount` : '',
-      outside.length ? (has || at === null ? `not counted in this amount: ${outside.join(', ')}` : `given by ${outside.join(' and ')}, which the engine keeps no amount of`) : '',
+      : has ? `${givenText(amount.amount, amount.unit)}${whole ? ' in all' : running.length ? ' so far' : ''}${how ? ` (${how})` : ''}` : '',
+      running.length ? `${plural(running.length, 'bolus', 'boluses')} still being given at ${mmss(at as number)}: ${running.map((r) => `${doseSum([r], d.weightKg)} over ${round3(r.dose?.overS ?? 0)} s from ${mmss(r.t)}`).join(', ')}` : '',
+      after.length ? `${boluses(after.length)} after ${mmss(at as number)} (${doseSum(after, d.weightKg)}) not yet in this amount` : '',
+      outside.length ? (has || at === null ? `not counted in this amount: ${outside.join(', ')}` : `given by ${outside.join(' and ')}; the engine counts no amount of it`) : '',
     ].filter(Boolean);
     return [{ drugId: id, text: `${drugName(id)}: ${parts.join('; ')}` }];
   });

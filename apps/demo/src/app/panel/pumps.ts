@@ -61,25 +61,31 @@ export function channelLines(r: PumpPanelRow | null, drugs: readonly DrugPanelRo
   };
 }
 
-/** The information lines of the rack: each drug that two or more loaded channels hold (they add, as one infusion). */
+/** A channel running at a rate or in TCI with something in it. */
+const delivering = (r: PumpPanelRow): boolean => !!r.contents && r.state === 'running' && (r.mode === 'tci' || r.rateMlH > 0);
+
+/** The information lines of the rack: each drug that two or more delivering channels hold (they add, as one infusion). */
 export function togetherLines(rows: readonly PumpPanelRow[]): string[] {
   const by = new Map<string, number[]>();
-  for (const r of rows) if (r.contents) by.set(r.contents.drugId, [...(by.get(r.contents.drugId) ?? []), r.ch]);
+  for (const r of rows.filter(delivering)) by.set(r.contents?.drugId as string, [...(by.get(r.contents?.drugId as string) ?? []), r.ch]);
   return [...by].filter(([, chs]) => chs.length > 1).map(([id, chs]) => PUMPS_WORDS.together(`${chs.slice(0, -1).join(', ')} and ${chs.at(-1)}`, drugName(id)));
 }
 
 /** What each running drug is running by, as the engine runs it: its rate, and each source by what it holds (a pump
- *  channel running at a rate or in TCI, an infusion off the pumps as the host's record has it, else a bolus being given
- *  over time). `offPumps`: the drugs with an infusion or TCI off the pumps on the kept course. */
+ *  channel running at a rate or in TCI, an infusion off the pumps as the host's record has it, a stopped channel that
+ *  holds it giving a bolus or a purge, else a bolus being given over time). `offPumps`: the drugs with an infusion or
+ *  TCI off the pumps on the kept course. */
 export type RunningLine = { drugId: string; text: string; pumps: number };
 
 export function runningLines(e: DrugsEvent | null, offPumps: ReadonlySet<string>): RunningLine[] {
   if (!e) return [];
-  const chans = (e.pumps ?? []).filter((r) => r.contents && r.state === 'running' && (r.mode === 'tci' || r.rateMlH > 0));
+  const chans = (e.pumps ?? []).filter(delivering);
+  const stopped = (e.pumps ?? []).filter((r) => r.contents && !delivering(r));
   return e.drugs.filter((d) => (d.rate ?? 0) > 0).map((d) => {
     const by = chans.filter((r) => r.contents?.drugId === d.id).map((r) => `pump channel ${r.ch}${r.programmed && r.programmed.drugId !== d.id ? ` (programmed as ${drugName(r.programmed.drugId)})` : ''}`);
     const pumps = by.length;
     if (offPumps.has(d.id)) by.push('an infusion off the pumps');
+    if (!by.length) by.push(...stopped.filter((r) => r.contents?.drugId === d.id).map((r) => `pump channel ${r.ch} giving a bolus or a purge`));
     return { drugId: d.id, pumps, text: `${drugName(d.id)} ${faceNum(d.rate ?? 0)} ${unitText(d.rateUnit ?? '')}: ${by.length ? by.join(' and ') : 'a bolus being given over time'}` };
   });
 }
@@ -91,7 +97,8 @@ export function pumpsView(link: Pick<Link, 'drugs' | 'rack' | 'givenLines'>): { 
   const list = h('ul', { class: 'pumps-list', 'aria-label': PUMPS_WORDS.list });
   const empty = h('p', { class: 'muted' }, PUMPS_WORDS.empty);
   const together = h('ul', { class: 'pumps-together' });
-  const given = h('ul', { class: 'pumps-given' });
+  // each channel and the amounts are reached by Tab as well as by scrolling, so a sheet shorter than the rack hides none
+  const given = h('ul', { class: 'pumps-given', tabindex: '0', 'aria-label': PUMPS_WORDS.givenTitle });
   const el = h('div', { class: 'pumps-view' }, empty, list, together, h('h3', {}, PUMPS_WORDS.givenTitle), given);
   const fill = (ul: HTMLElement, lines: readonly string[], none: string | null) => {
     const want = lines.length ? lines : none ? [none] : [];
@@ -104,8 +111,18 @@ export function pumpsView(link: Pick<Link, 'drugs' | 'rack' | 'givenLines'>): { 
     const lines = [h('div', {}), h('div', { class: 'pumps-holds' }), h('div', {}), h('div', {})];
     const tci = h('div', { class: 'pumps-tci' });
     const alarm = h('div', { class: 'pumps-alarm' });
-    const li = h('li', { class: 'pumps-ch', 'aria-labelledby': head.id }, h('div', { class: 'pumps-head' }, head, state), ...lines, tci, alarm);
+    const li = h('li', { class: 'pumps-ch', tabindex: '0', 'aria-labelledby': head.id }, h('div', { class: 'pumps-head' }, head, state), ...lines, tci, alarm);
     return { li, head, state, lines, tci, alarm };
+  };
+  // a channel that comes into alarm is brought into view once the view is on the page (the sheet is built when opened)
+  let shownAlarms = '';
+  const showAlarm = (els: readonly ChannelEl[]) => {
+    const on = els.filter((x) => x.li.dataset.state === 'alarm');
+    const key = on.map((x) => x.li.dataset.ch).join(',');
+    if (key === shownAlarms || !el.isConnected) return;
+    const fresh = on.find((x) => !shownAlarms.split(',').includes(x.li.dataset.ch ?? ''));
+    shownAlarms = key;
+    fresh?.li.scrollIntoView({ block: 'nearest' });
   };
   const refresh = () => {
     const drugs = link.drugs?.drugs ?? [];
@@ -117,6 +134,7 @@ export function pumpsView(link: Pick<Link, 'drugs' | 'rack' | 'givenLines'>): { 
       const l = channelLines(c.row, drugs);
       const st = c.row?.state ?? 'notLoaded';
       x.li.dataset.state = st;
+      x.li.dataset.ch = String(c.ch);
       setText(x.head, FACE_LABELS.channel(c.ch, FACE_LABELS.kind[c.kind]));
       setText(x.state, FACE_LABELS.state[st]);
       [l.what, l.holds ?? '', l.how, l.infused].forEach((s, k) => {
@@ -130,6 +148,7 @@ export function pumpsView(link: Pick<Link, 'drugs' | 'rack' | 'givenLines'>): { 
       x.alarm.dataset.on = String(!!c.row?.alarms.length);
     });
     keepOrder(list, els.map((x) => x.li));
+    showAlarm(els);
     fill(together, togetherLines(link.drugs?.pumps ?? []), null);
     const g = link.givenLines();
     fill(given, g ?? [], g ? PUMPS_WORDS.givenNone : PUMPS_WORDS.elsewhere);

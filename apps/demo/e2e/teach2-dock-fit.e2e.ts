@@ -87,7 +87,7 @@ for (const size of DOCK_SIZES) {
         await check('patient-events', true);
       }
     }
-    // with every tool on the dock: with fewer the marks' overlap of brief 185 did not show at 1280 px
+    // with every tool on the dock: the marks' overlap at 1280 px shows only with the full row
     await page.locator('.ip2-sheets .ip2-sheet:not([hidden]) .ip2-sheet-close').click();
     await check('every tool', false);
     await tool(page, 'patient').click();

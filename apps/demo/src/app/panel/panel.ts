@@ -72,6 +72,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
     { id: 'log', label: 'Log', render: make('log', logTab) },
   ], o.tab ?? 'vitals', (id) => {
     o.onTab?.(id);
+    if (ready) drawFooter(); // the read-only Pumps tab has nothing to stage: the staging footer stands aside unless something is staged
     // UI review #28: a tab paints as it opens. It repainted only at the next throttled repaint, so for ≈ 0.5 s it showed
     // what it had when last open ("No active alarms" under a bar reading "!!! ART M low +4")
     if (ready) for (const fn of refreshers.get(id) ?? []) fn();
@@ -103,6 +104,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
   const drawFooter = () => {
     const n = staging.size;
     footer.dataset.count = String(n);
+    footer.hidden = n === 0 && !staging.autoApply && t.current() === 'pumps';
     count.textContent = staging.autoApply ? 'Changes apply at once' : n === 0 ? 'No changes staged' : n === 1 ? '1 change staged' : `${n} changes staged`;
     list.replaceChildren(...staging.lines.map((l) => h('li', {}, l)));
     commit.disabled = n === 0;

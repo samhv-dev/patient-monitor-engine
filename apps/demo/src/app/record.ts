@@ -22,7 +22,8 @@ import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/cont
 import { alarmLine } from './alarms.ts';
 import { describeCommand, notDoneOf } from './describe.ts';
 import { deviceLabel, kindOf, numberOf, type DeviceKind, type DeviceOrder } from './device-names.ts';
-import { channelOfAlarm, clearedBy, PUMP_ALARM_PREFIX, pumpAlarmId, pumpAlarmsOf, pumpAlarmText, pumpCommandOf, type PumpAlarmNow } from './pump-alarms.ts';
+import type { RestoredReading } from './restored-state.ts';
+import { channelOfAlarm, clearedBy, heldOf, PUMP_ALARM_PREFIX, pumpAlarmId, pumpAlarmsOf, pumpAlarmText, pumpCommandOf, type PumpAlarmNow } from './pump-alarms.ts';
 
 /** How a state row's state was entered (`Row.by` on a state row). */
 export type StateBy = 'press' | 'rule' | 'goto';
@@ -37,8 +38,9 @@ export interface Row {
   text: string;
   /** The run event a debrief rule can name (types.ts `RunEventId`). */
   ev?: string;
-  /** A bolus, for the drug totals. */
-  dose?: { drugId: string; dose: number; unit: string };
+  /** A bolus, for the drug totals: its route when the command named one, and the seconds it is given over (a bolus over
+   *  time, a pump bolus). */
+  dose?: { drugId: string; dose: number; unit: string; route?: string; overS?: number };
   /** A command that starts (true) or stops (false) an infusion or TCI of the row's drug off the pumps. */
   runs?: boolean;
   /** A bookmark's label (bookmark rows). */
@@ -127,13 +129,25 @@ export type Sample = { t: number } & Record<ValueKey, number | null> & Partial<R
  *  alarm rows (a record without it counted boluses only and kept no pump alarm). */
 /**
  * Which routes the engine's amount given (`DrugPanelRow.totalAmount`) counts, per drug. A drug with a compartment model
- * (and a blood-pool row) counts every route: a bolus, a bolus over time, an infusion, TCI, and every pump channel's
- * rate, bolus and purge into the patient. A drug the engine models as a dose-response curve (`pk.kind` 'gamma': no
- * plasma compartment) counts only a dose given as a bolus by the drug event: its infusion and anything a pump channel
- * gives it (rate, bolus, purge) are not in the amount (engine-core l2/pk/pipeline.ts: the drug event's bolus, and the
- * gamma branch of its step, which adds no rate to the total).
+ * (and a blood-pool row) counts every route it absorbs: a bolus, a bolus over time (as it runs), an infusion, TCI, and
+ * every pump channel's rate, bolus and purge into the patient. A drug the engine models as a dose-response curve
+ * (`pk.kind` 'gamma': no plasma compartment) counts only a dose it absorbs given as a bolus by the drug event: its
+ * infusion and anything a pump channel gives it (rate, bolus, purge) are not in the amount (engine-core
+ * l2/pk/pipeline.ts: the drug event's bolus, and the gamma branch of its step, which adds no rate to the total). A dose
+ * by a route the engine does not absorb is in no drug's amount (`absorbed`).
  */
 export const countsDosesOnly = (drugId: string): boolean => DRUGS[drugId]?.pk.kind === 'gamma';
+
+/** True when the engine takes a dose of the drug by this route into the patient: a route with a route model (a route
+ *  the row models apart from its intravenous kinetics: dantrolene IM, F = 0) puts nothing into the circulation, the
+ *  amount given or the dose log (engine-core l2/pk/pipeline.ts: a drug event with a route model raises its local effect
+ *  and returns; a route model with F ≠ 0 is refused by the engine). Every other route the engine accepts is its
+ *  intravenous kinetics. */
+export const absorbed = (drugId: string, route: string | undefined): boolean => route === undefined || !(DRUGS[drugId] as { routeModels?: Record<string, unknown> } | undefined)?.routeModels?.[route];
+
+/** True when the engine's amount given counts this bolus row: a dose it absorbs, and for a drug whose amount counts doses
+ *  only, a dose given by the drug event (not by a pump channel). */
+export const doseInAmount = (r: Row): boolean => !!r.dose && absorbed(r.dose.drugId, r.dose.route) && !(countsDosesOnly(r.dose.drugId) && r.channel !== undefined);
 
 /** The drugs whose infusion or TCI off the pumps runs at the end of the kept rows (each drug's last such command). */
 export function offPumpInfusions(rows: readonly Row[]): Set<string> {
@@ -245,6 +259,12 @@ export class RunRecord {
   private defibJ: number | null = null;
   /** The pump channels as the engine's last drug panel showed them (their contents and programme name their alarms). */
   private pumpRows = new Map<number, PumpPanelRow>();
+  /** The pump commands applied and not yet shown not refused (`settle`). */
+  private clears: Array<{ ch: number; action: string; t: number }> = [];
+  /** What a load put on a channel since the last panel (null: an unload), to name an alarm in the second after it. */
+  private readonly loaded = new Map<number, string | null>();
+  /** The state the engine was last restored to (restoredFrom). */
+  private restoredState: RestoredReading | null = null;
 
   private readonly who: () => { patient: string; weightKg: number };
   private readonly now: () => number;
@@ -361,7 +381,9 @@ export class RunRecord {
     const b = c.batch as { id?: unknown; n?: unknown } | undefined;
     if (!bySc && typeof b?.id === 'string' && typeof b.n === 'number') row.batch = { id: b.id, n: b.n };
     if (ev?.kind === 'drug' || ev?.kind === 'infusion' || ev?.kind === 'tci') row.ev = `drug:${String(ev.drugId)}`;
-    if (ev?.kind === 'drug' && !ev.infusion) row.dose = { drugId: String(ev.drugId), dose: Number(ev.dose), unit: String(ev.unit) };
+    if (ev?.kind === 'drug' && !ev.infusion) {
+      row.dose = { drugId: String(ev.drugId), dose: Number(ev.dose), unit: String(ev.unit), ...(typeof ev.route === 'string' ? { route: ev.route } : {}), ...(Number(ev.overS) > 0 ? { overS: Number(ev.overS) } : {}) };
+    }
     if (ev?.kind === 'infusion') row.runs = Number(ev.rate) > 0;
     if (ev?.kind === 'tci') row.runs = Number(ev.target) > 0;
     if (ev?.kind === 'drug' && ev.infusion) row.runs = Number(ev.dose) > 0;
@@ -420,7 +442,7 @@ export class RunRecord {
     return {
       t, kind, text, channel: Number(ev.ch), ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), ...(kind === 'learner' ? { remote: true as const } : {}),
       ...(drug && gives ? { ev: `drug:${drug}` } : {}),
-      ...(drug && ev.action === 'bolus' && meta?.bolus ? { dose: { drugId: drug, dose: meta.bolus.dose, unit: meta.bolus.unit } } : {}),
+      ...(drug && ev.action === 'bolus' && meta?.bolus ? { dose: { drugId: drug, dose: meta.bolus.dose, unit: meta.bolus.unit, ...(meta.bolus.seconds > 0 ? { overS: meta.bolus.seconds } : {}) } } : {}),
       ...(Object.keys(extra).length ? { pump: extra } : {}),
     };
   }
@@ -450,7 +472,11 @@ export class RunRecord {
   /** The host's engine events (truth included: it stays on this page). */
   engine(e: EngineEvent): void {
     if (e.type === 'deviceStatus' && e.defib) this.defibJ = e.defib.energyJ;
-    if (e.type === 'pumpAlarm') this.raise(e.t, { id: pumpAlarmId(e.ch, e.alarm), text: pumpAlarmText(e.ch, this.pumpRows.get(e.ch), e.alarm) });
+    if (e.type === 'pumpRefused') this.clears = this.clears.filter((p) => !(p.ch === e.ch && p.action === e.action && Math.abs(p.t - e.t) < 1.5 * TICK_S));
+    else if (e.type === 'pumpAlarm') {
+      this.settle(e.t);
+      this.raise(e.t, { id: pumpAlarmId(e.ch, e.alarm), text: pumpAlarmText(e.ch, heldOf(this.pumpRows.get(e.ch), this.loaded.get(e.ch), e.programmed), e.alarm) });
+    }
     else if (e.type === 'drugs') this.drugs(e);
     else if (e.type === 'alarmStatus') {
       for (const a of e.active) {
@@ -530,20 +556,60 @@ export class RunRecord {
     for (const id of now) this.active.add(id);
   }
 
-  /** A pump command on a channel: the alarms it clears end at the tick it applies. */
+  /** A pump command on a channel, at the tick it applies: the engine checks it again then and may refuse it, so the
+   *  alarms it clears end at that tick once a later event of the engine shows it was not refused. */
   private pumpCleared(t: number, c: Record<string, unknown>): void {
     const p = pumpCommandOf(c);
     if (!p) return;
-    const on = [...this.active].filter((id) => id.startsWith(PUMP_ALARM_PREFIX) && channelOfAlarm(id) === p.ch);
-    const gone = new Set<string>(clearedBy(p.action, on.map((id) => id.split(':')[2] as PumpAlarmId)));
-    this.close(t, on.filter((id) => gone.has(id.split(':')[2] as string)));
+    this.clears.push({ ch: p.ch, action: p.action, t });
+    if (p.action === 'load') this.loaded.set(p.ch, p.holds ?? null);
+    if (p.action === 'unload') this.loaded.set(p.ch, null);
+  }
+
+  /** The pump commands applied by `t` and not refused: the alarms each clears end at its tick. */
+  private settle(t: number): void {
+    const due = this.clears.filter((p) => p.t <= t + EPS);
+    this.clears = this.clears.filter((p) => p.t > t + EPS);
+    for (const p of due) {
+      const on = [...this.active].filter((id) => id.startsWith(PUMP_ALARM_PREFIX) && channelOfAlarm(id) === p.ch);
+      const gone = new Set<string>(clearedBy(p.action, on.map((id) => id.split(':')[2] as PumpAlarmId)));
+      this.close(p.t, on.filter((id) => gone.has(id.split(':')[2] as string)));
+    }
+  }
+
+  /** The pump channels' alarms as the engine holds them at `t`: one listed and not standing is raised, one standing and
+   *  not listed has ended (the edges no event showed: a reconnection, a return to an unseen bookmark). */
+  private pumpTruth(t: number, pumps: readonly PumpPanelRow[]): void {
+    this.pumpRows = new Map(pumps.map((r) => [r.ch, r]));
+    this.loaded.clear();
+    const listed = pumpAlarmsOf(pumps);
+    for (const a of listed) this.raise(t, a);
+    this.ended(t, new Set(listed.map((a) => a.id)), (id) => id.startsWith(PUMP_ALARM_PREFIX));
+  }
+
+  /** What a return to a bookmark, or a reload's return, restored (restored-state.ts): taken as the engine's reading at
+   *  its time, so the amounts and the alarms are right while the case stays paused. */
+  restoredFrom(r: RestoredReading): void {
+    this.restoredState = r;
+  }
+
+  /** The restored state, once the record has gone back to its time (each return path calls it last). */
+  private applyRestored(t: number): void {
+    const r = this.restoredState;
+    if (!r || Math.abs(r.t - t) > TICK_S) return;
+    this.clears = [];
+    this.loaded.clear();
+    const g = (this.data.given ??= { at: null, amounts: {}, infusion: {}, outside: {} });
+    g.at = r.t;
+    g.amounts = { ...r.amounts };
+    this.pumpTruth(r.t, r.pumps);
   }
 
   /** The engine's 1 Hz drug panel: the amount given of each drug and the routes it ran by, and the pump channels'
    *  standing alarms (an edge the events did not show: a command the engine refused when it came to apply it). */
   private drugs(e: Extract<EngineEvent, { type: 'drugs' }>): void {
     const pumps = e.pumps ?? [];
-    this.pumpRows = new Map(pumps.map((r) => [r.ch, r]));
+    this.settle(e.t);
     const g = (this.data.given ??= { at: null, amounts: {}, infusion: {}, outside: {} });
     g.at = e.t;
     g.amounts = Object.fromEntries(e.drugs.filter((d) => d.totalAmount > 0).map((d) => [d.id, { amount: d.totalAmount, unit: d.amountUnit }]));
@@ -551,9 +617,7 @@ export class RunRecord {
     for (const c of pumps) if (c.contents && c.state === 'running' && (c.mode === 'tci' || c.rateMlH > 0)) infusing.add(c.contents.drugId);
     for (const id of infusing) g.infusion[id] ??= e.t;
     for (const d of e.drugs) if ((d.rate ?? 0) > 0 && countsDosesOnly(d.id)) g.outside[d.id] ??= e.t;
-    const listed = pumpAlarmsOf(pumps);
-    for (const a of listed) this.raise(e.t, a);
-    this.ended(e.t, new Set(listed.map((a) => a.id)), (id) => id.startsWith(PUMP_ALARM_PREFIX));
+    this.pumpTruth(e.t, pumps);
   }
 
   /** The 1 Hz sample of simulated second ⌊t⌋ from the latest values (several events of one second update one sample). */
@@ -604,6 +668,7 @@ export class RunRecord {
     this.rewindGiven(t);
     this.active = new Set(k.active);
     this.reopen(t);
+    this.applyRestored(t);
     this.lastVent = k.lastVent ?? -Infinity;
     this.pulse = k.pulse;
     this.held = null;
@@ -635,6 +700,7 @@ export class RunRecord {
     this.since = -Infinity;
     this.marks.clear();
     this.pumpRows.clear();
+    this.clears = [];
     for (const k of Object.keys(this.cur)) delete this.cur[k];
     for (const k of Object.keys(this.curAt)) delete this.curAt[k];
     for (const k of LAB_KEYS) delete this.lab[k];
@@ -653,6 +719,7 @@ export class RunRecord {
     this.rewindGiven(t);
     this.since = t;
     this.copy(); // the runner went back with the engine
+    this.applyRestored(t);
   }
 
   /**
@@ -691,6 +758,7 @@ export class RunRecord {
     this.lastVent = m ? m.lastVent : -Infinity;
     this.active = new Set(m?.active ?? []);
     this.reopen(t);
+    this.applyRestored(t);
     this.pulse = m ? m.pulse : rows.filter((r) => r.undone === undefined && (r.ev === 'pulseLoss' || r.ev === 'rosc')).at(-1)?.ev !== 'pulseLoss';
   }
 }

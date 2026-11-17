@@ -4,7 +4,7 @@
 // amounts given and the running list, read from the host). The Log has a line when it was raised and when it ended, and
 // the Debrief has the alarm, its end and the drug's amount: the engine's own figure. The channel is driven through the
 // instructor's own command path (the engine's `pump` event, as mobile-learner.e2e.ts does).
-// PME_INSTRUCTOR_PUMPS_SHOTS=<dir>: the laptop at 1440 wide and the phone at 390 wide are saved there as PNG.
+// PME_INSTRUCTOR_PUMPS_SHOTS=<dir>: the laptop at 1280 × 720 and the phone at 390 wide are saved there as PNG.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -21,8 +21,8 @@ test.afterAll(async () => vite?.close());
 type Drug = { id: string; totalAmount: number };
 type W = { __pmeApp: { session: { code: string }; link: { log: Array<{ kind: string; text: string }>; drugs: { drugs: Drug[] } | null; ctl: { hostPaused: boolean }; send(c: unknown): Promise<{ accepted: boolean }> } } };
 const PHENYLEPHRINE = { amount: 100, unit: 'mcg', perMl: 1 };
-const ALARM = 'Pump channel 2 (Phenylephrine): Infusion Complete';
-const RACK = ['syringe', 'drip', 'syringe', 'syringe'];
+const ALARM = 'Pump channel 4 (Phenylephrine): Infusion Complete';
+const RACK = ['syringe', 'syringe', 'syringe', 'drip'];
 
 const pump = (page: Page, event: Record<string, unknown>) => page.evaluate((e) => (window as unknown as W).__pmeApp.link.send({ type: 'applyEvent', event: e }), { kind: 'pump', ...event });
 /** Each step once the one before it has applied (the engine checks a pump event against the channels as they are). */
@@ -43,7 +43,7 @@ test("a drip channel runs to Infusion Complete: the laptop, the phone over the r
   const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
   const shots = process.env.PME_INSTRUCTOR_PUMPS_SHOTS;
   try {
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.setViewportSize({ width: 1280, height: 720 });
     await openApp(page, base, `?relay=${ws}#/teach2`, { warmMs: 1500, site: { schema: 'pme-site/1', pumpRack: RACK } });
     const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
     const instructorPin = (await page.evaluate(() => localStorage.getItem('pme.instructorPin'))) as string;
@@ -57,15 +57,16 @@ test("a drip channel runs to Infusion Complete: the laptop, the phone over the r
     await expect(phone.locator('.pumps-ch')).toHaveCount(RACK.length, { timeout: 15_000 }); // Room setup's rack, from the host
 
     await steps(page, [
-      { action: 'load', ch: 2, channel: 'drip', contents: { drugId: 'phenylephrine', concentration: PHENYLEPHRINE, volumeMl: 100 } },
-      { action: 'program', ch: 2, drugId: 'phenylephrine', concentration: PHENYLEPHRINE, set: 20 },
-      { action: 'rate', ch: 2, rate: 60, unit: 'mL/h', limitMl: 0.5 },
+      { action: 'load', ch: 4, channel: 'drip', contents: { drugId: 'phenylephrine', concentration: PHENYLEPHRINE, volumeMl: 100 } },
+      { action: 'program', ch: 4, drugId: 'phenylephrine', concentration: PHENYLEPHRINE, set: 20 },
+      { action: 'rate', ch: 4, rate: 60, unit: 'mL/h', limitMl: 0.5 },
       { action: 'start', ch: 2 },
     ]);
     // while it runs, the phone's Drugs tab lists it by what the bag holds
     await phone.getByRole('tab', { name: 'Drugs & fluids' }).click();
-    await expect(phone.locator('.infusions li', { hasText: /^Phenylephrine [\d.]+ µg\/min: pump channel 2$/ })).toHaveCount(1, { timeout: 15_000 });
+    await expect(phone.locator('.infusions li', { hasText: /^Phenylephrine [\d.]+ µg\/min: pump channel 4$/ })).toHaveCount(1, { timeout: 15_000 });
     await phone.getByRole('tab', { name: 'Pumps' }).click();
+    await expect(phone.locator('footer.stagebar')).toBeHidden(); // nothing to stage on a read-only tab
 
     const card = page.locator('.ip2-state section.ip2-pa');
     // 0.5 mL at 60 mL/h: the channel stops 30 s of the patient's time after its start
@@ -75,34 +76,42 @@ test("a drip channel runs to Infusion Complete: the laptop, the phone over the r
     await expect.poll(() => alarmLines(page)).toEqual([ALARM]);
     // the phone: its card and the channel in alarm in its Pumps tab, with the amount given as the host reads it
     await expect(phone.locator('section.ip2-pa li')).toHaveText([ALARM], { timeout: 15_000 });
-    const pch2 = phone.locator('.pumps-ch').nth(1);
+    const pch2 = phone.locator('.pumps-ch').nth(3);
     await expect(pch2).toHaveAttribute('data-state', 'alarm');
     await expect(pch2.locator('.pumps-alarm')).toHaveText(ALARM);
     await expect(phone.locator('.pumps-given li')).toHaveText([/^Phenylephrine: 50 µg in all \(an infusion\)$/], { timeout: 15_000 });
     // the laptop: the card's control opens the rack's view, where the channel is in alarm with its programme and what it gave
     await card.getByRole('button', { name: 'Show the pumps' }).click();
     const s = await sheet(page, 'pumps');
-    const ch2 = s.locator('.pumps-ch').nth(1);
+    const ch2 = s.locator('.pumps-ch').nth(3);
     await expect(ch2).toHaveAttribute('data-state', 'alarm');
-    await expect(ch2.locator('h4')).toHaveText('Channel 2 · Drip');
+    await expect(ch2).toBeInViewport(); // the channel in alarm is brought into view on a sheet shorter than the rack
+    await expect(ch2.locator('h4')).toHaveText('Channel 4 · Drip');
     await expect(ch2.locator('.pumps-alarm')).toHaveText(ALARM);
     await expect(ch2).toContainText('Phenylephrine 100 µg/mL');
     await expect(ch2).toContainText('Infused 0.5 mL');
+    // the keyboard reaches every channel and the amounts given: Tab from the first channel lands on each in turn
+    await s.locator('.pumps-ch').first().focus();
+    for (let i = 0; i < RACK.length; i++) await page.keyboard.press('Tab');
+    await expect(s.locator('.pumps-given')).toBeFocused();
+    await expect(s.locator('.pumps-given')).toBeInViewport();
     if (shots) {
-      await page.screenshot({ path: `${shots}/instructor-pumps-${browserName}-laptop-1440.png`, animations: 'disabled' });
+      await page.screenshot({ path: `${shots}/instructor-pumps-${browserName}-laptop-1280.png`, animations: 'disabled' });
       await phone.screenshot({ path: `${shots}/instructor-pumps-${browserName}-phone-390.png`, fullPage: true, animations: 'disabled' });
     }
-    // a new limit and a start clear it: both cards go, the Log says it ended
-    await steps(page, [{ action: 'rate', ch: 2, rate: 60, unit: 'mL/h', limitMl: 5 }, { action: 'start', ch: 2 }]);
+    // a new limit and a start clear it: both cards go, the Log says it ended, and the channel delivers again
+    const atAlarm = await engineMcg(page);
+    await steps(page, [{ action: 'rate', ch: 4, rate: 60, unit: 'mL/h', limitMl: 5 }, { action: 'start', ch: 4 }]);
     await expect(card).toBeHidden({ timeout: 10_000 });
     await expect(phone.locator('section.ip2-pa')).toBeHidden({ timeout: 15_000 });
     await expect.poll(() => alarmLines(page)).toEqual([ALARM, `${ALARM} ended`]);
+    await expect.poll(() => engineMcg(page), { timeout: 15_000 }).toBeGreaterThan(atAlarm);
     await closeSheets(page);
     // the Debrief: the alarm, its end, and the engine's own amount as the case was paused
     await pillV2(page).click();
     await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused), { timeout: 20_000 }).toBe(true);
     const mcg = await engineMcg(page);
-    expect(mcg).toBeGreaterThan(0); // the restarted channel may or may not have run before the pause: the line is checked against this figure
+    expect(mcg).toBeGreaterThan(atAlarm);
     await debriefLinkV2(page).click();
     const db = page.locator('[data-view=debrief]');
     await expect(db.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible({ timeout: 10_000 });
