@@ -453,12 +453,18 @@ export function breathSignal(d: DriverState, t: number, complianceMl: number): n
   return 0.5 - (dv / Math.max(1, c.vt)) * (SPONT_PPL_CMH2O / U_REF_CMH2O);
 }
 
+/** The end-expiratory pressure the lung meets (cmH2O): the ventilator's PEEP, or ambient through an open circuit. */
+export function lungPeep(d: DriverState): number {
+  if (d.airway === 'disconnected') return 0;
+  return d.source === 'ventilator' ? d.vent.peep : d.source === 'external' && d.ext ? d.ext.peep : 0;
+}
+
 /** Mean airway pressure (cmH2O) now: PEEP + mean alveolar swing (internal), or the drive's running mean. */
 export function meanAirwayPressure(d: DriverState, t: number, complianceMl: number): number {
   if (d.source === 'external' && d.ext) return d.ext.meanPaw;
   if (d.source !== 'ventilator' && d.source !== 'bvm') return 0;
   const c = lastCycleBefore(d, t);
-  const peep = d.source === 'ventilator' ? d.vent.peep : 0;
+  const peep = lungPeep(d);
   return c && c.exch ? peep + meanVolume(c) / complianceMl : peep;
 }
 

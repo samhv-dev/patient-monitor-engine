@@ -46,7 +46,7 @@ import { actualVolumes, closingCapacity, pattern, predictedVolumes, type Actual,
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts';
 import {
   alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, nominalRate,
-  LINK_PMUS_GAIN, onVentFrame, ownEffortPmus, planCycles, preoxActive, pruneCycles, replan, VCV_PMAX_DEFAULT, alveolarFraction, type DriverCtx, type DriverState,
+  LINK_PMUS_GAIN, lungPeep, onVentFrame, ownEffortPmus, planCycles, preoxActive, pruneCycles, replan, VCV_PMAX_DEFAULT, alveolarFraction, type DriverCtx, type DriverState,
 } from './driver.ts';
 
 export const RESP_CHANNELS = ['co2', 'resp'] as const satisfies readonly ChannelId[];
@@ -212,6 +212,7 @@ export function effortTriggers(pmus: number, autoPeep: number, resistance: numbe
 /** The patient's own inspiratory effort under the machine (MODELED; brief 93), or undefined (none evaluated, MANUAL). */
 export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { muscle: number; pmus: number; triggered: boolean } | undefined {
   if (l1.mode !== 'modeled' || (rs.driver.source !== 'ventilator' && rs.driver.source !== 'external') || rs.spont?.muscle === undefined) return undefined;
+  if (rs.driver.airway === 'apnoea') return { muscle: 0, pmus: 0, triggered: false };
   const muscle = rs.spont.muscle;
   const cap = P_MAX_CMH2O * (neuro?.pMaxMult ?? 1) * rs.lung.lp.pMax * rs.spont.fatigue; // The force the muscle can make
   const pmus = Math.min(cap, LINK_PMUS_GAIN * PMUS_REST_CMH2O * muscle); // the peak, at the link's own gain (driver.ts)
@@ -385,12 +386,12 @@ export function inductionFactor(pat: GasPatient): number {
  */
 export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'; x: number; pLimit?: number } { // pLimit
   const d = rs.driver;
-  const peep = d.source === 'ventilator' ? d.vent.peep : d.source === 'external' && d.ext ? d.ext.peep : 0;
+  const peep = lungPeep(d);
   if (rs.recruit && t < rs.recruit.until) return { mode: 'pressure', x: rs.recruit.p };
   if (d.source === 'external' && d.ext) {
     const dt = 0.016;
     const q = (frameAt(d.ext, t, 2) - frameAt(d.ext, t - dt, 2)) / dt; // mL/s from the frames' volume
-    return q > 50 ? { mode: 'flow', x: q } : { mode: 'pressure', x: d.ext.peep };
+    return q > 50 && d.airway !== 'disconnected' ? { mode: 'flow', x: q } : { mode: 'pressure', x: peep };
   }
   const c = cycleAt(d, t);
   if (!c || !c.exch || t >= c.cutAt || !(c.vt > 0)) return { mode: 'pressure', x: peep };
@@ -687,17 +688,19 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
 
 function lungStateEvent(rs: RespState, t: number, l1?: L1State): void {
   const d = rs.driver;
-  const ev = lungStatePayload(rs.lung, {
+  const effort = d.airway === 'apnoea' ? 0 : d.source === 'spontaneous' ? 1 : Math.max(d.cleft, l1 ? ownEffort(rs, l1)?.muscle ?? 0 : 0);
+  const payload = lungStatePayload(rs.lung, {
     deadSpaceMl: deadSpace(rs, l1), frcMl: frcNow(rs),
-    effort: d.source === 'spontaneous' ? 1 : Math.max(d.cleft, l1 ? ownEffort(rs, l1)?.muscle ?? 0 : 0), peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
+    effort, peep: lungPeep(d),
     baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
     pleuralMmHg: Math.max(rs.lung.lp.pPtx, rs.circPtx), // Stage V.1: as respPleural combines them
   }); // Absolute + per-lung fields
+  const ev = d.airway === 'patent' ? payload : { ...payload, airway: d.airway };
   const key = JSON.stringify(ev);
   if (key === rs.lungKey) return;
   // The per-lung fields move slowly but continuously: emit at most once per second unless a respiratory-signal field
   // changed
-  const core = JSON.stringify([ev.complianceMlPerCmH2O, ev.resistanceCmH2OPerLps, ev.effort, ev.autoPeepTendency, ev.shunt, ev.deadSpaceMl, ev.frcMl]);
+  const core = JSON.stringify([ev.complianceMlPerCmH2O, ev.resistanceCmH2OPerLps, ev.effort, ev.autoPeepTendency, ev.shunt, ev.deadSpaceMl, ev.frcMl, d.airway]);
   if (core === rs.lungCore && t - rs.lungT < 1) return;
   rs.lungKey = key;
   rs.lungCore = core;
@@ -725,7 +728,6 @@ function createBrk(profile: PatientProfile | undefined, pat: GasPatient): RespSt
   const heightCm = profile?.heightCm ?? defaultHeightCm(ageY);
   return { pk: 0, peepTot: 0, pesEe: 0, ageY, bmi: pat.weightKg / (heightCm / 100) ** 2, pred: predictedVolumes({ ageY, sex: profile?.sex ?? 'M', heightCm }) };
 }
-const setPeep = (rs: RespState) => (rs.driver.source === 'ventilator' ? rs.driver.vent.peep : rs.driver.source === 'external' && rs.driver.ext ? rs.driver.ext.peep : 0);
 /** End-expiration (the next sample starts an inspiration): the expiratory hold on a copy and the end-expiratory Pes. */
 function breathStart(rs: RespState, t: number): void {
   rs.brk.peepTot = mechSource(rs) ? expHold(rs.lung.mp, rs.lung.mech) : 0; // a hold needs a ventilator (D3)
@@ -745,7 +747,7 @@ function breathEnd(rs: RespState, l1: L1State, t: number): void {
   // Rinsp needs square flow — not a breath held at the VCV Pmax, not an external (link) PCV/PSV frame
   const limited = rs.driver.source === 'external' || (rs.driver.source === 'ventilator' && ppeak >= (rs.driver.vent.pmax ?? VCV_PMAX_DEFAULT) - 0.05);
   rs.mechanics = breathMechanics({
-    t, mech, limited, vt, ti: t - ls.tInsp, peep: setPeep(rs), ppeak, pplat: mech ? inspHold(ls.mp, ls.mech) : 0, peepTot: rs.brk.peepTot,
+    t, mech, limited, vt, ti: t - ls.tInsp, peep: lungPeep(rs.driver), ppeak, pplat: mech ? inspHold(ls.mp, ls.mech) : 0, peepTot: rs.brk.peepTot,
     pesEi: pesNow(rs, t), pesEe: rs.brk.pesEe, elErs: 1 - staticCompliance(ls) / ls.mp.ccw,
   });
   const art = mech || rs.driver.airway !== 'patent';
