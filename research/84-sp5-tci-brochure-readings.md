@@ -68,6 +68,9 @@ not named; p. 3 Ce can be locked by pressing and holding a button (OTCI).
 | Face | rate shown during a bolus | silent | gap |
 | Face | trailing zeros | silent (the brochure's own text is not the screen) | gap |
 
+The brochure's gaps TC-08 to TC-13 are now filled from the SP5 family's operator's manual, as the family's numbers
+(research/86).
+
 Every mechanical number, and so the TCI rate ceiling, needs the SP5 TCI operator's manual (or its 2015-08-07 data
 sheet).
 

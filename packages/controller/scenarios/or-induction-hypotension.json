@@ -24,7 +24,8 @@
     {
       "id": "induction", "label": "Induced",
       "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 112, \"ramp\": { \"durationS\": 60, \"curve\": \"exp\" } }.",
-      "transitions": [ { "id": "fall", "to": "hypotension", "when": { "afterS": 60 } } ]
+      "transitions": [ { "id": "fall", "to": "hypotension", "when": { "all": [ { "afterS": 60 }, { "rhythm": { "id": "sinus" } } ] },
+          "src": "PLACEHOLDER: no source read gives 60 s from propofol to the fall in pressure." } ]
     },
     {
       "id": "hypotension", "label": "Hypotension, reflex tachycardia",

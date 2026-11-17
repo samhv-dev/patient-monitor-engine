@@ -21,11 +21,13 @@
       ]
     },
     { "id": "circulating", "label": "Adenosine circulating", "notes": "10–30 s from push to effect.",
-      "transitions": [ { "id": "reachesNode", "to": "block", "when": { "afterS": 15 } } ] },
+      "transitions": [ { "id": "reachesNode", "to": "block", "when": { "all": [ { "afterS": 15 }, { "rhythm": { "id": "svtAvnrt" } } ] },
+        "src": "15 s: within the 10–30 s from push to effect, DESIGN-BRIEF §4.9 drug table (adenosine)." } ] },
     {
       "id": "block", "label": "Transient AV block",
       "onEnter": [ { "type": "setRhythm", "rhythm": "avb3Narrow", "opts": { "atrialRateBpm": 110, "rateBpm": 20 }, "when": "now" } ],
-      "transitions": [ { "id": "wearsOff", "label": "Block wears off (p 0.6 converts)", "to": "sinus", "when": { "afterS": 6 }, "probability": 0.6, "else": "svtAgain" } ]
+      "transitions": [ { "id": "wearsOff", "label": "Block wears off (p 0.6 converts)", "to": "sinus", "when": { "all": [ { "afterS": 6 }, { "rhythm": { "id": "avb3Narrow" } } ] }, "probability": 0.6, "else": "svtAgain",
+        "src": "6 s: within the AV block of 3–10 s, DESIGN-BRIEF §4.9 drug table (adenosine); p 0.6 is the card's placeholder (its $comment)." } ]
     },
     { "id": "svtAgain", "label": "SVT resumes", "onEnter": [ { "type": "setRhythm", "rhythm": "svtAvnrt", "opts": { "rateBpm": 180 }, "when": "now" } ],
       "transitions": [ { "id": "adenosine2", "label": "Adenosine ≥ 6 mg", "to": "circulating", "when": { "event": { "kind": "drug", "drugId": "adenosine", "minDose": 6 } } } ] },
