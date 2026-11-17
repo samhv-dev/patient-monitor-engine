@@ -5,7 +5,7 @@
 // with the instructor PIN on another (the relay's stand-in), the learner remote a raw peer signed in with the learner
 // PIN. The card shows within the host tick that staged it, on both; the press reaches the remote once, from either; a
 // Give before it is given and the card says so; clean preparations are listed collapsed.
-import { ControllerSession, createInProcessHub, createStamper, HostSession, type Formulary, type HostTarget, type ManagedTransport, type WireEvent, type WireMessage } from '@pme/controller';
+import { ControllerSession, SignInCredential, createInProcessHub, createStamper, HostSession, type Formulary, type HostTarget, type ManagedTransport, type WireEvent, type WireMessage } from '@pme/controller';
 import type { DispatchResult } from '@pme/engine-core';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { loadShippedFormulary } from '../formulary.ts';
@@ -60,7 +60,7 @@ async function room() {
   const relayHub = createInProcessHub();
   host.addTransport(relayHub.connect());
   const phoneT = relayHub.connect();
-  const phoneCtl = new ControllerSession({ session: S, transport: phoneT, issuedBy: 'remote', role: 'instructor', pin: () => INSTRUCTOR_PIN });
+  const phoneCtl = new ControllerSession({ session: S, transport: phoneT, issuedBy: 'remote', role: 'instructor', credential: new SignInCredential(INSTRUCTOR_PIN) });
   const phone = new Link(phoneCtl, phoneT, null);
   closers.push(() => (laptop.close(), phone.close(), laptopCtl.close(), phoneCtl.close()));
   await until(() => phoneCtl.access.state === 'granted', 'the phone granted');

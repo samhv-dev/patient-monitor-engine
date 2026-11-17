@@ -137,8 +137,11 @@ async function remote(id: string, pin = PIN) {
   const got: WireMessage[] = [];
   sock.onMessage((m) => got.push(m));
   const st = createStamper(CODE, id);
+  // the host's grant or refusal, as delivered: it answers after a real SHA-256 of the ticket it hands on, not on the clock
+  const answered = new Promise<void>((ok) => sock.onMessage((m) => void (m.kind === 'grant' && m.to === id && ok())));
   sock.send(st({ kind: 'hello', role: 'ventilator', pin }));
   await vi.advanceTimersByTimeAsync(20);
+  await answered;
   const granted = got.some((m) => m.kind === 'grant' && m.to === id && m.granted);
   let d: ReturnType<typeof createVentDriver> | null = null;
   const port = tagged(createRelayPort(ventWireOver(sock as never, st as never, { self: id }), { settings: () => (d ? { cfg: d.vs.cfg, measured: { RR: d.vs.p.measured.RR, VTE: d.vs.p.measured.VTE } } : null) }), id);
@@ -348,7 +351,7 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     const b = await remote('vent-b.1');
     await vi.advanceTimersByTimeAsync(2000);
     expect(cockpitDesk(s).driving?.remote).toBe(true);
-    s.host.instructorPinChanged();
+    await s.host.instructorPinChanged();
     timings.revoked = await until(3);
     expect(b.got.some((m) => m.kind === 'grant' && m.to === 'vent-b.1' && !m.granted)).toBe(true);
     await vi.advanceTimersByTimeAsync(2000);

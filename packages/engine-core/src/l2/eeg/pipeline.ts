@@ -15,7 +15,7 @@ import type { DrugBus } from '../../types-pk.ts';
 import type { ArtefactSpec } from '../ecg/api-types.ts';
 import { artefactSample, createArtefacts, type ArtState } from './artefacts.ts';
 import { spectrumOf } from './spectra.ts';
-import { agentMixOf, brainDo2Rel, cortexInputsOf, cortexStep } from './state.ts';
+import { agentMixOf, cortexInputsOf, cortexStep } from './state.ts';
 import { createSynth, synthNext, type SynthState } from './synth.ts';
 
 /** The channel's rate: one frontal channel at 125 Hz, an existing engine rate covering Miller's 0–50 Hz spectrograms
@@ -37,12 +37,9 @@ export interface EegCtx {
   antinoc: number;
   t1: number;
   tube: boolean;
-  /** The organs (brain CBF relative to normal) and the blood gases they read; core temperature; the hypothermic MAC
-   * factor (the endocrine model's cascade). */
-  cbfRel: number;
-  hb: number;
-  sao2: number;
-  pao2: number;
+  /** The organs' cortex energy state (its loss of function); core temperature; the hypothermic MAC factor (the
+   * endocrine model's cascade). */
+  metabolic: number;
   tempC: number;
   macF: number;
   /** The ECG model's artefact state (read only) and the device mains frequency. */
@@ -66,8 +63,7 @@ const HOP_DT = (s: SynthState) => s.H / s.fs;
 
 function spectrumNow(prev: CortexState | undefined, ctx: EegCtx, dtS: number) {
   const x = cortexInputsOf(ctx.bus, {
-    ageY: ctx.ageY, stimulus: ctx.stimulus, antinoc: ctx.antinoc, tempC: ctx.tempC, macF: ctx.macF,
-    do2Rel: brainDo2Rel(ctx.cbfRel, ctx.hb, ctx.sao2, ctx.pao2),
+    ageY: ctx.ageY, stimulus: ctx.stimulus, antinoc: ctx.antinoc, metabolic: ctx.metabolic, tempC: ctx.tempC, macF: ctx.macF,
   });
   const cortex = cortexStep(prev, x, dtS);
   return { cortex, spec: spectrumOf(cortex, agentMixOf(x)) };

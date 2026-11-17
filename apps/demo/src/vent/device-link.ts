@@ -1,7 +1,9 @@
 // R8d (plan room-and-instruments.md §7): the ventilator's own page signs in over the relay as the `ventilator` role
 // (R8a), granted by the host's PIN check (R8c) and carried by the relay to the host only (R8b). As the instructor's
-// phone does (controller-session.ts): every open socket says its own hello, from a fresh peer id, with the PIN the page
-// holds in memory (typed into P7's form; never in an address); a grant never passes from one socket to another. Its
+// phone does (controller-session.ts): every open socket says its own hello, from a fresh peer id, with the PIN typed
+// into P7's form until the host hands it a ticket, then with that ticket (sign-in-credential.ts; in the page's memory
+// only, never in an address); a grant never passes from one socket to another. When the instructor's computer
+// reconnects (the relay's notice), it stays signed in in its page and says its hello again on the host's hello. Its
 // link messages go out as `vent` only while it is granted, and only a `vent` for it is heard. A refusal ends the link
 // with the reason (the page shows the form again). When the browser says the network is gone (`offline`) it drops its
 // socket at once, so nothing it computes reaches the patient late: the host hears the silence and hands the patient to
@@ -9,7 +11,7 @@
 // host that handed it over for its silence revokes that socket id (VENTILATOR_REASONS.silent): it signs in again at once
 // on a new socket (closing the browser's socket does not stop Chromium sending frames it held on it once the network is
 // back; the host refuses those, by the revoked id).
-import { createStamper, createWebSocketTransport, newPeerId, VENTILATOR_REASONS, type InstructorAccess, type ManagedTransport, type WireMessage } from '@pme/controller';
+import { createStamper, createWebSocketTransport, isRejoined, newPeerId, VENTILATOR_REASONS, type InstructorAccess, type ManagedTransport, type SignInCredential, type WireMessage } from '@pme/controller';
 import type { VentWire, VentWireBody } from '@pme/ventilator';
 
 /** Plan §5 (instructor-peer-role.md): a socket that heard nothing this long is dropped and opened again, as the
@@ -33,7 +35,7 @@ export interface VentDevice {
 export interface VentDeviceOptions {
   code: string;
   relay: string;
-  pin: string;
+  credential: SignInCredential;
   /** For tests: the link to the relay (default a WebSocket with VENT_LIVENESS_MS). */
   connect?: (relay: string) => ManagedTransport;
 }
@@ -49,6 +51,8 @@ export function signInVentilator(o: VentDeviceOptions): VentDevice {
   let sender: string | null = null;
   let stamp: ReturnType<typeof createStamper> | null = null;
   let link: { t: ManagedTransport; offs: Array<() => void> } | null = null;
+  let rejoined = false; // the relay said a new host socket came: say the hello again on its hello
+  const hello = () => link && stamp && link.t.send(stamp({ kind: 'hello', role: 'ventilator', ...o.credential.proof() }));
   const set = (s: VentDeviceState, a: Pick<InstructorAccess, 'reason' | 'code'> = {}) => {
     state = s;
     access = a;
@@ -72,13 +76,16 @@ export function signInVentilator(o: VentDeviceOptions): VentDevice {
         sender = `${peer}.${++n}`;
         stamp = createStamper(o.code, sender);
         set('pending');
-        t.send(stamp({ kind: 'hello', role: 'ventilator', pin: o.pin }));
+        hello();
       }),
       t.onMessage((m: WireMessage) => {
         if (link !== cur) return;
+        if (m.kind === 'hello' && m.role === 'host' && rejoined) return void ((rejoined = false), hello());
         if (m.kind === 'grant') {
           if (m.to !== sender) return;
+          o.credential.take(m);
           if (m.granted) return set('granted');
+          if (isRejoined(m)) return void ((rejoined = true), set('pending'));
           // handed over for its silence (the hand-over contract): this socket id is done; sign in again at once on a
           // new socket with the PIN held, and take over from the engine's settings then
           if (m.reason === VENTILATOR_REASONS.silent) {

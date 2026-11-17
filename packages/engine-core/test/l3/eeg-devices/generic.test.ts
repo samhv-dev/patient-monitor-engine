@@ -17,7 +17,7 @@ const C = GENERIC_SPEC.constants;
 const GOOD = [2, 2, 2];
 const H0 = { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 };
 const M0 = { sevoflurane: 0, isoflurane: 0, desflurane: 0, n2o: 0 };
-const inp = (p: Partial<CortexInputs> = {}): CortexInputs => ({ ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, do2Rel: 1, tempC: 37, hyp: H0, mac: M0, ...p });
+const inp = (p: Partial<CortexInputs> = {}): CortexInputs => ({ ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, metabolic: 0, tempC: 37, hyp: H0, mac: M0, ...p });
 const sp = (p: Partial<CortexInputs> = {}): EegSpectrum => { const x = inp(p); return spectrumOf(cortexStep(undefined, x, 1), agentMixOf(x)); };
 const AWAKE = sp();
 const GA = sp({ hyp: { ...H0, gabaIv: 3500 } }); // propofol 3.5 µg/mL

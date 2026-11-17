@@ -4,14 +4,17 @@
 // "learner PIN" in them). The PIN is held in this page's memory only: the form has no name for it and never submits, so it
 // is never in the address or the history, and nothing here writes it to the phone's store; the field is emptied at sign-in
 // and when the page is left. At sign-in the page mounts the follower (views/follower.ts) whose every hello says
-// `{role: 'learner', show: 'learner', device, pin}`; the laptop's host grants it on the learner PIN (L4). Granted, the
+// `{role: 'learner', show: 'learner', device, pin}`; the laptop's host grants it on the learner PIN (L4) and hands it a
+// ticket, which every later hello says instead of the PIN (the page then holds no PIN). When the instructor's computer
+// reconnects (the relay's notice), the page stays as it is, says it is signing in again, and its next hello proves the
+// ticket. Granted, the
 // page shows the patient's monitor as a strip at the top, three tabs (Drugs, Infusions, Labs) and, under them, the
 // follower's connection line with its own Sound, Silence and "Change" (back to the picker). L7 puts the drugs menu (the
 // bench and the tray, remote/drugs.ts) in the Drugs tab (`drugs`), L8 the infusions menu (remote/infusions.ts) in the
 // Infusions tab (`infusions`), L11 the labs view (remote/labs.ts) in the Labs tab (`labs`); a tab given no menu is an empty frame that says so. Each sign-in mounts a new follower: `onSignedIn` hands it to the menus once the host grants it. A refusal (a wrong
 // learner PIN, too many tries, the learner PIN changed on the laptop) tears the follower down and shows the form again
 // with the reason in words.
-import { INSTRUCTOR_REASONS, LEARNER_REASONS, type RelayFrame, type WireMessage } from '@pme/controller';
+import { INSTRUCTOR_REASONS, isRejoined, LEARNER_REASONS, SignInCredential, TICKET_REASONS, type RelayFrame, type WireMessage } from '@pme/controller';
 import type { View } from '../shell.ts';
 import { h, setText, tabs } from '../ui.ts';
 import type { Follower } from './follower.ts';
@@ -39,9 +42,13 @@ export const LEARNER_WORDS = {
   badPin: 'The learner PIN has 4 to 8 digits.',
   signingIn: "Signing in: waiting for the instructor's computer…",
   signedIn: (code: string) => `Signed in as a learner remote · ${code}`,
+  signingInAgain: PHONE_WORDS.signingInAgain,
   wrongPin: 'Wrong learner PIN. Enter the learner PIN the instructor reads out.',
   tooManyTries: 'Too many wrong learner PINs from this phone. Wait a minute, then enter the learner PIN again.',
   pinChanged: "The learner PIN was changed on the instructor's computer. Enter the new learner PIN.",
+  takenOver: 'This sign-in was taken by another device. Enter the learner PIN to sign in again.',
+  newSession: "The instructor's computer started a new session. Enter the learner PIN to sign in again.",
+  notRenewed: "This phone's sign-in could not be renewed. Enter the learner PIN to sign in again.",
   noRemote: "The instructor's computer does not take a learner remote.",
   samePins: "The instructor's computer cannot take a learner remote until it draws a new learner PIN. Ask the instructor.",
   full: 'This room is full: no more phones can join it.',
@@ -65,6 +72,9 @@ export function learnerRefusalWords(a: { reason?: string; code?: string }): stri
   if (a.reason === LEARNER_REASONS.pinChanged) return LEARNER_WORDS.pinChanged;
   if (a.reason === LEARNER_REASONS.noRemote) return LEARNER_WORDS.noRemote;
   if (a.reason === LEARNER_REASONS.samePins) return LEARNER_WORDS.samePins;
+  if (a.reason === INSTRUCTOR_REASONS.takenOver) return LEARNER_WORDS.takenOver;
+  if (a.reason === TICKET_REASONS.newSession) return LEARNER_WORDS.newSession;
+  if (a.reason === TICKET_REASONS.used) return LEARNER_WORDS.notRenewed;
   return `Not signed in: ${a.reason ?? "the instructor's computer refused the phone"}.`;
 }
 
@@ -73,9 +83,9 @@ export interface LearnerRemoteOptions {
   code: string;
   /**
    * Mount the follower for `code` with its status line and buttons in `bar`, saying `{role: 'learner', show: 'learner',
-   * device, pin: pin()}` on every hello (main.ts: mountFollower over the relay). Called at each sign-in.
+   * device}` and the credential's proof on every hello (main.ts: mountFollower over the relay). Called at each sign-in.
    */
-  follow(code: string, bar: HTMLElement, pin: () => string): Follower;
+  follow(code: string, bar: HTMLElement, credential: SignInCredential): Follower;
   /** The monitor's region (the shell's stage): hidden until the host grants the remote. */
   stage?: HTMLElement;
   /** L7: the Drugs tab's menu (remote/drugs.ts), mounted in its panel. */
@@ -144,7 +154,7 @@ export function learnerRemoteView(o: LearnerRemoteOptions): LearnerRemote {
   function signIn(code: string, pin: string): void {
     live?.stop();
     bar.replaceChildren();
-    const f = o.follow(code, bar, () => pin); // the PIN lives in this closure, and nowhere else
+    const f = o.follow(code, bar, new SignInCredential(pin)); // the PIN lives in the credential until the first ticket, and nowhere else
     let opened = false;
     let hostSeen = false;
     let granted = false;
@@ -162,12 +172,14 @@ export function learnerRemoteView(o: LearnerRemoteOptions): LearnerRemote {
         if (m.kind === 'hello' && m.role === 'host') hostSeen = true;
         if (m.kind !== 'grant') return;
         if (m.granted) return void ((granted = true), draw());
+        if (isRejoined(m)) return void (setText(status, LEARNER_WORDS.signingInAgain), (status.dataset.state = 'pending'));
         refuse(learnerRefusalWords({ ...(m.reason !== undefined ? { reason: m.reason } : {}) }));
       }),
       // The relay's refusal (too many tries, a full room, an older kit); its `denied` follows the host's grant, whose words stand
       f.transport.onRelayFrame?.((fr: RelayFrame) => {
         if (fr.relay !== 'error' || fr.code === 'denied') return;
-        if (fr.code === 'too-many-tries' || fr.code === 'full' || fr.code === 'forbidden') refuse(learnerRefusalWords({ code: fr.code, reason: fr.message }));
+        // a command refused while it signs in again after the computer reconnected is not an older kit
+        if (fr.code === 'too-many-tries' || fr.code === 'full' || (fr.code === 'forbidden' && !granted)) refuse(learnerRefusalWords({ code: fr.code, reason: fr.message }));
       }) ?? (() => undefined),
     ];
     const giveUp = setTimeout(() => {

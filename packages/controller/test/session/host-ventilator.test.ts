@@ -170,7 +170,7 @@ describe('the host grants one remote ventilator (R8c)', () => {
     device(relay, 'ph.1', 'instructor').hello(PIN);
     await waitFor(() => grants(got, 'ph.1').length === 1);
     setPin('5555');
-    host.instructorPinChanged();
+    await host.instructorPinChanged();
     await waitFor(() => grants(got, 'ph.1').length === 2);
     expect(grants(got, 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: INSTRUCTOR_REASONS.pinChanged });
     expect(grants(got, 'ph.1').at(-1)).toMatchObject({ granted: false, reason: INSTRUCTOR_REASONS.pinChanged });
@@ -185,12 +185,12 @@ describe('the host grants one remote ventilator (R8c)', () => {
     expect(holders).toEqual(['vent-a.1', null, 'vent-a.1', null]);
   });
 
-  it('its socket leaving (peer-left) or its transport closing ends the grant: the app is told at once', async () => {
+  it('its socket leaving (peer-left) or its transport closing ends the grant: the app is told (after any check still pending)', async () => {
     const { link, holders } = setup();
     const one = link();
     device(one.relay, 'vent-a.1').hello(PIN);
     await waitFor(() => holders.length === 1);
-    one.detach();
+    await one.detach();
     expect(holders).toEqual(['vent-a.1', null]);
     const sock = new FakeRelaySocket();
     const seen: Array<string | null> = [];
@@ -213,7 +213,7 @@ describe('a silence hand-over revokes the cockpit id (R8c/R8d hand-over contract
     await waitFor(() => grants(got, 'vent-a.1').some((g) => g.granted));
     v.vent(cmds(1));
     await waitFor(() => vents.length === 1);
-    expect(host.revokeVentilator('vent-a.1', VENTILATOR_REASONS.silent)).toBe(true);
+    expect(await host.revokeVentilator('vent-a.1', VENTILATOR_REASONS.silent)).toBe(true);
     await settle();
     expect(grants(got, 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: VENTILATOR_REASONS.silent });
     expect(holders.at(-1)).toBeNull();
@@ -233,9 +233,9 @@ describe('a silence hand-over revokes the cockpit id (R8c/R8d hand-over contract
     const v1 = device(relay, 'vent-a.1');
     v1.hello(PIN);
     await waitFor(() => grants(got, 'vent-a.1').some((g) => g.granted));
-    expect(host.revokeVentilator('vent-zz.9', VENTILATOR_REASONS.silent)).toBe(false);
+    expect(await host.revokeVentilator('vent-zz.9', VENTILATOR_REASONS.silent)).toBe(false);
     expect(host.ventilator).toBe('vent-a.1');
-    host.revokeVentilator('vent-a.1', VENTILATOR_REASONS.silent);
+    await host.revokeVentilator('vent-a.1', VENTILATOR_REASONS.silent);
     const v2 = device(relay, 'vent-a.2');
     v2.hello(PIN);
     await waitFor(() => grants(got, 'vent-a.2').some((g) => g.granted));

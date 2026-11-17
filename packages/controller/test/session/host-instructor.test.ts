@@ -246,7 +246,7 @@ describe('who holds the role', () => {
     p.hello(PIN);
     await waitFor(() => grants(got, 'ph.1').length === 1);
     pin = '8100';
-    host.instructorPinChanged();
+    await host.instructorPinChanged();
     await waitFor(() => grants(got, 'ph.1').length === 2);
     expect(grants(got, 'ph.1')[1]).toMatchObject({ granted: false, reason: 'the PIN was changed' });
     const id = p.command(hr);
@@ -312,7 +312,7 @@ describe('who holds the role', () => {
     ph.hello(PIN); // the holder says hello again (a restore): no change
     phone(relay, 'ph.2').hello(PIN); // takes over: still one
     await waitFor(() => grants(got, 'ph.2').length === 1);
-    host.instructorPinChanged();
+    await host.instructorPinChanged();
     await waitFor(() => seen.length === 3);
     expect(seen).toEqual([1, 1, 0]);
     const other = link();

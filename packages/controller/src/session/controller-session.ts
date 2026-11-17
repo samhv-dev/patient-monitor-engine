@@ -5,7 +5,7 @@
 // Playwright Linux WebKit's BroadcastChannel), and refused after COMMAND_ANSWER_TIMEOUT_MS with no answer (a host
 // that stopped answering) — a sender always hears back; it never waits forever.
 // With `role: 'instructor'` (plan instructor-peer-role.md P5) it is the instructor's phone: it says its hello with the
-// PIN on every open socket, under a fresh `from` per connection, holds its commands until the host grants it, and
+// PIN, or once admitted the ticket the host handed it (sign-in-credential.ts), on every open socket, under a fresh `from` per connection, holds its commands until the host grants it, and
 // answers its own pending commands locally when a new host appears (the laptop reloaded), never giving them to the
 // reloaded case. A `controller` behaves as before.
 import type { RhythmId, SimSeconds } from '@pme/engine-core';
@@ -13,6 +13,9 @@ import {
   createStamper,
   newPeerId,
   fastForwardDone,
+  isRejoined,
+  REJOINED,
+  RELAY_PEER,
   SeqFilter,
   type AckCode,
   type AckResult,
@@ -31,6 +34,7 @@ import {
 import type { RelayFrame } from '../transport/relay-frames.ts';
 import { ScenarioView } from '../scenario/view.ts';
 import { RecentGives } from './drug-lock.ts';
+import type { SignInCredential } from './sign-in-credential.ts';
 
 export interface LogEntry {
   /** Wall time (epoch ms) the entry was made. */
@@ -56,8 +60,8 @@ export interface ControllerSessionOptions {
   answerTimeoutMs?: number;
   /** 'instructor': a phone that proves the PIN and commands once the host grants it (default 'controller'). */
   role?: 'controller' | 'instructor';
-  /** The instructor's PIN, read at every hello (held in the page's memory only, plan Q3). Required for 'instructor'. */
-  pin?: () => string;
+  /** What the instructor's hello proves: the PIN, then the host's ticket (in the page's memory only, plan Q3). Required for 'instructor'. */
+  credential?: SignInCredential;
 }
 
 /**
@@ -137,7 +141,7 @@ export class ControllerSession {
   constructor(o: ControllerSessionOptions) {
     this.o = o;
     this.instructor = o.role === 'instructor';
-    if (this.instructor && !o.pin) throw new Error('an instructor session needs a pin');
+    if (this.instructor && !o.credential) throw new Error('an instructor session needs a credential');
     // Plan §7: every window of the browser hears a BroadcastChannel, so the PIN never goes on one
     if (this.instructor && o.transport.kind === 'broadcastChannel') throw new Error('an instructor session goes through the relay, never a BroadcastChannel');
     this.access = { state: this.instructor ? 'pending' : 'granted' };
@@ -282,10 +286,10 @@ export class ControllerSession {
     this.addLog('status', `link ${s}`);
   }
 
-  /** The instructor's hello, with the PIN (never logged): its access is pending until the host answers. */
+  /** The instructor's hello, with its proof (never logged): its access is pending until the host answers. */
   private sayInstructorHello(): void {
     this.setAccess({ state: 'pending' });
-    this.o.transport.send(this.stamp({ kind: 'hello', role: 'instructor', pin: (this.o.pin as () => string)() }));
+    this.o.transport.send(this.stamp({ kind: 'hello', role: 'instructor', ...(this.o.credential as SignInCredential).proof() }));
   }
 
   private setAccess(a: InstructorAccess): void {
@@ -328,6 +332,9 @@ export class ControllerSession {
   /** The host's answer to our instructor hello, for this socket's `from` only. */
   private onGrant(m: Extract<WireMessage, { kind: 'grant' }>): void {
     if (!this.instructor || m.to !== this.sender) return;
+    // A new host socket came: not a refusal; the hello goes again on the host's hello, with the ticket held
+    if (isRejoined(m)) return this.setAccess({ state: 'pending', reason: REJOINED });
+    this.o.credential?.take(m);
     if (m.granted) {
       this.setAccess({ state: 'granted' });
       this.resendPending(); // the held commands, in the order they were pressed
@@ -344,7 +351,7 @@ export class ControllerSession {
         if (m.role === 'host') this.onHostHello(m.from);
         return;
       case 'grant':
-        this.hostId ??= m.from;
+        if (m.from !== RELAY_PEER) this.hostId ??= m.from;
         this.onGrant(m);
         return;
       case 'ack': {

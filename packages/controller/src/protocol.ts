@@ -443,23 +443,37 @@ export type VentLinkBody =
 export interface VentStateBody { v: 1; face: string | null; tick: number; body: unknown }
 export type VentLinkKind = VentLinkBody['kind'];
 
+/** The `from` of the relay's own WireMessages (the grant false of a host readmit); its seq is the wall clock. */
+export const RELAY_PEER = 'pme-relay';
+/** The relay's notice to a signed-in device when a new host socket came: it is not a refusal (the device signs in again). */
+export const REJOINED = "the instructor's computer reconnected; signing in again";
+/** Whether `m` is that notice: the device keeps its page and says its hello again on the host's hello. */
+export const isRejoined = (m: WireMessage): boolean => m.kind === 'grant' && !m.granted && m.from === RELAY_PEER;
+
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
   // `pin`: only with role 'instructor', 'ventilator', 'learner', 'pump' or 'defib' (the ventilator, learner and pump must
   // carry one; a learner's, a pump's and a defibrillator's is the LEARNER PIN: defibrillator plan R1), 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}): only with role
   // 'viewer', 'defib' or 'learner', and `device` alone with 'pump' (guard.ts; plan room-and-instruments.md §4 D1, R8a, R5c;
   // learner-action-remote.md §4 D1, L3; pump-rack-tci.md C1)
-  | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
+  // `ticket`: the sign-in the host handed this device at its last grant, said instead of the PIN (sign-in-book.ts), only
+  // with role 'instructor', 'ventilator', 'learner' or 'pump', never beside a `pin`
+  | { kind: 'hello'; role: Role; pin?: string; ticket?: string; show?: Instrument; device?: string }
   /**
    * R8a: a ventilator link message between the host and ONE granted ventilator (the relay routes it, R8b): from the
    * ventilator to the host, or from the host `to` the ventilator's id. Never to a viewer or an instructor, never cached.
    */
   | { kind: 'vent'; to?: string; body: VentLinkBody }
   | { kind: 'command'; body: WireCommand }
-  /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
-  | { kind: 'grant'; to: string; granted: boolean; reason?: string }
+  /**
+   * The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. A grant
+   * may carry the device's next `ticket` (sign-in-book.ts). `from: RELAY_PEER` is the relay's own notice that a new host
+   * socket came (REJOINED): the device stays and says its hello again on the host's hello.
+   */
+  | { kind: 'grant'; to: string; granted: boolean; reason?: string; ticket?: string }
   /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`.
-   *  `code: 'paused'` (L14): a learner device's drug was not given because the case was paused (PAUSED_REFUSAL). */
+   *  `code: 'paused'` (L14): a learner device's drug was not given, or its sample not drawn, because the case was paused
+   *  (PAUSED_REFUSAL). */
   | {
       kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
       code?: AckCode; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' | 'learner' | 'pump' };
@@ -502,10 +516,11 @@ export interface ManagedTransport extends Transport {
   onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
-/** The host's refusal codes: `recent` the same-drug lock (drug-lock.ts); `paused` (learner remote L14, the owner's ruling
- *  on N117) a learner device's drug while the case is paused: not given, nothing queued for the engine. */
+/** The host's refusal codes: `recent` the same-drug lock (drug-lock.ts); `paused` (learner remote L14) a learner device's
+ *  act on the patient (a drug, a sample) while the case is paused: not done, nothing queued for the engine. */
 export type AckCode = 'recent' | 'paused';
-/** The words of the `paused` refusal: the phone shows "Not given: the case was paused"; the host's Log and record the same. */
+/** The words of the `paused` refusal: the phone shows "Not given: the case was paused" (a sample: "Not sent: …"); the
+ *  host's Log and record the same. */
 export const PAUSED_REFUSAL = 'the case was paused';
 /** `code`: the host's refusal code when it gave one (AckCode). */
 export type AckResult = DispatchResult & { commandId: string; rttMs: number; code?: AckCode };

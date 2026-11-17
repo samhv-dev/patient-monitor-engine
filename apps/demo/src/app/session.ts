@@ -20,6 +20,7 @@ import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } fr
 import { clearPosition } from './position.ts';
 import { RunRecord } from './record.ts';
 import { readLayout } from './room-layout.ts';
+import { signInBook } from './sign-ins.ts';
 import { store } from './store.ts';
 import { hostLang } from './i18n/lang.ts';
 import { applySkinAlarmColours } from './shell.ts';
@@ -278,6 +279,8 @@ export class AppSession {
       // L4: the learner remote — its PIN (read at every learner hello and command), the formulary every preparation is
       // made from (loaded once, below; null until then), and each staged preparation into the /2 record
       ...(o.learnerPin ? { learnerPin: o.learnerPin } : {}),
+      // a device admitted over the relay comes back on its ticket after this page reloads (sign-ins.ts)
+      ...(o.relay ? { signIns: signInBook(this.code) } : {}),
       formulary: () => this.formulary,
       // pump-rack-tci.md A2 (C2's hand-over): the room's rack as Room setup sets it, and the shipped device profiles
       // (S1, N125), so the host grants a pump tablet on the learner PIN and checks each of its commands against them

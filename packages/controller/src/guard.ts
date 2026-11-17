@@ -62,6 +62,8 @@ const CONCENTRATION_UNITS: Readonly<Record<PumpConcentration['unit'], true>> = {
 
 /** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */
 export const PIN_RE = /^[0-9]{4,8}$/;
+/** A sign-in ticket (sign-in-book.ts): the book's id, a dot, 16 random bytes in base64url. */
+export const TICKET_RE = /^[A-Za-z0-9_-]{8}\.[A-Za-z0-9_-]{22}$/;
 
 /** A device's own key on a viewer's hello: 8 to 16 lower-case ASCII letters or digits (plan room-and-instruments.md §4 D1). */
 export const DEVICE_RE = /^[a-z0-9]{8,16}$/;
@@ -160,6 +162,7 @@ const showFits = (role: unknown, show: unknown): boolean => (role === 'pump') ==
  * held pending until the host's grant (relay/server.ts); with none it is the window of R5c, its two presses only.
  */
 const PIN_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump', 'defib']);
+const TICKET_WITH: ReadonlySet<unknown> = new Set(['instructor', 'ventilator', 'learner', 'pump']);
 
 const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
 const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);
@@ -305,9 +308,10 @@ export function parseWireMessage(data: unknown): WireMessage | null {
     case 'hello':
       if (!ROLES.has(m.role as string)) return null;
       if (m.pin !== undefined && (!PIN_WITH.has(m.role) || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
+      if (m.ticket !== undefined && (!TICKET_WITH.has(m.role) || typeof m.ticket !== 'string' || !TICKET_RE.test(m.ticket) || m.pin !== undefined)) return null;
       // R8a: a device that drives the patient proves the PIN; L3 (LQ1): the learner remote proves the learner PIN, and C1
-      // the pump the same
-      if ((m.role === 'ventilator' || m.role === 'learner' || m.role === 'pump') && m.pin === undefined) return null;
+      // the pump the same; once admitted, each proves its ticket instead
+      if ((m.role === 'ventilator' || m.role === 'learner' || m.role === 'pump') && m.pin === undefined && m.ticket === undefined) return null;
       if (m.show !== undefined && (!SHOWS_WITH.has(m.role) || !SHOWS.has(m.show) || !showFits(m.role, m.show))) return null;
       if (m.device !== undefined && (!DEVICE_WITH.has(m.role) || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
@@ -325,6 +329,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       break;
     case 'grant':
       if (typeof m.to !== 'string' || typeof m.granted !== 'boolean' || (m.reason !== undefined && typeof m.reason !== 'string')) return null;
+      if (m.ticket !== undefined && (m.granted !== true || typeof m.ticket !== 'string' || !TICKET_RE.test(m.ticket))) return null;
       break;
     case 'event':
       if (!Array.isArray(m.body) || !m.body.every((e) => e !== null && typeof e === 'object' && typeof (e as { type?: unknown }).type === 'string')) return null;

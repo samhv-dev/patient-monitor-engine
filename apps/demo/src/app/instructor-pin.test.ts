@@ -3,7 +3,7 @@
 // learner's frames. The learner's phone here is a raw socket on the real relay, beside the laptop's real HostSession
 // (reading this store) and real instructor phones: a wrong PIN, the right one, a command, a PIN change, a takeover.
 import { createEngine } from '@pme/engine-core';
-import { ControllerSession, createWebSocketTransport, HostSession, PIN_RE, type HostTarget } from '@pme/controller';
+import { ControllerSession, SignInCredential, createWebSocketTransport, HostSession, PIN_RE, type HostTarget } from '@pme/controller';
 import { afterEach, describe, expect, it } from 'vitest';
 import { startRelay, type RelayHandle } from '../../../../packages/controller/relay/server.ts';
 import { drawPin, instructorPin, PIN_KEY } from './instructor-pin.ts';
@@ -106,7 +106,7 @@ describe("a learner's frames never carry the PIN", () => {
 
     const phone = (typed: string) => {
       const t = createWebSocketTransport({ url: `${url}?e2e-remote` });
-      const c = new ControllerSession({ session: CODE, transport: t, role: 'instructor', pin: () => typed, issuedBy: 'remote' });
+      const c = new ControllerSession({ session: CODE, transport: t, role: 'instructor', credential: new SignInCredential(typed), issuedBy: 'remote' });
       closers.push(() => (c.close(), t.close()));
       return c;
     };
@@ -117,7 +117,7 @@ describe("a learner's frames never carry the PIN", () => {
     expect((await a.send({ type: 'time', action: 'pause' })).accepted).toBe(true);
     pin.change();
     pins.push(pin.get());
-    host.instructorPinChanged();
+    await host.instructorPinChanged();
     await until(() => a.access.state === 'revoked', 'revoked by the change');
     const b = phone(pin.get());
     await until(() => b.access.state === 'granted', 'the new PIN signed in');
