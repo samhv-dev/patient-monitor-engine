@@ -2,9 +2,8 @@
 // train holds is the manual's (research/57 A-09, A-10, A-18): high 10 pulses in two groups of 5, medium 3, low 1; when
 // the cause ends high 5, medium 3, low none; only the highest priority sounds; silence pauses the audio only (A-20).
 // What a pulse sounds like (pitch, length, gaps, how often a train repeats, the gain) is not in the manual (A-11): face.json
-// `tones` tags each `eng` until the owner's recording. Pure: `createAlarmSound` decides WHEN a train starts (the
-// monitor's burst schedule, on the wall clock) and hands it to a player; `audioPackagePlayer` plays it through @pme/audio
-// (brief 202).
+// `tones` tags each value `eng`. Pure: `createAlarmSound` decides WHEN a train starts (the monitor's burst schedule, on
+// the wall clock) and hands it to a player; `audioPackagePlayer` plays it through @pme/audio.
 import { BurstSchedule, playAlarmPulse, type AudioOut } from '@pme/audio';
 import type { AlarmEvent, AlarmSignals } from '../../core/alarms-view.ts';
 import { DATA, num } from './data.ts';
