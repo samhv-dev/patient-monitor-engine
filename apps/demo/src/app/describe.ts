@@ -146,10 +146,11 @@ function eegLine(a: Any): string {
 }
 
 /** A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: a drug "not given", a
- *  sample "not drawn". */
+ *  sample "not drawn", a pump channel's command "not done". */
 export function notDoneOf(c: Any): { what: string; not: string } {
   const e = (c.event ?? {}) as Any;
-  return e.kind === 'lab' ? { what: LAB_PANEL_WORDS[String(e.panel)] ?? 'Sample', not: 'not drawn' } : { what: describeCommand(c), not: 'not given' };
+  if (e.kind === 'lab') return { what: LAB_PANEL_WORDS[String(e.panel)] ?? 'Sample', not: 'not drawn' };
+  return { what: describeCommand(c), not: e.kind === 'pump' ? 'not done' : 'not given' };
 }
 
 /** `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); the Log then names it. */

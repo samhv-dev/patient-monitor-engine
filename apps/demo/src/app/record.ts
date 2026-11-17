@@ -306,7 +306,9 @@ export class RunRecord {
     const by = typeof c.by === 'string' ? c.by : undefined;
     const name = by !== undefined ? this.deviceName(by) : null;
     const { what, not } = notDoneOf(c);
-    this.add({ t: n.t, kind: 'learner', text: `${what} ${not}: ${n.reason}`, remote: true, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), notGiven: n.reason });
+    const ev = c.event as { kind?: unknown; ch?: unknown } | undefined;
+    const pump = c.issuedBy === PUMP_ISSUED_BY ? { kind: 'pump' as const, channel: Number(ev?.ch) } : { kind: 'learner' as const, remote: true as const };
+    this.add({ t: n.t, text: `${what} ${not}: ${n.reason}`, ...pump, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), notGiven: n.reason });
     // the runner's administrations now hold the attempt (AppSession records it there first); a paused clock sends no
     // sample, so the once-a-second copy would not carry it until the case resumed
     this.copy();
