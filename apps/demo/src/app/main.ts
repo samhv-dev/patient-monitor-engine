@@ -57,7 +57,7 @@ import { instructorRoomCard } from './views/room-instructor.ts';
 import { scenariosView } from './views/scenarios.ts';
 import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
-import { serveRemoteCockpit, serveWindowCockpit, ventScreens, ventView } from './views/vent.ts';
+import { chooseVentFace, serveRemoteCockpit, serveWindowCockpit, ventScreens, ventView } from './views/vent.ts';
 
 const site = loadSite();
 setDrugNames(site.drugNames); // One set of drug names on every screen
@@ -223,7 +223,7 @@ if (follow && shows === 'pick') {
   let lpin: InstructorPin | null = null;
   const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
   const learner = (lpin = learnerPin(() => pin.get()));
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, pumpRack: site.pumpRack, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, pumpRack: site.pumpRack, ventFace: site.ventFace, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
   learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
@@ -346,6 +346,15 @@ if (follow && shows === 'pick') {
       },
     },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
+    // the room's ventilator face, kept with the site profile; refused while a cockpit ventilates the patient
+    ventFace: {
+      face: () => session.ventFace,
+      choose: (f) => {
+        const refused = chooseVentFace(session, f);
+        if (!refused) (site.ventFace = f), saveSite(site);
+        return refused;
+      },
+    },
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
   shell.add(room);

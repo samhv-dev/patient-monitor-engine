@@ -1,8 +1,8 @@
 // Every e2e server on its own port. Vite 6 reads a port of 0 as "5173, or the next free one", so
 // when each e2e file started Vite itself every file's server took 5173 in turn, and a page a test left open reloaded
 // onto the next file's server. apps/demo/e2e/app-support.ts's startVite / startVitePreview are now the only way an e2e
-// file starts a Vite server: a port the operating system hands out (or PME_E2E_PORT + the worker's index), strictly
-// held. This keeps it so.
+// file starts a Vite server: a port the operating system hands out (or PME_E2E_PORT + the worker's index), bound by the
+// helper itself for the dev server and strictly held for the preview. This keeps it so.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -43,11 +43,12 @@ describe('e2e servers on their own ports', () => {
     expect(users.length).toBeGreaterThan(60);
   });
 
-  it('the helper holds each port strictly and never asks Vite for port 0', () => {
+  it('the helper binds the dev server port itself, holds the preview port strictly and never asks Vite for port 0', () => {
     const src = readFileSync(join(e2e, helper), 'utf8');
-    expect(src.match(/strictPort: true/g)?.length).toBe(2); // the dev server and the preview server
+    expect(src).toMatch(/middlewareMode: true, hmr: \{ server: http \}/); // Vite serves on the helper's own HTTP server
+    expect(src).toMatch(/listen\(http, e2ePort\(o\.portOffset\) \?\? 0\)/); // bound at once: the operating system's free port
+    expect(src.match(/strictPort: true/g)?.length).toBe(1); // the preview server
     expect(src).not.toMatch(/port:\s*0\b/);
-    expect(src).toMatch(/listen\(0, '127\.0\.0\.1'/); // the operating system's free port
   });
 
   it('the check itself reads imports as they are written', () => {

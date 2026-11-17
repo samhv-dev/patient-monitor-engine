@@ -97,6 +97,27 @@ describe('the host grants one remote ventilator (R8c)', () => {
     expect(got.some((m) => m.kind === 'snapshot')).toBe(false); // it follows nothing
   });
 
+  it("a ventilator's grant carries the room's face as it is at the grant; an instructor's and a refusal carry none", async () => {
+    let face = 'hamilton-style';
+    const { relay, got } = setup({ ventFace: () => face });
+    const v = device(relay, 'vent-a.1');
+    v.hello('0000');
+    await waitFor(() => grants(got, 'vent-a.1').length === 1);
+    expect(grants(got, 'vent-a.1')[0]).not.toHaveProperty('face');
+    face = 'edp-ts';
+    v.hello(PIN);
+    await waitFor(() => grants(got, 'vent-a.1').length === 2);
+    expect(grants(got, 'vent-a.1')[1]).toMatchObject({ granted: true, face: 'edp-ts' });
+    device(relay, 'inst-a.1', 'instructor').hello(PIN);
+    await waitFor(() => grants(got, 'inst-a.1').length === 1);
+    expect(grants(got, 'inst-a.1')[0]).toMatchObject({ granted: true });
+    expect(grants(got, 'inst-a.1')[0]).not.toHaveProperty('face');
+    const old = setup();
+    device(old.relay, 'vent-b.1').hello(PIN);
+    await waitFor(() => grants(old.got, 'vent-b.1').length === 1);
+    expect(grants(old.got, 'vent-b.1')[0]).not.toHaveProperty('face'); // no face named: the device's own default
+  });
+
   it('no PIN set, or an app that takes no remote ventilator (no onVent): every ventilator is denied', async () => {
     const off = setup();
     off.setPin(null);
