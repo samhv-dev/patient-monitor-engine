@@ -24,6 +24,8 @@ describe('a TCI model by its author\'s surname, a target with its unit', () => {
     expect(pump('schnider', 'effect', 3)).toBe('Channel 2: TCI Schnider, Ce target 3 µg/mL');
     expect(pump('minto', 'plasma', 4)).toBe('Channel 2: TCI Minto, Cp target 4 ng/mL');
     expect(pump('marsh', 'plasma', 0)).toBe('Channel 2: TCI stopped');
+    expect(pump('eleveld', 'effect', 3)).toBe('Channel 2: TCI Eleveld, Ce target 3 µg/mL, not a model the Mindray BeneFusion SP5 TCI holds');
+    expect(pump('shafer', 'plasma', 2)).toBe('Channel 2: TCI Shafer, Cp target 2 ng/mL, not a model the Mindray BeneFusion SP5 TCI holds');
     expect(describeCommand({ type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 3.5 } })).toBe('Propofol target-controlled infusion, effect-site target 3.5 µg/mL');
   });
 });

@@ -6,12 +6,15 @@
 // typed value outside the population the set was studied in shows the paper's range and is allowed (D6); a refusal
 // range is a device behaviour and the SP5 TCI manual's, a gap until it is read, said in the face's words. A set with no
 // ke0 says the registry's words beside the effect-site mode; whether the mode runs is the engine's answer. The command
-// sets the target; the channel runs at Start (the engine keeps a loaded channel paused until it is started).
+// sets the target; the channel runs at Start (the engine keeps a loaded channel paused until it is started). The SP5
+// TCI's library marks each set as held or not, a held set's plasma-only target, and its stated age range: information
+// only, every set and target stays offered.
 import { concUnit, DRUGS, NO_KE0_REFUSAL, TCI_SETS, type TciSet } from '@pme/engine-core';
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
+import { pumpModel, pumpModels, tciModelName } from '../tci-names.ts';
 import { h } from '../ui.ts';
-import { field, FLOW_WORDS, hint, missing, num, numberInput, selectOf, type CasePatient, type FlowDef, type FlowInput } from './form.ts';
+import { deviceName, field, FLOW_WORDS, hint, missing, num, numberInput, selectOf, type CasePatient, type FlowDef, type FlowInput } from './form.ts';
 
 export const TCI_WORDS = {
   button: 'TCI',
@@ -36,6 +39,12 @@ export const TCI_WORDS = {
   programFirst: 'Program the drug first: the TCI models are listed for the programmed drug.',
   noSet: (drug: string) => `No TCI model is registered for ${drug}.`,
   outside: (what: string, v: number, unit: string, set: string, a: number, b: number, src: string) => `${what} ${v} ${unit} is outside the population ${set} was studied in (${a}–${b} ${unit}; ${src})`,
+  notOnPump: (set: string) => `${set} · not on this pump`,
+  plasmaOnly: (mode: string) => `${mode} · plasma only on this pump`,
+  notHeld: (dev: string, model: string, drug: string, held: string[]) =>
+    `${dev}: ${model} is not on this pump; for ${drug} it holds ${new Intl.ListFormat('en').format(held)}`,
+  plasmaOnlyHint: (dev: string, model: string) => `${dev}: ${model} runs on a plasma target only`,
+  pumpAge: (dev: string, model: string, a: number, b: number, v: number) => `${dev}: its stated age range for ${model} is ${a}–${b} y; the patient is ${v} y`,
   // the SP5 TCI profile's gaps, in the face's words (D6, D12)
   patientGap: 'patient limits not set from the manual',
   targetGap: 'target step not set from the manual',
@@ -55,8 +64,11 @@ function tciFlow(x: FlowInput) {
     return { el: h('div', { class: 'pf-fields-in' }, hint(why)), build: () => ({ why }) };
   }
   const was = x.row?.tci ?? null;
-  const setSel = selectOf('setId', sets.map((s) => [s.meta.id, s.meta.name] as const), was && sets.some((s) => s.meta.id === was.setId) ? was.setId : undefined);
+  const sp5 = x.devices?.['sp5-tci'] ?? null;
+  const label = (s: TciSet) => (!sp5 || pumpModel(sp5, s.meta.id) ? s.meta.name : TCI_WORDS.notOnPump(s.meta.name));
+  const setSel = selectOf('setId', sets.map((s) => [s.meta.id, label(s)] as const), was && sets.some((s) => s.meta.id === was.setId) ? was.setId : undefined);
   const mode = selectOf('mode', TCI_WORDS.modes, was?.mode ?? 'effect');
+  const effect = mode.querySelector('option[value="effect"]') as HTMLOptionElement;
   const row = DRUGS[drugId];
   const target = numberInput('target', { min: 0 });
   if (was?.target != null) target.value = String(was.target);
@@ -69,19 +81,25 @@ function tciFlow(x: FlowInput) {
   const pmaField = field(TCI_WORDS.pma, pma);
   const opioidsField = field(TCI_WORDS.opioids, opioids);
   const hints = h('div', { class: 'pf-hints' });
-  const sp5 = x.devices?.['sp5-tci'] ?? null;
   const chosen = (): TciSet => sets.find((s) => s.meta.id === setSel.value) ?? (sets[0] as TciSet);
   const draw = () => {
     const s = chosen();
     pmaField.hidden = !s.meta.covariates.includes('pmaWeeks');
     opioidsField.hidden = !s.meta.covariates.includes('opioids');
     const out: string[] = [];
+    const held = pumpModel(sp5, s.meta.id);
+    const plasmaOnly = !!held && !held.targets.includes('effect-site');
+    effect.textContent = plasmaOnly ? TCI_WORDS.plasmaOnly(TCI_WORDS.modes[0][1]) : TCI_WORDS.modes[0][1];
+    if (sp5 && !held) out.push(TCI_WORDS.notHeld(deviceName(sp5), tciModelName(s.meta.id), drugName(drugId), pumpModels(sp5, drugId).map((m) => m.name)));
+    if (sp5 && held && plasmaOnly) out.push(TCI_WORDS.plasmaOnlyHint(deviceName(sp5), held.name));
     if (s.meta.ke0.none === true) out.push(NO_KE0_REFUSAL);
     const p = s.meta.population;
     for (const [what, inp, range, unit] of [['Age', age, p.ageY, 'y'], ['Weight', weight, p.weightKg, 'kg'], ['Height', height, p.heightCm, 'cm']] as const) {
       const v = num(inp.value);
       if (v !== null && range && (v < range[0] || v > range[1])) out.push(TCI_WORDS.outside(what, v, unit, s.meta.name, range[0], range[1], p.src));
     }
+    const ageY = num(age.value);
+    if (sp5 && held && ageY !== null && (ageY < held.ageYears.min || ageY > held.ageYears.max)) out.push(TCI_WORDS.pumpAge(deviceName(sp5), held.name, held.ageYears.min, held.ageYears.max, ageY));
     if (!sp5) out.push(FLOW_WORDS.noProfile);
     else {
       if (isGap(sp5.tci.patient)) out.push(TCI_WORDS.patientGap);
@@ -106,6 +124,8 @@ function tciFlow(x: FlowInput) {
       h('div', { class: 'pf-row' }, field(TCI_WORDS.height, height), field(TCI_WORDS.sex, sex)),
       pmaField, opioidsField),
     hints);
+  hints.id = `${setSel.id}-hints`;
+  for (const c of [setSel, mode, age]) c.setAttribute('aria-describedby', hints.id);
   el.addEventListener('input', draw);
   el.addEventListener('change', draw);
   draw();

@@ -6,7 +6,8 @@ import { unitText } from './drugs.ts';
 import { drugName, lungLabel } from './glossary.ts';
 import { showVital, vitalLabel, vitalOf } from './vitals.ts';
 import { rhythmLabel } from './rhythms.ts';
-import { tciModelName, tciSetDrug, tciTargetText } from './tci-names.ts';
+import { shippedPumpDevices } from './pump/devices.ts';
+import { pumpModel, tciModelName, tciSetDrug, tciTargetText } from './tci-names.ts';
 
 type Any = Record<string, unknown>;
 const num = (x: unknown): number => (typeof x === 'number' ? x : Number.NaN);
@@ -15,6 +16,11 @@ const over = (s: unknown): string => {
   const n = num(s);
   if (!(n > 0)) return '';
   return n >= 60 ? ` over ${+(n / 60).toFixed(1)} min` : ` over ${n} s`;
+};
+/** ", not a model the Mindray BeneFusion SP5 TCI holds" for a set the TCI pump's library lacks; nothing when it holds it. */
+const offPump = (setId: string): string => {
+  const pump = shippedPumpDevices()?.['sp5-tci'];
+  return pump && !pumpModel(pump, setId) ? `, not a model the ${pump.maker} ${pump.model} holds` : '';
 };
 const grade = (sev: unknown): string => {
   const s = num(sev);
@@ -66,7 +72,7 @@ function pumpLine(e: Any, meta: Any): string {
     case 'rate':
       return `${ch}: rate ${was ? `changed ${fromTo(num(was.rate), String(was.unit), e.rate, String(e.unit))}` : `${e.rate} ${unitText(String(e.unit))}`}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
     case 'tci':
-      return num(e.target) > 0 ? `${ch}: TCI ${tciModelName(String(e.setId))}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${tciTargetText(e.target, tciSetDrug(String(e.setId)))}` : `${ch}: TCI stopped`;
+      return num(e.target) > 0 ? `${ch}: TCI ${tciModelName(String(e.setId))}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${tciTargetText(e.target, tciSetDrug(String(e.setId)))}${offPump(String(e.setId))}` : `${ch}: TCI stopped`;
     case 'bolus':
       return e.volumeMl !== undefined ? `${ch}: bolus ${e.volumeMl} mL` : `${ch}: bolus ${(e.dose as Any | undefined)?.amount} ${unitText(String((e.dose as Any | undefined)?.unit))}`;
     case 'purge':
