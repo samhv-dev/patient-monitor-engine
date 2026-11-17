@@ -18,7 +18,7 @@ export function mountPumpAlarmCard(link: Pick<Link, 'pumpAlarms' | 'onChange'>, 
   const el = h('div', { class: 'ip2-pa-slot' }, card, say);
   let shown = new Set<string>();
   const draw = () => {
-    const now = link.pumpAlarms;
+    const now = link.pumpAlarms ?? []; // a test's partial Link has none
     const ids = new Set(now.map((a) => a.id));
     if (ids.size === shown.size && [...ids].every((id) => shown.has(id))) return;
     const fresh = now.filter((a) => !shown.has(a.id));
