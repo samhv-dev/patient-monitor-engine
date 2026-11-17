@@ -989,7 +989,7 @@ test('L13: a learner gives from the phone through a relay in its own process; th
     const sec = view.locator('#db-preparations');
     await expect(sec.locator('h2')).toHaveText('Preparations');
     const itm = sec.locator(`.db-preps > li[data-prep="${id}"]`);
-    await expect(itm.locator('.db-prep-head')).toHaveText(/^\d\d:\d\d · Learner remote \(bed 2 remote\) staged Sodium bicarbonate.* 10 mmol \(0\.909 mmol\/mL\) \+ Epinephrine 1 mg \(0\.0909 mg\/mL\), 11 mL$/);
+    await expect(itm.locator('.db-prep-head')).toHaveText(/^\d\d:\d\d · bed 2 remote staged Sodium bicarbonate.* 10 mmol \(0\.909 mmol\/mL\) \+ Epinephrine 1 mg \(0\.0909 mg\/mL\), 11 mL$/);
     await expect(itm.locator('.db-prep-ready')).toHaveText('Ready at once: no source for the preparation time');
     await expect(itm.locator('.db-prep-finding[data-kind="incompatible"]').first()).toContainText(/^Incompatible: .*NaHCO3 as solvent degrades epinephrine.*\(Stabilis /);
     await expect(itm.locator('.db-prep-notice')).toHaveText(`Notice shown at ${mmss13(shownAt)}`);
