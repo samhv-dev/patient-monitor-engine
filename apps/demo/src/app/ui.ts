@@ -85,18 +85,22 @@ export interface Stepper {
   input: HTMLInputElement;
   get value(): number;
   set(v: number): void;
+  /** Take a new range and step; the value is kept inside it. */
+  limit(r: { min: number; max: number; step: number }): void;
 }
 
 /** − value + with a unit in the accessible name; press-and-hold repeats; typing is allowed. */
 export function stepper(o: { label: string; unit: string; min: number; max: number; step: number; value: number; digits?: number; onchange?: (v: number) => void }): Stepper {
-  const digits = o.digits ?? (o.step < 1 ? Math.min(2, String(o.step).split('.')[1]?.length ?? 1) : 0);
-  const input = h('input', { type: 'number', inputmode: 'decimal', min: o.min, max: o.max, step: o.step, 'aria-label': `${o.label}${o.unit ? ` (${o.unit})` : ''}` });
-  const clamp = (v: number) => Math.min(o.max, Math.max(o.min, v));
+  const digitsOf = (step: number) => o.digits ?? (step < 1 ? Math.min(2, String(step).split('.')[1]?.length ?? 1) : 0);
+  let { min, max, step } = o;
+  let digits = digitsOf(step);
+  const input = h('input', { type: 'number', inputmode: 'decimal', min, max, step, 'aria-label': `${o.label}${o.unit ? ` (${o.unit})` : ''}` });
+  const clamp = (v: number) => Math.min(max, Math.max(min, v));
   const set = (v: number) => {
     input.value = clamp(v).toFixed(digits);
   };
   const bump = (d: number) => {
-    set(Number(input.value) + d * o.step);
+    set(Number(input.value) + d * step);
     o.onchange?.(Number(input.value));
   };
   const hold = (d: number) => {
@@ -121,7 +125,14 @@ export function stepper(o: { label: string; unit: string; min: number; max: numb
   });
   set(o.value);
   const el = h('div', { class: 'stepper' }, hold(-1), input, hold(1));
-  return { el, input, get value() { return Number(input.value); }, set };
+  const limit = (r: { min: number; max: number; step: number }) => {
+    if (r.min === min && r.max === max && r.step === step) return;
+    ({ min, max, step } = r);
+    digits = digitsOf(step);
+    Object.assign(input, { min: String(min), max: String(max), step: String(step) });
+    set(Number(input.value));
+  };
+  return { el, input, get value() { return Number(input.value); }, set, limit };
 }
 
 /** Labelled select. */

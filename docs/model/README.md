@@ -4,28 +4,29 @@
 
 One page per module of the engine. Each page is generated from the code (state, parameters, data rows, tests,
 known misses); its purpose, equations in words and related documents are written by hand and kept across
-regenerations. The list of known misses across modules is [known-misses.md](../validation/known-misses.md).
+regenerations. Each page lists the module's source files, test files and known misses; the number of known misses
+per module is in [known-misses.md](../validation/known-misses.md).
 
-| Module | Source files | Test files | Known misses |
-|---|---|---|---|
-| [Patient state and the two modes](patient-state.md) | 5 | 5 | 0 |
-| [Rhythms and the ECG](rhythms-ecg.md) | 38 | 47 | 3 |
-| [Circulation](circulation.md) | 21 | 67 | 21 |
-| [Pressure waveforms and pleth](pressure-waveforms.md) | 9 | 17 | 3 |
-| [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 28 |
-| [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
-| [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 34 | 18 |
-| [Blood, acid–base, electrolytes and fluids](blood.md) | 13 | 43 | 10 |
-| [Brain, kidney and liver](organs.md) | 15 | 31 | 13 |
-| [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 16 |
-| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 34 | 12 |
-| [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 31 | 53 | 33 |
-| [Monitor measurements (device layer)](monitor.md) | 23 | 41 | 13 |
-| [Alarms](alarms.md) | 5 | 17 | 0 |
-| [Defibrillator and pacer](defib-pacer.md) | 7 | 14 | 0 |
-| [Ventilator](ventilator.md) | 17 | 29 | 7 |
-| [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 25 | 20 | 0 |
-| [Control: commands, transports, scenarios](control.md) | 56 | 116 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 298 | 449 | 4 |
-| [Validation harness](validation-harness.md) | 62 | 55 | 0 |
-| [Whole-patient scenario suites](integration.md) | 0 | 1 | 8 |
+| Module |
+|---|
+| [Patient state and the two modes](patient-state.md) |
+| [Rhythms and the ECG](rhythms-ecg.md) |
+| [Circulation](circulation.md) |
+| [Pressure waveforms and pleth](pressure-waveforms.md) |
+| [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) |
+| [Gas exchange and capnography](gas-exchange.md) |
+| [Breathing, airway and the ventilator coupling](breathing.md) |
+| [Blood, acid–base, electrolytes and fluids](blood.md) |
+| [Brain, kidney and liver](organs.md) |
+| [Endocrine, metabolism and temperature](endocrine-thermal.md) |
+| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) |
+| [Pharmacology: PK, PD and the drug rows](pharmacology.md) |
+| [Monitor measurements (device layer)](monitor.md) |
+| [Alarms](alarms.md) |
+| [Defibrillator and pacer](defib-pacer.md) |
+| [Ventilator](ventilator.md) |
+| [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) |
+| [Control: commands, transports, scenarios](control.md) |
+| [Presentation: renderer, audio, skins, the app](presentation.md) |
+| [Validation harness](validation-harness.md) |
+| [Whole-patient scenario suites](integration.md) |
