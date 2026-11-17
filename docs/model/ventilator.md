@@ -56,7 +56,8 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | [`mechanics.ts:2`](../../packages/ventilator/src/mechanics.ts#L2) | for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil |
 | [`mechanics.ts:54`](../../packages/ventilator/src/mechanics.ts#L54) | the alveolar pressure (PEEP) by E = pleural − 5.44 − PEEP; the lung is then collapsed at end-expiration and every |
 | [`catalogue.ts:4`](../../packages/ventilator/src/pathology/catalogue.ts#L4) | plateau = PEEP + autoPEEP + VT/C, driving pressure = VT/C, peak − plateau = R_insp × 1 L/s; `signature` bands are the |
-| [`vent.ts:396`](../../packages/ventilator/src/vent.ts#L396) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
+| [`types.ts:52`](../../packages/ventilator/src/types.ts#L52) | A held airway carries the patient's effort: with no flow the equation of motion gives Paw = PEEP + recoil − Pmus, |
+| [`vent.ts:397`](../../packages/ventilator/src/vent.ts#L397) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
 
 ## State
 
@@ -161,6 +162,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `advanceVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Step until the vent clock reaches sim time `t` (s). |
 | `toggleHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | --- front-panel actions (v1.9 rail buttons) ------------------------------------------------------------- Insp/Exp hold: |
 | `releaseHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Ends a hold, or the arming of one, at once (a held key released, or held to the device's longest hold); |
+| `cancelHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Ends a hold, or the arming of one, and gives no breath: |
 | `manualBreath` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Manual breath: |
 
 Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `createLinkedSim`, `profileOf`, `createVentDriver`, `applyLungState`, `easeShape`, `createVent`, `setMode`, `loadPreset`, `runScenario`, `setCircuit`.
