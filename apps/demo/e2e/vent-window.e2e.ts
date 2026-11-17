@@ -89,7 +89,7 @@ test('the laptop window: the Room opener opens the cockpit in its own window, it
 
   const [win] = await Promise.all([page.context().waitForEvent('page'), page.getByRole('button', { name: 'Ventilator in a new window' }).click()]);
   await win.waitForLoadState();
-  expect(new URL(win.url()).search).toBe(`?link=${code}`);
+  expect(new URL(win.url()).search).toBe(`?link=${code}&face=hamilton-style`); // the room's face: the default
   await win.waitForFunction(() => '__vent' in window);
   await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'the window cockpit drives the patient' }).toBe('external');
   await expect(f.locator('.learner-hold')).toBeVisible({ timeout: 10_000 });

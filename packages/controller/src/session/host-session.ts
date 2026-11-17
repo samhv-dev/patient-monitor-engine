@@ -146,6 +146,8 @@ export interface HostSessionOptions {
   onVent?: (from: string, body: VentLinkBody) => void;
   /** R8c: the granted ventilator changed — its id, or null when it was revoked, taken over by none, or left. */
   onVentilator?: (from: string | null) => void;
+  /** The room's ventilator face, sent with each ventilator grant. Absent: the device's own default. */
+  ventFace?: () => string;
   /** The drugs a scenario command would give as a bolus (ScenarioDriver.triggerGives: a /1 step press's onEnter); a press
    *  while one is locked is refused `recent`, as a bolus is (drug-lock.ts). Absent: a scenario command gives none. */
   scenarioGives?: (cmd: ScenarioCommand) => string[];
@@ -788,9 +790,9 @@ export class HostSession {
     else this.o.onVentilator?.(h ? h.from : null);
   }
 
-  private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string, ticket?: string): void {
+  private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string, ticket?: string, face?: string): void {
     if (!this.transports.has(t)) return; // detached or closed while its check was pending
-    t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}), ...(ticket !== undefined ? { ticket } : {}) }));
+    t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}), ...(ticket !== undefined ? { ticket } : {}), ...(face !== undefined ? { face } : {}) }));
   }
 
   /** A device admitted on its PIN: a new chain of tickets, when the host keeps a book. */
@@ -877,7 +879,7 @@ export class HostSession {
       this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
       if (h.chain !== undefined && h.chain !== next.chain) this.o.signIns?.void((c) => c.id === h.chain, INSTRUCTOR_REASONS.takenOver);
     }
-    this.grant(t, from, true, undefined, next.ticket);
+    this.grant(t, from, true, undefined, next.ticket, role === 'ventilator' ? this.o.ventFace?.() : undefined);
     this.setHolder(role, { t, from, pin: want, ...(next.chain !== undefined ? { chain: next.chain } : {}) });
     if (role === 'instructor') this.instructorPreps(); // L9: a phone that signs in (or again) sees what was already staged
   }

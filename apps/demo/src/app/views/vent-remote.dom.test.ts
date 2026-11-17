@@ -101,7 +101,7 @@ const ctl = (await import('@pme/controller')) as unknown as { __end: (l: unknown
 const { createEngine } = await import('@pme/engine-core');
 const { createLocalPortPair, createRelayPort, createVentDriver, ventWireOver } = await import('@pme/ventilator');
 const { AppSession } = await import('../session.ts');
-const { cockpitDesk, COCKPIT_SILENCE_MS, engineVentilation, serveRemoteCockpit } = await import('./vent.ts');
+const { chooseVentFace, cockpitDesk, COCKPIT_SILENCE_MS, engineVentilation, serveRemoteCockpit, serveWindowCockpit, VENT_FACE_REFUSALS } = await import('./vent.ts');
 const { VENTILATOR_REASONS } = await import('@pme/controller');
 
 const CODE = 'VNTH2K';
@@ -415,5 +415,50 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     expect(v2.e.now().tick).toBe(tick);
     expect(frames('vent-a.1').length).toBeGreaterThan(200);
     expect(v2.e.snapshot()).toEqual(host.snapshot());
+  });
+});
+
+describe("the room's ventilator face", () => {
+  /** Fake time until the desk has no cockpit driving (the hand-over landed), at most 3 s. */
+  const handedOver = async () => {
+    const at = Date.now();
+    while (cockpitDesk(s).driving !== null && Date.now() - at < 3000) await vi.advanceTimersByTimeAsync(1);
+    return cockpitDesk(s).driving;
+  };
+
+  it("a granted tablet is told the room's face at its grant; a change is refused while it drives and applied once it is handed over", async () => {
+    expect(s.ventFace).toBe('hamilton-style');
+    expect(chooseVentFace(s, 'edp-ts')).toBeNull();
+    const t = await remote('vent-a.1');
+    expect(t.got.find((m) => m.kind === 'grant' && m.to === 'vent-a.1')).toMatchObject({ granted: true, face: 'edp-ts' });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(cockpitDesk(s).driving?.remote).toBe(true);
+    expect(chooseVentFace(s, 'hamilton-style')).toBe(VENT_FACE_REFUSALS.device);
+    expect(s.ventFace).toBe('edp-ts');
+    t.port.setHidden(true);
+    expect(await handedOver()).toBeNull();
+    expect(chooseVentFace(s, 'hamilton-style')).toBeNull();
+    expect(s.ventFace).toBe('hamilton-style');
+  });
+
+  it("the laptop's ventilator window and the Ventilator view are refused by their own words while they drive", async () => {
+    const [cockpitSide, hostSide] = createLocalPortPair();
+    stops.push(serveWindowCockpit(s, () => hostSide));
+    const win = createVentDriver(cockpitSide, 'normal');
+    // the window's page says its settings, as hamilton-page.ts does: the host hands the patient over with them
+    const t = setInterval(() => (win.frame(performance.now()), cockpitSide.post({ v: 1, kind: 'settings', cfg: { ...win.vs.cfg } } as never)), 1000 / 60);
+    stops.push(() => clearInterval(t), () => win.dispose());
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(cockpitDesk(s).driving?.remote).toBe(true);
+    expect(chooseVentFace(s, 'edp-ts')).toBe(VENT_FACE_REFUSALS.window);
+    const [viewSide, viewHost] = createLocalPortPair();
+    const local = createVentDriver(viewSide, 'normal');
+    const t2 = setInterval(() => local.frame(performance.now()), 1000 / 60);
+    stops.push(() => clearInterval(t2), () => local.dispose());
+    void cockpitDesk(s).take({ port: viewHost, remote: false, settings: () => ({ cfg: { ...local.vs.cfg } }) }, () => true); // the window is handed over first
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(cockpitDesk(s).driving?.remote).toBe(false);
+    expect(chooseVentFace(s, 'edp-ts')).toBe(VENT_FACE_REFUSALS.view);
+    expect(s.ventFace).toBe('hamilton-style');
   });
 });

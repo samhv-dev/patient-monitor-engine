@@ -13,6 +13,7 @@ import { h, setText } from '../app/ui.ts';
 import { PHONE_WORDS, pinForm, refusalWords } from '../app/views/pin-form.ts';
 import { signInVentilator, type VentDevice } from './device-link.ts';
 import { faceFromLocation, mountFace } from './faces/index.ts';
+import { faceOf } from './faces/ids.ts';
 import { hostLang } from '../app/i18n/lang.ts';
 
 /** An app string through the app's Persian table when the app is in Persian (plan vent-skin-edp-ts.md §6); loaded only then. */
@@ -107,7 +108,7 @@ function devicePage(code: string, relay: string): void {
         port = createRelayPort(wire, { settings: () => (drv ? settingsOf(drv) : null) });
         drv = createVentDriver(port, profile);
         driver = drv;
-        mountFace(drv, faceFromLocation(location), { linked: true, translate });
+        mountFace(drv, d.face === null ? faceFromLocation(location) : faceOf(d.face), { linked: true, translate }); // the room's face
         (window as unknown as { __vent: VentDriver }).__vent = drv; // e2e hook
       }
       port?.setHidden(document.visibilityState === 'hidden'); // its settings at once: the host knows what it would hand over
