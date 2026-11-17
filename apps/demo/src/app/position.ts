@@ -242,6 +242,7 @@ export async function restorePosition(p: Position, s: AppSession, link: Pick<Lin
   const marks = readStageMarks(p); // before the Load, which forgets what was kept
   s.restoring = true;
   try {
+    if (p.paused) await s.panel.send({ type: 'time', action: 'pause' }); // the case loads paused: it never runs a tick
     if (!load(card) || !(await s.lastLoad).accepted || !s.driver.hold(RELOAD_MARK, p.run)) return false;
     if (!(await s.panel.send({ type: 'scenario', action: 'restoreBookmark', target: RELOAD_MARK })).accepted) return false;
     // the course's stage marks placed again, and the course's history for the panel's view: it saw only the Load and
@@ -253,7 +254,6 @@ export async function restorePosition(p: Position, s: AppSession, link: Pick<Lin
     link.resumeCase(p.log, p.run.snapshot.tick * TICK_S);
     s.setLearner(p.learner);
     if (p.speed !== s.timeScale) await s.panel.send({ type: 'time', action: 'scale', value: p.speed });
-    if (p.paused) await s.panel.send({ type: 'time', action: 'pause' });
     return true;
   } finally {
     s.restoring = false;
