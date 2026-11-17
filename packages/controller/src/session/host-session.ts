@@ -20,6 +20,7 @@ import {
   type CommandSender,
   type ControlFlag,
   type FastForwardAlarm,
+  type Instrument,
   type ManagedTransport,
   type NoteEvent,
   type Role,
@@ -40,6 +41,7 @@ import {
   channelsRunning, concText, mismatched, noteApplied, onPumpsWords, pumpWire, rackRefusal, routedToChannel, translatePump,
   type ChannelInUse, type ChannelKind, type HostChannel, type PumpContext, type PumpTranslated,
 } from './pump-host.ts';
+import { defibRefusal, depthRefusal, type DefibStatus, type DepthWindow } from './room-refusal.ts';
 import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
 import type { SignInBook, TicketRole } from './sign-in-book.ts';
 import {
@@ -150,6 +152,8 @@ export interface HostSessionOptions {
   onVent?: (from: string, body: VentLinkBody) => void;
   /** R8c: the granted ventilator changed — its id, or null when it was revoked, taken over by none, or left. */
   onVentilator?: (from: string | null) => void;
+  /** The room's ventilator face, sent with each ventilator grant. Absent: the device's own default. */
+  ventFace?: () => string;
   /** The drugs a scenario command would give as a bolus (ScenarioDriver.triggerGives: a /1 step press's onEnter); a press
    *  while one is locked is refused `recent`, as a bolus is (drug-lock.ts). Absent: a scenario command gives none. */
   scenarioGives?: (cmd: ScenarioCommand) => string[];
@@ -359,9 +363,10 @@ export class HostSession {
    * frame on one transport (a phone on the relay claiming the panel's id) never touches a peer on another (the
    * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29), and one peer when
    * the relay says its socket left (R29), so a hello forged under its id dies with the forger's socket. `devices`: the
-   * device key a `defib` peer's last hello said (R5d), carried as `by` on its applied presses.
+   * device key a `defib` peer's last hello said (R5d), carried as `by` on its applied presses. `shows`: what a viewer's
+   * last hello said it shows, and its device key (a depth window reads the patient's EEG).
    */
-  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role>; left: Set<string>; devices: Map<string, string> }>();
+  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role>; left: Set<string>; devices: Map<string, string>; shows: Map<string, { show: Instrument; device?: string }> }>();
   /**
    * The one granted instructor phone, by (transport, from), and the PIN it proved (plan §3 option B: the newest right
    * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
@@ -375,6 +380,8 @@ export class HostSession {
   private readonly pumpChannels = new Map<number, HostChannel>();
   /** The engine's pump channels as its last `drugs` event showed them: a restored bookmark brings back channels the host's table no longer holds. */
   private pumpRows: ReadonlyArray<{ ch: number; kind: ChannelKind; state: string }> = [];
+  /** The defibrillator and pacer as the engine's last `deviceStatus` showed them. */
+  private defibStatus: DefibStatus | null = null;
   private learnerDenied: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong learner PINs (no lockout)
   /** L4 (§4 D3): the preparations the learner remotes staged, by device key and the device's own id. */
   private readonly preps = new Map<string, Map<string, HostPrep>>();
@@ -423,6 +430,7 @@ export class HostSession {
     this.offEngine = o.target.on((e) => {
       if (e.type === ('state' as EngineEvent['type'])) this.engineState = true; // the engine emits its own (E1)
       if (e.type === 'drugs') this.pumpRows = e.pumps ?? [];
+      if (e.type === 'deviceStatus') this.defibStatus = e;
       // C2 (D8): End, Empty Container or Infusion Complete stopped the channel: it no longer runs its drug (D9)
       if ((e.type as string) === 'pumpAlarm') {
         const c = this.pumpChannels.get((e as unknown as { ch: number }).ch);
@@ -448,10 +456,12 @@ export class HostSession {
     });
     // R29: the relay says a peer's socket left; frames are handled in order on this.chain, so the forgetting is too
     const offLeft = t.onPeerLeft?.((from) => void this.inOrder(() => this.forget(t, from)));
+    const offFarewell = t.onFarewell?.((from) => void this.inOrder(() => this.stopCountingShown(t, from)));
     this.transports.set(t, () => {
       offMsg();
       offStatus();
       offLeft?.();
+      offFarewell?.();
     });
     return () => this.detach(t);
   }
@@ -719,6 +729,7 @@ export class HostSession {
     this.pumpChannels.clear(); // C2: the channels are the old engine's (D4)
     if (cause === 'restart') {
       this.pumpRows = [];
+      this.defibStatus = null;
       this.stopped = null; // a new engine runs (a stopped one cannot restore a bookmark: its restore rejects)
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
@@ -799,9 +810,9 @@ export class HostSession {
     else this.o.onVentilator?.(h ? h.from : null);
   }
 
-  private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string, ticket?: string): void {
+  private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string, ticket?: string, face?: string): void {
     if (!this.transports.has(t)) return; // detached or closed while its check was pending
-    t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}), ...(ticket !== undefined ? { ticket } : {}) }));
+    t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}), ...(ticket !== undefined ? { ticket } : {}), ...(face !== undefined ? { face } : {}) }));
   }
 
   /** A device admitted on its PIN: a new chain of tickets, when the host keeps a book. */
@@ -888,7 +899,7 @@ export class HostSession {
       this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
       if (h.chain !== undefined && h.chain !== next.chain) this.o.signIns?.void((c) => c.id === h.chain, INSTRUCTOR_REASONS.takenOver);
     }
-    this.grant(t, from, true, undefined, next.ticket);
+    this.grant(t, from, true, undefined, next.ticket, role === 'ventilator' ? this.o.ventFace?.() : undefined);
     this.setHolder(role, { t, from, pin: want, ...(next.chain !== undefined ? { chain: next.chain } : {}) });
     if (role === 'instructor') this.instructorPreps(); // L9: a phone that signs in (or again) sees what was already staged
   }
@@ -960,12 +971,22 @@ export class HostSession {
     p?.seqs.forget(from);
     p?.roles.delete(from);
     p?.devices.delete(from);
+    p?.shows.delete(from);
     p?.left.add(from);
     this.learners.get(t)?.delete(from); // L4: a socket under its id signs in again
     this.o.signIns?.left(from);
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
     if (this.silentVents.get(from) === t) this.silentVents.delete(from); // its socket is gone: nothing more can come from it
+  }
+
+  /**
+   * A same-computer page's farewell: it no longer counts as showing anything (a depth window, for depthRefusal) until its
+   * next hello says so again. Anyone on the channel can send one for any id, so it forgets nothing else (forget() is the
+   * relay's proof that a socket left).
+   */
+  private stopCountingShown(t: ManagedTransport, from: string): void {
+    this.peers.get(t)?.shows.delete(from);
   }
 
   private queue(e: WireEvent): void {
@@ -985,7 +1006,7 @@ export class HostSession {
     if (m.session !== this.o.session) return; // A message for another session is not ours, whatever channel it came on
     if (m.from === this.peerId) return;
     let p = this.peers.get(t);
-    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map(), left: new Set(), devices: new Map() }));
+    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map(), left: new Set(), devices: new Map(), shows: new Map() }));
     if (p.seqs.check(m) === 'duplicate') return;
     // A peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket; a
     // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport). Only a hello
@@ -995,6 +1016,8 @@ export class HostSession {
       p.left.delete(m.from);
       if ((m.role === 'defib' || m.role === 'learner') && m.device !== undefined) p.devices.set(m.from, m.device);
       else p.devices.delete(m.from);
+      if (m.role === 'viewer' && m.show !== undefined) p.shows.set(m.from, { show: m.show, ...(m.device !== undefined ? { device: m.device } : {}) });
+      else p.shows.delete(m.from);
     }
     // R5d: the defibrillator window follows as a viewer does (a second screen of this computer gets the cockpit's frames)
     if (m.kind === 'hello' && (m.role === 'viewer' || m.role === 'defib' || m.role === 'learner' || m.role === 'pump')) this.viewerSeenAt = this.now();
@@ -1108,6 +1131,25 @@ export class HostSession {
     for (const c of this.pumpChannels.values()) if (c.contents) inUse.push({ ch: c.ch, kind: c.kind, running: c.running });
     for (const r of this.pumpRows) if (!this.pumpChannels.has(r.ch) && r.state !== 'notLoaded') inUse.push({ ch: r.ch, kind: r.kind, running: r.state === 'running' });
     return rackRefusal(next, inUse);
+  }
+
+  /** Why Room setup cannot change the defibrillator's model now (room-refusal.ts defibRefusal), or null. */
+  defibModelRefusal(): string | null {
+    return defibRefusal(this.defibStatus);
+  }
+
+  /**
+   * Why Room setup cannot switch the patient's EEG off or change its reader now: a depth window is attached (its hello
+   * heard, its link has not said it left), named as `name` gives its device key's name. Null: none attached.
+   */
+  depthRefusal(name: (device: string) => string | null): string | null {
+    const windows: DepthWindow[] = [];
+    for (const t of this.transports.keys()) {
+      for (const w of this.peers.get(t)?.shows.values() ?? []) {
+        if (w.show === 'depth') windows.push({ name: w.device !== undefined ? name(w.device) : null, local: t.kind === 'broadcastChannel' });
+      }
+    }
+    return depthRefusal(windows);
   }
 
   /** C2: what translatePump reads, or why no pump command can be taken now. */

@@ -19,6 +19,7 @@ import { translatePump, type HostChannel } from '../../src/session/pump-host.ts'
 import { loadFormulary } from '../../src/formulary/load.ts';
 import type { Formulary, FormularyFiles } from '../../src/formulary/types.ts';
 import { loadPumpDevices, type PumpDevices } from '../../src/pump-devices.ts';
+import { rateRange, type RateRange } from '../../src/session/pump-host.ts';
 import { collect, waitFor } from '../helpers.ts';
 
 const S = 'PMC234';
@@ -467,6 +468,41 @@ describe('C2, D9: a remote and the Drug sheet change a drug on its one channel, 
     const other = x.laptop.command({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'norepinephrine', rate: 0.1, unit: 'mcg/kg/min' } });
     expect(await ack(x.panelGot, other)).toMatchObject({ accepted: true });
     expect(applied(x.panelGot, other)?.event).toEqual({ kind: 'infusion', drugId: 'norepinephrine', rate: 0.1, unit: 'mcg/kg/min' });
+  });
+
+  it("one range for a channel's rate, from the tablet and from a remote alike: the device's for the loaded syringe or the programmed set", async () => {
+    const { x, p } = await twoChannels();
+    const lr = await remoteIn(x);
+    // the shipped stock propofol syringe is 50 mL (propofolChannel)
+    const s50 = DEVICES['sp-500'].syringes.find((s) => s.ml === 50);
+    expect(rateRange('syringe', { syringeMl: 50, set: null }, DEVICES)).toMatchObject({ min: s50?.rate.min, max: s50?.rate.max, step: DEVICES['sp-500'].rateStep.step, dropsMin: null });
+    const sp = rateRange('syringe', { syringeMl: 50, set: null }, DEVICES) as RateRange;
+    const over = +(sp.max + sp.step).toFixed(3);
+    const tablet = await p.send({ action: 'rate', ch: 1, rate: over, unit: 'mL/h' });
+    const remote = await lr.send({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: over });
+    expect(tablet).toMatchObject({ accepted: false, reason: `${over} mL/h: ${sp.words}` });
+    expect(remote).toMatchObject({ accepted: false, reason: tablet.reason });
+    const offStep = +(sp.min + sp.step / 2).toFixed(3);
+    expect((await lr.send({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: offStep })).reason).toBe(`${offStep} mL/h: ${sp.words}`);
+    expect((await lr.send({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: sp.max })).accepted).toBe(true);
+    expect((await p.send({ action: 'rate', ch: 1, rate: sp.min, unit: 'mL/h' })).accepted).toBe(true);
+
+    // a drip channel: the OT-701's factory range for its set
+    const fentanylBag = { id: 'b0000003', components: [{ productId: 'fentanyl-50mcg-ml', amount: 10, unit: 'mL' }], diluent: { id: 'saline', volumeMl: 40 }, container: 'bag-pvc' };
+    expect((await lr.send({ type: 'prep', action: 'stage', prep: fentanylBag })).accepted).toBe(true);
+    x.tg.at(600);
+    expect((await p.send({ action: 'load', ch: 3, bag: { prep: { device: REMOTE_KEY, id: 'b0000003' } } })).accepted).toBe(true);
+    expect((await p.send({ action: 'rate', ch: 3, rate: 5, unit: 'mL/h' })).reason).toBe(rateRange('drip', { syringeMl: null, set: null }, DEVICES)); // no set yet: the words that ask for one
+    const set = DEVICES['ot-701'].sets.find((s) => s.dropsPerMl === 60);
+    expect((await p.send({ action: 'program', ch: 3, drugId: 'fentanyl', concentration: { amount: 10, unit: 'mcg', perMl: 1 }, set: 60 })).accepted).toBe(true);
+    const ot = rateRange('drip', { syringeMl: null, set: 60 }, DEVICES) as RateRange;
+    expect(ot).toMatchObject({ min: set?.standard.mlH.min, max: set?.standard.mlH.max, step: DEVICES['ot-701'].rateStep.step, dropsMin: { min: set?.standard.dropsMin.min, max: set?.standard.dropsMin.max } });
+    expect((await p.send({ action: 'rate', ch: 3, rate: ot.max, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 3 })).accepted).toBe(true);
+    const dripOver = ot.max + ot.step;
+    expect((await lr.send({ type: 'infusion', action: 'set', drugId: 'fentanyl', rateMlH: dripOver })).reason).toBe(`${dripOver} mL/h: ${ot.words}`);
+    expect((await p.send({ action: 'rate', ch: 3, rate: dripOver, unit: 'mL/h' })).reason).toBe(`${dripOver} mL/h: ${ot.words}`);
+    expect((await p.send({ action: 'rate', ch: 3, rate: (ot.dropsMin?.max ?? 0) + 1, unit: 'drops/min' })).reason).toBe(`${(ot.dropsMin?.max ?? 0) + 1} drops/min: ${ot.dropsMin?.words}`);
   });
 
   it('a channel stopped by the engine (End) no longer counts as running the drug', async () => {

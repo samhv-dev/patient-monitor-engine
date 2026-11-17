@@ -49,4 +49,15 @@ describe("FX-22: the phone's pause follows the host's own state", () => {
     p.onMessage(snapshot());
     expect(p.paused).toBe(false);
   });
+
+  it('a case that begins on the paused host (a new engine, its load, its first state) is paused as any other pause', () => {
+    const p = hostPause();
+    p.onMessage(events(time('pause')));
+    p.onMessage(events({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent));
+    p.onMessage(events({ type: 'commandApplied', commandId: 'l', tick: 0, resolved: { command: { id: 'l', issuedBy: 'instructor', type: 'scenario', action: 'load', doc: { id: 'x' } } } } as WireEvent));
+    p.onMessage(events({ type: 'timeline', t: 30, tick: 1500, cause: 'restore' } as WireEvent));
+    expect(p.paused).toBe(true);
+    p.onMessage(events(time('resume')));
+    expect(p.paused).toBe(false);
+  });
 });

@@ -11,6 +11,7 @@ import {
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
 import type { CaseBegins, Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
+import { DEFAULT_FACE, type FaceId } from '../vent/faces/ids.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { shippedPumpDevices } from './pump/devices.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
@@ -194,13 +195,16 @@ export class AppSession {
   /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
    *  patient mount, or null: no EEG device (none switched on). */
   eegModel: string | null;
+  /** The room's ventilator face (site.ts ventFace): the Ventilator view's and a granted tablet's (views/vent.ts chooseVentFace). */
+  ventFace: FaceId;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
   formulary: Formulary | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[] }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[]; ventFace?: FaceId }) {
     this.el = el;
+    this.ventFace = o.ventFace ?? DEFAULT_FACE;
     this.defibModel = o.defibModel ?? null;
     this.eegModel = o.eegModel ?? null;
     this.pumpRack = [...(o.pumpRack ?? DEFAULT_SITE.pumpRack)];
@@ -308,6 +312,7 @@ export class AppSession {
       onVentilator: (from) => {
         for (const f of [...this.remoteFns]) f.ventilator(from);
       },
+      ventFace: () => this.ventFace,
     });
     this.host = hs;
     // Brief 195: the monitor stopped (`pme-monitor-failed`, bubbling from its canvas): the host tells every follower at
@@ -628,12 +633,17 @@ export class AppSession {
   /**
    * Room setup's defibrillator choice (R5b). A model is sent to the patient's engine now, through the host's command
    * path (every follower replays it), and at every patient mount after; null sends nothing: the engine keeps the model
-   * it holds until the next patient start (it has no "no model" command, R5a).
+   * it holds until the next patient start (it has no "no model" command, R5a). A device in use is the host's to refuse
+   * (a new model would disarm it and start it afresh): its words are returned and nothing changes. Null: applied.
    */
-  setDefibModel(model: string | null): void {
+  setDefibModel(model: string | null): string | null {
+    if (model === this.defibModel) return null;
+    const refused = this.host.defibModelRefusal();
+    if (refused) return refused;
     this.defibModel = model;
     this.sendDefibModel();
     for (const f of this.skinFns) f(this.skin, this.theme); // the style says the model: a defibrillator window's look (R5)
+    return null;
   }
 
   private sendDefibModel(): void {
@@ -644,13 +654,19 @@ export class AppSession {
   /**
    * Room setup's depth-of-anaesthesia device (EEG plan E12). A model switches the patient's EEG on and chooses its
    * reader now, through the host's command path (every follower replays both, so a depth window's own engine reads the
-   * same samples, D3), and at every patient mount after; null switches it off now and sends nothing at a mount.
+   * same samples, D3), and at every patient mount after; null switches it off now and sends nothing at a mount. Switching
+   * off or replacing a device a depth window reads is the host's to refuse: its words are returned and nothing changes.
+   * Null: applied.
    */
-  setEegModel(model: string | null): void {
+  setEegModel(model: string | null): string | null {
     const was = this.eegModel;
+    if (model === was) return null;
+    const refused = was ? this.host.depthRefusal((key) => this.deviceName(key)) : null;
+    if (refused) return refused;
     this.eegModel = model;
     if (model) this.sendEegModel();
     else if (was && !this.perf8) void this.panel.send({ type: 'device', action: { device: 'eeg', action: 'off' } } as never);
+    return null;
   }
 
   /** `on` first: the engine refuses a model while the EEG is off (validateEegCommand). */

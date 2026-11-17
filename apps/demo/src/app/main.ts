@@ -28,7 +28,7 @@ import { archive } from './archive.ts';
 import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession, type RoomKeep } from './session.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
-import { loadSite, saveSite, setLightScreen } from './site.ts';
+import { loadSite, saveSite, setLightScreen, type SiteProfile } from './site.ts';
 import { button, clock, h, pausedMark, setText, throttle, toast, trackChromeBottom } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
@@ -57,7 +57,7 @@ import { instructorRoomCard } from './views/room-instructor.ts';
 import { scenariosView } from './views/scenarios.ts';
 import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
-import { serveRemoteCockpit, serveWindowCockpit, ventScreens, ventView } from './views/vent.ts';
+import { chooseVentFace, serveRemoteCockpit, serveWindowCockpit, ventScreens, ventView } from './views/vent.ts';
 
 const site = loadSite();
 setDrugNames(site.drugNames); // One set of drug names on every screen
@@ -111,7 +111,7 @@ if (follow && shows === 'pick') {
   const drugs = drugsMenu({ now: () => caseClock?.renderT() ?? null });
   void loadShippedFormulary().then((f) => drugs.ready(f));
   // L8: the Infusions tab: start a ready syringe at a rate, change or stop any running infusion (LQ4)
-  const infusions = infusionsView({ now: () => caseClock?.renderT() ?? null });
+  const infusions = infusionsView({ now: () => caseClock?.renderT() ?? null, devices: shippedPumpDevices });
   // L11: the Labs tab: send a sample, wait the analyser's time, read this phone's own results (LQ13)
   const labs = labsView();
   const remote = learnerRemoteView({
@@ -223,7 +223,7 @@ if (follow && shows === 'pick') {
   let lpin: InstructorPin | null = null;
   const pin = instructorPin(undefined, undefined, () => lpin?.get() ?? null);
   const learner = (lpin = learnerPin(() => pin.get()));
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, pumpRack: site.pumpRack, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, eegModel: site.eegModel, pumpRack: site.pumpRack, ventFace: site.ventFace, instructorPin: () => pin.get(), learnerPin: () => learner.get() });
   learner.onChange(() => session.host.learnerPinChanged());
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
@@ -324,26 +324,35 @@ if (follow && shows === 'pick') {
   };
   // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
   shell.add(homeView());
+  // A Room setting the session applies, or refuses with the host's words (a device in use): kept with the site profile
+  // only when it is taken
+  const taken = <K extends keyof SiteProfile>(key: K, apply: (v: SiteProfile[K]) => string | null) => (v: SiteProfile[K]): string | null => {
+    const refused = apply(v);
+    if (!refused) (site[key] = v), saveSite(site);
+    return refused;
+  };
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
     followers: () => session.followers, onFollowers: (f) => session.onFollowers(f), devices: () => session.devices,
     label: (key, kind) => session.deviceLabel(key, kind),
     instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
-    defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
+    defib: { model: () => site.defibModel, choose: taken('defibModel', (m) => session.setDefibModel(m)) },
     // E12: the room's depth-of-anaesthesia device, kept with the site profile and switched on in the patient's engine
-    depth: { model: () => site.eegModel, choose: (m) => ((site.eegModel = m), saveSite(site), session.setEegModel(m)) },
+    depth: { model: () => site.eegModel, choose: taken('eegModel', (m) => session.setEegModel(m)) },
     // A1 (plan pump-rack-tci.md §5): the room's pump rack, sent to the pump tablet on the style event and kept with the
-    // site profile (so a restart keeps it); a rack the host refuses is neither
-    pumps: {
-      kinds: () => site.pumpRack,
-      choose: (k) => {
-        const refused = session.setPumpRack(k);
-        if (!refused) (site.pumpRack = k), saveSite(site);
+    // site profile (so a restart keeps it)
+    pumps: { kinds: () => site.pumpRack, choose: taken('pumpRack', (k) => session.setPumpRack(k)) },
+    vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
+    // the room's ventilator face, kept with the site profile; refused while a cockpit ventilates the patient
+    ventFace: {
+      face: () => session.ventFace,
+      choose: (f) => {
+        const refused = chooseVentFace(session, f);
+        if (!refused) (site.ventFace = f), saveSite(site);
         return refused;
       },
     },
-    vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
   shell.add(room);

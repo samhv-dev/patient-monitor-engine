@@ -34,6 +34,9 @@ const PLAY_SVG = '<svg aria-hidden="true" width="12" height="14" viewBox="0 0 12
 const STOP_SVG = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" rx="2" fill="currentColor"/></svg>';
 const SOUND_SVG = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10v4h4l5 4V6l-5 4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';
 
+/** A case that begins on a paused host (after Debrief now, loaded while paused, a paused position restored). */
+export const PAUSED_AT_START = (at: string) => `This case is paused at ${at}. Press Run to start it.`;
+
 export interface Header {
   el: HTMLElement;
   /** Press the clock pill (Space). */
@@ -107,7 +110,17 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     asking++;
     void link.send({ type: 'time', action: paused ? 'pause' : 'resume' }).finally(() => (asking--, refresh()));
     drawPill();
+    drawStart();
   });
+
+  // A case that has not run since it began: said beside its title, with the Run that starts it (the pill's own resume)
+  const startWords = h('span', { class: 'ip2-start-words', role: 'status' });
+  const startRun = h('button', { type: 'button', class: 'ip2-btn ip2-start-run', hidden: true, onclick: () => pill.click() }, 'Run');
+  const drawStart = () => {
+    const on = paused && link.ctl.pausedAtStart && !!link.ctl.scenario.doc;
+    setText(startWords, on ? PAUSED_AT_START(clock(link.simT)) : '');
+    startRun.hidden = !on;
+  };
 
   // The speed box: today's speed buttons, one at a time
   const speed = fan({
@@ -161,6 +174,7 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     // The pause and speed the HOST runs at, wherever they were set
     if (!asking && paused !== link.ctl.hostPaused) paused = link.ctl.hostPaused;
     drawPill();
+    drawStart();
     drawTop();
     const k = String(link.ctl.timeScale);
     setText(speed.box, `×${SPEEDS.includes(k) ? k : link.ctl.timeScale} ▾`);
@@ -168,7 +182,7 @@ export function mountHeader(link: Link, top?: TopControls): Header {
   };
 
   const el = h('header', { class: 'ip2-head', 'aria-label': 'Session' },
-    who, mode, title, preps, h('span', { class: 'ip2-spacer' }), pill, speed.wrap,
+    who, mode, title, startWords, startRun, preps, h('span', { class: 'ip2-spacer' }), pill, speed.wrap,
     ...(top ? [h('span', { class: 'ip2-head-div', 'aria-hidden': 'true' }), sound, room] : []));
   refresh();
   const offSound = top?.onSound?.(drawTop);
