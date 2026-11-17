@@ -10,13 +10,15 @@ import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DRUGS, DRUG_IDS } from '@pme/engine-core';
-import { checkFormulary, checkPumpDevices, injectableDrugIds, loadFormulary, loadPumpDevices, PUMP_DEVICE_IDS, type FormularyFiles, type FormularyProblem, type PumpDeviceFiles } from '../../src/index.ts';
+import { checkFormulary, checkPumpDevices, injectableDrugIds, loadFormulary, loadPumpDevices, PUMP_DEVICE_IDS, sp5TciMaxRateMlH, type FormularyFiles, type FormularyProblem, type PumpDeviceFiles } from '../../src/index.ts';
 
 const pkg = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const FOLDER = join(pkg, 'formulary');
 const PACKAGES = resolve(pkg, '..');
 /** A formulary file larger than this is not an entry (a class C entry is a few kB): an extract would be (rule 6) [ENG: test]. */
 const MAX_FILE_BYTES = 32 * 1024;
+/** The citation index grows by one short source per label, each string capped by rule 6: it is not an entry. */
+const INDEX = 'sources.json';
 
 /** Every file under `dir` (relative path), skipping node_modules and build output. */
 function walk(dir: string, root = dir): string[] {
@@ -38,7 +40,7 @@ function folderProblems(dir: string): string[] {
     const out: string[] = [];
     if (!f.endsWith('.json') && !f.endsWith('/.gitkeep') && f !== '.gitkeep') out.push(`${f}: only JSON entries live in the formulary (no PDF, no extracted text)`);
     if (head === '%PDF-') out.push(`${f}: a PDF`);
-    if (statSync(p).size > MAX_FILE_BYTES) out.push(`${f}: ${statSync(p).size} bytes, more than an entry (${MAX_FILE_BYTES})`);
+    if (f !== INDEX && statSync(p).size > MAX_FILE_BYTES) out.push(`${f}: ${statSync(p).size} bytes, more than an entry (${MAX_FILE_BYTES})`);
     return out;
   });
 }
@@ -364,6 +366,8 @@ describe('rule 6: the Trissel PDF, or text extracted from it, is refused in the 
 const REPO = resolve(pkg, '../..');
 const DEVICES = join(pkg, 'pump-devices');
 const RESEARCH_50 = join(REPO, 'research', '50-pump-reference-devices.md');
+const RESEARCH_84 = join(REPO, 'research', '84-sp5-tci-brochure-readings.md');
+const RESEARCH_86 = join(REPO, 'research', '86-sp5-family-manual-readings.md');
 const readDevices = (dir: string): PumpDeviceFiles =>
   Object.fromEntries(readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'schema.json').map((f) => [f, JSON.parse(readFileSync(join(dir, f), 'utf8')) as unknown]));
 const deviceSchema = JSON.parse(readFileSync(join(DEVICES, 'schema.json'), 'utf8')) as { $id: string };
@@ -375,11 +379,11 @@ function deviceShapeErrors(files: PumpDeviceFiles): string[] {
     return v(data) ? [] : (v.errors ?? []).map((e) => `${f}${e.instancePath}: ${e.message}`);
   });
 }
-/** research/50's table rows: id → { source, tag } (the note's columns: Id, Fact, As printed, Source, Tag). */
-function research50Rows(): Map<string, { source: string; tag: string }> {
+/** The device rows of research/50, 84 and 86: id → { source, tag } (the notes' columns: Id, Fact, As printed, Source, Tag). */
+function deviceRows(): Map<string, { source: string; tag: string }> {
   const rows = new Map<string, { source: string; tag: string }>();
-  for (const line of readFileSync(RESEARCH_50, 'utf8').split('\n')) {
-    const m = /^\| ((?:SP|OT|TC)-\d{2}) \|/.exec(line);
+  for (const line of [RESEARCH_50, RESEARCH_84, RESEARCH_86].flatMap((f) => readFileSync(f, 'utf8').split('\n'))) {
+    const m = /^\| ((?:SP|OT|TC|TB|TM)-\d{2}) \|/.exec(line);
     if (!m) continue;
     const cells = line.split(' | ').map((c) => c.replace(/^\| ?| ?\|$/g, '').trim());
     rows.set(m[1]!, { source: cells[3] ?? '', tag: cells[4] ?? '' });
@@ -482,7 +486,7 @@ describe('rule 7: the stock syringes and bags (S1, PQ7 = B)', () => {
 
 describe('the reference pumps\' device profiles (S1, D12): every number with its catalogue row, or a gap', () => {
   const shipped = readDevices(DEVICES);
-  const rows = research50Rows();
+  const rows = deviceRows();
   it('the three shipped profiles pass the source check and the schema, and load typed', () => {
     expect(Object.keys(shipped).sort()).toEqual([...PUMP_DEVICE_IDS].map((d) => `${d}.json`).sort());
     expect(checkPumpDevices(shipped).map((p) => `${p.file}${p.path}: ${p.why}`)).toEqual([]);
@@ -491,14 +495,14 @@ describe('the reference pumps\' device profiles (S1, D12): every number with its
     expect(r.ok && r.devices['sp-500'].kind).toBe('syringe');
     expect(r.ok && r.devices['ot-701'].kind).toBe('drip');
   });
-  it('every src is a row of research/50 that names its document and page; no number cites an inference or a gap row', () => {
+  it('every src is a row of research/50, 84 or 86 that names its document and page; no number cites an inference or a gap row', () => {
     expect(rows.size).toBeGreaterThan(50);
     for (const [file, data] of Object.entries(shipped)) {
       for (const c of cited(data)) {
         if (!c.src) continue;
         const row = rows.get(c.src);
-        expect(row, `${file}${c.path}: ${c.src} is not a row of research/50`).toBeDefined();
-        expect(row!.source, `${file}${c.path}: ${c.src}`).toMatch(/\b(J1|J2) pp?\. \d|\bW1\b/);
+        expect(row, `${file}${c.path}: ${c.src} is not a row of research/50, 84 or 86`).toBeDefined();
+        expect(row!.source, `${file}${c.path}: ${c.src}`).toMatch(/\b(J1|J2|B1|M1) pp?\. (?:[A-D]-)?\d|\bW1\b/);
         expect(['C', 'W', 'I'], `${file}${c.path}: ${c.src}`).toContain(row!.tag);
       }
     }
@@ -532,9 +536,42 @@ describe('the reference pumps\' device profiles (S1, D12): every number with its
     const ot = r.devices['ot-701'];
     expect(ot.sets.map((s) => [s.dropsPerMl, s.standard.mlH.max, s.narrow.mlH.max, s.standard.dropsMin.max])).toEqual([[15, 450, 100, 100], [20, 450, 100, 100], [60, 100, 100, 100]]);
     expect([ot.rateStep.step, ot.purge.rateMoreThan, ot.kvo.rate, ot.volumeLimit.max]).toEqual([1, 450, 1, 9999]);
-    // the SP5 TCI: the maker's page gives no mechanical number; each is a gap
+    // the SP5 TCI: its brochure gives the library and the syringes; the family manual the mechanics, each marked the family's
     const tc = r.devices['sp5-tci'];
-    for (const k of ['syringes', 'rate', 'bolus', 'purge', 'kvo', 'occlusion', 'alarms'] as const) expect(tc[k], k).toHaveProperty('gap');
+    for (const k of ['rate', 'bolus', 'purge', 'kvo', 'occlusion', 'alarms', 'volumeDisplay', 'timeDisplay'] as const) expect(tc[k].whose, k).toBe('SP5 family manual, not the TCI edition');
+    for (const k of ['patient', 'targetStep'] as const) expect(tc.tci[k], k).toHaveProperty('gap');
+    expect(tc.syringes.ml).toEqual([5, 10, 20, 30, 50, 60]);
+  });
+  it('the SP5 family\'s rate range is per syringe size, as M1 p. A-5 prints it, and the TCI maximum is its maximum, standing in', () => {
+    const r = loadPumpDevices(shipped);
+    if (!r.ok) throw new Error('profiles do not load');
+    const tc = r.devices['sp5-tci'];
+    expect(tc.rate.bySyringe.map((s) => [s.ml, s.min, s.max])).toEqual([[5, 0.1, 100], [10, 0.1, 200], [20, 0.1, 400], [30, 0.1, 600], [50, 0.1, 1500], [60, 0.1, 1500]]);
+    expect(tc.rate.bySyringe.map((s) => s.ml)).toEqual(tc.syringes.ml);
+    expect(tc.rate.step.step).toBe(0.01);
+    expect(tc.tci.maxRate).toMatchObject({ per: 'rate', src: 'TM-01' });
+    expect(tc.tci.maxRate.whose).toMatch(/^SP5 family manual's .*standing in for the TCI edition's/);
+    expect(tc.rate.bySyringe.map((s) => sp5TciMaxRateMlH(tc, s.ml))).toEqual([100, 200, 400, 600, 1500, 1500]);
+    expect([sp5TciMaxRateMlH(tc, null), sp5TciMaxRateMlH(tc, 15)]).toEqual([undefined, undefined]);
+    // the printed bolus and purge default at 50/60 mL is 800 mL/h, though the same sentence's rule gives the maximum
+    for (const k of ['bolus', 'purge'] as const) expect([tc[k].default.rate, tc[k].default.printed.ml, tc[k].default.printed.rate]).toEqual(['syringe maximum', [50, 60], 800]);
+    expect(tc.occlusion.levels.mmHg).toHaveLength(11);
+    expect([tc.kvo.min, tc.kvo.max, tc.kvo.step, tc.kvo.default.rate, tc.kvo.atMost.min]).toEqual([0.1, 5, 0.1, 1, 30]);
+    expect([tc.alarms.high.length, tc.alarms.mid.length, tc.alarms.low.length]).toEqual([7, 1, 11]);
+  });
+  it('the SP5 TCI\'s library: four drugs and seven models, as the maker counts them, each with its targets, ages and target range', () => {
+    const r = loadPumpDevices(shipped);
+    if (!r.ok) throw new Error('profiles do not load');
+    const { tci } = r.devices['sp5-tci'];
+    expect(tci.library).toHaveLength(tci.drugs.count);
+    expect(tci.library.flatMap((d) => d.models)).toHaveLength(tci.protocols.count);
+    expect(tci.library.map((d) => [d.drugId, d.models.map((m) => `${m.name}: ${m.targets.join('/')}`), d.targetRange.max, d.targetRange.unit])).toEqual([
+      ['propofol', ['Marsh: plasma', 'Schnider: plasma/effect-site', 'Kataria (Pedia): plasma', 'Paedfusor (Pedia): plasma'], 15, 'µg/mL'],
+      ['remifentanil', ['Minto: plasma/effect-site'], 20, 'ng/mL'],
+      ['sufentanil', ['Gepts: plasma/effect-site'], 20, 'ng/mL'],
+      ['alfentanil', ['Maitre: plasma/effect-site'], 500, 'ng/mL'],
+    ]);
+    for (const m of tci.library.flatMap((d) => d.models)) expect(m.ageYears.min, m.name).toBeLessThan(m.ageYears.max);
   });
   const fixtureDevices = (): Record<string, any> => JSON.parse(JSON.stringify(shipped)) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   const pwhy = (f: PumpDeviceFiles) => checkPumpDevices(f).map((p) => `${p.file}${p.path}: ${p.why}`);
@@ -550,10 +587,10 @@ describe('the reference pumps\' device profiles (S1, D12): every number with its
     expect(pwhy(ingap)).toEqual(['sp5-tci.json/kvo: a gap holds no number and no src: a number needs its row']);
     const other = fixtureDevices();
     other['sp-500.json'].rateStep.src = 'OT-09';
-    expect(pwhy(other)).toEqual(['sp-500.json/rateStep/src: "OT-09" is not a row of this device in research/50 (SP-nn)']);
+    expect(pwhy(other)).toEqual(['sp-500.json/rateStep/src: "OT-09" is not a row of this device (SP-nn)']);
     const free = fixtureDevices();
     free['ot-701.json'].kvo.src = 'JMS OT-701 catalogue, p. 2';
-    expect(pwhy(free)).toEqual(['ot-701.json/kvo/src: "JMS OT-701 catalogue, p. 2" is not a row of this device in research/50 (OT-nn)']);
+    expect(pwhy(free)).toEqual(['ot-701.json/kvo/src: "JMS OT-701 catalogue, p. 2" is not a row of this device (OT-nn)']);
     const empty = fixtureDevices();
     empty['sp-500.json'].nearEnd = { gap: '' };
     expect(pwhy(empty)).toEqual(['sp-500.json/nearEnd/gap: a gap names what the manual must give (1–200 characters)']);

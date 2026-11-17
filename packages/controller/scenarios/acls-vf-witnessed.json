@@ -1,5 +1,5 @@
 {
-  "$comment": "[draft] Clinical content awaits the owner's review (Stage 6b gate). Brief §7.4 example, expanded. Probabilities are [FIT: draft card's teaching-outcome placeholder pending clinical review; brief research/44 X-24] placeholders: shock ROSC 0.3 in coarse VF (brief §6.5 'organised with pulse' raised for teaching), 0.15 in fine VF; decay to fine VF at 4 min and asystole 5 min later follow the three-phase model (research 03 §1.8). vfCoarse/vfFine are Stage 5 ids; until Stage 5 merges the host shows stand-ins (standins.ts).",
+  "$comment": "[draft] Clinical content awaits the owner's review (Stage 6b gate). Brief §7.4 example, expanded. Probabilities are [FIT: draft card's teaching-outcome placeholder pending clinical review; brief research/44 X-24] placeholders: shock ROSC 0.3 in coarse VF (brief §6.5 'organised with pulse' raised for teaching), 0.15 in fine VF. vfCoarse/vfFine are Stage 5 ids; until Stage 5 merges the host shows stand-ins (standins.ts).",
   "schema": "pme-scenario/1",
   "id": "acls-vf-witnessed",
   "title": "[draft] Witnessed VF in PACU",
@@ -20,7 +20,8 @@
       "$comment": "Stage 2+: add { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 132 } and dbp 78, spo2 97, etco2 36 to the patient baseline.",
       "onEnter": [ { "type": "device", "action": { "device": "nibp", "action": "auto", "intervalMin": 5 } } ],
       "transitions": [
-        { "id": "arrest", "label": "Start VF now", "to": "vf", "when": { "any": [ { "afterS": 60 }, { "manual": { "label": "Start VF now" } } ] } }
+        { "id": "arrest", "label": "Start VF now", "to": "vf", "when": { "any": [ { "all": [ { "afterS": 60 }, { "rhythm": { "id": "sinus" } } ] }, { "manual": { "label": "Start VF now" } } ] },
+          "src": "60 s: the case's pacing (time for the handover), not a clinical number." }
       ]
     },
     {
@@ -31,7 +32,8 @@
         { "id": "shockVf", "label": "Shock (p 0.3)", "to": "rosc", "when": { "event": { "kind": "defib", "action": "shock", "minJ": 150 } }, "probability": 0.3, "else": "vf" },
         { "id": "epiCpr", "label": "Epinephrine + good CPR", "to": "rosc",
           "when": { "all": [ { "event": { "kind": "drug", "drugId": "epinephrine" } }, { "vital": { "var": "etco2", "op": ">=", "value": 20, "forS": 30 } } ] } },
-        { "id": "decay", "label": "Decay to fine VF", "to": "vfFine", "when": { "afterS": 240 } },
+        { "id": "decay", "label": "Decay to fine VF", "to": "vfFine", "when": { "rhythm": { "id": "vfCoarse", "forS": 240 } },
+          "src": "PLACEHOLDER: no source read gives 4 min of coarse VF before fine VF. The three-phase model's 4 min (Weisfeldt & Becker, JAMA 2002; research/03 §1.8) ends the electrical phase, not coarse VF; research/03 §1.8 splits coarse from fine at 0.2 mV." },
         { "id": "roscVf", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
       ]
     },
@@ -40,7 +42,8 @@
       "onEnter": [ { "type": "setRhythm", "rhythm": "vfFine", "when": "now" } ],
       "transitions": [
         { "id": "shockFine", "label": "Shock (p 0.15)", "to": "rosc", "when": { "event": { "kind": "defib", "action": "shock", "minJ": 150 } }, "probability": 0.15 },
-        { "id": "toAsystole", "label": "Deteriorate to asystole", "to": "asystole", "when": { "afterS": 300 } },
+        { "id": "toAsystole", "label": "Deteriorate to asystole", "to": "asystole", "when": { "rhythm": { "id": "vfFine", "forS": 300 } },
+          "src": "PLACEHOLDER: no source read gives 5 min of fine VF before asystole; research/03 §1.8 gives a hazard of about 2 %/min (Waalewijn 2002)." },
         { "id": "roscFine", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
       ]
     },

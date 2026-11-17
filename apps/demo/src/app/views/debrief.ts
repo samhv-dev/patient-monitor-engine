@@ -24,7 +24,7 @@ import { kitOffLine } from '../kit-store.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, preparationsOf, PREP_WORDS, PRESSURE_KEYS, remoteKeys, remoteWho, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type PrepRow, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, preparationsOf, PREP_WORDS, PRESSURE_KEYS, deviceWho, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type PrepRow, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { loadShippedFormulary } from '../formulary.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
@@ -107,15 +107,16 @@ function actionsTable(r: Report3): HTMLElement {
 }
 
 /** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record); a learner
- *  defibrillator press reads its who line (R5d), a learner remote's its own (L4, L13). `names`: the name Room setup gives
- *  a device key, from the session's one name source (AppSession.deviceName, brief 164). */
+ *  defibrillator press reads its who line (R5d), a learner remote's its own (L4, L13), a pump tablet's names the tablet.
+ *  `names`: the name Room setup gives a device key now (AppSession.deviceName). */
 function timelineRows(d: RunData, names: (key: string) => string | null): HTMLElement[] {
   const line = (r: Row, text: string | string[], isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
     h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, ...[text].flat(), undoneText(r))); // separate texts: the Persian page reads each (D13)
   const done = new Set<string>();
   return d.rows.flatMap((r) => {
     const b = r.batch?.id;
-    if (r.kind === 'learner') return [line(r, learnerWho(d.rows, r, names), false)];
+    if (r.kind === 'learner') return [line(r, learnerWho(d, r, names), false)];
+    if (r.kind === 'pump' && r.by !== undefined) return [line(r, `${r.text}, by ${deviceWho(d, 'pump', r.by, names, r.name)}`, false)];
     if (b === undefined) return [line(r, r.text, setup(r))];
     if (done.has(b)) return [];
     done.add(b);
@@ -488,7 +489,7 @@ function prepSection(p: { rows: PrepRow[]; unrecorded: boolean } | null): HTMLEl
 }
 
 export function debriefView(session: AppSession, link: Link): View {
-  /** The name Room setup gives a device key: the session's one name source (brief 164), the record's and the Log's. */
+  /** The name Room setup gives a device key now: before the record's own names (debrief.ts deviceWho). */
   const names = (key: string): string | null => session.deviceName?.(key) ?? null;
   // L13: the formulary names a preparation's sources: the session's (loaded with the learner PIN), else the shipped one,
   // loaded once when a run with preparations is drawn (an archived run on a page whose host never loaded it)
@@ -647,7 +648,7 @@ export function debriefView(session: AppSession, link: Link): View {
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
           h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)),
-            h('td', {}, r.text, r.kind === 'learner' && r.remote ? `, by ${remoteWho(r.by ?? '', remoteKeys(d.rows), names, r.name)}` : '', undoneText(r))))))
+            h('td', {}, r.text, r.kind === 'learner' && r.remote ? `, by ${deviceWho(d, 'learner', r.by ?? '', names, r.name)}` : r.kind === 'pump' && r.by !== undefined ? `, by ${deviceWho(d, 'pump', r.by, names, r.name)}` : '', undoneText(r))))))
         : h('p', { class: 'muted' }, 'No drugs or fluids were given.'),
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
       ...(r3 ? [

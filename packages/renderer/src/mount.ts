@@ -3,7 +3,7 @@
 // device tones follow the skin, `setSkin` switches without restarting the engine, and the handle exposes the 12-lead
 // capture, the trends and the event log. Without `skin` the legacy look stays.
 import {
-  AlarmSounder, beepMsAt, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
+  AlarmSounder, beepMsAt, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type Anchor, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
 } from '@pme/audio';
 import { BEHIND_REPORT_S, EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type AlarmEntry, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
 import { resolveSkin, type ResolvedSkin } from '@pme/skins';
@@ -12,6 +12,7 @@ import { DeviceUI, gridOf } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
 import { normalIbpScales, type IbpChannel, type IbpScales } from './ibp-scale.ts';
+import { beatToneHz, pulseTone } from './pulse-tone.ts';
 import { filterModeFor, renderPlan, type LaneOverride, type RenderPlan } from './skin-plan.ts';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
@@ -176,6 +177,8 @@ export const BEAT_TONE_MAX_SCALE = 4;
 export const beatToneAt = (kind: string, timeScale: number, nominal?: number): boolean => (kind !== 'qrs' && kind !== 'pulse') || (nominal ?? timeScale) <= BEAT_TONE_MAX_SCALE;
 /** The two-tone cue at the end of a fast-forward (none at its start), Hz [ENG: display]. */
 const FF_CUE_HZ = [660, 990] as const;
+/** Gain of the fast-forward end cue, and of the beep in the legacy look, which has no style to take one from [ENG: display]. */
+const CUE_GAIN = 0.25;
 
 export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorHandle {
   // Showcase hotfix item 4: a skin's layout.whenAttached follows the CO2 line (saadat-like: the CO2 waveform takes the
@@ -300,9 +303,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   let play: ((tone: ToneRequest, when: number) => ToneHandle | void) | null = null; // Follows the skin
   const playerFor = (out: AudioOut, sk: ResolvedSkin | null) =>
     sk
-      ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like' }) // RR-6
-      : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, 0.25, tone.durMs);
-  let anchor: { simT: number; perfMs: number; timeScale: number } = { simT: 0, perfMs: performance.now(), timeScale: 1 };
+      ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like', beepGain: pulseTone(sk).gain }) // RR-6
+      : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, CUE_GAIN, tone.durMs);
+  let anchor: Anchor = { simT: 0, perfMs: performance.now(), timeScale: 1, runS: 0 };
   let nominalRate: number | undefined; // a viewer's session speed (set by ViewerSync); a host gates on its own rate
   let lastBeatT: number | null = null; // sim time of the last beat tone: the beat interval that caps the beep's length
   const simNow = () => anchor.simT + ((performance.now() - anchor.perfMs) / 1000) * anchor.timeScale;
@@ -321,9 +324,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     }
   };
   const onEvents = (a: ClockAnchor, events: EngineEvent[]) => {
-    anchor = { simT: a.simT, perfMs: a.epochMs - performance.timeOrigin, timeScale: a.timeScale };
+    anchor = { simT: a.simT, perfMs: a.epochMs - performance.timeOrigin, timeScale: a.timeScale, runS: a.runS };
     onBehind(a.behindS ?? 0);
-    scheduler?.clock.setAnchor({ simT: a.simT, perfMs: anchor.perfMs, timeScale: a.timeScale });
+    scheduler?.clock.setAnchor(anchor);
     for (const e of events) {
       trends.record(e);
       eventLog.event(e);
@@ -380,11 +383,11 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       const beat = e.type === 'tone' && (e.kind === 'qrs' || e.kind === 'pulse');
       const rr = beat && lastBeatT !== null ? e.t - lastBeatT : 0; // ≤ 0 after a rewind or a re-posted tone: no cap
       if (beat) lastBeatT = e.t;
-      if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale, nominalRate) && (e.kind !== 'qrs' || !r || r.audio.beep.enabled)) {
+      if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale, nominalRate) && (!beat || !r || (r.audio.beep.enabled && e.kind === pulseTone(r).kind))) {
         scheduler?.enqueue({
           t: e.t, id: e.id, kind: e.kind,
           ...(rr > 0 ? { durMs: beepMsAt(60 / rr, nominalRate ?? a.timeScale) } : {}), // the same speed as the gate
-          ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
+          ...(beat && r ? { freqHz: beatToneHz(r, e.freqHz) } : e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
           ...(e.refT !== undefined ? { refT: e.refT } : {}),
           ...(e.chargeS !== undefined ? { chargeS: e.chargeS } : {}),
         });
@@ -397,7 +400,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       for (const fn of listeners) fn(e);
     }
     ui?.paint(a.simT);
-    sounder?.pump(a.simT);
+    sounder?.pump(simNow()); // now, not the batch's time: a raise in it starts its train here
   };
 
   const sizeOf = (): Size => ({
@@ -468,6 +471,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     const s = scheduler;
     bridge = new AlarmAudioBridge(sounder, () => s.clock.timeScale, { windowSilence: opts.audioSilence === 'window' });
     if (lastStatus) bridge.onStatus({ ...lastStatus, t: simNow() });
+    sounder.pump(simNow());
   };
 
   /**
@@ -483,7 +487,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ffLatched = ffLatched.filter((x) => x.since <= t); // A rewind drops the latched alarms of its discarded future
     nibpLast = null;
     lastPi = undefined;
-    anchor = { simT: t, perfMs: performance.now(), timeScale: anchor.timeScale };
+    anchor = { ...anchor, simT: t, perfMs: performance.now() }; // run time comes with the next post
     const line = (s.state as { st?: { resp?: { co2Sensor?: string } } } | null)?.st?.resp?.co2Sensor;
     if (line !== undefined) setCo2(line !== 'off', h);
     // UI review #14 follow-up: the cuff's last result is the restored engine's too (it is emitted only when measured,
@@ -571,7 +575,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           outputLatency: out.outputLatency,
           play: (tone, when) => play?.(tone, when),
         });
-        scheduler.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.perfMs, timeScale: anchor.timeScale });
+        scheduler.clock.setAnchor(anchor);
         scheduler.start();
         makeSounder();
       });
@@ -672,7 +676,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
             ff = false;
             makeSounder(); // the alarms active NOW sound again (makeSounder replays the last alarm status)
             // the owner's cue: one short two-tone at the END only (the Sound toggle's gain applies)
-            if (audio) FF_CUE_HZ.forEach((hz, i) => playBeep((audio as AudioOut).ctx, (audio as AudioOut).master, (audio as AudioOut).ctx.currentTime + 0.05 + 0.18 * i, hz));
+            if (audio) FF_CUE_HZ.forEach((hz, i) => playBeep((audio as AudioOut).ctx, (audio as AudioOut).master, (audio as AudioOut).ctx.currentTime + 0.05 + 0.18 * i, hz, CUE_GAIN));
           }
         }
       }),

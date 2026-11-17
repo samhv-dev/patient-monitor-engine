@@ -63,7 +63,7 @@ developer reads it for the gas truths and the capnogram the monitor draws.
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 4 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 4, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -174,8 +174,10 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | Function | File | Doc |
 |---|---|---|
 | `airwayCo2` | [`l2/co2/capno.ts`](../../packages/engine-core/src/l2/co2/capno.ts) | Airway CO2 (mmHg) at time t — the true signal before the sampler. |
+| `createSampler` | [`l2/co2/capno.ts`](../../packages/engine-core/src/l2/co2/capno.ts) | — |
 | `sampleCo2` | [`l2/co2/capno.ts`](../../packages/engine-core/src/l2/co2/capno.ts) | Displayed CO2 at 62.5 Hz sample time t: |
 | `lowFlowFactor` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | min(1, CO/CO_ref)^0.6 (brief §4.4 low-flow compression). |
+| `createCo2State` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | — |
 | `stepCo2` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | C_f·dPf/dt = φ·VCO2 − φ·VA·Pf/0.863 − k_fs·(Pf − Ps); |
 | `etco2True` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | True end-tidal PCO2 of an exchanging breath: |
 | `vaForPaco2` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | Alveolar ventilation that holds PaCO2 at `paco2` for this VCO2 (steady state of the fast compartment). |
@@ -183,6 +185,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `venousGradient` | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | Venous-return driving pressure Pmsf − RAP by volume status [FIT: |
 | `cardiacOutput` | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | CO (L/min) for the gas model, from the circulation (beats and CPR compressions eject through it). |
 | `applyPawCoupling` | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | Apply the mean-airway-pressure coupling to the L1 coupled truths at time t (MANUAL). |
+| `createDelay` | [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | — |
 | `siteDelay` | [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | Target delay for a site, CO ratio and PI (vasoconstriction below PI 1 % lengthens it) [FIT: |
 | `delayStep` | [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | Push this gas step's pulmonary SaO2 and return the SaO2 at the site (interpolated `delay` seconds back). |
 | `odc` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | Severinghaus 1979 (research 03 §3.5, §11 #13 confirmed): |
@@ -190,14 +193,17 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `po2ForContent` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | PO2 whose content is `c` (bisection; |
 | `o2Steady` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | Steady state for given inputs and shunt, or null when there is no ventilation to reach one. |
 | `solveShunt` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | MANUAL calibration (plan decision 2): |
+| `createO2State` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | — |
 | `stepO2` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | One Euler step of dtS seconds. |
+| `restingPaco2` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | — |
+| `apparatusDeadSpaceMl` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | — |
+| `ventDefaults` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | — |
 | `physicalDeadSpace` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | THE physical series dead space (mL) for this patient and airway — anatomical 2.2 mL/kg IBW, minus the extrathoracic share an artificial airway bypasses (ETT_BYPASS_ML_PER_KG × IBW, floored at 30 % of |
 | `coRefLpm` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | Stage V.1 (E-V1-1): |
+| `ageBand` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | — |
 | `defaultHeightCm` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | The stature gasPatient assumes when the profile gives none (cm) — the respiratory-mechanics predicted volumes use the same. |
 | `gasPatient` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | Patient scaling from PatientProfile (brief §7.4 patient.ageY/weightKg/heightCm/sex). |
 | `tempFactor` | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | VO2/VCO2 temperature factor: |
-
-Exported without a doc comment: `createSampler`, `createCo2State`, `createDelay`, `createO2State`, `restingPaco2`, `apparatusDeadSpaceMl`, `ventDefaults`, `ageBand`.
 
 ## Source files
 

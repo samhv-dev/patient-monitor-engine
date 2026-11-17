@@ -378,7 +378,7 @@ describe('the run record', () => {
     const copy = JSON.parse(JSON.stringify(r.data));
     expect(copy).toEqual(r.data);
     r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
-    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop', 'recognised'] });
+    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop', 'recognised', 'rateChange'], devices: {} });
   });
 
   it('on a real host: a bookmark restore keeps the course before it and marks the course after it undone', async () => {
@@ -536,6 +536,6 @@ describe('the run record', () => {
     one.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
     one.wire({ type: 'scenario', t: 0, stateId: 'awake' } as WireEvent);
     one.engine(meas(1, 99));
-    expect(Object.keys(one.data)).toEqual(['startedAt', 'lastWall', 'patient', 'weightKg', 'doc', 'rows', 'samples', 'returns', 'keeps']);
+    expect(Object.keys(one.data)).toEqual(['startedAt', 'lastWall', 'patient', 'weightKg', 'doc', 'rows', 'samples', 'returns', 'keeps', 'devices']);
   });
 });

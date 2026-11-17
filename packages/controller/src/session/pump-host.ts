@@ -2,15 +2,15 @@
 // loads and what it programs, never what a syringe holds: this module resolves a preparation (from the host's table,
 // learner plan D3) or a stock item (S1) to the syringe's or bag's TRUE contents, checks every command against the
 // channel's kind (Room setup's rack, A1) and the reference device's profile (D12, S1: every range and device word on a
-// refusal is the profile's), resolves the device rates the engine needs (the bolus and purge rates), and builds the
-// engine's `pump` event (E1, E2). It also keeps what the host APPLIED to each channel — its kind, syringe size, contents
+// refusal is the profile's), resolves the device rates the engine needs (the bolus and purge rates, a TCI channel's
+// highest rate), and builds the engine's `pump` event (E1, E2). It also keeps what the host APPLIED to each channel — its kind, syringe size, contents
 // and their origin, programme, rate, TCI and who set each — so a change can name the value it replaced, a mismatch of
 // contents and programme can be found (§8), and a remote's `infusion set` can be routed to its channel (D9). The volumes
 // stay the engine's (D4): this table holds none. Pure: no clock, no I/O; host-session.ts owns when each step runs.
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
 import type { PumpCommand, PumpMeta, PumpPatient, PumpReplaced, PumpSource, WireCommand } from '../protocol.ts';
 import type { Formulary, StockItem } from '../formulary/types.ts';
-import type { PumpDevices, Sp500Profile, Ot701Profile } from '../pump-devices.ts';
+import { sp5TciMaxRateMlH, type PumpDevices, type Sp500Profile, type Ot701Profile } from '../pump-devices.ts';
 import { notUsable, remainingOf, type HostPrep } from './preparations.ts';
 
 /** A channel's kind, as Room setup sets it (A1; protocol.ts PumpKind once A1 merges). */
@@ -227,12 +227,15 @@ export function translatePump(cmd: PumpCommand, x: PumpContext): PumpTranslated 
     }
     case 'tci': {
       if (kind !== 'syringe') return no(`the ${deviceName(ot)} has no TCI`);
+      // the engine's controller never runs above the device's highest rate for the loaded syringe
+      const tc = x.devices['sp5-tci'];
+      const maxRateMlH = sp5TciMaxRateMlH(tc, c?.syringeMl);
+      if (cmd.target > 0 && maxRateMlH === undefined) return no(`load a syringe first: the ${deviceName(tc)}'s TCI rate limit is per syringe size (${list(tc.rate.bySyringe.map((s) => s.ml))} mL)`);
       prev('tci');
       if (c?.tci && !samePatient(c.tci.patient, cmd.patient)) prev('patient');
       if (cmd.target > 0) gives();
       const { opioids, ...patient } = cmd.patient;
-      // the SP5 TCI's ceiling is a gap until its manual (sp5-tci.json tci.maxRate): none sent, the engine's 1200 mL/h holds
-      return ev({ action: 'tci', setId: cmd.setId, mode: cmd.mode, target: cmd.target, patient, ...(opioids !== undefined ? { opioids } : {}) });
+      return ev({ action: 'tci', setId: cmd.setId, mode: cmd.mode, target: cmd.target, patient, ...(opioids !== undefined ? { opioids } : {}), ...(cmd.target > 0 ? { maxRateMlH } : {}) });
     }
     case 'bolus': {
       if (kind !== 'syringe') return no(`the ${deviceName(ot)} has no bolus`);
@@ -380,6 +383,27 @@ export function channelsRunning(channels: ReadonlyMap<number, HostChannel>, drug
 export function onPumpsWords(chs: readonly number[], channelLess: boolean): string {
   const pumps = `${chs.length === 1 ? 'pump' : 'pumps'} ${list(chs)}`;
   return `running on ${pumps}${channelLess ? ' and as an infusion' : ''}: change it on the pump`;
+}
+
+/** A channel that holds a syringe or a bag (idle, running, paused or in alarm): what the patient is or may be receiving. */
+export interface ChannelInUse {
+  ch: number;
+  kind: ChannelKind;
+  running: boolean;
+}
+
+/**
+ * Why Room setup's rack `next` cannot replace the present one: it removes a channel in use or changes its kind. The
+ * running channels are named first (a running channel is stopped before it is unloaded). Null: no channel in use is touched.
+ */
+export function rackRefusal(next: readonly ChannelKind[], inUse: readonly ChannelInUse[]): string | null {
+  const hit = inUse.filter((c) => next[c.ch - 1] !== c.kind);
+  const running = hit.filter((c) => c.running);
+  const named = (running.length ? running : hit).map((c) => c.ch).sort((a, b) => a - b);
+  if (named.length === 0) return null;
+  const one = named.length === 1;
+  const who = `${one ? 'Channel' : 'Channels'} ${list(named)} ${one ? 'is' : 'are'}`;
+  return running.length ? `${who} running: stop ${one ? 'it' : 'them'} first.` : `${who} loaded: unload ${one ? 'it' : 'them'} first.`;
 }
 
 /**

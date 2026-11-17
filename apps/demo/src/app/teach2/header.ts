@@ -12,6 +12,7 @@ import { oneLiner } from '../patients.ts';
 import { hrefOf } from '../router.ts';
 import { cardOf } from '../scenarios.ts';
 import { SPEEDS } from '../sessionbar.ts';
+import { soundWords } from '../sound-seat.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import { defaultPatient, NO_CASE } from './begin.ts';
 import { PREPS_WORDS } from './learner-preps.ts';
@@ -19,6 +20,10 @@ import { PREPS_WORDS } from './learner-preps.ts';
 /** The top bar's controls the header carries on this route (main.ts: the same toggle and the same room code). */
 export interface TopControls {
   soundOn(): boolean;
+  /** The page of this browser that plays the session's sound instead (sound-seat.ts), else null. */
+  soundElsewhere?(): string | null;
+  /** Called when another page takes the sound or gives it up. */
+  onSound?(fn: () => void): () => void;
   toggleSound(): void | Promise<void>;
   code: string;
   /** The phones following the session. */
@@ -125,7 +130,7 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     if (!top || !sound || !room) return;
     const on = top.soundOn();
     sound.setAttribute('aria-pressed', String(on));
-    setText(soundWord, on ? 'Sound on' : 'Sound off');
+    setText(soundWord, soundWords(on, top.soundElsewhere?.() ?? null));
     const n = top.phones();
     const phones = `${n} ${n === 1 ? 'phone' : 'phones'}`;
     setText(roomCode, top.code);
@@ -166,10 +171,11 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     who, mode, title, preps, h('span', { class: 'ip2-spacer' }), pill, speed.wrap,
     ...(top ? [h('span', { class: 'ip2-head-div', 'aria-hidden': 'true' }), sound, room] : []));
   refresh();
+  const offSound = top?.onSound?.(drawTop);
   return {
     el,
     togglePause: () => pill.click(),
     refresh,
-    destroy: () => speed.close(),
+    destroy: () => (speed.close(), offSound?.()),
   };
 }

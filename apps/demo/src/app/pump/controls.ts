@@ -14,6 +14,7 @@ import type { ChannelKind } from './face.ts';
 import { FLOW_WORDS, type Flow, type FlowDef, type FlowInput, type PumpBody, type PumpLabel, type PumpLink } from './form.ts';
 import type { Rack, RackChannel } from './rack.ts';
 import type { Follower } from '../views/follower.ts';
+import { hostPause } from '../views/follower-status.ts';
 import { BOLUS } from './bolus.ts';
 import { LOAD } from './load.ts';
 import { PROGRAM } from './program.ts';
@@ -28,7 +29,7 @@ export { FLOW_WORDS, type CasePatient, type Flow, type FlowDef, type FlowInput, 
 const FLOWS: readonly FlowDef[] = [LOAD, PROGRAM, RATE, TCI, BOLUS];
 
 /** One channel's controls in its face's `actions` slot. */
-function channelControls(api: RackChannel, ctx: { link: PumpLink; input(api: RackChannel): FlowInput }): { destroy(): void; notice(words: string): void; ack(id: string, accepted: boolean, reason: string | undefined): boolean; refresh(): void } {
+function channelControls(api: RackChannel, ctx: { link: PumpLink; input(api: RackChannel): FlowInput; paused(): boolean }): { destroy(): void; notice(words: string): void; ack(id: string, accepted: boolean, reason: string | undefined): boolean; refresh(): void } {
   const ch = api.ch;
   const pending = new Map<string, string>(); // command id → what an accepted one did
   const said = h('p', { class: 'pf-said', role: 'status', 'aria-live': 'polite' });
@@ -54,10 +55,11 @@ function channelControls(api: RackChannel, ctx: { link: PumpLink; input(api: Rac
     const form = h('form', { class: 'pf-flow', 'data-flow': def.id, novalidate: true, 'aria-label': `${def.title} · channel ${ch}` },
       h('h3', { class: 'pf-flow-title' }, def.title), flow.el,
       h('div', { class: 'pf-flow-actions' },
-        h('button', { type: 'submit', class: 'btn primary pf-send' }, def.submit),
+        h('button', { type: 'submit', class: 'btn primary pf-send', disabled: ctx.paused() }, def.submit),
         h('button', { type: 'button', class: 'btn pf-cancel', onclick: () => close() }, FLOW_WORDS.cancel)));
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      if (ctx.paused()) return;
       const b = flow.build();
       if (!('type' in b)) return void setText(said, b.why);
       sendBody(b, def.done(ch, api.row()));
@@ -87,6 +89,8 @@ function channelControls(api: RackChannel, ctx: { link: PumpLink; input(api: Rac
       if (b.hidden && open?.def === d) close();
     }
     setText(startBtn, api.row()?.state === 'running' ? FLOW_WORDS.stop : FLOW_WORDS.start);
+    // the case's pause: every control that sends stays in place, unavailable (the host refuses what it would send)
+    for (const b of [...buttons.querySelectorAll('.pf-btn'), ...panel.querySelectorAll('.pf-send')]) (b as HTMLButtonElement).disabled = ctx.paused();
   };
   const offRow = api.onRow(() => refresh());
   refresh();
@@ -123,6 +127,9 @@ export interface Flows {
  */
 export function mountFlows(rack: Rack, link: PumpLink, o: { devices: PumpDevices | null; formulary(): Formulary | null }): Flows {
   let labels: readonly PumpLabel[] = [];
+  const pause = hostPause();
+  const pausedNote = h('p', { class: 'lr-paused pf-paused', role: 'status', hidden: true }, FLOW_WORDS.paused);
+  rack.el.prepend(pausedNote);
   const chans = new Map<number, ReturnType<typeof channelControls>>();
   const input = (api: RackChannel): FlowInput => ({
     ch: api.ch, kind: (api.el.dataset.kind ?? 'syringe') as ChannelKind, row: api.row(), devices: o.devices, formulary: o.formulary(), labels, casePatient: () => link.casePatient(),
@@ -131,10 +138,12 @@ export function mountFlows(rack: Rack, link: PumpLink, o: { devices: PumpDevices
     for (const api of rack.channels()) {
       const c = chans.get(api.ch);
       if (c) c.refresh();
-      else chans.set(api.ch, channelControls(api, { link, input }));
+      else chans.set(api.ch, channelControls(api, { link, input, paused: () => pause.paused }));
     }
+    pausedNote.hidden = !pause.paused;
   };
   const off = link.onMessage((m) => {
+    pause.onMessage(m);
     ensure();
     if (m.kind === 'ack') {
       for (const c of chans.values()) if (c.ack(m.commandId, m.accepted, m.reason)) break;
@@ -155,6 +164,7 @@ export function mountFlows(rack: Rack, link: PumpLink, o: { devices: PumpDevices
     },
     destroy() {
       off();
+      pausedNote.remove();
       for (const c of chans.values()) c.destroy();
       chans.clear();
     },

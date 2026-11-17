@@ -1,7 +1,7 @@
 // Pure burst geometry (no Web Audio): where each pulse of one burst starts, for a profile level with the skin's
 // overrides applied, and the volume-step → gain curve. Times are REAL seconds (brief §3.6: alarm bursts keep
 // real-time patterns when timeScale ≠ 1).
-import { levelKey, type AlarmLevel, type AlarmSoundProfile, type LevelSound, type ProfileOverrides } from './profiles/types.ts';
+import { levelKey, type AlarmLevel, type AlarmSoundProfile, type LevelSound, type ProfileOverrides, type VolumeCurve } from './profiles/types.ts';
 
 export interface BurstPulse {
   /** Onset relative to the burst start (s). */
@@ -43,6 +43,40 @@ export function volumeGain(v: AlarmSoundProfile['volume'], step: number): number
   const s = Math.round(Math.min(v.max, Math.max(v.min, step)));
   if (s <= 0) return 0;
   return v.maxGain * 10 ** ((-(v.max - s) * v.dbPerStep) / 20);
+}
+
+/**
+ * Linear gain of the pulse tone: the alarm volume law of the style (its dB per step and its gain at the top step) over
+ * the beep's own steps, at `levelDb` against a high-priority alarm on the same step.
+ */
+export function beepGain(alarm: VolumeCurve, beep: { volume: { min: number; max: number; default: number }; levelDb: number }, step = beep.volume.default): number {
+  return volumeGain({ ...alarm, min: beep.volume.min, max: beep.volume.max }, step) * dbToGain(beep.levelDb);
+}
+
+/**
+ * When an alarm's bursts start, in real seconds: the first when the alarm starts to sound, then one every repeatS
+ * (null: once). A burst found late (the caller slept past it) starts now and the repeat goes on from it, so the ones it
+ * overtook are dropped rather than piled up at one instant.
+ */
+export class BurstSchedule {
+  private nextS: number | null;
+  private readonly repeatS: number | null;
+
+  constructor(startS: number, repeatS: number | null) {
+    this.nextS = startS;
+    this.repeatS = repeatS;
+  }
+
+  /** The starts of the bursts due before untilS, each given once, none before nowS. */
+  take(nowS: number, untilS: number): number[] {
+    const out: number[] = [];
+    while (this.nextS !== null && this.nextS <= untilS) {
+      const at = Math.max(this.nextS, nowS);
+      out.push(at);
+      this.nextS = this.repeatS === null ? null : at + this.repeatS;
+    }
+    return out;
+  }
 }
 
 /** dB → linear amplitude. */

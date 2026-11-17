@@ -2,10 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "pme-pump-devices/1",
   "title": "The reference pumps' device profiles (plan pump-rack-tci.md D12, piece S1)",
-  "description": "One file per reference device (<deviceId>.json). Every number sits in an object whose src is a row id of research/50-pump-reference-devices.md (the document and its page), or the field is a gap naming what the operator manual must give. The source rules beyond shape are in packages/controller/src/pump-devices.ts (checkPumpDevices).",
+  "description": "One file per reference device (<deviceId>.json). Every number sits in an object whose src is a row id of research/50-pump-reference-devices.md or, for the SP5 TCI's brochure, research/84-sp5-tci-brochure-readings.md, and for the SP5 family's operator's manual research/86-sp5-family-manual-readings.md (the document and its page), or the field is a gap naming what the operator manual must give. The source rules beyond shape are in packages/controller/src/pump-devices.ts (checkPumpDevices).",
   "definitions": {
     "text": { "type": "string", "minLength": 1, "maxLength": 200 },
-    "src": { "type": "string", "pattern": "^(SP|OT|TC)-\\d{2}$" },
+    "src": { "type": "string", "pattern": "^(SP|OT|TC|TB|TM)-\\d{2}$" },
+    "family": { "const": "SP5 family manual, not the TCI edition" },
     "gap": {
       "type": "object", "additionalProperties": false, "required": ["gap"],
       "properties": { "gap": { "type": "string", "minLength": 10, "maxLength": 200 } }
@@ -144,25 +145,151 @@
       }
     },
     "count": {
-      "type": "object", "additionalProperties": false, "required": ["count", "src", "which"],
-      "properties": { "count": { "type": "integer", "minimum": 1 }, "src": { "$ref": "#/definitions/src" }, "which": { "$ref": "#/definitions/gap" } }
+      "type": "object", "additionalProperties": false, "required": ["count", "src"],
+      "properties": { "count": { "type": "integer", "minimum": 1 }, "src": { "$ref": "#/definitions/src" } }
+    },
+    "concUnit": { "enum": ["mg/mL", "µg/mL", "ng/mL"] },
+    "tciDrug": {
+      "type": "object", "additionalProperties": false, "required": ["drugId", "src", "concentration", "targetRange", "models"],
+      "properties": {
+        "drugId": { "type": "string", "pattern": "^[a-z]+$" }, "src": { "$ref": "#/definitions/src" },
+        "concentration": {
+          "oneOf": [
+            { "type": "object", "additionalProperties": false, "required": ["values", "unit", "src"], "properties": { "values": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "number", "exclusiveMinimum": 0 } }, "unit": { "$ref": "#/definitions/concUnit" }, "src": { "$ref": "#/definitions/src" } } },
+            { "type": "object", "additionalProperties": false, "required": ["min", "max", "unit", "src"], "properties": { "min": { "type": "number", "exclusiveMinimum": 0 }, "max": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "$ref": "#/definitions/concUnit" }, "src": { "$ref": "#/definitions/src" } } }
+          ]
+        },
+        "targetRange": {
+          "type": "object", "additionalProperties": false, "required": ["min", "max", "unit", "src"],
+          "properties": { "min": { "type": "number", "minimum": 0 }, "max": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "enum": ["µg/mL", "ng/mL"] }, "src": { "$ref": "#/definitions/src" } }
+        },
+        "models": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["name", "targets", "src", "ageYears"],
+            "properties": {
+              "name": { "$ref": "#/definitions/text" },
+              "targets": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["plasma", "effect-site"] } },
+              "src": { "$ref": "#/definitions/src" },
+              "ageYears": { "type": "object", "additionalProperties": false, "required": ["min", "max", "src"], "properties": { "min": { "type": "number", "minimum": 0 }, "max": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } } }
+            }
+          }
+        }
+      }
+    },
+    "alarmNames": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/text" } },
+    "volumeStep": {
+      "type": "object", "additionalProperties": false, "required": ["min", "max", "step", "unit", "src"],
+      "properties": { "min": { "type": "number", "exclusiveMinimum": 0 }, "max": { "type": "number", "exclusiveMinimum": 0 }, "step": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "const": "mL" }, "src": { "$ref": "#/definitions/src" } }
+    },
+    "sp5Rapid": {
+      "type": "object", "additionalProperties": false, "required": ["whose", "range", "src", "default"],
+      "properties": {
+        "whose": { "$ref": "#/definitions/family" }, "range": { "const": "rate" }, "src": { "$ref": "#/definitions/src" },
+        "default": {
+          "type": "object", "additionalProperties": false, "required": ["rate", "src", "printed", "note"],
+          "properties": {
+            "rate": { "const": "syringe maximum" }, "src": { "$ref": "#/definitions/src" },
+            "printed": {
+              "type": "object", "additionalProperties": false, "required": ["ml", "rate", "unit", "src"],
+              "properties": { "ml": { "type": "array", "minItems": 1, "items": { "type": "number", "exclusiveMinimum": 0 } }, "rate": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "const": "mL/h" }, "src": { "$ref": "#/definitions/src" } }
+            },
+            "note": { "$ref": "#/definitions/text" }
+          }
+        }
+      }
     },
     "sp5-tci": {
       "type": "object", "additionalProperties": false,
-      "required": ["deviceId", "maker", "model", "kind", "tci", "syringes", "rate", "bolus", "purge", "kvo", "occlusion", "alarms"],
+      "required": ["deviceId", "maker", "model", "kind", "tci", "syringes", "accuracy", "rate", "bolus", "purge", "kvo", "occlusion", "alarms", "volumeDisplay", "timeDisplay"],
       "properties": {
         "$comment": { "type": "string" },
         "deviceId": { "const": "sp5-tci" }, "maker": { "$ref": "#/definitions/text" }, "model": { "$ref": "#/definitions/text" }, "kind": { "const": "syringe" },
         "tci": {
-          "type": "object", "additionalProperties": false, "required": ["modes", "targets", "drugs", "protocols", "maxRate", "patient", "targetRange"],
+          "type": "object", "additionalProperties": false, "required": ["modes", "targets", "drugs", "protocols", "library", "maxRate", "patient", "targetStep"],
           "properties": {
             "modes": { "$ref": "#/definitions/names" }, "targets": { "$ref": "#/definitions/names" },
             "drugs": { "$ref": "#/definitions/count" }, "protocols": { "$ref": "#/definitions/count" },
-            "maxRate": { "$ref": "#/definitions/gap" }, "patient": { "$ref": "#/definitions/gap" }, "targetRange": { "$ref": "#/definitions/gap" }
+            "library": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/tciDrug" } },
+            "maxRate": {
+              "type": "object", "additionalProperties": false, "required": ["per", "whose", "src"],
+              "properties": { "per": { "const": "rate" }, "whose": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" } }
+            },
+            "patient": { "$ref": "#/definitions/gap" }, "targetStep": { "$ref": "#/definitions/gap" }
           }
         },
-        "syringes": { "$ref": "#/definitions/gap" }, "rate": { "$ref": "#/definitions/gap" }, "bolus": { "$ref": "#/definitions/gap" },
-        "purge": { "$ref": "#/definitions/gap" }, "kvo": { "$ref": "#/definitions/gap" }, "occlusion": { "$ref": "#/definitions/gap" }, "alarms": { "$ref": "#/definitions/gap" }
+        "syringes": {
+          "type": "object", "additionalProperties": false, "required": ["ml", "src"],
+          "properties": { "ml": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "number", "exclusiveMinimum": 0 } }, "src": { "$ref": "#/definitions/src" } }
+        },
+        "accuracy": {
+          "type": "object", "additionalProperties": false, "required": ["pct", "atLeastMlH", "belowPct", "src"],
+          "properties": { "pct": { "type": "number", "exclusiveMinimum": 0 }, "atLeastMlH": { "type": "number", "exclusiveMinimum": 0 }, "belowPct": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } }
+        },
+        "rate": {
+          "type": "object", "additionalProperties": false, "required": ["whose", "src", "bySyringe", "step"],
+          "properties": {
+            "whose": { "$ref": "#/definitions/family" }, "src": { "$ref": "#/definitions/src" },
+            "bySyringe": {
+              "type": "array", "minItems": 1,
+              "items": {
+                "type": "object", "additionalProperties": false, "required": ["ml", "min", "max", "unit", "src"],
+                "properties": { "ml": { "type": "number", "exclusiveMinimum": 0 }, "min": { "type": "number", "exclusiveMinimum": 0 }, "max": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "const": "mL/h" }, "src": { "$ref": "#/definitions/src" } }
+              }
+            },
+            "step": { "$ref": "#/definitions/step" }
+          }
+        },
+        "bolus": { "$ref": "#/definitions/sp5Rapid" }, "purge": { "$ref": "#/definitions/sp5Rapid" },
+        "kvo": {
+          "type": "object", "additionalProperties": false, "required": ["whose", "min", "max", "step", "unit", "src", "default", "atMost"],
+          "properties": {
+            "whose": { "$ref": "#/definitions/family" }, "min": { "type": "number", "exclusiveMinimum": 0 }, "max": { "type": "number", "exclusiveMinimum": 0 }, "step": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "const": "mL/h" }, "src": { "$ref": "#/definitions/src" },
+            "default": { "type": "object", "additionalProperties": false, "required": ["rate", "unit", "src"], "properties": { "rate": { "type": "number", "exclusiveMinimum": 0 }, "unit": { "const": "mL/h" }, "src": { "$ref": "#/definitions/src" } } },
+            "atMost": { "type": "object", "additionalProperties": false, "required": ["min", "then", "src"], "properties": { "min": { "type": "number", "exclusiveMinimum": 0 }, "then": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" } } }
+          }
+        },
+        "occlusion": {
+          "type": "object", "additionalProperties": false, "required": ["whose", "levels", "default"],
+          "properties": {
+            "whose": { "$ref": "#/definitions/family" },
+            "levels": {
+              "type": "object", "additionalProperties": false, "required": ["mmHg", "maxAboutMmHg", "src"],
+              "properties": { "mmHg": { "type": "array", "minItems": 1, "items": { "type": "number", "exclusiveMinimum": 0 } }, "maxAboutMmHg": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } }
+            },
+            "default": { "type": "object", "additionalProperties": false, "required": ["mmHg", "src"], "properties": { "mmHg": { "type": "number", "exclusiveMinimum": 0 }, "src": { "$ref": "#/definitions/src" } } }
+          }
+        },
+        "alarms": {
+          "type": "object", "additionalProperties": false, "required": ["whose", "src", "high", "mid", "low", "signals"],
+          "properties": {
+            "whose": { "$ref": "#/definitions/family" }, "src": { "$ref": "#/definitions/src" },
+            "high": { "$ref": "#/definitions/alarmNames" }, "mid": { "$ref": "#/definitions/alarmNames" }, "low": { "$ref": "#/definitions/alarmNames" },
+            "signals": {
+              "type": "array", "minItems": 3, "maxItems": 3,
+              "items": {
+                "type": "object", "additionalProperties": false, "required": ["level", "light", "repeatS", "onPct", "message", "src"],
+                "properties": {
+                  "level": { "enum": ["high", "mid", "low"] }, "light": { "enum": ["red", "yellow"] }, "repeatS": { "type": "number", "exclusiveMinimum": 0 },
+                  "flashHz": { "type": "number", "exclusiveMinimum": 0 }, "flashPlusMinusHz": { "type": "number", "minimum": 0 }, "steady": { "const": true },
+                  "onPct": { "$ref": "#/definitions/pair" }, "message": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" }
+                },
+                "oneOf": [
+                  { "properties": { "flashHz": true, "flashPlusMinusHz": true }, "required": ["flashHz", "flashPlusMinusHz"] },
+                  { "properties": { "steady": true }, "required": ["steady"] }
+                ]
+              }
+            }
+          }
+        },
+        "volumeDisplay": {
+          "type": "object", "additionalProperties": false, "required": ["whose", "vtbi", "volume"],
+          "properties": { "whose": { "$ref": "#/definitions/family" }, "vtbi": { "$ref": "#/definitions/volumeStep" }, "volume": { "$ref": "#/definitions/volumeStep" } }
+        },
+        "timeDisplay": {
+          "type": "object", "additionalProperties": false, "required": ["whose", "minS", "maxS", "format", "src"],
+          "properties": { "whose": { "$ref": "#/definitions/family" }, "minS": { "type": "number", "exclusiveMinimum": 0 }, "maxS": { "type": "number", "exclusiveMinimum": 0 }, "format": { "const": "h:m:s" }, "src": { "$ref": "#/definitions/src" } }
+        }
       }
     }
   }

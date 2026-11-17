@@ -1,5 +1,5 @@
 {
-  "$comment": "Mindray BeneFusion SP5 TCI (PQ2 = B, model name only). The maker's page (research/50 W1) gives no mechanical number: each is a gap until the SP5 TCI manual (plan SK2).",
+  "$comment": "Mindray BeneFusion SP5 TCI (PQ2 = B): TCI library and syringes from its page and brochure (research/50 W1, 84 B1); mechanics from the SP5 family manual (research/86 M1), marked whose.",
   "deviceId": "sp5-tci",
   "maker": "Mindray",
   "model": "BeneFusion SP5 TCI",
@@ -7,17 +7,98 @@
   "tci": {
     "modes": { "names": ["TCI", "TIVA"], "src": "TC-02" },
     "targets": { "names": ["plasma", "effect-site"], "src": "TC-04" },
-    "drugs": { "count": 4, "src": "TC-03", "which": { "gap": "which four anaesthetics the pump holds: SP5 TCI operator's manual (research/50 TC-06)" } },
-    "protocols": { "count": 7, "src": "TC-03", "which": { "gap": "which seven pharmacokinetic models the pump holds: SP5 TCI operator's manual (research/50 TC-06)" } },
-    "maxRate": { "gap": "the highest rate the pump runs in TCI: SP5 TCI operator's manual (research/50 TC-09)" },
+    "drugs": { "count": 4, "src": "TC-03" },
+    "protocols": { "count": 7, "src": "TC-03" },
+    "library": [
+      {
+        "drugId": "propofol", "src": "TB-01",
+        "concentration": { "values": [10, 20], "unit": "mg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 15, "unit": "µg/mL", "src": "TB-04" },
+        "models": [
+          { "name": "Marsh", "targets": ["plasma"], "src": "TB-02", "ageYears": { "min": 16, "max": 150, "src": "TB-05" } },
+          { "name": "Schnider", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 16, "max": 94, "src": "TB-05" } },
+          { "name": "Kataria (Pedia)", "targets": ["plasma"], "src": "TB-02", "ageYears": { "min": 3, "max": 16, "src": "TB-05" } },
+          { "name": "Paedfusor (Pedia)", "targets": ["plasma"], "src": "TB-02", "ageYears": { "min": 1, "max": 18, "src": "TB-05" } }
+        ]
+      },
+      {
+        "drugId": "remifentanil", "src": "TB-01",
+        "concentration": { "min": 20, "max": 50, "unit": "µg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 20, "unit": "ng/mL", "src": "TB-04" },
+        "models": [{ "name": "Minto", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 12, "max": 100, "src": "TB-05" } }]
+      },
+      {
+        "drugId": "sufentanil", "src": "TB-01",
+        "concentration": { "min": 0.2, "max": 5, "unit": "µg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 20, "unit": "ng/mL", "src": "TB-04" },
+        "models": [{ "name": "Gepts", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 12, "max": 150, "src": "TB-05" } }]
+      },
+      {
+        "drugId": "alfentanil", "src": "TB-01",
+        "concentration": { "min": 100, "max": 500, "unit": "µg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 500, "unit": "ng/mL", "src": "TB-04" },
+        "models": [{ "name": "Maitre", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 18, "max": 95, "src": "TB-05" } }]
+      }
+    ],
+    "maxRate": { "per": "rate", "whose": "SP5 family manual's rate maximum for the syringe, standing in for the TCI edition's until its manual is read", "src": "TM-01" },
     "patient": { "gap": "the patient data the pump accepts (age, weight, height, sex) and the limits it refuses outside: SP5 TCI operator's manual (research/50 TC-14)" },
-    "targetRange": { "gap": "the target ranges and steps, plasma and effect-site: SP5 TCI operator's manual (research/50 TC-15)" }
+    "targetStep": { "gap": "the target steps, plasma and effect-site: SP5 TCI operator's manual (research/50 TC-15)" }
   },
-  "syringes": { "gap": "the syringe sizes: SP5 TCI operator's manual (research/50 TC-07)" },
-  "rate": { "gap": "the flow rate range and step per syringe size: SP5 TCI operator's manual (research/50 TC-08)" },
-  "bolus": { "gap": "the bolus rate: SP5 TCI operator's manual (research/50 TC-10)" },
-  "purge": { "gap": "the purge rate and volume limit: SP5 TCI operator's manual (research/50 TC-10)" },
-  "kvo": { "gap": "the KVO rate: SP5 TCI operator's manual (research/50 TC-11)" },
-  "occlusion": { "gap": "the occlusion levels or pressures: SP5 TCI operator's manual (research/50 TC-12)" },
-  "alarms": { "gap": "the alarm list: SP5 TCI operator's manual (research/50 TC-13)" }
+  "syringes": { "ml": [5, 10, 20, 30, 50, 60], "src": "TB-06" },
+  "accuracy": { "pct": 2, "atLeastMlH": 1, "belowPct": 5, "src": "TB-07" },
+  "rate": {
+    "whose": "SP5 family manual, not the TCI edition", "src": "TM-01",
+    "bySyringe": [
+      { "ml": 5, "min": 0.1, "max": 100, "unit": "mL/h", "src": "TM-01" },
+      { "ml": 10, "min": 0.1, "max": 200, "unit": "mL/h", "src": "TM-01" },
+      { "ml": 20, "min": 0.1, "max": 400, "unit": "mL/h", "src": "TM-01" },
+      { "ml": 30, "min": 0.1, "max": 600, "unit": "mL/h", "src": "TM-01" },
+      { "ml": 50, "min": 0.1, "max": 1500, "unit": "mL/h", "src": "TM-01" },
+      { "ml": 60, "min": 0.1, "max": 1500, "unit": "mL/h", "src": "TM-01" }
+    ],
+    "step": { "step": 0.01, "unit": "mL/h", "src": "TM-02" }
+  },
+  "bolus": {
+    "whose": "SP5 family manual, not the TCI edition", "range": "rate", "src": "TM-03",
+    "default": {
+      "rate": "syringe maximum", "src": "TM-04",
+      "printed": { "ml": [50, 60], "rate": 800, "unit": "mL/h", "src": "TM-04" },
+      "note": "the page prints 800 mL/h for 50/60 mL, while the same sentence's rule, the syringe's maximum, would give 1500 mL/h"
+    }
+  },
+  "purge": {
+    "whose": "SP5 family manual, not the TCI edition", "range": "rate", "src": "TM-05",
+    "default": {
+      "rate": "syringe maximum", "src": "TM-06",
+      "printed": { "ml": [50, 60], "rate": 800, "unit": "mL/h", "src": "TM-06" },
+      "note": "the page prints 800 mL/h for 50/60 mL, while the same sentence's rule, the syringe's maximum, would give 1500 mL/h"
+    }
+  },
+  "kvo": {
+    "whose": "SP5 family manual, not the TCI edition", "min": 0.1, "max": 5, "step": 0.1, "unit": "mL/h", "src": "TM-07",
+    "default": { "rate": 1, "unit": "mL/h", "src": "TM-08" },
+    "atMost": { "min": 30, "then": "KVO finish", "src": "TM-09" }
+  },
+  "occlusion": {
+    "whose": "SP5 family manual, not the TCI edition",
+    "levels": { "mmHg": [150, 225, 300, 375, 450, 525, 600, 750, 825, 900, 975], "maxAboutMmHg": 1300, "src": "TM-10" },
+    "default": { "mmHg": 450, "src": "TM-11" }
+  },
+  "alarms": {
+    "whose": "SP5 family manual, not the TCI edition", "src": "TM-12",
+    "high": ["Occlusion", "Battery empty", "VTBI done", "KVO finish", "Syringe empty", "Syringe disengaged", "System error"],
+    "mid": ["System abnomal"],
+    "low": ["Reminder", "Battery low", "Syringe nearly empty", "VTBI near done", "Standby time expired", "Pump serial number conflict", "Communication is interrupted", "Relay invalid", "No battery inserted", "AC power disconnection", "Syringe not correctly inserted"],
+    "signals": [
+      { "level": "high", "light": "red", "repeatS": 10, "flashHz": 2, "flashPlusMinusHz": 0.6, "onPct": [20, 60], "message": "black characters on a red background", "src": "TM-13" },
+      { "level": "mid", "light": "yellow", "repeatS": 15, "flashHz": 0.6, "flashPlusMinusHz": 0.2, "onPct": [20, 60], "message": "black characters on a yellow background", "src": "TM-13" },
+      { "level": "low", "light": "yellow", "repeatS": 20, "steady": true, "onPct": [100, 100], "message": "white characters on a black background", "src": "TM-13" }
+    ]
+  },
+  "volumeDisplay": {
+    "whose": "SP5 family manual, not the TCI edition",
+    "vtbi": { "min": 0.1, "max": 9999.99, "step": 0.01, "unit": "mL", "src": "TM-14" },
+    "volume": { "min": 0.01, "max": 9999.99, "step": 0.01, "unit": "mL", "src": "TM-14" }
+  },
+  "timeDisplay": { "whose": "SP5 family manual, not the TCI edition", "minS": 1, "maxS": 359999, "format": "h:m:s", "src": "TM-15" }
 }

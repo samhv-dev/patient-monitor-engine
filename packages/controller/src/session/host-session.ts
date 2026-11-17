@@ -35,8 +35,8 @@ import { bolusDrugOf, givenByOf, type DrugLock, lockReason, RecentGives } from '
 import type { Formulary } from '../formulary/types.ts';
 import type { PumpDevices } from '../pump-devices.ts';
 import {
-  channelsRunning, concText, mismatched, noteApplied, onPumpsWords, pumpWire, routedToChannel, translatePump,
-  type ChannelKind, type HostChannel, type PumpContext, type PumpTranslated,
+  channelsRunning, concText, mismatched, noteApplied, onPumpsWords, pumpWire, rackRefusal, routedToChannel, translatePump,
+  type ChannelInUse, type ChannelKind, type HostChannel, type PumpContext, type PumpTranslated,
 } from './pump-host.ts';
 import type { PrepRecord, StagedPrep } from '../scenario/types-v2.ts';
 import type { SignInBook, TicketRole } from './sign-in-book.ts';
@@ -48,7 +48,7 @@ import {
 /** C2: the LABELS of the room's preparations a pump may load (§8): never their findings. */
 export interface PumpLabels {
   news: 'labels';
-  labels: Array<{ device: string; id: string; container: string; drugId: string; actives: Array<{ drugId: string; amount: number; unit: string; perMl: number }>; volumeMl: number; madeAt: number; readyAt: number }>;
+  labels: Array<{ device: string; name?: string; id: string; container: string; drugId: string; actives: Array<{ drugId: string; amount: number; unit: string; perMl: number }>; volumeMl: number; madeAt: number; readyAt: number }>;
 }
 /** C2 (§8): the instructor's finding: a channel whose contents and programme differ, with whether its notice was shown. */
 export interface PumpMismatchNews {
@@ -180,7 +180,8 @@ export interface HostSessionOptions {
    * `fastForwardToNextPhase` is refused.
    */
   phaseMark?: () => string | null;
-  /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
+  /** The name a person reads for a learner remote's device key (null: none), on the instructor's copy of a preparation's
+   *  news and on the label of a preparation a pump may load; never the key itself. */
   deviceName?: (key: string) => string | null;
   /** L14: a learner device's act on the patient (a drug, a sample) the host did NOT carry out because the case was paused,
    *  one call per act (the host's Log and record show the attempt; nothing reached the engine). */
@@ -361,6 +362,8 @@ export class HostSession {
   private readonly learners = new Map<ManagedTransport, Map<string, { pin: string; device: string; role: 'learner' | 'pump'; chain?: string }>>();
   /** C2: what the host applied to each pump channel (pump-host.ts; never a volume, D4), by channel number. */
   private readonly pumpChannels = new Map<number, HostChannel>();
+  /** The engine's pump channels as its last `drugs` event showed them: a restored bookmark brings back channels the host's table no longer holds. */
+  private pumpRows: ReadonlyArray<{ ch: number; kind: ChannelKind; state: string }> = [];
   private learnerDenied: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong learner PINs (no lockout)
   /** L4 (§4 D3): the preparations the learner remotes staged, by device key and the device's own id. */
   private readonly preps = new Map<string, Map<string, HostPrep>>();
@@ -408,6 +411,7 @@ export class HostSession {
     this.stamp = createStamper(o.session, this.peerId, this.now);
     this.offEngine = o.target.on((e) => {
       if (e.type === ('state' as EngineEvent['type'])) this.engineState = true; // the engine emits its own (E1)
+      if (e.type === 'drugs') this.pumpRows = e.pumps ?? [];
       // C2 (D8): End, Empty Container or Infusion Complete stopped the channel: it no longer runs its drug (D9)
       if ((e.type as string) === 'pumpAlarm') {
         const c = this.pumpChannels.get((e as unknown as { ch: number }).ch);
@@ -703,6 +707,7 @@ export class HostSession {
     this.infusions.clear();
     this.pumpChannels.clear(); // C2: the channels are the old engine's (D4)
     if (cause === 'restart') {
+      this.pumpRows = [];
       this.stopped = null; // a new engine runs (a stopped one cannot restore a bookmark: its restore rejects)
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
@@ -1064,8 +1069,8 @@ export class HostSession {
 
   /**
    * C2 (§7, D2, D12): a granted pump tablet's command. The host resolves what it loads and checks the shape against the
-   * channel's kind and device profile (pump-host.ts), then applies the engine's `pump` event through `command()` — the
-   * drug lock, the engine's validation and the record are the laptop's own — filed `issuedBy: 'pump'`, `by` = the device
+   * channel's kind and device profile (pump-host.ts), then applies the engine's `pump` event through learnerApply — the
+   * pause, the drug lock, the engine's validation and the record are the laptop's own — filed `issuedBy: 'pump'`, `by` = the device
    * key, with the channel and the values it replaced (`pump`, PumpMeta). A resend of an answered id changes nothing.
    */
   private async pumpCommand(t: ManagedTransport, from: string, by: string, c: Extract<WireCommand, { type: 'pump' }>, refuse: (reason: string) => void): Promise<void> {
@@ -1079,7 +1084,19 @@ export class HostSession {
     if (typeof x === 'string') return refuse(x);
     const out = translatePump(c as unknown as PumpCommand, x);
     if (!out.ok) return refuse(out.why);
-    return this.command(t, pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, by }, out), from);
+    return this.learnerApply(t, from, only(pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, by }, out)), null, refuse);
+  }
+
+  /**
+   * Why Room setup's pump rack `next` is refused (pump-host.ts rackRefusal), or null: it removes or changes no channel in
+   * use. The host's table answers for a channel it applied an event to (it is newer than the engine's 1 Hz rows); the
+   * engine's rows for the others.
+   */
+  pumpRackRefusal(next: readonly ChannelKind[]): string | null {
+    const inUse: ChannelInUse[] = [];
+    for (const c of this.pumpChannels.values()) if (c.contents) inUse.push({ ch: c.ch, kind: c.kind, running: c.running });
+    for (const r of this.pumpRows) if (!this.pumpChannels.has(r.ch) && r.state !== 'notLoaded') inUse.push({ ch: r.ch, kind: r.kind, running: r.state === 'running' });
+    return rackRefusal(next, inUse);
   }
 
   /** C2: what translatePump reads, or why no pump command can be taken now. */
@@ -1169,7 +1186,7 @@ export class HostSession {
     return this.learnerApply(t, from, infusePrep(f, h, c, withPrep, simT, this.infusions), h, refuse);
   }
 
-  /** A learner's act on the patient (a give, an infusion, a sample): refused as a whole, by the pause too, or every
+  /** A learner's act on the patient (a give, an infusion, a sample, a pump channel's command): refused as a whole, by the pause too, or every
    *  command through `command()` (one stage group). */
   private async learnerApply(t: ManagedTransport, from: string, out: Translated, h: HostPrep | null, refuse: (reason: string) => void): Promise<void> {
     if (!out.ok) return refuse(out.why);
@@ -1240,7 +1257,7 @@ export class HostSession {
   }
 
   private instructorCopy(h: HostPrep): InstructorPrepView {
-    const name = this.o.deviceName?.(h.by) ?? null; // L9: the card says "Bed 2 remote staged", on the laptop and the phone
+    const name = this.o.deviceName?.(h.by) ?? null;
     return { ...instructorView(h), ...(name ? { name } : {}) };
   }
 
@@ -1253,7 +1270,7 @@ export class HostSession {
 
   /**
    * C2 (§8): the LABELS of the preparations a pump may load — every one in a syringe or a bag, of any remote of the room,
-   * with something left: drug, concentration, volume, the maker's device key and the time it was made, never its findings
+   * with something left: drug, concentration, volume, the maker's device key and its name, the time it was made, never its findings
    * (the learner plan's D7 keeps those to the instructor and the maker).
    */
   private labels(): PumpLabels {
@@ -1263,7 +1280,8 @@ export class HostSession {
         const k = h.prep.container;
         if (h.leftMl <= 1e-9 || !(k === 'syringe-pp' || k === 'bag-pvc' || k === 'bag-polyolefin')) continue;
         const a = h.prep.actives;
-        labels.push({ device: h.by, id: h.id, container: k, drugId: a[0]?.drugId ?? '', actives: a.map((x) => ({ drugId: x.drugId, amount: x.perMl, unit: x.unit, perMl: 1 })), volumeMl: h.leftMl, madeAt: h.t, readyAt: h.prep.ready.atS });
+        const name = this.o.deviceName?.(h.by) ?? null;
+        labels.push({ device: h.by, ...(name ? { name } : {}), id: h.id, container: k, drugId: a[0]?.drugId ?? '', actives: a.map((x) => ({ drugId: x.drugId, amount: x.perMl, unit: x.unit, perMl: 1 })), volumeMl: h.leftMl, madeAt: h.t, readyAt: h.prep.ready.atS });
       }
     }
     return { news: 'labels', labels };

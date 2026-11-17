@@ -14,7 +14,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEngine, type Command, type DispatchResult, type EngineEvent } from '@pme/engine-core';
 import { HostSession, PUMP_REASONS, UNKNOWN_ROLE, type HostSessionOptions, type HostTarget } from '../../src/session/host-session.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { createStamper, LEARNER_ISSUED_BY, PAUSED_REFUSAL, PUMP_ISSUED_BY, type AppliedResolution, type ManagedTransport, type WireEvent, type WireMessage } from '../../src/protocol.ts';
+import { createStamper, LEARNER_ISSUED_BY, PAUSED_REFUSAL, PUMP_ISSUED_BY, type AppliedResolution, type ManagedTransport, type PumpCommand, type WireEvent, type WireMessage } from '../../src/protocol.ts';
+import { translatePump, type HostChannel } from '../../src/session/pump-host.ts';
 import { loadFormulary } from '../../src/formulary/load.ts';
 import type { Formulary, FormularyFiles } from '../../src/formulary/types.ts';
 import { loadPumpDevices, type PumpDevices } from '../../src/pump-devices.ts';
@@ -217,9 +218,8 @@ describe('C2: each D2 shape lands as one `applyEvent pump`, filed by the pump, w
     expect((await go({ action: 'stop', ch: 1 })).pump).toMatchObject({ infusion: { rate: 0 } });
     const patient = { ageY: 40, weightKg: 70, heightCm: 170, sex: 'm' };
     expect(await go({ action: 'tci', ch: 1, setId: 'eleveld', mode: 'effect', target: 3, patient: { ...patient, opioids: true } })).toMatchObject({
-      event: { action: 'tci', setId: 'eleveld', mode: 'effect', target: 3, patient, opioids: true },
+      event: { action: 'tci', setId: 'eleveld', mode: 'effect', target: 3, patient, opioids: true, maxRateMlH: 1500 }, // the 50 mL syringe's maximum (sp5-tci.json TM-01)
     });
-    expect(applied(x.panelGot, sent.at(-1) as string)?.event).not.toHaveProperty('maxRateMlH'); // the SP5's ceiling is a gap: the engine's holds
     expect((await go({ action: 'tci', ch: 1, setId: 'eleveld', mode: 'effect', target: 4, patient: { ...patient, opioids: true } })).pump).toMatchObject({ replaced: [{ what: 'tci', target: 3, by: PUMP_KEY }] });
     await go({ action: 'unload', ch: 1 });
     // one engine event per press, each the pump's
@@ -273,6 +273,61 @@ describe('C2: each D2 shape lands as one `applyEvent pump`, filed by the pump, w
       expect(await p.send(body), JSON.stringify(body)).toMatchObject({ accepted: true });
       engine.advanceTo(engine.now().simT + 0.2);
     }
+  });
+});
+
+describe('a TCI channel runs no faster than the SP5 family\'s maximum for its loaded syringe (sp5-tci.json tci.maxRate)', () => {
+  const tci = { type: 'pump', ch: 1, action: 'tci', setId: 'eleveld', mode: 'effect', patient: { ageY: 40, weightKg: 70, heightCm: 170, sex: 'm' } } as const;
+  const channel = (syringeMl: number | null): HostChannel => ({
+    ch: 1, kind: 'syringe', syringeMl, contents: null, programmed: null, set: null, rate: null, tci: null, running: false, by: {}, mismatch: null,
+  });
+  const translated = (syringeMl: number | null, target: number) =>
+    translatePump({ ...tci, target } as PumpCommand, { rack: ['syringe'], devices: DEVICES, formulary: SHIPPED, channels: new Map([[1, channel(syringeMl)]]), prep: () => undefined, simT: 0 });
+
+  it('the event carries the maximum of each syringe size the family lists; no syringe is refused; a stop carries none', () => {
+    const sizes = DEVICES['sp5-tci'].rate.bySyringe;
+    expect(sizes.map((s) => s.ml)).toEqual([5, 10, 20, 30, 50, 60]);
+    for (const s of sizes) expect(translated(s.ml, 3), `${s.ml} mL`).toMatchObject({ ok: true, event: { maxRateMlH: s.max } });
+    expect(translated(null, 3)).toEqual({ ok: false, why: "load a syringe first: the Mindray BeneFusion SP5 TCI's TCI rate limit is per syringe size (5, 10, 20, 30, 50 and 60 mL)" });
+    const stop = translated(null, 0);
+    expect(stop.ok && stop.event).not.toHaveProperty('maxRateMlH');
+  });
+
+  it.each([
+    ['propofol-10mg-ml-50ml', 50, 1500],
+    ['propofol-10mg-ml-20ml', 20, 400],
+  ])('on the real engine, %s: the rate reaches and never passes the %s mL syringe\'s %s mL/h, and the patient receives the volume × 10 mg/mL', async (stock, ml, max) => {
+    const engine = createEngine({ seed: 7 });
+    const seen: number[] = [];
+    let last: Extract<EngineEvent, { type: 'drugs' }> | null = null;
+    engine.on((e) => {
+      if (e.type !== 'drugs') return;
+      last = e;
+      const ch = e.pumps?.find((c) => c.ch === 1);
+      if (ch) seen.push(ch.rateMlH);
+    });
+    const t: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => undefined };
+    const x = setup({ target: t });
+    const p = await pumpIn(x);
+    for (const body of [
+      { action: 'load', ch: 1, syringe: { stock } },
+      { action: 'program', ch: 1, drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
+      { ...tci, target: 6 },
+      { action: 'start', ch: 1 },
+    ]) {
+      expect(await p.send(body), JSON.stringify(body)).toMatchObject({ accepted: true });
+      engine.advanceTo(engine.now().simT + 0.2);
+    }
+    // 60 s at most at the ceiling: the 20 mL syringe gives 6.7 mL, the 50 mL one 25 mL, neither runs empty
+    engine.advanceTo(engine.now().simT + 60);
+    const ch = (last as Extract<EngineEvent, { type: 'drugs' }> | null)?.pumps?.find((c) => c.ch === 1);
+    expect(ch).toMatchObject({ mode: 'tci', syringeMl: ml });
+    // the engine chooses mg/min and converts back to mL/h: equal to the ceiling to the last floating-point digits
+    expect(Math.max(...seen)).toBeCloseTo(max, 9); // a Ce step of 6 µg/mL asks for more than any syringe's maximum
+    expect(seen.every((r) => r <= max * (1 + 1e-12))).toBe(true);
+    const propofol = (last as Extract<EngineEvent, { type: 'drugs' }> | null)?.drugs.find((r) => r.id === 'propofol');
+    expect(propofol!.totalAmount).toBeCloseTo(ch!.infusedMl * 10, 6);
+    expect(ch!.infusedMl).toBeGreaterThan(0);
   });
 });
 
@@ -422,6 +477,67 @@ describe('C2, D9: a remote and the Drug sheet change a drug on its one channel, 
   });
 });
 
+describe("Room setup's rack never removes or changes a channel in use", () => {
+  const S4: Array<'syringe' | 'drip'> = ['syringe', 'syringe', 'syringe', 'syringe'];
+  const row = (ch: number, state: string) => ({ ch, kind: 'syringe', state });
+  const drugs = (x: ReturnType<typeof setup>, pumps: unknown[]) => x.tg.emit({ type: 'drugs', t: 1, drugs: [], volatile: null, macTotal: 0, pumps } as never);
+
+  it('an empty, idle rack takes any count and any kind', async () => {
+    const x = setup({ rack: S4 });
+    expect(x.host.pumpRackRefusal(['syringe'])).toBeNull();
+    expect(x.host.pumpRackRefusal(['drip', 'drip'])).toBeNull();
+  });
+
+  it('a running channel 3 refuses a count of 2 and a change of its kind, with the words that say why; a count that keeps it, or a change to an empty channel, is taken', async () => {
+    const x = setup({ rack: S4 });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 3);
+    expect((await p.send({ action: 'rate', ch: 3, rate: 10, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 3 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 3 is running: stop it first.');
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe', 'drip', 'syringe'])).toBe('Channel 3 is running: stop it first.');
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe', 'syringe'])).toBeNull();
+    expect(x.host.pumpRackRefusal(['syringe', 'drip', 'syringe', 'syringe'])).toBeNull();
+  });
+
+  it('stopped, the channel is still loaded and still refused; unloaded, it can go', async () => {
+    const x = setup({ rack: S4 });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 3);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 3 is loaded: unload it first.');
+    expect((await p.send({ action: 'rate', ch: 3, rate: 10, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 3 })).accepted).toBe(true);
+    expect((await p.send({ action: 'stop', ch: 3 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 3 is loaded: unload it first.');
+    expect((await p.send({ action: 'unload', ch: 3 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBeNull();
+  });
+
+  it('a running channel is named before a loaded one; two of a kind are named together', async () => {
+    const x = setup({ rack: S4 });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 3);
+    await propofolChannel(p, 4);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channels 3 and 4 are loaded: unload them first.');
+    expect((await p.send({ action: 'rate', ch: 4, rate: 10, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 4 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 4 is running: stop it first.');
+  });
+
+  it("the engine's own rows count for a channel the host's table does not hold (a restored bookmark), and a restart ends them", async () => {
+    const x = setup({ rack: S4 });
+    drugs(x, [row(1, 'notLoaded'), row(2, 'alarm'), row(3, 'running'), row(4, 'paused')]);
+    expect(x.host.pumpRackRefusal(['syringe'])).toBe('Channel 3 is running: stop it first.');
+    drugs(x, [row(1, 'notLoaded'), row(2, 'alarm'), row(3, 'loaded'), row(4, 'paused')]);
+    expect(x.host.pumpRackRefusal(['syringe'])).toBe('Channels 2, 3 and 4 are loaded: unload them first.');
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe', 'syringe', 'syringe'])).toBeNull();
+    x.host.newTimeline('restore');
+    expect(x.host.pumpRackRefusal(['syringe'])).toBe('Channels 2, 3 and 4 are loaded: unload them first.');
+    x.host.newTimeline('restart');
+    expect(x.host.pumpRackRefusal(['syringe'])).toBeNull();
+  });
+});
+
 describe('C2, §8 and PQ8 = A: the mismatch finding reaches the instructor, and the pump only with the notice', () => {
   it('propofol 10 mg/mL programmed as phenylephrine: a finding to the instructor\'s screens at once; the pump hears of it when the instructor shows it', async () => {
     const x = setup();
@@ -524,5 +640,57 @@ describe('C2: the pump tablet\'s admission and its news', () => {
     const labels = prepsTo(x.got, 'pump.1').filter((e) => (e.body as { news: string }).news === 'labels').at(-1)?.body as { labels: Array<Record<string, unknown>> };
     expect(labels.labels[0]).toMatchObject({ device: REMOTE_KEY, id: 's0000002', drugId: 'fentanyl', container: 'syringe-pp', volumeMl: 2 });
     expect(labels.labels[0]).not.toHaveProperty('findings');
+    expect(labels.labels[0]).not.toHaveProperty('name'); // no name source: the tablet says "a learner remote"
+  });
+
+  it("a preparation's label carries its maker's name from the host's name source, so the tablet never shows a device key", async () => {
+    const x = setup({ deviceName: (k) => (k === REMOTE_KEY ? 'Learner remote 1' : null) });
+    await pumpIn(x);
+    const lr = await remoteIn(x);
+    expect((await lr.send({ type: 'prep', action: 'stage', prep: { id: 's0000003', components: [{ productId: 'fentanyl-50mcg-ml', amount: 2, unit: 'mL' }], container: 'syringe-pp' } })).accepted).toBe(true);
+    await waitFor(() => prepsTo(x.got, 'pump.1').some((e) => (e.body as { news: string }).news === 'labels'));
+    const labels = prepsTo(x.got, 'pump.1').filter((e) => (e.body as { news: string }).news === 'labels').at(-1)?.body as { labels: Array<Record<string, unknown>> };
+    expect(labels.labels[0]).toMatchObject({ device: REMOTE_KEY, name: 'Learner remote 1', id: 's0000003' });
+  });
+});
+
+describe("the case's pause: the pump tablet's commands meet the learner's one rule", () => {
+  const PATIENT = { ageY: 40, weightKg: 70, heightCm: 170, sex: 'm' };
+  /** One of each of the nine pump commands, each valid on the channels the case below has set up. */
+  const NINE: Array<Record<string, unknown>> = [
+    { action: 'load', ch: 2, syringe: { stock: 'propofol-10mg-ml-50ml' } },
+    { action: 'program', ch: 1, drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
+    { action: 'rate', ch: 1, rate: 30, unit: 'mL/h' },
+    { action: 'tci', ch: 1, setId: 'eleveld', mode: 'effect', target: 3, patient: PATIENT },
+    { action: 'bolus', ch: 1, volumeMl: 2 },
+    { action: 'purge', ch: 1, volumeMl: 1 },
+    { action: 'start', ch: 1 },
+    { action: 'stop', ch: 1 },
+    { action: 'unload', ch: 1 },
+  ];
+
+  it('while paused each of the nine is refused `paused` in the remote\'s words, nothing reaches the engine and the host\'s channel table stays as the engine has it; after the resume each works', async () => {
+    const notGiven: Array<{ command: Record<string, unknown>; from: string; reason: string }> = [];
+    const x = setup({ onNotGiven: (n) => void notGiven.push(n as never) });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 1);
+    expect((await p.send({ action: 'rate', ch: 1, rate: 20, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await ack(x.panelGot, x.laptop.command({ type: 'time', action: 'pause' }))).accepted).toBe(true);
+    const before = x.tg.got.length;
+    for (const body of NINE) {
+      const id = p.command({ type: 'pump', ...body });
+      expect(await ack(x.got, id), String(body.action)).toMatchObject({ accepted: false, code: 'paused', reason: PAUSED_REFUSAL });
+      expect(applied(x.panelGot, id), String(body.action)).toBeUndefined();
+    }
+    expect(x.tg.got.length).toBe(before);
+    expect(notGiven.map((n) => [n.from, n.reason, n.command.issuedBy, n.command.by, (n.command.event as { action: string }).action])).toEqual(
+      NINE.map((b) => ['pump.1', PAUSED_REFUSAL, PUMP_ISSUED_BY, PUMP_KEY, b.action]));
+    expect((await ack(x.panelGot, x.laptop.command({ type: 'time', action: 'resume' }))).accepted).toBe(true);
+    // the refused rate 30 never reached the table: Start runs the channel at the 20 mL/h set before the pause
+    const start = p.command({ type: 'pump', action: 'start', ch: 1 });
+    expect(await ack(x.got, start)).toMatchObject({ accepted: true });
+    expect(applied(x.panelGot, start)?.pump).toMatchObject({ infusion: { rate: 20, unit: 'mL/h' } });
+    for (const body of NINE.filter((b) => b.action !== 'start')) expect(await p.send(body), String(body.action)).toMatchObject({ accepted: true });
+    expect(pumpEvents(x.tg.got).slice(-NINE.length).map((c) => c.event.action)).toEqual(['start', ...NINE.filter((b) => b.action !== 'start').map((b) => b.action)]);
   });
 });

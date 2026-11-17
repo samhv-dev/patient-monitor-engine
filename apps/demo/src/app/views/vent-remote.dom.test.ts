@@ -16,6 +16,7 @@ const net = vi.hoisted(() => ({
   engines: [] as unknown[],
   dispatched: [] as Array<{ id: string; type: string; tick: number; accepted: boolean; event?: Record<string, unknown> }>,
   dropped: 0,
+  warned: [] as unknown[][],
 }));
 
 vi.mock('@pme/controller', async (orig) => {
@@ -132,7 +133,7 @@ function tagged<P extends { post(m: never): void }>(port: P, tag: string): P {
 }
 
 /** A remote cockpit on another device: its socket to the relay, its hello with `pin`, and after its grant the cockpit. */
-async function remote(id: string, pin = PIN) {
+async function remote(id: string, pin = PIN, profile = 'normal') {
   const sock = ctl.__end(net.relay, 'websocket');
   const got: WireMessage[] = [];
   sock.onMessage((m) => got.push(m));
@@ -145,7 +146,7 @@ async function remote(id: string, pin = PIN) {
   const granted = got.some((m) => m.kind === 'grant' && m.to === id && m.granted);
   let d: ReturnType<typeof createVentDriver> | null = null;
   const port = tagged(createRelayPort(ventWireOver(sock as never, st as never, { self: id }), { settings: () => (d ? { cfg: d.vs.cfg, measured: { RR: d.vs.p.measured.RR, VTE: d.vs.p.measured.VTE } } : null) }), id);
-  d = createVentDriver(port, 'normal');
+  d = createVentDriver(port, profile);
   const timer = setInterval(() => (d as NonNullable<typeof d>).frame(performance.now()), 1000 / 60);
   const stop = () => {
     clearInterval(timer);
@@ -188,6 +189,7 @@ beforeEach(async () => {
   net.engines.length = 0;
   net.dispatched.length = 0;
   net.dropped = 0;
+  net.warned.length = 0;
   document.body.replaceChildren();
   const el = document.createElement('div');
   document.body.append(el);
@@ -418,5 +420,26 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     const patient = (x: ReturnType<typeof host.snapshot>) => ({ ...x, state: { ...(x.state as object), devices: undefined } });
     expect(patient(v2.e.snapshot())).toEqual(patient(host.snapshot()));
     expect((host.snapshot().state as { devices?: unknown }).devices).toBeDefined();
+  });
+});
+
+describe("a room's ventilator drives the patient with its breaths and its circuit only", () => {
+  it("its patient-changing commands and its clock are refused with a reason and logged; its breaths drive", async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation((...a: unknown[]) => void net.warned.push(a));
+    // a device page opened with a shock profile's address: its link core sends the profile's stand-in targets first
+    const v = await remote('vent-a.1', PIN, 'anaphylaxis-bronchospasm');
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(frames('vent-a.1').length).toBeGreaterThan(100);
+    v.port.post({ v: 1, kind: 'time', action: 'pause' });
+    const at = simNow();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(simNow()).toBeGreaterThan(at); // the session was not paused
+    expect(net.dispatched.filter((d) => d.id.startsWith('vent-a.1') && d.type !== 'externalDrive')).toEqual([]);
+    const refused = net.warned.filter((a) => a[0] === 'vent link rejected').map((a) => [a[1], a[2]]);
+    expect(refused).toEqual([
+      ...['sbp', 'dbp', 'cvp', 'hr'].map(() => ['setTarget', "a ventilator in a room may not send setTarget: the patient is the room's"]),
+      ['time', "a ventilator in a room may not send 'time'"],
+    ]);
+    warn.mockRestore();
   });
 });

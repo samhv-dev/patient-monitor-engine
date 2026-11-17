@@ -72,9 +72,14 @@ describe('the dose-rate line (L8)', () => {
     expect(doseUnitOf('fentanyl', 'mcg')).toBe('mcg/kg/min');
     // 10 mL/h × 10 mg/mL = 100 mg/h = 1666.7 µg/min; ÷ 64 kg = 26.0 µg/kg/min
     expect(doseRateText('propofol', (10 * 10) / 60, 'mg', 64)).toBe('26 µg/kg/min for 64 kg');
-    expect(doseRateText('propofol', (10 * 10) / 60, 'mg', null)).toBe(`1670 µg/min (${INFUSION_WORDS.noWeight})`);
+    expect(doseRateText('propofol', (10 * 10) / 60, 'mg', null)).toBe(`1667 µg/min (${INFUSION_WORDS.noWeight})`); // the pump face's number form
     // epinephrine: the formulary's mg, the engine's µg, prescribed µg/kg/min
     expect(doseRateText('epinephrine', (6 * 0.016) / 60, 'mg', 80)).toBe('0.02 µg/kg/min for 80 kg');
+  });
+
+  it('a rate is never written in exponent form, however small', () => {
+    expect(INFUSION_WORDS.mlH(3.9e-12)).toBe('0.0000000000039 mL/h');
+    expect(INFUSION_WORDS.started(0.05)).toBe('Started at 0.05 mL/h');
   });
 
   it("reads the weight from the engine's own snapshot (the drug model's patient)", () => {
@@ -178,7 +183,7 @@ describe('the infusions menu (L8)', () => {
     expect(row('remifentanil', '.lr-setby')).toBe('set by the instructor at 01:40');
     expect(row('remifentanil', '.lr-dose')).toBe(`${INFUSION_WORDS.doseRunning}: 0.1 µg/kg/min for 64 kg`);
     expect(row('remifentanil', '.lr-rate')).toBe('7.68 mL/h'); // 6.4 µg/min × 60 ÷ 50 µg/mL, the row's syringe the host keeps
-    expect(row('propofol', '.lr-setby')).toBe('set by another learner remote (othe) at 02:10');
+    expect(row('propofol', '.lr-setby')).toBe('set by another learner remote at 02:10');
     expect(row('propofol', '.lr-rate')).toBe('8 mL/h');
     expect(row('propofol', '.lr-dose')).toBe(`${INFUSION_WORDS.doseRunning}: 20.8 µg/kg/min for 64 kg`);
     expect(row('phenylephrine', '.lr-setby')).toBe('set by the case card at 01:05');

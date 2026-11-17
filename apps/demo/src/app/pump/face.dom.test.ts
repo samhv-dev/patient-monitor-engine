@@ -34,10 +34,23 @@ const drip = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => ({
 
 /** S1's shape (origin/pump-s1-stock-syringes-device-profiles, packages/controller/pump-devices/*.json), the two keys the face reads: gaps as S1 writes them. */
 const PROFILES: FaceProfiles = {
-  syringe: { nearEnd: { gap: 'the near-end time at which Almost Empty is raised: SP-500 operator manual (research/50 SP-21)' } },
-  drip: { kvo: { rate: 1, unit: 'mL/h', src: 'OT-15', after: { gap: 'whether and when the pump enters KVO after Infusion Complete: OT-701 operator manual (research/50 OT-24)' } } },
-  // sp5-tci.json (S1, on main): the TCI mode's highest rate is a gap until the SP5 TCI manual
-  tci: { tci: { maxRate: { gap: "the highest rate the pump runs in TCI: SP5 TCI operator's manual (research/50 TC-09)" } } },
+  syringe: {
+    nearEnd: { gap: 'the near-end time at which Almost Empty is raised: SP-500 operator manual (research/50 SP-21)' },
+    rateStep: { step: 0.1 }, // sp-500.json, SP-06
+    volumeDisplay: { max: 999.9 }, // sp-500.json, SP-12
+  },
+  drip: {
+    kvo: { rate: 1, unit: 'mL/h', src: 'OT-15', after: { gap: 'whether and when the pump enters KVO after Infusion Complete: OT-701 operator manual (research/50 OT-24)' } },
+    rateStep: { step: 1 }, // ot-701.json, OT-09
+    volumeDisplay: { max: 9999 }, // ot-701.json, OT-12
+  },
+  // sp5-tci.json: the TCI mode's highest rate is the SP5 family's rate maximum for the syringe (TM-01)
+  tci: {
+    rate: {
+      whose: 'SP5 family manual, not the TCI edition', src: 'TM-01', step: { step: 0.01, unit: 'mL/h', src: 'TM-02' },
+      bySyringe: [{ ml: 20, min: 0.1, max: 400, unit: 'mL/h', src: 'TM-01' }, { ml: 50, min: 0.1, max: 1500, unit: 'mL/h', src: 'TM-01' }],
+    },
+  },
 };
 /** E2: a syringe channel in TCI, Eleveld effect-site target 3 µg/mL; the pump's own Cp 3.4 and Ce 2.9, at 35 mL/h now. */
 const tciRow = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => syringe({
@@ -133,19 +146,23 @@ describe('the face, per channel kind (§5)', () => {
 });
 
 describe('E2: a syringe channel in TCI shows the mode\'s read-only rows (§5; the flows to set a target are A2\'s)', () => {
-  it("the set, Cp or Ce, the target, the pump's own predicted Cp and Ce, the current rate, the volumes, and the profile's TCI gap", () => {
+  it("the set, Cp or Ce, the target, the pump's own predicted Cp and Ce, the current rate, the volumes, and the loaded syringe's TCI rate limit", () => {
     const f = faceView(1, 'syringe', PROFILES);
     f.update(faceRow(tciRow()));
     expect(f.el.dataset.mode).toBe('tci');
     expect(keys(f.el)).toEqual(['syringe', 'tciSet', 'tciMode', 'target', 'cp', 'ce', 'rate', 'infused', 'remaining', 'toEmpty', 'alarms', 'tciMaxRate']);
-    expect(field(f.el, 'tciSet')).toBe('eleveld');
+    expect(field(f.el, 'tciSet')).toBe('Eleveld'); // the author's surname, never the set id
     expect(field(f.el, 'tciMode')).toBe('Ce');
     expect(field(f.el, 'target')).toBe('3 µg/mL');
     expect(field(f.el, 'cp')).toBe('3.4 µg/mL');
     expect(field(f.el, 'ce')).toBe('2.9 µg/mL');
     expect(field(f.el, 'rate')).toBe('35 mL/h');
-    expect(field(f.el, 'tciMaxRate')).toBe('maximum TCI rate not set');
+    expect(field(f.el, 'tciMaxRate')).toBe('up to 1500 mL/h'); // the 50 mL syringe's
     expect(f.el.outerHTML).not.toMatch(/Mindray|SP5|operator manual|TC-09/);
+    f.update(faceRow(tciRow({ syringeMl: 20 })));
+    expect(field(f.el, 'tciMaxRate')).toBe('up to 400 mL/h');
+    f.update(faceRow(tciRow({ syringeMl: 10 })));
+    expect(field(f.el, 'tciMaxRate')).toBe('—'); // a size the profile does not list: no limit is stated
   });
   it('a stopped TCI says so, with no target; the prediction still shows; time to empty is a dash at rate 0 (§5)', () => {
     const f = faceView(1, 'syringe', null);
@@ -159,6 +176,37 @@ describe('E2: a syringe channel in TCI shows the mode\'s read-only rows (§5; th
   it('the patient\'s own concentrations are never on the pump: the face shows the row\'s prediction only', () => {
     const r = faceRow(tciRow());
     expect(Object.keys(r.tci ?? {}).sort()).toEqual(['ce', 'cp', 'mode', 'setId', 'target', 'unit']);
+  });
+});
+
+describe("each number at its device's resolution (D12: the SP-500's rate step and volume display on a syringe channel, TCI included; the OT-701's on a drip channel)", () => {
+  const value = (r: PumpPanelRow, key: string, profiles: FaceProfiles | null = PROFILES) => faceModel(faceRow(r), r.kind, profiles).fields.find((x) => x.key === key)?.value;
+  it('a TCI rate of a floating-point residue reads 0 mL/h, and a rate that reads 0 has no time to empty', () => {
+    const r = tciRow({ rateMlH: 3.9e-12, volumeMl: 44.7, timeToEmptyMin: 6.89e14 });
+    expect(value(r, 'rate')).toBe('0 mL/h');
+    expect(value(r, 'toEmpty')).toBe('—');
+  });
+  it('the rate at 0.1 mL/h on a syringe channel: the step either side of half, and every digit above 100', () => {
+    expect(value(tciRow({ rateMlH: 0.049 }), 'rate')).toBe('0 mL/h');
+    expect(value(tciRow({ rateMlH: 0.051, timeToEmptyMin: 52000 }), 'rate')).toBe('0.1 mL/h');
+    expect(value(tciRow({ rateMlH: 0.051, timeToEmptyMin: 52000 }), 'toEmpty')).toBe('866 h 40 min');
+    expect(value(tciRow({ rateMlH: 123.44 }), 'rate')).toBe('123.4 mL/h');
+    expect(value(syringe({ rate: { rate: 20, unit: 'mL/h' }, rateMlH: 20 }), 'rate')).toBe('20 mL/h');
+  });
+  it('the rate at 1 mL/h on a drip channel, beside drops/min', () => {
+    const r = drip({ rate: { rate: 7, unit: 'drops/min' }, rateMlH: 28, set: 15 });
+    expect(value(r, 'rate')).toBe('7 drops/min');
+    expect(value(r, 'rateOther')).toBe('28 mL/h');
+    expect(value(drip({ rate: { rate: 1, unit: 'drops/min' }, rateMlH: 1.0000001, set: 60 }), 'rateOther')).toBe('1 mL/h');
+  });
+  it('the infused volume to the last digit of the display, 0.1 mL (0.1–999.9) on a syringe and 1 mL (0–9999) on a drip, and its amount of that volume', () => {
+    expect(value(syringe({ infusedMl: 5.77 }), 'infused')).toBe('5.8 mL · 58 mg');
+    expect(value(syringe({ infusedMl: 0.04 }), 'infused')).toBe('0 mL · 0 mg');
+    expect(value(drip({ infusedMl: 2.4 }), 'infused')).toBe('2 mL · 0.032 mg');
+  });
+  it('without a device profile the numbers are written as before, and nothing is made up', () => {
+    expect(value(tciRow({ rateMlH: 35.26 }), 'rate', null)).toBe('35.3 mL/h');
+    expect(value(syringe({ infusedMl: 5.77 }), 'infused', null)).toBe('5.77 mL · 57.7 mg');
   });
 });
 
@@ -177,7 +225,7 @@ describe("a device profile's gap is shown as the face's words, never filled (D8,
     expect(field(s.el, 'almostEmpty')).toBe('device profile not loaded');
   });
   it('a sourced value in place of the gap is not invented into an alarm: the line goes', () => {
-    const m = faceModel(faceRow(syringe()), 'syringe', { ...PROFILES, syringe: { nearEnd: { min: 3, src: 'SP-21' } } }, FACE_LABELS);
+    const m = faceModel(faceRow(syringe()), 'syringe', { ...PROFILES, syringe: { ...PROFILES.syringe, nearEnd: { min: 3, src: 'SP-21' } } }, FACE_LABELS);
     expect(m.fields.map((x) => x.key)).not.toContain('almostEmpty');
   });
   it("names no maker or model and carries none of the gap's own text", () => {

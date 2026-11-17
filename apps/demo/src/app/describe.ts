@@ -6,6 +6,7 @@ import { unitText } from './drugs.ts';
 import { drugName, lungLabel } from './glossary.ts';
 import { showVital, vitalLabel, vitalOf } from './vitals.ts';
 import { rhythmLabel } from './rhythms.ts';
+import { tciModelName, tciSetDrug, tciTargetText } from './tci-names.ts';
 
 type Any = Record<string, unknown>;
 const num = (x: unknown): number => (typeof x === 'number' ? x : Number.NaN);
@@ -44,22 +45,28 @@ const conc = (c: unknown): string => {
   const k = (c ?? {}) as Any;
   return `${+(num(k.amount) / num(k.perMl)).toFixed(3)} ${unitText(String(k.unit))}/mL`;
 };
+/** "from 10 to 20 mL/h": a rate change, the unit said once when both rates have it. */
+const fromTo = (was: number, wasUnit: string, rate: unknown, unit: string): string =>
+  wasUnit === unit ? `from ${was} to ${rate} ${unitText(unit)}` : `from ${was} ${unitText(wasUnit)} to ${rate} ${unitText(unit)}`;
 /**
- * A pump channel's act (plan pump-rack-tci.md C2): the engine's `pump` event as the host applied it. The line names the
- * channel and what the event says; who pressed it is the record row's (`kind`, `by`).
+ * A pump channel's act (plan pump-rack-tci.md C2): the engine's `pump` event as the host applied it, with what the host
+ * wrote beside it (`meta`: the channel's true drug, the values the act replaced). The line names the channel, its drug
+ * where it has one, and what the event says; who pressed it is the record row's (`kind`, `by`).
  */
-function pumpLine(e: Any): string {
-  const ch = `Channel ${e.ch}`;
+function pumpLine(e: Any, meta: Any): string {
+  const has = (meta.contents as Any | undefined)?.drugId;
+  const ch = `Channel ${e.ch}${has && (e.action === 'rate' || e.action === 'start' || e.action === 'stop') ? ` (${drug(has)})` : ''}`;
   const k = (e.contents ?? {}) as Any;
+  const was = ((meta.replaced ?? []) as Any[]).find((r) => r.what === 'rate');
   switch (e.action) {
     case 'load':
       return `${ch}: ${e.channel === 'drip' ? 'bag' : `${e.syringeMl} mL syringe`} of ${drug(k.drugId)} ${conc(k.concentration)} loaded (${+num(k.volumeMl).toFixed(2)} mL)`;
     case 'program':
       return `${ch} programmed: ${drug(e.drugId)} ${conc(e.concentration)}${e.set !== undefined ? `, ${e.set} drops/mL set` : ''}`;
     case 'rate':
-      return `${ch}: rate ${e.rate} ${unitText(String(e.unit))}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
+      return `${ch}: rate ${was ? `changed ${fromTo(num(was.rate), String(was.unit), e.rate, String(e.unit))}` : `${e.rate} ${unitText(String(e.unit))}`}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
     case 'tci':
-      return num(e.target) > 0 ? `${ch}: TCI ${e.setId}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${e.target}` : `${ch}: TCI stopped`;
+      return num(e.target) > 0 ? `${ch}: TCI ${tciModelName(String(e.setId))}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${tciTargetText(e.target, tciSetDrug(String(e.setId)))}` : `${ch}: TCI stopped`;
     case 'bolus':
       return e.volumeMl !== undefined ? `${ch}: bolus ${e.volumeMl} mL` : `${ch}: bolus ${(e.dose as Any | undefined)?.amount} ${unitText(String((e.dose as Any | undefined)?.unit))}`;
     case 'purge':
@@ -75,14 +82,18 @@ function pumpLine(e: Any): string {
   }
 }
 
-function event(e: Any): string {
+/** `c`: the command the event rode on (a rate change's `replaced`, a pump act's `pump`, as the host wrote them). */
+function event(e: Any, c: Any = {}): string {
   switch (e.kind) {
     case 'drug':
       return `${drug(e.drugId)} ${e.dose} ${unitText(String(e.unit))} ${e.route === 'iv' || e.route === undefined ? 'IV' : String(e.route).toUpperCase()}`;
-    case 'infusion':
-      return num(e.rate) > 0 ? `${drug(e.drugId)} ${e.rate} ${unitText(String(e.unit))} infusion started` : `${drug(e.drugId)} infusion stopped`;
+    case 'infusion': {
+      const was = c.replaced as Any | undefined;
+      if (!(num(e.rate) > 0)) return `${drug(e.drugId)} infusion stopped`;
+      return was ? `${drug(e.drugId)} infusion rate changed ${fromTo(num(was.rate), String(was.rateUnit), e.rate, String(e.unit))}` : `${drug(e.drugId)} ${e.rate} ${unitText(String(e.unit))} infusion started`;
+    }
     case 'tci':
-      return num(e.target) > 0 ? `${drug(e.drugId)} target-controlled infusion, ${e.mode === 'effect' ? 'effect-site' : 'plasma'} target ${e.target}` : `${drug(e.drugId)} target-controlled infusion stopped`;
+      return num(e.target) > 0 ? `${drug(e.drugId)} target-controlled infusion, ${e.mode === 'effect' ? 'effect-site' : 'plasma'} target ${tciTargetText(e.target, String(e.drugId))}` : `${drug(e.drugId)} target-controlled infusion stopped`;
     case 'vaporiser':
       return num(e.dialPct) > 0 ? `${drug(e.agent)} ${e.dialPct} % at ${e.fgfLpm} L/min fresh gas` : `${drug(e.agent)} vaporiser off`;
     case 'fluid':
@@ -126,7 +137,7 @@ function event(e: Any): string {
       // the panel that was sent (L10a: the gas panels on the room's analyser, chemistry and coagulation to the laboratory)
       return LAB_SENT[String(e.panel)] ?? 'Clinical event';
     case 'pump':
-      return pumpLine(e);
+      return pumpLine(e, (c.pump ?? {}) as Any);
     case 'mainstem':
       return e.ventilated === 'both' ? 'Both lungs ventilated' : `Only the ${e.ventilated} lung ventilated`;
     default:
@@ -146,10 +157,11 @@ function eegLine(a: Any): string {
 }
 
 /** A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: a drug "not given", a
- *  sample "not drawn". */
+ *  sample "not drawn", a pump channel's command "not done". */
 export function notDoneOf(c: Any): { what: string; not: string } {
   const e = (c.event ?? {}) as Any;
-  return e.kind === 'lab' ? { what: LAB_PANEL_WORDS[String(e.panel)] ?? 'Sample', not: 'not drawn' } : { what: describeCommand(c), not: 'not given' };
+  if (e.kind === 'lab') return { what: LAB_PANEL_WORDS[String(e.panel)] ?? 'Sample', not: 'not drawn' };
+  return { what: describeCommand(c), not: e.kind === 'pump' ? 'not done' : 'not given' };
 }
 
 /** `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); the Log then names it. */
@@ -186,7 +198,7 @@ export function describeCommand(c: Any, step?: string): string {
       return a === 'pause' ? 'Scenario timer held' : a === 'resume' ? 'Scenario timer running' : 'Scenario event';
     }
     case 'applyEvent':
-      return event((c.event ?? {}) as Any);
+      return event((c.event ?? {}) as Any, c);
     case 'attachSensor':
       return `${SENSORS[String(c.sensor)] ?? 'Sensor'} ${c.state === 'off' || c.state === 'none' ? 'removed' : 'attached'}`;
     case 'device': {

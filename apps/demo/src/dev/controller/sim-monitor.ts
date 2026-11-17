@@ -18,6 +18,8 @@ export interface SimMonitor {
 }
 
 const epochNow = (t = performance.now()) => performance.timeOrigin + t;
+/** This page draws no style, so its beep has no style's level to take [ENG: display]. */
+const BEEP_GAIN = 0.25;
 
 export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions; lanes?: LeadId[] } = {}): SimMonitor {
   const doc = el.ownerDocument;
@@ -40,7 +42,7 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
   const size = () => ({ cssW: Math.max(200, wrap.clientWidth), cssH: Math.max(100, wrap.clientHeight), dpr: globalThis.devicePixelRatio || 1 });
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }) as unknown as ConstructorParameters<typeof MonitorCore>[1];
   const core = new MonitorCore(canvas, ctx, size(), { ...(opts.engine ? { engine: opts.engine } : {}), ...(opts.lanes ? { lanes: opts.lanes } : {}) }, (anchor, events: EngineEvent[]) => {
-    scheduler?.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.epochMs - performance.timeOrigin, timeScale: anchor.timeScale });
+    scheduler?.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.epochMs - performance.timeOrigin, timeScale: anchor.timeScale, runS: anchor.runS });
     for (const e of events) {
       if (e.type === 'measurement' && e.values.hr) hrTile.update(e.values.hr);
       // Same tone handling as the renderer's mountMonitor: stable ids, refT for the
@@ -128,7 +130,7 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
           audioNow: () => out.ctx.currentTime,
           perfToAudio: out.perfToAudio,
           outputLatency: out.outputLatency,
-          play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880),
+          play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, BEEP_GAIN),
         });
         scheduler.start();
       });

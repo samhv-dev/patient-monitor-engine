@@ -15,8 +15,8 @@
 import type { Command } from '@pme/engine-core';
 import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
 import {
-  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, isLinkRecord, LEAD_TICKS, snapshotSettings, type CockpitSettings, type LinkPort,
-  type LinkRecord, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, isLinkRecord, LEAD_TICKS, roomVentMonitor, roomVentPort, snapshotSettings,
+  type CockpitSettings, type LinkPort, type LinkRecord, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
 import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
@@ -106,7 +106,9 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     session.ventTick = -1;
     offAttach = session.onMount((m) => {
       detach();
-      const l = attachMonitorToLink(session.linked(m), p, (cmd, r) => console.warn('vent link rejected', cmd.type, r));
+      // the cockpit drives the room's patient with its breaths and its circuit only (room-guard.ts)
+      const refused = (what: string, why?: string) => console.warn('vent link rejected', what, why);
+      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r));
       detach = l;
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
       // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,

@@ -38,7 +38,7 @@ export const TCI_WORDS = {
   outside: (what: string, v: number, unit: string, set: string, a: number, b: number, src: string) => `${what} ${v} ${unit} is outside the population ${set} was studied in (${a}–${b} ${unit}; ${src})`,
   // the SP5 TCI profile's gaps, in the face's words (D6, D12)
   patientGap: 'patient limits not set from the manual',
-  targetGap: 'target range not set from the manual',
+  targetGap: 'target step not set from the manual',
   what: { target: 'the target', age: 'the age', weight: 'the weight', height: 'the height', sex: 'the sex' },
 };
 
@@ -85,7 +85,7 @@ function tciFlow(x: FlowInput) {
     if (!sp5) out.push(FLOW_WORDS.noProfile);
     else {
       if (isGap(sp5.tci.patient)) out.push(TCI_WORDS.patientGap);
-      if (isGap(sp5.tci.targetRange)) out.push(TCI_WORDS.targetGap);
+      if (isGap(sp5.tci.targetStep)) out.push(TCI_WORDS.targetGap);
     }
     hints.replaceChildren(...out.map(hint));
   };

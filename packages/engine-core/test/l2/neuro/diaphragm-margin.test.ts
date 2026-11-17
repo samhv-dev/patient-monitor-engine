@@ -55,7 +55,7 @@ describe('effort = drive × neuromuscular transmission (brief 93)', () => {
     const s = createSpontDrive();
     s.paco2Rest = 40;
     const n = neuroResp({ vent: V0, macVolatile: 0, diaBlock, tofr: 1, di: 95, naturalAirway: false, wasApnoeic: false });
-    for (let t = 0; t < 600; t++) stepSpontDrive(s, { ...X, paco2, t, neuro: n });
+    for (let t = 0; t < 600; t++) stepSpontDrive(s, { ...X, paco2, t, neuro: n }, {});
     return s.muscle as number;
   };
   it('the muscle effort is the neural effort times the diaphragm\'s force', () => {

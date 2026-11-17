@@ -10,7 +10,7 @@ import { RunRecord } from './record.ts';
 import type { AppSession } from './session.ts';
 
 const KEY = 'bed2remote01';
-const NAMES: Record<string, string> = { [KEY]: 'bed 2 remote' };
+const NAMES: Record<string, string> = { [KEY]: 'bed 2 remote', bed2pumps001: 'bed 2 pumps' };
 const names = (k: string) => NAMES[k] ?? null;
 /** What the host hands its screens when it refuses a learner's give (host-session.ts onNotGiven), as it built it. */
 const fentanyl: NotGiven = {
@@ -21,6 +21,12 @@ const fentanyl: NotGiven = {
 const abg: NotGiven = {
   command: { id: 'lr-8', issuedBy: 'learner', by: KEY, type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } } as unknown as WireCommand,
   from: 'lr.1', reason: PAUSED_REFUSAL, t: 80,
+};
+
+const PUMP_KEY = 'bed2pumps001';
+const start: NotGiven = {
+  command: { id: 'pt-3', issuedBy: 'pump', by: PUMP_KEY, type: 'applyEvent', event: { kind: 'pump', ch: 1, action: 'start' }, pump: { ch: 1 } } as unknown as WireCommand,
+  from: 'pump.1', reason: PAUSED_REFUSAL, t: 90,
 };
 
 describe('L14: a learner give refused while paused, on the host', () => {
@@ -41,10 +47,11 @@ describe('L14: a learner give refused while paused, on the host', () => {
   it("the host's Log has the line, with the phone's Room-setup name and the reason", () => {
     const hub = createInProcessHub();
     const t: ManagedTransport = hub.connect();
-    const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
+    const record = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names);
+    const host = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner') => record.label(k, kind), record: { note: () => undefined } } as unknown as AppSession;
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(fentanyl);
-    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (learner remote: bed 2 remote) not given: the case was paused' }]);
+    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (bed 2 remote) not given: the case was paused' }]);
     link.close();
   });
 
@@ -54,10 +61,30 @@ describe('L14: a learner give refused while paused, on the host', () => {
     expect(r.data.rows).toEqual([{ t: 80, kind: 'learner', text: 'Arterial blood gas not drawn: the case was paused', remote: true, by: KEY, name: 'bed 2 remote', notGiven: PAUSED_REFUSAL }]);
     const hub = createInProcessHub();
     const t: ManagedTransport = hub.connect();
-    const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
+    const host = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner') => r.label(k, kind), record: { note: () => undefined } } as unknown as AppSession;
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(abg);
-    expect(link.log).toEqual([{ simT: 80, kind: 'learner', text: 'Arterial blood gas (learner remote: bed 2 remote) not drawn: the case was paused' }]);
+    expect(link.log).toEqual([{ simT: 80, kind: 'learner', text: 'Arterial blood gas (bed 2 remote) not drawn: the case was paused' }]);
+    link.close();
+  });
+
+  it("a pump tablet's command refused while paused: a pump row on its channel and a Log line naming the tablet, 'not done'", () => {
+    const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names);
+    r.notGiven(start);
+    expect(r.data.rows).toEqual([{ t: 90, kind: 'pump', channel: 1, text: 'Channel 1 started not done: the case was paused', by: PUMP_KEY, name: 'bed 2 pumps', notGiven: PAUSED_REFUSAL }]);
+    const hub = createInProcessHub();
+    const t: ManagedTransport = hub.connect();
+    const host = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'pump') => r.label(k, kind), record: { note: () => undefined } } as unknown as AppSession;
+    const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
+    link.notGiven(start);
+    expect(link.log).toEqual([{ simT: 90, kind: 'learner', text: 'Channel 1 started (bed 2 pumps) not done: the case was paused' }]);
+    // no name in Room setup: the tablet's number among the pump tablets, as every page reads it
+    const unnamed = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, () => null);
+    const t2: ManagedTransport = hub.connect();
+    const link2 = new Link(new ControllerSession({ session: 'LNK235', transport: t2 }), t2, { ...host, deviceLabel: (k: string, kind: 'pump') => unnamed.label(k, kind) } as unknown as AppSession);
+    link2.notGiven(start);
+    expect(link2.log.at(-1)?.text).toBe('Channel 1 started (Pump tablet 1) not done: the case was paused');
+    link2.close();
     link.close();
   });
 });
