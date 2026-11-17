@@ -18,7 +18,7 @@ import { filled } from './view.ts';
 
 const html = readFileSync(resolve(import.meta.dirname, '../../../../vent-hamilton.html'), 'utf8');
 const body = (html.split('<body>')[1] as string).split('<script')[0] as string;
-const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.help).map((l) => ({ v: filled(l.v) })), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
+const ALLOWED = new Set<string>([...Object.values(FACE.words), ...[...Object.values(FACE.reasons), ...Object.values(FACE.help)].map((l) => ({ v: filled(l.v) })), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
 const NUMERIC = /^[-+\d.:/ ]+$/;
 /** A window's value with its unit (research/57 T-40 "Apnea time 15 s"): a number and a sourced unit word. */
 const withUnit = (t: string) => { const m = /^([-+\d.:/]+) (.+)$/.exec(t); return m !== null && ALLOWED.has(m[2]!); };
@@ -146,7 +146,7 @@ describe('the EDP-TS face', () => {
       const x = CONTROLS.find((y) => y.id === b.dataset.ctl)!;
       if (x.kind === 'unavailable') {
         expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
-        expect(why(b), b.dataset.ctl).toBe(FACE.reasons[x.reason].v);
+        expect(why(b), b.dataset.ctl).toBe(filled(FACE.reasons[x.reason].v));
         expect(b.dataset.unsim, b.dataset.ctl).toBe(x.reason);
       } else {
         expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBeNull();

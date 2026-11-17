@@ -78,6 +78,10 @@ export interface BreathRecord {
   pmax: number;
   /** How long the inspiratory flow lasted (Ti without a pause or a hold), s. */
   tiFlow: number;
+  /** The ventilator gave the inspiratory flow at one constant rate (a volume-controlled breath, constant waveform). */
+  constFlow: boolean;
+  /** The set PEEP the breath was given at, cmH2O. */
+  peep: number;
   /** The breath's own kind, the controller it ran (the model's `breathKind`): a backup breath its backup kind. */
   kind: VentMode;
   /** A spontaneous (support) breath: one the patient's effort shapes and ends, not a mandatory or backup one. */
@@ -100,10 +104,11 @@ export interface HoldResult {
   peep: number;
   mode: VentMode;
   /**
-   * An inspiratory hold: the breath it held (its start, volume, peak pressure and flow time), the measured PEEP of the
-   * breath before it, and its expiration's time constant once that breath is complete (NaN until then).
+   * An inspiratory hold: the breath it held (its start, volume, peak pressure, flow time and whether that flow was
+   * constant), the measured PEEP of the breath before it, and its expiration's time constant once that breath is
+   * complete (NaN until then).
    */
-  breath?: { t0: number; vtMl: number; pmax: number; tiFlow: number; peepBefore: number; tcexp: number };
+  breath?: { t0: number; vtMl: number; pmax: number; tiFlow: number; constFlow: boolean; peepBefore: number; tcexp: number };
 }
 
 /** The device's manoeuvres and measurements: the face's numbers, each sourced in its data. */

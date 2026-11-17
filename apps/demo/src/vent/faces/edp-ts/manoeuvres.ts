@@ -29,8 +29,11 @@ export interface Manoeuvres {
   trappedMl(): number;
   /** The last P0.1, cmH2O, or NaN. */
   p01(): number;
-  /** The values Patient's Data shows, NaN until their hold has been made. */
-  values(): { cst: number; ri: number; re: number; autoPeep: number };
+  /**
+   * The values Patient's Data shows, NaN until their hold has been made; `riFlow` true when Ri is NaN because the held
+   * breath's flow was not constant.
+   */
+  values(): { cst: number; ri: number; riFlow: boolean; re: number; autoPeep: number };
 }
 
 /** `onEnd`: told when a test ends, with what the simulator's strip says. */
@@ -91,7 +94,8 @@ export function createManoeuvres(c: Cockpit, onEnd: (r: ReasonId) => void = () =
     values() {
       const insp = H.last('insp'), exp = H.last('exp');
       const cst = insp ? staticCompliance(insp, peepTotal(insp, exp)) : Number.NaN;
-      return { cst, ri: insp ? inspiratoryResistance(insp) : Number.NaN, re: expiratoryResistance(insp?.breath?.tcexp ?? Number.NaN, cst), autoPeep: exp ? autoPeep(exp) : Number.NaN };
+      const ri = insp ? inspiratoryResistance(insp) : Number.NaN;
+      return { cst, ri, riFlow: insp?.breath?.constFlow === false, re: expiratoryResistance(insp?.breath?.tcexp ?? Number.NaN, cst), autoPeep: exp ? autoPeep(exp) : Number.NaN };
     },
   };
 }

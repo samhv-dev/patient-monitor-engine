@@ -1,6 +1,6 @@
 // The expiratory hold at the END of expiration (the model's `expHoldAt: 'end'`), the EDP-TS end-expiratory occlusion
 // (manual pp. 98–99, research/57 K-15; its Insp/Exp Pause key, H-18, H-19). Absent, the hold closes 0.3 s into
-// expiration as v1.9 did; set, on the step the next breath would start, so the pressure it holds is the lung's at
+// expiration; set, on the step the next breath would start, so the pressure it holds is the lung's at
 // end-expiration: set PEEP plus the recoil of the volume still in the lung (intrinsic PEEP); released, it gives the
 // breath it held back at once, so the lung does not empty between the occlusion and that breath.
 import { describe, expect, it } from 'vitest';
@@ -62,7 +62,7 @@ describe("expHoldAt: 'end' (research/57 K-15)", () => {
     expect(vs.p.markers.at(-1)!.type).toBe('pt');
   });
 
-  it('left out, the hold closes 0.3 s into expiration, as before', () => {
+  it('left out, the hold closes 0.3 s into expiration', () => {
     const vs = createVent(VC);
     steps(vs, 20);
     toExpiration(vs);
@@ -132,7 +132,7 @@ describe("holdEffort: the patient's effort on a held airway (the equation of mot
     }
     expect(seen, 'an effort came during the hold').toBeGreaterThan(pmusValue(vs.cfg, 0.1));
   });
-  it('left out: the hold does not see the effort, as before', () => {
+  it('left out: the hold does not see the effort', () => {
     const vs = held({});
     for (let i = 0; i < 4 / DT; i++) {
       stepVent(vs);

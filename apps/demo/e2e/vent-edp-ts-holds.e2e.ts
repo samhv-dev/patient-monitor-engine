@@ -30,15 +30,15 @@ test('EDP-TS face: an inspiratory hold held with the key gives the plateau and t
     const v = (window as Any).__vent.vs;
     return { hold: v.hold as string | null, phase: v.p.phase as string, compliance: v.cfg.compliance as number, paw: v.p.Paw as number };
   });
-  // two complete breaths, so the breath record (the measured PEEP) exists; then the start of an inspiration
+  // two complete breaths, so the breath record (the measured PEEP) exists
   await page.waitForFunction(() => (window as Any).__vent.vs.p.breathCount >= 3, null, { timeout: 60_000, polling: 50 });
-  // the start of an inspiration: an expiration, then the frame its next inspiration begins on
-  await page.waitForFunction(() => (window as Any).__vent.vs.p.phase === 'exp', null, { timeout: 30_000, polling: 'raf' });
-  await page.waitForFunction(() => (window as Any).__vent.vs.p.phase === 'insp', null, { timeout: 30_000, polling: 'raf' });
-
+  // the pointer rests on the key first, so the press follows the start of an inspiration with nothing in between
   const key = page.locator('[data-ctl="under:inspExpPause"]');
   const b = (await key.boundingBox())!;
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  // the start of an inspiration: an expiration, then the frame its next inspiration begins on
+  await page.waitForFunction(() => (window as Any).__vent.vs.p.phase === 'exp', null, { timeout: 30_000, polling: 'raf' });
+  await page.waitForFunction(() => (window as Any).__vent.vs.p.phase === 'insp', null, { timeout: 30_000, polling: 'raf' });
   await page.mouse.down();
   // the key armed an inspiratory hold (it was pressed in inspiration), the valves close at the inspiration's end and
   // stay closed while the key is held

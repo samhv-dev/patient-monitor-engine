@@ -5,7 +5,8 @@
 import { modeName, type VentConfig } from '@pme/ventilator';
 import type { Cockpit, SampleBuffers } from '../../core/cockpit.ts';
 import { CONTROLS, faceMode, formatIe, LIMITS, ROWS, SETTINGS, settingState, WINDOWS, type Ctl, type Row, type WindowId } from './controls.ts';
-import { DATA, dec, L, LAYOUT, num, word, type Leaf, type ReasonId, type WordId } from './data.ts';
+import { DATA, dec, filled, L, LAYOUT, num, word, type Leaf, type ReasonId, type WordId } from './data.ts';
+export { filled } from './data.ts';
 import type { Knob } from './knob.ts';
 import type { TestId } from './manoeuvres.ts';
 import { alarmText } from './modes.ts';
@@ -135,14 +136,6 @@ function testValue(knob: Knob, t: TestId): string {
   if (t === 'trapped') return withUnit(fxd(m.trappedMl(), 'pdVol'), 'uMl');
   return withUnit(fxd(m.p01(), 'pdP01'), 'uCmH2O');
 }
-/** A face.json value by its path ("mechanics.lockHoldS"): a help text names its numbers so, never repeats them. */
-const valueAt = (path: string): string => {
-  const leaf = path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], DATA) as Leaf<number> | undefined;
-  if (leaf?.v === undefined) throw new Error(`face.json has no value ${path}`);
-  return String(leaf.v);
-};
-/** A text with its {path} numbers filled from face.json. */
-export const filled = (text: string): string => text.replace(/\{([\w.]+)\}/g, (_, p: string) => valueAt(p));
 /** A control's help, in the project's words (face.json help; plan GX8). */
 export const helpText = (id: string | null): string => (id ? filled((DATA.help as Record<string, Leaf<string> | undefined>)[id]?.v ?? '') : '');
 

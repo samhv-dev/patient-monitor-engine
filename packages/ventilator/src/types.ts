@@ -43,7 +43,7 @@ export interface VentConfig {
    */
   backupMode?: BackupMode; pmaxAction?: 'cap' | 'cycle';
   /**
-   * When an armed expiratory hold closes the valves. Absent: v1.9's, 0.3 s into expiration. 'end': at the end of
+   * When an armed expiratory hold closes the valves. Absent: 0.3 s into expiration. 'end': at the end of
    * expiration, on the step the next breath would start (the EDP-TS auto-PEEP manoeuvre, an end-expiratory occlusion:
    * manual pp. 98–99, research/57 K-15; its Insp/Exp Pause key, H-18, H-19). Optional, absent from DEFAULT_CONFIG.
    */
@@ -51,7 +51,7 @@ export interface VentConfig {
   /**
    * A held airway carries the patient's effort: with no flow the equation of motion gives Paw = PEEP + recoil − Pmus,
    * so an effort during a hold shows as its pressure swing (the EDP-TS's occlusions, research/57 K-15, K-19). Absent:
-   * v1.9's hold, which does not see the effort. Optional, absent from DEFAULT_CONFIG.
+   * the held airway does not see the effort. Optional, absent from DEFAULT_CONFIG.
    */
   holdEffort?: boolean;
   almMVlo: number; almMVhi: number; almFlo: number; almFhi: number; almVTlo: number; almVThi: number;

@@ -9,19 +9,20 @@ export const staticCompliance = (insp: HoldResult, peepTotal: number): number =>
 
 /**
  * Inspiratory resistance as the manual states it: (Pmax − Pplateau) / (VT / Ti), Ti the inspiratory flow's time (K-16).
- * VT / Ti is the mean inspiratory flow, so this is the airway's resistance only when the flow is constant; with a
- * descending or a pressure-controlled flow it reads lower (face.json mechanics.riFlow).
+ * VT / Ti is the mean inspiratory flow; Pmax − Pplateau is the resistance times the flow at the end of inspiration. The
+ * two flows are one only when the ventilator gave the breath at a constant flow, so the value is the airway's resistance
+ * for such a breath and NaN for any other (face.json mechanics.riFlow).
  */
 export const inspiratoryResistance = (insp: HoldResult): number => {
   const b = insp.breath;
-  return b ? (b.pmax - insp.paw) / (b.vtMl / 1000 / b.tiFlow) : Number.NaN;
+  return b?.constFlow ? (b.pmax - insp.paw) / (b.vtMl / 1000 / b.tiFlow) : Number.NaN;
 };
 
 /** Expiratory resistance: TCexp / static compliance (K-16), both of the one held breath. */
 export const expiratoryResistance = (tcexp: number, cstMl: number): number => tcexp / (cstMl / 1000);
 
-/** Dynamic compliance of a breath: VT / (Pmax − PEEP) (K-16, N-12). */
-export const dynamicCompliance = (b: BreathRecord, peep: number): number => b.vtMl / (b.pmax - peep);
+/** Dynamic compliance of a breath: VT / (Pmax − PEEP), the PEEP it was given at (K-16, N-12). */
+export const dynamicCompliance = (b: BreathRecord): number => b.vtMl / (b.pmax - b.peep);
 
 /** Intrinsic PEEP: the end-expiratory occlusion's pressure minus the set PEEP (K-15). */
 export const autoPeep = (exp: HoldResult): number => exp.paw - exp.peep;

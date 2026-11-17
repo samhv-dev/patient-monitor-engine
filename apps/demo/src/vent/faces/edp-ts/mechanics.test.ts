@@ -227,11 +227,26 @@ describe("Patient's Data from the breath record (research/57 N-07 to N-16)", () 
     const flowLs = 0.5 / 1.0;
     const cdyn = 500 / (500 / LUNG.compliance + flowLs * LUNG.resistance);
     // the value the face computes, unrounded, is the lung's within half the digit it prints; and the face prints it
-    const measured = dynamicCompliance(r, VCV.peep!);
+    const measured = dynamicCompliance(r);
     expect(Math.abs(measured - cdyn)).toBeLessThanOrEqual(half('pdC'));
     expect(row(c, k, 'cdyn')).toBe(measured.toFixed(dec('pdC')));
     expect(Number(row(c, k, 'tiTtot', 1))).toBeCloseTo(r.ti / (r.ti + r.te), dec('pdTiTtot'));
     expect(Math.abs(r.ti / (r.ti + r.te) - 1.0 / 5)).toBeLessThanOrEqual(half('pdTiTtot'));
+  });
+
+  it('Cdyn reads each breath against the PEEP it was given at: a PEEP changed in its expiration does not move it', () => {
+    const { d, c, k } = setup(LUNG, VCV);
+    settled(d);
+    toPhase(d, 'exp');
+    const n = d.vs.p.breathCount;
+    c.write({ peep: VCV.peep! + 5 });
+    // the breath whose expiration the change came in is complete when the next one starts
+    until(d, () => d.vs.p.breathCount > n, 10, 'the next breath');
+    const r = c.record()!;
+    expect(r.peep).toBe(VCV.peep);
+    const cdyn = 500 / (500 / LUNG.compliance + (0.5 / 1.0) * LUNG.resistance);
+    expect(Math.abs(dynamicCompliance(r) - cdyn)).toBeLessThanOrEqual(half('pdC'));
+    expect(row(c, k, 'cdyn')).toBe(dynamicCompliance(r).toFixed(dec('pdC')));
   });
 
   it('PSV/CPAP with a breathing patient: F Spont, VE Spont and F/VT are those of the breaths the lung took', () => {
@@ -299,32 +314,33 @@ describe('the screen lock (research/57 H-12, H-13)', () => {
   });
 });
 
-describe('inspiratory resistance with a flow that is not constant: the device\'s formula, as the manual states it (research/57 K-16)', () => {
-  const ri = (k: Knob) => k.tests!.values().ri;
-  it('the data marks that the formula is the airway resistance for a constant flow only', () => {
-    expect((M.riFlow as { v: string; src: string }).v).toBe('constant');
-    expect((M.riFlow as { src: string }).src).toContain('K-16');
+describe('inspiratory resistance: the manual\'s formula, shown for a breath given at a constant flow (research/57 K-16, K-27 to K-29)', () => {
+  const riRow = (c: Cockpit, k: Knob) => dataPage(c, k.tests!, 0).find((r) => r.word === 'ri')!;
+  it('the data marks the rule and cites the manual\'s formula, its definition, its figure and the gap', () => {
+    const l = M.riFlow as { v: string; p: string; src: string };
+    expect(l).toMatchObject({ v: 'constant', p: 'inferred' });
+    for (const row of ['K-16', 'K-27', 'K-28', 'K-29']) expect(l.src).toContain(row);
   });
-  it('VCV with the descending ramp (the face\'s starting waveform): R − Ti / (4·C), half the lung\'s resistance here', () => {
-    const { d, k } = setup(LUNG, { ...VCV, flowPattern: 'ramp0' });
+  it('VCV at a constant flow: Ri is the lung\'s resistance, shown with no reason', () => {
+    const { d, c, k } = setup(LUNG, VCV);
     settled(d);
     runTest(d, k, 'complRes');
-    // the ramp from twice the mean flow to zero: the pressure peaks where the flow is the mean, at Ti/2 (when R·C < Ti)
-    const want = LUNG.resistance - 1.0 / (4 * (LUNG.compliance / 1000));
-    expect(want).toBeCloseTo(LUNG.resistance / 2, 9);
-    expect(Math.abs(ri(k) - want), `Ri ${ri(k)}`).toBeLessThanOrEqual(half('pdR'));
+    expect(Math.abs(k.tests!.values().ri - LUNG.resistance)).toBeLessThanOrEqual(half('pdR'));
+    expect(riRow(c, k)).toMatchObject({ value: k.tests!.values().ri.toFixed(dec('pdR')), unsim: null });
   });
-  for (const [mode, label, extra] of [['PC', 'PCV', { pc: 15 }], ['PRVC', 'PRVC', { prvcTarget: 500 }]] as const) {
-    it(`${label}: (the set pressure − VT/C) over the mean flow, below the lung's resistance`, () => {
-      const { d, c, k } = setup(LUNG, { ...VCV, mode, modeLabel: label, itime: 1.0, ...extra });
+  for (const [label, set] of [
+    ['VCV with the descending ramp (the face\'s starting waveform)', { ...VCV, flowPattern: 'ramp0' }],
+    ['PCV', { ...VCV, mode: 'PC', modeLabel: 'PCV', pc: 15 }],
+    ['PRVC', { ...VCV, mode: 'PRVC', modeLabel: 'PRVC', prvcTarget: 500 }],
+  ] as const) {
+    it(`${label}: the flow was not constant, so Ri shows "---" and says why; Cst is still the lung's`, () => {
+      const { d, c, k } = setup(LUNG, set as Partial<VentConfig>);
       settled(d);
       runTest(d, k, 'complRes');
-      const r = c.holds!.last('insp')!;
-      // the pressure the breath was given at (PCV's set PCV; PRVC's adjusted pressure) above PEEP, less the plateau
-      const above = r.breath!.pmax - VCV.peep!;
-      const want = (above - r.breath!.vtMl / LUNG.compliance) / (r.breath!.vtMl / 1000 / r.breath!.tiFlow);
-      expect(Math.abs(ri(k) - want), `Ri ${ri(k)}`).toBeLessThanOrEqual(half('pdR'));
-      expect(ri(k)).toBeLessThan(LUNG.resistance * 0.5);
+      const v = k.tests!.values();
+      expect(Math.abs(v.cst - LUNG.compliance), `Cst ${v.cst}`).toBeLessThanOrEqual(half('pdC'));
+      expect(v.ri).toBeNaN();
+      expect(riRow(c, k)).toMatchObject({ value: '---', unsim: 'riFlow' });
     });
   }
 });

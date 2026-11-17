@@ -2,7 +2,8 @@
 // last COMPLETE breath, from the 5 ms steps: peak inspiratory flow, Ti (with a pause or an inspiratory hold, as a
 // ventilator reports it: research/57 R-08), Te, I:E, the end-expiratory pressure as the EDP-TS measures it (the mean
 // airway pressure of the last 50 ms of expiration, R-23); and what the respiratory mechanics read of it: the volume and
-// the peak pressure of its inspiratory flow, how long that flow lasted, whether it was a spontaneous breath, and the
+// the peak pressure of its inspiratory flow, how long that flow lasted and whether the ventilator gave it at one
+// constant rate, the set PEEP it was given at, whether it was a spontaneous breath, and the
 // expiratory time constant from its flow–volume curve (N-10). It is fed on every step, frozen or not: freezing the
 // display leaves the numbers live (K-07).
 import { breathKind, type VentMode, type VentState } from '@pme/ventilator';
@@ -12,7 +13,7 @@ import type { BreathRecord } from './types.ts';
 export const PEEP_WINDOW_S = 0.05;
 
 /** The breath in progress once its inspiratory flow has ended (an inspiratory hold reads it before the breath is complete). */
-export interface BreathSoFar { t0: number; vtMl: number; pmax: number; tiFlow: number }
+export interface BreathSoFar { t0: number; vtMl: number; pmax: number; tiFlow: number; constFlow: boolean }
 
 export interface RecorderOptions {
   /** How many complete breaths of each kind `breaths()` keeps. */
@@ -42,7 +43,7 @@ const SPONT_KINDS: ReadonlySet<VentMode> = new Set(['PSV', 'PAV']);
 /**
  * The expiratory time constant (s) from the expiration's [lung volume L, flow L/s] samples: the slope of flow against
  * volume over the window's share of the exhaled volume (a passive lung empties as flow = −volume / τ). NaN when the
- * window holds fewer than three samples.
+ * window holds fewer than `minSamples` samples.
  */
 export function timeConstant(samples: ReadonlyArray<readonly [number, number]>, [from, to]: readonly [number, number], minSamples: number): number {
   if (samples.length < minSamples) return Number.NaN;
@@ -67,7 +68,9 @@ export function createRecorder(o?: RecorderOptions): Recorder {
   let peak = 0;
   let wasInsp = false;
   let flowing = false; // the last step ended in inspiratory flow, so this step's sub-steps were inspiratory
-  let vStart = 0, pmax = 0, so: BreathSoFar | null = null, kind: VentMode = 'VC';
+  let vStart = 0, pmax = 0, so: BreathSoFar | null = null, kind: VentMode = 'VC', peep = 0;
+  // the flow the ventilator set on the breath's first flowing step, and whether every later step kept it
+  let qSet = Number.NaN, constFlow = false;
   const tail: Array<[number, number]> = []; // [t, Paw] of the expiration's last 50 ms
   const expSamples: Array<[number, number]> = []; // [V L, Q L/s] of the expiration's passive flow
   return {
@@ -79,7 +82,9 @@ export function createRecorder(o?: RecorderOptions): Recorder {
       flowing = !open && vs.hold === null && p.phase === 'insp';
       if (wasFlowing) {
         pmax = Math.max(pmax, p.Paw);
-        if (!flowing) so = { t0, vtMl: p.V - vStart, pmax, tiFlow: p.t - t0 };
+        if (Number.isNaN(qSet)) qSet = vs.flowTarget;
+        else if (vs.flowTarget !== qSet) constFlow = false;
+        if (!flowing) so = { t0, vtMl: p.V - vStart, pmax, tiFlow: p.t - t0, constFlow };
       }
       if (insp && !wasInsp) {
         if (Number.isFinite(t0) && Number.isFinite(te0) && tail.length) {
@@ -87,7 +92,7 @@ export function createRecorder(o?: RecorderOptions): Recorder {
           const te = p.t - te0;
           last = {
             t0, peakFlowLpm: peak, ti, te, ie: ti / Math.max(1e-9, te), peepEnd: tail.reduce((s, [, v]) => s + v, 0) / tail.length, tiTtot: ti / (ti + te),
-            vtMl: so?.vtMl ?? Number.NaN, pmax: so?.pmax ?? Number.NaN, tiFlow: so?.tiFlow ?? Number.NaN, kind, spont: SPONT_KINDS.has(kind),
+            vtMl: so?.vtMl ?? Number.NaN, pmax: so?.pmax ?? Number.NaN, tiFlow: so?.tiFlow ?? Number.NaN, constFlow: so?.constFlow ?? false, peep, kind, spont: SPONT_KINDS.has(kind),
             tcexp: o ? timeConstant(expSamples, o.tcexpWindow, o.tcexpMinSamples) : Number.NaN,
           };
           const k = kept[`${last.spont}`];
@@ -104,6 +109,10 @@ export function createRecorder(o?: RecorderOptions): Recorder {
         pmax = -Infinity;
         so = null;
         kind = breathKind(vs as VentState);
+        peep = vs.cfg.peep;
+        qSet = Number.NaN;
+        // only a volume-controlled breath has a flow the ventilator sets; a pressure-controlled one's follows the lung
+        constFlow = kind === 'VC';
       } else if (!insp && wasInsp) te0 = p.t;
       if (insp) peak = Math.max(peak, p.Q * 60);
       else {

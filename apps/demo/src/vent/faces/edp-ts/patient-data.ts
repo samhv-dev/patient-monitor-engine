@@ -32,7 +32,7 @@ const COMMON: Row[] = [
   row('tcexp', 'uS', (c) => fx(c.record()?.tcexp ?? Number.NaN, 'pdTc')),
   // the rapid shallow breathing index, PSV/CPAP only (N-11)
   row('fvt', 'uBpmL', (c) => fx(psvCpap(c) ? c.measured().RR / (c.measured().VTE / 1000) : Number.NaN, 'pdFvt')),
-  row('cdyn', 'uMlCm', (c) => { const r = c.record(); return fx(r ? dynamicCompliance(r, c.cfg.peep) : Number.NaN, 'pdC'); }),
+  row('cdyn', 'uMlCm', (c) => { const r = c.record(); return fx(r ? dynamicCompliance(r) : Number.NaN, 'pdC'); }),
   off('wobi', 'wobi'),
   off('etco2', 'etco2'),
   off('vco2', 'etco2'),
@@ -42,7 +42,8 @@ const COMMON: Row[] = [
 export const PAGES: Row[][] = [
   [...COMMON,
     row('cst', 'uMlCm', (_c, m) => fx(m.values().cst, 'pdC')),
-    row('ri', 'uCmLs', (_c, m) => fx(m.values().ri, 'pdR')),
+    // the manual's Ri reads the resistance of a constant-flow breath only: for another, "---" and why (mechanics.riFlow)
+    (_c, m) => { const v = m.values(); return { word: 'ri', value: fx(v.ri, 'pdR'), unit: 'uCmLs', unsim: v.riFlow ? 'riFlow' : null }; },
     row('re', 'uCmLs', (_c, m) => fx(m.values().re, 'pdR')),
     row('autoPeep', 'uCmH2O', (_c, m) => fx(m.values().autoPeep, 'pdAutoPeep'))],
   [...COMMON,

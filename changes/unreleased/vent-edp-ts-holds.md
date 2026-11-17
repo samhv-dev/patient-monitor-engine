@@ -7,7 +7,9 @@
   100 ms of the patient's next effort, on an end-expiratory occlusion); Esc cancels a test, and one whose valves cannot
   close is stopped; slow vital capacity, PV flex, Pimax and VD/VT are drawn and say why they are not simulated. Patient's Data
   (Menu, two pages) shows VE Mandat, VE Spont, F Spont, TCexp, F/VT, Cdyn, Ti/Ttot and, once their hold has been made,
-  Cst, Ri, Re and auto-PEEP, by the manual's formulas; what the model does not have shows "---". A hold ends with no
+  Cst, Ri, Re and auto-PEEP, by the manual's formulas; what the model does not have shows "---". Ri shows only for a
+  breath the ventilator gave at a constant flow, the only flow the manual's formula reads the resistance of; for a
+  descending or pressure-controlled breath it shows "---" and says why. Cdyn reads each breath against its own PEEP. A hold ends with no
   result when the circuit opens, on a reset, or when the mode or the set PEEP changes; a reset or a new patient
   clears every value. Also on the face: Manual
   Insp., Freeze (left with Freeze or Esc), Save loop with its reference loop and Ctrl + Graphics, the Graphics window's
@@ -20,4 +22,4 @@
 - **The ventilator model's expiratory hold can close at the end of expiration** (`expHoldAt: 'end'`, off unless set):
   on the step the next breath would start, so it holds PEEP total; released, it gives the breath it held back at once,
   and `cancelHold` ends it giving none. With `holdEffort` (off unless set) a held airway carries the patient's effort,
-  PEEP + recoil − Pmus. The Hamilton-style face keeps v1.9's hold, 0.3 s into expiration and blind to the effort.
+  PEEP + recoil − Pmus. The Hamilton-style face keeps its hold, 0.3 s into expiration and blind to the effort.

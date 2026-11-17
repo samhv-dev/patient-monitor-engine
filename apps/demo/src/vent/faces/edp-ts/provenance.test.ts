@@ -5,12 +5,15 @@
 // a `measured` one only colour samples (meas), an `eng` one says why, and a `sim` one (the simulator's own words) cites
 // the plan. The face's stylesheet holds no colour of its own (face.ts sets them from face.json), and every gap and reason
 // the control table names exists.
+import type { VentMode } from '@pme/ventilator';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CONTROLS, WINDOWS } from './controls.ts';
 import { helpId } from './knob.ts';
 import { labelsOf } from './screen.ts';
+import { MODE_WORD, reason, type ReasonId } from './data.ts';
+import { MODES } from './modes.ts';
 import { filled } from './view.ts';
 import FACE from './face.json';
 
@@ -105,6 +108,21 @@ describe('the help texts (research/57 K-14, H-21; plan GX8)', () => {
       expect(() => filled(t), k).not.toThrow();
     }
     expect(filled((FACE.help['under:inspExpPause'] as { v: string }).v)).toContain(`at most ${FACE.mechanics.holdInspMaxS.v} s`);
+  });
+  it('the reasons that name a mode list or a number read it from face.json: the pause key\'s, each test\'s, P0.1\'s', () => {
+    const R = FACE.reasons as Record<string, { v: string }>;
+    const T = FACE.mechanics.testModes as Record<string, { v: string[] }>;
+    const cases: Array<[string, string, string[]]> = [['pauseModes', 'mechanics.holdModes', FACE.mechanics.holdModes.v],
+      ...Object.keys(T).map((id) => [`modes:${id}`, `mechanics.testModes.${id}`, T[id]!.v] as [string, string, string[]])];
+    for (const [id, path, modes] of cases) {
+      expect(R[id]!.v, id).toContain(`{${path}}`);
+      expect(R[id]!.v.replace(/\{[\w.]+\}/g, ''), id).not.toMatch(/\b(?:VCV|PCV|PRVC|PSV)\b/);
+      for (const m of modes) expect(reason(id as ReasonId), id).toContain(FACE.words[MODE_WORD[m as VentMode]!].v);
+    }
+    expect(R.p01Effort!.v).toContain('{mechanics.p01WindowS}');
+  });
+  it('the device\'s name of each model mode is the one its mode entry carries', () => {
+    for (const [name, e] of Object.entries(MODES)) expect(MODE_WORD[e.mode], name).toBe(name);
   });
 });
 

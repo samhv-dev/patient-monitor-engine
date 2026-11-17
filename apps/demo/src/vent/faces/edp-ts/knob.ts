@@ -168,7 +168,7 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
     }
     if (row.kind === 'layout') { screen.layout = row.layout; wins = []; return; }
     if (row.kind === 'test') {
-      if (!tests?.allowed(row.test)) return say('testModes');
+      if (!tests?.allowed(row.test)) return say(`modes:${row.test}`);
       if (tests.start(row.test)) say(row.test === 'p01' ? 'p01Effort' : 'testRunning');
       return;
     }

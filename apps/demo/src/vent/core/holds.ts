@@ -74,7 +74,7 @@ export function createHolds(vs: VentState, rec: Recorder, spec: MechanicsSpec, c
     const so = rec.current();
     const r: HoldResult | null = h.since === null ? null : {
       kind: h.kind, t: P.t, durS: P.t - h.since, paw: P.Paw, vMl: P.V, peep: vs.cfg.peep, mode: vs.cfg.mode,
-      ...(h.kind === 'insp' && so ? { breath: { t0: so.t0, vtMl: so.vtMl, pmax: so.pmax, tiFlow: so.tiFlow, peepBefore: rec.last()?.peepEnd ?? vs.cfg.peep, tcexp: Number.NaN } } : {}),
+      ...(h.kind === 'insp' && so ? { breath: { t0: so.t0, vtMl: so.vtMl, pmax: so.pmax, tiFlow: so.tiFlow, constFlow: so.constFlow, peepBefore: rec.last()?.peepEnd ?? vs.cfg.peep, tcexp: Number.NaN } } : {}),
     };
     releaseHold(vs);
     if (r) results[h.kind] = r;
