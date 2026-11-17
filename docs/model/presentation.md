@@ -1488,6 +1488,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/restart-keeps-case.e2e.ts`](../../apps/demo/e2e/restart-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/return-here-restore.e2e.ts`](../../apps/demo/e2e/return-here-restore.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/room-code.e2e.ts`](../../apps/demo/e2e/room-code.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/room-in-use.e2e.ts`](../../apps/demo/e2e/room-in-use.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/room-qr-tab-guard.e2e.ts`](../../apps/demo/e2e/room-qr-tab-guard.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts`](../../apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-grid-layout.e2e.ts`](../../apps/demo/e2e/saadat-grid-layout.e2e.ts) | 0 | 0 |
