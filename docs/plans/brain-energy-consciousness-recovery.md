@@ -7,8 +7,11 @@ each cell is expected to do (§6.3). Every earlier design question is decided (�
 The parameters were checked against the published measurements in `research/81-evidence-brain-under-arrest-and-cpr.md`,
 `research/85-evidence-temperature-and-recovery-after-return-of-circulation.md` and
 `research/89-full-text-check-of-abstract-only-brain-numbers.md` and, for the anaemic flow rise and the reserve,
-`research/90-full-text-check-of-the-anaemia-flow-and-reserve-numbers.md` (§5.1 gives the outcome number by number). No product
-code, test, constant, card or other plan was changed while writing it.
+`research/90-full-text-check-of-the-anaemia-flow-and-reserve-numbers.md`, with the full-text readings of its four human
+studies (`research/90a-full-text-reading-of-the-human-brain-flow-studies.md`) and its four laboratory studies
+(`research/90b-full-text-reading-of-the-laboratory-brain-flow-studies.md`), which win where they differ from note 90
+(§5.1 gives the outcome number by number). No product code, test, constant, card or other plan was changed while
+writing it.
 
 **Base.** `origin/main` **7320de53**. On main: B1 (the cortex's energy entry, pull request 491) and B5 (the breathing
 gate's state in the brainstem entry, pull request 504). In review: B2a (the flow rise with anaemia, pull request 512,
@@ -246,13 +249,14 @@ the breathing gate reads CBF today. The EEG steps after the organs and reads the
    whichever is chosen. With B2d the delivery reference is the same patient's normal, so factor and
    delivery are measured from one normal. The factor is one regulated dilation spent from the shared dilator reserve;
    no content/viscosity split is built (§2.2, B2v, B2a). Whether factor and hypoxic term should be one content
-   term (Brown 1985 [ABS] names O2 content the major determinant; Todd 1994 [ABS] finds a larger rise for the same
-   content fall in hypoxaemia than in haemodilution, so they are not one term) stays a later question, not built (mine).
+   term (Brown 1985 [FT] names O2 content the major determinant, Table 2 p. 87; Todd 1994 [FT] finds a larger rise for
+   the same content fall in hypoxaemia than in haemodilution, Table 1 p. H2027, so they are not one term) stays a later
+   question, not built (mine).
 6. **The brainstem reads delivery, as the cortex does** (B5c). The brainstem tissue's supply is O2 delivery; a flow that
-   rises only to keep O2 transport within limits (Brown 1985 [ABS]) is not extra supply. The same reasoning as item 1
+   rises only to keep O2 transport within limits (Brown 1985 [FT], pp. 85–86) is not extra supply. The same reasoning as item 1
    keeps the thresholds on delivery, not on delivery ÷ demand. **A stated limit (mine):** delivery falls with the
    coupled flow fall under general anaesthesia (the coupling lowers flow with demand), so on delivery as on flow the
-   vasomotor gate reads an anaesthetised patient at CBF below 0.6 as partly ischaemic (hand-over of B2a: the anaesthetic
+   vasomotor gate reads an anaesthetised patient at CBF below 0.6 as partly ischaemic (B2a's finding: the anaesthetic
    runs of `eeg-baseline.json` move through this chain). With the delivery reference at the patient's own normal (B2d)
    the default patient reads delivery equal to flow at his normal content, so B5c moves him only where his content or
    saturation departs from the reference. Its 0.6 lies above the cortex's own abnormal level 0.40, so on
@@ -301,7 +305,8 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     by raising PaO2 to ≥ 350 mmHg (Weiskopf 2002 [ABS], 31); at Hb 4.8 no evidence of inadequate systemic oxygenation
     (Lieberman 2000 [ABS], 8: a systemic measurement, not a cerebral one). Cerebral flow rises as arterial O2 content
     falls: "CBF altering to maintain the rate of transport of oxygen to the brain within certain limits" over Hb
-    5.7–19.1 g/dL (Brown 1985 [ABS], 54); "a 2% increase in CBFV for each 1% decrease in Hc and CaO2" over Hb 14.5 →
+    5.7–19.1 g/dL (Brown 1985 [FT], 54; the text: transport "remained constant within certain limits", pp. 85–86,
+    while its Fig. 3 shows a lower transport at the anaemic end, note 90a §1); "a 2% increase in CBFV for each 1% decrease in Hc and CaO2" over Hb 14.5 →
     10.3 (Mühling 1999 [ABS], 11); rCBF +35.0 ± 2.5 % at 3 h of haemodilution (Tu 1996 [ABS], 13); forebrain CBF 78 →
     171 mL/100 g/min from Hct 43 % to 20 % (Todd 1992 [ABS], rats, halothane).
   - *What the engine does without it (mine, arithmetic on the engine's constants).* With no Hb term in `targetCbf`,
@@ -311,11 +316,13 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     physiology" (the condition of the consciousness decision) therefore needs the flow rise.**
   - *What the flow rise is made of: the evidence, and why its parts cannot be added.* Lowering the haematocrit lowers
     the blood's O2 content and its viscosity together. The full-text check of these numbers
-    (`research/90-full-text-check-of-the-anaemia-flow-and-reserve-numbers.md`) opened what could be opened; most
-    primary papers are closed and stay [ABS]:
-    - **The human sources that try find no independent viscosity effect on resting flow.** Brown 1985 [ABS] (54
-      people, Hb 5.7–19.1): "No significant effect of changes in blood viscosity was evident" once content was
-      allowed for. Borzage 2016 [FT] (45 people, measured viscosity, phase-contrast MRI): content "the strongest
+    (`research/90-full-text-check-of-the-anaemia-flow-and-reserve-numbers.md`, with notes 90a and 90b for the eight
+    articles since read in full) opened what could be opened; the papers not named [FT] stay [ABS]:
+    - **The human sources that try find no independent viscosity effect on resting flow.** Brown 1985 [FT] (54
+      people, Hb 5.7–19.1, awake, chronic anaemia or polycythaemia): once content had entered the stepwise regression,
+      whole-blood viscosity added nothing (F 0.01; nor did PaCO2, age or MAP; Table 2, p. 87), and flow against
+      viscosity flattened above about 5 mPa·s (Fig. 4, pp. 86–87); its PaCO2 and MAP were not held constant and no
+      group values for them are printed (p. 83). Borzage 2016 [FT] (45 people, measured viscosity, phase-contrast MRI): content "the strongest
       predictor of CBF (r² = 0.33)"; viscosity "had no detected effect on CBF after correction for differences in
       oxygen carrying capacity". Plasma exchange in 8 people lowered plasma and whole-blood viscosity with "no
       significant change in cerebral blood flow" (BMJ 1982 [ABS], PMID 6805689); a review pooling the human work
@@ -324,17 +331,26 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
       so a regression has little power to separate them, and the two plasma-exchange reports disagree (+24.4 mL/100
       g/min in 4 patients with paraproteinaemia, 1985 [ABS], where plasma, not red-cell, viscosity was lowered; no
       change in 8 in 1982).
-    - **The animal sources find a share of about half, measured in ways that do not add.** Tomiyama 1999 [ABS] (rats,
-      pentobarbital, Hct 44 → 17–19 %): restoring content at the same haematocrit lowered the rise, "the reduction in
-      CaO2 after hemodilution is responsible for 40-60% of the increase in CBF"; content was restored with O2 at 5
-      atmospheres, whose own action on the vessels the abstract does not separate. Hudak 1986 and 1987 [ABS] (newborn
+    - **The animal sources find a share of about half, measured in ways that do not add.** Tomiyama 1999 [FT] (rats,
+      pentobarbital, PaCO2 38–40, hetastarch, Hct 44 → 17 %; Table 1, p. H1192): CBF 79 (controls), 123 (diluted, CaO2
+      8.1), 104 when content was restored to a **calculated** 18.5 with 100 % O2 at 5 atmospheres (PaO2 3,300 mmHg,
+      calculated, not measured), 125 in diluted rats at 5 atmospheres kept normoxic, which controls for the pressure
+      only. The "40–60 %" is the content share of the rise over control: 44 % as measured, 61 % once every group is
+      adjusted to the same MAP with the 0.2 % per mmHg that a separate pressure test in diluted rats gave (HDil MAP
+      104, HBar 145; pp. H1193–H1194); the viscosity share is the remainder by subtraction, and a direct action of the
+      very high PaO2 on the vessels was not tested (pp. H1194–H1195). Whole-blood viscosity was measured ex vivo in
+      3 + 3 separate rats: 4.53 → 2.54 cP, with plasma viscosity rising 1.32 → 1.67 cP from the starch (p. H1193)
+      (note 90b §2). Hudak 1986 and 1987 [ABS] (newborn
       lambs, unanaesthetised; newborn sheep, anaesthetised): red-cell concentration accounted for 56 % and about 60 % of
       the fall in flow as haematocrit **rose** (20 → 40 %, 30 → 55 %), with viscosity "probable", not measured. The cats
       of 1992 (Muizelaar, [ABS]) show that viscosity moves flow but give no share. The shares come from different
       animals, directions and reference states; their sum lies near one only by the chance of the ranges (the check's
       reasoning, §4.1).
     - **The two act together, not side by side.** At equal content, dilution raised flow **less** than hypoxaemia: rabbits
-      82 ± 22 against 110 ± 38 mL/100 g/min at CaO2 ≈ 6 (Todd 1994 [ABS]); the pooled human slopes are 0.66 % flow per
+      (pentobarbital, 39 °C, PaCO2 37–39), whole-brain CBF 44, 46, 60, 82 mL/100 g/min at CaO2 17.5, 13.4, 9.4, 6.5 in
+      dilution against 39, 47, 80, 121 at CaO2 18.0, 13.2, 9.0, 6.1 in hypoxaemia (Todd 1994 [FT], Table 1 p. H2027;
+      viscosity not measured, p. H2030), and the authors read it as arguing "against viscosity being the principal
+      determinant" (p. H2028); the pooled human slopes are 0.66 % flow per
       1 % fall of content in haemodilution against 1.85 % in hypoxaemia (Hoiland 2016 [FT]). If a lower viscosity added
       flow on top of an unchanged content response the reverse would be expected, so the content response itself
       differs in haemodilution (the check's reasoning, §4.1, which the plan takes).
@@ -343,8 +359,23 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
       vasodilatory reserve … to compensate for anemia" (Vaclavu 2019 [FT], 36 + 11, ASL). Their flow after acetazolamide
       (108.3) stayed above the controls' (85.5) [the check's observation: a part of the rise that survives maximal
       dilation would fit it, such as viscosity; confounded by sickle vasculopathy and by whether 16 mg/kg is maximal].
-  - *What the plan therefore builds (decided by the evidence; the form of the viscosity part is the owner's, §9.2 item
-    2).* **The split between a content share and a viscosity share is not established for the human brain**, and the
+    - **The one study that measured the flow response to CO2 after dilution leaves the shared reserve standing.** Cats (pentobarbital and fentanyl), albumin exchange to Hct 19 %, CaO2 15.6 → 8.9: resting flow rose
+      about 39 → 62 → 69 mL/100 g/min at 1 and 2 h with O2 transport kept (Fig. 2, p. H1603, read from bars); at PaCO2
+      about 70 the flow rose about +360 % against about +400 % in time controls, not significantly different, while
+      the rise was attenuated when plasma viscosity was raised or cell-free Hb was in the plasma (Rebel 2003 [FT],
+      microspheres, Fig. 4B and text p. H1604; note 90b §4). The rise is printed only as a percent; neither the
+      results nor the legend of Fig. 4 states its reference, and no absolute hypercapnic flow is printed. **Mine:**
+      three readings remain. (i) If the percent is of the pre-dilution baseline, the diluted cats reached about 4.6 ×
+      that baseline (≈ 180 mL/100 g/min from the bars) against the controls' 5 × (≈ 230): what a shared reserve with an
+      unchanged ceiling predicts, the anaemic rise having spent part of it. (ii) If it is of the diluted baseline, they
+      reached about 1.75 × 4.6 ≈ 8 × the pre-dilution flow, above the controls: an unchanged ceiling cannot give that
+      if the controls' × 5 is the ceiling, and a ceiling raised by thinner blood (§9.2 item 2) could. (iii) PaCO2 70 for
+      10 min may have reached the ceiling in neither group, so that both requests fitted inside the reserve and the
+      study says nothing about the ceiling. So the study does not contradict a shared, finite reserve, does not show
+      that the diluted brain's maximal flow differs from normal, and cannot tell whether the ceiling rose. A cat's
+      hypercapnic rise (≈ × 5 at PaCO2 70, pH 7.14) is far above a person's and is not carried over.
+  - *What the plan therefore builds (decided by the evidence; whether viscosity acts at maximal dilation is open, §9.2
+    item 2).* **The split between a content share and a viscosity share is not established for the human brain**, and the
     shares cannot be added, so the plan builds no split. The whole anaemic rise at rest is one regulated dilation of the
     resistance vessels that keeps O2 transport "within certain limits" (Brown 1985), and it is spent from the shared
     reserve with CO2, hypoxia and the drugs (B2v), as the human reserve study shows (Vaclavu 2019 [FT]). At normal
@@ -352,13 +383,17 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     compressions, where the reserve is spent, the regulated rise adds nothing. **Viscosity** is a physical property of
     the blood, not of the vessels: a lower viscosity raises the conductance of vessels at any tone. While the vessels
     can still regulate, they compensate it (the cats' pial constriction after haemodilution, read by its authors as "a
-    normal autoregulatory adjustment of vasomotor tone to altered blood rheology", 1992 [ABS]; Rebel 2003 [ABS]:
-    constriction at normal O2 capacity), which fits the human finding of no independent effect at rest. When the vessels
-    are maximally dilated it can no longer be compensated, so it raises the **ceiling**, the maximally dilated flow
-    (mine, from the mechanisms; Vaclavu's anaemic flow after acetazolamide fits it). Whether the plan builds this
-    ceiling term or leaves viscosity out of the brain is the owner's question (§9.2 item 2).
-    Until he answers, B2a builds the regulated rise alone and marks viscosity's omission in the
-    code: at maximal dilation the engine then understates an anaemic patient's flow, toward ischaemia (mine).
+    normal autoregulatory adjustment of vasomotor tone to altered blood rheology", 1992 [ABS]; Rebel 2003 [FT]:
+    pial constriction with the cell-free Hb polymer at near-normal O2 capacity, p. H1604), which fits the human finding
+    of no independent effect at rest. The rats agree in size (mine, arithmetic on Tomiyama 1999 [FT]): their measured
+    whole-blood viscosity fell to 0.56 of normal, which in a passive tube at constant diameter would raise flow × 1.78,
+    while the whole measured rise, content included, was × 1.56, so the viscosity fall was not passed through in full
+    at normal tone. When the vessels are maximally dilated it can no longer be compensated, so it raises the
+    **ceiling**, the maximally dilated flow (mine, from the mechanisms; Vaclavu's anaemic flow after acetazolamide fits
+    it, and the cats' CO2 response after dilution does not exclude it). No study read tests it: whether the plan builds
+    this ceiling term or leaves viscosity out of the brain is open (§9.2 item 2). Until it is answered, B2a builds the
+    regulated rise alone and marks viscosity's omission in the code: at maximal dilation the engine then understates an
+    anaemic patient's flow, toward ischaemia (mine).
   - *The viscosity relation, if it is built.* Blood viscosity against haematocrit is not a power law. In resistance-size
     vessels at high shear (Pries 1992, as given by Secomb & Pries 2013 [FT]) its equivalent exponent between Hct 45 and
     30 % is about 0.57 at 30 µm, 0.67 at 50 µm and 0.79 at 100 µm (the check's arithmetic on the published equations,
@@ -366,10 +401,15 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     a fit to Weiskopf 1998's whole fall of systemic resistance, vasodilation included, so it is not a viscosity
     relation; its fade with flow (full at the resting output, none at 0.3) rests on Chien 1970 and Merrill 1969, cited
     and not read. A ceiling term would read the Pries relation at a stated resistance calibre [P] and the fade [INF].
-  - *What is measured about cerebral flow in anaemia combined with hypotension.* Humans, sevoflurane–N2O, Hct 32 % or
-    24 % with hydroxyethyl starch, then prostaglandin E1 to MAP ≈ 55 for 80 min: MCA velocity +122 % and +156 % after
-    haemodilution and still +135 % at 80 min of hypotension in the Hct 24 % group (J Clin Anesth 2005 [ABS], PMID
-    15896583, 15 + 15; MAP 55 under a vasodilating prostaglandin and a volatile, so not a test below the lower limit).
+  - *What is measured about cerebral flow in anaemia combined with hypotension.* Humans (30 ASA I–II hip-arthroplasty
+    patients, aged 48–69), 60 % N2O with 1.2–1.8 % end-tidal sevoflurane, PaO2 > 200 mmHg, PaCO2 38–40, Hct 37 → 33 %
+    or 37 → 25 % with hydroxyethyl starch (CaO2 18 → 16 or 18 → 11 vol%), then prostaglandin E1 to MAP ≈ 55 for 80 min:
+    MCA velocity rose **to** 122 % and 156 % **of baseline** after haemodilution, rises of +22 % and +56 % (about 44 →
+    54 and 44 → 66 cm/s), and stood at 135 % of baseline at 80 min of hypotension and 140 % after it in the Hct 24 %
+    group, with the pulsatility index unchanged (J Clin Anesth 2005 [FT], results and Fig. 1 p. 179, Table 2 p. 179;
+    the abstract's "+122 %" and "+156 %" misstate the article, note 90a §3). Velocity only: no flow and no MCA diameter
+    were measured, both anaesthetics dilate cerebral vessels, and MAP 55 under a vasodilating prostaglandin is not a
+    test below the lower limit.
     Humans, esmolol hypotension with haemodilution: lower rSO2 than haemodilution alone, 55.9 against 60.4 % at 30 min
     (Acta Anaesthesiol Scand 2006 [ABS], PMID 16879470, 56). Monkeys, halothane: Hct < 20 % combined with MABP < 40
     gave ischaemic injury in 7 of 16 survivors, either alone none (Anesthesiology 1986 [ABS], PMID 3789433, 41). Rats:
@@ -411,9 +451,54 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     unknown ranges; the one healthy-volunteer study read gives a steeper relation (Mühling's means, k = 0.683 in a power
     form [ABS; INF: the power form, MCA diameter constant]); and the two part widely where the simulator uses them most:
     at half the normal Hb the pooled line gives × 1.33 and the power form × 1.61 (mine, arithmetic). The one human
-    series spanning Hb 5.7–19.1 g/dL (Brown 1985, 54 people) is read only as an abstract (WANTED, being obtained). The
-    factor is held at Brown's range, **5.7–19.1 g/dL** [ABS]: 5.7 is the lowest Hb at which a cerebral-flow source
-    measured, not Lieberman's 4.8, which is a systemic measurement [P: below 5.7 no CBF measurement in people]. The
+    series spanning Hb 5.7–19.1 g/dL (Brown 1985 [FT], 54 people) **prints no equation**: only correlations, flow
+    against CaO2 r = −0.855 (a straight line "throughout the range", Fig. 1) and against 1/CaO2 r = 0.831 (Fig. 2),
+    which fit about equally well, with no coefficient, intercept or residual printed (pp. 84–87); its two lines can
+    only be read off the figures (note 90a §1). Its people are awake haematology out-patients with **chronic** anaemia
+    or polycythaemia, compared with one another rather than diluted, with PaCO2 and MAP not controlled, fast-compartment
+    (grey-matter-weighted) Xe-133 flow, and some contents calculated from venous Hb (p. 83).
+  - *The four forms beside the measured points (mine, arithmetic; note 90a §5, note 90b §6).* The forms, each relative
+    to the patient's own normal: **(A) the pooled acute line**, 1 + 0.66 × (1 − h), h = Hb ÷ Hb_normal (Hoiland 2016
+    [FT]); **(B) the power form**, h^−0.683 (Mühling 1999's means [ABS]); **(C) constant O2 transport**, 1 ÷ h, the
+    hypothesis Brown 1985 tested (r = 0.831; its Fig. 3 shows transport constant "within certain limits" and lower at
+    the anaemic end, transport against Hb r = 0.044); **(D) a rise that starts only below a threshold**, as the rabbits
+    show (flow flat to CaO2 ≈ 13 of 17.5, Hct 31 %, then rising more steeply; Todd 1994 [FT], Table 1 and Fig. 1
+    p. H2027): no human source gives its threshold or its slope, so it has no human numbers. Measured beside them: Brown
+    1985's two figure lines (chronic, awake), the 2005 velocities (acute, anaesthetised) and the three laboratory
+    dilutions (acute, anaesthetised animals, placed by their fraction of normal content). Reference Hb 14.5 g/dL as in
+    the notes; for the adult man (15) each Hb shifts by about 3 %. Columns A–C are computed on the Hb ratio, as the
+    engine computes the factor; Brown's columns use note 90a's conversion of Hb to CaO2 (1.34 × Hb × 0.97 + 0.003 ×
+    95), since his lines are drawn against CaO2. The 2005 group diluted to Hct 25 % is placed by its printed content
+    (18 → 11 vol%, h ≈ 0.61, row 9); by its haematocrit (37 → 25 %, h ≈ 0.68, row 10) the forms give A 1.21, B 1.31,
+    C 1.48. The measured × 1.56 lies above A and B either way, below C by content (1.64) and above it by haematocrit.
+
+    | Hb g/dL (h) | (A) pooled line | (B) power | (C) constant transport | Brown 1985, straight / reciprocal line | Measured, acute |
+    |---|---|---|---|---|---|
+    | 14.5 (1.00) | 1.00 | 1.00 | 1.00 | 1.00 / 1.00 | — |
+    | 13 (0.90) | 1.07 | 1.08 | 1.12 | 1.15 / 1.09 | 2005, CaO2 −11 %: velocity × 1.22 |
+    | 12 (0.83) | 1.11 | 1.14 | 1.21 | 1.25 / 1.16 | — |
+    | 11 (0.76) | 1.16 | 1.21 | 1.32 | 1.35 / 1.25 | rabbits, content 0.77: × 1.05 |
+    | 10 (0.69) | 1.20 | 1.29 | 1.45 | 1.45 / 1.35 | Mühling's means, Hb 14.5 → 10.3: velocity × 1.26 |
+    | 9 (0.62) | 1.25 | 1.39 | 1.61 | 1.55 / 1.48 | 2005, CaO2 −39 % (Hct −32 %): velocity × 1.56 |
+    | 8 (0.55) | 1.30 | 1.50 | 1.81 | 1.65 / 1.63 | rabbits, 0.54: × 1.36; cats, 0.57: ≈ × 1.6–1.8 (bars) |
+    | 7 (0.48) | 1.34 | 1.64 | 2.07 | 1.75 / 1.83 | — |
+    | 5.7 (0.39) | 1.40 | 1.89 | 2.54 | 1.88 / 2.19 | rats, 0.41: × 1.56; rabbits, 0.37: × 1.86 |
+
+    What the table shows (mine): the pooled acute line is the lowest of the human sources read below Hb ≈ 12, and
+    below every animal point at content falls of 40 % or more (only the rabbits' mild step lies under it); the 2005
+    anaesthetised velocities and Brown's chronic lines sit above both (A) and (B), and near (C) at moderate anaemia; the
+    animals lie mostly between (A) and (B), the rabbits flat at mild dilution and steep below it. Brown's two lines agree
+    within about 0.1 between Hb 8 and 13, where most of his subjects lie, and part at the ends, where there are few
+    (about 6 below Hb 8). The sources describe different patients: Brown, awake people with long-standing anaemia;
+    the pool, acute isovolaemic dilution in volunteers and in anaesthetised or diseased patients; 2005, anaesthetised
+    patients under vasodilating agents at a PaO2 above 200, by velocity; the animals, anaesthetised rats, rabbits and
+    cats. **The teaching cases where haemoglobin falls are acute** (bleeding and dilution during an anaesthetic, as in
+    the haemorrhage cards); no scenario card sets a low Hb in its patient's profile, and the one hand-set Hb 5 is a
+    development page. A chronic anaemia enters only when Hb is set in a patient's profile (the rule above). A chronic
+    relation is not put into an acute bleeding case without saying so.
+  - *Holds.* The factor is held at Brown's range, **5.7–19.1 g/dL** [FT] (p. 83; Table 1 p. 82): 5.7 is the lowest Hb
+    at which a cerebral-flow source measured, with about six subjects below 8 g/dL (Fig. 3, read from the figure), not
+    Lieberman's 4.8, which is a systemic measurement [P: below 5.7 no CBF measurement in people]. The
     consciousness cells are read at the pressure the engine gives that patient: at Hb 5 the adult man's delivery is
     ≈ 0.48 of his own normal at CPP 80 (working factor ≈ 1.41 capped at 1.40) and ≈ 0.41 at CPP 70 (reserve 1.20),
     against the abnormal level 0.40 (mine, arithmetic at SaO2 0.97, PaO2 95); if the cell fails at the engine's
@@ -438,7 +523,8 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     direction: Adrogué & Madias 2000 (NEJM 342:1581), Hahn 2006 (BJA 96:8), Sandfeldt 2001 (PMID 11162034); a measured
     brain-water gain per mOsm/kg is WANTED.
   - *Cells after the set and B2.* Weiskopf 2000 / Lieberman 2000: a normotensive, normoxic patient at Hb 5 and 4.8 g/dL is
-    conscious with an EEG above the abnormal level (delivery above 0.40 under every option of §9.2, mine). The chosen
+    conscious with an EEG above the abnormal level (delivery above 0.40 at CPP 70–80 under every option of §9.2 whose
+    factor at the hold, Hb 5.7, is at least 1.2, which forms A, B and C all are; mine). The chosen
     slope's source: at normal pressure the factor reproduces it (arithmetic on the source, not an independent cell).
     Todd 1992: direction at Hct 20 as a check, rats. Vaclavu 2019 [FT]: in chronic anaemia at normal pressure the
     reserve left for a further dilation is smaller than in a normal patient (direction). The maximal-dilation cells are
@@ -526,7 +612,7 @@ continuous background (P6, P7) [P, mine]. No rat or dog time is copied into a hu
 | Cerebral autoregulation, CO2 and O2 reactivity | **reused** | `autoreg`, `co2Factor`, `o2Factor`, `TAU_VASC_S` already set CBF; the state reads CBF, so hyperventilation and hypercapnia act through flow, as Miller Ch35 p. 1127 says they do |
 | Anaemia's flow rise | **in**, piece B2a (in review), merged after B2v, B2d and B5c | `targetCbf` gains an Hb factor relative to the patient's own normal Hb, one regulated dilation spent from the shared reserve (§2.2); the inputs exist in `BrainInputs` |
 | The shared vasodilator reserve | **in**, piece B2v | one reserve, the dilation left between the autoregulated state and maximal dilation, spent by the CO2, hypoxic, drug and anaemia-content requests; nothing left at and below the lower limit (§2.2, B2v) |
-| Blood viscosity in the brain | **not built**, the owner's question (§9.2 item 2) | the human sources find no independent viscosity effect on resting flow; at maximal dilation a lower viscosity would raise the ceiling (mine). The systemic `setCircViscosity` exponent 0.6 is a fit to the whole fall of systemic resistance, not a viscosity relation (§2.2; a finding for the blood plan, §7) |
+| Blood viscosity in the brain | **not built**, open (§9.2 item 2) | the human sources find no independent viscosity effect on resting flow; at maximal dilation a lower viscosity would raise the ceiling (mine; no study read tests it). The systemic `setCircViscosity` exponent 0.6 is a fit to the whole fall of systemic resistance, not a viscosity relation (§2.2; a finding for the blood plan, §7) |
 | Hypothermia | **in** (demand during low flow); the EEG's cold slowing **existing** (`cortexStep`); drug clearance **existing** (drug layer); no term on recovery after return (decided, §9.1 item 5); consciousness below 28 °C **attachment**; protection by immediate cooling and harm from fever: the injury state's **placeholders** (§1.3.7) | demand is existing code; the LOC temperature needs its source read; no source sizes a recovery term per degree |
 | The vasomotor centre's perfusion gate (sympathetic outflow, endocrine sympathetic drive, sweating and shivering) | **in**, piece B5c | `brainstemOutF` reads the brainstem entry's delivery instead of flow; its three readers are unchanged (§1.4) |
 | Drugs lowering CMRO2 | **in**, through `b.cmro2Rel` | existing code; the index → `cmro2Mult` coupling is kept as ruled |
@@ -579,7 +665,11 @@ texts through Europe PMC's `fullTextXML` service, read in memory and searched by
 automated reading with a bot check and were not used. Queries carried title words and identifiers only. **No file was
 downloaded.** The evidence checks are `research/81-evidence-brain-under-arrest-and-cpr.md` and, for temperature after
 the return of circulation, `research/85-evidence-temperature-and-recovery-after-return-of-circulation.md` (which also
-used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HTTP 500).
+used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HTTP 500). Eight articles on the anaemic
+flow rise and the reserve (Brown 1985, Willie 2012, J Clin Anesth 2005, Cerebrovasc Dis 2000, Tomiyama 1999, Todd
+1994, Rebel 2003, Harper & Glass 1965) were read in full from published copies kept outside the repository, their
+tables from the page images where the scan's text layer was poor; values read off a figure are marked so, with the
+reading error the notes state (research notes 90a and 90b).
 
 ### 5.1 What the evidence did to each number
 
@@ -588,7 +678,7 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 | A1 isoelectric 11 ± 2 s; red on main | stands | stands; de Vries 1997's 12 ± 4 s added | de Vries 1998, 1997 [ABS] |
 | A2 LOC band ≤ 30 s | must-hold | stands as must-hold; target 7–18 s added | Wieling 2009, Sauvageau 2010 [ABS] |
 | Q4 LOC threshold | proposal ≈ 0.32 on the fitted midpoint | ruled: 1/3 of normal delivery, own constant `DO2_LOC`; the 60 % option is contradicted (no change at Hb 7, where delivery at unchanged flow is ≈ 0.5) | Njemanze 1991, Astrup 1977, van Dijk 2014, Weiskopf 2000 [ABS] |
-| Anaemia: no CBF rise; LOC at Hb ≈ 4.3 | named attachment | **changes: built, B2a, before B2**; LOC from anaemia alone moves far below the sourced range | Brown 1985, Mühling 1999, Tu 1996, Todd 1992, Weiskopf 1998/2000/2002, Lieberman 2000 [ABS] |
+| Anaemia: no CBF rise; LOC at Hb ≈ 4.3 | named attachment | **changes: built, B2a, before B2**; LOC from anaemia alone moves far below the sourced range | Brown 1985 [FT]; Mühling 1999, Tu 1996, Todd 1992, Weiskopf 1998/2000/2002, Lieberman 2000 [ABS] |
 | §1.5.1 anaesthetic-specific critical CBF | WANTED | sourced for the slowing level; piece B9, blocked on the flattening level | Michenfelder 1987, Messick 1987, Grady 1998 [ABS] |
 | A6 continued breathing in minute 1 | proposal | stands | Zuercher 2010 BMC [FT]; Menegazzi 1995 [ABS] |
 | A6 gasps in minutes 2–5, < 3/min | proposal | changes: start ≈ 1–2 min, peak minutes 3–5; rate a range by anaesthetic, < 3/min (isoflurane), 2–5/min (IV), 6–11/min (α-chloralose), 3.7/min in intubated humans under CPR | Zuercher BMC [FT]; Tongying 2015, Lin 2023, Menegazzi 1995, Wolfskeil 2017, Srinivasan 2006 [ABS] |
@@ -609,11 +699,15 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 | Mühling's slope (per haematocrit point) | stop and ask if Mühling's full text is unread | the per-point reading fits the abstract's means (k = 0.683 in a power form); now one candidate of §9.2 item 3, not the working size; full text still WANTED | Mühling 1999 [ABS] |
 | B2a's reference Hb | 14 (assumed default) | **decided: the patient's own normal** (15 for the adult man, each band its own); every default patient unchanged | the blood model's `BAND` (decision) |
 | The delivery reference | Hb 14 for every patient | **decided: the patient's own normal**; a healthy default patient rests at delivery 1 (B2d) | decision |
-| The anaemia factor below the lower limit and under CPR | the whole factor multiplied in | **changes:** one regulated dilation spent from the shared reserve, adding nothing at maximal dilation; no content/viscosity split (not established in people, and the animal shares do not add) | Brown 1985, BMJ 1982, Tomiyama 1999, Hudak 1986, 1987, Todd 1994 [ABS]; Borzage 2016, Hoiland 2016, Vaclavu 2019 [FT] (research note 90) |
-| The size of the rise | k = 0.683 (Mühling's means) | **working size, not settled:** the pooled human slope, 0.66 % per 1 % content fall, linear (four studies including Mühling's), pending §9.2 item 3 | Hoiland 2016 [FT]; Mühling 1999 [ABS] |
-| The reserve's ceiling at normal pressure | 1.40 against the dogs' 1.52 | the human measurements bracket it: × 1.39 (PET) to × 1.70 (ASL) with acetazolamide, lower bounds; the dogs' 1.52 is a fitted asymptote relative to the same pressure's normocapnic flow | Zhao 2021, Vaclavu 2019 [FT]; Gersten 1999 [FT] fitting Harper & Glass 1965 (not read) |
-| The anaemia factor's lower hold | 4.8 g/dL (Lieberman 2000) | **5.7 g/dL** (Brown 1985's cerebral range); Lieberman's is a systemic measurement | Brown 1985, Lieberman 2000 [ABS] |
-| A shared vasodilator reserve | attachment | **piece B2v** (pull request 188's form, rebuilt) | Harper & Glass 1965 [S]; Okuda 1976, Gregory 1981, Paulson 1990 [ABS] |
+| The anaemia factor below the lower limit and under CPR | the whole factor multiplied in | **changes:** one regulated dilation spent from the shared reserve, adding nothing at maximal dilation; no content/viscosity split (not established in people, and the animal shares do not add) | Brown 1985, Tomiyama 1999, Todd 1994 [FT]; BMJ 1982, Hudak 1986, 1987 [ABS]; Borzage 2016, Hoiland 2016, Vaclavu 2019 [FT] (research notes 90, 90b) |
+| The animal content share "40–60 %" | the abstract's range | stands as a range, now explained: 44 % of the rise as measured, 61 % adjusted to equal MAP; the viscosity share is the remainder by subtraction; PaO2 3,300 calculated; no test of a direct hyperoxic action | Tomiyama 1999 [FT], pp. H1192–H1195 (note 90b §2) |
+| The size of the rise | k = 0.683 (Mühling's means) | **working size, not settled:** the pooled human slope, 0.66 % per 1 % content fall, linear (four studies including Mühling's), pending §9.2 item 3; every other source read lies above it below Hb ≈ 12 (§2.2 table) | Hoiland 2016 [FT]; Mühling 1999 [ABS]; Brown 1985, J Clin Anesth 2005, Todd 1994, Tomiyama 1999, Rebel 2003 [FT] |
+| Brown 1985's relation | expected to give the slope | **no equation printed**; straight (r −0.855) and reciprocal (r 0.831) fit about equally; chronic, awake, PaCO2 and MAP uncontrolled; lines read off the figures only | Brown 1985 [FT], pp. 83–87 (note 90a §1) |
+| The 2005 velocity rise after haemodilution | +122 % / +156 %; +135 % at MAP ≈ 55 | **corrected: to 122 % / 156 % of baseline, rises of +22 % / +56 %; 135 % of baseline (+35 %) at MAP ≈ 55** | J Clin Anesth 2005 [FT], p. 179 and Fig. 1 (note 90a §3) |
+| The reserve's ceiling at normal pressure | 1.40 against the dogs' 1.52 | **every figure of the two human reserve studies read in full lies above 1.40**, and only the PET value lies at it: acetazolamide × 1.39 (PET, 15 mg/kg) to × 1.79 (Xe-133, 18 mg/kg, n 6, each dose step still significant); CO2 × 1.5 (ICA flow at PaCO2 ≈ 49, MAP not significantly changed), ICA conductance × 1.85 at PaCO2 ≈ 58; no study shows a plateau; the dogs' 1.52 (MAP 100) and 2.11 (≈ 150, the dogs' normal) lie inside the measured scatter, relative to each dog's own flow at PaCO2 40 at that pressure; open (§9.2 item 1) | Zhao 2021, Vaclavu 2019, Willie 2012, Cerebrovasc Dis 2000, Harper & Glass 1965 [FT]; Gersten 1999 [FT] (notes 90a §2, §4; 90b §5) |
+| The anaemia factor's lower hold | 4.8 g/dL (Lieberman 2000) | **5.7 g/dL** (Brown 1985's cerebral range; about six subjects below 8 g/dL); Lieberman's is a systemic measurement | Brown 1985 [FT]; Lieberman 2000 [ABS] |
+| The CO2 response of flow after dilution | not known whether measured | **measured** (microspheres) in cats at Hct 19 %: about +360 % against +400 % in controls, not different; printed only as a percent of an unstated reference; no absolute flow | Rebel 2003 [FT], Fig. 4 p. H1604 (note 90b §4) |
+| A shared vasodilator reserve | attachment | **piece B2v** (pull request 188's form, rebuilt) | Harper & Glass 1965 [FT]; Okuda 1976, Gregory 1981, Paulson 1990 [ABS] |
 | R7 reopening 2 min | ruled rule on main | stays [P]; order sourced | Jørgensen 1997, Cerchiari 1990 [ABS] |
 | B7 brainstem tolerance | BLOCKED | stays BLOCKED for the `{ store, fn, debt }` form (B7b); the time course is buildable without it (B7a) | none found |
 | F = 0.55; store ≈ 6 s | [P]; [INF] | unchanged (not in the note) | — |
@@ -646,24 +740,28 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 | Hans 2007, J Vasc Surg (PMID 17275248); Calligaro 2005 (PMID 16242555); Mulaudzi 2009 (PMC3721289) | [ABS] | awake CEA: EEG found ischaemia in 59.4 % of those needing a shunt; deficits incl. LOC by stump pressure |
 | Weiskopf et al. 1998, JAMA (PMID 9438742); 2000, Anesthesiology (PMID 10839915); 2002, Anesthesiology (PMID 11964594) | [ABS] | conscious at Hb 5; deficits at 6 and 5; reversed by O2 |
 | Lieberman et al. 2000, Anesthesiology (PMID 10691227) | [ABS] | Hb 4.8 without inadequate systemic oxygenation |
-| Brown et al. 1985, Brain (PMID 3978400) | [ABS] | CBF keeps O2 transport within limits; O2 content the major determinant |
+| Brown et al. 1985, Brain 108:81 (PMID 3978400, DOI 10.1093/brain/108.1.81) | [FT] (scan, 13 pp.) | 54 awake people, Hb 5.7–19.1, chronic anaemia or polycythaemia (p. 83, Table 1 p. 82); CBF against CaO2 r −0.855 (Fig. 1) and against 1/CaO2 r 0.831 (Fig. 2), no equation printed; O2 transport against Hb r 0.044 (Fig. 3, pp. 85–86); after content, viscosity, PaCO2, age and MAP add nothing (Table 2, p. 87); PaCO2 and MAP not controlled (p. 83) |
 | *What the anaemic flow rise is made of* | | |
-| Todd et al. 1994, Am J Physiol (PMID 7977834) | [ABS] | rabbits: CBF rises as CaO2 falls in hypoxaemia and in haemodilution, more in hypoxaemia; cerebral DO2 falls in haemodilution, offset by extraction |
-| Tomiyama et al. 1999, Am J Physiol (PMID 10199842) | [ABS] | rats: restoring CaO2 by hyperbaric O2 at the same viscosity: the fall in CaO2 is "responsible for 40-60% of the increase in CBF" |
-| Rebel et al. 2003, Am J Physiol Heart Circ Physiol (PMID 12816746) | [ABS] | cats: pial arteriolar dilation after albumin exchange, constriction with cell-free Hb at near-normal capacity; pial arteriolar dilation (diameter, not flow) to hypercapnia unimpaired at Hct ≈ 19 %; constriction to hypocapnia blunted |
+| Todd et al. 1994, Am J Physiol 267:H2025 (PMID 7977834) | [FT] (scan; tables from the page images) | rabbits, pentobarbital, 39 °C: CaO2 lowered to matched steps by hypoxaemia or hetastarch dilution; whole-brain CBF flat to CaO2 ≈ 13 in dilution, then rising (Table 1, p. H2027); less flow in dilution than in hypoxaemia at equal CaO2; cerebral DO2 falls in dilution, offset by extraction (Table 2, p. H2028); viscosity not measured (p. H2030) |
+| Tomiyama et al. 1999, Am J Physiol 276:H1190 (PMID 10199842) | [FT] | rats, pentobarbital: CBF 79 / 123 / 104 / 125 (control, diluted, diluted with content restored by 5 atm O2, diluted hyperbaric normoxia; Table 1 p. H1192, text p. H1192); content share 44 % of the rise, 61 % adjusted to equal MAP, viscosity the remainder (pp. H1193–H1194); whole-blood viscosity 4.53 → 2.54 cP, plasma 1.32 → 1.67 cP (p. H1193); PaO2 calculated |
+| Rebel et al. 2003, Am J Physiol Heart Circ Physiol 285:H1600 (PMID 12816746) | [FT] | cats, pentobarbital + fentanyl, exchange to Hct ≈ 19 %: resting flow up about 75 % with albumin, O2 transport kept (Fig. 2, p. H1603); flow (microspheres) to hypercapnia about +360 % against +400 % in controls, not different, attenuated with raised plasma viscosity or cell-free Hb (Fig. 4, p. H1604), as a percent of an unstated reference, no absolute flow printed; pial dilation to hypercapnia kept; hypocapnic constriction blunted in every transfused group (p. H1604); plasma viscosity only (Table 2, p. H1603) |
 | Hudak et al. 1986, Am J Physiol (PMID 3728699); Hudak et al. 1987, J Appl Physiol (PMID 3571067) | [ABS] | newborn lambs (unanaesthetised) and sheep (anaesthetised), as haematocrit **rose**: red cell concentration at unchanged CaO2 accounts for 56 % and ≈ 60 % of the CBF fall; viscosity "probable", not measured |
 | Am J Physiol 1992 (PMID 1566914) | [ABS] | cats: CBF 140–90 % over Hct 60–120 % of baseline; in-vivo viscosity, not large-artery dilation; pial constriction after haemodilution |
 | Ric Clin Lab 1985 (PMID 4035219) | [ABS] | 4 patients with paraproteinaemia: plasmapheresis lowered **plasma** viscosity at constant Hct, CBF +24.4 mL/100 g/min (disputed: BMJ 1982, no change in 8) |
-| J Clin Anesth 2005 (PMID 15896583); Acta Anaesthesiol Scand 2006 (PMID 16879470) | [ABS] | humans: MCA velocity kept up under PGE1 hypotension with Hct 24 %; lower rSO2 with esmolol hypotension and haemodilution |
+| J Clin Anesth 2005;17:177 (PMID 15896583, DOI 10.1016/j.jclinane.2004.06.017) | [FT] | 30 hip-arthroplasty patients, N2O + sevoflurane, PaO2 > 200, PaCO2 38–40: MCA velocity to 122 % / 156 % of baseline after dilution to Hct 33 / 25 % (+22 % / +56 %), 135 % of baseline at MAP ≈ 55 under PGE1 (p. 179, Table 2 and Fig. 1); the abstract's "+122 %" / "+156 %" misstate it; velocity only, baseline ≈ 44 cm/s read from the figure |
+| Acta Anaesthesiol Scand 2006 (PMID 16879470) | [ABS] | humans: lower rSO2 with esmolol hypotension and haemodilution |
 | Anesthesiology 1986 (PMID 3789433); Acta Anaesthesiol Scand 2007 (PMID 17944636) | [ABS] | monkeys: injury with Hct < 20 % and MABP < 40; rats: CA1 damage with Hct ≤ 20 % and MAP 50–60 |
-| Gersten 1999, arXiv physics/9911029, fitting Harper & Glass 1965 (J Neurol Neurosurg Psychiatry 28:449, not read) | [FT] (the fit) | dogs: fitted asymptotes B(∞) 2.112 / 1.518 / 0.997 at MAP 150 / 100 / 50, relative to the normocapnic flow at the same pressure; ± set by the fitter; the 50 mmHg fit constrained |
+| Harper & Glass 1965, J Neurol Neurosurg Psychiatry 28:449 (PMC495935) | [FT] (scan) | 41 dogs, 302 measurements, thiopentone then N2O, cortical 85Kr clearance: each point as a percent of that dog's own flow at PaCO2 40 at its own pressure, absolute flows not printed (p. 450); PaCO2 40 → 80 raised flow about 100 % at the "normotensive" ≈ 150 mmHg, "only 50 %" at MAP held at 100, nothing at 50 (pp. 450–451, Figs 1–3); highest single points about × 2.2 and × 1.75 (read from the figures) |
+| Gersten 1999, arXiv physics/9911029, fitting Harper & Glass 1965 | [FT] (the fit) | dogs: fitted asymptotes B(∞) 2.112 / 1.518 / 0.997 at MAP 150 / 100 / 50, relative to the normocapnic flow at the same pressure; ± set by the fitter; the 50 mmHg fit constrained; 2.11 and 1.52 lie inside the 1965 scatter, at or just above the authors' plateaus (note 90b §5), not far extrapolations |
 | Okuda 1976; Gregory 1981; Paulson 1990 | [ABS] as read by pull request 188 | CO2 response abolished at low pressure; the limits move with CO2 |
 | Borzage et al. 2016, J Appl Physiol (PMC4835904) | [FT] | 45 people, measured viscosity: content the strongest predictor of CBF; no viscosity effect after correction for content |
 | Hoiland et al. 2016, Am J Physiol Regul Integr Comp Physiol (PMC4796739) | [FT], review | pooled human haemodilution 0.66 % CBF per 1 % fall of CaO2 (mean line over four studies weighted by n; per-study slopes and ranges plotted, not stated), against 1.85 % in hypoxaemia; humans argue against an appreciable viscosity role |
 | BMJ 1982;284:1733 (PMID 6805689) | [ABS] | plasma exchange in 8: viscosity down, no change of CBF |
 | Vaclavu et al. 2019, Haematologica (PMC6442969) | [FT] | acetazolamide (16 mg/kg, ASL): controls +69.5 %, sickle-cell anaemia +34.1 %, "utilize half of the cerebral vasodilatory reserve" |
 | Zhao et al. 2021, NeuroImage (PMC8272558) | [FT] | acetazolamide (15 mg/kg), 15O-water PET, 19 healthy adults: whole-brain +39 % (SD 19) |
-| Battisti-Charbonney et al. 2011, J Physiol (DOI 10.1113/jphysiol.2011.206052); Cerebrovasc Dis 2000 (PMID 10629349) | [ABS] | MCA velocity's hypercapnic maximum +76.5 % / +108 %; acetazolamide +55 % at 13 mg/kg in 59 |
+| Battisti-Charbonney et al. 2011, J Physiol (DOI 10.1113/jphysiol.2011.206052) | [ABS] | MCA velocity's hypercapnic maximum +76.5 % / +108 % |
+| Grossmann & Koeberle 2000, Cerebrovasc Dis 10:65 (PMID 10629349) | [FT] | 59 healthy or CNS-excluded people, Xe-133 fast flow F1, standardised to PaCO2 36.5: rest 70.8; 98.5 / 109.7 / 118.6 / 127 at 10 / 13 / 15 / 18 mg/kg acetazolamide (× 1.39 / 1.55 / 1.68 / 1.79), each step significant including 15 → 18, so no plateau shown (p. 66, Fig. 1 p. 67); n 6 at 18 mg/kg, all with severe side effects (Table 1, p. 67); BP slightly lower (p. 68) |
+| Willie et al. 2012, J Physiol (DOI 10.1113/jphysiol.2012.228551; PMC3459041) | [FT] (early online pagination) | 16 healthy young adults, end-tidal forcing, duplex ICA and VA flow: ICA flow 222 → 341 mL/min at PaCO2 49 (× 1.54, MAP 82 → 87, not significant), → 482 at 58 (MAP 94), → 489 at 62 (MAP 100, n 3); ICA conductance up to × 1.85 at 58 (Table 1, p. 6); the authors cannot separate PaCO2 from the MAP rise (p. 13) |
 | Secomb & Pries 2013, C R Physique (PMC4117233), giving Pries 1992; Trejo-Soto 2022, Micromachines (PMC8954080) | [FT] | blood viscosity against haematocrit and vessel diameter, not a power law; rises at low shear |
 | Mühling et al. 1999, Can J Anaesth (PMID 10391602) | [ABS] (the full abstract's means) | 2 % CBFV per 1 % fall in Hct and CaO2; means Hb 14.5 → 10.3, Vm-MCA 61.2 → 77.3 cm/s (the candidate power form of §9.2 item 3 takes k = 0.683 from them) |
 | Tu et al. 1996, Stroke (PMID 8610310) | [ABS] | rCBF +35 % at 3 h of haemodilution |
@@ -735,8 +833,10 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 - Shaffner 1999 full text (PMID 10446829): whether EEG or evoked potentials were recorded with the ATP (A8, B6b).
 - Vriens 1996 (PMID 8641146) and de Vries 1997 (PMID 9338844) full texts: the regression of EEG recovery time on arrest
   duration in seconds (P2, P3, R1).
-- Mühling 1999 full text: to confirm the per-haematocrit-point reading the abstract's means support (B2a's slope); Brown 1985 full text: the form
-  and its limits; a source for the vasodilator ceiling in anaemia below Hb 4.8 g/dL (B2a's range).
+- Mühling 1999 full text: to confirm the per-haematocrit-point reading the abstract's means support (form B); a source
+  for cerebral flow in people below Hb 5.7 g/dL (B2a's lower hold).
+- Brown 1984, MD thesis, Cambridge (cited by Brown 1985): the regression coefficients the article does not print, the
+  per-subject data, and the PaCO2 and MAP ranges (§2.2; §9.2 item 3).
 - Rossen, Kabat & Anderson 1943, Arch Neurol Psychiatry 50:510 (not indexed): time to LOC on acute arrest of cerebral
   flow (A2).
 - Sharbrough 1973 (PMID 4723697); Sundt 1981 (PMID 7266064); Trojaborg & Boysen 1973 (PMID 4118436): no abstracts
@@ -756,7 +856,7 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
   fixed or absent (none found in any species).
 - A measurement of time to EEG silence after an abrupt arrest at 33–35 °C (the store at mild hypothermia, §1.3.3).
 - Bjelland 2013 (PMID 23115086) full text: each group's temperatures and the concentration–time curves (the drug
-  layer's slopes; hand-over).
+  layer's slopes).
 - Levy 1984 (PMID 6703384) full text: n and the anaesthetic for the per-degree EEG figures (the EEG plan's cold term).
 - Michenfelder & Milde 1991 (PMID 2064037): the rest of the abstract and the text (EEG at 14 °C, recovery after
   rewarming).
@@ -773,27 +873,33 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 - The weight of the pigs in Lin 2023 and Menegazzi 1995: gasp VT per kg (B7a).
 - A study of gasping in unanaesthetised animals, or one comparing anaesthetics (B7a's awake row).
 - A human source for loss of consciousness as a function of SaO2 or CaO2 in acute hypoxaemia (§2.2).
-- **Decisive, for the owner to obtain** (research note 90 §5 gives what each settles): Brown 1985, Brain 108:81, DOI
-  10.1093/brain/108.1.81 (the CBF–content relation and its viscosity test, the slope's source); Harper & Glass 1965,
-  J Neurol Neurosurg Psychiatry 28:449, PMC495935 (whether the dog ceilings are measured or extrapolated); Rebel 2003,
-  Am J Physiol Heart Circ Physiol 285:H1600, DOI 10.1152/ajpheart.00077.2003 (whether the CO2 response of flow, not only
-  of pial diameter, was kept at Hct 19 %); Tomiyama 1999, Am J Physiol 276:H1190, DOI
-  10.1152/ajpheart.1999.276.4.H1190 (how 40–60 % was computed; the hyperoxic control); Willie 2012, J Physiol,
-  PMC3459041 (the human volumetric flow at the highest PaCO2, the reserve); Cerebrovasc Dis 2000, PMID 10629349 (the
-  acetazolamide dose–response, whether it plateaus); J Clin Anesth 2005;17:177, DOI 10.1016/j.jclinane.2004.06.017 (the
-  cell most at risk: baseline velocity, PaCO2, end-tidal agent, whether +135 % at MAP ≈ 55 is credible as flow); the
-  four studies pooled by Hoiland 2016 (Daif 2012, J Neurosurg Anesthesiol 24:19; Ekelund 2002, Acta Neurochir; Hino
-  1992, Stroke 23:423; Mühling 1999): each study's own slope, the range of content fall it reached and its measure (the review plots them and does not state them).
-- Also wanted: Hudak 1986 (DOI 10.1152/ajpheart.1986.251.1.h63), Hudak 1987 (DOI 10.1152/jappl.1987.62.3.1090),
-  Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949), Todd 1994 (DOI 10.1152/ajpheart.1994.267.5.h2025), BMJ 1982
-  (PMC1498687), Battisti-Charbonney 2011 (DOI 10.1113/jphysiol.2011.206052).
+- **Decisive for the three open questions** (research notes 90a §7 and 90b §7 give what each settles):
+  - the four studies pooled by Hoiland 2016 (Daif 2012, J Neurosurg Anesthesiol 24:19; Ekelund 2002, Acta Neurochir;
+    Hino 1992, Stroke 23:423; Mühling 1999): each study's own slope, the range of content fall it reached and its
+    measure (the review plots them and does not state them) (§9.2 item 3);
+  - an acute isovolaemic haemodilution study in people measuring **volumetric** flow (phase-contrast MRI, or duplex
+    ICA + VA) from Hb 14 to 7 at controlled PaCO2, awake and anaesthetised: the measurement that settles form and size
+    for the acute cases (§9.2 item 3);
+  - the human maximal reserve at a **clamped** MAP: hypercapnia with the pressure rise prevented, or acetazolamide at
+    20 mg/kg or more with volumetric flow (the 22 and 25 mg/kg studies the 2000 article cites, Cotev 1968 and Sullivan
+    1987) (§9.2 item 1);
+  - the flow response to CO2 or acetazolamide after acute haemodilution in people, as absolute flow (§9.2 item 2);
+  - Rebel 2003's absolute CBF at hypocapnia, recovery and hypercapnia in each group, and the reference of the percent
+    in its Fig. 4: not printed; the authors' tables would decide §9.2 item 2 in a cat;
+  - MCA diameter under haemodilution: whether velocity tracks flow there (the 2005 velocities, §2.2).
+- Also wanted: Harper & Glass 1965's data tables, offered by the authors on request (absolute flows, PaCO2 and pressure
+  per point and dog, the number of measurements per group, whether group I stayed near 150 mmHg); the input of
+  Gersten's fit (the plotted points or the drawn curves); Todd 1994's fitted slopes above and below CaO2 12 (drawn
+  only, Fig. 1); whole-blood viscosity with the dilution fluids, and Hudak 1986 (DOI 10.1152/ajpheart.1986.251.1.h63),
+  Hudak 1987 (DOI 10.1152/jappl.1987.62.3.1090), Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949); BMJ 1982
+  (PMC1498687); Battisti-Charbonney 2011 (DOI 10.1113/jphysiol.2011.206052).
 - Cerebral flow below the lower limit of autoregulation, or under chest compressions, with and without haemodilution
   (§2.2: that the regulated rise adds nothing there is the plan's inference from the shared reserve).
 - A blood-viscosity relation with haematocrit and shear rate from a rheology source (Chien 1970, Merrill 1969 are cited
   by the engine and not read; Pries 1992 read through Secomb & Pries 2013 [FT] covers high shear): the systemic
   `VISC_EXP` and any brain viscosity term from one relation (§7).
-- The reserve's ceiling at normal pressure in people (§9.2 item 1): Harper & Glass 1965 itself (dogs), and any human
-  study of the hypercapnic response during haemodilution.
+- The reserve's ceiling as a function of pressure in people (§9.2 item 1): the dogs give its form (Harper & Glass 1965
+  [FT]), at a normal pressure of about 150 mmHg; no human source read gives it.
 - Hofmeijer & van Putten 2012 full text: the synaptic share (§1.3.4); the CMRO2 at an isoelectric EEG (F).
 - Ching et al. 2012 SI: the ATP time constants, if the EEG plan's piece uses them.
 - Miller Ch71 p. 2254's primary source for loss of consciousness below 28 °C.
@@ -835,10 +941,10 @@ and may run any time after B4. B7b and B9 are blocked on sources.
 |---|---|---|---|---|
 | B1 | Structure, moved, no change | **on main** (pull request 491) | design | — |
 | B5 | Brainstem gate state relocated | **on main** (pull request 504) | none | — |
-| B2v | Shared vasodilator reserve (pull request 188's mechanism, rebuilt) | not started | design | — (§9.2 item 1 decides its normal-pressure ceiling) |
-| B2d | The delivery reference is the patient's own normal; the t = 0 read | briefed, not started | none | — |
+| B2v | Shared vasodilator reserve (pull request 188's mechanism, rebuilt, its normal-pressure ceiling one marked parameter) | not started | design | — (§9.2 item 1 sets the parameter's value, a data change) |
+| B2d | The delivery reference is the patient's own normal; the t = 0 read | not started | none | — |
 | B5c | The brainstem entry reads delivery; the vasomotor gate reads the entry | not started | design | B2d merged; lands in one merge with B2a |
-| B2a | Anaemia's flow rise, one regulated dilation spent from the reserve | **in review**, pull request 512 (head b72d7b1b), to be reworked as §6 B2a says | design | B2v and B2d merged; Brown 1985's full text or the answer to §9.2 item 3; stacked on B5c and lands with it |
+| B2a | Anaemia's flow rise, one regulated dilation spent from the reserve | **in review**, pull request 512 (head b72d7b1b), to be reworked as §6 B2a says | design | B2v and B2d merged (its rework of everything but the form needs no ruling); §9.2 item 3 fixes its form, one function with its source data; items 1 and 3 answered before its cells are read; stacked on B5c and lands with it |
 | B5b | The brainstem's no-flow timer on the organ model's clock, both modes; the arrest record | not started | design | B5 (on main) |
 | B2 | Consciousness | not started | none | B2a merged (decided, §9.1 item 4) |
 | B3 | Artefacts and readers | not started | none | B2 merged |
@@ -904,7 +1010,7 @@ Each expectation is the plan's (mine), from the mechanisms of §2.2 and the piec
 named. If the engine disagrees with an expectation, the piece reports the mechanism; no band a source sets is moved.
 
 - **The low-flow oximetry cell** (`fidelity-lowflow.test.ts`: once MAP < 30 holds for 20 s in a 3 L bleed over 15 min,
-  PI < 0.3). The 0.3 is the device's LOW PERF threshold (`LOW_PERF_PI`, `l3/spo2/spo2.ts`, brief §4.3; research/05 §6
+  PI < 0.3). The 0.3 is the device's LOW PERF threshold (`LOW_PERF_PI`, `l3/spo2/spo2.ts`; research/05 §6
   [S2], the monitor's instructions), an engineering and device value, not a physiological measurement. The audit
   judged the sibling cell on the tamponade case "TOO NARROW" (`target-audit.tsv` row 183: assert the device rule,
   LOW PERF whenever PI < 0.3, and allow a valid reading at MAP 20–30 while PI ≥ 0.3); that re-specification is the
@@ -974,7 +1080,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   reproduce main's EEG cortex columns exactly (one headless test, MANUAL and MODELED); snapshot round trip; the
   couplings census regenerated (`neuro.eeg.cortex.metabolic` now reads the organ state).
 - **Must not change:** any value, in any patient, ischaemic included. `eeg-baseline.json` byte-identical.
-- **Owner ruling:** none.
+- **Decision:** none.
 
 ### B2v. The shared vasodilator reserve (plan 8 h · 1.0–1.3 executor-h). Advisor: design.
 - **Why:** `targetCbf` multiplies the pressure autoregulation by the CO2, hypoxic and drug factors with no shared
@@ -983,36 +1089,59 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   × 1.296 at CPP 35.5, PaO2 100 → 40 × 1.528; CBF under CPR 0.496 against 0.30–0.40, pull request 188's measurements,
   to be measured again on the current main). The anaemia rise would be a fourth such limb.
 - **The mechanism.** The reserve is physically the dilation the resistance arterioles have left between the tone
-  autoregulation holds them in at this pressure and maximal dilation. Its ceiling is maximal dilation, which is the
-  pressure-passive line the engine's autoregulation curve already follows below its lower limit:
-  F_max = (CPP − CPP_ZERO_FLOW) ÷ (LL − CPP_ZERO_FLOW); reserve = max(1, F_max ÷ A(CPP)), 1.40 at CPP 80 with LL 60,
-  1.20 at CPP 70, 1 at and below LL (pull request 188's `dilatorReserve`). The dilating limbs act on one vessel tone, so
+  autoregulation holds them in at this pressure and maximal dilation. Its ceiling is maximal dilation. Below the
+  lower limit that is the pressure-passive line the engine's autoregulation curve already follows,
+  (CPP − CPP_ZERO_FLOW) ÷ (LL − CPP_ZERO_FLOW). Above it, pull request 188 continued the same line, which fixes the
+  ceiling at normal pressure at 1.40 (CPP 80, LL 60) as a by-product of `CPP_ZERO_FLOW` (10, an [ENG] shape). **B2v
+  builds the ceiling at normal pressure as one named parameter instead**, R_N (the ratio of maximally dilated to
+  autoregulated flow in the normal state, CPP_N 80 with LL_N 60, held as data with its source and its mark). The
+  formula is one way to do it (mine, [ENG]); the design call of B2v may choose another that keeps the same three
+  properties (R_N in the normal state, 1 at and below LL, pull request 188's line at 1.40). Above LL,
+  F_max = 1 + m × (CPP − LL) ÷ (LL − CPP_ZERO_FLOW), with m = (R_N − 1) × (LL_N − CPP_ZERO_FLOW) ÷ (CPP_N − LL_N), so
+  that the normal state's ceiling is R_N; at and below LL, the passive line as now; reserve = max(1, F_max ÷ A(CPP)).
+  At the built value R_N = 1.40 (marked [P], not sourced), m = 1 and F_max is pull request 188's line exactly at every CPP and every LL (1.40
+  at CPP 80, 1.20 at 70, 1 at and below LL, 70/65 for an LL of 75; mine, arithmetic), so nothing moves for choosing
+  this form. A later answer to §9.2 item 1 changes one data value and the unit values computed from it, with no
+  rework of the mechanism, of autoregulation's curve below LL, or of the cells below LL and under compressions, which
+  read 1 whatever its value. An LL moved toward the CPP (by CO2, Paulson 1990) still shrinks the reserve, as in pull
+  request 188. The kink of F_max at LL when R_N ≠ 1.40 is [ENG] (real maximal-dilation curves are smooth). The
+  dilating limbs act on one vessel tone, so
   their combined request (the product of the CO2 factor, the hypoxic factor, the drugs' factor and, from B2a, the
   anaemia factor) is delivered up to the reserve and no further (`spendReserve` = min(request, reserve)). A
   constricting request (< 1: hypocapnia, the metabolic coupling of propofol, hypothermia) is not dilation and always
   passes. Pressure spends the reserve first: as CPP falls through the plateau, autoregulation itself dilates. No
   viscosity term is built (§2.2; §9.2 item 2 would place one on the ceiling). The engine state is
-  unchanged: the reserve is a function of CPP and the brain's `ll`, `ul`, `ar`, computed in `targetCbf`; no new
-  constant.
+  unchanged: the reserve is a function of CPP and the brain's `ll`, `ul`, `ar`, computed in `targetCbf`; the one new
+  value is R_N, data with its source and mark.
 - **Sources:** the human reserve at normal pressure: acetazolamide raised whole-brain flow 39 % (SD 19) by 15O-water
   PET in 19 healthy adults at 15 mg/kg (Zhao 2021 [FT]) and grey-matter flow 69.5 % by ASL in 11 controls at 16 mg/kg
-  (Vaclavu 2019 [FT]), both lower bounds of maximal dilation; flow velocity's hypercapnic maximum +76.5 % (hyperoxic)
-  before MAP rises (Battisti-Charbonney 2011 [ABS]). Dogs: a four-parameter sigmoid fitted to Harper & Glass 1965's
-  data (Gersten 1999, an arXiv preprint [FT]; the dog paper itself not read) gives asymptotes B(∞), relative to the
-  normocapnic flow **at the same pressure**, of 2.112 at MAP 150, 1.518 at 100 and 0.997 at 50 (that fit constrained),
-  with ± values set by the fitter, not measured; Okuda 1976 [ABS] (baboons): CO2 responsiveness abolished at systolic 60; Gregory 1981 [ABS] (cats, MAP
-  36–37): no CO2 response with trimetaphan; Paulson 1990 [ABS]: the limits of autoregulation move with anything that
-  raises or lowers CBF, notably CO2. Rebel 2003 [ABS] (cats, Hct ≈ 19 %): pial **arteriolar dilation** to hypercapnia
-  unimpaired after albumin exchange (whether the flow response was measured is not in the abstract), and the
-  constriction to hypocapnia blunted.
+  (Vaclavu 2019 [FT]), both lower bounds of maximal dilation; Xe-133 fast flow × 1.39, 1.55, 1.68 and 1.79 at 10, 13,
+  15 and 18 mg/kg, every step significant, so no plateau shown, with blood pressure slightly lower (Grossmann &
+  Koeberle 2000 [FT], p. 66, Fig. 1 p. 67, p. 68); with CO2, ICA flow × 1.54 at PaCO2 ≈ 49 while MAP had not changed
+  significantly, rising to × 2.2 at PaCO2 ≈ 62 with MAP +21 % in 3 subjects, ICA conductance up to × 1.85 at ≈ 58
+  (Willie 2012 [FT], Table 1 p. 6; the authors cannot separate PaCO2 from the pressure rise, p. 13); flow velocity's
+  hypercapnic maximum +76.5 % (hyperoxic) before MAP rises (Battisti-Charbonney 2011 [ABS]). Dogs (Harper & Glass
+  1965 [FT]; 41 dogs, thiopentone then N2O, cortical 85Kr flow, each point a percent of that dog's own flow at PaCO2 40
+  at its own pressure, p. 450): raising PaCO2 40 → 80 raised flow about 100 % at the dogs' "normotensive" ≈ 150 mmHg
+  and "only 50 %" at MAP held at 100, and had no significant effect at 50 (pp. 450–451); the sigmoid fitted to these
+  data (Gersten 1999, an arXiv preprint [FT]) gives asymptotes B(∞) of 2.112 at 150, 1.518 at 100 and 0.997 at 50
+  (that fit constrained), with ± values set by the fitter, and 2.11 and 1.52 lie inside the measured scatter, at or
+  just above the authors' plateaus, not far beyond the data (note 90b §5). A dog's normal pressure is not a person's,
+  so the dogs give the form (the ceiling falls with pressure and vanishes near 50) and no human number. Okuda 1976
+  [ABS] (baboons): CO2 responsiveness abolished at systolic 60; Gregory 1981 [ABS] (cats, MAP 36–37): no CO2 response
+  with trimetaphan; Paulson 1990 [ABS]: the limits of autoregulation move with anything that raises or lowers CBF,
+  notably CO2. Rebel 2003 [FT] (cats, Hct ≈ 19 %): the flow response to hypercapnia after albumin exchange was not
+  different from controls' as a percent, the pial arteriolar dilation kept, and the constriction to hypocapnia blunted
+  (Fig. 4 and p. H1604; §2.2 for what it does to the shared reserve).
 - **What stays an engineering form, and why (stated in the code):** the hard `min` (real ceilings are sigmoid; a smooth
-  form would change the sourced 3 %/mmHg at normal pressure); F_max taken from the model's own pressure-passive line
-  (`CPP_ZERO_FLOW` is an [ENG] shape); one reserve for the whole brain. **The ceiling at normal pressure sits at the low edge of
-  the human measurements (mine, arithmetic):** 1.40 at CPP 80, against × 1.39 (PET, whole brain) to × 1.70 (ASL, grey
-  matter) with acetazolamide, both lower bounds. With it the anaemic rise at rest is capped below about Hb 9 with
-  Mühling's slope and below about Hb 6 with the pooled human slope, and a cap leaves nothing for CO2 or a volatile in
-  the same request. This is the open question of §9.2 item 1; below the lower limit every option gives 1, which is
-  where the review's artefacts lie.
+  form would change the sourced 3 %/mmHg at normal pressure); F_max below LL taken from the model's own
+  pressure-passive line (`CPP_ZERO_FLOW` is an [ENG] shape); its straight rise above LL; one reserve for the whole
+  brain. **The built value R_N = 1.40 lies below every human measurement read but one (mine, arithmetic):** × 1.39
+  (PET, whole brain, 15 mg/kg) is at it; × 1.5 (ICA flow, CO2, pressure unchanged), × 1.55–1.79 (Xe-133, 13–18 mg/kg),
+  × 1.70 (ASL, grey matter) and × 1.85 (ICA conductance) lie above it, and none shows a plateau. With 1.40 the anaemic
+  rise at rest is capped below about Hb 9 with Mühling's power form and below about Hb 6 with the pooled human line
+  (for the adult man), and a cap leaves nothing for CO2 or a volatile in the same request. This is the open question of
+  §9.2 item 1; below the lower limit every option gives 1, which is where the review's artefacts lie.
 - **Pull request 188** (`fix-cerebral-dilator-reserve`) proposes exactly this form with these sources and tests. It is
   open, not a draft, cut from a main of early November and in conflict with the current main. **The plan builds on its
   mechanism and its tests and does not merge the branch:** B2v rebuilds the two functions on the current `flow.ts`
@@ -1021,22 +1150,24 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
 - **First step, before any product code:** measure on the current main, with and without the reserve, the three cells
   most at risk (§6.3: tamponade-drainage ROSC, CPR-offset spread, warm septic MAP) and the CPR coronary perfusion
   pressure; if any leaves its band, stop and ask (§6.3 names the mechanism that would then be at fault).
-- **Tests:** unit: `dilatorReserve` 1.40 / 1.20 / 1 at CPP 80 / 70 / ≤ 60; 70/65 for an LL of 75; 1 with no flow;
-  `spendReserve` passes a constricting request unchanged. Cells: (a) at normal CPP, PaCO2 50 → CBF 1.30 and 30 → 0.70
-  (the tables, unchanged); (b) at CPP 35.5, PaCO2 40 → 52 adds no flow, ratio 0.99–1.01 [ENG: the plan's tolerance]
-  (direction: Okuda 1976 and Gregory 1981 [ABS]; the dog fit at MAP 50 is ≈ 1, but constrained by its fitter, so it is
-  context, not a band); (b′) the same CPP, PaO2 100 → 40 adds no flow; (c) CBF under CPR against 0.30–0.40 (research 81):
-  pull request 188 measured 0.405 on its base, so it may stay a recorded miss with A(CPP) alone left as its cause,
-  never tuned. Rebel 2003's kept pial dilation to CO2 at Hct 19 % is context, not a cell: it measured diameter, not
-  flow. Regression: the demo haemorrhage and tamponade cards and the arrest
+- **Tests:** unit: `dilatorReserve` computed from R_N: at the built value 1.40 / 1.20 / 1 at CPP 80 / 70 / ≤ 60
+  and 70/65 for an LL of 75; R_N exactly at the normal state for any R_N; 1 at and below LL for any R_N; 1 with no
+  flow; `spendReserve` passes a constricting request unchanged. Cells: (a) at normal CPP, PaCO2 50 → CBF 1.30 and
+  30 → 0.70 (the tables, unchanged, inside the reserve for any R_N ≥ 1.30); (b) at CPP 35.5, PaCO2 40 → 52 adds no
+  flow, ratio 0.99–1.01 [ENG: the plan's tolerance] (direction: Harper & Glass 1965 [FT], no significant effect at MAP
+  50 in dogs; Okuda 1976 and Gregory 1981 [ABS]); (b′) the same CPP, PaO2 100 → 40 adds no flow; (c) CBF under CPR
+  against 0.30–0.40 (research 81): pull request 188 measured 0.405 on its base, so it may stay a recorded miss with
+  A(CPP) alone left as its cause, never tuned. Rebel 2003's CO2 flow response at Hct 19 % is context, not a cell: a
+  cat, a percent of an unstated reference, no absolute flow. Regression: the demo haemorrhage and tamponade cards and the arrest
   records re-recorded with the reserve as their stated cause; the CPR coronary perfusion pressure against Paradis's
   15–25 read and reported (a source band: if it leaves it, the piece stops and asks).
 - **Must not change:** the CO2 and hypoxic gains inside the reserve, autoregulation's curve, `cmro2Rel`, any threshold.
-- **Needs before it starts:** nothing (main); the answer to §9.2 item 1 decides the ceiling's value at
-  normal pressure.
+- **Needs before it starts:** nothing (main). It is built and merged with R_N at the built value 1.40, marked [P] and not sourced,
+  with the measurements of §9.2 item 1 beside it; the answer to item 1 then changes that one value (and a viscosity
+  term from item 2, if chosen, is a second factor on F_max), with the rows it moves re-read and listed.
 
 ### B2d. The brain's delivery reference is the patient's own normal (plan 6 h · 0.8–1.0 executor-h). Advisor: none.
-- **What:** as already briefed: every reader of the delivery reference (the energy state's delivery, the PbtO2 and
+- **What:** every reader of the delivery reference (the energy state's delivery, the PbtO2 and
   SjvO2 ratio) measures against the content at the patient's own normal Hb (decision, §9.1 item 10), read from the
   blood core's `pat.hbRef` through the organ view (`OrganView.hbRef` → `BrainInputs.hbRef`): this piece brings that
   path in, and B2a reuses it. **It also makes the t = 0 view read `pat.hb` and `pat.hbRef`** before the blood's first
@@ -1058,7 +1189,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   flow. Its size and form are §9.2 item 3's answer; the working size is the pooled human slope,
   1 + 0.66 × (1 − Hb ÷ Hb_normal) (Hoiland 2016 [FT], §2.2) [P: working value], as data with its source; the content
   fall is the fall of O2 capacity at the reference saturation, (Hb ÷ Hb_normal), as §1.5.5 rules. Held at Brown's
-  5.7–19.1 g/dL [ABS]; the reference `hbRef`, the patient's own normal, through B2d's path; `TAU_VASC_S` relaxation as
+  5.7–19.1 g/dL [FT]; the reference `hbRef`, the patient's own normal, through B2d's path; `TAU_VASC_S` relaxation as
   before; the Cushing clamp (the surge target kept in [0, 1]); the census row `organs.brain.anaemia`. Viscosity is not
   built in the brain until §9.2 item 2 is answered; the code states the omission beside the factor.
 - **Kept from pull request 512's head (b72d7b1b):** the factor's place in `targetCbf` and its data structure
@@ -1089,11 +1220,13 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
 - **What its own tests show while the set is incomplete:** on its branch stacked on B5c (itself after B2v and B2d) the
   suite is green; on main alone the piece is not merged. No cell is made green by an expected-failure mark.
 - **Must not change:** `o2Factor`, `co2Factor`, autoregulation, `cmro2Rel`, the reserve's form, any threshold.
-- **Needs before it starts:** Brown 1985's full text (DOI 10.1093/brain/108.1.81, being obtained) or the owner's answer
-  to §9.2 item 3 (the size and form for a healthy patient).
-- **Owner decisions:** given (§9.1 items 6–8, 10, 11); §9.2 item 3 before it is coded; §9.2 item 1 (the ceiling) before its cells are read, since a
-  ceiling of 1.40 at CPP 80 caps the anaemic rise at rest below about Hb 6, and 1.20 at CPP 70 below about Hb 10.5
-  (§9.2).
+- **Needs before it starts:** B2v and B2d merged. Brown 1985's full text is read and prints no equation, so it does
+  not settle the form (§2.2). The rework that does not depend on the form (the reserve spending, the holds, the `hbRef`
+  path, the t = 0 start, the taken-back marks and records) may start before §9.2 item 3 is answered; the form is one
+  function with its source data, fixed by that answer.
+- **Decisions:** given (§9.1 items 6–8, 10, 11); §9.2 item 3 before the form is coded; §9.2 item 1 (the ceiling)
+  before its cells are read, since a ceiling of 1.40 at CPP 80 caps the anaemic rise at rest below about Hb 6, and
+  1.20 at CPP 70 below about Hb 10.5, with the pooled line (§9.2).
 
 ### B2. Consciousness from the cortex's function (plan 9 h · 1.1–1.5 executor-h). Advisor: none.
 - **What:** `NeuroEnv` carries the cortex's `fn` and `metabolic`; `depth()` adds `isch` (§1.4, on `fn`, with
@@ -1108,7 +1241,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   must stay green.
 - **Must not change:** `cmro2Mult`, the MAP set-shift, the drive's sedation term, `awarenessRisk`, the EEG's
   `METABOLIC_SLOW_SHARE`.
-- **Owner ruling:** given (§9.1 item 4). Needs B2a merged.
+- **Decision:** given (§9.1 item 4). Needs B2a merged.
 
 ### B3. The EEG artefacts and the readers follow consciousness (plan 6 h · 0.8–1.0 executor-h). Advisor: none.
 - **What:** `emgLevel` and the blink gate take `lor + isch` (the additive rule of B2), with the arousal and tube terms
@@ -1117,7 +1250,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   (BIS-type SR > 80 and index < 20 by VF + 90 s without compressions, given its 63-s window; Entropy SE falls
   likewise).
 - **Must not change:** the readers' algorithms (`l3/eeg-devices/`).
-- **Owner ruling:** none. Depends on B2.
+- **Decision:** none. Depends on B2.
 
 ### B3b. The compression artefact in the EEG (plan 6 h · 0.8–1.0 executor-h). Advisor: none.
 - **What:** an artefact term in `l2/eeg/artefacts.ts` while compressions run, reading the haemodynamic model's
@@ -1133,7 +1266,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   miscalculated (Nitzschke); the index is reported, not asserted (the case reports range from BIS 13 to 87); the
   instructor's view shows the underlying state.
 - **Must not change:** the ECG artefact, the readers' algorithms.
-- **Owner ruling:** none. Depends on B3.
+- **Decision:** none. Depends on B3.
 
 ### B4. The arrest validation cells (plan 5 h · 0.6–0.8 executor-h). Advisor: none.
 - **What:** sanity rows in `packages/validation/suites/sanity/` for the witnessed-VF course in both modes: A1 end to end
@@ -1141,7 +1274,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   decay, §1.3.3), A2, A4; known misses for course (d)'s instant recovery and for course (c)'s waking under CPR (A8,
   sources Reagan 2018 and Olaussen 2017) until B6b.
 - **Tests:** the rows; `docs/validation/known-misses.md` regenerated.
-- **Owner ruling:** none.
+- **Decision:** none.
 
 ### B5. The breathing gate's state relocated into the brainstem entry (plan 6 h · 0.8–1.0 executor-h). Advisor: none. **On main (pull request 504).**
 - **What:** a relocation only. `anoxS` and `gate` move from `SpontDrive` into `BrainEnergy.brainstem`
@@ -1153,7 +1286,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   four arrest courses × both modes, every second, recorded on main) unchanged; snapshot round trip (the state's new
   home, with a reader for old snapshots).
 - **Must not change:** any breathing value.
-- **Owner ruling:** none. It is kept separate so that the later pieces change values only.
+- **Decision:** none. It is kept separate so that the later pieces change values only.
 
 ### B5b. The brainstem's no-flow timer on the organ model's clock, in both modes, and the arrest record (plan 6 h · 0.8–1.0 executor-h). Advisor: design.
 - **Why:** in MODELED the timer advances only while the spontaneous drive is evaluated (source spontaneous, ventilator
@@ -1183,7 +1316,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   order differs from the resp pipeline's; the piece checks it before claiming identity); s9b/s9c rows green; snapshot
   round trip.
 - **Must not change:** the thresholds, the gasp rule, the reopening time, `plS`.
-- **Owner ruling:** none. B7a depends on it.
+- **Decision:** none. B7a depends on it.
 
 ### B5c. The brainstem reads delivery; the vasomotor centre's perfusion gate reads the brainstem (plan 7 h · 0.9–1.2 executor-h). Advisor: design.
 - **Why:** the brainstem's perfusion is read as flow (`cbfRel`) by the breathing gate (`stepBrainstem`,
@@ -1204,9 +1337,9 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   one input, four readers. The no-flow flag still closes the gate whatever the delivery. The organ numeric `cbf`, CBV
   and the Cushing path stay on flow, which is what they are.
 - **Sources:** the cortex's reasoning (§1.5.1, §1.5.6): the thresholds are flows measured at normal content, so they are
-  read as delivery (Miller Ch35 p. 1126: hypoxaemia acts once the flow compensation is spent); Brown 1985 [ABS] (the
-  flow rise keeps O2 transport within limits, so it is not extra supply); Todd 1994 [ABS] (cerebral O2 delivery falls
-  in haemodilution while flow rises); the thresholds' own [P] marks (Astrup 1981 for 0.2–0.6; the ruling's 0.2) stay
+  read as delivery (Miller Ch35 p. 1126: hypoxaemia acts once the flow compensation is spent); Brown 1985 [FT] (the
+  flow rise keeps O2 transport within limits, pp. 85–86, so it is not extra supply); Todd 1994 [FT] (cerebral O2
+  delivery falls in haemodilution while flow rises, Table 1 p. H2027); the thresholds' own [P] marks (Astrup 1981 for 0.2–0.6; the ruling's 0.2) stay
   beside the constants.
 - **Tests:** unit: at the patient's own normal content every reader is bit-identical to main for a flow sweep 0…1.2;
   hypoxaemia lowers the gate's reading in proportion to content (it no longer reads the hypoxic flow rise as plenty).
@@ -1232,7 +1365,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   derivation, never tuned. Cells: A1 end to end again (expected later than main's +14 s; stays a known miss with its
   upstream cause); A2 again (`isch` reads `fn`, so the store delays the loss of consciousness; reported against 7–18 s).
 - **Must not change:** `targetCbf`, `cmro2Rel`, `cmro2Mult`'s value, PbtO2, SjvO2.
-- **Owner ruling:** none.
+- **Decision:** none.
 
 ### B6b. The cortex's debt and the recovery table (plan 12 h · 1.5–2.0 executor-h). Advisor: design.
 - **What:** debt and `fnCap` (§1.3.5–6) with the recovery table of §2.3 as data: sourced rows P1–P14 with their
@@ -1255,7 +1388,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   (no term), and colder during the arrest gives less debt (demand).
 - **Must not change:** `targetCbf`, `cmro2Rel`, PbtO2, SjvO2, the CPR flow (the reflow deficit is an attachment), the
   EEG's cold term, the drug layer's clearance.
-- **Owner ruling:** given (§9.1 items 2 and 5).
+- **Decision:** given (§9.1 items 2 and 5).
 
 ### B7a. Breathing after arrest, re-sourced (plan 12 h · 1.5–2.0 executor-h). Advisor: design.
 - **What:** by the decision (§9.1 item 1), on the brainstem entry and B5b's arrest record (the sources state the
@@ -1331,7 +1464,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   reject the field's values.
 - **Must not change:** the cortex, consciousness, the circulation (gasps raising carotid flow and CPP are an
   attachment, §7), every other random stream.
-- **Owner ruling:** given (§9.1 items 1 and 9). Needs B5b; R2 cell needs B6b; B5c before or after (B5c's text).
+- **Decision:** given (§9.1 items 1 and 9). Needs B5b; R2 cell needs B6b; B5c before or after (B5c's text).
 
 ### B7b. The brainstem's `{ store, fn, debt }` (plan 8 h · 1.0–1.3 executor-h). Advisor: design. **BLOCKED.**
 - **What:** the brainstem entry becomes an `EnergyEntry` on the shared equations, replacing B7a's timer; the perfusion
@@ -1352,7 +1485,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
 - **Tests:** the hypoglycaemia rows: glucose 40 → slowing, < 20 → suppressed, unconscious below the slowing; the
   existing hypoglycaemia consciousness tests (moved by attribution to this piece if their numbers change); `cmro2Mult`
   in hypoglycaemia unchanged.
-- **Owner ruling:** none.
+- **Decision:** none.
 
 ### B9. The anaesthetic's critical flow (plan 5 h · 0.6–0.8 executor-h). Advisor: none. **BLOCKED.**
 - **What:** the cortex's abnormal level scaled by the active volatile's sourced critical flow (isoflurane ≈ 10,
@@ -1398,8 +1531,9 @@ setting; its estimate stays 12 h, with the risk stated here (mine).
   whole systemic resistance fall, which includes vasodilation): a single blood-viscosity relation from a rheology
   source, read by the systemic resistance and any brain viscosity term alike, belongs to the blood plan (WANTED,
   §5.3). The brain builds no viscosity term meanwhile (§2.2; §9.2 item 2).
-- **The attenuated hypocapnic constriction at low haematocrit** (Rebel 2003 [ABS], cats: blunted after any exchange)
-  and the larger hypoxic than haemodilutional flow rise at equal content (Todd 1994 [ABS]): not built.
+- **The attenuated hypocapnic constriction at low haematocrit** (Rebel 2003 [FT], cats: blunted after any exchange,
+  p. H1604) and the larger hypoxic than haemodilutional flow rise at equal content (Todd 1994 [FT], Table 1 p. H2027):
+  not built.
 - **Hypothermic loss of consciousness; the EEG plan's metabolic burst suppression** (Ching 2012) reading `fn`.
 
 ---
@@ -1521,32 +1655,144 @@ setting; its estimate stays 12 h, with the risk stated here (mine).
     12.5, infant 11.5, neonate 17 g/dL, as the blood model's table gives them), as for the adult man. **Sits in:**
     §1.5.5, §2.2, piece B2a.
 
-### 9.2 Open (each holds what it names; the questions in full are in this revision's hand-over)
+### 9.2 Open (each holds what it names)
 
-1. **How far the brain's vessels can still widen at normal pressure** (the shared reserve's ceiling). The engine's own
-   pressure-passive line gives 1.40 at CPP 80 and 1.20 at CPP 70. People given acetazolamide raised whole-brain flow by
-   39 % (PET, 19 adults [FT]) and grey-matter flow by 69.5 % (ASL, 11 controls [FT]), both lower bounds of maximal
-   dilation; artery velocity rose up to 76.5 % with CO2 before pressure rose [ABS]. The dogs' 1.52 at MAP 100 and 2.11
-   at 150 are asymptotes of a fitted curve, relative to the normocapnic flow at the same pressure, with ± values set by
-   the fitter (an arXiv preprint; the dog paper is not read). With the pooled slope, 1.40 caps an anaemic patient's rise
-   at rest below about Hb 6 at CPP 80 and 1.20 below about Hb 10.5 at CPP 70, and the tables' hypoxic doubling from
-   PaO2 ≈ 48. Adults with sickle-cell anaemia rested at 82.8 against the controls' 51.3 mL/100 g/min (× 1.61) and
-   reached 108.3 (× 2.11) after acetazolamide (Vaclavu 2019 [FT]): no ceiling at or below 1.70 without a viscosity term
-   reaches either, so this question and item 2 are coupled (confounded by sickle vasculopathy, chronic adaptation and
-   ASL at low haematocrit, mine). The human study at Hct 24 % and MAP ≈ 55 under prostaglandin E1 and sevoflurane
-   (+135 % artery velocity, J Clin Anesth 2005 [ABS]) lies where the reserve is 1 and the engine gives no rise: it is
-   the cell most at risk, and its full text is decisive (§5.3). Below the lower limit every option gives 1. **Holds
-   B2v's unit values (1.40, 1.20) and B2a's cells, and through the joint merge B5c and B2; B2v's first step (the
-   measurement of its cells at risk) does not wait.**
-2. **Whether viscosity acts in the simulated brain.** The human sources find no independent viscosity effect at rest;
-   the animal ones find about half, measured in ways that do not add (§2.2). The plan builds the regulated rise only and
-   marks the omission; the alternative is a viscosity term that raises the maximally dilated flow (the ceiling), which
-   is physics and the plan's inference, not a measurement, and which the sickle-cell values of item 1 would need.
-   **Holds whether B2v's ceiling gains a viscosity term; coupled to item 1.**
-3. **Which size and form of the anaemic rise the simulator uses for a healthy patient.** The working size is the pooled
-   human line (0.66 % flow per 1 % fall of content), which mixes anaesthetised patients with tumours, patients with
-   vasospasm after haemorrhage and two small healthy groups, over ranges the review does not state; the one
-   healthy-volunteer study read gives a steeper relation (k = 0.683 in a power form, from its abstract's means); at half
-   the normal Hb they give × 1.33 against × 1.61. The one series across Hb 5.7–19.1 g/dL in 54 people (Brown 1985) is
-   read only as its abstract and is being obtained. Options: the pooled line; the healthy-volunteer studies alone
-   (Mühling 1999 and Hino 1992); the relation of Brown's series once read in full. **Holds B2a's coding.**
+Each question below is put in one sentence, explained, given its options with what each rests on and what residents
+would see differently, the pieces each option changes, and a proposal with its reason. The proposals are the plan's
+(mine); none is a number chosen to make a cell pass. **What can start before any answer:** B2v (built with the
+ceiling as one marked parameter, R_N, which an answer changes as data, without rework: B2v, mechanism), B2d (reads no
+answer), B5c (after B2d; it reads delivery whatever the answers) and B2a's rework of everything but its form (B2a,
+needs). What waits: B2a's form (item 3), the reading of B2a's cells at rest (items 1 and 3), and through the joint
+merge B5c's landing and B2.
+
+1. **How far can a normal brain's flow still rise, at normal blood pressure, when its vessels widen fully?**
+   - *In plain words.* The simulator gives the brain's resistance vessels one store of widening, spent together by
+     carbon dioxide, low oxygen, the drugs and anaemia. At normal pressure its size, R_N, is the most that flow can
+     rise above resting. It is today a by-product of the engine's pressure–flow line (1.40, no measurement), and no
+     human study shows where the true maximum lies: each gives a rise that was still growing.
+   - *The measurements (§2.2, B2v; notes 90, 90a §2 and §4, 90b §5).* Whole-brain or volumetric flow: × 1.39 with
+     acetazolamide 15 mg/kg (PET, 19 adults); × 1.54 internal-carotid flow and × 1.50 carotid plus vertebral at
+     PaCO2 ≈ 49 with MAP not significantly changed, rising to × 2.2 at PaCO2 ≈ 62 when MAP had risen 21 % (3 of 16
+     subjects); carotid conductance (flow per mmHg) up to × 1.85 (Willie 2012). Grey-matter-weighted flow: × 1.55,
+     1.68 and 1.79 at 13, 15 and 18 mg/kg (Xe-133; every step significant; blood pressure slightly lower; at 18 mg/kg
+     n 6, all with severe side effects; Grossmann & Koeberle 2000); × 1.70 at 16 mg/kg (ASL, 11 controls). Dogs give
+     the form, not a human number: the rise to CO2 halves when pressure is held at 100 and vanishes at 50 (Harper &
+     Glass 1965), and the fitted limits lie inside the measured points.
+   - *Options.* R_N is built at **1.40, the built value**: marked [P], not sourced, the engine's own pressure–flow
+     line continued. In a normal patient the engine's CO2 response (3 % per mmHg) stops at the ceiling, so each option
+     also sets the PaCO2 above which hypercapnia adds no flow (mine, arithmetic on `co2Factor`); measured flow was still
+     rising at PaCO2 54 and 58 (internal-carotid flow × 1.88 and × 2.17, conductance × 1.69 and × 1.85; Willie 2012).
+     - **(a) Keep 1.40.** Rests on no measurement; the one whole-brain value at a fixed dose (× 1.39, PET, 15 mg/kg,
+       where the Xe-133 study gave × 1.68 at the same dose) is at it, every other figure above. Residents see: a
+       normal patient's flow and ICP stop rising with CO2 from PaCO2 ≈ 53; an anaemic patient at rest reaches the
+       ceiling below about Hb 6 (pooled line) or 9 (power form), and from there hypercapnia, hypoventilation or a
+       volatile add no flow and no ICP rise; the hypoxic rise stops from PaO2 ≈ 48.
+     - **(b) About × 1.5**, the internal-carotid and vertebral flow at PaCO2 ≈ 49 with the pressure unchanged. A point
+       on a rising curve, not a maximum. Residents see: a normal patient's CO2 response stops from PaCO2 ≈ 57; an
+       anaemic patient keeps a small CO2 and ICP response down to about Hb 8 (power form), and with the pooled line the
+       cap is not reached within the holds.
+     - **(c) About × 1.8**, where two independent measurements meet: internal-carotid conductance (volumetric, flow
+       per mmHg, so corrected for the 14 % pressure rise) × 1.85 at PaCO2 ≈ 58, and acetazolamide 18 mg/kg × 1.79
+       with blood pressure slightly lower (Xe-133, grey-matter-weighted, n 6). Neither shows a plateau, so it is still
+       a lower bound; correcting by conductance assumes flow follows pressure at that degree of dilation (mine).
+       Residents see: a normal patient's flow rises with CO2 to PaCO2 ≈ 67; an anaemic patient still raises flow and
+       ICP clearly with CO2 down to about Hb 6 (power form) or 8 (constant transport).
+     - **(d) Build a marked value and state the measurement that would settle it:** the maximal rise of whole-brain
+       flow at a clamped blood pressure (hypercapnia with the pressure rise prevented, or acetazolamide at 20 mg/kg or
+       more with volumetric flow; §5.3).
+   - *Pieces each option changes.* Every option: B2v's one value R_N and the unit values computed from it (no change of
+     form, of the curve below the lower limit or of the cells below it and under compressions, which read 1 under every
+     option); the engine's own-output records in which a dilating request exceeds 1.40 above the lower limit (deep
+     hypercapnia, hypoxaemia, anaemia at rest) are recorded a second time, with the value as cause, when R_N changes;
+     B2a's cells at rest (the haemoglobin at which the rise is capped, and the CO2 response left in an anaemic
+     patient). B2d: none. B5c: no code; its rows of anaemic patients at rest move with their flow, listed. B2v can start
+     before the answer.
+   - *Coupled to item 2.* Adults with sickle-cell anaemia rested at × 1.61 of the controls' flow and reached × 2.11
+     after acetazolamide (Vaclavu 2019): no ceiling from (a) to (c) reaches the second without a viscosity term
+     (confounded by sickle vasculopathy, chronic adaptation and ASL at low haematocrit; mine).
+   - *Proposal (mine): (d), with (c), × 1.8, as the proposed value.* It is the highest rise measured at normal
+     pressure by two methods that answer the two objections to the others: the conductance removes the pressure rise
+     that inflates the largest CO2 flows, and the acetazolamide figure was reached with the pressure falling. × 1.5 is
+     a point on a still-rising curve, and × 1.39 a submaximal dose read by a method that gave less than Xe-133 at the
+     same dose. (c) rests on few subjects (7 at the CO2 step, 6 at the dose) and on one grey-matter-weighted method,
+     so it stays marked [P] as a lower bound until the clamped-pressure measurement exists.
+2. **When the brain's vessels are already fully widened, does thinner, diluted blood still let more blood through?**
+   - *In plain words.* Thinner blood flows more easily through any tube. While the brain's vessels can still adjust,
+     they narrow to make up for it, which is why people show no separate effect of viscosity on resting flow. Once
+     they are fully widened (deep hypotension, chest compressions, maximal CO2) they cannot make up for it, and
+     physics says the diluted patient's maximal flow should be higher. No study read tests this.
+   - *The evidence (§2.2; notes 90a §6, 90b §4 and §6).* At rest, the human sources find no independent viscosity
+     effect (Brown 1985, Borzage 2016, the 1982 plasma exchange); the rats' measured viscosity fall would have raised
+     flow more than the whole measured rise if passed through (mine, Tomiyama 1999), so it is compensated at normal
+     tone. The one study of the CO2 flow response after dilution (cats, Rebel 2003) prints only percents of an
+     unstated reference, so it cannot show whether the diluted brain's maximal flow differs from normal, and its hypercapnia may
+     not have reached the ceiling at all (mine). Adults with sickle-cell anaemia reached a higher flow after acetazolamide than controls
+     (Vaclavu 2019), which a raised ceiling would fit. In people at MAP ≈ 55 under prostaglandin E1 and sevoflurane at
+     Hct 24 %, MCA velocity stood at 1.35 × its pre-dilution value (J Clin Anesth 2005 [FT]; velocity, vasodilating
+     agents), where the engine, below its lower limit, gives no rise: the cell most at risk from this question.
+   - *Options.*
+     - **(a) No viscosity term in the brain** (the build today). Rests on the human finding at rest and on the absence
+       of any test at maximal dilation. Residents see: a diluted patient in deep hypotension or under compressions has
+       the same cerebral flow as an undiluted one at the same pressure, so his O2 delivery falls with his content and
+       his EEG and consciousness fail at a higher pressure, in the direction the injury studies show (anaemia with deep
+       hypotension harms the brain).
+     - **(b) A viscosity term that raises the maximally dilated flow** (a factor on B2v's F_max from the blood's
+       viscosity, read from one rheology relation at a stated resistance calibre [P], the relation the blood plan holds,
+       §7). Rests on physics, the rats' measured viscosity fall and the sickle-cell values; no measurement of its size
+       in the brain. Residents see: a diluted patient below the lower limit or under compressions has more cerebral flow
+       than an undiluted one at the same pressure, part of his content fall is made up, and his EEG fails at a lower
+       pressure; the coronary perfusion pressure and low-flow oximetry rows of §6.3 may move with his brainstem's reading.
+     - **(c) Build (a), marked as an omission in the code, and state the measurement that would settle it:** absolute
+       maximal flow (with CO2, acetazolamide, or below the lower limit) in diluted against undiluted brains (Rebel
+       2003's absolute flows; the flow response to CO2 or acetazolamide after acute haemodilution in people; §5.3).
+   - *Pieces each option changes.* (a) and (c): none beyond the comment beside B2a's factor. (b): B2v (a second factor
+     on F_max, no change of the reserve's form), B2a (the omission note goes), the cells under compressions and below
+     the lower limit (§6.3) re-read; it needs the blood plan's viscosity relation first. B2d: none. B5c: no code; its
+     readings in diluted patients below the lower limit move. Every piece can start before the answer: (a) is what they
+     build, and (b) adds a factor without rework.
+   - *Proposal (mine): (c).* No study measures the effect at maximal dilation; the human evidence at rest fits a
+     compensated viscosity, which (a) already gives where the vessels can still adjust; and the error of (a) is toward
+     ischaemia in the diluted, hypotensive patient, which the injury studies show to be the real danger. A term whose
+     size no brain measurement sets would be the plan's inference built as physiology.
+3. **How much should a healthy patient's brain flow rise as his haemoglobin falls during a case, and in what shape?**
+   - *In plain words.* As haemoglobin falls, the brain widens its vessels so that its oxygen supply falls less. The
+     sources agree it rises; they disagree on how much and on the shape, and they describe different patients. The
+     simulator needs one rule for a patient who bleeds or is diluted during an anaesthetic, which is what the teaching
+     cases mostly are; a chronic anaemia enters only when the instructor sets Hb in a patient's profile.
+   - *The evidence (§2.2, with its table; notes 90a §1, §3, §5, 90b §§2–4, §6).* The pooled acute human dilution line
+     (0.66 % flow per 1 % fall of content; mixed volunteers and anaesthetised or diseased patients; ranges not stated)
+     is the lowest of the human sources below Hb ≈ 12. The one wide-range human series (Brown 1985: 54 awake people
+     with chronic anaemia or polycythaemia, PaCO2 and MAP uncontrolled) prints no equation; its figure lines give about
+     × 1.45 at Hb 10 and × 1.75–1.83 at Hb 7, against × 1.20 and × 1.34 on the pooled line, and fit a straight line and
+     a reciprocal about equally. Anaesthetised patients diluted acutely (2005) raised MCA velocity × 1.56 for a 39 %
+     fall of content (by content: pooled line × 1.26, power form × 1.40, constant transport × 1.64; by haematocrit, 37 → 25 %: × 1.21, 1.31, 1.48). The animals lie mostly between the pooled line and the
+     power form; the rabbits show no rise until content fell by about a quarter, then a steep one.
+   - *Options* (each relative to the patient's own normal; all are spent from the reserve and held at 5.7–19.1 g/dL).
+     - **(A) The pooled acute line**, 1 + 0.66 × (1 − h) (the working size). Rests on the only acute isovolaemic human
+       dilution data, pooled. Residents see the smallest rise: at Hb 9 flow × 1.25 and O2 delivery ≈ 0.78 of normal; the
+       reserve is left for CO2; the brain looks the most ischaemic in severe anaemia.
+     - **(B) The power form**, h^−0.683 (one healthy-volunteer study's abstract means). Residents see: at Hb 9 × 1.39
+       and delivery ≈ 0.86; the ceiling of item 1 reached at moderate anaemia, after which CO2 adds little.
+     - **(C) Constant O2 transport**, 1 ÷ h (the hypothesis Brown tested; the cats' albumin dilution kept transport).
+       Rests on a chronic human series and one animal study; Brown's own figure shows transport lower at the anaemic
+       end. Residents see: delivery held at normal until the ceiling is reached (about Hb 10.5 at 1.40), then falling; no
+       CO2 response left in moderate anaemia.
+     - **(D) A rise that starts only below a threshold** (the rabbits). No human source gives the threshold or the
+       slope, and the plan does not carry animal numbers to people; it cannot be built from the sources read.
+     - **(E) Two relations**: (A) for a fall during the run, Brown's chronic relation for a profile-set Hb. Rests on the
+       difference of patients between the sources; Brown's relation has no printed equation (its lines read off the
+       figures), and a patient who arrives anaemic and then bleeds needs a rule for both. Residents see: the
+       instructor's chronically anaemic patient starts with a higher flow and less reserve than a patient bled to the
+       same Hb.
+     - **(F) Build a marked working form and state the measurement that would settle it:** an acute isovolaemic
+       haemodilution study in people with volumetric flow from Hb 14 to 7 at controlled PaCO2, awake and anaesthetised,
+       and the pooled studies' own slopes and ranges (§5.3).
+   - *Pieces each option changes.* (A), (B), (C), (F): B2a only (its one form function and its source data, and its
+     source cells); B2v, B2d and B5c none (the haemoglobin at which item 1's ceiling caps the rise follows from the
+     form). (E): B2a gains a second relation and a stored chronic baseline read at t = 0 through B2d's path, a larger
+     rework of B2a. Every piece but B2a's form can start before the answer.
+   - *Proposal (mine): (F), with (A) as the working form.* The teaching cases are acute, and (A) is the only acute
+     isovolaemic human dilution relation; Brown's relation is chronic and has no printed equation, and the 2005
+     velocities are anaesthetised, under vasodilating agents and by velocity. (A) is the lowest of the human sources,
+     so its error is toward ischaemia, and the code states beside it that every other human source read lies above it.
+     (E) is the next question once a chronic relation with printed coefficients exists (Brown 1984, §5.3).
