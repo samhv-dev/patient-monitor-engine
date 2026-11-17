@@ -6,15 +6,15 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 152; sites: 193.
+Seams (de-duplicated on module, kind and field): 153; sites: 194.
 
-Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 58; unregistered: 94
+Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 59; unregistered: 94
 (the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
 
 | Module | ctx | ext | endo-write | bus-read | All |
 |---|---:|---:|---:|---:|---:|
 | blood | 5 | 3 | 0 | 1 | 9 |
-| breathing | 12 | 0 | 0 | 0 | 12 |
+| breathing | 13 | 0 | 0 | 0 | 13 |
 | endocrine-thermal | 4 | 7 | 9 | 4 | 24 |
 | engine-runtime | 0 | 6 | 0 | 6 | 12 |
 | lungs | 0 | 3 | 0 | 0 | 3 |
@@ -23,7 +23,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | pharmacology | 19 | 0 | 0 | 0 | 19 |
 | pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
 | rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 88 | 22 | 9 | 33 | 152 |
+| **All** | 89 | 22 | 9 | 33 | 153 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
@@ -221,6 +221,7 @@ The seams no coupling-registry row carries yet (piece R2 registers the rest); th
 | breathing | ctx | `advanceResp.neuro` | `engine.ts#advance` | 1 |
 | breathing | ctx | `advanceResp.hco3` | `engine.ts#advance` | 1 |
 | breathing | ctx | `advanceResp.cbfRel` | `engine.ts#advance` | 1 |
+| breathing | ctx | `advanceResp.brainstem` | `engine.ts#advance` | 1 |
 | breathing | ctx | `advanceResp.bronchoDil` | `engine.ts#advance` | 1 |
 | breathing | ctx | `advanceResp.hpvInhibit` | `engine.ts#advance` | 1 |
 | breathing | ctx | `advanceResp.anaphEndo` | `engine.ts#advance` | 1 |

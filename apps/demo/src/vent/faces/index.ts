@@ -18,12 +18,15 @@ export function faceFromLocation(loc: { search: string }): FaceId {
   return id !== null && id in FACES ? (id as FaceId) : DEFAULT_FACE;
 }
 
-/** The cockpit on the driver, the simulator's tools, and the face on both; `stop` takes them all down. */
-export function mountFace(d: VentDriver, id: FaceId, o: { linked: boolean } & FaceEnv): { cockpit: Cockpit; stop(): void } {
+/**
+ * The cockpit on the driver, the simulator's tools, and the face on both; `stop` takes them all down. `room`: the
+ * ventilator is linked to a room, whose patient is the room's: no simulator's tools at all.
+ */
+export function mountFace(d: VentDriver, id: FaceId, o: { linked: boolean; room?: boolean } & FaceEnv): { cockpit: Cockpit; stop(): void } {
   const face = FACES[id];
   const cockpit = createCockpit(d, face.spec, o);
-  const tools = mountSimTools(cockpit);
+  const tools = o.room ? null : mountSimTools(cockpit);
   const ui = face.mount(cockpit, tools, o);
   cockpit.start(ui.draw);
-  return { cockpit, stop: () => { ui.stop(); tools.stop(); cockpit.stop(); } };
+  return { cockpit, stop: () => { ui.stop(); tools?.stop(); cockpit.stop(); } };
 }

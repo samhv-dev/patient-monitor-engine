@@ -25,6 +25,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ge-
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -140,6 +142,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ge-
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -260,6 +264,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ge-
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -417,6 +423,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "none",
       "source": "HR_SOURCE",
       "volume": {
@@ -846,6 +854,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "none",
       "source": "HR_SOURCE",
       "volume": {
@@ -1280,6 +1290,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "none",
       "source": "HR_SOURCE",
       "volume": {
@@ -1667,6 +1679,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot lif
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -1764,6 +1778,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot lif
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -1866,6 +1882,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot lif
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -1963,6 +1981,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -2273,6 +2293,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -2588,6 +2610,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -2901,6 +2925,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -3199,6 +3225,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -3502,6 +3530,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -3839,6 +3869,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "none",
       "source": "HR_SOURCE",
       "volume": {
@@ -4284,6 +4316,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "none",
       "source": "HR_SOURCE",
       "volume": {
@@ -4734,6 +4768,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     "beep": {
       "baseHz": 880,
       "enabled": true,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "none",
       "source": "HR_SOURCE",
       "volume": {
@@ -5141,6 +5177,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot zol
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -5242,6 +5280,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot zol
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
@@ -5348,6 +5388,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot zol
     "beep": {
       "baseHz": 880,
       "enabled": false,
+      "levelDb": 0,
+      "neutralHz": 1047,
       "pitchMap": "nellcor-like",
       "source": "ECG",
       "volume": {
