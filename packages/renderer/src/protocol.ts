@@ -33,6 +33,8 @@ export interface ClockAnchor {
   timeScale: number;
   /** Sim seconds the engine's clock is behind real time (owed ticks a busy machine has not run yet; brief 105). */
   behindS: number;
+  /** Wall seconds the case has run at epochMs, paused time and fast-forwards left out: the alarm sound's clock. */
+  runS: number;
 }
 
 export type ToWorker =
