@@ -55,9 +55,10 @@ renderer, audio and skin contracts.
 | [`vitals.ts:11`](../../apps/demo/src/app/vitals.ts#L11) | Display = engine value × scale. |
 | [`meta.ts:9`](../../apps/demo/src/physiology-console/meta.ts#L9) | Displayed = raw × scale (e.g. mmHg·s/mL → dyn·s/cm⁵). |
 | [`model.ts:29`](../../apps/demo/src/physiology-console/model.ts#L29) | Raw engine values; `unit` is the display unit and display = raw × scale. |
-| [`controls.ts:33`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L33) | The set I:E on the knob's axis u: 1:E is u = 1 − E, I:1 is u = I − 1 (1:1 is 0; one step is 0.1 of either side). |
-| [`controls.ts:72`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L72) | In VC the model's Ti is VT / flow: the face's settle() turns this set Ti into vcFlow = 60 · VT / Ti (plan GM1) |
-| [`modes.ts:59`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L59) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
+| [`record.ts:40`](../../apps/demo/src/vent/core/record.ts#L40) | volume over the window's share of the exhaled volume (a passive lung empties as flow = −volume / τ). NaN when the |
+| [`controls.ts:35`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L35) | The set I:E on the knob's axis u: 1:E is u = 1 − E, I:1 is u = I − 1 (1:1 is 0; one step is 0.1 of either side). |
+| [`controls.ts:74`](../../apps/demo/src/vent/faces/edp-ts/controls.ts#L74) | In VC the model's Ti is VT / flow: the face's settle() turns this set Ti into vcFlow = 60 · VT / Ti (plan GM1) |
+| [`modes.ts:61`](../../apps/demo/src/vent/faces/edp-ts/modes.ts#L61) | In VC the face's set Ti (`itime`) owns the flow: vcFlow = 60 · VT / Ti, so the model's Ti = VT / mean flow is exactly |
 | [`clock-map.ts:2`](../../packages/audio/src/clock-map.ts#L2) | wallMs(t) = anchorWall + (t − anchorSim) · 1000 / timeScale |
 | [`clock-map.ts:3`](../../packages/audio/src/clock-map.ts#L3) | audioTime(wallMs) = contextTime + (wallMs − performanceTime) / 1000   (AudioContext.getOutputTimestamp) |
 | [`clock-map.ts:6`](../../packages/audio/src/clock-map.ts#L6) | wallMs(r) = anchorWall + (r − anchorRun) · 1000 |
@@ -84,6 +85,14 @@ renderer, audio and skin contracts.
 | `pathTo` | `string` | Keep only the routes from the trigger to this node id (the depth cut and the folds do not apply). |
 | `slack` | `number` | How many generations longer than the shortest a route to `pathTo` may be (default PATH_SLACK). |
 | `whole` | `boolean` | The whole tree, nothing folded. |
+
+### `HoldState` ([`apps/demo/src/vent/core/holds.ts`](../../apps/demo/src/vent/core/holds.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `kind` | `Kind` | An inspiratory or an expiratory hold. |
+| `by` | `'key' \| 'timed'` | 'key' while the key is held; 'timed' for a test's occlusion. |
+| `since` | `number \| null` | Sim time the valves closed, or null while the hold waits for its point of the breath. |
 
 ## Parameters
 
@@ -856,12 +865,19 @@ renderer, audio and skin contracts.
 | `sparkRange` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | [lo, hi] over the finite samples and the baseline; |
 | `sparkY` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | y of `v` in an h-tall box (1 px inset); |
 | `sparkPoints` | [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts) | Canvas points for `values` in a w×h box, the newest at the right edge; |
+| `timeConstant` | [`apps/demo/src/vent/core/record.ts`](../../apps/demo/src/vent/core/record.ts) | The expiratory time constant (s) from the expiration's [lung volume L, flow L/s] samples: |
+| `createRecorder` | [`apps/demo/src/vent/core/record.ts`](../../apps/demo/src/vent/core/record.ts) | Without options (a face with no mechanics) no breaths are kept by kind and no time constant is read. |
 | `settingState` | [`apps/demo/src/vent/faces/edp-ts/controls.ts`](../../apps/demo/src/vent/faces/edp-ts/controls.ts) | A setting's state in a configuration: |
 | `applyTokens` | [`apps/demo/src/vent/faces/edp-ts/device.ts`](../../apps/demo/src/vent/faces/edp-ts/device.ts) | The face's colours, fonts and lane colours as custom properties on an element (face.json → CSS). |
 | `fitDevice` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The device scaled as a whole to the space it is given above the strip (R19: |
 | `drawTraces` | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The lanes and loops of the cockpit's buffer: |
+| `createManoeuvres` | [`apps/demo/src/vent/faces/edp-ts/manoeuvres.ts`](../../apps/demo/src/vent/faces/edp-ts/manoeuvres.ts) | `onDone`: told when a test has its result. |
+| `autoscaled` | [`apps/demo/src/vent/faces/edp-ts/screen.ts`](../../apps/demo/src/vent/faces/edp-ts/screen.ts) | Autoscale (K-12): |
+| `lastBreath` | [`apps/demo/src/vent/faces/edp-ts/screen.ts`](../../apps/demo/src/vent/faces/edp-ts/screen.ts) | The last complete breath of the buffers (from one inspiration's start to the next), or null. |
+| `saveLoop` | [`apps/demo/src/vent/faces/edp-ts/screen.ts`](../../apps/demo/src/vent/faces/edp-ts/screen.ts) | Save the last breath's loops (K-09): |
 | `train` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | One train of a priority: |
 | `audioPackagePlayer` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The player through the project's audio package (@pme/audio): |
+| `graphicsOf` | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | The curves' screen: |
 | `viewOf` | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | The live View: |
 | `faceFromLocation` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | `?face=<id>`; |
 | `mountFace` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The cockpit on the driver, the simulator's tools, and the face on both; |
@@ -963,7 +979,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `disturbed`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `createDefibCore`, `createPending`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `disturbed`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `createDefibCore`, `createPending`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createHolds`, `createPending`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -1186,8 +1202,10 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/validation/review.ts`](../../apps/demo/src/validation/review.ts) | Blind realism review page (brief §9 steps 2–3, 6). |
 | [`apps/demo/src/vent/core/alarms-view.ts`](../../apps/demo/src/vent/core/alarms-view.ts) | The cockpit core's alarm view (plan vent-skin-edp-ts.md §4.3, piece V3): a face's alarm profile applied to the model's alarm CONDITIONS (ventAlarms), stepped on sim time so a test drives it with the driver's clock. |
 | [`apps/demo/src/vent/core/cockpit.ts`](../../apps/demo/src/vent/core/cockpit.ts) | The ventilator cockpit's core (plan vent-skin-edp-ts.md §4.3, piece V0): the logic every face needs, moved out of the Hamilton front end, knowing nothing of any look. |
+| [`apps/demo/src/vent/core/holds.ts`](../../apps/demo/src/vent/core/holds.ts) | The cockpit's holds (plan vent-skin-edp-ts.md §3.3 GX3, GX13, GD17): a key held to close the valves, and the timed occlusions of the respiratory-mechanics tests, both on the model's own hold (vent.ts: no flow, the airway |
+| [`apps/demo/src/vent/core/mechanics.ts`](../../apps/demo/src/vent/core/mechanics.ts) | Respiratory mechanics from the breath record and the holds (plan vent-skin-edp-ts.md §3.3 GD16, GD17, GX13): the formulas the EDP-TS manual states (research/57 K-15, K-16, N-07 to N-12, N-16), pure, in the device's units |
 | [`apps/demo/src/vent/core/pending.ts`](../../apps/demo/src/vent/core/pending.ts) | Select-turn-press (plan vent-skin-edp-ts.md §2.4, §4.3; built in V0 for the EDP-TS face of V1, which the Hamilton face never uses): touch a setting's key, turn the knob, press it to apply. |
-| [`apps/demo/src/vent/core/record.ts`](../../apps/demo/src/vent/core/record.ts) | The breath record (plan vent-skin-edp-ts.md §4.3, §3.3 GD1, GD2, GD6; piece V1): what a ventilator reports of the last COMPLETE breath, from the 5 ms steps: peak inspiratory flow, Ti (with a pause or an inspiratory hold, |
+| [`apps/demo/src/vent/core/record.ts`](../../apps/demo/src/vent/core/record.ts) | The breath record (plan vent-skin-edp-ts.md §4.3, §3.3 GD1, GD2, GD6, GD16, GD17): what a ventilator reports of the last COMPLETE breath, from the 5 ms steps: peak inspiratory flow, Ti (with a pause or an inspiratory hol |
 | [`apps/demo/src/vent/core/types.ts`](../../apps/demo/src/vent/core/types.ts) | The ventilator cockpit's core types (plan vent-skin-edp-ts.md §4.3, piece V0). |
 | [`apps/demo/src/vent/demos.ts`](../../apps/demo/src/vent/demos.ts) | The ventilator-link demonstrations as data: a profile (lung-pathology row), starting settings, and the step applied after `settleS` sim seconds — ventilator settings and, for the vascular events the ventilator cannot cau |
 | [`apps/demo/src/vent/device-link.ts`](../../apps/demo/src/vent/device-link.ts) | R8d (plan room-and-instruments.md §7): the ventilator's own page signs in over the relay as the `ventilator` role (R8a), granted by the host's PIN check (R8c) and carried by the relay to the host only (R8b). |
@@ -1198,8 +1216,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/vent/faces/edp-ts/device.ts`](../../apps/demo/src/vent/faces/edp-ts/device.ts) | The drawn EDP-TS device (brief 159): the housing and the screen on ONE fixed design grid (face.json layout.grid, every box measured on the rectified photographs, research/57 P-20 to P-35), scaled as a whole by face.ts, n |
 | [`apps/demo/src/vent/faces/edp-ts/face.ts`](../../apps/demo/src/vent/faces/edp-ts/face.ts) | The EDP-TS face (plan vent-skin-edp-ts.md §2, §4.3, §5, §6; pieces V1 and VF): the device drawn to the owner's photographs (device.ts, on one design grid scaled as a whole), painted from the View of the cockpit and the k |
 | [`apps/demo/src/vent/faces/edp-ts/knob.ts`](../../apps/demo/src/vent/faces/edp-ts/knob.ts) | The EDP-TS face's ONE knob-navigation mechanism (plan vent-skin-edp-ts.md §2.4; research/57 H-10, H-25, H-26, O-01 to O-16), pure and DOM-free so it is tested headless (knob.test.ts) and every window of every later piece |
+| [`apps/demo/src/vent/faces/edp-ts/manoeuvres.ts`](../../apps/demo/src/vent/faces/edp-ts/manoeuvres.ts) | The EDP-TS respiratory-mechanics tests (research/57 E-14, K-15 to K-17; plan GX13): each a timed occlusion of the cockpit's holds (core/holds.ts), in the modes the manual names, its result kept for Patient's Data (N-04: |
 | [`apps/demo/src/vent/faces/edp-ts/modes.ts`](../../apps/demo/src/vent/faces/edp-ts/modes.ts) | The EDP-TS face's modes and its spec for the cockpit core (plan vent-skin-edp-ts.md §3.3 GM1, GM2, GM10; piece V1): the three modes the model runs under the device's names, the bottom row each shows (research/57 D-01, D- |
+| [`apps/demo/src/vent/faces/edp-ts/patient-data.ts`](../../apps/demo/src/vent/faces/edp-ts/patient-data.ts) | Patient's Data (research/57 N-02 to N-16; plan GD16, GD17, GD19): the two pages of rows as the manual's figure lists them, each value from the cockpit's breath record and the holds by the manual's formulas (core/mechanic |
 | [`apps/demo/src/vent/faces/edp-ts/pictograms.ts`](../../apps/demo/src/vent/faces/edp-ts/pictograms.ts) | The EDP-TS face's pictograms (brief 159, R7, R8, R11, R12, R15, R18): ONE entry per subject the photographs show (research/57 P-07 to P-17), each my own drawing of that subject in inline SVG, never a trace of the device' |
+| [`apps/demo/src/vent/faces/edp-ts/screen.ts`](../../apps/demo/src/vent/faces/edp-ts/screen.ts) | What the EDP-TS screen shows of the curves, apart from the ventilator (research/57 K-07 to K-13; plan GD12 to GD15): the chosen screen of the Graphics window, each quantity's scale and the position of its zero, autoscale |
 | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The EDP-TS face's alarm tones (plan vent-skin-edp-ts.md V3, GA16; VQ6), made by the app itself: no sound file. |
 | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | What the EDP-TS screen and housing show at one moment (brief 159): a plain-data View. |
 | [`apps/demo/src/vent/faces/hamilton/face.ts`](../../apps/demo/src/vent/faces/hamilton/face.ts) | The Hamilton-style face: the v1.9 Hamilton-style front end (ventilator-sim-hamilton.html "UI" block), ported to TypeScript and rendering from @pme/ventilator instead of page globals. |
@@ -1394,6 +1415,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/ui-polish-b.e2e.ts`](../../apps/demo/e2e/ui-polish-b.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/validation-bedside.e2e.ts`](../../apps/demo/e2e/validation-bedside.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/validation-review.e2e.ts`](../../apps/demo/e2e/validation-review.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/vent-edp-ts-holds.e2e.ts`](../../apps/demo/e2e/vent-edp-ts-holds.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-edp-ts-stills.e2e.ts`](../../apps/demo/e2e/vent-edp-ts-stills.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-edp-ts.e2e.ts`](../../apps/demo/e2e/vent-edp-ts.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-embed.e2e.ts`](../../apps/demo/e2e/vent-embed.e2e.ts) | 0 | 0 |
@@ -1625,6 +1647,8 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/vent/faces/edp-ts/face.dom.test.ts`](../../apps/demo/src/vent/faces/edp-ts/face.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/knob.test.ts`](../../apps/demo/src/vent/faces/edp-ts/knob.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/link.test.ts`](../../apps/demo/src/vent/faces/edp-ts/link.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/mechanics.dom.test.ts`](../../apps/demo/src/vent/faces/edp-ts/mechanics.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/edp-ts/mechanics.test.ts`](../../apps/demo/src/vent/faces/edp-ts/mechanics.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/provenance.test.ts`](../../apps/demo/src/vent/faces/edp-ts/provenance.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/tones-player.test.ts`](../../apps/demo/src/vent/faces/edp-ts/tones-player.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts) | 0 | 0 |
