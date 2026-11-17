@@ -25,7 +25,8 @@
 //    (`publishStyle` on the instructor's page). Presentation only, not the session wire. `ibp` (E130): the IBP1/IBP2
 //    lane scales; the follower's monitor draws them (AUTO judges the same range from the same samples).
 //  - Sound: per window (mount option `audioSilence: 'window'`): the follower's own Sound and
-//    "Silence here"; nothing about sound crosses either channel.
+//    "Silence here"; nothing about sound crosses either channel. Of this browser's pages of the session only one sounds
+//    (its own channel `pme.sound.<CODE>`, sound-seat.ts).
 //  - A PHONE over the relay (`?join=<CODE>`): the same contract on a
 //    WebSocket to `pme-relay`. The relay sends a viewer only VIEWER_EVENTS (protocol.ts) and a hello's replays only to
 //    the peers awaiting a snapshot; it refuses a phone past the session's limit (`full`, no retry) and any role but
@@ -36,7 +37,7 @@
 //    phone HOLDS (its monitor still, "The ventilator is on the main screen") and takes a fresh snapshot when they stop.
 //    UI-A #2: only while the view is ON SCREEN — its close sends `cockpit {off: true}` and the phone follows at once.
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
-import { createBroadcastChannelTransport, createWebSocketTransport, epochNow, newPeerId, ViewerSync, type Instrument, type ManagedTransport, type RelayFrame, type WireMessage } from '@pme/controller';
+import { createBroadcastChannelTransport, createWebSocketTransport, epochNow, newPeerId, ViewerSync, type Instrument, type ManagedTransport, type RelayFrame, type SignInCredential, type WireMessage } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
 import { mountMonitor, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { briefingLayer, followBriefing } from '../briefing.ts';
@@ -45,6 +46,7 @@ import { createDefibCore } from '../../defib/core/core.ts';
 import type { DefibStatusIn } from '../../defib/core/types.ts';
 import { DEFIB_FACES, defibFace } from '../../defib/faces/index.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
+import { soundSeat, soundWords } from '../sound-seat.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
 import { followerStatus, hostPause, phoneStyle } from './follower-status.ts';
 
@@ -116,13 +118,13 @@ export interface NetFollow {
 export interface FollowerInstrument {
   show: Extract<Instrument, 'learner' | 'monitor' | 'defib' | 'depth' | 'pump'>;
   device: string;
-  /** With `pin`: the role each hello says, `learner` (the remote, L6) unless `pump` (the pump tablet, pump-rack-tci.md A1). */
+  /** With `credential`: the role each hello says, `learner` (the remote, L6) unless `pump` (the pump tablet, pump-rack-tci.md A1). */
   role?: 'learner' | 'pump';
   /**
    * L6 (plan learner-action-remote.md §4 D1): the learner remote's page. Each hello then says the `learner` role with
-   * this learner PIN (read at each hello from the page's memory, never kept), and the host grants it on that PIN (L4).
+   * this proof (the learner PIN, then the host's ticket; in the page's memory only), and the host grants it on that (L4).
    */
-  pin?: () => string;
+  credential?: SignInCredential;
 }
 
 /**
@@ -130,7 +132,8 @@ export interface FollowerInstrument {
  * adds them (viewer-sync.ts, which says the hello, is not changed: §4 D1).
  */
 export function withInstrument(t: ManagedTransport, i: FollowerInstrument): ManagedTransport {
-  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, ...(i.pin ? { role: i.role ?? 'learner', pin: i.pin() } : {}), show: i.show, device: i.device } : m);
+  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, ...(i.credential ? { role: i.role ?? 'learner', ...i.credential.proof() } : {}), show: i.show, device: i.device } : m);
+  if (i.credential) t.onMessage((m) => i.credential?.take(m)); // the ticket each grant hands on
   return new Proxy(t, {
     get(target, key) {
       if (key === 'send') return send;
@@ -180,7 +183,7 @@ export interface FollowerOptions {
  * `defib` (R5). `show: 'defib'` is the defibrillator window too.
  */
 export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow, o: Partial<FollowerInstrument> & FollowerOptions = {}): Follower {
-  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device, ...(o.pin ? { pin: o.pin, ...(o.role ? { role: o.role } : {}) } : {}) } : undefined;
+  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device, ...(o.credential ? { credential: o.credential, ...(o.role ? { role: o.role } : {}) } : {}) } : undefined;
   const defib = o.defib === true || o.show === 'defib';
   // EEG plan E12: the depth-of-anaesthesia window (`#/depth`, views/depth.ts draws it from this follower's engine): the
   // patient monitor under it is not this screen's instrument, so neither is its alarm sound (no Sound, no Silence here)
@@ -204,13 +207,15 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   };
   const link = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
   const said = instrument ? withInstrument(link, instrument) : link;
-  const transport = defib ? asOnePeer(said, 'defib') : instrument?.pin ? asOnePeer(said) : said;
+  const transport = defib ? asOnePeer(said, 'defib') : instrument?.credential ? asOnePeer(said) : said;
   const peerId = newPeerId('view'); // the sync's id, which the window's presses (and a learner remote's commands) share (asOnePeer)
   const status = h('span', { class: 'status-pill', role: 'status' }, `Waiting for the instructor's monitor ${code}…`);
-  // On and off again, this window only
-  const drawSound = () => ((sound.textContent = monitor.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
-  const sound = button('Sound off', () => (monitor.soundOn ? (monitor.disableSound(), drawSound()) : void monitor.enableSound().then(drawSound)), 'small sound');
+  // On and off again; of this browser's pages of the session, only the last switched on sounds (sound-seat.ts)
+  const seat = soundSeat(code, defib ? 'the defibrillator window' : 'the learner monitor', () => monitor.disableSound());
+  const drawSound = () => ((sound.textContent = soundWords(monitor.soundOn, seat.elsewhere)), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
+  const sound = button('Sound off', () => (monitor.soundOn ? (monitor.disableSound(), seat.off()) : void monitor.enableSound().then(() => seat.on())), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
+  seat.onChange(drawSound);
   // Silence here quiets THIS window's alarm sound only (by the skin's rule); the instructor's Silence does not quiet
   // it, and this one sends nothing to the session
   const hush = button('Silence here', () => {
@@ -238,7 +243,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   const f: Follower = { monitor, transport, peerId, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
   // L7: the learner remote's commands, under the sync's id (the peer its learner hello made); `issuedBy` is the host's to set
   let sentN = 0;
-  if (instrument?.pin) f.command = (body) => {
+  if (instrument?.credential) f.command = (body) => {
     const id = `${peerId}-c${++sentN}`;
     transport.send({ v: 1, session: code, from: peerId, seq: 0, sentAt: epochNow(), kind: 'command', body: { ...body, id, issuedBy: 'learner' } } as WireMessage);
     return id;
@@ -353,6 +358,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   }
   const draw = setInterval(drawStatus, 500);
   function destroy(): void {
+    seat.close();
     upright?.removeEventListener('change', onTurn);
     offDraw();
     offReadout();

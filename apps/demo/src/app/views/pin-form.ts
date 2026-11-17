@@ -3,7 +3,7 @@
 // numeric keypad, and the words of each state. The PIN is held in the page's memory only (Q3): the form has no name for
 // it and never submits, so it is never in the address or the history; the field is emptied at sign-in and whenever the
 // page is left (another route, the tab hidden or closed).
-import { INSTRUCTOR_REASONS, normalizeSessionCode, PIN_RE, type InstructorAccess } from '@pme/controller';
+import { INSTRUCTOR_REASONS, normalizeSessionCode, PIN_RE, TICKET_REASONS, type InstructorAccess } from '@pme/controller';
 import { button, h, input, setText } from '../ui.ts';
 
 /** The words of each state the instructor's phone can be in (plan P7). `at`: the case clock, mm:ss. */
@@ -15,6 +15,8 @@ export const PHONE_WORDS = {
   tooManyTries: 'Too many wrong PINs from this phone. Wait a minute, then enter the PIN again.',
   takenOver: (at: string) => `Taken over by another phone at ${at}. Enter the PIN to sign in again.`,
   pinChanged: "The PIN was changed on the instructor's computer. Enter the new PIN.",
+  newSession: "The instructor's computer started a new session. Enter the PIN to sign in again.",
+  notRenewed: "This phone's sign-in could not be renewed. Enter the PIN to sign in again.",
   noPhone: "The instructor's computer does not take an instructor phone.",
   restarted: (at: string) => `The instructor's computer restarted at ${at}: presses still waiting for an answer were not given.`,
   kitTooOld: 'This classroom kit does not take an instructor phone. Use the kit from the same release as the app.',
@@ -31,6 +33,8 @@ export function refusalWords(a: Pick<InstructorAccess, 'reason' | 'code'>, at: s
   if (a.reason === INSTRUCTOR_REASONS.takenOver) return PHONE_WORDS.takenOver(at);
   if (a.reason === INSTRUCTOR_REASONS.pinChanged) return PHONE_WORDS.pinChanged;
   if (a.reason === INSTRUCTOR_REASONS.noPhone) return PHONE_WORDS.noPhone;
+  if (a.reason === TICKET_REASONS.newSession) return PHONE_WORDS.newSession;
+  if (a.reason === TICKET_REASONS.used) return PHONE_WORDS.notRenewed;
   return `Not signed in: ${a.reason ?? "the instructor's computer refused the phone"}.`;
 }
 

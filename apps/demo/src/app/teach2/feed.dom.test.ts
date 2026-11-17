@@ -71,7 +71,7 @@ vi.mock('@pme/renderer', async () => {
   };
 });
 
-const { ControllerSession, VIEWER_EVENTS } = await import('@pme/controller');
+const { ControllerSession, SignInCredential, VIEWER_EVENTS } = await import('@pme/controller');
 const { AppSession } = await import('../session.ts');
 const { Link } = await import('../link.ts');
 const { boardOf, feedOf } = await import('./feed.ts');
@@ -89,6 +89,12 @@ const spec = { ageY: 35, sex: 'M' as const, weightKg: 80, heightCm: 180, comorbi
 const settle = async () => {
   for (let i = 0; i < 30; i++) await Promise.resolve();
 };
+/** Resolves once the host's answer to this phone's hello (a grant or a refusal) has reached its session. */
+const answered = (ctl: { access: { state: string }; onChange(fn: () => void): () => void }) =>
+  new Promise<void>((ok) => {
+    if (ctl.access.state !== 'pending') return ok();
+    const off = ctl.onChange(() => ctl.access.state !== 'pending' && (off(), ok()));
+  });
 const feeds = () => net.sent.flatMap(({ at, m }) => ((m as WireMessage).kind === 'event' ? (m as Extract<WireMessage, { kind: 'event' }>).body.map((e) => ({ at, e })) : [])).filter((x) => x.e.type === 'instructorView');
 const RECOGNITION = (mh.objectives as Array<{ text: string; debrief?: string }>).find((o) => o.debrief === 'recognition')?.text as string;
 
@@ -110,6 +116,7 @@ describe('P6: the view feed and the note path', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'performance', 'Date', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     net.peers.length = 0;
     net.sent.length = 0;
+    sessionStorage.clear(); // the host's book of signed-in devices is the tab's: each case is a new tab
     pin.v = PIN;
     document.body.replaceChildren();
     el = document.createElement('div');
@@ -130,11 +137,12 @@ describe('P6: the view feed and the note path', () => {
   /** An instructor phone that signs in with `p` now (a page opened or reloaded: a fresh session and Link). */
   async function phone(p = PIN) {
     const transport = (await import('@pme/controller')).createWebSocketTransport({ url: 'ws://relay.test/' });
-    const ctl = new ControllerSession({ session: CODE, transport, role: 'instructor', pin: () => p });
+    const ctl = new ControllerSession({ session: CODE, transport, role: 'instructor', credential: new SignInCredential(p) });
     const link = new Link(ctl, transport, null);
     closers.push(() => (link.close(), ctl.close(), transport.close()));
     await vi.advanceTimersByTimeAsync(50);
-    await settle();
+    await answered(ctl); // the host's grant or refusal, as delivered (it waits on a real SHA-256, not on the clock)
+    await settle(); // the welcome that follows it
     return { ctl, link };
   }
 
@@ -184,6 +192,24 @@ describe('P6: the view feed and the note path', () => {
     expect(Math.max(...sizes)).toBeLessThanOrEqual(16 * 1024);
   });
 
+  it("phone() returns only once the host's grant has reached the phone, however long the host's SHA-256 takes", async () => {
+    expect(s.loadScenario(mh)).toMatchObject({ ok: true });
+    await run(1);
+    const real = crypto.subtle.digest.bind(crypto.subtle);
+    const held: Array<() => void> = [];
+    const spy = vi.spyOn(crypto.subtle, 'digest').mockImplementation(((alg: AlgorithmIdentifier, data: BufferSource) => new Promise<ArrayBuffer>((ok) => held.push(() => void real(alg, data).then(ok)))) as never);
+    let back: Awaited<ReturnType<typeof phone>> | null = null;
+    const signing = phone().then((p) => void (back = p));
+    await run(1, 5000); // the clock runs on; the digest is held
+    expect(held.length).toBeGreaterThan(0);
+    expect(back, 'not back while the grant is held').toBeNull();
+    spy.mockRestore();
+    held.splice(0).forEach((go) => go());
+    await signing;
+    expect(back!.ctl.access.state).toBe('granted');
+    expect(back!.link.ctl.scenario.stateId).not.toBeNull(); // the welcome that follows the grant has arrived too
+  });
+
   it('the feed goes only while an instructor is granted, at most once a second, only on a change', async () => {
     expect(s.loadScenario(mh)).toMatchObject({ ok: true });
     await run(1);
@@ -208,7 +234,7 @@ describe('P6: the view feed and the note path', () => {
     for (let i = 1; i < bodies.length; i++) expect(bodies[i], 'each one changed').not.toBe(bodies[i - 1]);
 
     pin.v = '1111';
-    s.host.instructorPinChanged(); // every grant revoked
+    await s.host.instructorPinChanged(); // every grant revoked
     const n = feeds().length;
     await run(13, 3000);
     expect(feeds(), 'revoked: no more').toHaveLength(n);

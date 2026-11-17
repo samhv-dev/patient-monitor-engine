@@ -6,6 +6,7 @@ import { unitText } from './drugs.ts';
 import { drugName, lungLabel } from './glossary.ts';
 import { showVital, vitalLabel, vitalOf } from './vitals.ts';
 import { rhythmLabel } from './rhythms.ts';
+import { tciModelName, tciSetDrug, tciTargetText } from './tci-names.ts';
 
 type Any = Record<string, unknown>;
 const num = (x: unknown): number => (typeof x === 'number' ? x : Number.NaN);
@@ -59,7 +60,7 @@ function pumpLine(e: Any): string {
     case 'rate':
       return `${ch}: rate ${e.rate} ${unitText(String(e.unit))}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
     case 'tci':
-      return num(e.target) > 0 ? `${ch}: TCI ${e.setId}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${e.target}` : `${ch}: TCI stopped`;
+      return num(e.target) > 0 ? `${ch}: TCI ${tciModelName(String(e.setId))}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${tciTargetText(e.target, tciSetDrug(String(e.setId)))}` : `${ch}: TCI stopped`;
     case 'bolus':
       return e.volumeMl !== undefined ? `${ch}: bolus ${e.volumeMl} mL` : `${ch}: bolus ${(e.dose as Any | undefined)?.amount} ${unitText(String((e.dose as Any | undefined)?.unit))}`;
     case 'purge':
@@ -82,7 +83,7 @@ function event(e: Any): string {
     case 'infusion':
       return num(e.rate) > 0 ? `${drug(e.drugId)} ${e.rate} ${unitText(String(e.unit))} infusion started` : `${drug(e.drugId)} infusion stopped`;
     case 'tci':
-      return num(e.target) > 0 ? `${drug(e.drugId)} target-controlled infusion, ${e.mode === 'effect' ? 'effect-site' : 'plasma'} target ${e.target}` : `${drug(e.drugId)} target-controlled infusion stopped`;
+      return num(e.target) > 0 ? `${drug(e.drugId)} target-controlled infusion, ${e.mode === 'effect' ? 'effect-site' : 'plasma'} target ${tciTargetText(e.target, String(e.drugId))}` : `${drug(e.drugId)} target-controlled infusion stopped`;
     case 'vaporiser':
       return num(e.dialPct) > 0 ? `${drug(e.agent)} ${e.dialPct} % at ${e.fgfLpm} L/min fresh gas` : `${drug(e.agent)} vaporiser off`;
     case 'fluid':
@@ -143,6 +144,13 @@ function eegLine(a: Any): string {
   if (a.action === 'impedance') return Array.isArray(v) ? `EEG electrodes ${v.join(' · ')} kΩ` : `EEG electrodes ${String(v)} kΩ each`;
   if (a.action === 'ecgPickup') return `EEG ECG pickup ${v ? 'on' : 'off'}`;
   return 'Device setting changed';
+}
+
+/** A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: a drug "not given", a
+ *  sample "not drawn". */
+export function notDoneOf(c: Any): { what: string; not: string } {
+  const e = (c.event ?? {}) as Any;
+  return e.kind === 'lab' ? { what: LAB_PANEL_WORDS[String(e.panel)] ?? 'Sample', not: 'not drawn' } : { what: describeCommand(c), not: 'not given' };
 }
 
 /** `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); the Log then names it. */

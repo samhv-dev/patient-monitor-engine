@@ -66,8 +66,9 @@ export interface RoomDeps {
    *  sends it to the patient's engine). Absent: no card. */
   defib?: { model(): string | null; choose(model: string | null): void };
   /** A1 (plan pump-rack-tci.md §5, PQ1 = C): the room's pump rack, each channel's kind, and the session's hand-over of a
-   *  new setting (it saves it and sends it to the pump tablet). Absent: no card. */
-  pumps?: { kinds(): PumpKind[]; choose(kinds: PumpKind[]): void };
+   *  new setting (it saves it and sends it to the pump tablet), which answers the host's refusal words (a channel in use
+   *  would go or change kind) or null: applied. Absent: no card. */
+  pumps?: { kinds(): PumpKind[]; choose(kinds: PumpKind[]): string | null };
   /** The room's depth-of-anaesthesia device (EEG plan E12): the site's choice, and the session's hand-over of a new one
    *  (it saves it and switches the patient's EEG on with that reader, or off). Absent: no card. */
   depth?: { model(): string | null; choose(model: string | null): void };
@@ -102,7 +103,7 @@ export interface LearnerPinDeps {
   /** The learner PIN (instructor-pin.ts learnerPin): its `change()` draws a new one; main.ts tells the host, which revokes every learner remote. */
   pin: InstructorPin;
   /** The host's half (L4): wrong learner PINs in the last minute, and the learner remotes granted now. */
-  host: { learnerDenials(): number; learnerRemotes(): number };
+  host: { learnerDenials(): number; learnerRemotes(): number; idle(): Promise<void> };
   /** The relay address, or null: no learner remote can sign in. */
   relay: string | null;
 }
@@ -121,6 +122,7 @@ export function learnerPinCard(d: LearnerPinDeps): { el: HTMLElement; draw(): vo
     d.pin.change();
     if (held()) reveal(true);
     draw();
+    void d.host.idle().then(draw); // the count once the host has revoked them (after any sign-in it was still checking)
   }, 'ip-peer-change lr-pin-change');
   const pinBox = h('div', { class: 'ip-peer-pinbox' }, h('span', { class: 'ip-peer-pin-label' }, W.label), value, hold, change);
   const noRelay = h('p', { class: 'hint ip-peer-norelay' }, W.noRelay);
@@ -449,19 +451,24 @@ export function roomView(d: RoomDeps): RoomView {
   const pumpCard = d.pumps ? (() => {
     const choice = d.pumps;
     const kindsBox = h('div', { class: 'room-pump-kinds' });
+    const refused = h('p', { class: 'error room-pumps-refused', role: 'alert' });
+    const tried = (next: PumpKind[]): boolean => {
+      const why = choice.choose(next);
+      setText(refused, why ?? '');
+      return why === null;
+    };
     const counts = Array.from({ length: PUMP_LIMITS.channels }, (_, i): [string, string] => [String(i + 1), String(i + 1)]);
     const count = select(PUMP_ROOM_WORDS.count, counts, String(choice.kinds().length), (v) => {
-      const n = Number(v);
       const now = choice.kinds();
-      choice.choose(Array.from({ length: n }, (_, i) => now[i] ?? 'syringe'));
-      drawKinds();
+      if (tried(Array.from({ length: Number(v) }, (_, i) => now[i] ?? 'syringe'))) drawKinds();
+      else count.sel.value = String(now.length);
     });
     count.sel.dataset.pumps = 'count';
     const drawKinds = () => kindsBox.replaceChildren(...choice.kinds().map((k, i) => {
       const s = select(PUMP_ROOM_WORDS.channel(i + 1), PUMP_KINDS.map((x): [string, string] => [x, PUMP_ROOM_WORDS.kind[x]]), k, (v) => {
         const next = [...choice.kinds()];
         next[i] = v as PumpKind;
-        choice.choose(next);
+        if (!tried(next)) s.sel.value = choice.kinds()[i] as PumpKind;
       });
       s.sel.dataset.pumps = 'kind';
       return s.el;
@@ -470,6 +477,7 @@ export function roomView(d: RoomDeps): RoomView {
     return h('section', { class: 'room-card room-pumps', 'aria-labelledby': 'room-pumps-h' },
       h('h2', { id: 'room-pumps-h' }, PUMP_ROOM_WORDS.title),
       count.el,
+      refused,
       kindsBox,
       h('p', { class: 'hint' }, PUMP_ROOM_WORDS.hint));
   })() : null;

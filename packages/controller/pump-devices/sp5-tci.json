@@ -1,5 +1,5 @@
 {
-  "$comment": "Mindray BeneFusion SP5 TCI (PQ2 = B, model name only). The maker's page (research/50 W1) gives no mechanical number: each is a gap until the SP5 TCI manual (plan SK2).",
+  "$comment": "Mindray BeneFusion SP5 TCI (PQ2 = B). Its maker's page (research/50 W1) and brochure (research/84 B1) give the TCI library and syringes; each mechanical number is a gap. Data only.",
   "deviceId": "sp5-tci",
   "maker": "Mindray",
   "model": "BeneFusion SP5 TCI",
@@ -7,13 +7,45 @@
   "tci": {
     "modes": { "names": ["TCI", "TIVA"], "src": "TC-02" },
     "targets": { "names": ["plasma", "effect-site"], "src": "TC-04" },
-    "drugs": { "count": 4, "src": "TC-03", "which": { "gap": "which four anaesthetics the pump holds: SP5 TCI operator's manual (research/50 TC-06)" } },
-    "protocols": { "count": 7, "src": "TC-03", "which": { "gap": "which seven pharmacokinetic models the pump holds: SP5 TCI operator's manual (research/50 TC-06)" } },
+    "drugs": { "count": 4, "src": "TC-03" },
+    "protocols": { "count": 7, "src": "TC-03" },
+    "library": [
+      {
+        "drugId": "propofol", "src": "TB-01",
+        "concentration": { "values": [10, 20], "unit": "mg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 15, "unit": "µg/mL", "src": "TB-04" },
+        "models": [
+          { "name": "Marsh", "targets": ["plasma"], "src": "TB-02", "ageYears": { "min": 16, "max": 150, "src": "TB-05" } },
+          { "name": "Schnider", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 16, "max": 94, "src": "TB-05" } },
+          { "name": "Kataria (Pedia)", "targets": ["plasma"], "src": "TB-02", "ageYears": { "min": 3, "max": 16, "src": "TB-05" } },
+          { "name": "Paedfusor (Pedia)", "targets": ["plasma"], "src": "TB-02", "ageYears": { "min": 1, "max": 18, "src": "TB-05" } }
+        ]
+      },
+      {
+        "drugId": "remifentanil", "src": "TB-01",
+        "concentration": { "min": 20, "max": 50, "unit": "µg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 20, "unit": "ng/mL", "src": "TB-04" },
+        "models": [{ "name": "Minto", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 12, "max": 100, "src": "TB-05" } }]
+      },
+      {
+        "drugId": "sufentanil", "src": "TB-01",
+        "concentration": { "min": 0.2, "max": 5, "unit": "µg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 20, "unit": "ng/mL", "src": "TB-04" },
+        "models": [{ "name": "Gepts", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 12, "max": 150, "src": "TB-05" } }]
+      },
+      {
+        "drugId": "alfentanil", "src": "TB-01",
+        "concentration": { "min": 100, "max": 500, "unit": "µg/mL", "src": "TB-03" },
+        "targetRange": { "min": 0, "max": 500, "unit": "ng/mL", "src": "TB-04" },
+        "models": [{ "name": "Maitre", "targets": ["plasma", "effect-site"], "src": "TB-02", "ageYears": { "min": 18, "max": 95, "src": "TB-05" } }]
+      }
+    ],
     "maxRate": { "gap": "the highest rate the pump runs in TCI: SP5 TCI operator's manual (research/50 TC-09)" },
     "patient": { "gap": "the patient data the pump accepts (age, weight, height, sex) and the limits it refuses outside: SP5 TCI operator's manual (research/50 TC-14)" },
-    "targetRange": { "gap": "the target ranges and steps, plasma and effect-site: SP5 TCI operator's manual (research/50 TC-15)" }
+    "targetStep": { "gap": "the target steps, plasma and effect-site: SP5 TCI operator's manual (research/50 TC-15)" }
   },
-  "syringes": { "gap": "the syringe sizes: SP5 TCI operator's manual (research/50 TC-07)" },
+  "syringes": { "ml": [5, 10, 20, 30, 50, 60], "src": "TB-06" },
+  "accuracy": { "pct": 2, "atLeastMlH": 1, "belowPct": 5, "src": "TB-07" },
   "rate": { "gap": "the flow rate range and step per syringe size: SP5 TCI operator's manual (research/50 TC-08)" },
   "bolus": { "gap": "the bolus rate: SP5 TCI operator's manual (research/50 TC-10)" },
   "purge": { "gap": "the purge rate and volume limit: SP5 TCI operator's manual (research/50 TC-10)" },

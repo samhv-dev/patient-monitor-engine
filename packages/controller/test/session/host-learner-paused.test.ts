@@ -3,9 +3,11 @@
 // a running infusion) is REFUSED at the host with its own reason and code, `paused`: nothing reaches the engine's queue,
 // nothing is recorded as given, and the host tells its own screens (onNotGiven) what was not given, by whom, so the Log and
 // the record show the attempt. Preparing a drug does not act on the patient and stays allowed. After the resume the same
-// give is accepted and acts as before. The pause is the host's own `time pause`, the one place the patient's clock stops.
+// give is accepted and acts as before. A sample is an act on the patient like a give and follows the same rule; a sample
+// drawn before the pause returns at its turnaround in case time. The pause is the host's own `time pause`, the one place
+// the patient's clock stops.
 import { afterEach, describe, expect, it } from 'vitest';
-import { createEngine, type Command, type DispatchResult, type EngineEvent } from '@pme/engine-core';
+import { createEngine, turnaroundFor, type Command, type DispatchResult, type EngineEvent } from '@pme/engine-core';
 import { HostSession, type HostSessionOptions, type HostTarget, type NotGiven } from '../../src/session/host-session.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { createStamper, PAUSED_REFUSAL, type ManagedTransport, type WireEvent, type WireMessage } from '../../src/protocol.ts';
@@ -148,6 +150,20 @@ describe('L14: a learner device gives no drug while the case is paused', () => {
     expect(x.notGiven.map((n) => (n.command as { event: { drugId: string } }).event.drugId)).toEqual(['fentanyl', 'midazolam']);
   });
 
+  it('a sample: refused at the host with the `paused` code and its words; nothing to the engine; after the resume the same draw is accepted', async () => {
+    const x = await setup();
+    await x.time('pause');
+    const lab = { type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } };
+    const id = x.lr.command(lab);
+    expect(await ack(x.got, id)).toMatchObject({ accepted: false, code: 'paused', reason: PAUSED_REFUSAL });
+    expect(drugCmds(x.tg.got)).toEqual([]);
+    expect(appliedIds(x.panelGot)).not.toContain(id);
+    expect(x.notGiven).toEqual([expect.objectContaining({ from: 'lr.1', reason: PAUSED_REFUSAL, command: expect.objectContaining({ type: 'applyEvent', issuedBy: 'learner', by: KEY, event: { kind: 'lab', panel: 'abg' } }) })]);
+    await x.time('resume');
+    expect((await x.send(lab)).accepted).toBe(true);
+    expect(drugCmds(x.tg.got)).toEqual([expect.objectContaining({ event: expect.objectContaining({ kind: 'lab', panel: 'abg' }), issuedBy: 'learner', by: KEY })]);
+  });
+
   it('preparing stays allowed while paused: a stage and a discard are answered as before', async () => {
     const x = await setup();
     await x.time('pause');
@@ -196,6 +212,25 @@ describe('L14: a learner device gives no drug while the case is paused', () => {
 });
 
 describe('L14 on the real engine: paused, the drug is not in the engine; resumed, the same give is', () => {
+  it('a sample drawn before the pause keeps its draw time and returns at its turnaround in case time; one asked for during the pause is not drawn', async () => {
+    const engine = createEngine({ seed: 7 });
+    const results: Array<Extract<EngineEvent, { type: 'labResult' }>> = [];
+    engine.on((e: EngineEvent) => void (e.type === 'labResult' && results.push(e)));
+    const t: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => undefined };
+    const x = await setup({ target: t });
+    engine.advanceTo(10);
+    const drawnAt = engine.now().simT;
+    expect((await x.send({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } })).accepted).toBe(true);
+    await x.time('pause'); // the host's clock stops: the engine is not advanced while paused
+    expect(await x.send({ type: 'applyEvent', event: { kind: 'lab', panel: 'vbg' } })).toMatchObject({ accepted: false, code: 'paused' });
+    await x.time('resume');
+    // in 1 s strides, past the engine's next 1 Hz lab check after the due time (the result carries its due time)
+    for (let s = drawnAt + 1; s <= drawnAt + turnaroundFor('abg') + 2; s += 1) engine.advanceTo(s);
+    expect(results.map((r) => r.panel)).toEqual(['abg']);
+    expect(results[0]!.drawnAt).toBeCloseTo(drawnAt, 1);
+    expect(results[0]!.t).toBeCloseTo(drawnAt + turnaroundFor('abg'), 1);
+  });
+
   it('the shipped fentanyl 2 mL: refused while paused (the engine reports no fentanyl after 2 s of run), accepted after the resume (the engine reports it)', async () => {
     const engine = createEngine({ seed: 7 });
     const dispatched: Command[] = [];

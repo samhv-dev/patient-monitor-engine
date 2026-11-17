@@ -14,6 +14,7 @@
 // (the owner's ruling of 10 November: a device's face carries no Persian), `lang="en"`, left to right.
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
+import { tciModelName } from '../tci-names.ts';
 import { h, setText } from '../ui.ts';
 import type { FaceRow } from './face-row.ts';
 
@@ -28,10 +29,17 @@ export type ProfileValue = { gap: string } | ({ src: string } & Record<string, u
  * it has merged; until then null, and the face says the profile is not loaded.
  */
 export interface FaceProfiles {
-  syringe: { nearEnd: ProfileValue };
-  drip: { kvo: { after: ProfileValue } & Record<string, unknown> };
+  syringe: { nearEnd: ProfileValue } & DeviceReadings;
+  drip: { kvo: { after: ProfileValue } & Record<string, unknown> } & DeviceReadings;
   /** sp5-tci.json (S1): the TCI mode of a syringe channel; its highest TCI rate is a gap until the SP5 TCI manual. */
   tci: { tci: { maxRate: ProfileValue } & Record<string, unknown> };
+}
+
+/** A device's stated resolutions: its rate step (mL/h) and its infused-volume display range (mL). A TCI channel reads
+ *  the SP-500's (D12: the SP5 TCI's own are gaps). */
+interface DeviceReadings {
+  rateStep: { step: number };
+  volumeDisplay: { max: number };
 }
 
 /** The face's words, every one (SK1 replaces this object with a skin's labels file, each label with its provenance). */
@@ -117,13 +125,25 @@ export interface FaceModelOut {
   fields: FaceField[];
 }
 
+/** Two significant digits, never in exponent form (toPrecision writes 3.9e-12). */
+const twoDigits = new Intl.NumberFormat('en', { maximumSignificantDigits: 2, useGrouping: false });
+
 /** A number for the face: at most three significant digits under 100, whole above (display only, the value kept). */
 export function faceNum(x: number): string {
   if (!Number.isFinite(x)) return FACE_LABELS.dash;
   const a = Math.abs(x);
-  const s = a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : x.toPrecision(2);
-  return s.includes('.') && !s.includes('e') ? s.replace(/\.?0+$/, '') : s;
+  const s = a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : twoDigits.format(x === 0 ? 0 : x); // -0 is written 0
+  return trimZeros(s);
 }
+const trimZeros = (s: string) => (s.includes('.') ? s.replace(/\.?0+$/, '') : s);
+
+const decimals = (n: number) => String(n).split('.')[1]?.length ?? 0;
+/** `x` at a device's resolution `step`; null: no resolution known, `x` as it is. */
+const onStep = (x: number, step: number | null) => (step === null ? x : Math.round(x / step) * step);
+/** `x` written at `step`, every digit of it kept and trailing zeros dropped as faceNum drops them; null: as faceNum. */
+const shown = (x: number, step: number | null) => (step === null ? faceNum(x) : trimZeros(onStep(x, step).toFixed(decimals(step))));
+/** The least digit of a display whose range ends at `max` (999.9 → 0.1; 9999 → 1). */
+const leastDigit = (max: number) => 10 ** -decimals(max);
 
 const isGap = (v: ProfileValue | undefined): v is { gap: string } => !!v && typeof (v as { gap?: unknown }).gap === 'string';
 
@@ -144,19 +164,25 @@ export function faceModel(row: FaceRow | null, kind: ChannelKind, profiles: Face
   const perMl = c ? c.amount / c.perMl : null; // the programme's amount per mL: what the pump believes it gives
   const programmed = p && c ? `${drugName(p.drugId)} ${c.perMl === 1 ? L.perMl(faceNum(c.amount), unit) : L.inMl(faceNum(c.amount), unit, faceNum(c.perMl))}` : L.notProgrammed;
   const ml = (x: number | null | undefined) => (x === null || x === undefined ? L.dash : `${faceNum(x)} mL`);
-  const flowing = row !== null && (row.rate !== null || mode === 'tci'); // in TCI the pump sets its own rate
+  // a rate in mL/h and the infused volume at the channel's device's resolution (D12)
+  const device = profiles ? profiles[k] : null;
+  const rateStep = device ? device.rateStep.step : null;
+  const volumeStep = device ? leastDigit(device.volumeDisplay.max) : null;
+  const rateText = (x: number) => `${shown(x, rateStep)} mL/h`;
+  // in TCI the pump sets its own rate; a rate that shows as 0 has no time to empty (§5)
+  const flowing = row !== null && (row.rate !== null || mode === 'tci') && onStep(row.rateMlH, rateStep) > 0;
   const value: Record<FieldKey, () => string | null> = {
     syringe: () => ml(row?.syringeMl),
     set: () => (row?.set ? `${faceNum(row.set)} drops/mL` : L.dash),
     rate: () => {
-      if (row && mode === 'tci') return `${faceNum(row.rateMlH)} mL/h`; // the rate the TCI controller runs now
+      if (row && mode === 'tci') return rateText(row.rateMlH); // the rate the TCI controller runs now
       if (!row || !row.rate) return L.dash;
-      return k === 'drip' && row.rate.unit === 'drops/min' ? `${faceNum(row.rate.rate)} drops/min` : `${faceNum(row.rateMlH)} mL/h`;
+      return k === 'drip' && row.rate.unit === 'drops/min' ? `${faceNum(row.rate.rate)} drops/min` : rateText(row.rateMlH);
     },
     rateOther: () => {
       if (!row || !row.rate || !row.set) return L.dash;
       // mL/h = drops/min × 60 ÷ drops/mL (D2 item 3), and back
-      return row.rate.unit === 'drops/min' ? `${faceNum(row.rateMlH)} mL/h` : `${faceNum((row.rateMlH * row.set) / 60)} drops/min`;
+      return row.rate.unit === 'drops/min' ? rateText(row.rateMlH) : `${faceNum((row.rateMlH * row.set) / 60)} drops/min`;
     },
     dose: () => {
       if (!row || !row.rate) return L.dash;
@@ -164,7 +190,11 @@ export function faceModel(row: FaceRow | null, kind: ChannelKind, profiles: Face
       return perMl === null ? L.dash : `${faceNum(row.rateMlH * perMl)} ${unit}/h`;
     },
     limit: () => (!row || row.state === 'notLoaded' ? L.dash : row.limitMl === null ? L.none : ml(row.limitMl)),
-    infused: () => (!row || row.state === 'notLoaded' ? L.dash : `${ml(row.infusedMl)}${perMl === null ? '' : ` · ${faceNum(row.infusedMl * perMl)} ${unit}`}`),
+    infused: () => {
+      if (!row || row.state === 'notLoaded') return L.dash;
+      const v = onStep(row.infusedMl, volumeStep); // the amount is the programme's of the volume shown
+      return `${shown(v, volumeStep)} mL${perMl === null ? '' : ` · ${faceNum(v * perMl)} ${unit}`}`;
+    },
     remaining: () => (!row || row.state === 'notLoaded' ? L.dash : ml(row.volumeMl)),
     toEmpty: () => (flowing && row?.timeToEmptyMin !== null && row?.timeToEmptyMin !== undefined ? duration(row.timeToEmptyMin) : L.dash),
     alarms: () => (!row || row.state === 'notLoaded' ? L.dash : row.alarms.length ? row.alarms.map((a) => L.alarm[a]).join(', ') : L.none),
@@ -173,7 +203,7 @@ export function faceModel(row: FaceRow | null, kind: ChannelKind, profiles: Face
     almostEmpty: () => (!profiles ? L.noProfile : isGap(profiles.syringe.nearEnd) ? L.gap.nearEnd : null),
     kvo: () => (!profiles ? L.noProfile : isGap(profiles.drip.kvo.after) ? L.gap.kvoAfter : null),
     // E2: the pump's own prediction and its target, read only (setting a target is A2's flow)
-    tciSet: () => tci?.setId ?? L.dash,
+    tciSet: () => (tci ? tciModelName(tci.setId) : L.dash),
     tciMode: () => (!tci ? L.dash : tci.mode === null ? L.tciMode.stopped : L.tciMode[tci.mode]),
     target: () => (tci && tci.target !== null && tci.mode !== null ? `${faceNum(tci.target)} ${unitText(tci.unit)}` : L.dash),
     cp: () => (tci ? `${faceNum(tci.cp)} ${unitText(tci.unit)}` : L.dash),

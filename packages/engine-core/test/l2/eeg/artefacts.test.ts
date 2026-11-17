@@ -26,7 +26,7 @@ function art(seconds: number, at: (n: number, tS: number) => Partial<ArtefactInp
 const H0 = { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 };
 const M0 = { sevoflurane: 0, isoflurane: 0, desflurane: 0, n2o: 0 };
 function brain(seconds: number, propUgMl: number, seed = 13): number[] {
-  const x = { ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, do2Rel: 1, tempC: 37, hyp: { ...H0, gabaIv: 1000 * propUgMl }, mac: M0 };
+  const x = { ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, metabolic: 0, tempC: 37, hyp: { ...H0, gabaIv: 1000 * propUgMl }, mac: M0 };
   const s = spectrumOf(cortexStep(undefined, x, 1), agentMixOf(x));
   const g = createSynth(seedStream(seed, 'eeg'), FS, s);
   return Array.from({ length: seconds * FS }, () => synthNext(g, () => s));

@@ -1,11 +1,13 @@
 // AlarmSounder: turns "alarm X of level L is active" into pulse tones on the existing look-ahead ToneScheduler
 // (brief §3.6, §6.4, §6.4.1). Only the highest-priority active alarm sounds (lowest level number; ties: first
 // raised). Bursts repeat at the level's repeatS until the alarm clears; a change of the sounding alarm cancels the
-// old train's pending pulses and starts the new train at once. Silence cancels pending pulses for durationS; with
-// cancelOnNewAlarm (saadat) any NEW alarm ends the silence. Every pulse has a stable, never-reused id
+// old train's pending pulses and starts the new train at the next pump. Silence cancels pending pulses for durationS;
+// with cancelOnNewAlarm (saadat) any NEW alarm ends the silence. Every pulse has a stable, never-reused id
 // `alarm:<alarmId>:<train>:<burst>:<pulse>` so a cancel reaches pulses already handed to Web Audio.
-// Sim time ↔ real time: pulse offsets are real seconds × clock.timeScale (bursts keep real-time patterns [ENG: device]).
-import { burstPulses, dbToGain, levelSound, volumeGain } from './alarm-bursts.ts';
+// Whether an alarm sounds follows the case's clock (raise, clear and silence come in sim time); how it sounds does not:
+// the bursts and their repeat are placed on the scheduler's run time, real seconds while the case runs, so a change of
+// speed neither stretches nor squeezes them, and a pause holds them.
+import { BurstSchedule, burstPulses, dbToGain, levelSound, volumeGain } from './alarm-bursts.ts';
 import type { AlarmLevel, AlarmSoundProfile, ProfileOverrides } from './profiles/types.ts';
 import type { ToneRequest } from './scheduler.ts';
 
@@ -22,7 +24,7 @@ export interface AlarmToneRequest extends ToneRequest {
 export interface SounderScheduler {
   enqueue(tone: ToneRequest): void;
   cancel(ids: readonly string[]): void;
-  readonly clock: { readonly timeScale: number };
+  readonly clock: { readonly timeScale: number; simToRun(t: number): number; runToSim(r: number): number };
 }
 
 export interface AlarmSounderOptions {
@@ -43,10 +45,8 @@ interface Train {
   alarmId: string;
   level: AlarmLevel;
   no: number;
-  startT: number;
-  nextBurst: number;
-  nextBurstT: number;
-  done: boolean;
+  bursts: BurstSchedule;
+  burstNo: number;
 }
 
 const PRUNE_AFTER_S = 5;
@@ -60,7 +60,7 @@ export class AlarmSounder {
   private seq = 0;
   private trainNo = 0;
   private train: Train | null = null;
-  private pending = new Map<string, number>(); // id → sim t
+  private pending = new Map<string, number>(); // id → run time
   private silentUntil: number | null = null;
   /** The highest priority (lowest level) active when the silence began; null = none. */
   private silentLevel: AlarmLevel | null = null;
@@ -133,24 +133,28 @@ export class AlarmSounder {
     this.retrain(t);
   }
 
-  /** Enqueue every burst that starts before t + horizon. Call it often (every scheduler tick or frame). */
+  /** Enqueue every burst that starts before t + horizon; t is now (a raise posted late starts its train here). Call it
+   *  often (every scheduler tick or frame) and after every batch of alarm events. */
   pump(t: number): void {
     if (this.silentUntil !== null && t >= this.silentUntil) {
       const end = this.silentUntil;
       this.silentUntil = null;
       this.retrain(end);
     }
-    for (const [id, pt] of this.pending) if (pt < t - PRUNE_AFTER_S) this.pending.delete(id);
+    const clock = this.sched.clock;
+    const r = clock.simToRun(t);
+    for (const [id, pr] of this.pending) if (pr < r - PRUNE_AFTER_S) this.pending.delete(id);
     const tr = this.train;
     if (!tr || this.silentUntil !== null) return;
-    const ts = this.sched.clock.timeScale;
     const ls = levelSound(this.profile, tr.level, this.ov);
     const gain = volumeGain(this.volumeRange, this.volumeStep) * dbToGain(ls.levelDb);
-    while (!tr.done && tr.nextBurstT <= t + this.horizonS * ts) {
+    for (const start of tr.bursts.take(r, r + this.horizonS)) {
       burstPulses(ls).forEach((p, i) => {
+        const runT = start + p.offsetS;
         const req: AlarmToneRequest = {
-          t: tr.nextBurstT + p.offsetS * ts,
-          id: `alarm:${tr.alarmId}:${tr.no}:${tr.nextBurst}:${i}`,
+          t: clock.runToSim(runT),
+          runT,
+          id: `alarm:${tr.alarmId}:${tr.no}:${tr.burstNo}:${i}`,
           kind: 'alarm',
           freqHz: p.freqHz,
           durS: p.durS,
@@ -158,12 +162,10 @@ export class AlarmSounder {
           level: tr.level,
           profile: this.profile.id,
         };
-        this.pending.set(req.id, req.t);
+        this.pending.set(req.id, runT);
         this.sched.enqueue(req);
       });
-      tr.nextBurst++;
-      if (ls.repeatS === null) tr.done = true;
-      else tr.nextBurstT = tr.startT + tr.nextBurst * ls.repeatS * ts;
+      tr.burstNo++;
     }
   }
 
@@ -184,12 +186,15 @@ export class AlarmSounder {
     const top = this.top();
     const cur = this.train;
     if (cur && top && cur.alarmId === top.id && cur.level === top.level) return;
-    if (cur) this.cancelPending((pt, id) => id.startsWith(`alarm:${cur.alarmId}:${cur.no}:`) && pt >= t);
-    this.train = top && this.silentUntil === null ? { alarmId: top.id, level: top.level, no: this.trainNo++, startT: t, nextBurst: 0, nextBurstT: t, done: false } : null;
-    this.pump(t);
+    const r = this.sched.clock.simToRun(t);
+    if (cur) this.cancelPending((pr, id) => id.startsWith(`alarm:${cur.alarmId}:${cur.no}:`) && pr >= r);
+    this.train =
+      top && this.silentUntil === null
+        ? { alarmId: top.id, level: top.level, no: this.trainNo++, bursts: new BurstSchedule(r, levelSound(this.profile, top.level, this.ov).repeatS), burstNo: 0 }
+        : null;
   }
 
-  private cancelPending(match: (t: number, id: string) => boolean): void {
+  private cancelPending(match: (r: number, id: string) => boolean): void {
     const ids = [...this.pending].filter(([id, pt]) => match(pt, id)).map(([id]) => id);
     for (const id of ids) this.pending.delete(id);
     if (ids.length > 0) this.sched.cancel(ids);
