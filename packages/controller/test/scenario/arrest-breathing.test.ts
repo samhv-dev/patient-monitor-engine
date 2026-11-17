@@ -14,7 +14,7 @@ const WRITE = process.env.PME_ARREST_BREATHING_WRITE === '1';
 
 const SPONT = ['rr', 'vt', 've', 'fatigue', 'paco2Rest', 'paco2Set', 'nextT', 'pc', 'plS', 'effort', 'muscle', 'effortRr'] as const;
 /** The brainstem gate's state: seconds unperfused and the reopening gate (absent: perfused, open). */
-const gateOf = (p: Pipeline): { anoxS?: number; gate?: number } => p.resp.spont ?? {};
+const gateOf = (p: Pipeline): { anoxS?: number; gate?: number } => p.organs.brain.energy.brainstem;
 
 const value = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? null : round(v));
 
