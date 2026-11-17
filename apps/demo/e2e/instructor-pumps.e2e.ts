@@ -60,7 +60,7 @@ test("a drip channel runs to Infusion Complete: the laptop, the phone over the r
       { action: 'load', ch: 4, channel: 'drip', contents: { drugId: 'phenylephrine', concentration: PHENYLEPHRINE, volumeMl: 100 } },
       { action: 'program', ch: 4, drugId: 'phenylephrine', concentration: PHENYLEPHRINE, set: 20 },
       { action: 'rate', ch: 4, rate: 60, unit: 'mL/h', limitMl: 0.5 },
-      { action: 'start', ch: 2 },
+      { action: 'start', ch: 4 },
     ]);
     // while it runs, the phone's Drugs tab lists it by what the bag holds
     await phone.getByRole('tab', { name: 'Drugs & fluids' }).click();
