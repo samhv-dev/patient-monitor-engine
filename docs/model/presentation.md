@@ -602,7 +602,7 @@ renderer, audio and skin contracts.
 | `report3` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The report of a /2 run (null: |
 | `preparationsOf` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | L13: the learner remotes' preparations, from the record alone (the /2 runner's staged preparations and its administrations, each give's `prep` the host's record of it): |
 | `marks` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Every mark (bookmark) of the run in order, with its kind and note when it has them; |
-| `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug, from the kept rows. |
+| `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug: |
 | `givenLines` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The Debrief's line of each drug given, and the live "Given so far": |
 | `facts` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The measured facts of the kept course, in a fixed order; |
 | `perMinute` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: |
@@ -712,7 +712,8 @@ renderer, audio and skin contracts.
 | `pumpAlarmText` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | — |
 | `pumpAlarmsOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | Every alarm the channel rows list. |
 | `clearedBy` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | The alarms a command on a channel clears, of those standing on it (the engine's applyPump). |
-| `pumpCommandOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | A pump command's channel and action, from a command as the host applied it; |
+| `pumpCommandOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | A pump command's channel and action, from a command as the host applied it, and for a load what it puts on the channel; |
+| `heldOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | What a channel holds and is programmed with as its alarm names them: |
 | `bolusUnits` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The units a bolus may be given in on a channel: |
 | `bolusHint` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The rapid rate the bolus runs at, from the SP-500 profile for the loaded syringe size, and the volume gap. |
 | `mountFlows` | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | The flows on every channel of `rack`, sending through `link` (a granted pump tablet's follower). |
@@ -758,6 +759,7 @@ renderer, audio and skin contracts.
 | `labsLink` | [`apps/demo/src/app/remote/labs.ts`](../../apps/demo/src/app/remote/labs.ts) | The link of a granted learner follower. |
 | `labsView` | [`apps/demo/src/app/remote/labs.ts`](../../apps/demo/src/app/remote/labs.ts) | The Labs tab: |
 | `trayView` | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | The tray: its preparations, each with its state and Give, and "Deliver the tray". |
+| `restoredReading` | [`apps/demo/src/app/restored-state.ts`](../../apps/demo/src/app/restored-state.ts) | The reading of a snapshot, or null when its state holds no drug state (an older or foreign snapshot). |
 | `rhythmGroups` | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | Groups with every library id placed once ("Other" collects ids the map does not name). |
 | `startCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | The code a starting instructor's page runs under, or null when it has none and draws a new one. |
 | `keepsRoomCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Whether the code this page runs becomes the room's, which it does when started without `?session=` and not after "Start a new session". |
@@ -1207,6 +1209,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | Plan learner-action-remote.md L8 (§4 D2, D3, D8; LQ4 ruled 9 November): the learner remote's Infusions tab. |
 | [`apps/demo/src/app/remote/labs.ts`](../../apps/demo/src/app/remote/labs.ts) | Plan learner-action-remote.md L11 (§4 D2 item 5, D6; LQ2, LQ13 ruled 9 November): the learner remote's Labs tab. |
 | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | Plan learner-action-remote.md L7 (§4 D2, D3, D7; LQ3, LQ7): the tray on the learner remote's Drugs tab. |
+| [`apps/demo/src/app/restored-state.ts`](../../apps/demo/src/app/restored-state.ts) | What a return to a bookmark (or a reload's return to its position) restored, read from the snapshot the engine was restored from. |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Room plan R1 (docs/plans/room-and-instruments.md §7; Q3 ruled 5 November = A): the room code lives until the instructor asks for a new one, through reloads, restarts and the next day. |
 | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The remembered layout of the room (plan room-and-instruments.md R7, §4 D8; Q10 ruled 5 November = A: device names are kept across days, until "Forget the room"). |
