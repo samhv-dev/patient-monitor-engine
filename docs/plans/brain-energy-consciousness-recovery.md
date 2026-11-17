@@ -761,6 +761,7 @@ reading error the notes state (research notes 90a and 90b).
 | Zhao et al. 2021, NeuroImage (PMC8272558) | [FT] | acetazolamide (15 mg/kg), 15O-water PET, 19 healthy adults: whole-brain +39 % (SD 19) |
 | Battisti-Charbonney et al. 2011, J Physiol 589:3039 (DOI 10.1113/jphysiol.2011.206052; PMC3139085) | [FT] | MCA flow velocity (not flow) in 16 volunteers: sigmoid maxima 80 / 78.9 % hyperoxic and 101 / 101.7 % hypoxic (right / left), counted from the mean minimum during 5 min of hyperventilation, not from rest; the resting end-tidal PCO2 is not reported; the abstract's +108 % excludes four of the 16 subjects (Table 1) |
 | Grossmann & Koeberle 2000, Cerebrovasc Dis 10:65 (PMID 10629349) | [FT] | 59 healthy or CNS-excluded people, Xe-133 fast flow F1, standardised to PaCO2 36.5: rest 70.8; 98.5 / 109.7 / 118.6 / 127 at 10 / 13 / 15 / 18 mg/kg acetazolamide (× 1.39 / 1.55 / 1.68 / 1.79), each step significant including 15 → 18, so no plateau shown (p. 66, Fig. 1 p. 67); n 6 at 18 mg/kg, all with severe side effects (Table 1, p. 67); BP slightly lower (p. 68) |
+| Kety & Schmidt 1948, J Clin Invest 27:484 (PMC439519) | [FT] (page scans) | 8 studies in healthy young men, N2O method, 5 % CO2 (6) or 7 % (2): whole-brain flow 53 → 93 mL/100 g/min, mean (Table II p. 486), arterial PCO2 43 → 52 mmHg (Table I p. 485), direct MAP 82 → 93 mmHg (Table III p. 487; "rose significantly", p. 491); no plateau shown (Fig. 3 p. 490) |
 | Willie et al. 2012, J Physiol (DOI 10.1113/jphysiol.2012.228551; PMC3459041) | [FT] (early online pagination) | 16 healthy young adults, end-tidal forcing, duplex ICA and VA flow: ICA flow 222 → 341 mL/min at PaCO2 49 (× 1.54, MAP 82 → 87, not significant), → 482 at 58 (MAP 94), → 489 at 62 (MAP 100, n 3); ICA conductance up to × 1.85 at 58 (Table 1, p. 6); the authors cannot separate PaCO2 from the MAP rise (p. 13) |
 | Secomb & Pries 2013, C R Physique (PMC4117233), giving Pries 1992; Trejo-Soto 2022, Micromachines (PMC8954080) | [FT] | blood viscosity against haematocrit and vessel diameter, not a power law; rises at low shear |
 | Mühling et al. 1999, Can J Anaesth (PMID 10391602) | [ABS] (the full abstract's means) | 2 % CBFV per 1 % fall in Hct and CaO2; means Hb 14.5 → 10.3, Vm-MCA 61.2 → 77.3 cm/s (the candidate power form of §9.2 item 3 takes k = 0.683 from them) |
@@ -1682,11 +1683,26 @@ merge B5c's landing and B2.
    - *The measurements (§2.2, B2v; notes 90, 90a §2 and §4, 90b §5).* Whole-brain or volumetric flow: × 1.39 with
      acetazolamide 15 mg/kg (PET, 19 adults); × 1.54 internal-carotid flow and × 1.50 carotid plus vertebral at
      PaCO2 ≈ 49 with MAP not significantly changed, rising to × 2.2 at PaCO2 ≈ 62 when MAP had risen 21 % (3 of 16
-     subjects); carotid conductance (flow per mmHg) up to × 1.85 (Willie 2012). Grey-matter-weighted flow: × 1.55,
+     subjects); carotid conductance (flow per mmHg) up to × 1.85 (Willie 2012). Whole-brain flow by the nitrous oxide
+     method in healthy young men breathing 5 % CO2 (6 studies) or 7 % (2), the mean pooling both: 53 → 93 mL/100 g/min
+     (Table II, p. 486; the authors give the rise as averaging 75 %, Summary p. 491), at an arterial PCO2 of 43 → 52 mmHg
+     (Table I, p. 485; at 5 % 42 → 50, 41 → 47, 41 → 48, 48 → 54, 41 → 46, 42 → 53; at 7 % 45 → 60, 45 → 58) and a direct
+     mean arterial pressure of 82 → 93 mmHg (Table III, p. 487; the authors state that it rose significantly during the
+     CO2 inhalations, Summary p. 491), so the figure is not at a constant pressure; no plateau is shown (Fig. 3, p. 490)
+     (Kety & Schmidt 1948, J Clin Invest 27:484). Grey-matter-weighted flow: × 1.55,
      1.68 and 1.79 at 13, 15 and 18 mg/kg (Xe-133; every step significant; blood pressure slightly lower; at 18 mg/kg
      n 6, all with severe side effects; Grossmann & Koeberle 2000); × 1.70 at 16 mg/kg (ASL, 11 controls). Dogs give
      the form, not a human number: the rise to CO2 halves when pressure is held at 100 and vanishes at 50 (Harper &
      Glass 1965), and the fitted limits lie inside the measured points.
+   - *Where the CO2 measurements differ (set side by side, not resolved).* Battisti-Charbonney 2011: MCA velocity from
+     the hypocapnic floor (end-tidal PCO2 ≈ 25–28 mmHg), not from rest, sigmoid maxima of 78.9–80 % hyperoxic and
+     101–101.7 % hypoxic (all subjects), the MAP threshold at an end-tidal PCO2 of 49.1 / 44.4 mmHg. Willie 2012: ICA
+     volumetric flow from rest, × 1.54 at PaCO2 ≈ 49 (MAP not significantly changed), × 1.88 at 54, × 2.17 at 58 (MAP
+     +14 % at 58), conductance × 1.85 at ≈ 58. Kety & Schmidt 1948: whole-brain flow from rest (arterial PCO2 43), × 1.75
+     at PaCO2 52 on the means (arithmetic on Table II; per subject × 1.34 to × 2.55) with MAP +13 % on the means. The
+     velocity study describes a plateau, while the two volumetric studies show flow still rising at PaCO2 52–60;
+     reasons not tested here: the authors' caveat that velocity understates flow if the MCA widens, the different
+     references of the percentages, end-tidal against arterial gases, and the pressure rise.
    - *Options.* R_N is built at **1.40, the built value**: marked [P], not sourced, the engine's own pressure–flow
      line continued. In a normal patient the engine's CO2 response (3 % per mmHg) stops at the ceiling, so each option
      also sets the PaCO2 above which hypercapnia adds no flow (mine, arithmetic on `co2Factor`); measured flow was still
