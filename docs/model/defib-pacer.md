@@ -166,6 +166,7 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | `messagePriority` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | A message's equipment-alarm priority from appendix C, or 'info' for one appendix C does not list as an alarm. |
 | `connectionMessages` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The connection messages showing now, the most important first (appendix C's priorities; |
 | `connectionKey` | [`l3/defib-pacer/connections.ts`](../../packages/engine-core/src/l3/defib-pacer/connections.ts) | The connection, held-button and message fields as primitives, for the device layer's change compare (no string or object built: |
+| `createDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | — |
 | `chargeTimeS` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Charge time (s) for an energy: |
 | `validateDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | `energies`: |
 | `applyDefib` | [`l3/defib-pacer/defib.ts`](../../packages/engine-core/src/l3/defib-pacer/defib.ts) | Apply a validated action. |
@@ -174,6 +175,7 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | `energyReason` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The refusal for an energy not in a model's list, or undefined. |
 | `pacerGridReason` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The refusal for a pacer rate or output off the model's grid, or undefined. |
 | `validateM2Command` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | Validate one `device defib <action>` other than `model`: |
+| `createM2State` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | — |
 | `m2Status` | [`l3/defib-pacer/m2-vocabulary.ts`](../../packages/engine-core/src/l3/defib-pacer/m2-vocabulary.ts) | The published status: |
 | `readyToneSplit` | [`l3/defib-pacer/m2.ts`](../../packages/engine-core/src/l3/defib-pacer/m2.ts) | The AED's ready tones over the ready time-out T: |
 | `syncLeadOf` | [`l3/defib-pacer/m2.ts`](../../packages/engine-core/src/l3/defib-pacer/m2.ts) | The lead the sync detector reads: |
@@ -191,14 +193,16 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | `shockClass` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | What is being shocked (vtPoly/torsades count as pulseless VT: |
 | `shockStateFactor` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | The multiplier on the ROSC share from the state the shock lands in (1 = no information). |
 | `temperatureTermination` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | The multiplier on the whole TERMINATION (ROSC and asystole/PEA) from core temperature. |
+| `cardioversionSinus` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | — |
 | `outcomeProbabilities` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | Outcome probabilities for a shock (they sum to 1). |
 | `drawOutcome` | [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts) | Draw one outcome from the `outcome` stream (one uniform per shock, so replay is exact). |
+| `createPacer` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | — |
 | `validatePacer` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | `grid`: the room's model's rate and output steps (plan E0: |
+| `applyPacer` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | — |
 | `tcpSpec` | [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts) | The TCP modifier for this pacer state. |
+| `createSyncState` | [`l3/defib-pacer/sync.ts`](../../packages/engine-core/src/l3/defib-pacer/sync.ts) | — |
 | `syncStep` | [`l3/defib-pacer/sync.ts`](../../packages/engine-core/src/l3/defib-pacer/sync.ts) | Feed samples [st.n, end] read from the VCG X/Y/Z channels; |
 | `stepEnergy` | [`l3/defib-pacer/x-series.ts`](../../packages/engine-core/src/l3/defib-pacer/x-series.ts) | The next energy on a device's list from `energyJ`, upward (dir 1) or downward (dir −1); |
-
-Exported without a doc comment: `createDefib`, `createM2State`, `cardioversionSinus`, `createPacer`, `applyPacer`, `createSyncState`.
 
 ## Source files
 

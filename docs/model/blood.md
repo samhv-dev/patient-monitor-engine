@@ -86,7 +86,7 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 0, FIT 2, ENG 0, UNTAGGED 6, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -295,29 +295,41 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 
 | Function | File | Doc |
 |---|---|---|
+| `hco3Of` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | — |
 | `chargeResidual` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | The charge-balance residual f(pH) (mEq/L); |
 | `baseExcess` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | Standard base excess, Van Slyke (tables §5b.1): |
 | `solvePh` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | Bounded bisection on pH ∈ [6.5, 7.9]; |
 | `anionGap` | [`l2/blood/acid-base.ts`](../../packages/engine-core/src/l2/blood/acid-base.ts) | Anion gap without K (the blood-gas analyser convention): |
 | `sectionFor` | [`l2/blood/analysers.ts`](../../packages/engine-core/src/l2/blood/analysers.ts) | The row and section a panel runs on: |
 | `panelValues` | [`l2/blood/analysers.ts`](../../packages/engine-core/src/l2/blood/analysers.ts) | The section's analytes that the sample holds (the engine computes), in the row's order; |
+| `circOf` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | — |
 | `pushCircVolume` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The circulation model present: |
+| `setCircViscosity` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | — |
 | `setCircChemistry` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The circulation model present: |
 | `volumeCoFactor` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The circulation model ABSENT (unit rigs): |
 | `applyL1Fallback` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | The circulation model ABSENT (unit rigs): |
 | `chemistryContractility` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | Chemistry → contractility (tables §5b.1 Q44, §5b.2 Q46): |
 | `pulmCapPressure` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | --- lung water: |
 | `lungWaterStep` | [`l2/blood/circ-adapter.ts`](../../packages/engine-core/src/l2/blood/circ-adapter.ts) | One step of the extra lung water W (mL/kg above the conditions' EVLWI). |
+| `cohbWashout` | [`l2/blood/core.ts`](../../packages/engine-core/src/l2/blood/core.ts) | — |
+| `createBloodCore` | [`l2/blood/core.ts`](../../packages/engine-core/src/l2/blood/core.ts) | — |
+| `stepBloodCore` | [`l2/blood/core.ts`](../../packages/engine-core/src/l2/blood/core.ts) | — |
 | `landis` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | Landis–Pappenheimer colloid osmotic pressure (mmHg) of total protein TP (g/dL): |
+| `copPlasma` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | — |
+| `createFluids` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | — |
+| `leakSigma` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | — |
 | `starling` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | Plasma ↔ interstitium exchange J (mL/min, positive = filtration out of plasma) and extra lymph (mL/min). |
 | `stepFluids` | [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts) | One step of dtS seconds (Euler; |
+| `labPanel` | [`l2/blood/labs.ts`](../../packages/engine-core/src/l2/blood/labs.ts) | — |
 | `labSample` | [`l2/blood/labs.ts`](../../packages/engine-core/src/l2/blood/labs.ts) | Every analyte the engine computes for a sample drawn now, at the site (`abg` arterial, `vbg` venous; |
 | `p50` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | P50 (mmHg) for the given state. |
 | `hillN` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | Hill coefficient: |
 | `satDB` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | Functional HbO2 saturation 0–1. |
 | `contentDB` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | O2 content, mL O2 per L blood: |
 | `pulseOxApparent` | [`l2/blood/odc.ts`](../../packages/engine-core/src/l2/blood/odc.ts) | What a two-wavelength pulse oximeter reports (0–1) for a functional saturation `s` (plan decision 12; |
+| `o2Delivery` | [`l2/blood/oxygen.ts`](../../packages/engine-core/src/l2/blood/oxygen.ts) | — |
 | `stepLactate` | [`l2/blood/oxygen.ts`](../../packages/engine-core/src/l2/blood/oxygen.ts) | Lactate amount step (mmol in vLac); |
+| `ageBandB` | [`l2/blood/params.ts`](../../packages/engine-core/src/l2/blood/params.ts) | — |
 | `bloodPatient` | [`l2/blood/params.ts`](../../packages/engine-core/src/l2/blood/params.ts) | Patient scaling. |
 | `storedComp` | [`l2/blood/params.ts`](../../packages/engine-core/src/l2/blood/params.ts) | A cellular product after `days` of storage. |
 | `createBloodState` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | Create the blood for a profile. |
@@ -325,20 +337,23 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `tdpRisk` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | Torsades-risk hook for the drug model/rhythms (0–1): |
 | `pkBus` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | The drug model's bus (duck-typed), or null when the drug model is absent. |
 | `observeDoses` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | Turn the drug model's accepted boluses into the blood's mass balance and effect curves, in the drug library's units (sux mcg; |
+| `advanceBlood` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | — |
 | `bloodEcgTargets` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | ECG targets the engine pushes as deltas: |
 | `validateBloodCommand` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | Validation hook: |
 | `applyBloodCommand` | [`l2/blood/pipeline.ts`](../../packages/engine-core/src/l2/blood/pipeline.ts) | Apply hook: |
+| `concOf` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | — |
 | `sidOf` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | Apparent SID (mEq/L): |
 | `osmEcf` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | Effective ECF osmolality (mOsm/kg): |
+| `createSolutes` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | — |
 | `addFluid` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | Add `ml` of a fluid/product (its non-cell part carries the solutes; |
 | `removePlasma` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | Remove the solutes carried by `plasmaMl` of plasma (haemorrhage), at the current ECF concentrations. |
 | `calibrateXa` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | Starting XA (mmol) so that the start state has the target SID. |
 | `stepSolutes` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | `clearF` = hepatic flow × function (citrate, acetate); |
+| `ionisedCa` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | — |
 | `osmRatio` | [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts) | ICF osmolality / ECF osmolality ratio (cells swell when > 1). |
 | `bateman` | [`l2/blood/treatments.ts`](../../packages/engine-core/src/l2/blood/treatments.ts) | Bateman curve normalised to a peak of 1 (ka, ke in 1/min). |
 | `suxDeltaK` | [`l2/blood/treatments.ts`](../../packages/engine-core/src/l2/blood/treatments.ts) | Succinylcholine K release (tables: |
-
-Exported without a doc comment: `hco3Of`, `circOf`, `setCircViscosity`, `cohbWashout`, `createBloodCore`, `stepBloodCore`, `copPlasma`, `createFluids`, `leakSigma`, `labPanel`, `o2Delivery`, `ageBandB`, `advanceBlood`, `concOf`, `createSolutes`, `ionisedCa`, `bicarbCo2MlMin`.
+| `bicarbCo2MlMin` | [`l2/blood/treatments.ts`](../../packages/engine-core/src/l2/blood/treatments.ts) | — |
 
 ## Source files
 
