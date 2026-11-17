@@ -353,7 +353,7 @@ export function infusionsView(o: { now(): number | null; devices?: () => PumpDev
     const issuedBy = String(c.issuedBy ?? '');
     const by = typeof c.by === 'string' ? c.by : null;
     const who = issuedBy === LEARNER_ISSUED_BY
-      ? by === link?.device ? INFUSION_WORDS.thisPhone : INFUSION_WORDS.otherRemote
+      ? by === link?.device ? INFUSION_WORDS.thisPhone : ((c.sender as { name?: string } | undefined)?.name ?? INFUSION_WORDS.otherRemote)
       : givenByOf(issuedBy) === 'card' ? INFUSION_WORDS.card : INFUSION_WORDS.instructor;
     const k = e.concentration;
     const syringe = k && typeof k.amount === 'number' && typeof k.unit === 'string' && typeof k.perMl === 'number' && k.perMl > 0 ? { perMl: k.amount / k.perMl, unit: k.unit } : null;

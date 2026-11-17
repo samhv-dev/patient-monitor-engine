@@ -607,6 +607,7 @@ renderer, audio and skin contracts.
 | `perMinute` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: |
 | `notDoneOf` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: |
 | `describeCommand` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); |
+| `caseBeginsText` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | The Log's line where a case begins (a 'restart' timeline): |
 | `spanText` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A fast-forward's span in words ("5 min", "90 s"). |
 | `numberOf` | [`apps/demo/src/app/device-names.ts`](../../apps/demo/src/app/device-names.ts) | `key`'s number among its kind, the next one if it is new (`order` keeps it). |
 | `deviceLabel` | [`apps/demo/src/app/device-names.ts`](../../apps/demo/src/app/device-names.ts) | The name a person reads: |
@@ -1605,6 +1606,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/panel/eeg-artefacts-engine.test.ts`](../../apps/demo/src/app/panel/eeg-artefacts-engine.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/eeg.dom.test.ts`](../../apps/demo/src/app/panel/eeg.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/ibp-scales.dom.test.ts`](../../apps/demo/src/app/panel/ibp-scales.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/log.dom.test.ts`](../../apps/demo/src/app/panel/log.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/panel-load-tab.dom.test.ts`](../../apps/demo/src/app/panel/panel-load-tab.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/scenario.dom.test.ts`](../../apps/demo/src/app/panel/scenario.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/patients.test.ts`](../../apps/demo/src/app/patients.test.ts) | 0 | 0 |

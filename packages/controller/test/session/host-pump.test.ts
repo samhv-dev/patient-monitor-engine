@@ -174,11 +174,11 @@ describe('N99: a command from a role the host does not know is refused and logge
     expect((await lr.send(hr)).accepted).toBe(false); // learnerMay: not a learner's shape
     const lab = lr.command({ type: 'applyEvent', event: { kind: 'lab', panel: 'abg' } });
     expect(await ack(x.got, lab)).toMatchObject({ accepted: true });
-    expect(applied(x.got, lab)).toMatchObject({ issuedBy: LEARNER_ISSUED_BY, by: REMOTE_KEY });
+    expect(applied(x.got, lab)).toMatchObject({ issuedBy: LEARNER_ISSUED_BY, by: REMOTE_KEY, sender: { role: 'learner' } });
     const df = say('defib', 'df.1', { show: 'defib', device: 'defibwin01' });
     const d = df.command({ type: 'applyEvent', event: { kind: 'defib', action: 'charge' } });
     expect(await ack(x.got, d)).toMatchObject({ accepted: true });
-    expect(applied(x.got, d)).toMatchObject({ issuedBy: LEARNER_ISSUED_BY, by: 'defibwin01' });
+    expect(applied(x.got, d)).toMatchObject({ issuedBy: LEARNER_ISSUED_BY, by: 'defibwin01', sender: { role: 'defib' } });
     const p = await pumpIn(x);
     expect(await p.send({ action: 'load', ch: 1, syringe: { stock: 'propofol-10mg-ml-50ml' } })).toMatchObject({ accepted: true });
     const v = say('viewer', 'v.1').command(hr);
@@ -414,7 +414,7 @@ describe('C2, D9: a remote and the Drug sheet change a drug on its one channel, 
     const id = lr.command({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: 25 });
     expect(await ack(x.got, id)).toMatchObject({ accepted: true });
     expect(applied(x.panelGot, id)).toMatchObject({
-      type: 'applyEvent', issuedBy: LEARNER_ISSUED_BY, by: REMOTE_KEY,
+      type: 'applyEvent', issuedBy: LEARNER_ISSUED_BY, by: REMOTE_KEY, sender: { role: 'learner' },
       event: { kind: 'pump', action: 'rate', ch: 1, rate: 25, unit: 'mL/h' },
       pump: { ch: 1, replaced: [{ what: 'rate', rate: 20, unit: 'mL/h', by: PUMP_KEY }] },
     });
@@ -575,14 +575,14 @@ describe("Room setup's rack never removes or changes a channel in use", () => {
 });
 
 describe('C2, §8 and PQ8 = A: the mismatch finding reaches the instructor, and the pump only with the notice', () => {
-  it('propofol 10 mg/mL programmed as phenylephrine: a finding to the instructor\'s screens at once; the pump hears of it when the instructor shows it', async () => {
-    const x = setup();
+  it('propofol 10 mg/mL programmed as phenylephrine: a finding to the instructor\'s screens at once, naming the tablet by its role and name; the pump hears of it when the instructor shows it', async () => {
+    const x = setup({ deviceName: (key, role) => (key === PUMP_KEY && role === 'pump' ? 'bed 2 pumps' : null) });
     const p = await pumpIn(x);
     await propofolChannel(p, 2, { drugId: 'phenylephrine', concentration: { amount: 100, unit: 'mcg', perMl: 1 } });
     const host = x.host.peerId;
     await waitFor(() => prepsTo(x.got, host).length > 0);
     expect(prepsTo(x.got, host).map((e) => e.body)).toEqual([expect.objectContaining({
-      news: 'pumpMismatch', ch: 2, kind: 'syringe', device: PUMP_KEY,
+      news: 'pumpMismatch', ch: 2, kind: 'syringe', device: PUMP_KEY, sender: { role: 'pump', name: 'bed 2 pumps' },
       contents: { drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } }, programmed: { drugId: 'phenylephrine', concentration: { amount: 100, unit: 'mcg', perMl: 1 } }, notice: null,
     })]);
     expect(prepsTo(x.got, 'pump.1').filter((e) => (e.body as { news: string }).news === 'mismatch')).toEqual([]);

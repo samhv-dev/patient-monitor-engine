@@ -8,7 +8,7 @@
 // contents and programme can be found (§8), and a remote's `infusion set` can be routed to its channel (D9). The volumes
 // stay the engine's (D4): this table holds none. Pure: no clock, no I/O; host-session.ts owns when each step runs.
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
-import type { PumpCommand, PumpMeta, PumpPatient, PumpReplaced, PumpSource, WireCommand } from '../protocol.ts';
+import type { CommandSender, PumpCommand, PumpMeta, PumpPatient, PumpReplaced, PumpSource, WireCommand } from '../protocol.ts';
 import type { Formulary, StockItem } from '../formulary/types.ts';
 import { sp5TciMaxRateMlH, type PumpDevices, type Sp500Profile, type Ot701Profile } from '../pump-devices.ts';
 import { notUsable, remainingOf, type HostPrep } from './preparations.ts';
@@ -37,7 +37,8 @@ export interface HostChannel {
   running: boolean;
   by: { load?: string; programme?: string; rate?: string; tci?: string };
   /** §8: contents and programme differ; the instructor's finding and whether its notice was shown. */
-  mismatch: { since: number; notice: { shownAt: number } | null } | null;
+  /** `sender`: the device whose act made it, when a learner's, a pump tablet's or a defibrillator window's. */
+  mismatch: { since: number; notice: { shownAt: number } | null; sender?: CommandSender } | null;
 }
 
 /** What the pump's command became: the engine's event, or the words it is refused with. */
@@ -431,6 +432,6 @@ export function routedToChannel(c: HostChannel, rate: number, unit: RateUnit, x:
 }
 
 /** The command a translated pump action becomes (the instructor's own `applyEvent`, through command()). */
-export function pumpWire(base: { id: string; issuedBy: string; by?: string; stageGroup?: string; batch?: { id: string; n: number } }, t: Extract<PumpTranslated, { ok: true }>): WireCommand {
+export function pumpWire(base: { id: string; issuedBy: string; by?: string; sender?: CommandSender; stageGroup?: string; batch?: { id: string; n: number } }, t: Extract<PumpTranslated, { ok: true }>): WireCommand {
   return { ...base, type: 'applyEvent', event: t.event, pump: t.meta } as unknown as WireCommand;
 }

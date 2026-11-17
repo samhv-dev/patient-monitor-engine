@@ -171,22 +171,17 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
     const at = () => clock(link.simT);
     let opened = false;
     let hostSeen = false;
-    let hostId: string | null = null;
     let mounted: { panel: ReturnType<typeof mountPanel>; offs: Array<() => void> } | null = null;
     loading ??= (o.formulary ?? loadShippedFormulary)().then((f) => void (formulary = f), () => undefined);
     const offs: Array<() => void> = [
       transport.onStatus((s) => void (s === 'open' && (opened = true))),
       transport.onPresence?.((p) => void (p.hostOnline && (hostSeen = true))) ?? (() => undefined),
-      transport.onMessage((m: WireMessage) => {
-        if (m.kind !== 'hello' || m.role !== 'host') return;
-        hostSeen = true;
-        // A host hello from a NEW id is the laptop reloaded: the session has answered the pending presses itself
-        // (controller-session.ts HOST_RESTARTED_REASON, never given to the reloaded case) and signs in again with the ticket it holds
-        if (hostId !== null && m.from !== hostId) {
-          setText(notice, PHONE_WORDS.restarted(at()));
-          notice.hidden = false;
-        }
-        hostId = m.from;
+      transport.onMessage((m: WireMessage) => void (m.kind === 'hello' && m.role === 'host' && (hostSeen = true))),
+      // the laptop reloaded: the session has answered the pending presses itself (HOST_RESTARTED_REASON, never given to
+      // the reloaded case) and signs in again with the ticket it holds
+      ctl.onHostRestart(() => {
+        setText(notice, PHONE_WORDS.restarted(at()));
+        notice.hidden = false;
       }),
     ];
     const giveUp = setTimeout(() => {

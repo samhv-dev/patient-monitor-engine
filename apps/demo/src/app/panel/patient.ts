@@ -31,7 +31,6 @@ export function patientTab(c: PanelCtx): HTMLElement {
         if (!(await confirmDialog('Restart the patient?', what, 'Restart patient', true, 'Keep this patient'))) return;
         const r = host.restartPatient();
         if (!r.ok) return toast(`The patient could not restart: ${r.reason}`, 'alert');
-        link.note(inCase ? 'Patient restarted: the case starts again from 0:00' : 'Patient restarted', 'system');
         toast(inCase ? 'Patient restarted: the case starts again' : 'Patient restarted');
       }) // a secondary button: red is for alarms; the confirm dialog carries the danger styling
     : null;

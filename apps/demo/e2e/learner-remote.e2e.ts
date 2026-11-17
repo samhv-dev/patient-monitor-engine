@@ -365,7 +365,7 @@ test("L8 (LQ4): a phone changes and stops the instructor's infusion and changes 
   const remi = a.p.locator('.lr-inf[data-drug="remifentanil"]');
   const prop = a.p.locator('.lr-inf[data-drug="propofol"]');
   await expect(remi.locator('.lr-setby')).toHaveText(/^set by the instructor at \d\d:\d\d$/, { timeout: 15_000 });
-  await expect(prop.locator('.lr-setby')).toHaveText(/^set by another learner remote at \d\d:\d\d$/, { timeout: 15_000 });
+  await expect(prop.locator('.lr-setby')).toHaveText(/^set by bed 6 remote at \d\d:\d\d$/, { timeout: 15_000 });
   await expect(prop.locator('.lr-rate')).toHaveText('10 mL/h');
   await expect(b.p.locator('.lr-inf[data-drug="propofol"] .lr-setby')).toHaveText(/^set by this phone at /);
   // change the instructor's: 6 mL/h through the engine row's own syringe, the host keeps
@@ -380,7 +380,7 @@ test("L8 (LQ4): a phone changes and stops the instructor's infusion and changes 
   await prop.locator('.stepper input').dispatchEvent('change');
   await prop.locator('.lr-change-btn').click();
   await expect(a.p.locator('.lr-inf-said')).toHaveText('Propofol: changed to 5 mL/h', { timeout: 10_000 });
-  await expect(b.p.locator('.lr-inf[data-drug="propofol"] .lr-setby')).toHaveText(/^set by another learner remote at /, { timeout: 10_000 });
+  await expect(b.p.locator('.lr-inf[data-drug="propofol"] .lr-setby')).toHaveText(/^set by bed 5 remote at /, { timeout: 10_000 });
   await expect(b.p.locator('.lr-inf[data-drug="propofol"] .lr-rate')).toHaveText('5 mL/h');
   // stop the instructor's (it was this phone's rate by then)
   await remi.locator('.lr-stop').click();

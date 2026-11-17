@@ -49,13 +49,17 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 export type BatchMeta = { batch?: { id: string; n: number } };
 /** `actionId` (plan F3): the /2 card's action an A press sends the command for. Metadata, as `batch`: the host and the
  *  engine ignore it; the scenario driver reads it (a taking, and the administration record's source). */
+/** The device a learner's, a pump tablet's or a defibrillator window's command came from: its role and the name a
+ *  person reads for it (the host app's one naming rule; absent when the host has none). */
+export type CommandSender = { role: 'learner' | 'pump' | 'defib'; name?: string };
 /**
- * `by`: the device key of a learner's device (R5d, L4); `prepId` (L4, §4 D3): the learner preparation a give came from;
- * `replaced` (L4, LQ4): on a learner's infusion change, the rate it replaced and who had set it (a device key, or
- * drug-lock.ts GivenBy). The host writes all three; a device's own are refused (learnerMay) or ignored.
+ * `by`: the device key of a learner's device (R5d, L4), and `sender` its role and readable name; `prepId` (L4, §4 D3):
+ * the learner preparation a give came from; `replaced` (L4, LQ4): on any infusion's rate, whoever sent it, the rate it
+ * replaced and who had set it (a device key, or drug-lock.ts GivenBy). The host writes all four; a device's own are
+ * refused (learnerMay) or overwritten.
  */
 type CommandBase = {
-  id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string; by?: string; prepId?: string;
+  id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string; by?: string; sender?: CommandSender; prepId?: string;
   replaced?: { rate: number; rateUnit: string; by: string };
   /** C2 (pump-rack-tci.md §7): on an `applyEvent pump` the host built, its channel and what the record needs (PumpMeta). */
   pump?: PumpMeta;
@@ -294,7 +298,7 @@ export type ExtraEvent =
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }
   /** The host replaced its engine (patient restart, scenario load): sim time starts again at `t` on a new timeline.
    *  Within one timeline a peer's clock only moves forward; across this boundary it restarts (showcase hotfix). */
-  | { type: 'timeline'; t: SimSeconds; tick: Tick; cause?: TimelineCause }
+  | { type: 'timeline'; t: SimSeconds; tick: Tick; cause?: TimelineCause; begins?: CaseBegins }
   /**
    * The host's fast-forward from `fromT` to `toT` began (`wallMs`: the wall time it is paced to), or ended at `t`
    * (`stopped`: why it ended early; `alarms`: every alarm raised during it, once, `ended` = no longer active at its end).
@@ -372,6 +376,9 @@ export const fastForwardDone = (e: { t: SimSeconds; fromT: SimSeconds; toT: SimS
  * it). Either way every clock restarts at `t`.
  */
 export type TimelineCause = 'restart' | 'restore';
+/** What a 'restart' timeline begins, for the Log: a card's title or the free-run patient in words, and whether it is the
+ *  same case or patient again. Absent: a case brought back after the host's page reloaded (it is under way). */
+export type CaseBegins = { title: string; card: boolean; again: boolean };
 /** Brief §7.3 `EngineEvent` as it travels on the wire. */
 export type WireEvent = EngineEvent | ExtraEvent;
 

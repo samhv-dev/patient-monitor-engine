@@ -5,7 +5,7 @@
 // showPumpNotice, C2) and the pump tablet shows "syringe and programme differ" on that channel. The pump never warns by
 // itself; nothing here changes the channel (D10, PQ9 = A). The Link keeps the host's findings (link.ts pumpFindings).
 // The instructor phone's copy of the card and A3's Pumps sheet are later pieces; this is the laptop's.
-import { DEVICE_RE, type PumpMismatchNews } from '@pme/controller';
+import type { PumpMismatchNews } from '@pme/controller';
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
@@ -16,6 +16,8 @@ import './pump-mismatch.css';
 export const MISMATCH_CARD_WORDS = {
   title: 'Pump mismatches',
   tablet: 'pump tablet',
+  /** A mismatch the instructor's or the card's own change made (drug-lock.ts GivenBy). */
+  by: { laptop: "instructor's computer", phone: "instructor's phone", card: 'case card' } as Readonly<Record<string, string>>,
   what: (ch: number, who: string, kind: PumpMismatchNews['kind'], loaded: string, programmed: string) =>
     `Channel ${ch} (${who}): ${kind === 'drip' ? 'bag' : 'syringe'} and programme differ. Loaded: ${loaded}; programmed: ${programmed}.`,
   show: 'Show the mismatch notice to the learner',
@@ -56,7 +58,8 @@ export function mountPumpMismatch(link: Pick<Link, 'pumpFindings' | 'onChange' |
     if (sig === drawn) return;
     drawn = sig;
     el.hidden = all.length === 0;
-    const names = all.map((f) => (link.host && DEVICE_RE.test(f.device) ? link.host.deviceLabel(f.device, 'pump') : null));
+    // the device as the host named it on the command that made the mismatch (a learner remote's change routed to the channel too)
+    const names = all.map((f) => f.sender?.name ?? MISMATCH_CARD_WORDS.by[f.device] ?? null);
     keepOrder(list, keyed(cards, all.map((f, i) => JSON.stringify([f, names[i]])), (_, i) => card(all[i] as PumpMismatchNews, names[i] ?? null)));
   };
   const off = link.onChange(draw);
