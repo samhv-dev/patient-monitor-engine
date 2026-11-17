@@ -7,6 +7,7 @@
 //  - nothing runs `git worktree prune` (the hand script's lesson: it deleted other worktrees' records);
 //  - write permission only in the jobs that publish, no pull_request trigger, no secret but the built-in token, every
 //    action pinned by version and already used in this repository, gh-pages pushed as a fast-forward (never forced).
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -18,6 +19,9 @@ const showcase = join(root, 'scripts/showcase');
 const workflows = join(root, '.github/workflows');
 const order = (await import(pathToFileURL(join(showcase, 'publish-order.mjs')).href)) as {
   decide: (status: string | null) => { publish: boolean; why: string };
+};
+const ci = (await import(pathToFileURL(join(showcase, 'ci-passed.mjs')).href)) as {
+  ciPassed: (answer: unknown, sha: string) => { publish: boolean; why: string };
 };
 const site = (await import(pathToFileURL(join(showcase, 'site-tree.mjs')).href)) as {
   siteTree: (kit: string, out: string) => string[];
@@ -116,8 +120,61 @@ describe('the kit and site workflows', () => {
     for (const cond of ["github.event.workflow_run.conclusion == 'success'", "github.event.workflow_run.event == 'push'", "github.event.workflow_run.head_branch == 'main'", 'github.event.workflow_run.head_repository.full_name == github.repository']) {
       expect(j.kit).toContain(cond);
     }
-    // each publishing job checks again, through the API, that ci passed on the very commit it publishes
-    for (const name of ['pages', 'prerelease']) expect(j[name]).toContain('actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&status=success');
+    // on a dispatch, each publishing job asks the API whether ci passed on the very commit it publishes, before it publishes
+    for (const name of ['pages', 'prerelease']) {
+      const text = j[name]!;
+      const at = text.indexOf('- name: ci passed on this commit');
+      const step = text.slice(at, text.indexOf('\n      - ', at + 1));
+      expect(step).toContain("if: ${{ github.event_name == 'workflow_dispatch' }}");
+      expect(step).toContain('gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&per_page=100" | node src/scripts/showcase/ci-passed.mjs "$SHA"');
+      expect(step).toContain('set -euo pipefail');
+      expect(step).not.toContain('status=');
+      expect(text.indexOf('ORDER="$('), 'the check comes before anything is published').toBeGreaterThan(at);
+    }
+  });
+
+  describe('ci passed on the commit to publish (ci-passed.mjs)', () => {
+    const SHA = 'd97830d476cf5289b9d5ebfd033d61a08aad52a4';
+    const run = { id: 43947129876, run_number: 1962, event: 'push', head_branch: 'main', head_sha: SHA, status: 'completed', conclusion: 'success' };
+    // GitHub's answers for this commit: without a status filter it lists the run; with status=success it lists none
+    const listed = { total_count: 1, workflow_runs: [run] };
+    const filtered = { total_count: 0, workflow_runs: [] };
+    const cli = (answer: unknown) =>
+      spawnSync(process.execPath, [join(showcase, 'ci-passed.mjs'), SHA], { input: JSON.stringify(answer), encoding: 'utf8' });
+
+    it('publishes when a completed, successful run of a push to main is listed for the commit', () => {
+      expect(ci.ciPassed(listed, SHA)).toMatchObject({ publish: true });
+      const r = cli(listed);
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain(`ci run ${run.id} of a push to main passed on ${SHA}`);
+    });
+
+    it('refuses when no such run is listed', () => {
+      expect(ci.ciPassed(filtered, SHA)).toMatchObject({ publish: false });
+      const r = cli(filtered);
+      expect(r.status).toBe(1);
+      expect(r.stdout).toContain(`::error::no successful ci run of a push to main for ${SHA}: nothing is published`);
+      expect(cli({}).status).toBe(1);
+    });
+
+    it('refuses every run that is not a completed, successful push to main of exactly this commit', () => {
+      const others = [
+        { status: 'in_progress', conclusion: null },
+        { conclusion: 'failure' },
+        { conclusion: 'cancelled' },
+        { event: 'pull_request' },
+        { head_branch: 'other' },
+        { head_sha: '0'.repeat(40) },
+      ];
+      for (const o of others) expect(ci.ciPassed({ workflow_runs: [{ ...run, ...o }] }, SHA), JSON.stringify(o)).toMatchObject({ publish: false });
+      expect(ci.ciPassed({ workflow_runs: [{ ...run, conclusion: 'failure' }, run] }, SHA)).toMatchObject({ publish: true });
+    });
+
+    it('refuses when the answer is not GitHub\'s run list', () => {
+      expect(cli('not json').status).not.toBe(0);
+      const r = spawnSync(process.execPath, [join(showcase, 'ci-passed.mjs'), SHA], { input: '', encoding: 'utf8' });
+      expect(r.status).not.toBe(0);
+    });
   });
 
   it('kit-and-site.yml: builds and publishes exactly the commit ci tested (its head SHA), never a newer one', () => {

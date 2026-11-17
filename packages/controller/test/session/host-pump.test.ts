@@ -653,3 +653,44 @@ describe('C2: the pump tablet\'s admission and its news', () => {
     expect(labels.labels[0]).toMatchObject({ device: REMOTE_KEY, name: 'Learner remote 1', id: 's0000003' });
   });
 });
+
+describe("the case's pause: the pump tablet's commands meet the learner's one rule", () => {
+  const PATIENT = { ageY: 40, weightKg: 70, heightCm: 170, sex: 'm' };
+  /** One of each of the nine pump commands, each valid on the channels the case below has set up. */
+  const NINE: Array<Record<string, unknown>> = [
+    { action: 'load', ch: 2, syringe: { stock: 'propofol-10mg-ml-50ml' } },
+    { action: 'program', ch: 1, drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } },
+    { action: 'rate', ch: 1, rate: 30, unit: 'mL/h' },
+    { action: 'tci', ch: 1, setId: 'eleveld', mode: 'effect', target: 3, patient: PATIENT },
+    { action: 'bolus', ch: 1, volumeMl: 2 },
+    { action: 'purge', ch: 1, volumeMl: 1 },
+    { action: 'start', ch: 1 },
+    { action: 'stop', ch: 1 },
+    { action: 'unload', ch: 1 },
+  ];
+
+  it('while paused each of the nine is refused `paused` in the remote\'s words, nothing reaches the engine and the host\'s channel table stays as the engine has it; after the resume each works', async () => {
+    const notGiven: Array<{ command: Record<string, unknown>; from: string; reason: string }> = [];
+    const x = setup({ onNotGiven: (n) => void notGiven.push(n as never) });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 1);
+    expect((await p.send({ action: 'rate', ch: 1, rate: 20, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await ack(x.panelGot, x.laptop.command({ type: 'time', action: 'pause' }))).accepted).toBe(true);
+    const before = x.tg.got.length;
+    for (const body of NINE) {
+      const id = p.command({ type: 'pump', ...body });
+      expect(await ack(x.got, id), String(body.action)).toMatchObject({ accepted: false, code: 'paused', reason: PAUSED_REFUSAL });
+      expect(applied(x.panelGot, id), String(body.action)).toBeUndefined();
+    }
+    expect(x.tg.got.length).toBe(before);
+    expect(notGiven.map((n) => [n.from, n.reason, n.command.issuedBy, n.command.by, (n.command.event as { action: string }).action])).toEqual(
+      NINE.map((b) => ['pump.1', PAUSED_REFUSAL, PUMP_ISSUED_BY, PUMP_KEY, b.action]));
+    expect((await ack(x.panelGot, x.laptop.command({ type: 'time', action: 'resume' }))).accepted).toBe(true);
+    // the refused rate 30 never reached the table: Start runs the channel at the 20 mL/h set before the pause
+    const start = p.command({ type: 'pump', action: 'start', ch: 1 });
+    expect(await ack(x.got, start)).toMatchObject({ accepted: true });
+    expect(applied(x.panelGot, start)?.pump).toMatchObject({ infusion: { rate: 20, unit: 'mL/h' } });
+    for (const body of NINE.filter((b) => b.action !== 'start')) expect(await p.send(body), String(body.action)).toMatchObject({ accepted: true });
+    expect(pumpEvents(x.tg.got).slice(-NINE.length).map((c) => c.event.action)).toEqual(['start', ...NINE.filter((b) => b.action !== 'start').map((b) => b.action)]);
+  });
+});
