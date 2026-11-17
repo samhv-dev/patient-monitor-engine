@@ -175,12 +175,12 @@ export interface HostSessionOptions {
   phaseMark?: () => string | null;
   /** L9: the name Room setup gave a learner's device key (null: none), on the instructor's copy of a preparation's news. */
   deviceName?: (key: string) => string | null;
-  /** L14: a learner device's drug the host did NOT give because the case was paused, one call per drug (the host's Log
-   *  and record show the attempt; nothing reached the engine). */
+  /** L14: a learner device's act on the patient (a drug, a sample) the host did NOT carry out because the case was paused,
+   *  one call per act (the host's Log and record show the attempt; nothing reached the engine). */
   onNotGiven?: (n: NotGiven) => void;
 }
 
-/** L14: what the host refused to give (as it built it for the engine: the drug, the dose, `by` and `prepId`), who sent it,
+/** L14: what the host refused (as it built it for the engine: the drug and dose or the sample, `by`, `prepId`), who sent it,
  *  why (PAUSED_REFUSAL) and the case time it arrived at. */
 export interface NotGiven {
   command: WireCommand;
@@ -263,6 +263,8 @@ interface Gathered {
 }
 /** An engine command (time and scenario commands are the host's own, never part of a group's one dispatch). */
 const groupable = (c: WireCommand): boolean => c.type !== 'time' && c.type !== 'scenario';
+/** One learner command that acts on the patient as it is (a sample, a channel's rate), as learnerApply takes it. */
+const only = (c: WireCommand): Translated => ({ ok: true, cmds: [c], volumeMl: 0 });
 
 /** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG: network]. */
 export const STAGE_LEAD_TICKS = 3;
@@ -542,7 +544,7 @@ export class HostSession {
     return true;
   }
 
-  /** L14: the case is paused (a learner device's drug is refused until it resumes). */
+  /** L14: the case is paused (a learner device's act on the patient is refused until it resumes). */
   get paused(): boolean {
     return this.pausedNow;
   }
@@ -1007,8 +1009,7 @@ export class HostSession {
     if (!out.ok) return Promise.resolve(refuse(out.why));
     const { id, issuedBy, by, stageGroup, batch } = base as WireCommand & { by?: string };
     const wire = pumpWire({ id, issuedBy, ...(by !== undefined ? { by } : {}), ...(stageGroup !== undefined ? { stageGroup } : {}), ...(batch !== undefined ? { batch } : {}) }, out as Extract<PumpTranslated, { ok: true }>);
-    if (issuedBy === LEARNER_ISSUED_BY && this.pausedNow) return Promise.resolve(this.notGiven(t, from, [wire])); // L14 on the D9 path
-    return this.command(t, wire, from);
+    return issuedBy === LEARNER_ISSUED_BY ? this.learnerApply(t, from, only(wire), null, refuse) : this.command(t, wire, from);
   }
 
   /** D9 for the laptop's Drug sheet and the instructor phone's: an `applyEvent infusion` of a drug on a pump channel. */
@@ -1021,11 +1022,11 @@ export class HostSession {
   }
 
   /**
-   * L4 (§4 D3): a granted learner remote's command. A sample goes to the engine as it is. A `prep` stage or discard is
-   * the host's own table (acked, never dispatched: no commandApplied, so no follower applies it). A delivery, an infusion
-   * from a preparation and an infusion change become the instructor's `applyEvent drug` / `infusion`, with every
-   * quantity computed here from the formulary, and go through `command()`: the drug lock, staged delivery, the engine's
-   * validation and the record are the laptop's own. Each is filed `issuedBy: 'learner'`, `by` = the device key, `prepId`.
+   * L4 (§4 D3): a granted learner remote's command. A sample goes to the engine as it is, an act on the patient like a
+   * give. A `prep` stage or discard is the host's own table (acked, never dispatched: no commandApplied, so no follower
+   * applies it). A delivery, an infusion from a preparation and an infusion change become the instructor's `applyEvent
+   * drug` / `infusion`, with every quantity computed here from the formulary. Every act goes through learnerApply, then
+   * `command()`: the pause, the drug lock, staged delivery, the engine's validation and the record are the laptop's own. Each is filed `issuedBy: 'learner'`, `by` = the device key, `prepId`.
    */
   private async learnerCommand(t: ManagedTransport, from: string, by: string, c: WireCommand, refuse: (reason: string) => void): Promise<void> {
     const prior = this.seen.get(c.id);
@@ -1035,7 +1036,7 @@ export class HostSession {
     }
     if (this.ff) return refuse(FF_REFUSAL);
     const base = { id: c.id, issuedBy: LEARNER_ISSUED_BY, by, ...(c.stageGroup !== undefined ? { stageGroup: c.stageGroup } : {}), ...(c.batch !== undefined ? { batch: c.batch } : {}) } as WireCommand;
-    if (c.type === 'applyEvent') return this.command(t, { ...c, issuedBy: LEARNER_ISSUED_BY, by }, from);
+    if (c.type === 'applyEvent') return this.learnerApply(t, from, only({ ...c, issuedBy: LEARNER_ISSUED_BY, by }), null, refuse);
     const { simT } = this.o.target.now();
     if (c.type === 'infusion') return this.toChannel(t, from, base, c.drugId, c.rateMlH, 'mL/h', refuse) ?? this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
     if (c.type !== 'prep' || c.action === 'notice') return refuse('not a learner command'); // learnerMay admitted none other
@@ -1067,10 +1068,11 @@ export class HostSession {
     return this.learnerApply(t, from, infusePrep(f, h, c, withPrep, simT, this.infusions), h, refuse);
   }
 
-  /** Apply a learner command's translation: refused as a whole, or every command through `command()` (one stage group). */
+  /** A learner's act on the patient (a give, an infusion, a sample): refused as a whole, by the pause too, or every
+   *  command through `command()` (one stage group). */
   private async learnerApply(t: ManagedTransport, from: string, out: Translated, h: HostPrep | null, refuse: (reason: string) => void): Promise<void> {
     if (!out.ok) return refuse(out.why);
-    if (this.pausedNow) return this.notGiven(t, from, out.cmds); // L14 (N117 ruled B): no drug while the case is paused
+    if (this.pausedNow) return this.notGiven(t, from, out.cmds); // L14: no act on the patient while the case is paused
     // a preparation of two drugs is given whole or not at all: a locked drug refuses the delivery before any dose goes
     const now = this.o.target.now();
     const first = out.cmds[0] as WireCommand;
@@ -1081,9 +1083,9 @@ export class HostSession {
   }
 
   /**
-   * L14: refuse a learner's give because the case is paused — one ack (`code: 'paused'`), kept for a resend, nothing
+   * L14: refuse a learner's act because the case is paused — one ack (`code: 'paused'`), kept for a resend, nothing
    * dispatched (the engine's queue, the drug lock, the preparation's volume and the record of gives are untouched), and
-   * each drug it would have given to the host's own screens (onNotGiven), as the attempt it was.
+   * each drug or sample it would have given or drawn to the host's own screens (onNotGiven), as the attempt it was.
    */
   private notGiven(t: ManagedTransport, from: string, cmds: WireCommand[]): void {
     const now = this.o.target.now();
