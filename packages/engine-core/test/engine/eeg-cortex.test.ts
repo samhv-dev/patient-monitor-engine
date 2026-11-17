@@ -24,7 +24,7 @@ async function eegArm(arm: Arm): Promise<Sample[]> {
       const bus = st.pk.bus;
       const h = bus.cns.hypByClass as Record<string, number>;
       const sumErr = Math.abs(Object.values(h).reduce((a, b) => a + b, 0) - bus.cns.hypPropEq);
-      const x = cortexInputsOf(bus, { ageY: 40, stimulus: st.neuro.stim.level, antinoc: st.neuro.antinoc, do2Rel: st.organs.brain.cbfRel, tempC: st.resp.temp.tc, macF: st.endo?.cascade?.macF ?? 1 });
+      const x = cortexInputsOf(bus, { ageY: 40, stimulus: st.neuro.stim.level, antinoc: st.neuro.antinoc, metabolic: st.organs.brain.energy.cortex.metabolic, tempC: st.resp.temp.tc, macF: st.endo?.cascade?.macF ?? 1 });
       prev = cortexStep(prev, x, t - lastT);
       lastT = t;
       out.push({ t, sumErr, hypPropEq: bus.cns.hypPropEq, c: prev, s: spectrumOf(prev, agentMixOf(x)) });

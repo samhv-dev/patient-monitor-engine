@@ -16,7 +16,7 @@ const H0 = { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 
 const M0 = { sevoflurane: 0, isoflurane: 0, desflurane: 0, n2o: 0 };
 type Patch = Partial<Omit<CortexInputs, 'hyp' | 'mac'>> & { hyp?: Partial<CortexInputs['hyp']>; mac?: Partial<CortexInputs['mac']> };
 const inp = (p: Patch = {}): CortexInputs => ({
-  ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, do2Rel: 1, tempC: 37,
+  ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, metabolic: 0, tempC: 37,
   ...p, hyp: { ...H0, ...(p.hyp ?? {}) }, mac: { ...M0, ...(p.mac ?? {}) },
 });
 const sp = (p: Patch = {}): EegSpectrum => { const x = inp(p); return spectrumOf(cortexStep(undefined, x, 1), agentMixOf(x)); };

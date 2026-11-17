@@ -28,8 +28,8 @@ export interface CortexInputs {
   stimulus: number;
   /** The neuro model's total blunting of a noxious stimulus, 0–1 (`depth().antinoc`). */
   antinoc: number;
-  /** Cerebral O2 delivery relative to normal: CBF/CBF0 × CaO2/CaO2(ref); 1 = normal. */
-  do2Rel: number;
+  /** The cortex's loss of function from its energy supply, 0–1 (the organ model's `brain.energy.cortex.metabolic`). */
+  metabolic: number;
   /** Core temperature, °C. */
   tempC: number;
 }
