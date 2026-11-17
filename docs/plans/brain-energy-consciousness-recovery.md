@@ -341,7 +341,7 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
       104, HBar 145; pp. H1193–H1194); the viscosity share is the remainder by subtraction, and a direct action of the
       very high PaO2 on the vessels was not tested (pp. H1194–H1195). Whole-blood viscosity was measured ex vivo in
       3 + 3 separate rats: 4.53 → 2.54 cP, with plasma viscosity rising 1.32 → 1.67 cP from the starch (p. H1193)
-      (note 90b §2). Hudak 1986 and 1987 [ABS] (newborn
+      (note 90b §2). Hudak 1986 and Massik 1987 [ABS] (newborn
       lambs, unanaesthetised; newborn sheep, anaesthetised): red-cell concentration accounted for 56 % and about 60 % of
       the fall in flow as haematocrit **rose** (20 → 40 %, 30 → 55 %), with viscosity "probable", not measured. The cats
       of 1992 (Muizelaar, [ABS]) show that viscosity moves flow but give no share. The shares come from different
@@ -746,7 +746,7 @@ reading error the notes state (research notes 90a and 90b).
 | Todd et al. 1994, Am J Physiol 267:H2025 (PMID 7977834) | [FT] (scan; tables from the page images) | rabbits, pentobarbital, 39 °C: CaO2 lowered to matched steps by hypoxaemia or hetastarch dilution; whole-brain CBF flat to CaO2 ≈ 13 in dilution, then rising (Table 1, p. H2027); less flow in dilution than in hypoxaemia at equal CaO2; cerebral DO2 falls in dilution, offset by extraction (Table 2, p. H2028); viscosity not measured (p. H2030) |
 | Tomiyama et al. 1999, Am J Physiol 276:H1190 (PMID 10199842) | [FT] | rats, pentobarbital: CBF 79 / 123 / 104 / 125 (control, diluted, diluted with content restored by 5 atm O2, diluted hyperbaric normoxia; Table 1 p. H1192, text p. H1192); content share 44 % of the rise, 61 % adjusted to equal MAP, viscosity the remainder (pp. H1193–H1194); whole-blood viscosity 4.53 → 2.54 cP, plasma 1.32 → 1.67 cP (p. H1193); PaO2 calculated |
 | Rebel et al. 2003, Am J Physiol Heart Circ Physiol 285:H1600 (PMID 12816746) | [FT] | cats, pentobarbital + fentanyl, exchange to Hct ≈ 19 %: resting flow up about 75 % with albumin, O2 transport kept (Fig. 2, p. H1603); flow (microspheres) to hypercapnia about +360 % against +400 % in controls, not different, attenuated with raised plasma viscosity or cell-free Hb (Fig. 4, p. H1604), as a percent of an unstated reference, no absolute flow printed; pial dilation to hypercapnia kept; hypocapnic constriction blunted in every transfused group (p. H1604); plasma viscosity only (Table 2, p. H1603) |
-| Hudak et al. 1986, Am J Physiol (PMID 3728699); Hudak et al. 1987, J Appl Physiol (PMID 3571067) | [ABS] | newborn lambs (unanaesthetised) and sheep (anaesthetised), as haematocrit **rose**: red cell concentration at unchanged CaO2 accounts for 56 % and ≈ 60 % of the CBF fall; viscosity "probable", not measured |
+| Hudak et al. 1986, Am J Physiol (PMID 3728699); Massik et al. 1987, J Appl Physiol 62:1090 (PMID 3571067) | [ABS] | newborn lambs (unanaesthetised) and sheep (anaesthetised), as haematocrit **rose**: red cell concentration at unchanged CaO2 accounts for 56 % and ≈ 60 % of the CBF fall; viscosity "probable", not measured |
 | Am J Physiol 1992 (PMID 1566914) | [ABS] | cats: CBF 140–90 % over Hct 60–120 % of baseline; in-vivo viscosity, not large-artery dilation; pial constriction after haemodilution |
 | Ric Clin Lab 1985 (PMID 4035219) | [ABS] | 4 patients with paraproteinaemia: plasmapheresis lowered **plasma** viscosity at constant Hct, CBF +24.4 mL/100 g/min (disputed: BMJ 1982, no change in 8) |
 | J Clin Anesth 2005;17:177 (PMID 15896583, DOI 10.1016/j.jclinane.2004.06.017) | [FT] | 30 hip-arthroplasty patients, N2O + sevoflurane, PaO2 > 200, PaCO2 38–40: MCA velocity to 122 % / 156 % of baseline after dilution to Hct 33 / 25 % (+22 % / +56 %), 135 % of baseline at MAP ≈ 55 under PGE1 (p. 179, Table 2 and Fig. 1); the abstract's "+122 %" / "+156 %" misstate it; velocity only, baseline ≈ 44 cm/s read from the figure |
@@ -843,19 +843,21 @@ reading error the notes state (research notes 90a and 90b).
   for cerebral flow in people below Hb 5.7 g/dL (B2a's lower hold).
 - Brown 1984, MD thesis, Cambridge (cited by Brown 1985): the regression coefficients the article does not print, the
   per-subject data, and the PaCO2 and MAP ranges (§2.2; §9.2 item 3).
-- Rossen, Kabat & Anderson 1943, Arch Neurol Psychiatry 50:510 (not indexed): time to LOC on acute arrest of cerebral
+- Rossen, Kabat & Anderson 1943, Arch Neurol Psychiatry 50:510 (not in PubMed; DOI 10.1001/archneurpsyc.1943.02290230022002): time to LOC on acute arrest of cerebral
   flow (A2).
 - Sharbrough 1973 (PMID 4723697); Sundt 1981 (PMID 7266064); Trojaborg & Boysen 1973 (PMID 4118436): no abstracts
   indexed; the human CBF levels for EEG slowing vs flattening (A1, A2, B9's failure level).
 - Astrup, Siesjö & Symon 1981 (PMID 6272455), no abstract: the flow-time thresholds.
-- Njemanze 1991 full text: n and the velocity at presyncope (A2, §2.2).
+- Njemanze 1991, Aviat Space Environ Med 62:569 (PMID 1859345), full text: n and the velocity at presyncope (A2, §2.2).
 - Chen 2018, Neurocrit Care (PMID 28484928): asphyxial vs VF rats, the cause-of-arrest comparison (§2.3).
 - Jia 2006 (PMC3074257) and IEEE TBME 2006 (PMC3050568) full texts: the time courses after 5, 7 and 9 min (§2.3 R6;
   recorded, not built).
 - Nutma 2022 (PMID 35122892) full text: the EEG patterns at 12 and 24 h in each arm, 33 against 36 °C, the closest
-  human test of whether cooling delays a continuous EEG (§9.1 item 5).
+  human test of whether cooling delays a continuous EEG (§9.1 item 5). Still wanted: an open copy exists, but its
+  repository file could not be opened by script (a bot check); it can be read by hand in a browser.
 - Lybeck 2018 (PMID 29371115) full text: median awakening per arm, time from arrest to sedation stop per arm, sedation
-  by drug (§9.1 item 5: whether the drug layer can account for the later waking).
+  by drug (§9.1 item 5: whether the drug layer can account for the later waking). Still wanted, as for Nutma 2022: an
+  open copy exists, behind a bot check for scripts, readable by hand in a browser.
 - Annborn 2023 (PMID 37178902) full text: concentration time course, sedation stop, distribution of awakening.
 - Thoresen 2010 (PMID 20566612) full text: time to normal trace by arm and the sedation used.
 - A study measuring the EEG time course and waking together under randomised post-return temperature, with sedation
@@ -897,7 +899,7 @@ reading error the notes state (research notes 90a and 90b).
   per point and dog, the number of measurements per group, whether group I stayed near 150 mmHg); the input of
   Gersten's fit (the plotted points or the drawn curves); Todd 1994's fitted slopes above and below CaO2 12 (drawn
   only, Fig. 1); whole-blood viscosity with the dilution fluids, and Hudak 1986 (DOI 10.1152/ajpheart.1986.251.1.h63),
-  Hudak 1987 (DOI 10.1152/jappl.1987.62.3.1090), Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949);
+  Massik 1987 (DOI 10.1152/jappl.1987.62.3.1090), Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949);
   Battisti-Charbonney 2011: the resting end-tidal PCO2 and the sigmoid's equation as printed (to place
   rest on the fitted curve), and each subject's fitted parameters (Table 1 gives means only).
 - Cerebral flow below the lower limit of autoregulation, or under chest compressions, with and without haemodilution
