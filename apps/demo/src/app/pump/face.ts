@@ -14,6 +14,7 @@
 // (the owner's ruling of 10 November: a device's face carries no Persian), `lang="en"`, left to right.
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
+import { tciModelName } from '../tci-names.ts';
 import { h, setText } from '../ui.ts';
 import type { FaceRow } from './face-row.ts';
 
@@ -117,12 +118,15 @@ export interface FaceModelOut {
   fields: FaceField[];
 }
 
+/** Two significant digits, never in exponent form (toPrecision writes 3.9e-12). */
+const twoDigits = new Intl.NumberFormat('en', { maximumSignificantDigits: 2, useGrouping: false });
+
 /** A number for the face: at most three significant digits under 100, whole above (display only, the value kept). */
 export function faceNum(x: number): string {
   if (!Number.isFinite(x)) return FACE_LABELS.dash;
   const a = Math.abs(x);
-  const s = a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : x.toPrecision(2);
-  return s.includes('.') && !s.includes('e') ? s.replace(/\.?0+$/, '') : s;
+  const s = a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : twoDigits.format(x === 0 ? 0 : x); // -0 is written 0
+  return s.includes('.') ? s.replace(/\.?0+$/, '') : s;
 }
 
 const isGap = (v: ProfileValue | undefined): v is { gap: string } => !!v && typeof (v as { gap?: unknown }).gap === 'string';
@@ -173,7 +177,7 @@ export function faceModel(row: FaceRow | null, kind: ChannelKind, profiles: Face
     almostEmpty: () => (!profiles ? L.noProfile : isGap(profiles.syringe.nearEnd) ? L.gap.nearEnd : null),
     kvo: () => (!profiles ? L.noProfile : isGap(profiles.drip.kvo.after) ? L.gap.kvoAfter : null),
     // E2: the pump's own prediction and its target, read only (setting a target is A2's flow)
-    tciSet: () => tci?.setId ?? L.dash,
+    tciSet: () => (tci ? tciModelName(tci.setId) : L.dash),
     tciMode: () => (!tci ? L.dash : tci.mode === null ? L.tciMode.stopped : L.tciMode[tci.mode]),
     target: () => (tci && tci.target !== null && tci.mode !== null ? `${faceNum(tci.target)} ${unitText(tci.unit)}` : L.dash),
     cp: () => (tci ? `${faceNum(tci.cp)} ${unitText(tci.unit)}` : L.dash),

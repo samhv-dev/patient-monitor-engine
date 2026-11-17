@@ -733,6 +733,8 @@ renderer, audio and skin contracts.
 | `pacerDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. |
 | `parseSite` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A stored or imported profile; |
 | `setLightScreen` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The rail's light/dark switch (E125): |
+| `tciModelName` | [`apps/demo/src/app/tci-names.ts`](../../apps/demo/src/app/tci-names.ts) | "Schnider" for the set `schnider`: |
+| `tciTargetText` | [`apps/demo/src/app/tci-names.ts`](../../apps/demo/src/app/tci-names.ts) | "3 µg/mL": a target of `drugId` in the unit its Cp and Ce are shown in. |
 | `mount` | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
 | `defaultPatient` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The default patient as the board writes it: |
 | `caseList` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The library's cards in the library's order: |
@@ -1080,6 +1082,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and alarm defaults, and the shell's units and speed. |
 | [`apps/demo/src/app/staging.ts`](../../apps/demo/src/app/staging.ts) | Stage, then commit with one chosen transition (research/13-ui-simulator-benchmarks "Top 8" #1: Gaumard UNI's Apply panel, SimPad PLUS "Set transition time", Infirmary Integrated's Apply/Reset + auto-apply opt-out). |
 | [`apps/demo/src/app/store.ts`](../../apps/demo/src/app/store.ts) | Per-viewer conveniences in localStorage (research/13 brief §5), wrapped: private windows and previews can throw. |
+| [`apps/demo/src/app/tci-names.ts`](../../apps/demo/src/app/tci-names.ts) | How a TCI model and its target are written on the pump face, the Log and the Debrief: the model by its author's surname, as the SP5 TCI's brochure writes the models it holds (research/84 TB-02); a target with its drug's |
 | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Instructor v2, the ACTION slot (design §3.4, §3.5, board "Proposal v6"; plan IP6; answers 4–8, 20): one list of pills for the current stage, in the card's order (steps, judged objectives numbered on, automatic rows), eac |
 | [`apps/demo/src/app/teach2/alarm-line.ts`](../../apps/demo/src/app/teach2/alarm-line.ts) | Instructor v2, the alarm line under the learners' monitor in STATE (the owner's final layout, board "Option G"): the count and the sounding alarms' words (the alarm table's, as the top bar's count words its top alarm), a |
 | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | Instructor v2 with no case loaded (the owner's board "Empty 5", approved 30 October): which of the three ways to begin ACTION shows (the three cards, the case list, or Free roam), shared by ACTION and the strip through t |
@@ -1469,6 +1472,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/position.dom.test.ts`](../../apps/demo/src/app/position.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump-rack-session.dom.test.ts`](../../apps/demo/src/app/pump-rack-session.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/devices.dom.test.ts`](../../apps/demo/src/app/pump/devices.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/pump/face-num.dom.test.ts`](../../apps/demo/src/app/pump/face-num.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/face.dom.test.ts`](../../apps/demo/src/app/pump/face.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/flows.dom.test.ts`](../../apps/demo/src/app/pump/flows.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pump/page.dom.test.ts`](../../apps/demo/src/app/pump/page.dom.test.ts) | 0 | 0 |
@@ -1506,6 +1510,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/sim-clock.dom.test.ts`](../../apps/demo/src/app/sim-clock.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/tci-names.test.ts`](../../apps/demo/src/app/tci-names.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/action-parity.dom.test.ts`](../../apps/demo/src/app/teach2/action-parity.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/cache.dom.test.ts`](../../apps/demo/src/app/teach2/cache.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/census.dom.test.ts`](../../apps/demo/src/app/teach2/census.dom.test.ts) | 0 | 0 |

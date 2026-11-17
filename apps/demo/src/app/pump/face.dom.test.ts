@@ -138,7 +138,7 @@ describe('E2: a syringe channel in TCI shows the mode\'s read-only rows (§5; th
     f.update(faceRow(tciRow()));
     expect(f.el.dataset.mode).toBe('tci');
     expect(keys(f.el)).toEqual(['syringe', 'tciSet', 'tciMode', 'target', 'cp', 'ce', 'rate', 'infused', 'remaining', 'toEmpty', 'alarms', 'tciMaxRate']);
-    expect(field(f.el, 'tciSet')).toBe('eleveld');
+    expect(field(f.el, 'tciSet')).toBe('Eleveld'); // the author's surname, never the set id
     expect(field(f.el, 'tciMode')).toBe('Ce');
     expect(field(f.el, 'target')).toBe('3 µg/mL');
     expect(field(f.el, 'cp')).toBe('3.4 µg/mL');
