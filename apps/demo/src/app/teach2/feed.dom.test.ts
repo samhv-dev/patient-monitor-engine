@@ -138,6 +138,7 @@ describe('P6: the view feed and the note path', () => {
     await settle();
     // the host answers once its SHA-256 of the ticket it hands on is done (crypto.subtle: real work, not a timer)
     for (let i = 0; i < 100 && ctl.access.state === 'pending'; i++) await new Promise((r) => setImmediate(r));
+    await vi.advanceTimersByTimeAsync(50); // the welcome that follows the grant, as above
     await settle();
     return { ctl, link };
   }
