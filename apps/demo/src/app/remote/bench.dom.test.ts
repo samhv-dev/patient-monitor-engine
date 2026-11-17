@@ -42,11 +42,11 @@ describe('the bench (L7)', () => {
     const all = m.qa('.lr-pick').map((x) => x.dataset.drug as string);
     expect(all.length).toBeGreaterThan(0);
     for (const d of all) expect(f.drugs[d], d).toBeDefined(); // §5 rule 5: the bench offers only drugs with a file
-    expect(all).not.toContain('ketamine'); // in the library, no formulary file yet
+    expect(all).not.toContain('thiopental'); // in the library, no formulary file yet
     m.search('dant');
     expect(m.qa('.lr-pick').map((x) => x.textContent)).toEqual(['Dantrolene']);
-    m.search('adrenaline'); // the other name finds epinephrine (drugs.ts aka)
-    expect(m.qa('.lr-pick').map((x) => x.dataset.drug)).toEqual(['epinephrine']);
+    m.search('adrenaline'); // the other name finds epinephrine (drugs.ts aka), and noradrenaline holds the same word
+    expect(m.qa('.lr-pick').map((x) => x.dataset.drug)).toEqual(['epinephrine', 'norepinephrine']);
     m.search('zzz');
     expect(m.qa('.lr-pick')).toHaveLength(0);
     expect(m.text('.lr-nomatch')).toBe(BENCH_WORDS.noMatch('zzz'));

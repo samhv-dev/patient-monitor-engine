@@ -1,0 +1,58 @@
+{
+  "$comment": "The label's 0.1 mg/mL is atropine sulfate monohydrate (0.083 mg atropine base).",
+  "drugId": "atropine",
+  "products": [
+    {
+      "id": "atropine-100mcg-ml-syringe",
+      "form": "solution",
+      "strength": {
+        "amount": 0.1,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-atropine"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "dailymed-atropine"
+    },
+    {
+      "id": "dextrose5",
+      "listed": false,
+      "src": "dailymed-atropine"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-atropine"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-atropine"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-atropine"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-atropine"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
