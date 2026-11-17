@@ -17,10 +17,15 @@ const over = (s: unknown): string => {
   if (!(n > 0)) return '';
   return n >= 60 ? ` over ${+(n / 60).toFixed(1)} min` : ` over ${n} s`;
 };
-/** ", not a model the Mindray BeneFusion SP5 TCI holds" for a set the TCI pump's library lacks; nothing when it holds it. */
-const offPump = (setId: string): string => {
+/** What the TCI pump's library says against a set and target the pump would not run: a model it lacks, or an
+ *  effect-site target for a model it runs on plasma only; nothing otherwise. */
+const pumpNote = (setId: string, mode: unknown): string => {
   const pump = shippedPumpDevices()?.['sp5-tci'];
-  return pump && !pumpModel(pump, setId) ? `, not a model the ${pump.maker} ${pump.model} holds` : '';
+  if (!pump) return '';
+  const name = `${pump.maker} ${pump.model}`;
+  const held = pumpModel(pump, setId);
+  if (!held) return `, not a model the ${name} holds`;
+  return mode === 'effect' && !held.targets.includes('effect-site') ? `, a model the ${name} runs on a plasma target only` : '';
 };
 const grade = (sev: unknown): string => {
   const s = num(sev);
@@ -72,7 +77,7 @@ function pumpLine(e: Any, meta: Any): string {
     case 'rate':
       return `${ch}: rate ${was ? `changed ${fromTo(num(was.rate), String(was.unit), e.rate, String(e.unit))}` : `${e.rate} ${unitText(String(e.unit))}`}${typeof e.limitMl === 'number' ? `, limit ${e.limitMl} mL` : ''}`;
     case 'tci':
-      return num(e.target) > 0 ? `${ch}: TCI ${tciModelName(String(e.setId))}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${tciTargetText(e.target, tciSetDrug(String(e.setId)))}${offPump(String(e.setId))}` : `${ch}: TCI stopped`;
+      return num(e.target) > 0 ? `${ch}: TCI ${tciModelName(String(e.setId))}, ${e.mode === 'effect' ? 'Ce' : 'Cp'} target ${tciTargetText(e.target, tciSetDrug(String(e.setId)))}${pumpNote(String(e.setId), e.mode)}` : `${ch}: TCI stopped`;
     case 'bolus':
       return e.volumeMl !== undefined ? `${ch}: bolus ${e.volumeMl} mL` : `${ch}: bolus ${(e.dose as Any | undefined)?.amount} ${unitText(String((e.dose as Any | undefined)?.unit))}`;
     case 'purge':
