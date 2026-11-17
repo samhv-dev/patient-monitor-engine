@@ -424,8 +424,8 @@ export class HostSession {
     this.timer = period > 0 ? setInterval(() => this.emitState(), period) : null;
   }
 
-  /** Serve peers on this transport. Returns a detach function. */
-  addTransport(t: ManagedTransport): () => void {
+  /** Serve peers on this transport. Returns a detach function (resolves once its peers and grants are forgotten, in order). */
+  addTransport(t: ManagedTransport): () => Promise<void> {
     const offMsg = t.onMessage((m) => void this.inOrder(() => this.receive(t, m)));
     const offStatus = t.onStatus((s) => {
       if (s === 'open') t.send(this.stamp({ kind: 'hello', role: 'host' }));
@@ -438,7 +438,7 @@ export class HostSession {
       offStatus();
       offLeft?.();
     });
-    return () => void this.detach(t);
+    return () => this.detach(t);
   }
 
   bookmarks(): string[] {

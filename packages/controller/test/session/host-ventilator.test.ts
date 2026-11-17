@@ -185,12 +185,12 @@ describe('the host grants one remote ventilator (R8c)', () => {
     expect(holders).toEqual(['vent-a.1', null, 'vent-a.1', null]);
   });
 
-  it('its socket leaving (peer-left) or its transport closing ends the grant: the app is told at once', async () => {
+  it('its socket leaving (peer-left) or its transport closing ends the grant: the app is told (after any check still pending)', async () => {
     const { link, holders } = setup();
     const one = link();
     device(one.relay, 'vent-a.1').hello(PIN);
     await waitFor(() => holders.length === 1);
-    one.detach();
+    await one.detach();
     expect(holders).toEqual(['vent-a.1', null]);
     const sock = new FakeRelaySocket();
     const seen: Array<string | null> = [];
