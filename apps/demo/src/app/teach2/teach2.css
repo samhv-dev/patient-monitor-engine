@@ -33,6 +33,10 @@
 .ip2-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ip2-muted); }
 .ip2-mode { flex: none; padding: 5px 8px; border: 1px solid var(--ip2-control); border-radius: 4px; font: 500 11px/1 var(--font-plex-mono); letter-spacing: 0.04em; white-space: nowrap; }
 .ip2-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.ip2-start-words { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.ip2-start-words:empty { position: absolute; }
+.ip2-start-run { flex: none; align-self: center; height: 28px; }
+.ip2-start-run[hidden] { display: none; }
 .ip2-spacer { flex: 1 1 auto; }
 .ip2-pill { flex: none; display: inline-flex; align-items: center; gap: 10px; height: 34px; padding: 0 14px 0 12px; border: 1px solid var(--ip2-run-line); border-radius: 8px; background: var(--ip2-run-bg); color: var(--ip2-text); cursor: pointer; }
 .ip2-pill-icon { display: inline-flex; color: var(--ip2-run-glyph); }
