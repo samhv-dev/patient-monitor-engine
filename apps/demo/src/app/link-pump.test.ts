@@ -10,7 +10,7 @@ import type { AppSession } from './session.ts';
 
 const S = 'LNK234';
 const tick = () => new Promise((r) => setTimeout(r, 0));
-const hostStub = { onMount: () => () => undefined, deviceName: () => null, record: { note: () => undefined } } as unknown as AppSession;
+const hostStub = { onMount: () => () => undefined, deviceLabel: () => 'Pump tablet 1', record: { note: () => undefined } } as unknown as AppSession;
 const finding = { news: 'pumpMismatch', ch: 2, kind: 'syringe', device: 'pumptab0001', since: 300, notice: null, contents: { drugId: 'remifentanil', concentration: { amount: 50, unit: 'mcg', perMl: 1 } }, label: { amount: 50, unit: 'mcg', perMl: 1 }, origin: { stock: 'x' }, programmed: { drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } }, text: 'remifentanil 50 mcg/mL programmed as propofol 10 mg/mL' };
 
 describe("the Link keeps the host's pump-mismatch findings (A2)", () => {
