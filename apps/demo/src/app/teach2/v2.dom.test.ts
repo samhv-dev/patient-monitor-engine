@@ -37,7 +37,7 @@ function rig(o: { holds?: PhaseHold[]; takings?: Record<string, number>; simT?: 
   };
   const link = {
     ctl: { scenario: sv, bookmarks: [], simT, state: { values: { etco2: 44 } }, hostPaused: false },
-    host: { driver: { vitalHolds: () => o.holds ?? [], phaseRunner, stageMarks: () => [] }, record: { data: null } },
+    host: { driver: { vitalHolds: () => o.holds ?? [], rhythmHolds: () => [], phaseRunner, stageMarks: () => [] }, record: { data: null } },
     simT, log: [],
     send: async (c: CommandInput) => (single.push(c), { accepted: true, tick: 0, commandId: 'c', rttMs: 0 }),
     sendBatch: async (cs: CommandInput[]) => (sent.push(cs), cs.map(() => ({ accepted: true, tick: 0, commandId: 'c', rttMs: 0 }))),

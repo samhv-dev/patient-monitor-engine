@@ -20,7 +20,8 @@
         { "id": "atropine", "label": "Atropine (p 0.2)", "to": "atropineResponse", "when": { "event": { "kind": "drug", "drugId": "atropine", "minDose": 0.5 } }, "probability": 0.2 },
         { "id": "capture", "label": "Pacing with capture", "to": "paced", "when": { "event": { "kind": "pacer", "minMa": 70 } } },
         { "id": "chronotrope", "label": "Epinephrine infusion", "to": "infusion", "when": { "event": { "kind": "drug", "drugId": "epinephrine", "infusion": true } } },
-        { "id": "arrestBrady", "label": "Deteriorates (asystole)", "to": "asystole", "when": { "any": [ { "afterS": 420 }, { "manual": { "label": "Deteriorates (asystole)" } } ] } }
+        { "id": "arrestBrady", "label": "Deteriorates (asystole)", "to": "asystole", "when": { "any": [ { "rhythm": { "id": "avb3Wide", "forS": 420 } }, { "manual": { "label": "Deteriorates (asystole)" } } ] },
+          "src": "PLACEHOLDER: no source read gives 7 min of untreated complete heart block before asystole." }
       ]
     },
     {
@@ -28,7 +29,8 @@
       "onEnter": [ { "type": "setTarget", "variable": "hr", "value": 42, "ramp": { "durationS": 60, "curve": "exp" } } ],
       "transitions": [
         { "id": "captureLate", "label": "Pacing with capture", "to": "paced", "when": { "event": { "kind": "pacer", "minMa": 70 } } },
-        { "id": "fadeAtropine", "label": "Effect fades", "to": "chb", "when": { "afterS": 300 } }
+        { "id": "fadeAtropine", "label": "Effect fades", "to": "chb", "when": { "afterS": 300 },
+          "src": "PLACEHOLDER: DESIGN-BRIEF §4.9 gives atropine a duration of 30–60 min; the 5 min is not from it." }
       ]
     },
     {

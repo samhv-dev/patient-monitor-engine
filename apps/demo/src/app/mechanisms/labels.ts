@@ -145,6 +145,7 @@ const R: readonly Row[] = [
   ['endo.core.hormones.symp', 'Sympathetic stress activity', '0–1', 'Sympathetic stress activity from hypercapnia and the stress response.'],
   // ---- brain and organs ----
   ['organs.brain.cbfRel', 'Cerebral blood flow (relative to rest)', '×', 'Brain blood flow relative to normal: autoregulated, pressure-passive outside its limits.'],
+  ['organs.brain.energy.brainstem', 'Brainstem perfusion state', '', 'How long the brainstem has been without blood flow, and how far breathing has reopened since the flow returned.'],
   ['organs.brain.energy.cortex.metabolic', 'Cortical energy failure', '0–1', 'The share of the cortex\'s function lost because its oxygen delivery is below what it needs (0 normal, 1 none left).'],
   ['organs.brain.cpp', 'Cerebral perfusion pressure', 'mmHg', 'Mean arterial pressure at head height minus the intracranial (or cerebral venous) pressure.'],
   ['organs.brain.cush.drive', 'Cushing response drive', '0–1', 'The brainstem\'s pressor drive when cerebral perfusion pressure stays low.'],

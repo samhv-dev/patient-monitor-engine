@@ -48,7 +48,7 @@ export function eventRefusal(event: unknown): string | undefined {
   return hook?.({ type: 'applyEvent', id: 'card', issuedBy: 'scenario', event } as Command) ?? undefined;
 }
 
-const TRIGGER_KEYS = 'afterS, atScenarioS, vital, event, sensor, manual, all, any';
+const TRIGGER_KEYS = 'afterS, atScenarioS, vital, event, sensor, rhythm, manual, all, any';
 const MAX_ERRORS = 20;
 /** A trigger object: …/when, or a child of all/any inside it. */
 const WHEN_PATH = /\/when(\/(all|any)\/\d+)*$/;
@@ -140,6 +140,7 @@ export function validateScenario(input: unknown, opts: ValidateOptions = {}): Va
       if (!stateIds.has(t.to)) errors.push(`${at}/to: no state "${t.to}"`);
       if (t.else !== undefined && !stateIds.has(t.else)) errors.push(`${at}/else: no state "${t.else}"`);
       if (countManual(t.when) > 1) errors.push(`${at}/when: at most one manual trigger per transition`);
+      for (const r of rhythmLeaves(t.when, `${at}/when`)) if (rhythms && !rhythms.has(r.id)) warnings.push(`${r.path}/rhythm/id: "${r.id}" is not in this engine`);
     });
   });
   doc.bookmarks?.forEach((b, i) => {
@@ -149,6 +150,13 @@ export function validateScenario(input: unknown, opts: ValidateOptions = {}): Va
     if (o.at.startsWith('state:') && !stateIds.has(o.at.slice(6))) errors.push(`/debriefHints/${k}/${i}/at: no state "${o.at.slice(6)}"`);
   }));
   return errors.length ? { ok: false, errors: errors.slice(0, MAX_ERRORS), warnings } : { ok: true, doc, warnings };
+}
+
+function rhythmLeaves(w: When, path: string): Array<{ id: string; path: string }> {
+  if ('rhythm' in w) return [{ id: w.rhythm.id, path }];
+  if ('all' in w) return w.all.flatMap((c, i) => rhythmLeaves(c, `${path}/all/${i}`));
+  if ('any' in w) return w.any.flatMap((c, i) => rhythmLeaves(c, `${path}/any/${i}`));
+  return [];
 }
 
 function countManual(w: When): number {

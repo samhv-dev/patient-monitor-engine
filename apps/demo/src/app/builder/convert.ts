@@ -26,10 +26,10 @@
 import { SCENARIO_SCHEMA_V2, type DocCommand, type ScenarioDoc, type ScenarioDocV2, type ScenarioState, type When } from '@pme/controller/scenario';
 import type { Action, Phase, PhaseRule, ScriptEntry } from '@pme/controller/scenario';
 
-/** What a flag is about. A leaf kind (`vital`, `afterS`, `atScenarioS`, `sensor`, `event`, `manual`) is a leaf of a
+/** What a flag is about. A leaf kind (`vital`, `afterS`, `atScenarioS`, `sensor`, `rhythm`, `event`, `manual`) is a leaf of a
  *  transition's `when`; the others are the transition's die or the graph's shape. */
 export const FLAG_KINDS = [
-  'vital', 'afterS', 'atScenarioS', 'sensor', 'event', 'manual', 'probability', 'objective',
+  'vital', 'afterS', 'atScenarioS', 'sensor', 'rhythm', 'event', 'manual', 'probability', 'objective',
   'pressIntoPhase', 'pressScope', 'entryDiffers', 'reentry', 'onExit', 'unreachable', 'bookmark', 'hint',
 ] as const;
 export type FlagKind = (typeof FLAG_KINDS)[number];
@@ -63,6 +63,7 @@ const DECIDE: Record<FlagKind, string> = {
   afterS: 'propose the truth rule this time stood for, with its sources, for the owner to sign; or, if no source carries it, make it an instructor-pressed event (an action whose give is the beat)',
   atScenarioS: 'propose the truth rule this scenario time stood for, with its sources, for the owner to sign; or make it an instructor-pressed event',
   sensor: 'a /2 phase rule does not read a sensor: name the truth the sensor change stood for, with its sources, or make it an instructor-pressed event',
+  rhythm: 'a /2 phase reads the rhythm as the signal `rhythm:<id>`, and a hold is the phase’s `holdS`: write the phase’s entry rule and its hold',
   event: 'a /2 phase is not entered by a learner’s act and a script entry fires only on an A press: make the beat a sourced truth rule on what the act does to the patient, or an instructor-pressed event (an action whose give is the beat)',
   manual: 'this press is part of a combined condition no /2 form holds: decide the action and the rule apart',
   probability: 'a /2 card rolls no dice: propose the truth rule the branch stood for, with its sources, for the owner to sign; or let the instructor press the branch the case takes',
@@ -84,13 +85,14 @@ function leaves(w: When, path: string, out: Array<{ w: When; path: string }> = [
   else out.push({ w, path });
   return out;
 }
-const leafKind = (w: When): FlagKind => ('vital' in w ? 'vital' : 'afterS' in w ? 'afterS' : 'atScenarioS' in w ? 'atScenarioS' : 'sensor' in w ? 'sensor' : 'event' in w ? 'event' : 'manual');
+const leafKind = (w: When): FlagKind => ('vital' in w ? 'vital' : 'afterS' in w ? 'afterS' : 'atScenarioS' in w ? 'atScenarioS' : 'sensor' in w ? 'sensor' : 'rhythm' in w ? 'rhythm' : 'event' in w ? 'event' : 'manual');
 const isPress = (w: When) => 'manual' in w || 'event' in w;
 const said = (w: When): string => {
   if ('vital' in w) return `the displayed ${w.vital.var} ${w.vital.op} ${w.vital.value}${w.vital.forS ? ` for ${w.vital.forS} s` : ''}`;
   if ('afterS' in w) return `${w.afterS} s in the state`;
   if ('atScenarioS' in w) return `${w.atScenarioS} s on the scenario clock`;
   if ('sensor' in w) return `the ${w.sensor.sensor} sensor ${w.sensor.state}`;
+  if ('rhythm' in w) return `the rhythm ${w.rhythm.id}${w.rhythm.forS ? ` for ${w.rhythm.forS} s` : ''}`;
   if ('event' in w) return `the learner’s ${Object.entries(w.event).map(([k, v]) => (k === 'kind' ? v : `${k} ${v}`)).join(', ')}`;
   if ('manual' in w) return `the press “${w.manual.label}”`;
   return 'a combined condition';
