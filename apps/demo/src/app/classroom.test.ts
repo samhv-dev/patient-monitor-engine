@@ -4,6 +4,7 @@ import { hashOf, instructorTarget, instructorUrl, instrumentOf, joinCode, learne
 import { drawPin, instructorPin } from './instructor-pin.ts';
 import { pairingOf, pairingUrl } from './pairing.ts';
 import { encodeQr } from './qr.ts';
+import { carried } from './address.testing.ts';
 
 const at = (url: string): PageLocation => {
   const u = new URL(url);
@@ -122,7 +123,7 @@ describe('no address the app builds carries the PIN (a property over the builder
       urls.push(origin + ventWindowUrl(code, path));
       if (picker.ok) urls.push(new URL(ventDeviceUrl(new URL(picker.url)), picker.url).href);
       for (const u of urls) {
-        expect(u).not.toContain(pin);
+        expect(carried(u)).not.toContain(pin);
         expect(new URL(u).searchParams.has('pin')).toBe(false);
         expect(/[?&#]pin=/i.test(u)).toBe(false);
         checked++;

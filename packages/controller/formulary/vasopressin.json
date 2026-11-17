@@ -1,0 +1,57 @@
+{
+  "drugId": "vasopressin",
+  "products": [
+    {
+      "id": "vasostrict-20units-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 20,
+        "unit": "units",
+        "perVial": false,
+        "src": "dailymed-vasostrict"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "dailymed-vasostrict"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-vasostrict"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-vasostrict"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-vasostrict"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-vasostrict"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-vasostrict"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
