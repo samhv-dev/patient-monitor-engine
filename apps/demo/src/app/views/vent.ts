@@ -15,7 +15,7 @@
 import type { Command } from '@pme/engine-core';
 import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
 import {
-  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, roomVentMonitor, roomVentPort, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
 import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
@@ -114,7 +114,9 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     session.ventTick = -1;
     offAttach = session.onMount((m) => {
       detach();
-      const l = attachMonitorToLink(session.linked(m), p, (cmd, r) => console.warn('vent link rejected', cmd.type, r));
+      // the cockpit drives the room's patient with its breaths and its circuit only (room-guard.ts)
+      const refused = (what: string, why?: string) => console.warn('vent link rejected', what, why);
+      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r));
       detach = l;
       // the patient as it is now: what changed while this cockpit was not linked (an airway event) reaches it at once
       const ls = session.last.lungState;

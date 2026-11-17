@@ -8,6 +8,7 @@ import { l1Target, setL1Target, type L1State } from '../../l1/state.ts';
 import type { NeuroResp } from '../neuro/drive.ts';
 import { P_MAX_CMH2O, PMUS_REST_CMH2O, wakeShiftMmHg } from '../lung/drive.ts'; // wakeShiftMmHg
 import { brainstemGate, createSpontDrive, gatedRate, stepBrainstem, stepSpontDrive, type SpontDrive } from '../neuro/spont.ts'; // MODELED spontaneous drive; the brainstem's perfusion gate in both modes
+import type { BrainstemEntry } from '../brain/energy.ts';
 import type { RampState } from '../../l1/ramp.ts';
 import { co2NumStep, co2Numerics, createCo2Num, type Co2Num } from '../../l3/co2-numerics/co2-numerics.ts';
 import { createImpNum, impedanceSample, impRr, impStep, type ImpNum } from '../../l3/resp/impedance.ts';
@@ -71,6 +72,7 @@ export interface RespCtx {
   neuro?: NeuroResp; // Drug and NMB effects on spontaneous breathing
   hco3?: number; // blood.core.ab.hco3 for Winter's compensation (MODELED spontaneous drive)
   cbfRel?: number; // organs.brain.cbfRel — the brainstem-perfusion gate on the MODELED drive
+  brainstem: BrainstemEntry; // organs.brain.energy.brainstem — the gate's state, stepped here (one step late, as cbfRel)
   /** The drug model's bus (the lung reads PD outputs, never PK) — bronchodilation B and HPV inhibition, 0–1. */
   bronchoDil?: number;
   /** The drug model's `bus.airway.histamine` (0–1) — the drug-driven bronchoconstriction. */
@@ -220,11 +222,11 @@ export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { musc
   const triggered = rs.driver.source === 'ventilator' && rr > 0 && effortTriggers(pmus, autoPeepCmH2O(rs), airwayResistance(rs));
   return { muscle, pmus, triggered };
 }
-function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
+function driverCtx(rs: RespState, b: BrainstemEntry, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
   const n = neuro; // The instructor's rr/vt × the drug/NMB multipliers; apnoea → rr 0
   const own = ownEffort(rs, l1, n); // MODELED, on the machine: drive × neuromuscular transmission
   const sp = modeledSpont(rs, l1) ? rs.spont : undefined; // MODELED — the chemoreflex drive's own rr/vt (spont.ts)
-  const pattern = sp ? { rr: sp.rr, vt: sp.vt } : manualPattern(rs, l1, t, n);
+  const pattern = sp ? { rr: sp.rr, vt: sp.vt } : manualPattern(rs, b, l1, t, n);
   return {
     rr: pattern.rr,
     vt: pattern.vt,
@@ -241,18 +243,18 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
 }
 /** MANUAL (and MODELED before the drive's first evaluation): the instructor's rr/vt × the drug/NMB multipliers, apnoea →
  * rr 0, through the brainstem's perfusion gate in MANUAL. */
-function manualPattern(rs: RespState, l1: L1State, t: number, n?: NeuroResp): { rr: number; vt: number } {
+function manualPattern(rs: RespState, b: BrainstemEntry, l1: L1State, t: number, n?: NeuroResp): { rr: number; vt: number } {
   const vt0 = l1Target(l1, 'vt', t);
   const rr = n ? (n.apnoea ? 0 : l1Target(l1, 'rr', t) * n.rrMult) : l1Target(l1, 'rr', t);
   const vt = n ? vt0 * n.vtMult : vt0;
   if (l1.mode === 'modeled' || !rs.spont) return { rr, vt };
-  const g = brainstemGate(rs.spont, vt0);
+  const g = brainstemGate(b, rs.spont, vt0);
   return { rr: gatedRate(g, rr), vt: Math.min(vt, g.vtCap) };
 }
 /** MANUAL with the brainstem's perfusion gate acting on the instructor's pattern. */
-function manualGated(rs: RespState, l1: L1State): boolean {
+function manualGated(rs: RespState, b: BrainstemEntry, l1: L1State): boolean {
   if (l1.mode === 'modeled' || !rs.spont) return false;
-  const g = brainstemGate(rs.spont, 1);
+  const g = brainstemGate(b, rs.spont, 1);
   return g.rateCap < Infinity || g.gate * g.pulse < 1;
 }
 /** The pleural swing of an effort against an obstructed airway (partial: × obstruction; complete: all). */
@@ -496,8 +498,8 @@ function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number, blood?: 
 }
 
 /** Nominal alveolar ventilation of the current settings (MANUAL calibration). */
-function nominalVa(rs: RespState, l1: L1State, t: number): number {
-  const n = nominalRate(rs.driver, driverCtx(rs, l1, t));
+function nominalVa(rs: RespState, b: BrainstemEntry, l1: L1State, t: number): number {
+  const n = nominalRate(rs.driver, driverCtx(rs, b, l1, t));
   return (n.rr * Math.max(0, n.vt - deadSpace(rs, l1))) / 1000;
 }
 
@@ -548,7 +550,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     // The respiratory heat loss follows the actual ventilation; machine gas is dry, an HME is assumed unless
     // `thermal7e { hme: false }` removed it
     const mech = d.source === 'ventilator' || d.source === 'bvm' || d.source === 'external';
-    const nv = nominalRate(d, driverCtx(rs, l1, t));
+    const nv = nominalRate(d, driverCtx(rs, ctx.brainstem, l1, t));
     rs.temp.vent = { veLpm: d.airway === 'apnoea' || d.source === 'none' ? 0 : (nv.rr * nv.vt) / 1000, dryGas: mech, hme: mech ? rs.temp.vent.hme || !rs.temp.vent.dryGas : false };
     // E131: the heat model's MH muscle heat derives from the same mL O2 as the demand above (the patient's resting VO2),
     // and its sweating and shivering need the hypothalamic efferent, gated by brainstem perfusion as the baroreflex is
@@ -585,7 +587,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     }
   } else if (etT !== rs.seen.etco2) {
     rs.seen.etco2 = etT;
-    const n = nominalRate(d, driverCtx(rs, l1, t));
+    const n = nominalRate(d, driverCtx(rs, ctx.brainstem, l1, t));
     rs.co2.flow = lowFlowFactor(rs.coRatio); // calibrate against the settled low-flow factor
     const pf = (etT / Math.max(0.05, rs.co2.flow) + extraGradient(rs)) / Math.max(0.5, rs.lung.co2.g); // The mixing point's gap
     if (n.rr > 0) {
@@ -611,10 +613,10 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       ibwKg: rs.pat.ibwKg, airwayObs: d.airway === 'obstructed' ? 1 : 0,
       setShift: PREG_PACO2_SHIFT_MMHG * pregnancy(rs), // Progesterone
       jDrive: Math.min(1, rs.lungSpecs.reduce((m, s) => (s.id === 'pe' ? Math.max(m, s.severity) : m), 0)),
-    });
+    }, ctx.brainstem);
   } else if (l1.mode !== 'modeled') {
     // MANUAL: the instructor's rr/vt are the perfused patient's own pattern; the brainstem's perfusion gates it
-    stepBrainstem((rs.spont ??= createSpontDrive()), perfusion, GAS_DT_S);
+    stepBrainstem(ctx.brainstem, (rs.spont ??= createSpontDrive()), perfusion, GAS_DT_S);
   }
   const va = alveolarVentilation(d, t, deadSpace(rs, l1));
   rs.vaLpm = va;
@@ -634,7 +636,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const spT = l1Target(l1, 'spo2', t);
   if (spT !== rs.seen.spo2) {
     rs.seen.spo2 = spT;
-    const x = o2Inputs(rs, l1, t, Math.max(0.3, nominalVa(rs, l1, t)), ctx.blood);
+    const x = o2Inputs(rs, l1, t, Math.max(0.3, nominalVa(rs, ctx.brainstem, l1, t)), ctx.blood);
     rs.shunt = Math.max(0, solveShunt(x, spT / 100) - extraShunt(rs));
     const ss = o2Steady({ ...x, shunt: rs.shunt + extraShunt(rs) }, rs.shunt + extraShunt(rs));
     if (ss && (va > 0 || rs.gasK === 0)) Object.assign(rs.o2, ss);
@@ -664,13 +666,13 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   delete c.sbp;
   delete c.dbp;
   delete c.volumeStatus;
-  const n = nominalRate(d, driverCtx(rs, l1, t));
+  const n = nominalRate(d, driverCtx(rs, ctx.brainstem, l1, t));
   c.spo2 = sa * 100;
   c.etco2 = rs.etco2;
   c.fio2 = currentFio2(rs, l1, t);
   c.shunt = shuntFraction(rs.lung, Math.min(0.9, rs.shunt + extraShunt(rs)));
   c.tempCore = rs.temp.tc;
-  if (d.source === 'spontaneous' && d.airway !== 'apnoea' && !manualGated(rs, l1)) {
+  if (d.source === 'spontaneous' && d.airway !== 'apnoea' && !manualGated(rs, ctx.brainstem, l1)) {
     delete c.rr; // the spontaneous driver breathes at the rr/vt targets
     delete c.vt;
   } else if (d.source === 'spontaneous' && d.airway !== 'apnoea') {
@@ -791,7 +793,7 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     }
   }
   const tEnd = mEnd / RESP_RATE;
-  planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd, ctx.neuro), tEnd + PLAN_AHEAD_S); // Neuro
+  planCycles(rs.driver, driverCtx(rs, ctx.brainstem, ctx.l1, tEnd, ctx.neuro), tEnd + PLAN_AHEAD_S); // Neuro
   // Stamp newly planned cycles with the lung's expiratory τ and capnogram terms
   const ct = capnoTerms(rs.lung);
   for (const c of rs.driver.cycles) {

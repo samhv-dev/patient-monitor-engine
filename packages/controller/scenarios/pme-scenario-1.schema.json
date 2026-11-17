@@ -250,7 +250,8 @@
         "to": { "$ref": "#/definitions/id" },
         "when": { "$ref": "#/definitions/when" },
         "probability": { "type": "number", "minimum": 0, "maximum": 1 },
-        "else": { "$ref": "#/definitions/id" }
+        "else": { "$ref": "#/definitions/id" },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the transition's numbers (its times, thresholds and probability): the source cited, or PLACEHOLDER and why when no source carries a number." }
       },
       "dependencies": { "else": ["probability"] }
     },
@@ -290,6 +291,13 @@
           "required": ["sensor", "state"],
           "additionalProperties": false,
           "properties": { "sensor": { "$ref": "#/definitions/sensorId" }, "state": { "type": "string" } }
+        },
+        "rhythm": {
+          "type": "object",
+          "required": ["id"],
+          "additionalProperties": false,
+          "description": "The rhythm the engine draws (its id, as setRhythm names it), held without a break for forS s while the state is current.",
+          "properties": { "id": { "$ref": "#/definitions/id" }, "forS": { "type": "number", "minimum": 0 } }
         },
         "manual": {
           "type": "object",
