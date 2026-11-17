@@ -204,7 +204,7 @@ describe('R5a: the defibrillator model (device layer)', () => {
     const rev: EngineEvent[] = [];
     r.on((x) => rev.push(x));
     r.restore(snap);
-    expect(charge(r, rev, 360).chargeS).toBeCloseTo(12.6, 10);
+    expect(charge(r, rev)).toEqual({ energyJ: 120, chargeS: expect.closeTo(4.2, 10) as unknown as number }); // the model's, not lifepak-like's 200 J
     // the pacer too (row 58): a lifepak-like engine restored from the snapshot paces at the model's 70 ppm with HR shown,
     // and a skin it puts on after the restore keeps that
     r.dispatch(defib('disarm'));
@@ -217,6 +217,6 @@ describe('R5a: the defibrillator model (device layer)', () => {
     const f = devRig('zoll-like');
     f.e.advanceTo(1);
     f.e.dispatch(model('generic'));
-    expect(charge(f.e, f.ev, 360)).toEqual(charge(e, ev, 360));
+    expect(charge(f.e, f.ev, 200)).toEqual(charge(e, ev, 200));
   });
 });

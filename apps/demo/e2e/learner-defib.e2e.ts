@@ -182,7 +182,7 @@ test("the resident selects 150 J on the window, charges and shocks; the host rec
         }),
       }));
       expect(fit.sideways, `${width} px`).toBeLessThanOrEqual(0);
-      for (const k of fit.keys) expect(k, `${width} px`).toMatchObject({ inside: true, h: expect.any(Number) as number });
+      expect(fit.keys.map((k) => k.inside), `${width} px`).toEqual(fit.keys.map(() => true));
       expect(Math.min(...fit.keys.flatMap((k) => [k.h, k.w])), `${width} px`).toBeGreaterThanOrEqual(44);
     }
     await ctx.close();
