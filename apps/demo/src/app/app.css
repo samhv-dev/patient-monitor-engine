@@ -957,15 +957,15 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 /* L6 (plan learner-action-remote.md): the learner remote on a phone (`#/remote/learner`, data-learner=remote). Before the
    sign-in, the learner-PIN form alone (P7's form). Signed in, the patient's monitor as a strip at the top (LEARNER_STRIP:
    the header, two rows of tiles and two lanes), the three tabs under it, and the follower's connection line at the
-   bottom. The strip's height [ENG: ui]: 42 % of the screen, never under 340 px: its header (30 px) and its two tile
-   rows with every value shown (≈ 210 px, measured on a tablet on its side, the widest tiles) leave two lanes of 50 px,
-   10 px above the renderer's minimum (MIN_LANE_PX); never over 400 px (lanes of ≈ 80 px), beyond which only the lanes
-   would grow while the drugs lose room. A phone on its side is too short for a strip over
-   the tabs: the strip goes beside them. */
+   bottom. The strip's height [ENG: ui]: 40 % of the screen, never under 300 px: its header (30 px) and its two tile
+   rows with every value shown (≈ 210 px, measured) leave one lane of ≈ 60 px, the ECG, above the renderer's minimum
+   (MIN_LANE_PX); the pleth joins it where the screen gives both that minimum (fitStrip), so a phone whose browser shows
+   664 px keeps the strip under half of it. Never over 400 px (lanes of ≈ 80 px), beyond which only the lanes would
+   grow while the drugs lose room. A phone on its side is too short for a strip over the tabs: the strip goes beside them. */
 [data-learner='remote'] body { overscroll-behavior: none; }
 [data-learner='remote'] .app { grid-template-rows: minmax(0, 1fr); }
 [data-learner='remote'] .app > .topbar { display: none; }
-[data-learner='remote'] .main[data-route='remote'] { grid-template: 'stage' clamp(340px, 42dvh, 400px) 'view' minmax(0, 1fr) / minmax(0, 1fr); }
+[data-learner='remote'] .main[data-route='remote'] { grid-template: 'stage' clamp(300px, 40dvh, 400px) 'view' minmax(0, 1fr) / minmax(0, 1fr); }
 @media (orientation: landscape) and (max-height: 600px) {
   [data-learner='remote'] .main[data-route='remote'] { grid-template: 'stage view' minmax(0, 1fr) / minmax(0, 1fr) minmax(0, 1fr); }
 }

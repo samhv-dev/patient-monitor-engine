@@ -169,6 +169,7 @@ export interface LaneOverride {
 /**
  * A strip of the monitor: only these of the skin's own lanes and tiles, in the skin's order and look. Each lane kept is
  * the full screen's lane (its nominal height for the ECG gain included), so a trace is drawn as the full monitor draws it.
+ * `lanes` is in the order they are given up when the strip is too short for all of them (fitStrip): the last first.
  */
 export interface StripLayout {
   lanes: readonly LaneId[];
@@ -238,6 +239,12 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, 
     pxPerMm: s.sweep.pxPerMm ?? null,
     ...stripped(lanes, laneWeights, strip),
   };
+}
+
+/** The strip's lanes that each get `minLanePx` of a wave area `waveAreaPx` high: the first ones of its list, at least one. */
+export function fitStrip(strip: StripLayout, waveAreaPx: number, minLanePx: number): StripLayout {
+  const n = Math.max(1, Math.min(strip.lanes.length, Math.floor(waveAreaPx / minLanePx)));
+  return n === strip.lanes.length ? strip : { ...strip, lanes: strip.lanes.slice(0, n) };
 }
 
 /** The lanes a strip keeps, with their weights: selected after the full screen's plan is built. */

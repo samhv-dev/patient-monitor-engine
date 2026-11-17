@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveSkin } from '@pme/skins';
 import { DeviceUI, flashCss } from '../src/device-ui.ts';
 import { MIN_LANE_PX } from '../src/lane-metrics.ts';
-import { renderPlan, type StripLayout } from '../src/skin-plan.ts';
+import { fitStrip, renderPlan, type StripLayout } from '../src/skin-plan.ts';
 
 const STRIP: StripLayout = { lanes: ['PLETH', 'ECG1'], tiles: ['SpO2', 'HR', 'NIBP', 'IBP1', 'ART', 'CO2', 'RR'] };
 const SKINS = ['saadat-like', 'philips-like', 'ge-like', 'mindray-like', 'lifepak-like', 'zoll-like'];
@@ -31,6 +31,13 @@ describe('strip plan', () => {
     expect(renderPlan(r, undefined, undefined, true).lanes.map((l) => l.id)).toEqual(r.skin.layout.lanes);
   });
   it('the lane height a label and its sweep speed need', () => expect(MIN_LANE_PX).toBe(40));
+  it('fitStrip: as many lanes as get the minimum height, the last given up first, never fewer than one', () => {
+    const two: StripLayout = { lanes: ['ECG1', 'PLETH'], tiles: [] };
+    expect(fitStrip(two, 80, MIN_LANE_PX).lanes).toEqual(['ECG1', 'PLETH']);
+    expect(fitStrip(two, 79, MIN_LANE_PX).lanes).toEqual(['ECG1']);
+    expect(fitStrip(two, 10, MIN_LANE_PX).lanes).toEqual(['ECG1']);
+    expect(fitStrip(two, 400, MIN_LANE_PX)).toBe(two);
+  });
 });
 
 describe('strip tiles', () => {

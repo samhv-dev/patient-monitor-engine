@@ -1,10 +1,12 @@
 // The learner remote's monitor strip (LEARNER_STRIP, learner-remote.ts): the follower's monitor drawn by the one renderer
-// as a strip over the tabs, with ECG lane 1, the pleth and the tiles a learner deciding on a drug reads. 1. At two
-// phones upright, a phone on its side and a small tablet both ways, in two styles with the CO2 sensor on (the tallest
-// tiles), every lane has the height the renderer needs to label it (MIN_LANE_PX), every tile and value lies whole inside
-// the strip, the tabs and the connection line stay on the screen, and nothing scrolls sideways. 2. At 375 × 812 in sinus
-// rhythm and in ventricular fibrillation: the trace lanes, the HR box as the skin prints it for that state, and the
-// message bar showing one of the phone's own active alarms, with the VF alarm among them; both screenshots attached.
+// as a strip over the tabs, with ECG lane 1, the pleth and the tiles a learner deciding on a drug reads.
+// 1. At three phones upright, a phone on its side and a small tablet both ways, in two styles with the CO2 sensor on (the
+//    tallest tiles): ECG lane 1 is drawn, the pleth too where both get the height the renderer needs to label a lane
+//    (MIN_LANE_PX); every tile and value lies whole inside the strip; the tabs and the connection line stay on the
+//    screen; nothing scrolls sideways.
+// 2. At 375 × 812 in sinus rhythm and in ventricular fibrillation: both lanes, the HR box as the skin prints it for that
+//    state, and the message bar showing one of the phone's own active alarms, the VF alarm among them; both screenshots
+//    attached.
 // PME_E2E_PORT and PME_E2E_RELAY_PORT (+ the worker's index) keep Vite and the relay inside a machine's port range.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -32,6 +34,7 @@ type PhoneW = {
 const SIZES = [
   { name: '375 × 812 phone', width: 375, height: 812 },
   { name: '390 × 844 phone', width: 390, height: 844 },
+  { name: '390 × 664 phone (a browser\'s bars shown)', width: 390, height: 664 },
   { name: '844 × 390 phone on its side', width: 844, height: 390 },
   { name: '768 × 1024 tablet', width: 768, height: 1024 },
   { name: '1024 × 768 tablet on its side', width: 1024, height: 768 },
@@ -91,7 +94,7 @@ test('the remote strip at phone and tablet sizes: every lane tall enough to read
   const { code, pin } = await classroom(page);
   const { p, ctx } = await phone(browser, browserName, code, pin);
   expect((await page.evaluate(() => (window as unknown as HostW).__pmeApp.link.send({ type: 'attachSensor', sensor: 'co2', state: 'on' }))).accepted).toBe(true);
-  const measured: Record<string, number> = {}; // each lane's height, attached for the record
+  const measured: Record<string, string> = {}; // the lanes and their height, attached for the record
   const styles = [
     { skin: 'saadat-like', tiles: ['HR', 'NIBP', 'IBP1', 'SpO2', 'CO2'] },
     { skin: 'philips-like', tiles: ['HR', 'ART', 'NIBP', 'SpO2', 'CO2'] },
@@ -103,10 +106,15 @@ test('the remote strip at phone and tablet sizes: every lane tall enough to read
     for (const t of ['HR', 'SpO2']) await expect(p.locator(`.stage .pme-stile[data-param="${t}"] .v`)).toHaveText(/\d/, { timeout: 15_000 }); // the tiles at their full height
     for (const size of SIZES) {
       await p.setViewportSize({ width: size.width, height: size.height });
+      // the strip's plan after the resize: both lanes where each gets MIN_LANE_PX of the wave area, else the ECG alone
+      await p.waitForFunction((min) => {
+        const c = document.querySelector('.stage canvas') as HTMLCanvasElement;
+        return c.dataset.lanes === ((c.parentElement as HTMLElement).clientHeight >= 2 * min ? 'ECG1 PLETH' : 'ECG1');
+      }, MIN_LANE_PX, { timeout: 10_000 });
       const g = await geometry(p);
       const at = `${s.skin} at ${size.name}`;
-      measured[at] = Math.floor(g.laneH);
-      expect(g.lanes, at).toEqual(['ECG1', 'PLETH']);
+      measured[at] = `${g.lanes.join(' + ')} at ${Math.floor(g.laneH)} px`;
+      expect(['ECG1 PLETH', 'ECG1'], at).toContain(g.lanes.join(' '));
       expect(g.laneH, at).toBeGreaterThanOrEqual(MIN_LANE_PX);
       expect(g.outside, at).toEqual([]);
       expect(g.onScreen, at).toBe(true);

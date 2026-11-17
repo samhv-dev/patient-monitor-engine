@@ -12,7 +12,8 @@ import { DeviceUI, gridOf } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
 import { normalIbpScales, type IbpChannel, type IbpScales } from './ibp-scale.ts';
-import { filterModeFor, renderPlan, type LaneOverride, type RenderPlan, type StripLayout } from './skin-plan.ts';
+import { filterModeFor, fitStrip, renderPlan, type LaneOverride, type RenderPlan, type StripLayout } from './skin-plan.ts';
+import { MIN_LANE_PX } from './lane-metrics.ts';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
 import { simClock } from './overlays.ts';
@@ -54,7 +55,8 @@ export interface MountOptions {
   portrait?: boolean;
   /**
    * A strip of this monitor (a phone that shows the monitor above other controls): upright as `portrait`, whichever way
-   * the screen is turned, with only these of the skin's lanes and tiles. Needs `skin`.
+   * the screen is turned, with only these of the skin's lanes and tiles, and of the lanes only as many as get
+   * MIN_LANE_PX each (fitStrip). Needs `skin`.
    */
   strip?: StripLayout;
   /** The bed line of a two-row header (skin `layout.headerStyle`); default "BED 01" (rc.3, E96). */
@@ -196,6 +198,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const leads = new Map<number, LeadId>();
   const doc = el.ownerDocument;
   const strip = opts.strip;
+  let stripNow = strip; // the lanes of the strip that fit its wave area
   let portrait = opts.portrait === true || strip !== undefined;
   // Uniform scaling (roadmap "Uniform scaling and the landscape phone"): a skin with `layout.grid.screenPx` is laid out
   // at that one size (the frame its layout was measured in) and the whole of it — waves, tiles, header, strip and every
@@ -418,7 +421,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const only: LaneOverride | undefined = opts.lanes || opts.waves ? { ...(opts.lanes ? { lanes: opts.lanes } : {}), waves: opts.waves ?? [] } : undefined;
   /** The plan for a skin, with the ECG leads chosen on this skin kept. */
   const planNow = (sk: ResolvedSkin) => {
-    const p = renderPlan(sk, page, only, portrait, ibpScales, strip);
+    const p = renderPlan(sk, page, only, portrait, ibpScales, stripNow);
     let k = 0;
     for (const l of p.lanes) if (l.kind === 'ecg') l.channel = leads.get(k++) ?? l.channel;
     return p;
@@ -445,6 +448,22 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
 
   // Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia).
   /** The canvas size and, while scaled, the calibration in design px (a screen mm is 1/k design px wider). */
+  /** Send the plan for `sk` to the host, as the canvas now draws it. */
+  const replan = (h: Host, sk: ResolvedSkin) => {
+    const plan = planNow(sk);
+    planIn = plan;
+    h.control({ type: 'plan', plan });
+    markLanes(plan.lanes);
+  };
+  /** A strip whose wave area changed height: as many of its lanes as are tall enough to read. */
+  const fitLanes = () => {
+    if (!strip || !r) return;
+    const next = fitStrip(strip, wrap.clientHeight, MIN_LANE_PX);
+    if (next.lanes.length === stripNow?.lanes.length) return;
+    stripNow = next;
+    const sk = r;
+    void hostP.then((h) => replan(h, sk));
+  };
   const resize = () =>
     void hostP.then((h) => {
       h.control({ type: 'resize', size: sizeOf() });
@@ -454,7 +473,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     const framed = entries.some((e) => e.target === frame);
     if (framed) fit(); // a new factor: the wave column keeps its design size, so the canvas is resized from here
     if (entries.some((e) => e.target === outer)) setH();
-    if (framed || entries.some((e) => e.target === wrap)) resize();
+    if (framed || entries.some((e) => e.target === wrap)) (fitLanes(), resize());
   });
   ro.observe(wrap);
   ro.observe(outer);
@@ -693,12 +712,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       ui.setPortrait(on, page);
       place();
       const sk = r;
-      void hostP.then((h) => {
-        const plan = planNow(sk);
-        planIn = plan;
-        h.control({ type: 'plan', plan });
-        markLanes(plan.lanes);
-      });
+      void hostP.then((h) => replan(h, sk));
       resize();
     },
     latchAlarms(alarms) {
