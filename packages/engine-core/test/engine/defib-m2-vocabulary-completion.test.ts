@@ -52,7 +52,7 @@ describe('E0b: the connection state E0 lacked [G 2-8], [G 2-9], [G 12-11], [G 18
   });
 });
 
-describe("E0b: the bedside monitor's declared actions (plan §3.4.4; DQ27 = A, DQ28 = B)", () => {
+describe("E0b: the bedside monitor's relearn and analysis-lead actions (plan §3.4.4)", () => {
   const OK: Array<[string, unknown]> = [['relearn', undefined], ['analysisLeads', 'single'], ['analysisLeads', 'multi']];
   const BAD: Array<[string, unknown]> = [['relearn', 'now'], ['relearn', 1], ['analysisLeads', undefined], ['analysisLeads', 'II'], ['analysisLeads', true]];
 

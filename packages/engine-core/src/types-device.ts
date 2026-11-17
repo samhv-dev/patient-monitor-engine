@@ -154,7 +154,7 @@ export interface M2Config {
 }
 
 /**
- * The device faults the instructor can inject (DQ14 = A), as chapter 18 names them: the battery [G 1-20], [G 18-12];
+ * The device faults the instructor can inject, as chapter 18 names them: the battery [G 1-20], [G 18-12];
  * the self-test [G 18-4], [G 18-12]; defibrillation, pacing and the stuck buttons [G 18-13]; the printer [G 18-10],
  * [G 18-14], [G 18-15]. Appendix C's table (E7c) gives each one's message and priority.
  */
@@ -227,11 +227,11 @@ export type M2DeviceAction =
   | { device: 'defib'; action: 'twelveLead'; value: 'enter' | 'acquire' | 'exit'; lane?: never }
   /** Brightness: the display's levels and modes [G 2-15], [G 2-16]. */
   | { device: 'defib'; action: 'brightness'; value: 'press'; lane?: never }
-  /** The Trend and Export data keys [G 2-14], [G 2-15] (Export saves the incident as a file, DQ12 = A). */
+  /** The Trend and Export data keys [G 2-14], [G 2-15] (Export saves the incident as a file). */
   | { device: 'defib'; action: 'trend'; value: 'press'; lane?: never }
   | { device: 'defib'; action: 'export'; value: 'press'; lane?: never }
   // The instructor's inputs (plan §5.2), never the learner's
-  /** Device faults injected or cleared (DQ14 = A). */
+  /** Device faults injected or cleared. */
   | { device: 'defib'; action: 'faults'; value: Partial<M2Faults>; lane?: never }
   /** The transthoracic impedance the instructor sets; null = the patient's own (E2b). */
   | { device: 'defib'; action: 'impedance'; value: { ohm: number | null }; lane?: never }
@@ -304,9 +304,9 @@ export interface M2Status {
  */
 export type MonitorDeviceAction =
   | { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never }
-  /** The beat classifier learns the patient's dominant beat again (DQ27 = A, B2). */
+  /** The beat classifier learns the patient's dominant beat again (B2). */
   | { device: 'monitor'; action: 'relearn'; value?: never; lane?: never }
-  /** Arrhythmia analysis on one lead or several (DQ28 = B; lead II only until its piece). */
+  /** Arrhythmia analysis on one lead or several (lead II only until a piece builds the setting). */
   | { device: 'monitor'; action: 'analysisLeads'; value: 'single' | 'multi'; lane?: never }
   | DefibDeviceAction;
 
