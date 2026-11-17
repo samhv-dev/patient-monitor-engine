@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` b2e291f4 (Merge pull request #531 from samhv-dev/plan-electrolyte-units), built 2026-11-17T15:56:40.728Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/b2e291f4526864117f09818709eb1fcde1c90e3a
+The built teaching app of `main` d6b6b455 (Merge pull request #532 from samhv-dev/batch/1117-1725-513-516-504-508-518-511), built 2026-11-17T16:14:01.218Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/d6b6b455a72207d4d22694858236f2595a7def6c
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
