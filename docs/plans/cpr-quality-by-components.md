@@ -54,8 +54,8 @@ devices are not planned here.
   it meant; **Guideline** and **Typical** are added as further sets (§5).
 - **The right atrium between compressions.** Today a fitted release pressure holds it at a band of 15–25 mmHg credited
   to a paper that reports no right atrial pressure. Patients measured in full give 10.3–16.1 mmHg early in an arrest
-  and 16 mmHg late, at the pressure of the veins outside the chest. Without the fit the simulator matches patients in
-  compression but ends each release 7–8 mmHg low (§3.3, §3.9). The fit stays, named and flagged, on every path until
+  and 16 mmHg late, at about the jugular bulb's pressure. Without the fit the simulator is close to patients in
+  compression but 8–10 mmHg low between compressions in the 1994 paper's five-cycle window (7–8 over the first minute) (§3.3, §3.9). The fit stays, named and flagged, on every path until
   the venous-side piece (CQ12) replaces it with the mechanism patients show. Leaning is an addition with default 0.
 - The evidence agrees with the owner on all five factors as things that change haemodynamics; it **adds** the duty
   cycle, the surface, and the pre-shock pause as a separate, stronger interruption; it **differs** in three places: the
@@ -146,7 +146,8 @@ What the measurement shows *(mine, from the numbers above)*:
 - **Recoil and duty** cannot be varied today (constants), and 30:2 makes no pauses (the field is read nowhere).
 
 **Two further runs, with the fitted release pressure set to zero** (`research/92-the-simulators-cpr-right-atrium-without-the-fit.md`,
-on the rig of §3.9: 80 /min, duty 0.5, no breaths, the first minute; and on the rig above). They are summarised in
+on the rig of §3.9: 80 /min, duty 0.5, no breaths, read over the first five cycles and over the first minute; and on the
+rig above). They are summarised in
 §3.9, beside the human tables.
 
 ### 2.3 What reads `quality` today: cards and validation rows
@@ -193,7 +194,7 @@ share as a function of depth [NOTE §1.3].
 
 | Source | Species, n | Relation |
 |---|---|---|
-| Babbs 1983 (DOI 10.1016/s0196-0644(83)80290-x) [ABS] | dogs 6–12 kg, n 8, VF, mechanical | "CO = a(x − x0) for x greater than x0"; output threshold x0 mean 2.3 cm (1.5–3.0 per dog); a threshold for measurable pressure mean 1.8 cm. Animal |
+| Babbs 1983 (DOI 10.1016/s0196-0644(83)80290-x) [ABS] | dogs 6–12 kg, n 8, VF, mechanical | for cardiac output: "CO = a(x − x0) for x greater than x0", threshold x0 between 1.5 and 3.0 cm in each dog, mean 2.3 cm. For pressure only "a similar threshold for measurable blood pressure", seen in 7 of the 8 dogs, mean 1.8 cm, with no stated form. Animal |
 | Bellamy 1984 (DOI 10.1161/01.cir.69.1.174) [ABS] | swine, n 9, transverse piston | stroke 1.5 / 2 / 2.5 in: MAP 23 / 33 / 40 mmHg; coronary flow 12 / 30 / 50 % of pre-arrest; all coronary flow in relaxation. Animal; piston stroke, not sternal depth |
 | Ristagno 2007 (DOI 10.1378/chest.06-3065) [ABS] | pigs 40 kg, n 24 | ≈ 4.2 cm vs ≈ 6 cm: CPP and PetCO2 "significantly lower"; no ROSC when the shallow compressions came first. Animal |
 | Liang 2021 (DOI 10.21037/jtd-21-812) [ABS] | pigs, n 16, adrenaline | 30 vs 50 mm: no significant difference in CPP, carotid flow or EtCO2 over 5 min. Animal; contradicts the others, not explained in the abstract |
@@ -217,8 +218,11 @@ That is the rescuer's behaviour, not the chest's, and belongs to the compressor 
 displacement that reaches the chest is the sensor's reading minus the surface's give (§3.7).
 
 **What the engine must do.** The compression's pressure amplitude becomes a function of the chest's displacement,
-`a(d) = max(0, d − d0) / (dRef − d0)`, taking the place of `quality` in `cprPressure` for a command given in depth (a `quality` command keeps the legacy path): the threshold-linear form Babbs 1983 states,
-the only form a source gives. `d0` is 2.3 cm (Babbs 1983, dogs) and `dRef` 5.5 cm (the middle of 5–6 cm), both marked engineering choices until a human source sets them; the human end-tidal slope (Sheak 2015, +1.4 mmHg per 10 mm) is reported beside them as a known difference.
+`a(d) = max(0, d − d0) / (dRef − d0)`, taking the place of `quality` in `cprPressure` for a command given in depth (a `quality` command keeps the legacy path): the threshold-linear form Babbs 1983 states for
+cardiac output, the only form a source gives. The paper states that form and its 2.3-cm mean threshold for flow; for
+pressure it gives only a similar threshold (1.8 cm, 7 of 8 dogs) and no form. Applying the flow form and threshold to
+the pressure amplitude is therefore this plan's marked choice, not a measured pressure relation. `d0` is 2.3 cm (Babbs
+1983, dogs, the flow threshold) and `dRef` 5.5 cm (the middle of 5–6 cm), both marked engineering choices until a human source sets them; the human end-tidal slope (Sheak 2015, +1.4 mmHg per 10 mm) is reported beside them as a known difference.
 No plateau and no fall above 6 cm is invented: no source shows flow falling with depth; the device cannot measure
 beyond 7.6 cm [G A-10].
 
@@ -292,8 +296,10 @@ the release) was fitted so that the right atrial pressure between compressions s
 code credits to Paradis 1990. That paper reports no right atrial pressure at all: it gives the aortic relaxation
 pressure and the coronary perfusion pressure only (JAMA 263:1106, Table 1, p. 1108, read in full). The comment in
 `circuit.ts` records that a full release gave an aortic − RA gradient of about 46 mmHg. The fit is not leaning. What
-patients show, and what holds it up, is in §3.9: in short, the human right atrium between compressions sits at the
-pressure of the veins outside the chest, not 12 mmHg above it as the fit puts it. *(mine)* Removing the fit without a
+patients show, and what holds it up, is in §3.9: in short, the human right atrium between compressions sits at about the
+jugular bulb's pressure. The simulator with the fit reads close to its own veins too (about 2 mmHg below them), but by
+a collapsed, empty atrium whose pressure is the pressure applied from outside, which also leaves its compression peak
+too low. *(mine)* Removing the fit without a
 mechanism would widen the coronary gradient, move S13's CoPP, the CBF ceiling and the ROSC-rig row away from their
 sourced bands, and raise the shock's chance through the CoPP the shock model reads.
 
@@ -381,7 +387,7 @@ share against a 5-s one). The compression fraction is computed from the schedule
 never used as an input to flow.
 
 **Gap.** No human measurement of CPP over a pause and its rebuild was found; WANTED in §8.2 (a human arterial-line
-series across pauses). The two human studies with a negative CCF association (AHA refs 54, 55) were not read.
+series across pauses). The two human studies with a negative CCF association (AHA refs 54, 55) are identified (W9) but not read.
 
 ### 3.6 Ventilation during CPR: rate, tidal volume and inspiratory time
 
@@ -466,99 +472,122 @@ recommends switching compressors about every 2 minutes (2a, B-R) [LIB]. A script
 
 ### 3.9 The right atrium between compressions, and the venous side of the right heart
 
-The coronary perfusion pressure residents read is the aortic minus the right atrial pressure between compressions,
-so the right atrium's pressure in that phase sets half of the number.
+The coronary perfusion pressure residents read is the aortic minus the right atrial pressure between compressions, so
+the right atrium's pressure in that phase sets half of the number.
 
 **What patients show.** Three human papers, read in full:
 
 | Paper | Patients and CPR | Instant | RA, mmHg (mean ± SD) | Where |
 |---|---|---|---|---|
-| Shultz 1994, Circulation 89:684, DOI 10.1161/01.cir.89.2.684 | 21 anaesthetised adults, VF induced at defibrillator implantation, CPR 20–25 s after onset, manual, 80 /min, duty 50 %, no breaths | VF with no flow, just before CPR | 14.7 ± 6.8 | Table 1, p. 687 |
+| Shultz 1994, Circulation 89:684, DOI 10.1161/01.cir.89.2.684 | 21 anaesthetised adults, VF induced at defibrillator implantation; manual CPR 20–25 s after onset, 80 /min, duty 50 %, depth 1.5–2 in (3.8–5.1 cm) by visual inspection (pp. 685, 689). Ventilation during CPR not stated, except that the patients were apnoeically oxygenated during the first 10–15 s of CPR while minute ventilation or airway pressures were measured (the last 13 patients; p. 686, abstract); Fig. 3 (p. 687) marks breaths on the tracing. Adrenaline and fluids are not mentioned. Values are from **five CPR cycles beginning with the compression 20–25 s after induction** (p. 686), the first 3.75 s of CPR | VF with no flow, immediately before CPR (20–25 s of VF) | 14.7 ± 6.8 | Table 1, p. 687 |
 | | | decompression, lowest | **10.3 ± 5.9** | Table 2, p. 688 |
 | | | decompression, mean over the half-cycle | **15.8 ± 8.1** | Table 2, p. 688 |
-| | | last third of the cycle | 16.1 ± 8.2 | text, p. 686 |
-| | | compression, peak / mean | 44.0 ± 14.0 / 27.5 ± 11.5 | Table 2, p. 688 |
-| Paradis 1989, Circulation 80:361, DOI 10.1161/01.cir.80.2.361 | 22 out-of-hospital arrests in the emergency department, often > 30 min after collapse, Thumper 60 /min, duty 50 %, a breath after every fifth compression, adrenaline 1 mg every 5 min | relaxation, phase mean | **16 ± 6** | Table 1, p. 364 |
+| | | mean over the last third of the 750-ms cycle (500–750 ms) | 16.1 ± 8.2 | text, p. 686 |
+| | | compression, peak / mean over the half-cycle | 44.0 ± 14.0 / 27.5 ± 11.5 | Table 2, p. 688 |
+| Paradis 1989, Circulation 80:361, DOI 10.1161/01.cir.80.2.361 | 22 adult emergency department patients in medical cardiac arrest, measured just after catheter placement, in many > 30 min after collapse (down time 12 ± 10 min in the 11 with an accurate time; three measured at once after a re-arrest in hospital, counted as zero down time). Thumper in all but one patient: 60 /min, duty 50 %, a breath after every fifth compression, 80–100 lb for a piston excursion of 2 in; adrenaline 1 mg every 5 min; bicarbonate by blood gases (pp. 362–363). Phases defined by the waveform's inflections: compression from the onset of the downstroke to the start of the upstroke, relaxation the rest of the cycle, so relaxation includes the pressure's descent; each patient's value the average of five cycles, one ventilation-to-ventilation cycle; data not normally distributed, Wilcoxon tests (pp. 363–364) | relaxation, phase mean | **16 ± 6** | Table 1, p. 364 |
 | | | end of relaxation | **16 ± 7** | Table 1, p. 364 |
 | | | compression, phase mean / peak | 41 ± 14 / 55 ± 17 | Table 1, p. 364 |
-| | jugular bulb, above the thoracic inlet | relaxation / end of relaxation | 15 ± 8 / 14 ± 8 | Table 1, p. 364 |
+| | jugular bulb (at the skull base, its blood almost entirely intracranial; p. 362) | relaxation / end of relaxation | 15 ± 8 / 14 ± 8 | Table 1, p. 364 |
 | | | compression, phase mean / peak | 23 ± 10 / 29 ± 12 | Table 1, p. 364 |
 | | jugular bulb − RA | compression | **−19 ± 12** | Table 2, p. 364 |
 | | | relaxation | **−2 ± 6** | Table 2, p. 364 |
-| | | 0.06 s into relaxation | **+8 ± 8** | Table 2 and text, p. 364 |
-| Paradis 1990, JAMA 263:1106, DOI 10.1001/jama.1990.03440080084029 | 100 arrests in the emergency department, Thumper | — | **not reported** (aortic relaxation pressure and CoPP only) | Table 1, p. 1108 |
+| | | 0.06 s after the onset of relaxation | **+8 ± 8** | Table 2 and text, pp. 363–364 |
+| Paradis 1990, JAMA 263:1106, DOI 10.1001/jama.1990.03440080084029 | 100 arrests in the emergency department, Thumper (which also ventilated) | — | **not reported** (aortic relaxation pressure and CoPP only) | Table 1, p. 1108 |
 
 - No paper read states 15–25 mmHg.
 - The 1990 values can be derived as means only, toward the end of relaxation: about 16 mmHg without return of
   circulation and 9–10 with it (initial aortic relaxation minus initial CoPP, Table 1). No spread can be derived, so
   these are not cell targets.
 - Martin 1986 (Ann Emerg Med 15:125) gives 20.3 ± 7.2 at end-diastole, read as an abstract only (W16).
-- The static (no-flow) venous pressure in a broader human population: CVP 11.0 ± 5.4 at 13 s of VF (Schipke 2003,
-  n 82, abstract) and 12.8 ± 5.6 one minute after death (Repessé 2015, n 202, abstract).
+- Central venous pressure at no flow in broader human populations, all abstracts:
+  - 11.0 ± 5.4 at 13 s of VF (Schipke 2003, n 82);
+  - 12.8 ± 5.6 one minute after death in intensive care, ventilator disconnected (Repessé 2015, n 202);
+  - a mean circulatory filling pressure of median 15, IQR 12–18, one minute after death in intensive care (Wijnberge
+    2020, J Appl Physiol 129:311, DOI 10.1152/japplphysiol.00298.2020, n 311; arterial and venous pressures had
+    equalised in 52 %).
 
 **What holds it up** (`research/91-what-holds-right-atrial-pressure-up-in-human-cpr.md`):
 
-1. **It is the same early and late, with and without adrenaline:** 15.8–16.1 in the first minute (1994, no adrenaline,
-   no breaths) and 16 late (1989, adrenaline, mechanical CPR). Neither a long arrest, adrenaline, fluids nor
-   ventilation is needed to produce it.
-2. **In relaxation the atrium sits at the pressure of the veins outside the chest:** jugular bulb − RA −2 ± 6; at end
-   relaxation 14 against 16. A pressure held only inside the chest, as the fit is, would put the atrium about 12 mmHg
-   above those veins.
-3. **During compression a valve at the thoracic inlet holds on the jugular route.** The atrium rises far above the
-   jugular bulb (−19 ± 12). The authors read it as a functioning venous valve at the inlet, anatomical or by collapse
-   of the great veins (pp. 365, 367). Blood returns from the head early in relaxation (+8 ± 8 at 0.06 s).
-4. **The chest itself contributes little.** Mid-oesophageal pressure fell 3.6 ± 3.5 mmHg in decompression and rose
-   7.9 ± 2.4 in compression, from a baseline with the hands already resting (1994, n 6, Table 4, p. 690). Resting hands
-   added 0 to +7.
+1. **The value is the same early and late.**
+   - 15.8–16.1 in the first five cycles (1994; adrenaline not mentioned);
+   - 16 late (1989; adrenaline, mechanical CPR).
+   - *(mine)* Neither a long arrest nor adrenaline is needed to produce it. Whether ventilation contributes the 1994
+     paper does not settle: its patients were apnoeic only while ventilation was measured, and Fig. 3 shows breaths.
+2. **In relaxation the atrium sits at the jugular bulb's pressure:** jugular bulb − RA −2 ± 6; at end relaxation 14
+   against 16 (Table 1). *(mine)* The paper measured one vein outside the chest, the jugular bulb. That the
+   extrathoracic veins as a whole set the atrium's pressure, rather than the reverse, is the plan's reading.
+3. **During compression the gradient across the thoracic inlet holds** (jugular bulb − RA −19 ± 12). The authors read
+   it as a functioning venous valve at the inlet, "anatomic or simply functional", by collapse of the great veins like
+   a Starling resistor (p. 365; conclusion p. 367). The gradient turns forward early in relaxation (+8 ± 8 at 0.06 s),
+   which the authors say "would allow" return from the head. They measured pressures only, and say direct conclusions
+   about flow must be limited (p. 367).
+4. *(mine, as in research/91)* **The chest itself contributes little.** Mid-oesophageal pressure fell 3.6 ± 3.5 mmHg in
+   decompression and rose 7.9 ± 2.4 in compression, from a baseline with the hands already resting (1994, n 6,
+   Table 4, p. 690). Resting hands added up to 7 mmHg in some patients (p. 689).
 5. **The caval (subdiaphragmatic) route is unmeasured in people** (W13).
 
 The research piece that asked this (CQ10) is done with these findings; its open items are in §8.2.
 
-**What the simulator does without the fit** (two runs, research/92; fit at zero by a test-local module override, no
-source edited; 80 /min, duty 0.5, q 0.8, no breaths, first minute):
+**What the simulator does without the fit** (two runs, research/92). The fit was set to zero by a test-local module
+override, with no source edited. The rig: 80 /min, duty 0.5, q 0.8 (about 4.9 cm), no breaths (a choice of those runs,
+not the paper's condition). The table shows the **first five cycles** (the paper's window); the first minute is in
+brackets.
 
 | Reading | Simulator as it is | Without the fit | Patients (1994) |
 |---|---|---|---|
-| RA in decompression, lowest | 10.0 | 3.5 | 10.3 ± 5.9 |
-| RA in decompression, mean | 11.4 | 7.5 | 15.8 ± 8.1 |
-| RA at end of decompression / last third | 11.9 | 9.4 | 16.1 ± 8.2 |
-| RA in compression, peak / mean | 32.9 / 20.1 | 40.4 / 27.4 | 44.0 ± 14.0 / 27.5 ± 11.5 |
-| RA volume in release (unstressed 10 mL) | 1.0 mL (collapsed) | 41.1 mL | — |
-| Backward flow RA → veins per compression | 4.2 mL | 18.7 mL | — |
+| RA in decompression, lowest | 9.2 (10.0) | **2.3** (3.5) | 10.3 ± 5.9 |
+| RA in decompression, mean | 10.5 (11.4) | **6.2** (7.5) | 15.8 ± 8.1 |
+| RA at the end of release (simulator) beside the mean over the last third (patients): **unlike readings** | 11.0 (11.9) | **8.2** (9.4) | 16.1 ± 8.2 |
+| RA in compression, peak / mean | 32.2 / 19.5 (32.9 / 20.1) | **38.8 / 25.9** (40.4 / 27.4) | 44.0 ± 14.0 / 27.5 ± 11.5 |
+| RA volume in release (unstressed 10 mL), first minute | 1.0 mL (collapsed) | 41.1 mL | — |
+| Backward flow RA → veins per compression, first minute | 4.2 mL | 18.7 mL | — |
 
-- **In compression** the simulator without the fit matches patients. With the fit the atrium is squeezed empty, and
-  its compression peak is too low.
-- **Between compressions** it ends each release 7–8 mmHg low.
-- **Each compression pushes blood back into the veins** (18.7 mL, 1.6 times the net stroke) through a resistance with
-  no source: `R_VR_BACK` 5 `[ENG: numerics]`. The blood is returned in the release, and the right heart's volume
-  balance closes to about 1 mL per cycle.
+The simulator's release is "no compression pressure applied", not the papers' waveform-inflection phases.
+
+- **In compression** the simulator without the fit is close to the patients: 38.8 / 25.9 against 44.0 / 27.5 in the
+  five-cycle window. With the fit the atrium is squeezed empty, and its compression peak is too low.
+- **Between compressions** it is 8–10 mmHg low in the paper's window (10.3 − 2.3; 15.8 − 6.2; 16.1 − 8.2, arithmetic,
+  the last of these unlike readings), and 7–8 mmHg low over the first minute.
+- **With the fit** the atrium in release reads 11.3 against its systemic veins' 13.0 (veins − RA +1.7, first minute,
+  research/92 §7.2). That is about 2 mmHg below the veins, near the patients' jugular bulb − RA of −2 ± 6. It reaches
+  that number with a collapsed, empty atrium whose pressure is the pressure applied from outside.
+- **Each compression pushes blood back into the veins** (18.7 mL, 1.6 times the net stroke). The backward flow runs
+  through the forward resistance multiplied by a factor with no source: `R_VR_BACK` 5 `[ENG: numerics]`. The blood is
+  returned in the release, and the right heart's volume balance closes to about 1 mL per cycle.
 - **The refill takes about one time constant:** observed 0.32 s against a release of 0.375 s at 80 /min (0.273 s at
   110 /min). The code's τ for the atrium alone is `R_VR` 0.06 mmHg·s/mL `[FIT: unnamed]` ÷ `EMIN_RA` 0.3 mmHg/mL
   `[FIT: unsourced]` = 0.20 s. About 3 mmHg of gradient is left at the end of release.
-- **The atrium cannot fill above the simulator's venous pressure** (12.3 mmHg). That is inside the human static range
-  (Schipke, Repessé) but below the 1994 patients' 14.7 and the 1989 jugular bulb's 14–15. In every sensitivity variant,
-  the end-of-release pressure followed it, 2–5 mmHg below.
-- **The pericardium (1.5–1.8 mmHg) and the right ventricle** (steady volume, no tricuspid or pulmonary backflow) play
-  no part.
+- **The atrium cannot fill above the simulator's venous pressure** (12.3 mmHg). That is inside the human central venous
+  ranges (Schipke, Repessé), but below the 1994 patients' RA of 14.7 and the 1989 jugular bulb's 14–15. In every
+  sensitivity variant the end-of-release pressure followed it, 2–5 mmHg below.
+- **The pericardium (1.5–1.8 mmHg) and the right ventricle** (steady volume, no tricuspid or pulmonary backflow) play no
+  part.
 - **The intrathoracic pressure** stays at its resting −4 mmHg in release, and rises 12.0 (mean) to 17.6 (peak) mmHg in
   compression (see CQ3 and CQ6).
+- **20–25 s into VF the simulator has not come to rest:** its RA reads 16.3–16.5 while its systemic veins read 12.2.
 
 **The piece that replaces the fit: CQ12, the venous side of the right heart under compressions.**
 
 - **Builds:**
   - backward flow out of the atrium during compression on two routes: a one-way valve on the jugular–subclavian route,
     and an unvalved caval route;
-  - the atrium's refilling from the veins outside the chest during release, from both routes;
+  - the atrium's refilling from both routes during release;
   - then the fitted release pressure is removed.
 - **What the evidence gives** (`research/93-the-venous-side-of-the-chest-during-cpr.md`; most of its sources are
   abstracts, marked there):
-  - **The jugular–subclavian valve holds in compression.** Adults: jugular bulb − RA −19 ± 12 mmHg in compression and
-    +8 ± 8 at 0.06 s into relaxation (Paradis 1989, Table 2, read in full). Children: RA − jugular 18.3 ± 4.7 at peak
-    compression (Ann Emerg Med 1991;20:27, abstract). Valves are present in about 86–93 % of adults (autopsy and
-    ultrasound, abstracts). In pressure tests they held at about 45–75 mmHg, above human peak RA pressures in CPR
-    (abstracts). Doppler series under Valsalva call most of the same valves incompetent; the note does not resolve the
-    disagreement. A catheter through the internal jugular vein made the valve incompetent in 41–76 % (abstract). This
-    is a direction and a target.
+  - **The jugular route's gradient holds in compression.**
+    - Adults: jugular bulb − RA −19 ± 12 mmHg in compression and +8 ± 8 at 0.06 s into relaxation (Paradis 1989,
+      Table 2, read in full).
+    - Children: RA − jugular 18.3 ± 4.7 at peak compression (Ann Emerg Med 1991;20:27, abstract).
+    - Valves are present in about 86–88 % of adults by ultrasound and in 87 of 100 autopsies with valves in all four
+      veins (abstracts); 93 % (cadaver) is a review's figure [REV].
+    - In pressure tests the valves held against cough gradients of about 45–53 mmHg in patients and about 75 mmHg in
+      cadavers (abstracts). Those are larger than the RA − jugular gradient of human CPR (19 ± 12 in compression).
+    - Doppler series under Valsalva call most of the same valves incompetent; the note does not resolve the
+      disagreement.
+    - A catheter through the internal jugular vein made the valve incompetent in 41–76 % (abstract).
+    - The subclavian part of the route is measured by none of the three papers (in 1989 the RA catheter itself went
+      through the subclavian vein, p. 362); its valve rests on a review and abstracts.
   - **The caval route takes backward flow in compression and forward flow in release, in animals:** dogs by
     cine-angiography (Am J Cardiol 1984;53:269) and pigs by caval Doppler (Resuscitation 2003;59:337), both abstracts.
     No human measured it.
@@ -568,9 +597,9 @@ source edited; 80 /min, duty 0.5, q 0.8, no breaths, first minute):
     - In patients, active decompression lowered the atrial minimum in decompression: 7.8 ± 7.9 against 10.3 ± 5.9 mmHg,
       with oesophageal −5.9 ± 2.7 against −3.6 ± 3.5 (Shultz 1994, Tables 2 and 4). This is a cell only once an
       active-decompression input exists.
-    - Femoral venous pressure during late mechanical CPR in patients: median 41.6 mmHg in compression, 6.8 in
-      decompression (Resusc Plus 2026;29:101338, Table 2, read in full). It is a check of the venous side's direction,
-      not a caval value.
+    - Femoral venous pressure in patients during late mechanical CPR (LUCAS, after a median 62.5 min from last seen
+      alive): median per-compression peak 41.6 [30.5–61.6] mmHg and trough 6.8 [3.4–11.2] (Resusc Plus 2026;29:101338,
+      Table 2, read in full). It is a check of direction, not a caval value.
 - **Not sourced by any paper found:**
   - a backward resistance, a leak fraction or a regurgitant volume on either route;
   - the split of backward volume between the routes;
@@ -579,51 +608,91 @@ source edited; 80 /min, duty 0.5, q 0.8, no breaths, first minute):
   - a collapse of the cava at the diaphragm. The only number, a waterfall within about 1 mmHg of abdominal pressure,
     is from open-chest dogs without CPR, so the piece does not build one.
 
-  **The present backward-resistance factor `R_VR_BACK` 5 has no source**, and neither has the forward `R_VR`
-  `[FIT: unnamed]`. Published lumped CPR models assume an ideal one-way valve on the jugular and femoral veins and none
-  on the inferior vena cava, with resistances of 30 (jugular) and 25 (caval) mmHg·s/L (Front Physiol 2016;7:665,
-  Table 1). These are **model assumptions**; the parent model they cite is unread (W20).
+  **The present backward factor `R_VR_BACK` 5 has no source**, and neither has the forward `R_VR` `[FIT: unnamed]`.
+  Published lumped CPR models assume an ideal one-way valve on the jugular and femoral veins and none on the inferior
+  vena cava (Front Physiol 2016;7:665, Fig. 1, p. 3), with resistances of 30 (jugular) and 25 (caval) mmHg·s/L
+  (Table 1, p. 4). These are **model assumptions**; the parent model they cite is unread (W20).
 - **Which constants would be marked working values, and what would settle each:**
 
   | Constant | In the piece | What would settle it | Wanted |
   |---|---|---|---|
-  | The jugular valve: closed or leaking backward | one-way valve, backward leak 0 as a marked working value (the 1989 authors leave the 8 mmHg jugular rise open between leak and cerebral drainage) | jugular valve competence measured in CPR, with and without a catheter through it | W14, W23, W24, W25 |
+  | The jugular valve: closed or leaking backward | one-way valve, backward leak 0, a marked working value. The jugular bulb's rise through compression (15 → 23 mmHg, phase means, Table 1; derived) is left open by the authors between leakage back from the chest and continued cerebral drainage (p. 365) | jugular valve competence measured in CPR, with and without a catheter through it | W14, W23, W24, W25 |
   | The caval route's backward resistance | a marked working value | caval flow or pressure beside the RA through the cycle (human: none found); the size of RA → IVC reflux in dogs and pigs | W13, W17, W18, W19 |
   | The split of backward volume between routes | follows from the two routes' constants; not chosen | as above | W13, W17 |
   | The caval compliance | a marked working value | caval pressure–volume in CPR | W17, W18 |
   | The forward refilling resistance | a marked working value | measured venous return or caval flow in human CPR (none found) | W13, W18, W21 |
+  | The RA's passive elastance (`EMIN_RA` 0.3, `[FIT: unsourced]`) | left as it is, with its mark (it sets half the refill τ; changing it would move the RA outside CPR too) | human RA pressure–volume at low volume (not searched) | — |
   | The parent models' values and their sources | read, not copied | the 2005 and 1999 model papers | W20, W22 |
 
   No working value is chosen to make a pressure come out. Each is stated with its reason, and the cells report what
   follows from it.
-- **Cells.** All are on the fit at zero. Each range is the patients' mean ± 1 SD, the convention the validation rows
-  use for a group mean with its spread (`docs/validation/target-audit/rulings.tsv`). None is chosen from the
-  simulator's output.
+- **What the new compartments stand for.**
+  - The jugular-route compartment stands for the great veins above the thoracic inlet. It has neither the cerebral
+    inflow that fills the jugular bulb nor the intracranial-pressure route the 1989 authors cite (pp. 365–366).
+  - A miss on the jugular − RA cells can therefore come from the compartment's missing cerebral inflow, and is
+    reported with that cause named beside the mechanism's.
+  - The caval-route compartment stands for the inferior vena cava and the veins below it.
+- **Cells.** All are run on the fit at zero.
+  - Each banded range is the patients' mean ± 1 SD, the convention the validation rows use for a group mean with its
+    spread (`docs/validation/target-audit/rulings.tsv`), kept here although the 1989 data were not normally
+    distributed.
+  - None is chosen from the simulator's output.
+  - **Run in CQ12 (when it lands):**
 
-  | Cell | Rig | Instant | Range, mmHg | Source |
-  |---|---|---|---|---|
-  | RA in decompression, lowest | 1994-matched | lowest in the half-cycle | 4.4–16.2 | Shultz, Table 2 |
-  | RA in decompression, mean | 1994-matched | half-cycle mean | 7.7–23.9 | Shultz, Table 2 |
-  | RA, late in the cycle | 1994-matched | last third | 7.9–24.3 | Shultz, p. 686 |
-  | RA in compression, peak / mean | 1994-matched | peak; half-cycle mean | 30.0–58.0 / 16.0–39.0 | Shultz, Table 2 |
-  | RA in relaxation, phase mean / end | 1989-matched | phase mean; end of relaxation | 10–22 / 9–23 | Paradis 1989, Table 1 |
-  | RA in compression, phase mean / peak | 1989-matched | phase mean; peak | 27–55 / 38–72 | Paradis 1989, Table 1 |
-  | Jugular-route vein − RA | 1989-matched | compression; relaxation; 0.06 s into relaxation | −31 to −7; −8 to +4; 0 to +16 | Paradis 1989, Table 2 |
-  | Venous pressure at no flow | VF, no CPR | the last 2 s before CPR | 7.9–21.5 (Shultz); 5.6–16.4 (Schipke); 7.2–18.4 (Repessé) | Shultz Table 1; Schipke; Repessé |
-  | Right heart's volume balance | both | per cycle | closes within the integration's resolution | self-check |
-  | Every existing CPR row | as the rows define | — | reported before and after, bands unchanged | §2.3 |
+    | Cell | Rig | Instant, as the source defines it | Range, mmHg | Source |
+    |---|---|---|---|---|
+    | RA in decompression, lowest | 1994-matched | lowest in the decompression half-cycle, five cycles from the compression 20–25 s after VF onset | 4.4–16.2 | Shultz, Table 2 |
+    | RA in decompression, mean | 1994-matched | mean over the decompression half-cycle, same five cycles | 7.7–23.9 | Shultz, Table 2 |
+    | RA, last third | 1994-matched | mean over 500–750 ms of each 750-ms cycle, same five cycles | 7.9–24.3 | Shultz, p. 686 |
+    | RA in compression, peak / mean | 1994-matched | peak; mean over the compression half-cycle, same five cycles | 30.0–58.0 / 16.0–39.0 | Shultz, Table 2 |
+    | RA at no flow | VF, no CPR, 20–25 s into VF | the RA, immediately before the first compression | 7.9–21.5 | Shultz, Table 1 |
+    | Central venous pressure at no flow | VF, no CPR | the systemic venous compartment at 13 s of VF; and at 60 s after the circulation stops with no CPR | 5.6–16.4 at 13 s (Schipke); at 60 s, 7.2–18.4 (Repessé, mean ± 1 SD) and 12–18 (Wijnberge, interquartile range of a median 15), each reported beside the reading, neither chosen over the other | Schipke 2003; Repessé 2015; Wijnberge 2020 (all abstracts) |
+    | Right heart's volume balance | both rigs | per cycle | closes within the integration's resolution | self-check |
+    | Every existing CPR row | as the rows define | — | reported before and after, bands unchanged | §2.3 |
 
-  The rigs:
-  - **1994-matched:** 80 /min, duty 0.5, no breaths, CPR 20–25 s after VF onset, the first minute.
-  - **1989-matched:** 60 /min, duty 0.5, a breath after every fifth compression, adrenaline 1 mg every 5 min, measured
-    late (the paper: often more than 30 min). The breath-after-five schedule needs CQ7, which comes after CQ12, so CQ12
-    runs the 1994-matched cells and the static and balance cells. CQ7 adds the 1989-matched cells, as reported cells
-    first. A miss there goes back to CQ12's mechanism, not to a constant.
-  - The jugular-route vein is the venous compartment the piece places outside the chest on the valved route.
+    *(mine)* The simulator has not come to rest at 20–25 s of VF (its RA above its veins), so the RA cell at no flow
+    reads the RA at that instant, as the paper did, not at rest; the central venous cells read the venous compartment.
+
+  - **Reported in CQ12, no band:**
+    - the jugular-route compartment − RA on the 1994-matched rig: its sign in compression (expected negative) and at
+      0.06 s after the end of compression (expected positive), as a direction check from Paradis 1989 and the 1991
+      children (no human jugular value exists at that rig);
+    - the caval-route compartment's flow direction in compression (expected backward) and in release (expected
+      forward), from the dog and pig abstracts;
+    - the caval-route compartment's per-compression peak and trough beside the patients' femoral 41.6 / 6.8 (Resusc
+      Plus 2026), as a direction check only (a femoral vein late in mechanical CPR is not the cava early in manual
+      CPR).
+  - **Run in CQ7, once it gives the breath-after-five schedule, and only if CQ-Q6 is answered "both":**
+
+    | Cell | Rig | Instant, as the source defines it | Range, mmHg | Source |
+    |---|---|---|---|---|
+    | RA in relaxation, phase mean / end | 1989-matched | relaxation from the inflection at the start of the upstroke to the next downstroke's onset; its mean, and its last value; averaged over one ventilation-to-ventilation cycle (five compressions) | 10–22 / 9–23 | Paradis 1989, Table 1 |
+    | RA in compression, phase mean / peak | 1989-matched | compression from the downstroke's onset inflection to the upstroke's start inflection | 27–55 / 38–72 | Paradis 1989, Table 1 |
+    | Jugular-route compartment − RA | 1989-matched | compression; relaxation; 0.06 s after the onset of relaxation (per integration step, which resolves 60 ms) | −31 to −7; −8 to +4; 0 to +16 | Paradis 1989, Table 2 |
+
+  - **So CQ12 lands with no banded cell on either venous route.** It is judged by:
+    - the 1994 RA cells;
+    - the no-flow cells;
+    - the volume balance;
+    - the reported direction checks above;
+    - every existing CPR row, before and after.
+
+    The banded jugular − RA cells come with CQ7. A miss there is reported with its cause (§ "What the new compartments
+    stand for") and goes back to CQ12's mechanism, not to a constant.
+  - **The rigs:**
+    - **1994-matched:** 80 /min, duty 0.5, depth 3.8–5.1 cm (the paper's range; once CQ3 exists, the depth is set
+      within it and named); CPR from 20–25 s after VF onset; read over the first five cycles. No breaths is this
+      plan's choice, from the patients apnoeic while ventilation was measured, not a condition the paper states for all
+      of them.
+    - **1989-matched:** 60 /min, duty 0.5, a breath after every fifth compression, a compression of 2 in (5.1 cm),
+      adrenaline 1 mg every 5 min, measured after a long arrest. The paper's patients were measured just after catheter
+      placement, in many more than 30 min after collapse; three were measured at once after a re-arrest. The engine's
+      time of measurement is a marked choice, stated with the cell.
 - **Must not change:**
   - the compression amplitude and the depth curve;
   - the arterial side;
   - the pericardium;
+  - the RA's passive elastance (`EMIN_RA`);
   - the breathing model;
   - any band.
 - **Order:** before any piece that touches the release phase (CQ4's relaxation time, CQ5's leaning, CQ6's breaths on
@@ -646,7 +715,7 @@ source edited; 80 /min, duty 0.5, q 0.8, no breaths, first minute):
 |---|---|---|---|
 | Depth | every animal depth study (except Liang 2021) and both human EtCO2 regressions show flow and pressure rising with depth; guidelines 5–6 cm | the threshold below which compressions move nothing (Babbs, dogs); the M2 reads depth including the mattress (§3.7) | the upper limit (6 cm) is from injuries and survival curves, not from flow; no source shows flow falling with depth |
 | Rate | 100–120 /min in both guidelines, from human outcome data | the relaxation time (rate × duty) is where filling and coronary flow live | in humans, rate is not a predictor of EtCO2 over the range rescuers use (Sheak), and at constant force a higher rate lowered SBP (Ornato); its haemodynamic optimum is canine |
-| Full recoil | animal studies (Zuercher, Yannopoulos) and children with a beating heart (Glatz): leaning raises RA pressure and lowers CPP and output | leaning is common (12 % of compressions in adults, Niles); in adults, resting hands alone raised the intrathoracic pressure 0 to +7 mmHg (Shultz 1994); in patients the chest's release pulls the intrathoracic pressure down only 3.6 mmHg, and the right atrium between compressions stays near the pressure of the veins outside the chest (§3.9) | ERC 2025 found no study of leaning measures in humans; the guideline rests on porcine data |
+| Full recoil | animal studies (Zuercher, Yannopoulos) and children with a beating heart (Glatz): leaning raises RA pressure and lowers CPP and output | leaning is common (12 % of compressions in adults, Niles); in adults, resting hands alone raised the intrathoracic pressure 0 to +7 mmHg (Shultz 1994); in patients the chest's release pulls the intrathoracic pressure down only 3.6 mmHg, and the right atrium between compressions stays near the jugular bulb's pressure (§3.9) | ERC 2025 found no study of leaning measures in humans; the guideline rests on porcine data |
 | Avoiding hyperventilation | pigs: 30 /min lowered CPP and survival against 12 (Aufderheide); guidelines classify hyperventilation as harm | tidal volume and inspiratory time matter as well as rate (the mean intrathoracic pressure) | human outcome data are mixed: in PART, hypoventilation was the harm and mild hyperventilation (12–16 /min) was associated with better outcomes; an RCT of 10 vs 20 /min found no difference (stopped early) |
 | Minimising interruptions | animal CPP falls at once and rebuilds slowly; human survival falls with pre-shock pause | the **pre-shock** pause is the interruption with the strongest human signal (Cheskes; post-shock pause not associated); the **duty cycle** is a further factor of each compression | for the compression fraction as such, the human evidence is heterogeneous: two studies found the opposite sign (AHA 2025 refs 54, 55), and in Christenson 2009 the 81–100 % group did no better than 61–80 % |
 
@@ -768,16 +837,16 @@ the circuit already rebuilds after a pause in the measured way (§2.2), and the 
 |---|---|---|---|---|---|---|
 | **CQ1** | **The compression act as state.** `hs.cpr` becomes the act: `{active, rateMin, duty, leanKg, surface}` and its amplitude source, which in this piece is only the legacy `quality` carried straight to the amplitude (no depth yet). `cprPressure`, the release residual (renamed for what it is, still flagged as a fit), the coronary perfused fraction, the ECG artefact, the pads-lead artefact following the same compressions, the capnogram oscillation and the pleth read the act; the `cpr` command and the vocabulary gain the fields; `quality` stays accepted | — | old commands give byte-identical CoPP, EtCO2, pleth and ECG at q 0.4 / 0.8 / 1 / 1.2 against main (a recorded comparison); the type tests of `types-hemo.ts` and `controller/src/protocol.ts` | every number; the scenario format version | 8 | design |
 | **CQ2** | **The pure pauses.** The compressor's schedule as events in time: pauses for analysis, charge, pulse or rhythm check and compressor switch, each with its start and length; the AED cycle's "Stop CPR" and CPR period drive it; the compression fraction and each pause computed for the record | Cheskes 2011; Christenson 2009; Yu 2002; Sato 1997; Steen 2003; AHA 2025 BLS; ERC 2025 BLS and ALS | cells: a 20-s pre-shock pause gives a lower CoPP at the shock and a lower ROSC share than a 5-s one (Cheskes, human, direction; Yu and Sato, animal); CoPP during a pause falls within seconds and is rebuilt over several compressions (reported against §2.2 and Steen); the computed CCF equals the schedule's share of time | the circuit; the shock model's tables | 10 | design |
-| **CQ3** | **Depth.** The act's amplitude from the chest's displacement, `a(d)` threshold-linear (§3.1), with `d0` 2.3 cm and `dRef` 5.5 cm, both marked choices; the legacy path untouched | Babbs 1983; Sheak 2015; Murphy 2016; Bellamy 1984; Ristagno 2007 | cells: CoPP, SBP, CO and EtCO2 rise with depth from 3.5 to 6 cm (direction, every source); no forward flow below `d0` (Babbs, animal); the EtCO2 slope between 5 and 6 cm reported beside Sheak's +1.4 mmHg/10 mm and Murphy's +4 %/10 mm (a size cell whose band waits for W4's confidence interval); the depth of each legacy set (§5.1) gives the legacy amplitude to within the arithmetic; the intrathoracic pressure's rise in compression and its change in decompression reported beside the patients' mid-oesophageal +7.9 ± 2.4 and −3.6 ± 3.5 mmHg (Shultz 1994, Table 4, p. 690, n 6, from a hands-on baseline; manual, 80 /min) — a reported cell, never a value to fit (the simulator today: +12.0 mean, +17.6 peak, 0.0 in decompression) | the legacy path's numbers; rate behaviour | 6 | design |
+| **CQ3** | **Depth.** The act's amplitude from the chest's displacement, `a(d)` threshold-linear (§3.1): the flow form and flow threshold of Babbs 1983 applied to the pressure amplitude, with `d0` 2.3 cm and `dRef` 5.5 cm, both marked choices; the legacy path untouched | Babbs 1983; Sheak 2015; Murphy 2016; Bellamy 1984; Ristagno 2007 | cells: CoPP, SBP, CO and EtCO2 rise with depth from 3.5 to 6 cm (direction, every source); no forward flow below `d0` (Babbs, animal); the EtCO2 slope between 5 and 6 cm reported beside Sheak's +1.4 mmHg/10 mm and Murphy's +4 %/10 mm (a size cell whose band waits for W4's confidence interval); the depth of each legacy set (§5.1) gives the legacy amplitude to within the arithmetic; the intrathoracic pressure's rise in compression and its change in decompression reported beside the patients' mid-oesophageal +7.9 ± 2.4 and −3.6 ± 3.5 mmHg (Shultz 1994, Table 4, p. 690, n 6, from a hands-on baseline; manual, 80 /min) — a reported cell, never a value to fit (the simulator today: +12.0 mean, +17.6 peak, 0.0 in decompression) | the legacy path's numbers; rate behaviour | 6 | design |
 | **CQ4** | **Rate and duty.** Duty read from the act; the relaxation time from rate and duty; no rate term in the amplitude | Halperin 1986; Feneley 1988; Wolfe 1988; Dean 1990; Kim 2020; Ornato 1988; Sheak 2015 | cells: 60 against 120 /min at fixed depth: CoPP higher at 120 (Feneley, animal; today 22.6 against 27.1); 100 against 120: a small difference (Sheak, human: rate no predictor; reported); duty 33 against 50 %: CoPP higher at 33 (Kim, animal) | the amplitude | 5 | none |
 | **CQ5** | **Leaning.** A residual force between compressions adds a venous-side intrathoracic pressure through the release phase, by the measured pressure per kg (§3.3), with the adult scaling as a marked choice; added to today's residual, default 0 | Shultz 1994; Zuercher 2010; Glatz 2013; Niles 2011; Tomlinson 2007; Yannopoulos 2005 | cells: RA relaxation pressure rises and CoPP and CO fall with lean (direction: Zuercher, animal; Glatz, children); sizes reported beside the adult human 0 to +7 mmHg intrathoracic rise from resting hands (Shultz 1994, pp. 689, 691) and beside Zuercher's CPP 22 / 19 / 17 mmHg and cardiac index 1.9 / 1.6 / 1.4 at 0 / 1.8 / 3.6 kg; 0 kg gives exactly the legacy numbers | today's residual; the depth curve | 6 | design |
 | **CQ6** | **Ventilation during CPR, diagnosed.** The mean intrathoracic pressure the breathing model gives at 12 / 20 / 30 breaths/min under compressions, against Aufderheide; then the CoPP cell; washout kept apart by holding PaCO2 (§3.6). Finds where the coupling is weak; builds nothing if the cause is not established | Aufderheide 2004; the 2026 pig pilot; Wang 2022; Prause 2023; Sheak; Murphy | cells: mean intrathoracic pressure against 7.1 / 11.6 / 17.5 (animal); CoPP against 23.4 / 19.5 / 16.9 (animal, direction and reported size); the existing human EtCO2 relative cell; at 30 /min with PaCO2 held, CO and CoPP compared with the free arm; the intrathoracic pressure's rise in compression and its change in decompression reported beside the patients' mid-oesophageal +7.9 ± 2.4 and −3.6 ± 3.5 mmHg (Shultz 1994, Table 4, p. 690, n 6, from a hands-on baseline; manual, 80 /min) — a reported cell, never a value to fit (the simulator today: +12.0 mean, +17.6 peak, 0.0 in decompression) | the breathing model's behaviour outside CPR | 8 | design |
-| **CQ7** | **30:2 with breaths in the pause.** The `ventilation` field (read nowhere today) becomes the schedule's 30:2 or continuous; in 30:2 the compressions stop for the breaths and the breathing model gives two breaths in the pause; with an advanced airway the breaths fall on compressions. Needs a seam between the schedule and the breathing model | Berg 2001; Kern 2002; AHA 2025 BLS; ERC 2025 BLS | cells: in 30:2 the CoPP of the first compressions after the breaths is lower than of the last (Berg 14 against 21 mmHg, animal, direction and the gap as a reported size); compressions per minute and integrated CoPP lower in 30:2 than continuous (Berg, animal); and CQ12's 1989-matched cells (60 /min, a breath after every fifth compression), reported (§3.9) | the pure pauses of CQ2 | 8 | design |
+| **CQ7** | **30:2 with breaths in the pause.** The `ventilation` field (read nowhere today) becomes the schedule's 30:2 or continuous; in 30:2 the compressions stop for the breaths and the breathing model gives two breaths in the pause; with an advanced airway the breaths fall on compressions. Needs a seam between the schedule and the breathing model | Berg 2001; Kern 2002; AHA 2025 BLS; ERC 2025 BLS | cells: in 30:2 the CoPP of the first compressions after the breaths is lower than of the last (Berg 14 against 21 mmHg, animal, direction and the gap as a reported size); compressions per minute and integrated CoPP lower in 30:2 than continuous (Berg, animal); and, if CQ-Q6 = A, CQ12's 1989-matched cells (60 /min, a breath after every fifth compression), by the paper's phase definitions (§3.9) | the pure pauses of CQ2 | 8 | design |
 | **CQ8** | **Surface and the sensor.** The surface's share of the travel; the M2's sensor reads the total travel ± 0.6 cm; "Push Harder" and the bar graph on the sensor's reading; the haemodynamics on the chest's | the 2009 mattress study (W6 first); [G 15-1 to 15-4], [G A-10] | cells: on a bed without a backboard the sensor reads more than the chest receives; the prompt follows the sensor, the haemodynamics the chest | the depth curve | 5 | none |
 | **CQ9** | **The rescuer.** A scripted compressor whose depth follows Sugerman's Table 3 and whose switch resets it; the rate–depth trade-off only if W7 gives numbers | Sugerman 2009; Stiell 2012; AHA 2025 (switch every 2 min) | cells: depth flat to 90 s, then falling (Table 3 means); rate unchanged | the act's model | 5 | none |
-| **CQ10** | **Done.** What holds the human RA pressure up between compressions (`research/91-what-holds-right-atrial-pressure-up-in-human-cpr.md`): the same early and late, with and without adrenaline; at the pressure of the veins outside the chest in relaxation; a valve at the thoracic inlet holding on the jugular route in compression; the caval route unmeasured (§3.9). Its open items are W13–W16 | Shultz 1994; Paradis 1989; Paradis 1990 | — (a note) | any code | — | — |
+| **CQ10** | **Done.** What holds the human RA pressure up between compressions (`research/91-what-holds-right-atrial-pressure-up-in-human-cpr.md`): the same early and late; at about the jugular bulb's pressure in relaxation; the gradient across the thoracic inlet holding on the jugular route in compression, read by its authors as a valve; the caval route unmeasured in people; the mechanism readings marked as the plan's (§3.9). Its open items are W13–W16 | Shultz 1994; Paradis 1989; Paradis 1990 | — (a note) | any code | — | — |
 | **CQ11** | **The instructor's sheet and the learner's input.** The three words and the further sets (§5), each value editable, the set's name and values in the record; the learner's CPR action carries rate (and depth by CQ-Q4); the Debrief shows each pause, the compression fraction, mean depth and rate and the fraction at target | §5's sources | e2e: picking a set sends its values; an old card's run is unchanged; the record carries the set | the M2 face | 8 | none |
-| **CQ12** | **The venous side of the right heart under compressions** (§3.9). Backward flow out of the RA during compression on a valved jugular–subclavian route and an unvalved caval route; the RA's refilling from the veins outside the chest in release; then the fitted release pressure removed. Corrects the code comments that carry the old credit (§3.9). No source sizes either route's backward behaviour, the split between them, the caval compliance or the forward refilling resistance (`R_VR_BACK` 5 and `R_VR` have none); those are marked working values; no caval collapse at the diaphragm. Built now or after the wanted papers: CQ-Q7 | Shultz 1994; Paradis 1989; Schipke 2003; Repessé 2015; research/93 (the 1991 children, 1984 dog and 2003 pig abstracts; PLoS One 2025 and Resusc Plus 2026 in full; Front Physiol 2016 as a model assumption) | the cells of §3.9 at the named instants, each the patients' mean ± 1 SD: RA in decompression and in compression (Shultz, Table 2); RA in relaxation, at its end and in compression (Paradis 1989, Table 1); the jugular-route vein − RA in compression, relaxation and 0.06 s into relaxation (Paradis 1989, Table 2); the venous pressure at no flow inside the human static range; the right heart's volume balance closing each cycle; the systemic venous pressure in compression and decompression reported beside the patients' femoral venous 41.6 / 6.8 (Resusc Plus 2026, a check of direction only: the simulator's veins are one lumped compartment); every existing CPR row of §2.3 reported before and after. The 1989-matched cells join once CQ7 gives the breath-after-five schedule | the compression amplitude and depth curve; the arterial side; the pericardium; the breathing model; any band | 10 | design |
+| **CQ12** | **The venous side of the right heart under compressions** (§3.9). Backward flow out of the RA during compression on a one-way-valved jugular–subclavian route and an unvalved caval route; the RA's refilling from both in release; then the fitted release pressure removed. Corrects the code comments that carry the old credit (§3.9). No source sizes either route's backward behaviour, the split between them, the caval compliance or the forward refilling resistance (the backward factor `R_VR_BACK` 5 and `R_VR` have none): those are marked working values; `EMIN_RA` stays as it is; no caval collapse at the diaphragm. Built now or after the wanted papers: CQ-Q7 | Shultz 1994; Paradis 1989; Schipke 2003; Repessé 2015; Wijnberge 2020; research/93 (the 1991 children, 1984 dog and 2003 pig abstracts; PLoS One 2025 and Resusc Plus 2026 in full; Front Physiol 2016 as a model assumption) | **Run in CQ12:** the 1994-matched RA cells over the first five cycles (decompression lowest and half-cycle mean; the mean over the last third, 500–750 ms; compression peak and mean); the RA at 20–25 s of VF before CPR (Shultz) and the venous compartment at 13 s of VF and at 60 s with no circulation (Schipke, Repessé, Wijnberge), each with its own instant; the right heart's volume balance; every existing CPR row of §2.3 before and after. **Reported in CQ12, no band:** the sign of jugular-route compartment − RA in compression and at 0.06 s after it on the 1994-matched rig; the caval route's flow direction in each phase; the caval compartment's per-compression peak and trough beside the patients' femoral 41.6 / 6.8. **So CQ12 lands with no banded cell on either venous route.** **Run in CQ7 (if CQ-Q6 = A):** the 1989-matched RA and jugular − RA cells, by the paper's phase definitions | the compression amplitude and depth curve; the arterial side; the pericardium; `EMIN_RA`; the breathing model; any band | 10 | design |
 
 **What other plans may rely on.**
 
@@ -793,8 +862,7 @@ the circuit already rebuilds after a pause in the measured way (§2.2), and the 
   the shock, so the cycle's pause lengths act on the shock's chance with no new rule.
 - **The defibrillator plan's pieces.** E3 is wholly replaced: its state and both artefacts by CQ1, its haemodynamics
   by CQ3, its sensor and prompt by CQ8. F2 stands on CQ1 and CQ8 instead of E3. R3's compressions part becomes CQ11.
-  That plan's question on what `quality` means in centimetres is answered by §5.1 and §3.1 (the marked threshold and reference). These changes go to the
-  hand-over; the defibrillator plan is not edited here.
+  That plan's question on what `quality` means in centimetres is answered by §5.1 and §3.1 (the marked threshold and reference). The defibrillator plan's pointers name these pieces.
 
 ---
 
@@ -829,6 +897,7 @@ backflow, refilling, what published CPR models assume; most of its sources abstr
 | Paradis et al. Circulation 1989;80:361–368 (simultaneous aortic, jugular bulb and right atrial pressures in human CPR) | DOI 10.1161/01.cir.80.2.361 | [FT], as research/91 §0 and §3.0 read it: Tables 1–2, p. 364; pp. 362–367 | §3.9, CQ12 |
 | Paradis et al. JAMA 1990;263:1106–1113 (coronary perfusion pressure and ROSC in human CPR) | DOI 10.1001/jama.1990.03440080084029 | [FT], as research/91 §3.2 reads it: Table 1, p. 1108; reports no RA pressure | §3.3, §3.9 |
 | Schipke 2003; Repessé 2015 (human static venous pressure) | as research/91 §2 | [ABS], as research/91 reads them | §3.9 |
+| Wijnberge et al. Defining human mean circulatory filling pressure in the intensive care unit. J Appl Physiol 2020;129:311–316 | DOI 10.1152/japplphysiol.00298.2020 | [ABS] (Europe PMC record; research/96) | §3.9 |
 | Femoral arterial and venous pressures during mechanical CPR in patients. Resusc Plus 2026;29:101338 | PMC13195767 | [FT], as research/93 §3.1 reads it: Table 2 | §3.9, CQ12 |
 | Right ventricular pressure–volume relations and vena cava occlusion during CPR (pigs). PLoS One 2025;20:e0333122 | DOI 10.1371/journal.pone.0333122, PMC12469095 | [FT], as research/93 §3.2 reads it: Table 2 | §3.9 |
 | Passive leg raising in CPR, a lumped model. Front Physiol 2016;7:665 | PMC5220624 | [FT] [MODEL], as research/93 §3.4 reads it: Fig. 1, Table 1 | §3.9 (a model's assumption) |
@@ -846,10 +915,12 @@ carried a person's name or an e-mail address. No file was downloaded for this pl
 | W6 | The 2009 mattress study, full text | DOI 10.1016/j.resuscitation.2008.08.011 | whether 26.2 / 32.2 mm are chest depth or mattress share (CQ8) |
 | W7 | Idris 2015 full text | DOI 10.1097/ccm.0000000000000824 | depth by rate category for CQ9 |
 | W8 | A human arterial-line series of CPP across compression pauses and their rebuild | not found | CQ2's rebuild cell in humans (today animal only) |
-| W9 | The two studies with a negative CCF–survival association (AHA 2025 BLS refs 54, 55) | from the guideline's reference list | how CCF is presented in the Debrief |
-| W10 | Wang 2022 (PART ventilation) and Prause 2023 full texts | DOI 10.1016/j.resuscitation.2022.05.008; Resuscitation 187:109765 | CQ6's human ventilation cell |
+| W9 | The two studies with a negative CCF–survival association (AHA 2025 BLS refs 54, 55), full texts. Identified from the guideline's printed reference list (library copy): ref 54, "Chest compression fraction: a time dependent variable of survival in shockable out-of-hospital cardiac arrest", Resuscitation 2015;97:129–135; ref 55, "Chest compression depth and survival in out-of-hospital cardiac arrest", Resuscitation 2014;85:182–188 (whose depth findings §1.2 of the research note reads from its abstract). Europe PMC's reference list for the guideline numbers its references differently | DOI 10.1016/j.resuscitation.2015.07.003; DOI 10.1016/j.resuscitation.2013.10.002 | how CCF is presented in the Debrief |
+| W10 | Wang 2022 (PART ventilation) and Prause 2023 full texts | DOI 10.1016/j.resuscitation.2022.05.008; Prause 2023, Resuscitation 187:109765, DOI 10.1016/j.resuscitation.2023.109765 | CQ6's human ventilation cell |
 | W11 | A clinical median of the 30:2 breaths' pause in professional rescuers | not found | the Typical set's pause |
 | W12 | Aufderheide 2004 full text (the breath's duration and VT in the pigs) | DOI 10.1161/01.cir.0000126594.79136.61 | CQ6's size cell's inputs |
+| W26 | Bellamy 1984, coronary blood flow during CPR in swine, full text (the research note's W5) | DOI 10.1161/01.cir.69.1.174 | measured sternal displacement against piston stroke, and CPP by stroke: a second point on CQ3's depth curve |
+| W27 | Halperin 1986, determinants of blood flow to vital organs during CPR in dogs, full text (the research note's W8) | DOI 10.1161/01.cir.73.3.539 | the displacement and flow values behind "rate-independent at constant duration", on which CQ4's rule of no rate term rests |
 | W13 | A human measurement of inferior vena caval pressure or flow beside the RA through the CPR cycle | not found (the nearest is femoral venous pressure, Resusc Plus 2026) | whether the unvalved caval route takes backward flow in compression (CQ12) |
 | W14 | Determinants and clinical significance of jugular venous valve competence, full text | Circulation 1982;65:188–196, DOI 10.1161/01.cir.65.1.188 | the pressure a human jugular valve withstands and how often it is incompetent (CQ12; abstract only so far) |
 | W15 | A human measurement of the hands' resting pressure per patient, with chest size | not found | the adult size of the leaning term beyond the 0 to +7 mmHg range (CQ5) |
@@ -892,17 +963,17 @@ carried a person's name or an e-mail address. No file was downloaded for this pl
 - *Explanation:* Both give the same right atrial pressure between compressions (about 16 mmHg), but differ in
   compression (27.5 by hand, 41 by machine) and in how the CPR was done.
 - *Options:* A, both, each on a rig matched to its paper; B, only the early hand-compression patients, as in a class.
-- *Proposal:* A.
+- *Proposal:* A. The 1989-matched cells in §3.9 and CQ7 are run only if A is chosen.
 
 **CQ-Q7. Should the venous-side piece be built now with marked working values, or wait for the wanted papers?**
-- *Explanation:* The evidence gives the directions: a valve that holds on the neck veins in compressions, and free
-  backward flow into the inferior vena cava. It also gives the patients' pressures to check against. No paper gives
+- *Explanation:* The evidence gives the directions: a gradient that holds on the neck veins in compressions (patients),
+  and backward flow into the inferior vena cava in compressions (dogs and pigs, abstracts). It also gives the patients' pressures to check against. No paper gives
   the sizes: how much leaks, how much goes back into the cava, how fast the atrium refills. Building now means those
   sizes are marked working values, and the checks show what follows from them. Waiting means the fitted pressure
   stays until papers that may not exist are found.
 - *Options:* A, build now with marked working values, remove the fit, report the patients' pressures as checks, and
   report any miss (the right atrium, or a CPR row such as the coronary perfusion pressure) as a known miss with its
   cause and its band unchanged; replace a working value when a paper sizes it. B, wait for the wanted papers
-  (W17–W25) first, with the fit in place.
-- *Proposal:* A. The directions are sourced, and the residents then see the route patients take. Today's fit holds the
-  pressure by a route patients do not take, and its two venous constants have no source either.
+  (W13–W25) first, with the fit in place.
+- *Proposal:* A. The directions are sourced, and the residents then see a route the evidence points to. *(mine)* Today's
+  fit reaches the patients' number with an empty atrium, and its two venous constants have no source either.
