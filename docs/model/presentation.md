@@ -1478,6 +1478,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/physiology-console-mechanics.e2e.ts`](../../apps/demo/e2e/physiology-console-mechanics.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/physiology-console.e2e.ts`](../../apps/demo/e2e/physiology-console.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/press-across-repaint.e2e.ts`](../../apps/demo/e2e/press-across-repaint.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/pulse-tone-in-vf.e2e.ts`](../../apps/demo/e2e/pulse-tone-in-vf.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/pulse-tone-level.e2e.ts`](../../apps/demo/e2e/pulse-tone-level.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/pump-rack.e2e.ts`](../../apps/demo/e2e/pump-rack.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/reload-keeps-case.e2e.ts`](../../apps/demo/e2e/reload-keeps-case.e2e.ts) | 0 | 0 |

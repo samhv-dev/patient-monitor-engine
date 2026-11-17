@@ -398,7 +398,7 @@
     "arrhythmia.freqPvcPerMin": { "tag": "documented", "source": "research/06 §4.3" },
     "arrhythmia.pauseAlarm": { "tag": "documented", "source": "research/06 §4.3 (PAUSE among the arrhythmia alarms)" },
     "st": { "tag": "documented", "source": "research/06 §4.1 (M p.86-92, 266)" },
-    "beep.source": { "tag": "documented", "source": "research/06 §4.1 (M p.66-67); brief §3.6" },
+    "beep.source": { "tag": "documented", "source": "research/06 §4.1 (M p.66-67); brief §3.6", "note": "In ventricular fibrillation the tone follows the beat detector only on coarse fibrillation and only until the monitor calls VF (the VFIB alarm), then is silent; on fine fibrillation (below the rhythm library's 0.2 mV coarse/fine boundary, FINE_MV) it is silent. A clinical judgement, not a manual's statement: an engineering value for the device until a recording of a real monitor in VF is in hand; no manual read says what the tone does in VF (research/82 Q1)" },
     "beep.defaultOn": { "tag": "documented", "source": "research/06 §4.1 (M p.67, 302)", "note": "BEAT VOLUME factory 1" },
     "beep.volume": { "tag": "documented", "source": "research/06 §4.1 (M p.67, 302); brief §3.6" },
     "beep.levelDb": { "tag": "eng", "source": "ENG", "note": "the manual gives 47-69 dB(A) for ALARM VOLUME 1-7 (research/06 §4.2, M p.49) and no level for BEAT VOLUME 1-7: a beat step is as loud as the same alarm step at level 1" },
