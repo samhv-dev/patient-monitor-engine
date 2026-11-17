@@ -6,6 +6,7 @@
 import { createVentDriver, DT, recoilPressure, setCircuit, type VentConfig, type VentDriver } from '@pme/ventilator';
 import { describe, expect, it } from 'vitest';
 import { createCockpit, type Cockpit } from '../../core/cockpit.ts';
+import { dynamicCompliance } from '../../core/mechanics.ts';
 import { DATA, dec, num } from './data.ts';
 import { createKnob, type Knob } from './knob.ts';
 import { EDP_SPEC } from './modes.ts';
@@ -122,7 +123,7 @@ describe('Insp/Exp Pause, held (research/57 H-18 to H-20)', () => {
     for (const mode of ['VC', 'PC'] as const) expect(c0(mode).holds!.key(true), mode).toBe(true);
     for (const mode of ['PRVC', 'PSV'] as const) {
       const c = c0(mode);
-      expect(c.holds!.key(true), mode).toBe(false);
+      expect(c.holds!.key(true), mode).toBe('mode');
       expect([c.vs.hold, c.vs.pendingHold]).toEqual([null, null]);
     }
   });
@@ -191,11 +192,30 @@ describe('the respiratory-mechanics tests against the lung (research/57 K-15 to 
 describe("Patient's Data from the breath record (research/57 N-07 to N-16)", () => {
   const row = (c: Cockpit, k: Knob, w: string, page = 0) => dataPage(c, k.tests!, page).find((r) => r.word === w)!.value;
 
-  it('VE Mandat in VCV: the last three breaths\' volume over their time, the set VT times the rate', () => {
+  /** The breaths the lung took, read from the model as they happen: each one's start and the volume it exhaled. */
+  const watch = (d: VentDriver) => {
+    const took: Array<{ t0: number; vt: number; kind: 'mand' | 'pt' }> = [];
+    let n = d.vs.p.breathCount, phase = d.vs.p.phase;
+    const step = () => {
+      const p = d.vs.p;
+      if (p.breathCount !== n) { n = p.breathCount; took.push({ t0: p.markers.at(-1)!.t, vt: Number.NaN, kind: p.markers.at(-1)!.type }); }
+      if (phase !== 'exp' && p.phase === 'exp' && took.length) took[took.length - 1]!.vt = p.lastVTE;
+      phase = p.phase;
+    };
+    return { took, step };
+  };
+  /** Over the last three complete breaths the lung took: volume a minute, breaths a minute (N-07 to N-09). */
+  const lastThree = (took: Array<{ t0: number; vt: number }>) => {
+    const b = took.slice(-4, -1), span = took.at(-1)!.t0 - b[0]!.t0;
+    return { ve: (b.reduce((x, y) => x + y.vt, 0) / 1000) * (60 / span), f: (60 * b.length) / span };
+  };
+
+  it('VE Mandat in VCV: the last three breaths\' exhaled volume over their time, as the lung took them', () => {
     const { d, c, k } = setup(LUNG, VCV);
-    until(d, () => c.breaths(false).length === num(M.breathsAveraged), 60, 'three complete breaths');
-    expect(Math.abs(Number(row(c, k, 'veMandat')) - (0.5 * 12))).toBeLessThanOrEqual(half('pdVe') + 0.5 * 12 * 0.002);
-    expect(row(c, k, 'veSpont'), 'no spontaneous breath').toBe('---');
+    const w = watch(d);
+    until(d, () => { w.step(); return c.breaths(false).length === num(M.breathsAveraged) && w.took.length >= 4 && d.vs.p.phase === 'insp'; }, 60, 'three complete breaths');
+    expect(Math.abs(Number(row(c, k, 'veMandat')) - lastThree(w.took).ve)).toBeLessThanOrEqual(half('pdVe'));
+    expect(row(c, k, 'veSpont'), 'no spontaneous breath in VCV (N-03)').toBe('---');
   });
 
   it('TCexp is R·C, Cdyn is VT over the peak pressure above PEEP, Ti/Ttot the time ratio', () => {
@@ -206,20 +226,34 @@ describe("Patient's Data from the breath record (research/57 N-07 to N-16)", () 
     // constant flow Q = VT / Ti: the peak is PEEP + VT/C + Q·R
     const flowLs = 0.5 / 1.0;
     const cdyn = 500 / (500 / LUNG.compliance + flowLs * LUNG.resistance);
-    expect(Math.abs(Number(row(c, k, 'cdyn')) - cdyn)).toBeLessThanOrEqual(half('pdC') + 0.05);
+    // the value the face computes, unrounded, is the lung's within half the digit it prints; and the face prints it
+    const measured = dynamicCompliance(r, VCV.peep!);
+    expect(Math.abs(measured - cdyn)).toBeLessThanOrEqual(half('pdC'));
+    expect(row(c, k, 'cdyn')).toBe(measured.toFixed(dec('pdC')));
     expect(Number(row(c, k, 'tiTtot', 1))).toBeCloseTo(r.ti / (r.ti + r.te), dec('pdTiTtot'));
     expect(Math.abs(r.ti / (r.ti + r.te) - 1.0 / 5)).toBeLessThanOrEqual(half('pdTiTtot'));
   });
 
-  it('PSV/CPAP with a breathing patient: F Spont is the patient\'s rate, VE Spont its volume a minute, F/VT the rapid shallow breathing index', () => {
+  it('PSV/CPAP with a breathing patient: F Spont, VE Spont and F/VT are those of the breaths the lung took', () => {
     const { d, c, k } = setup({ ...LUNG, spont: true, pmus: 8, spontRate: 16, variability: false }, { ...VCV, mode: 'PSV', modeLabel: 'PSV/CPAP', backupMode: 'VC', ps: 10, cycleOff: 25 });
-    settled(d);
-    const n = c.breaths(true).length;
-    expect(n).toBe(num(M.breathsAveraged));
-    expect(Math.abs(Number(row(c, k, 'fSpont')) - 16)).toBeLessThanOrEqual(half('pdF'));
-    const vt = c.breaths(true).reduce((s, b) => s + b.vtMl, 0) / n / 1000;
-    expect(Math.abs(Number(row(c, k, 'veSpont')) - vt * 16)).toBeLessThanOrEqual(half('pdVe') + vt * 16 * 0.01);
-    expect(Number(row(c, k, 'fvt'))).toBeCloseTo(c.measured().RR / (c.measured().VTE / 1000), 0);
+    const w = watch(d);
+    let prev = Number.NaN;
+    // the breathing settles: two breaths in a row exhale the same volume to a hundredth of a mL
+    until(d, () => {
+      w.step();
+      const done = w.took.filter((x) => !Number.isNaN(x.vt));
+      const v = done.at(-1)?.vt ?? Number.NaN;
+      const ok = d.vs.p.phase === 'insp' && w.took.length >= 4 && Math.abs(v - prev) < 0.01 && c.breaths(true).length === num(M.breathsAveraged);
+      if (done.length >= 2) prev = done.at(-2)!.vt;
+      return ok;
+    }, 120, 'the breathing settles');
+    expect(w.took.slice(-4).every((x) => x.kind === 'pt'), 'the patient\'s breaths').toBe(true);
+    const want = lastThree(w.took);
+    expect(Math.abs(Number(row(c, k, 'fSpont')) - want.f)).toBeLessThanOrEqual(half('pdF'));
+    expect(Math.abs(Number(row(c, k, 'veSpont')) - want.ve)).toBeLessThanOrEqual(half('pdVe'));
+    // F/VT: the rate over the last exhaled volume in litres (N-11)
+    const last = w.took.at(-2)!;
+    expect(Math.abs(Number(row(c, k, 'fvt')) - want.f / (last.vt / 1000))).toBeLessThanOrEqual(half('pdFvt'));
     expect(row(c, k, 'veMandat'), 'no mandatory breath').toBe('---');
   });
 
@@ -262,5 +296,230 @@ describe('the screen lock (research/57 H-12, H-13)', () => {
     setCircuit(d.vs, 'disconnected');
     until(d, () => !k.locked(), 30, 'an alarm unlocks');
     expect(c.alarms().signals!.message).not.toBeNull();
+  });
+});
+
+describe('inspiratory resistance with a flow that is not constant: the device\'s formula, as the manual states it (research/57 K-16)', () => {
+  const ri = (k: Knob) => k.tests!.values().ri;
+  it('the data marks that the formula is the airway resistance for a constant flow only', () => {
+    expect((M.riFlow as { v: string; src: string }).v).toBe('constant');
+    expect((M.riFlow as { src: string }).src).toContain('K-16');
+  });
+  it('VCV with the descending ramp (the face\'s starting waveform): R − Ti / (4·C), half the lung\'s resistance here', () => {
+    const { d, k } = setup(LUNG, { ...VCV, flowPattern: 'ramp0' });
+    settled(d);
+    runTest(d, k, 'complRes');
+    // the ramp from twice the mean flow to zero: the pressure peaks where the flow is the mean, at Ti/2 (when R·C < Ti)
+    const want = LUNG.resistance - 1.0 / (4 * (LUNG.compliance / 1000));
+    expect(want).toBeCloseTo(LUNG.resistance / 2, 9);
+    expect(Math.abs(ri(k) - want), `Ri ${ri(k)}`).toBeLessThanOrEqual(half('pdR'));
+  });
+  for (const [mode, label, extra] of [['PC', 'PCV', { pc: 15 }], ['PRVC', 'PRVC', { prvcTarget: 500 }]] as const) {
+    it(`${label}: (the set pressure − VT/C) over the mean flow, below the lung's resistance`, () => {
+      const { d, c, k } = setup(LUNG, { ...VCV, mode, modeLabel: label, itime: 1.0, ...extra });
+      settled(d);
+      runTest(d, k, 'complRes');
+      const r = c.holds!.last('insp')!;
+      // the pressure the breath was given at (PCV's set PCV; PRVC's adjusted pressure) above PEEP, less the plateau
+      const above = r.breath!.pmax - VCV.peep!;
+      const want = (above - r.breath!.vtMl / LUNG.compliance) / (r.breath!.vtMl / 1000 / r.breath!.tiFlow);
+      expect(Math.abs(ri(k) - want), `Ri ${ri(k)}`).toBeLessThanOrEqual(half('pdR'));
+      expect(ri(k)).toBeLessThan(LUNG.resistance * 0.5);
+    });
+  }
+});
+
+describe('what ends a hold, and what it leaves', () => {
+  const holding = (lung = LUNG, set = VCV, phase: 'insp' | 'exp' = 'exp') => {
+    const s = setup(lung, set);
+    settled(s.d);
+    toPhase(s.d, phase);
+    s.c.holds!.key(true);
+    until(s.d, () => s.c.holds!.state()?.since != null, 10, 'the hold closes');
+    return s;
+  };
+  it('the circuit opened during a hold ends it, keeps no result and gives no held-back breath', () => {
+    const { d, c } = holding();
+    setCircuit(d.vs, 'disconnected');
+    until(d, () => c.holds!.state() === null, 1, 'the hold ends');
+    expect(c.holds!.last('exp')).toBeNull();
+    // the breath it held back is dropped; the next breath comes on its own mandatory timing
+    expect([d.vs.hold, d.vs.pendingHold, d.vs.heldBreath]).toEqual([null, null, undefined]);
+  });
+  it('a reset during a hold keeps no result; a reset forgets every result and breath: the screen shows "---"', () => {
+    const { d, c, k } = setup(TRAPPING.lung, TRAPPING.set);
+    settled(d);
+    runTest(d, k, 'complRes');
+    for (const w of ['cst', 'ri', 'autoPeep']) expect(dataPage(c, k.tests!, 0).find((r) => r.word === w)!.value, w).not.toBe('---');
+    toPhase(d, 'exp');
+    c.holds!.key(true);
+    until(d, () => c.holds!.state()?.since != null, 10, 'a second hold closes');
+    c.reset();
+    until(d, () => c.holds!.state() === null, 1, 'the hold ends');
+    expect([c.holds!.last('insp'), c.holds!.last('exp'), c.record()]).toEqual([null, null, null]);
+    expect(c.breaths(false)).toEqual([]);
+    expect(k.tests!.trappedMl()).toBeNaN();
+    for (const r of dataPage(c, k.tests!, 0)) expect(r.value, r.word).toBe('---');
+  });
+  it('a new patient (a preset) forgets them too', () => {
+    const { d, c, k } = setup(TRAPPING.lung, TRAPPING.set);
+    settled(d);
+    runTest(d, k, 'autoPeep');
+    c.preset('copd');
+    expect(k.tests!.values().autoPeep).toBeNaN();
+  });
+  for (const [what, patch] of [['the mode', { mode: 'PC', modeLabel: 'PCV' }], ['the set PEEP', { peep: 8 }]] as const) {
+    it(`${what} changed during a hold ends it with no result, and forgets the results measured against it`, () => {
+      const { d, c, k } = setup(TRAPPING.lung, TRAPPING.set);
+      settled(d);
+      runTest(d, k, 'autoPeep');
+      expect(k.tests!.values().autoPeep).not.toBeNaN();
+      toPhase(d, 'exp');
+      c.holds!.key(true);
+      until(d, () => c.holds!.state()?.since != null, 10, 'the hold closes');
+      c.write(patch as Partial<VentConfig>);
+      expect(c.holds!.state()).toBeNull();
+      expect([c.holds!.last('exp'), d.vs.hold]).toEqual([null, null]);
+      expect(k.tests!.values().autoPeep).toBeNaN();
+    });
+  }
+  it('Manual Insp. during a hold is refused, with the simulator\'s words; nothing is counted', () => {
+    const { d, c, k } = holding();
+    const n = d.vs.p.breathCount;
+    k.press('under:manualInsp');
+    expect(d.vs.p.breathCount).toBe(n);
+    expect(k.note()).toBe('manualHold');
+    c.holds!.key(false);
+    expect(d.vs.p.breathCount, 'only the held-back breath, at the release').toBe(n + 1);
+  });
+  it('a 20 s expiratory hold gives no breath for longer than the apnoea time: Apnea is raised while held, and goes when ventilation resumes', () => {
+    const { d, c } = holding();
+    until(d, () => c.alarms().active.some((a) => a.id === 'apnea'), num(M.holdExpMaxS), 'Apnea while held');
+    expect(d.vs.hold).toBe('exp');
+    until(d, () => c.holds!.state() === null, num(M.holdExpMaxS), 'the hold ends at its length');
+    until(d, () => !c.alarms().active.some((a) => a.id === 'apnea'), 1, 'the breath given at the release ends it');
+  });
+  it('a patient\'s effort during an expiratory hold shows on the held pressure (the model\'s equation of motion); the held-back breath keeps its kind', () => {
+    const { d, c } = holding({ ...LUNG, spont: true, pmus: 8, spontRate: 20, variability: false } as typeof LUNG, { ...VCV, rate: 6 });
+    const base = d.vs.p.Paw;
+    // the effort may already be rising when the valves close (a patient-triggered end of expiration)
+    until(d, () => d.vs.p.Paw < base - 1, 5, 'the held pressure falls with an effort');
+    expect(d.vs.hold).toBe('exp');
+    expect(d.vs.p.Paw).toBeCloseTo(VCV.peep! + recoilPressure(d.vs.cfg, d.vs.p.V) - d.vs.p.Pmus, 9);
+    const held = d.vs.heldBreath!;
+    c.holds!.key(false);
+    expect(d.vs.p.markers.at(-1)!.type).toBe(held.mandatory ? 'mand' : 'pt');
+  });
+});
+
+describe('the values belong to the breath and the hold they were measured on', () => {
+  it('PEEP total comes only from the occlusion that ended where the held breath began; a later key hold alone uses the measured PEEP', () => {
+    const { d, c, k } = setup(TRAPPING.lung, TRAPPING.set);
+    settled(d);
+    runTest(d, k, 'autoPeep');
+    const exp = c.holds!.last('exp')!;
+    // breaths go by, then an inspiratory hold by the key, with no occlusion before its breath
+    const n = d.vs.p.breathCount;
+    until(d, () => d.vs.p.breathCount >= n + 2 && d.vs.p.phase === 'insp', 30, 'two breaths later');
+    c.holds!.key(true);
+    until(d, () => c.holds!.state()?.since != null, 5, 'the hold closes');
+    c.holds!.key(false);
+    const insp = c.holds!.last('insp')!;
+    const cst = k.tests!.values().cst;
+    expect(cst).toBeCloseTo(insp.breath!.vtMl / (insp.paw - insp.breath!.peepBefore), 9);
+    expect(insp.breath!.peepBefore).not.toBeCloseTo(exp.paw, 3);
+  });
+  it('Re is the held breath\'s own time constant over its Cst, "---" until that breath is complete', () => {
+    const { d, c, k } = setup(LUNG, VCV);
+    settled(d);
+    runTest(d, k, 'complRes');
+    expect(k.tests!.values().re, 'the held breath not yet complete').toBeNaN();
+    const t0 = c.holds!.last('insp')!.breath!.t0;
+    until(d, () => Math.abs((c.record()?.t0 ?? -1) - t0) < DT / 2, 10, 'the held breath completes');
+    const v = k.tests!.values();
+    expect(v.re).toBeCloseTo(c.record()!.tcexp / (v.cst / 1000), 9);
+    const n = d.vs.p.breathCount;
+    c.write({ resistance: 20 }, 'tool');
+    until(d, () => d.vs.p.breathCount >= n + 2, 20, 'breaths on a changed lung');
+    expect(k.tests!.values().re, 'not a later breath\'s time constant').toBeCloseTo(v.re, 9);
+  });
+  it('a switch from PSV/CPAP to VCV leaves no pressure-support breath in VE Spont or F Spont', () => {
+    const { d, c, k } = setup({ ...LUNG, spont: true, pmus: 8, spontRate: 16 }, { ...VCV, mode: 'PSV', modeLabel: 'PSV/CPAP', backupMode: 'VC', ps: 10 });
+    until(d, () => c.breaths(true).length === num(M.breathsAveraged), 60, 'three spontaneous breaths');
+    k.press('side:mode'); k.push(); k.push(); // VCV
+    expect(c.cfg.mode).toBe('VC');
+    expect(c.breaths(true)).toEqual([]);
+    const page = dataPage(c, k.tests!, 0);
+    for (const w of ['veSpont', 'fSpont']) expect(page.find((r) => r.word === w)!.value, w).toBe('---');
+  });
+});
+
+describe('a test that cannot close its valves, and Esc', () => {
+  it('every breath ending at the pressure limit: the armed inspiratory occlusion never closes, the test is stopped at its wait and says so; the key then holds', () => {
+    // the maximum pressure under the breath's peak: the breath is ended at it (the device's Pmax cycling, research/57 A-32)
+    const { d, c, k } = setup(LUNG, { ...VCV, pmax: 12 });
+    settled(d);
+    const t0 = d.vs.p.t;
+    expect(k.tests!.start('complRes')).toBe(true);
+    until(d, () => k.tests!.running() === null, num(M.testWaitMaxS) + 10, 'the test ends');
+    // the end-expiratory occlusion first (at most one breath period and its length), then the wait
+    // and the step its end is seen on
+    expect(d.vs.p.t - t0).toBeLessThanOrEqual(60 / VCV.rate! + num(M.occlusionS) + num(M.testWaitMaxS) + 2 * DT);
+    expect(k.note()).toBe('testStopped');
+    expect(c.holds!.last('insp')).toBeNull();
+    expect([d.vs.hold, d.vs.pendingHold]).toEqual([null, null]);
+    expect(c.holds!.key(true)).toBe(true);
+  });
+  it('while a test runs the key says so; Esc cancels the test, with no result and no breath given', () => {
+    const { d, c, k } = setup(LUNG, VCV);
+    settled(d);
+    toPhase(d, 'insp');
+    k.tests!.start('autoPeep');
+    k.down('under:inspExpPause');
+    expect(k.note()).toBe('pauseBusy');
+    k.up('under:inspExpPause');
+    until(d, () => d.vs.hold === 'exp', 10, 'the occlusion closes');
+    const n = d.vs.p.breathCount;
+    k.press('under:esc');
+    expect([k.tests!.running(), d.vs.hold, c.holds!.last('exp')]).toEqual([null, null, null]);
+    expect(d.vs.p.breathCount).toBe(n);
+    expect(k.note()).toBe('testCancelled');
+  });
+});
+
+describe('P0.1: the drop of the held pressure in the first 100 ms of an effort (research/57 K-19)', () => {
+  const BREATHING = { ...LUNG, spont: true, pmus: 8, spontRate: 20, variability: false };
+  it('measured on an end-expiratory occlusion; it is the lung model\'s effort over that window; held until the next', () => {
+    const { d, c, k } = setup(BREATHING, { ...VCV, rate: 6 });
+    settled(d);
+    expect(k.tests!.p01(), 'before it is measured').toBeNaN();
+    // the effort, step by step: on the first step the airway is held (the step the valves close on is still the
+    // expiration's) and on the step the occlusion ends
+    let from = Number.NaN, to = Number.NaN, closed = 0, was = false;
+    const off = c.onStep(() => {
+      const now = c.holds!.state()?.since != null;
+      if (now && ++closed === 2) from = d.vs.p.Pmus;
+      if (was && !now) to = d.vs.p.Pmus;
+      was = now;
+    });
+    expect(k.tests!.start('p01')).toBe(true);
+    until(d, () => k.tests!.running() === null, 60, 'the test ends');
+    off();
+    expect(k.note()).toBe('testDone');
+    // the held pressure is PEEP + recoil − effort on a constant volume: its drop is the effort's rise
+    expect(Math.abs(k.tests!.p01() - (to - from))).toBeLessThan(1e-9);
+    expect(k.tests!.p01()).toBeGreaterThan(0);
+    const v = k.tests!.p01();
+    const n = d.vs.p.breathCount;
+    until(d, () => d.vs.p.breathCount > n + 1, 30, 'ventilation goes on');
+    expect(k.tests!.p01(), 'held').toBe(v);
+  });
+  it('with no effort the occlusion ends at its longest and says so; no value', () => {
+    const { d, k } = setup(LUNG, VCV);
+    settled(d);
+    k.tests!.start('p01');
+    until(d, () => k.tests!.running() === null, num(M.p01MaxS) + num(M.testWaitMaxS), 'the test ends');
+    expect(k.note()).toBe('p01NoEffort');
+    expect(k.tests!.p01()).toBeNaN();
   });
 });

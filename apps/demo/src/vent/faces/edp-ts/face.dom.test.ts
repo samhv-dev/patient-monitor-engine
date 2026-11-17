@@ -12,11 +12,13 @@ import { createVentDriver, type VentDriver } from '@pme/ventilator';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { liveWrites } from '../../../app/keep.testing.ts';
 import { faceFromLocation, mountFace } from '../index.ts';
+import { CONTROLS } from './controls.ts';
 import FACE from './face.json';
+import { filled } from './view.ts';
 
 const html = readFileSync(resolve(import.meta.dirname, '../../../../vent-hamilton.html'), 'utf8');
 const body = (html.split('<body>')[1] as string).split('<script')[0] as string;
-const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.help), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
+const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.help).map((l) => ({ v: filled(l.v) })), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
 const NUMERIC = /^[-+\d.:/ ]+$/;
 /** A window's value with its unit (research/57 T-40 "Apnea time 15 s"): a number and a sourced unit word. */
 const withUnit = (t: string) => { const m = /^([-+\d.:/]+) (.+)$/.exec(t); return m !== null && ALLOWED.has(m[2]!); };
@@ -136,10 +138,20 @@ describe('the EDP-TS face', () => {
   it('every control not honoured yet is drawn as the device draws it, marked unavailable and described with its reason', () => {
     const ui = mount(createVentDriver(null));
     const why = (b: HTMLElement) => document.getElementById(b.getAttribute('aria-describedby') ?? '')?.textContent ?? '';
-    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl="right:nebulizer"], [data-ctl="right:standby"], [data-ctl="under:suction"]')) {
-      expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
-      expect(why(b), b.dataset.ctl).toMatch(/not simulated yet|not modelled|cannot be changed yet/);
-      expect(b.dataset.unsim, b.dataset.ctl).toBeTruthy();
+    // every key of the right column and under the screen: unavailable in the control table, it is marked and says
+    // why; live, it is not marked
+    const keys = [...document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl^="under:"]')];
+    expect(keys.length).toBe(CONTROLS.filter((x) => x.region === 'right' || x.region === 'under').length);
+    for (const b of keys) {
+      const x = CONTROLS.find((y) => y.id === b.dataset.ctl)!;
+      if (x.kind === 'unavailable') {
+        expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
+        expect(why(b), b.dataset.ctl).toBe(FACE.reasons[x.reason].v);
+        expect(b.dataset.unsim, b.dataset.ctl).toBe(x.reason);
+      } else {
+        expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBeNull();
+        expect(b.dataset.unsim, b.dataset.ctl).toBeUndefined();
+      }
     }
     // V3 turned these on: the device's limits (research/57 L-02, L-13, L-08), live, and the silence key
     for (const [id, v] of [['tag:pLo', '5'], ['tag:peepHi', '20.0'], ['tag:o2Hi', '60'], ['tag:o2Lo', '40']]) expect(document.querySelector(`[data-ctl="${id}"] .tv`)!.textContent).toBe(v);

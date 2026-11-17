@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { CONTROLS, WINDOWS } from './controls.ts';
 import { helpId } from './knob.ts';
 import { labelsOf } from './screen.ts';
+import { filled } from './view.ts';
 import FACE from './face.json';
 
 const root = resolve(import.meta.dirname, '../../../../../..');
@@ -96,6 +97,29 @@ describe('the help texts (research/57 K-14, H-21; plan GX8)', () => {
     for (const c of CONTROLS) expect(help[helpId(c.id)], c.id).toBeDefined();
     for (const id of Object.keys(FACE.alarms)) expect(help[`alarm:${id}`], id).toBeDefined();
     for (const [k, l] of Object.entries(help)) expect((l as { p: string }).p, k).toBe('sim');
+  });
+  it('a help text writes none of the face\'s numbers: it names them by their path in face.json, filled when shown', () => {
+    for (const [k, l] of Object.entries(help)) {
+      const t = (l as { v: string }).v;
+      expect(t.replace(/\{[\w.]+\}/g, '').replace(/\b(?:P0\.1|O2|CO2|ETCO2|VD\/VT)\b/g, ''), k).not.toMatch(/\d/);
+      expect(() => filled(t), k).not.toThrow();
+    }
+    expect(filled((FACE.help['under:inspExpPause'] as { v: string }).v)).toContain(`at most ${FACE.mechanics.holdInspMaxS.v} s`);
+  });
+});
+
+describe('the tests\' modes (research/57 K-15 to K-17, K-19)', () => {
+  it('each test\'s modes cite the row that lists them, or are a marked choice with its reason', () => {
+    const T = FACE.mechanics.testModes as Record<string, { v: string[]; p: string; src: string; why?: string }>;
+    expect(T.autoPeep).toMatchObject({ p: 'documented', src: 'research/57 K-15' });
+    expect(T.trapped).toMatchObject({ p: 'documented', src: 'research/57 K-17' });
+    for (const id of ['complRes', 'p01']) { expect(T[id]!.p, id).toBe('eng'); expect(T[id]!.why, id).toBeTruthy(); }
+    // the rows cited as documented list exactly these modes
+    for (const [row, l] of [['K-15', T.autoPeep!], ['K-17', T.trapped!]] as const) {
+      const line = note.split('\n').find((x) => x.startsWith(`| ${row} |`))!;
+      expect(line, row).toMatch(/VCV, PCV, PRVC/);
+      expect(l.v).toEqual(['VC', 'PC', 'PRVC']);
+    }
   });
 });
 

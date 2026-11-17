@@ -32,13 +32,18 @@ test('EDP-TS face: an inspiratory hold held with the key gives the plateau and t
   });
   // two complete breaths, so the breath record (the measured PEEP) exists; then the start of an inspiration
   await page.waitForFunction(() => (window as Any).__vent.vs.p.breathCount >= 3, null, { timeout: 60_000, polling: 50 });
-  await page.waitForFunction(() => { const p = (window as Any).__vent.vs.p; return p.phase === 'insp' && p.phaseT < 0.3; }, null, { timeout: 30_000, polling: 'raf' });
+  // the start of an inspiration: an expiration, then the frame its next inspiration begins on
+  await page.waitForFunction(() => (window as Any).__vent.vs.p.phase === 'exp', null, { timeout: 30_000, polling: 'raf' });
+  await page.waitForFunction(() => (window as Any).__vent.vs.p.phase === 'insp', null, { timeout: 30_000, polling: 'raf' });
 
   const key = page.locator('[data-ctl="under:inspExpPause"]');
   const b = (await key.boundingBox())!;
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await page.mouse.down();
-  // the valves close at the end of this inspiration, and stay closed while the key is held
+  // the key armed an inspiratory hold (it was pressed in inspiration), the valves close at the inspiration's end and
+  // stay closed while the key is held
+  await page.waitForFunction(() => { const v = (window as Any).__vent.vs; return v.hold !== null || v.pendingHold !== null; }, null, { timeout: 10_000, polling: 'raf' });
+  expect(await page.evaluate(() => { const v = (window as Any).__vent.vs; return v.hold ?? v.pendingHold; }), 'pressed during the inspiration').toBe('insp');
   await page.waitForFunction(() => (window as Any).__vent.vs.hold === 'insp', null, { timeout: 10_000, polling: 'raf' });
   await expect(key).toHaveClass(/\blit\b/);
   const plateau = page.locator('.edp-screen .lv').nth(2); // under Peak and Trach.

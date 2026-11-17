@@ -11,10 +11,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { faceFromLocation, mountFace } from '../index.ts';
 import { DATA, num } from './data.ts';
 import FACE from './face.json';
+import { filled } from './view.ts';
 
 const html = readFileSync(resolve(import.meta.dirname, '../../../../vent-hamilton.html'), 'utf8');
 const body = (html.split('<body>')[1] as string).split('<script')[0] as string;
-const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.help), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
+const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.help).map((l) => ({ v: filled(l.v) })), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
 const NUMERIC = /^[-+\d.:/ ]+$/;
 const withUnit = (t: string) => { const m = /^([-+\d.:/]+|---) (.+)$/.exec(t); return m !== null && ALLOWED.has(m[2]!); };
 const texts = (): string[] => {
