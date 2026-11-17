@@ -1679,7 +1679,8 @@ merge B5c's landing and B2.
    - *In plain words.* The simulator gives the brain's resistance vessels one store of widening, spent together by
      carbon dioxide, low oxygen, the drugs and anaemia. At normal pressure its size, R_N, is the most that flow can
      rise above resting. It is today a by-product of the engine's pressure–flow line (1.40, no measurement), and no
-     human study shows where the true maximum lies: each gives a rise that was still growing.
+     human study shows where the true maximum lies: each volumetric or whole-brain study gives a rise that was still
+     growing; the one velocity study describes a plateau, but counts it from below rest and gives no rise above rest.
    - *The measurements (§2.2, B2v; notes 90, 90a §2 and §4, 90b §5).* Whole-brain or volumetric flow: × 1.39 with
      acetazolamide 15 mg/kg (PET, 19 adults); × 1.54 internal-carotid flow and × 1.50 carotid plus vertebral at
      PaCO2 ≈ 49 with MAP not significantly changed, rising to × 2.2 at PaCO2 ≈ 62 when MAP had risen 21 % (3 of 16
@@ -1708,18 +1709,23 @@ merge B5c's landing and B2.
      also sets the PaCO2 above which hypercapnia adds no flow (mine, arithmetic on `co2Factor`); measured flow was still
      rising at PaCO2 54 and 58 (internal-carotid flow × 1.88 and × 2.17, conductance × 1.69 and × 1.85; Willie 2012).
      - **(a) Keep 1.40.** Rests on no measurement; the one whole-brain value at a fixed dose (× 1.39, PET, 15 mg/kg,
-       where the Xe-133 study gave × 1.68 at the same dose) is at it, every other figure above. Residents see: a
+       where the Xe-133 study gave × 1.68 at the same dose) is at it, every other volumetric or whole-brain figure above
+       it (the 1948 whole-brain CO2 study too: × 1.75 on the means, with MAP + 13 %). The velocity study's plateau gives
+       no rise above rest, so it neither supports nor contradicts 1.40. Residents see: a
        normal patient's flow and ICP stop rising with CO2 from PaCO2 ≈ 53; an anaemic patient at rest reaches the
        ceiling below about Hb 6 (pooled line) or 9 (power form), and from there hypercapnia, hypoventilation or a
        volatile add no flow and no ICP rise; the hypoxic rise stops from PaO2 ≈ 48.
      - **(b) About × 1.5**, the internal-carotid and vertebral flow at PaCO2 ≈ 49 with the pressure unchanged. A point
-       on a rising curve, not a maximum. Residents see: a normal patient's CO2 response stops from PaCO2 ≈ 57; an
+       on a rising curve, not a maximum; the 1948 whole-brain figure at PaCO2 52 lies above it, with the pressure up
+       13 % on the means. Residents see: a normal patient's CO2 response stops from PaCO2 ≈ 57; an
        anaemic patient keeps a small CO2 and ICP response down to about Hb 8 (power form), and with the pooled line the
        cap is not reached within the holds.
      - **(c) About × 1.8**, where two independent measurements meet: internal-carotid conductance (volumetric, flow
        per mmHg, so corrected for the 14 % pressure rise) × 1.85 at PaCO2 ≈ 58, and acetazolamide 18 mg/kg × 1.79
        with blood pressure slightly lower (Xe-133, grey-matter-weighted, n 6). Neither shows a plateau, so it is still
-       a lower bound; correcting by conductance assumes flow follows pressure at that degree of dilation (mine).
+       a lower bound; correcting by conductance assumes flow follows pressure at that degree of dilation (mine). The
+       1948 whole-brain figure (× 1.75 at PaCO2 52 on the means, MAP + 13 %, not corrected) lies near it before any
+       pressure correction (mine); the velocity study neither supports nor contradicts it.
        Residents see: a normal patient's flow rises with CO2 to PaCO2 ≈ 67; an anaemic patient still raises flow and
        ICP clearly with CO2 down to about Hb 6 (power form) or 8 (constant transport).
      - **(d) Build a marked value and state the measurement that would settle it:** the maximal rise of whole-brain
@@ -1740,7 +1746,10 @@ merge B5c's landing and B2.
      that inflates the largest CO2 flows, and the acetazolamide figure was reached with the pressure falling. × 1.5 is
      a point on a still-rising curve, and × 1.39 a submaximal dose read by a method that gave less than Xe-133 at the
      same dose. (c) rests on few subjects (7 at the CO2 step, 6 at the dose) and on one grey-matter-weighted method,
-     so it stays marked [P] as a lower bound until the clamped-pressure measurement exists.
+     so it stays marked [P] as a lower bound until the clamped-pressure measurement exists. The proposal stands after
+     the 2011 velocity study and the 1948 whole-brain study were read in full: the first counts its rise from below
+     rest and so gives no figure against rest, and the second, near × 1.8 only before a pressure correction, rests on
+     means that pool two CO2 concentrations and rise with the pressure, so neither narrows nor replaces (c)'s two methods.
 2. **When the brain's vessels are already fully widened, does thinner, diluted blood still let more blood through?**
    - *In plain words.* Thinner blood flows more easily through any tube. While the brain's vessels can still adjust,
      they narrow to make up for it, which is why people show no separate effect of viscosity on resting flow. Once
