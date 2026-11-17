@@ -1,0 +1,12 @@
+[
+ {
+  "signature": "network-process-crashed",
+  "text": "WebSocket connection to 'ws://127.0.0.1:39575/?token=\u2026' failed: WebSocket network error: Network process crashed.",
+  "url": "(from the trace)"
+ },
+ {
+  "signature": "network-process-crashed",
+  "text": "WebSocket connection to 'ws://127.0.0.1:44365/' failed: WebSocket network error: Network process crashed.",
+  "url": "(from the trace)"
+ }
+]

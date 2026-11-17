@@ -1,0 +1,12 @@
+[
+ {
+  "signature": "webkit-internal-error",
+  "text": "Failed to load resource: WebKit encountered an internal error",
+  "url": "(from the trace)"
+ },
+ {
+  "signature": "webkit-internal-error",
+  "text": "Failed to load resource: WebKit encountered an internal error",
+  "url": "(from the trace)"
+ }
+]

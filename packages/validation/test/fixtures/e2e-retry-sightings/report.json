@@ -1,0 +1,521 @@
+{
+ "suites": [
+  {
+   "specs": [
+    {
+     "file": "builder-end-sections.e2e.ts",
+     "line": 47,
+     "title": "builder B5: a handout question, an opener, a line to show an (ci run 44003911554)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: expect(page).toHaveURL(expected) failed"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44003911554.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "builder-action-editor.e2e.ts",
+     "line": 40,
+     "title": "builder B4: a drug action of the MH card edited by keyboard, (ci run 44054484447)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: expect(page).toHaveURL(expected) failed"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44054484447.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "sim-line.e2e.ts",
+     "line": 63,
+     "title": "the line is on the Monitor view and the learner window, neve (ci run 43991982650)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F#/teach2\"]; pages [\"http://127.0.0.1:41195/?relay=ws%3A%2F%2F127.0.0.1%3A42557%2F&session=BU7G47#/room\"]"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/43991982650.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "sim-line.e2e.ts",
+     "line": 63,
+     "title": "the line is on the Monitor view and the learner window, neve (ci run 44035867305)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: page.waitForFunction: Timeout 15000ms exceeded.\nat #/scenarios; loads [\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F#/teach2\",\"host http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]; pages [\"http://127.0.0.1:39575/?relay=ws%3A%2F%2F127.0.0.1%3A44365%2F&session=QV7KA8#/room\"]"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44035867305.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "kit-store.e2e.ts",
+     "line": 136,
+     "title": "kit store, debriefs: a saved debrief is a file in user-data; (ci run 44061053044)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: page.reload: WebKit encountered an internal error\nCall log:\n  - waiting for navigation until \"load\""
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44061053044.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "kit-store.e2e.ts",
+     "line": 46,
+     "title": "kit store: Ctrl+S keeps the card in the user-data folder; a  (ci run 43977237726)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "timedOut",
+         "errors": [
+          {
+           "message": "Test timeout of 120000ms exceeded."
+          },
+          {
+           "message": "Error: page.waitForFunction: Test timeout of 120000ms exceeded."
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/43977237726.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "teach2-fit-stages.e2e.ts",
+     "line": 86,
+     "title": "Instructor v2 fits 1440 × 900 on the /2 MH card at recoverin (ci run 44035184955)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: locator.isVisible: Target page, context or browser has been closed\nCall log:\n    - checking visibility of locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: locator('.ip2-row-title').filter({ hasText: 'Preoxygenate: 100 % O₂ by face mask' }) }).first()"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44035184955.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "depth-artefacts.e2e.ts",
+     "line": 141,
+     "title": "through a relay in its own process: the instructor's loose e (ci run 44015852066)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: Timeout 5000ms exceeded while waiting on the predicate"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44015852066.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "learner-remote.e2e.ts",
+     "line": 192,
+     "title": "L9: the instructor sees the staging on the laptop dock and t (ci run 44045161565)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: expect(locator).toHaveText(expected) failed"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44045161565.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "builder-action-editor.e2e.ts",
+     "line": 40,
+     "title": "builder B4: a drug action of the MH card edited by keyboard, (ci run 44029616512)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: expect(page).toHaveURL(expected) failed"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44029616512.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "builder-phase-editor.e2e.ts",
+     "line": 36,
+     "title": "builder B3: a phase rule of the MH card edited by keyboard,  (ci run 44000311605)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: expect(page).toHaveURL(expected) failed"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44000311605.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "sim-line.e2e.ts",
+     "line": 63,
+     "title": "the line is on the Monitor view and the learner window, neve (ci run 43994852807)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "failed",
+         "errors": [
+          {
+           "message": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation\nat #/scenarios; loads [\"host http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F#/teach2\"]; pages [\"http://127.0.0.1:44487/?relay=ws%3A%2F%2F127.0.0.1%3A38929%2F&session=8HCR7D#/scenarios\"]"
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/43994852807.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "archive-beyond-localstorage.e2e.ts",
+     "line": 40,
+     "title": "N39: the archive outgrows a full localStorage; an earlier bu (ci run 44027075554)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "timedOut",
+         "errors": [
+          {
+           "message": "Test timeout of 240000ms exceeded."
+          },
+          {
+           "message": "Error: page.waitForFunction: Test timeout of 240000ms exceeded."
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44027075554.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "file": "archive-beyond-localstorage.e2e.ts",
+     "line": 40,
+     "title": "N39: the archive outgrows a full localStorage; an earlier bu (ci run 44022905539)",
+     "tags": [],
+     "tests": [
+      {
+       "projectName": "webkit",
+       "status": "flaky",
+       "results": [
+        {
+         "retry": 0,
+         "status": "timedOut",
+         "errors": [
+          {
+           "message": "Test timeout of 240000ms exceeded."
+          },
+          {
+           "message": "Error: page.waitForFunction: Test timeout of 240000ms exceeded."
+          }
+         ],
+         "attachments": [
+          {
+           "name": "evidence browser crashes",
+           "contentType": "application/json",
+           "path": "crashes/44022905539.json"
+          }
+         ]
+        },
+        {
+         "retry": 1,
+         "status": "passed",
+         "errors": [],
+         "attachments": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -258,6 +258,22 @@ recorded, not tagged, in `stage-14/known-flaky.tsv` ("not tagged" section).
 **Revert condition:** make the webkit leg exit 1 again after the v1.0.0-rc.2 demo, when Task 0 of the calibration pass
 re-harvests the known-flaky list. The workflow comment above the step names this ruling and this condition.
 
+**Ended 2026-11-17** by the retry rule below.
+
+## The retry rule (the owner's ruling, 2026-11-17)
+
+An untagged test that passes only on a retry fails its e2e job, on Chromium and on WebKit, with one exception on WebKit:
+a retry whose every earlier attempt ended in a **browser crash** is counted and reported apart and does not fail the
+job. An attempt ended in a browser crash when its error contains one of the wordings in `scripts/ci/browser-crash.json`
+("Target page, context or browser has been closed", "Target crashed", "Page crashed", "Network process crashed",
+"WebKit encountered an internal error"), or when a page of the test said one in its console or page errors during the
+attempt (`apps/demo/e2e/evidence.ts` records them across navigations into the attempt's `evidence/browser-crashes.json`).
+A crash followed by an assertion or a time-out on the next attempt fails the job; so does a page that stops answering
+with no crash said before the attempt failed. The step summary lists the crash retries under their own heading with
+their count, one `::warning` each, and a `::notice` when one job has three or more. `scripts/ci/e2e-report.mjs gate`
+implements it; `packages/validation/test/e2e-retry-gate.test.ts` checks it, on a fixture of nine WebKit retry-only
+passes of 2026-11-17 among others.
+
 ### The known-flaky WebKit quarantine (2026-10-24, PR `ci-stabilise`)
 
 Since 2026-10-24 the tests tagged `@known-flaky` (37 WebKit tests on this tree; `--grep @known-flaky --list`) no longer
@@ -266,8 +282,7 @@ non-blocking (`continue-on-error: true` on the job and on its test step). Its Pl
 are still uploaded (artifact `e2e-report-webkit-known-flaky`), and a step writes the tests' counts into the job
 summary: passed first time, passed only on a retry, failed all three attempts, skipped, with one line (and one
 `::warning`) for each test retried or failed. The gating `e2e (webkit)` job runs every other test
-(`--grep-invert @known-flaky`) with the rule above unchanged (warn-only for an untagged retry-only pass, until it is
-reverted). **`e2e (chromium)` still runs every test, tagged or not, and still fails on an untagged retry-only pass: a
+(`--grep-invert @known-flaky`) with the retry rule above. **`e2e (chromium)` still runs every test, tagged or not, and still fails on an untagged retry-only pass: a
 retry is not a pass.** No test was changed; the split is two `--grep` flags in `.github/workflows/ci.yml`, and
 `playwright.config.ts` is unchanged.
 

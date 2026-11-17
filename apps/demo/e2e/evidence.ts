@@ -11,6 +11,9 @@
 //                                    hook window.__vent); and the input events each frame received (below)
 //   evidence/<n>-<role>.console.txt  the page's console (Playwright keeps the last 200 messages) and its page errors
 //   evidence/index.json              the pages, and any page that could not be read and why
+//   evidence/browser-crashes.json    every console line or page error, on any page of the test and across its
+//                                    navigations, that names a browser crash (scripts/ci/browser-crash.json), which
+//                                    scripts/ci/e2e-report.mjs reads to tell a crash from a failure
 // The Playwright trace of the same attempt (every context, merged by Playwright into trace.zip) comes from the config's
 // `trace` option (playwright.config.ts). A passing attempt does nothing here: no read, no file.
 //
@@ -23,13 +26,17 @@
 // test's annotations ('lost-press') and, with PME_E2E_PRESS_LOG=<dir>, writes one JSON line per press there.
 //
 // On by default in CI; PME_E2E_EVIDENCE=1 turns it on locally, PME_E2E_EVIDENCE=0 off (also in CI).
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { test as base, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 
 export * from '@playwright/test';
 
 export const evidenceOn = (): boolean => (process.env.PME_E2E_EVIDENCE ? process.env.PME_E2E_EVIDENCE === '1' : !!process.env.CI);
+
+const CRASHES = (JSON.parse(readFileSync(resolve(import.meta.dirname, '../../../scripts/ci/browser-crash.json'), 'utf8')) as { signatures: Array<{ name: string; text: string }> }).signatures;
+/** A browser crash a page of the test reported: its signature, its words, the page's address then. */
+export interface CrashSeen { signature: string; text: string; url: string }
 
 const READ_MS = 3000; // one read of one page; a page whose main thread is stuck answers nothing [ENG: test]
 const APART_MS = 1000; // the second read, to show what still advances [ENG: test]
@@ -178,9 +185,12 @@ const timed = <T,>(p: Promise<T>, ms: number, what: string): Promise<T> =>
 const failed = (t: TestInfo) => t.errors.length > 0 || (t.status !== undefined && t.status !== 'skipped' && t.status !== t.expectedStatus);
 
 /** Write the evidence of every open page into `evidence/` of this attempt, and list each file as an attachment. */
-async function collect(browser: Browser, earlier: Set<BrowserContext>, testInfo: TestInfo): Promise<void> {
+async function collect(browser: Browser, earlier: Set<BrowserContext>, testInfo: TestInfo, crashes: readonly CrashSeen[]): Promise<void> {
   const dir = testInfo.outputPath('evidence');
   mkdirSync(dir, { recursive: true });
+  // first, so it is kept however the pages answer the reads below
+  writeFileSync(join(dir, 'browser-crashes.json'), JSON.stringify(crashes, null, 1));
+  testInfo.attachments.push({ name: 'evidence browser crashes', path: join(dir, 'browser-crashes.json'), contentType: 'application/json' });
   const pages: Array<{ page: Page; context: number; earlier: boolean }> = [];
   browser.contexts().forEach((c, i) => c.pages().forEach((page) => pages.push({ page, context: i, earlier: earlier.has(c) })));
   const index: Array<Record<string, unknown>> = [];
@@ -258,9 +268,22 @@ const openedBy = new Map<BrowserContext | Page, string>();
 const recording = new WeakSet<BrowserContext>();
 /** Where the lost presses of the current test go (the fixture sets it for the length of each test). */
 let lostSink: ((r: LostPress) => void) | null = null;
+/** Where the browser crashes the current test's pages report go. */
+let crashSink: ((r: CrashSeen) => void) | null = null;
+const watchCrashes = (p: Page) => {
+  const seen = (text: string) => {
+    const s = CRASHES.find((x) => text.includes(x.text));
+    if (s) crashSink?.({ signature: s.name, text: text.slice(0, 300), url: p.url() });
+  };
+  p.on('console', (m) => seen(m.text()));
+  p.on('pageerror', (e) => seen(e.message));
+  p.on('crash', () => seen('Page crashed'));
+};
 const record = async (c: BrowserContext) => {
   if (!evidenceOn() || recording.has(c)) return;
   recording.add(c);
+  c.pages().forEach(watchCrashes);
+  c.on('page', watchCrashes);
   await c.exposeBinding('__pmeLostPress', (_src, r: LostPress) => lostSink?.(r));
   await c.addInitScript(recordInputs);
 };
@@ -353,9 +376,11 @@ export const test = base.extend<{ _evidence: void }>({
       const on = evidenceOn();
       const lost: LostPress[] = [];
       lostSink = (r) => void lost.push(r);
+      const crashes: CrashSeen[] = [];
+      crashSink = (r) => void crashes.push(r);
       const unwatch = watchOpening(browser, earlier);
       let done: Promise<void> | null = null;
-      const capture = () => (done ??= collect(browser, earlier, testInfo).catch((e) => void testInfo.annotations.push({ type: 'evidence', description: `not written: ${String(e)}` })));
+      const capture = () => (done ??= collect(browser, earlier, testInfo, crashes).catch((e) => void testInfo.annotations.push({ type: 'evidence', description: `not written: ${String(e)}` })));
       // At the end of the test function, before afterEach hooks (Playwright's own failure screenshot runs at the same
       // point); Playwright 1.63 exposes no public hook there, so the fixture teardown below is the fallback
       const hooks = (testInfo as unknown as { _onDidFinishTestFunctionCallbacks?: Set<() => Promise<void>> })._onDidFinishTestFunctionCallbacks;
@@ -371,6 +396,7 @@ export const test = base.extend<{ _evidence: void }>({
       } finally {
         unwatch();
         lostSink = null;
+        crashSink = null;
         reportLost(testInfo, lost);
       }
       // a passing test that left something open fails, with the lines that opened it
