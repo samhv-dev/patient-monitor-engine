@@ -76,12 +76,17 @@ export type M2Contact = 'good' | 'poor' | 'off';
 export interface M2Connections {
   /** The multi-function cable is plugged into the device ("Connect Therapy Cable" otherwise [G 12-10]). */
   mfc: boolean;
+  /** Which MFC: the plain cable, or the one with the CPRD connector that CPR pads need [G 2-8], [G 2-9]. */
+  mfcType: 'plain' | 'cprd';
   /** What the MFC carries [G 2-8], [G 14-4], [G 14-18]. */
   therapy: 'none' | 'pads' | 'externalPaddles' | 'internalHandles' | 'testPlug';
   /** Adult, adult with the CPR sensor [G 15-1], or paediatric pads [G 1-12]; apex/sternum or anterior/posterior [G 14-8]. */
   pads: { type: 'adult' | 'adultCpr' | 'pediatric'; placement: 'apexSternum' | 'anteriorPosterior'; contact: M2Contact };
   /** External paddles: the paediatric plates [G 2-12]; with or without shock buttons [G 2-4]; on the chest or not. */
   paddles: { pediPlates: boolean; shockButtons: boolean; contact: M2Contact };
+  /** Where the external paddles are while off the patient: in their wells ("Check Pads - Pads Shorted" [G 12-11]),
+   * held apart ("Apply Paddles to Patient"), or face to face ("Check Paddles - Paddles Shorted") [G 18-6]. */
+  paddlesOffAt: 'wells' | 'apart' | 'faceToFace';
   /** Internal handles, with or without a Discharge button [G 14-19]. */
   internal: { dischargeButton: boolean; contact: M2Contact };
   /** The ECG patient cable [G A-2]. */
@@ -148,6 +153,35 @@ export interface M2Config {
   topLead: { monitor: M2LeadName; manual: M2LeadName };
 }
 
+/**
+ * The device faults the instructor can inject (DQ14 = A), as chapter 18 names them: the battery [G 1-20], [G 18-12];
+ * the self-test [G 18-4], [G 18-12]; defibrillation, pacing and the stuck buttons [G 18-13]; the printer [G 18-10],
+ * [G 18-14], [G 18-15]. Appendix C's table (E7c) gives each one's message and priority.
+ */
+export interface M2Faults {
+  lowBattery: boolean;
+  replaceBattery: boolean;
+  batteryError: boolean;
+  batteryCalibration: boolean;
+  batteryCommunication: boolean;
+  selfTestFailed: boolean;
+  defibDisabled: boolean;
+  defibChargingFailed: boolean;
+  excessiveDisarms: boolean;
+  test30JFailed: boolean;
+  /** The front-panel SHOCK, the CHARGE and a paddle button [G 18-13] [ENG: device; placeholder, the list the reading
+   * log records, which ends "…"; E9b completes it from the page]. */
+  shockButtonStuck: boolean;
+  chargeButtonStuck: boolean;
+  paddleButtonStuck: boolean;
+  pacerDisabled: boolean;
+  demandPacingDisabled: boolean;
+  pacerCurrentOutOfTolerance: boolean;
+  printerDoorOpen: boolean;
+  printerOutOfPaper: boolean;
+  printerFault: boolean;
+}
+
 /** The M2's top-trace sources (E1, m2.ts M2_LEADS) [G 6-7], [G 2-13]. */
 export type M2LeadName = 'pads' | 'I' | 'II' | 'III' | 'aVR' | 'aVL' | 'aVF' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6';
 
@@ -182,7 +216,27 @@ export type M2DeviceAction =
   /** A change to what is connected (a patch of M2Connections; each part given whole). */
   | { device: 'defib'; action: 'connect'; value: Partial<M2Connections>; lane?: never }
   | { device: 'defib'; action: 'setting'; value: Partial<M2Settings>; lane?: never }
-  | { device: 'defib'; action: 'config'; value: Partial<M2Config>; lane?: never };
+  | { device: 'defib'; action: 'config'; value: Partial<M2Config>; lane?: never }
+  /** Clear: in Pacer, acknowledges pads off or shorted [G 2-16], [G 16-2]. */
+  | { device: 'defib'; action: 'clear'; value: 'press'; lane?: never }
+  /** The 30 Joule Test key, in place of SYNC while the pads are shorted or the paddles face to face [G 2-15], [G 18-4]. */
+  | { device: 'defib'; action: 'test30J'; value: 'press'; lane?: never }
+  /** Diag: all leads at the diagnostic response for 12 s [G 2-14], [G 6-9]. */
+  | { device: 'defib'; action: 'diag'; value: 'press'; lane?: never }
+  /** The 12-lead keys: the 12-Lead key [G 2-13], Acquire [G 13-8], Exit 12-lead [G 13-9]. */
+  | { device: 'defib'; action: 'twelveLead'; value: 'enter' | 'acquire' | 'exit'; lane?: never }
+  /** Brightness: the display's levels and modes [G 2-15], [G 2-16]. */
+  | { device: 'defib'; action: 'brightness'; value: 'press'; lane?: never }
+  /** The Trend and Export data keys [G 2-14], [G 2-15] (Export saves the incident as a file, DQ12 = A). */
+  | { device: 'defib'; action: 'trend'; value: 'press'; lane?: never }
+  | { device: 'defib'; action: 'export'; value: 'press'; lane?: never }
+  // The instructor's inputs (plan §5.2), never the learner's
+  /** Device faults injected or cleared (DQ14 = A). */
+  | { device: 'defib'; action: 'faults'; value: Partial<M2Faults>; lane?: never }
+  /** The transthoracic impedance the instructor sets; null = the patient's own (E2b). */
+  | { device: 'defib'; action: 'impedance'; value: { ohm: number | null }; lane?: never }
+  /** The compressions the instructor gives, depth and rate; null = none (E3). */
+  | { device: 'defib'; action: 'compressions'; value: { depthCm: number; ratePerMin: number } | null; lane?: never };
 
 /** The M2's state in `deviceStatus.m2` (present only when the room's model is the M2). E0 declares every field with
  * its idle value; the piece named on each fills it. */
@@ -248,7 +302,13 @@ export interface M2Status {
  * The skin (and age band) the device layer follows; `setSkin` without an engine restart (brief §3.8). The
  * defibrillator model rides this union so `DeviceAction` (types.ts) carries it unchanged.
  */
-export type MonitorDeviceAction = { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never } | DefibDeviceAction;
+export type MonitorDeviceAction =
+  | { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never }
+  /** The beat classifier learns the patient's dominant beat again (DQ27 = A, B2). */
+  | { device: 'monitor'; action: 'relearn'; value?: never; lane?: never }
+  /** Arrhythmia analysis on one lead or several (DQ28 = B; lead II only until its piece). */
+  | { device: 'monitor'; action: 'analysisLeads'; value: 'single' | 'multi'; lane?: never }
+  | DefibDeviceAction;
 
 /** One active (or latched) alarm as the renderer shows it. */
 export interface AlarmEntry {

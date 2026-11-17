@@ -4,7 +4,7 @@
 // validated and is a no-op until the piece named in M2_COMMANDS gives it its behaviour; the status carries its idle
 // values. A value the guide does not give is a marked placeholder ([ENG: device; placeholder …]) with the owner's open
 // question (DQ) that will set it.
-import type { M2Config, M2Connections, M2Settings, M2Status } from '../../types-device.ts';
+import type { M2Config, M2Connections, M2Faults, M2Settings, M2Status } from '../../types-device.ts';
 import type { DefibSpec } from './defib.ts';
 import { M2_LEADS } from './m2.ts';
 import type { PacerSpec } from './pacer.ts';
@@ -108,9 +108,11 @@ const alarmLimit: Check = (v) => {
 const PADS = record('pads', { type: oneOf('type', ['adult', 'adultCpr', 'pediatric']), placement: oneOf('placement', ['apexSternum', 'anteriorPosterior']), contact: CONTACT }, true);
 const CONNECTIONS = record('connect', {
   mfc: bool('mfc'),
+  mfcType: oneOf('mfcType', ['plain', 'cprd']),
   therapy: oneOf('therapy', ['none', 'pads', 'externalPaddles', 'internalHandles', 'testPlug']),
   pads: PADS,
   paddles: record('paddles', { pediPlates: bool('pediPlates'), shockButtons: bool('shockButtons'), contact: CONTACT }, true),
+  paddlesOffAt: oneOf('paddlesOffAt', ['wells', 'apart', 'faceToFace']),
   internal: record('internal', { dischargeButton: bool('dischargeButton'), contact: CONTACT }, true),
   ecgCable: oneOf('ecgCable', ['none', '3', '5', '12']),
   ecgLeadsOff: bool('ecgLeadsOff'),
@@ -128,6 +130,20 @@ const SETTINGS = record('setting', {
   respImpedance: bool('respImpedance'),
 } satisfies Record<keyof M2Settings, Check>, false);
 
+const FAULT_NAMES = [
+  'lowBattery', 'replaceBattery', 'batteryError', 'batteryCalibration', 'batteryCommunication', 'selfTestFailed',
+  'defibDisabled', 'defibChargingFailed', 'excessiveDisarms', 'test30JFailed', 'shockButtonStuck', 'chargeButtonStuck',
+  'paddleButtonStuck', 'pacerDisabled', 'demandPacingDisabled', 'pacerCurrentOutOfTolerance', 'printerDoorOpen',
+  'printerOutOfPaper', 'printerFault',
+] as const satisfies ReadonlyArray<keyof M2Faults>;
+const FAULTS = record('faults', Object.fromEntries(FAULT_NAMES.map((k) => [k, bool(k)])) as Record<keyof M2Faults, Check>, false);
+const PRESS = (what: string): Check => oneOf(what, ['press']);
+/** The CPR sensor's ranges: depth 1.9–7.6 cm, rate 50–150 /min [G A-10]. */
+const CPR_SENSOR = { depthCm: [1.9, 7.6], ratePerMin: [50, 150] } as const;
+// the sensor's ranges as the bounds of what the instructor gives [ENG: device; placeholder bounds until E3 sets the input's own]
+const COMPRESSIONS = record('compressions', { depthCm: within('depthCm', ...CPR_SENSOR.depthCm), ratePerMin: within('ratePerMin', ...CPR_SENSOR.ratePerMin) }, true);
+const ohm: Check = (v) => (v === null || (typeof v === 'number' && Number.isFinite(v) && v > 0) ? undefined : 'ohm must be a positive number or null');
+
 /** The top trace's sources (E1, m2.ts M2_LEADS) [G 6-7], [G 2-13]. */
 const LEAD = oneOf('lead', M2_LEADS);
 const CONFIG = record('config', {
@@ -137,8 +153,8 @@ const CONFIG = record('config', {
   aedEnergies: BY_TYPE,
   cprAtStart: bool('cprAtStart'),
   cprPeriodS: whole('cprPeriodS', 30, 600), // [ENG: device; placeholder bounds, the guide gives the 120 s default only (G-CFG)]
-  cprTargetDepthCm: within('cprTargetDepthCm', 1.9, 7.6), // the sensor's depth range [G A-10]
-  metronome: record('metronome', { mode: oneOf('mode', ['always', 'compressions']), ratePerMin: whole('ratePerMin', 50, 150) }, true), // rate: the sensor's rate range [G A-10] [ENG: device; placeholder bounds]
+  cprTargetDepthCm: within('cprTargetDepthCm', ...CPR_SENSOR.depthCm),
+  metronome: record('metronome', { mode: oneOf('mode', ['always', 'compressions']), ratePerMin: whole('ratePerMin', ...CPR_SENSOR.ratePerMin) }, true), // [ENG: device; placeholder bounds, the sensor's rate range]
   aedPassword: (v) => (v === null ? undefined : text('aedPassword', 1, 16)(v)), // [ENG: device; placeholder length]
   checkPatientPause: bool('checkPatientPause'),
   nibpIntervalMin: oneOf('nibpIntervalMin', M2_NIBP_INTERVALS_MIN), // [G 8-9]
@@ -171,6 +187,16 @@ export const M2_COMMANDS: Readonly<Record<string, { piece: string; shape: string
   connect: { piece: 'E2a (E7b: channels)', shape: 'Partial<M2Connections>', validate: CONNECTIONS },
   setting: { piece: 'E8a, E8b', shape: 'Partial<M2Settings>', validate: SETTINGS },
   config: { piece: 'E1, E5, R4', shape: 'Partial<M2Config>', validate: CONFIG },
+  clear: { piece: 'E6', shape: "'press'", validate: PRESS('clear') },
+  test30J: { piece: 'E9b', shape: "'press'", validate: PRESS('test30J') },
+  diag: { piece: 'E8a', shape: "'press'", validate: PRESS('diag') },
+  twelveLead: { piece: 'E8c', shape: "'enter' | 'acquire' | 'exit'", validate: oneOf('twelveLead', ['enter', 'acquire', 'exit']) },
+  brightness: { piece: 'F1', shape: "'press'", validate: PRESS('brightness') },
+  trend: { piece: 'E9a', shape: "'press'", validate: PRESS('trend') },
+  export: { piece: 'E9a', shape: "'press'", validate: PRESS('export') },
+  faults: { piece: 'E9b (R3: the sheet)', shape: 'Partial<M2Faults>', validate: FAULTS },
+  impedance: { piece: 'E2b', shape: '{ ohm: number | null }', validate: record('impedance', { ohm }, true) },
+  compressions: { piece: 'E3', shape: '{ depthCm: number, ratePerMin: number } | null', validate: (v) => (v === null ? undefined : COMPRESSIONS(v)) },
 };
 
 /** Validate one `device defib <action>` other than `model`: unknown name, not an M2 room, or its own check. */
@@ -225,6 +251,8 @@ const IDLE: M2State = {
   // pads on, good contact, so E2a's gates refuse nothing a room does today [ENG: device; choice, for E2a to revisit]
   connections: {
     mfc: true, therapy: 'pads',
+    mfcType: 'plain', // [ENG: device; choice, the room's pads are plain adult pads]
+    paddlesOffAt: 'wells', // [ENG: device; choice, a unit stands with its paddles in their wells [G 2-2]]
     pads: { type: 'adult', placement: 'apexSternum', contact: 'good' },
     paddles: { pediPlates: false, shockButtons: true, contact: 'off' },
     internal: { dischargeButton: true, contact: 'off' },

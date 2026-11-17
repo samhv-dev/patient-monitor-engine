@@ -598,6 +598,9 @@ export const M2_DEVICE_ACTION_CLASS: Readonly<Record<string, 'learner' | 'refuse
   selector: 'learner', patientType: 'learner', defibMode: 'learner', shockButton: 'learner', analyze: 'learner',
   fourToOne: 'learner', alarmControl: 'learner', alarmLimit: 'learner', nibp: 'learner', co2: 'learner',
   codeMarker: 'learner', print: 'learner', setting: 'learner', lead: 'learner',
+  clear: 'learner', test30J: 'learner', diag: 'learner', twelveLead: 'learner', brightness: 'learner', trend: 'learner', export: 'learner',
+  // the instructor's inputs (§5.2), which §5.1 never gives the learner
+  faults: 'refused', impedance: 'refused', compressions: 'refused',
   // The learner connects the patient (pads, paddles, the ECG cable, the sensors). The instructor's override is
   // the laptop's own path (a controller, or the granted instructor phone) and never crosses a `defib` socket, so the wire
   // has nothing to tell apart
@@ -639,6 +642,13 @@ export const LEARNER_DEFIB_M2: Readonly<Record<string, DefibM2Shape>> = {
   'device defib codeMarker': m2Key('code marker'),
   'device defib print': m2Key('print'),
   'device defib connect': m2Key("the connections drawer's pads and paddles"),
+  'device defib clear': m2Key('Clear'),
+  'device defib test30J': m2Key('the 30 J test'),
+  'device defib diag': m2Key('Diag'),
+  'device defib twelveLead': m2Key('12-lead Acquire'),
+  'device defib brightness': m2Key('Brightness'),
+  'device defib trend': m2Key('Trend/Export'),
+  'device defib export': m2Key('Trend/Export'),
 };
 
 /** The table's key of a command: `applyEvent defib <action>`, `device <device> <action>`, else its census shape. */

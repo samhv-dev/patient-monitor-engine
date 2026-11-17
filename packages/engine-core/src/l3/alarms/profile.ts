@@ -163,6 +163,17 @@ export const DEFIB_MODELS: Readonly<Record<string, DefibModel>> = {
   },
 };
 
+/**
+ * The bedside monitor's actions declared before the pieces that give them behaviour (defibrillator plan §3.4.4): each
+ * is validated on every skin and does nothing until its piece lands. Relearn: the beat classifier learns the patient's
+ * dominant beat again (DQ27 = A). The analysis leads: one lead or several (DQ28 = B, later; lead II only until then;
+ * no piece is planned yet, DQ35).
+ */
+export const MONITOR_DECLARED: Readonly<Record<string, { piece: string; validate: (v: unknown) => string | undefined }>> = {
+  relearn: { piece: 'B2', validate: (v) => (v === undefined ? undefined : 'relearn takes no value') },
+  analysisLeads: { piece: 'DQ35', validate: (v) => (v === 'single' || v === 'multi' ? undefined : 'analysisLeads must be single or multi') },
+};
+
 const numberOr = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 
 /** Limit-key group a per-parameter switch acts on: 'NIBP_S' → 'NIBP', 'ART_M' → 'ART', 'HR' → 'HR'. */

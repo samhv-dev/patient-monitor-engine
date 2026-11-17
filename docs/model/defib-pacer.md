@@ -224,6 +224,7 @@ None recorded.
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
 | [`engine/defib-m2-connections.test.ts`](../../packages/engine-core/test/engine/defib-m2-connections.test.ts) | 0 | 0 |
 | [`engine/defib-m2-manual-sync.test.ts`](../../packages/engine-core/test/engine/defib-m2-manual-sync.test.ts) | 0 | 0 |
+| [`engine/defib-m2-vocabulary-completion.test.ts`](../../packages/engine-core/test/engine/defib-m2-vocabulary-completion.test.ts) | 0 | 0 |
 | [`engine/defib-m2-vocabulary.test.ts`](../../packages/engine-core/test/engine/defib-m2-vocabulary.test.ts) | 0 | 0 |
 | [`engine/defib-model.test.ts`](../../packages/engine-core/test/engine/defib-model.test.ts) | 0 | 0 |
 | [`engine/defib-tones.test.ts`](../../packages/engine-core/test/engine/defib-tones.test.ts) | 0 | 0 |

@@ -216,7 +216,7 @@ export function connectionKey(m: M2State): Array<string | boolean | number> {
   const c = m.connections;
   const h = m.held;
   return [
-    c.mfc, c.therapy, c.pads.type, c.pads.placement, c.pads.contact, c.paddles.pediPlates, c.paddles.shockButtons, c.paddles.contact,
+    c.mfc, c.mfcType, c.therapy, c.pads.type, c.pads.placement, c.pads.contact, c.paddles.pediPlates, c.paddles.shockButtons, c.paddles.contact, c.paddlesOffAt,
     c.internal.dischargeButton, c.internal.contact, c.ecgCable, c.ecgLeadsOff, c.spo2, c.nibp, c.co2, c.temp1, c.temp2,
     h.panel, h.apex, h.sternum, h.internal, m.messages.length, ...m.messages,
   ];
