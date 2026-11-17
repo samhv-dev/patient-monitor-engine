@@ -1011,7 +1011,7 @@ export class HostSession {
       case 'ventilator':
         return refuse(VENTILATOR_REASONS.noCommands); // the relay refuses it too (R8b)
       case 'defib': {
-        // R5d: the learner defibrillator window — Charge and Shock only, bare, checked here whatever the relay did (a
+        // R5d: the learner defibrillator window — energy select, Charge and Shock only, checked here whatever the relay did (a
         // same-browser window has no relay), then the instructor's own path; filed as the learner's, with its device key
         const no = learnerDefibMay(m.body);
         if (no !== null) return refuse(no);

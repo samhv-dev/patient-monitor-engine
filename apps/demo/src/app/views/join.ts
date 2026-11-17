@@ -19,8 +19,8 @@ import { h } from '../ui.ts';
 
 type Store = { get(k: string): string | null; set(k: string, v: string): void };
 type Shown = 'learner' | 'monitor' | 'remote' | 'depth' | 'pump' | 'defib';
-/** The defibrillator window's line, here and on Room setup's opener: what the window has (Charge, Shock, the rhythm). */
-export const DEFIB_LINE = "The room's defibrillator: charge and shock, with the patient's rhythm.";
+/** The defibrillator window's line, here and on Room setup's opener: what the window has (energy, Charge, Shock, the rhythm). */
+export const DEFIB_LINE = "The room's defibrillator: energy, charge and shock, with the patient's rhythm.";
 
 type Card = { show: Shown | 'vent' | 'iabp'; title: string; chip: string; text: string; foot: string; action: boolean };
 

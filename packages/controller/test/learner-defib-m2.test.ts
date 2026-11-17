@@ -143,9 +143,9 @@ describe('the admitted learner defibrillator: the table is §5.1, both ways (pla
     for (const [what, c] of refused) expect(learnerDefibM2May(c), what).toEqual(expect.any(String));
   });
 
-  it("today's window, with no PIN, keeps exactly its two bare presses (learnerDefibMay unchanged)", () => {
-    expect([...LEARNER_DEFIB_COMMANDS].sort()).toEqual(['applyEvent defib charge', 'applyEvent defib shock']);
-    for (const [shape, c] of Object.entries(EXAMPLES))
-      expect(learnerDefibMay(c) === null, shape).toBe(shape === 'applyEvent defib charge' || shape === 'applyEvent defib shock');
+  it('the window with no PIN keeps energy select, Charge and Shock of the table, nothing else', () => {
+    const own = ['applyEvent defib charge', 'applyEvent defib selectEnergy', 'applyEvent defib shock'];
+    expect([...LEARNER_DEFIB_COMMANDS].sort()).toEqual(own);
+    for (const [shape, c] of Object.entries(EXAMPLES)) expect(learnerDefibMay(c) === null, shape).toBe(own.includes(shape));
   });
 });

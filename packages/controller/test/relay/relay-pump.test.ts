@@ -289,7 +289,7 @@ describe("of what a granted pump sends, only D2 reaches the host: D2's complemen
     remote.send(pump('l1', 'start'));
     await waitFor(() => [viewer, defib, remote].every((s) => errors(s).length === 1), 2000, 'forbidden at all three');
     expect(errors(viewer)[0]).toEqual({ relay: 'error', code: 'forbidden', message: 'viewer may not send commands' });
-    expect(errors(defib)[0]).toEqual({ relay: 'error', code: 'forbidden', message: 'The defibrillator window sends Charge and Shock only.' });
+    expect(errors(defib)[0]).toEqual({ relay: 'error', code: 'forbidden', message: 'The defibrillator window sends energy, Charge and Shock only.' });
     expect(errors(remote)[0]).toMatchObject({ code: 'forbidden' });
     await settled();
     expect(commandsAt(host)).toEqual([]);

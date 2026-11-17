@@ -34,6 +34,15 @@ describe('R5d: the learner rows of the record', () => {
     ]);
   });
 
+  it("a learner's energy select is a `learner` row with the energy it chose; the shock after it reads the device's new energy", () => {
+    const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names({ [KEY]: 'bed 2' }));
+    r.engine(status(2, 120));
+    r.wire(applied(150, { issuedBy: LEARNER_ISSUED_BY, type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: 150 }, by: KEY }));
+    r.engine(status(3.1, 150));
+    r.wire(learner(500, 'shock'));
+    expect(r.data.rows.map((x) => [x.kind, x.text, x.ev ?? '', x.name ?? ''])).toEqual([['learner', 'Energy 150 J', '', 'bed 2'], ['learner', 'Shock 150 J', 'shock', 'bed 2']]);
+  });
+
   it('the energy is the device\'s as its last status said; none heard yet: the press without a number', () => {
     const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0);
     r.wire(learner(50, 'charge'));

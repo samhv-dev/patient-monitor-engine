@@ -12,8 +12,9 @@
 // answers; after the relay's first heartbeat sweep (10 s), a viewer that joins makes the host's `peers` frame list the
 // controller with its measured round trip (`devices`, plan room-and-instruments.md R2); a ventilator says hello with a
 // PIN, the host grants it, its `vent` `cmds` reach the host and the host's `vent` `clock` reaches it, byte for byte
-// (R8b); a defibrillator window says hello as `defib`, its charge reaches the host byte for byte and its
-// `selectEnergy` does not (`forbidden` to the window; its next shock is the host's next command) (R5c); a learner
+// (R8b); a defibrillator window says hello as `defib`, its charge and its energy select (with its energy) reach the host
+// byte for byte and a `selectEnergy` with no energy does not (`forbidden` to the window; its next shock is the host's
+// next command) (R5c); a learner
 // remote says hello as `learner` with the learner PIN, its `prep stage` is `forbidden` while pending and, once the host
 // grants it, reaches the host byte for byte, while its `applyEvent drug` with a forged `by` and an instructor's
 // `time pause` are `forbidden` and never reach the host (its next `prep deliver` is the host's next command) (learner
@@ -222,8 +223,9 @@ async function frames(port, proc, steps, state) {
   }
   if (downGot !== clock) throw new Error(`the host's clock differs at the ventilator: ${downGot}`);
   step(`ventilator granted; its vent cmds (${Buffer.byteLength(cmds)} bytes) reached the host and the host's vent clock reached it, byte for byte`);
-  // R5c: the learner defibrillator window. Its bare charge reaches the host as sent; its selectEnergy is refused
-  // `forbidden` and never reaches the host (the shock after it is the host's next command)
+  // R5c: the learner defibrillator window. Its bare charge and its energy select reach the host as sent (the room model's
+  // list is the host's to check); an energy select with no energy is refused `forbidden` and never reaches the host (the
+  // shock after it is the host's next command)
   const DEFIB_ID = 'kit-check-defib';
   const defib = socket(port, proc);
   await defib.opened;
@@ -234,17 +236,21 @@ async function frames(port, proc, steps, state) {
   defib.ws.send(charge);
   const chargeGot = await hostNext('the defib charge', (f) => f.kind === 'command');
   if (chargeGot !== charge) throw new Error(`the defib charge differs at the host: ${chargeGot}`);
-  defib.ws.send(defibCmd(3, 'kit-defib-select', { action: 'selectEnergy', energyJ: 360 }));
+  const select = defibCmd(3, 'kit-defib-select', { action: 'selectEnergy', energyJ: 150 });
+  defib.ws.send(select);
+  const selectGot = await hostNext('the defib energy select', (f) => f.kind === 'command');
+  if (selectGot !== select) throw new Error(`the defib energy select differs at the host: ${selectGot}`);
+  defib.ws.send(defibCmd(4, 'kit-defib-bare-select', { action: 'selectEnergy' }));
   let refusal = null;
   for (let i = 0; i < 4 && !refusal; i++) {
     const f = JSON.parse(await defib.next('the refusal of the defib selectEnergy'));
     if (f.relay === 'error') refusal = f;
   }
   if (refusal?.code !== 'forbidden') throw new Error(`the defib selectEnergy was not refused: ${JSON.stringify(refusal)}`);
-  defib.ws.send(defibCmd(4, 'kit-defib-shock', { action: 'shock' }));
+  defib.ws.send(defibCmd(5, 'kit-defib-shock', { action: 'shock' }));
   const nextCmd = JSON.parse(await hostNext('the defib shock', (f) => f.kind === 'command'));
   if (nextCmd.body?.id !== 'kit-defib-shock') throw new Error(`the host's next command after the refused selectEnergy: ${JSON.stringify(nextCmd)}`);
-  step(`defib window: its charge (${Buffer.byteLength(charge)} bytes) reached the host byte for byte; its selectEnergy was refused (${refusal.code}) and never reached the host`);
+  step(`defib window: its charge (${Buffer.byteLength(charge)} bytes) and its energy select (${Buffer.byteLength(select)} bytes) reached the host byte for byte; a selectEnergy with no energy was refused (${refusal.code}) and never reached the host`);
   // Learner remote L3: the learner PIN signs it in; granted, its own shapes reach the host, nothing else does
   const LRN_ID = 'kit-check-learner';
   const learner = socket(port, proc);

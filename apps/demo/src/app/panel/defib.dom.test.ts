@@ -1,13 +1,13 @@
 // @vitest-environment happy-dom
 // Room plan R5b: the Defib tab's energy starts at the room's defibrillator model's adult energy (it was a fixed 200 J,
 // panel/defib.ts), follows a change of the model, and offers the model's AED ladder as presets when it has one. With no
-// model chosen nothing a press sends changes.
+// model chosen nothing a press sends changes. A model with an energy list steps along it, as the learner's window does.
 import { describe, expect, it } from 'vitest';
 import type { AckResult, CommandInput } from '@pme/controller';
 import type { Link } from '../link.ts';
 import { DEFAULT_SITE, type SiteProfile } from '../site.ts';
 import type { PanelCtx } from './ctx.ts';
-import { defibTab, presetsOf } from './defib.ts';
+import { defibTab, nextEnergy, presetsOf } from './defib.ts';
 
 const OK: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 };
 function rig(defibModel: string | null) {
@@ -57,6 +57,22 @@ describe("R5b: the Defib tab's energies from the room's defibrillator model", ()
     input.value = '150';
     r.refresh();
     expect(r.energy()).toBe(150);
+  });
+  it("the generic model's − and + step along its energy list and stop at its ends; no model chosen keeps the 10 J step", () => {
+    const r = rig('generic');
+    const key = (name: string) => {
+      const b = r.el.querySelector(`button[aria-label="${name} Energy"]`) as HTMLButtonElement;
+      b.dispatchEvent(new PointerEvent('pointerdown'));
+      b.dispatchEvent(new PointerEvent('pointerup'));
+    };
+    key('Increase');
+    expect(r.energy()).toBe(150);
+    key('Increase');
+    key('Increase');
+    expect(r.energy()).toBe(200);
+    for (let i = 0; i < 2; i++) key('Decrease');
+    expect(r.energy()).toBe(120);
+    expect([nextEnergy('generic', 1, -1), nextEnergy('generic', 10, 1), nextEnergy(null, 200, 1), nextEnergy(null, 200, -1)]).toEqual([1, 15, 210, 190]);
   });
   it("a model with an AED ladder offers it as presets (the department's model, when it comes, as a skin: lifepak-like's block here)", () => {
     expect(presetsOf({ energyAdultJ: 200, energyPaedJ: 50, aedSequenceJ: [200, 300, 360] })).toEqual([200, 300, 360]);

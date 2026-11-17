@@ -1,6 +1,6 @@
-// Plan room-and-instruments.md R5d: the host applies a `defib` peer's Charge and Shock through the same path as the
-// instructor's press (one `applyEvent` into the engine, the engine's own validation, defib.ts validateDefib), with the
-// room's energy (no `energyJ`), and files it as the learner's (`issuedBy: 'learner'`, the device key of its hello as
+// Plan room-and-instruments.md R5d: the host applies a `defib` peer's energy select, Charge and Shock through the same
+// path as the instructor's press (one `applyEvent` into the engine, the engine's own validation against the room model's
+// energy list, defib.ts validateDefib); Charge and Shock carry no `energyJ` (the device's selected energy), and it files it as the learner's (`issuedBy: 'learner'`, the device key of its hello as
 // `by`), as P3 files an instructor phone's as `remote`. Every other shape is refused HERE too, with no relay in between
 // (an in-process transport stands for the relay: nothing filters on the way).
 import { afterEach, describe, expect, it } from 'vitest';
@@ -17,15 +17,16 @@ const target = (e: Engine): HostTarget => ({
   dispatch: (c) => e.dispatch(c), snapshot: () => e.snapshot(), restore: (s) => e.restore(s), on: (f) => e.on(f), now: () => e.now(), time: () => undefined,
 });
 const hosts: HostSession[] = [];
-afterEach(() => {
-  for (const h of hosts.splice(0)) h.close();
+afterEach(async () => {
+  await Promise.all(hosts.splice(0).map((h) => h.close()));
 });
 type Ack = Extract<WireMessage, { kind: 'ack' }>;
 type Status = NonNullable<Extract<DeviceEvent, { type: 'deviceStatus' }>['defib']>;
 
 /** A host on its own engine, one transport (no relay: nothing filters), and the defibrillator's last status. */
-function setup(seed = 7) {
+function setup(seed = 7, model?: string) {
   const engine = createEngine({ seed });
+  if (model) engine.dispatch({ id: 'm', issuedBy: 'instructor', type: 'device', action: { device: 'defib', action: 'model', value: model } } as never);
   const host = new HostSession({ session: S, target: target(engine), stateIntervalMs: 0 });
   hosts.push(host);
   const hub = createInProcessHub();
@@ -123,13 +124,55 @@ describe("R5d: a learner's Charge and Shock land as the instructor's would", () 
   });
 });
 
+describe("the window's energy select, on the room model's list", () => {
+  it('each step up and down the generic list is accepted; an energy off it is refused with the device\'s reason and changes nothing', async () => {
+    const x = setup(7, 'generic');
+    const win = peer(x.wire, 'defib-win', 'defib', KEY);
+    win.hello();
+    run(x.engine, 1);
+    expect(x.defib()?.energyJ).toBe(120);
+    for (const j of [150, 200, 150, 120, 100]) {
+      expect((await press(x, win, { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: j } })).accepted, `${j} J`).toBe(true);
+      run(x.engine, 0.1);
+      expect(x.defib()?.energyJ).toBe(j);
+    }
+    for (const j of [140, 360, 0]) {
+      const ack = await press(x, win, { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: j } });
+      expect(ack).toMatchObject({ accepted: false, reason: `${j} J is not a generic defibrillator energy (1–10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200 J)` });
+      run(x.engine, 0.1);
+      expect(x.defib()?.energyJ).toBe(100);
+    }
+  });
+
+  it('an energy selected while charged disarms the device, and the next charge goes to the new energy', async () => {
+    const x = setup(7, 'generic');
+    const win = peer(x.wire, 'defib-win', 'defib', KEY);
+    win.hello();
+    expect((await press(x, win, charge)).accepted).toBe(true);
+    run(x.engine, 6);
+    expect(x.defib()?.state).toBe('ready');
+    expect((await press(x, win, { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: 150 } })).accepted).toBe(true);
+    run(x.engine, 0.1);
+    expect(x.defib()).toMatchObject({ state: 'idle', energyJ: 150 });
+    expect((await press(x, win, shock)).reason).toBe('defibrillator is not charged');
+    expect((await press(x, win, charge)).accepted).toBe(true);
+    run(x.engine, 7);
+    expect(x.defib()).toMatchObject({ state: 'ready', energyJ: 150 });
+    expect((await press(x, win, shock)).accepted).toBe(true);
+    run(x.engine, 1);
+    expect(x.defib()?.lastShock?.energyJ).toBe(150);
+  });
+});
+
 describe("R5d: a defib peer's every other shape is refused at the HOST, with no relay in between", () => {
   const refusals: Array<[string, Record<string, unknown>]> = [
     ['charge with energyJ', { type: 'applyEvent', event: { kind: 'defib', action: 'charge', energyJ: 360 } }],
     ['shock with atTick', { ...shock, atTick: 99 }],
     ['shock with outcome', { type: 'applyEvent', event: { kind: 'defib', action: 'shock', outcome: 'sinus' } }],
     ['a forged `by`', { ...charge, by: 'someoneelse1' }],
-    ['selectEnergy', { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: 200 } }],
+    ['selectEnergy without energyJ', { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy' } }],
+    ['selectEnergy with energyJ as text', { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: '150' } }],
+    ['selectEnergy with a stray field', { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: 150, outcome: 'rosc' } }],
     ['preselect', { type: 'applyEvent', event: { kind: 'defib', action: 'preselect', outcome: 'sinus' } }],
     ['disarm', { type: 'applyEvent', event: { kind: 'defib', action: 'disarm' } }],
     ['syncOn', { type: 'applyEvent', event: { kind: 'defib', action: 'syncOn' } }],
@@ -154,7 +197,7 @@ describe("R5d: a defib peer's every other shape is refused at the HOST, with no 
     const id = win.command(body);
     await waitFor(() => ackOf(x.got, id) !== undefined);
     expect(ackOf(x.got, id)?.accepted).toBe(false);
-    expect(ackOf(x.got, id)?.reason).toMatch(/^The (defibrillator window sends Charge and Shock only|room's defibrillator sets the rest)/);
+    expect(ackOf(x.got, id)?.reason).toMatch(/^(The defibrillator window sends energy, Charge and Shock only|The room's defibrillator sets the rest|An energy select carries its energy in joules)/);
     await Promise.resolve();
     expect(applied(x.got, id)).toBeUndefined();
     expect(JSON.stringify(x.engine.snapshot())).toBe(before);

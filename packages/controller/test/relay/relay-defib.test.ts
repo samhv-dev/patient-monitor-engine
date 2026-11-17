@@ -145,7 +145,7 @@ describe('of what a `defib` socket sends, only Charge and Shock reach the host',
     ['defib shock with atTick', shock('r2', {}, { atTick: 5000 })],
     ['defib shock with an outcome', shock('r3', { outcome: 'sinus' })],
     ['defib charge with a stray field', charge('r4', { sync: true })],
-    ['defib selectEnergy', command('r5', { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ: 360 } })],
+    ['defib selectEnergy without energyJ', command('r5', { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy' } })],
     ['defib preselect', command('r6', { type: 'applyEvent', event: { kind: 'defib', action: 'preselect', outcome: 'sinus' } })],
     ['defib disarm', command('r7', { type: 'applyEvent', event: { kind: 'defib', action: 'disarm' } })],
     ['defib syncOn', command('r8', { type: 'applyEvent', event: { kind: 'defib', action: 'syncOn' } })],
@@ -221,6 +221,21 @@ describe('of what a `defib` socket sends, only Charge and Shock reach the host',
 });
 
 describe('at most 4 commands a second per `defib` socket', () => {
+  it('an energy select with its energy reaches the host byte for byte, and counts with Charge and Shock: the 5th in a second closes the socket', async () => {
+    const { host, defib } = await room();
+    const energy = (id: string, energyJ: number) => command(id, { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ } });
+    const up = [defib.send(energy('e1', 150)), defib.send(energy('e2', 200))];
+    await waitFor(() => commandsAt(host).length === 2, 2000, 'both at the host');
+    expect(host.raw.filter((r) => r.includes('"kind":"command"'))).toEqual(up);
+    defib.send(charge('c3'));
+    defib.send(energy('e4', 150));
+    defib.send(energy('e5', 120)); // the fake clock stands still
+    await waitFor(() => defib.closeCode !== null, 2000, 'closed');
+    expect(defib.closeCode).toBe(RELAY_CLOSE.tooManyTries);
+    await settled();
+    expect(commandsAt(host)).toHaveLength(4);
+  });
+
   it('4 in one second pass; the 5th closes the socket (`too-many-tries`, 4028) and never reaches the host', async () => {
     const { host, defib, viewer } = await room();
     for (let k = 1; k <= 5; k++) defib.send(k % 2 ? charge(`c${k}`) : shock(`s${k}`)); // the fake clock stands still

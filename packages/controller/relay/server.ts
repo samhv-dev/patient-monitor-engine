@@ -11,7 +11,7 @@
 // command, no event, no snapshot (it follows nothing), and no learner is ever sent a `vent` or counts it.
 // Plan room-and-instruments.md R5c: a `defib` socket (the learner defibrillator window) joins as a learner does, from
 // another device and with no PIN, in a learner's place, and receives what a viewer receives; of its commands only
-// LEARNER_DEFIB_COMMANDS (Charge and Shock, bare) go to the host, any other is `forbidden`, more than 4 a second close it.
+// LEARNER_DEFIB_COMMANDS (energy select, Charge and Shock) go to the host, any other is `forbidden`, more than 4 a second close it.
 // Defibrillator plan R1 (docs/plans/defibrillator-zoll-m2.md §5.1): a `defib` hello that carries the LEARNER PIN is
 // admitted as a learner remote is (the wrong-PIN limits, a learner's place), PENDING until the host's grant: every command
 // `forbidden` until then; granted, only the ZOLL M2's own controls (learnerDefibM2May) go to the host, any other is

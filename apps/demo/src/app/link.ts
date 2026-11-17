@@ -216,11 +216,19 @@ export class Link {
    * every page names it (device-names.ts). This link's own commands are logged with their ack (`send`); a replay, a cockpit frame, the card's
    * own commands (its state lines say them) and the ventilator's hand-over are not presses.
    */
+  /** A bare Charge or Shock (the defibrillator window's) in words with the energy the device holds, or null. */
+  private withDeviceEnergy(c: { event?: { kind?: unknown; action?: unknown; energyJ?: unknown } }): string | null {
+    const ev = c.event;
+    const j = this.device?.defib?.energyJ;
+    if (ev?.kind !== 'defib' || ev.energyJ !== undefined || j === undefined) return null;
+    return ev.action === 'charge' ? `Defibrillator charging to ${j} J` : ev.action === 'shock' ? `Shock delivered at ${j} J` : null;
+  }
+
   private applied(e: Extract<WireEvent, { type: 'commandApplied' }>): void {
     const r = e.resolved as AppliedResolution | undefined;
     const c = r?.command as (Record<string, unknown> & { issuedBy?: string; by?: unknown; event?: { kind?: unknown } }) | undefined;
     if (!this.host || !c || r?.replay || r?.mirror || e.commandId.startsWith(`${this.ctl.peerId}-`)) return;
-    const text = describeCommand(c);
+    const text = this.withDeviceEnergy(c) ?? describeCommand(c);
     if (c.issuedBy === 'remote') return this.add({ simT: e.tick * TICK_S, kind: 'instructor', text: `${text} (instructor's phone)` });
     if (c.issuedBy !== LEARNER_ISSUED_BY && c.issuedBy !== PUMP_ISSUED_BY) return;
     this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${this.deviceOf(c.by, deviceKindOf(c))})` });

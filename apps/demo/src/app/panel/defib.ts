@@ -1,6 +1,7 @@
 // Defib, pacing & CPR (research/13 §4.3 item 5). Shock, charge and CPR are urgent: they apply at once, never staged
 // (research/13 P6). The defibrillator state (charging, ready, shocks delivered, last outcome) mirrors the engine's
 // `deviceStatus`, so the instructor sees what the learner's defibrillator is doing.
+import { defibEnergiesJ, stepEnergy } from '@pme/engine-core';
 import type { Skin } from '@pme/skins';
 import { describeCommand } from '../describe.ts';
 import { defibDefaults } from '../site.ts';
@@ -12,8 +13,14 @@ const OUTCOME: Readonly<Record<string, string>> = { unchanged: 'no change', vf: 
 /** A defibrillator's AED ladder as the panel's energy presets (none without one). */
 export const presetsOf = (d: Partial<NonNullable<Skin['defib']>>): number[] => [...(d.aedSequenceJ ?? [])];
 
-/** The energy stepper's limits (its first value is the room's defibrillator model's adult energy, site.ts). */
+/** The energy stepper's limits (its first value is the room's defibrillator model's adult energy, site.ts); a model with
+ * an energy list steps along it instead. */
 export const ENERGY_LIMITS = { label: 'Energy', unit: 'J', min: 1, max: 360, step: 10 } as const;
+/** The energy one press of − or + moves to: along the model's list, stopping at its ends; else the even step. */
+export const nextEnergy = (model: string | null, energyJ: number, dir: 1 | -1): number => {
+  const list = defibEnergiesJ(model);
+  return list ? (stepEnergy(list, energyJ, dir) ?? energyJ) : energyJ + dir * ENERGY_LIMITS.step;
+};
 /** The pacer's modes and steppers, in the sheet's words. */
 export const PACER_MODES: Array<['off' | 'demand' | 'fixed', string]> = [['off', 'Off'], ['demand', 'Demand'], ['fixed', 'Fixed']];
 export const PACER_LIMITS = {
@@ -41,7 +48,7 @@ export function defibTab(c: PanelCtx): HTMLElement {
   // a new model's at the next repaint; the model's AED ladder, when it has one, is a row of presets
   let model = c.site.defibModel;
   let defaults = defibDefaults(model);
-  const energy = stepper({ ...ENERGY_LIMITS, value: defaults.energyAdultJ });
+  const energy = stepper({ ...ENERGY_LIMITS, value: defaults.energyAdultJ, next: (j, dir) => nextEnergy(model, j, dir) });
   const presets = h('div', { class: 'row defib-presets', role: 'group', 'aria-label': 'Energy presets' });
   const drawPresets = () => {
     const ladder = presetsOf({ aedSequenceJ: defaults.ladderJ });
