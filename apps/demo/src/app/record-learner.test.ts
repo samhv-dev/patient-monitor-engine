@@ -1,6 +1,6 @@
 // Plan room-and-instruments.md R5d: every press of the learner defibrillator window is a record row of kind `learner`,
 // with the device key the host carried as `by` and the name the instructor gave that device (R7's remembered layout);
-// the Debrief's who line names it ("Shock 200 J at 04:12, by Defibrillator (bed 2)", else "Defibrillator window n").
+// the Debrief's who line names it ("Shock 200 J at 04:12, by bed 2", else "Defibrillator window n").
 // The instructor's own presses keep their rows. The last case runs a real engine and host session as AppSession wires
 // them: the window's presses arrive on a transport of their own, the record reads the host's in-process hub.
 import { createEngine, type EngineEvent } from '@pme/engine-core';
@@ -53,22 +53,22 @@ describe('R5d: the learner rows of the record', () => {
 
 describe("R5d: the Debrief's who line", () => {
   const row = (t: number, by: string | undefined, text = 'Shock 200 J', name?: string): Row => ({ t, kind: 'learner', text, ev: 'shock', ...(by ? { by } : {}), ...(name ? { name } : {}) });
-  it('reads "Shock 200 J at 04:12, by Defibrillator (bed 2)" from the remembered layout', () => {
+  it('reads "Shock 200 J at 04:12, by bed 2" from the remembered layout', () => {
     const r = row(252, KEY);
-    expect(learnerWho([r], r, names({ [KEY]: 'bed 2' }))).toBe('Shock 200 J at 04:12, by Defibrillator (bed 2)');
+    expect(learnerWho({ rows: [r] }, r, names({ [KEY]: 'bed 2' }))).toBe('Shock 200 J at 04:12, by bed 2');
   });
-  it("the layout's name first (named after the run), else the name the row kept, else \"Defibrillator window n\" in order of first press", () => {
+  it("a record that kept no numbers: the layout's name first (named after the run), else the name the row kept, else \"Defibrillator window n\" in order of first press", () => {
     const a = row(10, 'aaaaaaaa1', 'Charge 120 J');
     const b = row(20, 'bbbbbbbb2', 'Charge 120 J');
     const a2 = row(30, 'aaaaaaaa1', 'Shock 120 J');
     const c = row(40, 'cccccccc3', 'Shock 120 J', 'trolley');
-    const rows = [a, b, a2, c];
+    const rows = { rows: [a, b, a2, c] };
     const none = names({});
     expect(learnerWho(rows, a, none)).toBe('Charge 120 J at 00:10, by Defibrillator window 1');
     expect(learnerWho(rows, b, none)).toBe('Charge 120 J at 00:20, by Defibrillator window 2');
     expect(learnerWho(rows, a2, none)).toBe('Shock 120 J at 00:30, by Defibrillator window 1');
-    expect(learnerWho(rows, c, none)).toBe('Shock 120 J at 00:40, by Defibrillator (trolley)');
-    expect(learnerWho(rows, c, names({ cccccccc3: 'bed 4' }))).toBe('Shock 120 J at 00:40, by Defibrillator (bed 4)');
+    expect(learnerWho(rows, c, none)).toBe('Shock 120 J at 00:40, by trolley');
+    expect(learnerWho(rows, c, names({ cccccccc3: 'bed 4' }))).toBe('Shock 120 J at 00:40, by bed 4');
   });
 });
 
@@ -127,7 +127,7 @@ describe('L4: the learner remote\'s rows', () => {
     expect(a).toMatchObject({ t: 10, kind: 'learner', remote: true, by: RKEY, name: 'bed 2 remote', prepId: 'p0000001', ev: 'drug:fentanyl', dose: { drugId: 'fentanyl', dose: 50, unit: 'mcg' } });
     expect(b).toMatchObject({ kind: 'learner', remote: true, by: RKEY, ev: 'drug:norepinephrine', replaced: { rate: 3, rateUnit: 'mL/h', by: 'laptop' } });
     expect(c).toMatchObject({ kind: 'learner', remote: true, by: RKEY });
-    expect(learnerWho(r.data.rows, a as Row, names({}))).toBe(`${(a as Row).text} at 00:10, by Learner remote (bed 2 remote)`);
+    expect(learnerWho(r.data, a as Row, names({}))).toBe(`${(a as Row).text} at 00:10, by bed 2 remote`);
   });
   it('the Debrief numbers the remotes among remotes and the windows among windows', () => {
     const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0);
@@ -135,8 +135,8 @@ describe('L4: the learner remote\'s rows', () => {
     r.wire(give(200, { by: 'remote0002' }));
     r.wire(give(300, { by: 'remote0003', prepId: 'p0000002' }));
     const [w, x, y] = r.data.rows as [Row, Row, Row];
-    expect(learnerWho(r.data.rows, w, names({}))).toMatch(/by Defibrillator window 1$/);
-    expect(learnerWho(r.data.rows, x, names({}))).toMatch(/by Learner remote 1$/);
-    expect(learnerWho(r.data.rows, y, names({}))).toMatch(/by Learner remote 2$/);
+    expect(learnerWho(r.data, w, names({}))).toMatch(/by Defibrillator window 1$/);
+    expect(learnerWho(r.data, x, names({}))).toMatch(/by Learner remote 1$/);
+    expect(learnerWho(r.data, y, names({}))).toMatch(/by Learner remote 2$/);
   });
 });

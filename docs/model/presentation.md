@@ -573,9 +573,8 @@ renderer, audio and skin contracts.
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
 | `openersAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card author's openers (D9) on this run: |
 | `handoutQuestionsAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card's handout questions (D16) whose anchor happened on the kept course, in the card's order, each with its anchor's time; |
-| `remoteKeys` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The learner remotes' device keys in the order the run first names them (a give's, then the remote whose rate it replaced), then `more` (L13: |
-| `remoteWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A learner remote by its device key: |
-| `learnerWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The who line of a learner defibrillator press (Room plan R5d): |
+| `deviceWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A device of the run by its key, as every page names it (device-names.ts): |
+| `learnerWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The who line of a learner's press: |
 | `first` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The first kept row of `want` (or of any of a list) at or after `from`, or null. |
 | `eventWords` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | An event in words, for a reason line ("the alarm Apnoea (no CO₂ breaths)", "epinephrine", "SpO₂ below 90 %"). |
 | `trendMeta` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A trend's or a lab's label and unit from the glossary ("ART M / NIBP M", "mmHg"; |
@@ -596,6 +595,9 @@ renderer, audio and skin contracts.
 | `notDoneOf` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: |
 | `describeCommand` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); |
 | `spanText` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A fast-forward's span in words ("5 min", "90 s"). |
+| `numberOf` | [`apps/demo/src/app/device-names.ts`](../../apps/demo/src/app/device-names.ts) | `key`'s number among its kind, the next one if it is new (`order` keeps it). |
+| `deviceLabel` | [`apps/demo/src/app/device-names.ts`](../../apps/demo/src/app/device-names.ts) | The name a person reads: |
+| `keptLabel` | [`apps/demo/src/app/device-names.ts`](../../apps/demo/src/app/device-names.ts) | The number-name a kept order holds for `key`, without numbering it (a saved record is read, never written), or null. |
 | `doseUnits` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Dose units offered for a drug: |
 | `findDrugs` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Search by name, id or another name ("noradr" finds norepinephrine). |
 | `perKg` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | "0.1 µg/kg/min = 7 µg/min" for this patient's weight; |
@@ -1001,6 +1003,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments and the key times of a run, computed from the run record alone (`record.ts` `RunData`): the scenario's states after the first (each the team's, the patient's or the scenario's as the record's `by` says), |
 | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | What the debrief states from a run record — each objective met / not met / not assessable from its rule (types.ts `ObjectiveRule`), with the reason and the simulated times in one line, and the facts the engine can measur |
 | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same verb as the button). |
+| [`apps/demo/src/app/device-names.ts`](../../apps/demo/src/app/device-names.ts) | A device's name as a person reads it, one for every place that shows it (the Room page, the Log, the Labs sheet, the pump tablet's bag list, the instructor's cards and the Debrief): the name typed over it in Room setup, |
 | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | The dose picker's data (research/13 brief §7 "Dose picker"). |
 | [`apps/demo/src/app/engine-bench.worker.ts`](../../apps/demo/src/app/engine-bench.worker.ts) | Home's "Engine · ms per tick" tile (E125). |
 | [`apps/demo/src/app/engine-stopped.ts`](../../apps/demo/src/app/engine-stopped.ts) | Brief 195: the instructor's page when its simulation has stopped (the monitor's `pme-monitor-failed`: an error while the engine stepped, a worker that crashed, or one the watchdog found dead). |
@@ -1438,6 +1441,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/describe-eeg.test.ts`](../../apps/demo/src/app/describe-eeg.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-lab.test.ts`](../../apps/demo/src/app/describe-lab.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-ventilation.test.ts`](../../apps/demo/src/app/describe-ventilation.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/device-names.test.ts`](../../apps/demo/src/app/device-names.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/drugs.test.ts`](../../apps/demo/src/app/drugs.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/eeg-model-session.dom.test.ts`](../../apps/demo/src/app/eeg-model-session.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/engine-stopped.dom.test.ts`](../../apps/demo/src/app/engine-stopped.dom.test.ts) | 0 | 0 |

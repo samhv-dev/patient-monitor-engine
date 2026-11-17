@@ -21,6 +21,7 @@ export const LOAD_WORDS = {
   prepared: 'Prepared on a learner remote',
   stock: 'Stock',
   prepText: (drugs: string, ml: string, device: string, at: string) => `${drugs} · ${ml} mL · made on ${device} at ${at}`,
+  unnamed: 'a learner remote',
   stockText: (drug: string, ml: string) => `${drug} · ${ml} mL · stock`,
   none: (kind: ChannelKind) => `No ${kind === 'syringe' ? 'syringe' : 'bag'} to load: prepare one on a learner remote's bench.`,
 };
@@ -40,7 +41,7 @@ export function loadChoices(kind: ChannelKind, labels: readonly PumpLabel[], f: 
   for (const l of labels) {
     if (!fits(kind, l.container)) continue;
     const drugs = l.actives.map((a) => `${drugName(a.drugId)} ${perMlText(a.amount, a.unit, a.perMl)}`).join(' + ');
-    out.push({ value: `prep|${l.device}|${l.id}`, text: LOAD_WORDS.prepText(drugs, faceNum(l.volumeMl), l.device, clock(l.madeAt)), source: { prep: { device: l.device, id: l.id } } });
+    out.push({ value: `prep|${l.device}|${l.id}`, text: LOAD_WORDS.prepText(drugs, faceNum(l.volumeMl), l.name ?? LOAD_WORDS.unnamed, clock(l.madeAt)), source: { prep: { device: l.device, id: l.id } } });
   }
   for (const s of (kind === 'syringe' ? f?.stock.syringes : f?.stock.bags) ?? []) {
     const p = f?.drugs[s.drugId]?.products.find((x) => x.id === s.product);

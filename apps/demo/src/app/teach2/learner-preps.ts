@@ -2,7 +2,7 @@
 // INSTRUCTOR sees it, on the laptop's dock (Instructor v2) and on the instructor's phone (views/remote.ts mounts the same
 // card). The host sends its own screens and the granted instructors the whole preparation, its findings and the device
 // that staged it (the `prep` event addressed to the host's own id: InstructorPrepNews); the Link keeps them here
-// (PrepBoard). A preparation with a finding gets a card at once: "Bed 2 remote staged <what> · Incompatible: <the
+// (PrepBoard). A preparation with a finding gets a card at once: "Learner remote 2 staged <what> · Incompatible: <the
 // entry's statement> (<its source>; <Trissel's cross-check>)" and ONE control, "Show the incompatibility notice to the
 // learner" (`prep notice {by, prepId}`, instructor-only): the learner's phone then sounds its tone and shows the finding
 // (remote/tray.ts, L7), and the card reads "Notice shown at mm:ss". There is no remove and no let-stand: the preparation
@@ -19,14 +19,16 @@ import './learner-preps.css';
 /** The card's words (English chrome: the owner rules the words; keys, so a translation table can hold them). */
 export const PREPS_WORDS = {
   title: 'Learner preparations',
-  staged: (who: string) => `${who} remote staged`,
-  unnamed: 'A learner',
+  staged: (who: string) => `${who} staged`,
+  unnamed: 'A learner remote',
   show: 'Show the incompatibility notice to the learner',
   showing: 'Showing the notice…',
   shownAt: (t: number) => `Notice shown at ${clock(t)}`,
   notShown: 'notice not shown',
   given: (t: number) => `given at ${clock(t)}`,
   givenAt: (t: number, notice: string) => `given at ${clock(t)}, ${notice}`,
+  infused: (t: number) => `infusion started at ${clock(t)}`,
+  infusedAt: (t: number, notice: string) => `infusion started at ${clock(t)}, ${notice}`,
   discardedAt: (t: number) => `discarded at ${clock(t)}`,
   clean: (n: number) => `${n} ${n === 1 ? 'preparation' : 'preparations'}, no finding`,
   noStatement: NO_STATEMENT,
@@ -95,7 +97,7 @@ export function mountLearnerPreps(link: Link, o: { formulary(): Formulary | null
     const p = e.prep;
     const key = `${p.by}|${p.id}`;
     const fate = e.discardedAt !== null ? PREPS_WORDS.discardedAt(e.discardedAt)
-      : e.givenAt !== null ? PREPS_WORDS.givenAt(e.givenAt, p.notice && p.notice.shownAt <= e.givenAt ? PREPS_WORDS.shownAt(p.notice.shownAt).toLowerCase() : PREPS_WORDS.notShown) : null;
+      : e.givenAt !== null ? (e.infused ? PREPS_WORDS.infusedAt : PREPS_WORDS.givenAt)(e.givenAt, p.notice && p.notice.shownAt <= e.givenAt ? PREPS_WORDS.shownAt(p.notice.shownAt).toLowerCase() : PREPS_WORDS.notShown) : null;
     const control = p.notice
       ? h('p', { class: 'ip2-lp-shown', role: 'status' }, PREPS_WORDS.shownAt(p.notice.shownAt))
       : h('button', { type: 'button', class: 'ip2-lp-show', 'data-prep': p.id, disabled: pending.has(key), onclick: () => void press(e) }, pending.has(key) ? PREPS_WORDS.showing : PREPS_WORDS.show);
@@ -123,7 +125,7 @@ export function mountLearnerPreps(link: Link, o: { formulary(): Formulary | null
     setText(cleanSum, PREPS_WORDS.clean(plain.length));
     cleanList.replaceChildren(...plain.map((e) => h('li', { class: 'ip2-lp-clean-row', 'data-prep': e.prep.id },
       h('strong', {}, PREPS_WORDS.staged(e.prep.name ?? PREPS_WORDS.unnamed)), ` ${whatText(e.prep, f)}`,
-      e.givenAt !== null ? ` · ${PREPS_WORDS.given(e.givenAt)}` : '')));
+      e.givenAt !== null ? ` · ${(e.infused ? PREPS_WORDS.infused : PREPS_WORDS.given)(e.givenAt)}` : '')));
   };
   const off = link.onChange(draw);
   draw();

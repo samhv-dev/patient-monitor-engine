@@ -33,7 +33,7 @@ function host() {
   const t = hub.connect();
   const record = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }));
   t.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => record.wire(e))));
-  const app = { onMount: () => () => undefined, deviceName: () => null, record, driver: { vitalHolds: () => [], phaseRunner: null } } as unknown as AppSession;
+  const app = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner' | 'pump' | 'defib') => record.label(k, kind), record, driver: { vitalHolds: () => [], phaseRunner: null } } as unknown as AppSession;
   const link = new Link(new ControllerSession({ session: S, transport: t }), t, app);
   const stamp = createStamper(S, 'host-1');
   const send = async (e: WireEvent) => (h.send(stamp({ kind: 'event', body: [e] })), await tick());
@@ -58,7 +58,7 @@ describe('the running case owns the board\'s readings of the log', () => {
     await learnerGive();
     const objective = (MH.objectives?.[0] as { text: string }).text;
     link.note(`Objective met: ${drugWords(objective)}`, 'marker');
-    expect(boardOf(link)?.offCard.map((x) => x.text)).toEqual(['Ephedrine 50 mg IV (learner remote)']);
+    expect(boardOf(link)?.offCard.map((x) => x.text)).toEqual(['Ephedrine 50 mg IV (Learner remote 1)']);
     expect(judged(link)).toEqual(['met']);
     const saved = record.data; // what "Finish the case" archives
     const kept = structuredClone(saved);
@@ -70,10 +70,10 @@ describe('the running case owns the board\'s readings of the log', () => {
     expect(record.data).not.toBe(saved);
     expect(saved).toEqual(kept);
     // the Log sheet keeps the session
-    expect(link.sessionLog.map((x) => x.text)).toContain('Ephedrine 50 mg IV (learner remote)');
+    expect(link.sessionLog.map((x) => x.text)).toContain('Ephedrine 50 mg IV (Learner remote 1)');
 
     await learnerGive();
-    expect(boardOf(link)?.offCard.map((x) => x.text)).toEqual(['Ephedrine 50 mg IV (learner remote)']);
+    expect(boardOf(link)?.offCard.map((x) => x.text)).toEqual(['Ephedrine 50 mg IV (Learner remote 1)']);
     link.close();
   });
 
@@ -82,7 +82,7 @@ describe('the running case owns the board\'s readings of the log', () => {
     await load();
     await learnerGive();
     await send({ type: 'timeline', t: 55, tick: 2750, cause: 'restore' } as WireEvent);
-    expect(boardOf(link)?.offCard.map((x) => x.text)).toEqual(['Ephedrine 50 mg IV (learner remote)']);
+    expect(boardOf(link)?.offCard.map((x) => x.text)).toEqual(['Ephedrine 50 mg IV (Learner remote 1)']);
     link.close();
   });
 });

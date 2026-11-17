@@ -25,7 +25,7 @@ describe('C2: the pump rows of the record', () => {
     expect(rows.map((x) => [x.t, x.kind, x.text, x.channel, x.by, x.name, x.ev ?? ''])).toEqual([
       [10, 'pump', 'Channel 2: 50 mL syringe of Propofol 10 mg/mL loaded (50 mL)', 2, KEY, 'bed 2 pumps', ''],
       [12, 'pump', 'Channel 2 programmed: Propofol 10 mg/mL', 2, KEY, 'bed 2 pumps', ''],
-      [14, 'pump', 'Channel 2: rate 30 mL/h', 2, KEY, 'bed 2 pumps', 'drug:propofol'],
+      [14, 'pump', 'Channel 2 (Propofol): rate changed from 20 to 30 mL/h', 2, KEY, 'bed 2 pumps', 'drug:propofol'],
       [16, 'pump', 'Channel 2: bolus 2 mL', 2, KEY, 'bed 2 pumps', 'drug:propofol'],
     ]);
     expect(rows[0]?.pump).toEqual({ origin: { stock: 'propofol-10mg-ml-50ml' } });
@@ -38,8 +38,8 @@ describe('C2: the pump rows of the record', () => {
     r.wire(press(700, { action: 'rate', rate: 25, unit: 'mL/h' }, { contents: PROPOFOL, infusion: { rate: 25, unit: 'mL/h' } }, 'learner', 'bed2remote01'));
     r.wire(press(750, { action: 'stop' }, { contents: PROPOFOL, infusion: { rate: 0, unit: 'mL/h' } }, 'instructor', undefined));
     expect(r.data.rows.map((x) => [x.kind, x.by ?? '', x.remote ?? false, x.channel, x.text])).toEqual([
-      ['learner', 'bed2remote01', true, 2, 'Channel 2: rate 25 mL/h'],
-      ['action', '', false, 2, 'Channel 2 stopped'],
+      ['learner', 'bed2remote01', true, 2, 'Channel 2 (Propofol): rate 25 mL/h'],
+      ['action', '', false, 2, 'Channel 2 (Propofol) stopped'],
     ]);
   });
 
