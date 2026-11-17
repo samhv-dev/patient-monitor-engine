@@ -4,6 +4,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { audit, expect, focusWalk, openApp, serveApp, startRelay, test } from './app-accessibility-support.ts';
+import { carried } from '../src/app/address.testing.ts';
 
 let base = '';
 serveApp((b) => (base = b));
@@ -25,7 +26,7 @@ test("accessibility: the instructor phone's PIN form and the Room's instructor c
   await expect(p.locator('.ip-peer-pin')).toHaveValue('4729');
   await p.locator('.ip-peer-go').click();
   await expect(p.locator('.ip-peer-pin')).toHaveValue('');
-  expect(p.url()).not.toContain('4729');
+  expect(carried(p.url())).not.toContain('4729');
   found.push(...(await focusWalk(p, 16)).map((f) => `phone form focus: ${f}`));
   await phone.close();
 

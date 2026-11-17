@@ -1,0 +1,128 @@
+{
+  "drugId": "remifentanil",
+  "products": [
+    {
+      "id": "ultiva-1mg",
+      "form": "powder",
+      "strength": {
+        "amount": 1,
+        "unit": "mg",
+        "perVial": true,
+        "src": "dailymed-ultiva"
+      },
+      "reconstitute": {
+        "diluents": [
+          "water",
+          "dextrose5",
+          "dextrose5Saline",
+          "saline",
+          "ringerLactate"
+        ],
+        "volumeMl": 1,
+        "final": {
+          "perMl": 1,
+          "src": "dailymed-ultiva"
+        },
+        "src": "dailymed-ultiva"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "ultiva-2mg",
+      "form": "powder",
+      "strength": {
+        "amount": 2,
+        "unit": "mg",
+        "perVial": true,
+        "src": "dailymed-ultiva"
+      },
+      "reconstitute": {
+        "diluents": [
+          "water",
+          "dextrose5",
+          "dextrose5Saline",
+          "saline",
+          "ringerLactate"
+        ],
+        "volumeMl": 2,
+        "final": {
+          "perMl": 1,
+          "src": "dailymed-ultiva"
+        },
+        "src": "dailymed-ultiva"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "ultiva-5mg",
+      "form": "powder",
+      "strength": {
+        "amount": 5,
+        "unit": "mg",
+        "perVial": true,
+        "src": "dailymed-ultiva"
+      },
+      "reconstitute": {
+        "diluents": [
+          "water",
+          "dextrose5",
+          "dextrose5Saline",
+          "saline",
+          "ringerLactate"
+        ],
+        "volumeMl": 5,
+        "final": {
+          "perMl": 1,
+          "src": "dailymed-ultiva"
+        },
+        "src": "dailymed-ultiva"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "dailymed-ultiva"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-ultiva"
+    },
+    {
+      "id": "water",
+      "listed": true,
+      "src": "dailymed-ultiva"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": true,
+      "src": "dailymed-ultiva"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "dailymed-ultiva"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-ultiva"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
