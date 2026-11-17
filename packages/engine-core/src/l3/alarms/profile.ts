@@ -1,6 +1,6 @@
 // The device layer's view of a skin (brief §3.8, §6.4, §6.4.1, §6.5, §6.8): everything the alarm manager, the
 // defibrillator and the pacer need, as plain JSON-safe data built once per skin/age-band switch from @pme/skins.
-import { resolveSkin, type LimitTable, type ResolvedSkin, type Skin } from '@pme/skins';
+import { resolveSkin, TECHNICAL_ALARMS, type LimitTable, type ResolvedSkin, type Skin, type TechnicalAlarmId } from '@pme/skins';
 import type { AgeBand, AlarmLevel } from '../../types-device.ts';
 import type { NumericId } from '../../types.ts';
 import { FALLBACK_DEFIB } from '../defib-pacer/defib.ts';
@@ -65,6 +65,8 @@ export interface DeviceProfile {
   alwaysOn: string[];
   /** Visual / audible latching per vendor (skin `alarms.latching`; manager.ts `latchCovers`). */
   latching: Skin['alarms']['latching'];
+  /** Each technical alarm's level on this skin (skin `alarms.technical`). */
+  technicalLevels: Record<TechnicalAlarmId, AlarmLevel>;
   delayS: number;
   spo2DelayS: number;
   /** `mode` 'acknowledge' = Silence acknowledges (Philips, Mindray); 'mute' = timed mute (`durationS`). */
@@ -203,6 +205,9 @@ function limitsFor(r: ResolvedSkin, band: AgeBand): Record<string, LimitDef> {
   return out;
 }
 
+const technicalLevels = (t: Skin['alarms']['technical']): Record<TechnicalAlarmId, AlarmLevel> =>
+  Object.fromEntries(TECHNICAL_ALARMS.map((id) => [id, t[id].level])) as Record<TechnicalAlarmId, AlarmLevel>;
+
 /** Build the profile for a skin (or preset) id and an age band. Throws for an unknown id (resolveSkin does). */
 export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfile {
   const r = resolveSkin(id);
@@ -222,6 +227,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     switches: { ...(r.preset?.alarmSwitches ?? {}) },
     alwaysOn: [...a.alwaysOn],
     latching: { ...a.latching },
+    technicalLevels: technicalLevels(a.technical),
     delayS: a.delayS,
     spo2DelayS: a.spo2DelayS ?? a.delayS,
     silence: { mode: a.silence.mode, durationS: a.silence.durationS, suppressesVisual: a.silence.suppressesVisual, cancelOnNewAlarm: a.silence.cancelOnNewAlarm, technicalActsAsAck: a.silence.technicalActsAsAck },

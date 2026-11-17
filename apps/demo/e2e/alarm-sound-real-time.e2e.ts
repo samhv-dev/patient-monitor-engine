@@ -5,7 +5,7 @@
 // without its own decay to asystole, so the alarm under test stays raised for the whole run (several sim minutes at ×8).
 import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
-import { openApp, speedV2, startVite, TEACH2 } from './app-support.ts';
+import { alarmBursts, openApp, speedV2, startVite, TEACH2, type Burst } from './app-support.ts';
 
 test.skip(
   ({ browserName }) => browserName === 'webkit' && !!process.env.CI,
@@ -17,23 +17,7 @@ let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-type Entry = { id: string; kind: string; when: number; lateS: number };
-type W = { __pmeApp: { session: { monitor: { audioLog: Entry[] } }; link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
-type Burst = { train: string; start: number; pulses: number; lateS: number };
-
-/** Every burst of one alarm in the sound log, from its pulse ids `alarm:<alarm>:<train>:<burst>:<pulse>`: audio start, pulses. */
-const alarmBursts = (page: import('@playwright/test').Page, alarm: string): Promise<Burst[]> =>
-  page.evaluate((alarm) => {
-    const by = new Map<string, Entry[]>();
-    for (const e of (window as unknown as W).__pmeApp.session.monitor.audioLog) {
-      if (e.kind !== 'alarm' || !e.id.startsWith(`alarm:${alarm}:`)) continue;
-      const key = e.id.split(':').slice(0, 4).join(':');
-      by.set(key, [...(by.get(key) ?? []), e]);
-    }
-    return [...by]
-      .map(([key, es]) => ({ train: key.split(':').slice(0, 3).join(':'), start: Math.min(...es.map((e) => e.when)), pulses: es.length, lateS: Math.max(...es.map((e) => e.lateS)) }))
-      .sort((a, b) => a.start - b.start);
-  }, alarm);
+type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
 
 test('speed changes during a sounding alarm: every burst whole, one repeat after the last, in real time', async ({ page }) => {
   test.setTimeout(150_000);

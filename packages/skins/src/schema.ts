@@ -1,7 +1,7 @@
 // JSON Schemas (draft-07, validated with ajv) for skins, themes and presets (brief §3.8). Built from small helpers
 // so the schema and src/types.ts read side by side. Every object is closed (additionalProperties: false) and every
 // property is required unless listed in `opt`: a shipped skin can neither miss a field nor carry an unknown one.
-import { COLOR_KEYS, HEADER_ITEMS, LAMP_STYLES, LANE_IDS, PAGE_KINDS, PITCH_MAPS, REQUIRED_COLOR_KEYS, SOUND_PROFILES, SWAP_SENSORS, TILE_PARAMS } from './types.ts';
+import { COLOR_KEYS, HEADER_ITEMS, LAMP_STYLES, LANE_IDS, PAGE_KINDS, PITCH_MAPS, REQUIRED_COLOR_KEYS, SOUND_PROFILES, SWAP_SENSORS, TECHNICAL_ALARMS, TILE_PARAMS } from './types.ts';
 
 export type JsonSchema = Record<string, unknown>;
 
@@ -106,6 +106,7 @@ const alarms = obj(
     spo2DelayS: nullable(num(0, 60)),
     alarmFreezeOption: bool,
     recall: nullable(obj({ count: int(1, 1000), windowS: pair })),
+    technical: obj(Object.fromEntries(TECHNICAL_ALARMS.map((id) => [id, obj({ level: int(1, 3) })]))),
   },
   {
     repeatS: obj({}, { L1: nullable(num(1, 60)), L2: nullable(num(1, 60)), L3: nullable(num(1, 60)) }),

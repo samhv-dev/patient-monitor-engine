@@ -40,6 +40,12 @@ export type LampStyle = (typeof LAMP_STYLES)[number];
 export const SOUND_PROFILES = ['iec-style', 'traditional', 'saadat'] as const;
 export type SoundProfileId = (typeof SOUND_PROFILES)[number];
 export const PITCH_MAPS = ['none', 'nellcor-like', 'enhanced'] as const;
+/** The technical alarms the engine raises; each style states the level of every one (`alarms.technical`). */
+export const TECHNICAL_ALARMS = [
+  'ecgLeadsOff', 'spo2SensorOff', 'nibp-failed', 'co2Line', 'spo2NonPulsatile', 'spo2LowPerf', 'spo2LowSignal',
+  'abpNonPulsatile', 'abpZero', 'tempProbeOff', 'abpNoSensor',
+] as const;
+export type TechnicalAlarmId = (typeof TECHNICAL_ALARMS)[number];
 export type PitchMapId = (typeof PITCH_MAPS)[number];
 
 export interface TileSpec {
@@ -365,6 +371,8 @@ export interface Skin {
     repeatS?: Partial<Record<Level, number | null>>;
     /** Pulses in the low-priority burst when the skin differs from its profile (Philips-like INOP: 2). */
     lowPulses?: 1 | 2;
+    /** Each technical alarm's level (1 high … 3 low) on this monitor: the bar colour, the lamp and the sound follow it. */
+    technical: Record<TechnicalAlarmId, { level: 1 | 2 | 3 }>;
     volume: { min: number; max: number; default: number };
     lamp: { L1: LampStyle; L2: LampStyle; L3: LampStyle; flashHz: { L1: number; L2: number }; duty: number };
     messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** Rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean; /** Seconds per rotated message; absent = 2 s. */ rotateS?: number };

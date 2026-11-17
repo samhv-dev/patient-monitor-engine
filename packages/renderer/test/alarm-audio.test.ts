@@ -1,11 +1,12 @@
 // Only the highest-priority alarm is audible (fake audio clock); silence and a new Saadat-like alarm behave as the
 // engine says (brief §6.4.1).
 import { describe, expect, it } from 'vitest';
-import { AlarmSounder, IEC_STYLE, SAADAT, ToneScheduler, type AlarmSoundProfile, type AlarmToneRequest } from '@pme/audio';
+import { AlarmSounder, getAlarmProfile, IEC_STYLE, SAADAT, ToneScheduler, type AlarmSoundProfile, type AlarmToneRequest, type ProfileOverrides } from '@pme/audio';
+import { resolveSkin } from '@pme/skins';
 import { AlarmAudioBridge } from '../src/alarm-audio.ts';
 import type { AlarmStatus } from '../src/alarm-view.ts';
 
-function rig(profile: AlarmSoundProfile, o: { windowSilence?: boolean } = {}) {
+function rig(profile: AlarmSoundProfile, o: { windowSilence?: boolean; overrides?: ProfileOverrides } = {}) {
   let now = 0;
   const played: AlarmToneRequest[] = [];
   const sched = new ToneScheduler({
@@ -18,7 +19,7 @@ function rig(profile: AlarmSoundProfile, o: { windowSilence?: boolean } = {}) {
     },
   });
   sched.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1, runS: 0 });
-  const sounder = new AlarmSounder(sched, profile);
+  const sounder = new AlarmSounder(sched, profile, o.overrides ? { overrides: o.overrides } : {});
   const bridge = new AlarmAudioBridge(sounder, () => 1, o);
   const run = (t: number) => {
     sounder.pump(now); // as the page does after each batch of events
@@ -31,7 +32,7 @@ function rig(profile: AlarmSoundProfile, o: { windowSilence?: boolean } = {}) {
   };
   return { bridge, played, run };
 }
-const entry = (id: string, level: 1 | 2 | 3, acked = false) => ({ id, level, category: 'physiological' as const, text: id, since: 0, latched: false, acked });
+const entry = (id: string, level: 1 | 2 | 3, acked = false, category: 'physiological' | 'technical' = 'physiological') => ({ id, level, category, text: id, since: 0, latched: false, acked });
 const st = (t: number, active: Array<ReturnType<typeof entry> & { sounding?: boolean }>, silencedUntil: number | null = null): AlarmStatus => ({
   type: 'alarmStatus', t, skin: 'x', ageBand: 'adult', active, silencedUntil, pausedUntil: null, limits: {}, allOff: false, arrhythmiaAnalysis: false, volume: 5,
 });
@@ -131,4 +132,26 @@ describe('a learner window manages its own alarm sound', () => {
     r.run(202);
     expect(r.played.length).toBeGreaterThan(m);
   });
+
+  // The sensor-off alarm as each style sounds it, from its data (level: skin `alarms.technical`; cadence: the profile
+  // and the skin's overrides, as mount.ts builds the sounder): [pulses per burst, burst starts in the first 45 s]
+  const SENSOR_OFF: Record<string, [number, number[]]> = {
+    'saadat-like': [3, [0, 20, 40]], // level 2, "DO-DO-DO" every 20 s (B9 manuals 9-18, 3-4)
+    'philips-like': [2, [0, 20, 40]], // INOP: two tones, then a pause
+    'mindray-like': [1, [0, 20, 40]], // ISO low: one beep every 20 s
+    'zoll-like': [1, [0]], // low: not repeated
+  };
+  for (const [skin, [pulses, starts]] of Object.entries(SENSOR_OFF)) {
+    it(`${skin}: SpO2 sensor off sounds ${pulses} pulse(s) at ${starts.join(', ')} s`, () => {
+      const r = resolveSkin(skin);
+      const a = r.audio.alarm;
+      const k = rig(getAlarmProfile(a.profile), { overrides: { repeatS: a.repeatS, lowPulses: a.lowPulses, volume: a.volume, silence: a.silence } });
+      k.bridge.onStatus(st(0, [entry('spo2SensorOff', r.skin.alarms.technical.spo2SensorOff.level, false, 'technical')]));
+      k.run(45);
+      const when = k.played.map((p) => p.runT ?? p.t);
+      const bursts = when.filter((w, i) => i === 0 || w - (when[i - 1] as number) > 1.5).map((w) => +w.toFixed(3));
+      expect(bursts).toEqual(starts);
+      expect(when.length).toBe(pulses * starts.length);
+    });
+  }
 });
