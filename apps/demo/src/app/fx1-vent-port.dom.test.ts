@@ -12,6 +12,10 @@ function fakeSession() {
   const s = {
     code: 'ABC123',
     timeScale: 1,
+    ventFace: 'hamilton-style',
+    ventSettings: null,
+    ventSettled: () => Promise.resolve(-1),
+    host: { fastForwarding: false, cockpitOff: () => {} },
     ventLink: null,
     onMount: () => () => {},
     onTimeScale: (fn: (k: number) => void) => (scaleFns.add(fn), () => void scaleFns.delete(fn)),
@@ -42,5 +46,22 @@ describe('FX-1 Ventilator view link', () => {
     s.setTimeScale(4);
     await Promise.resolve();
     expect(posted).toContainEqual({ v: 1, kind: 'time', action: 'scale', value: 4 });
+  });
+});
+
+describe("the Ventilator view wears the room's face", () => {
+  it('its cockpit is loaded with the face; a face chosen while the view was closed loads a fresh cockpit wearing it', async () => {
+    const s = fakeSession();
+    const v = ventView(s as unknown as AppSession);
+    const frame = v.el.querySelector('iframe') as HTMLIFrameElement;
+    const cw = { [FRAME_PORT_KEY]: { 'pme-vent/vabc123': () => {} } };
+    Object.defineProperty(frame, 'contentWindow', { get: () => cw });
+    v.enter?.('');
+    expect(new URL(frame.src, 'http://x/').searchParams.get('face')).toBe('hamilton-style');
+    v.leave?.();
+    await Promise.resolve();
+    s.ventFace = 'edp-ts';
+    v.enter?.('');
+    expect(new URL(frame.src, 'http://x/').searchParams.get('face')).toBe('edp-ts');
   });
 });

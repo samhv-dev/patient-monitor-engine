@@ -237,6 +237,12 @@ describe('the learner action remote role (plan learner-action-remote.md L3)', ()
     expect(parseWireMessage(grant(false, T))).toBeNull();
     expect(parseWireMessage(grant(true, 'not-a-ticket'))).toBeNull();
   });
+  it("a grant's ventilator face is a short id, on a grant only", () => {
+    const grant = (granted: boolean, face: unknown) => ({ ...stamp({ kind: 'grant', to: 'vent-a.1', granted }), face });
+    expect(parseWireMessage(grant(true, 'edp-ts'))).toMatchObject({ kind: 'grant', granted: true, face: 'edp-ts' });
+    expect(parseWireMessage(grant(false, 'edp-ts'))).toBeNull();
+    for (const face of ['', 'EDP TS', 'x'.repeat(33), '<b>', 7]) expect(parseWireMessage(grant(true, face)), String(face)).toBeNull();
+  });
   it('a PIN is still refused on a viewer, a controller and a host (the defibrillator screen proves one since defib R1)', () => {
     for (const role of ['viewer', 'controller', 'host']) expect(parseWireMessage(hello(role, { pin: '4729' })), role).toBeNull();
   });

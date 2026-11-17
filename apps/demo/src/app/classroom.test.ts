@@ -120,7 +120,7 @@ describe('no address the app builds carries the PIN (a property over the builder
       ];
       // R8d: the ventilator's laptop window and its device page (from the picker's address)
       const picker = qrTarget(code, page, relay, ri);
-      urls.push(origin + ventWindowUrl(code, path));
+      urls.push(origin + ventWindowUrl(code, path, 'edp-ts'));
       if (picker.ok) urls.push(new URL(ventDeviceUrl(new URL(picker.url)), picker.url).href);
       for (const u of urls) {
         expect(carried(u)).not.toContain(pin);
@@ -134,9 +134,9 @@ describe('no address the app builds carries the PIN (a property over the builder
 });
 
 describe("the ventilator's own screen (R8d)", () => {
-  it('the laptop window is vent-hamilton.html?link=CODE beside the app (BroadcastChannel: no relay, no PIN)', () => {
-    expect(ventWindowUrl('AB2CD3', '/')).toBe('/vent-hamilton.html?link=AB2CD3');
-    expect(ventWindowUrl('AB2CD3', '/patient-monitor-engine/index.html')).toBe('/patient-monitor-engine/vent-hamilton.html?link=AB2CD3');
+  it("the laptop window is vent-hamilton.html?link=CODE&face=<the room's face> beside the app (BroadcastChannel: no relay, no PIN)", () => {
+    expect(ventWindowUrl('AB2CD3', '/', 'hamilton-style')).toBe('/vent-hamilton.html?link=AB2CD3&face=hamilton-style');
+    expect(ventWindowUrl('AB2CD3', '/patient-monitor-engine/index.html', 'edp-ts')).toBe('/patient-monitor-engine/vent-hamilton.html?link=AB2CD3&face=edp-ts');
   });
   it("the device page is vent-hamilton.html with the picker's own search (the code, the relay) and #/vent", () => {
     expect(VENT_HASH).toBe('#/vent');
