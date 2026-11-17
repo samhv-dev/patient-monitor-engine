@@ -33,7 +33,7 @@ function host() {
   const t = hub.connect();
   const record = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }));
   t.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => record.wire(e))));
-  const app = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner' | 'pump' | 'defib') => record.label(k, kind), record, driver: { vitalHolds: () => [], phaseRunner: null } } as unknown as AppSession;
+  const app = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner' | 'pump' | 'defib') => record.label(k, kind), record, driver: { vitalHolds: () => [], rhythmHolds: () => [], phaseRunner: null } } as unknown as AppSession;
   const link = new Link(new ControllerSession({ session: S, transport: t }), t, app);
   const stamp = createStamper(S, 'host-1');
   const send = async (e: WireEvent) => (h.send(stamp({ kind: 'event', body: [e] })), await tick());
