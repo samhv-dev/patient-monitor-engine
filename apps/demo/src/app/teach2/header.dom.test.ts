@@ -8,7 +8,8 @@ import { disturbed } from '../keep.testing.ts';
 import type { Link } from '../link.ts';
 import { mountSessionBar } from '../sessionbar.ts';
 import { FF_SKIPS, mountFastForward } from './ff.ts';
-import { mountHeader } from './header.ts';
+import { scenarioById } from '../scenarios.ts';
+import { mountHeader, PAUSED_AT_START } from './header.ts';
 
 function fakeLink(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 }) {
   const sent: CommandInput[] = [];
@@ -159,8 +160,8 @@ describe('Instructor v2 header: the same commands as the session bar', () => {
     expect(room.getAttribute('href')).toBe('#/room');
     expect(room.getAttribute('aria-label')).toBe('Room code Q F B A W A, 3 phones: Room setup');
     expect(f.sent).toEqual([]);
-    // the order of option G: patient line, MODELED, title, (L9: the learner preparations' count, hidden at 0), gap, pill, speed, divider, Sound, Room
-    expect([...v2.el.children].map((c) => c.className.split(' ')[0])).toEqual(['ip2-who', 'ip2-mode', 'ip2-title', 'ip2-preps-count', 'ip2-spacer', 'ip2-pill', 'ip2-fanwrap', 'ip2-head-div', 'ip2-topctl', 'ip2-topctl']);
+    // the order of option G: patient line, MODELED, title, (a case begun paused: its words and Run, empty and hidden otherwise), (L9: the learner preparations' count, hidden at 0), gap, pill, speed, divider, Sound, Room
+    expect([...v2.el.children].map((c) => c.className.split(' ')[0])).toEqual(['ip2-who', 'ip2-mode', 'ip2-title', 'ip2-start-words', 'ip2-btn', 'ip2-preps-count', 'ip2-spacer', 'ip2-pill', 'ip2-fanwrap', 'ip2-head-div', 'ip2-topctl', 'ip2-topctl']);
   });
 
   it('the Sound switch says which page of this browser plays the sound, as soon as another page takes or gives it up', () => {
@@ -264,5 +265,61 @@ describe('a repaint keeps every control a press can rest on', () => {
       await vi.waitFor(() => expect(clockEl.textContent).toBe('01:01'));
     };
     expect(await disturbed(held, repaint)).toEqual([]);
+  });
+});
+
+// A case that begins on a paused host (after Debrief now, loaded while paused, a paused position restored) says so
+// beside its title, with the Run that starts it; a case paused while it runs does not.
+describe('a case that begins paused', () => {
+  function begun(o: { pausedAtStart: boolean; card?: boolean }) {
+    const f = fakeLink();
+    Object.assign(f.ctl, { hostPaused: true, pausedAtStart: o.pausedAtStart });
+    if (o.card !== false) {
+      const doc = scenarioById('showcase-mh')!.doc;
+      f.ctl.scenario.onEvent({ type: 'commandApplied', commandId: 'l', tick: 0, resolved: { command: { id: 'l', issuedBy: 'instructor', type: 'scenario', action: 'load', doc } } } as never);
+    }
+    const v2 = mountHeader(f.link);
+    document.body.append(v2.el);
+    offs.push(v2.destroy);
+    const words = v2.el.querySelector('.ip2-start-words') as HTMLElement;
+    const run = v2.el.querySelector('.ip2-start-run') as HTMLButtonElement;
+    return { ...f, v2, words, run };
+  }
+
+  it('says it is paused at its clock and how to start it, announced, beside the title', () => {
+    const b = begun({ pausedAtStart: true });
+    expect(b.words.textContent).toBe('This case is paused at 00:00. Press Run to start it.');
+    expect(b.words.textContent).toBe(PAUSED_AT_START('00:00'));
+    expect(b.words.getAttribute('role')).toBe('status');
+    expect(b.words.previousElementSibling?.classList.contains('ip2-title')).toBe(true);
+    expect(b.run.hidden).toBe(false);
+    expect(b.run.textContent).toBe('Run');
+  });
+
+  it('Run sends the pill\'s resume, and the words go at once and stay gone once the host runs', async () => {
+    const b = begun({ pausedAtStart: true });
+    const { sent } = await press(b, b.run);
+    expect(sent).toEqual([{ type: 'time', action: 'resume' }]);
+    expect(b.words.textContent).toBe('');
+    expect(b.run.hidden).toBe(true);
+    Object.assign(b.ctl, { pausedAtStart: false });
+    b.v2.refresh();
+    expect(b.words.textContent).toBe('');
+    expect(b.run.hidden).toBe(true);
+  });
+
+  it('the clock pill starts it as well, and the words go', async () => {
+    const b = begun({ pausedAtStart: true });
+    await press(b, b.v2.el.querySelector('.ip2-pill') as HTMLElement);
+    expect(b.words.textContent).toBe('');
+    expect(b.run.hidden).toBe(true);
+  });
+
+  it('says nothing for a pause in a case that has run, nor with no case', () => {
+    for (const o of [{ pausedAtStart: false }, { pausedAtStart: true, card: false }]) {
+      const b = begun(o);
+      expect(b.words.textContent, JSON.stringify(o)).toBe('');
+      expect(b.run.hidden, JSON.stringify(o)).toBe(true);
+    }
   });
 });

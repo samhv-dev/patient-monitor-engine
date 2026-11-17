@@ -20,10 +20,13 @@ test.afterAll(async () => vite?.close());
 test.afterEach(async () => relay?.close());
 
 type Sync = { status: string; resyncs: number };
-type Truth = { tree?: { resp?: { driver?: { source?: string; vent?: Record<string, number> }; mechanics?: { ppeak?: number | null } } } };
+type Truth = { t: number; tree?: { resp?: { driver?: { source?: string; vent?: Record<string, number> }; mechanics?: { t: number; kind: string; ppeak?: number | null } } } };
+/** The host's truth from a moment on: who ventilates (each change, at the truth that first showed it) and every mechanical breath's peak pressure (once per breath, at its end-inspiration). */
+type Rec = { sources: Array<{ t: number; source: string }>; mech: Array<{ t: number; ppeak: number }> };
 type W = {
   __pmeFollower: { sync: Sync | null };
-  __pmeApp: { session: { code: string; simNow(): number; last: { truth?: Truth; state?: { breathing?: { source: string } } } }; link: { send(c: unknown): Promise<{ accepted: boolean }>; ctl: { measurements: Record<string, { value: number | null } | undefined> } } };
+  __steady?: (source: string, n: number, from: number) => number[];
+  __pmeApp: { session: { code: string; simNow(): number; onEvent(fn: (e: { type: string }) => void): () => void; last: { truth?: Truth; state?: { breathing?: { source: string } } } }; link: { send(c: unknown): Promise<{ accepted: boolean }>; ctl: { measurements: Record<string, { value: number | null } | undefined> } } };
 };
 
 const ws = () => `ws://127.0.0.1:${relay!.port}/`;
@@ -48,15 +51,51 @@ const cockpitCfg = (p: Page) =>
     const c = (window as unknown as { __vent?: { vs: { cfg: Record<string, unknown> }; paused: boolean } }).__vent;
     return c ? { mode: c.vs.cfg.mode, rate: c.vs.cfg.rate, vt: c.vs.cfg.vt, peep: c.vs.cfg.peep, fio2: c.vs.cfg.fio2, pmax: c.vs.cfg.pmax, paused: c.paused } : null;
   });
-/** Watch `s` seconds, logging the phone's resyncs and the patient every 10 s; returns the resyncs it counted. */
+/** Until the host's simulation clock has run `s` seconds on from now. */
+async function simSeconds(host: Page, s: number): Promise<void> {
+  const until = (await host.evaluate(() => (window as unknown as W).__pmeApp.session.simNow())) + s;
+  await host.waitForFunction((u) => (window as unknown as W).__pmeApp.session.simNow() >= u, until, { timeout: (s + 30) * 1000 });
+}
+/** Watch `s` simulated seconds, logging the phone's resyncs and the patient every 10 s; returns the resyncs it counted. */
 async function watch(host: Page, f: Page, s: number, tag: string): Promise<number> {
   const r0 = await resyncs(f);
   for (let i = 10; i <= s; i += 10) {
-    await host.waitForTimeout(10_000);
+    await simSeconds(host, 10);
     console.log(`[E128] ${tag} +${i}s: phone resyncs ${(await resyncs(f)) - r0}, host ${JSON.stringify(await patient(host))}`);
   }
   return (await resyncs(f)) - r0;
 }
+/**
+ * From now on, record the host's truth as it arrives, and answer `steady(source, n, from)`: the peak pressures of `n`
+ * steady breaths of `source` after sim time `from`, i.e. the breaths ending after the truth that first showed `source` in
+ * charge, less the first of them. That first breath starts from the lung the previous driver left (a spontaneous breath's
+ * volume, or no PEEP yet) and peaks above or below the steady ones by the volume at the switch.
+ */
+const record = (p: Page) =>
+  p.evaluate(() => {
+    const w = window as unknown as W;
+    const rec: Rec = { sources: [], mech: [] };
+    w.__steady = (source, n, from) => {
+      const took = rec.sources.find((x) => x.source === source && x.t >= from);
+      return took ? rec.mech.filter((m) => m.t > took.t).slice(1, n + 1).map((m) => m.ppeak) : [];
+    };
+    w.__pmeApp.session.onEvent((e) => {
+      if (e.type !== 'truth') return;
+      const tr = e as unknown as Truth;
+      const r = tr.tree?.resp;
+      const source = r?.driver?.source ?? '?';
+      if (rec.sources.at(-1)?.source !== source) rec.sources.push({ t: tr.t, source });
+      const m = r?.mechanics;
+      if (m?.kind === 'mech' && typeof m.ppeak === 'number' && rec.mech.at(-1)?.t !== m.t) rec.mech.push({ t: m.t, ppeak: m.ppeak });
+    });
+  });
+async function steadyPeaks(host: Page, source: string, n: number, from: number): Promise<number[]> {
+  const args = { source, n, from };
+  await host.waitForFunction((a) => (window as unknown as W).__steady!(a.source, a.n, a.from).length === a.n, args, { timeout: 60_000 });
+  return host.evaluate((a) => (window as unknown as W).__steady!(a.source, a.n, a.from), args);
+}
+/** The largest difference between any of the steady peaks `a` and any of `b`. */
+const spread = (a: number[], b: number[]) => Math.max(...a.flatMap((x) => b.map((y) => Math.abs(x - y))));
 const within = (a: number | null, b: number | null, tol: number) => a !== null && b !== null && Math.abs(a - b) <= tol;
 
 test('leaving the Ventilator view hands the patient to the engine ventilator: one resync on release, then the phone follows', async ({ page, browser, browserName }) => {
@@ -73,6 +112,8 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
   const f = await phone(browser, browserName, code);
   await f.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
+  await record(page);
+  const simNow = () => page.evaluate(() => (window as unknown as W).__pmeApp.session.simNow());
 
   // baseline: a minute with no resync
   expect(await watch(page, f, 60, 'baseline'), 'resyncs before any visit').toBe(0);
@@ -83,9 +124,10 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
       const r0 = await resyncs(f);
       expect(await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 16, vtMl: 450, peep: 6, fio2: 0.5 } }).then((r) => r.accepted))).toBe(true);
       await expect.poll(async () => (await patient(page)).vent).toMatchObject({ rr: 16, vt: 450, peep: 6 });
-      await page.waitForTimeout(5000);
+      await simSeconds(page, 5);
       expect((await resyncs(f)) - r0, 'the panel\'s ventilator change is followed').toBe(0);
     }
+    const opened = await simNow();
     await page.evaluate(() => (location.hash = '#/vent'));
     await expect(f.locator('.learner-hold')).toBeVisible({ timeout: 10_000 });
     await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'the cockpit drives the patient' }).toBe('external');
@@ -95,11 +137,12 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
       console.log(`[E128] visit 2 cockpit ${JSON.stringify(c)}`);
       expect(c).toMatchObject({ mode: 'VC', rate: 16, vt: 450, peep: 6, fio2: 50, paused: false });
     }
-    await page.waitForTimeout(6000);
+    const onVentPeaks = await steadyPeaks(page, 'external', 2, opened);
     const onVent = await patient(page);
     const held = await resyncs(f);
-    console.log(`[E128] visit ${visit} on the Ventilator view 6 s: ${JSON.stringify(onVent)} cockpit ${JSON.stringify(await cockpitCfg(page))}`);
+    console.log(`[E128] visit ${visit} on the Ventilator view, steady peaks ${JSON.stringify(onVentPeaks)}: ${JSON.stringify(onVent)} cockpit ${JSON.stringify(await cockpitCfg(page))}`);
 
+    const closed = await simNow();
     await page.evaluate(() => (location.hash = '#/teach2'));
     await expect(f.locator('.learner-hold')).toBeHidden({ timeout: 3000 });
     // the hand-over: the engine's own ventilator, the cockpit paused and silent
@@ -120,7 +163,8 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
     // the patient continues ventilated as the cockpit left it (the engine's normal breath-to-breath variation)
     expect(within(after.etco2, onVent.etco2, 5), `EtCO2 ${after.etco2} vs ${onVent.etco2} on the cockpit`).toBe(true);
     expect(within(after.spo2, onVent.spo2, 3), `SpO2 ${after.spo2} vs ${onVent.spo2} on the cockpit`).toBe(true);
-    expect(within(after.ppeak, onVent.ppeak, 5), `peak pressure ${after.ppeak} vs ${onVent.ppeak} on the cockpit`).toBe(true);
+    const afterPeaks = await steadyPeaks(page, 'ventilator', 2, closed);
+    expect(spread(afterPeaks, onVentPeaks), `steady peak pressures ${JSON.stringify(afterPeaks)} vs ${JSON.stringify(onVentPeaks)} on the cockpit`).toBeLessThanOrEqual(5);
   }
   await f.context().close();
 });
