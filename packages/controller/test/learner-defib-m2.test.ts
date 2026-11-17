@@ -40,6 +40,12 @@ const SECTION_5_1: ReadonlyArray<[string, readonly string[]]> = [
   ['print', ['device defib print']],
   ["the connections drawer's pads and paddles", ['device defib connect']],
   ["Lead (the top trace's source)", ['device defib lead']],
+  ['Clear', ['device defib clear']],
+  ['the 30 J test', ['device defib test30J']],
+  ['Diag', ['device defib diag']],
+  ['12-lead Acquire', ['device defib twelveLead']],
+  ['Brightness', ['device defib brightness']],
+  ['Trend/Export', ['device defib trend', 'device defib export']],
 ];
 
 /** One legal command of every shape in the table (values as E0's validators take them). */
@@ -66,6 +72,13 @@ const EXAMPLES: Readonly<Record<string, CommandInput>> = {
   'device defib connect': dev('connect', { pads: { type: 'adult', placement: 'anteriorPosterior', contact: 'good' } }),
   'device defib setting': dev('setting', { nibpMode: 'auto', nibpIntervalMin: 5 }),
   'device defib lead': dev('lead', 'II'),
+  'device defib clear': dev('clear', 'press'),
+  'device defib test30J': dev('test30J', 'press'),
+  'device defib diag': dev('diag', 'press'),
+  'device defib twelveLead': dev('twelveLead', 'acquire'),
+  'device defib brightness': dev('brightness', 'press'),
+  'device defib trend': dev('trend', 'press'),
+  'device defib export': dev('export', 'press'),
 };
 
 describe('the admitted learner defibrillator: the table is §5.1, both ways (plan defibrillator-zoll-m2.md R1)', () => {
@@ -82,6 +95,8 @@ describe('the admitted learner defibrillator: the table is §5.1, both ways (pla
       expect(Object.hasOwn(LEARNER_DEFIB_M2, `device defib ${action}`), action).toBe(cls === 'learner');
     expect(M2_DEVICE_ACTION_CLASS.model).toBe('refused');
     expect(M2_DEVICE_ACTION_CLASS.config).toBe('roomSetup'); // §5.4: the Supervisor configuration is set in Room setup (R4)
+    // the instructor's inputs, which the learner is never allowed
+    for (const a of ['faults', 'impedance', 'compressions']) expect(M2_DEVICE_ACTION_CLASS[a], a).toBe('refused');
   });
 
   it('every allowed shape passes, with its own fields', () => {
@@ -115,6 +130,8 @@ describe('the admitted learner defibrillator: the table is §5.1, both ways (pla
       ['device defib model', dev('model', 'generic')],
       ['device defib config', dev('config', { readyTimeoutS: 30 })],
       ['device defib faults, the instructor\'s', dev('faults', { lowBattery: true })],
+      ['device defib impedance, the instructor\'s', dev('impedance', { ohm: 75 })],
+      ['device defib compressions, the instructor\'s', dev('compressions', { depthCm: 5, ratePerMin: 110 })],
       ['the bedside monitor\'s alarms', cmd({ type: 'device', action: { device: 'alarm', action: 'silence' } })],
       ['the bedside monitor\'s skin', cmd({ type: 'device', action: { device: 'monitor', action: 'skin', value: 'philips' } })],
       ['a device action that is not an object', cmd({ type: 'device', action: 'selector' })],

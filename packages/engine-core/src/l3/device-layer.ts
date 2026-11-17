@@ -11,7 +11,7 @@ import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, 
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
 import { createAlarmInstance, instanceBlock, stepInstance, type AlarmInstance, type AlarmOwner } from './alarms/instance.ts';
-import { DEFIB_MODELS, deviceProfile, skinBand, type DefibModel } from './alarms/profile.ts';
+import { DEFIB_MODELS, deviceProfile, MONITOR_DECLARED, skinBand, type DefibModel } from './alarms/profile.ts';
 import { afterShock, applyDefib, createDefib, FALLBACK_DEFIB, stepDefib, validateDefib, type DefibSpec, type DefibState } from './defib-pacer/defib.ts';
 import { drawOutcome, shockClass, T_PEAK_WINDOW_S, type ShockOutcome } from './defib-pacer/outcome.ts';
 import { applyPacer, createPacer, FALLBACK_PACER, tcpSpec, validatePacer, type PacerSpec, type PacerState } from './defib-pacer/pacer.ts';
@@ -178,7 +178,9 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
       }
     }
     if (a.action === 'ageBand') return ['adult', 'paed', 'neo', 'paediatric', 'neonatal'].includes(a.value) ? undefined : 'ageBand must be adult, paed or neo';
-    return `unknown monitor action ${String((a as { action: string }).action)}`;
+    const name = String((a as { action: unknown }).action);
+    if (Object.hasOwn(MONITOR_DECLARED, name)) return (MONITOR_DECLARED[name] as (typeof MONITOR_DECLARED)[string]).validate((a as { value?: unknown }).value);
+    return `unknown monitor action ${name}`;
   }
   if (a.device === 'defib') {
     // the M2's vocabulary (plan E0): an unknown name, a room that is not an M2, or the command's own check
@@ -243,6 +245,7 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
     return true;
   }
   if (a.device === 'monitor') {
+    if (a.action !== 'skin' && a.action !== 'ageBand') return true; // MONITOR_DECLARED: no behaviour until its piece
     const band: AgeBand = a.action === 'ageBand' ? skinBand(a.value as 'adult') : d.alarms.profile.ageBand;
     const skin = a.action === 'skin' ? a.value : d.alarms.profile.skin;
     setProfile(d.alarms, deviceProfile(skin, band), t, out); // the defibrillator model, if set, is kept (R5a, row 58)

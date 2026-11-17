@@ -43,6 +43,7 @@ export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // demo/controller drug
 export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence page: the onset shapes (gamma vs chain)
 export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor
 export { M2_COMMANDS, M2_ENERGIES_J, M2_LIMIT_KEYS, M2_NIBP_INTERVALS_MIN, NOT_M2 } from './l3/defib-pacer/m2-vocabulary.ts'; // the ZOLL M2's frozen vocabulary (defibrillator plan E0): the learner allow-list (R1), the instructor's sheet (R3), the face (F0)
+export { MSG, messagePriority, type M2Message, type M2Mode, type M2Priority } from './l3/defib-pacer/connections.ts'; // the M2's connection words and their priority (the face, the instructor's sheet)
 export type * from './types-truth.ts';
 export type * from './types-neuro.ts';
 export type * from './types-eeg.ts';
