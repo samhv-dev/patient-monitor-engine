@@ -465,7 +465,8 @@ export type WireMessage = { v: 1; session: string; from: string; seq: number; se
    */
   | { kind: 'grant'; to: string; granted: boolean; reason?: string; ticket?: string }
   /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`.
-   *  `code: 'paused'` (L14): a learner device's drug was not given because the case was paused (PAUSED_REFUSAL). */
+   *  `code: 'paused'` (L14): a learner device's drug was not given, or its sample not drawn, because the case was paused
+   *  (PAUSED_REFUSAL). */
   | {
       kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
       code?: AckCode; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' | 'learner' | 'pump' };
@@ -508,10 +509,11 @@ export interface ManagedTransport extends Transport {
   onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
-/** The host's refusal codes: `recent` the same-drug lock (drug-lock.ts); `paused` (learner remote L14, the owner's ruling
- *  on N117) a learner device's drug while the case is paused: not given, nothing queued for the engine. */
+/** The host's refusal codes: `recent` the same-drug lock (drug-lock.ts); `paused` (learner remote L14) a learner device's
+ *  act on the patient (a drug, a sample) while the case is paused: not done, nothing queued for the engine. */
 export type AckCode = 'recent' | 'paused';
-/** The words of the `paused` refusal: the phone shows "Not given: the case was paused"; the host's Log and record the same. */
+/** The words of the `paused` refusal: the phone shows "Not given: the case was paused" (a sample: "Not sent: …"); the
+ *  host's Log and record the same. */
 export const PAUSED_REFUSAL = 'the case was paused';
 /** `code`: the host's refusal code when it gave one (AckCode). */
 export type AckResult = DispatchResult & { commandId: string; rttMs: number; code?: AckCode };
