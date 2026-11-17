@@ -1,6 +1,8 @@
 # The brain without blood flow, and its recovery: one brain energy state, read by the EEG, consciousness and breathing — Plan
 
-**STATUS: BEING BUILT; SECOND REVISION FOR REVIEW.** Every design question is decided (§9). The parameters were checked
+**STATUS: BEING BUILT; SECOND REVISION FOR REVIEW.** Every design question of the plan is decided (§9.1). Two
+questions are open (§9.2): the brain's normal delivery, which blocks B5c only, and the factor's reference for the
+patient bands whose own normal Hb is not 15, which bounds B2a's list of rows it may move. The parameters were checked
 against the published measurements in `research/81-evidence-brain-under-arrest-and-cpr.md` and, for temperature after
 the circulation returns, `research/85-evidence-temperature-and-recovery-after-return-of-circulation.md` (§5.1 gives
 the outcome number by number). This revision also answers what the first built pieces found where the plan's text did
@@ -118,7 +120,7 @@ Per compartment c, at each 10 Hz step:
    content on main is `caO2(14, 0.97, 95)` (named `CAO2_REF` in pull request 512, value unchanged), while the
    simulator's normal adult carries Hb 15 (`ODC_DEFAULT`, `l2/blood/odc.ts`), so the default patient rests at a
    delivery of about 1.07, not 1 (mine, arithmetic). Whether the brain's normal delivery should be the normal adult's is
-   a question raised outside this plan; this plan does not change the reference (§9.2).
+   an open question (§9.2, blocking B5c only); this plan does not change the reference.
 2. **Steady-state function** `fnSS_c(D)` = 1 above the compartment's abnormal level, 0 below its failure level, linear
    between. For the cortex these are today's `DO2_EEG_ABNORMAL` 20/50 and `DO2_EEG_LOST` 12/50 (Miller Ch35 p. 1122;
    Ch10 p. 211: EEG ischaemia from about 20, isoelectric at about 15, membranes kept between about 6 and 12), and
@@ -235,7 +237,9 @@ the breathing gate reads CBF today. The EEG steps after the organs and reads the
    at the reference saturation, (Hb ÷ the factor's reference Hb)^−k, so no hypoxaemia row moves. **The factor's
    reference Hb is the simulator's own normal adult, 15 g/dL** (decision, §9.1 item 6; `ODC_DEFAULT.hb`), so the
    default patient's flow is unchanged by the piece (factor exactly 1) and nothing newly misses its band because of
-   it. In the power form the ratio of flows between two Hb values does not depend on the reference, so Mühling's slope
+   it. **[MARKED: open, §9.2]** The default adult man is at 15, but the blood model's other default bands are not
+   (`bloodPatient`: adult woman and older man 13.5, child 12.5, infant 11.5, neonate 17 g/dL), so at a reference of
+   15 their resting flow moves (× 1.075, 1.133, 1.199 and 0.918, mine, arithmetic) although they are not anaemic. In the power form the ratio of flows between two Hb values does not depend on the reference, so Mühling's slope
    is read the same way at either reference (mine, arithmetic). The factor's reference is not the delivery reference of
    item 1 of §1.3 (Hb 14), which this plan does not change. Whether the two should be one content term (Brown 1985
    [ABS] names O2 content the major determinant) is a later question, not built (mine).
@@ -321,7 +325,7 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     4.8 g/dL; the vasodilator ceiling is WANTED]. Above the reference Hb the factor falls below 1; Brown's range
     reaches 19.1 g/dL, and above it the factor is held at its value there [P, mine: the same rule as the lower hold;
     pull request 512 at its last head has no upper hold, so either its rework adds it or the merged piece states the
-    gap and the next brain piece that touches `flow.ts` adds it].
+    gap and B5c or B6a, whichever starts first, adds it].
   - *The dilator reserve (a stated limit).* `targetCbf` multiplies its factors with no shared ceiling: below the
     autoregulation limit the pressure-passive flow is still multiplied by `o2Factor`, `co2Factor` and, after B2a, the
     anaemia factor, although the vessels are then already maximally dilated (mine). Haemorrhage is anaemia with
@@ -336,23 +340,30 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     PbtO2 and SjvO2 at t = 0 (Brown's cross-sectional relation says this is real).
   - *The rows the piece may move, and no other.* (1) Rows of patients who are in fact anaemic at the moment the row
     reads them (haemorrhage, haemodilution, a card with a low Hb), each listed with its Hb and the factor's value as
-    its cause. (2) The haemorrhage case's own-output row, the coronary perfusion pressure at 60 s of compressions (demo
+    its cause. **[MARKED: open, §9.2]** Whether the default patients of the other bands (Hb 13.5, 12.5, 11.5, 17) belong
+    here, or their own band's normal is the factor's reference, is the second open question. (2) The haemorrhage case's own-output row, the coronary perfusion pressure at 60 s of compressions (demo
     S5 haemorrhage `cppAt60`, band [15.03, 23.03]): it records what that case's patient did, not a number a source
     sets, so it is re-recorded after the reference decision with its cause stated (decision, §9.1 item 7). This
     permission is for that one recorded row; a band a source sets is never moved. (3) Nothing else: with the reference
     at 15 the default patient's rows return to their recorded values (B2a's control at 15 returned the tamponade
     drainage ROSC, the warm septic MAP, the CPR-offset spread and the glycine row; `eeg-baseline.json` and
-    `arrest-cortex.json`, recorded on default patients, follow from a factor of exactly 1 and are shown byte-identical
-    by the piece), and any other row that moves is a failure of the piece, to be explained by mechanism, not
-    re-recorded.
+    `arrest-cortex.json`, recorded on default men, follow from a factor of exactly 1 and are shown byte-identical
+    where the rig's Hb stays at 15; a rig whose fluids move its Hb moves only by that Hb, listed with it as cause), and
+    any other row that moves is a failure of the piece, to be explained by mechanism, not re-recorded.
   - *The glycine row is not the flow rise's.* At a reference of 14 the glycine-absorption cell (3 L of 1.5 % glycine:
     ICP at least 1 mmHg above the control) turned green through the dilution's flow rise, while the brain water it is
-    about stayed at +1.99 mL. It is not counted as passed by the flow rise (decision, §9.1 item 8): it stays an
-    expected failure and is re-specified on brain water, its true mechanism, as a named cell of the blood-fluids plan
+    about stayed at +1.99 mL. It is not counted as passed by the flow rise (decision, §9.1 item 8): whichever way the ICP
+    assertion falls at the reference of 15 (B2a's control returned it to +0.26), it is not evidence of the mechanism,
+    and the cell is re-specified on brain water, its true mechanism, as a named cell of the blood-fluids plan
     (`docs/plans/fu-9-blood-fluids.md`, F11 / task A8, where the brain-water gain `OSM_WATER_ML_PER_MOSM` is built),
     not of this plan. The source the cell needs: brain water against the fall of plasma osmolality in acute
     hypo-osmolality (Adrogué & Madias 2000, NEJM 342:1581, Hahn 2006, BJA 96:8, and Sandfeldt 2001, PMID 11162034, the
-    row's present sources, give the direction; a measured brain-water gain per mOsm/kg is WANTED, §5.3). The blood-fluids plan's change goes into this revision's hand-over.
+    row's present sources, give the direction; a measured brain-water gain per mOsm/kg is WANTED, §5.3). The cell, named
+    "F11 brain water": over the 2.5-h glycine run against the no-absorption control, brain water gained per mOsm/kg
+    of the fall of effective osmolality within the band its source states; until that source is read, the direction
+    (water gained) is the passing cell and the size is an expected failure carrying the plan's own comparison (an
+    ideal-osmometer brain of ≈ 1.1 L would gain ≈ 55 mL for −15 mOsm/kg, against the engine's +1.99 mL) [INF]. The ICP
+    assertion becomes a reported value, not a cell. The blood-fluids plan's change goes into this revision's hand-over.
   - *Cells after B2a and B2.* Weiskopf 2000 / Lieberman 2000: a normotensive, normoxic patient at Hb 5 and 4.8 g/dL is
     conscious with an EEG above the abnormal level (for any k in 0.65–1.34 delivery at Hb 5 stays above 0.40, mine;
     at normal pressure and normoxia the factor gives 0.90, 0.82, 0.74 and 0.73 at Hb 10, 7, 5 and 4.8 with a reference
@@ -514,7 +525,7 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 | A9 gasps under CPR | qualitative | numbers: 21.1 / 8.4 per min (continuous) and 15.4 / 1.1 (30:2) after 3–4 / 5–6 min of VF | Zuercher 2010 CCRP [FT] |
 | §7 compression artefact | attachment, no source | sourced; piece B3b | Kim 2021 [FT]; Nitzschke 2012, Fatovich 2006 [ABS]; Sethi 2008 [SEC] |
 | R1 17 ± 9 s | cell | stands; relation to arrest length and no cumulation added; Plaschke's 5 min added | de Vries 1997, Vriens 1996, Plaschke 2006 [ABS] |
-| Q2 middle of the curve | no source | animal points placed (§2.3); the human curve between 1 and 20 min stays [P] | Chen 2013, 2019 [FT]; Jia 2008, Cerchiari 1990, Lin 1977, Schmidt-Kastner 1986, Jørgensen 1981 [ABS] |
+| Q2 middle of the curve | no source | animal points placed (§2.3); the human curve between 1 and 20 min stays [P] | Chen 2013, 2019, Jia 2008 [FT]; Cerchiari 1990, Lin 1977, Schmidt-Kastner 1986, Jørgensen 1981 [ABS] |
 | R5 awakening | Elmer only | three cohorts: 46–65 h, 3.2 days, day 2; none relates to no-flow time | Elmer 2023 [FT]; Grossestreuer 2013, Fugate 2011 [ABS] |
 | R6 cooling after return | conflict, open question | **decided: no temperature term on recovery**; the sign changes with species and end point and no source sizes a term per degree; protection by immediate cooling and harm from fever become the injury state's placeholders | research note 85: Chen 2013, Jia 2008 [FT]; Lybeck 2018, Annborn 2023, Thoresen 2010, Kuboyama 1993, Zeiner 2001, Hickey 2003 [ABS] |
 | `Q10_BRAIN` 7 %/°C, floor 0.3 | [P], "tables" | sourced for 33–37 °C; below about 28 °C the line departs from the measurements (finding for the organ tables, not changed) | McCullough 1999, Michenfelder & Milde 1991 [ABS] |
@@ -613,6 +624,7 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 | Hofmeijer et al. 2015, Neurology (PMC4515041); J Intensive Care 2016 (PMC4818927) | [FT] | continuous EEG within about 11–12 h in good outcomes under 33 °C |
 | Nutma et al. 2022, Resuscitation (PMID 35122892) | [ABS] | outcome by EEG class at 33 against 36 °C; pattern distribution by arm not in the abstract |
 | Thoresen et al. 2010, Pediatrics (PMID 20566612); Hallberg et al. 2010, Acta Paediatr (PMID 20050830) | [ABS] | newborns: background normal by 48 h cooled against 24 h normothermic |
+| Pediatr Neonatol 2014 (PMID 24440513) | [ABS] | newborn piglets after hypoxia–ischaemia: 4 of 9 head-cooled continuous normal voltage at 6 days, none normothermic |
 | Zeiner et al. 2001, Arch Intern Med (PMID 11525703); Bro-Jeppesen et al. 2013, Resuscitation (PMID 23917079); Hickey et al. 2003, Crit Care Med (PMID 12576962) | [ABS] | fever after return: OR 2.26 per °C above 37 °C; HR 2.0 per °C above 36.5 °C; rat injury worse with fever at 24 h |
 | Ergin et al. 1994 (PMID 8127108); Walpoth et al. 1997, N Engl J Med (PMID 9366581) | [ABS] | tolerance of circulatory arrest at deep temperatures (context) |
 
@@ -677,15 +689,16 @@ organ and sanity rows) byte-identical unless the piece says which row moves and 
 hours are estimates.
 
 **Order.** B1 structure (on main) → B2a anaemia's flow rise (in review) and B5 brainstem relocated (in review) → B5b
-the brainstem's timer on the organ clock → B5c the brainstem reads delivery → B2 consciousness → B3 artefacts and
-readers → B3b compression artefact → B4 arrest cells → B6a cortex store → B6b cortex debt → B7a breathing re-sourced →
+the brainstem's timer on the organ clock and the arrest record → B2 consciousness → B3 artefacts and readers → B3b
+compression artefact → B4 arrest cells → B6a cortex store → B6b cortex debt → B7a breathing re-sourced →
 B7b brainstem `{ store, fn, debt }` (BLOCKED on a source) → B8 glucose → B9 anaesthetic critical flow (BLOCKED on a
-source).
+source). B5c (the brainstem reads delivery) is outside this chain: it needs B5b and B2a and the answer to the
+delivery-reference question (§9.2), and nothing waits for it.
 B2a must merge before B2 (the condition of the consciousness decision). B5b needs B5. B5c needs B5b and B2a (the
 misreading it repairs is the flow rise's). B2 does not need B5b or B5c: it reads the cortex only; B5c and B2 share no
 file, but both may move rows of anaemic and haemorrhaging patients, so whichever merges second records against the
-other's main and says so. B3b needs B3. B7a needs B5b (a timer that measures time since the loss of flow in both modes)
-and B5c (the entry it reads); its R2 cell needs B6b. B8 needs only B1 and may run any time after B4. B7b and B9 are
+other's main and says so. B3b needs B3. B7a needs B5b (a timer and an arrest record that measure time since the loss of
+flow in both modes, through compressions); it does not need B5c; its R2 cell needs B6b. B8 needs only B1 and may run any time after B4. B7b and B9 are
 blocked on sources.
 
 | Piece | What | State (main 068c7130) | Advisor | Needs before it starts |
@@ -693,15 +706,15 @@ blocked on sources.
 | B1 | Structure, moved, no change | **on main** (pull request 491) | design | — |
 | B2a | Anaemia's flow rise in `targetCbf` | **in review**, pull request 512, in rework: the reference Hb to 15 (§9.1 item 6), the haemorrhage row re-recorded (item 7), the glycine row back to an expected failure (item 8) | design | — (its rework is the above) |
 | B5 | Brainstem gate state relocated | **in review**, pull request 504 | none | — |
-| B5b | The brainstem's no-flow timer on the organ model's clock, both modes | not started | none | B5 merged |
-| B5c | The brainstem entry reads delivery; the vasomotor gate reads the entry | not started | design | B5b and B2a merged |
+| B5b | The brainstem's no-flow timer on the organ model's clock, both modes; the arrest record | not started | design | B5 merged |
+| B5c | The brainstem entry reads delivery; the vasomotor gate reads the entry | not started | design | B5b and B2a merged; the delivery-reference question answered (§9.2) |
 | B2 | Consciousness | not started | none | B2a merged (decided, §9.1 item 4) |
 | B3 | Artefacts and readers | not started | none | B2 merged |
 | B3b | Compression artefact in the EEG | not started | none | B3 merged |
 | B4 | Arrest validation cells | not started | none | B3 merged (its A4 cell reads B3) |
 | B6a | Cortex O2 store | not started | design | B4 merged (its A1/A2 cells re-read B4's rows) |
 | B6b | Cortex debt and the recovery table | not started | design | B6a merged (decided, §9.1 items 2 and 5: no temperature term) |
-| B7a | Breathing re-sourced on the brainstem entry, gasping by chance or by setting | not started | design | B5b and B5c merged (decided, §9.1 items 1 and 9); its R2 cell B6b |
+| B7a | Breathing re-sourced on the brainstem entry, gasping by chance or by setting | not started | design | B5b merged (decided, §9.1 items 1 and 9); its R2 cell B6b |
 | B7b | Brainstem `{ store, fn, debt }` | BLOCKED | design | a brainstem-tolerance source |
 | B8 | Glucose substrate | not started | none | B1 (on main); after B4 |
 | B9 | Anaesthetic critical flow | BLOCKED | none | a flattening-level and dose source |
@@ -719,6 +732,7 @@ blocked on sources.
 | No shared vasodilator ceiling (CBF × 4.05 at Hb 5 and PaO2 30) | B2a | §7 attachment, unchanged |
 | The gate's constants were said to "become its parameters" in B5; as built they stay in `spont.ts` | B5 (pull request 504) | §1.4: they stay until B7a retires the gasp rule and B7b moves the threshold and the reopening into the brainstem compartment's data |
 | The no-flow timer stands still under bag ventilation in MODELED (58 s against 79 s) | B5 | B5b; B7a depends on it |
+| The no-flow timer is deleted under compressions (CPR flow above 0.2, VF's no-flow flag false), so it is not "time since the loss of flow" | this revision, from the code | B5b's arrest record |
 
 ### 6.2 What the pieces changed outside their own files
 
@@ -750,15 +764,21 @@ blocked on sources.
   with their sources as data fields: the form (Brown 1985), k = 0.683 computed from Mühling 1999's means (§2.2), the
   lower Hb hold 4.8 g/dL (Lieberman 2000) [P], the upper hold at Brown's 19.1 g/dL [P] (§2.2), and **the factor's
   reference Hb = the simulator's normal adult, 15 g/dL** (decision, §9.1 item 6), read from the blood model's own
-  default (`ODC_DEFAULT.hb`), not a second literal. The delivery reference `CAO2_REF` (Hb 14, the old literal named)
-  is a separate quantity and keeps its value. The factor reads Hb, not CaO2 (§1.5.5). The couplings census gains
+  default man (the `bloodPatient` band, `ODC_DEFAULT.hb` 15), not a second literal. The delivery reference `CAO2_REF`
+  (Hb 14, the old literal named) is a separate quantity and keeps its value. **At pull request 512's last head one
+  constant, `HB_REF` 14, feeds both the factor and `CAO2_REF`**: a rework that only sets it to 15 would silently move
+  delivery, PbtO2 and SjvO2 for every patient. The rework splits it into two constants, the factor's reference (15)
+  and the delivery reference (14, unchanged). The factor reads Hb, not CaO2 (§1.5.5). The couplings census gains
   `organs.brain.anaemia: blood.out.hb → organs.brain.cbfRel`.
-- **Tests:** unit: factor 1 at Hb 15 exactly; monotonic; held below 4.8 and above 19.1 g/dL. Reported: CBF at CPP below
+- **Tests:** unit: factor 1 at Hb 15 exactly; monotonic; held below 4.8 g/dL, and above 19.1 g/dL if the rework adds the upper
+  hold (otherwise the hold and its test go to the first later piece that edits `l2/brain/`, B5c or B6a, whichever
+  starts first, and the merged B2a states the gap). Reported: CBF at CPP below
   the lower limit with and without the factor (the dilator-reserve limit). Cells: Mühling (CBF at Hb 10.3 ÷ CBF at
   14.5 equal to the source's velocity ratio); Todd (direction and size at Hct 20, as a check, rats); hypoxaemia rows
   unchanged (`o2Factor` untouched); the no-latch set of §1.5.2 with the Hb point recomputed; the Cushing surge target
-  stays in [0, 1] (the NaN after the return of circulation at Hb 5.3). Regression: every default patient's row
-  byte-identical (`eeg-baseline.json`, `arrest-cortex.json` included); the piece lists every row of a patient who is in
+  stays in [0, 1] (the NaN after the return of circulation at Hb 5.3). Regression: every default man's row
+  byte-identical where the rig's Hb stays at 15 (`eeg-baseline.json`, `arrest-cortex.json` included; a rig whose fluids
+  move its Hb is listed with that Hb as cause); the piece lists every row of a patient who is in
   fact anaemic, with its Hb, the factor and its moved values (CBF, CBV, ICP, PbtO2, SjvO2), and attributes each.
 - **Rows it may move, and why** (§2.2): the anaemic patients' rows, each with its cause; the haemorrhage case's
   own-output `cppAt60` row, re-recorded once after the reference decision with its cause stated (decision, §9.1 item
@@ -828,22 +848,34 @@ blocked on sources.
 - **Must not change:** any breathing value.
 - **Owner ruling:** none. It is kept separate so that the later pieces change values only.
 
-### B5b. The brainstem's no-flow timer on the organ model's clock, in both modes (plan 5 h · 0.6–0.8 executor-h). Advisor: none.
+### B5b. The brainstem's no-flow timer on the organ model's clock, in both modes, and the arrest record (plan 6 h · 0.8–1.0 executor-h). Advisor: design.
 - **Why:** in MODELED the timer advances only while the spontaneous drive is evaluated (source spontaneous, ventilator
   or external); under bag ventilation it stands still (course c: 58 s in MODELED against 79 s in MANUAL in B5's
-  record). B7a takes its times as minutes since the loss of flow, which is what the timer must measure.
+  record). B7a takes its times as minutes since the loss of flow, which is what the timer must measure. And
+  `anoxS` is not that time under compressions: it is deleted as soon as the brainstem is perfused (`cbfRel` ≥ 0.2,
+  and CPR flow is 0.30–0.40) and the no-flow flag is false in VF under compressions (VF has no `pulseless` option;
+  `coRatio` > 0 once compressions run), so it vanishes during CPR and restarts at every pause.
 - **What:** `anoxS` and `gate` are stepped where the cortex entry is, in the organ model's step (`stepBrainEnergy`,
   `l2/organs/pipeline.ts`, the brain's 10 Hz grid), in both modes and whatever ventilates the patient, reading the
   same `cbfRel` and the same no-flow flag (rhythm pulseless or CO ≤ 0, today computed in the resp pipeline; it reaches
   the organ step through the organ inputs, one definition). `stepBrainstem` keeps only the pulseless timer `plS`
   until B7a retires it. The constants stay in `spont.ts` with their values. Consciousness and breathing still read
   the entry one pass late (§1.4).
+  **The arrest record:** `brainstem.arrest?: { onsetS, noFlowBeforeCprS? }`, created when the pulse is lost (the
+  pulseless flag: a pulseless rhythm or a no-beat rhythm, `NO_BEAT_RHYTHMS`), deleted at the return of a pulse, and
+  stepped on the same organ clock; `noFlowBeforeCprS` is set when compressions first start (`hs.cpr.active`) in that
+  arrest. It is what B7a reads for "minutes since the loss of flow" and for "the no-flow time before compressions";
+  `anoxS` keeps its meaning (time unperfused, the gate). A low-flow state without arrest creates no record. Snapshot:
+  the record is part of the entry.
 - **Tests:** unit: the timer advances at the organ step's dt in MANUAL and MODELED alike, with the drive evaluated or
-  not; course c in MODELED now counts through the bag ventilation (its `anoxS` reaches MANUAL's, within one organ
+  not; the arrest record lives from pulse loss to the return of a pulse, survives compressions and their pauses, and
+  holds the no-flow time before the first compression; course c in MODELED now counts through the bag ventilation (its `anoxS` reaches MANUAL's, within one organ
   step). Regression: `arrest-breathing.json` re-recorded with the cause stated (MODELED cadence 1 Hz → 10 Hz in every
-  course; course c's timer through bag ventilation), every other course's MANUAL rows byte-identical; s9b/s9c rows
-  green; snapshot round trip.
-- **Must not change:** the thresholds, the gasp rule, the reopening time, `plS`, every MANUAL breathing value.
+  course; course c's timer through bag ventilation), the MANUAL rows are expected byte-identical, and any
+  MANUAL move is reported with its cause (the no-flow flag is now read in the organ step, whose place in the pass
+  order differs from the resp pipeline's; the piece checks it before claiming identity); s9b/s9c rows green; snapshot
+  round trip.
+- **Must not change:** the thresholds, the gasp rule, the reopening time, `plS`.
 - **Owner ruling:** none. B7a depends on it.
 
 ### B5c. The brainstem reads delivery; the vasomotor centre's perfusion gate reads the brainstem (plan 7 h · 0.9–1.2 executor-h). Advisor: design.
@@ -868,8 +900,14 @@ blocked on sources.
   (direction only; no source gives the size). Regression: the piece lists every moved row and attributes it to the
   delivery read: anaemic and haemorrhaging patients, and **the default patient wherever flow is between 0.2 and 0.6**
   (general anaesthesia's coupled flow fall, CPR), because the default patient's content is above the delivery
-  reference (delivery ≈ 1.07 × flow, §1.3.1). That last group moves only if the delivery reference stays at Hb 14
-  (§9.2); the piece starts after that question is answered.
+  reference (delivery ≈ 1.07 × flow, §1.3.1); severe hypoxaemia, where delivery departs furthest from flow; the
+  asphyxial-arrest courses (falling content before the arrest). The default patient's group moves only if the delivery
+  reference stays at Hb 14 (§9.2). **A source-set band is never moved:** the CPR coronary perfusion pressure at 70 s
+  is 24.7 mmHg on main against Paradis 1990's 15–25 (cited in `baroreflex.ts`); if the delivery read takes it or any
+  other source-set band outside its band, the piece stops and asks.
+- **Relative to B7a:** B7a does not wait for B5c. If B5c lands first, B7a's gate reads delivery from the start; if
+  B7a lands first, its gate compares flow and B5c switches the comparison and re-records the arrest-breathing record
+  with that cause.
 - **Must not change:** the thresholds' values, the gasp rule, `targetCbf`, the cortex.
 - **Owner ruling:** the delivery reference question (§9.2) before it starts.
 
@@ -907,9 +945,9 @@ blocked on sources.
 - **Owner ruling:** given (§9.1 items 2 and 5).
 
 ### B7a. Breathing after arrest, re-sourced (plan 12 h · 1.5–2.0 executor-h). Advisor: design.
-- **What:** by the decision (§9.1 item 1), on the brainstem entry and its no-flow timer as B5b and B5c leave them (the
-  sources state the course in minutes after the loss of flow, which is what the timer measures from B5b in both modes,
-  so the times are taken as stated, not fitted):
+- **What:** by the decision (§9.1 item 1), on the brainstem entry and B5b's arrest record (the sources state the
+  course in minutes after the loss of flow, which is what the record measures from B5b in both modes and through
+  compressions, so the times are taken as stated, not fitted):
   - **Whether this patient gasps** (decision, §9.1 item 9), decided once per arrest:
     - *The incidence* is data with its source, in a new `l2/neuro/gasping.ts`: after the arrest, 46 % when the cause
       is cardiac and 32 % for other causes (Clark 1992 [ABS], 445 out-of-hospital arrests, the one source read that
@@ -923,16 +961,20 @@ blocked on sources.
       [INF, mine: Clark's "cardiac etiology" is presumed cardiac disease; the mapping is the plan's].
     - *The draw:* one uniform value `u` from a new named random stream `'gasping'` (added to `StreamName` and
       `STREAM_NAMES` in `rng/sfc32.ts`; each stream is seeded from hash(seed, name), so no other stream's draws move),
-      taken once when the brainstem's no-flow timer starts (the entry has no `anoxS` and becomes unperfused), always,
-      whatever the setting, and kept in the entry (`brainstem.gaspU`) for the whole arrest; a new arrest after a
-      return of circulation draws again. The patient gasps after the arrest if `u` < the after-arrest incidence for
+      taken once when B5b's arrest record is created (the pulse is lost), always, whatever the setting, and kept in
+      the record (`arrest.gaspU`) for its lifetime; pauses in compressions do not redraw, a low-flow state without
+      arrest does not draw, and a new arrest after a return of a pulse draws again. A card with a fixed `seed` gasps
+      the same way on every run. The patient gasps after the arrest if `u` < the after-arrest incidence for
       the cause, and under compressions if `u` < the under-compressions incidence; one draw with two thresholds, so a
       patient who gasps under compressions also gasped before them [INF, mine: no source follows the same patients
-      through both phases]. Older snapshots seed the stream as `ectopyHazard` is seeded today (`engine.restore`).
+      through both phases]. Its stated artefact: because the under-compressions threshold (26 %) is one figure for
+      every cause while the after-arrest ones differ, a patient of other cause who gasped after the arrest is likelier
+      to gasp under compressions (26/32) than a cardiac one (26/46), although Wolfskeil reports more gasping in VF. Older snapshots seed the stream as `ectopyHazard` is seeded today (`engine.restore`).
     - *The setting:* `gasping?: 'chance' | 'yes' | 'no'` in `NeuroProfile` (`types-neuro.ts`; absent = `'chance'`).
       The scenario format carries it as `patient.neuro.gasping` (the patient's neuro block passes `NeuroProfile`
       1:1; `packages/controller/scenarios/pme-scenario-1.schema.json` and `-2.schema.json` gain the enum). The
-      instructor sets it live through the existing `neuroProfile` clinical event, from a three-way control "Gasps
+      instructor sets it live through the engine's existing `neuroProfile` clinical event (the controller's
+      `ClinicalEvent` union in `controller/src/protocol.ts` and its command list do not carry it yet; B7a adds it), from a three-way control "Gasps
       after arrest: by chance / yes / no" on the instructor's Patient tab (`apps/demo/src/app/panel/patient.ts`), shown
       with the drawn outcome when the setting is "by chance" and an arrest is running. `'yes'` and `'no'` override the
       draw; the draw is still taken, so the stream's position never depends on the setting.
@@ -976,7 +1018,7 @@ blocked on sources.
   reject the field's values.
 - **Must not change:** the cortex, consciousness, the circulation (gasps raising carotid flow and CPP are an
   attachment, §7), every other random stream.
-- **Owner ruling:** given (§9.1 items 1 and 9). Needs B5b and B5c; R2 cell needs B6b.
+- **Owner ruling:** given (§9.1 items 1 and 9). Needs B5b; R2 cell needs B6b; B5c before or after (B5c's text).
 
 ### B7b. The brainstem's `{ store, fn, debt }` (plan 8 h · 1.0–1.3 executor-h). Advisor: design. **BLOCKED.**
 - **What:** the brainstem entry becomes an `EnergyEntry` on the shared equations, replacing B7a's timer; the perfusion
@@ -1010,7 +1052,7 @@ blocked on sources.
 - **Tests (when unblocked):** carotid clamping under isoflurane and halothane at the sources' values (Michenfelder,
   Messick, Grady).
 
-Total ≈ 114 plan hours (14.4–19.0 executor-hours), estimates, of which B1 is built, B2a and B5 are in review, and
+Total ≈ 115 plan hours (14.6–19.2 executor-hours), estimates, of which B1 is built, B2a and B5 are in review, and
 B7b's 8 h and B9's 5 h are not schedulable until their sources are found. B7a grows with the gasping draw and its
 setting; its estimate stays 12 h, with the risk stated here (mine).
 
@@ -1144,10 +1186,13 @@ setting; its estimate stays 12 h, with the risk stated here (mine).
    arrest, the `NeuroProfile.gasping` setting with its scenario field `patient.neuro.gasping` and its instructor
    control, and what the tests hold fixed).
 
-### 9.2 Raised outside this plan (not a question of this plan's text)
+### 9.2 Open (each blocks only what it names; the questions in full are in this revision's hand-over)
 
-- **The brain's normal delivery.** Delivery is relative to the content at Hb 14 (`caO2(14, 0.97, 95)`), while the
-  simulator's normal adult is at Hb 15, so the default patient rests at delivery ≈ 1.07. B5c, which moves the
-  vasomotor gate from flow to delivery, would move the default patient's rows wherever flow lies between 0.2 and 0.6
-  if the reference stays at 14. The question and its options are in this revision's hand-over; B5c starts after it is
-  answered. The plan's other pieces do not depend on it.
+1. **The brain's normal delivery.** Delivery is relative to the content at Hb 14 (`caO2(14, 0.97, 95)`), while the
+   simulator's normal adult man is at Hb 15, so he rests at delivery ≈ 1.07. B5c, which moves the vasomotor gate from
+   flow to delivery, would move the default man's rows wherever flow lies between 0.2 and 0.6 (general anaesthesia,
+   CPR) if the reference stays at 14. **Blocks B5c only.**
+2. **The factor's reference for the other default bands.** The decision sets the factor's reference at the normal
+   adult's 15 g/dL so that the default patient is unchanged; the blood model's default woman and older man (13.5),
+   child (12.5), infant (11.5) and neonate (17) are not at 15, so their resting flow moves although they are not
+   anaemic (§1.5.5, marked). **Bounds B2a's list of the rows it may move**; the rest of B2a stands.
