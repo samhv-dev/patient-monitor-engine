@@ -5,7 +5,7 @@ import { attachReveal, normalizeSessionCode, RevealGesture, type Formulary } fro
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
-import { instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
+import { hashOf, instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
 import { instructorPin, learnerPin, type InstructorPin } from './instructor-pin.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
@@ -37,7 +37,7 @@ import { watchHiddenTab } from './hidden-tab.ts';
 import { mountDepthWindow } from './views/depth.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { stoppedNotice } from './engine-stopped.ts';
-import { deviceKey, pickerView } from './views/join.ts';
+import { deviceKey, pickerView, PICKER_WORDS } from './views/join.ts';
 import { pumpPageView } from './pump/page.ts';
 import { mountFlows, pumpLink } from './pump/controls.ts';
 import { faceProfilesOf, shippedPumpDevices } from './pump/devices.ts';
@@ -73,7 +73,6 @@ const moved = normalizeSessionCode(q.get('moved') ?? '');
 // landscape, the room model's look), `#/depth` the depth-of-anaesthesia window (EEG plan E12), anything else today's
 // learner monitor
 const shows = follow ? instrumentOf(location.hash) : null;
-const defibWindow = shows === 'defib';
 if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 if (follow && shows === 'remote') document.documentElement.dataset.learner = 'remote'; // L6: the monitor strip over the tabs (app.css)
 if (follow && shows === 'pump') document.documentElement.dataset.learner = 'pump'; // A1: the rack, no monitor (app.css)
@@ -166,11 +165,12 @@ if (follow && shows === 'pick') {
   document.title = 'Infusion pumps: patient monitor simulator';
   Object.assign(window, { __pmePumpPage: page, __pmeApp: { shell, frames, site } });
 } else if (follow && shows && shows !== 'pick' && shows !== 'remote') {
-  if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
-  // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
-  const what = defibWindow ? 'Defibrillator' : shows === 'depth' ? 'Depth of anaesthesia' : 'Learner monitor';
+  // An address it does not know is the learner monitor's; an instrument's own address is kept, so a reload reopens it
+  if (location.hash !== hashOf(shows)) history.replaceState(null, '', `${location.pathname}${location.search}${hashOf(shows)}`);
+  // Its status and its own Sound / Silence sit under the monitor: the monitor view hides the top bar
+  const what = PICKER_WORDS.cards.find((c) => c.show === shows)?.title ?? '';
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': what });
-  shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
+  shell.add({ id: 'monitor', title: what, el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
   const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { show: shows, device: deviceKey() });
   if (shows === 'depth') {
     // E12: the depth device over its follower's monitor, which is not this screen's instrument (its engine is the
@@ -190,7 +190,6 @@ if (follow && shows === 'pick') {
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
-  if (defibWindow) document.title = `${what}: patient monitor simulator`;
   Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
 } else if (moved) {
   document.body.replaceChildren(h('main', { class: 'host-moved' },
