@@ -25,9 +25,11 @@ export const WIRE_LIMITS = {
  * plan's 4 ("3 plus a spare" counted one stand-in), which would drop the first tick of anaphylaxis and air embolism.
  * `bytes`: a `vent` body's largest JSON [ENG: network; that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
  */
-export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16 } as const;
+export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16, alarms: 32, alarmChars: 80 } as const;
 // `batch` (R8c): the most `cmds` one relay-port message packs [ENG: network; at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
 // 16 holds two windows, an animation frame that came late]; `bytes` bounds it too (a steady tick is 0.25 KB).
+// `alarms`, `alarmChars`: an `alarms` body's most alarms and longest alarm text [ENG: network; the ventilator model has 15
+// alarms (ventilator alarms.ts) and its longest words, "Disconnection on patient side", are 29 characters].
 
 /**
  * A learner's `prep` and `infusion` commands (plan learner-action-remote.md §4 D2): `components`, the most products one
@@ -238,6 +240,9 @@ function pumpBodyOk(b: Record<string, unknown>): boolean {
       return false;
   }
 }
+const PRIORITIES: ReadonlySet<unknown> = new Set(['high', 'medium', 'low']);
+const ventAlarmOk = (a: unknown): boolean =>
+  isObj(a) && typeof a.id === 'string' && a.id.length <= 64 && typeof a.text === 'string' && a.text.length <= VENT_LIMITS.alarmChars && PRIORITIES.has(a.priority) && typeof a.silenced === 'boolean';
 function ventBodyOk(b: unknown): boolean {
   if (!isObj(b) || b.v !== 1) return false;
   switch (b.kind) {
@@ -259,6 +264,9 @@ function ventBodyOk(b: unknown): boolean {
       break;
     case 'control':
       if ((b.patch !== undefined && !isObj(b.patch)) || (b.circuit !== undefined && !CIRCUITS.has(b.circuit)) || (b.profile !== undefined && typeof b.profile !== 'string')) return false;
+      break;
+    case 'alarms':
+      if (!Number.isInteger(b.tick) || !Array.isArray(b.alarms) || b.alarms.length > VENT_LIMITS.alarms || !b.alarms.every(ventAlarmOk)) return false;
       break;
     case 'settings':
       if (!isObj(b.cfg) || (b.hidden !== undefined && typeof b.hidden !== 'boolean')) return false;

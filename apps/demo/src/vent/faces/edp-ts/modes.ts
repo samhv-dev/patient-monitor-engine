@@ -108,6 +108,7 @@ export const EDP_SPEC: FaceSpec = {
   modes: MODES,
   matchMonitorFlow: false, // the face sets Ti; the monitor's matched flow would overwrite it every frame (plan GM1)
   alarmProfile: ALARM_PROFILE,
+  alarmText,
   init: INIT,
   settle,
 };

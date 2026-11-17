@@ -3,7 +3,7 @@
 import './app.css';
 import { attachReveal, normalizeSessionCode, RevealGesture, type Formulary } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
-import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
+import { limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
 import { hashOf, instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
 import { instructorPin, learnerPin, type InstructorPin } from './instructor-pin.ts';
@@ -421,7 +421,7 @@ if (follow && shows === 'pick') {
   shell.right.append(alarm, sound, code);
   function alarmText(): string {
     const s = link.alarmSummary;
-    return s.level && s.top ? `${LEVEL_MARK[s.level]} ${alarmLine(s.top).text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? LIMITS_OFF_LABEL : 'No alarms';
+    return s.level && s.words ? `${LEVEL_MARK[s.level]} ${s.words}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? LIMITS_OFF_LABEL : 'No alarms';
   }
   const drawAlarm = throttle(() => {
     const s = link.alarmSummary;

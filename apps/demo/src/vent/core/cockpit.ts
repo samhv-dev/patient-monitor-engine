@@ -6,7 +6,7 @@
 import {
   bannerText, clamp, DT, loadPreset, lungBaseOf, manualBreath, modeName, monitorMatchedFlow, resetPhysics, runScenario,
   setMode, silenceAlarms, toggleHold, ventAlarms,
-  type Measured, type PresetId, type VentAlarm, type VentConfig, type VentDriver, type VentPhase, type VentPhysics, type VentState,
+  type Measured, type PresetId, type VentAlarm, type VentAlarmReport, type VentConfig, type VentDriver, type VentPhase, type VentPhysics, type VentState,
 } from '@pme/ventilator';
 import { createAlarmView, type AlarmEvent, type AlarmSignals } from './alarms-view.ts';
 import { createRecorder } from './record.ts';
@@ -65,6 +65,8 @@ export interface Cockpit {
   scenario(id: string): void;
 
   alarms(): AlarmView;
+  /** The alarms the face shows now, in its words and priorities, as the link reports them to the monitor side. */
+  alarmReport(): VentAlarmReport[];
   /** The silence key: with a profile its presses (`silenceS`), otherwise v1.9's 120 s. */
   silence(): void;
   /** Esc's alarm part (research/57 H-25): reset the latched lamps of the alarms that have ended; true when one was. */
@@ -125,6 +127,7 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   d.onStep = () => {
     rec.step(vs);
     view?.step(P.t, conditions(), S); // every step, frozen or not: a freeze stops the display, not the alarms
+    d.reportAlarms(c.alarmReport());
     if (frozen) return;
     BUF.p.push(P.dispPaw); BUF.f.push(P.dispFlowLpm); BUF.v.push(P.V); BUF.t.push(P.t); BUF.ph.push(P.phase); BUF.vb.push(Math.max(0, P.V - P.breathVstart));
     const k = keep();
@@ -189,6 +192,16 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
     preset(id) { loadPreset(vs, id); syncBase(); emit('preset'); },
     scenario(id) { runScenario(vs, id); clearBuf(); emit('scenario'); },
     alarms: () => (view ? { banner: bannerText(vs), active: profiled(conditions()), signals: view.signals(P.t) } : { banner: bannerText(vs), active: profiled(ventAlarms(vs)) }),
+    alarmReport() {
+      const words = (a: Pick<VentAlarm, 'id' | 'text'>) => face.alarmText?.(a.id) ?? a.text;
+      if (!view) {
+        const silenced = vs.silenceUntil > P.t;
+        return profiled(ventAlarms(vs)).map((a) => ({ id: a.id, text: words(a), priority: a.priority, silenced }));
+      }
+      const s = view.signals(P.t);
+      const text = new Map(conditions().map((a) => [a.id, a.text]));
+      return s.signals.filter((x) => x.active).map((x) => ({ id: x.id, text: words({ id: x.id, text: text.get(x.id) ?? x.id }), priority: x.priority, silenced: s.silencedS > 0 }));
+    },
     silence() {
       if (view && prof?.silenceS?.length) silenceAlarms(vs, view.silence(P.t));
       else silenceAlarms(vs);

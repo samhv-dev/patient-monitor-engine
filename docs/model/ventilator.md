@@ -179,7 +179,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | The window link (the second transport): the ventilator in its own window/iframe, the monitor elsewhere in the same browser. |
 | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | Link profiles: one per lung-pathology row (pathology/catalogue.ts). |
 | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The window link over the relay (plan room-and-instruments.md R8c): a cockpit on another device and the host's monitor exchange the link's messages inside the controller's `vent` message (R8a), which the relay carries bet |
-| [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | A ventilator linked to a room drives the room's patient through the room's host, which takes from it only what a ventilator does: its breaths (the VentFrame), its own circuit at the Y-piece, and its settings for a hand-o |
+| [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | A ventilator linked to a room drives the room's patient through the room's host, which takes from it only what a ventilator does: its breaths (the VentFrame), its own circuit at the Y-piece, its settings for a hand-over |
 | [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts) | Ventilator side of the window link: runs the ventilator on real time × scale, but never past the tick the monitor's `clock` messages allow (the engine is the master clock; before the first clock message it may run 2·LEAD |
 | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | Engine → vent: the `lungState` event IS the patient's lung. |
 | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Lung mechanics of the original simulator (ventilator-sim-hamilton.html v1.9, "ENGINE" block), ported line for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil (airway clo |
@@ -207,6 +207,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 |---|---|---|
 | [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) | 1 | 0 |
 | [`alarms-frame.test.ts`](../../packages/ventilator/test/alarms-frame.test.ts) | 0 | 0 |
+| [`alarms-report.test.ts`](../../packages/ventilator/test/alarms-report.test.ts) | 0 | 0 |
 | [`catalogue-md.test.ts`](../../packages/ventilator/test/catalogue-md.test.ts) | 0 | 0 |
 | [`determinism.test.ts`](../../packages/ventilator/test/determinism.test.ts) | 0 | 0 |
 | [`effort-parity.test.ts`](../../packages/ventilator/test/effort-parity.test.ts) | 0 | 0 |

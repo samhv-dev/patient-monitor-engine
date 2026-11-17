@@ -4,11 +4,13 @@
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
 import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, PUMP_ISSUED_BY, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type NotGiven, type PumpMismatchNews, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { alarmLine } from './alarms.ts';
 import { describeCommand, notDoneOf, spanText, timeText } from './describe.ts';
 import { DEVICE_WORDS, type DeviceKind } from './device-names.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
 import { PrepBoard } from './teach2/prep-board.ts';
+import { VENT_LEVEL, ventAlarmChanges, ventAlarmLogLine, ventAlarmShort, type VentAlarmsEvent } from './vent-alarms.ts';
 
 export type AlarmStatusEvent = Extract<EngineEvent, { type: 'alarmStatus' }>;
 export type DeviceStatusEvent = Extract<EngineEvent, { type: 'deviceStatus' }>;
@@ -33,6 +35,8 @@ export class Link {
   readonly ctl: ControllerSession;
   readonly host: AppSession | null;
   alarms: AlarmStatusEvent | null = null;
+  /** The ventilator's alarms, as the host last reported them (null: none since the case began). */
+  ventAlarms: VentAlarmsEvent | null = null;
   device: DeviceStatusEvent | null = null;
   /** The session's log: it runs on across cases (the Log sheet and its export). */
   readonly sessionLog: ClinicalLogEntry[] = [];
@@ -151,11 +155,18 @@ export class Link {
     for (const off of this.offs) off();
   }
 
-  /** The highest active alarm level (1 = high) and how many alarms are active. */
-  get alarmSummary(): { level: 1 | 2 | 3 | null; n: number; top: AlarmEntry | null } {
+  /**
+   * The highest active alarm level (1 = high) and how many alarms are active, the monitor's and the ventilator's; `words`:
+   * the highest one's (the monitor's first between equals); `top`: the monitor's alarm when it is that one.
+   */
+  get alarmSummary(): { level: 1 | 2 | 3 | null; n: number; top: AlarmEntry | null; words: string | null } {
     const act = (this.alarms?.active ?? []).filter((a) => (!a.acked || a.latched) && !a.prompt); // A prompt is not an alarm (MUI-7)
     const top = [...act].sort((a, b) => a.level - b.level)[0] ?? null;
-    return { level: top ? top.level : null, n: act.length, top };
+    const v = this.ventAlarms;
+    const vent = v ? [...v.active].sort((a, b) => VENT_LEVEL[a.priority] - VENT_LEVEL[b.priority])[0] ?? null : null;
+    const n = act.length + (v?.active.length ?? 0);
+    if (v && vent && (!top || VENT_LEVEL[vent.priority] < top.level)) return { level: VENT_LEVEL[vent.priority], n, top: null, words: ventAlarmShort(vent) };
+    return { level: top ? top.level : null, n, top, words: top ? alarmLine(top).text : null };
   }
 
   private onEvent(e: WireEvent, from: string): void {
@@ -176,6 +187,10 @@ export class Link {
       for (const x of a.active) if (!this.lastRaised.has(x.id)) this.add({ simT: a.t, kind: 'alarm', text: x.text });
       this.lastRaised = now;
       this.changed();
+    } else if (e.type === 'ventAlarms') {
+      for (const c of ventAlarmChanges(this.ventAlarms?.active ?? [], e.active)) this.add({ simT: e.t, kind: 'alarm', text: ventAlarmLogLine(c, e.screen) });
+      this.ventAlarms = e;
+      this.changed();
     } else if (e.type === 'instructorView') {
       if (this.host) return; // the host reads its originals; the body is the host's own
       this.view = e.body as ViewFeed;
@@ -191,6 +206,7 @@ export class Link {
       if (e.cause !== 'restore') {
         this.conditions.clear();
         this.caseFrom = this.sessionLog.length;
+        this.ventAlarms = null; // the host reports the ventilator's alarms again for the new case
       }
       this.changed();
     } else if (e.type === 'fastForward') {

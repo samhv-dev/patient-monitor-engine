@@ -338,7 +338,24 @@ export type ExtraEvent =
    * Never in VIEWER_EVENTS: the relay sends it to no other learner, viewer or defibrillator window. `body` is the host's
    * (L4); opaque here, as instructorView's.
    */
-  | { type: 'prep'; t: SimSeconds; to: string; body: unknown };
+  | { type: 'prep'; t: SimSeconds; to: string; body: unknown }
+  /**
+   * The alarms of the ventilator that drives the patient, as its face shows them, at `t` (engine time): sent by the host
+   * on every change, after every new timeline and to every peer it welcomes; `active` is empty once none is active or
+   * the cockpit no longer drives. `screen`: where that cockpit runs (the app's Ventilator view, a window of the host's
+   * computer, a device signed in as the ventilator). Never in VIEWER_EVENTS.
+   */
+  | { type: 'ventAlarms'; t: SimSeconds; screen: VentScreen; active: VentAlarmEntry[] };
+
+/** Where the cockpit that drives the patient runs. */
+export type VentScreen = 'view' | 'window' | 'device';
+/** One ventilator alarm: its face's id, words and priority, and whether the ventilator silenced its sound. */
+export interface VentAlarmEntry {
+  id: string;
+  text: string;
+  priority: 'high' | 'medium' | 'low';
+  silenced: boolean;
+}
 
 /** A running Case briefing: the card's `briefing` with its defaults, and when the host started it (epoch ms, its clock). */
 export interface BriefingNotice {
@@ -433,7 +450,9 @@ export type VentLinkBody =
    * R8c: the `cmds` of 20 ms of the cockpit's wall time in one message (`packages/ventilator` link/relay-port.ts): 400 a
    * second at ×8 would close its socket at the relay's 120. Never a link message of its own: the far port unpacks it.
    */
-  | { v: 1; kind: 'batch'; msgs: Array<{ v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[] }> };
+  | { v: 1; kind: 'batch'; msgs: Array<{ v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[] }> }
+  /** The alarms the ventilator's face shows at its tick `tick` (`packages/ventilator` link/port.ts VentAlarmsMsg). */
+  | { v: 1; kind: 'alarms'; tick: number; alarms: VentAlarmEntry[] };
 export type VentLinkKind = VentLinkBody['kind'];
 
 /** The `from` of the relay's own WireMessages (the grant false of a host readmit); its seq is the wall clock. */

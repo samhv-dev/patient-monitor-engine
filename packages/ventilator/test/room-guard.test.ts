@@ -38,7 +38,7 @@ describe('what a ventilator in a room may send', () => {
     ]) expect(roomVentCommandRefusal(c)).toMatch(/^a ventilator in a room may not send /);
   });
 
-  it('the link messages it may send reach the host; any other is refused and heard once', () => {
+  it('the link messages it may send (its breaths, its settings, its alarms) reach the host; any other is refused and heard once', () => {
     const [vent, host] = createLocalPortPair();
     const refused: Array<[string, string]> = [];
     const heard: string[] = [];
@@ -46,12 +46,13 @@ describe('what a ventilator in a room may send', () => {
     const msgs: LinkMsg[] = [
       { v: 1, kind: 'cmds', tick: 1, cmds: [] },
       { v: 1, kind: 'settings', cfg: createVent().cfg },
+      { v: 1, kind: 'alarms', tick: 2, alarms: [{ id: 'pmax', text: 'High pressure (Pmax)', priority: 'high', silenced: false }] },
       { v: 1, kind: 'time', action: 'pause' },
       { v: 1, kind: 'control', profile: 'ards-severe-recruitable' },
       { v: 1, kind: 'clock', ventTick: 9 },
     ];
     for (const m of msgs) vent.post(m);
-    expect(heard).toEqual(['cmds', 'settings']);
+    expect(heard).toEqual(['cmds', 'settings', 'alarms']);
     expect(refused.map(([k]) => k)).toEqual(['time', 'control', 'clock']);
     expect(refused[0]?.[1]).toBe("a ventilator in a room may not send 'time'");
   });

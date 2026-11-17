@@ -9,7 +9,7 @@
 // A relay of an older build sends no `devices`: the page then reads the room as before R7, from the hellos it heard
 // (Weak while a phone said hello in the last RESYNC_MS: joining or catching up) and the relay's count.
 import type { Instrument, RelayDevice, Role } from '@pme/controller';
-import { kindOf, type DeviceKind } from './device-names.ts';
+import { kindOf, VENT_SCREEN_WORDS, type DeviceKind } from './device-names.ts';
 
 export type RoomLevel = 'stable' | 'weak' | 'down';
 export type RelayState = 'none' | 'open' | 'down';
@@ -158,7 +158,7 @@ export function deviceRows(o: { relay: RelayState; phones: number; peers: readon
   for (const x of o.peers.filter((p) => p.via === 'local'))
     rows.push({ ...base, id: x.id, show: x.show, level: 'stable', name: named(x.device, x.show === 'defib' ? 'defib' : null) ?? `Window ${++w}`, where: 'this computer', showing: showingOf(x.role, x.show), state: 'connected', ping: 'this computer', heard: ago(o.now - x.lastAt) });
   // R8d: the ventilator's window on this computer (BroadcastChannel: no hello, the desk knows it), once it has been heard
-  if (o.vent?.window) rows.push({ ...base, level: 'stable', name: 'Ventilator window', where: 'this computer', showing: 'Ventilator', state: o.vent.window, ping: 'this computer', heard: '—' });
+  if (o.vent?.window) rows.push({ ...base, level: 'stable', name: VENT_SCREEN_WORDS.window, where: 'this computer', showing: 'Ventilator', state: o.vent.window, ping: 'this computer', heard: '—' });
   let p = 0;
   const phone = (key: string | null) => (key && known[key]?.name) || `Phone ${++p}`;
   const down = o.relay !== 'open';

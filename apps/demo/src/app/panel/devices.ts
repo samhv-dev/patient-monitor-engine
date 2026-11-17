@@ -16,6 +16,7 @@ import { eegGroup } from './eeg.ts';
 import { nibpStartCommand } from '../patients.ts';
 import { LEVEL_MARK, LEVEL_NAME } from '../shell.ts';
 import { button, clock, h, select, setText, toast, toggle } from '../ui.ts';
+import { VENT_LEVEL, ventAlarmName } from '../vent-alarms.ts';
 import type { PanelCtx } from './ctx.ts';
 import { ibpScalesControl } from './ibp-scales.ts';
 
@@ -130,15 +131,21 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     followSensors();
     const a = link.alarms;
     const act = a?.active ?? [];
-    list.replaceChildren(...[...act].sort((x, y) => x.level - y.level).map((x) => {
-      const lv = LEVEL_NAME[x.level];
+    const pri = (level: 1 | 2 | 3) => {
+      const lv = LEVEL_NAME[level];
+      return h('span', { class: 'pri', 'data-level': lv }, `${LEVEL_MARK[level]} ${lv[0]?.toUpperCase()}${lv.slice(1)}`);
+    };
+    const v = link.ventAlarms;
+    list.replaceChildren(...[
       // Glossary words outside the monitor frame; the monitor's own text is the tooltip
-      return h('li', { 'data-level': lv, title: `On the monitor: ${x.text}`, 'data-vendor-title': '' },
-        h('span', { class: 'pri', 'data-level': lv }, `${LEVEL_MARK[x.level]} ${lv[0]?.toUpperCase()}${lv.slice(1)}`),
-        h('span', {}, alarmLine(x).text, x.latched ? h('span', { class: 'muted' }, ' (latched)') : null),
-        h('span', { class: 'num muted' }, x.acked ? 'acknowledged' : clock(x.since)));
-    }));
-    if (!act.length) list.replaceChildren(h('li', { class: 'none' }, a?.allOff ? 'All alarms are off on this monitor' : 'No active alarms'));
+      ...act.map((x) => ({ level: x.level, li: h('li', { 'data-level': LEVEL_NAME[x.level], title: `On the monitor: ${x.text}`, 'data-vendor-title': '' },
+        pri(x.level), h('span', {}, alarmLine(x).text, x.latched ? h('span', { class: 'muted' }, ' (latched)') : null),
+        h('span', { class: 'num muted' }, x.acked ? 'acknowledged' : clock(x.since))) })),
+      // the ventilator's own, in its face's words; its silence is the ventilator's, not this sheet's
+      ...(v ? v.active.map((x) => ({ level: VENT_LEVEL[x.priority], li: h('li', { 'data-level': x.priority, 'data-vent': '' },
+        pri(VENT_LEVEL[x.priority]), h('span', {}, ventAlarmName(x, v.screen)), h('span', { class: 'num muted' }, x.silenced ? 'silenced on the ventilator' : 'on the ventilator')) })) : []),
+    ].sort((x, y) => x.level - y.level).map((x) => x.li));
+    if (!act.length && !v?.active.length) list.replaceChildren(h('li', { class: 'none' }, a?.allOff ? 'All alarms are off on this monitor' : 'No active alarms'));
     const simT = a?.t ?? link.simT;
     const parts: string[] = [];
     if (a?.silencedUntil && a.silencedUntil > simT) parts.push(`Sound silenced, ${clock(a.silencedUntil - simT)} left`);

@@ -1,6 +1,7 @@
 // A ventilator linked to a room drives the room's patient through the room's host, which takes from it only what a
-// ventilator does: its breaths (the VentFrame), its own circuit at the Y-piece, and its settings for a hand-over. The
-// patient (lungs, effort, disease, circulation) and the session's clock are the room's: anything else is refused.
+// ventilator does: its breaths (the VentFrame), its own circuit at the Y-piece, its settings for a hand-over and the
+// alarms its face shows. The patient (lungs, effort, disease, circulation) and the session's clock are the room's:
+// anything else is refused.
 import type { Command } from '@pme/engine-core';
 import type { LinkMsg, LinkPort, MonitorLike } from './port.ts';
 
@@ -11,7 +12,7 @@ export const ROOM_VENT_MAY_SEND: {
   readonly messages: ReadonlySet<LinkMsg['kind']>;
   readonly commands: { readonly [T in Command['type']]?: Rule<T> };
 } = {
-  messages: new Set<LinkMsg['kind']>(['cmds', 'settings']),
+  messages: new Set<LinkMsg['kind']>(['cmds', 'settings', 'alarms']),
   commands: {
     externalDrive: (c) => c.source === 'ventilator',
     applyEvent: (c) => c.event.kind === 'airway',

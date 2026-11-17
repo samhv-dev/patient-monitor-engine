@@ -6,7 +6,7 @@
 import { advanceVent, createVent, resetPhysics, setCircuit } from '../vent.ts';
 import type { VentState } from '../types.ts';
 import { createLinkCore, linkEvent, linkTick, patchVent, LINK_TICK_S, type LinkCore } from './core.ts';
-import { LEAD_TICKS, type LinkPort } from './port.ts';
+import { LEAD_TICKS, type LinkPort, type VentAlarmReport } from './port.ts';
 import { PROFILES, type ProfileId } from './profiles.ts';
 
 /**
@@ -30,6 +30,8 @@ export interface VentDriver {
   onStep: ((vs: VentState) => void) | undefined;
   /** Called after a `control` message changed settings (the front end redraws its knobs and sheets). */
   onControl: (() => void) | undefined;
+  /** The alarms the face shows now: sent to the monitor side when they differ from the last sent. */
+  reportAlarms(alarms: VentAlarmReport[]): void;
   dispose(): void;
 }
 
@@ -40,6 +42,9 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
   let sim = k * LINK_TICK_S;
   let lastMs: number | null = null;
   let allowed = port ? k + 2 * LEAD_TICKS : Infinity;
+  let alarms: VentAlarmReport[] = [];
+  let alarmsSaid = '[]';
+  const sayAlarms = () => port?.post({ v: 1, kind: 'alarms', tick: k, alarms });
   /** Run the ventilator tick by tick up to sim time `to`, posting each tick's commands. */
   const runTo = (to: number) => {
     while ((k + 1) * LINK_TICK_S <= to + 1e-9) {
@@ -70,6 +75,13 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
       core = createLinkCore(vs, prof(id));
       resetPhysics(vs);
     },
+    reportAlarms(next) {
+      const json = JSON.stringify(next);
+      if (json === alarmsSaid) return;
+      alarmsSaid = json;
+      alarms = next;
+      sayAlarms();
+    },
     dispose: () => off?.(),
   };
   const off = port?.onMessage((m) => {
@@ -89,6 +101,7 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
         // clock: as before its first clock, it may run 2·LEAD_TICKS past its own tick, enough for that frame.
         d.paused = false;
         allowed = Math.max(allowed, k + 2 * LEAD_TICKS);
+        if (alarms.length) sayAlarms(); // a new link hears what the face already shows
       }
       else if (m.value !== undefined) d.scale = m.value;
     } else if (m.kind === 'control') {

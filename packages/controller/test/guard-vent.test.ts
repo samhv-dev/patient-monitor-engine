@@ -180,3 +180,23 @@ describe('R8c: the relay port\'s bodies', () => {
       expect(parseWireMessage(vent({ v: 1, kind: 'settings', cfg: normal.cfg, ...extra })), JSON.stringify(extra)).toBeNull();
   });
 });
+
+// The ventilator's alarms as its face shows them, from the cockpit to the host (the instructor's alarm strip, Log and Debrief).
+describe("the cockpit's `alarms`", () => {
+  const pmax = { id: 'pmax', text: 'High pressure (Pmax)', priority: 'high', silenced: false };
+  it('passes with its tick and the face\'s alarms, each id, words, priority and silence; an empty list ends them', () => {
+    expect(parseWireMessage(JSON.stringify(vent({ v: 1, kind: 'alarms', tick: 812, alarms: [pmax, { ...pmax, id: 'mvLow', text: 'Low minute volume', priority: 'medium', silenced: true }] })))).toMatchObject({ body: { kind: 'alarms' } });
+    expect(parseWireMessage(vent({ v: 1, kind: 'alarms', tick: 0, alarms: [] }))).not.toBeNull();
+    expect(parseWireMessage(vent({ v: 1, kind: 'alarms', tick: 3, alarms: Array.from({ length: VENT_LIMITS.alarms }, (_, i) => ({ ...pmax, id: `a${i}` })) }))).not.toBeNull();
+  });
+  it(`is refused with a tick that is not an integer, more than ${VENT_LIMITS.alarms} alarms, or an alarm in another shape`, () => {
+    for (const body of [
+      { v: 1, kind: 'alarms', tick: 1.5, alarms: [pmax] }, { v: 1, kind: 'alarms', tick: 3 }, { v: 1, kind: 'alarms', tick: 3, alarms: {} },
+      { v: 1, kind: 'alarms', tick: 3, alarms: Array.from({ length: VENT_LIMITS.alarms + 1 }, (_, i) => ({ ...pmax, id: `a${i}` })) },
+      { v: 1, kind: 'alarms', tick: 3, alarms: [{ ...pmax, priority: 'urgent' }] }, { v: 1, kind: 'alarms', tick: 3, alarms: [{ ...pmax, silenced: 'no' }] },
+      { v: 1, kind: 'alarms', tick: 3, alarms: [{ ...pmax, text: 'x'.repeat(VENT_LIMITS.alarmChars + 1) }] }, { v: 1, kind: 'alarms', tick: 3, alarms: [{ ...pmax, id: 7 }] },
+      { v: 1, kind: 'alarms', tick: 3, alarms: [null] },
+    ])
+      expect(parseWireMessage(vent(body)), JSON.stringify(body).slice(0, 120)).toBeNull();
+  });
+});

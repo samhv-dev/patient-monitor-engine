@@ -384,7 +384,7 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     const local = createVentDriver(tagged(cockpitSide, 'view-'), 'normal');
     const t = setInterval(() => local.frame(performance.now()), 1000 / 60);
     stops.push(() => clearInterval(t));
-    const view = { port: hostSide, remote: false, settings: () => ({ cfg: { ...local.vs.cfg } }) };
+    const view = { port: hostSide, remote: false, screen: 'view' as const, settings: () => ({ cfg: { ...local.vs.cfg } }) };
     await desk.take(view, () => true);
     await vi.advanceTimersByTimeAsync(2000);
     expect(frames('view-').length).toBeGreaterThan(50);
@@ -417,6 +417,44 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     expect(v2.e.now().tick).toBe(tick);
     expect(frames('vent-a.1').length).toBeGreaterThan(200);
     expect(v2.e.snapshot()).toEqual(host.snapshot());
+  });
+});
+
+describe("the remote cockpit's alarms reach the instructor", () => {
+  const pmax = { id: 'pmax' as const, text: 'High pressure (Pmax)', priority: 'high' as const, silenced: false };
+  it("each change goes through the relay's guard and the room's guarded port to the host, which sends it as `ventAlarms` at the engine's time of that tick; a kind not in the room's table is still refused; its hand-over ends them", async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation((...a: unknown[]) => void net.warned.push(a));
+    const heard: Array<Extract<WireEvent, { type: 'ventAlarms' }>> = [];
+    let timelineT = -1;
+    s.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => (e.type === 'ventAlarms' && heard.push(e), e.type === 'timeline' && (timelineT = e.t)))));
+    const v = await remote('vent-a.1');
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(cockpitDesk(s).driving?.remote).toBe(true);
+    v.d.reportAlarms([pmax]);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(heard.map((e) => [e.screen, e.active])).toEqual([['device', [pmax]]]);
+    // the ventilator runs at most MAX_AHEAD_TICKS (1.5 s) ahead of the engine: the tick it was shown on is that close
+    expect(Math.abs((heard[0]?.t ?? -9) - simNow())).toBeLessThanOrEqual(1.5);
+    v.d.reportAlarms([{ ...pmax, silenced: true }]);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(heard.at(-1)?.active).toEqual([{ ...pmax, silenced: true }]);
+    v.port.post({ v: 1, kind: 'time', action: 'pause' });
+    await vi.advanceTimersByTimeAsync(100);
+    const refused = net.warned.filter((x) => x[0] === 'vent link rejected').map((x) => x[1]);
+    expect(refused).toEqual(['time']); // the alarms passed the room's table; the clock did not
+    const late = phone(); // a peer that says hello now hears what is on
+    await vi.advanceTimersByTimeAsync(100);
+    expect(events(late).filter((e) => e.type === 'ventAlarms').at(-1)).toMatchObject({ active: [{ ...pmax, silenced: true }] });
+    s.host.newTimeline('restore'); // a return to a bookmark: they are said again, at the new timeline's time
+    await settle();
+    expect(heard.at(-1)).toMatchObject({ t: timelineT, active: [{ ...pmax, silenced: true }] });
+    v.sock.muted = true; // silent: the host hands the patient over and the cockpit no longer drives
+    for (let i = 0; i < 300 && handOvers().length === 0; i++) await vi.advanceTimersByTimeAsync(10);
+    expect(handOvers()).toHaveLength(1);
+    await settle();
+    expect(heard.at(-1)?.active).toEqual([]);
+    expect(net.dropped).toBe(0);
+    warn.mockRestore();
   });
 });
 

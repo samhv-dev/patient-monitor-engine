@@ -22,6 +22,7 @@ import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/cont
 import { alarmLine } from './alarms.ts';
 import { describeCommand, notDoneOf } from './describe.ts';
 import { deviceLabel, kindOf, numberOf, type DeviceKind, type DeviceOrder } from './device-names.ts';
+import { ventAlarmName, type VentAlarmsEvent } from './vent-alarms.ts';
 
 /** How a state row's state was entered (`Row.by` on a state row). */
 export type StateBy = 'press' | 'rule' | 'goto';
@@ -80,6 +81,9 @@ export interface Row {
   /** An alarm raise row (D2): the first status reporting it acknowledged (`AlarmEntry.acked`). */
   ackT?: number;
 }
+/** The run event of a ventilator alarm row (`ventAlarm:<the face's id>`), apart from the monitor's `alarm:<id>`. */
+export const VENT_ALARM_EV = 'ventAlarm:';
+export const isVentAlarm = (r: Row): boolean => r.kind === 'alarm' && !!r.ev?.startsWith(VENT_ALARM_EV);
 /** A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss. */
 /** The instructor's mark kinds (the controller's `MarkKind` without the driver's own `stage`). */
 const MARK_KINDS: readonly string[] = ['good', 'bad', 'discuss'] satisfies Array<Exclude<MarkKind, 'stage'>>;
@@ -189,6 +193,8 @@ export class RunRecord {
   private active = new Set<string>();
   /** The kept raise row of each alarm still in the engine's active list (its end and acknowledgement go on it). */
   private open = new Map<string, Row>();
+  /** The kept raise row of each ventilator alarm still active (its end goes on it). */
+  private ventOpen = new Map<string, Row>();
   private lastVent = -Infinity;
   private pulse: boolean | null = null;
   /** The PVCs in a row so far, the first one's time, and the run's row once it is one. */
@@ -247,6 +253,7 @@ export class RunRecord {
   /** The host's wire events (its own panel's end of the in-process hub): commands applied, states, timelines. */
   wire(e: WireEvent): void {
     if (e.type === 'timeline') return e.cause === 'restore' ? this.restored(e.t) : this.reset();
+    if (e.type === 'ventAlarms') return this.ventAlarms(e);
     if (e.type === 'scenario') {
       if (!this.data.doc) return void (this.held = e); // a load publishes its first state before its own commandApplied
       this.copy(); // a phase entered (or a resync's repeat of it)
@@ -388,6 +395,22 @@ export class RunRecord {
     this.add({ t, kind: 'pump', channel: ch, text: `Channel ${ch}: ${what} and programme differ (${String(b.text)})` });
   }
 
+  /** The ventilator's alarms (its silence is not an end): a row at each raise, its end when it leaves the list. */
+  private ventAlarms(e: VentAlarmsEvent): void {
+    const now = new Set(e.active.map((a) => a.id));
+    for (const [id, row] of this.ventOpen) {
+      if (now.has(id)) continue;
+      row.endT ??= e.t;
+      this.ventOpen.delete(id);
+    }
+    for (const a of e.active) {
+      if (this.ventOpen.has(a.id)) continue;
+      const row: Row = { t: e.t, kind: 'alarm', text: ventAlarmName(a, e.screen), ev: `${VENT_ALARM_EV}${a.id}` };
+      this.add(row);
+      this.ventOpen.set(a.id, row);
+    }
+  }
+
   /** L4: a learner remote's device key, the name Room setup gave it, its preparation and an infusion change's replaced rate. */
   private learnerOf(c: Record<string, unknown>): Pick<Row, 'remote' | 'by' | 'name' | 'prepId' | 'replaced'> {
     const by = typeof c.by === 'string' ? c.by : undefined;
@@ -510,6 +533,9 @@ export class RunRecord {
     this.data.samples = this.data.samples.filter((s) => s.t <= t + EPS);
     this.active = new Set(k.active);
     this.reopen(t);
+    // the ventilator's alarms end with the page that heard them; a ventilator still alarming says them again
+    for (const r of this.data.rows) if (isVentAlarm(r) && (r.endT === undefined || r.endT > t)) r.endT = t;
+    this.ventOpen.clear();
     this.lastVent = k.lastVent ?? -Infinity;
     this.pulse = k.pulse;
     this.held = null;
@@ -534,6 +560,7 @@ export class RunRecord {
     this.data.devices = this.order;
     this.active = new Set();
     this.open.clear();
+    this.ventOpen.clear();
     this.lastVent = -Infinity;
     this.pulse = null;
     this.pvcRun = { n: 0, t: 0, row: null };
@@ -564,7 +591,7 @@ export class RunRecord {
   /** The alarm rows after the engine went back to time `t`: an end or an acknowledgement later than `t` is undone on
    *  every kept row, and each alarm the trackers hold active is open again on its latest kept raise row. */
   private reopen(t: number): void {
-    const rows = this.data.rows.filter((r) => r.kind === 'alarm' && r.undone === undefined);
+    const rows = this.data.rows.filter((r) => r.kind === 'alarm' && !isVentAlarm(r) && r.undone === undefined);
     for (const r of rows) {
       if (r.endT !== undefined && r.endT > t + EPS) delete r.endT;
       if (r.ackT !== undefined && r.ackT > t + EPS) delete r.ackT;
@@ -588,6 +615,8 @@ export class RunRecord {
     this.lastVent = m ? m.lastVent : -Infinity;
     this.active = new Set(m?.active ?? []);
     this.reopen(t);
+    // the ventilator does not go back with the engine: an alarm whose raise was undone is raised again by its next report
+    for (const [id, row] of this.ventOpen) if (row.undone !== undefined) this.ventOpen.delete(id);
     this.pulse = m ? m.pulse : rows.filter((r) => r.undone === undefined && (r.ev === 'pulseLoss' || r.ev === 'rosc')).at(-1)?.ev !== 'pulseLoss';
   }
 }

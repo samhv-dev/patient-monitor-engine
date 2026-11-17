@@ -2,11 +2,13 @@
 // pump tablet's bag list, the instructor's cards and the Debrief): the name typed over it in Room setup, else its role
 // and its number among this session's devices of that role, in the order the host first heard of each. A device key
 // is never shown.
-import type { Role } from '@pme/controller';
+import type { Role, VentScreen } from '@pme/controller';
 
 /** The roles whose devices act on the patient, each numbered on its own. */
 export type DeviceKind = 'learner' | 'pump' | 'defib';
 export const DEVICE_WORDS: Readonly<Record<DeviceKind, string>> = { learner: 'Learner remote', pump: 'Pump tablet', defib: 'Defibrillator window' };
+/** The ventilator by where its cockpit runs: one drives at a time and it has no device key, so it has no number. */
+export const VENT_SCREEN_WORDS: Readonly<Record<VentScreen, string>> = { view: 'Ventilator view', window: 'Ventilator window', device: 'Ventilator' };
 /** The device keys of each kind in the order first heard of: the n-th reads "<the kind's word> n". */
 export type DeviceOrder = Partial<Record<DeviceKind, string[]>>;
 
