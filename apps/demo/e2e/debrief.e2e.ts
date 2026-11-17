@@ -984,12 +984,12 @@ test('L13: a learner gives from the phone through a relay in its own process; th
     await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible({ timeout: 10_000 });
     // the timeline: each give's own line, its text as the engine's applied command described it, named as Room setup named the phone
     const timeline = await view.locator('#db-timeline tbody tr[data-kind="learner"] td:last-child').allTextContents();
-    for (const r of rows) expect(timeline).toContain(`${r.text} at ${mmss13(r.t)}, by Learner remote (bed 2 remote)`);
+    for (const r of rows) expect(timeline).toContain(`${r.text} at ${mmss13(r.t)}, by bed 2 remote`);
     // the Preparations item of this preparation
     const sec = view.locator('#db-preparations');
     await expect(sec.locator('h2')).toHaveText('Preparations');
     const itm = sec.locator(`.db-preps > li[data-prep="${id}"]`);
-    await expect(itm.locator('.db-prep-head')).toHaveText(/^\d\d:\d\d · Learner remote \(bed 2 remote\) staged Sodium bicarbonate.* 10 mmol \(0\.909 mmol\/mL\) \+ Epinephrine 1 mg \(0\.0909 mg\/mL\), 11 mL$/);
+    await expect(itm.locator('.db-prep-head')).toHaveText(/^\d\d:\d\d · bed 2 remote staged Sodium bicarbonate.* 10 mmol \(0\.909 mmol\/mL\) \+ Epinephrine 1 mg \(0\.0909 mg\/mL\), 11 mL$/);
     await expect(itm.locator('.db-prep-ready')).toHaveText('Ready at once: no source for the preparation time');
     await expect(itm.locator('.db-prep-finding[data-kind="incompatible"]').first()).toContainText(/^Incompatible: .*NaHCO3 as solvent degrades epinephrine.*\(Stabilis /);
     await expect(itm.locator('.db-prep-notice')).toHaveText(`Notice shown at ${mmss13(shownAt)}`);

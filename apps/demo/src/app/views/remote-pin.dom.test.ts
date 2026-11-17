@@ -8,6 +8,7 @@ import { createStamper, INSTRUCTOR_REASONS, type ManagedTransport, type RelayFra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SITE } from '../site.ts';
 import { GIVE_UP_MS, PHONE_WORDS, remoteView } from './remote.ts';
+import { carried } from '../address.testing.ts';
 
 const CODE = 'AB2CD3';
 const PIN = '4729';
@@ -115,7 +116,7 @@ describe("the instructor phone's PIN form", () => {
     f.typePin(PIN);
     const r = f.submit();
     expect(f.pinField().value).toBe('');
-    expect(location.href).not.toContain(PIN);
+    expect(carried(location.href)).not.toContain(PIN);
     expect(location.href).toContain(`#/remote?code=${CODE}`);
     expect(JSON.stringify(history.state)).not.toContain(PIN);
     expect(history.length).toBe(before); // replaced, never pushed
@@ -190,7 +191,7 @@ describe('the states and their words', () => {
     expect(card.hidden).toBe(true);
     ev('host-h1');
     expect(card.hidden).toBe(false);
-    expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate/);
+    expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 staged Sodium bicarbonate/);
     expect(card.querySelector('.ip2-lp-finding')?.textContent).toBe('Incompatible: A haze forms. (no source speaks)');
     card.querySelector<HTMLButtonElement>('.ip2-lp-show')!.click();
     await new Promise((x) => setTimeout(x, 0));

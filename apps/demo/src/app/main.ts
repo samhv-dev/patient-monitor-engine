@@ -329,6 +329,7 @@ if (follow && shows === 'pick') {
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
     followers: () => session.followers, onFollowers: (f) => session.onFollowers(f), devices: () => session.devices,
+    label: (key, kind) => session.deviceLabel(key, kind),
     instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },

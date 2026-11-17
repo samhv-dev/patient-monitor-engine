@@ -196,6 +196,7 @@ function hostRig(profile: AlarmSoundProfile) {
   let run = 0;
   let speed = 1;
   let paused = false;
+  let keepUp = 1; // the share of the asked speed the engine manages (below 1: it falls behind)
   const played: Array<{ tone: AlarmToneRequest; when: number }> = [];
   const sched = new ToneScheduler({
     audioNow: () => wall,
@@ -215,7 +216,7 @@ function hostRig(profile: AlarmSoundProfile) {
       const dt = Math.min(0.025, end - wall);
       wall += dt;
       if (!paused) {
-        sim += dt * speed;
+        sim += dt * speed * keepUp;
         run += dt;
       }
       anchor();
@@ -230,6 +231,7 @@ function hostRig(profile: AlarmSoundProfile) {
     speed: (k: number) => void (speed = k),
     pause: () => void (paused = true),
     resume: () => void (paused = false),
+    keepUp: (share: number) => void (keepUp = share),
     /** Burst starts, in wall seconds. */
     starts: () => bursts(onsets(played)).map((b) => b[0] as number),
   };
@@ -282,6 +284,19 @@ describe('AlarmSounder: the sound keeps real time when the case speed changes', 
     const b = bursts(onsets(h.played));
     expect(b.map((x) => x[0])).toEqual(every(0, 10, h.wall));
     for (const x of b.slice(0, -1)) expect(diffs(x)).toEqual([0.25, 0.25, 0.5, 0.25, 0.75, 0.25, 0.25, 0.5, 0.25]);
+  });
+
+  it('an engine that cannot keep up with ×8 (sim at a third of the asked speed) leaves the 10 s repeat unchanged', () => {
+    const h = hostRig(SAADAT);
+    h.s.raise('SPO2_LOW', 1, 0);
+    h.wait(5);
+    h.speed(8);
+    h.keepUp(1 / 3);
+    h.wait(40);
+    h.keepUp(1);
+    h.speed(1);
+    h.wait(20);
+    expect(h.starts()).toEqual(every(0, 10, 65));
   });
 
   it('a pause is silent and stops the repeat clock; on resume the train goes on with the rest of its interval', () => {

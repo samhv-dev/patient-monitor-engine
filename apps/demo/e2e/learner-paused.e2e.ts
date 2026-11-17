@@ -162,7 +162,7 @@ test('L14: through a relay in its own process, a phone gives no drug while the c
     await expect(item.locator('.lr-said')).toHaveText('Not given: the case was paused', { timeout: 10_000 });
     await shot(p, 'phone-refused-reason', browserName, '.lr-item .lr-said');
     expect(await engineDrugs(page)).not.toContain('ephedrine');
-    await expect.poll(() => logLines(page), { timeout: 10_000 }).toEqual(['Ephedrine 50 mg IV (learner remote: bed 2 remote) not given: the case was paused']);
+    await expect.poll(() => logLines(page), { timeout: 10_000 }).toEqual(['Ephedrine 50 mg IV (bed 2 remote) not given: the case was paused']);
     await shot(page, 'laptop-log-not-given', browserName);
     const attempt = (await rows(page)).filter((r) => r.kind === 'learner' && r.by === KEY);
     expect(attempt).toEqual([expect.objectContaining({ text: 'Ephedrine 50 mg IV not given: the case was paused', name: 'bed 2 remote', notGiven: 'the case was paused' })]);
@@ -190,8 +190,8 @@ test('L14: through a relay in its own process, a phone gives no drug while the c
     await expect(item.locator('.lr-said')).toHaveText(/^Given 1 mL at \d\d:\d\d$/, { timeout: 10_000 });
     await expect.poll(() => engineDrugs(page), { timeout: 10_000 }).toContain('ephedrine');
     await expect.poll(() => logLines(page), { timeout: 10_000 }).toEqual([ // the Log sheet lists the newest first
-      'Ephedrine 50 mg IV (learner remote: bed 2 remote)',
-      'Ephedrine 50 mg IV (learner remote: bed 2 remote) not given: the case was paused',
+      'Ephedrine 50 mg IV (bed 2 remote)',
+      'Ephedrine 50 mg IV (bed 2 remote) not given: the case was paused',
     ]);
     await expect.poll(async () => (await admin(page)).filter((a) => a.source === 'learner' && a.drugId === 'ephedrine').map((a) => a.result.accepted), { timeout: 10_000 }).toEqual([false, true]);
     await shot(p, 'phone-given-after-resume', browserName, '.lr-item .lr-said');
