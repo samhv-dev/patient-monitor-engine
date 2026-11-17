@@ -190,7 +190,7 @@ describe('the states and their words', () => {
     expect(card.hidden).toBe(true);
     ev('host-h1');
     expect(card.hidden).toBe(false);
-    expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate/);
+    expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 staged Sodium bicarbonate/);
     expect(card.querySelector('.ip2-lp-finding')?.textContent).toBe('Incompatible: A haze forms. (no source speaks)');
     card.querySelector<HTMLButtonElement>('.ip2-lp-show')!.click();
     await new Promise((x) => setTimeout(x, 0));

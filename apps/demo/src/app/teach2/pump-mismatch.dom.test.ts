@@ -21,7 +21,7 @@ function stub() {
   const link = {
     pumpFindings: new Map<number, PumpMismatchNews>(),
     onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)),
-    host: { deviceName: (k: string) => (k === 'pumptab0001' ? 'bed 2 pumps' : null), host: { showPumpNotice: (ch: number) => (shown.push(ch), true) } },
+    host: { deviceLabel: (k: string) => (k === 'pumptab0001' ? 'bed 2 pumps' : 'Pump tablet 2'), host: { showPumpNotice: (ch: number) => (shown.push(ch), true) } },
   };
   const changed = () => [...fns].forEach((fn) => fn());
   return { link, shown, changed };
@@ -36,7 +36,7 @@ describe("the instructor's pump-mismatch card (§8, PQ8 = A)", () => {
     s.changed();
     expect(card.el.hidden).toBe(false);
     const li = card.el.querySelector('.ip2-pm-card') as HTMLElement;
-    expect(li.querySelector('.ip2-pm-what')?.textContent).toBe('Channel 2 (pump tablet: bed 2 pumps): syringe and programme differ. Loaded: Remifentanil 50 µg/mL; programmed: Propofol 10 mg/mL.');
+    expect(li.querySelector('.ip2-pm-what')?.textContent).toBe('Channel 2 (bed 2 pumps): syringe and programme differ. Loaded: Remifentanil 50 µg/mL; programmed: Propofol 10 mg/mL.');
     const buttons = li.querySelectorAll('button');
     expect([...buttons].map((b) => b.textContent)).toEqual([MISMATCH_CARD_WORDS.show]);
     (buttons[0] as HTMLButtonElement).click();
@@ -51,12 +51,12 @@ describe("the instructor's pump-mismatch card (§8, PQ8 = A)", () => {
     card.destroy();
   });
 
-  it('a bag on a drip channel, and a tablet with no Room-setup name', () => {
+  it('a bag on a drip channel, and a tablet with no Room-setup name: its number, never its key', () => {
     const s = stub();
     const card = mountPumpMismatch(s.link as never);
     s.link.pumpFindings.set(3, finding({ ch: 3, kind: 'drip', device: 'unnamed0001' }));
     s.changed();
-    expect(card.el.querySelector('.ip2-pm-what')?.textContent).toMatch(/^Channel 3 \(pump tablet\): bag and programme differ\. /);
+    expect(card.el.querySelector('.ip2-pm-what')?.textContent).toMatch(/^Channel 3 \(Pump tablet 2\): bag and programme differ\. /);
   });
 
   it('a change to one channel\'s finding leaves the other cards as they are: their Show button and their shown line', async () => {
