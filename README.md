@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` 7320de53 (Merge pull request #530 from samhv-dev/remote-infusion-range), built 2026-11-17T17:48:14.068Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/7320de5313a3ddf13889ca54db2347e40cd533da
+The built teaching app of `main` f5ea1691 (Merge pull request #540 from samhv-dev/batch/1117-2028-534-521), built 2026-11-17T18:47:04.709Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/f5ea16915725779fcea6a4a5c18287824b0dc8d8
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`

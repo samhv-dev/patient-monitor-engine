@@ -1,8 +1,8 @@
 Patient monitor simulator - offline showcase kit
-Commit:   7320de5313a3ddf13889ca54db2347e40cd533da
+Commit:   f5ea16915725779fcea6a4a5c18287824b0dc8d8
 Branch:   HEAD
-Subject:  Merge pull request #530 from samhv-dev/remote-infusion-range
-Built:    2026-11-17T17:48:14.068Z
+Subject:  Merge pull request #540 from samhv-dev/batch/1117-2028-534-521
+Built:    2026-11-17T18:47:04.709Z
 Built by: node scripts/showcase/make-bundle.mjs "/home/runner/work/_temp/kits/pme-classroom-kit" (node v22.23.4, vite build --base ./ in apps/demo)
 App size: 5.2 MB
 Runtime:  runtime/ has no macOS node: /opt/hostedtoolcache/node/22.23.4/x64/bin/node (v22.23.4) is not an official signed Node.js build (no Node.js Foundation / OpenJS Developer ID). The launcher uses ruby, then perl.
