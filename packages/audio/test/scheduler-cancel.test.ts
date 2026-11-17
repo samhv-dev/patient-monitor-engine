@@ -12,7 +12,7 @@ function rig(durS: number) {
     outputLatency: () => 0,
     play: (_tone, when) => ({ endsAt: when + durS, stop: () => stops.push(now.s) }),
   });
-  s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1 });
+  s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1, runS: 0 });
   return { s, now, stops };
 }
 
