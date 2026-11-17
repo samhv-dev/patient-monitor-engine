@@ -166,7 +166,7 @@ embedding developer can see which commands (`stimulus`, `meal`, the thermal and 
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 22 rows; SOURCED 2, FIT 11, ENG 0, UNTAGGED 3, ABSENT 6.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -500,6 +500,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | Function | File | Doc |
 |---|---|---|
 | `pkActive` | [`l2/endo/adapters.ts`](../../packages/engine-core/src/l2/endo/adapters.ts) | The drug model has an agent acting now (any effect-site concentration or volatile MAC fraction > 0). |
+| `readEndoInputs` | [`l2/endo/adapters.ts`](../../packages/engine-core/src/l2/endo/adapters.ts) | — |
 | `observeDoses` | [`l2/endo/adapters.ts`](../../packages/engine-core/src/l2/endo/adapters.ts) | The drug model's accepted boluses (`bus.doses`, each listed for exactly one engine pass) → the glucose model: |
 | `readInfusions` | [`l2/endo/adapters.ts`](../../packages/engine-core/src/l2/endo/adapters.ts) | The drug model's running infusions (`ps.pk.drugs.<id>.rate`, amount/min in the row's unit: |
 | `preBlunt` | [`l2/endo/adapters.ts`](../../packages/engine-core/src/l2/endo/adapters.ts) | The endoHrF the circulation model must receive so that its `betaBlunt(endoHrF, b)` equals `target` (fever unblunted). |
@@ -510,23 +511,37 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `writeLung` | [`l2/endo/adapters.ts`](../../packages/engine-core/src/l2/endo/adapters.ts) | Anaphylaxis bronchospasm → the lung model's `lungCondition anaphylaxis` (its grades I–V = severity 0.2–1; |
 | `ecgDeltas` | [`l2/endo/adapters.ts`](../../packages/engine-core/src/l2/endo/adapters.ts) | ECG modifier DELTAS (the blood model's pattern): |
 | `combine` | [`l2/endo/conditions.ts`](../../packages/engine-core/src/l2/endo/conditions.ts) | Combine bundles: |
+| `createConditions` | [`l2/endo/conditions.ts`](../../packages/engine-core/src/l2/endo/conditions.ts) | — |
 | `stepConditions` | [`l2/endo/conditions.ts`](../../packages/engine-core/src/l2/endo/conditions.ts) | 1 Hz step. `beta2` is EXOGENOUS epinephrine's β2 effect (0–1, effects.ts `mastB2`): |
 | `conditionEffects` | [`l2/endo/conditions.ts`](../../packages/engine-core/src/l2/endo/conditions.ts) | The combined effects of sepsis, anaphylaxis, SIRS and the hypermetabolic state (thyroid storm is thyroid.ts's). |
 | `glucoseProfile` | [`l2/endo/core.ts`](../../packages/engine-core/src/l2/endo/core.ts) | Resolved per-profile glucose parameters (tables §5c SI diabetic 1–3e-4 → × 0.3; |
+| `createEndoCore` | [`l2/endo/core.ts`](../../packages/engine-core/src/l2/endo/core.ts) | — |
 | `cortResponseOf` | [`l2/endo/core.ts`](../../packages/engine-core/src/l2/endo/core.ts) | The adrenal's cortisol RESPONSE — halved by the adrenal-insufficiency profile and, on top of it, suppressed by an 11β-hydroxylase inhibitor the patient has had (etomidate: |
 | `insulinopenia` | [`l2/endo/core.ts`](../../packages/engine-core/src/l2/endo/core.ts) | The insulinopenia that shifts K⁺ out of the cells — the patient's own (smoothed) insulin deficit, or the instructor's `dka` condition, which IS insulinopenia even though the profile's insulin is norma |
+| `stepEndoCore` | [`l2/endo/core.ts`](../../packages/engine-core/src/l2/endo/core.ts) | — |
 | `stressEffects` | [`l2/endo/effects.ts`](../../packages/engine-core/src/l2/endo/effects.ts) | `cortExo`: an exogenous glucocorticoid as cortisol-equivalent nmol/L above basal (the drug model's dexamethasone) — it joins the METABOLIC cortisol term only; |
+| `createGlucose` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | — |
 | `counterRegEgp` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | Glucagon-like counter-regulation below 70 mg/dL (Pulse's liver release threshold is 85: |
+| `stepGlucose` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | — |
 | `dextroseBolus` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | IV dextrose bolus (g) — enters the glucose space at once (D50 25 g). |
 | `dextroseInfusion` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | IV dextrose infusion, g/h (D5 at 100 mL/h = 5 g/h). |
 | `meal` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | Oral/enteral carbohydrate (g) into the gut (absorbed with τ GUT_TAU_S). |
 | `insulinBolus` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | IV insulin bolus (units) into the insulin space. |
 | `insulinInfusion` | [`l2/endo/glucose.ts`](../../packages/engine-core/src/l2/endo/glucose.ts) | IV insulin infusion, units/h. |
+| `createHormones` | [`l2/endo/hormones.ts`](../../packages/engine-core/src/l2/endo/hormones.ts) | — |
 | `adrenalDrive` | [`l2/endo/hormones.ts`](../../packages/engine-core/src/l2/endo/hormones.ts) | Adrenal (humoral) drive: |
+| `stepHormones` | [`l2/endo/hormones.ts`](../../packages/engine-core/src/l2/endo/hormones.ts) | — |
+| `resolveEndoProfile` | [`l2/endo/pipeline.ts`](../../packages/engine-core/src/l2/endo/pipeline.ts) | — |
+| `createEndoState` | [`l2/endo/pipeline.ts`](../../packages/engine-core/src/l2/endo/pipeline.ts) | — |
 | `advanceEndo` | [`l2/endo/pipeline.ts`](../../packages/engine-core/src/l2/endo/pipeline.ts) | Advance to time tEnd (s): |
 | `validateEndoCommand` | [`l2/endo/pipeline.ts`](../../packages/engine-core/src/l2/endo/pipeline.ts) | Validation hook: |
 | `applyEndoCommand` | [`l2/endo/pipeline.ts`](../../packages/engine-core/src/l2/endo/pipeline.ts) | Apply hook: |
+| `thyroidEffects` | [`l2/endo/thyroid.ts`](../../packages/engine-core/src/l2/endo/thyroid.ts) | — |
+| `createTemp` | [`l2/temp/temp.ts`](../../packages/engine-core/src/l2/temp/temp.ts) | — |
+| `stepTemp` | [`l2/temp/temp.ts`](../../packages/engine-core/src/l2/temp/temp.ts) | — |
 | `bsaM2` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | Du Bois body surface area, m² (Pulse's skin-area formula). |
+| `radiativeH` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | — |
+| `convectiveH` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | — |
 | `satMgL` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | Saturated water vapour content of air, mg/L (cubic fit, 0–40 °C: |
 | `respiratoryW` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | Respiratory heat loss, W: |
 | `dryW` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | Dry (radiative + convective) loss from the periphery at Tp through the insulation, over `exposed` × BSA. |
@@ -534,13 +549,16 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `forcedAirW` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | Forced-air warming: |
 | `infusionW` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | An IV infusion at `tempC` (warmer: |
 | `ivInflow` | [`l2/thermal/environment.ts`](../../packages/engine-core/src/l2/thermal/environment.ts) | The IV inflow the heat model sees (the blood model's pipeline writes it into `rs.temp.iv` every 100 ms): |
+| `createThermal` | [`l2/thermal/heat.ts`](../../packages/engine-core/src/l2/thermal/heat.ts) | — |
 | `currentThresholds` | [`l2/thermal/heat.ts`](../../packages/engine-core/src/l2/thermal/heat.ts) | Current thresholds (depth, set point; |
 | `stepThermal` | [`l2/thermal/heat.ts`](../../packages/engine-core/src/l2/thermal/heat.ts) | One step of dtS seconds (≤ 1 s). |
 | `setCoreTarget` | [`l2/thermal/heat.ts`](../../packages/engine-core/src/l2/thermal/heat.ts) | MANUAL target: |
 | `upgradeThermal` | [`l2/thermal/heat.ts`](../../packages/engine-core/src/l2/thermal/heat.ts) | Restore of an older snapshot without thermoregulation: |
+| `thermalMetabolic` | [`l2/thermal/metabolic.ts`](../../packages/engine-core/src/l2/thermal/metabolic.ts) | — |
 | `mhO2Demand` | [`l2/thermal/metabolic.ts`](../../packages/engine-core/src/l2/thermal/metabolic.ts) | E131 — THE one MH rate: |
 | `oxyKjPerL` | [`l2/thermal/metabolic.ts`](../../packages/engine-core/src/l2/thermal/metabolic.ts) | The caloric equivalent of oxygen at respiratory quotient `rq`, kJ per L O2 (= J per mL; |
 | `tempHrF` | [`l2/thermal/metabolic.ts`](../../packages/engine-core/src/l2/thermal/metabolic.ts) | HR × from core temperature: |
+| `cascade` | [`l2/thermal/metabolic.ts`](../../packages/engine-core/src/l2/thermal/metabolic.ts) | — |
 | `mhActivity` | [`l2/thermal/mh.ts`](../../packages/engine-core/src/l2/thermal/mh.ts) | MH activity 0–1 at time t (the onset ramp × the dantrolene-unsuppressed fraction). |
 | `mhSympDrive` | [`l2/thermal/mh.ts`](../../packages/engine-core/src/l2/thermal/mh.ts) | The MH SYMPATHETIC drive 0–1 at time t (E117): |
 | `mhOnsetT` | [`l2/thermal/mh.ts`](../../packages/engine-core/src/l2/thermal/mh.ts) | The MH onset time the exposure implies (the earliest trigger + its latency), or null (not exposed). |
@@ -551,8 +569,6 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `vasoDilation` | [`l2/thermal/thresholds.ts`](../../packages/engine-core/src/l2/thermal/thresholds.ts) | Vasomotor dilation fraction f (0 = fully constricted, 1 = fully dilated). |
 | `shiverW` | [`l2/thermal/thresholds.ts`](../../packages/engine-core/src/l2/thermal/thresholds.ts) | Shivering heat, W, on top of the basal m0 (Pulse PH/Energy 617–624 form): |
 | `sweatW` | [`l2/thermal/thresholds.ts`](../../packages/engine-core/src/l2/thermal/thresholds.ts) | Sweat evaporative heat loss, W (Pulse PH/Energy 668–679 gain, capped for draped skin [FIT: |
-
-Exported without a doc comment: `readEndoInputs`, `createConditions`, `createEndoCore`, `stepEndoCore`, `createGlucose`, `stepGlucose`, `createHormones`, `stepHormones`, `resolveEndoProfile`, `createEndoState`, `thyroidEffects`, `createTemp`, `stepTemp`, `radiativeH`, `convectiveH`, `createThermal`, `thermalMetabolic`, `cascade`.
 
 ## Source files
 

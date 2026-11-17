@@ -53,12 +53,12 @@ reads it for the tick order, the ventilator link and the events it emits.
 | [`driver.ts:17`](../../packages/engine-core/src/l2/resp/driver.ts#L17) | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
 | [`driver.ts:77`](../../packages/engine-core/src/l2/resp/driver.ts#L77) | the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p. |
 | [`driver.ts:442`](../../packages/engine-core/src/l2/resp/driver.ts#L442) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
-| [`pipeline.ts:454`](../../packages/engine-core/src/l2/resp/pipeline.ts#L454) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
-| [`pipeline.ts:509`](../../packages/engine-core/src/l2/resp/pipeline.ts#L509) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
+| [`pipeline.ts:456`](../../packages/engine-core/src/l2/resp/pipeline.ts#L456) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
+| [`pipeline.ts:511`](../../packages/engine-core/src/l2/resp/pipeline.ts#L511) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 1, FIT 0, ENG 0, UNTAGGED 7, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -71,7 +71,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `breathing.drive.depression` | `neuro.resp.totalDep` → `resp.spont.ve` (V̇E (MV)) | − · factor | UNTAGGED | — | — | The neuro model's ventilatory depression scales the spontaneous drive (apnoea below its threshold). |
 | `breathing.drive.rate` | `neuro.resp.totalDep` → `resp.spont.rr` (RR (spont)) | − · factor | UNTAGGED | — | — | The same depression on the rate. |
 | `breathing.drive.co2` | `resp.co2.pf` (PaCO₂) → `resp.spont.ve` (V̇E (MV)) | + · gain | UNTAGGED | `CO2_SLOPE` = 1.5, `APNOEA_OFFSET` = 4 | — | The hypercapnic ventilatory response, CO2_SLOPE L/min/mmHg above the apnoeic threshold. |
-| `breathing.drive.brainstem` | `organs.brain.cbfRel` → `resp.spont.ve` (V̇E (MV)) | + · threshold | UNTAGGED | — | — | The respiratory gate closes as brainstem flow falls (the organs' CBF, one step late): on the chemoreflex drive in MODELED, on the instructor's rr/vt in MANUAL. |
+| `breathing.drive.brainstem` | `organs.brain.cbfRel`, `organs.brain.energy.brainstem` → `resp.spont.ve` (V̇E (MV)) | + · threshold | UNTAGGED | — | — | The respiratory gate closes as brainstem flow falls (the organs' CBF, one step late): on the chemoreflex drive in MODELED, on the instructor's rr/vt in MANUAL. Its state (seconds unperfused, the reopening gate) is the brain's brainstem entry, which the gate steps. |
 
 ## State
 
@@ -186,32 +186,37 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `ownEffortPmus` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The patient's own inspiratory muscle pressure at `t` during a mechanical breath, cmH2O (≥ 0; |
 | `linkEffortShape` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The waveform's fraction of its peak `u` s after the effort's start: |
 | `alveolarFraction` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The mixed-expirate share of a breath at the sampling site (Fowler 1948 single-breath washout; |
+| `createDriver` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | — |
 | `cycleAt` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The cycle containing t (last one starting at or before t), or undefined. |
 | `lastCycleBefore` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The last cycle that started at or before t (running or finished). |
+| `preoxActive` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | — |
 | `planCycles` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Plan cycles up to `until` (sim s). |
 | `pruneCycles` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Drop cycles that end before `t` (keep enough history for the sidestream delay and u(t − 2·RR)). |
 | `replan` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | A command changed the source or airway at time t: |
 | `onVentFrame` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | --- external drive (VentFrame in) ----------------------------------------------------------------------- |
 | `checkDrive` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | External drive watchdog: |
+| `frameAt` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | — |
 | `cycleVolume` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Lung volume above FRC (mL) at time t within cycle c (constant-flow inspiration, passive expiration). |
 | `chestVolume` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Chest volume (mL above FRC) for the impedance channel: |
 | `breathSignal` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): |
 | `meanAirwayPressure` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Mean airway pressure (cmH2O) now: |
 | `alveolarVentilation` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Alveolar ventilation (L/min) delivered at time t: |
 | `nominalRate` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Nominal breaths/min and VT of the current settings (MANUAL calibration and the `state` event). |
+| `createRespState` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | — |
+| `effortTriggers` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | — |
 | `ownEffort` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | The patient's own inspiratory effort under the machine (MODELED; |
 | `respBreathU` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | The seam the haemodynamics reads: |
+| `applyLungSpecs` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | — |
 | `inductionFactor` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Induction-atelectasis factor by body size (catalogue §10: |
 | `lungDrive` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | How the breath driver drives the lung units at time t. |
 | `ptxStep` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | One step of the tension pneumothorax's one-way valve. |
 | `respPleural` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Circulation seam: |
 | `metabolic` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Metabolic factor (× the resting VO2 or VCO2): |
 | `pregnancy` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Pregnancy severity (the `pregnancy` lung condition, 0–1). |
+| `gaLevel` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | — |
 | `advanceResp` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | --- the tick ---------------------------------------------------------------------------------------------- Generate 62.5 Hz samples up to and including absolute index `mEnd` (= floor(ECG end index / |
 | `validateRespCommand` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Validation hook. |
 | `applyRespCommand` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Apply hook. |
-
-Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `createRespState`, `effortTriggers`, `applyLungSpecs`, `gaLevel`.
 
 ## Source files
 

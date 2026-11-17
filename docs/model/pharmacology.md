@@ -94,7 +94,7 @@ library rows and the outputs other modules consume.
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 19 rows; SOURCED 6, FIT 9, ENG 0, UNTAGGED 4, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -256,7 +256,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `CIRCUIT_L` | `7` | — | [ENG: device] | circle system + bag + absorber gas volume [ENG: device] |
 | `MAC_AWAKE` | `0.34` | — | Miller 10e ch. 18 p. 406 | × MAC for the potent agents (Miller 10e ch. 18 p. 406) |
 
-### Drug rows (65; `packages/engine-core/src/l2/pk/data/`)
+### Drug rows (`packages/engine-core/src/l2/pk/data/`)
 
 | Id | Name | Class | PK | Source | Tag |
 |---|---|---|---|---|---|
@@ -338,28 +338,42 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|
 | `eegClassOf` | [`l2/pk/combine.ts`](../../packages/engine-core/src/l2/pk/combine.ts) | --- EEG stage E1: |
 | `volatileCbfDirect` | [`l2/pk/combine.ts`](../../packages/engine-core/src/l2/pk/combine.ts) | Direct CBF factor of a volatile at `mac` — the vasodilation beyond flow–metabolism coupling (Matta 1999 MCA velocity under an isoelectric EEG, tables §5.1) — piecewise linear through (0, 1), (0.5, 1 + |
+| `combine` | [`l2/pk/combine.ts`](../../packages/engine-core/src/l2/pk/combine.ts) | — |
 | `fromClearances` | [`l2/pk/compartment.ts`](../../packages/engine-core/src/l2/pk/compartment.ts) | Microconstants from volumes (L) and clearances (L/min): |
 | `pkSystem` | [`l2/pk/compartment.ts`](../../packages/engine-core/src/l2/pk/compartment.ts) | The exact discrete system for step dtS seconds (cached by value: |
 | `pkStep` | [`l2/pk/compartment.ts`](../../packages/engine-core/src/l2/pk/compartment.ts) | One exact step: |
 | `lbmJames` | [`l2/pk/covariates.ts`](../../packages/engine-core/src/l2/pk/covariates.ts) | James (1976) lean body mass, as Schnider 1998 and Minto 1997 used it (kg; |
 | `ffmAlSallami` | [`l2/pk/covariates.ts`](../../packages/engine-core/src/l2/pk/covariates.ts) | Al-Sallami (2015) fat-free mass, as Eleveld 2018 used it (kg). |
+| `decrementFromNowMin` | [`l2/pk/csht.ts`](../../packages/engine-core/src/l2/pk/csht.ts) | — |
+| `decrementTimeMin` | [`l2/pk/csht.ts`](../../packages/engine-core/src/l2/pk/csht.ts) | — |
+| `gammaShape` | [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts) | — |
+| `gammaConc` | [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts) | — |
+| `onsetChain` | [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts) | — |
+| `chainShape` | [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts) | — |
 | `gammaN` | [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts) | Shape exponent n from time to peak and the time at which the effect has fallen to 10 % (both s). |
+| `rhythmRequest` | [`l2/pk/hooks.ts`](../../packages/engine-core/src/l2/pk/hooks.ts) | — |
 | `matMul` | [`l2/pk/linalg.ts`](../../packages/engine-core/src/l2/pk/linalg.ts) | Small dense linear algebra for the compartment models. |
 | `matVec` | [`l2/pk/linalg.ts`](../../packages/engine-core/src/l2/pk/linalg.ts) | y = A·x. |
 | `expm` | [`l2/pk/linalg.ts`](../../packages/engine-core/src/l2/pk/linalg.ts) | e^A by scaling and squaring with an 18-term Taylor series (Moler & Van Loan 2003, method 3). |
 | `ttpeMin` | [`l2/pk/models.ts`](../../packages/engine-core/src/l2/pk/models.ts) | Time to peak effect-site concentration after a bolus (min), 0.1 s resolution, 20 min horizon. |
 | `ke0ForTtpe` | [`l2/pk/models.ts`](../../packages/engine-core/src/l2/pk/models.ts) | ke0 fitted by the time-to-peak-effect method (Minto 2003; |
+| `perKg` | [`l2/pk/nmb.ts`](../../packages/engine-core/src/l2/pk/nmb.ts) | — |
 | `bindSugammadex` | [`l2/pk/nmb.ts`](../../packages/engine-core/src/l2/pk/nmb.ts) | Instant 1:1 molar binding in the central compartment (tables §5d "Sugammadex mechanism"; |
 | `bindSugammadexSites` | [`l2/pk/nmb.ts`](../../packages/engine-core/src/l2/pk/nmb.ts) | The same 1:1 molar binding at both effect sites (x[3] thumb, x[4] diaphragm), in concentration terms: |
 | `hill` | [`l2/pk/pd.ts`](../../packages/engine-core/src/l2/pk/pd.ts) | PD primitives. |
 | `competitiveEc50` | [`l2/pk/pd.ts`](../../packages/engine-core/src/l2/pk/pd.ts) | Competitive antagonism: |
 | `acidosisFactor` | [`l2/pk/pd.ts`](../../packages/engine-core/src/l2/pk/pd.ts) | Catecholamine efficacy under acidaemia (tables §5b.1/§6.2): |
 | `betaBlunt` | [`l2/pk/pd.ts`](../../packages/engine-core/src/l2/pk/pd.ts) | β-receptor occupancy by a β-blocker drug blunts the RISE of a catecholamine-driven multiplier (the endocrine model's surge `endoHrF`/`endoEesF`): |
+| `pkPatientOf` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | — |
+| `createPkState` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | — |
 | `concUnit` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | The row's concentration unit — the unit of every BusAgent field and of the panel's Ce. |
 | `clFactor` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Clearance factor from liver flow/function, kidney and temperature, quantised to 1 % (cache hits). |
 | `gammaDeclineRate` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | The decline-rate multiplier of a gamma row, 1 − φ·(1 − f), φ = min(1, (ln 2/t½β)/ke) — the clearance-governed share of the chain's decline (ke); |
+| `distFactor` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | — |
+| `validatePkCommand` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | — |
 | `routeHonoured` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | True when the engine models a dose of this drug by this route (validatePkCommand's route rule; |
 | `applyPkCommand` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Apply a validated command. |
+| `concOf` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | — |
 | `advancePk` | [`l2/pk/pipeline.ts`](../../packages/engine-core/src/l2/pk/pipeline.ts) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. |
 | `tciSetRefusal` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | --- the pump's own prediction (E2, D3) ------------------------------------------------------------------------- Why a set cannot run this drug in this mode, or undefined: |
 | `newPrediction` | [`l2/pk/pump.ts`](../../packages/engine-core/src/l2/pk/pump.ts) | A fresh prediction: |
@@ -381,8 +395,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `toAmount` | [`l2/pk/units.ts`](../../packages/engine-core/src/l2/pk/units.ts) | Bolus dose → amount in `amountUnit`, or an error string. |
 | `toRate` | [`l2/pk/units.ts`](../../packages/engine-core/src/l2/pk/units.ts) | Rate → amount/min in `amountUnit`, or an error string. |
 | `uptakeLpm` | [`l2/pk/volatile.ts`](../../packages/engine-core/src/l2/pk/volatile.ts) | The agent's alveolar UPTAKE, L/min of gas — Q̇·λb/g·(FA − Fv) with Fv the flow-weighted mixed-venous tension of the three tissue groups. |
-
-Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTimeMin`, `gammaShape`, `gammaConc`, `onsetChain`, `chainShape`, `rhythmRequest`, `perKg`, `pkPatientOf`, `createPkState`, `distFactor`, `validatePkCommand`, `concOf`, `stepVolatile`.
+| `stepVolatile` | [`l2/pk/volatile.ts`](../../packages/engine-core/src/l2/pk/volatile.ts) | — |
 
 ## Source files
 

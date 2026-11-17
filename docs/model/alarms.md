@@ -94,6 +94,7 @@ waits or stays quiet; an embedding developer gets one `alarmStatus` summary for 
 
 | Function | File | Doc |
 |---|---|---|
+| `createInputs` | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | — |
 | `observeQrs` | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | A QRS detection at R time tR (s). |
 | `observeEvent` | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | An engine event the device layer sees (measurements, beats, NIBP results and the raw technical flags). |
 | `buildConditions` | [`l3/alarms/conditions.ts`](../../packages/engine-core/src/l3/alarms/conditions.ts) | Every condition that is true at sim time t (the manager applies delays, switches and silence). |
@@ -105,17 +106,19 @@ waits or stays quiet; an embedding developer gets one `alarmStatus` summary for 
 | `stepInstance` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | One committed tick of the instance, true when its visible state changed (its owner's status is then due). |
 | `instanceBlock` | [`l3/alarms/instance.ts`](../../packages/engine-core/src/l3/alarms/instance.ts) | The owner's published block from the instance. |
 | `latchCovers` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Whether a latching mode covers an alarm. |
+| `defaultConfig` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | — |
+| `createAlarmMgr` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | — |
 | `setProfile` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Switch skin or age band: |
 | `limitOf` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Effective limit (after setLimit) for a limit key, or null when the skin has none. |
+| `isEnabled` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | — |
 | `validateAlarmAction` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Validation for `device alarm` actions: |
 | `applyAlarmAction` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Apply a validated `device alarm` action at sim time t. |
 | `stepAlarms` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | Advance the life cycle to sim time t with this tick's true conditions: |
 | `alarmStatus` | [`l3/alarms/manager.ts`](../../packages/engine-core/src/l3/alarms/manager.ts) | The renderer's summary (types-device.ts `alarmStatus`). |
 | `skinBand` | [`l3/alarms/profile.ts`](../../packages/engine-core/src/l3/alarms/profile.ts) | Engine age bands (brief §7.1 EngineOptions.device.ageBand) → skin bands. |
 | `deviceProfile` | [`l3/alarms/profile.ts`](../../packages/engine-core/src/l3/alarms/profile.ts) | Build the profile for a skin (or preset) id and an age band. |
+| `fixedText` | [`l3/alarms/text.ts`](../../packages/engine-core/src/l3/alarms/text.ts) | — |
 | `limitText` | [`l3/alarms/text.ts`](../../packages/engine-core/src/l3/alarms/text.ts) | Limit alarm text: |
-
-Exported without a doc comment: `createInputs`, `defaultConfig`, `createAlarmMgr`, `isEnabled`, `fixedText`.
 
 ## Source files
 

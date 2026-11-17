@@ -136,14 +136,26 @@ No exported `…State` type in this module.
 
 | Function | File | Doc |
 |---|---|---|
+| `provenanceQueue` | [`bedside/apply.ts`](../../packages/validation/src/bedside/apply.ts) | — |
+| `bedsideMarkdown` | [`bedside/apply.ts`](../../packages/validation/src/bedside/apply.ts) | — |
+| `cacheDir` | [`datasets/cache.ts`](../../packages/validation/src/datasets/cache.ts) | — |
+| `readCsv` | [`datasets/csv.ts`](../../packages/validation/src/datasets/csv.ts) | — |
+| `fetchZenodo` | [`datasets/fetch-zenodo.ts`](../../packages/validation/src/datasets/fetch-zenodo.ts) | — |
+| `readManifest` | [`datasets/manifest.ts`](../../packages/validation/src/datasets/manifest.ts) | — |
+| `writeManifest` | [`datasets/manifest.ts`](../../packages/validation/src/datasets/manifest.ts) | — |
 | `mghMeta` | [`datasets/mghdb.ts`](../../packages/validation/src/datasets/mghdb.ts) | Metadata and channel indices from a .hea text. |
 | `mghSignals` | [`datasets/mghdb.ts`](../../packages/validation/src/datasets/mghdb.ts) | Physical-unit window [fromS, toS) of every mapped channel, decoded once per record. |
 | `pwdbStats` | [`datasets/pwdb.ts`](../../packages/validation/src/datasets/pwdb.ts) | [p10, p50, p90] per site and age band (25…75 y in 10-year steps) in ms. |
+| `selectVitaldb` | [`datasets/select.ts`](../../packages/validation/src/datasets/select.ts) | — |
+| `selectMghdb` | [`datasets/select.ts`](../../packages/validation/src/datasets/select.ts) | — |
 | `fetchAll` | [`datasets/select.ts`](../../packages/validation/src/datasets/select.ts) | Download everything the manifests list; |
 | `fillGaps` | [`datasets/signals.ts`](../../packages/validation/src/datasets/signals.ts) | Replace NaN runs by linear interpolation (edges hold the nearest value). |
+| `parseVital` | [`datasets/vital.ts`](../../packages/validation/src/datasets/vital.ts) | — |
 | `waveSlice` | [`datasets/vital.ts`](../../packages/validation/src/datasets/vital.ts) | A wave track as one evenly sampled array from `fromS` to `toS` (seconds after t0); |
 | `numbers` | [`datasets/vital.ts`](../../packages/validation/src/datasets/vital.ts) | A numeric track as (time s after t0, value) pairs inside [fromS, toS). |
 | `selectCandidates` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | Deterministic stratified pick (decision 2): |
+| `vitaldbSums` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | — |
+| `loadCase` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | — |
 | `findWindows` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | Up to `max` 300 s windows inside [opstart + 600 s, opend − 300 s] where all four waves are ≥ 99 % present, the arterial trace is plausible (MAP 40–150, no flush > 250), the ventilator is in IPPV (SET_ |
 | `inspirationsFromAwp` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | Inspiration onsets from airway pressure: |
 | `newReadings` | [`datasets/vitaldb.ts`](../../packages/validation/src/datasets/vitaldb.ts) | Solar8000 repeats the last NIBP reading every 2 s: |
@@ -154,39 +166,83 @@ No exported `…State` type in this module.
 | `loadPtbxl` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | The selected PTB-XL records the cache holds, lead II in mV, and the selected files it does not hold. |
 | `fetchRigSets` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | Fill the cache: |
 | `rigSummary` | [`ecg-analysis/rig-sets.ts`](../../packages/validation/src/ecg-analysis/rig-sets.ts) | One line per class: |
+| `capture` | [`engine/capture.ts`](../../packages/validation/src/engine/capture.ts) | — |
+| `numericSeries` | [`engine/match.ts`](../../packages/validation/src/engine/match.ts) | — |
+| `matchedRun` | [`engine/match.ts`](../../packages/validation/src/engine/match.ts) | — |
 | `pulseBeats` | [`metrics/abp.ts`](../../packages/validation/src/metrics/abp.ts) | One beat per R peak (sample times in s of the ECG `rS`); |
+| `capnoAngles` | [`metrics/capno.ts`](../../packages/validation/src/metrics/capno.ts) | — |
+| `hrAveragingError` | [`metrics/device.ts`](../../packages/validation/src/metrics/device.ts) | — |
+| `nibpVsAbp` | [`metrics/device.ts`](../../packages/validation/src/metrics/device.ts) | — |
+| `paEtGap` | [`metrics/device.ts`](../../packages/validation/src/metrics/device.ts) | — |
+| `detectR` | [`metrics/ecg.ts`](../../packages/validation/src/metrics/ecg.ts) | — |
+| `intervalsOf` | [`metrics/intervals.ts`](../../packages/validation/src/metrics/intervals.ts) | — |
+| `ppgAbp` | [`metrics/ppg.ts`](../../packages/validation/src/metrics/ppg.ts) | — |
+| `respVariation` | [`metrics/resp-variation.ts`](../../packages/validation/src/metrics/resp-variation.ts) | — |
+| `computeWindowMetrics` | [`metrics/window-metrics.ts`](../../packages/validation/src/metrics/window-metrics.ts) | — |
+| `ptbxlIntervals` | [`morphology/intervals-suite.ts`](../../packages/validation/src/morphology/intervals-suite.ts) | — |
+| `engineIntervals` | [`morphology/intervals-suite.ts`](../../packages/validation/src/morphology/intervals-suite.ts) | — |
 | `intervalFills` | [`morphology/intervals-suite.ts`](../../packages/validation/src/morphology/intervals-suite.ts) | p10–p90 of each interval in the reference: |
 | `series` | [`morphology/suite.ts`](../../packages/validation/src/morphology/suite.ts) | Per-window scalar or per-beat series of a metric (per-window scalars become one-element arrays). |
 | `gradeBand` | [`morphology/suite.ts`](../../packages/validation/src/morphology/suite.ts) | Grade one band over a group of window pairs. |
+| `measurePairs` | [`morphology/suite.ts`](../../packages/validation/src/morphology/suite.ts) | — |
+| `gradePairs` | [`morphology/suite.ts`](../../packages/validation/src/morphology/suite.ts) | — |
 | `runBloodOracle` | [`oracle/blood-scenarios.ts`](../../packages/validation/src/oracle/blood-scenarios.ts) | One scenario on both engines (StandardMale, our engine MODELED). |
 | `compareRow` | [`oracle/compare.ts`](../../packages/validation/src/oracle/compare.ts) | agree: \|ours − pulse\| ≤ tol·max(1, \|pulse\|); |
 | `judge` | [`oracle/oracle.ts`](../../packages/validation/src/oracle/oracle.ts) | agree: \|ours − pulse\| within tolPct of \|pulse\| → green, < 30 % → yellow, else red. |
+| `oursDoc` | [`oracle/oracle.ts`](../../packages/validation/src/oracle/oracle.ts) | — |
 | `runOracle` | [`oracle/oracle.ts`](../../packages/validation/src/oracle/oracle.ts) | Run one scenario on both engines. |
+| `pulseDir` | [`oracle/pulse-node.ts`](../../packages/validation/src/oracle/pulse-node.ts) | — |
+| `loadPulse` | [`oracle/pulse-node.ts`](../../packages/validation/src/oracle/pulse-node.ts) | — |
 | `overBudget` | [`perf/tick-bench.ts`](../../packages/validation/src/perf/tick-bench.ts) | The p99 gate of `perf:ticks --budget-ms` — a reason when the tail is over budget (or not a number), else null. |
+| `tickBench` | [`perf/tick-bench.ts`](../../packages/validation/src/perf/tick-bench.ts) | — |
+| `generate` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | — |
 | `compareWave` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Per-sample 2 % comparison; |
+| `readBaseline` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | — |
+| `writeBaseline` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | — |
 | `runRegression` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Compare every case with the committed baseline; |
+| `hashRun` | [`regression/determinism.ts`](../../packages/validation/src/regression/determinism.ts) | — |
+| `runDeterminism` | [`regression/determinism.ts`](../../packages/validation/src/regression/determinism.ts) | — |
+| `writeGolden` | [`regression/determinism.ts`](../../packages/validation/src/regression/determinism.ts) | — |
 | `allRows` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | Every graded row of every suite, in report order. |
+| `counts` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | — |
+| `calibrationQueue` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | — |
 | `gatingFailures` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | What fails the run: |
+| `renderMarkdown` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | — |
+| `renderQueue` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | — |
 | `toClip` | [`review/clips.ts`](../../packages/validation/src/review/clips.ts) | A 10 s clip from the middle of a window, at the engine rate, ECG band-passed like the monitor filter. |
+| `shuffle` | [`review/clips.ts`](../../packages/validation/src/review/clips.ts) | — |
+| `buildBundle` | [`review/clips.ts`](../../packages/validation/src/review/clips.ts) | — |
+| `scoreReview` | [`review/score.ts`](../../packages/validation/src/review/score.ts) | — |
+| `scoreMarkdown` | [`review/score.ts`](../../packages/validation/src/review/score.ts) | — |
+| `resolveRef` | [`segments/grade.ts`](../../packages/validation/src/segments/grade.ts) | — |
+| `gradeTarget` | [`segments/grade.ts`](../../packages/validation/src/segments/grade.ts) | — |
+| `runValidationDoc` | [`segments/run.ts`](../../packages/validation/src/segments/run.ts) | — |
 | `gradeCross` | [`segments/run.ts`](../../packages/validation/src/segments/run.ts) | Grade a row across documents from their runs; |
 | `quantile` | [`stats.ts`](../../packages/validation/src/stats.ts) | Distribution statistics for recorded-vs-generated comparisons (brief §9; |
 | `ksD` | [`stats.ts`](../../packages/validation/src/stats.ts) | Two-sample Kolmogorov–Smirnov statistic D (0 = identical empirical CDFs, 1 = disjoint). |
 | `wasserstein1` | [`stats.ts`](../../packages/validation/src/stats.ts) | 1-Wasserstein (earth mover's) distance between two empirical distributions, in the data's units. |
 | `coverage` | [`stats.ts`](../../packages/validation/src/stats.ts) | Fraction of `xs` inside [lo, hi] (interval coverage). |
+| `pearson` | [`stats.ts`](../../packages/validation/src/stats.ts) | — |
 | `csvCells` | [`templates/compare-ptbxl.ts`](../../packages/validation/src/templates/compare-ptbxl.ts) | Split one CSV line, honouring double quotes. |
 | `rPeaks` | [`templates/compare-ptbxl.ts`](../../packages/validation/src/templates/compare-ptbxl.ts) | R peaks on lead II: |
+| `medianBeat` | [`templates/compare-ptbxl.ts`](../../packages/validation/src/templates/compare-ptbxl.ts) | — |
 | `engineBeat` | [`templates/compare-ptbxl.ts`](../../packages/validation/src/templates/compare-ptbxl.ts) | The engine's 12-lead normal beat around R (R = kernel τ 40 ms), for a given QT. |
+| `comparePtbxl` | [`templates/compare-ptbxl.ts`](../../packages/validation/src/templates/compare-ptbxl.ts) | — |
 | `highpassZeroPhase` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Zero-phase first-order high-pass (forward + backward), cut-off fc. |
 | `bandpassZeroPhase` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Zero-phase band-pass: |
 | `resample` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Resample fsIn → fsOut with a Hann-windowed sinc interpolator (±16 input samples, anti-aliased) [ENG: |
 | `toInt16Base64` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Quantise a unit-RMS signal to Int16 (× scale) and base64-encode it little-endian. |
+| `extractAf` | [`templates/extract-af.ts`](../../packages/validation/src/templates/extract-af.ts) | — |
+| `extractVf` | [`templates/extract-vf.ts`](../../packages/validation/src/templates/extract-vf.ts) | — |
+| `fetchCached` | [`templates/fetch.ts`](../../packages/validation/src/templates/fetch.ts) | — |
 | `parseSums` | [`templates/fetch.ts`](../../packages/validation/src/templates/fetch.ts) | Parse SHA256SUMS.txt ("<hex> <path>" per line). |
+| `sha256` | [`templates/fetch.ts`](../../packages/validation/src/templates/fetch.ts) | — |
+| `fetchVerified` | [`templates/fetch.ts`](../../packages/validation/src/templates/fetch.ts) | — |
+| `writeTemplateModule` | [`templates/template-module.ts`](../../packages/validation/src/templates/template-module.ts) | — |
 | `parseHeader` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Parse a .hea text (record line + one line per signal). |
 | `decode212` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Decode format 212 (two 12-bit two's-complement samples per 3 bytes), interleaved over nSignals. |
 | `decode16` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Decode format 16 (16-bit little-endian two's complement), interleaved over nSignals. |
 | `parseAnnotations` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Parse an MIT-format annotation file (annot(5)). |
-
-Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`, `readCsv`, `fetchZenodo`, `readManifest`, `writeManifest`, `selectVitaldb`, `selectMghdb`, `parseVital`, `vitaldbSums`, `loadCase`, `capture`, `numericSeries`, `matchedRun`, `capnoAngles`, `hrAveragingError`, `nibpVsAbp`, `paEtGap`, `detectR`, `intervalsOf`, `ppgAbp`, `respVariation`, `computeWindowMetrics`, `ptbxlIntervals`, `engineIntervals`, `measurePairs`, `gradePairs`, `oursDoc`, `pulseDir`, `loadPulse`, `tickBench`, `generate`, `readBaseline`, `writeBaseline`, `hashRun`, `runDeterminism`, `writeGolden`, `counts`, `calibrationQueue`, `renderMarkdown`, `renderQueue`, `shuffle`, `buildBundle`, `scoreReview`, `scoreMarkdown`, `resolveRef`, `gradeTarget`, `runValidationDoc`, `pearson`, `medianBeat`, `comparePtbxl`, `extractAf`, `extractVf`, `fetchCached`, `sha256`, `fetchVerified`, `writeTemplateModule`.
 
 ## Source files
 
@@ -268,6 +324,7 @@ None recorded.
 | [`check-licences.test.ts`](../../packages/validation/test/check-licences.test.ts) | 0 | 0 |
 | [`check-notices.test.ts`](../../packages/validation/test/check-notices.test.ts) | 0 | 0 |
 | [`check-size.test.ts`](../../packages/validation/test/check-size.test.ts) | 0 | 0 |
+| [`ci-affected.test.ts`](../../packages/validation/test/ci-affected.test.ts) | 0 | 0 |
 | [`coupling-seams.test.ts`](../../packages/validation/test/coupling-seams.test.ts) | 0 | 0 |
 | [`couplings.test.ts`](../../packages/validation/test/couplings.test.ts) | 0 | 0 |
 | [`datasets/manifest.test.ts`](../../packages/validation/test/datasets/manifest.test.ts) | 0 | 0 |
@@ -280,6 +337,7 @@ None recorded.
 | [`docs-honesty.test.ts`](../../packages/validation/test/docs-honesty.test.ts) | 0 | 0 |
 | [`docs-readers.test.ts`](../../packages/validation/test/docs-readers.test.ts) | 0 | 0 |
 | [`e2e-evidence.test.ts`](../../packages/validation/test/e2e-evidence.test.ts) | 0 | 0 |
+| [`e2e-retry-gate.test.ts`](../../packages/validation/test/e2e-retry-gate.test.ts) | 0 | 0 |
 | [`e2e-servers.test.ts`](../../packages/validation/test/e2e-servers.test.ts) | 0 | 0 |
 | [`e2e-shard-plan.test.ts`](../../packages/validation/test/e2e-shard-plan.test.ts) | 0 | 0 |
 | [`ecg-analysis/rig-sets.test.ts`](../../packages/validation/test/ecg-analysis/rig-sets.test.ts) | 0 | 0 |

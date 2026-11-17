@@ -129,7 +129,7 @@ reads it for the per-beat truths the monitor and the other organ models consume.
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 85 rows; SOURCED 2, FIT 22, ENG 0, UNTAGGED 50, ABSENT 11.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -614,37 +614,53 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `activationAt` | [`l2/circ/activation.ts`](../../packages/engine-core/src/l2/circ/activation.ts) | Activation level at time t: |
 | `pruneActivations` | [`l2/circ/activation.ts`](../../packages/engine-core/src/l2/circ/activation.ts) | Drop activations that ended before t. |
 | `obstructiveAlias` | [`l2/circ/aliases.ts`](../../packages/engine-core/src/l2/circ/aliases.ts) | The pair an event expands to, or null when it is not an aliased obstructive-shock event. |
+| `riskOf` | [`l2/circ/arrest.ts`](../../packages/engine-core/src/l2/circ/arrest.ts) | — |
+| `vfShare` | [`l2/circ/arrest.ts`](../../packages/engine-core/src/l2/circ/arrest.ts) | — |
 | `onsetRhythm` | [`l2/circ/arrest.ts`](../../packages/engine-core/src/l2/circ/arrest.ts) | The onset rhythm: |
 | `arrestStep` | [`l2/circ/arrest.ts`](../../packages/engine-core/src/l2/circ/arrest.ts) | One step of dt seconds (1 Hz): |
 | `peaDecayStep` | [`l2/circ/arrest.ts`](../../packages/engine-core/src/l2/circ/arrest.ts) | One 1 Hz step of the decay of an engine-declared organised PEA. |
 | `roscStep` | [`l2/circ/arrest.ts`](../../packages/engine-core/src/l2/circ/arrest.ts) | ROSC of an engine-declared organised arrest (PEA): |
 | `brainstemOutF` | [`l2/circ/baroreflex.ts`](../../packages/engine-core/src/l2/circ/baroreflex.ts) | × on the delivered sympathetic output from brainstem perfusion (1 when the organ model is absent). |
+| `createBaro` | [`l2/circ/baroreflex.ts`](../../packages/engine-core/src/l2/circ/baroreflex.ts) | — |
 | `stepBaro` | [`l2/circ/baroreflex.ts`](../../packages/engine-core/src/l2/circ/baroreflex.ts) | One 10 Hz step with the current mean arterial pressure; |
+| `createOut` | [`l2/circ/circuit.ts`](../../packages/engine-core/src/l2/circ/circuit.ts) | — |
 | `evaluate` | [`l2/circ/circuit.ts`](../../packages/engine-core/src/l2/circ/circuit.ts) | Evaluate every pressure and flow of state s at time t into o. |
 | `stepCirc` | [`l2/circ/circuit.ts`](../../packages/engine-core/src/l2/circ/circuit.ts) | Advance s in place from t to t + h (classical RK4). |
 | `arterialVolume` | [`l2/circ/circuit.ts`](../../packages/engine-core/src/l2/circ/circuit.ts) | Stressed arterial volume ∫₀^PC C(p) dp for C(P) = WK_C·clamp(e^{−k(P−P0)}, 0.5, 3), × cArt. |
 | `totalVolume` | [`l2/circ/circuit.ts`](../../packages/engine-core/src/l2/circ/circuit.ts) | Total blood volume represented by state s (mL): |
+| `applyCircCondition` | [`l2/circ/conditions.ts`](../../packages/engine-core/src/l2/circ/conditions.ts) | — |
+| `createCoronary` | [`l2/circ/coronary.ts`](../../packages/engine-core/src/l2/circ/coronary.ts) | — |
+| `stepCoronary` | [`l2/circ/coronary.ts`](../../packages/engine-core/src/l2/circ/coronary.ts) | — |
 | `stPatchOf` | [`l2/circ/coronary.ts`](../../packages/engine-core/src/l2/circ/coronary.ts) | The ST modifier patch for the ECG (null when below the 0.05 mV floor of Modifiers.ischaemicDepressionMv). |
+| `createIabp` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | — |
 | `iabpOnBeat` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | A beat starting at beatT (R) with RR rr and the previous beat's aortic closure at avCloseS after its onset: |
 | `iabpSchedule` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | Schedule the next balloon cycle at `now`, when a beat has completed (research/20, the tables' §8.1 pressure trigger). |
 | `iabpFlow` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | Balloon dV/dt (mL/s): |
 | `iabpStop` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | Stop at time t: |
+| `createLvad` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | — |
 | `lvadFlow` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | Pump flow LV → aorta (mL/s) at LV pressure pLv, aortic pressure pAo, LV volume vLv (mL) and the LV's resting EDV lvSizeMl (the collapse volume scales with it; |
 | `lvadNumerics` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | Console numerics over the interval since the last call (flow L/min, PI, power W), then reset the window. |
+| `bypassFlow` | [`l2/circ/devices.ts`](../../packages/engine-core/src/l2/circ/devices.ts) | — |
+| `bolusScale` | [`l2/circ/drugs.ts`](../../packages/engine-core/src/l2/circ/drugs.ts) | — |
 | `drugEffect` | [`l2/circ/drugs.ts`](../../packages/engine-core/src/l2/circ/drugs.ts) | Combined multipliers of every bolus at time t (β-mediated parts × (1 − betaBlock)). |
 | `pruneBoluses` | [`l2/circ/drugs.ts`](../../packages/engine-core/src/l2/circ/drugs.ts) | Drop boluses whose effect is below 0.1 % (t > 7 τoff). |
 | `ectopyDrive` | [`l2/circ/ectopy.ts`](../../packages/engine-core/src/l2/circ/ectopy.ts) | The ectopic drive D and its terms (0 at rest). |
 | `ectopyRate` | [`l2/circ/ectopy.ts`](../../packages/engine-core/src/l2/circ/ectopy.ts) | Ectopic events per minute. |
 | `ectopyStep` | [`l2/circ/ectopy.ts`](../../packages/engine-core/src/l2/circ/ectopy.ts) | One step of dt seconds: |
 | `hypoxicArrestRequest` | [`l2/circ/hypoxic-arrest.ts`](../../packages/engine-core/src/l2/circ/hypoxic-arrest.ts) | The rhythm the circulation asks for at this 1 Hz step, or null. |
+| `createCircModel` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | — |
 | `circOnBeat` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | A mechanical beat at time t (the rhythm engine's R time). |
 | `circOnAtrial` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | An atrial depolarisation (P onset): |
+| `circGiveDrug` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | — |
 | `circVolume` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | Bleed (negative) or infuse (positive) `ml` over `overS` seconds from now. |
 | `chemoFactors` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | Chemoreflex → circulation (B §4.9; |
 | `circVagalStimulus` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | The engine's stimulus observer (the endocrine model consumes the event; |
 | `stepCircModel` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | Advance the model to time tEnd in 2 ms RK4 steps; |
 | `circCardiacOutput` | [`l2/circ/model.ts`](../../packages/engine-core/src/l2/circ/model.ts) | Cardiac output (L/min): |
 | `obstructedSwingMmHg` | [`l2/circ/pleural.ts`](../../packages/engine-core/src/l2/circ/pleural.ts) | The pleural pressure (mmHg, ≥ 0, subtracted) of an effort against an obstructed upper airway — the muscle pressure spent there (Mueller manoeuvre: |
+| `pleuralPressureMmHg` | [`l2/circ/pleural.ts`](../../packages/engine-core/src/l2/circ/pleural.ts) | — |
+| `ageBand` | [`l2/circ/profile.ts`](../../packages/engine-core/src/l2/circ/profile.ts) | — |
+| `resolveProfile` | [`l2/circ/profile.ts`](../../packages/engine-core/src/l2/circ/profile.ts) | — |
 | `heldRate` | [`l2/circ/rate-rule.ts`](../../packages/engine-core/src/l2/circ/rate-rule.ts) | The rate to hold for a rhythm just set: |
 | `modeledHrRequest` | [`l2/circ/rate-rule.ts`](../../packages/engine-core/src/l2/circ/rate-rule.ts) | The rate MODELED mode asks the rhythm engine for at time t, or null when the rhythm's own rate stands. |
 | `initialState` | [`l2/circ/stabilise.ts`](../../packages/engine-core/src/l2/circ/stabilise.ts) | Analytic starting state: |
@@ -653,8 +669,6 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `valveFlow` | [`l2/circ/valves.ts`](../../packages/engine-core/src/l2/circ/valves.ts) | Flow (mL/s, positive = forward) for pressure difference dp = P_upstream − P_downstream. |
 | `betaVenousUnits` | [`l2/circ/venous.ts`](../../packages/engine-core/src/l2/circ/venous.ts) | β venous potency units Σ Ce/EC50 over the listed agents on the drug bus. |
 | `betaDV0Ml` | [`l2/circ/venous.ts`](../../packages/engine-core/src/l2/circ/venous.ts) | Volume (mL) moved from the unstressed to the stressed venous pool at potency u and β occupancy occ. |
-
-Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, `applyCircCondition`, `createCoronary`, `stepCoronary`, `createIabp`, `createLvad`, `bypassFlow`, `bolusScale`, `createCircModel`, `circGiveDrug`, `pleuralPressureMmHg`, `ageBand`, `resolveProfile`.
 
 ## Source files
 

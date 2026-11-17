@@ -54,7 +54,7 @@ describe('panel Scenario tab (DOM)', () => {
     expect(q<HTMLElement>(panel, '.pme-scn-title').textContent).toBe('[draft] Witnessed VF in PACU');
     expect(q<HTMLElement>(panel, '.pme-scn-state').textContent).toBe('Stable in PACU');
     // FU-8 (Stage 9 R-S9-2, E-FU8-2): the transition names its target state by the state's label, not its id
-    expect(texts(panel, '.pme-scn-next li')).toEqual(['Start VF now Start VF now: any of (after 60 s in state; button "Start VF now") → Coarse VF']);
+    expect(texts(panel, '.pme-scn-next li')).toEqual(['Start VF now Start VF now: any of (all of (after 60 s in state; rhythm sinus); button "Start VF now") → Coarse VF']);
     expect(texts(panel, '.pme-scn-states li').length).toBe(5);
     expect(q(panel, '.pme-scn-states li[aria-current=step]')?.getAttribute('data-state')).toBe('stable');
   });
