@@ -759,7 +759,7 @@ reading error the notes state (research notes 90a and 90b).
 | BMJ 1982;284:1733 (PMID 6805689) | [ABS] | plasma exchange in 8: viscosity down, no change of CBF |
 | Vaclavu et al. 2019, Haematologica (PMC6442969) | [FT] | acetazolamide (16 mg/kg, ASL): controls +69.5 %, sickle-cell anaemia +34.1 %, "utilize half of the cerebral vasodilatory reserve" |
 | Zhao et al. 2021, NeuroImage (PMC8272558) | [FT] | acetazolamide (15 mg/kg), 15O-water PET, 19 healthy adults: whole-brain +39 % (SD 19) |
-| Battisti-Charbonney et al. 2011, J Physiol (DOI 10.1113/jphysiol.2011.206052) | [ABS] | MCA velocity's hypercapnic maximum +76.5 % / +108 % |
+| Battisti-Charbonney et al. 2011, J Physiol 589:3039 (DOI 10.1113/jphysiol.2011.206052; PMC3139085) | [FT] | MCA flow velocity (not flow) in 16 volunteers: sigmoid maxima 80 / 78.9 % hyperoxic and 101 / 101.7 % hypoxic (right / left), counted from the mean minimum during 5 min of hyperventilation, not from rest; the resting end-tidal PCO2 is not reported; the abstract's +108 % excludes four of the 16 subjects (Table 1) |
 | Grossmann & Koeberle 2000, Cerebrovasc Dis 10:65 (PMID 10629349) | [FT] | 59 healthy or CNS-excluded people, Xe-133 fast flow F1, standardised to PaCO2 36.5: rest 70.8; 98.5 / 109.7 / 118.6 / 127 at 10 / 13 / 15 / 18 mg/kg acetazolamide (× 1.39 / 1.55 / 1.68 / 1.79), each step significant including 15 → 18, so no plateau shown (p. 66, Fig. 1 p. 67); n 6 at 18 mg/kg, all with severe side effects (Table 1, p. 67); BP slightly lower (p. 68) |
 | Willie et al. 2012, J Physiol (DOI 10.1113/jphysiol.2012.228551; PMC3459041) | [FT] (early online pagination) | 16 healthy young adults, end-tidal forcing, duplex ICA and VA flow: ICA flow 222 → 341 mL/min at PaCO2 49 (× 1.54, MAP 82 → 87, not significant), → 482 at 58 (MAP 94), → 489 at 62 (MAP 100, n 3); ICA conductance up to × 1.85 at 58 (Table 1, p. 6); the authors cannot separate PaCO2 from the MAP rise (p. 13) |
 | Secomb & Pries 2013, C R Physique (PMC4117233), giving Pries 1992; Trejo-Soto 2022, Micromachines (PMC8954080) | [FT] | blood viscosity against haematocrit and vessel diameter, not a power law; rises at low shear |
@@ -892,7 +892,8 @@ reading error the notes state (research notes 90a and 90b).
   Gersten's fit (the plotted points or the drawn curves); Todd 1994's fitted slopes above and below CaO2 12 (drawn
   only, Fig. 1); whole-blood viscosity with the dilution fluids, and Hudak 1986 (DOI 10.1152/ajpheart.1986.251.1.h63),
   Hudak 1987 (DOI 10.1152/jappl.1987.62.3.1090), Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949); BMJ 1982
-  (PMC1498687); Battisti-Charbonney 2011 (DOI 10.1113/jphysiol.2011.206052).
+  (PMC1498687); Battisti-Charbonney 2011: the resting end-tidal PCO2 and the sigmoid's equation as printed (to place
+  rest on the fitted curve), and each subject's fitted parameters (Table 1 gives means only).
 - Cerebral flow below the lower limit of autoregulation, or under chest compressions, with and without haemodilution
   (§2.2: that the regulated rise adds nothing there is the plan's inference from the shared reserve).
 - A blood-viscosity relation with haematocrit and shear rate from a rheology source (Chien 1970, Merrill 1969 are cited
@@ -1119,8 +1120,16 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   15 and 18 mg/kg, every step significant, so no plateau shown, with blood pressure slightly lower (Grossmann &
   Koeberle 2000 [FT], p. 66, Fig. 1 p. 67, p. 68); with CO2, ICA flow × 1.54 at PaCO2 ≈ 49 while MAP had not changed
   significantly, rising to × 2.2 at PaCO2 ≈ 62 with MAP +21 % in 3 subjects, ICA conductance up to × 1.85 at ≈ 58
-  (Willie 2012 [FT], Table 1 p. 6; the authors cannot separate PaCO2 from the pressure rise, p. 13); flow velocity's
-  hypercapnic maximum +76.5 % (hyperoxic) before MAP rises (Battisti-Charbonney 2011 [ABS]). Dogs (Harper & Glass
+  (Willie 2012 [FT], Table 1 p. 6; the authors cannot separate PaCO2 from the pressure rise, p. 13); MCA flow
+  **velocity**, not flow, in 16 awake volunteers by rebreathing at a held end-tidal PO2: the fitted sigmoid's maximum
+  was 80 % (right MCA, n 16) and 78.9 % (left, n 10) hyperoxic and 101 % and 101.7 % hypoxic, each counted from the mean
+  minimum velocity during 5 min of hyperventilation to an end-tidal PCO2 of 25 mmHg (SD 4.0), **not from rest**; the
+  sigmoid's midpoint lay at 36.8 / 35.6 mmHg hyperoxic, and the resting value is not reported, so the article gives no
+  rise above rest; MAP began to rise at an end-tidal PCO2 of 49.1
+  mmHg hyperoxic and 44.4 hypoxic (MCA velocity threshold 51.7 / 45.4); the abstract's +108 % is the hypoxic mean after
+  excluding four of the 16 subjects, whose hypoxic rise was not larger (107.5 / 108.9 % right / left; hyperoxic 78.5 /
+  73.7 %); the authors note that the MCA diameter may change at very high CO2, which would make velocity understate flow
+  (Battisti-Charbonney 2011 [FT], Methods, Data analysis; Table 1; Discussion). Dogs (Harper & Glass
   1965 [FT]; 41 dogs, thiopentone then N2O, cortical 85Kr flow, each point a percent of that dog's own flow at PaCO2 40
   at its own pressure, p. 450): raising PaCO2 40 → 80 raised flow about 100 % at the dogs' "normotensive" ≈ 150 mmHg
   and "only 50 %" at MAP held at 100, and had no significant effect at 50 (pp. 450–451); the sigmoid fitted to these
