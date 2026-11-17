@@ -95,7 +95,7 @@ describe('the dose-rate line (L8)', () => {
     const staged = stagePrep(f, { id: 'p1', issuedBy: 'learner', type: 'prep', action: 'stage', prep: { id: 'prop0001', components: [{ productId: 'propofol-1pct-aspen', amount: 20, unit: 'mL' }], container: 'syringe-pp' } } as unknown as Extract<WireCommand, { type: 'prep'; action: 'stage' }>, DEVICE, ME, 0);
     if (!staged.ok) throw new Error(staged.why);
     const view = learnerView(staged.prep);
-    const out = infusePrep(f, staged.prep, { id: 'cmd1', issuedBy: 'learner', type: 'prep', action: 'infuse', prepId: 'prop0001', rateMlH: 10 } as Extract<WireCommand, { type: 'prep'; action: 'infuse' }>, { id: 'cmd1', issuedBy: 'learner', by: DEVICE } as unknown as WireCommand, 1, new Map());
+    const out = infusePrep(f, staged.prep, { id: 'cmd1', issuedBy: 'learner', type: 'prep', action: 'infuse', prepId: 'prop0001', rateMlH: 10 } as Extract<WireCommand, { type: 'prep'; action: 'infuse' }>, { id: 'cmd1', issuedBy: 'learner', by: DEVICE } as unknown as WireCommand, 1);
     if (!out.ok) throw new Error(out.why);
     const cmd = out.cmds[0] as unknown as Record<string, unknown>;
     // the engine (the host's and this phone's are the same build): the patient of 64 kg, the host's applyEvent
@@ -193,6 +193,18 @@ describe('the infusions menu (L8)', () => {
     // the change stepper starts at the running rate and previews the dose through that infusion's own syringe
     expect(m.q<HTMLInputElement>('.lr-inf[data-drug="propofol"] .stepper input').value).toBe('8.0');
     expect(row('propofol', '.lr-dose-preview')).toBe(`${INFUSION_WORDS.doseAtRate}: 20.8 µg/kg/min for 64 kg`);
+  });
+
+  it('another remote is named as the host named it on its command (its number, or its Room-setup name); this phone is "this phone"', async () => {
+    const m = mount();
+    await m.settle();
+    const inf = (id: string, drugId: string, extra: Record<string, unknown>) => m.applied(Math.round(130 / TICK_S), { id, issuedBy: 'learner', type: 'applyEvent', event: { kind: 'infusion', drugId, rate: 8, unit: 'mL/h' }, ...extra });
+    inf('o1', 'propofol', { by: OTHER, sender: { role: 'learner', name: 'Learner remote 2' } });
+    inf('o2', 'remifentanil', { by: 'thirdkey0003', sender: { role: 'learner', name: 'bed 3 phone' } });
+    inf('o3', 'norepinephrine', { by: DEVICE, sender: { role: 'learner', name: 'Learner remote 1' } });
+    m.engine(drugs([{ id: 'propofol', rate: 1, amountUnit: 'mg' }, { id: 'remifentanil', rate: 1, amountUnit: 'mcg' }, { id: 'norepinephrine', rate: 1, amountUnit: 'mcg' }]));
+    const setBy = (d: string) => m.text(`.lr-inf[data-drug="${d}"] .lr-setby`);
+    expect([setBy('propofol'), setBy('remifentanil'), setBy('norepinephrine')]).toEqual(['set by Learner remote 2 at 02:10', 'set by bed 3 phone at 02:10', 'set by this phone at 02:10']);
   });
 
   it("Change and Stop send `infusion set` on the instructor's infusion and another remote's alike; refusals are the host's words", async () => {

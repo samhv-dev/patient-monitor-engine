@@ -2,6 +2,7 @@
 // verb as the button). Engine ids never reach these lines: targets through the glossary, drugs by the library's name,
 // conditions and rhythms by their catalogue labels.
 import { DRUGS, EEG_DEVICES, LUNG_CONDITIONS, RHYTHM_IDS, type EegModelId } from '@pme/engine-core';
+import type { CaseBegins } from '@pme/controller';
 import { unitText } from './drugs.ts';
 import { drugName, lungLabel } from './glossary.ts';
 import { showVital, vitalLabel, vitalOf } from './vitals.ts';
@@ -201,7 +202,7 @@ export function describeCommand(c: Any, step?: string): string {
     case 'scenario': {
       const doc = c.doc as { title?: string } | undefined;
       const a = String(c.action);
-      if (a === 'load') return `Scenario loaded: ${(doc?.title ?? '').replace(/^\[draft\]\s*/i, '') || 'case'}`;
+      if (a === 'load') return `Scenario loaded: ${cardTitle(doc?.title)}`;
       if (a === 'bookmark') return `Bookmark: ${c.target ?? ''}`.trim();
       if (a === 'restoreBookmark') return `Returned to bookmark ${c.target ?? ''}`.trim();
       if (a === 'goto') return 'Scenario: jumped to a state';
@@ -223,6 +224,15 @@ export function describeCommand(c: Any, step?: string): string {
     default:
       return 'Instructor action';
   }
+}
+
+/** A card's title as the Log names it (a builder draft's run without its "[draft]" tag). */
+const cardTitle = (title: string | undefined): string => (title ?? '').replace(/^\[draft\]\s*/i, '') || 'case';
+
+/** The Log's line where a case begins (a 'restart' timeline): the card's title, or the free-run patient. */
+export function caseBeginsText(b: CaseBegins): string {
+  if (b.card) return `${b.again ? 'Case restarted from 0:00' : 'Case begins'}: ${cardTitle(b.title)}`;
+  return `${b.again ? 'Patient restarted' : 'New patient'}: ${b.title}`;
 }
 
 /** A sim time as the session clock shows it ("13:20"; ui.ts's `clock`, which the log cannot import in Node). */

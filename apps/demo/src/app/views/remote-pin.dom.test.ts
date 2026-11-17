@@ -276,6 +276,16 @@ describe('the states and their words', () => {
     expect(f.status()).toBe(PHONE_WORDS.signedIn(CODE));
   });
 
+  it('computer restarted, for a phone that joined a session already running: it heard no host hello, only the grant', () => {
+    const { f, r, h } = signIn();
+    h.grant(true);
+    h.clock(61);
+    host(r, 'host-h2').hello();
+    const notice = f.q<HTMLElement>('.ip-peer-notice');
+    expect(notice.hidden).toBe(false);
+    expect(notice.textContent).toBe(PHONE_WORDS.restarted('01:01'));
+  });
+
   it('kit too old: no answer to the instructor hello in 10 s; or no laptop in the session; or no relay reached', () => {
     vi.useFakeTimers();
     const a = signIn();

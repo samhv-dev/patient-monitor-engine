@@ -745,3 +745,40 @@ describe('L13: what the record keeps of a preparation for the Debrief', () => {
     expect(staged.at(-1)).not.toHaveProperty('remaining');
   });
 });
+
+describe('what the host writes on every applied command: the rate it replaced and the device that sent it', () => {
+  it("the laptop's own rate over its running infusion carries the rate it replaced, as a remote's does; a sender's own `replaced` is never kept", async () => {
+    const x = setup();
+    const rate = (r: number, extra: Record<string, unknown> = {}) => x.laptop.command({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'norepinephrine', rate: r, unit: 'mL/h' }, ...extra });
+    const appliedOf = async (id: string) => {
+      await waitFor(() => applied(x.panelGot, id) !== undefined, 2000, `applied ${id}`);
+      return applied(x.panelGot, id)?.resolved.command;
+    };
+    const start = rate(3, { replaced: { rate: 99, rateUnit: 'mL/h', by: 'card' } });
+    expect(await appliedOf(start)).not.toHaveProperty('replaced');
+    expect(x.tg.got.at(-1)).not.toHaveProperty('replaced');
+    const change = rate(6);
+    expect(await appliedOf(change)).toMatchObject({ replaced: { rate: 3, rateUnit: 'mL/h', by: 'laptop' } });
+    expect(x.tg.got.at(-1)).toMatchObject({ replaced: { rate: 3, rateUnit: 'mL/h', by: 'laptop' } });
+    const b = await signIn(x, 'lr.2', KEY2);
+    expect((await b.send({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 4 })).accepted).toBe(true);
+    const back = rate(5);
+    expect(await appliedOf(back)).toMatchObject({ replaced: { rate: 4, rateUnit: 'mL/h', by: KEY2 } });
+  });
+
+  it("a learner remote's command carries its role and the name the host's app gives it; the laptop's carries none", async () => {
+    const x = setup({ deviceName: (key, role) => (key === KEY2 && role === 'learner' ? 'bed 2 remote' : null) });
+    const id0 = x.laptop.command({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'norepinephrine', rate: 3, unit: 'mL/h' } });
+    expect((await ack(x.panelGot, id0)).accepted).toBe(true);
+    const named = await signIn(x, 'lr.2', KEY2);
+    const unnamed = await signIn(x, 'lr.1', KEY);
+    const a = named.command({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 5 });
+    const b = unnamed.command({ type: 'infusion', action: 'set', drugId: 'norepinephrine', rateMlH: 6 });
+    await waitFor(() => applied(x.got, a) !== undefined && applied(x.got, b) !== undefined, 2000, 'both applied');
+    expect(applied(x.got, a)?.resolved.command).toMatchObject({ by: KEY2, sender: { role: 'learner', name: 'bed 2 remote' } });
+    expect(applied(x.got, b)?.resolved.command).toMatchObject({ by: KEY, sender: { role: 'learner' } });
+    expect((applied(x.got, b)?.resolved.command as { sender?: object }).sender).not.toHaveProperty('name');
+    await waitFor(() => applied(x.panelGot, id0) !== undefined);
+    expect(applied(x.panelGot, id0)?.resolved.command).not.toHaveProperty('sender');
+  });
+});

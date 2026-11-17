@@ -18,12 +18,12 @@ export function logTab(c: PanelCtx): HTMLElement {
       note.inp.value = '';
     }
   });
-  const show = (e: ClinicalLogEntry) => filter === 'all' || (filter === 'actions' && (e.kind === 'instructor' || e.kind === 'learner')) || (filter === 'alarms' && e.kind === 'alarm') || (filter === 'markers' && (e.kind === 'marker' || e.kind === 'note' || e.kind === 'scenario'));
+  const show = (e: ClinicalLogEntry) => filter === 'all' || e.begins || (filter === 'actions' && (e.kind === 'instructor' || e.kind === 'learner')) || (filter === 'alarms' && e.kind === 'alarm') || (filter === 'markers' && (e.kind === 'marker' || e.kind === 'note' || e.kind === 'scenario'));
   let n = -1;
   const draw = () => {
-    if (n === link.sessionLog.length) return;
-    n = link.sessionLog.length;
-    list.replaceChildren(...link.sessionLog.filter(show).slice(-300).reverse().map((e) => h('li', { 'data-kind': e.kind },
+    if (n === link.logRev) return;
+    n = link.logRev;
+    list.replaceChildren(...link.sessionLog.filter(show).slice(-300).reverse().map((e) => h('li', { 'data-kind': e.kind, ...(e.begins ? { 'data-begins': '' } : {}) },
       h('time', {}, e.simT === null ? '--:--' : clock(e.simT)), h('span', { class: 'k' }, KIND_TEXT[e.kind]),
       h('span', {}, e.text, e.refused ? h('span', { class: 'refused' }, ' (not applied; the reason is in the exported log)') : null))));
   };
