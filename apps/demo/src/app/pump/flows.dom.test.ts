@@ -37,7 +37,7 @@ const row = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => ({
 const LABELS = {
   news: 'labels',
   labels: [
-    { device: 'bed2remote01', id: 'p1', container: 'syringe-pp', drugId: 'propofol', actives: [{ drugId: 'propofol', amount: 10, unit: 'mg', perMl: 1 }], volumeMl: 20, madeAt: 312, readyAt: 312 },
+    { device: 'bed2remote01', name: 'Learner remote 1', id: 'p1', container: 'syringe-pp', drugId: 'propofol', actives: [{ drugId: 'propofol', amount: 10, unit: 'mg', perMl: 1 }], volumeMl: 20, madeAt: 312, readyAt: 312 },
     { device: 'bed2remote01', id: 'p2', container: 'bag-pvc', drugId: 'norepinephrine', actives: [{ drugId: 'norepinephrine', amount: 0.016, unit: 'mg', perMl: 1 }], volumeMl: 250, madeAt: 400, readyAt: 460 },
   ],
 };
@@ -98,13 +98,13 @@ describe('Load (D2 item 1, §8): the labels and the stock items that fit the cha
     t.open(2, 'load');
     const s = t.sel(2, 'source');
     expect(t.options(s)).toEqual([
-      ['prep|bed2remote01|p1', 'Propofol 10 mg/mL · 20 mL · made on bed2remote01 at 05:12'],
+      ['prep|bed2remote01|p1', 'Propofol 10 mg/mL · 20 mL · made on Learner remote 1 at 05:12'],
       ['stock|propofol-10mg-ml-50ml', 'Propofol 10 mg/mL · 50 mL · stock'],
       ['stock|propofol-10mg-ml-20ml', 'Propofol 10 mg/mL · 20 mL · stock'],
       ['stock|phenylephrine-100mcg-ml-20ml', 'Phenylephrine 100 µg/mL · 20 mL · stock'],
     ]);
     t.open(3, 'load');
-    expect(t.options(t.sel(3, 'source'))).toEqual([['prep|bed2remote01|p2', 'Norepinephrine 0.016 mg/mL · 250 mL · made on bed2remote01 at 06:40']]);
+    expect(t.options(t.sel(3, 'source'))).toEqual([['prep|bed2remote01|p2', 'Norepinephrine 0.016 mg/mL · 250 mL · made on a learner remote at 06:40']]);
   });
 
   it('sends the preparation by its maker and id (the host resolves what it holds); "Sent" until the host answers, then its words', () => {

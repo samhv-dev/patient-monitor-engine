@@ -5,7 +5,7 @@
 // blocks it), then charges and shocks. A forged `applyEvent drug` and a `time pause` on the window's own socket are
 // refused and change nothing on the host; a learner phone (a viewer) still cannot command; the phone sees the shock as
 // a follower does (its own engine counts it). The Debrief's timeline names the device: "Shock 120 J at mm:ss, by
-// Defibrillator (bed 2)". On Chromium (and local WebKit) a window of this computer (`?follow=`, the browser's channel,
+// bed 2". On Chromium (and local WebKit) a window of this computer (`?follow=`, the browser's channel,
 // no relay in between) forges the same two and the HOST refuses them; CI's Linux WebKit drops BroadcastChannel messages
 // between pages (FALLBACK ruling 2026-10-11, learner-monitor-follows.e2e.ts), so that part is skipped there only.
 // The second case: the window's Energy up (by keyboard) selects 150 J, it charges and shocks; the host's shock, the
@@ -134,8 +134,8 @@ test('the defibrillator window charges and shocks the free-roam patient; nothing
     const timeline = page.locator('#db-timeline tbody tr[data-kind="learner"]');
     await expect(timeline).toHaveCount(2, { timeout: 10_000 });
     const lines = (await timeline.allInnerTexts()).map((r) => r.replace(/\s+/g, ' ').trim());
-    expect(lines[0]).toMatch(/^\d\d:\d\d Learner Charge 120 J at \d\d:\d\d, by Defibrillator \(bed 2\)$/);
-    expect(lines[1]).toMatch(/^\d\d:\d\d Learner Shock 120 J at \d\d:\d\d, by Defibrillator \(bed 2\)$/);
+    expect(lines[0]).toMatch(/^\d\d:\d\d Learner Charge 120 J at \d\d:\d\d, by bed 2$/);
+    expect(lines[1]).toMatch(/^\d\d:\d\d Learner Shock 120 J at \d\d:\d\d, by bed 2$/);
     await ctx.close();
     await phone.context().close();
   } finally {
