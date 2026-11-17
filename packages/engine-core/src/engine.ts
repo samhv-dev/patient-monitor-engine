@@ -678,7 +678,9 @@ class Engine implements MonitorEngine {
       const t = refT + BEEP_DELAY_S;
       if (this.posted.has(id) || t < simT - LATE_TONE_POST_S) continue;
       this.posted.set(id, { t, n: d.n });
-      this.emit({ type: 'tone', t, id, kind: 'qrs', freqHz: spo2PitchHz(this.st.resp.num.spo2.shown), refT }); // pitch(SpO2)
+      const spo2 = this.st.resp.num.spo2.shown;
+      // pitch(SpO2) only while the SpO2 is valid; without one the tone carries no pitch and the style gives its own
+      this.emit({ type: 'tone', t, id, kind: 'qrs', ...(spo2 !== null ? { freqHz: spo2PitchHz(spo2) } : {}), refT });
     }
     this.committedDet = [];
     this.dirtyFromN = Number.POSITIVE_INFINITY;
