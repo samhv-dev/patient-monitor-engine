@@ -94,6 +94,15 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `RUN_TIMEOUT_MS` | `2000` | ms | [ENG: network] | A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then takes over, as when the cockpit is closed), wall ms [ENG: network]. |
 | `RESTORE_REPOST_MS` | `250` | ms | [ENG: ui] | A ventilator that has not taken a restore is sent it again at most this often while it sends, wall ms [ENG: ui]. |
 
+### [`link/record.ts`](../../packages/ventilator/src/link/record.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `VENT_STATE_BYTES` | `6 * 1024` | — | [ENG: network; 4.3 KB measured with the Hamilton face and its alarm view] | A ventilator state's largest JSON, bytes [ENG: network; 4.3 KB measured with the Hamilton face and its alarm view]. |
+| `RECORD_LUNGS_MAX` | `4` | — | [ENG: network; with a state at most RELAY_STATE_MS old, a lung that changes every second of sim time at ×4 gives 1] | The most lungStates a record holds for ticks after its state's [ENG: network; with a state at most RELAY_STATE_MS old, a lung that changes every second of sim time at ×4 gives 1]. A ventilator whose state lags further keeps no record until its next state: a bookmark then holds no ventilator, rather than one it cannot give back exactly. |
+| `REMAKE_TICKS_MAX` | `200` | — | [ENG: network; a state RELAY_STATE_MS old at ×8 is 100 ticks, plus the MAX_AHEAD_TICKS it may run ahead of the engine] | The most ventilator ticks a restored ventilator makes again before it sends [ENG: network; a state RELAY_STATE_MS old at ×8 is 100 ticks, plus the MAX_AHEAD_TICKS it may run ahead of the engine]. |
+| `RESTORE_AHEAD_MAX` | `150` | — | [ENG: network; MAX_AHEAD_TICKS, twice] | How far past a state the clock limit a restore names may lie [ENG: network; MAX_AHEAD_TICKS, twice]. |
+
 ### [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -102,7 +111,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `RELAY_BATCH_MAX` | `16` | — | — | The most `cmds` one batch packs (@pme/controller guard.ts VENT_LIMITS.batch). |
 | `RELAY_BODY_BYTES` | `4 * 1024` | — | — | A `vent` body's largest JSON (guard.ts VENT_LIMITS.bytes): a burst over it goes in several batches. |
 | `SETTINGS_MS` | `1000` | ms | — | The cockpit's settings go at least this often, ms (plan R8c: "once a second"). |
-| `RELAY_STATE_MS` | `1000` | ms | [ENG: network; 4.3 KB a second; the link makes again, unsent, the ticks a restored engine already has, so an older state costs no exactness] | The cockpit's state goes at most this often, ms [ENG: network; 4.3 KB a second; the link makes again, unsent, the ticks a restored engine already has, so an older state costs no exactness]. |
+| `RELAY_STATE_MS` | `250` | ms | [ENG: network; 4.3 KB, 17 KB a second; a state this old at ×8 is 100 ticks, which the link makes again unsent, and leaves room for RECORD_LUNGS_MAX lungStates after it] | The cockpit's state goes at most this often, ms [ENG: network; 4.3 KB, 17 KB a second; a state this old at ×8 is 100 ticks, which the link makes again unsent, and leaves room for RECORD_LUNGS_MAX lungStates after it]. |
 | `RELAY_STATE_BYTES` | `8 * 1024` | — | — | A `state` body's largest JSON (guard.ts VENT_LIMITS.stateBytes). |
 
 ### [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts)
@@ -151,6 +160,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `attachMonitorToLink` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | Monitor side: |
 | `lungConditionsOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | The row's engine lung conditions (Stage V.1): |
 | `profileOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | — |
+| `isLinkRecord` | [`link/record.ts`](../../packages/ventilator/src/link/record.ts) | Whether `r` is a record a restore to engine tick `engineTick` can give back: |
 | `createRelayPort` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | `settings`: |
 | `ventWireOver` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The cockpit's wire over its socket to the relay (a @pme/controller ManagedTransport and its stamper): |
 | `roomVentCommandRefusal` | [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | Why the host refuses this command from a room's ventilator, or null when a ventilator may send it. |
@@ -193,6 +203,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | [`link/in-process.ts`](../../packages/ventilator/src/link/in-process.ts) | In-process link: the ventilator and the patient engine in ONE loop on ONE sim clock (lockstep, deterministic). |
 | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | The window link (the second transport): the ventilator in its own window/iframe, the monitor elsewhere in the same browser. |
 | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | Link profiles: one per lung-pathology row (pathology/catalogue.ts). |
+| [`link/record.ts`](../../packages/ventilator/src/link/record.ts) | What the engine keeps of the ventilator that drives it, so that a bookmark holds the ventilator with the patient, and the checks every reader makes before it trusts a record or a ventilator state that came from a peer. |
 | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The window link over the relay (plan room-and-instruments.md R8c): a cockpit on another device and the host's monitor exchange the link's messages inside the controller's `vent` message (R8a), which the relay carries bet |
 | [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | A ventilator linked to a room drives the room's patient through the room's host, which takes from it only what a ventilator does: its breaths (the VentFrame), its own circuit at the Y-piece, its settings for a hand-over, |
 | [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts) | Ventilator side of the window link: runs the ventilator on real time × scale, but never past the tick the monitor's `clock` messages allow (the engine is the master clock; before the first clock message it may run 2·LEAD |
