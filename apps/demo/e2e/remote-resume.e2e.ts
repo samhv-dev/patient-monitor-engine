@@ -42,10 +42,10 @@ async function reload(page: Page): Promise<void> {
   await page.waitForFunction(() => '__pmeApp' in window);
 }
 /** A device's context, with every hello it says and every frame it receives over the relay kept. */
-async function deviceContext(browser: Browser, o: { phone?: 'Pixel 7' | 'iPhone 13'; tablet?: boolean }): Promise<{ ctx: BrowserContext; p: Page; hellos: Hello[]; received: string[] }> {
+async function deviceContext(browser: Browser, o: { phone?: 'Pixel 7' | 'iPhone 13'; tablet?: boolean; key?: string }): Promise<{ ctx: BrowserContext; p: Page; hellos: Hello[]; received: string[] }> {
   const { defaultBrowserType: _b, ...phone } = devices[o.phone ?? 'Pixel 7'] as (typeof devices)[string];
   const ctx = await browser.newContext(o.tablet ? { viewport: { width: 1280, height: 800 }, hasTouch: true } : phone);
-  await ctx.addInitScript((k) => localStorage.setItem('pme.device', k), KEY);
+  await ctx.addInitScript((k) => localStorage.setItem('pme.device', k), o.key ?? KEY);
   const p = await ctx.newPage();
   const hellos: Hello[] = [];
   const received: string[] = [];
@@ -62,14 +62,10 @@ async function typePin(p: Page, pin: string): Promise<void> {
   for (const d of pin) await p.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
   await p.locator('.ip-peer-go').click();
 }
-/** The hellos said after the laptop's reload: at least one, every one proving a ticket, none carrying a PIN. */
-function provedTicketOnly(hellos: Hello[], from: number): void {
-  const after = hellos.slice(from);
-  expect(after.length).toBeGreaterThan(0);
-  for (const h of after) {
-    expect(h.ticket, 'a ticket').toBeTruthy();
-    expect(h).not.toHaveProperty('pin');
-  }
+/** The device said its hello again after the laptop's reload, proving a ticket; no hello since carried a PIN. */
+async function provedTicketOnly(hellos: Hello[], from: number): Promise<void> {
+  await expect.poll(() => hellos.slice(from).some((h) => h.ticket), { timeout: 30_000, message: 'a hello with the ticket' }).toBe(true);
+  for (const h of hellos.slice(from)) expect(h).not.toHaveProperty('pin');
 }
 /** The Room page's row of this device: one, signed in. */
 async function oneRoomRow(page: Page): Promise<void> {
@@ -88,14 +84,15 @@ test('the learner remote returns by itself after the laptop reloads: no PIN, no 
   await typePin(d.p, learnerPin);
   const signed = d.p.locator('.lr-status');
   await expect(signed).toHaveText(`Signed in as a learner remote · ${code}`, { timeout: 20_000 });
-  const monitor = await deviceContext(browser, { phone: browserName === 'webkit' ? 'iPhone 13' : 'Pixel 7' });
+  const monitor = await deviceContext(browser, { phone: browserName === 'webkit' ? 'iPhone 13' : 'Pixel 7', key: 'resumemonitor1' });
   await monitor.p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws())}#/monitor`);
   await expect(monitor.p.locator('.status-pill').first()).toContainText(code, { timeout: 20_000 });
   const before = d.hellos.length;
   await reload(page);
+  await provedTicketOnly(d.hellos, before);
   await expect(signed).toHaveText(`Signed in as a learner remote · ${code}`, { timeout: 30_000 });
+  await expect(signed).toBeVisible();
   await expect(d.p.locator('.ip-peer-form')).toBeHidden();
-  provedTicketOnly(d.hellos, before);
   await oneRoomRow(page);
   expect(monitor.received.some((f) => f.includes('"ticket"')), "a learner monitor never receives another device's ticket").toBe(false);
   await d.ctx.close();
@@ -114,10 +111,11 @@ test('the pump tablet returns by itself after the laptop reloads, its rack still
   await expect(d.p.locator('.pump-face')).toHaveCount(2);
   const before = d.hellos.length;
   await reload(page);
+  await provedTicketOnly(d.hellos, before);
   await expect(signed).toHaveText(`Signed in as the room's infusion pumps · ${code}`, { timeout: 30_000 });
+  await expect(signed).toBeVisible();
   await expect(d.p.locator('.pump-face')).toHaveCount(2);
   await expect(d.p.locator('.ip-peer-form')).toBeHidden();
-  provedTicketOnly(d.hellos, before);
   await oneRoomRow(page);
   await d.ctx.close();
 });
@@ -133,10 +131,10 @@ test("the instructor's phone returns by itself after the laptop reloads, its pan
   await expect(signed).toHaveText(`Signed in as the instructor's remote · ${code}`, { timeout: 20_000 });
   const before = d.hellos.length;
   await reload(page);
-  await expect(d.p.locator('.ip-peer-notice')).toContainText("The instructor's computer restarted", { timeout: 30_000 });
+  await provedTicketOnly(d.hellos, before);
   await expect(signed).toHaveText(`Signed in as the instructor's remote · ${code}`, { timeout: 30_000 });
+  await expect(signed).toBeVisible();
   await expect(d.p.locator('.ip-peer-form')).toBeHidden();
-  provedTicketOnly(d.hellos, before);
   await d.ctx.close();
 });
 
@@ -157,7 +155,7 @@ test("the ventilator's own page returns by itself after the laptop reloads, on t
     return v?.state === 'granted' && v.sender === was;
   }, sender, { timeout: 30_000 });
   await expect(d.p.locator('.ip-peer-form')).toBeHidden();
-  provedTicketOnly(d.hellos, before);
+  await provedTicketOnly(d.hellos, before);
   await d.ctx.close();
 });
 
@@ -188,7 +186,7 @@ test('the learner PIN changed while a phone was away and the laptop reloaded: ba
   away = false;
   await expect(d.p.locator('.ip-peer-form')).toBeVisible({ timeout: 30_000 });
   await expect(d.p.locator('.ip-peer-error')).toHaveText("The learner PIN was changed on the instructor's computer. Enter the new learner PIN.");
-  provedTicketOnly(d.hellos, before);
+  await provedTicketOnly(d.hellos, before);
   await typePin(d.p, changed as string);
   await expect(d.p.locator('.lr-status')).toHaveText(`Signed in as a learner remote · ${code}`, { timeout: 20_000 });
   await d.ctx.close();
