@@ -27,8 +27,9 @@ A pull request runs the jobs its change can reach in the package graph (`scripts
 at the top of `.github/workflows/ci.yml`): a change to the demo, for one, skips `unit (core)` and the engine's slow groups.
 Main, the merge runner's `batch/*` branches, a `run-validation` label and any change to the engine, the controller's
 scenario code, a workflow, a script or a root config run every job. When you add a cross-package import,
-`packages/validation/test/ci-affected.test.ts` fails until `GRAPH` in that script names the edge. The check to read is
-`verdict`.
+`packages/validation/test/ci-affected.test.ts` fails until `GRAPH` in that script names the edge, whatever the import's
+form. The check to read is `verdict` with the conclusion success: it compares every job with the plan, and then with a
+floor that does not use the rule (`scripts/ci/floor.mjs`, run from the base commit).
 
 ### Reading the evidence of a retry-only pass
 

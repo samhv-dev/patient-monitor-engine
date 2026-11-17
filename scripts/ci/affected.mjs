@@ -15,12 +15,12 @@ import { pathToFileURL } from 'node:url';
 
 export const GRAPH = {
   'packages/audio': { src: [], test: [] },
-  'packages/skins': { src: [], test: [] },
+  'packages/skins': { src: [], test: ['packages/engine-core'] },
   'packages/engine-core': { src: ['packages/skins'], test: [] },
-  'packages/controller': { src: ['packages/engine-core'], test: ['apps/demo'] },
+  'packages/controller': { src: ['packages/engine-core'], test: ['apps/demo', 'packages/ventilator'] },
   'packages/ventilator': { src: ['packages/engine-core'], test: [] },
   'packages/renderer': { src: ['packages/audio', 'packages/controller', 'packages/engine-core', 'packages/skins'], test: [] },
-  'packages/validation': { src: ['packages/controller', 'packages/engine-core'], test: ['apps/demo'] },
+  'packages/validation': { src: ['packages/controller', 'packages/engine-core'], test: ['apps/demo', 'packages/skins'] },
   'apps/demo': {
     src: ['packages/audio', 'packages/controller', 'packages/engine-core', 'packages/renderer', 'packages/skins', 'packages/validation', 'packages/ventilator'],
     test: [],
@@ -77,15 +77,19 @@ function packageOf(path) {
  * merge runner's batch branch, on a pull request labelled run-validation, and when a changed path is in FULL or in no
  * known place.
  */
-export function plan({ event, headRef = '', labels = [], files, nightly = false }) {
+export function plan({ event, headRef = '', labels = [], files, nightly = false, owners = {} }) {
   let full = null;
   if (event !== 'pull_request') full = `a ${event} run`;
+  else if (files.length === 0) full = 'an empty diff';
   else if (headRef.startsWith('batch/')) full = `the merge runner's batch branch ${headRef}`;
   else if (labels.includes('run-validation')) full = 'the run-validation label';
-  const code = event !== 'pull_request' || files.some((f) => !DOCUMENT.test(f));
+  const ownerOf = (f) => Object.entries(owners).find(([t]) => f === t || f.startsWith(t.endsWith('/') ? t : `${t}/`))?.[1];
+  const isDocument = (f) => DOCUMENT.test(f) && !ownerOf(f);
+  const code = full !== null || files.some((f) => !isDocument(f));
   const touched = new Set();
   for (const f of files) {
-    if (DOCUMENT.test(f)) continue;
+    if (isDocument(f)) continue;
+    if (ownerOf(f)) { touched.add(ownerOf(f)); continue; }
     if (full === null && FULL.some((re) => re.test(f))) full = `${f} (an input of every job)`;
     const p = packageOf(f);
     if (p) touched.add(p);
@@ -94,11 +98,13 @@ export function plan({ event, headRef = '', labels = [], files, nightly = false 
   const r = reach();
   const runs = (pkgs) => full !== null || pkgs.some((p) => [...touched].some((t) => r[p].has(t)));
   const each = code && !nightly;
+  const unitCore = each && runs(SELECTIVE.unit_core);
   const expect = {
-    docs: full === null && files.some((f) => DOCUMENT.test(f)),
+    // the document checks are inside build, unit and unit (core); without all three, the docs job runs them
+    docs: files.some(isDocument) && !unitCore,
     build: each,
     unit: each,
-    unit_core: each && runs(SELECTIVE.unit_core),
+    unit_core: unitCore,
     e2e: code,
     showcase: each,
     test_slow: each && runs(SELECTIVE.test_slow),
@@ -107,35 +113,47 @@ export function plan({ event, headRef = '', labels = [], files, nightly = false 
   return { full: full !== null, code, why, expect };
 }
 
-/** Every package's edges as the code has them (what GRAPH must say). */
-export function scan(root = ROOT) {
-  const dirs = Object.fromEntries(
+function workspace(root) {
+  return Object.fromEntries(
     ['packages', 'apps'].flatMap((top) => readdirSync(join(root, top)).filter((d) => existsSync(join(root, top, d, 'package.json'))).map((d) => {
       const name = JSON.parse(readFileSync(join(root, top, d, 'package.json'), 'utf8')).name;
       return [name, `${top}/${d}`];
     })),
   );
-  const out = {};
+}
+
+/** Every reference a workspace file makes: an `@pme/<name>` import, or a relative path (resolved), with its kind. */
+function* references(root) {
+  const dirs = workspace(root);
   for (const dir of Object.values(dirs)) {
-    const edges = { src: new Set(), test: new Set() };
     for (const file of walk(join(root, dir))) {
       const rel = relative(join(root, dir), file);
       const kind = /(^|\/)(test|e2e|scripts)\//.test(rel) || /\.(test|spec|e2e|soak)\.[cm]?[jt]sx?$/.test(rel) ? 'test' : 'src';
       for (const line of readFileSync(file, 'utf8').split('\n')) {
         if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue;
-        for (const m of line.matchAll(/(?:from|import|require)\s*\(?\s*['"`]@pme\/([a-z-]+)/g)) if (dirs[`@pme/${m[1]}`]) edges[kind].add(dirs[`@pme/${m[1]}`]);
-        for (const m of line.matchAll(/['"`]((?:\.\.\/)+(?:packages|apps)\/[a-z-]+)/g)) {
-          const target = relative(root, resolve(dirname(file), m[1]));
-          if (Object.values(dirs).includes(target)) edges[kind].add(target);
-        }
+        for (const m of line.matchAll(/(?:from|import|require)\s*\(?\s*['"`]@pme\/([a-z-]+)/g)) if (dirs[`@pme/${m[1]}`]) yield { dir, kind, target: dirs[`@pme/${m[1]}`] };
+        for (const m of line.matchAll(/['"`](\.\.?\/[^'"`$]*)/g)) yield { dir, kind, target: relative(root, resolve(dirname(file), m[1])) };
       }
     }
-    edges.src.delete(dir);
-    edges.test.delete(dir);
-    for (const p of edges.src) edges.test.delete(p);
-    out[dir] = { src: [...edges.src].sort(), test: [...edges.test].sort() };
   }
-  return out;
+}
+
+/** Every package's edges as the code has them (what GRAPH must say). */
+export function scan(root = ROOT) {
+  const dirs = Object.values(workspace(root));
+  const out = Object.fromEntries(dirs.map((d) => [d, { src: new Set(), test: new Set() }]));
+  for (const { dir, kind, target } of references(root)) {
+    const p = dirs.find((d) => target === d || target.startsWith(`${d}/`));
+    if (p && p !== dir) out[dir][kind].add(p);
+  }
+  return Object.fromEntries(Object.entries(out).map(([d, e]) => [d, { src: [...e.src].sort(), test: [...[...e.test].filter((p) => !e.src.has(p))].sort() }]));
+}
+
+/** Files under a document path that shipped code imports or reads, each with that code's package. */
+export function documentOwners(root = ROOT) {
+  const owners = {};
+  for (const { dir, kind, target } of references(root)) if (kind === 'src' && DOCUMENT.test(target)) owners[target] = dir;
+  return owners;
 }
 
 function* walk(dir) {
@@ -159,7 +177,7 @@ export function summary(p) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href && process.argv[2] === 'plan') {
   const files = readFileSync(process.argv[3], 'utf8').split('\n').filter(Boolean);
-  const p = plan({ event: process.env.EVENT, headRef: process.env.HEAD_REF, labels: JSON.parse(process.env.LABELS || 'null') ?? [], files, nightly: process.env.NIGHTLY === 'true' });
+  const p = plan({ event: process.env.EVENT, headRef: process.env.HEAD_REF, labels: JSON.parse(process.env.LABELS || 'null') ?? [], files, nightly: process.env.NIGHTLY === 'true', owners: documentOwners() });
   console.log(`code=${p.code}\nfull=${p.full}\nexpect=${JSON.stringify(p.expect)}`);
   console.error(summary(p));
 }

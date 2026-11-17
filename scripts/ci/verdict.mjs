@@ -5,19 +5,24 @@
 import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-/** `needs`: { job: { result } }; `expect`: { job_key: boolean } (a job id's '-' is a key's '_'); `changes` must succeed. */
-export function verdict(needs, expect) {
+/**
+ * `needs`: { job: { result } }; `expect`: { job_key: boolean } (a job id's '-' is a key's '_'); `changes` must succeed.
+ * `nightly`: the e2e legs are then the non-gating quarantine (scripts/ci/e2e-sets.mjs), whose tests never fail the run:
+ * they must have run, and a failed leg is accepted, as the quarantine's own job does.
+ */
+export function verdict(needs, expect, nightly = false) {
   const rows = Object.entries(needs).map(([job, { result }]) => {
     const want = job === 'changes' ? true : expect[job.replaceAll('-', '_')];
     if (want === undefined) return { job, result, ok: false, note: 'not in the plan' };
-    const ok = want ? result === 'success' : result === 'skipped';
+    const ran = nightly && job === 'e2e' ? ['success', 'failure'] : ['success'];
+    const ok = want ? ran.includes(result) : result === 'skipped';
     return { job, result, ok, note: want ? 'expected to run' : 'skipped by the path rule' };
   });
   return { ok: rows.every((r) => r.ok), rows };
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const { ok, rows } = verdict(JSON.parse(process.env.NEEDS), JSON.parse(process.env.EXPECT || '{}'));
+  const { ok, rows } = verdict(JSON.parse(process.env.NEEDS), JSON.parse(process.env.EXPECT || '{}'), process.env.NIGHTLY === 'true');
   const table = ['### verdict', '', '| job | result | plan | |', '|---|---|---|---|', ...rows.map((r) => `| ${r.job} | ${r.result} | ${r.note} | ${r.ok ? 'ok' : '**NOT OK**'} |`), ''].join('\n');
   console.log(table);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${table}\n`);

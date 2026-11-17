@@ -7,5 +7,7 @@
   the engine, the controller's scenario code, a workflow, a script or a root config still run every job. The engine's
   slow set is packed into twelve groups run two at a time on one runner, and the showcase halves share one; the
   ventilator's unit tests run in the build job; the renderer build is part of the `changes` job; the e2e count is part
-  of a new `verdict` job, the check a merge reads, which fails when a job the plan expected did not succeed. A full run
+  of a new `verdict` job, the check a merge reads, which fails when a job the plan expected did not succeed, and when a
+  floor that does not use the rule is not met (every job on main, a batch branch, the label or a change to the
+  workflows or CI scripts; the code jobs on any code change). A full run
   is 20 jobs, down from 30. No test was removed or moved. No product code changed.

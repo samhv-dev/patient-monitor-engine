@@ -22,15 +22,17 @@ jobs:
   # - EVERY job runs on a push to main, on the nightly, manual and tag runs (their own sets, below), on the merge
   #   runner's batch/* branches, on a pull request labelled run-validation, and on a pull request that changes the engine
   #   (engine-core, skins), the controller's scenario code, a workflow, a script, the lockfile, a root config, or a path
-  #   the rule does not place.
+  #   the rule does not place, or an empty diff.
   # - Any other pull request skips only the jobs whose packages it cannot reach: `unit (core)` and the engine's slow
-  #   groups. A pull request of documents only runs the docs job alone.
+  #   groups. A pull request of documents only runs the docs job alone. Changed files are listed at both paths of a
+  #   move (--no-renames), so an engine file moved out of the engine still counts as an engine change.
   # - The label is read when the run starts; added later, it takes effect on the next push.
   # A skipped job reports as skipped. The `verdict` job is the check a merge reads: it fails when a job the plan expected
   # did not succeed or one it left out did not skip.
   # This job also builds the renderer IIFE and the embed every e2e shard loads, and the shard plan they share.
   changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       code: ${{ steps.f.outputs.code }}
       expect: ${{ steps.f.outputs.expect }}
@@ -52,7 +54,7 @@ jobs:
           nightly=false; case "$EVENT:${{ github.ref }}" in schedule:*|workflow_dispatch:*|push:refs/tags/*) nightly=true ;; esac
           echo "nightly=$nightly" >> "$GITHUB_OUTPUT"
           : > "$RUNNER_TEMP/files.txt"
-          if [ "$EVENT" = pull_request ]; then git diff --name-only HEAD^1 HEAD > "$RUNNER_TEMP/files.txt"; cat "$RUNNER_TEMP/files.txt"; fi
+          if [ "$EVENT" = pull_request ]; then git diff --name-only --no-renames HEAD^1 HEAD > "$RUNNER_TEMP/files.txt"; cat "$RUNNER_TEMP/files.txt"; fi
           NIGHTLY=$nightly node scripts/ci/affected.mjs plan "$RUNNER_TEMP/files.txt" > "$RUNNER_TEMP/plan.txt" 2>> "$GITHUB_STEP_SUMMARY"
           cat "$RUNNER_TEMP/plan.txt" | tee -a "$GITHUB_OUTPUT"
       # The e2e matrix, one row per shard, from scripts/ci/e2e-sets.mjs: the one place each set's shard count is set (the
@@ -140,9 +142,10 @@ jobs:
           if-no-files-found: error
 
   # Every unit-test file that reads a document (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts
-  # keeps that list complete) and the NOTICES and licence checks: alone on a pull request of documents only, and beside
-  # the other jobs when a pull request that does not run every job also changes a document (the readers in unit (core)
-  # may then be skipped). No e2e test reads docs/ (research/42 §1.4 a).
+  # keeps that list complete) and the NOTICES and licence checks: whenever a document changed and unit (core) does not
+  # run, since build, unit and unit (core) hold every document reader between them. A file under a document path that
+  # shipped code imports or reads (docs/showcase/i18n/fa-debrief.json, which the demo bundles, and the reports under
+  # docs/validation/) is not a document to the rule but a file of that code's package (affected.mjs, documentOwners).
   docs:
     needs: changes
     if: fromJSON(needs.changes.outputs.expect).docs
@@ -496,9 +499,10 @@ jobs:
   # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core (packages/engine-core/vite.config.ts SLOW),
   # kept apart from the unit job so their long synchronous stretches cannot starve the Vitest worker RPC there. Twelve
   # groups of ≈ 16 min of tests each, two at once on one runner, each in its own Vitest process with its files one at a
-  # time, as it would run alone (scripts/ci/lanes.mjs). The runner has 4 vCPUs; the per-tick CPU budgets among these
-  # files measured 3× to 150× under their limits on a runner of their own. On a pull request they run only when the
-  # change reaches engine-core (the changes job).
+  # time, as it would run alone (scripts/ci/lanes.mjs). Two groups at once can only slow a test, never pass one that
+  # fails alone: every per-tick CPU budget among these files is an upper bound. Run 44081774193, the first with two
+  # groups to a runner, logged them 4.5× to 170× under their limits (the "ms per tick" / "µs" lines of each test-slow
+  # job). On a pull request they run only when the change reaches engine-core (the changes job).
   test-slow:
     needs: changes
     if: fromJSON(needs.changes.outputs.expect).test_slow
@@ -523,13 +527,21 @@ jobs:
   # `playwright test --list` on the same tree (scripts/ci/e2e-count.mjs); a PR or main push checks the gating sets, the
   # nightly run the quarantine, and a difference fails either. Then every job against the plan of the changes job
   # (scripts/ci/verdict.mjs): one the plan expected that did not succeed, or one it left out that did not skip, fails.
+  # Last, the floor (scripts/ci/floor.mjs, the base commit's copy): from the event, the ref, the head branch, the labels
+  # and the changed files alone, a push to main, a batch/* branch, the run-validation label or a change under .github/
+  # or scripts/ci/ needs every job to have succeeded, and any code change needs changes, build, unit, e2e and showcase.
+  # `always()`: the job runs even in a cancelled run, and then fails on the cancelled jobs, so a cancelled or cut-short
+  # run never shows it as success, nor as skipped (which a required check would count as passing). The check to
+  # require is `verdict` with the conclusion success.
   verdict:
     needs: [changes, docs, build, unit, unit-core, e2e, showcase, test-slow]
-    if: ${{ !cancelled() }}
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # the PR's merge commit and its base parent: the floor's file list and its base copy
       - uses: pnpm/action-setup@v4
         if: needs.changes.result == 'success' && fromJSON(needs.changes.outputs.expect).e2e
       - uses: actions/setup-node@v4
@@ -548,8 +560,22 @@ jobs:
         if: needs.changes.result == 'success' && fromJSON(needs.changes.outputs.expect).e2e
         run: node scripts/ci/e2e-count.mjs reports ${{ needs.changes.outputs.nightly == 'true' && 'nightly' || 'pr' }}
       - name: every job against the plan
-        if: ${{ !cancelled() }}
+        if: ${{ always() }}
         env:
           NEEDS: ${{ toJSON(needs) }}
           EXPECT: ${{ needs.changes.outputs.expect }}
+          NIGHTLY: ${{ needs.changes.outputs.nightly }}
         run: node scripts/ci/verdict.mjs
+      - name: the floor (independent of the path rule)
+        if: ${{ always() }}
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          : > "$RUNNER_TEMP/floor-files.txt"
+          if [ "$EVENT" = pull_request ]; then git diff --name-only --no-renames HEAD^1 HEAD > "$RUNNER_TEMP/floor-files.txt"; fi
+          git show HEAD^1:scripts/ci/floor.mjs > "$RUNNER_TEMP/floor.mjs" 2>/dev/null || cp scripts/ci/floor.mjs "$RUNNER_TEMP/floor.mjs"
+          node "$RUNNER_TEMP/floor.mjs" "$RUNNER_TEMP/floor-files.txt"
