@@ -310,6 +310,7 @@ transports (`src/protocol.ts`).
 | `noteApplied` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | An APPLIED `pump` event (accepted by the engine) into the host's table, by `by` (a device key, or the sender's drug-lock.ts GivenBy) at sim time `t`. |
 | `channelsRunning` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The channels on which `drugId` runs now (its contents are that drug and it is started), by channel number (D9). |
 | `onPumpsWords` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | D9's refusal: |
+| `rackRefusal` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | Why Room setup's rack `next` cannot replace the present one: |
 | `routedToChannel` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | D9: a remote's or the Drug sheet's rate for a drug that runs on exactly one channel (and no channel-less infusion), as that channel's `pump rate` (or `pump stop` at 0), checked against its device. |
 | `pumpWire` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The command a translated pump action becomes (the instructor's own `applyEvent`, through command()). |
 | `backoffDelay` | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Delay before reconnect attempt `attempt` (0-based): |
@@ -481,6 +482,7 @@ None recorded.
 | [`session/host-pump.test.ts`](../../packages/controller/test/session/host-pump.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |
+| [`session/host-sign-in-order.test.ts`](../../packages/controller/test/session/host-sign-in-order.test.ts) | 0 | 0 |
 | [`session/host-sign-in.test.ts`](../../packages/controller/test/session/host-sign-in.test.ts) | 0 | 0 |
 | [`session/host-speed-range.test.ts`](../../packages/controller/test/session/host-speed-range.test.ts) | 0 | 0 |
 | [`session/host-stage-group.test.ts`](../../packages/controller/test/session/host-stage-group.test.ts) | 0 | 0 |
