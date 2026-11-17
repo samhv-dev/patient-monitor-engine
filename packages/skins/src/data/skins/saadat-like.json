@@ -217,7 +217,7 @@
       "spo2NonPulsatile": { "level": 3 },
       "spo2LowPerf": { "level": 3 },
       "spo2LowSignal": { "level": 3 },
-      "abpNonPulsatile": { "level": 3 },
+      "abpNonPulsatile": { "level": 2 },
       "abpZero": { "level": 3 },
       "tempProbeOff": { "level": 3 },
       "abpNoSensor": { "level": 3 }
@@ -403,7 +403,7 @@
     "alarms.technical.spo2NonPulsatile.level": { "tag": "eng", "source": "research/83 §4 (the Saadat-style table)", "note": "SPO2 NO PULSE is in neither edition; SpO2 SEARCH is a message with no level (FA 9-20, EN 9-19)" },
     "alarms.technical.spo2LowPerf.level": { "tag": "eng", "source": "research/83 §4 (the Saadat-style table)", "note": "SPO2 LOW PERFUSION is in neither technical table (only a warning, FA 9-10, EN 9-11): no level given" },
     "alarms.technical.spo2LowSignal.level": { "tag": "documented", "source": "research/83 §4 (the Saadat-style table); FA 9-17 (PDF p.116), EN 9-17 (PDF p.113)", "note": "SPO2 LOW SIGNAL IQ is level 3 in both editions" },
-    "alarms.technical.abpNonPulsatile.level": { "tag": "eng", "source": "research/83 §4 (the Saadat-style table); FA 12-16 (PDF p.162), EN 12-16 (PDF p.158)", "note": "IBP1 STATIC PRESSURE: level 2 in the Persian edition only, the English level cell is empty; level 3 kept until the editions agree or the unit is observed" },
+    "alarms.technical.abpNonPulsatile.level": { "tag": "documented", "source": "research/83 §4 (the Saadat-style table); Persian manual D01111-12 printed 12-15/12-16 (PDF p.161-162)", "note": "IBP1/IBP2 STATIC PRESSURE sits in the level-2 cell (yellow message) that starts on 12-15 and runs on 12-16; the level is stated in the Persian edition only: the English edition D01112-V11 12-16 (PDF p.158) leaves the cell empty" },
     "alarms.technical.abpZero.level": { "tag": "eng", "source": "research/83 §4 (the Saadat-style table)", "note": "IBP zeroing is in neither technical table: no level given" },
     "alarms.technical.tempProbeOff.level": { "tag": "eng", "source": "research/83 §4 (the Saadat-style table); FA 11-8, EN 11-8", "note": "neither edition lists a temperature technical alarm" },
     "alarms.technical.abpNoSensor.level": { "tag": "eng", "source": "research/83 §4 (the Saadat-style table); FA 12-15 (PDF p.161), EN 12-16 (PDF p.158); research/34", "note": "IBP1 NO SENSOR: level 2 in the Persian edition only, the English cell is empty; kept a silent prompt as photographed on units in use" },

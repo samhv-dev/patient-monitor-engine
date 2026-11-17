@@ -120,7 +120,7 @@ A `null` table or cell means "not published" and must never be filled with inven
 - `alarms.abpDisconnectDefault`: the arterial-line disconnect alarm (static, mean < 10 mmHg) is on by default
   (Philips IFU p. 44; the IEC default) or off (saadat-like, research/06 §4.1).
 - `alarms.technical.<id>.level`: each technical alarm's level on this monitor, for every id of `TECHNICAL_ALARMS`
-  (the IEC default: all 3; saadat-like: leads-off, sensor-off and the clogged sampling line 2, B9 manuals). The engine
+  (the IEC default: all 3; saadat-like: leads-off, sensor-off, the clogged sampling line and the static pressure 2, B9 manuals). The engine
   raises the alarm at this level (`DeviceProfile.technicalLevels`); the bar, the lamp, the sound, Silence and the Log
   follow the level.
 - `arrhythmia.pauseAlarm`: the PAUSE alarm's factory switch (mindray-like off, BeneVision N App. C.1.1.2).

@@ -41,9 +41,9 @@ describe('technical alarm levels come from the style', () => {
     });
   }
 
-  it('saadat-like: leads-off, sensor-off and the clogged sampling line are level 2, the rest level 3 (B9 manuals, research/83)', () => {
+  it('saadat-like: leads-off, sensor-off, the clogged sampling line and the static pressure are level 2, the rest level 3 (B9 manuals, research/83)', () => {
     const levels = technicalLevels(deviceProfile('saadat-like'));
-    const two: TechnicalAlarmId[] = ['ecgLeadsOff', 'spo2SensorOff', 'co2Line'];
+    const two: TechnicalAlarmId[] = ['ecgLeadsOff', 'spo2SensorOff', 'co2Line', 'abpNonPulsatile'];
     for (const a of TECHNICAL_ALARMS) expect([a, levels.get(a)]).toEqual([a, two.includes(a) ? 2 : 3]);
     const texts = Object.fromEntries(buildConditions(createAlarmMgr(deviceProfile('saadat-like')), scenarios()[0] as AlarmInputs, T).map((c) => [c.id, c.text]));
     expect(texts).toMatchObject({ spo2SensorOff: 'SPO2 SENSOR OFF', co2Line: 'SAMPLING LINE CLOGGED' });
