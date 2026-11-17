@@ -3,7 +3,7 @@
 **STATUS: BEING BUILT; THIRD REVISION FOR REVIEW.** The flow rise with anaemia is re-planned to land whole: what it is
 made of by mechanism and source (§2.2), the shared vasodilator reserve it spends (B2v), who reads flow and who reads
 delivery (§1.4, B5c), the start of a run (B2d), the set of pieces that lands together and its order (§6), and what
-each cell is expected to do (§6.3). Every earlier design question is decided (§9.1); two questions are open (§9.2).
+each cell is expected to do (§6.3). Every earlier design question is decided (§9.1); three questions are open (§9.2).
 The parameters were checked against the published measurements in `research/81-evidence-brain-under-arrest-and-cpr.md`,
 `research/85-evidence-temperature-and-recovery-after-return-of-circulation.md` and
 `research/89-full-text-check-of-abstract-only-brain-numbers.md` and, for the anaemic flow rise and the reserve,
@@ -238,11 +238,12 @@ the breathing gate reads CBF today. The EEG steps after the organs and reads the
    changes MODELED arrest breathing except through `loc` (B2), which is reported.
 5. **The flow rise with anaemia reads Hb, not CaO2.** Hypoxaemia already raises flow through `o2Factor` (PaO2); a CaO2
    term would count the hypoxaemic fall of content a second time. B2a's factor is computed from the blood's O2 capacity
-   at the reference saturation, (Hb ÷ Hb_normal)^−k, so no hypoxaemia row moves. **The factor's reference is the
+   at the reference saturation, through the fall 1 − Hb ÷ Hb_normal (the working size and form of §2.2), so no
+   hypoxaemia row moves. **The factor's reference is the
    patient's own normal haemoglobin** (decision, §9.1 items 6 and 11): the blood model's band and sex normal, 15 for the
-   adult man and each other default band its own, so every default patient's factor is exactly 1 at rest. In the power
-   form the ratio of flows between two Hb values does not depend on the reference, so Mühling's slope is read the same
-   way at any reference (mine, arithmetic). With B2d the delivery reference is the same patient's normal, so factor and
+   adult man and each other default band its own, so every default patient's factor is exactly 1 at rest. Every
+   candidate size and form (§9.2 item 3) is written relative to the patient's own normal, so this decision holds
+   whichever is chosen. With B2d the delivery reference is the same patient's normal, so factor and
    delivery are measured from one normal. The factor is one regulated dilation spent from the shared dilator reserve;
    no content/viscosity split is built (§2.2, B2v, B2a). Whether factor and hypoxic term should be one content
    term (Brown 1985 [ABS] names O2 content the major determinant; Todd 1994 [ABS] finds a larger rise for the same
@@ -381,8 +382,8 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     present autoregulated state and maximal dilation; every dilating request (CO2, hypoxia, the drugs' direct and
     coupled effects, and the anaemia rise) spends it; pressure spends it first as it falls through the
     plateau; at and below the lower limit nothing is left.
-  - *The reference: the patient's own normal.* The factor is (Hb ÷ Hb_normal)^−k with Hb_normal the patient's own normal
-    haemoglobin, the blood model's band and sex normal (`bloodPatient`'s `BAND`: adult man 15, adult woman and older man
+  - *The reference: the patient's own normal.* The factor is a function of Hb ÷ Hb_normal (its working form below), with
+    Hb_normal the patient's own normal haemoglobin, the blood model's band and sex normal (`bloodPatient`'s `BAND`: adult man 15, adult woman and older man
     13.5, child 12.5, infant 11.5, neonate 17 g/dL), read through `pat.hbRef` (decision, §9.1 item 11). Every default
     patient rests at a factor of exactly 1 and a delivery of exactly 1 (with B2d's delivery reference, decision §9.1
     item 10).
@@ -398,19 +399,25 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     restore; nothing in the snapshot is added, and the piece states this (mine: a bookmark is restored only inside one
     build).
   - *Form, slope and holds.* The rise is a function of the fall of O2 capacity at the reference saturation, Hb ÷
-    Hb_normal (§1.5.5). **Its size is the pooled human haemodilution slope**, 0.66 % flow per 1 % fall of content,
-    linear as the source states it: factor = 1 + 0.66 × (1 − Hb ÷ Hb_normal) (Hoiland 2016 [FT], a review; the mean
-    line is weighted by sample size over four studies: 20 anaesthetised tumour-resection patients, 8 patients with
-    vasospasm after subarachnoid haemorrhage, 8 healthy volunteers and Mühling's 11 healthy volunteers; a fifth, 5
-    patients with carotid occlusion, is shown and left out of the mean). It is chosen over Mühling 1999's k = 0.683
-    alone because it contains that study and three more, by the evidence, not for convenience; it mixes measures and
-    patients, and the range of content fall each study reached is WANTED. Brown 1985 [ABS] gives the direction only.
-    The factor is held at Brown's range, **5.7–19.1 g/dL** [ABS]: 5.7 is the lowest Hb at which a cerebral-flow source
+    Hb_normal (§1.5.5). **Its size and form over the whole range are not settled** (§9.2 item 3). **The working size is
+    the pooled human haemodilution slope** [P: working value, pending §9.2 item 3], 0.66 % flow per 1 % fall of
+    content, linear as the source states it: factor = 1 + 0.66 × (1 − Hb ÷ Hb_normal) (Hoiland 2016 [FT], a review;
+    the mean line is weighted by sample size over four studies: Daif 2012, 20 anaesthetised tumour-resection patients;
+    Ekelund 2002, 8 patients with vasospasm after subarachnoid haemorrhage; Hino 1992, 8 healthy volunteers; Mühling
+    1999, 11 healthy volunteers; a fifth, 5 patients with carotid occlusion, is shown and left out of the mean). **The
+    review's text does not state each study's own slope or the range of content fall it reached:** they are plotted in
+    its figure (with the SD of the per-study slopes as error bars) and not given as numbers, so they are WANTED (§5.3).
+    Why it is not settled: the pool mixes anaesthetised and diseased patients with two small healthy groups over
+    unknown ranges; the one healthy-volunteer study read gives a steeper relation (Mühling's means, k = 0.683 in a power
+    form [ABS; INF: the power form, MCA diameter constant]); and the two part widely where the simulator uses them most:
+    at half the normal Hb the pooled line gives × 1.33 and the power form × 1.61 (mine, arithmetic). The one human
+    series spanning Hb 5.7–19.1 g/dL (Brown 1985, 54 people) is read only as an abstract (WANTED, being obtained). The
+    factor is held at Brown's range, **5.7–19.1 g/dL** [ABS]: 5.7 is the lowest Hb at which a cerebral-flow source
     measured, not Lieberman's 4.8, which is a systemic measurement [P: below 5.7 no CBF measurement in people]. The
     consciousness cells are read at the pressure the engine gives that patient: at Hb 5 the adult man's delivery is
-    ≈ 0.48 of his own normal at CPP 80 (factor ≈ 1.41 capped at 1.40) and ≈ 0.41 at CPP 70 (reserve 1.20), against the
-    abnormal level 0.40 (mine, arithmetic at SaO2 0.97, PaO2 95); if the cell fails at the engine's pressure, the
-    ceiling question decides, and no threshold moves.
+    ≈ 0.48 of his own normal at CPP 80 (working factor ≈ 1.41 capped at 1.40) and ≈ 0.41 at CPP 70 (reserve 1.20),
+    against the abnormal level 0.40 (mine, arithmetic at SaO2 0.97, PaO2 95); if the cell fails at the engine's
+    pressure, the ceiling question decides, and no threshold moves.
   - *The rows the set may move, and no other.* (1) Rows of patients who are in fact off their own normal Hb at the
     moment the row reads them (haemorrhage, haemodilution, a card with a hand-set Hb), each listed with its Hb, the
     factor and the moved values (CBF, CBV, ICP, PbtO2, SjvO2). (2) Each piece's own stated cause: B2v's
@@ -599,11 +606,11 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 | P6 Chen 2013 cooled times | stated as at 33 °C | first burst during cooling, continuous background during rewarming; not a steady-33 °C measurement | Chen 2013 [FT] |
 | P8 Jia 2008 | [ABS] | [FT]: unsedated, continuous earlier when cooled while still cold; figures not read | Jia 2008 [FT] |
 | A6 incidence of gasping | "B7a gasps always [P]" | **decided: by chance**, 46 % cardiac / 32 % other causes, or set by the instructor or the scenario | Clark 1992 [ABS] |
-| B2a's slope k | stop and ask if Mühling's full text is unread | settled from the abstract's means, k = 0.683 (per haematocrit point); full text still WANTED | Mühling 1999 [ABS] (B2a, in review) |
+| Mühling's slope (per haematocrit point) | stop and ask if Mühling's full text is unread | the per-point reading fits the abstract's means (k = 0.683 in a power form); now one candidate of §9.2 item 3, not the working size; full text still WANTED | Mühling 1999 [ABS] |
 | B2a's reference Hb | 14 (assumed default) | **decided: the patient's own normal** (15 for the adult man, each band its own); every default patient unchanged | the blood model's `BAND` (decision) |
 | The delivery reference | Hb 14 for every patient | **decided: the patient's own normal**; a healthy default patient rests at delivery 1 (B2d) | decision |
 | The anaemia factor below the lower limit and under CPR | the whole factor multiplied in | **changes:** one regulated dilation spent from the shared reserve, adding nothing at maximal dilation; no content/viscosity split (not established in people, and the animal shares do not add) | Brown 1985, BMJ 1982, Tomiyama 1999, Hudak 1986, 1987, Todd 1994 [ABS]; Borzage 2016, Hoiland 2016, Vaclavu 2019 [FT] (research note 90) |
-| The size of the rise | k = 0.683 (Mühling's means) | **changes:** the pooled human slope, 0.66 % per 1 % content fall, linear (four studies including Mühling's) | Hoiland 2016 [FT]; Mühling 1999 [ABS] |
+| The size of the rise | k = 0.683 (Mühling's means) | **working size, not settled:** the pooled human slope, 0.66 % per 1 % content fall, linear (four studies including Mühling's), pending §9.2 item 3 | Hoiland 2016 [FT]; Mühling 1999 [ABS] |
 | The reserve's ceiling at normal pressure | 1.40 against the dogs' 1.52 | the human measurements bracket it: × 1.39 (PET) to × 1.70 (ASL) with acetazolamide, lower bounds; the dogs' 1.52 is a fitted asymptote relative to the same pressure's normocapnic flow | Zhao 2021, Vaclavu 2019 [FT]; Gersten 1999 [FT] fitting Harper & Glass 1965 (not read) |
 | The anaemia factor's lower hold | 4.8 g/dL (Lieberman 2000) | **5.7 g/dL** (Brown 1985's cerebral range); Lieberman's is a systemic measurement | Brown 1985, Lieberman 2000 [ABS] |
 | A shared vasodilator reserve | attachment | **piece B2v** (pull request 188's form, rebuilt) | Harper & Glass 1965 [S]; Okuda 1976, Gregory 1981, Paulson 1990 [ABS] |
@@ -652,13 +659,13 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
 | Gersten 1999, arXiv physics/9911029, fitting Harper & Glass 1965 (J Neurol Neurosurg Psychiatry 28:449, not read) | [FT] (the fit) | dogs: fitted asymptotes B(∞) 2.112 / 1.518 / 0.997 at MAP 150 / 100 / 50, relative to the normocapnic flow at the same pressure; ± set by the fitter; the 50 mmHg fit constrained |
 | Okuda 1976; Gregory 1981; Paulson 1990 | [ABS] as read by pull request 188 | CO2 response abolished at low pressure; the limits move with CO2 |
 | Borzage et al. 2016, J Appl Physiol (PMC4835904) | [FT] | 45 people, measured viscosity: content the strongest predictor of CBF; no viscosity effect after correction for content |
-| Hoiland et al. 2016, Am J Physiol Regul Integr Comp Physiol (PMC4796739) | [FT], review | pooled human haemodilution 0.66 % CBF per 1 % fall of CaO2, against 1.85 % in hypoxaemia; humans argue against an appreciable viscosity role |
+| Hoiland et al. 2016, Am J Physiol Regul Integr Comp Physiol (PMC4796739) | [FT], review | pooled human haemodilution 0.66 % CBF per 1 % fall of CaO2 (mean line over four studies weighted by n; per-study slopes and ranges plotted, not stated), against 1.85 % in hypoxaemia; humans argue against an appreciable viscosity role |
 | BMJ 1982;284:1733 (PMID 6805689) | [ABS] | plasma exchange in 8: viscosity down, no change of CBF |
 | Vaclavu et al. 2019, Haematologica (PMC6442969) | [FT] | acetazolamide (16 mg/kg, ASL): controls +69.5 %, sickle-cell anaemia +34.1 %, "utilize half of the cerebral vasodilatory reserve" |
 | Zhao et al. 2021, NeuroImage (PMC8272558) | [FT] | acetazolamide (15 mg/kg), 15O-water PET, 19 healthy adults: whole-brain +39 % (SD 19) |
 | Battisti-Charbonney et al. 2011, J Physiol (DOI 10.1113/jphysiol.2011.206052); Cerebrovasc Dis 2000 (PMID 10629349) | [ABS] | MCA velocity's hypercapnic maximum +76.5 % / +108 %; acetazolamide +55 % at 13 mg/kg in 59 |
 | Secomb & Pries 2013, C R Physique (PMC4117233), giving Pries 1992; Trejo-Soto 2022, Micromachines (PMC8954080) | [FT] | blood viscosity against haematocrit and vessel diameter, not a power law; rises at low shear |
-| Mühling et al. 1999, Can J Anaesth (PMID 10391602) | [ABS] (the full abstract's means) | 2 % CBFV per 1 % fall in Hct and CaO2; means Hb 14.5 → 10.3, Vm-MCA 61.2 → 77.3 cm/s, from which k = 0.683 |
+| Mühling et al. 1999, Can J Anaesth (PMID 10391602) | [ABS] (the full abstract's means) | 2 % CBFV per 1 % fall in Hct and CaO2; means Hb 14.5 → 10.3, Vm-MCA 61.2 → 77.3 cm/s (the candidate power form of §9.2 item 3 takes k = 0.683 from them) |
 | Tu et al. 1996, Stroke (PMID 8610310) | [ABS] | rCBF +35 % at 3 h of haemodilution |
 | Todd et al. 1992, Am J Physiol (PMID 1379006) | [ABS] | rat CBF 78 → 171 from Hct 43 to 20 % |
 | Grocott et al. 2009, NEJM (PMID 19129527) | [ABS] | conscious at PaO2 24.6 mmHg, acclimatised |
@@ -776,7 +783,7 @@ used NCBI's E-utilities `efetch` for PMC full texts where Europe PMC answered HT
   acetazolamide dose–response, whether it plateaus); J Clin Anesth 2005;17:177, DOI 10.1016/j.jclinane.2004.06.017 (the
   cell most at risk: baseline velocity, PaCO2, end-tidal agent, whether +135 % at MAP ≈ 55 is credible as flow); the
   four studies pooled by Hoiland 2016 (Daif 2012, J Neurosurg Anesthesiol 24:19; Ekelund 2002, Acta Neurochir; Hino
-  1992, Stroke 23:423; Mühling 1999): the range of content fall each reached and its measure.
+  1992, Stroke 23:423; Mühling 1999): each study's own slope, the range of content fall it reached and its measure (the review plots them and does not state them).
 - Also wanted: Hudak 1986 (DOI 10.1152/ajpheart.1986.251.1.h63), Hudak 1987 (DOI 10.1152/jappl.1987.62.3.1090),
   Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949), Todd 1994 (DOI 10.1152/ajpheart.1994.267.5.h2025), BMJ 1982
   (PMC1498687), Battisti-Charbonney 2011 (DOI 10.1113/jphysiol.2011.206052).
@@ -831,7 +838,7 @@ and may run any time after B4. B7b and B9 are blocked on sources.
 | B2v | Shared vasodilator reserve (pull request 188's mechanism, rebuilt) | not started | design | — (§9.2 item 1 decides its normal-pressure ceiling) |
 | B2d | The delivery reference is the patient's own normal; the t = 0 read | briefed, not started | none | — |
 | B5c | The brainstem entry reads delivery; the vasomotor gate reads the entry | not started | design | B2d merged; lands in one merge with B2a |
-| B2a | Anaemia's flow rise, one regulated dilation spent from the reserve | **in review**, pull request 512 (head b72d7b1b), to be reworked as §6 B2a says | design | B2v and B2d merged; stacked on B5c and lands with it |
+| B2a | Anaemia's flow rise, one regulated dilation spent from the reserve | **in review**, pull request 512 (head b72d7b1b), to be reworked as §6 B2a says | design | B2v and B2d merged; Brown 1985's full text or the answer to §9.2 item 3; stacked on B5c and lands with it |
 | B5b | The brainstem's no-flow timer on the organ model's clock, both modes; the arrest record | not started | design | B5 (on main) |
 | B2 | Consciousness | not started | none | B2a merged (decided, §9.1 item 4) |
 | B3 | Artefacts and readers | not started | none | B2 merged |
@@ -1010,8 +1017,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   open, not a draft, cut from a main of early November and in conflict with the current main. **The plan builds on its
   mechanism and its tests and does not merge the branch:** B2v rebuilds the two functions on the current `flow.ts`
   (where B2a's factor will be a fourth limb), carries its tests over, measures again every number its description
-  gives, and records the demo cards' courses on the current main. Whether the old pull request is closed is the
-  orchestrator's call; B2v's pull request names it as superseded.
+  gives, and records the demo cards' courses on the current main. B2v's pull request names the old one as superseded.
 - **First step, before any product code:** measure on the current main, with and without the reserve, the three cells
   most at risk (§6.3: tamponade-drainage ROSC, CPR-offset spread, warm septic MAP) and the CPR coronary perfusion
   pressure; if any leaves its band, stop and ask (§6.3 names the mechanism that would then be at fault).
@@ -1049,17 +1055,17 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
 - **What:** `anaemiaFactor(hb, hbRef)` in `l2/brain/flow.ts` as **one regulated dilation** (§2.2: no content/viscosity
   split is built, because none is established for the human brain and the shares cannot be added). Its request joins
   the dilating product spent from B2v's reserve, so at and below the lower limit and under compressions it adds no
-  flow. Its size is the pooled human haemodilution slope, 1 + 0.66 × (1 − Hb ÷ Hb_normal) (Hoiland 2016 [FT], §2.2),
-  as data with its source; the content
+  flow. Its size and form are §9.2 item 3's answer; the working size is the pooled human slope,
+  1 + 0.66 × (1 − Hb ÷ Hb_normal) (Hoiland 2016 [FT], §2.2) [P: working value], as data with its source; the content
   fall is the fall of O2 capacity at the reference saturation, (Hb ÷ Hb_normal), as §1.5.5 rules. Held at Brown's
   5.7–19.1 g/dL [ABS]; the reference `hbRef`, the patient's own normal, through B2d's path; `TAU_VASC_S` relaxation as
   before; the Cushing clamp (the surge target kept in [0, 1]); the census row `organs.brain.anaemia`. Viscosity is not
   built in the brain until §9.2 item 2 is answered; the code states the omission beside the factor.
 - **Kept from pull request 512's head (b72d7b1b):** the factor's place in `targetCbf` and its data structure
-  (`ANAEMIA_FLOW_SOURCE`, k computed from data), the upper hold 19.1, the per-patient `hbRef` (the band's sex normal,
+  (`ANAEMIA_FLOW_SOURCE`, the source's numbers held as data, with the size computed from them), the upper hold 19.1, the per-patient `hbRef` (the band's sex normal,
   one table), the Cushing clamp and its unit test, the census row, the `anaemia.test.ts` structure with its source
   cells, and the engine-output pins as pins.
-- **Changed:** the factor's request is spent from the reserve; the power form with Mühling's k becomes the pooled human linear slope (Mühling's study is one of the pooled four); the lower hold 4.8
+- **Changed:** the factor's request is spent from the reserve; the power form with Mühling's k gives way to the size and form §9.2 item 3 settles (working size: the pooled human linear slope, which contains Mühling's study); the lower hold 4.8
   (Lieberman, a systemic measurement) becomes 5.7 (Brown); the `hbRef` path and the t = 0 read come from B2d; `HB_REF`
   is gone (B2d); the Mühling test is titled as arithmetic on the source's means; every record's cause is written in its
   test header with Hb, factor and sizes; the hand-set anaemic patients (`blood-anaemia-co.test.ts`,
@@ -1083,7 +1089,9 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
 - **What its own tests show while the set is incomplete:** on its branch stacked on B5c (itself after B2v and B2d) the
   suite is green; on main alone the piece is not merged. No cell is made green by an expected-failure mark.
 - **Must not change:** `o2Factor`, `co2Factor`, autoregulation, `cmro2Rel`, the reserve's form, any threshold.
-- **Owner decisions:** given (§9.1 items 6–8, 10, 11); §9.2 item 1 (the ceiling) before its cells are read, since a
+- **Needs before it starts:** Brown 1985's full text (DOI 10.1093/brain/108.1.81, being obtained) or the owner's answer
+  to §9.2 item 3 (the size and form for a healthy patient).
+- **Owner decisions:** given (§9.1 items 6–8, 10, 11); §9.2 item 3 before it is coded; §9.2 item 1 (the ceiling) before its cells are read, since a
   ceiling of 1.40 at CPP 80 caps the anaemic rise at rest below about Hb 6, and 1.20 at CPP 70 below about Hb 10.5
   (§9.2).
 
@@ -1389,7 +1397,7 @@ setting; its estimate stays 12 h, with the risk stated here (mine).
 - **The systemic viscosity term's exponent** (`VISC_EXP` 0.6, a fit of SVR × (Hb/Hb_ref)^0.6 to Weiskopf 1998's
   whole systemic resistance fall, which includes vasodilation): a single blood-viscosity relation from a rheology
   source, read by the systemic resistance and any brain viscosity term alike, belongs to the blood plan (WANTED,
-  §5.3). The brain's share uses the cerebral sources meanwhile (§2.2).
+  §5.3). The brain builds no viscosity term meanwhile (§2.2; §9.2 item 2).
 - **The attenuated hypocapnic constriction at low haematocrit** (Rebel 2003 [ABS], cats: blunted after any exchange)
   and the larger hypoxic than haemodilutional flow rise at equal content (Todd 1994 [ABS]): not built.
 - **Hypothermic loss of consciousness; the EEG plan's metabolic burst suppression** (Ching 2012) reading `fn`.
@@ -1535,3 +1543,10 @@ setting; its estimate stays 12 h, with the risk stated here (mine).
    marks the omission; the alternative is a viscosity term that raises the maximally dilated flow (the ceiling), which
    is physics and the plan's inference, not a measurement, and which the sickle-cell values of item 1 would need.
    **Holds whether B2v's ceiling gains a viscosity term; coupled to item 1.**
+3. **Which size and form of the anaemic rise the simulator uses for a healthy patient.** The working size is the pooled
+   human line (0.66 % flow per 1 % fall of content), which mixes anaesthetised patients with tumours, patients with
+   vasospasm after haemorrhage and two small healthy groups, over ranges the review does not state; the one
+   healthy-volunteer study read gives a steeper relation (k = 0.683 in a power form, from its abstract's means); at half
+   the normal Hb they give × 1.33 against × 1.61. The one series across Hb 5.7–19.1 g/dL in 54 people (Brown 1985) is
+   read only as its abstract and is being obtained. Options: the pooled line; the healthy-volunteer studies alone
+   (Mühling 1999 and Hino 1992); the relation of Brown's series once read in full. **Holds B2a's coding.**
