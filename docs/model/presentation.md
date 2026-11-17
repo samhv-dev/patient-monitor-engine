@@ -66,8 +66,8 @@ renderer, audio and skin contracts.
 | [`calibration.ts:3`](../../packages/renderer/src/calibration.ts#L3) | Default calibration: 96 CSS px per inch = 3.78 CSS px/mm [05 §3.1] until the user calibrates. |
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:911`](../../packages/renderer/src/device-ui.ts#L911) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
-| [`mount.ts:205`](../../packages/renderer/src/mount.ts#L205) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:449`](../../packages/renderer/src/mount.ts#L449) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`mount.ts:208`](../../packages/renderer/src/mount.ts#L208) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
+| [`mount.ts:452`](../../packages/renderer/src/mount.ts#L452) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -874,6 +874,7 @@ renderer, audio and skin contracts.
 | `levelSound` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | The level's sound with skin overrides applied (repeat time; |
 | `burstDurationS` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | First onset to last offset (s). |
 | `volumeGain` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | Linear gain for a volume step: |
+| `beepGain` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | Linear gain of the pulse tone: |
 | `harmonicTable` | [`alarm-voice.ts`](../../packages/audio/src/alarm-voice.ts) | Real/imag arrays for a PeriodicWave with the given harmonic levels (dB re fundamental). |
 | `playAlarmPulse` | [`alarm-voice.ts`](../../packages/audio/src/alarm-voice.ts) | One alarm pulse at audio time `when`. |
 | `playSegments` | [`alarm-voice.ts`](../../packages/audio/src/alarm-voice.ts) | A device tone (segments back to back, each gliding startHz → endHz) at audio time `when`. |
@@ -970,7 +971,7 @@ renderer, audio and skin contracts.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `disturbed`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `createDefibCore`, `createPending`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `builderPage`, `editsAt`, `rawNames`, `draftRun`, `markCompatible`, `scriptSection`, `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `disturbed`, `learnerStrip`, `forward`, `layout`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `field`, `selectOf`, `pumpPageView`, `rackView`, `onRecent`, `readWindows`, `deviceRows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `mechanismsPanel`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `createDefibCore`, `createPending`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `createAlarmView`, `createCockpit`, `createPending`, `createRecorder`, `signInVentilator`, `el`, `mountEmbed`, `createDevice`, `createKnob`, `settle`, `createAlarmSound`, `mountSimTools`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `mountMonitor`, `formatIcp`, `formatPbto2`, `pulseTone`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -1255,6 +1256,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`numerics-resp.ts`](../../packages/renderer/src/numerics-resp.ts) | Respiratory numeric tiles (brief §6.1, §6.8): SpO2 with PI, EtCO2 with FiCO2 and awRR, RR (impedance) and temperature T1/T2. |
 | [`overlays.ts`](../../packages/renderer/src/overlays.ts) | Event overlays on the ECG lanes (brief §3.5 step 5; research/05 §2.6): pace marks, sync markers, shock marks and lead-off dashes. |
 | [`protocol.ts`](../../packages/renderer/src/protocol.ts) | Messages between the main thread and the engine+renderer worker (brief §3.4). |
+| [`pulse-tone.ts`](../../packages/renderer/src/pulse-tone.ts) | The pulse tone a style's data give: its gain by the style's alarm volume law, the tone kind its source drives, and its pitch while there is no valid SpO2. |
 | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | ResolvedSkin → RenderPlan: the plain-data lane layout the worker draws from. |
 | [`sweep-lane.ts`](../../packages/renderer/src/sweep-lane.ts) | One sweep lane (brief §3.5 "Per frame, for each lane"): x comes from sim time, never from frame counts. |
 | [`tile-fit.ts`](../../packages/renderer/src/tile-fit.ts) | Saadat pass 3 (the owner's 2026-10-23 review): how the parts of a split tile fit their width. |
@@ -1367,6 +1369,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/physiology-console-mechanics.e2e.ts`](../../apps/demo/e2e/physiology-console-mechanics.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/physiology-console.e2e.ts`](../../apps/demo/e2e/physiology-console.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/press-across-repaint.e2e.ts`](../../apps/demo/e2e/press-across-repaint.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/pulse-tone-level.e2e.ts`](../../apps/demo/e2e/pulse-tone-level.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/pump-rack.e2e.ts`](../../apps/demo/e2e/pump-rack.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/reload-keeps-case.e2e.ts`](../../apps/demo/e2e/reload-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/remote-resume.e2e.ts`](../../apps/demo/e2e/remote-resume.e2e.ts) | 0 | 0 |
@@ -1408,6 +1411,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/vent-embed.e2e.ts`](../../apps/demo/e2e/vent-embed.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-handover-phones.e2e.ts`](../../apps/demo/e2e/vent-handover-phones.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-link.e2e.ts`](../../apps/demo/e2e/vent-link.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/vent-room-no-drawer.e2e.ts`](../../apps/demo/e2e/vent-room-no-drawer.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-view-new-patient.e2e.ts`](../../apps/demo/e2e/vent-view-new-patient.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-view-restore.e2e.ts`](../../apps/demo/e2e/vent-view-restore.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-view-speed.e2e.ts`](../../apps/demo/e2e/vent-view-speed.e2e.ts) | 0 | 0 |
@@ -1638,9 +1642,11 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/vent/faces/edp-ts/tones-player.test.ts`](../../apps/demo/src/vent/faces/edp-ts/tones-player.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/hamilton/face.dom.test.ts`](../../apps/demo/src/vent/faces/hamilton/face.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/room.dom.test.ts`](../../apps/demo/src/vent/room.dom.test.ts) | 0 | 0 |
 | [`alarm-bursts.test.ts`](../../packages/audio/test/alarm-bursts.test.ts) | 0 | 0 |
 | [`alarm-sounder.test.ts`](../../packages/audio/test/alarm-sounder.test.ts) | 0 | 0 |
 | [`alarm-voice.test.ts`](../../packages/audio/test/alarm-voice.test.ts) | 0 | 0 |
+| [`beep-gain.test.ts`](../../packages/audio/test/beep-gain.test.ts) | 0 | 0 |
 | [`clock-map.test.ts`](../../packages/audio/test/clock-map.test.ts) | 0 | 0 |
 | [`context.test.ts`](../../packages/audio/test/context.test.ts) | 0 | 0 |
 | [`pitch-and-device-tones.test.ts`](../../packages/audio/test/pitch-and-device-tones.test.ts) | 0 | 0 |
@@ -1688,6 +1694,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`overlays-tcp.test.ts`](../../packages/renderer/test/overlays-tcp.test.ts) | 0 | 0 |
 | [`pleth-scale.test.ts`](../../packages/renderer/test/pleth-scale.test.ts) | 0 | 0 |
 | [`portrait-layout.test.ts`](../../packages/renderer/test/portrait-layout.test.ts) | 0 | 0 |
+| [`pulse-tone.test.ts`](../../packages/renderer/test/pulse-tone.test.ts) | 0 | 0 |
 | [`restore-lanes.test.ts`](../../packages/renderer/test/restore-lanes.test.ts) | 0 | 0 |
 | [`saadat-pass-2.test.ts`](../../packages/renderer/test/saadat-pass-2.test.ts) | 0 | 0 |
 | [`saadat-pass-3.test.ts`](../../packages/renderer/test/saadat-pass-3.test.ts) | 0 | 0 |

@@ -50,7 +50,7 @@ function rig(doc: ScenarioDoc, history: H[], rows: Array<Partial<RecRow> & { t: 
   const record = emptyRun('test', 80, 0);
   record.doc = doc;
   const ctl = { scenario: sv, bookmarks: [], simT, hostPaused: false, state: null, send: async () => ({ accepted: true, tick: 0, commandId: 'c', rttMs: 0 }) };
-  const host = { record: { data: record }, driver: { stageMarks: () => [], vitalHolds: () => [] }, onBriefing: () => () => undefined };
+  const host = { record: { data: record }, driver: { stageMarks: () => [], vitalHolds: () => [], rhythmHolds: () => [] }, onBriefing: () => () => undefined };
   const link = { ctl, host, log: [], ramps: new Map(), get simT() { return ctl.simT; }, send: ctl.send, note: () => undefined } as unknown as Link;
   const digits = new Map<number, (() => void) | null>();
   const ctx = { link, keys: { digit: (n: number, f: (() => void) | null) => digits.set(n, f), letter: () => undefined, escape: () => () => undefined }, dock: {}, openSheet: () => undefined } as unknown as Teach2Ctx;

@@ -298,6 +298,44 @@ test('the pump tablet: a channel button held while Room setup adds a channel tak
 });
 
 
+test("the case's pause: the tablet shows it and its controls are unavailable; a Start that reaches the host is refused in the remote's words and not run; after the resume Start runs the channel", async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  await relayProcess();
+  const { code, pin } = await laptop(page);
+  const { ctx, p } = await pumpTablet(browser, code, pin);
+  await flow(p, 1, 'load', async (form) => void (await form.locator('select[name="source"]').selectOption('stock|propofol-10mg-ml-50ml')));
+  await expect(said(p, 1)).toHaveText('Loaded on channel 1.', { timeout: 10_000 });
+  await flow(p, 1, 'program', async (form) => {
+    await form.locator('select[name="drugId"]').selectOption('propofol');
+    await form.locator('input[name="amount"]').fill('10');
+    await form.locator('select[name="unit"]').selectOption('mg');
+  });
+  await expect(said(p, 1)).toHaveText('Programmed on channel 1.', { timeout: 10_000 });
+  await flow(p, 1, 'rate', async (form) => void (await form.locator('input[name="rate"]').fill('20')));
+  await expect(said(p, 1)).toHaveText('Rate set on channel 1.', { timeout: 10_000 });
+
+  const time = (action: 'pause' | 'resume') => page.evaluate((a) => (window as unknown as { __pmeApp: { link: { send(c: unknown): unknown } } }).__pmeApp.link.send({ type: 'time', action: a }), action);
+  const start = p.locator('.pump-face[data-ch="1"] .pf-btn[data-flow="start"]');
+  await time('pause');
+  await expect(p.locator('.pf-paused')).toHaveText('The case is paused: the pumps take no command until it resumes.', { timeout: 10_000 });
+  await expect(start).toBeDisabled();
+  await expect(p.locator('.pump-face[data-ch="1"] .pf-btn[data-flow="load"]')).toBeDisabled();
+  // a Start that reaches the host while paused (as a press sends it, through the tablet's own follower)
+  await p.evaluate(() => (window as unknown as { __pmePumpPage: { follower(): { command(b: unknown): string } } }).__pmePumpPage.follower().command({ type: 'pump', ch: 1, action: 'start' }));
+  await expect.poll(() => logLines(page), { timeout: 10_000 }).toContain('learner|Channel 1 (Propofol) started (bed 2 pumps) not done: the case was paused');
+  expect((await rows(page)).find((r) => r.kind === 'pump' && r.text === 'Channel 1 (Propofol) started not done: the case was paused')).toMatchObject({ channel: 1, by: PUMPS, name: 'bed 2 pumps' });
+  expect((await engine(page))?.pumps.find((c) => c.ch === 1)?.state).not.toBe('running');
+
+  await time('resume');
+  await expect(p.locator('.pf-paused')).toBeHidden({ timeout: 10_000 });
+  await expect(start).toBeEnabled();
+  await start.click();
+  await expect(said(p, 1)).toHaveText('Started on channel 1.', { timeout: 10_000 });
+  await expect.poll(async () => (await engine(page))?.pumps.find((c) => c.ch === 1)?.state ?? null, { timeout: 15_000 }).toBe('running');
+  await expect(p.locator('.pump-face[data-ch="1"]')).toHaveAttribute('data-state', 'running', { timeout: 10_000 });
+  await ctx.close();
+});
+
 test('Room setup refuses a channel count that removes a running channel, in its own words; the tablet and the engine keep it; unloaded, it goes', async ({ page, browser }) => {
   test.setTimeout(120_000);
   await relayProcess();

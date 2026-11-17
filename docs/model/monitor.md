@@ -660,6 +660,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`engine/hr-af-numeric.test.ts`](../../packages/engine-core/test/engine/hr-af-numeric.test.ts) | 0 | 0 |
 | [`engine/hr-agonal-qrs.test.ts`](../../packages/engine-core/test/engine/hr-agonal-qrs.test.ts) | 0 | 0 |
 | [`engine/hr-skin-averaging.test.ts`](../../packages/engine-core/test/engine/hr-skin-averaging.test.ts) | 0 | 0 |
+| [`engine/qrs-tone-pitch.test.ts`](../../packages/engine-core/test/engine/qrs-tone-pitch.test.ts) | 0 | 0 |
 | [`engine/state-sensor-map.test.ts`](../../packages/engine-core/test/engine/state-sensor-map.test.ts) | 0 | 0 |
 | [`l3/capture12-arrest.test.ts`](../../packages/engine-core/test/l3/capture12-arrest.test.ts) | 0 | 0 |
 | [`l3/capture12.test.ts`](../../packages/engine-core/test/l3/capture12.test.ts) | 0 | 0 |

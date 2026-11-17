@@ -6,9 +6,32 @@
 they touch. The face is named after the device, **EDP-TS** (VQ1). The work is split into **version 1** (the working
 ventilator with all its modes, then EDP-TS becomes the default face) and **version 2** (the start-up sequence, tube
 compensation, capnography) (§7.2). What still waits: the owner's detailed video of the device being operated and his
-recordings of its alarm sounds (§7.3); until the video, the manual decides every point it covers (VQ7). Nothing is
-built: this pull request adds this page, four static mock-ups in `docs/plans/vent-skin-edp-ts/mockup/`, two roadmap
-rows and the README's affiliation sentence (§5), and changes no product code, test, card, kit or data file.
+recordings of its alarm sounds (§7.3); until the video, the manual decides every point it covers (VQ7). What is built
+is listed under "Build state" below.
+
+**Build state (checked 17 November 2026 against main 068c7130 and the merged and open pull requests).**
+
+| Piece | State |
+|---|---|
+| VR | on main (PR 404) |
+| V0 | on main (PR 410) |
+| V1 | on main (PR 416); the face redrawn to the owner's photographs, piece VF, on main (PR 418) |
+| V1b | in a pull request (521) |
+| V2 | on main (PR 428) |
+| V3 | on main (PR 420) |
+| V4 | in a pull request (527) |
+| V5 | not started; the suction key's behaviour waits for the owner's video (§7.3) |
+| V6, V7, V8, V9, V10, V11, V13 | not started |
+| VD | not started |
+| V12, V14, V15 (version 2) | not started |
+
+V1b note (from PR 521): a ventilator tablet receives no `style` message from the host (a ventilator follows nothing),
+so the device page cannot read the room's face from it as V1b's row says; the chosen face travels in the ventilator's
+sign-in grant instead.
+
+Repairs outside the pieces, in a pull request: a ventilator linked to a room has no Patient drawer (518); ventilator
+alarms reach the instructor's alarm line, Log and Debrief (519); "Return here" takes the ventilator back with the
+patient (505).
 
 **Base and inputs.**
 - Base: `origin/main` **c13cb826** (Merge PR #391), read in the worktree `scratch/wt-plan-vent-skin` (branch
