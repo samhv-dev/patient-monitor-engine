@@ -212,7 +212,8 @@ describe('the controls V1 marked "needs piece V3", turned on', () => {
     run(d, 8);
     k.press('under:ctrl');
     k.press('side:alarmLimits');
-    expect(k.note()).toBe('alarmHelp');
+    expect(k.windows().map((w) => w.id), 'the help window').toEqual(['help']);
+    expect(k.helpFor()).toBe('alarm:disconnection');
     expect(k.alarmTest()).toBeNull();
   });
 });

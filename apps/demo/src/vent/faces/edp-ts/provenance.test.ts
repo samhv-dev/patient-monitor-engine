@@ -9,6 +9,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CONTROLS, WINDOWS } from './controls.ts';
+import { helpId } from './knob.ts';
+import { labelsOf } from './screen.ts';
 import FACE from './face.json';
 
 const root = resolve(import.meta.dirname, '../../../../../..');
@@ -85,6 +87,40 @@ describe('the control table and the windows name real reasons and gap rows', () 
         if (r.kind === 'limits' && r.off) { expect(reasons[r.off.reason]).toBeDefined(); expect(GAPS.has(r.off.gap)).toBe(true); }
       }
     }
+  });
+});
+
+describe('the help texts (research/57 K-14, H-21; plan GX8)', () => {
+  const help = FACE.help as Record<string, unknown>;
+  it('every control of the table and every alarm the face shows has its help, in the simulator\'s words', () => {
+    for (const c of CONTROLS) expect(help[helpId(c.id)], c.id).toBeDefined();
+    for (const id of Object.keys(FACE.alarms)) expect(help[`alarm:${id}`], id).toBeDefined();
+    for (const [k, l] of Object.entries(help)) expect((l as { p: string }).p, k).toBe('sim');
+  });
+});
+
+describe('the screens of the Graphics window and the scales (research/57 K-10 to K-13)', () => {
+  it('every panel of every screen lies in the curves\' area of the photographed screen, between the left column and the pictogram column', () => {
+    const G = FACE.layout.grid as Record<string, { v: unknown }>;
+    const left = (G.left!.v as number[])[2]!, right = G.rkeyX!.v as number, top = (G.win!.v as number[])[1]!, bottom = G.tileY!.v as number;
+    for (const [id, l] of Object.entries(FACE.graphics.layouts)) {
+      for (const pn of (l as { v: { panels: Array<{ kind: string; box: number[] }> } }).v.panels) {
+        const [x, y, w, h] = pn.box as [number, number, number, number];
+        // a curve or a loop carries its scale strip at its left and its time or axis strip under it
+        const axes = pn.kind !== 'data';
+        const sx = axes ? (FACE.layout.grid.scaleW.v as number) : 0, th = axes ? (G.timeH!.v as number) : 0;
+        expect(x - sx >= left && x + w <= right && y >= top && y + h + th <= bottom, `${id} ${pn.box}`).toBe(true);
+      }
+    }
+  });
+  it('the starting scales are the photographed ones, and their labels the photographed labels (R-27 to R-29, P-11, P-12)', () => {
+    const S = FACE.graphics.scales, I = FACE.graphics.scaleInit.v;
+    expect(S.paw.v[I.paw]).toEqual([-7, 35]);
+    expect(S.vol.v[I.vol]).toEqual([-0.2, 1.0]);
+    expect(S.flow.v[I.flow]).toEqual([-60, 60]);
+    expect(labelsOf('p', { idx: I.paw, shift: 0 })).toEqual(FACE.layout.pawLabels.v);
+    expect(labelsOf('v', { idx: I.vol, shift: 0 })).toEqual([...(FACE.layout.grid.loopVLabels.v as number[])].reverse());
+    expect(labelsOf('f', { idx: I.flow, shift: 0 })).toEqual(FACE.layout.grid.flowLabels.v);
   });
 });
 

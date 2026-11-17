@@ -16,7 +16,7 @@ import FACE from './face.json';
 
 const html = readFileSync(resolve(import.meta.dirname, '../../../../vent-hamilton.html'), 'utf8');
 const body = (html.split('<body>')[1] as string).split('<script')[0] as string;
-const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
+const ALLOWED = new Set<string>([...Object.values(FACE.words), ...Object.values(FACE.reasons), ...Object.values(FACE.help), ...Object.values(FACE.alarms).map((a) => a.text)].map((l) => (l as { v: string }).v));
 const NUMERIC = /^[-+\d.:/ ]+$/;
 /** A window's value with its unit (research/57 T-40 "Apnea time 15 s"): a number and a sourced unit word. */
 const withUnit = (t: string) => { const m = /^([-+\d.:/]+) (.+)$/.exec(t); return m !== null && ALLOWED.has(m[2]!); };
@@ -57,7 +57,7 @@ describe('the EDP-TS face', () => {
     for (let i = 0; i < 3; i++) { click('[data-ctl="side:menu"]'); check(`menu ×${i + 1}`); }
     click('[data-ctl="under:esc"]'); click('[data-ctl="under:esc"]');
     // piece V2: Menu → Backup ventilation, as the manual draws it (research/57 T-40)
-    click('[data-ctl="side:menu"]'); knobPress(); check('backup window');
+    click('[data-ctl="side:menu"]'); wheel(1); knobPress(); check('backup window');
     expect([...document.querySelectorAll('.edp-win .t')].map((e) => e.textContent)).toEqual(['Backup ventilation']);
     expect([...document.querySelectorAll('.edp-win .edp-entry .lbl')].map((e) => e.textContent)).toEqual(['Ventilation Modes', 'Apnea time', 'Backup in SIMV/APRV', 'Accept']);
     expect(document.querySelector('.edp-win')!.textContent).toContain('VCV');
@@ -136,7 +136,7 @@ describe('the EDP-TS face', () => {
   it('every control not honoured yet is drawn as the device draws it, marked unavailable and described with its reason', () => {
     const ui = mount(createVentDriver(null));
     const why = (b: HTMLElement) => document.getElementById(b.getAttribute('aria-describedby') ?? '')?.textContent ?? '';
-    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl^="right:"], [data-ctl^="under:"]:not([data-ctl="under:ctrl"]):not([data-ctl="under:esc"])')) {
+    for (const b of document.querySelectorAll<HTMLElement>('[data-ctl="right:nebulizer"], [data-ctl="right:standby"], [data-ctl="under:suction"]')) {
       expect(b.getAttribute('aria-disabled'), b.dataset.ctl).toBe('true');
       expect(why(b), b.dataset.ctl).toMatch(/not simulated yet|not modelled|cannot be changed yet/);
       expect(b.dataset.unsim, b.dataset.ctl).toBeTruthy();
