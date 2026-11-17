@@ -4,49 +4,13 @@
      node --experimental-strip-types scripts/coupling-seams.ts -->
 
 The engine's cross-module coupling seams and its effector products and sums, read from the code
-(docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
+(docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row and every count and total
+are in the output of `node --experimental-strip-types scripts/coupling-seams.ts --json`.
 
-Seams (de-duplicated on module, kind and field): 152; sites: 193.
+A seam is carried by a row of the coupling registry (`packages/engine-core/src/couplings/`) or is unregistered: in the
+list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow (a new seam needs a row).
 
-Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 58; unregistered: 94
-(the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
-
-| Module | ctx | ext | endo-write | bus-read | All |
-|---|---:|---:|---:|---:|---:|
-| blood | 5 | 3 | 0 | 1 | 9 |
-| breathing | 12 | 0 | 0 | 0 | 12 |
-| endocrine-thermal | 4 | 7 | 9 | 4 | 24 |
-| engine-runtime | 0 | 6 | 0 | 6 | 12 |
-| lungs | 0 | 3 | 0 | 0 | 3 |
-| neuro | 20 | 0 | 0 | 18 | 38 |
-| organs | 10 | 2 | 0 | 4 | 16 |
-| pharmacology | 19 | 0 | 0 | 0 | 19 |
-| pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
-| rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 88 | 22 | 9 | 33 | 152 |
-
-## Exported numeric constants inside the module's own effector expressions
-
-| Module | Exported numeric constants | Inside an effector product or sum |
-|---|---:|---:|
-| rhythms-ecg | 62 | 32 |
-| circulation | 193 | 52 |
-| pressure-waveforms | 60 | 26 |
-| lungs | 66 | 22 |
-| gas-exchange | 44 | 12 |
-| breathing | 21 | 8 |
-| blood | 67 | 28 |
-| organs | 141 | 63 |
-| endocrine-thermal | 167 | 68 |
-| neuro | 188 | 94 |
-| pharmacology | 34 | 14 |
-| monitor | 47 | 5 |
-| alarms | 17 | 0 |
-| defib-pacer | 28 | 6 |
-| engine-runtime | 11 | 2 |
-| **All** | 1146 | 432 |
-
-## The ten effector expressions with the most factors (of 1728)
+## The ten effector expressions with the most factors
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +25,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 947 products)
+## The ten products with the most factors
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -76,7 +40,442 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/blood/solutes.ts#stepSolutes` | `jk` | product | 5 |
 | `l2/brain/params.ts#(top level)` | `OSM_WATER_ML_PER_MOSM` | product | 5 |
 
-## Unregistered seams (94)
+## Exported numeric constants inside the module's own effector expressions
+
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#EPI_A_GAIN`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#EPI_F_HZ`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#F0_HZ`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#F_DROP_HZ`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#F_TAU_S`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#TAU_A_S`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#VF_B_WEIGHT`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#VF_FREQ_JITTER`
+- rhythms-ecg: `l2/ecg/arrest/vf.ts#VF_FREQ_JITTER_BIAS`
+- rhythms-ecg: `l2/ecg/artefacts/body.ts#EMG_MAX_RMS_MV`
+- rhythms-ecg: `l2/ecg/artefacts/body.ts#WANDER_MAX_MV`
+- rhythms-ecg: `l2/ecg/artefacts/front-end.ts#MAINS_MAX_MV`
+- rhythms-ecg: `l2/ecg/artefacts/front-end.ts#MOTION_MAX_MV`
+- rhythms-ecg: `l2/ecg/artefacts/front-end.ts#RAIL_MV`
+- rhythms-ecg: `l2/ecg/atria.ts#AV_NODE_ERP_S`
+- rhythms-ecg: `l2/ecg/beat-templates.ts#DELTA_S`
+- rhythms-ecg: `l2/ecg/ectopy.ts#PVC_RUN_RATE_BPM`
+- rhythms-ecg: `l2/ecg/foci.ts#VT_JITTER_S`
+- rhythms-ecg: `l2/ecg/generator.ts#ECG_RATE`
+- rhythms-ecg: `l2/ecg/generator.ts#NOISE_SD_MV`
+- rhythms-ecg: `l2/ecg/generator.ts#WANDER_MV`
+- rhythms-ecg: `l2/ecg/hrv.ts#A_LF_S`
+- rhythms-ecg: `l2/ecg/hrv.ts#A_RSA_MAX_S`
+- rhythms-ecg: `l2/ecg/hrv.ts#EPS_SD_S`
+- rhythms-ecg: `l2/ecg/hrv.ts#F_RESP_HZ`
+- rhythms-ecg: `l2/ecg/morphology/conduction.ts#RBBB_S_SCALE`
+- rhythms-ecg: `l2/ecg/pacing.ts#DEFAULT_AV_DELAY_MS`
+- rhythms-ecg: `l2/ecg/rhythm-engine.ts#NON_FINITE_FALLBACK_S`
+- rhythms-ecg: `l2/ecg/rhythms.ts#DEFAULT_FLUTTER_ATRIAL_BPM`
+- rhythms-ecg: `l2/ecg/templates.ts#FLUTTER_PP_MV`
+- rhythms-ecg: `l2/ecg/templates.ts#WIDE_QT_EXTRA_MS`
+- rhythms-ecg: `l2/ecg/texture.ts#XFADE_SAMPLES`
+- circulation: `l2/body-size.ts#SIZE_REF_KG`
+- circulation: `l2/circ/arrest.ts#K_HAZARD`
+- circulation: `l2/circ/arrest.ts#K_HAZARD_S`
+- circulation: `l2/circ/arrest.ts#K_ISCH_ARREST`
+- circulation: `l2/circ/arrest.ts#T_HAZARD`
+- circulation: `l2/circ/arrest.ts#T_HAZARD_S`
+- circulation: `l2/circ/arrest.ts#T_HOT`
+- circulation: `l2/circ/arrest.ts#T_HOT_S`
+- circulation: `l2/circ/baroreflex.ts#BARO_DT`
+- circulation: `l2/circ/baroreflex.ts#K_PP`
+- circulation: `l2/circ/baroreflex.ts#SYMP_DELAY_S`
+- circulation: `l2/circ/baroreflex.ts#SYMP_WITHDRAW`
+- circulation: `l2/circ/conditions.ts#BJ_VAGAL_MS`
+- circulation: `l2/circ/conditions.ts#LV_INFARCT_RM`
+- circulation: `l2/circ/conditions.ts#PE_MAX_FRAC`
+- circulation: `l2/circ/conditions.ts#PE_VASO`
+- circulation: `l2/circ/conditions.ts#RV_INFARCT_RM`
+- circulation: `l2/circ/coronary.ts#D_BASAL`
+- circulation: `l2/circ/coronary.ts#D_EC`
+- circulation: `l2/circ/coronary.ts#G_ISCH`
+- circulation: `l2/circ/coronary.ts#IVR_S`
+- circulation: `l2/circ/coronary.ts#P_ZF`
+- circulation: `l2/circ/coronary.ts#TAU_ISCH_DOWN_S`
+- circulation: `l2/circ/devices.ts#IABP_DEFLATE_LEAD_S`
+- circulation: `l2/circ/devices.ts#IABP_DEFLATE_S`
+- circulation: `l2/circ/devices.ts#IABP_INFLATE_S`
+- circulation: `l2/circ/devices.ts#LVAD_INFLOW_MARGIN`
+- circulation: `l2/circ/devices.ts#LVAD_REF_EDV_ML`
+- circulation: `l2/circ/devices.ts#LVAD_SUCTION_ML`
+- circulation: `l2/circ/ectopy.ts#LAMBDA_1`
+- circulation: `l2/circ/ectopy.ts#LAMBDA_MAX`
+- circulation: `l2/circ/ectopy.ts#T_ECT_COLD`
+- circulation: `l2/circ/ectopy.ts#T_ECT_HOT`
+- circulation: `l2/circ/model.ts#G_SA_ISCH`
+- circulation: `l2/circ/model.ts#G_SA_K`
+- circulation: `l2/circ/model.ts#K_BRADY`
+- circulation: `l2/circ/model.ts#PESP_MAX`
+- circulation: `l2/circ/model.ts#PESP_PREMATURE`
+- circulation: `l2/circ/model.ts#REST_ERP_S`
+- circulation: `l2/circ/model.ts#REST_TAU_S`
+- circulation: `l2/circ/params.ts#BV_ML_KG_F`
+- circulation: `l2/circ/params.ts#CMH2O_TO_MMHG`
+- circulation: `l2/circ/params.ts#DYSSYNC`
+- circulation: `l2/circ/params.ts#PERI_EXTRA_ML`
+- circulation: `l2/circ/params.ts#PERI_RESERVE`
+- circulation: `l2/circ/params.ts#PVR`
+- circulation: `l2/circ/params.ts#P_PL0`
+- circulation: `l2/circ/params.ts#SPONT_SWING_CMH2O`
+- circulation: `l2/circ/params.ts#T_ACT_PER_SYSTOLE`
+- circulation: `l2/circ/params.ts#T_IT`
+- circulation: `l2/circ/params.ts#V0_ART`
+- circulation: `l2/circ/stabilise.ts#STAB_WINDOW_S`
+- pressure-waveforms: `l2/hemo/cvp.ts#CANNON_GAIN`
+- pressure-waveforms: `l2/hemo/cvp.ts#CVP_RESP_MMHG`
+- pressure-waveforms: `l2/hemo/params.ts#BREATH_HZ`
+- pressure-waveforms: `l2/hemo/params.ts#CPR_DUTY`
+- pressure-waveforms: `l2/hemo/params.ts#FLUSH_S`
+- pressure-waveforms: `l2/hemo/params.ts#G_MAX`
+- pressure-waveforms: `l2/hemo/params.ts#HEMO_RATE`
+- pressure-waveforms: `l2/hemo/params.ts#INSUFFLATION_GAIN`
+- pressure-waveforms: `l2/hemo/params.ts#MMHG_PER_CM`
+- pressure-waveforms: `l2/hemo/params.ts#PA_C`
+- pressure-waveforms: `l2/hemo/params.ts#PA_ZC`
+- pressure-waveforms: `l2/hemo/params.ts#RADIAL_FR_HZ`
+- pressure-waveforms: `l2/hemo/params.ts#RADIAL_GAIN`
+- pressure-waveforms: `l2/hemo/params.ts#RADIAL_ZETA`
+- pressure-waveforms: `l2/hemo/params.ts#SAMPLE_S`
+- pressure-waveforms: `l2/hemo/params.ts#SUBSTEPS`
+- pressure-waveforms: `l2/hemo/params.ts#SV_REF_ML`
+- pressure-waveforms: `l2/hemo/params.ts#WK_C`
+- pressure-waveforms: `l2/hemo/params.ts#WK_CK`
+- pressure-waveforms: `l2/hemo/params.ts#WK_L`
+- pressure-waveforms: `l2/hemo/params.ts#WK_P0`
+- pressure-waveforms: `l2/hemo/params.ts#WK_ZC`
+- pressure-waveforms: `l2/hemo/params.ts#ZERO_S`
+- pressure-waveforms: `l2/hemo/tracker.ts#TRACK_ALPHA`
+- pressure-waveforms: `l2/hemo/tracker.ts#TRACK_ALPHA_R`
+- pressure-waveforms: `l2/pleth/pleth.ts#PLETH_DET_FLOOR`
+- lungs: `l2/lung/breath.ts#PES_BMI_REF`
+- lungs: `l2/lung/breath.ts#PES_BMI_SLOPE`
+- lungs: `l2/lung/breath.ts#PES_FRC_CMH2O`
+- lungs: `l2/lung/conditions.ts#REFRACT_DUR_MAX`
+- lungs: `l2/lung/conditions.ts#REFRACT_SEV`
+- lungs: `l2/lung/conditions.ts#REFRACT_TAU_MIN`
+- lungs: `l2/lung/drive.ts#CO2_SLOPE`
+- lungs: `l2/lung/drive.ts#FATIGUE_TAU_S`
+- lungs: `l2/lung/drive.ts#J_PE_VE_FRAC`
+- lungs: `l2/lung/drive.ts#P_MAX_CMH2O`
+- lungs: `l2/lung/drive.ts#WAKE_MMHG`
+- lungs: `l2/lung/params.ts#CCW_ML`
+- lungs: `l2/lung/params.ts#CO2_SLOPE_BLOOD`
+- lungs: `l2/lung/params.ts#RV_ML_KG`
+- lungs: `l2/lung/params.ts#R_TUBE`
+- lungs: `l2/lung/params.ts#TAU_COLLAPSE_F04_MIN`
+- lungs: `l2/lung/params.ts#TAU_COLLAPSE_F1_MIN`
+- lungs: `l2/lung/params.ts#TLC_ML_KG`
+- lungs: `l2/lung/params.ts#VQ_LOW`
+- lungs: `l2/lung/volumes.ts#BLEND_FROM_Y`
+- lungs: `l2/lung/volumes.ts#BLEND_TO_Y`
+- lungs: `l2/lung/volumes.ts#PEAK_TAU_EXP`
+- gas-exchange: `l2/co2/capno.ts#APNOEA_DECAY_S`
+- gas-exchange: `l2/co2/capno.ts#CO2_RATE`
+- gas-exchange: `l2/co2/capno.ts#CO2_SUBSTEPS`
+- gas-exchange: `l2/co2/capno.ts#CUT_DECAY_S`
+- gas-exchange: `l2/gas/coupling.ts#RAP_FRACTION`
+- gas-exchange: `l2/gas/params.ts#BLOOD_VENOUS_FRACTION`
+- gas-exchange: `l2/gas/params.ts#CI_LPM_PER_KG`
+- gas-exchange: `l2/gas/params.ts#CMH2O_TO_MMHG`
+- gas-exchange: `l2/gas/params.ts#K_CO2`
+- gas-exchange: `l2/gas/params.ts#PB_MMHG`
+- gas-exchange: `l2/gas/params.ts#PH2O_MMHG`
+- gas-exchange: `l2/gas/params.ts#RQ`
+- breathing: `l2/resp/driver.ts#EXP_TAU_S`
+- breathing: `l2/resp/driver.ts#LINK_PMUS_DECAY_S`
+- breathing: `l2/resp/driver.ts#LINK_PMUS_HOLD_S`
+- breathing: `l2/resp/driver.ts#LINK_PMUS_RISE_S`
+- breathing: `l2/resp/driver.ts#SPONT_JITTER`
+- breathing: `l2/resp/driver.ts#SPONT_PPL_CMH2O`
+- breathing: `l2/resp/driver.ts#SPONT_TI_FRACTION`
+- breathing: `l2/resp/driver.ts#U_REF_CMH2O`
+- blood: `l2/blood/acid-base.ts#CO2_SOL`
+- blood: `l2/blood/circ-adapter.ts#VISC_EXP`
+- blood: `l2/blood/core.ts#COHB_T_HALF_AIR_MIN`
+- blood: `l2/blood/core.ts#DKA_KETO_MMOL_L`
+- blood: `l2/blood/params.ts#BLOOD_DT_S`
+- blood: `l2/blood/params.ts#CISF_PER_ML`
+- blood: `l2/blood/params.ts#CITRATE_CHARGE`
+- blood: `l2/blood/params.ts#DO2_CRIT_ML_KG_MIN`
+- blood: `l2/blood/params.ts#KF_ML_MIN_MMHG`
+- blood: `l2/blood/params.ts#K_ANAER`
+- blood: `l2/blood/params.ts#K_EL_AWAKE`
+- blood: `l2/blood/params.ts#K_EL_GA_FACTOR`
+- blood: `l2/blood/params.ts#K_LAC_PER_H`
+- blood: `l2/blood/params.ts#LACTATE_CO2_ML_PER_MMOL`
+- blood: `l2/blood/params.ts#MCHC_G_PER_ML`
+- blood: `l2/blood/params.ts#MG_ION_FRAC`
+- blood: `l2/blood/params.ts#MG_MMOL_PER_G`
+- blood: `l2/blood/params.ts#OSM0`
+- blood: `l2/blood/params.ts#OSM_TAU_MIN`
+- blood: `l2/blood/params.ts#PC_PER_ML`
+- blood: `l2/blood/params.ts#PI_ISF0`
+- blood: `l2/blood/params.ts#REGIONAL_FLOW_FULL`
+- blood: `l2/blood/params.ts#REGIONAL_FLOW_ON`
+- blood: `l2/blood/params.ts#REGIONAL_FRAC`
+- blood: `l2/blood/params.ts#SAO2_NORMAL`
+- blood: `l2/blood/solutes.ts#K_CIT`
+- blood: `l2/blood/solutes.ts#K_TAU_MIN`
+- blood: `l2/blood/solutes.ts#K_TBK_MMOL`
+- organs: `l2/brain/params.ts#BRAIN_DT_S`
+- organs: `l2/brain/params.ts#BREAKTHROUGH_PER_MMHG`
+- organs: `l2/brain/params.ts#CBV0_ML`
+- organs: `l2/brain/params.ts#CBV_EFF`
+- organs: `l2/brain/params.ts#CPP_REF`
+- organs: `l2/brain/params.ts#CPP_ZERO_FLOW`
+- organs: `l2/brain/params.ts#CUSH_DMAP`
+- organs: `l2/brain/params.ts#CUSH_HR_DROP`
+- organs: `l2/brain/params.ts#HTS_TAU_IN_MIN`
+- organs: `l2/brain/params.ts#MANNITOL_MOSM_PER_G`
+- organs: `l2/brain/params.ts#MMHG_PER_CM_BLOOD`
+- organs: `l2/brain/params.ts#OSM_K_MOSM`
+- organs: `l2/brain/params.ts#OSM_VMAX_ML`
+- organs: `l2/brain/params.ts#PBTO2_0`
+- organs: `l2/brain/params.ts#PBTO2_EXP`
+- organs: `l2/brain/params.ts#PBTO2_HYPEROXIA`
+- organs: `l2/brain/params.ts#TBI_AR_LOSS`
+- organs: `l2/brain/wave.ts#P3_REL`
+- organs: `l2/brain/wave.ts#PULSE_VOL_ML`
+- organs: `l2/brain/wave.ts#RESP_VOL_ML`
+- organs: `l2/liver/liver.ts#DO2_CRIT`
+- organs: `l2/liver/liver.ts#HEPATIC_FAILURE_LOSS`
+- organs: `l2/liver/liver.ts#K_LAC0_PER_H`
+- organs: `l2/liver/liver.ts#LAC_PROD0_MMOL_DAY`
+- organs: `l2/liver/liver.ts#SPLANCHNIC_GAIN`
+- organs: `l2/liver/liver.ts#VOLATILE_HBF_PER_MAC`
+- organs: `l2/liver/liver.ts#V_LAC_L_KG`
+- organs: `l2/organs/effects.ts#CUSH_SVR_GAIN`
+- organs: `l2/organs/effects.ts#DBP_SHARE`
+- organs: `l2/organs/effects.ts#SBP_SHARE`
+- organs: `l2/organs/inputs.ts#ALPHA_EXCESS_MAP`
+- organs: `l2/organs/inputs.ts#ALPHA_NEED_MAP`
+- organs: `l2/organs/inputs.ts#PE_NE_EQ`
+- organs: `l2/organs/pipeline.ts#ICP_RATE`
+- organs: `l2/renal/params.ts#AKI_KF_LOSS`
+- organs: `l2/renal/params.ts#ALBUMIN0_G_L`
+- organs: `l2/renal/params.ts#ANG_GAIN`
+- organs: `l2/renal/params.ts#COLD_DIURESIS_PER_C`
+- organs: `l2/renal/params.ts#COLD_ONSET_C`
+- organs: `l2/renal/params.ts#EABV_TAU_S`
+- organs: `l2/renal/params.ts#FUROSEMIDE_EMAX`
+- organs: `l2/renal/params.ts#FUROSEMIDE_KA_PER_MIN`
+- organs: `l2/renal/params.ts#FUROSEMIDE_KE_PER_MIN`
+- organs: `l2/renal/params.ts#HCT_REF`
+- organs: `l2/renal/params.ts#KF_PER_KIDNEY`
+- organs: `l2/renal/params.ts#LP_A`
+- organs: `l2/renal/params.ts#LP_B`
+- organs: `l2/renal/params.ts#LP_C`
+- organs: `l2/renal/params.ts#MANNITOL_ML_PER_G`
+- organs: `l2/renal/params.ts#MYOGENIC_MAX`
+- organs: `l2/renal/params.ts#PI_GLOM0`
+- organs: `l2/renal/params.ts#RENAL_REF_CO_L_KG`
+- organs: `l2/renal/params.ts#RENAL_REF_CVP`
+- organs: `l2/renal/params.ts#RENAL_REF_MAP`
+- organs: `l2/renal/params.ts#R_AFF`
+- organs: `l2/renal/params.ts#R_ART`
+- organs: `l2/renal/params.ts#R_EFF`
+- organs: `l2/renal/params.ts#R_GLOM`
+- organs: `l2/renal/params.ts#R_PT`
+- organs: `l2/renal/params.ts#R_RV`
+- organs: `l2/renal/params.ts#SEPSIS_GFR_LOSS`
+- organs: `l2/renal/params.ts#UOP0_ML_KG_H`
+- organs: `l2/renal/params.ts#V_AT_15`
+- endocrine-thermal: `l2/endo/conditions.ts#ANAPH_EPI_STABILISE`
+- endocrine-thermal: `l2/endo/params.ts#CAT_RESERVE_TAU_DOWN_S`
+- endocrine-thermal: `l2/endo/params.ts#CAT_RESERVE_TAU_UP_S`
+- endocrine-thermal: `l2/endo/params.ts#CORT_BASAL`
+- endocrine-thermal: `l2/endo/params.ts#CORT_GAIN`
+- endocrine-thermal: `l2/endo/params.ts#CORT_TAU_S`
+- endocrine-thermal: `l2/endo/params.ts#DRIVE_HYPERCAPNIA_PER_MMHG`
+- endocrine-thermal: `l2/endo/params.ts#DRIVE_HYPOGLY_PER_MGDL`
+- endocrine-thermal: `l2/endo/params.ts#DRIVE_HYPOTENSION_PER_MMHG`
+- endocrine-thermal: `l2/endo/params.ts#DRIVE_HYPOXIA_PER_SAT`
+- endocrine-thermal: `l2/endo/params.ts#EGP_INSULIN_SUPP`
+- endocrine-thermal: `l2/endo/params.ts#EPI_ADRENAL_GAIN`
+- endocrine-thermal: `l2/endo/params.ts#EPI_BASAL_PG_ML`
+- endocrine-thermal: `l2/endo/params.ts#EPI_CL_ML_MIN_KG`
+- endocrine-thermal: `l2/endo/params.ts#EPI_VD_L_KG`
+- endocrine-thermal: `l2/endo/params.ts#ETOM_SUPPR_MAX`
+- endocrine-thermal: `l2/endo/params.ts#ETOM_SUPPR_T12_S`
+- endocrine-thermal: `l2/endo/params.ts#GLUCAGON_EGP_PER_MGDL`
+- endocrine-thermal: `l2/endo/params.ts#GUT_BIOAVAIL`
+- endocrine-thermal: `l2/endo/params.ts#GUT_TAU_S`
+- endocrine-thermal: `l2/endo/params.ts#HUM_EC50_MMHG`
+- endocrine-thermal: `l2/endo/params.ts#HUM_MAX`
+- endocrine-thermal: `l2/endo/params.ts#HYPO_EPI_THRESHOLD_MGDL`
+- endocrine-thermal: `l2/endo/params.ts#HYPO_L1_MGDL`
+- endocrine-thermal: `l2/endo/params.ts#IB_UU_ML`
+- endocrine-thermal: `l2/endo/params.ts#INS_N_PER_MIN`
+- endocrine-thermal: `l2/endo/params.ts#KETO_TAU_S`
+- endocrine-thermal: `l2/endo/params.ts#NE_BASAL_PG_ML`
+- endocrine-thermal: `l2/endo/params.ts#NE_CL_ML_MIN_KG`
+- endocrine-thermal: `l2/endo/params.ts#NE_SPILL_GAIN`
+- endocrine-thermal: `l2/endo/params.ts#NE_VD_L_KG`
+- endocrine-thermal: `l2/endo/params.ts#P2_PER_MIN`
+- endocrine-thermal: `l2/endo/params.ts#PULSE_SEC_INTERCEPT`
+- endocrine-thermal: `l2/endo/params.ts#PULSE_SEC_SLOPE`
+- endocrine-thermal: `l2/endo/params.ts#SG_PER_MIN`
+- endocrine-thermal: `l2/endo/params.ts#SI_PER_MIN_PER_UU`
+- endocrine-thermal: `l2/endo/params.ts#SYMP_HYPOGLY_PER_MGDL`
+- endocrine-thermal: `l2/endo/params.ts#SYMP_OFF_TAU_S`
+- endocrine-thermal: `l2/endo/params.ts#SYMP_ON_TAU_S`
+- endocrine-thermal: `l2/endo/params.ts#UU_PER_UNIT`
+- endocrine-thermal: `l2/endo/params.ts#VG_DL_KG`
+- endocrine-thermal: `l2/endo/params.ts#VI_ML_KG`
+- endocrine-thermal: `l2/thermal/environment.ts#AIR_J_L_C`
+- endocrine-thermal: `l2/thermal/environment.ts#EMISSIVITY`
+- endocrine-thermal: `l2/thermal/environment.ts#EXHALED_C`
+- endocrine-thermal: `l2/thermal/environment.ts#FORCED_AIR_AREA`
+- endocrine-thermal: `l2/thermal/environment.ts#FORCED_AIR_H`
+- endocrine-thermal: `l2/thermal/environment.ts#F_RAD`
+- endocrine-thermal: `l2/thermal/environment.ts#HME_RECOVERY`
+- endocrine-thermal: `l2/thermal/environment.ts#LATENT_J_MG`
+- endocrine-thermal: `l2/thermal/environment.ts#SIGMA`
+- endocrine-thermal: `l2/thermal/environment.ts#SKIN_EVAP_W_70`
+- endocrine-thermal: `l2/thermal/environment.ts#WATER_J_ML_C`
+- endocrine-thermal: `l2/thermal/params.ts#BLOOD_HEAT_WH_L_C`
+- endocrine-thermal: `l2/thermal/params.ts#GA_KCP`
+- endocrine-thermal: `l2/thermal/params.ts#GA_M`
+- endocrine-thermal: `l2/thermal/params.ts#KJ_PER_KCAL`
+- endocrine-thermal: `l2/thermal/params.ts#MH_RELAX_TAU_S`
+- endocrine-thermal: `l2/thermal/params.ts#MH_SYMP_TAU_S`
+- endocrine-thermal: `l2/thermal/params.ts#M_AWAKE_W_70`
+- endocrine-thermal: `l2/thermal/params.ts#PERIPH_GRADIENT_C`
+- endocrine-thermal: `l2/thermal/params.ts#SHIVER_SPAN_C`
+- endocrine-thermal: `l2/thermal/params.ts#SKBF_MIN_L_H_M2`
+- endocrine-thermal: `l2/thermal/params.ts#THR_AGE_SHIFT_C`
+- endocrine-thermal: `l2/thermal/params.ts#TISSUE_K_W_M2_C`
+- endocrine-thermal: `l2/thermal/params.ts#VASOCONSTRICT_KCP`
+- endocrine-thermal: `l2/thermal/params.ts#WEIR_KCAL_PER_L_CO2`
+- endocrine-thermal: `l2/thermal/params.ts#WEIR_KCAL_PER_L_O2`
+- neuro: `l2/eeg/artefacts.ts#EMG_AROUSAL`
+- neuro: `l2/eeg/artefacts.ts#EMG_AWAKE`
+- neuro: `l2/eeg/artefacts.ts#EMG_PEAK_HZ`
+- neuro: `l2/eeg/artefacts.ts#EMG_Q`
+- neuro: `l2/eeg/artefacts.ts#EMG_TUBE`
+- neuro: `l2/eeg/artefacts.ts#IMPEDANCE_LIMIT_KOHM`
+- neuro: `l2/eeg/artefacts.ts#IMPEDANCE_NOISE_UV_PER_KOHM`
+- neuro: `l2/eeg/artefacts.ts#IMPEDANCE_UNEQUAL_KOHM`
+- neuro: `l2/eeg/pipeline.ts#EEG_RATE`
+- neuro: `l2/eeg/spectra.ts#ALPHA_AROUSAL_DROP_DB`
+- neuro: `l2/eeg/spectra.ts#ALPHA_ETHER_ABOVE_PROP_DB`
+- neuro: `l2/eeg/spectra.ts#ALPHA_ETHER_DEEP_HZ`
+- neuro: `l2/eeg/spectra.ts#ALPHA_ETHER_HZ`
+- neuro: `l2/eeg/spectra.ts#ALPHA_FADE_DB`
+- neuro: `l2/eeg/spectra.ts#ALPHA_IV_DEEP_HZ`
+- neuro: `l2/eeg/spectra.ts#ALPHA_IV_LIGHT_HZ`
+- neuro: `l2/eeg/spectra.ts#ALPHA_PROP_BELOW_SLOW_DB`
+- neuro: `l2/eeg/spectra.ts#BETA_AROUSAL_DB`
+- neuro: `l2/eeg/spectra.ts#BETA_AWAKE_DB`
+- neuro: `l2/eeg/spectra.ts#BETA_GA_FALL_DB`
+- neuro: `l2/eeg/spectra.ts#BETA_SED_RISE_DB`
+- neuro: `l2/eeg/spectra.ts#DEX_SPINDLE_BELOW_PROP_DB`
+- neuro: `l2/eeg/spectra.ts#GAMMA_HZ`
+- neuro: `l2/eeg/spectra.ts#HF_SLOPE_GA`
+- neuro: `l2/eeg/spectra.ts#KET_ALPHA_LOSS_DB`
+- neuro: `l2/eeg/spectra.ts#KET_GAMMA_DB`
+- neuro: `l2/eeg/spectra.ts#KET_THETA_DB`
+- neuro: `l2/eeg/spectra.ts#N2O_ALPHA_LOSS_DB`
+- neuro: `l2/eeg/spectra.ts#N2O_FAST_DB`
+- neuro: `l2/eeg/spectra.ts#OPIOID_BETA_DROP_DB`
+- neuro: `l2/eeg/spectra.ts#SLOPE_AWAKE`
+- neuro: `l2/eeg/spectra.ts#SLOPE_HYPER_CAP`
+- neuro: `l2/eeg/spectra.ts#SLOPE_MAINT`
+- neuro: `l2/eeg/spectra.ts#SLOWING_FAST_LOSS_DB`
+- neuro: `l2/eeg/spectra.ts#SLOW_GA_RISE_DB`
+- neuro: `l2/eeg/spectra.ts#THETA_BELOW_ALPHA_DB`
+- neuro: `l2/eeg/spectra.ts#THETA_HZ`
+- neuro: `l2/eeg/state.ts#BS_ESTABLISHED_MAC`
+- neuro: `l2/eeg/state.ts#BS_NEAR_ISO_MAC`
+- neuro: `l2/eeg/state.ts#BS_ONSET_PROP_NG_ML`
+- neuro: `l2/eeg/state.ts#DEXMED_LOR_NG_ML`
+- neuro: `l2/eeg/state.ts#N2O_TRANSIENT_TAU_S`
+- neuro: `l2/eeg/state.ts#SUPP_ESTABLISHED`
+- neuro: `l2/eeg/state.ts#SUPP_NEAR_ISO`
+- neuro: `l2/eeg/synth.ts#BS_MIN_SUPP_S`
+- neuro: `l2/eeg/synth.ts#BURST_UV_PER_SD`
+- neuro: `l2/eeg/synth.ts#FF_DROP_MAX`
+- neuro: `l2/eeg/synth.ts#FF_FLOOR`
+- neuro: `l2/eeg/synth.ts#GAIN_TAU_S`
+- neuro: `l2/eeg/synth.ts#OSC_DUTY_MIN`
+- neuro: `l2/neuro/bus.ts#FENT_EEG_POT`
+- neuro: `l2/neuro/bus.ts#KET_NG_PER_REF`
+- neuro: `l2/neuro/bus.ts#MIDAZ_NG_PER_REF`
+- neuro: `l2/neuro/depth.ts#DI_E0`
+- neuro: `l2/neuro/depth.ts#EMG_RISE`
+- neuro: `l2/neuro/depth.ts#GLYCO_U`
+- neuro: `l2/neuro/depth.ts#KET_EEG_W`
+- neuro: `l2/neuro/depth.ts#MAC_AWAKE`
+- neuro: `l2/neuro/depth.ts#MAC_DI50`
+- neuro: `l2/neuro/depth.ts#N2O_DI_W`
+- neuro: `l2/neuro/depth.ts#OPIOID_MAC_K`
+- neuro: `l2/neuro/depth.ts#OPIOID_MAC_RMAX`
+- neuro: `l2/neuro/depth.ts#OPIOID_W`
+- neuro: `l2/neuro/depth.ts#REMI_EEG_EC50`
+- neuro: `l2/neuro/depth.ts#REMI_MAC_POT`
+- neuro: `l2/neuro/drive.ts#DIAPH_APNOEA`
+- neuro: `l2/neuro/drive.ts#DIAPH_EFFECTIVE`
+- neuro: `l2/neuro/drive.ts#HVR_NMB_EMAX`
+- neuro: `l2/neuro/drive.ts#HVR_NMB_TOFR_LO`
+- neuro: `l2/neuro/drive.ts#HVR_VOL_C50`
+- neuro: `l2/neuro/drive.ts#HVR_VOL_EMAX`
+- neuro: `l2/neuro/drive.ts#PROP_VENT_C50`
+- neuro: `l2/neuro/drive.ts#REMI_VENT_C50`
+- neuro: `l2/neuro/drive.ts#UA_AROUSAL`
+- neuro: `l2/neuro/drive.ts#VENT_ALPHA_BENZO`
+- neuro: `l2/neuro/drive.ts#VENT_ALPHA_HYP`
+- neuro: `l2/neuro/drive.ts#VT_EFFORT_ML_KG`
+- neuro: `l2/neuro/interactions.ts#VOL_NMB_K`
+- neuro: `l2/neuro/neostigmine.ts#NEO_G50`
+- neuro: `l2/neuro/neostigmine.ts#NEO_SMAX`
+- neuro: `l2/neuro/nmb.ts#MOS_OCC_COMPLETE`
+- neuro: `l2/neuro/nmb.ts#MOS_OCC_THRESHOLD`
+- neuro: `l2/neuro/nmb.ts#TOFR_EXP`
+- neuro: `l2/neuro/spont.ts#ACUTE_HCO3_PER_MMHG`
+- neuro: `l2/neuro/spont.ts#ALK_DEADBAND`
+- neuro: `l2/neuro/spont.ts#CENTRAL_TAU_S`
+- neuro: `l2/neuro/spont.ts#SPONT_DT_S`
+- neuro: `l2/neuro/spont.ts#VT_MAX_ML_KG`
+- neuro: `l2/neuro/spont.ts#VT_REST_ML_KG`
+- neuro: `l2/neuro/spont.ts#WINTER_OFFSET`
+- neuro: `l2/neuro/spont.ts#WINTER_SLOPE`
+- neuro: `l2/neuro/tof-device.ts#AMG_SD`
+- neuro: `l2/neuro/tof-device.ts#PTC_REPORT_S`
+- neuro: `l2/neuro/tof-device.ts#TETANUS_LOCKOUT_S`
+- pharmacology: `l2/pk/combine.ts#DEXMED_EEG_C50_NG_ML`
+- pharmacology: `l2/pk/combine.ts#DEXMED_NG_PER_REF`
+- pharmacology: `l2/pk/combine.ts#FENT_PER_REMI`
+- pharmacology: `l2/pk/combine.ts#HEMO_SYN_MAX`
+- pharmacology: `l2/pk/combine.ts#HEMO_SYN_U50`
+- pharmacology: `l2/pk/combine.ts#PROP_HYP_C50_REF`
+- pharmacology: `l2/pk/hooks.ts#SUX_BRADY_S`
+- pharmacology: `l2/pk/pd.ts#FENT_VENT_REMI_EQ`
+- pharmacology: `l2/pk/pipeline.ts#ARM_BRAIN_S`
+- pharmacology: `l2/pk/pipeline.ts#LIPID_SINK_CARDIAC`
+- pharmacology: `l2/pk/pipeline.ts#LIPID_SINK_CEREBRAL`
+- pharmacology: `l2/pk/pipeline.ts#PK_DT_S`
+- pharmacology: `l2/pk/tci.ts#TCI_DT_S`
+- pharmacology: `l2/pk/volatile.ts#CIRCUIT_L`
+- monitor: `l3/capture12/capture.ts#CAPTURE_RATE`
+- monitor: `l3/capture12/capture.ts#CAPTURE_S`
+- monitor: `l3/pulse/detector.ts#DET_RATE`
+- monitor: `l3/pulse/detector.ts#MISSED_LIMIT`
+- monitor: `l3/trends/trend-store.ts#TREND_HOURS`
+- defib-pacer: `l3/defib-pacer/defib.ts#CHARGE_S_PER_J`
+- defib-pacer: `l3/defib-pacer/outcome.ts#AA_ROSC_GAIN`
+- defib-pacer: `l3/defib-pacer/outcome.ts#AF_CUMULATIVE`
+- defib-pacer: `l3/defib-pacer/outcome.ts#AF_FIRST_SHOCK_70J`
+- defib-pacer: `l3/defib-pacer/outcome.ts#CARDIOVERSION_HILL`
+- defib-pacer: `l3/defib-pacer/sync.ts#SYNC_RATE`
+- engine-runtime: `clock/clock.ts#TICK_MS`
+- engine-runtime: `engine.ts#BEEP_DELAY_S`
+
+## Unregistered seams
 
 The seams no coupling-registry row carries yet (piece R2 registers the rest); the list may shrink and never grow.
 

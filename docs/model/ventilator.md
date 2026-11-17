@@ -133,19 +133,27 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 
 | Function | File | Doc |
 |---|---|---|
+| `ventAlarms` | [`alarms.ts`](../../packages/ventilator/src/alarms.ts) | — |
 | `bannerText` | [`alarms.ts`](../../packages/ventilator/src/alarms.ts) | The banner text: |
+| `toVentFrame` | [`frame.ts`](../../packages/ventilator/src/frame.ts) | — |
 | `monitorMatchedFlow` | [`link/core.ts`](../../packages/ventilator/src/link/core.ts) | The VC flow that gives the monitor's own ventilator breath — x = VT / Ti, Ti = 60 / rate / (1 + I:E), no pause — so the same VT, rate and Pmax deliver the same volume on the same lungs (the cockpit's |
+| `createLinkCore` | [`link/core.ts`](../../packages/ventilator/src/link/core.ts) | — |
 | `linkTick` | [`link/core.ts`](../../packages/ventilator/src/link/core.ts) | Commands for the engine after the ventilator has advanced to the current tick. |
 | `linkEvent` | [`link/core.ts`](../../packages/ventilator/src/link/core.ts) | Engine events the ventilator consumes. |
 | `patchVent` | [`link/core.ts`](../../packages/ventilator/src/link/core.ts) | Change ventilator settings from outside (a page, a demo, a test). |
+| `createLinkedSim` | [`link/in-process.ts`](../../packages/ventilator/src/link/in-process.ts) | — |
 | `createBroadcastPort` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | BroadcastChannel port (a channel never hears its own posts). |
 | `createFramePort` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | FX-1: a port between a page and the same-origin iframe it embeds that never waits on the receiving document's own task queue. |
 | `createLocalPortPair` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | Two connected ports in one page (synchronous delivery). |
 | `attachMonitorToLink` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | Monitor side: |
 | `lungConditionsOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | The row's engine lung conditions (Stage V.1): |
+| `profileOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | — |
 | `createRelayPort` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | `settings`: |
 | `ventWireOver` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The cockpit's wire over its socket to the relay (a @pme/controller ManagedTransport and its stamper): |
+| `createVentDriver` | [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts) | — |
 | `lungMechanics` | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | One lung (C, R_insp, R_exp, pleural) → the ventilator's single compartment (catalogue rows and lungState alike). |
+| `applyLungState` | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | — |
+| `easeShape` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | — |
 | `pbw` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Predicted body weight (kg) from height and sex (Devine; |
 | `recoilPressure` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Elastic recoil (cmH2O above PEEP) at volume v (mL above the PEEP volume). |
 | `pleuralOpening` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | With the pleural space above normal by `c.pleural`, the end-expiratory pleural pressure (P_PL0 + pleural) exceeds the alveolar pressure (PEEP) by E = pleural − 5.44 − PEEP; |
@@ -154,14 +162,17 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `simRand` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | The original's LCG (`simRand`). |
 | `mechanicsToVent` | [`pathology/mechanics.ts`](../../packages/ventilator/src/pathology/mechanics.ts) | The row's lung as the ventilator's single compartment — the same mapping lungState uses (lung-input.ts). |
 | `referenceRun` | [`pathology/mechanics.ts`](../../packages/ventilator/src/pathology/mechanics.ts) | Run the row at its reference settings for 60 s (VC, square flow, 0.3 s pause, no pressure limit). |
+| `createVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | — |
 | `resetPhysics` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | v1.9 `resetPhysics` (the Reset button; |
+| `setMode` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | — |
+| `loadPreset` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | — |
+| `runScenario` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | — |
 | `startInspiration` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | `backup`: plan V2, a backup breath of that kind (mandatory; |
 | `stepVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | One 5 ms step (v1.9 `stepPhysics`). |
 | `advanceVent` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Step until the vent clock reaches sim time `t` (s). |
 | `toggleHold` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | --- front-panel actions (v1.9 rail buttons) ------------------------------------------------------------- Insp/Exp hold: |
 | `manualBreath` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | Manual breath: |
-
-Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `createLinkedSim`, `profileOf`, `createVentDriver`, `applyLungState`, `easeShape`, `createVent`, `setMode`, `loadPreset`, `runScenario`, `setCircuit`.
+| `setCircuit` | [`vent.ts`](../../packages/ventilator/src/vent.ts) | — |
 
 ## Source files
 
