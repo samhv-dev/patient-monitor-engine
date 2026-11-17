@@ -199,6 +199,45 @@ describe('the three fields of brief 152: a statement\'s containers (N60), a mola
   });
 });
 
+describe("an unlisted fluid's reason (notListed): advised against, named only for the running line, or silent", () => {
+  const bad = (edit: (d: any) => void, has?: object) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const f = fixture();
+    edit(f['fixturedrug.json']);
+    if (has) f['fixturedrug.json'].has = has;
+    return [...shapeErrors(f), ...why(check(f))];
+  };
+  const against = { reason: 'advisedAgainst', section: 'Fixture 2.3', words: 'Fixture: not to be diluted in saline.' };
+  it('is admitted in each of its three shapes, on an unlisted row read from a label', () => {
+    expect(bad((d) => (d.diluents[1].notListed = against))).toEqual([]);
+    expect(bad((d) => (d.diluents[1].notListed = { reason: 'runningLine', section: 'Fixture 2.5', words: 'Fixture: given into a running line of saline.' }))).toEqual([]);
+    expect(bad((d) => (d.diluents[1].notListed = { reason: 'silent' }))).toEqual([]);
+    const r = loadFormulary((() => { const f = fixture(); f['fixturedrug.json'].diluents[1].notListed = against; return f; })(), FIXTURE_IDS);
+    expect(r.ok && r.formulary.drugs.fixturedrug?.diluents[1]?.notListed).toEqual(against);
+  });
+  it('the schema refuses its wrong shapes: no section or words where the label speaks, words on a silent label, an unknown reason', () => {
+    expect(bad((d) => (d.diluents[1].notListed = { reason: 'advisedAgainst', words: 'Fixture words.' }))).toContain('fixturedrug.json/diluents/1/notListed: must match exactly one schema in oneOf');
+    expect(bad((d) => (d.diluents[1].notListed = { reason: 'silent', words: 'Fixture words.' }))).toContain('fixturedrug.json/diluents/1/notListed: must match exactly one schema in oneOf');
+    expect(bad((d) => (d.diluents[1].notListed = { reason: 'unknown' }))).toContain('fixturedrug.json/diluents/1/notListed: must match exactly one schema in oneOf');
+  });
+  it('rule 3: a reason on a listed row, or on a row whose src is not a label, is refused', () => {
+    expect(bad((d) => (d.diluents[0].notListed = { reason: 'silent' }))).toEqual(['fixturedrug.json/diluents/0/notListed: a reason sits only on an unlisted fluid']);
+    expect(bad((d) => Object.assign(d.diluents[1], { src: 'fixture-stabilis', notListed: { reason: 'silent' } }))).toEqual([
+      "fixturedrug.json/diluents/1/notListed: an unlisted fluid's reason is read from the label: the row's src is a monograph",
+    ]);
+  });
+  it('rule 3: every unlisted fluid of an entry read from its label alone has a reason', () => {
+    const labelOnly = (d: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      delete d.diluents[1].compat;
+      d.admixtures = [];
+      d.stability = [];
+    };
+    expect(bad(labelOnly, { stabilis: false, trissel: false, monograph: true })).toEqual([
+      'fixturedrug.json/diluents/1/notListed: every unlisted fluid of an entry read from its label alone says why: advisedAgainst, runningLine or silent',
+    ]);
+    expect(bad((d) => { labelOnly(d); d.diluents[1].notListed = { reason: 'silent' }; }, { stabilis: false, trissel: false, monograph: true })).toEqual([]);
+  });
+});
+
 describe("each of §5's rules fails on a fixture built to break it", () => {
   it('rule 1: a bare number (no src beside it, no gap)', () => {
     const f = fixture();

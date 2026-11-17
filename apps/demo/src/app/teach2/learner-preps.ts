@@ -11,7 +11,7 @@
 import type { Finding, Formulary, InstructorPrepView } from '@pme/controller';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { FINDING_WORDS, NO_SOURCE, NO_STATEMENT, sourcesText } from '../prep-words.ts';
+import { FINDING_WORDS, findingTail, NO_SOURCE, NO_STATEMENT } from '../prep-words.ts';
 import type { BoardEntry } from './prep-board.ts';
 import { clock, h, keepOrder, keyed, setText, toast } from '../ui.ts';
 import './learner-preps.css';
@@ -55,7 +55,7 @@ export { sourcesText } from '../prep-words.ts'; // L13: one DOM-free place for t
 /** One finding: "Incompatible: <statement> (<sources>)". */
 function findingRow(x: Finding, f: Formulary | null): HTMLElement {
   return h('li', { class: 'ip2-lp-finding', 'data-kind': x.kind },
-    h('strong', {}, FINDING_WORDS[x.kind]), `: ${x.statement ?? PREPS_WORDS.noStatement} ${sourcesText(x, f)}`);
+    h('strong', {}, FINDING_WORDS[x.kind]), findingTail(x, f));
 }
 
 export interface LearnerPreps {

@@ -92,10 +92,17 @@ export interface Compat extends Statement {
   containers?: Container[];
 }
 
+/** Why the label does not list a fluid, read from the label: it advises against it, it names it only for the line the
+ *  drug is given through (a running infusion, a flush), each with the label's section and words; or it is silent. */
+export type NotListed = { reason: 'advisedAgainst' | 'runningLine'; section: string; words: string } | { reason: 'silent' };
+
 export interface DiluentListing extends Sourced {
   id: string;
-  /** Listed in the stocked product's monograph (LQ11: a diluent not listed is wrong, graded). */
+  /** Listed in the stocked product's monograph (LQ11). An unlisted fluid is graded wrong only when the label advises
+   *  against it, or when `notListed` is absent (the label's reason not yet read). */
   listed: boolean;
+  /** On an unlisted fluid: why the label does not list it. */
+  notListed?: NotListed;
   compat?: Compat;
 }
 

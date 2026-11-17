@@ -153,6 +153,18 @@ export function checkFormulary(files: FormularyFiles, injectable: readonly strin
       }
     }
 
+    // Rule 3: an unlisted fluid's reason is the label's: only on an unlisted row whose src is a label, and on every
+    // unlisted row of an entry whose only source is its label
+    const labelOnly = isObj(has) && has.monograph === true && !has.stabilis && !has.trissel;
+    (Array.isArray(data.diluents) ? data.diluents : []).forEach((d, i) => {
+      if (!isObj(d)) return;
+      const path = `/diluents/${i}/notListed`;
+      if ('notListed' in d) {
+        if (d.listed !== false) no(3, file, path, 'a reason sits only on an unlisted fluid');
+        else if (kindOf(d.src) !== 'monograph') no(3, file, path, "an unlisted fluid's reason is read from the label: the row's src is a monograph");
+      } else if (labelOnly && d.listed === false) no(3, file, path, 'every unlisted fluid of an entry read from its label alone says why: advisedAgainst, runningLine or silent');
+    });
+
     // Rule 6: every string is short: a paraphrase, never a copied monograph
     for (const { path, s } of strings(data)) if (s.length > MAX_STATEMENT) no(6, file, path, `${s.length} characters: a statement is at most ${MAX_STATEMENT}, in our words`);
   }

@@ -29,7 +29,7 @@ library without a file and without a line in `pending.json` fails the build.
 |---|---|---|---|
 | **Stabilis** (stabilis.org), the source of record | `stabilis` | compatibility and stability statements and their figures | `id` (the monograph), `retrieved` (YYYY-MM-DD), `cites` (the reference Stabilis gives for the figure) |
 | **Trissel's Handbook on Injectable Drugs, 17th edition (2013)**, the cross-check | `trissel` | the cross-check of every statement; the statement itself only where Stabilis has none | `edition` (`17 (2013)`, the only one accepted), `monograph`, `page`, `reader`, `date` |
-| **The product's label** (DailyMed or EMC for now, the department's leaflet once the stock list arrives) | `monograph` | products, strengths, concentrations, the listed diluents (a diluent not listed is a wrong diluent) | `product`, `holder`, `version`, `issuer` (`DailyMed`, `EMC` or `department`) |
+| **The product's label** (DailyMed or EMC for now, the department's leaflet once the stock list arrives) | `monograph` | products, strengths, concentrations, the listed diluents, and why the label does not list a fluid (`notListed`, below) | `product`, `holder`, `version`, `issuer` (`DailyMed`, `EMC` or `department`) |
 | A paper | `study` | a preparation time or a measured loss | `citation`, and a `doi` or a `pmid` |
 
 ## The rules the check enforces
@@ -43,7 +43,8 @@ library without a file and without a line in `pending.json` fails the build.
    `ruling`: who ruled, the date, and which source the entry follows. A statement taken from Trissel carries its own
    Trissel source and page: its `src` is a `trissel` key with a page, and its cross-check is
    `{ "trissel": "agrees", "src": <that same key> }`; anything else is refused. It is still a paraphrase in our words
-   (rule 6), never Trissel's text.
+   (rule 6), never Trissel's text. An unlisted fluid's `notListed` (why the label does not list it) sits only on a
+   `listed: false` row whose `src` is a label; every unlisted fluid of an entry whose only source is its label has one.
 4. A `gap` names an owner question of the plan's §10 (`LQ1`–`LQ14`) and holds no number. A preparation time may be a
    gap (`{ "gap": "LQ7" }`: the preparation is ready at once and the Debrief says "no source for the preparation
    time"); a strength, a reconstitution or a diluent's content may not, because the bench cannot deliver without it.
@@ -89,6 +90,7 @@ The angle-bracketed values are placeholders showing where each value comes from 
   "diluents": [
     { "id": "water", "listed": true, "src": "<a monograph key>" },
     { "id": "saline", "listed": false, "src": "<a monograph key>",
+      "notListed": { "reason": "<advisedAgainst or runningLine>", "section": "<the label's section>", "words": "<the label's words>" },
       "compat": { "verdict": "<verdict>", "statement": "<our words>", "src": "<a stabilis key>",
                   "crossCheck": { "trissel": "<agrees, differs or not listed>", "src": "<a trissel key>" } } }
   ],
@@ -97,6 +99,13 @@ The angle-bracketed values are placeholders showing where each value comes from 
   "has": { "stabilis": true, "trissel": true, "monograph": true }
 }
 ```
+
+**Why a fluid is not listed** (`notListed`, read from the label's dosage, administration, compatibility and
+how-supplied sections): `advisedAgainst` (the label advises against it: Levophed 2.3, "saline solution alone is not
+recommended"), `runningLine` (the label names it only for the line the drug is given through: a running infusion, a
+flush) or `silent` (`{ "reason": "silent" }`: the label neither lists it nor advises against it). The first two carry
+the label's `section` and `words`. Only `advisedAgainst` is graded as a wrong diluent; a row without `notListed` (its label
+not yet read for the reason) is graded as a wrong diluent, "Diluent not listed in the label".
 
 `verdict` is `incompatible`, `compatible`, `conditional` or `not tested`. A stability row gives the diluent, the
 container (`vial`, `syringe-pp`, `bag-pvc`, `bag-polyolefin`), the temperature in °C and the source's points as

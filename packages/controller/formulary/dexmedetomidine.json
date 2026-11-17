@@ -37,27 +37,46 @@
     {
       "id": "dextrose5",
       "listed": false,
-      "src": "dailymed-precedex"
+      "src": "dailymed-precedex",
+      "notListed": {
+        "reason": "runningLine",
+        "section": "2.5 Administration with Other Fluids",
+        "words": "PRECEDEX has been shown to be compatible when administered with the following intravenous fluids: 5% dextrose in water"
+      }
     },
     {
       "id": "water",
       "listed": false,
-      "src": "dailymed-precedex"
+      "src": "dailymed-precedex",
+      "notListed": {
+        "reason": "silent"
+      }
     },
     {
       "id": "ringerLactate",
       "listed": false,
-      "src": "dailymed-precedex"
+      "src": "dailymed-precedex",
+      "notListed": {
+        "reason": "runningLine",
+        "section": "2.5 Administration with Other Fluids",
+        "words": "PRECEDEX has been shown to be compatible when administered with the following intravenous fluids: Lactated Ringer's solution"
+      }
     },
     {
       "id": "dextrose5Saline",
       "listed": false,
-      "src": "dailymed-precedex"
+      "src": "dailymed-precedex",
+      "notListed": {
+        "reason": "silent"
+      }
     },
     {
       "id": "dextrose4Saline018",
       "listed": false,
-      "src": "dailymed-precedex"
+      "src": "dailymed-precedex",
+      "notListed": {
+        "reason": "silent"
+      }
     }
   ],
   "admixtures": [],

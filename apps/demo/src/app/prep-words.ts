@@ -11,10 +11,18 @@ export const FINDING_WORDS: Readonly<Record<Finding['kind'], string>> = {
   conditional: 'Compatible only under conditions',
   notTested: 'Not tested together',
   wrongDiluent: 'Diluent not listed in the label',
+  advisedAgainst: 'The label advises against this diluent',
+  runningLine: 'The label names this fluid only for the line the drug is given through, not for mixing',
+  labelSilent: 'The label does not mention this fluid; it neither lists it nor advises against it',
 };
 /** A finding the formulary holds no statement for, and one no source speaks for. */
 export const NO_STATEMENT = 'no statement in the formulary';
 export const NO_SOURCE = 'no source speaks';
+
+/** What follows a finding's heading on the card and in the Debrief: its statement (none for a label silent about the
+ *  fluid: the heading says it), then its sources. */
+export const findingTail = (x: Finding, f: Formulary | null): string =>
+  `${x.kind === 'labelSilent' && !x.statement ? '' : `: ${x.statement ?? NO_STATEMENT}`} ${sourcesText(x, f)}`;
 
 /** A source as the phone names it (the finding after the notice, a product's label). */
 export function sourceText(s: Source | undefined, key: string): string {
