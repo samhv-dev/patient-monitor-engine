@@ -6,6 +6,11 @@ import { expect, test } from './evidence.ts';
 import type { ViteDevServer } from 'vite';
 import { openApp, speedV2, startVite, TEACH2 } from './app-support.ts';
 
+test.skip(
+  ({ browserName }) => browserName === 'webkit' && !!process.env.CI,
+  'the CI WebKit runner has no audio output: its output timestamp stays near audio time 0, so every tone maps to ≈ 0 and plays when it is queued, and the sound log cannot show the schedule; macOS WebKit and CI Chromium run it',
+);
+
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
