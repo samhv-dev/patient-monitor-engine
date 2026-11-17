@@ -63,19 +63,21 @@ describe('R5a: the defibrillator model (device layer)', () => {
     expect(c.chargeS).toBeCloseTo(120 * CHARGE_S_PER_J, 10);
   });
 
-  it('generic on a lifepak-like monitor: 120 J (the skin no longer sets it), 360 J by the 7 s / 200 J rule; a later skin change keeps both', () => {
+  it('generic on a lifepak-like monitor: 120 J (the skin no longer sets it), its list\'s top 200 J by the 7 s / 200 J rule, lifepak-like\'s 360 J refused; a later skin change keeps them', () => {
     const { e, ev } = devRig('lifepak-like');
     e.advanceTo(1);
     e.dispatch(model('generic'));
     expect(charge(e, ev)).toEqual({ energyJ: 120, chargeS: expect.closeTo(4.2, 10) as unknown as number });
     e.dispatch(defib('disarm'));
-    expect(charge(e, ev, 360).chargeS).toBeCloseTo(360 * CHARGE_S_PER_J, 10); // 12.6 s, not lifepak-like's 10 s
+    expect(charge(e, ev, 200).chargeS).toBeCloseTo(200 * CHARGE_S_PER_J, 10);
     e.dispatch(defib('disarm'));
+    expect(e.dispatch(defib('charge', { energyJ: 360 })).accepted).toBe(false);
     for (const s of ['zoll-like', 'lifepak-like', 'saadat-like']) {
       e.dispatch(skin(s));
-      e.dispatch(defib('selectEnergy', { energyJ: 360 }));
-      expect(charge(e, ev).chargeS).toBeCloseTo(12.6, 10);
+      e.dispatch(defib('selectEnergy', { energyJ: 200 }));
+      expect(charge(e, ev).chargeS).toBeCloseTo(7, 10);
       e.dispatch(defib('disarm'));
+      expect(e.dispatch(defib('selectEnergy', { energyJ: 360 })).accepted).toBe(false);
     }
   });
 
@@ -170,7 +172,7 @@ describe('R5a: the defibrillator model (device layer)', () => {
     expect(lastStatus(r.ev).pacer).toMatchObject({ mode: 'demand', ratePpm: 90, mA: 60 });
   });
 
-  it('the low-energy outcome rule reads the model\'s default: a 90 J shock on lifepak-like + generic draws as on saadat-like (8 seeds)', () => {
+  it('the low-energy outcome rule reads the model\'s default: an 85 J shock on lifepak-like + generic draws as on saadat-like (8 seeds)', () => {
     const outcomes = (s: string, withModel: boolean) => {
       const got: string[] = [];
       for (let seed = 1; seed <= 8; seed++) {
@@ -178,7 +180,7 @@ describe('R5a: the defibrillator model (device layer)', () => {
         if (withModel) e.dispatch(model('generic'));
         e.dispatch(cmd({ type: 'setRhythm', rhythm: 'vfCoarse' }));
         e.advanceTo(2);
-        e.dispatch(defib('charge', { energyJ: 90 }));
+        e.dispatch(defib('charge', { energyJ: 85 }));
         e.advanceTo(6);
         e.dispatch(defib('shock'));
         e.advanceTo(7);
@@ -186,10 +188,10 @@ describe('R5a: the defibrillator model (device layer)', () => {
       }
       return got;
     };
-    const ref = outcomes('saadat-like', false); // 90 J ≥ ½ × 120 J: full termination
+    const ref = outcomes('saadat-like', false); // 85 J ≥ ½ × 120 J: full termination
     expect(outcomes('lifepak-like', true)).toEqual(ref);
     expect(outcomes('saadat-like', true)).toEqual(ref);
-    expect(outcomes('lifepak-like', false)).not.toEqual(ref); // 90 J < ½ × 200 J: the low-energy halving (today's behaviour)
+    expect(outcomes('lifepak-like', false)).not.toEqual(ref); // 85 J < ½ × 200 J: the low-energy halving
   });
 
   it('a snapshot keeps the model; an engine that replays the command holds the same spec', () => {
@@ -202,7 +204,7 @@ describe('R5a: the defibrillator model (device layer)', () => {
     const rev: EngineEvent[] = [];
     r.on((x) => rev.push(x));
     r.restore(snap);
-    expect(charge(r, rev, 360).chargeS).toBeCloseTo(12.6, 10);
+    expect(charge(r, rev)).toEqual({ energyJ: 120, chargeS: expect.closeTo(4.2, 10) as unknown as number }); // the model's, not lifepak-like's 200 J
     // the pacer too (row 58): a lifepak-like engine restored from the snapshot paces at the model's 70 ppm with HR shown,
     // and a skin it puts on after the restore keeps that
     r.dispatch(defib('disarm'));
@@ -215,6 +217,6 @@ describe('R5a: the defibrillator model (device layer)', () => {
     const f = devRig('zoll-like');
     f.e.advanceTo(1);
     f.e.dispatch(model('generic'));
-    expect(charge(f.e, f.ev, 360)).toEqual(charge(e, ev, 360));
+    expect(charge(f.e, f.ev, 200)).toEqual(charge(e, ev, 200));
   });
 });

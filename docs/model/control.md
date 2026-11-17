@@ -265,7 +265,7 @@ transports (`src/protocol.ts`).
 | `injectStyles` | [`panel/styles.ts`](../../packages/controller/src/panel/styles.ts) | — |
 | `commandShape` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). |
 | `instructorMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). |
-| `learnerDefibMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, bare), else the reason it is refused (R5c). |
+| `learnerDefibMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, its own fields only), else the reason it is refused (R5c). |
 | `defibShape` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | The table's key of a command: |
 | `learnerDefibM2May` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when an ADMITTED `defib` peer may send `c` (a shape of LEARNER_DEFIB_M2, its own fields only), else the reason. |
 | `learnerMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted `learner` peer may send `c` (one of LEARNER_COMMANDS, with its own fields only), else the reason it is refused (§4 D2). |

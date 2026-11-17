@@ -179,24 +179,24 @@ describe('R5a acceptance: the room\'s defibrillator model, set by the host, hold
     expect(m.hrDashes).toEqual({ host: false, window: true });
   });
   for (const order of ['before', 'after'] as const) {
-    for (const energyJ of [undefined, 360]) {
+    for (const energyJ of [undefined, 200]) {
       it(`zoll-like window (the generic model's look), skin on ${order} the snapshot, ${energyJ ?? 'default'} J: identical through charge, shock and pacing`, async () => {
         const m = await measure({ windowSkin: 'zoll-like', order, model: 'generic', ...(energyJ ? { energyJ } : {}) });
         results.push(m);
         identical(m);
         expect(m.defibEnergyJ.host).toBe(energyJ ?? 120);
-        expect(m.chargeTimeS.host).toBe(energyJ ? 12.62 : 4.22);
+        expect(m.chargeTimeS.host).toBe(energyJ ? 7.02 : 4.22);
       });
     }
   }
   for (const order of ['before', 'after'] as const) {
-    for (const energyJ of [undefined, 360]) {
+    for (const energyJ of [undefined, 200]) {
       it(`lifepak-like window, skin on ${order} the snapshot, ${energyJ ?? 'default'} J, model generic: the divergences are an EQUALITY (defibrillator, pacing at the defaults, at 80 mA and through PAUSE, HR)`, async () => {
         const m = await measure({ windowSkin: 'lifepak-like', order, model: 'generic', ...(energyJ ? { energyJ } : {}) });
         results.push(m);
         identical(m);
         expect(m.defibEnergyJ).toEqual({ host: energyJ ?? 120, window: energyJ ?? 120 });
-        expect(m.chargeTimeS).toEqual(energyJ ? { host: 12.62, window: 12.62 } : { host: 4.22, window: 4.22 });
+        expect(m.chargeTimeS).toEqual(energyJ ? { host: 7.02, window: 7.02 } : { host: 4.22, window: 4.22 });
         expect(m.hrDashes).toEqual({ host: false, window: false });
       });
     }

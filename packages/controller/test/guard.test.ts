@@ -167,10 +167,11 @@ describe('the learner defibrillator role (plan room-and-instruments.md R5c)', ()
 
   const cmd = (c: object) => ({ id: 'k1', issuedBy: 'defib-a', ...c }) as unknown as CommandInput;
   const defib = (event: object, extra: object = {}) => cmd({ type: 'applyEvent', event: { kind: 'defib', ...event }, ...extra });
-  it('LEARNER_DEFIB_COMMANDS is exactly Charge and Shock; learnerDefibMay passes both, bare', () => {
-    expect([...LEARNER_DEFIB_COMMANDS].sort()).toEqual(['applyEvent defib charge', 'applyEvent defib shock']);
+  it('LEARNER_DEFIB_COMMANDS is exactly energy select, Charge and Shock; learnerDefibMay passes Charge and Shock bare and energy select with its energy', () => {
+    expect([...LEARNER_DEFIB_COMMANDS].sort()).toEqual(['applyEvent defib charge', 'applyEvent defib selectEnergy', 'applyEvent defib shock']);
     expect(learnerDefibMay(defib({ action: 'charge' }))).toBeNull();
     expect(learnerDefibMay(defib({ action: 'shock' }))).toBeNull();
+    for (const energyJ of [1, 150, 200, 360]) expect(learnerDefibMay(defib({ action: 'selectEnergy', energyJ })), `${energyJ} J`).toBeNull(); // the room model's list is the engine's check
   });
 
   it('refuses an energy, an outcome or a tick, every other defibrillator action and every other command', () => {
@@ -182,7 +183,11 @@ describe('the learner defibrillator role (plan room-and-instruments.md R5c)', ()
       ['charge with atTick 0', defib({ action: 'charge' }, { atTick: 0 })],
       ['shock with a stray field', defib({ action: 'shock', sync: true })],
       ['charge with a stray command field', defib({ action: 'charge' }, { stageGroup: 'g' })],
-      ['selectEnergy', defib({ action: 'selectEnergy', energyJ: 360 })],
+      ['selectEnergy without energyJ', defib({ action: 'selectEnergy' })],
+      ['selectEnergy with energyJ as text', defib({ action: 'selectEnergy', energyJ: '150' })],
+      ['selectEnergy with energyJ NaN', defib({ action: 'selectEnergy', energyJ: Number.NaN })],
+      ['selectEnergy with a stray field', defib({ action: 'selectEnergy', energyJ: 150, sync: true })],
+      ['selectEnergy with atTick', defib({ action: 'selectEnergy', energyJ: 150 }, { atTick: 5 })],
       ['preselect', defib({ action: 'preselect', outcome: 'sinus' })],
       ['disarm', defib({ action: 'disarm' })],
       ['syncOn', defib({ action: 'syncOn' })],

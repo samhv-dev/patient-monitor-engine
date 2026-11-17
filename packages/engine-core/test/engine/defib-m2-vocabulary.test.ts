@@ -1,7 +1,6 @@
 // Defibrillator plan E0 (docs/plans/defibrillator-zoll-m2.md §6 E0, brief 179): the ZOLL M2 as a defibrillator model
 // with the limits its Operator's Guide states, per-model energy validation, and the frozen command vocabulary. Every
-// declared command is accepted in its valid form, refused in an invalid one, and changes nothing yet; the generic model
-// is unchanged. Pages are the guide's printed pages, [G n-m] (REF 9650-000873-01 Rev. C).
+// declared command is accepted in its valid form, refused in an invalid one, and changes nothing yet. Pages are the guide's printed pages, [G n-m] (REF 9650-000873-01 Rev. C).
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 import { DEFIB_MODELS } from '../../src/l3/alarms/profile.ts';
@@ -85,19 +84,20 @@ describe('E0: the ZOLL M2 model [G A-2], [G 14-4], [G 12-6], [G A-10], [G 16-5]'
     expect(z.pacer).toMatchObject({ rateDefault: 70, rateRange: [30, 180], mADefault: 0, mARange: [0, 140], mAStep: { up: 2, down: 2 }, modeDefault: 'demand', pausePct: null });
     expect(z.pacerGrid).toEqual({ ratePpm: 2, mA: 2, mAMin: 8 }); // [G 1-11], [G 16-4], [G 16-5], [G A-10]
     expect(z.hrDashesWhilePacing).toBe(false);
-    // generic: no list, no escalation, no grid (today's behaviour)
+    // generic: the X Series list, no escalation, no grid
     const g = DEFIB_MODELS.generic!;
-    expect([g.energiesJ, g.escalationJ, g.aedSequenceJ, g.pacerGrid]).toEqual([undefined, undefined, undefined, undefined]);
+    expect(g.energiesJ).toEqual(M2_ENERGIES_J);
+    expect([g.escalationJ, g.aedSequenceJ, g.pacerGrid]).toEqual([undefined, undefined, undefined]);
   });
 });
 
 describe('E0: per-model energy validation', () => {
-  it('360 J is refused on zoll-m2 and accepted on generic; 140 J is refused on zoll-m2 with a reason a face can show', () => {
+  it('360 J and 140 J are refused on zoll-m2 and on generic, each with a reason a face can show', () => {
     const z = room('zoll-m2');
     const g = room('generic');
     for (const a of ['selectEnergy', 'charge']) {
-      expect(g.e.dispatch(defib(a, { energyJ: 360 })).accepted).toBe(true);
-      g.e.dispatch(defib('disarm'));
+      expect(g.e.dispatch(defib(a, { energyJ: 360 })).reason).toBe('360 J is not a generic defibrillator energy (1–10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200 J)');
+      expect(g.e.dispatch(defib(a, { energyJ: 140 })).reason).toBe('140 J is not a generic defibrillator energy (1–10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200 J)');
       const r360 = z.e.dispatch(defib(a, { energyJ: 360 }));
       expect(r360.accepted).toBe(false);
       expect(r360.reason).toBe('360 J is not a ZOLL M2 energy (1–10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200 J)');
@@ -109,8 +109,9 @@ describe('E0: per-model energy validation', () => {
       }
     }
     expect(z.e.dispatch(defib('charge')).accepted).toBe(true); // no energy: the selected one (120 J)
-    // generic keeps its range and its words
-    expect(g.e.dispatch(defib('selectEnergy', { energyJ: 361 })).reason).toBe('energyJ must be 1–360 J');
+    // no model chosen keeps its range and its words
+    expect(room(null).e.dispatch(defib('selectEnergy', { energyJ: 361 })).reason).toBe('energyJ must be 1–360 J');
+    expect(room(null).e.dispatch(defib('selectEnergy', { energyJ: 360 })).accepted).toBe(true);
   });
 
   it('the M2 pacer: rate 30–180 in 2 ppm steps, output 0 (paused) or 8–140 mA in 2 mA steps; generic unchanged', () => {

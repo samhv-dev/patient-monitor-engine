@@ -114,6 +114,8 @@ export class ScenarioDriver {
   /** The taking (its key) whose procedure/sample/communication record is made: one record per taking. */
   private recordedTaking: string | null = null;
   private readonly off: () => void;
+  /** The defibrillator's selected energy in the last deviceStatus: what a bare Charge charges to and a bare Shock delivers. */
+  private defibJ: number | null = null;
 
   constructor(o: ScenarioDriverOptions) {
     this.o = o;
@@ -471,6 +473,12 @@ export class ScenarioDriver {
     void res.then(rec, (err: unknown) => rec({ accepted: false, tick: -1, reason: String(err) })).finally(() => this.inFlight--);
   }
 
+  /** A bare defibrillator Charge or Shock, as the runner and the record read it: with the device's own energy. */
+  private withDeviceEnergy(w: WireCommand): WireCommand {
+    if (w.type !== 'applyEvent' || w.event.kind !== 'defib' || (w.event.action !== 'charge' && w.event.action !== 'shock') || w.event.energyJ !== undefined || this.defibJ === null) return w;
+    return { ...w, event: { ...w.event, energyJ: this.defibJ } };
+  }
+
   private standIn(dc: DocCommand): DocCommand {
     if (dc.type !== 'setRhythm') return dc;
     const s = resolveRhythm(dc.rhythm, dc.opts, this.known);
@@ -481,7 +489,7 @@ export class ScenarioDriver {
 
   private wrap(inner: HostTarget): HostTarget {
     const observe = (c: Command, r: DispatchResult): DispatchResult => {
-      const w = c as WireCommand;
+      const w = this.withDeviceEnergy(c as WireCommand);
       this.taking(c);
       let res = r;
       if ((w.type === 'applyEvent' || w.type === 'attachSensor') && !r.accepted && NOT_IMPLEMENTED.test(r.reason ?? '')) {
@@ -580,6 +588,7 @@ export class ScenarioDriver {
 
   private onEngine(e: EngineEvent): void {
     const w = e as WireEvent;
+    if (w.type === 'deviceStatus' && w.defib) this.defibJ = w.defib.energyJ;
     if (w.type === 'measurement') {
       const values: Record<string, number> = {};
       for (const [k, m] of Object.entries(w.values)) if (m && m.value !== null) values[k] = m.value;

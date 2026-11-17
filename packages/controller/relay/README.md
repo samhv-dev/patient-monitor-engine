@@ -76,7 +76,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 | ventilator, granted | forwarded to the host (its PIN reaches the host alone); awaits no snapshot | refused (`forbidden`: its commands ride `vent`) | dropped | dropped | dropped | dropped | to the host alone, as sent |
 | ventilator, pending | same as granted | refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`), never at the host |
 | viewer | same as controller | refused (`{relay:'error', code:'forbidden'}`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
-| defib, no PIN | same as controller | Charge or Shock, bare (`LEARNER_DEFIB_COMMANDS`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
+| defib, no PIN | same as controller | energy select with its `energyJ`, or Charge or Shock, bare (`LEARNER_DEFIB_COMMANDS`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | defib with the learner PIN, granted | same as controller (its PIN reaches the host alone) | the ZOLL M2's own controls with their own fields only (`learnerDefibM2May`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | defib with the learner PIN, pending | same as granted | refused (`forbidden`: "the defibrillator is not signed in") | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 | learner, granted | same as controller (its learner PIN reaches the host alone) | `LEARNER_COMMANDS` with their own fields only (`learnerMay`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
@@ -131,8 +131,9 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   below), in a learner's place under `--max-peers`, and counted in `peers`. It may name `show` and
   `device` as a viewer does. It RECEIVES what a viewer receives: the lean copy, the snapshot after its hello, the cached
   snapshot while the host is away. Of what it SENDS, a `command` goes to the host only if `learnerDefibMay` passes it:
-  `applyEvent` of `{kind:'defib', action:'charge'}` or `{kind:'defib', action:'shock'}` and no other field (no
-  `energyJ`: the room's model sets the energy; no `outcome`; no `atTick`). Any other command is answered
+  `applyEvent` of `{kind:'defib', action:'selectEnergy', energyJ}` (a number; the room model's list checks it at the
+  host's dispatch), `{kind:'defib', action:'charge'}` or `{kind:'defib', action:'shock'}`, and no other field (no
+  `energyJ` on Charge or Shock: the device charges to its selected energy; no `outcome`; no `atTick`). Any other command is answered
   `{relay:'error', code:'forbidden'}` and never reaches the host; the socket stays open and follows. The host's ack of a
   passing command comes back to it, as to a controller. At most 4 commands a second through one `defib` socket,
   refused ones included [ENG: network; a charge and a shock per cycle, with a margin for double taps]; the 5th within a sliding

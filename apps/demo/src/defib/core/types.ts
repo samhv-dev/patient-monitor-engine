@@ -36,7 +36,7 @@ export interface DefibView {
   /** The M2's state; null on any other model. */
   m2: M2Status | null;
   mode: DefibMode;
-  /** The model's energy list, J; null = any 1–360 J (the generic model). */
+  /** The room model's energy list, ascending, J; null = no model chosen (any 1–360 J). */
   energiesJ: readonly number[] | null;
   /** The selected energy, then CHARGING or READY, and SYNC (instrument.ts defibReadout). */
   readout: string;

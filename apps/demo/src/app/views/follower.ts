@@ -254,12 +254,13 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   const statusFns = new Set<(s: DefibStatusIn) => void>();
   let pressN = 0;
   const face = DEFIB_FACES[defibFace(site.defibModel, site.skin).face]; // generic for every model until F1
+  let roomModel = site.defibModel; // the host's, once its style says it
   const defibCore = defib ? createDefibCore({
     newId: () => `${peerId}-press-${++pressN}`,
     send: (body, id) => void transport.send({ v: 1, session: code, from: peerId, seq: 0, sentAt: epochNow(), kind: 'command', body: { ...body, id, issuedBy: 'learner' } } as WireMessage),
     onStatus: (fn) => (statusFns.add(fn), () => void statusFns.delete(fn)),
     onAck: (fn) => transport.onMessage((m) => void (m.kind === 'ack' && fn(m.commandId, m.accepted, m.reason))),
-  }, face.spec) : null;
+  }, face.spec, { model: () => roomModel }) : null;
   const defibUi = defibCore ? face.mount(defibCore, { stage: shell.stage, bar }) : null;
   /** Put on a style: the defibrillator window wears the room model's look whatever the monitor style. */
   const wear = (skin: string, theme: string) => {
@@ -281,6 +282,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     const m = ev.data;
     if (m?.kind !== 'style') return;
     wearIbp(m.ibp);
+    if (m.defib !== undefined) roomModel = m.defib;
     wear(defib ? defibFace(m.defib ?? null, m.skin).skin : m.skin, m.theme);
   };
   style?.postMessage({ kind: 'ask' } satisfies StyleMsg);
@@ -324,6 +326,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
       if (e.type === 'engineStopped') stopped = true; // brief 195: said once a second while it lasts
       if (e.type === 'timeline') stopped = false; // a new engine (the instructor restarted the patient)
       if (e.type === 'style' && net) {
+        if (e.defib !== undefined) roomModel = e.defib;
         if (defib) wear(defibFace(e.defib ?? null, e.skin).skin, e.theme); // landscape, the room model's look (R5)
         else if (depth) wear(e.skin, e.theme); // E12: the depth window wears the theme; its monitor is not shown
         else wearPhone(e.skin, e.theme);

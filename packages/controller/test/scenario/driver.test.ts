@@ -84,6 +84,22 @@ describe('ScenarioDriver', () => {
     expect(driver.runner?.stateId).toBe('rosc'); // seed 42: the first shock's draw is 0.062 < 0.3
   });
 
+  it("a bare shock (the learner's window) counts at the device's selected energy against a minJ rule", async () => {
+    for (const [energyJ, to] of [[120, 'a'], [150, 'b']] as const) {
+      const { driver, run, host } = rig();
+      host.engine.dispatch({ id: `m${energyJ}`, issuedBy: 'instructor', type: 'device', action: { device: 'defib', action: 'model', value: 'generic' } } as unknown as Command);
+      expect(driver.load(doc([{ when: { event: { kind: 'defib', action: 'shock', minJ: 150 } } }])).ok).toBe(true);
+      await run(50);
+      expect((driver.host.dispatch(learner({ kind: 'defib', action: 'selectEnergy', energyJ })) as { accepted: boolean }).accepted).toBe(true);
+      await run(100);
+      expect((driver.host.dispatch(learner({ kind: 'defib', action: 'charge' })) as { accepted: boolean }).accepted).toBe(true);
+      await run(100 + 50 * CHARGE_LEAD_S);
+      expect((driver.host.dispatch(learner({ kind: 'defib', action: 'shock' })) as { accepted: boolean }).accepted).toBe(true);
+      driver.poll();
+      expect(driver.runner?.stateId, `${energyJ} J`).toBe(to);
+    }
+  });
+
   it('a real validation error from the engine stays a rejection', async () => {
     const { driver } = rig();
     const r = driver.host.dispatch({ id: 'x', issuedBy: 't', type: 'setTarget', variable: 'hr', value: 999 }) as { accepted: boolean };

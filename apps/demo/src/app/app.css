@@ -504,6 +504,11 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 /* R5d: the defibrillator window's Charge and Shock: 44 px targets, the WCAG 2.1 SC 2.5.5 size [ENG: ui]; always enabled */
 .defib-keys { display: inline-flex; gap: var(--s-2); }
 .defib-keys .btn { min-height: 44px; min-width: 88px; font-size: 1.05rem; font-weight: 700; }
+.defib-energy { display: inline-flex; align-items: center; gap: var(--s-2); }
+.defib-energy[hidden] { display: none; }
+.defib-energy .btn { min-height: 44px; min-width: 44px; font-size: 1.05rem; }
+.defib-energy .btn[aria-disabled='true'] { opacity: 0.45; }
+.defib-energy-value { min-width: 4.5ch; text-align: center; font: 700 1.05rem / 1 ui-monospace, 'SF Mono', Menlo, monospace; }
 /* EEG plan E12: the depth-of-anaesthesia window (views/depth.ts) over its follower's monitor, the generic face: the
    lanes (raw EEG, spectrogram, SEF trend) and the values; side by side on a wide screen, stacked when upright. Dark,
    or light under the host's projector theme. The hold line (.learner-hold, z 5) stays over it. */

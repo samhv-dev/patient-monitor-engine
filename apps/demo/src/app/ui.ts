@@ -86,8 +86,9 @@ export interface Stepper {
   limit(r: { min: number; max: number; step: number }): void;
 }
 
-/** − value + with a unit in the accessible name; press-and-hold repeats; typing is allowed. */
-export function stepper(o: { label: string; unit: string; min: number; max: number; step: number; value: number; digits?: number; onchange?: (v: number) => void }): Stepper {
+/** − value + with a unit in the accessible name; press-and-hold repeats; typing is allowed. `next` replaces the even
+ * step (a device's own list of values). */
+export function stepper(o: { label: string; unit: string; min: number; max: number; step: number; value: number; digits?: number; onchange?: (v: number) => void; next?: (v: number, dir: 1 | -1) => number }): Stepper {
   const digitsOf = (step: number) => o.digits ?? (step < 1 ? Math.min(2, String(step).split('.')[1]?.length ?? 1) : 0);
   let { min, max, step } = o;
   let digits = digitsOf(step);
@@ -96,11 +97,11 @@ export function stepper(o: { label: string; unit: string; min: number; max: numb
   const set = (v: number) => {
     input.value = clamp(v).toFixed(digits);
   };
-  const bump = (d: number) => {
-    set(Number(input.value) + d * step);
+  const bump = (d: 1 | -1) => {
+    set(o.next ? o.next(Number(input.value), d) : Number(input.value) + d * step);
     o.onchange?.(Number(input.value));
   };
-  const hold = (d: number) => {
+  const hold = (d: 1 | -1) => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const stop = () => {
       if (timer) clearTimeout(timer);

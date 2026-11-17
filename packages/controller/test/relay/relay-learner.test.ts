@@ -263,7 +263,7 @@ describe('of what a granted learner sends, only §4 D2 reaches the host', () => 
     defib.send(command('d2', { type: 'applyEvent', event: { kind: 'defib', action: 'charge' } }));
     await waitFor(() => errors(viewer).length === 1 && errors(defib).length === 1, 2000, 'forbidden at both');
     expect(errors(viewer)[0]).toEqual({ relay: 'error', code: 'forbidden', message: 'viewer may not send commands' });
-    expect(errors(defib)[0]).toEqual({ relay: 'error', code: 'forbidden', message: 'The defibrillator window sends Charge and Shock only.' });
+    expect(errors(defib)[0]).toEqual({ relay: 'error', code: 'forbidden', message: 'The defibrillator window sends energy, Charge and Shock only.' });
     await waitFor(() => commandsAt(host).length === 1, 2000, "the window's charge");
     expect(commandsAt(host)[0]).toMatchObject({ from: 'defib-d1', body: { id: 'd2' } });
   });
