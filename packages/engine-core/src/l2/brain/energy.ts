@@ -6,7 +6,7 @@
 //               linear between;  fn = 1 − metabolic
 // The brainstem entry is, for now, the breathing gate's perfusion state, stepped by the resp pipeline (l2/neuro/spont.ts
 // stepBrainstem) on the organ model's flow.
-import { caO2 } from './flow.ts';
+import { CAO2_REF, caO2 } from './flow.ts';
 import { DO2_EEG_ABNORMAL, DO2_EEG_LOST } from './params.ts';
 
 /** A compartment's delivery thresholds, relative to normal delivery. */
@@ -50,9 +50,9 @@ export interface Supply {
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
-/** O2 delivery relative to normal: CBF/CBF0 × CaO2 ÷ the brain model's reference CaO2 (Hb 14, SaO2 0.97, PaO2 95). */
+/** O2 delivery relative to normal: CBF/CBF0 × CaO2 ÷ the brain model's reference CaO2. */
 export function brainDo2Rel(cbfRel: number, hb: number, sao2: number, pao2: number): number {
-  return (Math.max(0, cbfRel) * caO2(hb, sao2, pao2)) / caO2(14, 0.97, 95);
+  return (Math.max(0, cbfRel) * caO2(hb, sao2, pao2)) / CAO2_REF;
 }
 
 /** The share of a compartment's function lost at `delivery`. */

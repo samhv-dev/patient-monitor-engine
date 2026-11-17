@@ -11,7 +11,7 @@ describe('brain → body effects (decision 4)', () => {
     const l1 = createL1State();
     const hemo = createHemoState(undefined, l1, 80);
     const resp = createRespState(undefined, l1, 1);
-    const b = createBrain(brainParams(), { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, tempC: 37, drugs: NO_DRUGS });
+    const b = createBrain(brainParams(), { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, hbRef: 14, tempC: 37, drugs: NO_DRUGS });
     let hr = 80;
     const ctx = { l1, hemo, resp, hrNow: () => hr, setHr: (x: number) => { hr = x; } };
     const e = createEffects();
@@ -33,7 +33,7 @@ describe('brain → body effects (decision 4)', () => {
     l1.mode = 'modeled';
     const hemo = createHemoState(undefined, l1, 80);
     const resp = createRespState(undefined, l1, 1);
-    const b = createBrain(brainParams(), { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, tempC: 37, drugs: NO_DRUGS });
+    const b = createBrain(brainParams(), { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, hbRef: 14, tempC: 37, drugs: NO_DRUGS });
     const ext = hemo.circ.ext;
     expect(ext.rSysF).toBeUndefined(); // 7a's initialiser omits the optional key
     b.cush.drive = 1;

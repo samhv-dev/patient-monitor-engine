@@ -4,7 +4,7 @@
 // (cushing.ts) and herniation are states.
 import { createCushing, cushingDMap, stepCushing, type CushingState } from './cushing.ts';
 import { createBrainEnergy, stepBrainEnergy, type BrainEnergy } from './energy.ts';
-import { autoreg, brainOxygen, caO2, cbvRel, co2Factor, NO_DRUGS, o2Factor, tempCmro2, type BrainDrugs } from './flow.ts';
+import { anaemiaFactor, autoreg, brainOxygen, CAO2_REF, caO2, cbvRel, co2Factor, NO_DRUGS, o2Factor, tempCmro2, type BrainDrugs } from './flow.ts';
 import { csfDisplacementRate, elastance, icpOfVolume } from './mechanics.ts';
 import {
   CBF_LL, CBF_UL, CBV0_ML, CBV_EFF, CPP_REF, CSF_RESERVE_ML, HEAD_HEIGHT_CM, HEADUP_VOL_ML_30, HERNIATION_CPP, HERNIATION_S,
@@ -21,6 +21,7 @@ export interface BrainInputs {
   cvp: number; // mmHg
   paco2: number; pao2: number; sao2: number; // mmHg, mmHg, fraction
   hb: number; // g/dL
+  hbRef: number; // g/dL, the patient's own normal (the blood model's band default) [ENG: control] (the brain's flow is relative to it)
   tempC: number;
   drugs: BrainDrugs; // anaesthetic CMRO2 multiplier and direct vasodilation (organs/inputs.ts: neuro/drugs, or INTERIM fallback)
   osm?: number | null; // The blood model's plasma effective osmolality, mOsm/kg (absent/null without the blood model)
@@ -80,7 +81,7 @@ export function createBrain(p: BrainParams, inp: BrainInputs): BrainState {
 
 function targetCbf(b: BrainState, inp: BrainInputs, cpp: number): number {
   const m = inp.drugs.cmro2Mult * tempCmro2(inp.tempC) * inp.drugs.cbfVaso;
-  return autoreg(cpp, b.p.ll, b.p.ul, b.p.ar) * co2Factor(inp.paco2, b.paco2Ref) * o2Factor(inp.pao2) * m;
+  return autoreg(cpp, b.p.ll, b.p.ul, b.p.ar) * co2Factor(inp.paco2, b.paco2Ref) * o2Factor(inp.pao2) * anaemiaFactor(inp.hb, inp.hbRef) * m;
 }
 
 /** Osmotic brain-water loss (mL, ≥ 0) at time t: Bateman shape normalised to its peak × saturation × Vmax. */
@@ -156,7 +157,7 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
   b.lowCppS = b.cpp <= HERNIATION_CPP ? b.lowCppS + dt : 0;
   if (b.lowCppS >= HERNIATION_S) b.herniated = true;
   b.cmro2Rel = inp.drugs.cmro2Mult * tempCmro2(inp.tempC);
-  const r = (b.cbfRel * caO2(inp.hb, inp.sao2, inp.pao2)) / Math.max(1e-6, b.cmro2Rel * caO2(14, 0.97, 95));
+  const r = (b.cbfRel * caO2(inp.hb, inp.sao2, inp.pao2)) / Math.max(1e-6, b.cmro2Rel * CAO2_REF);
   const o = brainOxygen(r, inp.sao2, inp.pao2);
   b.pbto2 = o.pbto2;
   b.sjvo2 = o.sjvo2;

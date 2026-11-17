@@ -51,7 +51,7 @@ describe('the cortex entry', () => {
 });
 
 describe('in the brain model', () => {
-  const REST: BrainInputs = { map: 90, cvp: 6, paco2: 40, pao2: 95, sao2: 0.97, hb: 14, tempC: 37, drugs: NO_DRUGS };
+  const REST: BrainInputs = { map: 90, cvp: 6, paco2: 40, pao2: 95, sao2: 0.97, hb: 14, hbRef: 14, tempC: 37, drugs: NO_DRUGS };
   it('created and stepped: the entry reads the step\'s own flow and blood gases', () => {
     const b = createBrain(brainParams(), REST);
     expect(b.energy.cortex.delivery).toBe(refDelivery(b.cbfRel, 14, 0.97, 95));

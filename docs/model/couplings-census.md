@@ -38,7 +38,7 @@ list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink a
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 | `l2/blood/pipeline.ts#advanceBlood` | `pf` | product | 6 |
 | `l2/blood/solutes.ts#stepSolutes` | `jk` | product | 5 |
-| `l2/brain/params.ts#(top level)` | `OSM_WATER_ML_PER_MOSM` | product | 5 |
+| `l2/brain/model.ts#targetCbf` | `return (targetCbf)` | product | 5 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
