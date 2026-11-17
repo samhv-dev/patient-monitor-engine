@@ -573,10 +573,17 @@ export class AppSession {
     return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel, pumps: [...this.pumpRack] };
   }
 
-  /** Room setup's pump rack (A1): kept here, and sent to the pump tablet at once on the style event (as the defibrillator model). */
-  setPumpRack(kinds: PumpKind[]): void {
+  /**
+   * Room setup's pump rack (A1): kept here, and sent to the pump tablet at once on the style event (as the defibrillator
+   * model). A rack that removes or changes a channel in use is the host's to refuse: its words are returned and nothing
+   * changes. Null: applied.
+   */
+  setPumpRack(kinds: PumpKind[]): string | null {
+    const refused = this.host.pumpRackRefusal(kinds);
+    if (refused) return refused;
     this.pumpRack = [...kinds];
     for (const f of this.skinFns) f(this.skin, this.theme);
+    return null;
   }
 
   private ibp: IbpScales = {};

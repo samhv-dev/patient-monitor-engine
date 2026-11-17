@@ -15,6 +15,7 @@ import { draftRun } from './builder/run-panel.ts';
 import { drafts } from './builder/drafts.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
+import { soundSeat, soundWords } from './sound-seat.ts';
 import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
 import { RAIL_VERSION } from './about.ts';
 import { simLine } from './sim-line.ts';
@@ -313,10 +314,10 @@ if (follow && shows === 'pick') {
   };
   const weightKg = () => session.spec.weightKg;
 
+  const seat = soundSeat(session.code, "the instructor's page", () => session.disableSound());
   const toggleSound = async (): Promise<void> => {
-    if (session.soundOn) session.disableSound();
-    else await session.enableSound();
-    drawSound();
+    if (session.soundOn) (session.disableSound(), seat.off());
+    else await session.enableSound().then(() => seat.on());
   };
   // The alarm count opens the Instructor view's Devices sheet
   const openAlarms = (): void => {
@@ -334,9 +335,16 @@ if (follow && shows === 'pick') {
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
     // E12: the room's depth-of-anaesthesia device, kept with the site profile and switched on in the patient's engine
     depth: { model: () => site.eegModel, choose: (m) => ((site.eegModel = m), saveSite(site), session.setEegModel(m)) },
-    // A1 (plan pump-rack-tci.md §5): the room's pump rack, kept with the site profile (so a restart keeps it) and sent to
-    // the pump tablet on the style event
-    pumps: { kinds: () => site.pumpRack, choose: (k) => ((site.pumpRack = k), saveSite(site), session.setPumpRack(k)) },
+    // A1 (plan pump-rack-tci.md §5): the room's pump rack, sent to the pump tablet on the style event and kept with the
+    // site profile (so a restart keeps it); a rack the host refuses is neither
+    pumps: {
+      kinds: () => site.pumpRack,
+      choose: (k) => {
+        const refused = session.setPumpRack(k);
+        if (!refused) (site.pumpRack = k), saveSite(site);
+        return refused;
+      },
+    },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
   });
@@ -357,7 +365,7 @@ if (follow && shows === 'pick') {
       if (u.searchParams.has('scenario')) (u.searchParams.delete('scenario'), history.replaceState(null, '', u));
     },
   };
-  const teach2 = teach2View(link, { site, weightKg, loadScenario, finish, top: { soundOn: () => session.soundOn, toggleSound, code: session.code, phones: () => session.followers } });
+  const teach2 = teach2View(link, { site, weightKg, loadScenario, finish, top: { soundOn: () => session.soundOn, soundElsewhere: () => seat.elsewhere, onSound: (fn) => seat.onChange(fn), toggleSound, code: session.code, phones: () => session.followers } });
   shell.add(teach2);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));
@@ -403,10 +411,11 @@ if (follow && shows === 'pick') {
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
   const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: openAlarms });
-  // A toggle — it turns sound off again (it only ever turned it on); this window's sound only
-  const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
+  // A toggle; of this browser's pages of the session, only the last switched on sounds (sound-seat.ts)
+  const drawSound = () => ((sound.textContent = soundWords(session.soundOn, seat.elsewhere)), sound.setAttribute('aria-pressed', String(session.soundOn)));
   const sound = button('Sound off', () => void toggleSound(), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
+  seat.onChange(drawSound);
   // R7: the code pill opens Room setup (the one QR code: a remote pairs through its picker)
   const code = h('a', { class: 'code-pill', href: hrefOf('room'), 'aria-label': `Room code ${session.code.split('').join(' ')}: Room setup` }, h('span', { class: 'muted' }, 'Room '), session.code);
   shell.right.append(alarm, sound, code);

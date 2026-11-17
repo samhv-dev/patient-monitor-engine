@@ -21,4 +21,11 @@ describe('the shipped pump device profiles in the app (N125)', () => {
     expect(syringe?.value).toBe('near-end time not set');
     expect(drip?.value).toBe('KVO not set from the manual');
   });
+  it("the face reads each device's resolution from its shipped profile: the SP-500's 0.1 mL/h on a TCI channel, the OT-701's 1 mL/h", () => {
+    const p = faceProfilesOf(shippedPumpDevices());
+    expect(p?.syringe.rateStep.step).toBe(0.1);
+    expect(p?.drip.rateStep.step).toBe(1);
+    expect(p?.syringe.volumeDisplay.max).toBe(999.9);
+    expect(p?.drip.volumeDisplay.max).toBe(9999);
+  });
 });
