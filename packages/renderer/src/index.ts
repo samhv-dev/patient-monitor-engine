@@ -5,6 +5,7 @@ export * from './calibration.ts';
 export * from './decimate.ts';
 export { SweepLane, type LaneConfig, type SampleSource } from './sweep-lane.ts';
 export { MonitorCore } from './monitor-core.ts';
+export { MIN_LANE_PX } from './lane-metrics.ts';
 export { NumericTile, formatNumeric } from './numerics-dom.ts';
 export { mountMonitor, type MonitorHandle, type MonitorRole, type MountOptions, type ViewerClock } from './mount.ts';
 export type { RenderPath } from './worker-host.ts';
@@ -12,7 +13,7 @@ export { WAVE_STYLE, scaleFor, autoRange, type WaveLaneId, type WaveStyle } from
 export { PressureTile, formatPressure, formatNibp, formatClock, type NibpView } from './numerics-hemo.ts';
 /** The five transport adapters of @pme/controller (brief §7.5). */
 export { transports } from '@pme/controller';
-export { renderPlan, legacyPlan, filterModeFor, ecgLabel, type RenderPlan, type PlanLane, type PlanIbp } from './skin-plan.ts';
+export { renderPlan, legacyPlan, filterModeFor, ecgLabel, type RenderPlan, type PlanLane, type PlanIbp, type StripLayout } from './skin-plan.ts';
 export { autoIbpRange, ibpScaleError, normalIbpScales, IBP_AUTO_EVERY_S, IBP_AUTO_RANGES, IBP_SCALE_LIMITS, type IbpChannel, type IbpScale, type IbpScales } from './ibp-scale.ts';
 export { barView, tileAlarmView, visibleAlarms, type AlarmStatus, type BarView, type TileAlarmView } from './alarm-view.ts';
 export { AlarmAudioBridge } from './alarm-audio.ts';

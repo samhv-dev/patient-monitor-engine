@@ -1,7 +1,7 @@
 // ResolvedSkin → RenderPlan: the plain-data lane layout the worker draws from. It runs on the main thread (where
 // @pme/skins is resolved) and crosses to the worker as JSON. A plan built from the legacy options (`legacyPlan`)
 // reproduces the old hard-coded look exactly, so pages without a skin keep it.
-import { engineFilterFor, type LaneId, type LaneText, type LaneTextLabel, type ResolvedSkin, type Skin } from '@pme/skins';
+import { engineFilterFor, type LaneId, type LaneText, type LaneTextLabel, type ResolvedSkin, type Skin, type TileParam } from '@pme/skins';
 import type { ChannelId, EcgFilterMode, LeadId } from '@pme/engine-core';
 import { ibpChannelOf, ibpScaleError, type IbpChannel, type IbpScale, type IbpScales } from './ibp-scale.ts';
 import { NOMINAL_ECG_LANE_MM } from './ecg-gain.ts';
@@ -166,9 +166,18 @@ export interface LaneOverride {
   lanes?: readonly LeadId[];
   waves?: readonly WaveLaneId[];
 }
+/**
+ * A strip of the monitor: only these of the skin's own lanes and tiles, in the skin's order and look. Each lane kept is
+ * the full screen's lane (its nominal height for the ECG gain included), so a trace is drawn as the full monitor draws it.
+ * `lanes` is in the order they are given up when the strip is too short for all of them (fitStrip): the last first.
+ */
+export interface StripLayout {
+  lanes: readonly LaneId[];
+  tiles: readonly TileParam[];
+}
 const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP', icp: 'ICP' }; // co2, resp, icp
 
-export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, portrait = false, ibpScales: IbpScales = {}): RenderPlan {
+export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, portrait = false, ibpScales: IbpScales = {}, strip?: StripLayout): RenderPlan {
   const s = r.skin;
   const pg = s.pages.find((p) => p.id === (page ?? s.defaultPage));
   const laneIds: readonly LaneId[] = only
@@ -228,9 +237,21 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, 
     laneText: lt ? laneTextPlan(lt, r.render.foreground, portrait) : null,
     calBar: !(lt?.gutterPx && !portrait) || s.ecg.calPulse.defaultOn,
     pxPerMm: s.sweep.pxPerMm ?? null,
-    laneWeights,
-    lanes,
+    ...stripped(lanes, laneWeights, strip),
   };
+}
+
+/** The strip's lanes that each get `minLanePx` of a wave area `waveAreaPx` high: the first ones of its list, at least one. */
+export function fitStrip(strip: StripLayout, waveAreaPx: number, minLanePx: number): StripLayout {
+  const n = Math.max(1, Math.min(strip.lanes.length, Math.floor(waveAreaPx / minLanePx)));
+  return n === strip.lanes.length ? strip : { ...strip, lanes: strip.lanes.slice(0, n) };
+}
+
+/** The lanes a strip keeps, with their weights: selected after the full screen's plan is built. */
+function stripped(lanes: PlanLane[], laneWeights: number[] | null, strip?: StripLayout): Pick<RenderPlan, 'lanes' | 'laneWeights'> {
+  if (!strip) return { lanes, laneWeights };
+  const kept = lanes.flatMap((l, i) => (strip.lanes.includes(l.id as LaneId) ? [i] : []));
+  return { lanes: kept.map((i) => lanes[i] as PlanLane), laneWeights: laneWeights && kept.map((i) => laneWeights[i] as number) };
 }
 
 /**
