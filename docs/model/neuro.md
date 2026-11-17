@@ -89,7 +89,7 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 12 rows; SOURCED 1, FIT 6, ENG 1, UNTAGGED 4, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -462,6 +462,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `emgLevel` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | The EMG drive, 0–1 of EMG_FULL_RMS_UV: |
 | `impedanceUnreliable` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | Electrodes above the limit or unequal: |
 | `impedanceNoiseUv` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | Electrode noise RMS, µV. |
+| `createArtefacts` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | — |
 | `artefactSample` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | The artefacts' sum at one sample, µV. |
 | `createEegState` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | The EEG switched on at 125 Hz sample `m0`. |
 | `validateEegCommand` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | A reason, undefined (accepted) or null (not an EEG command). |
@@ -481,10 +482,17 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `cortexStep` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | One step of the cortical state. |
 | `createSynth` | [`l2/eeg/synth.ts`](../../packages/engine-core/src/l2/eeg/synth.ts) | A generator for `fs` drawing from `rng`, primed with `spec` (two blocks, so the first sample has full variance). |
 | `synthNext` | [`l2/eeg/synth.ts`](../../packages/engine-core/src/l2/eeg/synth.ts) | The next sample, µV. |
+| `readBus` | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | — |
 | `newDoses` | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | Doses the drug model accepted after `seenT` (the neuro model observes, never consumes). |
 | `pcheOf` | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | Cholinesterase phenotype for the drug model's PK patient (`PkPatient.pche`; |
+| `ce50Propofol` | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | — |
 | `locPropofol` | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | Schnider C50 for loss of consciousness: |
+| `opioidFentEq` | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | — |
+| `depth` | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | — |
 | `smoothDi` | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | Displayed index: |
+| `neuroResp` | [`l2/neuro/drive.ts`](../../packages/engine-core/src/l2/neuro/drive.ts) | — |
+| `ec50Multipliers` | [`l2/neuro/interactions.ts`](../../packages/engine-core/src/l2/neuro/interactions.ts) | — |
+| `hypokalaemiaMult` | [`l2/neuro/interactions.ts`](../../packages/engine-core/src/l2/neuro/interactions.ts) | — |
 | `neoEc50Mult` | [`l2/neuro/neostigmine.ts`](../../packages/engine-core/src/l2/neuro/neostigmine.ts) | EC50 multiplier for the non-depolarisers from 7g's acetylcholine gain (1 = no neostigmine). |
 | `hillBlock` | [`l2/neuro/nmb.ts`](../../packages/engine-core/src/l2/neuro/nmb.ts) | Fractional receptor-level block 0–1 of one agent at concentration ce. |
 | `siteBlock` | [`l2/neuro/nmb.ts`](../../packages/engine-core/src/l2/neuro/nmb.ts) | Combined block of several agents at one site: |
@@ -492,19 +500,23 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `diaphragmNdBlock` | [`l2/neuro/nmb.ts`](../../packages/engine-core/src/l2/neuro/nmb.ts) | The DIAPHRAGM's non-depolarising force from its receptors' free fraction. |
 | `tofFrom` | [`l2/neuro/nmb.ts`](../../packages/engine-core/src/l2/neuro/nmb.ts) | The TOF picture from the thumb block. |
 | `phase2Fraction` | [`l2/neuro/nmb.ts`](../../packages/engine-core/src/l2/neuro/nmb.ts) | Succinylcholine phase II fraction from the cumulative dose (the drug model's `cumulativeMgPerKg`): |
+| `neuroOutputs` | [`l2/neuro/outputs.ts`](../../packages/engine-core/src/l2/neuro/outputs.ts) | — |
+| `createNeuroState` | [`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts) | — |
 | `validateNeuroCommand` | [`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts) | --- commands ------------------------------------------------------------------------------------------------ Validation hook: |
 | `applyNeuroCommand` | [`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts) | Apply a validated command at sim time t. |
 | `fasciculating` | [`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts) | True while succinylcholine fasciculations show (engine: |
 | `stepNeuroTo` | [`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts) | Step the neuro state on its 10 Hz grid up to and including time tEnd (s). |
 | `diaphragmVtCapMl` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The tidal volume a partly blocked diaphragm can move in one SUSTAINED breath, mL — 35 mL (VT_EFFORT_ML_KG) at the first effort, a resting VT at DIAPH_EFFECTIVE, the chemical ceiling at full strength ( |
+| `createSpontDrive` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | — |
 | `winterPaco2` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | Winter's expected PaCO2 in metabolic acidosis (mmHg). |
 | `paco2SetPoint` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The chemoreflex set point: |
 | `stepBrainstem` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | One step (`dtS`, the drive's SPONT_DT_S by default) of the brainstem's perfusion state: |
 | `brainstemGate` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The gates on a breathing pattern whose resting VT is `vt0`, from the state stepBrainstem keeps (`b`, and `plS` on the drive's record): |
 | `stepSpontDrive` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | One 1 Hz step of the drive; |
+| `createTofDevice` | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | — |
+| `validateTofAction` | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | — |
+| `tofAction` | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | — |
 | `tofStep` | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | Called every neuro step (0.1 s) with the TRUE reading; |
-
-Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `opioidFentEq`, `depth`, `neuroResp`, `ec50Multipliers`, `hypokalaemiaMult`, `neuroOutputs`, `createNeuroState`, `createSpontDrive`, `createTofDevice`, `validateTofAction`, `tofAction`.
 
 ## Source files
 
