@@ -25,6 +25,16 @@ describe('Cushing response (tables §5.1)', () => {
     for (let i = 0; i < 1200; i++) stepCushing(c, 45, 8, 0.1);
     expect(c.drive).toBeGreaterThan(0.99);
   });
+  it('while still active, the drive stays in 0–1 when the triggers clear (ICP below the threshold: no pre-surge CPP)', () => {
+    const c = createCushing();
+    for (let i = 0; i < 600; i++) stepCushing(c, 35, Infinity, 0.1);
+    for (const cpp of [70, Infinity]) {
+      stepCushing(c, cpp, Infinity, 0.1);
+      expect(c.active).toBe(true);
+      expect(c.drive).toBeGreaterThanOrEqual(0);
+      expect(c.drive).toBeLessThanOrEqual(1);
+    }
+  });
   it('a brief dip does not trigger it', () => {
     const c = createCushing();
     for (let i = 0; i < 200; i++) stepCushing(c, 30, Infinity, 0.1);

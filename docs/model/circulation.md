@@ -704,6 +704,8 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min) | — | — | UNSUPPORTED ([audit row 24](../../docs/validation/target-audit/30-target-audit.md#row-24)) | an ordering, not a level: after the same insult, phenylephrine restores S/D and kIsch faster than ephedrine, and ephedrine raises HR >= 10/min | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
 | RV infarct, presenting state: CVP 9–13 | — | Dell'Italia 1985 | not audited | — | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
 | untreated HTN 60 y falls at least 5 points more than the healthy 40 y | 4.42 points | — | not audited | — | [`circ-sympathetic-tone.test.ts`](../../packages/engine-core/test/engine/circ-sympathetic-tone.test.ts) |
+| drainage + standard-quality CPR alone: ROSC within 4 min of the drainage | +250 s | — | not audited | — | [`circ-tamponade-drainage.test.ts`](../../packages/engine-core/test/engine/circ-tamponade-drainage.test.ts) |
+| the myocardium 24 s into CPR is the same (within 0.03) whichever 0.15 s step CPR starts on | spread 0.033 | — | not audited | — | [`cpr-beating-coronary.test.ts`](../../packages/engine-core/test/engine/cpr-beating-coronary.test.ts) |
 | VF + CPR q 1: CBF ≤ 0.40 of normal | 0.45 | Niemann & Steen 2007 | MIS-SPECIFIED ([audit row 31](../../docs/validation/target-audit/30-target-audit.md#row-31)) | 0.20-0.40 at q 1 (ceiling 0.40); cite Kern 2007, not Meaney 2013 | [`cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) |
 | quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) | 20.5 / 25.2 / 26.6 / 26.6 at the circulation's CPR flow | — | UNSUPPORTED ([audit row 28](../../docs/validation/target-audit/30-target-audit.md#row-28)) | 0.8 -> 15-26; 1.0 -> 20-30; monotone, with q 1.0 at least 3 mmHg above q 0.5; q 0.5 -> 10-20; q 1.2 -> 22-35 (Berve 29 +/- 17, research/09) | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
 | ventilation: +10 breaths/min lowers EtCO2 by 8.7–17.4 % at the learner default | −19 % | Sheak 2015; Murphy 2016 | MIS-SPECIFIED ([audit row 29](../../docs/validation/target-audit/30-target-audit.md#row-29)) | relative: -10 % to -25 % per +10 breaths/min | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
@@ -742,9 +744,9 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | [`engine/circ-sanity-1.test.ts`](../../packages/engine-core/test/engine/circ-sanity-1.test.ts) | 2 | 0 |
 | [`engine/circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) | 3 | 0 |
 | [`engine/circ-sympathetic-tone.test.ts`](../../packages/engine-core/test/engine/circ-sympathetic-tone.test.ts) | 1 | 0 |
-| [`engine/circ-tamponade-drainage.test.ts`](../../packages/engine-core/test/engine/circ-tamponade-drainage.test.ts) | 0 | 0 |
+| [`engine/circ-tamponade-drainage.test.ts`](../../packages/engine-core/test/engine/circ-tamponade-drainage.test.ts) | 1 | 0 |
 | [`engine/circ-teaching.test.ts`](../../packages/engine-core/test/engine/circ-teaching.test.ts) | 0 | 0 |
-| [`engine/cpr-beating-coronary.test.ts`](../../packages/engine-core/test/engine/cpr-beating-coronary.test.ts) | 0 | 0 |
+| [`engine/cpr-beating-coronary.test.ts`](../../packages/engine-core/test/engine/cpr-beating-coronary.test.ts) | 1 | 0 |
 | [`engine/cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) | 1 | 0 |
 | [`engine/cpr-ecg-artefact.test.ts`](../../packages/engine-core/test/engine/cpr-ecg-artefact.test.ts) | 0 | 0 |
 | [`engine/cpr-etco2-circulation.test.ts`](../../packages/engine-core/test/engine/cpr-etco2-circulation.test.ts) | 0 | 0 |
