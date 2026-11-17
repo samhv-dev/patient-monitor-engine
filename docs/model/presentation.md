@@ -65,9 +65,9 @@ renderer, audio and skin contracts.
 | [`calibration.ts:2`](../../packages/renderer/src/calibration.ts#L2) | x = (simT · mm_s · px_mm) mod laneWidth |
 | [`calibration.ts:3`](../../packages/renderer/src/calibration.ts#L3) | Default calibration: 96 CSS px per inch = 3.78 CSS px/mm [05 §3.1] until the user calibrates. |
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
-| [`device-ui.ts:891`](../../packages/renderer/src/device-ui.ts#L891) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
-| [`mount.ts:199`](../../packages/renderer/src/mount.ts#L199) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:436`](../../packages/renderer/src/mount.ts#L436) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`device-ui.ts:911`](../../packages/renderer/src/device-ui.ts#L911) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
+| [`mount.ts:208`](../../packages/renderer/src/mount.ts#L208) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
+| [`mount.ts:452`](../../packages/renderer/src/mount.ts#L452) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:29`](../../packages/renderer/src/protocol.ts#L29) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -398,6 +398,12 @@ renderer, audio and skin contracts.
 | `IBP_AUTO_EVERY_S` | `30` | s | — | AUTO is judged at every multiple of this many sim seconds, over the two windows before it [DOC: see the header]. |
 | `IBP_AUTO_HEADROOM` | `0.1` | — | [ENG: display] | The window's peak stays this share of the range's span under its top [ENG: display]. |
 | `IBP_AUTO_OUTLIER_BLOCKS` | `2` | — | [ENG: display] | Up to this many one-second blocks of a window above (or below) the rest are outliers, a flush or an odd beat [ENG: display]. |
+
+### [`lane-metrics.ts`](../../packages/renderer/src/lane-metrics.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `LABEL_STRIP_H` | `18` | — | [ENG: display] | The lane text's rows, shared by the canvas (monitor-core) and whoever lays out a monitor's box. CSS px: the 14 px label row [ENG: display]. |
 
 ### [`monitor-core.ts`](../../packages/renderer/src/monitor-core.ts)
 
@@ -1054,6 +1060,7 @@ renderer, audio and skin contracts.
 | `formatGain` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | Gain as the lane label prints it (brief §3.8 `ecg.gainLabel`): |
 | `ecgLabel` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | Fill an ECG lane template. |
 | `renderPlan` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | — |
+| `fitStrip` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | The strip's lanes that each get `minLanePx` of a wave area `waveAreaPx` high: |
 | `legacyPlan` | [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts) | The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. |
 | `fitPart` | [`tile-fit.ts`](../../packages/renderer/src/tile-fit.ts) | One part of width `w`, its texts' natural widths and the gap between two texts beside each other. |
 | `fitTile` | [`tile-fit.ts`](../../packages/renderer/src/tile-fit.ts) | A split tile: |
@@ -1356,6 +1363,7 @@ renderer, audio and skin contracts.
 | [`iife-worker.ts`](../../packages/renderer/src/iife-worker.ts) | IIFE build only (`vite build --mode iife` aliases './engine.worker.ts?worker&inline' to this file). |
 | [`index.ts`](../../packages/renderer/src/index.ts) | @pme/renderer public API. |
 | [`lab-panel.ts`](../../packages/renderer/src/lab-panel.ts) | The lab / ABG panel (a DOM widget, like numerics-dom.ts). |
+| [`lane-metrics.ts`](../../packages/renderer/src/lane-metrics.ts) | The lane text's rows, shared by the canvas (monitor-core) and whoever lays out a monitor's box. |
 | [`monitor-core.ts`](../../packages/renderer/src/monitor-core.ts) | Engine + sweep lanes + static chrome, driven by frame timestamps. |
 | [`mount.ts`](../../packages/renderer/src/mount.ts) | mountMonitor (brief §7.6): ECG lanes + HR tile + QRS beep; pressure/pleth lanes and tiles. |
 | [`numerics-dom.ts`](../../packages/renderer/src/numerics-dom.ts) | DOM numeric tiles (brief §3.1: DOM numerics ≤1 Hz). |
@@ -1483,6 +1491,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/pump-rack.e2e.ts`](../../apps/demo/e2e/pump-rack.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/reload-keeps-case.e2e.ts`](../../apps/demo/e2e/reload-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/remote-resume.e2e.ts`](../../apps/demo/e2e/remote-resume.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/remote-strip.e2e.ts`](../../apps/demo/e2e/remote-strip.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/resolution-fit.e2e.ts`](../../apps/demo/e2e/resolution-fit.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/respiratory-evidence-page.e2e.ts`](../../apps/demo/e2e/respiratory-evidence-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/restart-keeps-case.e2e.ts`](../../apps/demo/e2e/restart-keeps-case.e2e.ts) | 0 | 0 |
@@ -1813,6 +1822,7 @@ renderer, audio and skin contracts.
 | [`saadat-pass-3.test.ts`](../../packages/renderer/test/saadat-pass-3.test.ts) | 0 | 0 |
 | [`skin-plan.test.ts`](../../packages/renderer/test/skin-plan.test.ts) | 0 | 0 |
 | [`spo2-cpr-e126.test.ts`](../../packages/renderer/test/spo2-cpr-e126.test.ts) | 0 | 0 |
+| [`strip-layout.test.ts`](../../packages/renderer/test/strip-layout.test.ts) | 0 | 0 |
 | [`sweep-backfill.test.ts`](../../packages/renderer/test/sweep-backfill.test.ts) | 0 | 0 |
 | [`sweep-lane-4b.test.ts`](../../packages/renderer/test/sweep-lane-4b.test.ts) | 0 | 0 |
 | [`sweep-lane.test.ts`](../../packages/renderer/test/sweep-lane.test.ts) | 0 | 0 |

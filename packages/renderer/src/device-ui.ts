@@ -147,9 +147,24 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)){flex-wrap:wrap;row-gap:2px}',
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4))>.part{flex:1 0 40%}',
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)) .pv:empty{display:none}',
+    // a strip's third-of-a-phone tile: its sub-line's parts one under another, a part too long for the tile on two lines
+    '.pme-subset .pme-stile .s{white-space:normal}',
+    '.pme-subset .pme-stile .s>span{display:block}',
     // the rc.3 limit pairs stay off a phone, as the old limits do (review T-12)
     '.pme-portrait .pme-stile.rc3 .lim.a,.pme-portrait .pme-stile.rc3 .lim.b,.pme-portrait .pme-stile.rc3 .lim.c,.pme-portrait .pme-stile.rc3 .part .lim,.pme-portrait .pme-stile.rc3 .limrow{display:none}',
   ].join('\n');
+}
+
+/** Between the parts of a tile's sub-line. */
+const SUB_SEPARATOR = '  ';
+
+/** A tile's sub-line ("awRR 12  imCO2 0") as one span per part, the parts' own separators between them (the same text). */
+function wrapAtParts(doc: Document, sub: string): Array<Node | string> {
+  return sub.split(SUB_SEPARATOR).flatMap((part, i) => {
+    const span = doc.createElement('span');
+    span.textContent = part;
+    return i ? [SUB_SEPARATOR, span] : [span];
+  });
 }
 
 /**
@@ -438,9 +453,13 @@ export class DeviceUI {
   private note = '';
   private readonly noteEl: HTMLSpanElement;
 
-  constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string, portrait = false, bed = 'BED 01') {
+  /** A strip's tiles (StripLayout.tiles): only these of the skin's tiles are built; null, every tile. */
+  private readonly only: ReadonlySet<TileParam> | null;
+
+  constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string, portrait = false, bed = 'BED 01', only?: readonly TileParam[]) {
     this.r = r;
     this.portrait = portrait;
+    this.only = only ? new Set(only) : null;
     this.bed = bed;
     this.style = doc.createElement('style');
     doc.head.append(this.style);
@@ -509,7 +528,7 @@ export class DeviceUI {
     this.badge.style.display = r.skin.layout.badge ? '' : 'none';
     // Portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
     this.tiles.style.cssText = this.portrait ? 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;overflow:hidden;' : 'display:flex;flex:none;overflow:hidden;';
-    this.tiles.className = this.portrait ? 'pme-portrait' : '';
+    this.tiles.className = this.portrait ? `pme-portrait${this.only ? ' pme-subset' : ''}` : '';
     this.tiles.style.background = r.render.background;
     this.tiles.style.setProperty('--pme-divider', r.skin.chrome.divider);
     this.tiles.replaceChildren();
@@ -534,6 +553,7 @@ export class DeviceUI {
       const c = doc.createElement('div');
       c.style.cssText = this.portrait ? 'display:contents' : `width:180px;border-left:1px solid ${r.skin.chrome.divider};`;
       for (const spec of col) {
+        if (this.only && !this.only.has(spec.param)) continue;
         const tile = this.buildTile(spec);
         this.tileList.push(tile);
         const el = tile.el;
@@ -915,7 +935,7 @@ export class DeviceUI {
 
   /** The one-line extras text of the old skeleton and the unsplit rc.3 tiles. */
   private extras(spec: TileSpec): string {
-    return this.extraParts(spec).filter((p) => p.text).map((p) => `${p.label} ${p.value}`).join('  ');
+    return this.extraParts(spec).filter((p) => p.text).map((p) => `${p.label} ${p.value}`).join(SUB_SEPARATOR);
   }
 
   private paintTiles(t: number): void {
@@ -998,7 +1018,8 @@ export class DeviceUI {
       // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG: display];
       // the grid sizes its values from the skin (layout.grid.fontPx)
       if (!split && !grid) tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
-      tile.sub.textContent = sub;
+      if (this.only && tile.sub.textContent !== sub) tile.sub.replaceChildren(...wrapAtParts(tile.sub.ownerDocument, sub));
+      else if (!this.only) tile.sub.textContent = sub;
       const partKeys = tile.rc3?.parts.flatMap((pt) => (pt.limitKey ? [pt.limitKey] : [])) ?? [];
       const av = tileAlarmView(p, this.status, this.r, t, this.pump, partKeys);
       tile.bell.innerHTML = av.bellOff && this.r.skin.alarms.alarmOffIcon === 'crossed-bell-red' ? BELL_OFF_SVG : av.bellOff ? '🔕' : '';
