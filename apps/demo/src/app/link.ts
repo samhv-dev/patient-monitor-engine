@@ -55,8 +55,8 @@ export class Link {
   readonly pumpFindings = new Map<number, PumpMismatchNews>();
   /** The engine's last `drugs` event: every drug's concentrations, rate and amount given, and the pump channels. */
   drugs: DrugsEvent | null = null;
-  /** The room's pump rack as Room setup set it (the host's `style`), each channel's kind. */
-  rack: readonly PumpKind[] = [];
+  /** A remote's copy of the room's pump rack, from the host's `style`. */
+  private styleRack: readonly PumpKind[] = [];
   private readonly pumpEdges = new PumpAlarmEdges();
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
@@ -157,6 +157,11 @@ export class Link {
     for (const off of this.offs) off();
   }
 
+  /** The room's pump rack as Room setup set it, each channel's kind: the host's own, or on a remote its last `style`. */
+  get rack(): readonly PumpKind[] {
+    return this.host ? this.host.pumpRack : this.styleRack;
+  }
+
   /** The pump channels' standing alarms. */
   get pumpAlarms(): PumpAlarmNow[] {
     return this.pumpEdges.now;
@@ -203,7 +208,7 @@ export class Link {
       const a = this.pumpEdges.event(e);
       if (a) this.add({ simT: e.t, kind: 'alarm', text: a.text });
     } else if (e.type === 'style') {
-      if (e.pumps) this.rack = [...e.pumps];
+      if (e.pumps) this.styleRack = [...e.pumps];
     } else if (e.type === 'timeline') {
       // A new timeline — onsets in progress began on the old one; a restart also ends the acute events (a Remote has no
       // AppSession.onMount to tell it); a bookmark restore keeps them (the engine does not report them)

@@ -22,7 +22,8 @@ const pump = (page: Page, event: Record<string, unknown>) => page.evaluate((e) =
 async function steps(page: Page, list: Array<Record<string, unknown>>): Promise<void> {
   for (const e of list) await expect.poll(async () => (await pump(page, e)).accepted, { message: JSON.stringify(e), timeout: 10_000, intervals: [200] }).toBe(true);
 }
-const alarmLines = (page: Page) => page.evaluate(() => (window as unknown as W).__pmeApp.link.log.filter((x) => x.kind === 'alarm').map((x) => x.text));
+/** The Log's pump alarm lines (the monitor's own alarms, such as a sensor not attached, are lines of the same kind). */
+const alarmLines = (page: Page) => page.evaluate(() => (window as unknown as W).__pmeApp.link.log.filter((x) => x.kind === 'alarm' && x.text.startsWith('Pump channel')).map((x) => x.text));
 
 test('a drip channel runs to Infusion Complete: the instructor\'s page, the Log and the Debrief show it, and when it ended', async ({ page, browserName }) => {
   test.setTimeout(180_000);
@@ -52,13 +53,14 @@ test('a drip channel runs to Infusion Complete: the instructor\'s page, the Log 
   await expect(ch2).toContainText('Infused 0.5 mL');
   await expect(s.locator('.pumps-given')).toContainText('Phenylephrine: 50 µg');
   const shots = process.env.PME_269_SHOTS;
-  if (shots) await page.screenshot({ path: `${shots}/269-${browserName}-instructor-1440.png` });
+  if (shots) await page.screenshot({ path: `${shots}/269-${browserName}-instructor-1440.png`, animations: 'disabled' });
   if (shots) {
     const phone = await page.context().newPage();
     await phone.setViewportSize({ width: 390, height: 844 });
     await phone.goto(`${base}/#/remote?code=${await page.evaluate(() => (window as unknown as W).__pmeApp.session.code)}`);
     await phone.getByRole('tab', { name: 'Pumps' }).click();
-    await expect(phone.locator('.pumps-ch').nth(1)).toHaveAttribute('data-state', 'alarm', { timeout: 15_000 });
+    // a same-browser remote has no `style` (the host sends the rack to relay peers): it shows the channels the engine holds
+    await expect(phone.locator('.pumps-ch[data-state="alarm"] h4')).toHaveText('Channel 2 · Drip', { timeout: 15_000 });
     await phone.screenshot({ path: `${shots}/269-${browserName}-remote-390.png`, fullPage: true });
     await phone.close();
     await page.bringToFront();
