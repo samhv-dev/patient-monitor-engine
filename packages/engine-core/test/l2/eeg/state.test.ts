@@ -2,8 +2,9 @@
 // as values (research/43 P-1, P-2, P-7, P-12; Miller Ch35/Ch36; Stecker 2001).
 import { describe, expect, it } from 'vitest';
 import {
-  brainDo2Rel, cortexInputsOf, DEEP_ONSET, cortexStep, DEXMED_LOR_NG_ML, N2O_TRIGGER_MAC, N2O_TRANSIENT_TAU_S, SUPP_ESTABLISHED, SUPP_NEAR_ISO,
+  cortexInputsOf, DEEP_ONSET, cortexStep, DEXMED_LOR_NG_ML, N2O_TRIGGER_MAC, N2O_TRANSIENT_TAU_S, SUPP_ESTABLISHED, SUPP_NEAR_ISO,
 } from '../../../src/l2/eeg/state.ts';
+import { CORTEX, functionLoss } from '../../../src/l2/brain/energy.ts';
 import { ce50Propofol, locPropofol } from '../../../src/l2/neuro/depth.ts';
 import { DEXMED_EEG_C50_NG_ML } from '../../../src/l2/pk/combine.ts';
 import { AGENTS, MAC_AWAKE } from '../../../src/l2/pk/volatile.ts';
@@ -14,7 +15,7 @@ const H0 = { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 
 const M0 = { sevoflurane: 0, isoflurane: 0, desflurane: 0, n2o: 0 };
 type Patch = Partial<Omit<CortexInputs, 'hyp' | 'mac'>> & { hyp?: Partial<CortexInputs['hyp']>; mac?: Partial<CortexInputs['mac']> };
 const inp = (p: Patch = {}): CortexInputs => ({
-  ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, do2Rel: 1, tempC: 37,
+  ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, metabolic: 0, tempC: 37,
   ...p, hyp: { ...H0, ...(p.hyp ?? {}) }, mac: { ...M0, ...(p.mac ?? {}) },
 });
 const cx = (p: Patch = {}) => cortexStep(undefined, inp(p), 0.1);
@@ -89,17 +90,13 @@ describe('EEG E1 cortical state', () => {
     expect(cx({ mac: { desflurane: 0.6 }, opioidFentEq: 10 }).suppressDrive).toBeCloseTo(cx({ mac: { desflurane: 0.6 } }).suppressDrive, 12);
   });
 
-  it('C34: O2 delivery — EEG abnormal below CBF 20 of 50 mL/100 g/min (0.4), voltage lost toward 12 (0.24) (Ch35 pp. 1105, 1122)', () => {
-    expect(cx({ do2Rel: 0.45 }).metabolic).toBe(0);
-    expect(cx({ do2Rel: 0.4 }).metabolic).toBe(0);
-    expect(cx({ do2Rel: 0.32 }).metabolic).toBeCloseTo(0.5, 9);
-    expect(cx({ do2Rel: 0.32 }).suppress).toBe(0); // slowing with preserved voltage first
-    expect(cx({ do2Rel: 0.24 }).metabolic).toBe(1);
-    expect(cx({ do2Rel: 0.24 }).suppress).toBe(1);
-    // hypoxaemia acts through the same delivery: compensated by flow it changes nothing (Ch35 p. 1126)
-    expect(brainDo2Rel(1, 14, 0.97, 95)).toBeCloseTo(1, 9);
-    expect(brainDo2Rel(1.5, 14, 0.65, 35)).toBeGreaterThan(0.95);
-    expect(brainDo2Rel(1, 14, 0.3, 20)).toBeLessThan(0.4);
+  it('C34: the cortex\'s loss of function from its O2 delivery first slows (voltage kept), then the voltage goes (Ch35 pp. 1105, 1122)', () => {
+    const at = (delivery: number) => cx({ metabolic: functionLoss(delivery, CORTEX) });
+    expect(at(0.45).metabolic).toBe(0);
+    expect(at(0.32).metabolic).toBeCloseTo(0.5, 9);
+    expect(at(0.32).suppress).toBe(0); // slowing with preserved voltage first
+    expect(at(0.24).metabolic).toBe(1);
+    expect(at(0.24).suppress).toBe(1);
   });
 
   it('C35: hypothermia — slowing as the core cools, burst suppression from 24.4 °C, silence at 17.8 °C (Stecker 2001; Ch35 p. 1127 "15–18 °C")', () => {
@@ -160,7 +157,7 @@ describe('EEG E1 cortical state', () => {
     const bus = busFixture({ cns: { opioidCeFentEq: 3 }, volatiles: { sevoflurane: { fet: 1.8, brain: 1.8, macAge: 1.8, macFrac: 0.9 } } });
     bus.cns.hypByClass = { gabaIv: 2, barbiturate: 0, etomidate: 0, benzo: 0.5, dissociative: 0 };
     bus.cns.alpha2Eq = 0.3;
-    const x = cortexInputsOf(bus, { ageY: 40, stimulus: 0.5, antinoc: 0.2, do2Rel: 1, tempC: 36, macF: 0.9 });
+    const x = cortexInputsOf(bus, { ageY: 40, stimulus: 0.5, antinoc: 0.2, metabolic: 0, tempC: 36, macF: 0.9 });
     expect(x.hyp.gabaIv).toBeCloseTo(2000, 9);
     expect(x.hyp.benzo).toBeCloseTo(500, 9);
     expect(x.mac.sevoflurane).toBeCloseTo(1, 9);

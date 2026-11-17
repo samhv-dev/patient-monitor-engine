@@ -53,6 +53,8 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | Where | Relation |
 |---|---|
 | [`cushing.ts:3`](../../packages/engine-core/src/l2/brain/cushing.ts#L3) | > 30 s (the tables' two triggers). Drive 0–1 (onset τ 15 s → MAP +30–50 over 30–60 s), giving ΔMAP = 50·drive |
+| [`energy.ts:4`](../../packages/engine-core/src/l2/brain/energy.ts#L4) | delivery = CBF/CBF0 × CaO2 ÷ the reference CaO2 |
+| [`energy.ts:6`](../../packages/engine-core/src/l2/brain/energy.ts#L6) | linear between;  fn = 1 − metabolic |
 | [`flow.ts:1`](../../packages/engine-core/src/l2/brain/flow.ts#L1) | Cerebral blood flow, metabolism and brain oxygen (tables §5.1): CBF = CBF0·A(CPP)·C(PaCO2)·O(PaO2)·M, with M the |
 | [`flow.ts:15`](../../packages/engine-core/src/l2/brain/flow.ts#L15) | 0–1 fractional effect, E = Ce/(Ce + C50) |
 | [`flow.ts:36`](../../packages/engine-core/src/l2/brain/flow.ts#L36) | A with an autoregulation index ar (1 intact, 0 pressure-passive: CBF ∝ CPP/CPP_REF). TBI impairs it. |
@@ -64,11 +66,11 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`params.ts:31`](../../packages/engine-core/src/l2/brain/params.ts#L31) | CBV ∝ CBF^0.38, tables `grubb` [VERIFY] |
 | [`params.ts:37`](../../packages/engine-core/src/l2/brain/params.ts#L37) | [FIT: intracranial volume–pressure fit; brief research/44 L2-11] PbtO2 ∝ (delivery/demand)^0.75, not the tables' linear form: linear gave 9.5 in check 18 (tables 10–15) |
 | [`params.ts:39`](../../packages/engine-core/src/l2/brain/params.ts#L39) | (Fick on tables [P] values: SjvO2 ≈ 0.65, textbook 55–75 %) resting cerebral O2 extraction, chosen so SjvO2 = 0.97·(1 − 0.33) ≈ 0.65 (textbook 55–75 %; tables have no row) |
-| [`params.ts:46`](../../packages/engine-core/src/l2/brain/params.ts#L46) | tables MAP_head = MAP − 0.74·h |
-| [`params.ts:59`](../../packages/engine-core/src/l2/brain/params.ts#L59) | OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg) |
+| [`params.ts:55`](../../packages/engine-core/src/l2/brain/params.ts#L55) | tables MAP_head = MAP − 0.74·h |
+| [`params.ts:68`](../../packages/engine-core/src/l2/brain/params.ts#L68) | OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg) |
 | [`wave.ts:3`](../../packages/engine-core/src/l2/brain/wave.ts#L3) | AMP = elastance × arterial pulse volume (≈ 1.6 mL at PP 40), so AMP ≈ 0.1·ICP + 0.5 when compliant and rises |
 | [`effects.ts:2`](../../packages/engine-core/src/l2/organs/effects.ts#L2) | `coupled` sbp/dbp (+1.3/+0.85 × ΔMAP, the widened pulse pressure; MAP = dbp + (sbp − dbp)/3 rises by exactly ΔMAP) |
-| [`pipeline.ts:170`](../../packages/engine-core/src/l2/organs/pipeline.ts#L170) | ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the |
+| [`pipeline.ts:178`](../../packages/engine-core/src/l2/organs/pipeline.ts#L178) | ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the |
 | [`kidney.ts:33`](../../packages/engine-core/src/l2/renal/kidney.ts#L33) | One algebraic kidney (both kidneys in parallel, so resistances ÷ 2): RBF = (Pa − Pv)/ΣR; P_gc from the divider; |
 | [`kidney.ts:34`](../../packages/engine-core/src/l2/renal/kidney.ts#L34) | GFR = Kf·(P_gc − P_B − π_gc)+. `k` scales every resistance (calibration to the resting RBF), `rAff` is the TGF state |
 | [`kidney.ts:49`](../../packages/engine-core/src/l2/renal/kidney.ts#L49) | leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol |
@@ -82,7 +84,7 @@ an embedding developer reads it for the organ inputs it collects and the effects
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 6 rows; SOURCED 0, FIT 2, ENG 0, UNTAGGED 3, ABSENT 1.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 7 rows; SOURCED 1, FIT 2, ENG 0, UNTAGGED 3, ABSENT 1.
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -90,6 +92,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|---|---|---|---|
 | `organs.brain.cpp` | `hemo.circ.mapNow`, `organs.brain.icp` → `organs.brain.cpp` | ± · state | UNTAGGED | — | — | CPP = MAP at head height − max(ICP, cerebral venous pressure). |
 | `organs.brain.flow` | `organs.brain.cpp` → `organs.brain.cbfRel` | + · state | UNTAGGED | — | — | Cerebral flow = autoregulated conductance × CPP (flat inside the autoregulation limits, pressure-passive outside). |
+| `organs.brain.energy.cortex` | `organs.brain.cbfRel`, `blood.out.hb` (Hb), `resp.o2.sa` (SaO₂), `resp.o2.pao2` (PaO₂) → `organs.brain.energy.cortex.metabolic` | − · threshold | SOURCED | `DO2_EEG_ABNORMAL` = 20 / 50, `DO2_EEG_LOST` = 12 / 50 | — | Cortical O2 delivery (CBF/CBF0 × CaO2 ÷ the reference CaO2) below 20/50 of normal costs the cortex its function, all of it below 12/50. |
 | `organs.brain.vasomotor` | `organs.brain.cbfRel` → `hemo.circ.ext.cbfRel` | + · state | UNTAGGED | — | — | Brainstem perfusion handed to the circulation (the vasomotor centre's own supply). |
 | `organs.cushing.drive` | `organs.brain.cpp` → `organs.brain.cush.drive` | − · threshold | FIT | `CUSH_CPP` = 40, `CUSH_DELAY_S` = 30, `CUSH_TAU_ON_S` = 15, `CUSH_TAU_OFF_S` = 60 | delay `CUSH_DELAY_S`; τ `CUSH_TAU_ON_S` | CPP below CUSH_CPP for CUSH_DELAY_S starts the surge drive. |
 | `organs.cushing.svr` | `organs.brain.cush.drive` → `hemo.circ.ext.rSysF` | + · factor | FIT | `CUSH_SVR_GAIN` = 1.2 | — | SVR × (1 + CUSH_SVR_GAIN·drive); the bradycardia is the baroreflex's answer (no hrF). |
@@ -126,6 +129,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `cush` | `CushingState` | — |
 | `lowCppS` | `number` | — |
 | `herniated` | `boolean` | — |
+| `energy` | `BrainEnergy` | — |
 | `icp` | `number` | outputs (truths) |
 | `cpp` | `number` | — |
 | `mapHead` | `number` | — |
@@ -250,6 +254,9 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `OER_MAX` | `0.75` | — | tables §5.3 | (tables §5.3 `erMax` 0.6–0.75) extraction ceiling (tables §5.3 `erMax` range 0.6–0.75, top end: the brain extracts more than the body) |
 | `Q10_BRAIN` | `0.07` | — | [P] | CMRO2 −7 %/°C, tables `q10Brain` [P] |
 | `HB_DEFAULT` | `14` | g/dL | — | g/dL without the blood model (the gas model's HB_G_DL) |
+| `DO2_EEG_ABNORMAL` | `20 / 50` | — | Miller 10th ed. chapter 35; Miller Ch35 p. 1122; [INF] | The cortex's energy thresholds on O2 delivery (Miller 10th ed. chapter 35, printed pages) The EEG turns abnormal at CBF 20 of 50 mL/100 g/min (Miller Ch35 p. 1122) — read as O2 DELIVERY relative to normal, so hypoxaemia acts only once flow compensation is exhausted (Ch35 p. 1126) [INF]. |
+| `DO2_EEG_LOST` | `12 / 50` | — | Miller Ch35 p. 1122 | Cellular survival threatened at CBF 12 mL/100 g/min (Miller Ch35 p. 1122): the voltage is gone. |
+| `METABOLIC_SLOW_SHARE` | `0.5` | — | Miller Ch35 p. 1105 gives the order; [FIT: half; src Miller Ch35 p. 1105 gives the order, not the share] | The share of `metabolic` that only slows (voltage preserved) before the voltage goes (Ch35 p. 1105: "first slowing with preserved voltage, then loss of voltage") [FIT: half; src Miller Ch35 p. 1105 gives the order, not the share]. |
 | `HEAD_HEIGHT_CM` | `25` | — | research/44 L2; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | tragus above the heart at 90° head-up [FIT: intracranial volume–pressure fit; brief research/44 L2-11]; 30° → 12.5 cm → MAP_head −9.2 |
 | `HEADUP_VOL_ML_30` | `2.9` | — | research/44 L2; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | Venous/CSF volume that leaves the skull at 30° head-up [FIT: intracranial volume–pressure fit; brief research/44 L2-11]: ICP 20 → 14.4 at PVI 20 (tables: −5.6 mmHg). |
 | `MMHG_PER_CM_BLOOD` | `0.74` | — | — | tables MAP_head = MAP − 0.74·h |
@@ -391,6 +398,9 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | Function | File | Doc |
 |---|---|---|
 | `stepCushing` | [`l2/brain/cushing.ts`](../../packages/engine-core/src/l2/brain/cushing.ts) | Advance by dt (s) with the pre-surge CPP and the current head-MAP − ICP gap (Infinity: |
+| `brainDo2Rel` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | O2 delivery relative to normal: |
+| `functionLoss` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | The share of a compartment's function lost at `delivery`. |
+| `stepBrainEnergy` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | Set the energy state from the supply now (no stored energy yet: |
 | `autoregIntact` | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | Pressure autoregulation A(CPP) with intact regulation (tables A(): |
 | `autoreg` | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | A with an autoregulation index ar (1 intact, 0 pressure-passive: |
 | `co2Factor` | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | CO2 reactivity C(PaCO2) = 1 + k·(PaCO2 − ref), PaCO2 clamped to 20–80 (tables C()). |
@@ -421,6 +431,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `readDrugView` | [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts) | The drug model's bus (`ps.pk.bus`), the neuro model's CMRO2 (`ps.neuro.outputs.cmro2Mult`) and the endocrine model's sepsis (`ps.endo.core.cond.sepsis.cur`). |
 | `alphaExcess` | [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts) | The α-agonist that is "above need" (tables §5.2 D row: |
 | `rebaselineOrgans` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | Recalibrate on the running pipelines' t = 0 truths (the engine calls this once, right after creating its state). |
+| `upgradeOrgans` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | A snapshot taken before the brain had an energy state: |
 | `validateOrgansCommand` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | undefined = accepted, string = rejected, null = not an organ command. |
 | `lpReab` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | Pulse's tubular reabsorption permeability at renal arterial pressure p (annex B2; |
 | `natriuresis` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | Pressure natriuresis: |
@@ -436,13 +447,14 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `createRenal` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | The kidney is calibrated on the HEALTHY reference (MAP 93, CVP 5, CO 0.08 L/min/kg: |
 | `uopOver` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Rolling urine output over the last `minutes` (≤ 1440), mL/kg/h. |
 
-Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea`, `createLiver`, `applyOrganEffects`, `readOrganView`, `createOrgansState`, `organChannelActive`, `advanceOrgans`, `applyOrgansCommand`, `stepRenal`, `giveFurosemide`, `giveMannitolRenal`.
+Exported without a doc comment: `createBrainEnergy`, `createBrain`, `giveOsmotherapy`, `beatShapeArea`, `createLiver`, `applyOrganEffects`, `readOrganView`, `createOrgansState`, `organChannelActive`, `advanceOrgans`, `applyOrgansCommand`, `stepRenal`, `giveFurosemide`, `giveMannitolRenal`.
 
 ## Source files
 
 | File | Header |
 |---|---|
 | [`l2/brain/cushing.ts`](../../packages/engine-core/src/l2/brain/cushing.ts) | Cushing response (tables §5.1): brainstem ischaemia when CPP — computed on the PRE-SURGE MAP, so the response cannot switch itself off — stays below 40 mmHg, OR the ICP comes within 10 mmHg of the (current) head MAP, for |
+| [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | The brain's energy state (docs/plans/brain-energy-consciousness-recovery.md §1): one entry per compartment, stepped on the brain's 10 Hz grid from the organ model's own flow and blood gases, and read by the EEG. |
 | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | Cerebral blood flow, metabolism and brain oxygen (tables §5.1): CBF = CBF0·A(CPP)·C(PaCO2)·O(PaO2)·M, with M the flow–metabolism coupling plus the direct vasodilation of volatiles/ketamine (tables "Anaesthetic and treatm |
 | [`l2/brain/mechanics.ts`](../../packages/engine-core/src/l2/brain/mechanics.ts) | Monro–Kellie craniospinal mechanics (tables §5.1): ICP = ICP0·10^(ΔV/PVI) over the change of intracranial volume (mass + oedema + ΔCBV − displaced CSF − osmotic brain-water loss − head-up venous drainage), and Marmarou C |
 | [`l2/brain/model.ts`](../../packages/engine-core/src/l2/brain/model.ts) | BrainModel (tables §5.1): plain-data state stepped at 10 Hz from the circulation/gas truths. |
@@ -492,6 +504,7 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | [`engine/organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) | 1 | 0 |
 | [`engine/organs-wiring.test.ts`](../../packages/engine-core/test/engine/organs-wiring.test.ts) | 0 | 0 |
 | [`l2/brain/cushing.test.ts`](../../packages/engine-core/test/l2/brain/cushing.test.ts) | 0 | 0 |
+| [`l2/brain/energy.test.ts`](../../packages/engine-core/test/l2/brain/energy.test.ts) | 0 | 0 |
 | [`l2/brain/flow.test.ts`](../../packages/engine-core/test/l2/brain/flow.test.ts) | 0 | 0 |
 | [`l2/brain/mechanics.test.ts`](../../packages/engine-core/test/l2/brain/mechanics.test.ts) | 0 | 0 |
 | [`l2/brain/model.test.ts`](../../packages/engine-core/test/l2/brain/model.test.ts) | 1 | 0 |

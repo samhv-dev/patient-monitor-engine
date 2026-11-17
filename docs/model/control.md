@@ -431,6 +431,7 @@ None recorded.
 | [`relay/relay.test.ts`](../../packages/controller/test/relay/relay.test.ts) | 0 | 0 |
 | [`remote/remote-scenario.dom.test.ts`](../../packages/controller/test/remote/remote-scenario.dom.test.ts) | 0 | 0 |
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 0 | 0 |
+| [`scenario/arrest-cortex.test.ts`](../../packages/controller/test/scenario/arrest-cortex.test.ts) | 0 | 0 |
 | [`scenario/briefing.test.ts`](../../packages/controller/test/scenario/briefing.test.ts) | 0 | 0 |
 | [`scenario/builtins.test.ts`](../../packages/controller/test/scenario/builtins.test.ts) | 0 | 0 |
 | [`scenario/clock-step-back.test.ts`](../../packages/controller/test/scenario/clock-step-back.test.ts) | 0 | 0 |
