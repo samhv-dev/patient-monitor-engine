@@ -51,7 +51,7 @@ renderer, audio and skin contracts.
 
 | Where | Relation |
 |---|---|
-| [`site.ts:78`](../../apps/demo/src/app/site.ts#L78) | PQ1 = C, the owner's ruling (research/00-orchestrator-rulings.md, 9 November 16:00): "1–8, default 4". All syringe |
+| [`site.ts:81`](../../apps/demo/src/app/site.ts#L81) | PQ1 = C, the owner's ruling (research/00-orchestrator-rulings.md, 9 November 16:00): "1–8, default 4". All syringe |
 | [`vitals.ts:11`](../../apps/demo/src/app/vitals.ts#L11) | Display = engine value × scale. |
 | [`meta.ts:9`](../../apps/demo/src/physiology-console/meta.ts#L9) | Displayed = raw × scale (e.g. mmHg·s/mL → dyn·s/cm⁵). |
 | [`model.ts:29`](../../apps/demo/src/physiology-console/model.ts#L29) | Raw engine values; `unit` is the display unit and display = raw × scale. |
@@ -923,6 +923,7 @@ renderer, audio and skin contracts.
 | `ventScreens` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8d: whether the laptop's ventilator window and the granted tablet drive the patient now (null: |
 | `serveRemoteCockpit` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8c: the host drives from the granted remote cockpit (HostSession onVent / onVentilator) exactly as the view does: |
 | `serveWindowCockpit` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8d: the cockpit in a window of this computer (Room setup's "Ventilator in a new window": |
+| `chooseVentFace` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | Room setup's ventilator face: |
 | `ventView` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | — |
 | `createDefibCore` | [`apps/demo/src/defib/core/core.ts`](../../apps/demo/src/defib/core/core.ts) | — |
 | `createPending` | [`apps/demo/src/defib/core/pending.ts`](../../apps/demo/src/defib/core/pending.ts) | — |
@@ -972,7 +973,6 @@ renderer, audio and skin contracts.
 | `createAlarmSound` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | — |
 | `audioPackagePlayer` | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The player through the project's audio package (@pme/audio): |
 | `viewOf` | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | The live View: |
-| `faceFromLocation` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | `?face=<id>`; |
 | `mountFace` | [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The cockpit on the driver, the simulator's tools, and the face on both; |
 | `mountSimTools` | [`apps/demo/src/vent/sim-tools.ts`](../../apps/demo/src/vent/sim-tools.ts) | — |
 | `levelSound` | [`alarm-bursts.ts`](../../packages/audio/src/alarm-bursts.ts) | The level's sound with skin overrides applied (repeat time; |
@@ -1335,7 +1335,8 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/vent/faces/edp-ts/tones.ts`](../../apps/demo/src/vent/faces/edp-ts/tones.ts) | The EDP-TS face's alarm tones (plan vent-skin-edp-ts.md V3, GA16; VQ6), made by the app itself: no sound file. |
 | [`apps/demo/src/vent/faces/edp-ts/view.ts`](../../apps/demo/src/vent/faces/edp-ts/view.ts) | What the EDP-TS screen and housing show at one moment (brief 159): a plain-data View. |
 | [`apps/demo/src/vent/faces/hamilton/face.ts`](../../apps/demo/src/vent/faces/hamilton/face.ts) | The Hamilton-style face: the v1.9 Hamilton-style front end (ventilator-sim-hamilton.html "UI" block), ported to TypeScript and rendering from @pme/ventilator instead of page globals. |
-| [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The ventilator's faces (plan vent-skin-edp-ts.md §4.3, §4.5): the registry, the choice from the address, and the mount every page uses (vent-hamilton.html in its three link modes, and the embed). |
+| [`apps/demo/src/vent/faces/ids.ts`](../../apps/demo/src/vent/faces/ids.ts) | The ventilator's faces by id and name, apart from their code: Room setup offers them and the app's pages put the chosen one in a cockpit's address without loading a face. |
+| [`apps/demo/src/vent/faces/index.ts`](../../apps/demo/src/vent/faces/index.ts) | The ventilator's faces (plan vent-skin-edp-ts.md §4.3, §4.5): the registry and the mount every page uses (vent-hamilton.html in its three link modes, and the embed). |
 | [`apps/demo/src/vent/hamilton-page.ts`](../../apps/demo/src/vent/hamilton-page.ts) | vent-hamilton.html: the ventilator alone (no ?link) or linked to a monitor in another window/iframe (?link=<session>[&profile=<id>]) over BroadcastChannel `pme-vent/<session>`, or over a direct frame port with its parent |
 | [`apps/demo/src/vent/link-page.ts`](../../apps/demo/src/vent/link-page.ts) | vent-link.html: the Hamilton ventilator (iframe, its own window context) and the patient monitor side by side, linked over BroadcastChannel `pme-vent/<session>` (both ways). |
 | [`apps/demo/src/vent/sim-tools.ts`](../../apps/demo/src/vent/sim-tools.ts) | The simulator's own tools (plan vent-skin-edp-ts.md §4.3): the patient drawer (presets, the lung, the patient's effort) and the asynchrony examples. |
@@ -1442,6 +1443,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/builder-phase-editor.e2e.ts`](../../apps/demo/e2e/builder-phase-editor.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-run-in-place.e2e.ts`](../../apps/demo/e2e/builder-run-in-place.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/case-briefing.e2e.ts`](../../apps/demo/e2e/case-briefing.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/case-starts-paused.e2e.ts`](../../apps/demo/e2e/case-starts-paused.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-page.e2e.ts`](../../apps/demo/e2e/circulation-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-rhythm-rates.e2e.ts`](../../apps/demo/e2e/circulation-rhythm-rates.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/controller-latency.e2e.ts`](../../apps/demo/e2e/controller-latency.e2e.ts) | 0 | 0 |
@@ -1534,6 +1536,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/vent-embed.e2e.ts`](../../apps/demo/e2e/vent-embed.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-handover-phones.e2e.ts`](../../apps/demo/e2e/vent-handover-phones.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-link.e2e.ts`](../../apps/demo/e2e/vent-link.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/vent-room-face.e2e.ts`](../../apps/demo/e2e/vent-room-face.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-room-no-drawer.e2e.ts`](../../apps/demo/e2e/vent-room-no-drawer.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-view-new-patient.e2e.ts`](../../apps/demo/e2e/vent-view-new-patient.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-view-restore.e2e.ts`](../../apps/demo/e2e/vent-view-restore.e2e.ts) | 0 | 0 |
@@ -1768,6 +1771,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/vent/faces/edp-ts/tones-player.test.ts`](../../apps/demo/src/vent/faces/edp-ts/tones-player.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/view-alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/hamilton/face.dom.test.ts`](../../apps/demo/src/vent/faces/hamilton/face.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/faces/ids.dom.test.ts`](../../apps/demo/src/vent/faces/ids.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/room.dom.test.ts`](../../apps/demo/src/vent/room.dom.test.ts) | 0 | 0 |
 | [`alarm-bursts.test.ts`](../../packages/audio/test/alarm-bursts.test.ts) | 0 | 0 |
 | [`alarm-sounder.test.ts`](../../packages/audio/test/alarm-sounder.test.ts) | 0 | 0 |

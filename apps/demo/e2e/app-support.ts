@@ -1,47 +1,63 @@
 // Stage 9 e2e support (not a test file: testMatch is *.e2e.ts): the Vite server, the app hook, route helpers and the
 // in-page audits (engine-id scan, accessibility checks) shared by the stage9-*.e2e.ts files.
-import { createServer as netServer, type AddressInfo } from 'node:net';
+import { createServer as httpServer } from 'node:http';
+import { createServer as netServer, type AddressInfo, type Server } from 'node:net';
 import { resolve } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { createServer, preview, type InlineConfig, type PreviewServer, type ViteDevServer } from 'vite';
 
-/** A port the operating system hands out now (listen on 0, read it, release it). */
-async function osPort(): Promise<number> {
-  const s = netServer();
-  await new Promise<void>((r) => s.listen(0, '127.0.0.1', r));
-  const { port } = s.address() as AddressInfo;
-  await new Promise<void>((r) => s.close(() => r()));
-  return port;
+function e2ePort(offset = 0): number | null {
+  const fixed = Number(process.env.PME_E2E_PORT) || 0;
+  return fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) + offset : null;
 }
 
-async function e2ePort(offset = 0): Promise<number> {
-  const fixed = Number(process.env.PME_E2E_PORT) || 0;
-  return fixed ? fixed + Number(process.env.TEST_PARALLEL_INDEX ?? 0) + offset : await osPort();
+/** Listen on `port`, or on one the operating system hands out (0): the port is held from the moment it is chosen. */
+function listen(server: Server, port: number): Promise<number> {
+  return new Promise((ok, fail) => {
+    server.once('error', fail);
+    server.listen(port, '127.0.0.1', () => ok((server.address() as AddressInfo).port));
+  });
+}
+const closed = (server: Server) => new Promise<void>((done) => server.close(() => done()));
+
+/** A port the operating system hands out now, released again (for a server that binds it itself). */
+async function osPort(): Promise<number> {
+  const s = netServer();
+  const port = await listen(s, 0);
+  await closed(s);
+  return port;
 }
 
 /**
  * The ONE way an e2e file starts a Vite server (packages/validation/test/e2e-servers.test.ts keeps every file
- * on it). Each server gets its own port, held strictly: Vite 6 reads a port of 0 as "5173, or the next free one", so
- * before this every file's server took 5173 in turn and a page a test left open reloaded onto the next file's server.
- * The port: PME_E2E_PORT + the worker's parallel index (+ `portOffset`) when that variable is set (a machine whose runs
- * keep to an assigned range), otherwise one the operating system hands out. `strictPort`: a port taken meanwhile fails
- * the start loudly instead of sharing. `config` is merged over the app's own (vite.config.ts); its `server` keeps the
- * port and host given here.
+ * on it). Each server gets its own port: the helper binds its own HTTP server and hands it to Vite (middleware mode, HMR
+ * on the same server), so the port is never released between being chosen and being served on (Vite 6 reads a port of 0
+ * as "5173, or the next free one"). The port: PME_E2E_PORT + the worker's parallel index (+ `portOffset`) when that
+ * variable is set (a machine whose runs keep to an assigned range; a port taken fails the start loudly), otherwise one
+ * the operating system hands out. `config` is merged over the app's own (vite.config.ts); its `server` keeps middleware mode and the HMR server
+ * given here. `vite.close()` also closes the HTTP server.
  */
 export async function startVite(config: InlineConfig = {}, o: { portOffset?: number } = {}): Promise<{ vite: ViteDevServer; base: string }> {
-  const port = await e2ePort(o.portOffset);
+  const http = httpServer();
   const vite = await createServer({
     root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), logLevel: 'error',
     ...config,
-    server: { ...config.server, port, strictPort: true, host: '127.0.0.1' },
+    server: { ...config.server, middlewareMode: true, hmr: { server: http } },
   });
-  await vite.listen();
+  http.on('request', vite.middlewares);
+  const port = await listen(http, e2ePort(o.portOffset) ?? 0);
+  const closeVite = vite.close.bind(vite);
+  vite.close = async () => {
+    await closeVite();
+    http.closeAllConnections();
+    await closed(http);
+  };
   return { vite, base: `http://127.0.0.1:${port}` };
 }
 
 /** The same for a `vite preview` server of a build (`config` names the build's outDir): its own port, strictly held. */
 export async function startVitePreview(config: InlineConfig): Promise<{ server: PreviewServer; base: string }> {
-  const port = await e2ePort();
+  const port = e2ePort() ?? (await osPort());
   const server = await preview({ logLevel: 'error', ...config, preview: { ...config.preview, port, strictPort: true, host: '127.0.0.1' } });
   return { server, base: `http://127.0.0.1:${port}` };
 }

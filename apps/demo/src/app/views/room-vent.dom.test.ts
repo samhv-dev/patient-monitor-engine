@@ -7,7 +7,8 @@ import type { ManagedTransport, RelayDevice, TransportStatus } from '@pme/contro
 import { describe, expect, it } from 'vitest';
 import { disturbed } from '../keep.testing.ts';
 import { deviceRows } from '../room-status.ts';
-import { roomView } from './room.ts';
+import { roomView, VENT_ROOM_WORDS } from './room.ts';
+import { VENT_FACE_REFUSALS } from './vent.ts';
 
 const quiet = (status: TransportStatus = 'open'): ManagedTransport => ({ kind: 'websocket', status, send: () => undefined, close: () => undefined, onMessage: () => () => undefined, onStatus: (fn: (s: TransportStatus) => void) => (fn(status), () => undefined) }) as unknown as ManagedTransport;
 const base = { code: 'ABC234', relay: null, relayLink: null, local: quiet(), hostPeerId: 'host-1', learnerUrl: 'http://127.0.0.1:1/?follow=ABC234#/monitor', followers: () => 0, onFollowers: () => () => undefined };
@@ -23,7 +24,7 @@ describe("R8d: the ventilator's own screen on Room setup", () => {
     expect(win.textContent).toBe('New window');
     expect(card.querySelector('a')?.textContent).toBe('Open here');
     win.click();
-    expect(opened).toEqual(['/vent-hamilton.html?link=ABC234']);
+    expect(opened).toEqual(['/vent-hamilton.html?link=ABC234&face=hamilton-style']); // no face choice given: the default face
     expect(opened[0]).not.toMatch(/pin/i);
   });
 
@@ -69,5 +70,47 @@ describe("R8d: the ventilator's own screen on Room setup", () => {
     expect(await disturbed(held, () => v.draw())).toEqual([]);
     expect(await disturbed(held, () => ((vent = { window: 'driving', device: null }), v.draw()))).toEqual([]);
     expect([chip().textContent, chip().className]).toEqual(['Window · driving', 'st on']);
+  });
+});
+
+describe("Room setup's ventilator model", () => {
+  const room = (refusal: string | null) => {
+    let face: 'hamilton-style' | 'edp-ts' = 'hamilton-style';
+    const opened: string[] = [];
+    const tried: string[] = [];
+    const v = roomView({ ...base, open: (u) => void opened.push(u), ventFace: { face: () => face, choose: (f) => (tried.push(f), refusal ?? ((face = f), null)) } });
+    document.body.replaceChildren(v.el);
+    const card = v.el.querySelector('section.room-vent') as HTMLElement;
+    const sel = card.querySelector('select') as HTMLSelectElement;
+    const choose = (id: string) => ((sel.value = id), sel.dispatchEvent(new Event('change')));
+    const newWindow = () => (v.el.querySelector('[aria-label="Ventilator in a new window"]') as HTMLButtonElement).click();
+    return { card, sel, choose, newWindow, opened, tried, alert: () => card.querySelector('[role="alert"]')?.textContent };
+  };
+
+  it('offers the two faces by their names, the room\'s own selected; a choice is handed to the session and the new window wears it', () => {
+    const r = room(null);
+    expect(r.card.querySelector('h2')?.textContent).toBe(VENT_ROOM_WORDS.title);
+    expect([...r.sel.options].map((o) => [o.value, o.textContent])).toEqual([['hamilton-style', 'Hamilton-style'], ['edp-ts', 'EDP-TS']]);
+    expect(r.sel.value).toBe('hamilton-style');
+    r.newWindow();
+    r.choose('edp-ts');
+    expect(r.tried).toEqual(['edp-ts']);
+    expect(r.alert()).toBe('');
+    r.newWindow();
+    expect(r.opened).toEqual(['/vent-hamilton.html?link=ABC234&face=hamilton-style', '/vent-hamilton.html?link=ABC234&face=edp-ts']);
+  });
+
+  it('a refused change says why and the choice goes back to the face the room has', () => {
+    const r = room(VENT_FACE_REFUSALS.window);
+    r.choose('edp-ts');
+    expect(r.alert()).toBe(VENT_FACE_REFUSALS.window);
+    expect(r.sel.value).toBe('hamilton-style');
+    r.newWindow();
+    expect(r.opened).toEqual(['/vent-hamilton.html?link=ABC234&face=hamilton-style']);
+  });
+
+  it('no face choice given (an older host page): no card', () => {
+    const v = roomView({ ...base });
+    expect(v.el.querySelector('section.room-vent')).toBeNull();
   });
 });

@@ -279,6 +279,86 @@ describe('TCI (D2 item 4, D6, §6): the registered sets for the programmed drug,
   });
 });
 
+describe('TCI: which models the Mindray BeneFusion SP5 TCI holds, from its profile; nothing refused', () => {
+  const PUMP = DEVICES!['sp5-tci'];
+  const DEV = `${PUMP.maker} ${PUMP.model}`;
+  const propofol = PUMP.tci.library.find((d) => d.drugId === 'propofol')!.models;
+  const model = (name: string) => propofol.find((m) => m.name === name)!;
+  const open = () => {
+    const t = setup();
+    t.rack.update([faceRow(row())]);
+    t.open(2, 'tci');
+    return t;
+  };
+  const describedBy = (t: ReturnType<typeof setup>, name: string) => {
+    const el = t.form(2).querySelector(`[name="${name}"]`) as HTMLElement;
+    return document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent ?? '';
+  };
+
+  it('a held model with both targets is plain: no mark on the model or the effect site', () => {
+    const t = open();
+    expect(model('Schnider').targets).toEqual(['plasma', 'effect-site']);
+    t.set(t.sel(2, 'setId'), 'schnider');
+    expect(t.sel(2, 'setId').selectedOptions[0]!.textContent).toBe('Schnider (propofol)');
+    expect(t.options(t.sel(2, 'mode'))).toEqual([['effect', 'Effect site (Ce)'], ['plasma', 'Plasma (Cp)']]);
+    expect(t.hints(2)).not.toContain('not on this pump');
+    expect(t.hints(2)).not.toContain('plasma target only');
+  });
+
+  it('a model the pump does not hold is marked in its option and its hint, for a screen reader too, and is still sent', () => {
+    const t = open();
+    const label = new Map(t.options(t.sel(2, 'setId')) as Array<[string, string]>);
+    expect(label.get('eleveld')).toBe('Eleveld (propofol, arterial) · not on this pump');
+    expect(label.get('marsh-modified')).toBe('Modified Marsh (propofol; ke0 1.21, Struys 2000) · not on this pump');
+    expect(label.get('marsh')).toBe('Marsh (propofol; ke0 as the Diprifusor ran it)');
+    t.set(t.sel(2, 'setId'), 'eleveld');
+    const held = new Intl.ListFormat('en').format(propofol.map((m) => m.name));
+    const words = `${DEV}: Eleveld is not on this pump; for Propofol it holds ${held}`;
+    expect(held).toBe('Marsh, Schnider, Kataria (Pedia), and Paedfusor (Pedia)');
+    expect(t.hints(2)).toContain(words);
+    expect(describedBy(t, 'setId')).toContain(words);
+    for (const [k, v] of [['target', '3'], ['ageY', '52'], ['weightKg', '81'], ['heightCm', '176']] as const) t.set(t.inp(2, k), v);
+    t.set(t.sel(2, 'sex'), 'm');
+    t.send(2);
+    expect(t.sent).toEqual([{ type: 'pump', ch: 2, action: 'tci', setId: 'eleveld', mode: 'effect', target: 3, patient: { ageY: 52, weightKg: 81, heightCm: 176, sex: 'm' } }]);
+  });
+
+  it('a model the pump runs on plasma only: the effect-site choice says so, and an effect-site target is still sent', () => {
+    const t = open();
+    expect(model('Marsh').targets).toEqual(['plasma']);
+    t.set(t.sel(2, 'setId'), 'marsh');
+    expect(t.options(t.sel(2, 'mode'))).toEqual([['effect', 'Effect site (Ce) · plasma only on this pump'], ['plasma', 'Plasma (Cp)']]);
+    expect(t.hints(2)).toContain(`${DEV}: Marsh runs on a plasma target only`);
+    expect(describedBy(t, 'mode')).toContain('Marsh runs on a plasma target only');
+    t.set(t.sel(2, 'setId'), 'schnider');
+    expect(t.sel(2, 'mode').options[0]!.textContent).toBe('Effect site (Ce)');
+    t.set(t.sel(2, 'setId'), 'marsh');
+    t.set(t.sel(2, 'mode'), 'effect');
+    for (const [k, v] of [['target', '3'], ['ageY', '52'], ['weightKg', '81'], ['heightCm', '176']] as const) t.set(t.inp(2, k), v);
+    t.set(t.sel(2, 'sex'), 'm');
+    t.send(2);
+    expect(t.sent[0]).toMatchObject({ action: 'tci', setId: 'marsh', mode: 'effect' });
+  });
+
+  it('a patient outside the pump\'s stated age range for the model: the range beside the age, and still sent', () => {
+    const t = open();
+    const { min, max } = model('Marsh').ageYears;
+    t.set(t.sel(2, 'setId'), 'marsh');
+    t.set(t.inp(2, 'ageY'), String(min - 6));
+    const words = `${DEV}: its stated age range for Marsh is ${min}–${max} y; the patient is ${min - 6} y`;
+    expect(words).toBe('Mindray BeneFusion SP5 TCI: its stated age range for Marsh is 16–150 y; the patient is 10 y');
+    expect(t.hints(2)).toContain(words);
+    expect(describedBy(t, 'ageY')).toContain(words);
+    t.set(t.inp(2, 'ageY'), String(min));
+    expect(t.hints(2)).not.toContain('stated age range');
+    t.set(t.inp(2, 'ageY'), String(min - 6));
+    for (const [k, v] of [['target', '3'], ['weightKg', '30'], ['heightCm', '135']] as const) t.set(t.inp(2, k), v);
+    t.set(t.sel(2, 'sex'), 'f');
+    t.send(2);
+    expect(t.sent[0]).toMatchObject({ action: 'tci', setId: 'marsh', patient: { ageY: min - 6 } });
+  });
+});
+
 describe('Bolus (D2 item 5) and Purge (D7)', () => {
   it('a bolus by volume at the syringe size\'s rapid rate, its volume limit a gap', () => {
     const t = setup();

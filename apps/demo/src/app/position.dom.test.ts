@@ -322,3 +322,25 @@ describe("the case's lines of the instructor's log across a reload", () => {
     link.close();
   }, 60_000);
 });
+
+describe('a paused position across a reload', () => {
+  beforeEach(() => sessionStorage.clear());
+
+  it('the host pauses before the case loads, so the restored case begins paused and no tick runs before the pause', async () => {
+    const a = page();
+    a.load(a.card);
+    await a.run(1);
+    await a.goto('induced');
+    const run = await a.driver.position();
+    if (!run) throw new Error('no consistent position');
+    const kept = position({ paused: true, speed: 1, stateId: run.runner.stateId, simT: run.snapshot.tick * 0.02, run, record: a.record.keep() });
+
+    const b = page();
+    const sent: Array<Record<string, unknown>> = [];
+    const send = b.s.panel.send.bind(b.s.panel);
+    (b.s.panel as { send: typeof send }).send = (c) => (sent.push(c as Record<string, unknown>), send(c));
+    expect(await restorePosition(kept, b.s, { resumeCase: () => undefined }, (c) => (sent.push({ type: 'scenario', action: 'load' }), b.load(c)))).toBe(true);
+    expect(sent.map((c) => `${c.type} ${c.action}`)).toEqual(['time pause', 'scenario load', 'scenario restoreBookmark']);
+    expect(b.driver.runner?.stateId).toBe('induced');
+  }, 60_000);
+});
