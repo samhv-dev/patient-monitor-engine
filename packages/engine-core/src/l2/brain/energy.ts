@@ -4,6 +4,8 @@
 //   delivery = CBF/CBF0 × CaO2 ÷ the reference CaO2
 //   metabolic = the share of function lost: 0 above the compartment's abnormal delivery, 1 below its failure level,
 //               linear between;  fn = 1 − metabolic
+// The brainstem entry is, for now, the breathing gate's perfusion state, stepped by the resp pipeline (l2/neuro/spont.ts
+// stepBrainstem) on the organ model's flow.
 import { CAO2_REF, caO2 } from './flow.ts';
 import { DO2_EEG_ABNORMAL, DO2_EEG_LOST } from './params.ts';
 
@@ -27,8 +29,16 @@ export interface EnergyEntry {
 export interface CortexEntry extends EnergyEntry {
   metabolic: number;
 }
+/** The brainstem's perfusion state as the breathing gate keeps it. */
+export interface BrainstemEntry {
+  /** Seconds without brainstem perfusion (absent while perfused). */
+  anoxS?: number;
+  /** 0 → 1 while the breathing drive reopens after an anoxic spell (absent = open). */
+  gate?: number;
+}
 export interface BrainEnergy {
   cortex: CortexEntry;
+  brainstem: BrainstemEntry;
 }
 /** The blood supply a compartment sees: flow relative to normal and the arterial O2 content's terms. */
 export interface Supply {
@@ -51,7 +61,18 @@ export function functionLoss(delivery: number, c: Compartment): number {
 }
 
 export function createBrainEnergy(): BrainEnergy {
-  return { cortex: { delivery: 1, fn: 1, metabolic: 0 } };
+  return { cortex: { delivery: 1, fn: 1, metabolic: 0 }, brainstem: {} };
+}
+
+/** The brainstem entry from a snapshot that kept the gate's state on the spontaneous drive's record: moved, not copied. */
+export function brainstemFrom(spont: object | undefined): BrainstemEntry {
+  const old = spont as BrainstemEntry | undefined;
+  const b: BrainstemEntry = {};
+  if (old?.anoxS !== undefined) b.anoxS = old.anoxS;
+  if (old?.gate !== undefined) b.gate = old.gate;
+  delete old?.anoxS;
+  delete old?.gate;
+  return b;
 }
 
 /** Set the energy state from the supply now (no stored energy yet: each entry follows its delivery). */

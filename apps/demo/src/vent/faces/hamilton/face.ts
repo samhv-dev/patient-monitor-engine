@@ -25,7 +25,7 @@ export const HAMILTON_SPEC: FaceSpec = {
   matchMonitorFlow: true, // its VC sets flow: linked, it matches the monitor ventilator's until Flow or Pause is set here
 };
 
-function mountHamiltonFace(c: Cockpit, tools: SimTools): { draw(ts: number): void; stop(): void } {
+function mountHamiltonFace(c: Cockpit, tools: SimTools | null): { draw(ts: number): void; stop(): void } {
   const vs = c.vs;
   const S = c.cfg;
   const P = c.p;
@@ -295,7 +295,7 @@ function mountHamiltonFace(c: Cockpit, tools: SimTools): { draw(ts: number): voi
       mk(c.frozen ? 'Resume' : 'Freeze', () => { c.toggleFreeze(); buildRail(); }, c.frozen),
       mk('Insp hold', () => { c.hold('insp'); buildRail(); }, vs.hold === 'insp'),
       mk('Exp hold', () => { c.hold('exp'); buildRail(); }, vs.hold === 'exp'),
-      mk('Patient', () => tools.open()),
+      ...(tools ? [mk('Patient', () => tools.open())] : []),
       mk('Man. breath', () => c.manualBreath()),
       mk('Reset', () => c.reset()),
     );
@@ -433,9 +433,10 @@ function mountHamiltonFace(c: Cockpit, tools: SimTools): { draw(ts: number): voi
   const openSheet = (which: 'modes' | 'controls' | 'alarms') => { if (which === 'controls') sheetTab = 'basic'; if (which === 'modes') pendingMode = null; buildSheet(which); $('sheet').classList.add('on'); $('scrim').classList.add('on'); };
   const closeSheet = () => { $('sheet').classList.remove('on'); $('scrim').classList.remove('on'); };
   $('closeSheet').onclick = closeSheet;
-  $('scrim').onclick = () => { closeSheet(); tools.close(); }; // the scrim is shared by the sheet and the simulator's drawer
+  $('scrim').onclick = () => { closeSheet(); tools?.close(); }; // the scrim is shared by the sheet and the simulator's drawer
   $('modesBtn').onclick = () => openSheet('modes');
-  $('tabUtil').onclick = () => tools.open();
+  if (tools) $('tabUtil').onclick = () => tools.open();
+  else $('tabUtil').remove(); // its one use is the simulator's drawer
   $('tabSystem').onclick = () => openSheet('controls');
   $('alarmBanner').onclick = () => c.silence();
   document.querySelectorAll<HTMLElement>('.vtab').forEach((bt) => (bt.onclick = () => {

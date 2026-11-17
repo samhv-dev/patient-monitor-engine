@@ -5,14 +5,15 @@ const OP: Record<string, string> = { '<': '<', '<=': '≤', '>': '>', '>=': '≥
 const MIN_TEXT: Record<string, string> = { minJ: '≥ %s J', minDose: 'dose ≥ %s', minVolumeMl: '≥ %s mL', minMa: '≥ %s mA' };
 
 /**
- * The words a host prints for engine ids — a vital (`etco2`), an event value (a drug id), a sensor and a scenario
- * state. The controller owns no glossary (the app's glossary is the one label source), so the host passes its labeller;
+ * The words a host prints for engine ids — a vital (`etco2`), an event value (a drug id), a sensor, a rhythm and a
+ * scenario state. The controller owns no glossary (the app's glossary is the one label source), so the host passes its labeller;
  * without one the ids print as they are.
  */
 export interface Labeller {
   vital?: (id: string) => string;
   value?: (key: string, v: string) => string;
   sensor?: (id: string) => string;
+  rhythm?: (id: string) => string;
   state?: (id: string) => string;
 }
 
@@ -27,6 +28,7 @@ export function describeWhen(w: When, lx: Labeller = {}): string {
     return `${w.event.kind}${parts.length ? ` ${parts.join(' ')}` : ''}`;
   }
   if ('sensor' in w) return `${lx.sensor?.(w.sensor.sensor) ?? w.sensor.sensor} ${w.sensor.state}`;
+  if ('rhythm' in w) return `rhythm ${lx.rhythm?.(w.rhythm.id) ?? w.rhythm.id}${w.rhythm.forS ? ` for ${w.rhythm.forS} s` : ''}`;
   if ('manual' in w) return `button "${w.manual.label}"`;
   if ('all' in w) return `all of (${w.all.map((x) => describeWhen(x, lx)).join('; ')})`;
   return `any of (${w.any.map((x) => describeWhen(x, lx)).join('; ')})`;

@@ -111,7 +111,7 @@ if (follow && shows === 'pick') {
   const drugs = drugsMenu({ now: () => caseClock?.renderT() ?? null });
   void loadShippedFormulary().then((f) => drugs.ready(f));
   // L8: the Infusions tab: start a ready syringe at a rate, change or stop any running infusion (LQ4)
-  const infusions = infusionsView({ now: () => caseClock?.renderT() ?? null });
+  const infusions = infusionsView({ now: () => caseClock?.renderT() ?? null, devices: shippedPumpDevices });
   // L11: the Labs tab: send a sample, wait the analyser's time, read this phone's own results (LQ13)
   const labs = labsView();
   const remote = learnerRemoteView({

@@ -25,7 +25,7 @@ function rig(o: { loaded?: ScenarioCard } = {}) {
   const ctl = { scenario: sv, state: { mode: 'modeled', values: {}, control: {} }, timeScale: 1, hostPaused: false, fastForward: null, simT: 192, bookmarks: [] };
   const link = {
     ctl, simT: 192, conditions: new Map(), alarms: null, alarmSummary: { level: null, n: 0, top: null }, log: [], ramps: new Map(),
-    host: { spec: SPEC, mode: 'modeled', record: { data: { rows: [] } }, driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [] } },
+    host: { spec: SPEC, mode: 'modeled', record: { data: { rows: [] } }, driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [], rhythmHolds: () => [] } },
     send: async (c: CommandInput) => (sent.push(structuredClone(c)), reply),
     note: () => undefined,
     onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)),
