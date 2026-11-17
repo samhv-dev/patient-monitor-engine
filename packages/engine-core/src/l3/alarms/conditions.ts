@@ -5,7 +5,7 @@ import type { EngineEvent, Measured, NumericId } from '../../types.ts';
 import type { LineSensorState } from '../../types-hemo.ts';
 import { LOW_PERF_PI } from '../spo2/spo2.ts';
 import { isEnabled, limitOf, type AlarmMgrState, type Condition } from './manager.ts';
-import { displayDigits, fixedText, limitText, type FixedAlarmId } from './text.ts';
+import { displayDigits, fixedText, limitText, type PhysiologicalAlarmId, type TechnicalAlarmId } from './text.ts';
 
 /** VF is recognised this long after it starts (a monitor needs a few seconds of analysis) [ENG: device]. */
 export const VF_CONFIRM_S = 3;
@@ -189,9 +189,14 @@ function valid(inp: AlarmInputs, id: NumericId, t: number): number | null {
 export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): Condition[] {
   const p = s.profile;
   const out: Condition[] = [];
-  const fixed = (id: FixedAlarmId, level: 1 | 2 | 3, category: 'physiological' | 'technical', delayS = 0): Condition => ({
-    id, level, category, text: fixedText(p, id, level, category === 'technical'), delayS,
+  const fixed = (id: PhysiologicalAlarmId, level: 1 | 2 | 3, delayS = 0): Condition => ({
+    id, level, category: 'physiological', text: fixedText(p, id, level, false), delayS,
   });
+  // A technical alarm's level is the skin's (`alarms.technical`), never the engine's
+  const tech = (id: TechnicalAlarmId, delayS = 0): Condition => {
+    const level = p.technicalLevels[id];
+    return { id, level, category: 'technical', text: fixedText(p, id, level, true), delayS };
+  };
   // LIFEPAK-like: HR alarms off while pacing (research/05 §2.6); with the leads off HR is not measured (brief §6.2).
   const hrSuppressed = (inp.pacing && p.hrDashesWhilePacing) || inp.leadsOff;
   // An AUTO skin takes the first valid pulse as the HR/alarm source while the ECG has no heart rate (Philips "Alarm
@@ -225,7 +230,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     if (l.low !== null && (under || (raisedLiveId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c, ...(under ? {} : { held: true }) });
   }
   const spo2 = valid(inp, 'spo2', t);
-  if (p.desat !== null && spo2 !== null && spo2 < p.desat && isEnabled(s, 'SpO2')) out.push({ ...fixed('DESAT', 1, 'physiological', DESAT_DELAY_S), numeric: 'spo2' });
+  if (p.desat !== null && spo2 !== null && spo2 < p.desat && isEnabled(s, 'SpO2')) out.push({ ...fixed('DESAT', 1, DESAT_DELAY_S), numeric: 'spo2' });
 
   // Extreme rate alarms (red) from the active HR source, WITH OR WITHOUT arrhythmia analysis (Philips "HR alarms when
   // arrhythmia analysis is switched off" include extreme tachy/brady, [S2] IFU p. 89): the HR limit ∓ 20 bpm clamped
@@ -246,15 +251,15 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
       if (now) seen[id] = t;
       return now || (holdingId(s, id) && (band || t - (seen[id] ?? -Infinity) < EXTREME_CLEAR_S));
     };
-    if (beyond('EXTREME_BRADY', hrA < bradyAt, hrA <= bradyAt)) out.push({ ...fixed('EXTREME_BRADY', 1, 'physiological'), holdS: EVENT_HOLD_S });
-    if (beyond('EXTREME_TACHY', hrA > tachyAt, hrA >= tachyAt)) out.push({ ...fixed('EXTREME_TACHY', 1, 'physiological'), holdS: EVENT_HOLD_S });
+    if (beyond('EXTREME_BRADY', hrA < bradyAt, hrA <= bradyAt)) out.push({ ...fixed('EXTREME_BRADY', 1), holdS: EVENT_HOLD_S });
+    if (beyond('EXTREME_TACHY', hrA > tachyAt, hrA >= tachyAt)) out.push({ ...fixed('EXTREME_TACHY', 1), holdS: EVENT_HOLD_S });
   }
 
   // ECG: technical first; lethal arrhythmias whenever leads are on (they cannot be switched off, brief §6.4.1).
-  if (inp.leadsOff) out.push(fixed('ecgLeadsOff', 3, 'technical'));
+  if (inp.leadsOff) out.push(tech('ecgLeadsOff'));
   else {
     const vf = inp.vfSince !== null && t - inp.vfSince >= VF_CONFIRM_S;
-    if (vf) out.push(fixed('VFIB', 1, 'physiological'));
+    if (vf) out.push(fixed('VFIB', 1));
     const since = Math.max(inp.lastQrsT ?? -Infinity, inp.ecgOnSince);
     // Once ASYSTOLE stands, an agonal beat (R–R ≥ AGONAL_RR_S, < 20/min, research/03 §1.5) does not end it — the arrest
     // alarm governs; two beats closer than that (a rhythm returning) do. Without it each agonal beat cleared ASYSTOLE
@@ -262,22 +267,22 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     // re-raised ASYSTOLE 15 times in 4 min)
     const lastRR = inp.lastQrsT !== null && inp.prevQrsT != null ? inp.lastQrsT - inp.prevQrsT : Infinity;
     const agonal = holdingId(s, 'ASYSTOLE') && lastRR >= AGONAL_RR_S;
-    if (!vf && (t - since >= p.arrhythmia.asystoleS || agonal)) out.push(fixed('ASYSTOLE', 1, 'physiological'));
+    if (!vf && (t - since >= p.arrhythmia.asystoleS || agonal)) out.push(fixed('ASYSTOLE', 1));
     const v = inp.vt;
     if (v.count >= p.arrhythmia.vtacCount && t - v.lastT < VT_GAP_S) {
       const rate = (60 * (v.count - 1)) / Math.max(1e-3, v.lastT - v.firstT);
-      if (rate >= p.arrhythmia.vtacRate) out.push(fixed('VTAC', 1, 'physiological'));
+      if (rate >= p.arrhythmia.vtacRate) out.push(fixed('VTAC', 1));
     }
     if (s.cfg.arrhythmia && !hrSuppressed) {
       const hr = valid(inp, 'hr', t);
       if (hr !== null && hr > 0) {
-        if (ar.brady !== null && hr <= ar.brady) out.push(fixed('BRADY', 2, 'physiological'));
-        if (ar.tachy !== null && hr >= ar.tachy) out.push(fixed('TACHY', 2, 'physiological'));
+        if (ar.brady !== null && hr <= ar.brady) out.push(fixed('BRADY', 2));
+        if (ar.tachy !== null && hr >= ar.tachy) out.push(fixed('TACHY', 2));
       }
       const gap = inp.lastQrsT === null ? 0 : t - inp.lastQrsT;
       const pauseAt = 'ratio' in ar.pause ? (inp.meanRR ?? Infinity) * ar.pause.ratio : ar.pause.s;
-      if (ar.pauseAlarm && !vf && gap > pauseAt && gap < ar.asystoleS) out.push({ ...fixed('PAUSE', 2, 'physiological'), holdS: EVENT_HOLD_S });
-      if (inp.pvcTimes.filter((x) => x > t - 60).length >= p.arrhythmiaPvcPerMin) out.push(fixed('PVCS', 2, 'physiological'));
+      if (ar.pauseAlarm && !vf && gap > pauseAt && gap < ar.asystoleS) out.push({ ...fixed('PAUSE', 2), holdS: EVENT_HOLD_S });
+      if (inp.pvcTimes.filter((x) => x > t - 60).length >= p.arrhythmiaPvcPerMin) out.push(fixed('PVCS', 2));
     }
   }
   // APNEA (brief §6.4 "apnoea (20 s)"; §6.4.1 always on, level 1): what the monitor's own detectors see — the
@@ -286,9 +291,9 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
   // ONE alarm — from the active respiratory source only: the capnograph while it measures, else the impedance (Philips
   // "***APNEA" from CO2, Resp or AGM, [S2] IFU p. 41; Saadat's CAPNO/RESP key selects one RR source, research/06 §4.1).
   const apnoeaSrc = inp.co2 === 'on' ? 'apnoea-co2' : 'apnoea-resp';
-  if (p.apneaS !== null && inp.apnoeaFlags.includes(apnoeaSrc)) out.push(fixed(apnoeaSrc, 1, 'physiological'));
-  if (inp.co2Line || inp.co2 === 'occluded') out.push({ ...fixed('co2Line', 3, 'technical'), numeric: 'etco2' });
-  if (inp.spo2Probe === 'off') out.push(fixed('spo2SensorOff', 3, 'technical'));
+  if (p.apneaS !== null && inp.apnoeaFlags.includes(apnoeaSrc)) out.push(fixed(apnoeaSrc, 1));
+  if (inp.co2Line || inp.co2 === 'occluded') out.push({ ...tech('co2Line'), numeric: 'etco2' });
+  if (inp.spo2Probe === 'off') out.push(tech('spo2SensorOff'));
   // The technical alarms real monitors raise from the signals themselves ([S2] IFU p. 44, 53–61; research/06 §4.2);
   // `numeric` marks the value the INOP replaces ("-?-") in the tile
   if (inp.spo2Probe === 'on' && t - inp.spo2OnSince >= SPO2_SEARCH_S) {
@@ -312,15 +317,15 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     // delay raises nothing). With the pending entry held by the band, a single PI dip to 0.30 at 596 s in the 3 L bleed
     // raised LOW PERF at 601 s and cleared it 1.0 s later
     const lowPerf = piV !== null ? piV < LOW_PERF_PI || (raisedLiveId(s, 'spo2LowPerf') && piV < LOW_PERF_CLEAR_PI && !okFor(inp.piOkSince, LOW_PERF_DELAY_S)) : raisedLiveId(s, 'spo2LowPerf');
-    if (nonPuls) out.push({ ...fixed('spo2NonPulsatile', 3, 'technical'), numeric: 'spo2' });
-    else if (lowPerf) out.push({ ...fixed('spo2LowPerf', 3, 'technical', LOW_PERF_DELAY_S), numeric: 'spo2' });
-    else if (m !== undefined && m.value !== null && m.flag === 'questionable') out.push({ ...fixed('spo2LowSignal', 3, 'technical', LOW_SIGNAL_DELAY_S), numeric: 'spo2' });
+    if (nonPuls) out.push({ ...tech('spo2NonPulsatile'), numeric: 'spo2' });
+    else if (lowPerf) out.push({ ...tech('spo2LowPerf', LOW_PERF_DELAY_S), numeric: 'spo2' });
+    else if (m !== undefined && m.value !== null && m.flag === 'questionable') out.push({ ...tech('spo2LowSignal', LOW_SIGNAL_DELAY_S), numeric: 'spo2' });
   }
   // MUI-7: no transducer on the channel (the line's sensor state 'none', not a zero pressure) — on the skins that show
   // it (skin `ibp.noSensorMessage`). A prompt, with no tone and no lamp [inferred: the photos show it standing on
   // monitors in use for an unused channel, which no unit would let sound]
-  if (inp.abp === 'none' && p.ibpNoSensor) out.push({ ...fixed('abpNoSensor', 3, 'technical'), prompt: true });
-  if (inp.abp === 'zeroing') out.push({ ...fixed('abpZero', 3, 'technical'), numeric: 'abpMean' });
+  if (inp.abp === 'none' && p.ibpNoSensor) out.push({ ...tech('abpNoSensor'), prompt: true });
+  if (inp.abp === 'zeroing') out.push({ ...tech('abpZero'), numeric: 'abpMean' });
   else if (inp.abp !== 'none') {
     const mean = valid(inp, 'abpMean', t);
     const keep = p.ibpStaticDisplay === 'keep';
@@ -329,12 +334,12 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
       // [S2] p. 57 "Pulse numeric is displayed with -?-") or the hidden S/D ('mean-only', Saadat); the red disconnect
       // below 10 mmHg where the skin has it on (saadat-like: OFF by default, research/06 §4.1). The engine raises the
       // INOP whatever the pulse source [ENG: device]; an IntelliVue raises it only for the pressure selected as the pulse source
-      out.push({ ...fixed('abpNonPulsatile', 3, 'technical'), numeric: keep ? 'prAbp' : 'abpSys' });
-      if (p.abpDisconnect && mean < DISCONNECT_MMHG) out.push({ ...fixed('abpDisconnect', 1, 'physiological', DISCONNECT_DELAY_S), numeric: 'abpMean' });
+      out.push({ ...tech('abpNonPulsatile'), numeric: keep ? 'prAbp' : 'abpSys' });
+      if (p.abpDisconnect && mean < DISCONNECT_MMHG) out.push({ ...fixed('abpDisconnect', 1, DISCONNECT_DELAY_S), numeric: 'abpMean' });
     }
   }
-  if (inp.temp === 'off' && inp.tempSeen) out.push({ ...fixed('tempProbeOff', 3, 'technical'), numeric: 'tempCore' });
-  if (inp.nibpFailed) out.push(fixed('nibp-failed', 3, 'technical'));
+  if (inp.temp === 'off' && inp.tempSeen) out.push({ ...tech('tempProbeOff'), numeric: 'tempCore' });
+  if (inp.nibpFailed) out.push(tech('nibp-failed'));
   return chain(out, s);
 }
 

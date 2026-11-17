@@ -88,6 +88,7 @@ import { heldRate } from './l2/circ/rate-rule.ts';
 import { betaVenousUnits } from './l2/circ/venous.ts';
 import { BEEP_BASE_HZ, spo2PitchHz } from './l3/spo2/spo2.ts';
 import { VF_CONFIRM_S } from './l3/alarms/conditions.ts';
+import { deviceProfile } from './l3/alarms/profile.ts';
 import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts';
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts';
 import { lastCycleBefore } from './l2/resp/driver.ts';
@@ -590,6 +591,7 @@ class Engine implements MonitorEngine {
     this.queue = data.queue;
     this.groupTicks = new Map(data.groups ?? []); // The bookmark's pending groups, never the discarded future's
     this.dev = data.dev ?? createDevice(this.devOpts?.skin, this.devOpts?.ageBand);
+    if (data.dev) data.dev.alarms.profile.technicalLevels ??= deviceProfile(data.dev.alarms.profile.skin, data.dev.alarms.profile.ageBand).technicalLevels; // Absent in older snapshots
     this.syncCo2Sampler();
     this.tick = s.tick;
     this.syncLaneBuffers();

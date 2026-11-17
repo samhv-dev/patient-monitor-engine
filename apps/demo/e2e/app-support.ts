@@ -318,3 +318,23 @@ export async function deliver(page: Page, onsetS?: 0 | 30 | 60 | 120 | 300): Pro
 
 /** The dock's Debrief link (the session bar's "Debrief"); data-ready "true" once the case has ended. */
 export const debriefLinkV2 = (page: Page) => page.locator('.ip2-dock a.ip2-debrief');
+
+// ---- The monitor's sound log ----
+
+type SoundLogEntry = { id: string; kind: string; when: number; lateS: number };
+export type Burst = { train: string; start: number; pulses: number; lateS: number };
+
+/** Every burst of one alarm in the page's sound log, from its pulse ids `alarm:<alarm>:<train>:<burst>:<pulse>`: audio start, pulses. */
+export const alarmBursts = (page: Page, alarm: string): Promise<Burst[]> =>
+  page.evaluate((alarm) => {
+    const by = new Map<string, SoundLogEntry[]>();
+    const log = (window as unknown as { __pmeApp: { session: { monitor: { audioLog: SoundLogEntry[] } } } }).__pmeApp.session.monitor.audioLog;
+    for (const e of log) {
+      if (e.kind !== 'alarm' || !e.id.startsWith(`alarm:${alarm}:`)) continue;
+      const key = e.id.split(':').slice(0, 4).join(':');
+      by.set(key, [...(by.get(key) ?? []), e]);
+    }
+    return [...by]
+      .map(([key, es]) => ({ train: key.split(':').slice(0, 3).join(':'), start: Math.min(...es.map((e) => e.when)), pulses: es.length, lateS: Math.max(...es.map((e) => e.lateS)) }))
+      .sort((a, b) => a.start - b.start);
+  }, alarm);

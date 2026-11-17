@@ -119,8 +119,9 @@ describe('alarm engine in the engine', () => {
     e.dispatch(cmd({ type: 'attachSensor', sensor: 'spo2', state: 'off' }));
     e.advanceTo(40);
     const lo = alarmsOf(ev, 'ecgLeadsOff', 'raised')[0]!;
-    expect(lo).toMatchObject({ category: 'technical', level: 3, priority: 'low', text: 'ECG CHECK LA/RA/LL' });
-    expect(alarmsOf(ev, 'spo2SensorOff', 'raised')[0]).toMatchObject({ category: 'technical', level: 3 });
+    // level 2 on this style: the B9 manuals' leads-off and sensor-off rows (research/83, 5-18 and 9-18)
+    expect(lo).toMatchObject({ category: 'technical', level: 2, priority: 'medium', text: 'ECG CHECK LA/RA/LL' });
+    expect(alarmsOf(ev, 'spo2SensorOff', 'raised')[0]).toMatchObject({ category: 'technical', level: 2 });
     expect(alarmsOf(ev, 'ASYSTOLE')).toEqual([]);
     // FU-5 (audit M3): with the leads off the HR is not measured — invalid, never a valid "0"
     const hr = ev.filter((x): x is Extract<EngineEvent, { type: 'measurement' }> => x.type === 'measurement' && x.t > 6 && x.values.hr !== undefined);

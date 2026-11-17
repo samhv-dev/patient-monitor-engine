@@ -1,17 +1,16 @@
 // Alarm message text (brief §6.4 "Message format: `***SpO2 94<96`"; brief §6.4.1: Saadat-like messages are English
 // uppercase without asterisks, e.g. "HR TOO LOW", "%SPO2 LOW", "ECG ASYSTOLE"). Texts not quoted by a source are
 // [inferred] from those patterns.
+import type { TechnicalAlarmId } from '@pme/skins';
 import type { AlarmLevel } from '../../types-device.ts';
 import type { NumericId } from '../../types.ts';
 import type { DeviceProfile, LimitDef } from './profile.ts';
 
-export type FixedAlarmId =
+export type { TechnicalAlarmId };
+export type PhysiologicalAlarmId =
   | 'ASYSTOLE' | 'VFIB' | 'VTAC' | 'EXTREME_BRADY' | 'EXTREME_TACHY' | 'BRADY' | 'TACHY' | 'PAUSE' | 'PVCS' | 'DESAT'
-  | 'ecgLeadsOff' | 'spo2SensorOff' | 'nibp-failed' | 'apnoea-co2' | 'apnoea-resp' | 'co2Line'
-  // Technical alarms raised by real conditions, and the arterial line's disconnect alarm
-  | 'spo2NonPulsatile' | 'spo2LowPerf' | 'spo2LowSignal' | 'abpNonPulsatile' | 'abpDisconnect' | 'abpZero' | 'tempProbeOff'
-  // A technical prompt: no transducer on the IBP channel (MUI-7)
-  | 'abpNoSensor';
+  | 'apnoea-co2' | 'apnoea-resp' | 'abpDisconnect';
+export type FixedAlarmId = PhysiologicalAlarmId | TechnicalAlarmId;
 
 const IEC_TEXT: Record<FixedAlarmId, string> = {
   ASYSTOLE: 'ASYSTOLE',
@@ -56,7 +55,7 @@ const SAADAT_TEXT: Record<FixedAlarmId, string> = {
   'nibp-failed': 'NIBP MEASUREMENT FAILED',
   'apnoea-co2': 'CO2 APNEA', // [inferred] from the "RESP APNEA" pattern
   'apnoea-resp': 'RESP APNEA', // brief §6.4.1
-  co2Line: 'CO2 CHECK LINE', // [inferred] from the "ECG CHECK LA/RA/LL" pattern
+  co2Line: 'SAMPLING LINE CLOGGED', // research/83: B9 manuals FA/EN 14-21 (a blocked sidestream line)
   spo2NonPulsatile: 'SPO2 NO PULSE', // [inferred] brief §4.3 "NO PULSE"
   spo2LowPerf: 'SPO2 LOW PERFUSION', // research/06 §4.2 (M p.109–116)
   spo2LowSignal: 'SPO2 LOW SIGNAL IQ', // research/06 §4.2 (M p.109–116; E126)

@@ -27,7 +27,7 @@
   "spo2": { "avgOptions": [5, 10, 20], "avgDefault": 10, "updateHz": 0.5 },
   "nibp": { "initialInflation": { "adult": 165, "paed": 130, "neo": 100 } },
   "alarms": {
-    "repeatS": { "L1": 10, "L2": 20 }, "lowPulses": 2,
+    "repeatS": { "L1": 10, "L2": 20, "L3": 20 }, "lowPulses": 2,
     "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
     "pause": { "durationS": 120 },
     "delayS": 3, "spo2DelayS": 10,
@@ -90,6 +90,7 @@
     "glyphs.nibpFail": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 56 (NBP MEASURE FAILED: -?-)" },
     "glyphs.inop": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 55–62 ('Numeric is replaced by a -?-' for SpO2, pressure, temperature and CO2 INOPs)" },
     "alarms.repeatS": { "tag": "documented", "source": "research/05 §2.5 (ISO red 5/10/15 s, yellow 10/20/30 s); brief §6.4" },
+    "alarms.repeatS.L3": { "tag": "eng", "source": "research/82 §4 (Question 3); Philips IntelliVue IFU M8000-9001D printed p.31; Configuration Guide Rel. J.0 p.142", "note": "the ISO INOP sound repeats (\"a lower pitched tone is repeated twice, followed by a pause\") and its interval is not published (the configurable intervals cover red and yellow only): 20 s, the yellow default" },
     "alarms.lowPulses": { "tag": "documented", "source": "research/05 §2.5 (INOP: lower tone ×2); brief §6.4" },
     "limits.adult": { "tag": "documented", "source": "brief §6.8 (Philips factory); research/03 §8.10" },
     "limits.paed": { "tag": "documented", "source": "brief §6.8 (Philips factory)", "note": "null = not given in the table" },

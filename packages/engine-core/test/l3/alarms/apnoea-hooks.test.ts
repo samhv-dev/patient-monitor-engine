@@ -53,12 +53,13 @@ describe('respiratory alarm hooks (synthetic events)', () => {
     expect(ids(buildConditions(createAlarmMgr(deviceProfile('iran-icu-as-found')), inp, 12))).not.toContain('apnoea-resp');
   });
 
-  it('CO2 line INOP from the raw flag, level 3 technical', () => {
-    for (const [skin, text] of [['philips-like', 'CO2 OCCLUSION'], ['saadat-like', 'CO2 CHECK LINE']] as const) { // FU-5: the Philips text ([S2] p. 53)
+  it('CO2 line INOP from the raw flag, technical, at the style level', () => {
+    // the Philips text ([S2] p. 53); the B9 manuals' SAMPLING LINE CLOGGED, level 2 (research/83, 14-21)
+    for (const [skin, text, level] of [['philips-like', 'CO2 OCCLUSION', 3], ['saadat-like', 'SAMPLING LINE CLOGGED', 2]] as const) {
       const m = createAlarmMgr(deviceProfile(skin));
       const inp = createInputs();
       observeEvent(inp, raw(10, 'co2Line', true));
-      expect(buildConditions(m, inp, 10).find((x) => x.id === 'co2Line')).toMatchObject({ level: 3, category: 'technical', text });
+      expect(buildConditions(m, inp, 10).find((x) => x.id === 'co2Line')).toMatchObject({ level, category: 'technical', text });
       observeEvent(inp, raw(11, 'co2Line', false));
       expect(ids(buildConditions(m, inp, 11))).not.toContain('co2Line');
     }

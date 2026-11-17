@@ -115,7 +115,20 @@
     "delayS": 0,
     "spo2DelayS": 10,
     "alarmFreezeOption": false,
-    "recall": null
+    "recall": null,
+    "technical": {
+      "ecgLeadsOff": { "level": 3 },
+      "spo2SensorOff": { "level": 3 },
+      "nibp-failed": { "level": 3 },
+      "co2Line": { "level": 3 },
+      "spo2NonPulsatile": { "level": 3 },
+      "spo2LowPerf": { "level": 3 },
+      "spo2LowSignal": { "level": 3 },
+      "abpNonPulsatile": { "level": 3 },
+      "abpZero": { "level": 3 },
+      "tempProbeOff": { "level": 3 },
+      "abpNoSensor": { "level": 3 }
+    }
   },
   "limits": { "adult": null, "paed": null, "neo": null },
   "arrhythmia": {
@@ -209,6 +222,7 @@
     "alarms.spo2DelayS": { "tag": "documented", "source": "brief §6.4" },
     "alarms.alarmFreezeOption": { "tag": "documented", "source": "brief §3.8" },
     "alarms.recall": { "tag": "documented", "source": "brief §3.8" },
+    "alarms.technical": { "tag": "eng", "source": "research/05 §2.5; brief §6.2, §6.4", "note": "every technical alarm at the low priority (cyan), as the Philips INOPs are; a style whose manual gives another level states its own" },
     "limits": { "tag": "unverified", "source": "brief §6.8", "note": "vendor tables not retrieved are not invented" },
     "arrhythmia.defaultOn": { "tag": "documented", "source": "brief §6.4" },
     "arrhythmia.asystoleS": { "tag": "documented", "source": "brief §6.4; research/05 §2.2" },
