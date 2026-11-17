@@ -407,6 +407,7 @@
       "cellW": {"v": 66.5, "p": "measured", "src": "research/57 P-22"},
       "tagY": {"v": 64, "p": "measured", "src": "research/57 P-23"},
       "tagH": {"v": 25, "p": "measured", "src": "research/57 P-23"},
+      "minHit": {"v": 26, "p": "eng", "src": "research/57 P-23", "why": "the least height of a touch key over a drawn part smaller than a finger (a limit tag's half, a loop's axis numbers): 24 CSS px at the smallest scale the face is checked at"},
       "msg": {"v": [62, 88, 738, 33], "p": "measured", "src": "research/57 P-24"},
       "left": {"v": [0, 88, 58, 450], "p": "measured", "src": "research/57 P-25"},
       "leftRows": {"v": [[96, "battery"], [116, "lungs"], [163, "peak"], [183, "peakV"], [204, "rule"], [209, "trach"], [249, "rule"], [251, "plateau"], [291, "rule"], [295, "mean"], [312, "meanV"], [336, "rule"], [340, "peep"], [356, "peepV"], [380, "tag"], [407, "plimits"], [435, "keyHi"], [486, "keyLo"]], "p": "measured", "src": "research/57 P-25"},

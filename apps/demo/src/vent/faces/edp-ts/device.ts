@@ -14,13 +14,12 @@ import { picto, type PictoId } from './pictograms.ts';
 import type { Q } from './screen.ts';
 import type { GraphicsView, LampState, LimitView, TagView, View } from './view.ts';
 
-/** The smallest touch target, design px: the limit tags' hit boxes' height, 24 CSS px at the smallest scale the face is checked at. */
-const MIN_HIT = 26;
 /** The keys that act while held, not on a click (research/57 H-12, H-19). */
 const HELD = new Set(['under:inspExpPause', 'under:lock']);
 
 type Box = [number, number, number, number];
 const G = DATA.layout.grid;
+const minHit = (G.minHit as Leaf<number>).v;
 const gv = <T>(l: unknown): T => (l as Leaf<T>).v;
 const W = (id: WordId) => word(id);
 const ctl = (id: string): Ctl => CONTROLS.find((x) => x.id === id) as Ctl;
@@ -94,7 +93,7 @@ export function createDevice(h: DeviceHandlers): Device {
   // ---- the alarm-limit tags (R-11, R-12, L-17; P-09, P-23) ----
   const tagY = gv<number>(G.tagY), tagH = gv<number>(G.tagH);
   type TagEls = { box: HTMLElement; hi?: HTMLElement; lo?: HTMLElement };
-  /** A drawn tag at `box`; its one or two limits are buttons whose hit box is at least 26 design px high. */
+  /** A drawn tag at `box`; its one or two limits are buttons whose hit box is at least minHit design px high. */
   const tagAt = (box: Box, t: TagView, name: string, cls = '') => {
     const d = place(el('div', { class: `edp-tag ${cls}`.trim() }, picto('step', t.side)), box);
     scr.append(d);
@@ -104,7 +103,7 @@ export function createDevice(h: DeviceHandlers): Device {
       const two = t.hi && t.lo;
       const [bx, by, bw, bh] = box;
       const tv = el('span', { class: 'tv' });
-      const hit: Box = two ? (which === 'hi' ? [bx, by - 14, bw, bh / 2 + 14] : [bx, by + bh / 2, bw, bh / 2 + 14]) : [bx, by - Math.max(0, (26 - bh) / 2), bw, Math.max(26, bh)];
+      const hit: Box = two ? (which === 'hi' ? [bx, by - 14, bw, bh / 2 + 14] : [bx, by + bh / 2, bw, bh / 2 + 14]) : [bx, by - Math.max(0, (minHit - bh) / 2), bw, Math.max(minHit, bh)];
       const b = place(button('edp-limit', lv.ctl, tv), hit);
       // the value sits on its line of the drawn tag: high on the first, low on the second (one value: the first)
       // a left-column key (Pressure Limits): the value large, above its symbol (high) or below it (low), as photographed
@@ -208,7 +207,7 @@ export function createDevice(h: DeviceHandlers): Device {
         labelsOn(tl, [...ax.labels].reverse(), ax.lo, ax.hi, 'x', DEC[pn.x]);
         ts.append(tl);
         // the x axis's numbers: a touch key over the drawn strip, as high as a finger needs (the strip is 12 px)
-        const hit = Math.max(timeH, MIN_HIT);
+        const hit = Math.max(timeH, minHit);
         const xk = strip(pn.x, 'edp-axis-hit', [x, y + h + timeH / 2 - hit / 2, w, hit]);
         xk.dataset.strip = 'x';
         curves.append(sc, panel, ts, xk);
