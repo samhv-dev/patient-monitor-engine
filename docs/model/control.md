@@ -421,6 +421,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`formulary/label-diluents.test.ts`](../../packages/controller/test/formulary/label-diluents.test.ts) | 0 | 0 |
 | [`formulary/prepare.test.ts`](../../packages/controller/test/formulary/prepare.test.ts) | 0 | 0 |
 | [`formulary/shipped-rows.test.ts`](../../packages/controller/test/formulary/shipped-rows.test.ts) | 0 | 0 |
 | [`formulary/sources.test.ts`](../../packages/controller/test/formulary/sources.test.ts) | 0 | 0 |
@@ -518,6 +519,7 @@ None recorded.
 | [`session/host-time.test.ts`](../../packages/controller/test/session/host-time.test.ts) | 0 | 0 |
 | [`session/host-ventilator.test.ts`](../../packages/controller/test/session/host-ventilator.test.ts) | 0 | 0 |
 | [`session/learner-baseline.test.ts`](../../packages/controller/test/session/learner-baseline.test.ts) | 0 | 0 |
+| [`session/paused-at-start.test.ts`](../../packages/controller/test/session/paused-at-start.test.ts) | 0 | 0 |
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |
 | [`session/sign-in-book.test.ts`](../../packages/controller/test/session/sign-in-book.test.ts) | 0 | 0 |
 | [`session/timeline-reset.test.ts`](../../packages/controller/test/session/timeline-reset.test.ts) | 0 | 0 |

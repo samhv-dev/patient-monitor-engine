@@ -753,7 +753,7 @@
   },
   "dailymed-vecuronium": {
     "kind": "monograph",
-    "product": "Vecuronium Bromide for 10 mg vial",
+    "product": "Vecuronium Bromide for Injection, 10 mg vial (1 mg/mL when reconstituted to 10 mL)",
     "holder": "Hikma Pharmaceuticals USA Inc.",
     "version": "SPL setid dceeec01-2910-4489-8d70-9c0c711d17ab, version 4, effective 2026-01-29",
     "issuer": "DailyMed"
@@ -835,18 +835,25 @@
     "version": "SPL setid d4b5863a-efb9-4551-a9ad-2b06e8666d87, version 22, effective 2026-04-23",
     "issuer": "DailyMed"
   },
-  "dailymed-lidocaine": {
+  "dailymed-lidocaine-ansyr": {
     "kind": "monograph",
-    "product": "Lidocaine HCl 1% and 2%",
+    "product": "Lidocaine HCl Injection 1% (10 mg/mL) and 2% (20 mg/mL), 5 mL Ansyr syringes, intravenous, for ventricular arrhythmias",
     "holder": "Hospira, Inc.",
-    "version": "SPL setid 3b2dd84e-cee8-4e58-d494-395a65a353a0, version 48, effective 2026-10-19",
+    "version": "SPL setid ad1ef0a8-88db-4648-c098-d009eaeb4e5b, version 32, effective 2026-08-20",
     "issuer": "DailyMed"
   },
   "dailymed-bupivacaine": {
     "kind": "monograph",
-    "product": "Bupivacaine HCl 0.25% and 0.5%",
+    "product": "Bupivacaine HCl Injection 0.25% (2.5 mg/mL), 30 mL single-dose vial",
     "holder": "Hospira, Inc.",
     "version": "SPL setid bb44c7e1-d911-4788-908f-09b7b271969b, version 21, effective 2026-04-14",
+    "issuer": "DailyMed"
+  },
+  "dailymed-sensorcaine-mpf": {
+    "kind": "monograph",
+    "product": "Sensorcaine-MPF (bupivacaine HCl) 0.5% (5 mg/mL), 10 and 30 mL single-dose vials",
+    "holder": "Fresenius Kabi USA, LLC",
+    "version": "SPL setid b6bfc04a-1868-4630-9ca1-8c027af97ce3, version 1, effective 2024-11-18",
     "issuer": "DailyMed"
   },
   "dailymed-humulin-r": {
