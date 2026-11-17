@@ -8,6 +8,7 @@
 import { createStamper, INSTRUCTOR_REASONS, LEARNER_REASONS, REJOINED, RELAY_PEER, TICKET_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
 import type { EngineEvent, PumpPanelRow } from '@pme/engine-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { carried } from '../address.testing.ts';
 
 const CODE = 'GP3P4G';
 const PIN = '5813';
@@ -139,7 +140,7 @@ describe('the pump page: the learner-PIN form first', () => {
     await signIn();
     const hello = link().sent.find((m) => m.kind === 'hello') as Extract<WireMessage, { kind: 'hello' }>;
     expect(hello).toMatchObject({ role: 'pump', show: 'pump', device: DEVICE, pin: PIN });
-    expect(location.href).not.toContain(PIN);
+    expect(carried(location.href)).not.toContain(PIN);
     expect(writes.mock.calls.some((c) => String(c[1]).includes(PIN))).toBe(false);
   });
 

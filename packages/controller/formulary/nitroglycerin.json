@@ -1,0 +1,57 @@
+{
+  "drugId": "nitroglycerin",
+  "products": [
+    {
+      "id": "nitroglycerin-5mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 5,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-nitroglycerin"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "dailymed-nitroglycerin"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-nitroglycerin"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-nitroglycerin"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-nitroglycerin"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-nitroglycerin"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-nitroglycerin"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
