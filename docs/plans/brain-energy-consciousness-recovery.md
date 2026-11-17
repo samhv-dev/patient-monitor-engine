@@ -324,8 +324,9 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
       viscosity flattened above about 5 mPa·s (Fig. 4, pp. 86–87); its PaCO2 and MAP were not held constant and no
       group values for them are printed (p. 83). Borzage 2016 [FT] (45 people, measured viscosity, phase-contrast MRI): content "the strongest
       predictor of CBF (r² = 0.33)"; viscosity "had no detected effect on CBF after correction for differences in
-      oxygen carrying capacity". Plasma exchange in 8 people lowered plasma and whole-blood viscosity with "no
-      significant change in cerebral blood flow" (BMJ 1982 [ABS], PMID 6805689); a review pooling the human work
+      oxygen carrying capacity". Plasma exchange in 8 patients lowered plasma and whole-blood viscosity with "no
+      significant change in cerebral blood flow", measured 12–18 h after the exchange at an unchanged haematocrit (BMJ
+      1982 [FT], PMID 6805689); a review pooling the human work
       (Hoiland 2016 [FT]) reads "studies in humans provide evidence against an appreciable role of viscosity". The
       limit (the check's reading, which the plan shares): in anaemia haematocrit, viscosity and content move together,
       so a regression has little power to separate them, and the two plasma-exchange reports disagree (+24.4 mL/100
@@ -340,7 +341,7 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
       104, HBar 145; pp. H1193–H1194); the viscosity share is the remainder by subtraction, and a direct action of the
       very high PaO2 on the vessels was not tested (pp. H1194–H1195). Whole-blood viscosity was measured ex vivo in
       3 + 3 separate rats: 4.53 → 2.54 cP, with plasma viscosity rising 1.32 → 1.67 cP from the starch (p. H1193)
-      (note 90b §2). Hudak 1986 and 1987 [ABS] (newborn
+      (note 90b §2). Hudak 1986 and Massik 1987 [ABS] (newborn
       lambs, unanaesthetised; newborn sheep, anaesthetised): red-cell concentration accounted for 56 % and about 60 % of
       the fall in flow as haematocrit **rose** (20 → 40 %, 30 → 55 %), with viscosity "probable", not measured. The cats
       of 1992 (Muizelaar, [ABS]) show that viscosity moves flow but give no share. The shares come from different
@@ -574,7 +575,7 @@ circulation unless stated.
 | P5 | 18–58 s adenosine asystole | humans, isoflurane, 15 | EEG power "reduced to -57%, but reached normal values within 5 min" | Plaschke 2006 [ABS] | a second short-arrest number: EEG power normal by 5 min |
 | P6 | 5 min untreated (pacing-induced) | rats, chloral hydrate (none for 30 min before), normothermic, 20 | isoelectric → burst suppression → continuous; first burst 21.5 ± 6.0 min; continuous background 239.5 ± 38.4 min; with 2 h hypothermia 15.1 ± 1.9 and 171.2 ± 15.2 min (the first burst came during cooling, before the target was reached at 15.7 ± 5.0 min; the continuous background came during rewarming, 2–4 h: not a measurement at a steady 33 °C) | Chen 2013 [FT] | shape: the milestone sequence and their ratio; rat time scale not transferred |
 | P7 | 5 min untreated (asphyxial, arrest ≈ 3 min after it began) | rats, normothermic, 40 | first burst 25.70 [22.48–30.05] min; continuous ("normal trace") 208.39 [186.29–248.80] min | Chen 2019 [FT] | shape, as P6; asphyxial cause |
-| P8 | 7 min asphyxia | rats, 24 (8 per group), halothane stopped 5 min before the arrest, no sedation after; 33, 37 or 39 °C within 15 min, for 6 h | burst frequency in the first 90 min 25.6 ± 12.2 (33 °C), 16.9 ± 8.5 (37 °C), 22.6 ± 8.3/min (39 °C); most animals continuous at 90 min, earlier when cooled (p = 0.025) while still cold, later with hyperthermia; mortality 0/8, 1/8, 4/8; the times to continuous are in a figure only | Jia 2008 [FT] | shape; the rat direction of temperature, recorded, not built (§9.1 item 5) |
+| P8 | 7 min asphyxia | rats, 24 (8 per group), halothane stopped 5 min before the arrest, no sedation after; 33, 37 or 39 °C within 15 min, for 6 h | burst frequency in the first 90 min 25.6 ± 12.2 (33 °C), 16.9 ± 8.5 (37 °C), 22.6 ± 8.3/min (39 °C); most animals continuous at 90 min, earlier when cooled (p = 0.025) while still cold, later with hyperthermia; mortality 0/8, 1/8, 4/8; the times to continuous are not given in the text, tables or figure legends (the figures themselves not seen); the time from the start of the arrest to the first burst was 18.4 ± 2.4 (39 °C), 18.0 ± 1.9 (37 °C) and 16.2 ± 2.4 min (33 °C), p = 0.143 (Results, last paragraph) | Jia 2008 [FT] | shape; the rat direction of temperature, recorded, not built (§9.1 item 5) |
 | P9 | 7 min asphyxial arrest | dogs, 23 | brainstem auditory potentials normal at 1 h; EEG frequency distribution "never recovered … during the 6 h" | Cerchiari 1990 [ABS] | brainstem before cortex (R2); cortex still abnormal at 6 h |
 | P10 | 8–14 min | dogs, 14, 5 h follow-up | EEG deteriorated in all with arrest > 8 min; > 12 min "either no return (isoelectric) or marked slowing" | Lin 1977 [ABS] | shape: beyond ≈ 12 min, no continuous EEG within hours |
 | P11 | 1 h complete ischaemia | cats, normothermic, 12 | at 5–6 h of recirculation: no EEG recovery in 5, intermittent in 3, continuous in 4; EEG intensity correlated with ATP | Schmidt-Kastner 1986 [ABS] | the far end of the animal range |
@@ -599,7 +600,7 @@ continuous background (P6, P7) [P, mine]. No rat or dog time is copied into a hu
 | R3 | The EEG's course after a long arrest | Jørgensen & Holm 1998 [ABS] (231): intermittent activity, then continuous delta → theta → alpha, over hours to days; Geocadin 2002 [ABS] (rats, 5 or 7 min asphyxia): more bursting in the first 30–40 min in good-outcome animals; P6–P8, P12 | `fnCap(Q)` rises from 0 through a burst-suppression range (the EEG cortex's existing suppression drives the bursting) to continuous; the times from the recovery table |
 | R4 | Outcome by the EEG at 12 and 24 h | Ruijter 2019 [FT] (850 patients): generalized suppression (< 10 µV) or synchronous patterns with ≥ 50 % suppression from 6 h onward invariably meant poor outcome; continuous patterns at 12 h predicted good outcome (sensitivity 0.50, specificity 0.91); Westhall 2016 [FT] (103 of the TTM trial): a highly malignant EEG after rewarming meant poor outcome in all; a benign EEG in 1 % of poor outcomes | validation bands for the EEG plan's injury state (§7), not built in this plan's pieces |
 | R5 | Awakening | P13, P14; Paul 2016 [ABS] (326, midazolam + fentanyl): delayed awakening (> 48 h after sedation stop) in 56 of 194 woken, at median 93 h; Resuscitation 2016 (PMID 27036662) [ABS] (163 woken after 24 h at 32–34 °C): mean 3.8 days, later with a lower target; Resuscitation 2021 (PMID 34102268) [ABS] (209): high-dose benzodiazepine 5 against 3 days | the far end of the recovery table; sedation is a confound the engine's drug layer carries separately |
-| R6 | Temperature after return | **Rats, unsedated, cooled at once:** Chen 2013 [FT] (P6) and Jia 2008 [FT] (P8) earlier bursts and continuous background; Jia 2006 [ABS] and IEEE TBME 2006 (PMID 16761828) [ABS]: better qEEG recovery. **Newborns:** Thoresen 2010 [ABS] (74): good outcomes normalised by 24 h when normothermic, by 48 h when cooled. **Adults, sedated:** Lybeck 2018 [ABS] (939, TTM): awakening later at 33 than 36 °C (p = 0.002), cumulative sedative doses not different; Annborn 2023 [ABS] (71, concentrations measured): 53 against 46 h (p = 0.09); Fugate 2011 [ABS]: day 2 with and without cooling; Hofmeijer 2015 [FT] and J Intensive Care 2016 (PMC4818927) [FT]: continuous patterns within about 11–12 h in good outcomes under 33 °C, no comparator; Westhall 2016 [FT]: prognostic value not changed by 33 against 36 °C. **Drugs under cooling:** Bjelland 2013, Hostler 2010, Leslie 1995 [ABS]: lower clearance, more drug for a dose | **decided (§9.1 item 5): no temperature term on recovery.** Temperature acts through demand during low flow, the EEG's direct cold slowing and drug clearance; the protection by immediate cooling and the harm from fever are the injury state's placeholders (§1.3.7) |
+| R6 | Temperature after return | **Rats, unsedated, cooled at once:** Chen 2013 [FT] (P6) and Jia 2008 [FT] (P8) earlier bursts and continuous background. **Rats, cooled from 45 min after the circulation returned:** Jia 2006 [FT] (no anaesthesia after the resuscitation) and IEEE TBME 2006 (PMID 16761828) [FT] (halothane anaesthesia possibly continued during the cooling; about 3 h recorded): better qEEG recovery with cooling. **Newborns:** Thoresen 2010 [ABS] (74): good outcomes normalised by 24 h when normothermic, by 48 h when cooled. **Adults, sedated:** Lybeck 2018 [ABS] (939, TTM): awakening later at 33 than 36 °C (p = 0.002), cumulative sedative doses not different; Annborn 2023 [ABS] (71, concentrations measured): 53 against 46 h (p = 0.09); Fugate 2011 [ABS]: day 2 with and without cooling; Hofmeijer 2015 [FT] and J Intensive Care 2016 (PMC4818927) [FT]: continuous patterns within about 11–12 h in good outcomes under 33 °C, no comparator; Westhall 2016 [FT]: prognostic value not changed by 33 against 36 °C. **Drugs under cooling:** Bjelland 2013, Hostler 2010, Leslie 1995 [ABS]: lower clearance, more drug for a dose | **decided (§9.1 item 5): no temperature term on recovery.** Temperature acts through demand during low flow, the EEG's direct cold slowing and drug clearance; the protection by immediate cooling and the harm from fever are the injury state's placeholders (§1.3.7) |
 | R7 | Breathing after return | the gate on main reopens over 2 min (the ruled "1–3 min"); no timed source found; its order is sourced (R2); Reid 1998 (as the evidence check states it; not in its tables, not read here) (rats, 7 min): in 3 of 36 the brainstem response never returned, and none of those breathed | B5 re-expresses it unchanged; B7a keeps the 2-min reopening as [P] after the no-flow phases; a function of brainstem debt only in B7b |
 | R8 | The patient who does not wake | Ruijter 2019 [FT], Westhall 2016 [FT], Elmer 2023 [FT]; mechanism (synaptic failure becoming lasting) Hofmeijer 2012 [ABS] | the EEG plan's injury state on this plan's debt (the ruling, §9.1 item 3; §7) |
 
@@ -694,7 +695,7 @@ reading error the notes state (research notes 90a and 90b).
 | R6 cooling after return | conflict, open question | **decided: no temperature term on recovery**; the sign changes with species and end point and no source sizes a term per degree; protection by immediate cooling and harm from fever become the injury state's placeholders | research note 85: Chen 2013, Jia 2008 [FT]; Lybeck 2018, Annborn 2023, Thoresen 2010, Kuboyama 1993, Zeiner 2001, Hickey 2003 [ABS] |
 | `Q10_BRAIN` 7 %/°C, floor 0.3 | [P], "tables" | sourced for 33–37 °C; below about 28 °C the line departs from the measurements (finding for the organ tables, not changed) | McCullough 1999, Michenfelder & Milde 1991 [ABS] |
 | P6 Chen 2013 cooled times | stated as at 33 °C | first burst during cooling, continuous background during rewarming; not a steady-33 °C measurement | Chen 2013 [FT] |
-| P8 Jia 2008 | [ABS] | [FT]: unsedated, continuous earlier when cooled while still cold; figures not read | Jia 2008 [FT] |
+| P8 Jia 2008 | [ABS] | [FT]: unsedated, continuous earlier when cooled while still cold; the times to continuous are not given in the text, tables or figure legends; first burst 16.2–18.4 min after the start of the arrest at the three temperatures (figures not seen) | Jia 2008 [FT] |
 | A6 incidence of gasping | "B7a gasps always [P]" | **decided: by chance**, 46 % cardiac / 32 % other causes, or set by the instructor or the scenario | Clark 1992 [ABS] |
 | Mühling's slope (per haematocrit point) | stop and ask if Mühling's full text is unread | the per-point reading fits the abstract's means (k = 0.683 in a power form); now one candidate of §9.2 item 3, not the working size; full text still WANTED | Mühling 1999 [ABS] |
 | B2a's reference Hb | 14 (assumed default) | **decided: the patient's own normal** (15 for the adult man, each band its own); every default patient unchanged | the blood model's `BAND` (decision) |
@@ -745,7 +746,7 @@ reading error the notes state (research notes 90a and 90b).
 | Todd et al. 1994, Am J Physiol 267:H2025 (PMID 7977834) | [FT] (scan; tables from the page images) | rabbits, pentobarbital, 39 °C: CaO2 lowered to matched steps by hypoxaemia or hetastarch dilution; whole-brain CBF flat to CaO2 ≈ 13 in dilution, then rising (Table 1, p. H2027); less flow in dilution than in hypoxaemia at equal CaO2; cerebral DO2 falls in dilution, offset by extraction (Table 2, p. H2028); viscosity not measured (p. H2030) |
 | Tomiyama et al. 1999, Am J Physiol 276:H1190 (PMID 10199842) | [FT] | rats, pentobarbital: CBF 79 / 123 / 104 / 125 (control, diluted, diluted with content restored by 5 atm O2, diluted hyperbaric normoxia; Table 1 p. H1192, text p. H1192); content share 44 % of the rise, 61 % adjusted to equal MAP, viscosity the remainder (pp. H1193–H1194); whole-blood viscosity 4.53 → 2.54 cP, plasma 1.32 → 1.67 cP (p. H1193); PaO2 calculated |
 | Rebel et al. 2003, Am J Physiol Heart Circ Physiol 285:H1600 (PMID 12816746) | [FT] | cats, pentobarbital + fentanyl, exchange to Hct ≈ 19 %: resting flow up about 75 % with albumin, O2 transport kept (Fig. 2, p. H1603); flow (microspheres) to hypercapnia about +360 % against +400 % in controls, not different, attenuated with raised plasma viscosity or cell-free Hb (Fig. 4, p. H1604), as a percent of an unstated reference, no absolute flow printed; pial dilation to hypercapnia kept; hypocapnic constriction blunted in every transfused group (p. H1604); plasma viscosity only (Table 2, p. H1603) |
-| Hudak et al. 1986, Am J Physiol (PMID 3728699); Hudak et al. 1987, J Appl Physiol (PMID 3571067) | [ABS] | newborn lambs (unanaesthetised) and sheep (anaesthetised), as haematocrit **rose**: red cell concentration at unchanged CaO2 accounts for 56 % and ≈ 60 % of the CBF fall; viscosity "probable", not measured |
+| Hudak et al. 1986, Am J Physiol (PMID 3728699); Massik et al. 1987, J Appl Physiol 62:1090 (PMID 3571067) | [ABS] | newborn lambs (unanaesthetised) and sheep (anaesthetised), as haematocrit **rose**: red cell concentration at unchanged CaO2 accounts for 56 % and ≈ 60 % of the CBF fall; viscosity "probable", not measured |
 | Am J Physiol 1992 (PMID 1566914) | [ABS] | cats: CBF 140–90 % over Hct 60–120 % of baseline; in-vivo viscosity, not large-artery dilation; pial constriction after haemodilution |
 | Ric Clin Lab 1985 (PMID 4035219) | [ABS] | 4 patients with paraproteinaemia: plasmapheresis lowered **plasma** viscosity at constant Hct, CBF +24.4 mL/100 g/min (disputed: BMJ 1982, no change in 8) |
 | J Clin Anesth 2005;17:177 (PMID 15896583, DOI 10.1016/j.jclinane.2004.06.017) | [FT] | 30 hip-arthroplasty patients, N2O + sevoflurane, PaO2 > 200, PaCO2 38–40: MCA velocity to 122 % / 156 % of baseline after dilution to Hct 33 / 25 % (+22 % / +56 %), 135 % of baseline at MAP ≈ 55 under PGE1 (p. 179, Table 2 and Fig. 1); the abstract's "+122 %" / "+156 %" misstate it; velocity only, baseline ≈ 44 cm/s read from the figure |
@@ -756,11 +757,12 @@ reading error the notes state (research notes 90a and 90b).
 | Okuda 1976; Gregory 1981; Paulson 1990 | [ABS] as read by pull request 188 | CO2 response abolished at low pressure; the limits move with CO2 |
 | Borzage et al. 2016, J Appl Physiol (PMC4835904) | [FT] | 45 people, measured viscosity: content the strongest predictor of CBF; no viscosity effect after correction for content |
 | Hoiland et al. 2016, Am J Physiol Regul Integr Comp Physiol (PMC4796739) | [FT], review | pooled human haemodilution 0.66 % CBF per 1 % fall of CaO2 (mean line over four studies weighted by n; per-study slopes and ranges plotted, not stated), against 1.85 % in hypoxaemia; humans argue against an appreciable viscosity role |
-| BMJ 1982;284:1733 (PMID 6805689) | [ABS] | plasma exchange in 8: viscosity down, no change of CBF |
+| Brown & Marshall, BMJ 1982;284:1733 (PMID 6805689; PMC1498687) | [FT] (page scans) | 8 patients, not volunteers (myasthenia, neuropathy, Eaton–Lambert syndrome, macular oedema with myeloma; aged 26–71), normal cerebral circulation; plasma exchange, 50 mL/kg replaced by 5 % albumin; intravenous Xe-133, measured a few hours before and 12–18 h after (p. 1733); plasma viscosity 1.54 → 1.29 mPa s, whole blood −43 % at 0.7/s and −14 % at 94.5/s, PCV 0.41 → 0.40, not significant (Table I, p. 1734); CBF 71.3 ± 8.8 → 69.9 ± 9.5 mL/100 g/min, not significant; MAP 121 → 117 mmHg; Hb 13.6 → 13.2 g/dL (Table II); the authors equate the lowered viscosity to that of blood at Hb ≈ 10 g/dL (p. 1735) |
 | Vaclavu et al. 2019, Haematologica (PMC6442969) | [FT] | acetazolamide (16 mg/kg, ASL): controls +69.5 %, sickle-cell anaemia +34.1 %, "utilize half of the cerebral vasodilatory reserve" |
 | Zhao et al. 2021, NeuroImage (PMC8272558) | [FT] | acetazolamide (15 mg/kg), 15O-water PET, 19 healthy adults: whole-brain +39 % (SD 19) |
-| Battisti-Charbonney et al. 2011, J Physiol (DOI 10.1113/jphysiol.2011.206052) | [ABS] | MCA velocity's hypercapnic maximum +76.5 % / +108 % |
+| Battisti-Charbonney et al. 2011, J Physiol 589:3039 (DOI 10.1113/jphysiol.2011.206052; PMC3139085) | [FT] (text and tables) | MCA flow velocity (not flow) in 16 volunteers: sigmoid maxima 80 / 78.9 % hyperoxic and 101 / 101.7 % hypoxic (right / left), counted from the mean minimum during 5 min of hyperventilation, not from rest; the resting end-tidal PCO2 is not reported; the abstract's +108 % excludes four of the 16 subjects (Table 1) |
 | Grossmann & Koeberle 2000, Cerebrovasc Dis 10:65 (PMID 10629349) | [FT] | 59 healthy or CNS-excluded people, Xe-133 fast flow F1, standardised to PaCO2 36.5: rest 70.8; 98.5 / 109.7 / 118.6 / 127 at 10 / 13 / 15 / 18 mg/kg acetazolamide (× 1.39 / 1.55 / 1.68 / 1.79), each step significant including 15 → 18, so no plateau shown (p. 66, Fig. 1 p. 67); n 6 at 18 mg/kg, all with severe side effects (Table 1, p. 67); BP slightly lower (p. 68) |
+| Kety & Schmidt 1948, J Clin Invest 27:484 (PMC439519) | [FT] (page scans) | 8 studies in healthy young men, N2O method, 5 % CO2 (6) or 7 % (2): whole-brain flow 53 → 93 mL/100 g/min, mean (Table II p. 486), arterial PCO2 43 → 52 mmHg (Table I p. 485), direct MAP 82 → 93 mmHg (Table III p. 487; "rose significantly", p. 491); no plateau shown (Fig. 3 p. 490) |
 | Willie et al. 2012, J Physiol (DOI 10.1113/jphysiol.2012.228551; PMC3459041) | [FT] (early online pagination) | 16 healthy young adults, end-tidal forcing, duplex ICA and VA flow: ICA flow 222 → 341 mL/min at PaCO2 49 (× 1.54, MAP 82 → 87, not significant), → 482 at 58 (MAP 94), → 489 at 62 (MAP 100, n 3); ICA conductance up to × 1.85 at 58 (Table 1, p. 6); the authors cannot separate PaCO2 from the MAP rise (p. 13) |
 | Secomb & Pries 2013, C R Physique (PMC4117233), giving Pries 1992; Trejo-Soto 2022, Micromachines (PMC8954080) | [FT] | blood viscosity against haematocrit and vessel diameter, not a power law; rises at low shear |
 | Mühling et al. 1999, Can J Anaesth (PMID 10391602) | [ABS] (the full abstract's means) | 2 % CBFV per 1 % fall in Hct and CaO2; means Hb 14.5 → 10.3, Vm-MCA 61.2 → 77.3 cm/s (the candidate power form of §9.2 item 3 takes k = 0.683 from them) |
@@ -780,11 +782,12 @@ reading error the notes state (research notes 90a and 90b).
 | Olaussen et al. 2017, Resuscitation (PMID 28161214); Zhou 2024, Emerg Med Int (PMC11455598) | [ABS]; [FT] | CPR-induced consciousness 0.7 %; 0.23–0.9 % |
 | Tobin 2009, Anesth Analg (PMID 19843796) | [ABS] | consciousness at MAP 50 during arrest, one case |
 | Fatovich 2006 (PMID 16378674); Chollet-Xémard 2009 (PMID 19058894); Nitzschke 2012 (PMID 20828974) | [ABS] | BIS under CPR is artefact; does not track EtCO2 |
-| Sethi 2008 (PMID 18602746); Biesbroek 2018 (PMID 30105170) | [SEC] through Roberti 2023 | periodic CPR artefact, isoelectric between; EEG back seconds after compressions began |
+| Sethi 2008 (PMID 18602746) | [SEC] through Roberti 2023 | periodic CPR artefact, isoelectric between |
+| Biesbroek et al. 2018, Neurol Clin Pract 8:e7 (PMID 30105170; PMC6075975) | [FT] (text; the figure and the video not seen) | one man, 68, on 21-lead EEG monitoring, arrest rhythm ventricular tachycardia; EEG slowing and loss of fast activity about 40 s after its onset (the authors set this against "within 30 seconds" in asystole); EEG activity "returned several seconds after initiation of chest compressions"; **the text gives no number of seconds and no time from the onset of the tachycardia to compressions**; [INF] the rhythm was VT, so some flow before compressions cannot be ruled out |
 | Roberti et al. 2023, Intensive Care Med Exp (PMC9852381) | [FT] | review of EEG during CPR |
 | Hossmann 1988, Crit Care Med (PMID 3139367) | [ABS] | recovery needs recirculation CBF > 40 mL/100 g/min (cats); barbiturates did not help |
 | Hofmeijer & van Putten 2012, Stroke (PMID 22207505) | [ABS] | ≈ 30 % of energy to synaptic transmission; synaptic failure first, may persist |
-| Ching et al. 2012, PNAS (PMC3286963) | [FT-part]: main text; the SI not read | ATP-gated burst suppression; the EEG plan's metabolic burst-suppression piece reads `fn` |
+| Ching et al. 2012, PNAS 109:3095 (PMC3286963) | [FT-part]: main text; the SI not read | ATP-gated burst suppression: ATP production lowered to 30–50 % of baseline as a surrogate for metabolic rate, continuous activity giving way to suppression at 50 %, [ATP] falling by about 25 % during a burst and recovering slowly during suppression, networks of up to 20 cells (14 shown); **the main text gives no ATP time constant** (its details are in the SI); the EEG plan's metabolic burst-suppression piece reads `fn` |
 | Zuercher et al. 2010, BMC Cardiovasc Disord 10:36 (PMC2928171) | [FT] | Table 2: breathing and gasps by minute of untreated VF |
 | Zuercher et al. 2010, Crit Care Res Pract (PMC2951081) | [FT] | Table 1: gasps under CPR by VF duration and CPR mode |
 | Menegazzi et al. 1995, Acad Emerg Med (PMID 8597915) | [ABS] | agonal breathing by minute, 6–11/min, VT 502–852 mL (α-chloralose) |
@@ -810,7 +813,9 @@ reading error the notes state (research notes 90a and 90b).
 | Stecker et al. 2001 I and II, Ann Thorac Surg (PMID 11216734, 11216751) | [ABS] | EEG events by temperature in cooling; rewarming does not mirror cooling |
 | Ann Thorac Surg 2018, neonatal swine and humans (PMC6330195) | [FT] | isoelectric at 22.4 °C, emergence at 27.3 °C (hysteresis) |
 | Chen et al. 2013 (PMC3867829); Jia et al. 2008, Resuscitation (PMID 18597914, PMC2570264) | [FT] | rat EEG recovery earlier with immediate cooling, no sedation after the arrest; Jia: 33 / 37 / 39 °C |
-| Jia et al. 2006 (PMID 16919609); IEEE TBME 2006 (PMID 16761828); IEEE TBME 2009 (PMID 19174339); Jia et al. 2008, Resuscitation (PMID 17936492) | [ABS] | qEEG recovery greater with cooling; immediate better than delayed; no qEEG change in sham rats at 33 °C |
+| Jia et al. 2006, Brain Res 1111:166 (PMID 16919609; PMC3074257) | [FT] (text and tables; figures not seen) | rats, 7 per group, 7 or 9 min asphyxia; no anaesthesia after the resuscitation; cooling began 45 min after the return of circulation, 33 °C for 12 h; qEEG recovery greater with cooling |
+| Shin et al. 2006, IEEE Trans Biomed Eng 53:1016 (PMID 16761828; PMC3050568) | [FT] (text and tables; figures not seen) | rats, 5 per group; cooling began after a 45 min recovery at 37 °C, and the methods state that halothane anaesthesia was continued (wording ambiguous); about 3 h recorded; qEEG recovery greater with cooling |
+| IEEE TBME 2009 (PMID 19174339); Jia et al. 2008, Resuscitation (PMID 17936492) | [ABS] | qEEG recovery greater with cooling; immediate better than delayed; no qEEG change in sham rats at 33 °C |
 | Leonov et al. 1990, J Cereb Blood Flow Metab (PMID 2298837); Kuboyama et al. 1993, Crit Care Med (PMID 8370299); Abella et al. 2004, Circulation (PMID 15159295) | [ABS] | protection by cooling after return when immediate; lost with a 15-min delay (dogs); intra-arrest cooling in mice |
 | Mathew et al. 2001, J Clin Anesth (PMID 11435056); Levy 1984, Anesthesiology (PMID 6703384) | [ABS] | BIS −1.12 per °C; peak frequency 0.39 Hz/°C |
 | Hostler et al. 2010, Drug Metab Dispos (PMC2872942); Bjelland et al. 2013, Drug Metab Dispos (PMID 23115086); Leslie et al. 1995, Anesth Analg (PMID 7726398) | [ABS] | midazolam clearance −11.1 %/°C; fentanyl, propofol, morphine clearance lower at 33–34 °C; propofol +28 % at 34 °C |
@@ -827,7 +832,8 @@ reading error the notes state (research notes 90a and 90b).
 ### 5.3 WANTED (each with what it settles)
 
 - Losasso 1992, Anesth Analg 75:1021 (PMID 1443682): the first human EEG through asystole and CPR (A8).
-- Biesbroek 2018 (PMID 30105170) full text: EEG return seconds after compressions, and the no-flow time before (A8).
+- Biesbroek 2018 (PMID 30105170) figure and video: the seconds from compressions to EEG return, and the time from the
+  onset of the tachycardia to compressions (A8); the text gives neither.
 - AWARE-II full text (PMID 37423492): how many showed delta/theta/alpha under CPR, at what rSO2 and after what no-flow
   time (A8).
 - Shaffner 1999 full text (PMID 10446829): whether EEG or evoked potentials were recorded with the ATP (A8, B6b).
@@ -837,19 +843,21 @@ reading error the notes state (research notes 90a and 90b).
   for cerebral flow in people below Hb 5.7 g/dL (B2a's lower hold).
 - Brown 1984, MD thesis, Cambridge (cited by Brown 1985): the regression coefficients the article does not print, the
   per-subject data, and the PaCO2 and MAP ranges (§2.2; §9.2 item 3).
-- Rossen, Kabat & Anderson 1943, Arch Neurol Psychiatry 50:510 (not indexed): time to LOC on acute arrest of cerebral
+- Rossen, Kabat & Anderson 1943, Arch Neurol Psychiatry 50:510 (not in PubMed; DOI 10.1001/archneurpsyc.1943.02290230022002): time to LOC on acute arrest of cerebral
   flow (A2).
 - Sharbrough 1973 (PMID 4723697); Sundt 1981 (PMID 7266064); Trojaborg & Boysen 1973 (PMID 4118436): no abstracts
   indexed; the human CBF levels for EEG slowing vs flattening (A1, A2, B9's failure level).
 - Astrup, Siesjö & Symon 1981 (PMID 6272455), no abstract: the flow-time thresholds.
-- Njemanze 1991 full text: n and the velocity at presyncope (A2, §2.2).
+- Njemanze 1991, Aviat Space Environ Med 62:569 (PMID 1859345), full text: n and the velocity at presyncope (A2, §2.2).
 - Chen 2018, Neurocrit Care (PMID 28484928): asphyxial vs VF rats, the cause-of-arrest comparison (§2.3).
-- Jia 2008 (PMC2570264) figure data: the times to continuous EEG at 33, 37 and 39 °C; Jia 2006 (PMC3074257) and IEEE
-  TBME 2006 (PMC3050568) full texts: the time courses after 5, 7 and 9 min (§2.3 R6; recorded, not built).
+- Jia 2006 (PMC3074257) and IEEE TBME 2006 (PMC3050568) full texts: the time courses after 5, 7 and 9 min (§2.3 R6;
+  recorded, not built).
 - Nutma 2022 (PMID 35122892) full text: the EEG patterns at 12 and 24 h in each arm, 33 against 36 °C, the closest
-  human test of whether cooling delays a continuous EEG (§9.1 item 5).
+  human test of whether cooling delays a continuous EEG (§9.1 item 5). Still wanted: an open copy exists, but its
+  repository file could not be opened by script (a bot check); it can be read by hand in a browser.
 - Lybeck 2018 (PMID 29371115) full text: median awakening per arm, time from arrest to sedation stop per arm, sedation
-  by drug (§9.1 item 5: whether the drug layer can account for the later waking).
+  by drug (§9.1 item 5: whether the drug layer can account for the later waking). Still wanted, as for Nutma 2022: an
+  open copy exists, behind a bot check for scripts, readable by hand in a browser.
 - Annborn 2023 (PMID 37178902) full text: concentration time course, sedation stop, distribution of awakening.
 - Thoresen 2010 (PMID 20566612) full text: time to normal trace by arm and the sedation used.
 - A study measuring the EEG time course and waking together under randomised post-return temperature, with sedation
@@ -891,8 +899,9 @@ reading error the notes state (research notes 90a and 90b).
   per point and dog, the number of measurements per group, whether group I stayed near 150 mmHg); the input of
   Gersten's fit (the plotted points or the drawn curves); Todd 1994's fitted slopes above and below CaO2 12 (drawn
   only, Fig. 1); whole-blood viscosity with the dilution fluids, and Hudak 1986 (DOI 10.1152/ajpheart.1986.251.1.h63),
-  Hudak 1987 (DOI 10.1152/jappl.1987.62.3.1090), Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949); BMJ 1982
-  (PMC1498687); Battisti-Charbonney 2011 (DOI 10.1113/jphysiol.2011.206052).
+  Massik 1987 (DOI 10.1152/jappl.1987.62.3.1090), Muizelaar 1992 (DOI 10.1152/ajpheart.1992.262.4.h949);
+  Battisti-Charbonney 2011: the resting end-tidal PCO2 and the sigmoid's equation as printed (to place
+  rest on the fitted curve), and each subject's fitted parameters (Table 1 gives means only).
 - Cerebral flow below the lower limit of autoregulation, or under chest compressions, with and without haemodilution
   (§2.2: that the regulated rise adds nothing there is the plan's inference from the shared reserve).
 - A blood-viscosity relation with haematocrit and shear rate from a rheology source (Chien 1970, Merrill 1969 are cited
@@ -901,7 +910,7 @@ reading error the notes state (research notes 90a and 90b).
 - The reserve's ceiling as a function of pressure in people (§9.2 item 1): the dogs give its form (Harper & Glass 1965
   [FT]), at a normal pressure of about 150 mmHg; no human source read gives it.
 - Hofmeijer & van Putten 2012 full text: the synaptic share (§1.3.4); the CMRO2 at an isoelectric EEG (F).
-- Ching et al. 2012 SI: the ATP time constants, if the EEG plan's piece uses them.
+- Ching et al. 2012 SI (not opened): the ATP time constants, if the EEG plan's piece uses them.
 - Miller Ch71 p. 2254's primary source for loss of consciousness below 28 °C.
 
 ---
@@ -1119,8 +1128,16 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   15 and 18 mg/kg, every step significant, so no plateau shown, with blood pressure slightly lower (Grossmann &
   Koeberle 2000 [FT], p. 66, Fig. 1 p. 67, p. 68); with CO2, ICA flow × 1.54 at PaCO2 ≈ 49 while MAP had not changed
   significantly, rising to × 2.2 at PaCO2 ≈ 62 with MAP +21 % in 3 subjects, ICA conductance up to × 1.85 at ≈ 58
-  (Willie 2012 [FT], Table 1 p. 6; the authors cannot separate PaCO2 from the pressure rise, p. 13); flow velocity's
-  hypercapnic maximum +76.5 % (hyperoxic) before MAP rises (Battisti-Charbonney 2011 [ABS]). Dogs (Harper & Glass
+  (Willie 2012 [FT], Table 1 p. 6; the authors cannot separate PaCO2 from the pressure rise, p. 13); MCA flow
+  **velocity**, not flow, in 16 awake volunteers by rebreathing at a held end-tidal PO2: the fitted sigmoid's maximum
+  was 80 % (right MCA, n 16) and 78.9 % (left, n 10) hyperoxic and 101 % and 101.7 % hypoxic, each counted from the mean
+  minimum velocity during 5 min of hyperventilation to an end-tidal PCO2 of 25 mmHg (SD 4.0), **not from rest**; the
+  sigmoid's midpoint lay at 36.8 / 35.6 mmHg hyperoxic, and the resting value is not reported, so the article gives no
+  rise above rest; MAP began to rise at an end-tidal PCO2 of 49.1
+  mmHg hyperoxic and 44.4 hypoxic (MCA velocity threshold 51.7 / 45.4); the abstract's +108 % is the hypoxic mean after
+  excluding four of the 16 subjects, whose hypoxic rise was not larger (107.5 / 108.9 % right / left; hyperoxic 78.5 /
+  73.7 %); the authors note that the MCA diameter may change at very high CO2, which would make velocity understate flow
+  (Battisti-Charbonney 2011 [FT], Methods, Data analysis; Table 1; Discussion). Dogs (Harper & Glass
   1965 [FT]; 41 dogs, thiopentone then N2O, cortical 85Kr flow, each point a percent of that dog's own flow at PaCO2 40
   at its own pressure, p. 450): raising PaCO2 40 → 80 raised flow about 100 % at the dogs' "normotensive" ≈ 150 mmHg
   and "only 50 %" at MAP held at 100, and had no significant effect at 50 (pp. 450–451); the sigmoid fitted to these
@@ -1669,32 +1686,53 @@ merge B5c's landing and B2.
    - *In plain words.* The simulator gives the brain's resistance vessels one store of widening, spent together by
      carbon dioxide, low oxygen, the drugs and anaemia. At normal pressure its size, R_N, is the most that flow can
      rise above resting. It is today a by-product of the engine's pressure–flow line (1.40, no measurement), and no
-     human study shows where the true maximum lies: each gives a rise that was still growing.
+     human study shows where the true maximum lies: each volumetric or whole-brain study gives a rise that was still
+     growing; the one velocity study describes a plateau, but counts it from below rest and gives no rise above rest.
    - *The measurements (§2.2, B2v; notes 90, 90a §2 and §4, 90b §5).* Whole-brain or volumetric flow: × 1.39 with
      acetazolamide 15 mg/kg (PET, 19 adults); × 1.54 internal-carotid flow and × 1.50 carotid plus vertebral at
      PaCO2 ≈ 49 with MAP not significantly changed, rising to × 2.2 at PaCO2 ≈ 62 when MAP had risen 21 % (3 of 16
-     subjects); carotid conductance (flow per mmHg) up to × 1.85 (Willie 2012). Grey-matter-weighted flow: × 1.55,
+     subjects); carotid conductance (flow per mmHg) up to × 1.85 (Willie 2012). Whole-brain flow by the nitrous oxide
+     method in healthy young men breathing 5 % CO2 (6 studies) or 7 % (2), the mean pooling both: 53 → 93 mL/100 g/min
+     (Table II, p. 486; the authors give the rise as averaging 75 %, Summary p. 491), at an arterial PCO2 of 43 → 52 mmHg
+     (Table I, p. 485; at 5 % 42 → 50, 41 → 47, 41 → 48, 48 → 54, 41 → 46, 42 → 53; at 7 % 45 → 60, 45 → 58) and a direct
+     mean arterial pressure of 82 → 93 mmHg (Table III, p. 487; the authors state that it rose significantly during the
+     CO2 inhalations, Summary p. 491), so the figure is not at a constant pressure; no plateau is shown (Fig. 3, p. 490)
+     (Kety & Schmidt 1948, J Clin Invest 27:484). Grey-matter-weighted flow: × 1.55,
      1.68 and 1.79 at 13, 15 and 18 mg/kg (Xe-133; every step significant; blood pressure slightly lower; at 18 mg/kg
      n 6, all with severe side effects; Grossmann & Koeberle 2000); × 1.70 at 16 mg/kg (ASL, 11 controls). Dogs give
      the form, not a human number: the rise to CO2 halves when pressure is held at 100 and vanishes at 50 (Harper &
      Glass 1965), and the fitted limits lie inside the measured points.
+   - *Where the CO2 measurements differ (set side by side, not resolved).* Battisti-Charbonney 2011: MCA velocity from
+     the hypocapnic floor (end-tidal PCO2 ≈ 25–28 mmHg), not from rest, sigmoid maxima of 78.9–80 % hyperoxic and
+     101–101.7 % hypoxic (all subjects), the MAP threshold at an end-tidal PCO2 of 49.1 / 44.4 mmHg. Willie 2012: ICA
+     volumetric flow from rest, × 1.54 at PaCO2 ≈ 49 (MAP not significantly changed), × 1.88 at 54, × 2.17 at 58 (MAP
+     +14 % at 58), conductance × 1.85 at ≈ 58. Kety & Schmidt 1948: whole-brain flow from rest (arterial PCO2 43), × 1.75
+     at PaCO2 52 on the means (arithmetic on Table II; per subject × 1.34 to × 2.55) with MAP +13 % on the means. The
+     velocity study describes a plateau, while the two volumetric studies show flow still rising at PaCO2 52–60;
+     reasons not tested here: the authors' caveat that velocity understates flow if the MCA widens, the different
+     references of the percentages, end-tidal against arterial gases, and the pressure rise.
    - *Options.* R_N is built at **1.40, the built value**: marked [P], not sourced, the engine's own pressure–flow
      line continued. In a normal patient the engine's CO2 response (3 % per mmHg) stops at the ceiling, so each option
      also sets the PaCO2 above which hypercapnia adds no flow (mine, arithmetic on `co2Factor`); measured flow was still
      rising at PaCO2 54 and 58 (internal-carotid flow × 1.88 and × 2.17, conductance × 1.69 and × 1.85; Willie 2012).
      - **(a) Keep 1.40.** Rests on no measurement; the one whole-brain value at a fixed dose (× 1.39, PET, 15 mg/kg,
-       where the Xe-133 study gave × 1.68 at the same dose) is at it, every other figure above. Residents see: a
+       where the Xe-133 study gave × 1.68 at the same dose) is at it, every other volumetric or whole-brain figure above
+       it (the 1948 whole-brain CO2 study too: × 1.75 on the means, with MAP + 13 %). The velocity study's plateau gives
+       no rise above rest, so it neither supports nor contradicts 1.40. Residents see: a
        normal patient's flow and ICP stop rising with CO2 from PaCO2 ≈ 53; an anaemic patient at rest reaches the
        ceiling below about Hb 6 (pooled line) or 9 (power form), and from there hypercapnia, hypoventilation or a
        volatile add no flow and no ICP rise; the hypoxic rise stops from PaO2 ≈ 48.
      - **(b) About × 1.5**, the internal-carotid and vertebral flow at PaCO2 ≈ 49 with the pressure unchanged. A point
-       on a rising curve, not a maximum. Residents see: a normal patient's CO2 response stops from PaCO2 ≈ 57; an
+       on a rising curve, not a maximum; the 1948 whole-brain figure at PaCO2 52 lies above it, with the pressure up
+       13 % on the means. Residents see: a normal patient's CO2 response stops from PaCO2 ≈ 57; an
        anaemic patient keeps a small CO2 and ICP response down to about Hb 8 (power form), and with the pooled line the
        cap is not reached within the holds.
      - **(c) About × 1.8**, where two independent measurements meet: internal-carotid conductance (volumetric, flow
        per mmHg, so corrected for the 14 % pressure rise) × 1.85 at PaCO2 ≈ 58, and acetazolamide 18 mg/kg × 1.79
        with blood pressure slightly lower (Xe-133, grey-matter-weighted, n 6). Neither shows a plateau, so it is still
-       a lower bound; correcting by conductance assumes flow follows pressure at that degree of dilation (mine).
+       a lower bound; correcting by conductance assumes flow follows pressure at that degree of dilation (mine). The
+       1948 whole-brain figure (× 1.75 at PaCO2 52 on the means, MAP + 13 %, not corrected) lies near it before any
+       pressure correction (mine); the velocity study neither supports nor contradicts it.
        Residents see: a normal patient's flow rises with CO2 to PaCO2 ≈ 67; an anaemic patient still raises flow and
        ICP clearly with CO2 down to about Hb 6 (power form) or 8 (constant transport).
      - **(d) Build a marked value and state the measurement that would settle it:** the maximal rise of whole-brain
@@ -1715,7 +1753,10 @@ merge B5c's landing and B2.
      that inflates the largest CO2 flows, and the acetazolamide figure was reached with the pressure falling. × 1.5 is
      a point on a still-rising curve, and × 1.39 a submaximal dose read by a method that gave less than Xe-133 at the
      same dose. (c) rests on few subjects (7 at the CO2 step, 6 at the dose) and on one grey-matter-weighted method,
-     so it stays marked [P] as a lower bound until the clamped-pressure measurement exists.
+     so it stays marked [P] as a lower bound until the clamped-pressure measurement exists. The proposal stands after
+     the 2011 velocity study and the 1948 whole-brain study were read in full: the first counts its rise from below
+     rest and so gives no figure against rest, and the second, near × 1.8 only before a pressure correction, rests on
+     means that pool two CO2 concentrations and rise with the pressure, so neither narrows nor replaces (c)'s two methods.
 2. **When the brain's vessels are already fully widened, does thinner, diluted blood still let more blood through?**
    - *In plain words.* Thinner blood flows more easily through any tube. While the brain's vessels can still adjust,
      they narrow to make up for it, which is why people show no separate effect of viscosity on resting flow. Once
