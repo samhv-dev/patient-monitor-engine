@@ -125,8 +125,9 @@ export class ControllerSession {
   /** The envelope's `from`: the peer id, or for an instructor `<peerId>.<n>`, n counting the connections. */
   private sender: string;
   private connections = 0;
-  /** The host's peer id once heard: a hello from another id is a new host (a reloaded laptop). */
+  /** The host's peer id once heard (its hello, grant, events or snapshot): a hello from another id is a new host (a reloaded laptop). */
   private hostId: string | null = null;
+  private readonly hostRestartFns = new Set<() => void>();
   private readonly now: () => number;
   private readonly pending = new Map<string, Pending>();
   /** Staged deliveries being answered, by batch id: each item's line, in send order, and the answers so far. */
@@ -189,6 +190,12 @@ export class ControllerSession {
   /** An instructor note in the event log (a debrief marker; not sent to the host). */
   note(text: string): void {
     this.addLog('note', text);
+  }
+
+  /** A new host came: the laptop's page reloaded (the pending presses were answered HOST_RESTARTED_REASON). */
+  onHostRestart(fn: () => void): () => void {
+    this.hostRestartFns.add(fn);
+    return () => void this.hostRestartFns.delete(fn);
   }
 
   onChange(fn: () => void): () => void {
@@ -316,6 +323,7 @@ export class ControllerSession {
     const fresh = this.hostId !== null && from !== this.hostId;
     this.hostId = from;
     this.hostOnline = true;
+    if (fresh) for (const fn of [...this.hostRestartFns]) fn();
     if (!this.instructor) this.resendPending();
     else {
       if (fresh) for (const [id, p] of [...this.pending]) this.answer(id, p, { accepted: false, tick: -1, reason: HOST_RESTARTED_REASON });

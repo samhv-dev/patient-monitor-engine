@@ -159,11 +159,11 @@ export function deliverPrep(
 
 /**
  * `prep infuse` → one `applyEvent infusion` per drug at the pump's mL/h, with that drug's concentration × its r at the
- * start (§7.1: the concentration is fixed at its start value; L12, conditional, would make it fall with age). `running`
- * gives the rate each replaces (LQ4).
+ * start (§7.1: the concentration is fixed at its start value; L12, conditional, would make it fall with age). The host
+ * writes the rate each replaces as it applies it (LQ4).
  */
 export function infusePrep(
-  f: Formulary, h: HostPrep, cmd: Extract<WireCommand, { type: 'prep'; action: 'infuse' }>, base: WireCommand, simT: number, running: ReadonlyMap<string, Running>,
+  f: Formulary, h: HostPrep, cmd: Extract<WireCommand, { type: 'prep'; action: 'infuse' }>, base: WireCommand, simT: number,
 ): Translated {
   const why = notUsable(f, h, simT);
   if (why) return no(why);
@@ -174,24 +174,19 @@ export function infusePrep(
     h.gives[a.drugId] = { remaining: r, activeAmount: a.perMl * r, unit: `${a.unit}/mL`, basis: basisOf(rem) }; // an infusion's: per mL of the syringe
     return { kind: 'infusion', drugId: a.drugId, rate: cmd.rateMlH, unit: 'mL/h', concentration: { amount: a.perMl * r, unit: a.unit, perMl: 1 } };
   });
-  if (!out.ok) return out;
-  for (const c of out.cmds) {
-    const was = running.get((c as { event: { drugId: string } }).event.drugId);
-    if (was) Object.assign(c, { replaced: { rate: was.rate, rateUnit: was.unit, by: was.by } });
-  }
-  return { ok: true, cmds: out.cmds, volumeMl: 0 };
+  return out.ok ? { ok: true, cmds: out.cmds, volumeMl: 0 } : out;
 }
 
 /**
  * `infusion set` (LQ4, option B): change, or at 0 stop, the running infusion of `drugId` whoever started it, at the pump's
  * mL/h with THAT infusion's own syringe (its concentration, or none: the engine's row syringe, as the instructor's rate
- * gave it), recording the rate it replaced and who had set it.
+ * gave it); the host writes the rate it replaced as it applies it.
  */
 export function setInfusion(cmd: Extract<WireCommand, { type: 'infusion' }>, base: WireCommand, running: ReadonlyMap<string, Running>): Translated {
   const was = running.get(cmd.drugId);
   if (!was) return no(`no ${cmd.drugId} infusion is running`);
   const event = { kind: 'infusion', drugId: cmd.drugId, rate: cmd.rateMlH, unit: 'mL/h', ...(was.concentration ? { concentration: was.concentration } : {}) };
-  return { ok: true, cmds: [{ ...base, type: 'applyEvent', event, replaced: { rate: was.rate, rateUnit: was.unit, by: was.by } } as unknown as WireCommand], volumeMl: 0 };
+  return { ok: true, cmds: [{ ...base, type: 'applyEvent', event } as unknown as WireCommand], volumeMl: 0 };
 }
 
 /** The scenario driver's record of a preparation for one of its drugs at its last give (types-v2.ts PrepRecord), or undefined. */

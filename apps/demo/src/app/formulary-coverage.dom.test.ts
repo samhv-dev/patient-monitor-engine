@@ -71,7 +71,7 @@ function runs(drugId: string, how: 'give' | 'infuse'): string | null {
   const t = 3600;
   const out = how === 'give'
     ? deliverPrep(F, s.prep, { id: 'c1', type: 'prep', action: 'deliver', prepId: s.prep.id, volumeMl: 'all', route: 'iv' } as Extract<WireCommand, { type: 'prep'; action: 'deliver' }>, BASE, t)
-    : infusePrep(F, s.prep, { id: 'c1', type: 'prep', action: 'infuse', prepId: s.prep.id, rateMlH: 1 } as Extract<WireCommand, { type: 'prep'; action: 'infuse' }>, BASE, t, new Map());
+    : infusePrep(F, s.prep, { id: 'c1', type: 'prep', action: 'infuse', prepId: s.prep.id, rateMlH: 1 } as Extract<WireCommand, { type: 'prep'; action: 'infuse' }>, BASE, t);
   if (!out.ok) return out.why;
   const e = createEngine({ seed: 1, mode: 'modeled' });
   for (const c of out.cmds) {

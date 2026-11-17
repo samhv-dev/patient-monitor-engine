@@ -249,6 +249,7 @@ input[type='checkbox'], input[type='radio'] { flex: none; width: 24px; height: 2
 .log time { font-family: var(--font-num); font-variant-numeric: tabular-nums; color: var(--text-muted); }
 .log .k { font-size: var(--t-12); color: var(--text-muted); border: 1px solid var(--line); border-radius: var(--r-chip); padding: 0 4px; align-self: start; }
 .log li[data-kind='marker'] .k, .log li[data-kind='note'] .k { border-color: var(--accent); color: var(--accent); }
+.log li[data-begins] { border-bottom: 2px solid var(--text-muted); font-weight: 600; } /* newest first: it closes its case's lines */
 
 /* ---------- views ---------- */
 .page { max-width: 1180px; margin: 0 auto; padding: var(--s-5) var(--s-5) var(--s-7); }

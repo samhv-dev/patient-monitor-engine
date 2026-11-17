@@ -3,8 +3,8 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import { TICK_S, type AlarmEntry, type EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, PUMP_ISSUED_BY, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type NotGiven, type PumpMismatchNews, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
-import { describeCommand, notDoneOf, spanText, timeText } from './describe.ts';
+import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, PUMP_ISSUED_BY, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type CommandSender, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type NotGiven, type PumpMismatchNews, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { caseBeginsText, describeCommand, notDoneOf, spanText, timeText } from './describe.ts';
 import { DEVICE_WORDS, type DeviceKind } from './device-names.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
@@ -21,13 +21,17 @@ export interface ClinicalLogEntry {
   refused?: string;
   /** The run event a note is, into the record with it (D5: 'recognised', the /1 Recognised press). */
   ev?: NoteEvent;
+  /** The line where a case begins: shown under every filter of the Log sheet. */
+  begins?: true;
 }
 
 const LOG_MAX = 1000;
-/** The kind of device that pressed a learner's or pump's command: a pump tablet's is filed `issuedBy: 'pump'` (its line
- *  names the channel: describe.ts). */
-const deviceKindOf = (c: { issuedBy?: unknown; event?: unknown }): DeviceKind =>
-  c.issuedBy === PUMP_ISSUED_BY ? 'pump' : (c.event as { kind?: unknown } | undefined)?.kind === 'defib' ? 'defib' : 'learner';
+/** How many of this link's own commands wait for the host's commandApplied (or it for their ack) at most. */
+const OWN_MAX = 64;
+/** The kind of device that pressed a learner's or pump's command, as the host wrote it (`sender`); a command filed before
+ *  the host wrote one: a pump tablet's is `issuedBy: 'pump'`, a defibrillator window's a `defib` event. */
+const deviceKindOf = (c: { issuedBy?: unknown; event?: unknown; sender?: CommandSender }): DeviceKind =>
+  c.sender?.role ?? (c.issuedBy === PUMP_ISSUED_BY ? 'pump' : (c.event as { kind?: unknown } | undefined)?.kind === 'defib' ? 'defib' : 'learner');
 
 export class Link {
   readonly ctl: ControllerSession;
@@ -57,6 +61,11 @@ export class Link {
   private lastRaised = new Set<string>();
   /** The staged deliveries' stage groups (sendBatch): one buffer per Link, so each delivery has its own group id. */
   private batchBuf: StageBuffer | null = null;
+  /** This link's accepted commands whose line waits for the host's commandApplied, and applied commands whose ack has
+   *  not come yet, by command id: the line says the command as the host applied it (the rate it replaced). */
+  private readonly ownLines = new Map<string, { entry: ClinicalLogEntry; step: string | undefined }>();
+  private readonly ownApplied = new Map<string, Record<string, unknown>>();
+  private rev = 0;
 
   constructor(ctl: ControllerSession, transport: ManagedTransport, host: AppSession | null = null) {
     this.ctl = ctl;
@@ -81,11 +90,36 @@ export class Link {
 
   /** Send with a log line; resolves with the ack (rejections are logged with the engine's reason). */
   async send(c: CommandInput, kind: ClinicalLogEntry['kind'] = 'instructor'): Promise<AckResult> {
-    const text = describeCommand(c as Record<string, unknown>, scenarioStep(this.ctl.scenario, c)); // read before the press moves the state
+    const step = scenarioStep(this.ctl.scenario, c); // read before the press moves the state
     const r = await this.ctl.send(c);
     this.track(c, r);
-    this.add({ simT: this.simT, kind, text, ...(r.accepted ? {} : { refused: r.reason ?? 'refused' }) });
+    const entry: ClinicalLogEntry = { simT: this.simT, kind, text: describeCommand(c as Record<string, unknown>, step), ...(r.accepted ? {} : { refused: r.reason ?? 'refused' }) };
+    this.add(entry);
+    if (r.accepted) this.ownLine(r.commandId, entry, step);
     return r;
+  }
+
+  /** An accepted command's line, said again as the host applied it once its commandApplied is here. */
+  private ownLine(id: string, entry: ClinicalLogEntry, step: string | undefined): void {
+    const applied = this.ownApplied.get(id);
+    if (!applied) return void bounded(this.ownLines, OWN_MAX).set(id, { entry, step });
+    this.ownApplied.delete(id);
+    this.rewrite(entry, describeCommand(applied, step));
+  }
+
+  private ownCommandApplied(id: string, c: Record<string, unknown>): void {
+    const line = this.ownLines.get(id);
+    if (!line) return void bounded(this.ownApplied, OWN_MAX).set(id, c);
+    this.ownLines.delete(id);
+    this.rewrite(line.entry, describeCommand(c, line.step));
+  }
+
+  private rewrite(entry: ClinicalLogEntry, text: string): void {
+    const i = this.sessionLog.indexOf(entry);
+    if (i < 0 || entry.text === text) return;
+    this.sessionLog[i] = { ...entry, text };
+    this.rev++;
+    this.changed();
   }
 
   /**
@@ -191,6 +225,7 @@ export class Link {
       if (e.cause !== 'restore') {
         this.conditions.clear();
         this.caseFrom = this.sessionLog.length;
+        if (e.begins) this.add({ simT: e.t, kind: 'system', text: caseBeginsText(e.begins), begins: true });
       }
       this.changed();
     } else if (e.type === 'fastForward') {
@@ -218,12 +253,14 @@ export class Link {
    */
   private applied(e: Extract<WireEvent, { type: 'commandApplied' }>): void {
     const r = e.resolved as AppliedResolution | undefined;
-    const c = r?.command as (Record<string, unknown> & { issuedBy?: string; by?: unknown; event?: { kind?: unknown } }) | undefined;
-    if (!this.host || !c || r?.replay || r?.mirror || e.commandId.startsWith(`${this.ctl.peerId}-`)) return;
+    const c = r?.command as (Record<string, unknown> & { issuedBy?: string; by?: unknown; sender?: CommandSender; event?: { kind?: unknown } }) | undefined;
+    if (!c || r?.replay || r?.mirror) return;
+    if (e.commandId.startsWith(`${this.ctl.peerId}-`)) return this.ownCommandApplied(e.commandId, c);
+    if (!this.host) return;
     const text = describeCommand(c);
     if (c.issuedBy === 'remote') return this.add({ simT: e.tick * TICK_S, kind: 'instructor', text: `${text} (instructor's phone)` });
     if (c.issuedBy !== LEARNER_ISSUED_BY && c.issuedBy !== PUMP_ISSUED_BY) return;
-    this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${this.deviceOf(c.by, deviceKindOf(c))})` });
+    this.add({ simT: e.tick * TICK_S, kind: 'learner', text: `${text} (${this.deviceOf(c)})` });
   }
 
   /** L14: on the host, a learner remote's give or sample, or a pump tablet's command, the host refused because the case was paused
@@ -233,12 +270,20 @@ export class Link {
   notGiven(n: NotGiven): void {
     const c = n.command as unknown as Record<string, unknown>;
     const { what, not } = notDoneOf(c);
-    this.add({ simT: n.t, kind: 'learner', text: `${what} (${this.deviceOf(c.by, deviceKindOf(c))}) ${not}: ${n.reason}` });
+    this.add({ simT: n.t, kind: 'learner', text: `${what} (${this.deviceOf(c)}) ${not}: ${n.reason}` });
   }
 
-  /** The device `by` as every page names it, or its role's word alone for a command that names no device. */
-  private deviceOf(by: unknown, kind: DeviceKind): string {
-    return typeof by === 'string' && this.host ? this.host.deviceLabel(by, kind) : DEVICE_WORDS[kind].toLowerCase();
+  /** The device that sent `c` as every page names it (the name the host wrote on it), or its role's word alone for a
+   *  command that names no device. */
+  private deviceOf(c: { by?: unknown; issuedBy?: unknown; event?: unknown; sender?: CommandSender }): string {
+    const kind = deviceKindOf(c);
+    if (c.sender?.name) return c.sender.name;
+    return typeof c.by === 'string' && this.host ? this.host.deviceLabel(c.by, kind) : DEVICE_WORDS[kind].toLowerCase();
+  }
+
+  /** Counts every change to the session's log, a line said again in place too (the Log sheet redraws on it). */
+  get logRev(): number {
+    return this.rev;
   }
 
   /** The running case's lines of the session's log. */
@@ -250,6 +295,7 @@ export class Link {
    *  restore itself logged. Not filed into the record again (its own copy came back with it). */
   resumeCase(kept: readonly ClinicalLogEntry[], t: number): void {
     this.sessionLog.splice(this.caseFrom, 0, ...kept.filter((x) => x.simT === null || x.simT <= t + 1e-6));
+    this.rev++;
     this.trim();
     this.changed();
   }
@@ -257,6 +303,7 @@ export class Link {
   private add(x: ClinicalLogEntry): void {
     if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text, x.ev); // Into the debrief
     this.sessionLog.push(x);
+    this.rev++;
     this.trim();
     this.changed();
   }
@@ -271,6 +318,12 @@ export class Link {
   private changed(): void {
     for (const fn of [...this.fns]) fn();
   }
+}
+
+/** `m`, with its oldest entry dropped when it is full. */
+function bounded<K, V>(m: Map<K, V>, max: number): Map<K, V> {
+  if (m.size >= max) m.delete(m.keys().next().value as K);
+  return m;
 }
 
 /** The step a scenario trigger presses: its button label (or the transition's label) in the view's current state, the

@@ -16,6 +16,8 @@ import {
   type PumpSource,
   SeqFilter,
   type AppliedResolution,
+  type CaseBegins,
+  type CommandSender,
   type ControlFlag,
   type FastForwardAlarm,
   type ManagedTransport,
@@ -56,6 +58,8 @@ export interface PumpMismatchNews {
   ch: number;
   kind: ChannelKind;
   device: string;
+  /** The device whose act made the mismatch, when it was a learner's, a pump tablet's or a defibrillator window's. */
+  sender?: CommandSender;
   since: number;
   notice: { shownAt: number } | null;
   contents: { drugId: string; concentration: { amount: number; unit: string; perMl: number } };
@@ -180,9 +184,9 @@ export interface HostSessionOptions {
    * `fastForwardToNextPhase` is refused.
    */
   phaseMark?: () => string | null;
-  /** The name a person reads for a learner remote's device key (null: none), on the instructor's copy of a preparation's
-   *  news and on the label of a preparation a pump may load; never the key itself. */
-  deviceName?: (key: string) => string | null;
+  /** The name a person reads for a device key of `role` (null: none): on the instructor's copy of a preparation's news,
+   *  on the label of a preparation a pump may load and on every command the device sends (`sender`); never the key itself. */
+  deviceName?: (key: string, role: CommandSender['role']) => string | null;
   /** L14: a learner device's act on the patient (a drug, a sample) the host did NOT carry out because the case was paused,
    *  one call per act (the host's Log and record show the attempt; nothing reached the engine). */
   onNotGiven?: (n: NotGiven) => void;
@@ -278,6 +282,13 @@ interface Gathered {
 const groupable = (c: WireCommand): boolean => c.type !== 'time' && c.type !== 'scenario';
 /** One learner command that acts on the patient as it is (a sample, a channel's rate), as learnerApply takes it. */
 const only = (c: WireCommand): Translated => ({ ok: true, cmds: [c], volumeMl: 0 });
+/** The drug and rate an applied event sets an infusion to (an `infusion`, or a `drug` given as a rate), or null. */
+function rateOf(c: WireCommand): { drugId: string; rate: number } | null {
+  if (c.type !== 'applyEvent') return null;
+  const e = c.event as { kind?: unknown; drugId?: unknown; rate?: unknown; dose?: unknown; unit?: unknown; infusion?: unknown };
+  const rate = e.kind === 'infusion' ? e.rate : e.kind === 'drug' && (e.infusion === true || /\/(min|h)$/.test(String(e.unit))) ? e.dose : undefined;
+  return typeof e.drugId === 'string' && typeof rate === 'number' ? { drugId: e.drugId, rate } : null;
+}
 
 /** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG: network]. */
 export const STAGE_LEAD_TICKS = 3;
@@ -695,7 +706,7 @@ export class HostSession {
    * monotonic, so without it the session clock froze at the old high-water time — showcase rehearsal 2026-10-04).
    * Per-timeline host state (stage groups, set targets, the scenario run) ends with the old engine.
    */
-  newTimeline(cause: TimelineCause = 'restart'): void {
+  newTimeline(cause: TimelineCause = 'restart', begins?: CaseBegins): void {
     this.timelines++; // A fast-forward on the old timeline stops
     this.flush();
     this.groups.clear();
@@ -715,7 +726,7 @@ export class HostSession {
       for (const k of [...this.sticky.keys()]) if (k.startsWith('ecg.')) this.sticky.delete(k);
     }
     const { tick, simT } = this.o.target.now();
-    this.queue({ type: 'timeline', t: simT, tick, cause });
+    this.queue({ type: 'timeline', t: simT, tick, cause, ...(begins ? { begins } : {}) });
     this.flush();
   }
 
@@ -1016,7 +1027,7 @@ export class HostSession {
         const no = learnerDefibMay(m.body);
         if (no !== null) return refuse(no);
         const by = p.devices.get(m.from);
-        return this.command(t, { ...m.body, issuedBy: LEARNER_ISSUED_BY, ...(by !== undefined ? { by } : {}) }, m.from);
+        return this.command(t, { ...m.body, issuedBy: LEARNER_ISSUED_BY, ...(by !== undefined ? this.filed(by, 'defib') : {}) }, m.from);
       }
       case 'learner': {
         // L4: the learner action remote — granted on the learner PIN, its shapes checked here again (learnerMay; a
@@ -1084,7 +1095,7 @@ export class HostSession {
     if (typeof x === 'string') return refuse(x);
     const out = translatePump(c as unknown as PumpCommand, x);
     if (!out.ok) return refuse(out.why);
-    return this.learnerApply(t, from, only(pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, by }, out)), null, refuse);
+    return this.learnerApply(t, from, only(pumpWire({ id: c.id, issuedBy: PUMP_ISSUED_BY, ...this.filed(by, 'pump') }, out)), null, refuse);
   }
 
   /**
@@ -1125,8 +1136,8 @@ export class HostSession {
     if (typeof x === 'string') return Promise.resolve(refuse(x));
     const out = routedToChannel(this.pumpChannels.get(chs[0] as number) as HostChannel, rate, unit as never, x);
     if (!out.ok) return Promise.resolve(refuse(out.why));
-    const { id, issuedBy, by, stageGroup, batch } = base as WireCommand & { by?: string };
-    const wire = pumpWire({ id, issuedBy, ...(by !== undefined ? { by } : {}), ...(stageGroup !== undefined ? { stageGroup } : {}), ...(batch !== undefined ? { batch } : {}) }, out as Extract<PumpTranslated, { ok: true }>);
+    const { id, issuedBy, by, sender, stageGroup, batch } = base as WireCommand & { by?: string; sender?: CommandSender };
+    const wire = pumpWire({ id, issuedBy, ...(by !== undefined ? { by } : {}), ...(sender ? { sender } : {}), ...(stageGroup !== undefined ? { stageGroup } : {}), ...(batch !== undefined ? { batch } : {}) }, out as Extract<PumpTranslated, { ok: true }>);
     return issuedBy === LEARNER_ISSUED_BY ? this.learnerApply(t, from, only(wire), null, refuse) : this.command(t, wire, from);
   }
 
@@ -1137,6 +1148,12 @@ export class HostSession {
     if (e.kind !== 'infusion' || typeof e.drugId !== 'string' || typeof e.rate !== 'number' || typeof e.unit !== 'string') return null;
     if (this.seen.has(c.id)) return null; // a resend: command() answers it with its first ack
     return this.toChannel(t, from, c, e.drugId, e.rate, e.unit, refuse);
+  }
+
+  /** What the host writes on a device's command: its key and who it is (its role and the name a person reads). */
+  private filed(by: string, role: CommandSender['role']): { by: string; sender: CommandSender } {
+    const name = this.o.deviceName?.(by, role) ?? null;
+    return { by, sender: { role, ...(name ? { name } : {}) } };
   }
 
   /**
@@ -1153,8 +1170,9 @@ export class HostSession {
       return t.send(this.stamp(prior)); // idempotent: a resend changes nothing
     }
     if (this.ff) return refuse(FF_REFUSAL);
-    const base = { id: c.id, issuedBy: LEARNER_ISSUED_BY, by, ...(c.stageGroup !== undefined ? { stageGroup: c.stageGroup } : {}), ...(c.batch !== undefined ? { batch: c.batch } : {}) } as WireCommand;
-    if (c.type === 'applyEvent') return this.learnerApply(t, from, only({ ...c, issuedBy: LEARNER_ISSUED_BY, by }), null, refuse);
+    const filed = this.filed(by, 'learner');
+    const base = { id: c.id, issuedBy: LEARNER_ISSUED_BY, ...filed, ...(c.stageGroup !== undefined ? { stageGroup: c.stageGroup } : {}), ...(c.batch !== undefined ? { batch: c.batch } : {}) } as WireCommand;
+    if (c.type === 'applyEvent') return this.learnerApply(t, from, only({ ...c, issuedBy: LEARNER_ISSUED_BY, ...filed }), null, refuse);
     const { simT } = this.o.target.now();
     if (c.type === 'infusion') return this.toChannel(t, from, base, c.drugId, c.rateMlH, 'mL/h', refuse) ?? this.learnerApply(t, from, setInfusion(c, base, this.infusions), null, refuse);
     if (c.type !== 'prep' || c.action === 'notice') return refuse('not a learner command'); // learnerMay admitted none other
@@ -1183,7 +1201,7 @@ export class HostSession {
     if (!f) return refuse(LEARNER_REASONS.noFormulary);
     const withPrep = { ...base, prepId: h.id } as WireCommand;
     if (c.action === 'deliver') return this.learnerApply(t, from, deliverPrep(f, h, c, withPrep, simT), h, refuse);
-    return this.learnerApply(t, from, infusePrep(f, h, c, withPrep, simT, this.infusions), h, refuse);
+    return this.learnerApply(t, from, infusePrep(f, h, c, withPrep, simT), h, refuse);
   }
 
   /** A learner's act on the patient (a give, an infusion, a sample, a pump channel's command): refused as a whole, by the pause too, or every
@@ -1257,7 +1275,7 @@ export class HostSession {
   }
 
   private instructorCopy(h: HostPrep): InstructorPrepView {
-    const name = this.o.deviceName?.(h.by) ?? null;
+    const name = this.o.deviceName?.(h.by, 'learner') ?? null;
     return { ...instructorView(h), ...(name ? { name } : {}) };
   }
 
@@ -1280,7 +1298,7 @@ export class HostSession {
         const k = h.prep.container;
         if (h.leftMl <= 1e-9 || !(k === 'syringe-pp' || k === 'bag-pvc' || k === 'bag-polyolefin')) continue;
         const a = h.prep.actives;
-        const name = this.o.deviceName?.(h.by) ?? null;
+        const name = this.o.deviceName?.(h.by, 'learner') ?? null;
         labels.push({ device: h.by, ...(name ? { name } : {}), id: h.id, container: k, drugId: a[0]?.drugId ?? '', actives: a.map((x) => ({ drugId: x.drugId, amount: x.perMl, unit: x.unit, perMl: 1 })), volumeMl: h.leftMl, madeAt: h.t, readyAt: h.prep.ready.atS });
       }
     }
@@ -1294,10 +1312,10 @@ export class HostSession {
   }
 
   /** C2 (§8, PQ8 = A): the mismatch finding of channel `c`, to the host's own screens and granted instructors only. */
-  private mismatchNews(c: HostChannel, device: string): void {
+  private mismatchNews(c: HostChannel, device: string, sender: CommandSender | undefined): void {
     const k = c.contents as NonNullable<HostChannel['contents']>;
     const body: PumpMismatchNews = {
-      news: 'pumpMismatch', ch: c.ch, kind: c.kind, device, since: c.mismatch?.since ?? 0, notice: c.mismatch?.notice ?? null,
+      news: 'pumpMismatch', ch: c.ch, kind: c.kind, device, ...(sender ? { sender } : {}), since: c.mismatch?.since ?? 0, notice: c.mismatch?.notice ?? null,
       contents: { drugId: k.drugId, concentration: k.concentration }, label: k.label, origin: k.origin,
       programmed: c.programmed as NonNullable<HostChannel['programmed']>,
       text: `${k.drugId} ${concText(k.label)} programmed as ${c.programmed?.drugId} ${c.programmed ? concText(c.programmed.concentration) : ''}`.trim(),
@@ -1330,7 +1348,7 @@ export class HostSession {
     const now = mismatched(ch);
     if (now && (!was || e.action === 'load' || e.action === 'program')) {
       ch.mismatch = { since: simT, notice: was && e.action !== 'load' && e.action !== 'program' ? was.notice : null };
-      this.mismatchNews(ch, by);
+      this.mismatchNews(ch, by, (c as { sender?: CommandSender }).sender);
     } else if (!now && was) {
       ch.mismatch = null;
       this.queue({ type: 'prep', t: simT, to: this.peerId, body: { news: 'pumpMismatchCleared', ch: ch.ch } satisfies PumpNews });
@@ -1499,9 +1517,10 @@ export class HostSession {
     }
   }
 
-  /** An engine command with its stage group's tick (the group's first command sets it, STAGE_LEAD_TICKS ahead). */
+  /** An engine command with the rate it replaces, on an infusion's rate (whoever sent it), and its stage group's tick
+   *  (the group's first command sets it, STAGE_LEAD_TICKS ahead). */
   private stamped(cmd: WireCommand): Command {
-    const c = cmd as Command;
+    const c = this.withReplaced(cmd) as Command;
     if (!cmd.stageGroup) return c;
     const g = this.groups.get(cmd.stageGroup);
     const at = g && this.now() - g.at < STAGE_GROUP_TTL_MS ? g.tick : this.o.target.now().tick + STAGE_LEAD_TICKS;
@@ -1547,15 +1566,24 @@ export class HostSession {
     return applied;
   }
 
+  /** The command with `replaced`, as the host's table has it: the infusion of its drug that its rate replaces, or none. */
+  private withReplaced(c: WireCommand): WireCommand {
+    const drugId = rateOf(c)?.drugId;
+    if (drugId === undefined) return c;
+    const { replaced: _sent, ...rest } = c as WireCommand & { replaced?: unknown };
+    const was = this.infusions.get(drugId);
+    return (was ? { ...rest, replaced: { rate: was.rate, rateUnit: was.unit, by: was.by } } : rest) as WireCommand;
+  }
+
   /** L4 (LQ4): the infusion each drug runs at, as applied by any device: what a learner's `infusion set` changes and replaces. */
   private noteInfusion(c: WireCommand): void {
     if (c.type !== 'applyEvent') return;
-    const e = c.event as { kind: string; drugId?: unknown; rate?: unknown; dose?: unknown; unit?: unknown; infusion?: unknown; concentration?: Running['concentration'] };
+    const e = c.event as { kind: string; drugId?: unknown; unit?: unknown; concentration?: Running['concentration'] };
     if (typeof e.drugId !== 'string') return;
     const by = (c as { by?: string }).by ?? givenByOf(c.issuedBy);
     if (e.kind === 'tci') return void this.infusions.delete(e.drugId); // a TCI pump drives it now, not a rate
-    const rate = e.kind === 'infusion' ? e.rate : e.kind === 'drug' && (e.infusion === true || /\/(min|h)$/.test(String(e.unit))) ? e.dose : undefined;
-    if (typeof rate !== 'number') return;
+    const rate = rateOf(c)?.rate;
+    if (rate === undefined) return;
     if (rate === 0) return void this.infusions.delete(e.drugId);
     this.infusions.set(e.drugId, { rate, unit: String(e.unit), ...(e.kind === 'infusion' && e.concentration ? { concentration: e.concentration } : {}), by });
   }

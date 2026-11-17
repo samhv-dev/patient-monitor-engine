@@ -9,7 +9,7 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
+import type { CaseBegins, Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { shippedPumpDevices } from './pump/devices.ts';
@@ -298,7 +298,7 @@ export class AppSession {
         this.record.notGiven(n);
         for (const fn of [...this.notGivenFns]) fn(n);
       },
-      deviceName: (key) => this.deviceLabel(key, 'learner'), // the instructor's card and the pump's bag list name the remote
+      deviceName: (key, role) => this.deviceLabel(key, role), // the instructor's card, the pump's bag list and every device's command name it
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
       // R8c: the granted remote cockpit's link messages and its grant, for the Ventilator desk (views/vent.ts)
@@ -670,15 +670,16 @@ export class AppSession {
     this.monitor?.disableSound();
   }
 
-  /** A new body (profile, mode) = a new engine; the session code, remote pairing, log and listeners carry on. */
-  restart(start: SessionStart): void {
+  /** A new body (profile, mode) = a new engine; the session code, remote pairing, log and listeners carry on. `again`:
+   *  the same patient started again ("Restart patient"). */
+  restart(start: SessionStart, again = false): void {
     this.spec = start.spec;
     this.mode = start.mode;
     this.driver.runner = null;
     clearPosition(); // a reload now brings back the new patient, not the case
     this.setLearner(false); // a new patient starts without learner controls
     this.setBriefing(null); // free roam: no card, no briefing
-    this.mount(start.seed ?? 7);
+    this.mount(start.seed ?? 7, { title: oneLiner(this.spec), card: false, again });
     this.panel.note(`Patient restarted: ${start.mode.toUpperCase()}`);
   }
 
@@ -696,7 +697,7 @@ export class AppSession {
   restartPatient(): { ok: true; doc: AnyScenarioDoc | null } | { ok: false; reason: string } {
     const doc = this.caseDoc();
     if (!doc) {
-      this.restart({ spec: this.spec, mode: this.mode });
+      this.restart({ spec: this.spec, mode: this.mode }, true);
       return { ok: true, doc: null };
     }
     const r = this.loadScenario(doc);
@@ -729,6 +730,8 @@ export class AppSession {
     const v = validateScenario(raw);
     if (!v.ok) return { ok: false, reason: v.errors.join('; ') };
     const seed = v.doc.seed ?? 7; // TCH-11: the card's seed seeds the run (the engine and the runner); 7 is the free run's
+    // a case brought back after this page reloaded is under way: it begins nothing in the Log
+    const begins = this.restoring ? undefined : { title: v.doc.title, card: true, again: this.caseDoc()?.id === v.doc.id };
     const eo = engineOptionsOf(v.doc, seed);
     const p = v.doc.patient ?? {};
     this.spec = { ageY: p.ageY ?? 40, sex: p.sex ?? 'M', weightKg: p.weightKg ?? 70, heightCm: p.heightCm ?? 175, comorbid: [], attached: true };
@@ -736,7 +739,7 @@ export class AppSession {
     this.driver.runner = null;
     clearPosition(); // the old case's position is not this one's
     const kept = room?.sensors ? { ...eo.patient?.sensors, ...p.sensors, ...room.sensors } : p.sensors; // the room's probes over the card's
-    this.mountWith({ ...eo, mode: this.mode, truthHz: 1, patient: { ...eo.patient, ...(kept ? { sensors: kept as typeof p.sensors } : {}) } });
+    this.mountWith({ ...eo, mode: this.mode, truthHz: 1, patient: { ...eo.patient, ...(kept ? { sensors: kept as typeof p.sensors } : {}) } }, begins);
     const sensors = { ...eo.patient?.sensors, ...kept } as Record<string, string | undefined>;
     // UI review #14: a scenario's cuff cycles from Load as a free-play patient's does (the skin's default, Saadat AUTO
     // every 5 min); it showed "/" for the whole case. Not when the card's patient has no cuff on (nibp 'off'). A restart
@@ -768,14 +771,14 @@ export class AppSession {
     return this.monitor;
   }
 
-  private mount(seed: number): void {
+  private mount(seed: number, begins?: CaseBegins): void {
     if (this.perf8) {
       this.mountWith({ ...PERF8.engine, patient: { ...PERF8.engine.patient, baseline: { ...PERF8.engine.patient.baseline }, sensors: { ...PERF8.engine.patient.sensors } } } as never);
       PERF8.commands.forEach((c, i) => void this.monitor?.dispatch({ id: `perf8-${i}`, issuedBy: 'perf', ...c } as never));
       return;
     }
     const patient = profileOf(this.spec);
-    this.mountWith({ seed, mode: this.mode, patient, truthHz: 1, device: { ageBand: ageBandOf(this.spec) } });
+    this.mountWith({ seed, mode: this.mode, patient, truthHz: 1, device: { ageBand: ageBandOf(this.spec) } }, begins);
     this.startCuff(seed);
   }
 
@@ -793,7 +796,8 @@ export class AppSession {
     }
   }
 
-  private mountWith(engine: NonNullable<Parameters<typeof mountMonitor>[1]>['engine']): void {
+  /** `begins`: what the new timeline begins, for the Log (CaseBegins). */
+  private mountWith(engine: NonNullable<Parameters<typeof mountMonitor>[1]>['engine'], begins?: CaseBegins): void {
     this.offMon?.();
     this.monitor?.destroy();
     this.el.replaceChildren();
@@ -820,7 +824,7 @@ export class AppSession {
     });
     // a new engine = a new timeline: every controller (this page's panel, a paired Remote) restarts its clock and
     // scenario timer here instead of holding the old body's high-water time (showcase rehearsal 2026-10-04)
-    this.host.newTimeline();
+    this.host.newTimeline('restart', begins);
     m.setTimeScale(this.timeScale);
     if (this.paused) m.pause();
     if (this.soundOn) void m.enableSound();

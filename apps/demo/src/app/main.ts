@@ -253,10 +253,8 @@ if (follow && shows === 'pick') {
   // the phones: AppSession's own listener)
   const stopped = stoppedNotice(shell.root, {
     restart: () => {
-      const inCase = session.caseDoc() !== null;
-      const r = session.restartPatient();
-      if (!r.ok) return toast(`The patient could not restart: ${r.reason}`, 'alert');
-      link.note(inCase ? 'Patient restarted: the case starts again from 0:00' : 'Patient restarted', 'system');
+      const r = session.restartPatient(); // the Log's line is the new timeline's (link.ts)
+      if (!r.ok) toast(`The patient could not restart: ${r.reason}`, 'alert');
     },
     reload: () => location.reload(),
   });
