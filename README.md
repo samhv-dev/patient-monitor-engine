@@ -1,7 +1,7 @@
 # patient-monitor-engine — static site (1.0.0-rc.5 line)
 
-The built teaching app of `main` 8a4c0a58 (Merge pull request #525 from samhv-dev/plan-brain-energy-revision-2), built 2026-11-17T14:56:11.610Z. Full commit:
-https://github.com/samhv-dev/patient-monitor-engine/commit/8a4c0a58d1f4867972a6142524da82542f058b4d
+The built teaching app of `main` 97a8726c (Merge pull request #529 from samhv-dev/device-plans-status-text), built 2026-11-17T15:18:17.186Z. Full commit:
+https://github.com/samhv-dev/patient-monitor-engine/commit/97a8726c359ed35834c50f4489e432b2af5a91eb
 
 This is a teaching simulator: not a medical device and not clinically validated. Source, release notes and known
 limitations: https://github.com/samhv-dev/patient-monitor-engine (see `CHANGELOG.md`, `docs/guides/known-deviations.md`
