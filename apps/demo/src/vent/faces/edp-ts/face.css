@@ -93,8 +93,9 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 /* the axis numbers are a touch key (K-11): their colour changes while the scale is selected */
 .edp-curves { position: absolute; inset: 0; pointer-events: none; }
 .edp-curves > * { position: absolute; pointer-events: auto; }
-button.edp-scale, button.edp-time { background: var(--edp-axis) !important; }
-button.edp-scale.sel, button.edp-time.sel { background: var(--edp-selected) !important; }
+button.edp-scale { background: var(--edp-axis) !important; }
+button.edp-scale.sel, .edp-time.sel { background: var(--edp-selected) !important; }
+.edp-axis-hit { z-index: 1; }
 .edp-scale.sel span, .edp-time.sel span { color: var(--edp-inkLight); }
 .edp-time .tl { position: absolute; }
 /* the reference loop's date and time (K-09), at the panel's lower left */

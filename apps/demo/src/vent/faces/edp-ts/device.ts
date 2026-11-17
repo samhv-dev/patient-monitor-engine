@@ -14,6 +14,8 @@ import { picto, type PictoId } from './pictograms.ts';
 import type { Q } from './screen.ts';
 import type { GraphicsView, LampState, LimitView, TagView, View } from './view.ts';
 
+/** The smallest touch target, design px: the limit tags' hit boxes' height, 24 CSS px at the smallest scale the face is checked at. */
+const MIN_HIT = 26;
 /** The keys that act while held, not on a click (research/57 H-12, H-19). */
 const HELD = new Set(['under:inspExpPause', 'under:lock']);
 
@@ -201,11 +203,15 @@ export function createDevice(h: DeviceHandlers): Device {
         const yt = el('span', { class: 'lt' }, W(TITLE[pn.y])); yt.style.left = `${zx + 8}px`;
         const xt = el('span', { class: 'lx' }, W(TITLE[pn.x])); xt.style.top = `${zy + 2}px`;
         const panel = place(el('div', { class: 'edp-panel loop' }, cv, yt, xt, el('span', { class: 'ref' }, g.refAt)), [x, y, w, h]);
-        const ts = strip(pn.x, 'edp-time', [x - loopScaleW, y + h, loopScaleW + w, timeH]);
+        const ts = place(el('div', { class: 'edp-time' }), [x - loopScaleW, y + h, loopScaleW + w, timeH]);
         const tl = place(el('div', { class: 'tl' }), [loopScaleW, 0, w, timeH]);
         labelsOn(tl, [...ax.labels].reverse(), ax.lo, ax.hi, 'x', DEC[pn.x]);
         ts.append(tl);
-        curves.append(sc, panel, ts);
+        // the x axis's numbers: a touch key over the drawn strip, as high as a finger needs (the strip is 12 px)
+        const hit = Math.max(timeH, MIN_HIT);
+        const xk = strip(pn.x, 'edp-axis-hit', [x, y + h + timeH / 2 - hit / 2, w, hit]);
+        xk.dataset.strip = 'x';
+        curves.append(sc, panel, ts, xk);
         loops.push({ cv, x: pn.x, y: pn.y, xr: [ax.lo, ax.hi], yr: [ay.lo, ay.hi] });
       } else {
         dataRows = place(el('div', { class: 'edp-data' }), [x, y, w, h]);
@@ -219,7 +225,7 @@ export function createDevice(h: DeviceHandlers): Device {
   const rkeys = RIGHT.map(([id, p], i) => {
     const x = ctl(id);
     const b = place(button('edp-rkey', id, picto(p)), [gv<number>(G.rkeyX), gv<number>(G.rkeyY0) + i * gv<number>(G.rkeyPitch), gv<number>(G.rkeyW), gv<number>(G.rkeyH)]);
-    if (x.kind === 'unavailable' && x.word) b.setAttribute('aria-label', W(x.word));
+    if ((x.kind === 'unavailable' || x.kind === 'action') && x.word) b.setAttribute('aria-label', W(x.word));
     scr.append(b);
     return b;
   });
@@ -430,7 +436,11 @@ export function createDevice(h: DeviceHandlers): Device {
     for (const b of underKeys) if (b !== ctrlKey) b.classList.toggle('lit', v.lit.includes(b.dataset.ctl!));
     const ck = JSON.stringify([v.graphics.panels, v.graphics.axes, v.graphics.refAt]);
     if (ck !== curvesKey) { curvesKey = ck; buildCurves(v.graphics); }
-    for (const b of scaleKeys) b.classList.toggle('sel', v.graphics.axes[b.dataset.q as Q].sel);
+    for (const b of scaleKeys) {
+      const on = v.graphics.axes[b.dataset.q as Q].sel;
+      b.classList.toggle('sel', on);
+      if (b.dataset.strip === 'x') b.previousElementSibling?.classList.toggle('sel', on); // the drawn strip under it
+    }
     if (dataRows) paintData(dataRows, v.data ?? []);
     paintWindow(v);
     alarmBox.hidden = !v.alarm;
