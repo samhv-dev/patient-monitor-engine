@@ -76,16 +76,36 @@ copy of the table.
 | `ion` | the ion the dose is counted in: `K+`, `Mg2+`, `Ca2+`, `Na+`, `HCO3-` |
 | `valence` | the magnitude of the ion's charge, 1 or 2 |
 | `salt` | the salt AS LABELLED, with its water of hydration (for example `MgSO4·7H2O`) |
-| `saltMolarMass` | g/mol of that salt, with `src` |
+| `mmolPerG` | mmol of the ion per g of the product AS LABELLED, from the label's own figure (for example "8 to 24 mEq (1 gram to 3 grams)"), with `src`. **This is the figure doses use** |
+| `saltMolarMass` | g/mol of that salt, with `src`: the cross-check of `mmolPerG` |
 | `ionPerSalt` | moles of the counted ion per mole of salt (1 for every salt in the table) |
-| `labelMmolPerG` | the label's own figure, where a label prints one (for example "8 to 24 mEq (1 gram to 3 grams)"), with `src`: the cross-check of `saltMolarMass` |
+| `excipientIon` | where the product carries the ion in a second salt, that salt and its share, with `src` (calcium gluconate: calcium saccharate, below) |
 | `prescribed` | the unit a clinician prescribes it in, with `src` |
 | `labelUnits` | the units the product labels use, per issuer, with `src` |
 
-**A check at load time, and a CI test:** `1000 × ionPerSalt / saltMolarMass` must agree with `labelMmolPerG` to
-within the label's own rounding. The rounding is the printed figure's last digit: "8 to 24 mEq (1 gram to 3 grams)"
-gives 8.0 ± 0.5 mEq/g. An entry whose two figures disagree fails the build. This is how a hydrate mistake is caught
-(MgSO₄ anhydrous would give 16.6 mEq/g).
+**A check at load time, and a CI test.** `1000 × ionPerSalt / saltMolarMass`, plus any `excipientIon`, must agree
+with `mmolPerG` to within the label's own rounding. The rounding is the printed figure's last digit: "8 to 24 mEq
+(1 gram to 3 grams)" gives 8.0 ± 0.5 mEq/g. An entry whose two figures disagree fails the build. This is how a hydrate
+mistake is caught (MgSO₄ anhydrous would give 16.6 mEq/g).
+
+Why the label's figure, and not the molar mass, is what doses use: calcium gluconate. Its US label (DailyMed
+16307c00, WG Critical Care) gives the salt as "calcium D-gluconate (1:2) monohydrate ... Molecular weight: 448.39",
+which alone would be 2.23 mmol/g. But "Each mL ... contains 100 mg of calcium gluconate (equivalent to 94 mg of
+calcium gluconate anhydrous and 4.5 mg of calcium saccharate tetrahydrate)" and "9.3 mg (0.465 mEq) of elemental
+calcium". So the product carries 2.33 mmol of Ca²⁺ per g of labelled salt:
+- 94 mg / 430.37 = 0.218 mmol [mine];
+- 4.5 mg / 320.3 (calcium saccharate tetrahydrate) = 0.014 mmol [mine];
+- 0.232 mmol in all = 9.3 mg of Ca, as printed.
+
+The cross-check passes only with the excipient declared. That is what the field is for.
+
+**The sources of this table.** The engine has no `sources.json` (the formulary's lives in the controller, and the
+engine does not import the controller). Each `src` is therefore an inline object in the table: the issuer (DailyMed,
+EMC or IUPAC), the document id and version, and the words read. An engine-core unit test asserts the following, as
+the formulary's source test does for its files (§5 rules 1–2 of the learner plan):
+- every numeric field has a `src`;
+- each `src` has its issuer's required fields;
+- the label words are ≤ 200 characters.
 
 **The one conversion.** It has the form
 
@@ -133,8 +153,8 @@ against the label figure in the last column.
 |---|---|---|---|---|---|
 | Potassium chloride (`potassiumChloride`) | mmol (UK, EU), mEq (US): the same number, valence 1 | US concentrate: "Each mL ... contains 2 mEq of K⁺ and Cl⁻ equivalent to 149 mg of potassium chloride" (DailyMed bf8e8ac7). UK: "15% of Potassium Chloride in 10 ml"; "20 MMOL potassium per hour" (EMC 6272). UK glucose-KCl: "1g KCl = 525 mg of K⁺ or 13.4 mEq or 13.4 mmol of K⁺" (EMC 1858) | K⁺, 1 | KCl, 74.55 [mine] | 1000/74.55 = 13.41 mmol/g; label "13.4 mmol" (EMC 1858) and 149 mg = 2.00 mmol (DailyMed bf8e8ac7): agree |
 | Magnesium sulfate (`magnesium`) | g (obstetrics, anaesthesia); mmol in UK and EU practice; mEq on US labels | US: "Magnesium Sulfate 50% (500 mg/mL)"; "8 to 24 mEq (1 gram to 3 grams) daily" (DailyMed d4b5863a, the formulary's `dailymed-magnesium`) | Mg²⁺, 2 | MgSO₄·7H₂O, 246.47 [mine] | 1000/246.47 = 4.06 mmol/g = 8.11 mEq/g; label 8 mEq per g: agrees (the engine's `MG_MMOL_PER_G` 4.06) |
-| Calcium chloride (`calciumChloride`) | g or mg (10 %); mmol in UK | EMC 4126 (the formulary's monograph; its mmol line to be read by U1: **placeholder**) | Ca²⁺, 2 | CaCl₂·2H₂O, 147.01 [mine] | 1000/147.01 = 6.80 mmol/g (the engine's 6.8). The label line is read in U1 |
-| Calcium gluconate (`calciumGluconate`) | g or mg (10 %); mmol in UK | The row's own string "4.65 mEq Ca per g" (rows-other.ts:22, source "7c plan decision 8"); no formulary file yet (pending) | Ca²⁺, 2 | As labelled: the label's hydrate decides. Anhydrous C₁₂H₂₂CaO₁₄ 430.37 gives 2.32 mmol/g; the monohydrate 448.39 gives 2.23 mmol/g [mine] | The engine's 2.3 sits between them. 4.65 mEq/g = 2.325 mmol/g matches the anhydrous figure, not the monohydrate. **To settle in U1 from the label U1 reads.** The value moves by up to 3 % and a validation re-run shows what that moves |
+| Calcium chloride (`calciumChloride`) | g or mg (10 %); mmol in UK | UK: "Each ml contains 100mg of Calcium Chloride dihydrate"; "a typical dose is 2.25 to 4.5 mmol (approximately 3-7ml of a 10% w/v solution)" (EMC 4126, Martindale, revised 30/01/2025: the formulary's monograph) | Ca²⁺, 2 | CaCl₂·2H₂O, 147.01 [mine] | 1000/147.01 = 6.80 mmol/g, 0.68 mmol/mL; the label's 2.25 mmol in "approximately 3" mL is 0.68–0.75: agrees (the engine's 6.8) |
+| Calcium gluconate (`calciumGluconate`) | g or mg (10 %); mmol in UK | US: "100 mg of calcium gluconate per mL which contains 9.3 mg (i.e., 0.465 mEq) of elemental calcium" (DailyMed 16307c00, WG Critical Care, effective 2025-11-01); the row's own string "4.65 mEq Ca per g" agrees | Ca²⁺, 2 | the monohydrate, 448.39 (the label), plus calcium saccharate as an excipient ion (§2.1) | 0.465 mEq/mL = 2.325 mmol/g; the engine's 2.3 is that figure, rounded. Nothing moves beyond the rounding (≤ 1.1 %) |
 | Sodium bicarbonate (`sodiumBicarbonate`) | mmol or mEq (equal); mL of 8.4 % | "84 mg is one mEq each of Na⁺ and HCO₃⁻ (HCO₃⁻ is univalent: 1 mEq = 1 mmol)" (formulary `dailymed-sodiumbicarbonate-hospira`) | HCO₃⁻ (and Na⁺), 1 | NaHCO₃, 84.01 [mine] | 1000/84.01 = 11.90 mmol/g; label 84 mg per mEq: agrees |
 | Hypertonic saline (`hypertonicSaline`) | mL of a stated %; mmol of Na⁺ in some protocols | the row takes mL and `concentrationPct` 3, 7.5, 23.4 (types-pk.ts:15) | Na⁺, 1 | NaCl, 58.44 [mine] | 3 % = 30 g/L = 513 mmol/L [mine]. A label line is read by the F3 batch (the drug is pending) |
 | Phosphate | not in the library | — | HPO₄²⁻/H₂PO₄⁻, charge depends on pH | — | mmol only, mEq refused (§2.1) |
@@ -191,8 +211,14 @@ All read on 17 November 2026; the files are under `assets/formulary-labels-270/`
 - **Products:**
   - the US concentrate 2 mEq/mL (DailyMed bf8e8ac7) and the UK 15 % 10 mL (EMC 6272), each a `solution` with its
     strength in its label's unit;
-  - the ready-to-use 20 mEq/50 mL (Baxter 092ddee4 or ICU Medical eb56a807) as a stock syringe-sized container for
-    the rack (`stock-syringes.json`, the S1 shape), and 40 mEq/100 mL as a stock bag.
+  - the ready-to-use 20 mEq/50 mL and 40 mEq/100 mL (Baxter 092ddee4; ICU Medical eb56a807) as stock **bags** for
+    a drip channel (`stock-syringes.json`, the S1 shape). Both labels describe flexible containers ("Viaflex Plus",
+    "flexible plastic containers"), so they are not stocked as syringes.
+- **The KCl syringe is not sourced.** A syringe for a syringe channel is made on the bench, from the concentrate and
+  a listed diluent. No label read describes one. A syringe of 20 mmol in 50 mL made from concentrate (10 mL of
+  2 mmol/mL plus 40 mL of saline) is a 5-fold dilution, against the UK concentrate's "not less than 50 times its
+  volume". What the department's KCl syringe is (its concentration and volume, and how it is made) is owner question
+  Q5. Until it is answered, FK offers the bench's preparation with the label finding, and stocks no syringe.
 - **Diluents:**
   - saline `listed: true` (EMC 6272, and the US label's "in saline");
   - dextrose 5 % `listed: false`, with the US label's reason ("dextrose may lower serum potassium levels") as the
@@ -239,7 +265,8 @@ All read on 17 November 2026; the files are under `assets/formulary-labels-270/`
 ### 4.2 The measurement (headless, run once)
 
 A one-off script was run once:
-- the engine's own rig, `rig6()`: the modelled adult, 40 y, 70 kg, 175 cm, male, seed 7, the same rig as
+- the engine's own rig, `rig6()`: the modelled adult, 40 y, 70 kg, 175 cm, male, seed 7, awake and breathing on
+  his own (no anaesthetic, no ventilator: `test/helpers/resp-modeled-rig.ts:12`); the same rig as
   `test/engine/blood-potassium-chloride.test.ts`;
 - 60 s of settling, then the load;
 - reads at fixed times (a bounded count of steps);
@@ -272,7 +299,7 @@ The warning goes to the Log, not to the patient.
 | Rosa RM et al., N Engl J Med 1980;302:431 (PMID 6101508) | 9 HEALTHY adults; KCl 0.5 meq/kg iv (≈ 35 mmol at 70 kg); with and without propranolol; adrenaline arm | "elevated serum potassium 0.6 +/- 0.09"; propranolol "0.9 +/- 0.05"; adrenaline "0.1 +/- 0.06" | 35 mmol over 1 h ≈ +1.4 by interpolation between the 20 and 40 mmol/h arms [mine] | **The only normal-adult figure, and the engine is about twice it.** The infusion time is not in the abstract. **WANTED:** the full text (paywalled), which settles the time and the time course. If the time was 1 h, the engine's cellular uptake (τ 43 min) is too slow for a normal adult |
 | Disposition of intravenous potassium in anuric man, Kidney Int 1979;15:651 (PMID 459246) | anuric haemodialysis patients; 0.3 mEq/kg/h | a two-compartment model fits; "From 63 to 92% of the infused potassium left the extracellular fluid"; "Cellular uptake ... was less when the plasma potassium concentration was higher" | 45 % of the 20 mmol in cells at 1 h, 85 % by 3 h, in a patient with kidneys | Two compartments: the engine has them. Uptake falling at a higher K: the engine's uptake is linear in the excess (`solutes.ts:107`) |
 | The disposition of intravenous potassium in normal man: the role of insulin, Clin Sci 1981;61:23 (PMID 7018811) | 6 normal adults; 0.6 mmol/kg/h for 3 h (≈ 42 mmol/h) | insulin did not rise; glucose with it changed neither the plasma rise nor the cellular uptake | — | Supports the engine's choice that a K load needs no insulin term. The increments are not in the abstract: **WANTED** (full text) |
-| Effects of acute mineralocorticoid ... blockade on the excretion of an acute potassium load, J Clin Endocrinol Metab 1993;77:902 (PMID 8408463) | 7 healthy males; KCl 1 mmol/kg ORALLY under water diuresis | K excretion "from 18.8 +/- 2.4 to 63.3 +/- 3.9 mmol/5 h"; canrenoate blunted it to 51.9 | 17 of 20 mmol are in the cells at 3 h, and the kidney excreted almost none of the load (ECF +1.8, cells +17) [read from the rig's numbers] | **A miss in the kidney.** A normal kidney excretes about half an acute load within hours. It is partly aldosterone-dependent. The engine has no aldosterone term on K secretion, and under the rig's general anaesthesia its urine is low. The oral route and the water diuresis make this a direction, not a band |
+| Effects of acute mineralocorticoid ... blockade on the excretion of an acute potassium load, J Clin Endocrinol Metab 1993;77:902 (PMID 8408463) | 7 healthy males; KCl 1 mmol/kg ORALLY under water diuresis | K excretion "from 18.8 +/- 2.4 to 63.3 +/- 3.9 mmol/5 h"; canrenoate blunted it to 51.9 | 17 of 20 mmol are in the cells at 3 h, and the kidney excreted almost none of the load (ECF +1.8, cells +17) [read from the rig's numbers] | **A miss in the kidney, for the course over hours.** A normal kidney excretes about half an acute load within 5 h. Canrenoate removed about a quarter of the load's extra excretion ((63.3 − 51.9) / (63.3 − 18.8) = 26 % [mine]); the authors attribute the rest to distal sodium and volume delivery. So aldosterone is the minor arm. The oral route and the water diuresis make this a direction, not a band. Hamill found the same 1 h peak with and without renal insufficiency, so **the kidney does not set the 1 h peak** |
 | Early and late adjustment to potassium loading in humans, Kidney Int 1990;38:942 (PMID 2266680) | 6 healthy adults; 400 mmol/day orally | each K meal is followed by "an acute transient rise in plasma K, aldosterone and kaliuresis" | no aldosterone | The mechanism the kidney lacks: aldosterone rises with plasma K and drives kaliuresis |
 | The labels (§3.1): US concentrate; Ann Pharm Fr 2016;74:3 (PMID 26298848, review) | a direct injection of concentrate | "Direct patient injection of potassium chloride at this concentration may be instantaneously fatal"; "Fatal cardiac arrhythmia and cardiac arrest have occurred"; "Accidental direct intravenous injection of a concentrated solution of potassium often leads to patient death" | 20 mmol pushed: K 5.61, a trace of peaked T for a few minutes, **sinus rhythm**, no harm | **The central miss. The error the simulator must let a resident make is harmless in the engine today.** No source read here gives the quantity (the plasma K at the heart after a push): **WANTED** |
 | Retrospective review of the frequency of ECG changes in hyperkalemia, Clin J Am Soc Nephrol 2008;3:324 (PMID 18235147) | 90 admitted adults, K ≥ 6 | "The electrocardiogram was insensitive for diagnosing hyperkalemia"; "no diagnostic threshold could be established"; the probability of changes rose with K | the engine's stages are deterministic thresholds of kEcg (5.5 / 6.5 / 7 / 7.8; research 03 §1.6) | The thresholds are the experimental ordering. The clinical spread is not modelled; it is not needed for this piece, and is noted only |
@@ -281,22 +308,14 @@ The warning goes to the Log, not to the patient.
 
 The engine adds the whole load to ONE well-mixed ECF of about 14 L at once. Two things are missing, by mechanism:
 
-1. **The heart sees the blood the load is in, before it mixes [mine, the Fick mixing argument].** A dose injected
-   into a vein reaches the right heart, the lungs and then the coronary arteries in the plasma that carries it. It is
-   not yet spread through the interstitial fluid.
-   - Over one minute, 20 mmol enters about one minute's plasma flow. That is a cardiac output of 5 L/min × (1 − Hct
-     0.42) ≈ 2.9 L/min [mine].
-   - So the plasma reaching the coronary arteries in that minute carries about 20 / 2.9 ≈ +6.9 mmol/L above baseline,
-     K ≈ 11 mmol/L, before recirculation and transcapillary loss [mine].
-   - That is past the engine's own sine-wave and arrest thresholds (7.8–8.5). It is the principle of cardioplegia.
-
-   A slower load gives a smaller excess at the heart: excess ≈ rate / plasma flow.
-   - 20 mmol/h: 0.33 mmol/min ÷ 2.9 L/min ≈ +0.11 mmol/L [mine], negligible on top of the systemic rise.
-   - 1 200 mmol/h (20 mmol/min): about +6.9, as above.
-
-   A low cardiac output (shock, CPR) raises the excess for the same rate [mine]. This is the coupling a fitted
-   constant would miss. A central line does not remove it; it is where the label's warning about the catheter tip in
-   the atrium comes from (EMC 15221: "the catheter must not be in the atrium or ventricle").
+1. **The heart sees the blood the load is in, before it mixes [mine, a mass-balance argument].** A dose given into a
+   vein reaches the right heart, the lungs and then the coronary arteries in the plasma that carries it, before it has
+   spread through the interstitial fluid. The excess the heart sees is set by the delivery rate divided by the plasma
+   flow, on top of the systemic K. A slow infusion adds almost nothing at the heart; a fast push adds a great deal; a
+   low cardiac output raises the excess for the same rate. This is the coupling a fitted constant would miss, and it
+   is why the labels insist on a slow, controlled rate and why one label warns that the central catheter tip must not
+   sit in the atrium or ventricle (EMC 15221). The engine has cardiac output and haematocrit as state; it lacks only
+   the delivery rate at the blood model's seam.
 2. **Plasma and interstitium are not one pool.** K crosses the capillary wall quickly but not instantly. The anuric
    kinetic study (PMID 459246) needed two compartments, and the plasma excess after a fast load decays as it spreads
    into the ~11 L of interstitial fluid [mine, the volumes are the engine's `plasmaMl` and `isfMl`]. Without this, the
@@ -307,18 +326,33 @@ The engine adds the whole load to ONE well-mixed ECF of about 14 L at once. Two 
 
 | Mechanism | State | Couplings | The number it needs, and its source |
 |---|---|---|---|
-| **K1. The load in the circulating plasma; the heart reads coronary-arterial K** | A plasma K separate from the interstitial K (plasma volume from `blood/params.ts`). The infusion enters the plasma | Cardiac output and haematocrit from the circulation and blood models. `kEcg`, the ECG stages, ectopy and the arrest hazard read the PLASMA K at the heart (arterial plasma after the lungs) instead of the pooled ECF K | The transcapillary exchange rate of K (plasma ↔ interstitium), as a permeability-surface product or a tracer half-time. **WANTED:** a human tracer study of early plasma disappearance of ⁴²K or ⁴³K, or a physiology text's whole-body capillary K exchange figure. A placeholder until then, labelled. The recirculation transit (a few tens of seconds) is a circulation-model quantity |
-| **K2. Cellular uptake that falls at higher K, and that adrenaline and β-blockade move** | the existing cellular pool | the existing `kShift` path (β₂ agonists, endogenous adrenaline) | Shape from PMID 459246 ("less when the plasma potassium concentration was higher"); size from the β-blockade and adrenaline arms of Rosa 1980 (0.9 and 0.1 against 0.6). The τ 43 min is re-checked against Rosa's time course once its full text is in hand (WANTED). Built only if the validation rows of piece KV fail on it |
-| **K3. Aldosterone-driven kaliuresis of an acute load** | an aldosterone level with its own response to plasma K and its own lag (the endocrine model is the natural owner) | distal K secretion in `organs/pipeline.ts renalSeam` gains the aldosterone factor; spironolactone or canrenoate, if ever in the library, act on it | Direction and the blocked fraction from PMID 8408463 (63.3 against 51.9 mmol/5 h with canrenoate) and PMID 2266680. The adrenal response to plasma K: **WANTED** (a dose–response of plasma aldosterone against plasma K in humans) |
-| Acid–base shift | exists (−4.0 mmol/L per pH unit of non-organic pH, `core.ts:178`) | — | already sourced in its own plan; unchanged |
+| **K1a. First pass: the heart reads the plasma the load is in** | the delivery rate of the load (infusion rate, or a push's duration) | cardiac output (circulation) and haematocrit (blood); `kEcg`, the ECG stages, ectopy and the arrest hazard read systemic K plus the first-pass excess | No new constant: a mass balance on engine state. The seam lacks the delivery rate: the blood model receives lump amounts per advance pass (`pk/pipeline.ts logDose`, `blood/pipeline.ts observeDoses`), so rate or duration must cross it, and a hand push without `overS` needs a duration (owner question Q6) |
+| **K1b. Plasma and interstitium as two pools** | a plasma K separate from the interstitial K (`plasmaMl`, `isfMl`, `blood/params.ts:137`) | transcapillary exchange; K1a then reads the plasma pool | The transcapillary exchange rate of K: **WANTED** (a human tracer study of early plasma disappearance of radio-potassium, or a physiology text's figure). **Conditional on that source**; without it the rate would be a constant in disguise |
+| **K2. Faster, load-dependent cellular uptake in a normal adult** | the existing cellular pool and τ | the existing `kShift` path | The one mechanism identified that would LOWER the normal adult's 1 h peak (row 117: engine +0.77 against the audit's proposed 0.2–0.6; neither K1 nor K3 lowers it, and Hamill shows the kidney does not set it). Shape from PMID 459246; size from Rosa 1980, whose infusion time is behind a paywall (**WANTED**). Until then no sourced number exists: owner question Q3 |
+| **K3. Aldosterone-driven kaliuresis** | an aldosterone level responding to plasma K with its own lag (endocrine model) | the distal K secretion in `organs/pipeline.ts renalSeam` | Direction and the blocked share (about a quarter) from PMID 8408463 and 2266680; the adrenal response to plasma K is **WANTED**. It shapes the course over hours, not the 1 h peak, so it does not gate the offer |
+| Acid–base shift | exists (`core.ts:178`) | — | unchanged |
 | Insulin | exists (drug model PD) | — | PMID 7018811 supports no K-induced insulin term: unchanged |
 
-**This section decides the order.** The syringe is not offered before:
-- K1 is built and passes;
-- the KV rows hold, with the normal-adult rows (Rosa 1980) either passing or recorded as known misses with the
-  owner's ruling (Q3).
+**The rack.** Which device and concentration can deliver a harmful rate is decided by K1a's own tests, run against
+the device data (the SP-500 and OT-701 profiles, and the SP5 family's per-syringe maxima once PR 522 lands) and the
+products of §3.1, not by a table in this plan. The plan records only the principle: the harm scales with mmol per
+minute reaching the heart, so the product's concentration (Q2, Q5) matters as much as the pump's maximum rate.
 
-A resident who pushes 20 mmol must see the patient arrest, or come close to it. Today the patient barely notices.
+**This section decides the order.** The syringe is not offered before:
+- K1a is built and passes the KV first-pass row (asserted on the K the heart reads and the ECG stage, not on the
+  rhythm, which comes from a hazard draw);
+- the KV rows hold, the normal-adult row either passing or recorded as a known miss with the owner's ruling (Q3).
+
+**KV's hypokalaemic rows are shape-only.** A profile K of 3.2 sets the set point with full cells (`createSolutes`),
+not a depleted patient. Hamill's and Kruse's populations were depleted; until a profile can deplete the cells (by the
+total-body relation the engine already has, `K_TBK_MMOL`), those rows grade the shape (peak at the end, fall after),
+not the size.
+
+**Census of what a change at the heart touches (K1a's first step).** No scenario card gives KCl
+(`packages/controller/scenarios/*.json`). The instructor's picker opens KCl on Infusion only (`apps/demo/src/app/drugs.ts:50`).
+Tests that give KCl: `packages/engine-core/test/engine/blood-potassium-chloride.test.ts` (its bolus case expects
+K > 4.2 and stays true) and the coverage and scenario-variable tests (`formulary-coverage.dom.test.ts`,
+`concentration-vars.test.ts`). K1a lists any others it finds and attributes every drift.
 
 ## 5. What the devices do for potassium, and what the simulator's pump shows
 
@@ -346,7 +380,7 @@ A resident who pushes 20 mmol must see the patient arrest, or come close to it. 
   20 mmol/h, with its text citation; piece SG makes it the product's label figure.
 - The **Debrief** says, per KCl channel:
   - the peak rate in mmol/h and the concentration in mmol/mL;
-  - the route the case declared;
+  - the route the order named, if any (the scenario format's `route` has `central`; no case declares the patient's lines);
   - the label maximum of the product's issuer, in its words (10 mEq/h US, 20 mmol/h UK concentrate, 40 mEq/h urgent
     US with monitoring);
   - the plasma K and the ECG the patient had.
@@ -356,76 +390,86 @@ A resident who pushes 20 mmol must see the patient arrest, or come close to it. 
 ## 6. The pieces, in order
 
 The order rule: **nothing is offered to a learner before the physiology behind it is right.** The offer is one line of
-data: KCl leaves `pending.json` and the coverage test's `WANTED` table. That happens in piece FK, and FK waits for KV
-and K1.
+data: KCl leaves `pending.json` and the coverage test's `WANTED` table, in piece FK, which waits for KV and K1a.
 
 | # | Piece | Builds | Tests | Sources | Must not change | Hours |
 |---|---|---|---|---|---|---|
-| 1 | **KV. Potassium validation rows first** (validation workflow) | The rows of §4.3, each graded from the engine's own rig, run once, and written into `known-misses.md` where they fail. The rows: <br>• Hamill 20/30/40 mmol over 1 h, peak at the end, on a hypokalaemic profile (K 3.2); <br>• Kruse 1994's time course (peak, then 1 h after; profile K 2.9); <br>• the anuric fraction leaving the ECF (an anuric profile, 0.3 mmol/kg/h, 63–92 %); <br>• the direction of the kaliuresis of a load with a working kidney (PMID 8408463, direction only); <br>• the push: "20 mmol iv push in a normal adult → a life-threatening rhythm" as a direction row from the labels and PMID 26298848 (a known miss today); <br>• row 117 re-targeted as the audit proposed (end-of-infusion rise 0.2–0.6 for 20 mmol/1 h, normal adult), with its source corrected | the rows are the tests; slow-c | §4.3; the target audit row 117 | no physiology; no band moved to meet the engine | 6 |
-| 2 | **U1. The electrolyte table and the one conversion** (validation workflow if the gluconate figure moves) | `l2/pk/data/electrolytes.json` and `l2/pk/electrolytes.ts` (§2.1). The engine's `units.ts` mEq line, `CA_MMOL_PER_G`, `MG_MMOL_PER_G` and the per-drug unit list at `blood/pipeline.ts:278` read it. Each entry's label cross-check is read from its label (calcium chloride EMC 4126; calcium gluconate: the label U1 opens) | load-time check; a unit test per entry (salt mass ↔ label figure); a refusal test per §2.1 refusal; mEq of Mg converts to half the mmol | IUPAC atomic weights; the labels of §2.3 | every existing dose's effect, except a calcium-gluconate shift of at most 3 % if its label says so (stated in the PR with the validation run) | 6 |
-| 3 | **K1. The load in the plasma; the heart reads coronary-arterial K** (validation workflow; advisor kind design) | §4.4 K1: plasma and interstitial K as two pools with transcapillary exchange; the infusion and the push enter the plasma; `kEcg` and the arrest hazard read the arterial plasma K; the excess at the heart follows rate ÷ plasma flow and so falls with cardiac output | the KV push row; a unit test that a slow infusion's plasma K equals today's pooled K within the exchange's small lag; a CO-coupling test (the same push at half the CO gives a larger excess). Every existing potassium row (FU-9 F6, insulin–dextrose, succinylcholine, the AKI rows) stays green or its drift is attributed | the exchange-rate source (WANTED; §4.4); the engine's plasma and ISF volumes | the cellular pool, its τ and the total-body set point; the ECG thresholds; the arrest hazard's rule | 12 |
-| 4 | **K3. Aldosterone and the kaliuresis of a load** (validation workflow; advisor kind design; may need its own plan) | §4.4 K3, in the endocrine and renal models | the KV kaliuresis row; a canrenoate-style arm if a mineralocorticoid antagonist is in the library | PMID 8408463, 2266680; the aldosterone dose–response (WANTED) | the volume-driven ADH/aldosterone factor `vNh` (`renal/params.ts:81`) keeps its meaning; K3 adds the K-driven arm | 10 |
-| 5 | **K2. Load-dependent uptake** (conditional) | §4.4 K2, only if KV's rows fail on it after K1 and K3 | the Rosa rows (once the full text is in hand) | PMID 459246, 6101508 | the insulin and β₂ paths' own rows | 6 (conditional) |
-| 6 | **U2. The host, the wire and the rack accept mmol and mEq** | `preparations.ts`: `SYRINGE_UNITS` becomes "a unit `convert` takes for this drug"; a mEq syringe or bag reaches the engine in mmol of the ion; `types-pk.ts` infusion `concentration.unit` gains `mmol`; `pump-host.ts inUnit` calls `convert`; the refusals of §2.1 in the host's words | host tests: 20 mmol in 50 mL KCl infuses at 50 mL/h → 20 mmol/h in the engine; 16 mEq of Mg = 8 mmol; a mEq preparation of a drug with no table entry is refused with its words; DOM test: the remote shows the refusal | §2 | brief 321's Start path: U2 changes what the host ACCEPTS, not how a channel is loaded or started | 6 |
-| 7 | **FK. The KCl formulary entry, the stock containers, the offer** (second reading) | `formulary/potassiumChloride.json` per §3.3; the 20 mEq/50 mL and 40 mEq/100 mL ready-to-use containers in `stock-syringes.json`; `sources.json` entries (DailyMed, EMC); KCl leaves `pending.json` and `WANTED`. **Starts only when KV is merged and K1 is merged and green** | the formulary source check; the coverage test (KCl now preparable, run by the host, infused on a pump channel); the second reader's table | §3.1; Stabilis; Trissel 17th ed. | other entries | 6 + 2 (second reading) |
-| 8 | **U3. Units on every screen** | the bench, the tray, the rack's generic face, the instructor's rack view, the Log and the Debrief write §2.2's forms through `convert` | DOM tests read the table (no bare numbers); a Log line for Mg in g with mmol beside it | §2 | the device skins' own fields (an SP5 skin shows no dose rate in mmol) | 6 |
-| 9 | **SG. The label maximum in the instructor's view and the Debrief** | the engine's `drugWarning` takes the product's label maximum from the formulary entry (its issuer and words) instead of one figure; the Debrief's KCl paragraph (§5) | the Debrief paragraph for a US and a UK product; nothing on a device face | §3.1 | the warning still never clamps a dose | 4 |
-| 10 | **E. One end-to-end case** | a browser test: a learner prepares KCl 20 mmol in 50 mL; Start (brief 321's path) puts it on a free syringe channel; 20 mmol/h runs; the instructor's view and the Log agree. A second arm: the learner pushes 20 mmol through the pump's bolus and the patient's ECG and rhythm change (after K1) | the test waits for the events (channel running; the rhythm change), never for time | — | — | 4 |
+| 1 | **KV. Potassium validation rows first** (validation workflow) | the rows of §4.3 on the engine's own rig, written into `known-misses.md` where they fail: Hamill and Kruse 1994 (shape-only, §4.4); the anuric fraction leaving the ECF (PMID 459246); the direction of a working kidney's kaliuresis (PMID 8408463); a first-pass row from the labels' warning (direction only, on the K the heart reads and the ECG stage); row 117 re-targeted as the audit proposed, with its citation corrected | the rows are the tests (slow-c) | §4.3; audit row 117 | no physiology; no band moved to meet the engine | 6 |
+| 2 | **U1. The electrolyte table and the one conversion** (validation workflow) | `l2/pk/data/electrolytes.json`, `l2/pk/electrolytes.ts` (§2.1); `units.ts`'s mEq line, `CA_MMOL_PER_G`, `MG_MMOL_PER_G` and the unit list at `blood/pipeline.ts:278` read it | load-time cross-check; the inline-source test; one test per refusal; 16 mEq of Mg is 8 mmol | IUPAC atomic weights; the labels of §2.3 | every dose's effect, beyond rounding (≤ 1.1 % for calcium gluconate) | 6 |
+| 3 | **K1a. First pass at the heart** (validation workflow; advisor kind design) | §4.4 K1a: the delivery rate or push duration crosses the drug-to-blood seam; the heart's K = systemic + rate ÷ plasma flow; ECG, ectopy and arrest hazard read it; the census first | KV's first-pass row; a slow infusion unchanged within the step; the CO coupling (the same rate at half the cardiac output gives a larger excess); every existing potassium row green or its drift attributed | engine state only; Q6 for a push's duration | the cellular pool and τ; the ECG thresholds; the arrest rule | 14 |
+| 4 | **K1b. Plasma and interstitium** (conditional on its source; validation workflow) | §4.4 K1b | a fast load's plasma peak decays into the interstitium at the sourced rate | the WANTED exchange source | K1a's interface | 6 (conditional) |
+| 5 | **K2. Load-dependent uptake** (conditional on Rosa's full text) | §4.4 K2 | the Rosa rows; row 117 | PMID 459246, 6101508 | the insulin and β₂ rows | 6 (conditional) |
+| 6 | **K3. Aldosterone and kaliuresis** (validation workflow; advisor kind design; may need its own plan) | §4.4 K3 | KV's kaliuresis row | PMID 8408463, 2266680; WANTED dose–response | `vNh` keeps its meaning | 10 |
+| 7 | **U2. Host and rack accept mmol and mEq — after brief 321 merges** | scoped to what 321 leaves: the preparation-to-channel load accepts a preparation in mmol or mEq of a table drug (the `SYRINGE_UNITS` check on that path); `pump-host.ts inUnit` uses `convert` (valence); the §2.1 refusals in the host's words. The channel-less infusion path is 321's and is not touched | host: a KCl preparation of 20 mmol in 50 mL loaded on a channel at 50 mL/h reaches the engine as 20 mmol/h; mEq of Mg converts by valence; a mEq preparation of a drug with no entry is refused with its words | §2 | 321's Start sequence and channel rule | 4 |
+| 8 | **FK. The KCl entry and the offer** (second reading) | `formulary/potassiumChloride.json` (§3.3); the stock bags; `sources.json` entries; KCl leaves `pending.json` and `WANTED`. **Starts only when KV and K1a are merged and green, and Q5 is answered** | the source check; the coverage test (preparable, run by the host, on a channel); the second reader's table | §3.1; Stabilis; Trissel 17th ed. | other entries | 8 |
+| 9 | **U3. Units on every screen, both languages** | the bench, the tray, the generic face, the instructor's rack view, the Log and the Debrief write §2.2's forms through `convert`; the Debrief's Persian catalogue (`docs/showcase/i18n/fa-debrief.json`) carries the new lines, written with the persian-writing conventions and read by the owner (displayed tokens untranslated) | DOM tests read the table; a Log line for Mg in g with mmol beside it; the fa catalogue has every new key | §2 | device skins' own fields | 8 |
+| 10 | **SG. The label maximum for the instructor and the Debrief** | the engine's `drugWarning` takes the product's label maximum and issuer from the formulary entry; the Debrief's KCl paragraph (§5) | a US and a UK product's paragraph; nothing on a device face | §3.1 | the warning never clamps a dose | 4 |
+| 11 | **E. One end-to-end case** | a learner prepares KCl, brief 321's Start puts it on a channel, it runs; the instructor's view and the Log agree; a second arm: a pump bolus raises the K the heart reads and changes the ECG stage (after K1a) | the test waits for events (channel running; the stage change), never for time, and asserts no rhythm draw | — | — | 4 |
 
-**Total:** 68 h with K2. Without K2 (conditional): 62 h. (KV 6, U1 6, K1 12, K3 10, K2 6, U2 6, FK 8, U3 6, SG 4, E 4.)
+**Total:** 76 h with the conditionals; 64 h without K1b and K2. (KV 6, U1 6, K1a 14, K1b 6c, K2 6c, K3 10, U2 4, FK 8,
+U3 8, SG 4, E 4.)
 
-**Partition and order:**
-- KV and U1 run in parallel; they touch different files.
-- K1 follows KV (its rows are K1's acceptance).
-- K3 follows K1 (both touch the blood/renal seam).
-- U2 can run beside K1: it offers nothing, because the bench lists only drugs with a file and KCl has none until FK.
-- FK waits for KV and K1, merged and green.
-- U3, SG and E follow FK.
-
-**The validation workflow** applies to KV, U1 (if it moves a value), K1, K3 and K2: anything under
-`packages/engine-core/src/**` that can move a value.
+**Partition and order:** KV and U1 in parallel; K1a after KV; K3 after K1a (both touch the blood/renal seam); U2 after
+brief 321 merges, beside K1a; FK after KV, K1a and Q5; U3, SG and E after FK. The validation workflow applies to KV,
+U1, K1a, K1b, K2 and K3.
 
 ## 7. Questions for the owner
 
 **Q1. Whose maximum rate does the simulator compare against?**
-The labels differ: US 10 mEq/h (K > 2.5) and 40 mEq/h urgent with ECG monitoring; UK concentrate 20 mmol/h; UK
-B. Braun 10/40 mmol/h by serum K. No reference pump holds a potassium limit.
-- A: the label of the product the learner chose (its issuer's words), in the instructor's view and the Debrief only.
-- B: one figure for the whole simulator (today's 20 mmol/h, from the textbook chapters).
-- C: the department's own protocol, when the owner supplies it.
+The labels differ (US 10 mEq/h, 40 mEq/h urgent with monitoring; UK concentrate 20 mmol/h; UK B. Braun 10/40 mmol/h
+by serum K), and no reference pump holds a potassium limit.
+- A: the label of the product chosen, in the instructor's view and the Debrief only.
+- B: one figure for the whole simulator (today's 20 mmol/h).
+- C: the department's protocol, when supplied.
 
-Proposal: A now, C when the protocol exists. No device face shows a limit its manual does not have.
+Proposal: A now, C when the protocol exists.
 
 **Q2. May the learner make an undiluted concentrate syringe?**
-Every concentrate label forbids injecting it undiluted. No label endorses drawing it into a syringe. The ready-to-use
-0.4 mmol/mL products are central-only.
-- A: the bench allows it and raises the label's finding; the physiology (K1) answers.
-- B: the bench refuses an undiluted concentrate.
+Every concentrate label forbids giving it undiluted; none endorses drawing it into a syringe.
+- A: the bench allows it and raises the label's finding; the physiology answers.
+- B: the bench refuses it.
 - C: allow it only in a case that declares the error as a teaching aim.
 
-Proposal: A. The error is the lesson, and K1 makes it honest.
+Proposal: A, once K1a makes the consequence honest.
 
 **Q3. Which rows must pass before the syringe is offered?**
-The human data opened are mostly in DEPLETED intensive-care patients (Hamill, Kruse). The one normal-adult study
-(Rosa 1980) puts the engine at about twice its rise, but its infusion time is behind a paywall.
-- A: KV's rows with K1 passing; the normal-adult row a known miss until Rosa's full text is read.
-- B: wait for the full text and K2 if needed.
-- C: also require K3 (the kaliuresis).
+The human data opened are mostly from depleted ICU patients. The one normal-adult study puts the engine at about
+twice its rise, and no mechanism with a sourced number lowers that peak yet (K2 waits for Rosa's full text).
+- A: KV with K1a passing; the normal-adult row a known miss until the full text is read.
+- B: wait for the full text and K2.
 
-Proposal: A, with K3 next. The push, the error the ruling names, is fixed by K1.
+Proposal: A.
 
 **Q4. The SP5 skin and mmol.**
-The SP5 family has no mmol unit (M1 p. 5-2). On that skin, KCl can only be run in mL/h with its name.
-- A: keep the skin true: mL/h and the name only; the generic face and the instructor show mmol/h.
-- B: let the SP5 skin show mmol/h anyway.
+The SP5 family has no mmol unit (M1 p. 5-2).
+- A: keep the skin true (mL/h and the name); the generic face and the instructor show mmol/h.
+- B: let the SP5 skin show mmol/h.
 
-Proposal: A (the device faces follow their manuals).
+Proposal: A.
+
+**Q5. What is the department's KCl syringe?**
+No label read describes a KCl syringe for a syringe pump; the ready-to-use 0.4 mmol/mL products are bags, central
+only, and a syringe made from concentrate is less diluted than the UK label's 50-fold.
+- A: the owner names the department's syringe (concentration, volume, how it is made); FK stocks that, labelled as
+  the department's.
+- B: offer only the bench's own preparation, with the label findings, and no stock syringe.
+- C: offer KCl on drip channels only (the ready-to-use bags).
+
+Proposal: A, with B until it is answered.
+
+**Q6. How long does a hand push take, when the order gives no duration?**
+K1a needs a delivery duration for a push; the engine has none, and no source was found.
+- A: the remote and the instructor's sheet ask for "over … s" on an electrolyte push, as for other slow pushes.
+- B: a default duration named by the owner, labelled as the owner's.
+
+Proposal: A.
 
 ## 8. Lines of other plans this plan makes stale (not edited here)
 
 - `docs/plans/learner-action-remote.md` §9.1, the F3 row: "potassium chloride C". KCl's entry is now piece FK here,
   gated on K1; it is no longer an F3 entry.
 - `docs/plans/learner-action-remote.md` §1 and the bench's units: the host's `SYRINGE_UNITS` is replaced by U2.
-- `docs/plans/pump-rack-tci.md` §13 S1, stock syringes: the KCl ready-to-use containers are FK's.
+- `docs/plans/pump-rack-tci.md` §13 S1, stock syringes: the KCl ready-to-use bags are FK's.
+- `scratch/briefs/post-demo/321-…` and its plan lines: U2 follows 321 and does not edit its Start path.
 - `packages/engine-core/src/l2/pk/data/rows-other.ts:22` (code, not a plan): calcium gluconate's "4.65 mEq Ca per g"
   becomes the table's figure in U1.
