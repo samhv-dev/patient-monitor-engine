@@ -114,7 +114,7 @@ describe('the cases that ask for the PIN again, each with its reason', () => {
     device(a.relay, 'p.1', 'pump', { device: 'tablet0001' })({ pin: LEARNER_PIN });
     const [l, p] = [await answer(a.got, 'lr.1', 1), await answer(a.got, 'p.1', 1)];
     learner = '771234';
-    a.host.learnerPinChanged();
+    await a.host.learnerPinChanged();
     a.host.close();
     const b = hostPage(keep, { learner: () => learner, instructor: () => INSTRUCTOR_PIN });
     device(b.relay, 'lr.1', 'learner', { show: 'learner', device: KEY })({ ticket: l.ticket });
@@ -128,7 +128,7 @@ describe('the cases that ask for the PIN again, each with its reason', () => {
     const a = hostPage(keep, { learner: () => LEARNER_PIN, instructor: () => INSTRUCTOR_PIN });
     device(a.relay, 'ins.1', 'instructor')({ pin: INSTRUCTOR_PIN });
     const g = await answer(a.got, 'ins.1', 1);
-    a.host.instructorPinChanged();
+    await a.host.instructorPinChanged();
     device(a.relay, 'ins.2', 'instructor')({ ticket: g.ticket });
     expect(await answer(a.got, 'ins.2', 1)).toMatchObject({ granted: false, reason: INSTRUCTOR_REASONS.pinChanged });
   });

@@ -19,7 +19,7 @@ export interface InstructorRoomDeps {
   relay: string | null;
   pin: InstructorPin;
   /** The host's half: a PIN change revokes the phone; the wrong PINs it counted in the last minute. */
-  host: { instructorPinChanged(): void; instructorDenials(): number };
+  host: { instructorPinChanged(): Promise<void>; instructorDenials(): number };
   /** Instructor phones granted now (0 or 1), and every grant or revocation (a takeover calls it with 1 again). */
   instructors(): number;
   onInstructors(fn: (n: number) => void): () => void;
@@ -102,9 +102,12 @@ export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
   const change = button('Change the PIN', () => {
     changing = true;
     d.pin.change();
-    d.host.instructorPinChanged();
-    changing = false;
     if (held()) reveal(true);
+    // the host revokes after any sign-in it is still checking (host-session.ts inOrder): "changed" until it has
+    void d.host.instructorPinChanged().then(() => {
+      changing = false;
+      draw();
+    });
     draw();
   }, 'ip-peer-change');
   const pinBox = h('div', { class: 'ip-peer-pinbox' }, h('span', { class: 'ip-peer-pin-label' }, 'PIN'), value, hold, change);

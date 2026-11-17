@@ -480,6 +480,7 @@ None recorded.
 | [`session/host-pump.test.ts`](../../packages/controller/test/session/host-pump.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |
+| [`session/host-sign-in-order.test.ts`](../../packages/controller/test/session/host-sign-in-order.test.ts) | 0 | 0 |
 | [`session/host-sign-in.test.ts`](../../packages/controller/test/session/host-sign-in.test.ts) | 0 | 0 |
 | [`session/host-speed-range.test.ts`](../../packages/controller/test/session/host-speed-range.test.ts) | 0 | 0 |
 | [`session/host-stage-group.test.ts`](../../packages/controller/test/session/host-stage-group.test.ts) | 0 | 0 |
