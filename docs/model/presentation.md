@@ -1427,6 +1427,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/builder-phase-editor.e2e.ts`](../../apps/demo/e2e/builder-phase-editor.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/builder-run-in-place.e2e.ts`](../../apps/demo/e2e/builder-run-in-place.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/case-briefing.e2e.ts`](../../apps/demo/e2e/case-briefing.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/case-starts-paused.e2e.ts`](../../apps/demo/e2e/case-starts-paused.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-page.e2e.ts`](../../apps/demo/e2e/circulation-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/circulation-rhythm-rates.e2e.ts`](../../apps/demo/e2e/circulation-rhythm-rates.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/controller-latency.e2e.ts`](../../apps/demo/e2e/controller-latency.e2e.ts) | 0 | 0 |
@@ -1486,6 +1487,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/restart-keeps-case.e2e.ts`](../../apps/demo/e2e/restart-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/return-here-restore.e2e.ts`](../../apps/demo/e2e/return-here-restore.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/room-code.e2e.ts`](../../apps/demo/e2e/room-code.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/room-in-use.e2e.ts`](../../apps/demo/e2e/room-in-use.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/room-qr-tab-guard.e2e.ts`](../../apps/demo/e2e/room-qr-tab-guard.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts`](../../apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-grid-layout.e2e.ts`](../../apps/demo/e2e/saadat-grid-layout.e2e.ts) | 0 | 0 |
