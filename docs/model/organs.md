@@ -70,7 +70,7 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`params.ts:68`](../../packages/engine-core/src/l2/brain/params.ts#L68) | OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg) |
 | [`wave.ts:3`](../../packages/engine-core/src/l2/brain/wave.ts#L3) | AMP = elastance × arterial pulse volume (≈ 1.6 mL at PP 40), so AMP ≈ 0.1·ICP + 0.5 when compliant and rises |
 | [`effects.ts:2`](../../packages/engine-core/src/l2/organs/effects.ts#L2) | `coupled` sbp/dbp (+1.3/+0.85 × ΔMAP, the widened pulse pressure; MAP = dbp + (sbp − dbp)/3 rises by exactly ΔMAP) |
-| [`pipeline.ts:178`](../../packages/engine-core/src/l2/organs/pipeline.ts#L178) | ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the |
+| [`pipeline.ts:183`](../../packages/engine-core/src/l2/organs/pipeline.ts#L183) | ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the |
 | [`kidney.ts:33`](../../packages/engine-core/src/l2/renal/kidney.ts#L33) | One algebraic kidney (both kidneys in parallel, so resistances ÷ 2): RBF = (Pa − Pv)/ΣR; P_gc from the divider; |
 | [`kidney.ts:34`](../../packages/engine-core/src/l2/renal/kidney.ts#L34) | GFR = Kf·(P_gc − P_B − π_gc)+. `k` scales every resistance (calibration to the resting RBF), `rAff` is the TGF state |
 | [`kidney.ts:49`](../../packages/engine-core/src/l2/renal/kidney.ts#L49) | leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol |
@@ -84,7 +84,7 @@ an embedding developer reads it for the organ inputs it collects and the effects
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 7 rows; SOURCED 1, FIT 2, ENG 0, UNTAGGED 3, ABSENT 1.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -400,6 +400,8 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `stepCushing` | [`l2/brain/cushing.ts`](../../packages/engine-core/src/l2/brain/cushing.ts) | Advance by dt (s) with the pre-surge CPP and the current head-MAP − ICP gap (Infinity: |
 | `brainDo2Rel` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | O2 delivery relative to normal: |
 | `functionLoss` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | The share of a compartment's function lost at `delivery`. |
+| `createBrainEnergy` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | — |
+| `brainstemFrom` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | The brainstem entry from a snapshot that kept the gate's state on the spontaneous drive's record: |
 | `stepBrainEnergy` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | Set the energy state from the supply now (no stored energy yet: |
 | `autoregIntact` | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | Pressure autoregulation A(CPP) with intact regulation (tables A(): |
 | `autoreg` | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | A with an autoregulation index ar (1 intact, 0 pressure-passive: |
@@ -417,22 +419,32 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `elastance` | [`l2/brain/mechanics.ts`](../../packages/engine-core/src/l2/brain/mechanics.ts) | Elastance dICP/dV (mmHg/mL) = 2.303·ICP/PVI (tables `pvi` row). |
 | `csfDisplacementRate` | [`l2/brain/mechanics.ts`](../../packages/engine-core/src/l2/brain/mechanics.ts) | d(displaced CSF)/dt, mL/min. |
 | `brainParams` | [`l2/brain/model.ts`](../../packages/engine-core/src/l2/brain/model.ts) | Profile → brain parameters: |
+| `createBrain` | [`l2/brain/model.ts`](../../packages/engine-core/src/l2/brain/model.ts) | — |
 | `osmoticLoss` | [`l2/brain/model.ts`](../../packages/engine-core/src/l2/brain/model.ts) | Osmotic brain-water loss (mL, ≥ 0) at time t: |
+| `giveOsmotherapy` | [`l2/brain/model.ts`](../../packages/engine-core/src/l2/brain/model.ts) | — |
 | `headUp` | [`l2/brain/model.ts`](../../packages/engine-core/src/l2/brain/model.ts) | Head-up posture: |
 | `stepBrain` | [`l2/brain/model.ts`](../../packages/engine-core/src/l2/brain/model.ts) | Advance the brain by dt seconds (called every BRAIN_DT_S). |
 | `p2p1` | [`l2/brain/wave.ts`](../../packages/engine-core/src/l2/brain/wave.ts) | P2/P1 ratio vs elastance (mmHg/mL): |
 | `beatShape` | [`l2/brain/wave.ts`](../../packages/engine-core/src/l2/brain/wave.ts) | Unit-peak beat shape at time s after the R wave, and its mean over a beat of length rr (for the zero-mean pulse). |
+| `beatShapeArea` | [`l2/brain/wave.ts`](../../packages/engine-core/src/l2/brain/wave.ts) | — |
 | `icpSample` | [`l2/brain/wave.ts`](../../packages/engine-core/src/l2/brain/wave.ts) | One sample: |
+| `createLiver` | [`l2/liver/liver.ts`](../../packages/engine-core/src/l2/liver/liver.ts) | — |
 | `hbfFactor` | [`l2/liver/liver.ts`](../../packages/engine-core/src/l2/liver/liver.ts) | Splanchnic/hepatic flow factor: |
 | `stepLactatePool` | [`l2/liver/liver.ts`](../../packages/engine-core/src/l2/liver/liver.ts) | One-compartment lactate pool (mmol/L): |
 | `stepLiver` | [`l2/liver/liver.ts`](../../packages/engine-core/src/l2/liver/liver.ts) | Step at dt s. |
+| `applyOrganEffects` | [`l2/organs/effects.ts`](../../packages/engine-core/src/l2/organs/effects.ts) | — |
 | `circExt` | [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts) | The circulation's `circ.ext` (multipliers other modules write) when the circulation is present, else null. |
 | `bloodCore` | [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts) | The blood model's `core` (where the organ model writes `liver` and `renal`), or null. |
 | `readDrugView` | [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts) | The drug model's bus (`ps.pk.bus`), the neuro model's CMRO2 (`ps.neuro.outputs.cmro2Mult`) and the endocrine model's sepsis (`ps.endo.core.cond.sepsis.cur`). |
 | `alphaExcess` | [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts) | The α-agonist that is "above need" (tables §5.2 D row: |
+| `readOrganView` | [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts) | — |
+| `createOrgansState` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | — |
 | `rebaselineOrgans` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | Recalibrate on the running pipelines' t = 0 truths (the engine calls this once, right after creating its state). |
 | `upgradeOrgans` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | A snapshot taken before the brain had an energy state: |
+| `organChannelActive` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | — |
+| `advanceOrgans` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | — |
 | `validateOrgansCommand` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | undefined = accepted, string = rejected, null = not an organ command. |
+| `applyOrgansCommand` | [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts) | — |
 | `lpReab` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | Pulse's tubular reabsorption permeability at renal arterial pressure p (annex B2; |
 | `natriuresis` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | Pressure natriuresis: |
 | `renalHaemo` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | One algebraic kidney (both kidneys in parallel, so resistances ÷ 2): |
@@ -446,8 +458,9 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `eabv` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Effective arterial blood volume (0–1+) [FIT: |
 | `createRenal` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | The kidney is calibrated on the HEALTHY reference (MAP 93, CVP 5, CO 0.08 L/min/kg: |
 | `uopOver` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Rolling urine output over the last `minutes` (≤ 1440), mL/kg/h. |
-
-Exported without a doc comment: `createBrainEnergy`, `createBrain`, `giveOsmotherapy`, `beatShapeArea`, `createLiver`, `applyOrganEffects`, `readOrganView`, `createOrgansState`, `organChannelActive`, `advanceOrgans`, `applyOrgansCommand`, `stepRenal`, `giveFurosemide`, `giveMannitolRenal`.
+| `stepRenal` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | — |
+| `giveFurosemide` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | — |
+| `giveMannitolRenal` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | — |
 
 ## Source files
 

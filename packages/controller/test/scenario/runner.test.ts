@@ -52,6 +52,19 @@ describe('ScenarioRunner', () => {
     expect(states(r.advance(17))).toEqual(['b']);
   });
 
+  it('rhythm with forS counts only while the engine draws that rhythm; another rhythm resets it', () => {
+    const rhythm = (id: string) => ({ kind: 'rhythm' as const, id });
+    const r = new ScenarioRunner(doc([{ when: { rhythm: { id: 'vfCoarse', forS: 10 } } }]));
+    r.start(0);
+    r.advance(1, [rhythm('vfCoarse')]);
+    r.advance(6, [rhythm('asystole')]); // the instructor's rhythm after 5 s
+    expect(r.advance(30)).toEqual([]);
+    expect(r.rhythmHolds()).toMatchObject([{ id: 'vfCoarse', current: 'asystole', met: false, heldS: 0 }]);
+    r.advance(31, [rhythm('vfCoarse')]);
+    expect(r.advance(40.9)).toEqual([]);
+    expect(states(r.advance(41))).toEqual(['b']);
+  });
+
   it('vital reads measured aliases: nibpSys counts as sbp; a higher-rank source wins until stale', () => {
     const r = new ScenarioRunner(doc([{ when: { vital: { var: 'sbp', op: '<', value: 80 } } }]));
     r.start(0);

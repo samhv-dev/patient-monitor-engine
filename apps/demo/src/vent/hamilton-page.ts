@@ -13,6 +13,7 @@ import { h, setText } from '../app/ui.ts';
 import { PHONE_WORDS, pinForm, refusalWords } from '../app/views/pin-form.ts';
 import { signInVentilator, type VentDevice } from './device-link.ts';
 import { faceFromLocation, mountFace } from './faces/index.ts';
+import { faceOf } from './faces/ids.ts';
 import { hostLang } from '../app/i18n/lang.ts';
 
 /** An app string through the app's Persian table when the app is in Persian (plan vent-skin-edp-ts.md §6); loaded only then. */
@@ -107,7 +108,7 @@ function devicePage(code: string, relay: string): void {
         port = createRelayPort(wire, { settings: () => (drv ? settingsOf(drv) : null) });
         drv = createVentDriver(port, profile);
         driver = drv;
-        mountFace(drv, faceFromLocation(location), { linked: true, translate });
+        mountFace(drv, d.face === null ? faceFromLocation(location) : faceOf(d.face), { linked: true, room: true, translate }); // the room's face
         (window as unknown as { __vent: VentDriver }).__vent = drv; // e2e hook
       }
       port?.setHidden(document.visibilityState === 'hidden'); // its settings at once: the host knows what it would hand over
@@ -147,7 +148,10 @@ else {
   const port = session ? (embedded ? createFramePort(session, () => parent) : createBroadcastPort(session)) : null;
   const driver = createVentDriver(port, profile);
   if (port && !embedded) sayWindowSettings(port, driver);
+  // a room's cockpit is the app's frame (`&via=parent`) or a window of its own; a page that frames a linked cockpit
+  // without `via=parent` is the stand-alone ventilator-and-monitor page (dev/vent-link.html), whose patient is its own
+  const room = port !== null && (embedded || parent === window);
   // the face (`?face=`, plan vent-skin-edp-ts.md §4.5); linked, the Hamilton face matches the monitor ventilator's flow in VC
-  mountFace(driver, faceFromLocation(location), { linked: port !== null, translate });
+  mountFace(driver, faceFromLocation(location), { linked: port !== null, room, translate });
   (window as unknown as { __vent: typeof driver }).__vent = driver; // e2e hook
 }

@@ -38,7 +38,7 @@ export interface RenderContract {
 }
 
 export interface AudioContract {
-  beep: { enabled: boolean; source: Skin['beep']['source']; baseHz: number; pitchMap: PitchMapId; volume: Skin['beep']['volume'] };
+  beep: { enabled: boolean; source: Skin['beep']['source']; baseHz: number; pitchMap: PitchMapId; volume: Skin['beep']['volume']; levelDb: number; neutralHz: number };
   alarm: {
     profile: SoundProfileId;
     repeatS: Partial<Record<Level, number | null>>;
@@ -251,7 +251,7 @@ function renderContract(skin: Skin): RenderContract {
 
 function audioContract(skin: Skin): AudioContract {
   return {
-    beep: { enabled: skin.beep.defaultOn, source: skin.beep.source, baseHz: skin.beep.baseHz, pitchMap: skin.beep.pitchMap, volume: { ...skin.beep.volume } },
+    beep: { enabled: skin.beep.defaultOn, source: skin.beep.source, baseHz: skin.beep.baseHz, pitchMap: skin.beep.pitchMap, volume: { ...skin.beep.volume }, levelDb: skin.beep.levelDb, neutralHz: skin.beep.neutralHz },
     alarm: {
       profile: skin.alarms.soundProfile,
       repeatS: { ...(skin.alarms.repeatS ?? {}) },

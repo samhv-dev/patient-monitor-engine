@@ -44,7 +44,7 @@ describe('the automatic-row bar reads the driver\'s holds (ruling 4)', () => {
     record.doc = MH;
     const link = {
       ctl: { scenario: sv, bookmarks: [], simT: 400, state: { values: { etco2: 46 } }, hostPaused: false },
-      host: holds === null ? null : { driver: { vitalHolds: () => holds }, record: { data: record } },
+      host: holds === null ? null : { driver: { vitalHolds: () => holds, rhythmHolds: () => [] }, record: { data: record } },
       simT: 400, log: [], send: async () => ({ accepted: true, tick: 0, commandId: 'c', rttMs: 0 }), note: () => undefined,
     } as unknown as Link;
     const el = document.createElement('div');

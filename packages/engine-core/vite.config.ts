@@ -122,175 +122,172 @@ const SLOW = [
   'test/engine/eeg-cortex.test.ts', // EEG E1/E2 on the engine: eight drug arms, ≈ 9 900 sim-s sampled every 5 s
 ];
 /**
- * THIRTEEN slow groups (brief 218, 2026-11-12), re-packed longest-first onto the least-loaded group from the measured CI
- * per-file times: the mean of three green runs of 12 November (PR run 43186437413, main runs 43199909378 and
- * 43185270151; Vitest's per-file duration in each job log), 13689 s of slow tests in all, so that every group is
- * ≈ 17.5 min of tests (≈ 19 min a job with its set-up) on a runner of average speed. The runners differ: the same group
- * took 16.8 and 33.4 min on two runs, so a slow runner still doubles a group. Per file: mean s (max of the three runs).
- * drug-layer.test.ts alone is 935 s mean, 1370 s max (22.8 min): one file, it sets slow-f's floor and cannot be split
- * here. The longrun files are listed one by one (their glob in SLOW stays, so a new longrun file lands in slow-b).
- * slow-b is SLOW minus the other twelve by Vitest's own matcher, and every group excludes every other, so the groups are
- * disjoint by construction; ci.yml checks it. A new slow file joins SLOW (and so slow-b) or the group whose CI sum it fits.
+ * TWELVE slow groups, packed longest-first onto the least-loaded group from the measured CI per-file times: the mean of
+ * three green runs of 17 November (PR runs 44063071442, 44045161565 and 44022905539; Vitest's per-file duration in each
+ * job log), 11678 s of slow tests in all, so that every group is ≈ 16.2 min of tests. ci.yml runs two groups at once
+ * on one runner (scripts/ci/lanes.mjs), each in its own Vitest process, so six jobs carry the twelve. The runners differ:
+ * the same group took 16.8 and 33.4 min on two runs, so a slow runner still doubles a group. Per file: mean s (max of
+ * the three runs). drug-layer.test.ts is one file and sets its group's floor. The longrun files are listed one by one
+ * (their glob in SLOW stays, so a new longrun file lands in slow-b). slow-b is SLOW minus the other eleven by Vitest's
+ * own matcher, and every group excludes every other, so the groups are disjoint by construction; ci.yml checks it. A new
+ * slow file joins SLOW (and so slow-b) or the group whose CI sum it fits.
  */
-const SLOW_A = [ // ≈ 1052 s mean on CI (17.5 min)
-  'test/engine/endo-insulin-omission.test.ts', // 468 s (max 530), from slow-h
-  'test/engine/pk-longrun.test.ts', // 179 s (max 268)
-  'test/engine/neuro-engine.test.ts', // 124 s (max 155), from slow-e
-  'test/engine/lung-unilateral.test.ts', // 85 s (max 126)
-  'test/engine/neuro-acceptance.test.ts', // 66 s (max 79), from slow-e
-  'test/engine/blood-hyperk.test.ts', // 40 s (max 46), from slow-c
-  'test/engine/drug-opioid-induction-synergy.test.ts', // 35 s (max 36), from slow-b
-  'test/engine/circ-manual-cvp-peep.test.ts', // 26 s (max 31), from slow-e
-  'test/engine/blood-o2-extraction.test.ts', // 19 s (max 22), from slow-c
-  'test/engine/af-pulse-deficit.test.ts', // 9 s (max 12), from slow-f
-  'test/engine/cpr-ecg-artefact.test.ts', // 1 s (max 2), from slow-d
+const SLOW_A = [ // ≈ 977 s mean on CI (16.3 min)
+  'test/engine/drug-layer.test.ts', // 804 s (max 809)
+  'test/engine/fidelity-lowflow.test.ts', // 57 s (max 74)
+  'test/engine/blood-hyperk.test.ts', // 37 s (max 37)
+  'test/engine/drug-desflurane-surge.test.ts', // 27 s (max 31)
+  'test/engine/circ-pulseless-arrest.test.ts', // 24 s (max 33)
+  'test/engine/resp-rocuronium-apnoea.test.ts', // 15 s (max 21)
+  'test/engine/circ-pulm-hypertension-grade.test.ts', // 13 s (max 16)
 ];
-// slow-b, the remainder (≈ 1053 s mean, 17.6 min on 12 November): every SLOW file not listed in another
-// group, which today is:
-//   pk-tci-pump-control.test.ts 262 s (max 274)
-//   organs-soak.test.ts 223 s (max 227)
-//   resp-coupling.test.ts 162 s (max 196), from slow-e
-//   blood-anaemia-co.test.ts 122 s (max 136), from slow-g
-//   blood-desaturation-recheck.test.ts 89 s (max 98), from slow-g
-//   fidelity-nibp.test.ts 64 s (max 65)
-//   drug-desflurane-surge.test.ts 40 s (max 48), from slow-e
-//   lung-copd-startup.test.ts 34 s (max 35)
-//   lung-copd.test.ts 28 s (max 31), from slow-g
-//   resp-obstruction.test.ts 18 s (max 20), from slow-d
-//   cpr-cerebral-flow.test.ts 7 s (max 8), from slow-d
-//   pk-propofol-co-reference.test.ts 4 s (max 5), from slow-d
-const SLOW_C = [ // ≈ 1052 s mean on CI (17.5 min)
-  'test/engine/blood-fluid-kinetics.test.ts', // 282 s (max 350)
-  'test/engine/organs-renal.test.ts', // 218 s (max 223), from slow-b
-  'test/engine/lung-longrun.test.ts', // 159 s (max 242), from slow-a
-  'test/engine/thermal-mh-arrest-heat.test.ts', // 119 s (max 136), from slow-h
-  'test/engine/organs-tbi-treatment.test.ts', // 83 s (max 126), from slow-f
-  'test/engine/neuro-spont.test.ts', // 59 s (max 67), from slow-g
-  'test/engine/lung-hpv-volatile.test.ts', // 45 s (max 65), from slow-a
-  'test/engine/cat-reserve-engine.test.ts', // 33 s (max 48), from slow-a
-  'test/engine/circ-sympathetic-tone.test.ts', // 24 s (max 27), from slow-d
-  'test/engine/resp-rocuronium-apnoea.test.ts', // 20 s (max 21), from slow-b
-  'test/engine/alarms-limit-text.test.ts', // 8 s (max 9), from slow-d
-  'test/engine/lung-pe-profile.test.ts', // 2 s (max 2), from slow-d
+// slow-b, the remainder (≈ 973 s mean, 16.2 min): every SLOW file not listed in another group, today
+//   thermal-periop-course.test.ts // 574 s (max 631)
+//   organs-brain-osmolality.test.ts // 123 s (max 180)
+//   neuro-engine.test.ts // 80 s (max 80)
+//   drug-hypokalaemia-rocuronium.test.ts // 58 s (max 68)
+//   resp-mechanics.test.ts // 41 s (max 46)
+//   circ-body-size.test.ts // 32 s (max 38)
+//   thermal-mh-haemodynamics.test.ts // 24 s (max 24)
+//   circ-sanity-2.test.ts // 19 s (max 22)
+//   circ-lvad-filling.test.ts // 14 s (max 14)
+//   cpr-cerebral-flow.test.ts // 6 s (max 7)
+//   hemo-nibp-arrest.test.ts // 2 s (max 2)
+const SLOW_C = [ // ≈ 973 s mean on CI (16.2 min)
+  'test/engine/drug-layer-guards-csht.test.ts', // 534 s (max 717)
+  'test/engine/neuro-longrun.test.ts', // 126 s (max 153)
+  'test/engine/thermal-mh-trigger.test.ts', // 94 s (max 108)
+  'test/engine/blood-sanity-haem.test.ts', // 62 s (max 85)
+  'test/engine/neuro-acceptance.test.ts', // 43 s (max 44)
+  'test/engine/fidelity-nibp.test.ts', // 38 s (max 41)
+  'test/engine/hr-af-numeric.test.ts', // 29 s (max 34)
+  'test/engine/circ-rate-rule.test.ts', // 21 s (max 28)
+  'test/engine/resp-child-baseline.test.ts', // 18 s (max 24)
+  'test/engine/resp-breath-delivered-vt.test.ts', // 5 s (max 5)
+  'test/engine/hr-agonal-qrs.test.ts', // 3 s (max 4)
 ];
-const SLOW_D = [ // ≈ 1052 s mean on CI (17.5 min)
-  'test/engine/stimulus-surge.test.ts', // 338 s (max 382)
-  'test/engine/endo-insulin-dextrose.test.ts', // 216 s (max 322), from slow-i
-  'test/engine/hemo-longrun.test.ts', // 156 s (max 234), from slow-a
-  'test/engine/vagal-events.test.ts', // 108 s (max 122)
-  'test/engine/eeg-cortex.test.ts', // 73 s (max 82), from slow-h
-  'test/engine/circ-tamponade-drainage.test.ts', // 55 s (max 57), from slow-b
-  'test/engine/organs-renal-iap.test.ts', // 38 s (max 46), from slow-c
-  'test/engine/fidelity-alarms.test.ts', // 30 s (max 34), from slow-g
-  'test/engine/circ-sanity-2.test.ts', // 22 s (max 31), from slow-a
-  'test/engine/circ-pulsus.test.ts', // 15 s (max 16), from slow-b
-  'test/engine/state-sensor-map.test.ts', // 1 s (max 1)
+const SLOW_D = [ // ≈ 975 s mean on CI (16.3 min)
+  'test/engine/drug-layer-guards.test.ts', // 485 s (max 570)
+  'test/engine/pk-tci-pump-control.test.ts', // 143 s (max 158)
+  'test/engine/organs-soak.test.ts', // 120 s (max 129)
+  'test/engine/lung-recruitment.test.ts', // 64 s (max 74)
+  'test/engine/blood-desaturation-recheck.test.ts', // 52 s (max 56)
+  'test/engine/fidelity-resp.test.ts', // 33 s (max 46)
+  'test/engine/circ-sanity-1.test.ts', // 28 s (max 33)
+  'test/engine/tension-ptx.test.ts', // 23 s (max 30)
+  'test/engine/resp-obstruction.test.ts', // 16 s (max 18)
+  'test/engine/circ-pea-resuscitation.test.ts', // 11 s (max 13)
 ];
-const SLOW_E = [ // ≈ 1053 s mean on CI (17.6 min)
-  'test/engine/drug-layer-guards.test.ts', // 640 s (max 770)
-  'test/engine/circ-longrun.test.ts', // 126 s (max 175), from slow-a
-  'test/engine/thermal-mh-trigger.test.ts', // 95 s (max 116), from slow-c
-  'test/engine/drug-hypokalaemia-rocuronium.test.ts', // 60 s (max 73), from slow-c
-  'test/engine/resp-mechanics.test.ts', // 45 s (max 50), from slow-d
-  'test/engine/circ-iabp.test.ts', // 33 s (max 37), from slow-d
-  'test/engine/lung-copd-retainer.test.ts', // 24 s (max 29), from slow-c
-  'test/l2/pk/interactions-misc.test.ts', // 20 s (max 20), from slow-b
-  'test/engine/resp-breath-delivered-vt.test.ts', // 7 s (max 8), from slow-b
-  'test/engine/hemo-nibp-arrest.test.ts', // 3 s (max 3), from slow-b
+const SLOW_E = [ // ≈ 973 s mean on CI (16.2 min)
+  'test/engine/clinical-suite.test.ts', // 412 s (max 546)
+  'test/engine/endo-longrun.test.ts', // 156 s (max 213)
+  'test/engine/resp-coupling.test.ts', // 123 s (max 136)
+  'test/engine/circ-lowflow-arrest.test.ts', // 82 s (max 107)
+  'test/engine/endo-circ-acceptance.test.ts', // 58 s (max 70)
+  'test/engine/fidelity-ecg.test.ts', // 42 s (max 50)
+  'test/engine/organs-oliguria-flag.test.ts', // 32 s (max 36)
+  'test/engine/blood-k-rhythm.test.ts', // 26 s (max 29)
+  'test/engine/drug-opioid-induction-synergy.test.ts', // 20 s (max 21)
+  'test/l2/pk/interactions-misc.test.ts', // 13 s (max 14)
+  'test/engine/resp-pleural-effort.test.ts', // 9 s (max 12)
 ];
-const SLOW_F = [ // ≈ 1056 s mean on CI (17.6 min)
-  'test/engine/drug-layer.test.ts', // 935 s (max 1370)
-  'test/engine/thermal-mh-haemodynamics.test.ts', // 40 s (max 41), from slow-b
-  'test/engine/circ-negative-volume.test.ts', // 33 s (max 36), from slow-d
-  'test/engine/resp-vcv-pmax.test.ts', // 24 s (max 34)
-  'test/engine/circ-lvad-filling.test.ts', // 17 s (max 18), from slow-d
-  'test/engine/rhythm-agonal-rate.test.ts', // 7 s (max 8), from slow-d
+const SLOW_F = [ // ≈ 973 s mean on CI (16.2 min)
+  'test/engine/endo-insulin-omission.test.ts', // 376 s (max 377)
+  'test/engine/pk-acceptance-pd.test.ts', // 160 s (max 184)
+  'test/engine/engine-pipeline.test.ts', // 125 s (max 150)
+  'test/engine/organs-curves.test.ts', // 87 s (max 97)
+  'test/engine/thermal-fever-ga.test.ts', // 63 s (max 73)
+  'test/engine/pk-acceptance-pk.test.ts', // 52 s (max 70)
+  'test/engine/cat-reserve-engine.test.ts', // 36 s (max 50)
+  'test/engine/circ-sympathetic-tone.test.ts', // 26 s (max 36)
+  'test/engine/lung-copd-retainer.test.ts', // 23 s (max 27)
+  'test/engine/pk-acceptance-scen.test.ts', // 16 s (max 22)
+  'test/engine/pacer-sensing.test.ts', // 9 s (max 10)
 ];
-const SLOW_G = [ // ≈ 1055 s mean on CI (17.6 min)
-  'test/engine/thermal-periop-course.test.ts', // 799 s (max 887)
-  'test/engine/organs-curves.test.ts', // 80 s (max 97), from slow-c
-  'test/engine/resp-ga-state.test.ts', // 57 s (max 80), from slow-a
-  'test/engine/blood-k-rhythm.test.ts', // 39 s (max 40), from slow-b
-  'test/engine/organs-oliguria-flag.test.ts', // 33 s (max 37), from slow-d
-  'test/engine/af-rate-control.test.ts', // 23 s (max 27), from slow-e
-  'test/engine/resp-pregnancy.test.ts', // 18 s (max 21), from slow-c
-  'test/engine/circ-manual-ischaemia.test.ts', // 6 s (max 6), from slow-d
+const SLOW_G = [ // ≈ 972 s mean on CI (16.2 min)
+  'test/engine/drug-apnoea.test.ts', // 369 s (max 421)
+  'test/engine/resp-bronchodilation.test.ts', // 161 s (max 206)
+  'test/engine/blood-sanity-acid.test.ts', // 130 s (max 190)
+  'test/engine/organs-tbi-treatment.test.ts', // 89 s (max 130)
+  'test/engine/eeg-cortex.test.ts', // 63 s (max 73)
+  'test/engine/circ-hypoxic-arrest.test.ts', // 51 s (max 66)
+  'test/engine/circ-tamponade-drainage.test.ts', // 35 s (max 40)
+  'test/engine/blood-massive-transfusion.test.ts', // 27 s (max 31)
+  'test/engine/resp-vcv-pmax.test.ts', // 22 s (max 22)
+  'test/engine/af-rate-control.test.ts', // 18 s (max 20)
+  'test/engine/circ-manual-ischaemia.test.ts', // 5 s (max 5)
+  'test/engine/spo2-motion-recovery.test.ts', // 2 s (max 3)
+  'test/engine/state-sensor-map.test.ts', // 0 s (max 0)
 ];
-const SLOW_H = [ // ≈ 1053 s mean on CI (17.6 min)
-  'test/engine/drug-layer-guards-csht.test.ts', // 541 s (max 611)
-  'test/engine/endo-longrun.test.ts', // 158 s (max 233), from slow-a
-  'test/engine/circ-lowflow-arrest.test.ts', // 117 s (max 121), from slow-b
-  'test/engine/pk-acceptance-pk.test.ts', // 77 s (max 79), from slow-b
-  'test/engine/fidelity-lowflow.test.ts', // 54 s (max 79), from slow-f
-  'test/engine/fidelity-arrest.test.ts', // 36 s (max 52), from slow-f
-  'test/engine/organs-htn.test.ts', // 32 s (max 45), from slow-i
-  'test/engine/cpr-etco2-circulation.test.ts', // 22 s (max 25), from slow-d
-  'test/engine/circ-pulm-hypertension-grade.test.ts', // 13 s (max 14), from slow-d
-  'test/engine/hr-agonal-qrs.test.ts', // 3 s (max 3), from slow-d
+const SLOW_H = [ // ≈ 973 s mean on CI (16.2 min)
+  'test/engine/blood-fluid-kinetics.test.ts', // 336 s (max 488)
+  'test/engine/lung-longrun.test.ts', // 169 s (max 245)
+  'test/engine/pk-longrun.test.ts', // 142 s (max 144)
+  'test/engine/vagal-events.test.ts', // 99 s (max 117)
+  'test/engine/lung-r14.test.ts', // 67 s (max 87)
+  'test/engine/lung-hpv-volatile.test.ts', // 47 s (max 64)
+  'test/engine/fidelity-arrest.test.ts', // 37 s (max 49)
+  'test/engine/circ-negative-volume.test.ts', // 28 s (max 28)
+  'test/engine/resp-alkalosis-compensation.test.ts', // 22 s (max 26)
+  'test/engine/lung-copd.test.ts', // 17 s (max 19)
+  'test/engine/circ-pulsus.test.ts', // 9 s (max 11)
 ];
-const SLOW_I = [ // ≈ 1053 s mean on CI (17.6 min)
-  'test/engine/drug-apnoea.test.ts', // 408 s (max 586)
-  'test/engine/pk-acceptance-pd.test.ts', // 183 s (max 274)
-  'test/engine/organs-renal-kaliuresis.test.ts', // 147 s (max 177), from slow-c
-  'test/engine/lung-recruitment.test.ts', // 101 s (max 114), from slow-g
-  'test/engine/thermal-fever-ga.test.ts', // 67 s (max 75), from slow-d
-  'test/engine/hr-af-numeric.test.ts', // 45 s (max 50), from slow-g
-  'test/engine/circ-coronary-supply.test.ts', // 35 s (max 40), from slow-d
-  'test/engine/blood-massive-transfusion.test.ts', // 28 s (max 33), from slow-c
-  'test/engine/resp-alkalosis-compensation.test.ts', // 23 s (max 28), from slow-c
-  'test/engine/pacer-sensing.test.ts', // 13 s (max 15), from slow-e
-  'test/engine/spo2-motion-recovery.test.ts', // 3 s (max 3), from slow-d
+const SLOW_I = [ // ≈ 972 s mean on CI (16.2 min)
+  'test/engine/resp-suite.test.ts', // 330 s (max 438)
+  'test/engine/resp-longrun.test.ts', // 175 s (max 237)
+  'test/engine/blood-septic-leak.test.ts', // 141 s (max 190)
+  'test/engine/blood-potassium-chloride.test.ts', // 117 s (max 156)
+  'test/engine/eeg-baseline.test.ts', // 59 s (max 68)
+  'test/engine/organs-tbi.test.ts', // 42 s (max 57)
+  'test/engine/circ-coronary-supply.test.ts', // 33 s (max 38)
+  'test/engine/resp-drive-nonchemical.test.ts', // 27 s (max 36)
+  'test/engine/cpr-etco2-circulation.test.ts', // 24 s (max 31)
+  'test/engine/blood-o2-extraction.test.ts', // 16 s (max 16)
+  'test/engine/alarms-limit-text.test.ts', // 8 s (max 11)
 ];
-const SLOW_J = [ // ≈ 1052 s mean on CI (17.5 min)
-  'test/engine/resp-suite.test.ts', // 470 s (max 475), from slow-b
-  'test/engine/resp-bronchodilation.test.ts', // 166 s (max 233), from slow-i
-  'test/engine/blood-septic-leak.test.ts', // 128 s (max 153), from slow-c
-  'test/engine/thermal-warmer.test.ts', // 96 s (max 147), from slow-f
-  'test/engine/blood-sanity-haem.test.ts', // 62 s (max 95), from slow-f
-  'test/engine/organs-tbi.test.ts', // 42 s (max 48), from slow-d
-  'test/engine/resp-bronchospasm-one.test.ts', // 34 s (max 38), from slow-c
-  'test/engine/resp-drive-nonchemical.test.ts', // 26 s (max 30), from slow-d
-  'test/engine/blood-mannitol.test.ts', // 18 s (max 22), from slow-c
-  'test/engine/resp-pleural-effort.test.ts', // 10 s (max 11), from slow-c
+const SLOW_J = [ // ≈ 972 s mean on CI (16.2 min)
+  'test/engine/stimulus-surge.test.ts', // 325 s (max 381)
+  'test/engine/drug-nmb-volatile-sux.test.ts', // 186 s (max 252)
+  'test/engine/hemo-longrun.test.ts', // 138 s (max 167)
+  'test/engine/thermal-warmer.test.ts', // 96 s (max 132)
+  'test/engine/lung-unilateral.test.ts', // 68 s (max 69)
+  'test/engine/neuro-spont.test.ts', // 46 s (max 66)
+  'test/engine/resp-bronchospasm-one.test.ts', // 37 s (max 48)
+  'test/engine/circ-iabp.test.ts', // 31 s (max 35)
+  'test/engine/lung-copd-startup.test.ts', // 20 s (max 23)
+  'test/engine/circ-manual-cvp-peep.test.ts', // 17 s (max 17)
+  'test/engine/af-pulse-deficit.test.ts', // 7 s (max 7)
+  'test/engine/cpr-ecg-artefact.test.ts', // 1 s (max 1)
 ];
-const SLOW_K = [ // ≈ 1054 s mean on CI (17.6 min)
-  'test/engine/endo-acceptance.test.ts', // 404 s (max 409), from slow-b
-  'test/engine/engine-pipeline.test.ts', // 192 s (max 215), from slow-g
-  'test/engine/neuro-longrun.test.ts', // 145 s (max 217), from slow-a
-  'test/engine/endo-circ-acceptance.test.ts', // 96 s (max 98), from slow-b
-  'test/engine/eeg-baseline.test.ts', // 68 s (max 77), from slow-h
-  'test/engine/fidelity-ecg.test.ts', // 45 s (max 65), from slow-f
-  'test/engine/circ-body-size.test.ts', // 35 s (max 38), from slow-d
-  'test/engine/circ-sanity-1.test.ts', // 29 s (max 34), from slow-c
-  'test/engine/resp-trigger.test.ts', // 23 s (max 31), from slow-a
-  'test/engine/circ-pea-resuscitation.test.ts', // 12 s (max 14), from slow-d
-  'test/engine/circ-manual-rosc-ramp.test.ts', // 5 s (max 5), from slow-d
+const SLOW_K = [ // ≈ 973 s mean on CI (16.2 min)
+  'test/engine/endo-adrenal.test.ts', // 279 s (max 395)
+  'test/engine/endo-insulin-dextrose.test.ts', // 188 s (max 222)
+  'test/engine/organs-renal-kaliuresis.test.ts', // 145 s (max 170)
+  'test/engine/thermal-mh-arrest-heat.test.ts', // 120 s (max 165)
+  'test/engine/hemo-nibp.test.ts', // 72 s (max 99)
+  'test/engine/resp-ga-state.test.ts', // 55 s (max 59)
+  'test/engine/organs-renal-iap.test.ts', // 37 s (max 44)
+  'test/engine/organs-htn.test.ts', // 30 s (max 41)
+  'test/engine/resp-trigger.test.ts', // 20 s (max 23)
+  'test/engine/blood-mannitol.test.ts', // 19 s (max 25)
+  'test/engine/pk-propofol-co-reference.test.ts', // 4 s (max 4)
+  'test/engine/circ-manual-rosc-ramp.test.ts', // 4 s (max 5)
 ];
-const SLOW_L = [ // ≈ 1052 s mean on CI (17.5 min)
-  'test/engine/endo-adrenal.test.ts', // 360 s (max 401), from slow-g
-  'test/engine/resp-induction.test.ts', // 208 s (max 300), from slow-i
-  'test/engine/blood-sanity-acid.test.ts', // 155 s (max 188), from slow-e
-  'test/engine/organs-brain-osmolality.test.ts', // 107 s (max 128), from slow-c
-  'test/engine/hemo-nibp.test.ts', // 70 s (max 96), from slow-i
-  'test/engine/resp-inspired-co2.test.ts', // 49 s (max 57), from slow-c
-  'test/engine/pacer-tcp-pain.test.ts', // 36 s (max 40), from slow-d
-  'test/engine/fidelity-resp.test.ts', // 29 s (max 34), from slow-c
-  'test/engine/circ-pulseless-arrest.test.ts', // 22 s (max 24), from slow-d
-  'test/engine/pk-acceptance-scen.test.ts', // 16 s (max 22), from slow-a
+const SLOW_L = [ // ≈ 972 s mean on CI (16.2 min)
+  'test/engine/endo-acceptance.test.ts', // 245 s (max 298)
+  'test/engine/resp-induction.test.ts', // 210 s (max 293)
+  'test/engine/organs-renal.test.ts', // 152 s (max 221)
+  'test/engine/circ-longrun.test.ts', // 122 s (max 136)
+  'test/engine/blood-anaemia-co.test.ts', // 75 s (max 80)
+  'test/engine/resp-inspired-co2.test.ts', // 53 s (max 73)
+  'test/engine/pacer-tcp-pain.test.ts', // 39 s (max 53)
+  'test/engine/neuro-circ.test.ts', // 29 s (max 38)
+  'test/engine/fidelity-alarms.test.ts', // 21 s (max 25)
+  'test/engine/resp-pregnancy.test.ts', // 18 s (max 20)
+  'test/engine/rhythm-agonal-rate.test.ts', // 6 s (max 6)
+  'test/engine/lung-pe-profile.test.ts', // 2 s (max 2)
 ];
-const SLOW_M = [ // ≈ 1052 s mean on CI (17.5 min)
-  'test/engine/clinical-suite.test.ts', // 348 s (max 394), from slow-d
-  'test/engine/drug-nmb-volatile-sux.test.ts', // 208 s (max 250), from slow-e
-  'test/engine/resp-longrun.test.ts', // 156 s (max 229), from slow-a
-  'test/engine/blood-potassium-chloride.test.ts', // 107 s (max 121), from slow-h
-  'test/engine/lung-r14.test.ts', // 73 s (max 87), from slow-e
-  'test/engine/circ-hypoxic-arrest.test.ts', // 54 s (max 64), from slow-e
-  'test/engine/neuro-circ.test.ts', // 38 s (max 39), from slow-b
-  'test/engine/tension-ptx.test.ts', // 31 s (max 32), from slow-b
-  'test/engine/circ-rate-rule.test.ts', // 20 s (max 28), from slow-f
-  'test/engine/resp-child-baseline.test.ts', // 17 s (max 18), from slow-d
-];
-const OTHERS = { A: SLOW_A, C: SLOW_C, D: SLOW_D, E: SLOW_E, F: SLOW_F, G: SLOW_G, H: SLOW_H, I: SLOW_I, J: SLOW_J, K: SLOW_K, L: SLOW_L, M: SLOW_M };
+const OTHERS = { A: SLOW_A, C: SLOW_C, D: SLOW_D, E: SLOW_E, F: SLOW_F, G: SLOW_G, H: SLOW_H, I: SLOW_I, J: SLOW_J, K: SLOW_K, L: SLOW_L };
 const SLOW_B = SLOW.filter((p) => !Object.values(OTHERS).some((g) => g.includes(p)));
 const set = process.env.PME_TEST_SET;
 
@@ -312,7 +309,7 @@ export default defineConfig({
     ...(set === 'fast' ? { exclude: ['**/node_modules/**', '**/dist/**', ...SLOW] } : {}),
     ...(set === 'slow' ? { include: SLOW, fileParallelism: false } : {}),
     // Each group excludes every other group by the same matcher (disjoint by construction)
-    ...(set && /^slow-[a-m]$/.test(set) ? (() => {
+    ...(set && /^slow-[a-l]$/.test(set) ? (() => {
       const own = set.slice(5).toUpperCase() as keyof typeof OTHERS | 'B';
       const groups = { ...OTHERS, B: SLOW_B };
       const other = Object.entries(OTHERS).filter(([k]) => k !== own).flatMap(([, g]) => g);
