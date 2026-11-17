@@ -29,6 +29,28 @@ function fakePk(n: number) {
   };
 }
 
+// Wraps a tree so that every read of an own property through it is counted, per object and key. Typed arrays are not
+// wrapped: `ArrayBuffer.isView` does not see through a proxy.
+function counted<T extends object>(root: T) {
+  const reads = new Map<object, Map<PropertyKey, number>>();
+  const wrap = (v: unknown): unknown => (v !== null && typeof v === 'object' && !ArrayBuffer.isView(v) && !(v instanceof ArrayBuffer) ? new Proxy(v, handler) : v);
+  const handler: ProxyHandler<object> = {
+    get(t, k, recv) {
+      if (Object.hasOwn(t, k) && !(Array.isArray(t) && k === 'length')) {
+        const m = reads.get(t) ?? reads.set(t, new Map()).get(t)!;
+        m.set(k, (m.get(k) ?? 0) + 1);
+      }
+      return wrap(Reflect.get(t, k, recv));
+    },
+  };
+  const all = () => [...reads].flatMap(([t, m]) => [...m].map(([k, n]) => ({ t, k, n })));
+  return { value: wrap(root) as T, all };
+}
+// The walk is linear in the tree it keeps: it copies each property once, and looks once more at an array's elements
+// (the all-numbers check) and at an array item's `id`/`drugId`/`agent` (its key in the copy) before copying them.
+const ID_KEYS = new Set<PropertyKey>(['id', 'drugId', 'agent']);
+const readsAllowed = (t: object, k: PropertyKey) => (Array.isArray(t) || ID_KEYS.has(k) ? 2 : 1);
+
 describe('truth event', () => {
   it('is off by default and rejects rates outside 0–2 Hz', () => {
     const e = createEngine(adult);
@@ -69,20 +91,20 @@ describe('truth event', () => {
     console.log(`truth 12-drug tree: ${r.leaves} leaves`);
     expect(r.truncated).toBe(false);
   });
-  it('costs < 0.2 ms per call on today\'s state (logged; CI asserts 1 ms) and fits 50 KB with module-sized sub-trees', () => {
+  it('reads each value of today\'s state no more often than the walk needs (time logged) and fits 50 KB with module-sized sub-trees', () => {
     const e = createEngine(adult);
     e.advanceTo(30);
     const { st, dev } = e.snapshot().state as { st: Record<string, unknown>; dev: object };
-    for (let i = 0; i < 100; i++) pruneTruth(st, dev); // JIT warm-up
-    // FU-11 K3: the best of five 40-call batches — one batch on a loaded runner could exceed the bound while the cost did not
-    let per = Infinity;
-    for (let b = 0; b < 5; b++) {
-      const t0 = performance.now();
-      for (let i = 0; i < 40; i++) pruneTruth(st, dev);
-      per = Math.min(per, (performance.now() - t0) / 40);
-    }
-    console.log(`pruneTruth ≈ ${per.toFixed(3)} ms per call`);
-    expect(per).toBeLessThan(1);
+    const seen = counted({ st, dev });
+    expect(JSON.stringify(pruneTruth(seen.value.st, seen.value.dev))).toBe(JSON.stringify(pruneTruth(st, dev)));
+    const reads = seen.all();
+    const over = reads.filter(({ t, k, n }) => n > readsAllowed(t, k));
+    console.log(`pruneTruth reads ${reads.length} values ${reads.reduce((a, r) => a + r.n, 0)} times; ${over.length} read more often than the walk needs`);
+    expect(over.map(({ k, n }) => `${String(k)}: ${n}×`)).toEqual([]);
+    for (let i = 0; i < 100; i++) pruneTruth(st, dev);
+    const t0 = performance.now();
+    for (let i = 0; i < 200; i++) pruneTruth(st, dev);
+    console.log(`pruneTruth ≈ ${((performance.now() - t0) / 200).toFixed(3)} ms per call`);
     // later stages add ~6 organ sub-trees (150 leaves each, realistic key lengths) and 7g's pk tree, on top of the
     // 7a-era trees (l1, hemo, resp) so this check does not move when 7b–7g land. A typical anaesthetic: 12 drugs given.
     const fake = (tag: string) => Object.fromEntries(Array.from({ length: 150 }, (_, i) => [`${tag}Field${i}`, i * 1.2345678]));
