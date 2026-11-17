@@ -1949,7 +1949,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     "alarm": {
       "lowPulses": null,
       "profile": "iec-style",
-      "repeatS": {},
+      "repeatS": {
+        "L3": 20,
+      },
       "silence": {
         "cancelOnNewAlarm": true,
         "durationS": 0,
@@ -2259,7 +2261,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     "alarm": {
       "lowPulses": null,
       "profile": "iec-style",
-      "repeatS": {},
+      "repeatS": {
+        "L3": 20,
+      },
       "silence": {
         "cancelOnNewAlarm": true,
         "durationS": 0,
@@ -2574,7 +2578,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     "alarm": {
       "lowPulses": null,
       "profile": "iec-style",
-      "repeatS": {},
+      "repeatS": {
+        "L3": 20,
+      },
       "silence": {
         "cancelOnNewAlarm": true,
         "durationS": 0,
@@ -2887,6 +2893,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
       "repeatS": {
         "L1": 10,
         "L2": 20,
+        "L3": 20,
       },
       "silence": {
         "cancelOnNewAlarm": true,
@@ -3185,6 +3192,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
       "repeatS": {
         "L1": 10,
         "L2": 20,
+        "L3": 20,
       },
       "silence": {
         "cancelOnNewAlarm": true,
@@ -3488,6 +3496,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
       "repeatS": {
         "L1": 10,
         "L2": 20,
+        "L3": 20,
       },
       "silence": {
         "cancelOnNewAlarm": true,

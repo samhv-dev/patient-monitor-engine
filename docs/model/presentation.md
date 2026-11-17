@@ -1389,6 +1389,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/teach2-keys.e2e.ts`](../../apps/demo/e2e/teach2-keys.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-mh-v2.e2e.ts`](../../apps/demo/e2e/teach2-mh-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-rail-lines.e2e.ts`](../../apps/demo/e2e/teach2-rail-lines.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/technical-alarm-level.e2e.ts`](../../apps/demo/e2e/technical-alarm-level.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/time-control.e2e.ts`](../../apps/demo/e2e/time-control.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/ui-polish-a.e2e.ts`](../../apps/demo/e2e/ui-polish-a.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/ui-polish-b.e2e.ts`](../../apps/demo/e2e/ui-polish-b.e2e.ts) | 0 | 0 |
@@ -1712,6 +1713,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`schema.test.ts`](../../packages/skins/test/schema.test.ts) | 0 | 0 |
 | [`sensor-swap.test.ts`](../../packages/skins/test/sensor-swap.test.ts) | 0 | 0 |
 | [`skin-distinctness-contrast.test.ts`](../../packages/skins/test/skin-distinctness-contrast.test.ts) | 0 | 0 |
+| [`technical-alarms.test.ts`](../../packages/skins/test/technical-alarms.test.ts) | 0 | 0 |
 | [`themes.test.ts`](../../packages/skins/test/themes.test.ts) | 0 | 0 |
 | [`vendor-alarm-semantics.test.ts`](../../packages/skins/test/vendor-alarm-semantics.test.ts) | 0 | 0 |
 | [`vendors.test.ts`](../../packages/skins/test/vendors.test.ts) | 0 | 0 |

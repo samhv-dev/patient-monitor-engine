@@ -150,6 +150,7 @@ None recorded.
 | [`l3/alarms/on-delay.test.ts`](../../packages/engine-core/test/l3/alarms/on-delay.test.ts) | 0 | 0 |
 | [`l3/alarms/profile.test.ts`](../../packages/engine-core/test/l3/alarms/profile.test.ts) | 0 | 0 |
 | [`l3/alarms/skin-wording.test.ts`](../../packages/engine-core/test/l3/alarms/skin-wording.test.ts) | 0 | 0 |
+| [`l3/alarms/technical-levels.test.ts`](../../packages/engine-core/test/l3/alarms/technical-levels.test.ts) | 0 | 0 |
 | [`l3/alarms/technical.test.ts`](../../packages/engine-core/test/l3/alarms/technical.test.ts) | 0 | 0 |
 | [`l3/alarms/text.test.ts`](../../packages/engine-core/test/l3/alarms/text.test.ts) | 0 | 0 |
 

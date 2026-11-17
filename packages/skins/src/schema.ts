@@ -36,7 +36,7 @@ export const provenanceSchema: JsonSchema = record(
     { tag: en(['documented', 'measured', 'assumed', 'unverified', 'conflict', 'inferred', 'eng']), source: { type: 'string', minLength: 3 } },
     { note: str },
   ),
-  '^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)*$',
+  '^[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*$', // an alarm id may hold a hyphen ('nibp-failed')
 );
 
 const chrome = obj({
