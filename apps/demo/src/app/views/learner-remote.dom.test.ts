@@ -7,6 +7,7 @@
 // panel: behind press-and-hold, "New learner PIN". The tabs' 44 px is measured in a browser (mobile-learner.e2e.ts).
 import { createStamper, INSTRUCTOR_REASONS, LEARNER_REASONS, REJOINED, RELAY_PEER, TICKET_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { carried } from '../address.testing.ts';
 
 const CODE = 'GP3P4G';
 const PIN = '5813';
@@ -132,7 +133,7 @@ describe("the learner remote's page (L6)", () => {
     await vi.waitFor(() => expect(hellos().length).toBeGreaterThanOrEqual(2));
     for (const x of hellos()) expect(x).toMatchObject({ role: 'learner', show: 'learner', device: DEVICE, pin: PIN });
     for (const x of link().sent.filter((y) => y.kind !== 'hello')) expect(JSON.stringify(x)).not.toContain(PIN);
-    expect(location.href).not.toContain(PIN);
+    expect(carried(location.href)).not.toContain(PIN);
     expect(history.state).toBeNull();
     expect(stored()).not.toContain(PIN);
   });
