@@ -459,7 +459,7 @@ if (follow && shows === 'pick') {
   const kept = q.get('load') === 'perf8' ? null : readPosition({ code: session.code });
   if (kept && (!deep || deep === kept.cardId)) {
     session.live = true;
-    void restorePosition(kept, session, loadScenario).then((ok) => {
+    void restorePosition(kept, session, link, loadScenario).then((ok) => {
       const text = ok ? `Restored after ${handed ? 'the move from the other tab' : 'reload'}: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after ${handed ? 'the move from the other tab' : 'the reload'}: ${kept.title} starts again`;
       toast(text, 'alert'); // after a reload, on whichever view it landed
       link.note(text, 'system');
@@ -468,7 +468,7 @@ if (follow && shows === 'pick') {
     session.live = true;
     if (!location.hash) location.hash = hrefOf('teach2'); // a deep link to a card opens the Instructor view
   }
-  keepPositions(session);
+  keepPositions(session, link);
   // Another tab took this session (or started it anew): stop hosting it here, and say where it went
   announceHost(session.code, { kept: () => keptItems(), gone: () => (session.destroy(), location.replace(`${location.pathname}?moved=${session.code}`)) });
   shell.start();
