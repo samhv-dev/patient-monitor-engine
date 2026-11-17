@@ -41,7 +41,7 @@ import { deviceKey, pickerView, PICKER_WORDS } from './views/join.ts';
 import { pumpPageView } from './pump/page.ts';
 import { mountFlows, pumpLink } from './pump/controls.ts';
 import { faceProfilesOf, shippedPumpDevices } from './pump/devices.ts';
-import { learnerRemoteView } from './views/learner-remote.ts';
+import { LEARNER_STRIP, learnerRemoteView } from './views/learner-remote.ts';
 import { drugsMenu } from './remote/drugs.ts';
 import { infusionsLink, infusionsView } from './remote/infusions.ts';
 import { labsLink, labsView } from './remote/labs.ts';
@@ -120,7 +120,7 @@ if (follow && shows === 'pick') {
     infusions: infusions.el,
     labs: labs.el,
     follow: (code, bar, credential) => {
-      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), credential });
+      const f = mountFollower(shell, site, code, bar, join && relay ? { relay } : undefined, { show: 'learner', device: deviceKey(), credential, strip: LEARNER_STRIP });
       line.set(f.monitor, f.style, true);
       f.onStyle = (st) => line.set(f.monitor, st, true);
       return (current = f);

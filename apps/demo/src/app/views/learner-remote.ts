@@ -17,11 +17,22 @@
 import { INSTRUCTOR_REASONS, isRejoined, LEARNER_REASONS, SignInCredential, TICKET_REASONS, type RelayFrame, type WireMessage } from '@pme/controller';
 import type { View } from '../shell.ts';
 import { h, setText, tabs } from '../ui.ts';
+import type { StripLayout } from '@pme/renderer';
 import type { Follower } from './follower.ts';
 import { PHONE_WORDS, pinForm } from './pin-form.ts';
 
 /** Plan P7 §1: an older kit's relay refuses the learner's hello or an older host never answers; the phone gives up [ENG: ui; P7's 10 s]. */
 export const LEARNER_GIVE_UP_MS = 10_000;
+
+/**
+ * The monitor strip over the tabs: what a learner deciding on a drug reads (the rhythm and its rate, the perfusion, the
+ * blood pressure, the oxygenation and the ventilation), as the skin draws them; a skin without one of them has no such
+ * lane or tile, and the rest stay on the learner and patient monitors.
+ */
+export const LEARNER_STRIP: StripLayout = {
+  lanes: ['ECG1', 'PLETH'],
+  tiles: ['HR', 'NIBP', 'IBP1', 'ART', 'SpO2', 'CO2', 'RR'],
+};
 
 /** The remote's tabs, in this order (§3): L7 fills Drugs, L8 Infusions, L11 Labs. */
 export const LEARNER_TABS = [

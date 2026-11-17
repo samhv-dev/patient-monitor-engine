@@ -38,7 +38,7 @@
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
 import { createBroadcastChannelTransport, createWebSocketTransport, epochNow, newPeerId, ViewerSync, type Instrument, type ManagedTransport, type RelayFrame, type SignInCredential, type WireMessage } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
-import { mountMonitor, type IbpScales, type MonitorHandle } from '@pme/renderer';
+import { mountMonitor, type IbpScales, type MonitorHandle, type StripLayout } from '@pme/renderer';
 import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
 import { createDefibCore } from '../../defib/core/core.ts';
@@ -174,6 +174,8 @@ export interface FollowerOptions {
   defib?: boolean;
   /** false: no Sound and no Silence here (the pump tablet shows no monitor, so it sounds none of its alarms; A1). */
   sound?: boolean;
+  /** The monitor as a strip over other controls (the learner remote): upright whichever way the screen is turned. */
+  strip?: StripLayout;
 }
 
 /**
@@ -191,8 +193,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   // A phone held upright shows the monitor upright (tiles under the waveforms); turned sideways, the skin's own screen
   // (the whole Saadat-like screen scaled as one unit, the owner's mock-up m14 of 26 October), and it follows each turn
   // R4: the patient monitor (`#/monitor/wide`) stays landscape, held either way; so does the defibrillator (R5)
-  const upright = net && instrument?.show !== 'monitor' && !defib && !depth ? matchMedia('(orientation: portrait)') : null;
-  const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: upright?.matches ?? false });
+  const upright = net && instrument?.show !== 'monitor' && !defib && !depth && !o.strip ? matchMedia('(orientation: portrait)') : null;
+  const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: upright?.matches ?? false, ...(o.strip ? { strip: o.strip } : {}) });
   const onTurn = () => monitor.setPortrait(upright?.matches ?? false);
   upright?.addEventListener('change', onTurn);
   let refused: { code: string; message: string } | null = null; // The relay's refusal (a full session)

@@ -13,6 +13,7 @@ import { autoIbpRange, IBP_AUTO_EVERY_S, ibpScaleError, type IbpScales } from '.
 import { ecgLabel, formatSpeed, ibpBaseRange, legacyPlan, setIbpRange, type LaneTextPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
 import { autoRange, scaleFor } from './wave-lanes.ts';
+import { LABEL_STRIP_H } from './lane-metrics.ts';
 import { feedCo2Range, newCo2Range, restartCo2Range } from './co2-range.ts';
 
 export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // legacy look (legacyPlan)
@@ -20,7 +21,6 @@ export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrom
 const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG: display]
 /** A width per character that holds capitals and "m" ("NORMAL" ≈ 60 px, "50mmHg" ≈ 57 px at 14 px): lane-text boxes are clipped. */
 const WIDE_CHAR_W = 10.5;
-const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG: display]
 /** F28: how far below its top a 14 px capital or digit inks (≈ 10 px, one to spare). A phone in portrait gives the
  *  Saadat-like lanes ≈ 30–41 px (390 × 664) or ≈ 55–75 px (390 × 844); landscape lanes are ≥ 77 px [ENG: display]. */
 const INK_H = 11;

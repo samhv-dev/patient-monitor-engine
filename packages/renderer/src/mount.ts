@@ -12,7 +12,7 @@ import { DeviceUI, gridOf } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
 import { normalIbpScales, type IbpChannel, type IbpScales } from './ibp-scale.ts';
-import { filterModeFor, renderPlan, type LaneOverride, type RenderPlan } from './skin-plan.ts';
+import { filterModeFor, renderPlan, type LaneOverride, type RenderPlan, type StripLayout } from './skin-plan.ts';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
 import { simClock } from './overlays.ts';
@@ -52,6 +52,11 @@ export interface MountOptions {
    * waveforms (a learner's phone held upright). Needs `skin`.
    */
   portrait?: boolean;
+  /**
+   * A strip of this monitor (a phone that shows the monitor above other controls): upright as `portrait`, whichever way
+   * the screen is turned, with only these of the skin's lanes and tiles. Needs `skin`.
+   */
+  strip?: StripLayout;
   /** The bed line of a two-row header (skin `layout.headerStyle`); default "BED 01" (rc.3, E96). */
   bed?: string;
   /** E130: the IBP1/IBP2 lane scales at mount (a channel left out: the skin's fixed scale). */
@@ -152,7 +157,7 @@ export interface MonitorHandle {
   setHeaderNote(text: string): boolean;
   /**
    * The phone turned: `true` lays the monitor out upright (`MountOptions.portrait`), `false` as the skin's own screen
-   * (with `layout.grid`, the whole screen scaled as one unit). The engine and the trends are kept.
+   * (with `layout.grid`, the whole screen scaled as one unit). The engine and the trends are kept. A strip stays upright.
    */
   setPortrait(on: boolean): void;
   /**
@@ -190,7 +195,8 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   /** ECG lead per ECG lane chosen since the skin was set, kept when a sensor swaps a lane (a new skin starts afresh). */
   const leads = new Map<number, LeadId>();
   const doc = el.ownerDocument;
-  let portrait = opts.portrait === true;
+  const strip = opts.strip;
+  let portrait = opts.portrait === true || strip !== undefined;
   // Uniform scaling (roadmap "Uniform scaling and the landscape phone"): a skin with `layout.grid.screenPx` is laid out
   // at that one size (the frame its layout was measured in) and the whole of it — waves, tiles, header, strip and every
   // font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the
@@ -212,7 +218,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   wrap.append(canvas);
   const tiles = doc.createElement('div');
   tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Scroll
-  const ui = r ? new DeviceUI(doc, wrap, r, page, portrait, opts.bed) : null; // Device layer; portrait
+  const ui = r ? new DeviceUI(doc, wrap, r, page, portrait, opts.bed, strip?.tiles) : null; // Device layer; portrait
   root.append(left, ui ? ui.tiles : tiles);
   outer.append(root);
   if (ui) outer.append(ui.strip);
@@ -410,6 +416,13 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const markIbp = () => void (canvas.dataset.ibpScales = JSON.stringify(ibpScales));
   markIbp();
   const only: LaneOverride | undefined = opts.lanes || opts.waves ? { ...(opts.lanes ? { lanes: opts.lanes } : {}), waves: opts.waves ?? [] } : undefined;
+  /** The plan for a skin, with the ECG leads chosen on this skin kept. */
+  const planNow = (sk: ResolvedSkin) => {
+    const p = renderPlan(sk, page, only, portrait, ibpScales, strip);
+    let k = 0;
+    for (const l of p.lanes) if (l.kind === 'ecg') l.channel = leads.get(k++) ?? l.channel;
+    return p;
+  };
   const engineOpts: EngineOptions | undefined = r ? { ...(opts.engine ?? {}), device: { ...(opts.engine?.device ?? {}), skin: opts.skin as string } } : opts.engine;
   const coreOpts = {
     ...(engineOpts ? { engine: engineOpts } : {}),
@@ -417,7 +430,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ...(opts.waves ? { waves: opts.waves } : {}),
     ...(opts.fps ? { fps: opts.fps } : {}),
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
-    ...(r ? { plan: renderPlan(r, page, only, portrait, ibpScales) } : {}),
+    ...(r ? { plan: planNow(r) } : {}),
     startEpochMs: performance.timeOrigin + performance.now(), // the monitor's clock starts at its mount (brief 105)
   };
   let planIn: RenderPlan | null = coreOpts.plan ?? null; // the plan last sent (the IBP lanes' fixed ranges are read from it)
@@ -494,13 +507,6 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       nibpLast = { sys: nb.last.sys, dia: nb.last.dia, map: nb.last.map, at: nb.last.at };
       ui?.seedNibp(nibpLast);
     }
-  };
-  /** The plan for the current skin, with the ECG leads chosen on this skin kept. */
-  const planNow = (sk: ResolvedSkin) => {
-    const p = renderPlan(sk, page, only, portrait, ibpScales);
-    let k = 0;
-    for (const l of p.lanes) if (l.kind === 'ecg') l.channel = leads.get(k++) ?? l.channel;
-    return p;
   };
   /** Showcase hotfix item 4: the CO2 line was attached or detached; re-resolve and redraw only if the skin swaps. */
   const setCo2 = (on: boolean, h: Host) => {
@@ -625,7 +631,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       r = next;
       page = o.page;
       leads.clear();
-      const plan = renderPlan(next, page, only, portrait, ibpScales);
+      const plan = planNow(next);
       planIn = plan;
       h.control({ type: 'plan', plan });
       markLanes(plan.lanes);
@@ -679,7 +685,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     setHeaderNote: (text) => ui?.setNote(text) ?? false,
     behindS: () => behind,
     setPortrait(on) {
-      if (on === portrait) return;
+      if (on === portrait || strip) return;
       portrait = on;
       root.style.flexDirection = on ? 'column' : 'row';
       if (!ui || !r) return;
