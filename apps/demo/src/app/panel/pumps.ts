@@ -1,10 +1,10 @@
-// The instructor's view of the pump rack (plan pump-rack-tci.md §9): every channel as the engine holds it, read-only.
-// Each channel of Room setup's rack, and any channel the engine still runs above it, with its programme, its rate or
-// TCI target, what it has infused, its state and its alarms; under a TCI channel the pump's predicted Cp and Ce beside
-// the patient's own; a syringe or bag that holds another drug than its programme says what it truly holds. Then each
-// drug's amount given by every route, as the engine counts it. Nothing here changes a channel.
+// The instructor's view of the pump rack: every channel as the engine holds it, read-only. Each channel of Room setup's
+// rack, and any channel the engine still runs above it, with its programme, its rate or TCI target, what it has infused,
+// its state and its alarms; under a TCI channel the pump's predicted Cp and Ce beside the patient's own for that drug
+// (every route's); a syringe or bag that holds another drug than its programme says what it truly holds; a line where
+// two channels hold one drug (the patient receives their sum). Then each drug given so far, in the Debrief's own words
+// (Link.givenLines). Nothing here changes a channel.
 import type { DrugPanelRow, DrugsEvent, PumpConcentration, PumpPanelRow } from '@pme/engine-core';
-import { givenText, uncountedInfusion } from '../debrief.ts';
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
@@ -23,7 +23,9 @@ export const PUMPS_WORDS = {
   tci: (model: string, mode: string, target: string) => `TCI ${model}, ${mode} target ${target}`,
   tciStopped: (model: string) => `TCI ${model} stopped`,
   infused: (ml: string, left: string) => `Infused ${ml} mL · ${left} mL left`,
-  predicted: (site: 'Cp' | 'Ce', pred: string, patient: string) => `Predicted ${site} ${pred} · patient ${patient}`,
+  predicted: (site: 'Cp' | 'Ce', pred: string, patient: string) => `Predicted ${site} ${pred} · the patient's, all routes: ${patient}`,
+  together: (chs: string, drug: string) => `Channels ${chs} both hold ${drug}: the patient receives their sum.`,
+  elsewhere: 'Amounts given are read on the instructor\'s computer.',
   noAlarm: 'No alarm',
   givenTitle: 'Given so far',
   givenNone: 'No drug given yet.',
@@ -55,37 +57,46 @@ export function channelLines(r: PumpPanelRow | null, drugs: readonly DrugPanelRo
   return {
     what, holds: differs && c ? PUMPS_WORDS.holds(concText(c.drugId, c.concentration)) : null, how,
     infused: PUMPS_WORDS.infused(faceNum(r.infusedMl), faceNum(r.volumeMl)), tci,
-    alarms: r.alarms.length ? r.alarms.map((a) => pumpAlarmText(r.ch, p?.drugId ?? null, a)).join(' · ') : PUMPS_WORDS.noAlarm,
+    alarms: r.alarms.length ? r.alarms.map((a) => pumpAlarmText(r.ch, r, a)).join(' · ') : PUMPS_WORDS.noAlarm,
   };
 }
 
-/** Each drug given so far, as the engine counts it. */
-export function givenNow(drugs: readonly DrugPanelRow[]): string[] {
-  return drugs.filter((d) => d.totalAmount > 0 || (d.rate ?? 0) > 0)
-    .map((d) => `${drugName(d.id)}: ${givenText(d.totalAmount, d.amountUnit)}${(d.rate ?? 0) > 0 && uncountedInfusion(d.id) ? ' (its infusion is not counted)' : ''}`);
+/** The information lines of the rack: each drug that two or more loaded channels hold (they add, as one infusion). */
+export function togetherLines(rows: readonly PumpPanelRow[]): string[] {
+  const by = new Map<string, number[]>();
+  for (const r of rows) if (r.contents) by.set(r.contents.drugId, [...(by.get(r.contents.drugId) ?? []), r.ch]);
+  return [...by].filter(([, chs]) => chs.length > 1).map(([id, chs]) => PUMPS_WORDS.together(`${chs.slice(0, -1).join(', ')} and ${chs.at(-1)}`, drugName(id)));
 }
 
-/** The infusions the engine runs that `own` does not list: each drug running by a rate off the pump channels, then each
- *  running channel. */
-export function othersRunning(e: DrugsEvent | null, own: ReadonlySet<string>): string[] {
+/** What each running drug is running by, as the engine runs it: its rate, and each source by what it holds (a pump
+ *  channel running at a rate or in TCI, an infusion off the pumps as the host's record has it, else a bolus being given
+ *  over time). `offPumps`: the drugs with an infusion or TCI off the pumps on the kept course. */
+export type RunningLine = { drugId: string; text: string; pumps: number };
+
+export function runningLines(e: DrugsEvent | null, offPumps: ReadonlySet<string>): RunningLine[] {
   if (!e) return [];
-  const chans = (e.pumps ?? []).filter((r) => r.state === 'running');
-  const pumped = new Set(chans.map((r) => r.contents?.drugId));
-  const free = e.drugs.filter((d) => (d.rate ?? 0) > 0 && !own.has(d.id) && !pumped.has(d.id)).map((d) => `${drugName(d.id)} ${faceNum(d.rate ?? 0)} ${unitText(d.rateUnit ?? '')}`);
-  return [...free, ...chans.map((r) => {
-    const l = channelLines(r, e.drugs);
-    return `Pump channel ${r.ch}: ${[l.what, l.how].filter(Boolean).join(', ')}`;
-  })];
+  const chans = (e.pumps ?? []).filter((r) => r.contents && r.state === 'running' && (r.mode === 'tci' || r.rateMlH > 0));
+  return e.drugs.filter((d) => (d.rate ?? 0) > 0).map((d) => {
+    const by = chans.filter((r) => r.contents?.drugId === d.id).map((r) => `pump channel ${r.ch}${r.programmed && r.programmed.drugId !== d.id ? ` (programmed as ${drugName(r.programmed.drugId)})` : ''}`);
+    const pumps = by.length;
+    if (offPumps.has(d.id)) by.push('an infusion off the pumps');
+    return { drugId: d.id, pumps, text: `${drugName(d.id)} ${faceNum(d.rate ?? 0)} ${unitText(d.rateUnit ?? '')}: ${by.length ? by.join(' and ') : 'a bolus being given over time'}` };
+  });
 }
 
 interface ChannelEl { li: HTMLElement; head: HTMLElement; state: HTMLElement; lines: HTMLElement[]; tci: HTMLElement; alarm: HTMLElement }
 
 /** The view on `link`: a list of channels, then the amounts given. */
-export function pumpsView(link: Pick<Link, 'drugs' | 'rack'>): { el: HTMLElement; refresh(): void } {
+export function pumpsView(link: Pick<Link, 'drugs' | 'rack' | 'givenLines'>): { el: HTMLElement; refresh(): void } {
   const list = h('ul', { class: 'pumps-list', 'aria-label': PUMPS_WORDS.list });
   const empty = h('p', { class: 'muted' }, PUMPS_WORDS.empty);
+  const together = h('ul', { class: 'pumps-together' });
   const given = h('ul', { class: 'pumps-given' });
-  const el = h('div', { class: 'pumps-view' }, empty, list, h('h3', {}, PUMPS_WORDS.givenTitle), given);
+  const el = h('div', { class: 'pumps-view' }, empty, list, together, h('h3', {}, PUMPS_WORDS.givenTitle), given);
+  const fill = (ul: HTMLElement, lines: readonly string[], none: string | null) => {
+    const want = lines.length ? lines : none ? [none] : [];
+    if ([...ul.children].map((li) => li.textContent).join('\n') !== want.join('\n')) ul.replaceChildren(...want.map((s) => h('li', s === none ? { class: 'muted' } : {}, s)));
+  };
   const cache = new Map<string, ChannelEl>();
   const make = (key: string): ChannelEl => {
     const head = h('h4', { id: `pumps-ch-${key}` });
@@ -119,8 +130,9 @@ export function pumpsView(link: Pick<Link, 'drugs' | 'rack'>): { el: HTMLElement
       x.alarm.dataset.on = String(!!c.row?.alarms.length);
     });
     keepOrder(list, els.map((x) => x.li));
-    const g = givenNow(drugs);
-    if (given.textContent !== (g.join('') || PUMPS_WORDS.givenNone)) given.replaceChildren(...(g.length ? g.map((s) => h('li', {}, s)) : [h('li', { class: 'muted' }, PUMPS_WORDS.givenNone)]));
+    fill(together, togetherLines(link.drugs?.pumps ?? []), null);
+    const g = link.givenLines();
+    fill(given, g ?? [], g ? PUMPS_WORDS.givenNone : PUMPS_WORDS.elsewhere);
   };
   refresh();
   return { el, refresh };

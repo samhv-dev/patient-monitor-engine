@@ -6,7 +6,10 @@ import { TICK_S, type AlarmEntry, type DrugsEvent, type EngineEvent } from '@pme
 import { asV1, isV2, LEARNER_ISSUED_BY, manualLabel, PUMP_ISSUED_BY, StageBuffer, WIRE_LIMITS, type AckResult, type AppliedResolution, type CommandInput, type ControllerSession, type InstructorPrepNews, type ManagedTransport, type NoteEvent, type NotGiven, type PumpKind, type PumpMismatchNews, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, notDoneOf, spanText, timeText } from './describe.ts';
 import { DEVICE_WORDS, type DeviceKind } from './device-names.ts';
-import { PumpAlarmEdges, type PumpAlarmNow } from './pump-alarms.ts';
+import { givenLines } from './debrief.ts';
+import { runningLines, type RunningLine } from './panel/pumps.ts';
+import { PumpAlarmEdges, pumpCommandOf, type PumpAlarmNow } from './pump-alarms.ts';
+import { offPumpInfusions } from './record.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
 import { PrepBoard } from './teach2/prep-board.ts';
@@ -58,6 +61,8 @@ export class Link {
   /** A remote's copy of the room's pump rack, from the host's `style`. */
   private styleRack: readonly PumpKind[] = [];
   private readonly pumpEdges = new PumpAlarmEdges();
+  /** The pump alarms raised during the fast-forward under way (null: none under way), for its end line. */
+  private ffPump: string[] | null = null;
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
   private lastRaised = new Set<string>();
@@ -162,6 +167,24 @@ export class Link {
     return this.host ? this.host.pumpRack : this.styleRack;
   }
 
+  /** Each drug given so far, in the Debrief's words, from the host's record; on a remote the host's feed's; null: none
+   *  read (a remote without the feed). */
+  givenLines(): string[] | null {
+    return this.host ? givenLines(this.host.record.data).map((x) => x.text) : (this.view?.given ?? null);
+  }
+
+  /** What each running drug runs by (panel/pumps.ts runningLines), from the host's engine and record; on a remote the
+   *  host's feed's; null: none read. */
+  runningLines(): RunningLine[] | null {
+    return this.host ? runningLines(this.drugs, offPumpInfusions(this.host.record.data.rows)) : (this.view?.running ?? null);
+  }
+
+  /** A pump alarm's Log line, and its place in the end line of a fast-forward under way. */
+  private pumpRaised(t: number, text: string): void {
+    this.ffPump?.push(`${text} ${timeText(t)}`);
+    this.add({ simT: t, kind: 'alarm', text });
+  }
+
   /** The pump channels' standing alarms. */
   get pumpAlarms(): PumpAlarmNow[] {
     return this.pumpEdges.now;
@@ -200,13 +223,13 @@ export class Link {
       this.device = e as unknown as DeviceStatusEvent;
     } else if (e.type === 'drugs') {
       this.drugs = e;
-      const { raised, ended } = this.pumpEdges.rows(e.pumps ?? []);
-      for (const a of raised) this.add({ simT: e.t, kind: 'alarm', text: a.text });
-      for (const a of ended) this.add({ simT: e.t, kind: 'alarm', text: `${a.text} ended` });
+      const { raised, ended, returned } = this.pumpEdges.rows(e.pumps ?? []);
+      for (const a of raised) this.pumpRaised(e.t, returned ? `${a.text}: standing after the return to the bookmark` : a.text);
+      for (const a of ended) this.add({ simT: e.t, kind: 'alarm', text: returned ? `${a.text}: not standing after the return to the bookmark` : `${a.text} ended` });
       this.changed();
     } else if (e.type === 'pumpAlarm') {
       const a = this.pumpEdges.event(e);
-      if (a) this.add({ simT: e.t, kind: 'alarm', text: a.text });
+      if (a) this.pumpRaised(e.t, a.text);
     } else if (e.type === 'style') {
       if (e.pumps) this.styleRack = [...e.pumps];
     } else if (e.type === 'timeline') {
@@ -214,8 +237,11 @@ export class Link {
       // AppSession.onMount to tell it); a bookmark restore keeps them (the engine does not report them)
       this.ramps.clear();
       this.pumpFindings.clear(); // the host's channels end with the old engine too (host-session newTimeline)
-      this.pumpEdges.forget();
-      this.drugs = null;
+      if (e.cause === 'restore') this.pumpEdges.returned();
+      else {
+        this.pumpEdges.forget();
+        this.drugs = null;
+      }
       this.preps.clear(); // the host's preparation table ends with the old engine, a restore's too (host-session newTimeline)
       if (e.cause !== 'restore') {
         this.conditions.clear();
@@ -224,12 +250,20 @@ export class Link {
       this.changed();
     } else if (e.type === 'fastForward') {
       // Where a fast-forward began and ended, and the alarms raised during it (shown, not sounded), with times
-      if (e.phase === 'start') this.add({ simT: e.fromT, kind: 'system', text: `Fast-forward ${spanText(e.toT - e.fromT)} started (sound muted until it ends)` });
-      else {
+      if (e.phase === 'start') {
+        this.ffPump = [];
+        this.add({ simT: e.fromT, kind: 'system', text: `Fast-forward ${spanText(e.toT - e.fromT)} started (sound muted until it ends)` });
+      } else {
         const al = (e.alarms ?? []).map((a) => `${a.text} ${timeText(a.since)}`);
-        this.add({ simT: e.t, kind: 'system', text: `Fast-forward ended${e.stopped ? ` early (${e.stopped})` : ''}; ${al.length ? `alarms during it: ${al.join(', ')}` : 'no alarms during it'}` });
+        const pumps = this.ffPump ?? [];
+        this.ffPump = null;
+        const said = [al.length ? `alarms during it: ${al.join(', ')}` : '', pumps.length ? `pump alarms during it: ${pumps.join(', ')}` : ''].filter(Boolean);
+        this.add({ simT: e.t, kind: 'system', text: `Fast-forward ended${e.stopped ? ` early (${e.stopped})` : ''}; ${said.length ? said.join('; ') : 'no alarms during it'}` });
       }
     } else if (e.type === 'commandApplied') {
+      const r = e.resolved as AppliedResolution | undefined;
+      const p = r && !r.replay && !r.mirror ? pumpCommandOf(r.command as unknown as Record<string, unknown>) : null;
+      if (p) for (const a of this.pumpEdges.command(p.ch, p.action)) this.add({ simT: e.tick * TICK_S, kind: 'alarm', text: `${a.text} ended` });
       this.applied(e);
     } else if (e.type === 'scenario') {
       // a /1 state's label, or a /2 phase's (F11: a phase read "next state")

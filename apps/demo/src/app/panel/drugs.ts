@@ -7,7 +7,6 @@ import { bleed, fluid, infusion, vaporiser } from '../../physiology-console/acti
 import { describeCommand } from '../describe.ts';
 import { doseUnits, findDrugs, lockLabel, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
 import { button, h, input, keepOrder, keyed, seg, setText, stepper, toast } from '../ui.ts';
-import { othersRunning } from './pumps.ts';
 import type { PanelCtx } from './ctx.ts';
 
 const CLASS: Readonly<Record<string, string>> = {
@@ -113,11 +112,12 @@ export function drugsTab(c: PanelCtx): HTMLElement {
   };
   const drawKg = () => setText(kg, perKg(dose.value, unitSel.value, c.weightKg()) || `Patient ${c.weightKg()} kg`);
 
-  // ---- running infusions: this phone's own (with Stop), then every other the engine runs, and each pump channel ----
+  // ---- running infusions: this phone's own (with Stop), then each drug the engine runs and what it runs by, as the
+  // host reads them (a drug this phone started off the pumps, and runs by nothing else, is its own line) ----
   const runList = h('ul', { class: 'infusions' });
   const items = new Map<string, HTMLElement>();
   const drawRunning = () => {
-    const others = othersRunning(link.drugs, new Set(running.keys()));
+    const others = (link.runningLines() ?? []).filter((x) => !(running.has(x.drugId) && x.pumps === 0)).map((x) => x.text);
     const keys = [...[...running].map(([id, r]) => `own|${id}|${r.rate}|${r.unit}`), ...others.map((t) => `other|${t}`)];
     keepOrder(runList, keyed(items, keys.length ? keys : ['none'], (k) => {
       const [kind, id = ''] = k.split('|');

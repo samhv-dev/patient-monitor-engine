@@ -1,13 +1,14 @@
 // @vitest-environment happy-dom
 // The instructor's view of the pump rack and its alarm card, from scripted engine rows: every channel of the rack (and
 // one the engine runs above it), the programme, the rate or TCI target, the pump's prediction beside the patient's own
-// concentrations, a syringe holding another drug than its programme, the amounts given; nothing in it is a control. The
-// alarm card stands on the page from the start, shows each standing alarm and announces a new one.
+// concentrations of the drug, a syringe holding another drug than its programme, two channels of one drug, the lines
+// given so far as the Link reads them; nothing in it is a control. The alarm card stands on the page from the start,
+// shows each standing alarm and announces a new one. The phone's running list names each drug by what holds it.
 import type { DrugPanelRow, DrugsEvent, PumpPanelRow } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { mountPumpAlarmCard } from '../teach2/pump-alarm-card.ts';
 import { PumpAlarmEdges } from '../pump-alarms.ts';
-import { othersRunning, pumpsView } from './pumps.ts';
+import { pumpsView, runningLines } from './pumps.ts';
 
 const P10 = { amount: 10, unit: 'mg' as const, perMl: 1 };
 const channel = (o: Partial<PumpPanelRow> & { ch: number }): PumpPanelRow => ({
@@ -26,7 +27,7 @@ describe('the pump rack view', () => {
       channel({ ch: 2, mode: 'tci', rate: null, tci: { setId: 'eleveld', mode: 'effect', target: 3, cp: 2.1, ce: 2.99, unit: 'mcg/mL' } }),
       channel({ ch: 5, contents: { drugId: 'remifentanil', concentration: { amount: 50, unit: 'mcg', perMl: 1 } }, state: 'alarm', alarms: ['end'] }),
     ];
-    const v = pumpsView({ drugs: event(pumps, drugs), rack: ['syringe', 'syringe', 'drip', 'syringe'] });
+    const v = pumpsView({ drugs: event(pumps, drugs), rack: ['syringe', 'syringe', 'drip', 'syringe'], givenLines: () => ['Propofol: 212 mg in all (an infusion)'] });
     const items = [...v.el.querySelectorAll('.pumps-ch')] as HTMLElement[];
     expect(items.map((li) => li.querySelector('h4')?.textContent)).toEqual(['Channel 1 · Syringe', 'Channel 2 · Syringe', 'Channel 3 · Drip', 'Channel 4 · Syringe', 'Channel 5 · Syringe']);
     expect(items.map((li) => li.dataset.state)).toEqual(['running', 'running', 'notLoaded', 'notLoaded', 'alarm']);
@@ -36,19 +37,20 @@ describe('the pump rack view', () => {
     expect(items[2]?.textContent).toContain('Nothing loaded');
     // TCI: the pump's prediction beside the patient's own (plan §9)
     expect(items[1]?.textContent).toContain('TCI Eleveld, Ce target 3 µg/mL');
-    expect(items[1]?.querySelector('.pumps-tci')?.textContent).toBe('Predicted Cp 2.1 µg/mL · patient 2.4 µg/mL\nPredicted Ce 2.99 µg/mL · patient 3.6 µg/mL');
+    expect(items[1]?.querySelector('.pumps-tci')?.textContent).toBe("Predicted Cp 2.1 µg/mL · the patient's, all routes: 2.4 µg/mL\nPredicted Ce 2.99 µg/mL · the patient's, all routes: 3.6 µg/mL");
     // a syringe of remifentanil programmed as propofol: the truth, in the alarm colour's class
     expect(items[4]?.querySelector('.pumps-holds')?.textContent).toBe('Holds Remifentanil 50 µg/mL: not what it is programmed with');
-    expect(items[4]?.querySelector('.pumps-alarm')?.textContent).toBe('Pump channel 5 (Propofol): End');
+    expect(items[4]?.querySelector('.pumps-alarm')?.textContent).toBe('Pump channel 5 (Remifentanil, programmed as Propofol): End');
     expect(items[0]?.querySelector('.pumps-alarm')?.textContent).toBe('No alarm');
-    expect([...v.el.querySelectorAll('.pumps-given li')].map((li) => li.textContent)).toEqual(['Propofol: 212 mg', 'Remifentanil: 30 µg']);
+    expect([...v.el.querySelectorAll('.pumps-given li')].map((li) => li.textContent)).toEqual(['Propofol: 212 mg in all (an infusion)']);
+    expect([...v.el.querySelectorAll('.pumps-together li')].map((li) => li.textContent)).toEqual(['Channels 1 and 2 both hold Propofol: the patient receives their sum.']);
     expect(v.el.querySelectorAll('button, input, select')).toHaveLength(0); // a view, not a second pump
     expect(v.el.querySelector('ul.pumps-list')?.getAttribute('aria-label')).toBe('Pump channels');
     expect(items[0]?.getAttribute('aria-labelledby')).toBe(items[0]?.querySelector('h4')?.id);
   });
 
   it('repaints in place: a channel keeps its node as its numbers move', () => {
-    const link = { drugs: event([channel({ ch: 1 })], []), rack: ['syringe'] as const };
+    const link = { drugs: event([channel({ ch: 1 })], []), rack: ['syringe'] as const, givenLines: () => [] };
     const v = pumpsView(link);
     const first = v.el.querySelector('.pumps-ch');
     link.drugs = event([channel({ ch: 1, infusedMl: 5, volumeMl: 45 })], []);
@@ -57,17 +59,26 @@ describe('the pump rack view', () => {
     expect(first?.textContent).toContain('Infused 5 mL · 45 mL left');
   });
 
-  it('no rack and no channel: says so', () => {
-    const v = pumpsView({ drugs: null, rack: [] });
+  it('no rack and no channel: says so; a page with no reading of the amounts says where they are', () => {
+    const v = pumpsView({ drugs: null, rack: [], givenLines: () => [] });
     expect(v.el.textContent).toContain('This room has no pump rack.');
     expect(v.el.textContent).toContain('No drug given yet.');
+    expect(pumpsView({ drugs: null, rack: [], givenLines: () => null }).el.querySelector('.pumps-given')?.textContent).toBe("Amounts given are read on the instructor's computer.");
   });
 
-  it('the phone\'s running list: an infusion off the pumps, then each running channel', () => {
-    const e = event([channel({ ch: 1 }), channel({ ch: 2, state: 'paused' })], [drug({ id: 'propofol', rate: 3.3, rateUnit: 'mg/min' }), drug({ id: 'norepinephrine', rate: 8, rateUnit: 'mcg/min', amountUnit: 'mcg' })]);
-    expect(othersRunning(e, new Set())).toEqual(['Norepinephrine 8 µg/min', 'Pump channel 1: Propofol 10 mg/mL, Rate 20 mL/h']);
-    expect(othersRunning(e, new Set(['norepinephrine']))).toEqual(['Pump channel 1: Propofol 10 mg/mL, Rate 20 mL/h']);
-    expect(othersRunning(null, new Set())).toEqual([]);
+  it("the phone's running list: each running drug once, by what holds it, with an infusion off the pumps beside its channels", () => {
+    const remi = { drugId: 'remifentanil', concentration: { amount: 50, unit: 'mcg' as const, perMl: 1 } };
+    const e = event([channel({ ch: 1 }), channel({ ch: 2, state: 'paused' }), channel({ ch: 3, contents: remi })], [
+      drug({ id: 'propofol', rate: 3.3, rateUnit: 'mg/min' }), drug({ id: 'norepinephrine', rate: 8, rateUnit: 'mcg/min', amountUnit: 'mcg' }),
+      drug({ id: 'remifentanil', rate: 0.2, rateUnit: 'mcg/min', amountUnit: 'mcg' }), drug({ id: 'ketamine', rate: 1, rateUnit: 'mg/min' }),
+    ]);
+    expect(runningLines(e, new Set(['norepinephrine', 'propofol'])).map((x) => [x.text, x.pumps])).toEqual([
+      ['Propofol 3.3 mg/min: pump channel 1 and an infusion off the pumps', 1],
+      ['Norepinephrine 8 µg/min: an infusion off the pumps', 0],
+      ['Remifentanil 0.2 µg/min: pump channel 3 (programmed as Propofol)', 1],
+      ['Ketamine 1 mg/min: a bolus being given over time', 0],
+    ]);
+    expect(runningLines(null, new Set())).toEqual([]);
   });
 });
 
