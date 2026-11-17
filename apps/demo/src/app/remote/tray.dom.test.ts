@@ -8,6 +8,7 @@
 import { createStamper, type Formulary, type LearnerPrepNews, type LearnerPrepView, type WireBody, type WireMessage } from '@pme/controller';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadShippedFormulary } from '../formulary.ts';
+import { drugName } from '../glossary.ts';
 import type { FollowerCommand } from '../views/follower.ts';
 import type { BenchChoice } from './bench.ts';
 import { trayView, TRAY_WORDS, FINDING_WORDS } from './tray.ts';
@@ -186,6 +187,29 @@ describe('the tray (L7)', () => {
     // a later news of the same preparation (a give) keeps the finding and does not sound again
     m.news('delivered', { ...view, leftMl: 0, notice: { shownAt: 125, findings: [finding] } });
     expect(m.tone).toHaveBeenCalledOnce();
+  });
+
+  it("the label's reason in the notice: advised against in the label's words and section, running line only, and silent, each with its label", () => {
+    const m = mount();
+    m.t.stage(DANTROLENE);
+    const view = made('dant0001');
+    m.news('made', view);
+    const on = (drugId: string, other: string, src: string) => ({ drugId, against: 'diluent' as const, other, src });
+    const said = '"Administration in saline solution alone is not recommended." (2.3 Preparation of Diluted Solution)';
+    const line = '"May inject BRIDION into the intravenous line of a running infusion with the following intravenous solutions: 5% dextrose" (2.3 Drug Compatibility)';
+    m.news('notice', { ...view, notice: { shownAt: 125, findings: [
+      { kind: 'advisedAgainst' as const, ...on('norepinephrine', 'saline', 'dailymed-levophed'), statement: said },
+      { kind: 'runningLine' as const, ...on('sugammadex', 'dextrose5', 'dailymed-bridion'), statement: line },
+      { kind: 'labelSilent' as const, ...on('lidocaine', 'saline', 'dailymed-lidocaine-ansyr'), statement: null },
+    ] } });
+    const rows = [...m.item('dant0001').querySelectorAll('.lr-finding-row')].map((r) => [(r as HTMLElement).dataset.kind, r.textContent]);
+    const label = (k: string) => `(${(f.sources[k] as { product: string }).product} (DailyMed))`;
+    const saline = f.diluents.saline!.name;
+    expect(rows).toEqual([
+      ['advisedAgainst', `The label advises against this diluent: ${drugName('norepinephrine')} in ${saline}. ${said} ${label('dailymed-levophed')}`],
+      ['runningLine', `The label names this fluid only for the line the drug is given through, not for mixing: ${drugName('sugammadex')} in ${f.diluents.dextrose5!.name}. ${line} ${label('dailymed-bridion')}`],
+      ['labelSilent', `The label does not mention this fluid; it neither lists it nor advises against it: ${drugName('lidocaine')} in ${saline}. ${label('dailymed-lidocaine-ansyr')}`],
+    ]);
   });
 
   it("another remote's `prep` news is not this tray's; a `timeline` event (a restart, a restore) clears the tray and says why", () => {

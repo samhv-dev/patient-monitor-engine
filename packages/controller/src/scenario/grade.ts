@@ -38,7 +38,7 @@
 // - Plan learner-action-remote.md §6 (L5): a card's `drug.diluent` is one more criterion (a deviation line); a sample
 //   action with `sample` takes a `sample` record of a listed panel, a learner's or the instructor's, as a drug action
 //   takes a drug record; the formulary grades every preparation, independent of any card (LQ14): staged with a diluent
-//   the stocked product's label does not list, or as an admixture the source calls incompatible, it is a deviation
+//   the stocked product's label advises against (or does not list, its reason not read), or as an admixture the source calls incompatible, it is a deviation
 //   (`preparations`); delivered (any volume, an accepted give), a violation of source 'formulary', its harm 'modelled'
 //   when the source's figures reduced the active amount (`remaining` < 1), else 'not modelled'. A card that uses none of
 //   it, in a run that staged nothing, grades exactly as before: no `preparations` key, no violation `source`.
@@ -218,13 +218,15 @@ function deviations(act: Action, a: Administration, id: Ident, w?: number): stri
   return out;
 }
 
-/** The findings the formulary grades (D5, LQ11): a diluent the label does not list, and what the source calls incompatible.
- *  `conditional` and `notTested` are reported with the preparation, not graded. */
-const graded = (f: Finding) => f.kind === 'wrongDiluent' || f.kind === 'incompatible';
+/** The findings the formulary grades (D5, LQ11): a diluent the label advises against (or does not list, its reason not
+ *  read), and what the source calls incompatible. A fluid the label is silent about, or names only for the line the drug
+ *  is given through, is reported with the preparation, not graded; so are `conditional` and `notTested`. */
+const graded = (f: Finding) => f.kind === 'wrongDiluent' || f.kind === 'advisedAgainst' || f.kind === 'incompatible';
 /** A graded finding in words. */
 function findingWords(f: Finding): string {
   const said = f.statement ? `: ${f.statement}` : '';
   if (f.kind === 'wrongDiluent') return `${f.drugId} prepared in ${f.other}, a diluent its label does not list`;
+  if (f.kind === 'advisedAgainst') return `${f.drugId} prepared in ${f.other}, a diluent its label advises against${said}`;
   return f.against === 'diluent' ? `${f.drugId} incompatible with the diluent ${f.other}${said}` : `${f.drugId} incompatible with ${f.other} in the preparation${said}`;
 }
 

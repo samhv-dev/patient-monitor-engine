@@ -842,6 +842,13 @@
     "version": "SPL setid ad1ef0a8-88db-4648-c098-d009eaeb4e5b, version 32, effective 2026-08-20",
     "issuer": "DailyMed"
   },
+  "dailymed-lidocaine-d5w": {
+    "kind": "monograph",
+    "product": "Lidocaine Hydrochloride and 5% Dextrose Injection, USP, premixed: 4 mg/mL (500 mL) and 8 mg/mL (250 mL), Viaflex Plus, intravenous infusion",
+    "holder": "Baxter Healthcare Corporation",
+    "version": "SPL setid f21512ea-c7c3-4766-b976-b2c0b5616bf0, version 17, effective 2026-02-20",
+    "issuer": "DailyMed"
+  },
   "dailymed-bupivacaine": {
     "kind": "monograph",
     "product": "Bupivacaine HCl Injection 0.25% (2.5 mg/mL), 30 mL single-dose vial",

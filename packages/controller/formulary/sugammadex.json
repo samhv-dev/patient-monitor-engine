@@ -24,27 +24,48 @@
     {
       "id": "dextrose5",
       "listed": false,
-      "src": "dailymed-bridion"
+      "src": "dailymed-bridion",
+      "notListed": {
+        "reason": "runningLine",
+        "section": "2.3 Drug Compatibility",
+        "words": "May inject BRIDION into the intravenous line of a running infusion with the following intravenous solutions: 5% dextrose"
+      }
     },
     {
       "id": "water",
       "listed": false,
-      "src": "dailymed-bridion"
+      "src": "dailymed-bridion",
+      "notListed": {
+        "reason": "silent"
+      }
     },
     {
       "id": "ringerLactate",
       "listed": false,
-      "src": "dailymed-bridion"
+      "src": "dailymed-bridion",
+      "notListed": {
+        "reason": "runningLine",
+        "section": "2.3 Drug Compatibility",
+        "words": "May inject BRIDION into the intravenous line of a running infusion with the following intravenous solutions: Ringer's lactate solution"
+      }
     },
     {
       "id": "dextrose5Saline",
       "listed": false,
-      "src": "dailymed-bridion"
+      "src": "dailymed-bridion",
+      "notListed": {
+        "reason": "runningLine",
+        "section": "2.3 Drug Compatibility",
+        "words": "May inject BRIDION into the intravenous line of a running infusion with the following intravenous solutions: 5% dextrose in 0.9% sodium chloride"
+      }
     },
     {
       "id": "dextrose4Saline018",
       "listed": false,
-      "src": "dailymed-bridion"
+      "src": "dailymed-bridion",
+      "notListed": {
+        "reason": "silent"
+      }
     }
   ],
   "admixtures": [],

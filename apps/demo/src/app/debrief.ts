@@ -14,7 +14,7 @@ import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
 import { DEVICE_WORDS, keptLabel, type DeviceKind } from './device-names.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf, unitText } from './glossary.ts';
-import { FINDING_WORDS, NO_STATEMENT, sourcesText, sourceText } from './prep-words.ts';
+import { FINDING_WORDS, findingTail, sourceText } from './prep-words.ts';
 import { LAB_KEYS, LABS, PRESSURES, TREND, TREND_KEYS, type LabKey, type PressureKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 
 /** The pressures a record of Debrief 2 keeps (record.ts `PRESSURES`). */
@@ -530,7 +530,7 @@ export function preparationsOf(d: RunData, names: (key: string) => string | null
       id: p.id, by: p.by, t: p.t,
       head: PREP_WORDS.staged(p.t, deviceWho(d, 'learner', p.by, names, kept, more), prepWhat(p, f)),
       ready: !p.ready ? null : p.ready.gap ? PREP_WORDS.readyGap(GAP_WORDS[p.ready.gap]) : PREP_WORDS.readyAt(p.ready.atS, p.ready.src.map((s) => sourceText(f?.sources[s], s)).join('; ')),
-      findings: p.findings.map((x) => ({ kind: x.kind, text: `${FINDING_WORDS[x.kind]}: ${x.statement ?? NO_STATEMENT} ${sourcesText(x, f)}` })),
+      findings: p.findings.map((x) => ({ kind: x.kind, text: `${FINDING_WORDS[x.kind]}${findingTail(x, f)}` })),
       notice: notice ? PREP_WORDS.noticeShown(notice.shownAt) : n ? PREP_WORDS.noticeNot : null,
       gives: giveLines.length ? giveLines : [PREP_WORDS.notGiven],
       grade: grades.get(k) ?? null,

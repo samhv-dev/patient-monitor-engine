@@ -431,7 +431,7 @@ haemorrhage card's epinephrine 1 mg IV or IO in ROSC.
 
 **Preparations: the formulary's grades, on every card** (plan learner-action-remote.md §6, D5, LQ11). `grade()` grades
 each preparation a learner stages, whatever the card says, and lists it under `preparations`. A preparation in a
-diluent that the stocked product's label does not list, or an admixture that the source calls incompatible, is a
+diluent that the stocked product's label advises against (or does not list, where the entry does not yet say why), or an admixture that the source calls incompatible, is a
 **deviation** while it is only staged. Once it is **delivered** (any volume, in a give the engine accepted), it is a
 **violation** with `source: "formulary"`. Its harm is "modelled" when the source's own figures reduced the active amount
 delivered, and "not modelled" otherwise. A preparation with none of these findings is "ok". A card's own

@@ -1,14 +1,16 @@
 // Plan learner-action-remote.md L2 (§4 D5, LQ11, LQ12): what the bench finds in a preparation, from the formulary
-// alone. A diluent is WRONG when the stocked product's monograph does not list it (the drug's `diluents[].listed`, and,
-// for a product reconstituted from powder, the product's own `reconstitute.diluents`): graded, whatever the effect.
+// alone. A diluent the stocked product's monograph does not list (the drug's `diluents[].listed`, and, for a product
+// reconstituted from powder, the product's own `reconstitute.diluents`) is found by the label's reason (`notListed`):
+// `advisedAgainst`, `runningLine` or `labelSilent`; `wrongDiluent` where the entry gives no reason, or where only the
+// powder's reconstitution list leaves it out. `advisedAgainst` and `wrongDiluent` are graded, whatever the effect.
 // Whether drug is lost is a separate question, answered by the source's statement: `incompatible` or `conditional` when
 // it says so, `notTested` when it says "not tested" or when no file makes a statement and the label does not list the
 // diluent. Admixtures are read from both drugs' files. No Y-site (LQ12): preparations only. A statement that names its
 // containers (N60: adsorption to a PVC bag) speaks only for a preparation in one of them; elsewhere it is as if absent.
 // Pure: no clock, no I/O.
-import type { Compat, Container, Formulary } from './types.ts';
+import type { Compat, Container, DiluentListing, Formulary } from './types.ts';
 
-export type FindingKind = 'wrongDiluent' | 'incompatible' | 'conditional' | 'notTested';
+export type FindingKind = 'wrongDiluent' | 'advisedAgainst' | 'runningLine' | 'labelSilent' | 'incompatible' | 'conditional' | 'notTested';
 
 export interface Finding {
   kind: FindingKind;
@@ -17,7 +19,7 @@ export interface Finding {
   against: 'diluent' | 'admixture';
   /** The diluent id, or the other drug's id. */
   other: string;
-  /** The source's statement, in our words; null where there is none. */
+  /** The source's statement, in our words (a label's reason: its words and section); null where there is none. */
   statement: string | null;
   /** The `sources.json` key behind the finding; null where no source speaks. */
   src: string | null;
@@ -35,6 +37,16 @@ export const holdsIn = (c: Compat, container: Container | null | undefined): boo
 const fromStatement = (c: Compat, drugId: string, against: Finding['against'], other: string): Finding[] =>
   c.verdict === 'compatible' ? [] : [{ kind: c.verdict === 'not tested' ? 'notTested' : c.verdict, drugId, against, other, statement: c.statement, src: c.src }];
 
+/** A fluid the label does not list, as the label's reason makes it (no reason read, or a fluid the drug's row lists and
+ *  the powder's reconstitution list leaves out: wrong). */
+function unlisted(listing: DiluentListing | undefined, drugId: string, other: string): Finding {
+  const base = { drugId, against: 'diluent' as const, other, src: listing?.src ?? null };
+  const why = listing?.listed === false ? listing.notListed : undefined;
+  if (!why) return { kind: 'wrongDiluent', ...base, statement: null };
+  if (why.reason === 'silent') return { kind: 'labelSilent', ...base, statement: null };
+  return { kind: why.reason, ...base, statement: `"${why.words}" (${why.section})` };
+}
+
 /** Every finding for these drugs (each with a file in `formulary`) in this diluent (null: none) and container (none:
  *  not named), in input order. */
 export function findings(items: readonly FindingItem[], diluentId: string | null, formulary: Formulary, container?: Container | null): Finding[] {
@@ -45,7 +57,7 @@ export function findings(items: readonly FindingItem[], diluentId: string | null
       const listing = entry.diluents.find((d) => d.id === diluentId);
       const forPowder = entry.products.filter((p) => productIds.includes(p.id) && p.reconstitute).every((p) => p.reconstitute!.diluents.includes(diluentId));
       const listed = listing?.listed === true && forPowder;
-      if (!listed) out.push({ kind: 'wrongDiluent', drugId, against: 'diluent', other: diluentId, statement: null, src: listing?.src ?? null });
+      if (!listed) out.push(unlisted(listing, drugId, diluentId));
       const compat = listing?.compat && holdsIn(listing.compat, container) ? listing.compat : undefined;
       if (compat) out.push(...fromStatement(compat, drugId, 'diluent', diluentId));
       else if (!listed) out.push({ kind: 'notTested', drugId, against: 'diluent', other: diluentId, statement: null, src: null });

@@ -178,6 +178,22 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     expect(c.laptop.querySelector('.ip2-lp-clean-sum')?.textContent).toBe('2 preparations, no finding');
   });
 
+  it("the label's reason on the card: advised against (Levophed 2.3) in the label's words, running line only (Bridion 2.3), silent (lidocaine), each with its label", async () => {
+    const r = await room();
+    const c = r.cards();
+    r.at(30);
+    const inBag = (id: string, productId: string, ml: number, diluent: string) => ({ type: 'prep', action: 'stage', prep: { id, components: [{ productId, amount: ml, unit: 'mL' }], diluent: { id: diluent, volumeMl: 50 }, container: 'bag-polyolefin' } });
+    for (const b of [inBag('noradr01', 'levophed-1mg-ml', 4, 'saline'), inBag('sugam001', 'bridion-100mg-ml', 2, 'dextrose5'), inBag('lido0001', 'lidocaine-10mg-ml', 10, 'saline')]) expect((await r.send(b)).accepted).toBe(true);
+    await until(() => [c.laptop, c.phone].every((el) => el.querySelectorAll('.ip2-lp-card').length === 3), 'three cards on both');
+    const label = (k: string) => `${(F.sources[k] as { product: string }).product} (DailyMed)`;
+    const rows = (id: string) => [...c.laptop.querySelectorAll(`.ip2-lp-card[data-prep="${id}"] .ip2-lp-finding`)].map((x) => x.textContent);
+    const noStatement = `Not tested together: no statement in the formulary (${PREPS_WORDS.noSource})`;
+    expect(rows('noradr01')).toEqual([`The label advises against this diluent: "Administration in saline solution alone is not recommended." (2.3 Preparation of Diluted Solution) (${label('dailymed-levophed')})`, noStatement]);
+    expect(rows('sugam001')).toEqual([`The label names this fluid only for the line the drug is given through, not for mixing: "May inject BRIDION into the intravenous line of a running infusion with the following intravenous solutions: 5% dextrose" (2.3 Drug Compatibility) (${label('dailymed-bridion')})`, noStatement]);
+    expect(rows('lido0001')).toEqual([`The label does not mention this fluid; it neither lists it nor advises against it (${label('dailymed-lidocaine-ansyr')})`, noStatement]);
+    expect(c.phone.querySelector('.ip2-lp-card[data-prep="lido0001"] .ip2-lp-finding')?.textContent).toBe(rows('lido0001')[0]);
+  });
+
   it("the Link takes the instructor's copy only, and a new timeline empties the board", async () => {
     const r = await room();
     r.at(5);

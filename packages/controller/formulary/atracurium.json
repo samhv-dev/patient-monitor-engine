@@ -29,12 +29,20 @@
     {
       "id": "water",
       "listed": false,
-      "src": "dailymed-atracurium"
+      "src": "dailymed-atracurium",
+      "notListed": {
+        "reason": "silent"
+      }
     },
     {
       "id": "ringerLactate",
       "listed": false,
-      "src": "dailymed-atracurium"
+      "src": "dailymed-atracurium",
+      "notListed": {
+        "reason": "advisedAgainst",
+        "section": "Dosage and Administration",
+        "words": "it is recommended that Lactated Ringer’s Injection not be used as a diluent in preparing solutions of atracurium besylate injection for infusion"
+      }
     },
     {
       "id": "dextrose5Saline",
@@ -44,7 +52,10 @@
     {
       "id": "dextrose4Saline018",
       "listed": false,
-      "src": "dailymed-atracurium"
+      "src": "dailymed-atracurium",
+      "notListed": {
+        "reason": "silent"
+      }
     }
   ],
   "admixtures": [],

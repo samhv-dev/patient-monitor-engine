@@ -42,12 +42,20 @@
     {
       "id": "water",
       "listed": false,
-      "src": "dailymed-cisatracurium"
+      "src": "dailymed-cisatracurium",
+      "notListed": {
+        "reason": "silent"
+      }
     },
     {
       "id": "ringerLactate",
       "listed": false,
-      "src": "dailymed-cisatracurium"
+      "src": "dailymed-cisatracurium",
+      "notListed": {
+        "reason": "advisedAgainst",
+        "section": "2.7 Preparation of Cisatracurium Besylate Injection",
+        "words": "Do not dilute Cisatracurium Besylate Injection in Lactated Ringer's Injection, USP due to chemical instability."
+      }
     },
     {
       "id": "dextrose5Saline",
@@ -57,7 +65,10 @@
     {
       "id": "dextrose4Saline018",
       "listed": false,
-      "src": "dailymed-cisatracurium"
+      "src": "dailymed-cisatracurium",
+      "notListed": {
+        "reason": "silent"
+      }
     }
   ],
   "admixtures": [],

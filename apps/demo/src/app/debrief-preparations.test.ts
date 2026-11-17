@@ -185,3 +185,41 @@ describe('L13: the Preparations section, from a scripted /2 run', () => {
     expect(preparationsOf(free, names({}), F)).toEqual({ rows: [], unrecorded: true });
   });
 });
+
+describe("the label's reason in the Debrief: the card's words; only advised against is graded", () => {
+  const prep = (id: string, drugId: string, productId: string, diluent: string, findings: StagedPrep['findings']): StagedPrep => ({
+    ...NEVER, id, drugId, productId, diluent, findings, actives: [{ drugId, amount: 1, unit: 'mg', perMl: 0.1 }],
+  });
+  const untested = (drugId: string, other: string) => ({ kind: 'notTested' as const, drugId, against: 'diluent' as const, other, statement: null, src: null });
+  const run = (...preps: StagedPrep[]): PrepRow[] => {
+    const d = scripted();
+    d.admin = [];
+    d.rows = [];
+    d.preps = preps;
+    return rowsOf(d, names({}), F);
+  };
+  it('advised against (Levophed 2.3): its words and section, then the label; a deviation', () => {
+    const said = '"Administration in saline solution alone is not recommended." (2.3 Preparation of Diluted Solution)';
+    const [r] = run(prep('n0000001', 'norepinephrine', 'levophed-1mg-ml', 'saline', [{ kind: 'advisedAgainst', drugId: 'norepinephrine', against: 'diluent', other: 'saline', statement: said, src: 'dailymed-levophed' }, untested('norepinephrine', 'saline')]));
+    expect(r!.findings[0]).toEqual({ kind: 'advisedAgainst', text: `The label advises against this diluent: ${said} (${src('dailymed-levophed')})` });
+    expect(r!.grade).toBe('deviation');
+  });
+  it('running line only (Bridion 2.3) and silent (lidocaine): the card\'s words, and "ok"', () => {
+    const line = '"May inject BRIDION into the intravenous line of a running infusion with the following intravenous solutions: 5% dextrose" (2.3 Drug Compatibility)';
+    const [a, b] = run(
+      prep('s0000001', 'sugammadex', 'bridion-100mg-ml', 'dextrose5', [{ kind: 'runningLine', drugId: 'sugammadex', against: 'diluent', other: 'dextrose5', statement: line, src: 'dailymed-bridion' }, untested('sugammadex', 'dextrose5')]),
+      prep('l0000001', 'lidocaine', 'lidocaine-10mg-ml', 'saline', [{ kind: 'labelSilent', drugId: 'lidocaine', against: 'diluent', other: 'saline', statement: null, src: 'dailymed-lidocaine-ansyr' }, untested('lidocaine', 'saline')]),
+    );
+    expect(a!.findings[0]!.text).toBe(`The label names this fluid only for the line the drug is given through, not for mixing: ${line} (${src('dailymed-bridion')})`);
+    expect(b!.findings.map((x) => x.text)).toEqual([
+      `The label does not mention this fluid; it neither lists it nor advises against it (${src('dailymed-lidocaine-ansyr')})`,
+      'Not tested together: no statement in the formulary (no source speaks)',
+    ]);
+    expect([a!.grade, b!.grade]).toEqual(['ok', 'ok']);
+  });
+  it('a record made before the reason was read: lidocaine in saline stored "not listed" reads as it was stored, a deviation', () => {
+    const [r] = run(prep('l0000002', 'lidocaine', 'lidocaine-10mg-ml', 'saline', [{ kind: 'wrongDiluent', drugId: 'lidocaine', against: 'diluent', other: 'saline', statement: null, src: 'dailymed-lidocaine-ansyr' }]));
+    expect(r!.findings).toEqual([{ kind: 'wrongDiluent', text: `Diluent not listed in the label: no statement in the formulary (${src('dailymed-lidocaine-ansyr')})` }]);
+    expect(r!.grade).toBe('deviation');
+  });
+});

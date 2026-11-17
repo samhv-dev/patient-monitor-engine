@@ -49,6 +49,13 @@
         "src": { "$ref": "#/definitions/src" }
       }
     },
+    "notListed": {
+      "description": "Why the label does not list a fluid (on a listed: false row only): it advises against it, or names it only for the line the drug is given through (each with the label's section and words), or it is silent.",
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["reason", "section", "words"], "properties": { "reason": { "enum": ["advisedAgainst", "runningLine"] }, "section": { "$ref": "#/definitions/text" }, "words": { "$ref": "#/definitions/text" } } },
+        { "type": "object", "additionalProperties": false, "required": ["reason"], "properties": { "reason": { "const": "silent" } } }
+      ]
+    },
     "compat": {
       "type": "object", "additionalProperties": false, "required": ["verdict", "statement", "src", "crossCheck"],
       "properties": { "verdict": { "$ref": "#/definitions/verdict" }, "containers": { "$ref": "#/definitions/containers" }, "statement": { "$ref": "#/definitions/text" }, "src": { "$ref": "#/definitions/src" }, "crossCheck": { "$ref": "#/definitions/crossCheck" } }
@@ -102,7 +109,7 @@
           "type": "array",
           "items": {
             "type": "object", "additionalProperties": false, "required": ["id", "listed", "src"],
-            "properties": { "id": { "$ref": "#/definitions/id" }, "listed": { "type": "boolean" }, "src": { "$ref": "#/definitions/src" }, "compat": { "$ref": "#/definitions/compat" } }
+            "properties": { "id": { "$ref": "#/definitions/id" }, "listed": { "type": "boolean" }, "src": { "$ref": "#/definitions/src" }, "compat": { "$ref": "#/definitions/compat" }, "notListed": { "$ref": "#/definitions/notListed" } }
           }
         },
         "admixtures": {

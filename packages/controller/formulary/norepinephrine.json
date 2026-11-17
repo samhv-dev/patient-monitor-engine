@@ -19,7 +19,12 @@
     {
       "id": "saline",
       "listed": false,
-      "src": "dailymed-levophed"
+      "src": "dailymed-levophed",
+      "notListed": {
+        "reason": "advisedAgainst",
+        "section": "2.3 Preparation of Diluted Solution",
+        "words": "Administration in saline solution alone is not recommended."
+      }
     },
     {
       "id": "dextrose5",
@@ -29,12 +34,18 @@
     {
       "id": "water",
       "listed": false,
-      "src": "dailymed-levophed"
+      "src": "dailymed-levophed",
+      "notListed": {
+        "reason": "silent"
+      }
     },
     {
       "id": "ringerLactate",
       "listed": false,
-      "src": "dailymed-levophed"
+      "src": "dailymed-levophed",
+      "notListed": {
+        "reason": "silent"
+      }
     },
     {
       "id": "dextrose5Saline",
@@ -44,7 +55,10 @@
     {
       "id": "dextrose4Saline018",
       "listed": false,
-      "src": "dailymed-levophed"
+      "src": "dailymed-levophed",
+      "notListed": {
+        "reason": "silent"
+      }
     }
   ],
   "admixtures": [],
