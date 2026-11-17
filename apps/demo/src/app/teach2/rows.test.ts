@@ -2,10 +2,12 @@
 // row-state table — current, ready, condition not met, overdue, taken (and out of order), failed, met, automatic pending
 // and fired — the folds' contents, and the A row's bar with and without IP1's hold accessor.
 import type { ScenarioDoc } from '@pme/controller';
+import { BUILTIN_SCENARIOS } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
 import { emptyRun, type Row as RecRow, type RunData, type Sample } from '../record.ts';
+import { rhythmLabel } from '../rhythms.ts';
 import { showcaseDoc } from '../showcase/harness.ts';
 import { classify, firstT, type HoldLike, type LiveRow, type Source } from './rows.ts';
 
@@ -222,6 +224,15 @@ describe('rows.ts: automatic rows (answers 5, 8)', () => {
     const b = classify(src(HAEM, 'vf', { history: [{ t: 0, stateId: 'bleeding' }, { t: 300, stateId: 'vf', transitionId: 'x' }] }));
     expect(b.list.map((r) => [r.row.kind, r.look, r.progress])).toEqual([['judged', 'ready', null], ['auto', 'pending', 0]]);
     expect(b.list[1]?.subtitle).toBe('when a shock is given (from the Defib sheet)');
+  });
+
+  it('a rhythm rule: the hold from the host, "not in" the rhythm once another is drawn; a follower names the rhythm', () => {
+    const VF = BUILTIN_SCENARIOS['acls-vf-witnessed'] as ScenarioDoc;
+    const h: H[] = [{ t: 0, stateId: 'stable' }, { t: 60, stateId: 'vf', transitionId: 'arrest' }];
+    const decay = (holds: HoldLike[] | null) => classify(src(VF, 'vf', { history: h, simT: 120, holds })).list.find((r) => r.row.kind === 'auto' && r.row.tr.id === 'decay') as LiveRow;
+    expect([decay([{ transitionId: 'decay', key: 'decay', met: true, fraction: 0.25 }]).progress, decay([{ transitionId: 'decay', key: 'decay', met: true, fraction: 0.25 }]).right]).toEqual([0.25, 'in 03:00']);
+    expect(decay([{ transitionId: 'decay', key: 'decay', met: false, fraction: 0 }]).right).toBe(`not in ${rhythmLabel('vfCoarse')}`);
+    expect(decay(null).right).toBe(`while ${rhythmLabel('vfCoarse')}`);
   });
 
   it('haemorrhage PEA: 1 step, the judged objective, 1 A row; the mixed junctional step of the ventilated stage is a step', () => {

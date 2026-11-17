@@ -12,7 +12,7 @@
 //    it replaced (L4). A refusal is the host's words, shown as they are. An infusion that was running before this phone
 //    signed in has no `commandApplied` here: it says so instead of guessing who set it.
 // A restart or a bookmark restore (the host's `timeline` event) clears the preparations and who set what.
-import { givenByOf, LEARNER_ISSUED_BY, type LearnerPrepNews, type LearnerPrepView, type WireMessage } from '@pme/controller';
+import { givenByOf, LEARNER_ISSUED_BY, rateRange, type LearnerPrepNews, type LearnerPrepView, type PumpDevices, type WireMessage } from '@pme/controller';
 import { DRUGS, TICK_S, type DrugsEvent, type EngineEvent, type PatientSnapshot, type PkState } from '@pme/engine-core';
 import { PRESETS, unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
@@ -22,7 +22,7 @@ import type { Follower, FollowerCommand } from '../views/follower.ts';
 import { hostPause } from '../views/follower-status.ts';
 import { mmss, perMlText } from './bench.ts';
 
-/** The pump's mL/h range on the phone [ENG: ui; 0.1 mL/h, a syringe pump's finest step, to 1200 mL/h, the published pumps' limit (engine-core l2/pk/tci.ts)]. */
+/** The mL/h range of an infusion on no pump channel [ENG: ui; 0.1 mL/h, a syringe pump's finest step, to 1200 mL/h, the published pumps' limit (engine-core l2/pk/tci.ts)]. A drug on one pump channel takes that channel's range (rateRange). */
 export const INFUSION_ML_H = { min: 0.1, max: 1200, step: 0.1, start: 5 } as const;
 
 export const INFUSION_WORDS = {
@@ -131,6 +131,7 @@ export function doseRateText(drugId: string, perMin: number, from: string, weigh
   return `${faceNum(v)} ${unitText(u)}${perKg ? ` ${weightKg === null ? `(${INFUSION_WORDS.noWeight})` : INFUSION_WORDS.forWeight(weightKg)}` : ''}`;
 }
 
+type PumpRow = NonNullable<DrugsEvent['pumps']>[number];
 /** The host's syringe of an infusion: amount per mL, in `unit`. */
 type Syringe = { perMl: number; unit: string };
 /** Who set a drug's running rate, when, and with what syringe, as the host's `commandApplied` said. */
@@ -174,7 +175,7 @@ export interface Infusions {
 }
 
 /** The Infusions tab: "Start an infusion" over "Running". */
-export function infusionsView(o: { now(): number | null }): Infusions {
+export function infusionsView(o: { now(): number | null; devices?: () => PumpDevices | null }): Infusions {
   const preps = new Map<string, StartRow>();
   const runs = new Map<string, RunRow>();
   const setBy = new Map<string, SetBy>();
@@ -197,17 +198,33 @@ export function infusionsView(o: { now(): number | null }): Infusions {
 
   const rowOf = (drugId: string) => last?.drugs.find((d) => d.id === drugId && d.rate !== null) ?? null;
   const isReady = (v: LearnerPrepView) => (o.now() ?? -Infinity) >= v.ready.atS;
+  /** The one pump channel running `drugId` at a rate, which the host routes a change to (host-session.ts toChannel); null on none or several. */
+  const channelOf = (drugId: string): PumpRow | null => {
+    const chs = (last?.pumps ?? []).filter((p) => p.state === 'running' && p.mode === 'rate' && p.contents?.drugId === drugId);
+    return chs.length === 1 ? (chs[0] as PumpRow) : null;
+  };
+  /** The range a change of `drugId` is offered in: its channel's, as the host checks it, else the channel-less one. */
+  const rangeOf = (drugId: string): { min: number; max: number; step: number } => {
+    const ch = channelOf(drugId);
+    const devices = o.devices?.() ?? null;
+    const r = ch && devices ? rateRange(ch.kind, ch, devices) : null;
+    return r && typeof r !== 'string' ? r : INFUSION_ML_H;
+  };
   /** The dose rate of `ml` mL/h through `syringe` (amount/min = mL/h × amount per mL ÷ 60). */
   const doseAt = (drugId: string, ml: number, s: Syringe) => doseRateText(drugId, (ml * s.perMl) / 60, s.unit, weightKg);
-  /** The running infusion's syringe: the host's, else the engine row's own (what the host's `infusion set` keeps then). */
+  /** The running infusion's syringe: its pump channel's contents, else the host's, else the engine row's own (what the host's `infusion set` keeps then). */
   const syringeOf = (drugId: string): Syringe | null => {
+    const k = channelOf(drugId)?.contents?.concentration;
+    if (k) return { perMl: k.amount / k.perMl, unit: k.unit };
     const s = setBy.get(drugId)?.syringe;
     if (s) return s;
     const row = DRUGS[drugId];
     return row?.syringePerMl ? { perMl: row.syringePerMl, unit: row.amountUnit } : null;
   };
-  /** The running mL/h: as the host set it, else the engine's amount per minute through the syringe. */
+  /** The running mL/h: its pump channel's, else as the host set it, else the engine's amount per minute through the syringe. */
   const mlHOf = (drugId: string): number | null => {
+    const ch = channelOf(drugId);
+    if (ch) return ch.rateMlH;
     const s = setBy.get(drugId);
     if (s?.rateMlH != null) return s.rateMlH;
     const row = rowOf(drugId);
@@ -257,7 +274,7 @@ export function infusionsView(o: { now(): number | null }): Infusions {
   }
 
   function addRun(drugId: string): RunRow {
-    const ml = stepper({ label: `${drugName(drugId)} ${INFUSION_WORDS.rate}`, unit: 'mL/h', min: INFUSION_ML_H.min, max: INFUSION_ML_H.max, step: INFUSION_ML_H.step, value: INFUSION_ML_H.start, onchange: () => drawRun(r) });
+    const ml = stepper({ label: `${drugName(drugId)} ${INFUSION_WORDS.rate}`, unit: 'mL/h', ...rangeOf(drugId), value: INFUSION_ML_H.start, onchange: () => drawRun(r) });
     const name = drugName(drugId);
     const r: RunRow = {
       drugId, ml, shownMlH: null,
@@ -288,6 +305,7 @@ export function infusionsView(o: { now(): number | null }): Infusions {
     setText(r.dose, `${INFUSION_WORDS.doseRunning}: ${doseRateText(r.drugId, row.rate, row.amountUnit, weightKg)}`);
     setText(r.setBy, s ? INFUSION_WORDS.setBy(s.who, s.t) : INFUSION_WORDS.setBefore);
     r.box.hidden = tci;
+    r.ml.limit(rangeOf(r.drugId));
     // the stepper follows the running rate until the learner types a new one
     if (ml !== null && ml !== r.shownMlH && document.activeElement !== r.ml.input) {
       r.ml.set(ml);

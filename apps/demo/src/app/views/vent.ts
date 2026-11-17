@@ -15,13 +15,14 @@
 import type { Command } from '@pme/engine-core';
 import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
 import {
-  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, roomVentMonitor, roomVentPort, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
 import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
 import type { AppSession, VentSettings } from '../session.ts';
 import { h } from '../ui.ts';
 import type { View } from '../shell.ts';
+import type { FaceId } from '../../vent/faces/ids.ts';
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const r1 = (v: number) => Math.round(v * 10) / 10;
@@ -105,7 +106,9 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     session.ventTick = -1;
     offAttach = session.onMount((m) => {
       detach();
-      const l = attachMonitorToLink(session.linked(m), p, (cmd, r) => console.warn('vent link rejected', cmd.type, r));
+      // the cockpit drives the room's patient with its breaths and its circuit only (room-guard.ts)
+      const refused = (what: string, why?: string) => console.warn('vent link rejected', what, why);
+      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r));
       detach = l;
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
       // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,
@@ -367,6 +370,26 @@ export function serveWindowCockpit(session: AppSession, open: (name: string) => 
   };
 }
 
+/** Why the room's ventilator face cannot change now: a cockpit is ventilating the patient, by the screen it is on. */
+export const VENT_FACE_REFUSALS = {
+  window: 'The ventilator window is ventilating the patient: close it first.',
+  device: 'The ventilator tablet is ventilating the patient: close its page first.',
+  view: 'The Ventilator view is ventilating the patient: leave it first.',
+} as const;
+
+/**
+ * Room setup's ventilator face: refused with its words while a cockpit drives the patient (its face would be replaced
+ * under the user's hands), else the session's face from now on. Null: applied.
+ */
+export function chooseVentFace(session: AppSession, face: FaceId): string | null {
+  if (cockpitDesk(session).driving) {
+    const s = ventScreens(session);
+    return VENT_FACE_REFUSALS[s.window === 'driving' ? 'window' : s.device === 'driving' ? 'device' : 'view'];
+  }
+  session.ventFace = face;
+  return null;
+}
+
 export function ventView(session: AppSession): View {
   const frame = h('iframe', { class: 'iframe vent', title: 'Ventilator' });
   const el = h('section', { 'aria-label': 'Ventilator' }, frame);
@@ -376,6 +399,8 @@ export function ventView(session: AppSession): View {
   let handing = false; // A hand-over has not reached the engine yet (the engine's settings are not the cockpit's)
   let port: ReturnType<typeof createFramePort> | null = null;
   let mine: Cockpit | null = null; // this view's cockpit on the desk (one per loaded cockpit)
+  let face: FaceId | null = null; // the face the loaded cockpit wears
+  let unload: (() => void) | null = null;
   const cockpit = (): VentDriver | null => {
     try {
       return (frame.contentWindow as unknown as { __vent?: VentDriver } | null)?.__vent ?? null;
@@ -413,6 +438,10 @@ export function ventView(session: AppSession): View {
     enter: () => {
       gen++;
       session.ventShown = true;
+      // the room's face changed since the cockpit loaded (never while it drives: chooseVentFace): a fresh cockpit wears it,
+      // from the engine's ventilator settings, as the view's cockpit takes over after a hand-over
+      const carry = started && face !== session.ventFace && !linked();
+      if (carry) unload?.();
       if (started) {
         // Back on the view after a hand-over: the cockpit starts again from the engine's own ventilator settings (what it
         // handed over, or what the instructor or the case has set since). Back before it (a fast-forward was running),
@@ -444,18 +473,23 @@ export function ventView(session: AppSession): View {
       // ventilated by the old cockpit (haemorrhage: pulse lost 10:08 instead of 10:03). The next visit loads a fresh
       // cockpit, as on a fresh page; if the view is on screen it reloads at once.
       let mounts = 0;
-      const offReset = session.onMount(() => {
-        if (++mounts === 1) return; // the patient the cockpit was opened for
+      const drop = () => {
         offReset();
         offScale();
         unlink();
-        gen++; // a hand-over in progress is for the old patient
+        gen++; // a hand-over in progress is for the old cockpit
         port = null;
         mine = null;
+        unload = null;
         p.close();
         frame.onload = null;
         frame.src = 'about:blank';
         started = false;
+      };
+      unload = drop;
+      const offReset = session.onMount(() => {
+        if (++mounts === 1) return; // the patient the cockpit was opened for
+        drop();
         // On screen = the route the URL names NOW, not the last hashchange handled: a restart in the same task as a route
         // change (or ahead of its queued hashchange, as Linux WebKit runs a Playwright call) saw a stale flag and reloaded
         // the cockpit off screen.
@@ -464,15 +498,17 @@ export function ventView(session: AppSession): View {
       link();
       // as the Stage V link page does: once the cockpit has loaded, send it an empty patch (its first control message)
       // and this session's speed; loaded after the view closed, it waits paused
+      const from = carry && !handing ? session.ventSettings : null;
       frame.onload = () => {
-        p.post({ v: 1, kind: 'control', patch: {} });
+        p.post({ v: 1, kind: 'control', patch: from ? cockpitPatch(from, cockpit()?.vs.cfg) : {} });
         p.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
         if (!linked()) p.post({ v: 1, kind: 'time', action: 'pause' });
       };
       // The cockpit follows every later speed change too — opened at ×1 and then run at ×4 it ventilated at a quarter
       // of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal (presenter rehearsal)
       const offScale = session.onTimeScale((k) => p.post({ v: 1, kind: 'time', action: 'scale', value: k }));
-      frame.src = `./vent-hamilton.html?link=${name}&profile=normal&via=parent`;
+      face = session.ventFace;
+      frame.src = `./vent-hamilton.html?link=${name}&profile=normal&via=parent&face=${face}`;
     },
     // UI-A #2 (demo review 24 Oct #2): the phones hold for the cockpit only while the view is on screen. E128: leaving it
     // hands the patient to the engine's ventilator and releases the phones.

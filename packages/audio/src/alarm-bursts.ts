@@ -1,7 +1,7 @@
 // Pure burst geometry (no Web Audio): where each pulse of one burst starts, for a profile level with the skin's
 // overrides applied, and the volume-step → gain curve. Times are REAL seconds (brief §3.6: alarm bursts keep
 // real-time patterns when timeScale ≠ 1).
-import { levelKey, type AlarmLevel, type AlarmSoundProfile, type LevelSound, type ProfileOverrides } from './profiles/types.ts';
+import { levelKey, type AlarmLevel, type AlarmSoundProfile, type LevelSound, type ProfileOverrides, type VolumeCurve } from './profiles/types.ts';
 
 export interface BurstPulse {
   /** Onset relative to the burst start (s). */
@@ -43,6 +43,14 @@ export function volumeGain(v: AlarmSoundProfile['volume'], step: number): number
   const s = Math.round(Math.min(v.max, Math.max(v.min, step)));
   if (s <= 0) return 0;
   return v.maxGain * 10 ** ((-(v.max - s) * v.dbPerStep) / 20);
+}
+
+/**
+ * Linear gain of the pulse tone: the alarm volume law of the style (its dB per step and its gain at the top step) over
+ * the beep's own steps, at `levelDb` against a high-priority alarm on the same step.
+ */
+export function beepGain(alarm: VolumeCurve, beep: { volume: { min: number; max: number; default: number }; levelDb: number }, step = beep.volume.default): number {
+  return volumeGain({ ...alarm, min: beep.volume.min, max: beep.volume.max }, step) * dbToGain(beep.levelDb);
 }
 
 /**

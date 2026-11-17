@@ -7,24 +7,30 @@ import {
   BRAINSTEM_CBF_MIN, createSpontDrive, GASP_END_S, GASP_ONSET_S, GASP_RR, GASP_VT_FRAC, GATE_REOPEN_S, stepSpontDrive,
   type SpontDrive, type SpontInputs,
 } from '../../../src/l2/neuro/spont.ts';
+import type { BrainstemEntry } from '../../../src/l2/brain/energy.ts';
 
 /** Hypercapnic enough that the ungated chemoreflex breathes fast (the post-arrest patient of the review). */
 const X: SpontInputs = { t: 0, paco2: 80, pao2: 60, hco3: 24, rr0: 12, vt0: 500, co2SlopeMult: 1, pMaxMult: 1, evlwi: 7, complianceMl: 55, resistance: 3 };
 /** Normocapnic resting inputs: the drive returns the resting pattern (RR 12, VT 500) and fatigue stays 1. */
 const REST: Partial<SpontInputs> = { paco2: 40, pao2: 95 };
+/** A drive and the brainstem entry its gate keeps. */
+interface Patient {
+  s: SpontDrive;
+  b: BrainstemEntry;
+}
 /** Steps 1 s at a time from t0 to t1 (exclusive) with the given extra inputs; returns the (t, rr, vt) series. */
-function run(s: SpontDrive, t0: number, t1: number, extra: Partial<SpontInputs>): Array<[number, number, number]> {
+function run({ s, b }: Patient, t0: number, t1: number, extra: Partial<SpontInputs>): Array<[number, number, number]> {
   const out: Array<[number, number, number]> = [];
   for (let t = t0; t < t1; t++) {
-    stepSpontDrive(s, { ...X, ...extra, t });
+    stepSpontDrive(s, { ...X, ...extra, t }, b);
     out.push([t - t0, s.rr, s.vt]);
   }
   return out;
 }
-const fresh = () => {
+const fresh = (): Patient => {
   const s = createSpontDrive();
   s.paco2Rest = 40;
-  return s;
+  return { s, b: {} };
 };
 
 describe('brainstem-perfusion gate on the MODELED drive', () => {
@@ -34,7 +40,7 @@ describe('brainstem-perfusion gate on the MODELED drive', () => {
     run(a, 0, 120, {});
     run(b, 0, 120, { cbfRel: BRAINSTEM_CBF_MIN, noFlow: false });
     expect(b).toEqual(a);
-    expect('anoxS' in b || 'gate' in b).toBe(false);
+    expect('anoxS' in b.b || 'gate' in b.b).toBe(false);
   });
   it('no flow: unchanged for 30 s, then gasps (RR ≤ 6, VT ≤ 0.3 × resting) fading to apnoea by 2 min', () => {
     const ref = run(fresh(), 0, 300, {});
@@ -68,13 +74,13 @@ describe('brainstem-perfusion gate on the MODELED drive', () => {
     expect((back[half]?.[1] ?? 0) / (ref[half]?.[1] ?? 1)).toBeGreaterThan(0.45);
     expect((back[half]?.[1] ?? 1) / (ref[half]?.[1] ?? 1)).toBeLessThan(0.55);
     expect(back.at(-1)?.[1]).toBeCloseTo(ref.at(-1)?.[1] ?? Number.NaN, 9);
-    expect('gate' in s || 'anoxS' in s).toBe(false); // fully reopened: no trace left
+    expect('gate' in s.b || 'anoxS' in s.b).toBe(false); // fully reopened: no trace left
   });
   it('an interruption of ≤ 30 s leaves no trace (no gasping phase, no reopening ramp)', () => {
     const s = fresh();
     run(s, 0, GASP_ONSET_S, { ...REST, noFlow: true });
     const after = run(s, GASP_ONSET_S, GASP_ONSET_S + 60, REST);
     expect(after).toEqual(run(fresh(), GASP_ONSET_S, GASP_ONSET_S + 60, REST));
-    expect('gate' in s || 'anoxS' in s).toBe(false);
+    expect('gate' in s.b || 'anoxS' in s.b).toBe(false);
   });
 });

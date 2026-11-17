@@ -79,7 +79,8 @@ export function playSegments(ctx: Ctx, dest: AudioNode, when: number, segs: read
 export interface TonePlayerOptions {
   profile: AlarmSoundProfile;
   toneSet?: ToneSet;
-  beepGain?: number;
+  /** The pulse tone's gain (beepGain from the style's data). */
+  beepGain: number;
   deviceGain?: number;
 }
 
@@ -98,7 +99,7 @@ export function createTonePlayer(ctx: Ctx, dest: AudioNode, opts: TonePlayerOpti
     switch (tone.kind) {
       case 'qrs':
       case 'pulse':
-        return playBeep(ctx, dest, when, tone.freqHz ?? 880, opts.beepGain ?? 0.25, tone.durMs);
+        return playBeep(ctx, dest, when, tone.freqHz ?? 880, opts.beepGain, tone.durMs);
       case 'alarm': {
         const a = tone as AlarmToneRequest;
         return playAlarmPulse(ctx, dest, when, a, opts.profile.harmonicsDb, opts.profile.rampMs);

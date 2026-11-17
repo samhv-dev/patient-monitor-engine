@@ -108,7 +108,7 @@ export function drawTraces(d: Device, B: Cockpit['buf'], ref: SavedLoop | null =
   }
 }
 
-function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: number): void; stop(): void } {
+function mountEdp(c: Cockpit, tools: SimTools | null, env: FaceEnv = {}): { draw(ts: number): void; stop(): void } {
   const knob: Knob = createKnob(c);
   const body = document.body;
   const style = el('style', { 'data-face': 'edp-ts' }, css);
@@ -150,17 +150,20 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   const why = el('span', { class: 'why', role: 'status' });
   // the alarm sound silenced, with the seconds left (A-20): said here, outside the device, as no source shows it on it (S-06)
   const sil = el('span', { class: 'sil', role: 'status' });
-  const handle = el('button', { class: 'edp-simhandle', type: 'button' }) as HTMLButtonElement;
-  handle.textContent = SIM_WORD;
-  void env.translate?.(SIM_WORD).then((t) => { if (t) handle.textContent = t; }).catch(() => {});
-  handle.onclick = () => tools.open();
-  const strip = el('div', { class: 'edp-strip' }, why, sil, handle);
+  const strip = el('div', { class: 'edp-strip' }, why, sil);
+  if (tools) {
+    const handle = el('button', { class: 'edp-simhandle', type: 'button' }) as HTMLButtonElement;
+    handle.textContent = SIM_WORD;
+    void env.translate?.(SIM_WORD).then((t) => { if (t) handle.textContent = t; }).catch(() => {});
+    handle.onclick = () => tools.open();
+    strip.append(handle);
+  }
   body.append(strip, d.reasons);
 
   // the drawer's switch: marks every control not simulated yet (off by default; face state only, never written to cfg,
   // which travels over the link)
   let showUnsim = false;
-  const offSwitch = tools.addSection?.(() => {
+  const offSwitch = tools?.addSection?.(() => {
     const cb = el('input', { type: 'checkbox' }) as HTMLInputElement;
     cb.checked = showUnsim;
     cb.onchange = () => { showUnsim = cb.checked; root.classList.toggle('edp-show-unsim', showUnsim); };
