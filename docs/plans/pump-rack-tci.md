@@ -2,11 +2,40 @@
 
 **STATUS: READY TO BUILD — the owner's ten rulings folded in (2026-11-09).** Written by a planning executor from
 brief 109 of the post-demo set; the owner answered all ten questions on 9 November (PQ1–PQ10, now §11 "Decisions"), and
-brief 114 folded them into every section they touch. Nothing in it is built: this pull request adds this page and one
-roadmap row, and changes no product code, test, card, kit or data file. What still waits is named where it waits: the
+brief 114 folded them into every section they touch. What is built is listed under "Build state" below. What still waits is named where it waits: the
 three skins' look on its screenshots or manual pages (SK2), the device numbers the two JMS catalogues do not give on
 the operator manuals (named gaps, `research/50-pump-reference-devices.md`), the department's stock list (PQ7 A), and any
 TCI drug beyond the three the owner ruled in (E3d, PQ6 C).
+
+**Build state (checked 17 November 2026 against main 068c7130 and the merged and open pull requests).**
+
+| Piece | State |
+|---|---|
+| S0 | on main (PR 374) |
+| T1 | on main (PR 376) |
+| T2 | on main (PR 387) |
+| T3 | blocked on papers readable in full: its census is on main (PR 413), no set is registered |
+| E1 | on main (PR 399) |
+| E2 | on main (PR 408) |
+| S1 | on main (PR 412) |
+| C1 | on main (PR 406) |
+| C2 | on main (PR 421) |
+| A1 | on main (PR 417) |
+| A2 | on main (PR 459) |
+| A3 | not started |
+| A4 | not started |
+| SK1 | not started |
+| SK2 | blocked on each device's look source (screenshots or pages of its own document) |
+| O1 | not started |
+| AL1 | not started |
+| E3a, E3b, E3c | not started |
+| E3d | blocked on the owner naming alfentanil (PQ6 = C) |
+| S9 | not started |
+
+Repairs outside the pieces: on main, the Room page refuses a channel count or kind that removes a channel in use (PR
+494), the face's numbers at the device's resolution (PR 496), the SP5 TCI's brochure data (PR 502), the pump tablet
+refused while the case is paused (PR 498). In a pull request: the TCI maximum per syringe (522), the TCI dialog's marks
+for the models the SP5 TCI holds (528).
 
 **Base and preconditions.**
 - Base: `origin/main` **8344539d** (Merge PR #359, `plan-learner-action-remote`), read in the worktree
@@ -538,6 +567,7 @@ label). **CI:** 1 run + validation.
 remifentanil, fentanyl or sufentanil that the executor's census finds (listed for the orchestrator before it is
 added). Registered sets are not used by the plant, so no validation workflow. **Gate:** common, `@pme/engine-core`.
 **CI:** 1 run.
+**Plan and code differ:** PR 413 merged the census but registered no set (no paper readable in full); `tci-sets/` on main has no Kataria, Paedfusor or Eleveld remifentanil set.
 
 ### E1: Pump channels in the PK layer, both kinds (12 h; validation workflow)
 **Depends on:** S0. **Files:** `types-pk.ts` (`kind: 'pump'` with its actions; the channel state with its `kind`;

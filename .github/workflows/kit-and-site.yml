@@ -62,15 +62,17 @@ jobs:
       SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: ci passed on this commit (a push to main)
-        run: |
-          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&status=success" --jq .total_count)
-          [ "$n" -gt 0 ] || { echo "::error::no successful ci run of a push to main for $SHA: nothing is published"; exit 1; }
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.SHA }}
           path: src
           sparse-checkout: scripts/showcase
+      # an automatic run needs no question: the ci run that triggered it is the evidence (the kit job's condition)
+      - name: ci passed on this commit (a push to main)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&per_page=100" | node src/scripts/showcase/ci-passed.mjs "$SHA"
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -109,15 +111,17 @@ jobs:
       SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: ci passed on this commit (a push to main)
-        run: |
-          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&status=success" --jq .total_count)
-          [ "$n" -gt 0 ] || { echo "::error::no successful ci run of a push to main for $SHA: nothing is published"; exit 1; }
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.SHA }}
           path: src
           sparse-checkout: scripts/showcase
+      # an automatic run needs no question: the ci run that triggered it is the evidence (the kit job's condition)
+      - name: ci passed on this commit (a push to main)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&branch=main&per_page=100" | node src/scripts/showcase/ci-passed.mjs "$SHA"
       - uses: actions/download-artifact@v4
         with:
           name: kit-zips
