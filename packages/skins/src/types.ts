@@ -427,7 +427,7 @@ export interface Skin {
     pauseAlarm: boolean;
   };
   st: { defaultOn: boolean; isoMs: number; stMs: number; updateS: number };
-  beep: { source: 'ECG' | 'PLETH' | 'HR_SOURCE'; defaultOn: boolean; volume: { min: number; max: number; default: number }; pitchMap: PitchMapId; baseHz: number };
+  beep: { source: 'ECG' | 'PLETH' | 'HR_SOURCE'; defaultOn: boolean; volume: { min: number; max: number; default: number }; levelDb: number; pitchMap: PitchMapId; baseHz: number; neutralHz: number };
   syncMarker: 'line' | 'triangle-mid-qrs' | 'r-above' | null;
   defib: {
     energyAdultJ: number;

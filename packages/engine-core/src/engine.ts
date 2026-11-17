@@ -577,7 +577,7 @@ class Engine implements MonitorEngine {
       data.st.organs = createOrgansState(undefined, data.st.l1); // Absent in older snapshots
       rebaselineOrgans(data.st.organs, this.organsCtx(data.st));
     }
-    upgradeOrgans(data.st.organs);
+    upgradeOrgans(data.st.organs, data.st.resp.spont);
     data.st.blood ??= createBloodState(undefined); // Absent in older snapshots
     data.st.neuro ??= createNeuroState(undefined, seed); // Absent in older snapshots
     data.st.rng.ectopyHazard ??= seedStream(seed, 'ectopyHazard'); // E133's stream, absent in older snapshots
@@ -680,7 +680,9 @@ class Engine implements MonitorEngine {
       const t = refT + BEEP_DELAY_S;
       if (this.posted.has(id) || t < simT - LATE_TONE_POST_S) continue;
       this.posted.set(id, { t, n: d.n });
-      this.emit({ type: 'tone', t, id, kind: 'qrs', freqHz: spo2PitchHz(this.st.resp.num.spo2.shown), refT }); // pitch(SpO2)
+      const spo2 = this.st.resp.num.spo2.shown;
+      // pitch(SpO2) only while the SpO2 is valid; without one the tone carries no pitch and the style gives its own
+      this.emit({ type: 'tone', t, id, kind: 'qrs', ...(spo2 !== null ? { freqHz: spo2PitchHz(spo2) } : {}), refT });
     }
     this.committedDet = [];
     this.dirtyFromN = Number.POSITIVE_INFINITY;
@@ -749,7 +751,7 @@ class Engine implements MonitorEngine {
     ps.rhythm.fwaves = ps.rhythm.fwaves.filter((f) => f.end >= ps.n / ECG_RATE);
     const none = () => {};
     advanceResp(ps.resp, {
-      l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
+      l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel, brainstem: ps.organs.brain.energy.brainstem,
       bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, histamine: ps.pk.bus.airway.histamine,
     }, Math.floor(end / 8), none);
     const resp = ps.resp;
@@ -862,7 +864,7 @@ class Engine implements MonitorEngine {
       mgMmolL: ps.blood.out.mg > 0 ? ps.blood.out.mg : undefined, iCaMmolL: ps.blood.out.iCa > 0 ? ps.blood.out.iCa : undefined, kMmolL: ps.blood.out.k > 0 ? ps.blood.out.k : undefined, // ONE Mg and Ca state (0 before the blood model's first step); the blood model's K beside them
     }, ps.pk.bus);
     advanceResp(ps.resp, {
-      l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
+      l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel, brainstem: ps.organs.brain.energy.brainstem,
       bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, // Drug PD outputs; endocrine anaphylaxis relief
       histamine: ps.pk.bus.airway.histamine, // The drug-driven bronchoconstriction
     }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Blood view; neuro, HCO3 for Winter's; the organs' CBF, one step late — organs advance after resp

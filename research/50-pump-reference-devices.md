@@ -28,7 +28,8 @@ few words at most.
 **The tags.** `C`: read in the document's text, on the page cited. `W`: read on the web page W1. `I`: my reading of
 the cited rows (never a source value; a profile never cites an `I` row for a number). `GAP`: no document I could read
 gives it; the profile carries it as a `gap` naming what the manual must give. `B`: given by the SP5 TCI's brochure; the
-profile cites that note's row (research/84, TB-nn).
+profile cites that note's row (research/84, TB-nn). `M`: given by the SP5 family's operator's manual (the plain SP5's,
+not the TCI edition); the profile cites that note's row (research/86, TM-nn) and marks the number as the family's.
 
 Values are written as the document prints them, units included ("ml" is printed; the profiles write mL).
 
@@ -112,12 +113,12 @@ pump's TCI features in a few words and no number of the pump's mechanics. Every 
 | TC-05 | Drug compensation | "automatic drug compensation" is named, with no detail | W1 | W |
 | TC-06 | Which four drugs and which seven models | not in W1; the SP5 TCI brochure gives them (research/84 TB-01, TB-02) | research/84 | B |
 | TC-07 | Syringe sizes | not in W1; the SP5 TCI brochure gives them (research/84 TB-06) | research/84 | B |
-| TC-08 | Flow rate range and step, per syringe size | not in W1 | — | GAP |
-| TC-09 | Maximum rate in TCI (the induction rate) | not in W1 | — | GAP |
-| TC-10 | Bolus and purge rates | not in W1 | — | GAP |
-| TC-11 | KVO rate | not in W1 | — | GAP |
-| TC-12 | Occlusion levels or pressures | not in W1 | — | GAP |
-| TC-13 | Alarm list | not in W1 | — | GAP |
+| TC-08 | Flow rate range and step, per syringe size | not in W1; the SP5 family manual gives them (research/86 TM-01, TM-02) | research/86 | M |
+| TC-09 | Maximum rate in TCI (the induction rate) | not in W1 nor the family manual; by the owner's ruling the family's rate maximum for the syringe stands in (research/86 TM-01) | research/86 | M |
+| TC-10 | Bolus and purge rates | not in W1; the SP5 family manual gives them (research/86 TM-03 to TM-06) | research/86 | M |
+| TC-11 | KVO rate | not in W1; the SP5 family manual gives it (research/86 TM-07 to TM-09) | research/86 | M |
+| TC-12 | Occlusion levels or pressures | not in W1; the SP5 family manual gives them (research/86 TM-10, TM-11) | research/86 | M |
+| TC-13 | Alarm list | not in W1; the SP5 family manual gives it (research/86 TM-12, TM-13) | research/86 | M |
 | TC-14 | Patient data the pump accepts (age, weight, height, sex) and the limits it refuses outside | not in W1 (plan D6) | — | GAP |
 | TC-15 | Target ranges and steps, plasma and effect-site | not in W1 | — | GAP |
 
@@ -127,7 +128,9 @@ number legible, and for the SP5 without TCI: it lists rate, time and body-weight
 safety-and-performance summaries of other models (uSP, iSP, uDSP) and a data sheet of the eSP TCI. Numbers of another
 model, or of a copy whose origin cannot be read, are not the SP5 TCI's: TC-07 to TC-15 stay gaps until the SP5 TCI
 operator's manual is in the library (plan SK2). The SP5 TCI's own brochure, read later, gives TC-06 and TC-07 and parts
-of TC-14 and TC-15 (`research/84-sp5-tci-brochure-readings.md`); the rest stays a gap.
+of TC-14 and TC-15 (`research/84-sp5-tci-brochure-readings.md`). The SP5 family's operator's manual gives TC-08 and
+TC-10 to TC-13 as the family's numbers, and its rate maximum stands in for TC-09
+(`research/86-sp5-family-manual-readings.md`); TC-14 and TC-15 stay gaps.
 
 ## 4. Facts in the catalogues that no profile carries
 

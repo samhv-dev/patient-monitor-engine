@@ -18,6 +18,8 @@ export interface SimMonitor {
 }
 
 const epochNow = (t = performance.now()) => performance.timeOrigin + t;
+/** This page draws no style, so its beep has no style's level to take [ENG: display]. */
+const BEEP_GAIN = 0.25;
 
 export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions; lanes?: LeadId[] } = {}): SimMonitor {
   const doc = el.ownerDocument;
@@ -128,7 +130,7 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
           audioNow: () => out.ctx.currentTime,
           perfToAudio: out.perfToAudio,
           outputLatency: out.outputLatency,
-          play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880),
+          play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, BEEP_GAIN),
         });
         scheduler.start();
       });

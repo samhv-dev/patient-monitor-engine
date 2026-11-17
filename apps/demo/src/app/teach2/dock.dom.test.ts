@@ -86,7 +86,7 @@ describe('Instructor v2 dock: the Debrief ready flag of a /2 card', () => {
     const record = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }), () => Date.UTC(2026, 10, 1, 9, 0));
     record.wire({ type: 'commandApplied', commandId: 'c0', tick: 0, resolved: { command: { id: 'c0', issuedBy: 'instructor', type: 'scenario', action: 'load', doc } } } as unknown as WireEvent);
     const link = {
-      ctl: { scenario: sv, hostPaused: false }, simT: 1471, host: { record, driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [] } },
+      ctl: { scenario: sv, hostPaused: false }, simT: 1471, host: { record, driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [], rhythmHolds: () => [] } },
       send: async (c: CommandInput) => ({ accepted: true, tick: 0, commandId: String(c.type), rttMs: 0 }),
       note: (text: string) => record.note(1471, text),
     } as unknown as Link;
