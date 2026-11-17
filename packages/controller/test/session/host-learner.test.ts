@@ -339,7 +339,7 @@ describe('the two PIN statements (§4 D9, LQ1): the safety of the whole feature'
     const b = await signIn(x, 'lr.2', KEY2);
     expect(x.host.learnerRemotes()).toBe(2);
     x.setLearnerPin('774411');
-    x.host.learnerPinChanged();
+    await x.host.learnerPinChanged();
     await waitFor(() => ['lr.1', 'lr.2'].every((id) => grants(x.got, id).length === 2));
     for (const id of ['lr.1', 'lr.2']) expect(grants(x.got, id).at(-1)).toMatchObject({ granted: false, reason: LEARNER_REASONS.pinChanged });
     expect(x.host.learnerRemotes()).toBe(0);
@@ -363,7 +363,7 @@ describe('the two PIN statements (§4 D9, LQ1): the safety of the whole feature'
     expect((await lr.send(stage('p0000010'))).reason).toBe(LEARNER_REASONS.notSignedIn);
     expect(grants(x.got, 'lr.1').at(-1)).toMatchObject({ granted: false, reason: LEARNER_REASONS.pinChanged });
     expect(grants(x.got, 'ph.1').at(-1)).toMatchObject({ granted: true });
-    x.host.instructorPinChanged(); // the instructor's change revokes the phone, not the learners (and vice versa)
+    await x.host.instructorPinChanged(); // the instructor's change revokes the phone, not the learners (and vice versa)
     await waitFor(() => grants(x.got, 'ph.1').at(-1)?.granted === false);
     expect(grants(x.got, 'lr.1').filter((g) => g.granted)).toHaveLength(1);
   });

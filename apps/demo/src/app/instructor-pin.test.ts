@@ -117,7 +117,7 @@ describe("a learner's frames never carry the PIN", () => {
     expect((await a.send({ type: 'time', action: 'pause' })).accepted).toBe(true);
     pin.change();
     pins.push(pin.get());
-    host.instructorPinChanged();
+    await host.instructorPinChanged();
     await until(() => a.access.state === 'revoked', 'revoked by the change');
     const b = phone(pin.get());
     await until(() => b.access.state === 'granted', 'the new PIN signed in');

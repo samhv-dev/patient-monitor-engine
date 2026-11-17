@@ -328,7 +328,7 @@ describe("Room setup's learner PIN (L6, §4 D9)", () => {
   };
   const card = (o: { remotes?: number; denials?: number; relay?: string | null } = {}) => {
     const p = pin();
-    const c = learnerPinCard({ pin: p, host: { learnerRemotes: () => o.remotes ?? 0, learnerDenials: () => o.denials ?? 0 }, relay: o.relay === undefined ? 'ws://relay.test/' : o.relay });
+    const c = learnerPinCard({ pin: p, host: { learnerRemotes: () => o.remotes ?? 0, learnerDenials: () => o.denials ?? 0, idle: () => Promise.resolve() }, relay: o.relay === undefined ? 'ws://relay.test/' : o.relay });
     document.body.replaceChildren(c.el);
     return { c, p, hold: c.el.querySelector('.ip-peer-hold') as HTMLButtonElement, value: c.el.querySelector('.ip-peer-pin-value') as HTMLElement };
   };
