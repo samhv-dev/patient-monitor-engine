@@ -382,6 +382,27 @@ export function onPumpsWords(chs: readonly number[], channelLess: boolean): stri
   return `running on ${pumps}${channelLess ? ' and as an infusion' : ''}: change it on the pump`;
 }
 
+/** A channel that holds a syringe or a bag (idle, running, paused or in alarm): what the patient is or may be receiving. */
+export interface ChannelInUse {
+  ch: number;
+  kind: ChannelKind;
+  running: boolean;
+}
+
+/**
+ * Why Room setup's rack `next` cannot replace the present one: it removes a channel in use or changes its kind. The
+ * running channels are named first (a running channel is stopped before it is unloaded). Null: no channel in use is touched.
+ */
+export function rackRefusal(next: readonly ChannelKind[], inUse: readonly ChannelInUse[]): string | null {
+  const hit = inUse.filter((c) => next[c.ch - 1] !== c.kind);
+  const running = hit.filter((c) => c.running);
+  const named = (running.length ? running : hit).map((c) => c.ch).sort((a, b) => a - b);
+  if (named.length === 0) return null;
+  const one = named.length === 1;
+  const who = `${one ? 'Channel' : 'Channels'} ${list(named)} ${one ? 'is' : 'are'}`;
+  return running.length ? `${who} running: stop ${one ? 'it' : 'them'} first.` : `${who} loaded: unload ${one ? 'it' : 'them'} first.`;
+}
+
 /**
  * D9: a remote's or the Drug sheet's rate for a drug that runs on exactly one channel (and no channel-less infusion),
  * as that channel's `pump rate` (or `pump stop` at 0), checked against its device.
