@@ -108,7 +108,9 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
       detach();
       // the cockpit drives the room's patient with its breaths and its circuit only (room-guard.ts)
       const refused = (what: string, why?: string) => console.warn('vent link rejected', what, why);
-      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r));
+      // its state for the room's bookmarks is the link's own record, written past the room's guard (port.ts LinkOptions)
+      const keep = (state: LinkRecord | null) => session.linked(m).dispatch({ id: 'vent-state', issuedBy: 'ventilator', type: 'deviceState', source: 'ventilator', state } as Command);
+      const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r), { keep });
       detach = l;
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
       // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,
@@ -126,22 +128,29 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     return r;
   };
   /**
-   * A return to a bookmark that holds the cockpit driving then: the cockpit linked now takes it back (its link sends it),
-   * and the patient's clock stands until it ventilates the restored patient or RUN_TIMEOUT_MS passed. With none linked,
-   * the engine's own ventilator takes the patient with the bookmark's settings after the cockpit's last frame, as when a
-   * cockpit goes.
+   * A return to engine tick `tick`, to a bookmark that holds the cockpit driving then. The patient's clock stands until
+   * the return has ended in one of two ways: the cockpit linked now has taken the bookmark back and ventilates the
+   * restored patient, or the engine's own ventilator has the patient, with the bookmark's settings, on the tick after
+   * the bookmark's last frame (no cockpit linked, or one that could not or did not take it back in RUN_TIMEOUT_MS; it is
+   * then unlinked, as at any hand-over). The clock stands until that hand-over has reached the engine, so its tick is
+   * the bookmark's, never the wall clock's.
    */
-  const restored = (r: LinkRecord) => {
-    const taking = driving ? session.ventLink?.restoring() : null;
-    if (taking) return void session.holdClock(taking);
+  const restored = (r: LinkRecord, tick: number) => {
     const s = snapshotSettings(r.vent);
-    if (s) void toEngine(s, r.link.offset === null ? 0 : r.link.lastTick + r.link.offset + 1);
+    const at = Math.max(tick + 1, r.link.offset === null ? 0 : r.link.lastTick + r.link.offset + 1);
+    const engine = async () => void (s && (await toEngine(s, at)));
+    const taking = driving ? session.ventLink?.restoring() : null;
+    void session.holdClock(taking ? taking.then((o) => {
+      if (o === 'loaded') return undefined;
+      desk.unlink();
+      return engine();
+    }) : engine());
   };
   session.onMount((m) => m.on((e) => {
-    if (e.type === 'deviceState' && e.source === 'ventilator' && isLinkRecord(e.state)) {
-      const r = e.state;
-      queueMicrotask(() => restored(r)); // after the link heard it too
-    }
+    if (e.type !== 'deviceState' || e.source !== 'ventilator') return;
+    const tick = Math.round(e.t / 0.02);
+    const r = e.state;
+    if (isLinkRecord(r, tick)) queueMicrotask(() => restored(r, tick)); // after the link heard it too
   }));
   const desk: CockpitDesk = {
     get driving() {

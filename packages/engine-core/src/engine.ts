@@ -1417,6 +1417,15 @@ function rampReason(r: Ramp | undefined): string | undefined {
   return numReason('ramp.durationS', r.durationS, 0, 86_400) ?? numReason('ramp.delayS', r.delayS, 0, 86_400);
 }
 
+/** The snapshot without the state of a device that drives the patient (`deviceState`): what leaves the host for a
+ *  follower, which needs the patient and never gives the device back. Byte-identical to a snapshot taken without one. */
+export function withoutDevices(s: PatientSnapshot): PatientSnapshot {
+  const st = s.state as Record<string, unknown> | null;
+  if (typeof st !== 'object' || st === null || !('devices' in st)) return s;
+  const { devices: _d, ...rest } = st;
+  return { ...s, state: rest };
+}
+
 export function createEngine(opts: EngineOptions = {}): MonitorEngine {
   return new Engine(opts);
 }

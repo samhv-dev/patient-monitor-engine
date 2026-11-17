@@ -1,6 +1,6 @@
 // Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope
 // validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel).
-import { INSTRUMENTS, NOTE_EVENTS, type WireMessage } from './protocol.ts';
+import { HOST_ONLY_COMMANDS, INSTRUMENTS, NOTE_EVENTS, type WireMessage } from './protocol.ts';
 import type { DoseUnit, PkRoute, PumpConcentration, RateUnit } from '@pme/engine-core';
 
 export const WIRE_LIMITS = {
@@ -321,6 +321,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
     case 'command': {
       const b = m.body as Record<string, unknown> | null;
       if (!b || typeof b !== 'object' || typeof b.id !== 'string' || typeof b.type !== 'string' || typeof b.issuedBy !== 'string') return null;
+      if (HOST_ONLY_COMMANDS.has(b.type)) return null;
       if (b.type === 'note' && ((b.kind !== 'note' && b.kind !== 'marker') || typeof b.text !== 'string' || b.text.length > WIRE_LIMITS.noteChars)) return null;
       if (b.type === 'note' && b.ev !== undefined && !(NOTE_EVENTS as readonly unknown[]).includes(b.ev)) return null; // a known tag only
       if ((b.type === 'prep' || b.type === 'infusion') && !prepBodyOk(b)) return null; // L3: a learner's shapes, typed

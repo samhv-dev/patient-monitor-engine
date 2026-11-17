@@ -1,7 +1,9 @@
 // A ventilator linked to a room drives the room's patient through the room's host, which takes from it only what a
 // ventilator does: its breaths (the VentFrame), its own circuit at the Y-piece, its settings for a hand-over, and its own
-// state for the room's bookmarks (the `state` it reports, the `deviceState` the link keeps in the engine, the answer to
-// a restore). The patient (lungs, effort, disease, circulation) and the session's clock are the room's: anything else is refused.
+// state for the room's bookmarks: the `state` it reports (the host keeps the newest, checked and at most
+// VENT_STATE_BYTES, as its link's record; one each animation frame in this computer, one each RELAY_STATE_MS over the
+// relay) and `restored`, its answer to a return (one per return; it ends the fence on its older messages). The record
+// itself is the host's link's to write (LinkOptions.keep), never a ventilator's command. The patient (lungs, effort, disease, circulation) and the session's clock are the room's: anything else is refused.
 import type { Command } from '@pme/engine-core';
 import type { LinkMsg, LinkPort, MonitorLike } from './port.ts';
 
@@ -16,7 +18,6 @@ export const ROOM_VENT_MAY_SEND: {
   commands: {
     externalDrive: (c) => c.source === 'ventilator',
     applyEvent: (c) => c.event.kind === 'airway',
-    deviceState: (c) => c.source === 'ventilator',
   },
 };
 

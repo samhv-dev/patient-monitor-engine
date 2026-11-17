@@ -7,7 +7,8 @@ import { decodeState, encodeState } from '@pme/engine-core';
 import { advanceVent, createVent, resetPhysics, setCircuit } from '../vent.ts';
 import type { VentState } from '../types.ts';
 import { createLinkCore, linkEvent, linkTick, patchVent, LINK_TICK_S, type LinkCore } from './core.ts';
-import { LEAD_TICKS, type LinkPort, type StampedLung } from './port.ts';
+import { LEAD_TICKS, type LinkPort } from './port.ts';
+import { isVentSnapshot, RECORD_LUNGS_MAX, REMAKE_TICKS_MAX, RESTORE_AHEAD_MAX, type StampedLung, type VentSnapshot } from './record.ts';
 import type { CockpitSettings } from './relay-port.ts';
 import type { LungStateEvent } from '../lung-input.ts';
 import { PROFILES, type ProfileId } from './profiles.ts';
@@ -20,23 +21,13 @@ import { PROFILES, type ProfileId } from './profiles.ts';
  */
 export const LINKED_MAX_FRAME_S = 0.5;
 
-/**
- * Everything the ventilator holds that decides its next frames, JSON-safe (`body` is engine-core's snapshot codec): what a
- * bookmark keeps of it, so that a restore returns the ventilator with the patient. `face` is the front end's id (a state
- * is loaded only by the face that saved it); `tick` the ventilator tick it was taken after.
- */
-export interface VentSnapshot {
-  v: 1;
-  face: string | null;
-  tick: number;
-  body: unknown;
-}
-
 /** What a front end adds to the snapshot: its own state that changes what the ventilator does or signals. `load` is
  *  also its moment to show the loaded settings. */
 export interface VentExtension {
   face: string;
   save(): unknown;
+  /** Whether `x` is a saved state of this front end (checked before anything is loaded). */
+  valid(x: unknown): boolean;
   load(x: unknown): void;
 }
 
@@ -52,9 +43,32 @@ interface Body {
 
 /** The settings a snapshot holds, and what it last measured (a hand-over's input), or null when it is not one. */
 export function snapshotSettings(s: VentSnapshot): CockpitSettings | null {
-  if (s?.v !== 1) return null;
-  const vs = (decodeState(s.body) as Body).vs;
-  return { cfg: vs.cfg, measured: { RR: vs.p.measured.RR, VTE: vs.p.measured.VTE } };
+  const b = bodyOf(s);
+  return b && { cfg: b.vs.cfg, measured: { RR: b.vs.p.measured.RR, VTE: b.vs.p.measured.VTE } };
+}
+
+const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
+/** `x` has every key of `ref`, each of the same type (a face may add its own): a state from this build of the ventilator. */
+const sameShape = (x: unknown, ref: object): boolean =>
+  isObj(x) && Object.entries(ref).every(([key, v]) => key in x && (v === null || x[key] === null || typeof x[key] === typeof v));
+const REF = createVent();
+
+/** The body of a ventilator state, decoded, or null when it is not one this build of the ventilator wrote. */
+function bodyOf(s: unknown): Body | null {
+  if (!isVentSnapshot(s)) return null;
+  let b: Body;
+  try {
+    b = decodeState(s.body) as Body;
+  } catch {
+    return null;
+  }
+  const t = s.tick * LINK_TICK_S;
+  const ok = isObj(b) && typeof b.profile === 'string' && b.profile in PROFILES && Number.isFinite(b.sim) && b.sim >= t - 1e-9 && b.sim < t + LINK_TICK_S
+    && isObj(b.vs) && isObj(b.vs.cfg) && isObj(b.vs.p) && sameShape(b.vs.cfg, REF.cfg) && isObj(b.vs.p.measured)
+    && typeof b.vs.p.t === 'number' && Math.abs(b.vs.p.t - t) < 1e-6 + LINK_TICK_S / 4
+    && isObj(b.core) && isObj(b.core.lung) && isObj(b.core.lung.base) && typeof b.core.started === 'boolean' && Number.isInteger(b.core.seq)
+    && Array.isArray(b.lungs) && b.lungs.length <= RECORD_LUNGS_MAX && b.lungs.every((l) => isObj(l) && isObj(l.ev) && Number.isInteger(l.at));
+  return ok ? b : null;
 }
 
 /** Copy `src` into `dst` in place (the front ends hold references to the ventilator's objects). */
@@ -154,8 +168,8 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
       return { v: 1, face: d.ext?.face ?? null, tick: k, body: encodeState(body) };
     },
     load(s: VentSnapshot) {
-      if (s?.v !== 1 || s.face !== (d.ext?.face ?? null)) return false;
-      const b = decodeState(s.body) as Body;
+      const b = bodyOf(s);
+      if (!b || s.face !== (d.ext?.face ?? null) || (d.ext && !d.ext.valid(b.ext))) return false;
       refill(vs.cfg, b.vs.cfg);
       refill(vs.p, b.vs.p);
       refill(vs, { ...b.vs, cfg: vs.cfg, p: vs.p });
@@ -164,7 +178,7 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
       k = s.tick;
       sim = b.sim;
       lungs = b.lungs ?? [];
-      if (d.ext && b.ext !== undefined) d.ext.load(b.ext);
+      d.ext?.load(b.ext);
       return true;
     },
     dispose: () => off?.(),
@@ -198,7 +212,10 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
       // so the monitor never waits on a ventilator that cannot take it.
       if (m.epoch === epoch) return;
       epoch = m.epoch;
-      const loaded = d.load(m.state);
+      const fits = isVentSnapshot(m.state) && Number.isInteger(m.upTo) && m.upTo >= m.state.tick && m.upTo - m.state.tick <= REMAKE_TICKS_MAX
+        && Number.isFinite(m.allowed) && m.allowed >= m.upTo && m.allowed - m.upTo <= RESTORE_AHEAD_MAX
+        && Array.isArray(m.lungs) && m.lungs.length <= RECORD_LUNGS_MAX;
+      const loaded = fits && d.load(m.state);
       if (loaded) {
         allowed = m.allowed;
         for (const l of m.lungs) takeLung(l); // sent after the state was taken: its pending ones are known by their time

@@ -18,9 +18,9 @@ export const RELAY_BATCH_MAX = 16;
 export const RELAY_BODY_BYTES = 4 * 1024;
 /** The cockpit's settings go at least this often, ms (plan R8c: "once a second"). */
 export const SETTINGS_MS = 1000;
-/** The cockpit's state goes at most this often, ms [ENG: network; 4.3 KB a second; the link makes again, unsent, the
- *  ticks a restored engine already has, so an older state costs no exactness]. */
-export const RELAY_STATE_MS = 1000;
+/** The cockpit's state goes at most this often, ms [ENG: network; 4.3 KB, 17 KB a second; a state this old at ×8 is
+ *  100 ticks, which the link makes again unsent, and leaves room for RECORD_LUNGS_MAX lungStates after it]. */
+export const RELAY_STATE_MS = 250;
 /** A `state` body's largest JSON (guard.ts VENT_LIMITS.stateBytes). */
 export const RELAY_STATE_BYTES = 8 * 1024;
 

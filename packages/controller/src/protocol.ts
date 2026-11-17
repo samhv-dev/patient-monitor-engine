@@ -547,6 +547,14 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   'prep notice',
 ]);
 
+/**
+ * Commands only the host's own code may give its engine: no peer sends them, whatever its role or transport (the guard
+ * drops them from the wire, HostSession refuses them from any peer). `deviceState` is the ventilator link's record of
+ * the cockpit that drives the patient (packages/ventilator link/record.ts), written by that link alone.
+ */
+export const HOST_ONLY_COMMANDS: ReadonlySet<string> = new Set(['deviceState']);
+export const HOST_ONLY_REASON = 'only the host gives this command';
+
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */
 export function commandShape(c: WireCommand | CommandInput): string {
   const x = c as { type: string; action?: unknown; event?: { kind?: unknown } };

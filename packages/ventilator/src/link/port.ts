@@ -27,7 +27,7 @@ import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
 import type { VentConfig } from '../types.ts';
 import type { LungStateEvent } from '../lung-input.ts';
 import type { ProfileId } from './profiles.ts';
-import type { VentSnapshot } from './vent-driver.ts';
+import { isLinkRecord, isVentSnapshot, RECORD_LUNGS_MAX, VENT_STATE_BYTES, type LinkRecord, type StampedLung, type VentSnapshot } from './record.ts';
 
 export type LinkMsg =
   | { v: 1; kind: 'cmds'; tick: number; cmds: Command[]; epoch?: string }
@@ -41,30 +41,8 @@ export type LinkMsg =
   | { v: 1; kind: 'restore'; epoch: string; state: VentSnapshot; lungs: StampedLung[]; allowed: number; upTo: number }
   | { v: 1; kind: 'restored'; epoch: string; loaded: boolean };
 
-/**
- * What the engine holds of the ventilator driving it (a `deviceState` command; restored as a `deviceState` event): the
- * ventilator's state, the link's own (the tick offset, the last ventilator tick the engine has, the clock it published)
- * and the lungStates sent for ticks after that state's (the state may not hold them yet). The engine's queue holds the frames up to `link.lastTick`; the state may be older (a
- * report comes after its frames), and the ventilator then makes those ticks again, which the link does not send twice.
- */
-export interface LinkRecord {
-  v: 1;
-  vent: VentSnapshot;
-  link: { offset: number | null; lastTick: number; allowed: number; engTick: number };
-  lungs: StampedLung[];
-}
-
-/** A lungState and the ventilator tick it is applied on (null: at once, sent before the link knew its offset). */
-export interface StampedLung {
-  ev: LungStateEvent;
-  at: number | null;
-}
-
-/** How a restore ended at the ventilator: it loaded the state, it could not (it drives on with its own), no answer. */
+/** How a restore ended at the ventilator: it loaded the state, it could not, or it did not answer in RUN_TIMEOUT_MS. */
 export type RestoreOutcome = 'loaded' | 'refused' | 'silent';
-
-export const isLinkRecord = (r: unknown): r is LinkRecord =>
-  typeof r === 'object' && r !== null && (r as LinkRecord).v === 1 && (r as LinkRecord).vent?.v === 1 && typeof (r as LinkRecord).link === 'object';
 
 export interface LinkPort {
   post(m: LinkMsg): void;
@@ -185,6 +163,14 @@ export const RESTORE_REPOST_MS = 250;
 let epochs = 0;
 const newEpoch = () => `${Date.now().toString(36)}.${++epochs}`;
 
+export interface LinkOptions {
+  /**
+   * Where the link keeps its record (`deviceState`, null: none). Only the link writes it; the default dispatches it on
+   * `mon`, which a host that guards what a ventilator may send (roomVentMonitor) does not want: it passes its own.
+   */
+  keep?: (state: LinkRecord | null) => unknown;
+}
+
 /** The link's detach function; also `runTo`, the fast-forward's lockstep with the cockpit. */
 export type LinkDetach = (() => void) & {
   /**
@@ -203,7 +189,13 @@ export type LinkDetach = (() => void) & {
  * result — which is the engine's current tick + 1 — and only ever grows, to what the latest late frame needed; a
  * ventilator restart (its tick goes backwards) relearns it. Returns a detach function.
  */
-export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected: (c: Command, reason?: string) => void = () => {}): LinkDetach {
+export function attachMonitorToLink(
+  mon: MonitorLike,
+  port: LinkPort,
+  onRejected: (c: Command, reason?: string) => void = () => {},
+  o: LinkOptions = {},
+): LinkDetach {
+  const keep = o.keep ?? ((state: LinkRecord | null) => mon.dispatch({ id: 'vent-state', issuedBy: 'ventilator', type: 'deviceState', source: 'ventilator', state }));
   let offset: number | null = null;
   let learning = false;
   let gen = 0; // Stage V.1: bumped by a ventilator restart; results of commands sent before it are stale
@@ -215,23 +207,33 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
   let lungs: StampedLung[] = [];
   let detached = false;
   let dirty = false;
+  const write = (state: LinkRecord | null) => {
+    try {
+      void Promise.resolve(keep(state)).catch(() => {});
+    } catch {
+      // an engine that refuses it keeps the record it had
+    }
+  };
   /** The record goes to the engine once per task in which it changed, so a snapshot taken in any later task holds it. */
   const touch = () => {
     if (vent === null || dirty) return;
     dirty = true;
     queueMicrotask(() => {
       dirty = false;
-      if (vent === null || detached) return;
-      const state: LinkRecord = { v: 1, vent, link: { offset, lastTick, allowed, engTick }, lungs };
-      try {
-        void Promise.resolve(mon.dispatch({ id: 'vent-state', issuedBy: 'ventilator', type: 'deviceState', source: 'ventilator', state })).catch(() => {});
-      } catch {
-        // an engine that refuses it keeps the record it had
-      }
+      if (vent !== null && !detached) write({ v: 1, vent, link: { offset, lastTick, allowed, engTick }, lungs });
     });
+  };
+  /** No record: the ventilator sends no state it can be given back, or one too large or too old to be. */
+  const forget = () => {
+    if (vent === null) return;
+    vent = null;
+    lungs = [];
+    write(null);
   };
   /** A restore sent and not yet answered: the ventilator's messages from before it are not heard. */
   let awaiting: { msg: Extract<LinkMsg, { kind: 'restore' }>; at: number } | null = null;
+  /** The epoch of the last restore it answered: its messages from before it stay unheard. */
+  let fence: string | null = null;
   /** The ticks the restored engine already holds, which the restored ventilator makes again. */
   let dropTo = -1;
   /** The last restore's end (it settles once; a later restore starts another). */
@@ -247,8 +249,8 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
     settle('silent');
     offset = r.link.offset;
     lastTick = r.link.lastTick;
-    allowed = r.link.allowed;
     engTick = r.link.engTick;
+    allowed = Number.isFinite(r.link.allowed) ? r.link.allowed : lastTick + 2 * LEAD_TICKS;
     learning = false;
     vent = r.vent;
     lungs = r.lungs;
@@ -263,39 +265,44 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
       };
     });
     outcome = { p, settle: (o) => s(o) };
-    const msg = {
-      v: 1, kind: 'restore', epoch: newEpoch(), state: r.vent, lungs: r.lungs, upTo: dropTo,
-      allowed: Number.isFinite(allowed) ? allowed : Math.max(dropTo, r.vent.tick) + 2 * LEAD_TICKS,
-    } as const;
+    const msg = { v: 1, kind: 'restore', epoch: newEpoch(), state: r.vent, lungs: r.lungs, upTo: dropTo, allowed } as const;
     awaiting = { msg, at: Date.now() };
     touch();
     port.post(msg);
   };
-  /** Whether a message of the ventilator is not heard: one from before the restore it has not taken yet. */
+  /** A ventilator that will not be given the bookmark back (it could not load it, or cannot take a restore). */
+  const refused = () => {
+    awaiting = null;
+    dropTo = -1;
+    relearn();
+    forget();
+    settle('refused');
+  };
+  /** Whether a message of the ventilator is not heard: one from before the restore it has not taken, or before the last. */
   const fenced = (m: Extract<LinkMsg, { kind: 'cmds' | 'state' | 'restored' }>): boolean => {
-    if (!awaiting) return m.kind === 'restored';
     if (m.kind === 'restored') {
-      if (m.epoch !== awaiting.msg.epoch) return true;
+      if (!awaiting || m.epoch !== awaiting.msg.epoch) return true;
       awaiting = null;
-      if (!m.loaded) {
-        dropTo = -1;
-        relearn();
-        settle('refused');
-      }
+      fence = m.epoch;
+      if (!m.loaded) refused();
       return true;
     }
     if (m.epoch === undefined) {
-      // a ventilator that cannot take a restore drives on from its own state, as before
-      awaiting = null;
-      dropTo = -1;
-      relearn();
-      settle('refused');
+      if (awaiting) refused(); // an older ventilator, which sends no epoch, drives on from its own state
       return false;
     }
-    if (m.epoch === awaiting.msg.epoch) return false;
-    if (Date.now() - awaiting.at >= RESTORE_REPOST_MS) {
-      awaiting.at = Date.now();
-      port.post(awaiting.msg);
+    if (awaiting) {
+      if (m.epoch === awaiting.msg.epoch) return false;
+      if (Date.now() - awaiting.at >= RESTORE_REPOST_MS) {
+        awaiting.at = Date.now();
+        port.post(awaiting.msg);
+      }
+      return true;
+    }
+    if (fence === null || m.epoch === fence) return false;
+    if (m.kind === 'cmds' && m.epoch === '' && m.tick < lastTick) {
+      fence = null; // the ventilator started again (a reloaded page): a new one, learnt again
+      return false;
     }
     return true;
   };
@@ -311,6 +318,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
   const offPort = port.onMessage((m) => {
     if ((m.kind === 'cmds' || m.kind === 'state' || m.kind === 'restored') && fenced(m)) return;
     if (m.kind === 'state') {
+      if (!isVentSnapshot(m.state) || JSON.stringify(m.state).length > VENT_STATE_BYTES) return forget();
       vent = m.state;
       const tick = m.state.tick;
       lungs = lungs.filter((l) => l.at !== null && l.at > tick);
@@ -376,7 +384,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
   });
   const offEng = mon.on((e) => {
     if (e.type === 'deviceState') {
-      if (e.source === 'ventilator' && isLinkRecord(e.state)) restore(e.state);
+      if (e.source === 'ventilator' && isLinkRecord(e.state, Math.round(e.t / 0.02))) restore(e.state);
       return;
     }
     const tk = 't' in e ? Math.floor(e.t / 0.02 + 1e-6) : 0; // every event but toneCancel carries sim time
@@ -408,8 +416,11 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
     }
     if (e.type === 'lungState') {
       const at = Number.isFinite(allowed) ? allowed + 1 : null;
-      lungs = [...lungs.filter((l) => l.at !== null), { ev: e, at }];
-      touch();
+      if (vent !== null) {
+        lungs = [...lungs.filter((l) => l.at !== null), { ev: e, at }];
+        if (lungs.length > RECORD_LUNGS_MAX) forget();
+        else touch();
+      }
       port.post({ v: 1, kind: 'lungState', ev: e, ...(at === null ? {} : { atTick: at }) });
     }
   });

@@ -35,6 +35,7 @@ describe('what a ventilator in a room may send', () => {
       cmd({ type: 'setRhythm', rhythm: 'vf' }),
       cmd({ type: 'setModifiers', modifiers: {} }),
       cmd({ type: 'externalDrive', source: 'manual', frame: {} }),
+      cmd({ type: 'deviceState', source: 'ventilator', state: { v: 1 } }), // the host's link writes its record, never a ventilator
     ]) expect(roomVentCommandRefusal(c)).toMatch(/^a ventilator in a room may not send /);
   });
 

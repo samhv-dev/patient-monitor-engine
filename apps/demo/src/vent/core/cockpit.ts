@@ -151,6 +151,11 @@ export function createCockpit(d: VentDriver, face: FaceSpec, o: CockpitOptions):
   d.ext = {
     face: face.id,
     save: () => ({ matched, rec: rec.save(), view: view?.save() ?? null }),
+    valid(x) {
+      const s = x as { matched?: unknown; rec?: { tail?: unknown }; view?: { pending?: unknown; sig?: unknown } | null } | null;
+      return typeof s === 'object' && s !== null && typeof s.matched === 'boolean' && typeof s.rec === 'object' && s.rec !== null && Array.isArray(s.rec.tail)
+        && (view ? typeof s.view === 'object' && s.view !== null && Array.isArray(s.view.pending) && Array.isArray(s.view.sig) : s.view === null);
+    },
     load(x) {
       const s = x as { matched: boolean; rec: RecorderState; view: AlarmViewState | null };
       matched = s.matched;
