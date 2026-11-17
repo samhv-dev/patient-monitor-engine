@@ -460,6 +460,7 @@ renderer, audio and skin contracts.
 
 | Function | File | Doc |
 |---|---|---|
+| `carried` | [`apps/demo/src/app/address.testing.ts`](../../apps/demo/src/app/address.testing.ts) | For tests: the parts of an address that can carry a secret (its user info, path, query and fragment), without its host and port, which hold no secret and can hold the same digits as one by chance (a r |
 | `alarmCaps` | [`apps/demo/src/app/alarm-caps.ts`](../../apps/demo/src/app/alarm-caps.ts) | The skin's alarm capabilities; |
 | `noPauseReason` | [`apps/demo/src/app/alarm-caps.ts`](../../apps/demo/src/app/alarm-caps.ts) | Why "Pause alarms" is not offered, in clinical words; |
 | `alarmRefusal` | [`apps/demo/src/app/alarm-caps.ts`](../../apps/demo/src/app/alarm-caps.ts) | The toast for an alarm action the engine refused: |
@@ -969,6 +970,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | File | Header |
 |---|---|
 | [`apps/demo/src/app/about.ts`](../../apps/demo/src/app/about.ts) | The release label and the education-only line, shown in the app (Start and Settings → About) as the Debrief's print footer says it. |
+| [`apps/demo/src/app/address.testing.ts`](../../apps/demo/src/app/address.testing.ts) | For tests: the parts of an address that can carry a secret (its user info, path, query and fragment), without its host and port, which hold no secret and can hold the same digits as one by chance (a random port and a PIN |
 | [`apps/demo/src/app/alarm-caps.ts`](../../apps/demo/src/app/alarm-caps.ts) | FX-4: what the active monitor's alarm keys can do, read from its skin data (the same data the engine's alarm manager uses), so the panel offers only what the modelled device has. |
 | [`apps/demo/src/app/alarms.ts`](../../apps/demo/src/app/alarms.ts) | The instructor's alarm mirror in glossary words (research/11 §5.16 rules 1 and 2). |
 | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The Debrief archive (the owner's board "Finish 2", approved 30 October): every debrief "Finish the case" saves, kept in THIS browser (the debriefs in IndexedDB, their index in localStorage) until the instructor clears it |
@@ -1451,6 +1453,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/fast-forward-panel.dom.test.ts`](../../apps/demo/src/app/fast-forward-panel.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-address.dom.test.ts`](../../apps/demo/src/app/follower-address.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/follower-beep-gate.test.ts`](../../apps/demo/src/app/follower-beep-gate.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/formulary-coverage.dom.test.ts`](../../apps/demo/src/app/formulary-coverage.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/formulary.test.ts`](../../apps/demo/src/app/formulary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 0 | 0 |
