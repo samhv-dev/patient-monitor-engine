@@ -67,7 +67,7 @@ describe("R5d + R8d: a defibrillator window on this computer is listed and kept 
     const rows = [...v.el.querySelectorAll('.room-table tbody tr')].map((r) => r.textContent ?? '');
     expect(rows.filter((r) => r.includes('Defibrillator') && r.includes('this computer'))).toHaveLength(1);
     expect(v.el.querySelector('.room-openers [data-show="defib"] .st')?.textContent).toBe('Window 2');
-    expect(v.el.querySelector('.room-openers [data-show="defib"] p')?.textContent).toBe("The room's defibrillator: charge and shock, with the patient's rhythm.");
+    expect(v.el.querySelector('.room-openers [data-show="defib"] p')?.textContent).toBe("The room's defibrillator: energy, charge and shock, with the patient's rhythm.");
     v.leave?.();
     const next = roomView({ ...deps, open: (u: string) => void opened.push(u) });
     const reopen = next.el.querySelector('.room-reopen') as HTMLButtonElement;

@@ -122,7 +122,7 @@ describe('R1 through a real relay and a real host (before R2)', () => {
     const local = acks(x.localGot);
     for (const a of local) expect(a.accepted, a.commandId).toBe(false);
     // the M2 selector is inert at the host until R2 (learnerDefibMay is unchanged)
-    expect(local.map((a) => a.reason)).toEqual(Array(3).fill('The defibrillator window sends Charge and Shock only.'));
+    expect(local.map((a) => a.reason)).toEqual(Array(3).fill('The defibrillator window sends energy, Charge and Shock only.'));
 
     // 4. a screen with the learner PIN: its hello reaches the host, which grants nothing until R2; its Charge stays at the relay
     const pinned = await screen('defib-pin', { pin: '4729', show: 'defib', device: 'bed4defib01' });

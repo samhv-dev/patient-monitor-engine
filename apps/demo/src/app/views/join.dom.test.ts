@@ -58,7 +58,7 @@ const WORDS = {
     { show: 'depth', title: 'Depth of anaesthesia', chip: 'Ready', text: "The raw EEG, its spectrogram and the processed-EEG values of the room's depth-of-anaesthesia device.", foot: 'A phone, a tablet or a second screen', action: true },
     { show: 'iabp', title: 'Intra-aortic balloon pump', chip: 'Coming later', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release', action: false },
     // the room's defibrillator window (`#/defib`), the Room page's line for it; it signs in with no PIN
-    { show: 'defib', title: 'Defibrillator', chip: 'Ready', text: "The room's defibrillator: charge and shock, with the patient's rhythm.", foot: 'Sideways on a tablet', action: true },
+    { show: 'defib', title: 'Defibrillator', chip: 'Ready', text: "The room's defibrillator: energy, charge and shock, with the patient's rhythm.", foot: 'Sideways on a tablet', action: true },
   ],
 };
 

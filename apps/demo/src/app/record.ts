@@ -313,15 +313,16 @@ export class RunRecord {
   }
 
   /**
-   * R5d: a press of the learner defibrillator window (the host applied only Charge and Shock, bare: host-session.ts) —
-   * its words with the device's energy, the device key the host carried and the name the instructor gave it.
+   * R5d: a press of the learner defibrillator window (energy select with its energy; Charge and Shock bare:
+   * host-session.ts) — its words with the energy, the device key the host carried and the name the instructor gave it.
    */
   private learnerRow(t: number, c: Record<string, unknown>, ev: Record<string, unknown> | null): Row {
     const shock = ev?.kind === 'defib' && ev.action === 'shock';
     const by = typeof c.by === 'string' ? c.by : undefined;
     const name = by !== undefined ? this.deviceName(by) : null;
+    const text = ev?.action === 'selectEnergy' ? `Energy ${String(ev.energyJ)} J` : `${shock ? 'Shock' : 'Charge'}${this.defibJ !== null ? ` ${this.defibJ} J` : ''}`;
     return {
-      t, kind: 'learner', text: `${shock ? 'Shock' : 'Charge'}${this.defibJ !== null ? ` ${this.defibJ} J` : ''}`,
+      t, kind: 'learner', text,
       ...(shock ? { ev: 'shock' } : {}), ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}),
     };
   }

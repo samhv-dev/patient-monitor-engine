@@ -1,22 +1,30 @@
-// The generic defibrillator face (plan defibrillator-zoll-m2.md §4.2, piece F0): today's window (Room plan R5, R5d),
-// moved onto the core with no change in what it shows or sends. The readout (the energy, then CHARGING or READY, and
-// SYNC) on the stage; Charge and Shock, always enabled (the host's device decides, Q5 ruled 5 November), with the
-// device's words for a refusal under them, in the bar. A press goes once; a lost one is pressed again, as on the device.
-// It has no quick keys, no menu and no Trim Knob. Each key reports its pointer-down and pointer-up to the core as well
-// as its click (the M2's press-and-hold Shock needs the phases, F1); the generic table sends on the click only.
-// In a `zoll-m2` room, until F1 registers the M2's own face, this face is shown with the M2's energy list and a plain
-// line saying so.
+// The generic defibrillator face (plan defibrillator-zoll-m2.md §4.2, piece F0): the readout (the energy, then CHARGING
+// or READY, and SYNC) on the stage; energy select down and up along the room model's list, Charge and Shock, always
+// enabled (the host's device decides, Q5 ruled 5 November), with the device's words for a refusal under them, in the
+// bar. Energy select stops at the list's ends; an energy changed while charging or charged disarms on the device, and
+// the readout shows it. A press goes once; a lost one is pressed again, as on the device. It has no quick keys, no menu
+// and no Trim Knob. Each key reports its pointer-down and pointer-up to the core as well as its click (the M2's
+// press-and-hold Shock needs the phases, F1); the generic table sends on the click only. In a room with no model chosen
+// there is no list, and energy select is not shown. In a `zoll-m2` room, until F1 registers the M2's own face, this
+// face is shown with the M2's energy list and a plain line saying so.
+import { stepEnergy } from '@pme/engine-core';
 import { button, h, setText } from '../../../app/ui.ts';
 import type { DefibCore } from '../../core/core.ts';
-import type { DefibCommand, DefibFaceSpec, Phase } from '../../core/types.ts';
+import type { DefibCommand, DefibFaceSpec, DefibView, Phase } from '../../core/types.ts';
 
 const press = (action: 'charge' | 'shock') => (phase: Phase): DefibCommand | null => (phase === 'click' ? { type: 'applyEvent', event: { kind: 'defib', action } } : null);
+/** The energy one step along the room model's list, or null: no list, no device yet, or the list's end. */
+const nextEnergy = (v: DefibView, dir: 1 | -1): number | null => (v.energiesJ && v.defib ? stepEnergy(v.energiesJ, v.defib.energyJ, dir) : null);
+const energy = (dir: 1 | -1) => (phase: Phase, v: DefibView): DefibCommand | null => {
+  const energyJ = phase === 'click' ? nextEnergy(v, dir) : null;
+  return energyJ === null ? null : { type: 'applyEvent', event: { kind: 'defib', action: 'selectEnergy', energyJ } };
+};
 
 export const GENERIC_SPEC: DefibFaceSpec = {
   id: 'generic',
   label: 'Generic defibrillator',
   levels: {},
-  keys: { charge: press('charge'), shock: press('shock') },
+  keys: { energyDown: energy(-1), energyUp: energy(1), charge: press('charge'), shock: press('shock') },
   revertMs: null, // no Trim Knob
 };
 
@@ -44,19 +52,27 @@ export const genericFace = {
     const readout = h('p', { class: 'defib-readout', role: 'status', 'aria-label': 'Defibrillator' });
     at.stage.append(readout);
     const said = h('p', { class: 'defib-said', role: 'status', 'aria-live': 'polite' });
-    const key = (label: string, name: 'charge' | 'shock', cls?: string) => {
-      const b = button(label, () => void core.press(name, 'click'), cls);
+    const key = (label: string, name: string, cls?: string, attrs = {}) => {
+      const b = button(label, () => void core.press(name, 'click'), cls, attrs);
       b.addEventListener('pointerdown', () => void core.press(name, 'down'));
       b.addEventListener('pointerup', () => void core.press(name, 'up'));
       return b;
     };
+    const down = key('▼', 'energyDown', '', { 'aria-label': 'Energy down' });
+    const up = key('▲', 'energyUp', '', { 'aria-label': 'Energy up' });
+    const selected = h('output', { class: 'defib-energy-value', 'aria-label': 'Selected energy', 'aria-live': 'polite' });
+    const energySelect = h('div', { class: 'defib-energy', role: 'group', 'aria-label': 'Energy select' }, down, selected, up);
     const keys = h('div', { class: 'defib-keys', role: 'group', 'aria-label': 'Defibrillator' }, key('Charge', 'charge'), key('Shock', 'shock', 'primary'));
-    at.bar.append(keys, said);
+    at.bar.append(energySelect, keys, said);
     let note: HTMLElement | null = null; // made only in an M2 room, so a generic room's window is today's to the element
     const draw = () => {
       const v = core.view();
       setText(readout, v.readout);
       setText(said, v.said);
+      energySelect.hidden = !v.energiesJ;
+      setText(selected, v.defib ? `${v.defib.energyJ} J` : '');
+      down.setAttribute('aria-disabled', String(nextEnergy(v, -1) === null));
+      up.setAttribute('aria-disabled', String(nextEnergy(v, 1) === null));
       if (v.m2 && !note) at.bar.append((note = h('p', { class: 'defib-note' })));
       if (note) {
         note.hidden = !v.m2;
@@ -67,7 +83,7 @@ export const genericFace = {
     return {
       stop() {
         off();
-        readout.remove(); // as today's window: the keys stay in the page's bar
+        readout.remove(); // the keys stay in the page's bar
       },
     };
   },

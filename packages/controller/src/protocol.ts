@@ -559,29 +559,31 @@ export function instructorMay(c: WireCommand | CommandInput): string | null {
 
 // --- what the learner defibrillator window may send (plan room-and-instruments.md R5c) ----------------------------
 /**
- * The two shapes a `defib` peer may send (Q5 ruled 5 November): Charge and Shock, nothing else. Each is bare — no
- * `energyJ` (the room's defibrillator model and the instructor's choice set the energy), no `outcome` (the instructor's
- * post-shock rhythm), no `atTick` (the host applies it on its own tick).
+ * The shapes a `defib` peer may send: energy select, Charge and Shock, nothing else. Charge and Shock are bare (the
+ * device charges to its selected energy; no `outcome`, the instructor's post-shock rhythm; no `atTick`, the host applies
+ * it on its own tick); energy select carries its `energyJ` alone, which the room model's list checks at dispatch.
  */
-export const LEARNER_DEFIB_COMMANDS: ReadonlySet<string> = new Set(['applyEvent defib charge', 'applyEvent defib shock']);
+export const LEARNER_DEFIB_COMMANDS: ReadonlySet<string> = new Set(['applyEvent defib selectEnergy', 'applyEvent defib charge', 'applyEvent defib shock']);
 /**
  * R5d: what the host writes as `issuedBy` on a `defib` peer's applied command, whatever the window wrote (as P3 writes
  * `remote` on an instructor phone's); the device key of the window's hello rides as the command's `by` (CommandBase),
  * so the record names the device that pressed (apps/demo record.ts, a `learner` row).
  */
 export const LEARNER_ISSUED_BY = 'learner';
-/** The only fields a learner's Charge or Shock carries, on the command and on its event. */
+/** The only fields a learner's press carries, on the command and on its event. */
 const DEFIB_COMMAND_KEYS: ReadonlySet<string> = new Set(['id', 'issuedBy', 'type', 'event']);
 const DEFIB_EVENT_KEYS: ReadonlySet<string> = new Set(['kind', 'action']);
 
-/** Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, bare), else the reason it is refused (R5c). */
+/** Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, its own fields only), else the reason it is refused (R5c). */
 export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
   const x = c as { type?: unknown; event?: unknown };
-  const ev = x.event as { kind?: unknown; action?: unknown } | null | undefined;
+  const ev = x.event as { kind?: unknown; action?: unknown; energyJ?: unknown } | null | undefined;
   const isEvent = x.type === 'applyEvent' && ev !== null && typeof ev === 'object' && !Array.isArray(ev);
   if (!isEvent || ev.kind !== 'defib' || !LEARNER_DEFIB_COMMANDS.has(`applyEvent defib ${String(ev.action)}`))
-    return 'The defibrillator window sends Charge and Shock only.';
-  const extra = [...Object.keys(c).filter((k) => !DEFIB_COMMAND_KEYS.has(k)), ...Object.keys(ev).filter((k) => !DEFIB_EVENT_KEYS.has(k))];
+    return 'The defibrillator window sends energy, Charge and Shock only.';
+  const energy = ev.action === 'selectEnergy';
+  if (energy && (typeof ev.energyJ !== 'number' || !Number.isFinite(ev.energyJ))) return 'An energy select carries its energy in joules.';
+  const extra = [...Object.keys(c).filter((k) => !DEFIB_COMMAND_KEYS.has(k)), ...Object.keys(ev).filter((k) => !DEFIB_EVENT_KEYS.has(k) && !(energy && k === 'energyJ'))];
   if (extra.length > 0) return `The room's defibrillator sets the rest (${extra.join(', ')} is not the window's).`;
   return null;
 }

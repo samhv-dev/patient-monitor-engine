@@ -9,7 +9,7 @@
 // the face's menu root; Home inside a menu [G 2-4]), `knob` (the Trim Knob's press [G 2-4], [G 2-16]: sends a turned
 // value, else acts on the field under the cursor). `turn(steps)` is the knob's rotation: it turns a selected value, else
 // moves the cursor around the screen's fields, both ways [G 2-16].
-import { M2_ENERGIES_J } from '@pme/engine-core';
+import { defibEnergiesJ, M2_ENERGIES_J } from '@pme/engine-core';
 import { defibReadout, defibWords } from '../../app/instrument.ts';
 import { createPending } from './pending.ts';
 import type { DefibCommand, DefibDriver, DefibFaceSpec, DefibMode, DefibStatusIn, DefibView, Phase } from './types.ts';
@@ -29,6 +29,8 @@ export interface DefibCore {
 export interface DefibCoreOptions {
   /** The wall clock the pending value's time-out counts on (ms). */
   now?: () => number;
+  /** The room's defibrillator model (a DEFIB_MODELS key), or null: none chosen. */
+  model?: () => string | null;
 }
 
 export function createDefibCore(driver: DefibDriver, face: DefibFaceSpec, o: DefibCoreOptions = {}): DefibCore {
@@ -50,7 +52,7 @@ export function createDefibCore(driver: DefibDriver, face: DefibFaceSpec, o: Def
     const level = Math.min(levels.get(mode) ?? 0, Math.max(0, rows.length - 1));
     return {
       defib: st.defib, pacer: st.pacer, m2: st.m2 ?? null, mode,
-      energiesJ: st.m2 ? M2_ENERGIES_J : null,
+      energiesJ: st.m2 ? M2_ENERGIES_J : defibEnergiesJ(o.model?.() ?? null),
       readout: defibReadout(st.defib), said, level, keys: rows[level] ?? [], cursor, menu: [...menu], pending: null,
     };
   };

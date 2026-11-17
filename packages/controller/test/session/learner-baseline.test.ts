@@ -80,7 +80,7 @@ describe('L0 at the host: no learner device gives a drug or draws a sample today
     const id = win.command(body);
     await waitFor(() => ackOf(x.got, id) !== undefined);
     expect(ackOf(x.got, id)?.accepted).toBe(false);
-    expect(ackOf(x.got, id)?.reason).toMatch(/^The defibrillator window sends Charge and Shock only/);
+    expect(ackOf(x.got, id)?.reason).toMatch(/^The defibrillator window sends energy, Charge and Shock only/);
     await Promise.resolve();
     expect(appliedIds(x.got)).not.toContain(id);
     expect(JSON.stringify(x.engine.snapshot())).toBe(before);

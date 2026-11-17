@@ -1,4 +1,4 @@
-// Room plan R5d: the learner defibrillator window presses Charge and Shock, and the host applies them as the
+// Room plan R5d: the learner defibrillator window presses energy select, Charge and Shock, and the host applies them as the
 // instructor's own. A free-roam patient, the room's generic defibrillator (120 J adult: defib.ts FALLBACK_DEFIB); the
 // instructor sets VF; the window — a device over the relay (`?join=`, the in-process relay as mobile-learner.e2e.ts runs
 // it) that chose Defibrillator on the room's picker, named "bed 2" in Room setup — first shocks with no charge (refused in the device's words, nothing in the window
@@ -8,6 +8,8 @@
 // Defibrillator (bed 2)". On Chromium (and local WebKit) a window of this computer (`?follow=`, the browser's channel,
 // no relay in between) forges the same two and the HOST refuses them; CI's Linux WebKit drops BroadcastChannel messages
 // between pages (FALLBACK ruling 2026-10-11, learner-monitor-follows.e2e.ts), so that part is skipped there only.
+// The second case: the window's Energy up (by keyboard) selects 150 J, it charges and shocks; the host's shock, the
+// instructor's CPR sheet and the Log say 150 J; the keys are 44 px and nothing scrolls sideways at 375–1280 px.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -22,10 +24,11 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
 const KEY = 'bed2defib0001';
-type Status = { defib: { shocks: number; state: string } | null };
+type Status = { defib: { shocks: number; state: string; energyJ: number; lastShock: { energyJ: number } | null } | null };
 type HostW = { __pmeApp: { session: { code: string; simNow(): number; last: { deviceStatus?: Status }; record: { data: { rows: Array<{ kind: string; text: string; ev?: string }> } } }; link: { send(c: unknown): Promise<{ accepted: boolean; reason?: string }> } } };
 type FolW = { __pmeFollower: { sync: { status: string } | null; transport: { send(m: unknown): void }; monitor: { viewerClock(): Promise<{ on(fn: (e: { type: string } & Status) => void, types: string[]): () => void }> } }; __shocks?: number };
 const send = (p: Page, c: unknown) => p.evaluate((x) => (window as unknown as HostW).__pmeApp.link.send(x), c);
+const hostDefib = (p: Page) => p.evaluate(() => (window as unknown as HostW).__pmeApp.session.last.deviceStatus?.defib ?? null);
 const hostShocks = (p: Page) => p.evaluate(() => (window as unknown as HostW).__pmeApp.session.last.deviceStatus?.defib?.shocks ?? 0);
 const hostRows = (p: Page) => p.evaluate(() => (window as unknown as HostW).__pmeApp.session.record.data.rows.map((r) => `${r.kind}|${r.text}|${r.ev ?? ''}`));
 const synced = (w: Page) => w.waitForFunction(() => (window as unknown as FolW).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
@@ -44,23 +47,29 @@ async function unchanged(page: Page): Promise<void> {
   expect((await hostRows(page)).filter((r) => r.includes('drug:'))).toEqual([]);
 }
 
-test('the defibrillator window charges and shocks the free-roam patient; nothing else it sends is applied; the Debrief names it', async ({ page, browserName }) => {
-  test.setTimeout(180_000);
+/** A relay, the host with the generic model, and the window on another device opened from the room's picker. */
+async function openWindow(page: Page) {
   const dir = mkdtempSync(join(tmpdir(), 'r5d-'));
   writeFileSync(join(dir, 'index.html'), '<!doctype html>');
   const relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = `ws://127.0.0.1:${relay.port}/`;
+  // Room setup named this device "bed 2" (R7's remembered layout, kept on the instructor's computer)
+  await page.addInitScript((k) => localStorage.setItem('pme.roomLayout', JSON.stringify({ [k]: { name: 'bed 2', show: 'defib', lastSeen: Date.now() } })), KEY);
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}`, { warmMs: 1500, site: { defibModel: 'generic' } });
+  const code = await page.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
+  const ctx = await page.context().browser()!.newContext();
+  await ctx.addInitScript((k) => localStorage.setItem('pme.device', k), KEY);
+  const win = await ctx.newPage();
+  // the room's QR opens the picker; its Defibrillator card opens the window on this device
+  await win.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/pick`);
+  await Promise.all([win.waitForEvent('load'), win.locator('.join-card[data-show="defib"]').getByRole('button', { name: 'Show here' }).click()]);
+  return { relay, ws, code, ctx, win };
+}
+
+test('the defibrillator window charges and shocks the free-roam patient; nothing else it sends is applied; the Debrief names it', async ({ page, browserName }) => {
+  test.setTimeout(180_000);
+  const { relay, ws, code, ctx, win } = await openWindow(page);
   try {
-    const ws = `ws://127.0.0.1:${relay.port}/`;
-    // Room setup named this device "bed 2" (R7's remembered layout, kept on the instructor's computer)
-    await page.addInitScript((k) => localStorage.setItem('pme.roomLayout', JSON.stringify({ [k]: { name: 'bed 2', show: 'defib', lastSeen: Date.now() } })), KEY);
-    await openApp(page, base, `?relay=${encodeURIComponent(ws)}`, { warmMs: 1500, site: { defibModel: 'generic' } });
-    const code = await page.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
-    const ctx = await page.context().browser()!.newContext();
-    await ctx.addInitScript((k) => localStorage.setItem('pme.device', k), KEY);
-    const win = await ctx.newPage();
-    // the room's QR opens the picker; its Defibrillator card opens the window on this device
-    await win.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/pick`);
-    await Promise.all([win.waitForEvent('load'), win.locator('.join-card[data-show="defib"]').getByRole('button', { name: 'Show here' }).click()]);
     const phone = await (await page.context().browser()!.newContext()).newPage();
     await phone.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/monitor`);
     for (const w of [win, phone]) await synced(w);
@@ -115,7 +124,7 @@ test('the defibrillator window charges and shocks the free-roam patient; nothing
       await forgeOwn(local, code, pause);
       // the host's own answer (no relay here): both refused with the allow-list's reason
       await expect.poll(() => local.evaluate(() => (window as unknown as { __acks: unknown[] }).__acks), { timeout: 5000 })
-        .toEqual([{ accepted: false, reason: 'The defibrillator window sends Charge and Shock only.' }, { accepted: false, reason: 'The defibrillator window sends Charge and Shock only.' }]);
+        .toEqual([{ accepted: false, reason: 'The defibrillator window sends energy, Charge and Shock only.' }, { accepted: false, reason: 'The defibrillator window sends energy, Charge and Shock only.' }]);
       await unchanged(page);
       await local.close();
     }
@@ -129,6 +138,54 @@ test('the defibrillator window charges and shocks the free-roam patient; nothing
     expect(lines[1]).toMatch(/^\d\d:\d\d Learner Shock 120 J at \d\d:\d\d, by Defibrillator \(bed 2\)$/);
     await ctx.close();
     await phone.context().close();
+  } finally {
+    await relay.close();
+  }
+});
+
+test("the resident selects 150 J on the window, charges and shocks; the host records a 150 J shock; the window's keys fit every width", async ({ page }) => {
+  test.setTimeout(180_000);
+  const { relay, ctx, win } = await openWindow(page);
+  try {
+    await synced(win);
+    await expect(win.locator('.defib-readout')).toHaveText('120 J', { timeout: 10_000 });
+    expect((await send(page, { type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' })).accepted).toBe(true);
+    const group = win.getByRole('group', { name: 'Energy select' });
+    const up = group.getByRole('button', { name: 'Energy up' });
+    const selected = group.locator('output[aria-label="Selected energy"]');
+    await expect(selected).toHaveText('120 J');
+    await up.focus();
+    await win.keyboard.press('Enter'); // reachable and operable by keyboard
+    await expect(win.locator('.defib-readout')).toHaveText('150 J', { timeout: 5000 });
+    await expect(selected).toHaveText('150 J');
+    await expect.poll(async () => (await hostDefib(page))?.energyJ, { timeout: 5000 }).toBe(150);
+
+    await win.getByRole('button', { name: 'Charge', exact: true }).click();
+    await expect(win.locator('.defib-readout')).toHaveText('150 J READY', { timeout: 15_000 });
+    await win.getByRole('button', { name: 'Shock', exact: true }).click();
+    await expect.poll(async () => (await hostDefib(page))?.lastShock?.energyJ, { timeout: 5000 }).toBe(150);
+    expect((await hostRows(page)).filter((r) => r.startsWith('learner|'))).toEqual(['learner|Energy 150 J|', 'learner|Charge 150 J|', 'learner|Shock 150 J|shock']);
+    // the instructor's CPR sheet and the log say what was delivered
+    await page.locator('.ip2-dock button.ip2-tool[data-sheet="defib"]').click();
+    await expect(page.locator('.ip2-sheet[data-sheet="defib"]')).toContainText('last shock 150 J', { timeout: 10_000 });
+    await page.locator('.ip2-dock button.ip2-tool[data-sheet="log"]').click();
+    const log = page.locator('.ip2-sheet[data-sheet="log"] .log li[data-kind=learner]');
+    for (const line of ['Energy 150 J', 'Defibrillator charging to 150 J', 'Shock delivered at 150 J']) await expect(log.filter({ hasText: line })).toHaveCount(1, { timeout: 10_000 });
+
+    for (const width of [375, 768, 1024, 1280]) {
+      await win.setViewportSize({ width, height: width < 768 ? 812 : 768 });
+      const fit = await win.evaluate(() => ({
+        sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        keys: [...document.querySelectorAll<HTMLElement>('.defib-energy button, .defib-keys button')].map((b) => {
+          const r = b.getBoundingClientRect();
+          return { h: r.height, w: r.width, inside: r.left >= 0 && r.right <= innerWidth };
+        }),
+      }));
+      expect(fit.sideways, `${width} px`).toBeLessThanOrEqual(0);
+      for (const k of fit.keys) expect(k, `${width} px`).toMatchObject({ inside: true, h: expect.any(Number) as number });
+      expect(Math.min(...fit.keys.flatMap((k) => [k.h, k.w])), `${width} px`).toBeGreaterThanOrEqual(44);
+    }
+    await ctx.close();
   } finally {
     await relay.close();
   }
