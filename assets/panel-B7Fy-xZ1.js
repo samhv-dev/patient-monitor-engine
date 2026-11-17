@@ -1,4 +1,4 @@
-import{i as R,r as P}from"./styles-BEDNKHZX.js";import{a as N,S as V}from"./staging-CbWEoBAB.js";import{R as G,a as z}from"./reveal-DQdcBbcu.js";const D=h=>`${String(Math.floor(h/60)).padStart(2,"0")}:${String(Math.floor(h%60)).padStart(2,"0")}`;function J(h,b){var x;const m=h.ownerDocument,E=b.session,o=E.scenario;h.innerHTML=`
+import{i as R,r as P}from"./styles-BEDNKHZX.js";import{a as N,S as V}from"./staging-D8OOHkFY.js";import{R as G,a as z}from"./reveal-DQdcBbcu.js";const D=h=>`${String(Math.floor(h/60)).padStart(2,"0")}:${String(Math.floor(h%60)).padStart(2,"0")}`;function J(h,b){var x;const m=h.ownerDocument,E=b.session,o=E.scenario;h.innerHTML=`
     <section class="pme-section">
       <h3>Load scenario</h3>
       <div class="pme-row"><select name="scenario-builtin"></select><button type="button" data-action="scenario-load-builtin">Load</button></div>
