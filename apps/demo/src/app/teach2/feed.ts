@@ -11,6 +11,8 @@
 // is in (the state event outran the next feed), a remote reads what it has, as before (Link.viewNow).
 import { asV1, isV2 } from '@pme/controller';
 import type { Link } from '../link.ts';
+import type { RunningLine } from '../panel/pumps.ts';
+import type { PumpAlarmNow } from '../pump-alarms.ts';
 import { byOf } from './cue.ts';
 import { classify, classifyV2, liveGrades, type Board, type HoldLike } from './rows.ts';
 import { firedInStage, stageEntries, stageMarks, type StageEntry } from './strip.ts';
@@ -30,6 +32,12 @@ export interface ViewFeed {
   by: string | null;
   /** Each entered stage's return: the label of its latest stage mark (ScenarioDriver.stageMarks), by stage id. */
   marks: Record<string, string>;
+  /** Each drug given so far and each running drug's sources, as the host's record and engine have them (Link). */
+  given?: string[];
+  running?: RunningLine[];
+  /** The host's standing pump alarms, and its Log's pump alarm lines for the case, each at its own time. */
+  pumpAlarms?: PumpAlarmNow[];
+  pumpLog?: Array<{ t: number; text: string }>;
 }
 
 /** The A rows' bar starts (rows.ts `Source.base`), one map per Link, kept across refreshes and cleared with a new card:
@@ -95,5 +103,5 @@ export function feedOf(link: Link): ViewFeed {
     const m = stageMarks.of(link, e);
     if (m !== null) marks[e.stage] = m;
   }
-  return { docId: sv.doc?.id ?? null, stateId: sv.stateId, board: boardOf(link), entries, fired: [...firedOf(link, entries)], by: cur ? (byOf(link, cur) ?? null) : null, marks };
+  return { docId: sv.doc?.id ?? null, stateId: sv.stateId, board: boardOf(link), entries, fired: [...firedOf(link, entries)], by: cur ? (byOf(link, cur) ?? null) : null, marks, given: link.givenLines() ?? [], running: link.runningLines() ?? [], pumpAlarms: link.pumpAlarms, pumpLog: link.pumpLog };
 }

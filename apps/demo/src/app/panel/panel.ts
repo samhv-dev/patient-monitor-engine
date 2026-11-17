@@ -17,11 +17,12 @@ import { devicesTab } from './devices.ts';
 import { drugsTab } from './drugs.ts';
 import { logTab } from './log.ts';
 import { patientTab } from './patient.ts';
+import { pumpsTab } from './pumps.ts';
 import { scenarioTab } from './scenario.ts';
 import { vitalsTab } from './vitals.ts';
 
 export const TABS: ReadonlyArray<[string, string]> = [
-  ['scenario', 'Scenario'], ['vitals', 'Vitals & rhythm'], ['drugs', 'Drugs & fluids'], ['airway', 'Airway & ventilation'],
+  ['scenario', 'Scenario'], ['vitals', 'Vitals & rhythm'], ['drugs', 'Drugs & fluids'], ['pumps', 'Pumps'], ['airway', 'Airway & ventilation'],
   ['defib', 'Defib, pacing & CPR'], ['devices', 'Devices & alarms'], ['patient', 'Patient'], ['log', 'Log'],
 ];
 
@@ -63,6 +64,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
     { id: 'scenario', label: 'Scenario', render: make('scenario', scenarioTab) },
     { id: 'vitals', label: 'Vitals & rhythm', render: make('vitals', vitalsTab) },
     { id: 'drugs', label: 'Drugs & fluids', render: make('drugs', drugsTab) },
+    { id: 'pumps', label: 'Pumps', render: make('pumps', pumpsTab) },
     { id: 'airway', label: 'Airway & ventilation', render: make('airway', airwayTab) },
     { id: 'defib', label: 'Defib, pacing & CPR', render: make('defib', defibTab) },
     { id: 'devices', label: 'Devices & alarms', render: make('devices', devicesTab) },
@@ -70,6 +72,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
     { id: 'log', label: 'Log', render: make('log', logTab) },
   ], o.tab ?? 'vitals', (id) => {
     o.onTab?.(id);
+    if (ready) drawFooter(); // the read-only Pumps tab has nothing to stage: the staging footer stands aside unless something is staged
     // UI review #28: a tab paints as it opens. It repainted only at the next throttled repaint, so for ≈ 0.5 s it showed
     // what it had when last open ("No active alarms" under a bar reading "!!! ART M low +4")
     if (ready) for (const fn of refreshers.get(id) ?? []) fn();
@@ -101,6 +104,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
   const drawFooter = () => {
     const n = staging.size;
     footer.dataset.count = String(n);
+    footer.hidden = n === 0 && !staging.autoApply && t.current() === 'pumps';
     count.textContent = staging.autoApply ? 'Changes apply at once' : n === 0 ? 'No changes staged' : n === 1 ? '1 change staged' : `${n} changes staged`;
     list.replaceChildren(...staging.lines.map((l) => h('li', {}, l)));
     commit.disabled = n === 0;

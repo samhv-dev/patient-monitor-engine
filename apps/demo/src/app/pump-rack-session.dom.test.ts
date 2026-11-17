@@ -79,7 +79,7 @@ describe("A1: the host sends the room's pump rack on its style event", () => {
   it("a rack that removes a running channel is the host's to refuse: its words come back, and the tablet's rack is unchanged", async () => {
     s = new AppSession(document.createElement('div'), { spec, mode: 'modeled' }, { skin: 'saadat-like', theme: '', code: 'KKQB2N', relay: 'ws://relay.test/', pumpRack: ['syringe', 'syringe', 'syringe', 'syringe'] });
     await settle();
-    const pumps = [1, 2, 3, 4].map((ch) => ({ ch, kind: 'syringe', state: ch === 3 ? 'running' : 'notLoaded' }));
+    const pumps = [1, 2, 3, 4].map((ch) => ({ ch, kind: 'syringe', state: ch === 3 ? 'running' : 'notLoaded', alarms: [] }));
     for (const fn of net.engine) fn({ type: 'drugs', t: 1, drugs: [], volatile: null, macTotal: 0, pumps });
     const sent = styles().length;
     expect(s.setPumpRack(['syringe', 'syringe'])).toBe('Channel 3 is running: stop it first.');

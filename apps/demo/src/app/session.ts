@@ -18,6 +18,7 @@ import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type Mo
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
+import { restoredReading, type RestoredReading } from './restored-state.ts';
 import { RunRecord } from './record.ts';
 import type { DeviceKind } from './device-names.ts';
 import { readLayout } from './room-layout.ts';
@@ -155,6 +156,7 @@ export class AppSession {
   private readonly listeners = new Set<(e: EngineEvent) => void>();
   private readonly appFns = new Set<(e: EngineEvent) => void>();
   private readonly mountFns = new Set<(m: MonitorHandle) => void>();
+  private readonly restoredFns = new Set<(r: RestoredReading) => void>();
   private readonly onFailed = (e: Event): void => this.host.engineStopped((e as CustomEvent<{ reason: string }>).detail.reason);
   private readonly scaleFns = new Set<(k: number) => void>();
   private offMon: (() => void) | null = null;
@@ -224,6 +226,12 @@ export class AppSession {
       snapshot: () => this.need().snapshot(),
       restore: async (s: PatientSnapshot) => {
         await this.need().restore(s);
+        // the engine reads its drug panel again only when it runs: the record and the Link take the state it restored
+        const r = restoredReading(s);
+        if (r) {
+          this.record.restoredFrom(r);
+          for (const fn of [...this.restoredFns]) fn(r);
+        }
         this.lastT = s.tick * TICK_S;
         this.lastWall = performance.now();
         this.readT = this.lastT; // the course goes back to the bookmark
@@ -515,6 +523,12 @@ export class AppSession {
   }
 
   /** Called after every (re)mount with the new monitor (the ventilator link re-attaches to it). */
+  /** Each return to a bookmark (or a reload's return): the state the engine was restored to. */
+  onRestored(fn: (r: RestoredReading) => void): () => void {
+    this.restoredFns.add(fn);
+    return () => void this.restoredFns.delete(fn);
+  }
+
   onMount(fn: (m: MonitorHandle) => void): () => void {
     this.mountFns.add(fn);
     if (this.monitor) fn(this.monitor);

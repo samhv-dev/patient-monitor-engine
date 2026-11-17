@@ -26,6 +26,7 @@ import { defibTab } from '../panel/defib.ts';
 import { devicesTab } from '../panel/devices.ts';
 import { logTab } from '../panel/log.ts';
 import { patientTab } from '../panel/patient.ts';
+import { pumpsTab } from '../panel/pumps.ts';
 import { vitalsTab } from '../panel/vitals.ts';
 import { confirmDialog, h, select, setText, toast } from '../ui.ts';
 import { Cache } from './cache.ts';
@@ -37,8 +38,8 @@ import { sheetFrame, type SheetFrame } from './sheet.ts';
 
 /** One tab of a sheet: its id (today's tab id), its words, the body it mounts (today's tab body). */
 export type SheetTab = readonly [id: string, label: string, body: (c: PanelCtx) => HTMLElement];
-/** The sheets in the dock's order (brief 208, ruling 3: Drug, Airway, CPR, Patient, Devices, Log, then Labs, which is
- *  LABS_SHEET below, on the host only): id, the dock's name (also the sheet's title), its letter ('' = none), its tabs (the
+/** The sheets in the dock's order (Drug, Airway, CPR, Patient, Devices, Log, the pump rack's read-only view, then Labs,
+ *  which is LABS_SHEET below, on the host only): id, the dock's name (also the sheet's title), its letter ('' = none), its tabs (the
  *  first is where the sheet opens; none for the Drug sheet, which draws its own groups). */
 export const SHEETS: ReadonlyArray<{ id: string; name: string; letter: string; tabs: readonly SheetTab[] }> = [
   { id: 'drug', name: 'Drug', letter: 'd', tabs: [] },
@@ -47,6 +48,7 @@ export const SHEETS: ReadonlyArray<{ id: string; name: string; letter: string; t
   { id: 'patient', name: 'Patient', letter: 'v', tabs: [['vitals', 'Vitals & rhythm', vitalsTab], ['patient', 'Patient & events', patientTab]] },
   { id: 'devices', name: 'Devices', letter: '', tabs: [['devices', 'Devices & alarms', devicesTab]] },
   { id: 'log', name: 'Log', letter: '', tabs: [['log', 'Log', logTab]] },
+  { id: 'pumps', name: 'Pumps', letter: '', tabs: [['pumps', 'Pump rack', pumpsTab]] },
 ];
 /** L15 (LQ13 ruled B): the laptop's Labs sheet, after the others, offered on the host only (labs-sheet.ts). */
 export const LABS_SHEET = { id: 'labs', name: 'Labs', letter: '', tabs: [] } as const;

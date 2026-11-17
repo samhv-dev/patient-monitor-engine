@@ -602,7 +602,8 @@ renderer, audio and skin contracts.
 | `report3` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The report of a /2 run (null: |
 | `preparationsOf` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | L13: the learner remotes' preparations, from the record alone (the /2 runner's staged preparations and its administrations, each give's `prep` the host's record of it): |
 | `marks` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Every mark (bookmark) of the run in order, with its kind and note when it has them; |
-| `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug (mass doses in mg; |
+| `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug: |
+| `givenLines` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The Debrief's line of each drug given, and the live "Given so far": |
 | `facts` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The measured facts of the kept course, in a fixed order; |
 | `perMinute` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: |
 | `notDoneOf` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: |
@@ -686,6 +687,12 @@ renderer, audio and skin contracts.
 | `logTab` | [`apps/demo/src/app/panel/log.ts`](../../apps/demo/src/app/panel/log.ts) | — |
 | `mountPanel` | [`apps/demo/src/app/panel/panel.ts`](../../apps/demo/src/app/panel/panel.ts) | — |
 | `patientTab` | [`apps/demo/src/app/panel/patient.ts`](../../apps/demo/src/app/panel/patient.ts) | — |
+| `channelsOf` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The channels to show: |
+| `channelLines` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | A channel's lines, in the order they are shown. |
+| `togetherLines` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The information lines of the rack: |
+| `runningLines` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | — |
+| `pumpsView` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The view on `link`: |
+| `pumpsTab` | [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The view as a panel tab body (the phone's Pumps tab, the laptop's Pumps sheet). |
 | `scenarioTab` | [`apps/demo/src/app/panel/scenario.ts`](../../apps/demo/src/app/panel/scenario.ts) | — |
 | `vitalsTab` | [`apps/demo/src/app/panel/vitals.ts`](../../apps/demo/src/app/panel/vitals.ts) | — |
 | `profileOf` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | — |
@@ -702,6 +709,11 @@ renderer, audio and skin contracts.
 | `restorePosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | After a reload: |
 | `sourceText` | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | A source as the phone names it (the finding after the notice, a product's label). |
 | `sourcesText` | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | A finding's sources as the card names them, its source of record then Trissel's cross-check (the source key alone while the formulary is not loaded). |
+| `pumpAlarmText` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | — |
+| `pumpAlarmsOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | Every alarm the channel rows list. |
+| `clearedBy` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | The alarms a command on a channel clears, of those standing on it (the engine's applyPump). |
+| `pumpCommandOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | A pump command's channel and action, from a command as the host applied it, and for a load what it puts on the channel; |
+| `heldOf` | [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | What a channel holds and is programmed with as its alarm names them: |
 | `bolusUnits` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The units a bolus may be given in on a channel: |
 | `bolusHint` | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | The rapid rate the bolus runs at, from the SP-500 profile for the loaded syringe size, and the volume gap. |
 | `mountFlows` | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | The flows on every channel of `rack`, sending through `link` (a granted pump tablet's follower). |
@@ -735,6 +747,7 @@ renderer, audio and skin contracts.
 | `onRecent` | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | — |
 | `recognisedNote` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The note a press sends on `doc` (null: |
 | `recognisedButton` | [`apps/demo/src/app/recognised.ts`](../../apps/demo/src/app/recognised.ts) | The button (`cls` its classes where it sits): |
+| `offPumpInfusions` | [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The drugs whose infusion or TCI off the pumps runs at the end of the kept rows (each drug's last such command). |
 | `productWords` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | A product as the bench names it: |
 | `benchView` | [`apps/demo/src/app/remote/bench.ts`](../../apps/demo/src/app/remote/bench.ts) | The bench: the search, then the product and its amount, the diluent and volume, the container, the preview, "Put on the tray". |
 | `drugsMenu` | [`apps/demo/src/app/remote/drugs.ts`](../../apps/demo/src/app/remote/drugs.ts) | The Drugs tab: |
@@ -746,6 +759,7 @@ renderer, audio and skin contracts.
 | `labsLink` | [`apps/demo/src/app/remote/labs.ts`](../../apps/demo/src/app/remote/labs.ts) | The link of a granted learner follower. |
 | `labsView` | [`apps/demo/src/app/remote/labs.ts`](../../apps/demo/src/app/remote/labs.ts) | The Labs tab: |
 | `trayView` | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | The tray: its preparations, each with its state and Give, and "Deliver the tray". |
+| `restoredReading` | [`apps/demo/src/app/restored-state.ts`](../../apps/demo/src/app/restored-state.ts) | The reading of a snapshot, or null when its state holds no drug state (an older or foreign snapshot). |
 | `rhythmGroups` | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | Groups with every library id placed once ("Other" collects ids the map does not name). |
 | `startCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | The code a starting instructor's page runs under, or null when it has none and draws a new one. |
 | `keepsRoomCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Whether the code this page runs becomes the room's, which it does when started without `?session=` and not after "Start a new session". |
@@ -823,6 +837,7 @@ renderer, audio and skin contracts.
 | `pressAction` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | A pme-scenario/2 A press (plan F6, design §10): |
 | `pressStep` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Press the step labelled `label`: |
 | `judge` | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Record the judged objective `text` (its words as the card writes them) as met: |
+| `mountPumpAlarmCard` | [`apps/demo/src/app/teach2/pump-alarm-card.ts`](../../apps/demo/src/app/teach2/pump-alarm-card.ts) | — |
 | `mountPumpMismatch` | [`apps/demo/src/app/teach2/pump-mismatch.ts`](../../apps/demo/src/app/teach2/pump-mismatch.ts) | The card on the laptop's `link`; |
 | `firstT` | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | The first time `want` (or any of a list) happened at or after `from`, as the debrief reads it; |
 | `classify` | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | The board of the current stage. |
@@ -1164,11 +1179,13 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/panel/log.ts`](../../apps/demo/src/app/panel/log.ts) | Log (research/13 §4.3 item 8): the debrief view — every instructor, learner, scenario and alarm event with the sim time, filters, notes and bookmarks, and CSV/JSON export. |
 | [`apps/demo/src/app/panel/panel.ts`](../../apps/demo/src/app/panel/panel.ts) | The instructor panel (research/13 §4.3, brief §7): eight tabs in the order they are used, the staged-changes footer (the controller pages' stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), ke |
 | [`apps/demo/src/app/panel/patient.ts`](../../apps/demo/src/app/panel/patient.ts) | Patient (research/13 §4.9): the one patient card — who the patient is, MODELED or MANUAL, and "Restart patient", which asks first and says what resets (drugs, fluids, ventilation; a running case starts again from 0:00, F |
+| [`apps/demo/src/app/panel/pumps.ts`](../../apps/demo/src/app/panel/pumps.ts) | The instructor's view of the pump rack: every channel as the engine holds it, read-only. |
 | [`apps/demo/src/app/panel/scenario.ts`](../../apps/demo/src/app/panel/scenario.ts) | Scenario (research/13 §4.3 item 1; the simulator sweep's top patterns 4 and 5): before a run, the library as cards (story, patient, duration, objectives) filtered by category; during a run, the state strip with the curre |
 | [`apps/demo/src/app/panel/vitals.ts`](../../apps/demo/src/app/panel/vitals.ts) | Vitals & rhythm (research/13 §4.3 item 2): one row per target — glossary label with its tooltip, the live value, a stepper in clinical units, and the model state as a chip (CAE Maestro's flags): MODELED (wave), held by t |
 | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | Patient profiles for the Start screen and the Patient tab (brief §4.9 "one Patient card"). |
 | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | A reload must not lose the running case (UI review 2026-10-24 #1: a reload mid-card came back as "No scenario", the default patient, 00:05). |
 | [`apps/demo/src/app/prep-words.ts`](../../apps/demo/src/app/prep-words.ts) | Plan learner-action-remote.md L13: how the app names a preparation's findings and their sources, in one DOM-free place, so the learner's tray (L7), the instructor's card (L9) and the Debrief (L13) say the same words for |
+| [`apps/demo/src/app/pump-alarms.ts`](../../apps/demo/src/app/pump-alarms.ts) | The pump channels' alarms as the instructor's screens read them. |
 | [`apps/demo/src/app/pump/bolus.ts`](../../apps/demo/src/app/pump/bolus.ts) | Plan pump-rack-tci.md A2, Bolus (§4 D2 item 5, §5; PQ3 = A): a bolus from a syringe channel, as a volume or as a dose the host converts with the PROGRAMMED concentration (what the pump believes it gives; the patient rece |
 | [`apps/demo/src/app/pump/controls.ts`](../../apps/demo/src/app/pump/controls.ts) | Plan pump-rack-tci.md A2 (§4 D2, §5 "Buttons", §8): the channel controls on each face of the rack, and the one place a flow's command leaves the tablet. |
 | [`apps/demo/src/app/pump/devices.ts`](../../apps/demo/src/app/pump/devices.ts) | Plan pump-rack-tci.md D12 (S1's profiles) for the app, and finding N125: the shipped device profiles (packages/controller/pump-devices/, every file but its JSON Schema), checked by the same rules as the CI's source check |
@@ -1192,6 +1209,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/remote/infusions.ts`](../../apps/demo/src/app/remote/infusions.ts) | Plan learner-action-remote.md L8 (§4 D2, D3, D8; LQ4 ruled 9 November): the learner remote's Infusions tab. |
 | [`apps/demo/src/app/remote/labs.ts`](../../apps/demo/src/app/remote/labs.ts) | Plan learner-action-remote.md L11 (§4 D2 item 5, D6; LQ2, LQ13 ruled 9 November): the learner remote's Labs tab. |
 | [`apps/demo/src/app/remote/tray.ts`](../../apps/demo/src/app/remote/tray.ts) | Plan learner-action-remote.md L7 (§4 D2, D3, D7; LQ3, LQ7): the tray on the learner remote's Drugs tab. |
+| [`apps/demo/src/app/restored-state.ts`](../../apps/demo/src/app/restored-state.ts) | What a return to a bookmark (or a reload's return to its position) restored, read from the snapshot the engine was restored from. |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Room plan R1 (docs/plans/room-and-instruments.md §7; Q3 ruled 5 November = A): the room code lives until the instructor asks for a new one, through reloads, restarts and the next day. |
 | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The remembered layout of the room (plan room-and-instruments.md R7, §4 D8; Q10 ruled 5 November = A: device names are kept across days, until "Forget the room"). |
@@ -1228,6 +1246,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/teach2/learner-preps.ts`](../../apps/demo/src/app/teach2/learner-preps.ts) | Plan learner-action-remote.md L9 (§4 D7; LQ3 ruled 9 November): what the learner remotes have prepared, as the INSTRUCTOR sees it, on the laptop's dock (Instructor v2) and on the instructor's phone (views/remote.ts mount |
 | [`apps/demo/src/app/teach2/prep-board.ts`](../../apps/demo/src/app/teach2/prep-board.ts) | Plan learner-action-remote.md L9 (§4 D7): the instructor's copy of the learner remotes' preparations, as the Link keeps it from the host's `prep` news addressed to the host's own id (the laptop's Link and the instructor |
 | [`apps/demo/src/app/teach2/press.ts`](../../apps/demo/src/app/teach2/press.ts) | Instructor v2 (E127): the two presses of the ACTION list, sending exactly what today's Scenario tab sends. |
+| [`apps/demo/src/app/teach2/pump-alarm-card.ts`](../../apps/demo/src/app/teach2/pump-alarm-card.ts) | The pump channels' standing alarms on the instructor's screens, mounted with the page (not with the Pumps sheet, which is built when first opened), so an alarm is seen and announced the moment the engine raises it: a car |
 | [`apps/demo/src/app/teach2/pump-mismatch.ts`](../../apps/demo/src/app/teach2/pump-mismatch.ts) | Plan pump-rack-tci.md §8 (PQ8 = A, the owner's ruling, as LQ3 for the learner preparations): a pump channel whose syringe or bag and programme differ is the instructor's finding at once — a card on the laptop's dock, bes |
 | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | Instructor v2, the ACTION rows classified live (design §3.4, §3.5; answers 4–8, 20). |
 | [`apps/demo/src/app/teach2/sheet.ts`](../../apps/demo/src/app/teach2/sheet.ts) | Instructor v2, the sheet frame (design §4, board "Proposal v11"; plan IP7): every sheet has the same shape. |
@@ -1456,6 +1475,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/instructor-pumps.e2e.ts`](../../apps/demo/e2e/instructor-pumps.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/instrument-reload.e2e.ts`](../../apps/demo/e2e/instrument-reload.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/kit-store.e2e.ts`](../../apps/demo/e2e/kit-store.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/laptop-labs.e2e.ts`](../../apps/demo/e2e/laptop-labs.e2e.ts) | 0 | 0 |
@@ -1592,6 +1612,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/learner-paused.test.ts`](../../apps/demo/src/app/learner-paused.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-case.dom.test.ts`](../../apps/demo/src/app/link-case.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-others.test.ts`](../../apps/demo/src/app/link-others.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/link-pump-alarms.test.ts`](../../apps/demo/src/app/link-pump-alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-pump.test.ts`](../../apps/demo/src/app/link-pump.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/mechanisms/graph.test.ts`](../../apps/demo/src/app/mechanisms/graph.test.ts) | 0 | 0 |
@@ -1606,6 +1627,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/panel/eeg.dom.test.ts`](../../apps/demo/src/app/panel/eeg.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/ibp-scales.dom.test.ts`](../../apps/demo/src/app/panel/ibp-scales.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/panel-load-tab.dom.test.ts`](../../apps/demo/src/app/panel/panel-load-tab.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/pumps.dom.test.ts`](../../apps/demo/src/app/panel/pumps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/scenario.dom.test.ts`](../../apps/demo/src/app/panel/scenario.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/patients.test.ts`](../../apps/demo/src/app/patients.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/position.dom.test.ts`](../../apps/demo/src/app/position.dom.test.ts) | 0 | 0 |
@@ -1619,6 +1641,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/app/readers-v2.dom.test.ts`](../../apps/demo/src/app/readers-v2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/recognised.dom.test.ts`](../../apps/demo/src/app/recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/record-delivered.test.ts`](../../apps/demo/src/app/record-delivered.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-pump.test.ts`](../../apps/demo/src/app/record-pump.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |

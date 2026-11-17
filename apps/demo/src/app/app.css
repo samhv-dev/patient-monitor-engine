@@ -356,6 +356,18 @@ body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .linkish:hover { color: var(--text-strong); text-decoration: underline; }
 .next, .marks, .infusions, .plain { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); }
 .next li, .marks li, .infusions li { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: var(--s-1) 0; border-bottom: 1px solid var(--line); }
+/* The pump rack's read-only view (panel/pumps.ts): one block per channel; an alarm and a syringe holding another drug
+   than its programme in the danger colour. */
+.pumps-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
+.pumps-ch { display: grid; gap: 2px; padding: var(--s-2); border: 1px solid var(--line); border-radius: 8px; }
+.pumps-ch[data-state='alarm'] { border-color: var(--danger); }
+.pumps-head { display: flex; justify-content: space-between; gap: var(--s-2); }
+.pumps-head h4 { margin: 0; font-size: inherit; }
+.pumps-state { color: var(--text-muted); }
+.pumps-tci { white-space: pre-line; }
+.pumps-holds, .pumps-alarm[data-on='true'] { color: var(--danger); font-weight: 600; }
+.pumps-alarm[data-on='false'] { color: var(--text-muted); }
+.pumps-given { margin: 0; padding-left: 1.2em; }
 /* UI-A #5 (demo review 24 Oct #5): a card's manual step names a whole action ("Intubate: ventilator 12 × 500, PEEP 5,
    FiO₂ 0.5; sevoflurane 2 %") and was cut at the panel's edge at 1280 wide; it wraps inside the panel, left-aligned,
    one line keeping the small buttons' 32 px. Every other button stays on one line. */

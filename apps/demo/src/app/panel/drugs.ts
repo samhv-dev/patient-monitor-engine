@@ -6,7 +6,7 @@ import type { ClinicalEvent } from '@pme/controller';
 import { bleed, fluid, infusion, vaporiser } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';
 import { doseUnits, findDrugs, lockLabel, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
-import { button, h, input, seg, setText, stepper, toast } from '../ui.ts';
+import { button, h, input, keepOrder, keyed, seg, setText, stepper, toast } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
 
 const CLASS: Readonly<Record<string, string>> = {
@@ -112,23 +112,34 @@ export function drugsTab(c: PanelCtx): HTMLElement {
   };
   const drawKg = () => setText(kg, perKg(dose.value, unitSel.value, c.weightKg()) || `Patient ${c.weightKg()} kg`);
 
-  // ---- running infusions ----
+  // ---- running infusions: this phone's own (with Stop), then each drug the engine runs and what it runs by, as the
+  // host reads them (a drug this phone started off the pumps, and runs by nothing else, is its own line) ----
   const runList = h('ul', { class: 'infusions' });
+  const items = new Map<string, HTMLElement>();
   const drawRunning = () => {
-    runList.replaceChildren(...[...running.entries()].map(([id, r]) => h('li', {},
-      h('span', {}, `${r.name} ${r.rate} ${unitText(r.unit)}`),
-      button('Stop', async () => {
-        const cmd = infusion(id, 0, r.unit);
-        const a = await link.send(cmd as never);
-        if (a.accepted) {
-          running.delete(id);
-          drawRunning();
-          toast(`${r.name} infusion stopped`);
-        }
-      }, 'ghost small'))));
-    if (!running.size) runList.replaceChildren(h('li', { class: 'muted' }, 'No infusions running. Choose a drug above and pick Infusion.'));
+    const others = (link.runningLines?.() ?? []) // a test's partial Link has none
+      .filter((x) => !(running.has(x.drugId) && x.pumps === 0)).map((x) => x.text);
+    const keys = [...[...running].map(([id, r]) => `own|${id}|${r.rate}|${r.unit}`), ...others.map((t) => `other|${t}`)];
+    keepOrder(runList, keyed(items, keys.length ? keys : ['none'], (k) => {
+      const [kind, id = ''] = k.split('|');
+      if (kind === 'other') return h('li', {}, k.slice('other|'.length));
+      const r = running.get(id);
+      if (kind !== 'own' || !r) return h('li', { class: 'muted' }, 'No infusions running. Choose a drug above and pick Infusion.');
+      return h('li', {},
+        h('span', {}, `${r.name} ${r.rate} ${unitText(r.unit)}`),
+        button('Stop', async () => {
+          const cmd = infusion(id, 0, r.unit);
+          const a = await link.send(cmd as never);
+          if (a.accepted) {
+            running.delete(id);
+            drawRunning();
+            toast(`${r.name} infusion stopped`);
+          }
+        }, 'ghost small'));
+    }));
   };
   drawRunning();
+  c.onRefresh(drawRunning);
 
   // ---- vaporiser ----
   let agent = 'sevoflurane';

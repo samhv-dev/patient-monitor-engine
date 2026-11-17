@@ -153,7 +153,7 @@ test('L15 at 1440 × 900: with the Labs entry in the dock every sheet\'s primary
   await relayProcess();
   await laptop(page, {});
   const tools = await page.locator('.ip2-dock-tools button.ip2-tool').evaluateAll((bs) => bs.map((b) => (b as HTMLElement).dataset.sheet));
-  expect(tools).toEqual(['drug', 'airway', 'defib', 'patient', 'devices', 'log', 'labs']);
+  expect(tools).toEqual(['drug', 'airway', 'defib', 'patient', 'devices', 'log', 'pumps', 'labs']);
   expect(await covered(page, DOCK)).toEqual([]);
   // each sheet in turn: its footer (Deliver, the sheet's own buttons) and the dock, hit-tested
   const found: string[] = [];

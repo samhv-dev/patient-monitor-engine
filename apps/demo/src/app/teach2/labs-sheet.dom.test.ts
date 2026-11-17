@@ -261,7 +261,7 @@ describe('the Labs tool in the dock', () => {
   it('is the last tool on the host, opens the Labs sheet over ACTION, and lists what was drawn before it was first opened', () => {
     const s = source({ k1: 'bed 1 remote' });
     const r = rig(s.src);
-    expect([...r.tools.querySelectorAll('.ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'CPR', 'Patient', 'Devices', 'Log', 'Labs']);
+    expect([...r.tools.querySelectorAll('.ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'CPR', 'Patient', 'Devices', 'Log', 'Pumps', 'Labs']);
     s.draw(100, 'abg', 'learner', { by: 'k1' }); // before the sheet is built
     s.result('abg', 100 * TICK_S, ABG);
     (r.tools.querySelector('[data-sheet="labs"]') as HTMLButtonElement).click();

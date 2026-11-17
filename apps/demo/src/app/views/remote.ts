@@ -17,6 +17,7 @@ import { loadShippedFormulary } from '../formulary.ts';
 import { mountLearnerPreps } from '../teach2/learner-preps.ts';
 import { Link } from '../link.ts';
 import { mountPanel } from '../panel/panel.ts';
+import { mountPumpAlarmCard } from '../teach2/pump-alarm-card.ts';
 import { pairingOf } from '../pairing.ts';
 import { qrSvg } from '../qr.ts';
 import { mountSessionBar } from '../sessionbar.ts';
@@ -102,7 +103,7 @@ function sameBrowserRemote(o: RemoteOptions): View {
     mountFastForward(document.body, ctl, { simT: () => link.simT });
     o.bar.hidden = false;
     const panel = mountPanel(link, { site: o.site, weightKg: () => link.ctl.scenario.doc?.patient?.weightKg ?? 70 });
-    holder.append(panel.el);
+    holder.append(mountPumpAlarmCard(link, () => panel.select('pumps')).el, panel.el);
     // Connected once the host has answered the hello (its snapshot) OR once its 1 Hz state reaches this page: the state
     // is all the panel needs (on a cold Vite start a remote once waited over 10 s for the snapshot answer).
     const draw = throttle(() => setText(status, ctl.hostOnline || ctl.state ? `Connected to ${code}` : `Waiting for the monitor ${code}…`), 500);
@@ -198,11 +199,12 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
       // L9 (LQ3): the same card as the laptop's dock, above the panel: what the learners staged, and the notice's control
       const preps = mountLearnerPreps(link, { formulary: () => formulary, inline: true });
       void loading?.then(() => preps.refresh());
-      mounted = { panel, offs: [mountSessionBar(o.bar, link), mountFastForward(document.body, ctl, { simT: () => link.simT }), preps.destroy] };
+      const pumpAlarms = mountPumpAlarmCard(link, () => panel.select('pumps'));
+      mounted = { panel, offs: [mountSessionBar(o.bar, link), mountFastForward(document.body, ctl, { simT: () => link.simT }), preps.destroy, pumpAlarms.destroy] };
       o.bar.hidden = false;
       form.hidden = true;
       // the head, the notice and the card share the grid's first row (.remote-panel: auto, then the panel's 1fr)
-      holder.replaceChildren(h('div', { class: 'remote-top' }, connectedHead(status), notice, preps.el), panel.el);
+      holder.replaceChildren(h('div', { class: 'remote-top' }, connectedHead(status), notice, preps.el, pumpAlarms.el), panel.el);
       Object.assign(window, { __pmeRemote: { link, panel } }); // e2e hook
     };
     const draw = () => {
