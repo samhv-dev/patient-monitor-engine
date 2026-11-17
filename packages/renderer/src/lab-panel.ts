@@ -4,7 +4,7 @@
 // limit carries its source in its row; an analyte with no sourced range in the repository is shown unflagged (`range:
 // null`), never against an invented one. The ranges are the app's adult normals (apps/demo/src/app/glossary-data.ts, the
 // glossary's `normal` column, research/11 §5.7), its entry number named in each row.
-import type { LabPanelId, LabValues } from '@pme/engine-core';
+import type { AnalyteId, LabPanelId, LabValues } from '@pme/engine-core';
 
 /** A sourced interval: `lo`, `hi` or both (a limit the source does not give is absent). */
 export interface LabLimits {
@@ -35,7 +35,8 @@ export const LAB_ROWS: readonly LabRow[] = [
   },
   {
     key: 'pco2', label: 'PCO2', unit: 'mmHg', range: { lo: 35, hi: 45, src: G(179, '35–45') }, crit: { lo: 20, hi: 70, src: `${KOST(2)}, PaCO2` },
-    venous: { range: null, crit: { lo: 20, hi: 68, src: `${KOST(2)}, venous PCO2` } },
+    // the engine's venous gas is mixed venous (engine-core l2/blood/labs.ts): the glossary's mixed-venous CO2 tension
+    venous: { range: { lo: 41, hi: 51, src: G(113, '41–51 (PaCO2 + 4–6)') }, crit: { lo: 20, hi: 68, src: `${KOST(2)}, venous PCO2` } },
   },
   {
     // "80–100 on air": the arterial range depends on the inspired oxygen, which the panel does not know, so it is not flagged
@@ -61,6 +62,14 @@ export const LAB_ROWS: readonly LabRow[] = [
   { key: 'osm', label: 'Osm', unit: 'mOsm/kg', range: { lo: 275, hi: 295, src: G(195, '275–295') }, crit: { lo: 250, hi: 330, src: KOST(1) } },
   { key: 'inr', label: 'INR', unit: '', range: { lo: 0.8, hi: 1.2, src: G(210, '0.8–1.2') }, crit: { hi: 5, src: `${KOST(3)} (high limit only)` } },
 ];
+
+/** The names of the analytes an analyser row names that have no row above (the engine computes none of them). */
+const OTHER_LABELS: Partial<Record<AnalyteId, string>> = {
+  hhb: 'HHb', caTotal: 'Total calcium', creatinine: 'Creatinine', ck: 'CK', tbil: 'Bilirubin', hbf: 'HbF',
+  pt: 'PT', aptt: 'APTT', fibrinogen: 'Fibrinogen', platelets: 'Platelets',
+};
+/** The test's name as a lab panel prints it. */
+export const labLabel = (key: AnalyteId): string => LAB_ROWS.find((r) => r.key === key)?.label ?? OTHER_LABELS[key] ?? key;
 
 const isVenous = (panel?: LabPanelId) => panel === 'vbg';
 const rangeOf = (r: LabRow, panel?: LabPanelId) => (isVenous(panel) && r.venous ? r.venous.range : r.range);

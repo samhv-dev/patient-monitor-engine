@@ -2,6 +2,7 @@
 // spectrum level (spectrumOf, no signal yet), plus C28's amplitude/slope half and C34/C35's spectral half. "Direction"
 // cells test sign and order; the cells with a sourced number test the number.
 import { describe, expect, it } from 'vitest';
+import { CORTEX, functionLoss } from '../../../src/l2/brain/energy.ts';
 import { agentMixOf, cortexStep } from '../../../src/l2/eeg/state.ts';
 import { bandPower, medianFreq, peakOf, psdDb, rmsUv, spectrumOf } from '../../../src/l2/eeg/spectra.ts';
 import { depth } from '../../../src/l2/neuro/depth.ts';
@@ -11,7 +12,7 @@ const H0 = { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 
 const M0 = { sevoflurane: 0, isoflurane: 0, desflurane: 0, n2o: 0 };
 type Patch = Partial<Omit<CortexInputs, 'hyp' | 'mac'>> & { hyp?: Partial<CortexInputs['hyp']>; mac?: Partial<CortexInputs['mac']> };
 const inp = (p: Patch = {}): CortexInputs => ({
-  ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, do2Rel: 1, tempC: 37,
+  ageY: 40, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, metabolic: 0, tempC: 37,
   ...p, hyp: { ...H0, ...(p.hyp ?? {}) }, mac: { ...M0, ...(p.mac ?? {}) },
 });
 const sp = (p: Patch = {}, prev?: CortexState): EegSpectrum => { const x = inp(p); return spectrumOf(cortexStep(prev, x, 0.1), agentMixOf(x)); };
@@ -202,8 +203,8 @@ describe('EEG E2 spectra: acceptance cells at the spectrum level', () => {
   });
 
   it('C34 / C35 (spectral half): ischaemia and cooling slow the EEG (median frequency down) before the voltage goes', () => {
-    expect(medianFreq(sp({ do2Rel: 0.33 }), 0.5, 30)).toBeLessThan(medianFreq(AWAKE, 0.5, 30));
-    expect(sp({ do2Rel: 0.33 }).suppression.p).toBe(0);
+    expect(medianFreq(sp({ metabolic: functionLoss(0.33, CORTEX) }), 0.5, 30)).toBeLessThan(medianFreq(AWAKE, 0.5, 30));
+    expect(sp({ metabolic: functionLoss(0.33, CORTEX) }).suppression.p).toBe(0);
     expect(medianFreq(sp({ tempC: 28 }), 0.5, 30)).toBeLessThan(medianFreq(AWAKE, 0.5, 30));
     expect(sp({ tempC: 17.8 }).suppression.p).toBe(1);
   });

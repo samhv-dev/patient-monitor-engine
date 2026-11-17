@@ -20,7 +20,7 @@ import type { EngineEvent } from '@pme/engine-core';
 import { asV1, DEVICE_RE, isV2, LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type NotGiven, type PumpMeta, type PumpReplaced, type RelayDevice, type WireEvent } from '@pme/controller';
 import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
-import { describeCommand } from './describe.ts';
+import { describeCommand, notDoneOf } from './describe.ts';
 import { deviceLabel, kindOf, numberOf, type DeviceKind, type DeviceOrder } from './device-names.ts';
 
 /** How a state row's state was entered (`Row.by` on a state row). */
@@ -327,13 +327,14 @@ export class RunRecord {
     this.add(row);
   }
 
-  /** L14: a learner's give the host refused because the case was paused (host-session.ts onNotGiven): the attempt, who
+  /** L14: a learner's give or sample the host refused because the case was paused (host-session.ts onNotGiven): the attempt, who
    *  made it and why, at the case time it arrived. */
   notGiven(n: NotGiven): void {
     const c = n.command as unknown as Record<string, unknown>;
     const by = typeof c.by === 'string' ? c.by : undefined;
     const name = this.given(by, 'learner');
-    this.add({ t: n.t, kind: 'learner', text: `${describeCommand(c)} not given: ${n.reason}`, remote: true, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), notGiven: n.reason });
+    const { what, not } = notDoneOf(c);
+    this.add({ t: n.t, kind: 'learner', text: `${what} ${not}: ${n.reason}`, remote: true, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), notGiven: n.reason });
     // the runner's administrations now hold the attempt (AppSession records it there first); a paused clock sends no
     // sample, so the once-a-second copy would not carry it until the case resumed
     this.copy();

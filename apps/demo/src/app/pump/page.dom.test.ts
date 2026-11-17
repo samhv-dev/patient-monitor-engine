@@ -5,7 +5,7 @@
 // once the host grants it, with n channels of the kinds Room setup sent on the `style` event; the faces follow the
 // follower engine's `drugs` event; the syringe's contents are never in the page's DOM; the tablet does not carry the
 // monitor's Sound and Silence (it shows no monitor). A host that never answers is said in words.
-import { createStamper, INSTRUCTOR_REASONS, LEARNER_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
+import { createStamper, INSTRUCTOR_REASONS, LEARNER_REASONS, REJOINED, RELAY_PEER, TICKET_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
 import type { EngineEvent, PumpPanelRow } from '@pme/engine-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -54,14 +54,16 @@ const { DEFAULT_SITE } = await import('../site.ts');
 const { store } = await import('../store.ts');
 
 const link = () => net.links.at(-1) as Link;
-const host = () => {
+/** `id`: the host page's peer id (a reloaded page has a new one). */
+const host = (id = 'host-aaaaaa') => {
   const l = link();
-  const stamp = createStamper(CODE, 'host-aaaaaa', () => Date.now());
+  const stamp = createStamper(CODE, id, () => Date.now());
   const send = (b: WireBody) => [...l.msg].forEach((fn) => fn(stamp(b)));
   const tabletFrom = () => [...l.sent].reverse().find((m) => m.kind === 'hello')?.from as string;
   return {
     hello: () => send({ kind: 'hello', role: 'host' }),
-    grant: (granted: boolean, reason?: string) => send({ kind: 'grant', to: tabletFrom(), granted, ...(reason ? { reason } : {}) }),
+    grant: (granted: boolean, reason?: string, ticket?: string) => send({ kind: 'grant', to: tabletFrom(), granted, ...(reason ? { reason } : {}), ...(ticket ? { ticket } : {}) }),
+    rejoined: () => [...l.msg].forEach((fn) => fn(createStamper(CODE, RELAY_PEER)({ kind: 'grant', to: tabletFrom(), granted: false, reason: REJOINED }))),
     rack: (pumps?: Array<'syringe' | 'drip'>) => send({ kind: 'event', body: [{ type: 'style', skin: 'saadat-like', theme: '', ...(pumps ? { pumps } : {}), replay: true }] } as WireBody),
     relayError: (code: 'too-many-tries' | 'full' | 'forbidden', message = 'refused') => [...l.rf].forEach((fn) => fn({ relay: 'error', code, message })),
   };
@@ -96,7 +98,7 @@ function mount() {
     code: CODE,
     stage,
     profiles: null,
-    follow: (code, bar, pin) => mountFollower({ stage, monitorHost } as never, DEFAULT_SITE, code, bar, { relay: 'ws://relay.test/' }, { show: 'pump', role: 'pump', device: DEVICE, pin, sound: false }),
+    follow: (code, bar, credential) => mountFollower({ stage, monitorHost } as never, DEFAULT_SITE, code, bar, { relay: 'ws://relay.test/' }, { show: 'pump', role: 'pump', device: DEVICE, credential, sound: false }),
   });
   document.body.append(v.el);
   const q = <T extends Element>(s: string) => v.el.querySelector(s) as T;
@@ -226,6 +228,28 @@ describe('refusals, in words', () => {
     await m.signIn();
     host().grant(false, LEARNER_REASONS.noRemote);
     expect(m.words()).toBe(PUMP_WORDS.noRemote);
+  });
+
+  it("the instructor's computer reconnects: the rack stays, the tablet says it signs in again, and its next hello proves the ticket", async () => {
+    const m = mount();
+    await m.signIn();
+    host().rack(['syringe', 'syringe']);
+    const ticket = `ABCDEFGH.${'c'.repeat(22)}`;
+    host().grant(true, undefined, ticket);
+    host().rejoined();
+    expect(m.q<HTMLElement>('.pump-signed').hidden).toBe(false);
+    expect(m.q('.pump-status')?.textContent).toBe(PUMP_WORDS.signingInAgain);
+    const reloaded = host('host-bbbbbb');
+    reloaded.hello();
+    const hellos = () => link().sent.filter((x) => x.kind === 'hello');
+    await vi.waitFor(() => expect(hellos().at(-1)).toMatchObject({ role: 'pump', ticket }));
+    expect(hellos().at(-1)).not.toHaveProperty('pin');
+    reloaded.grant(true, undefined, `ABCDEFGH.${'d'.repeat(22)}`);
+    expect(m.q('.pump-status')?.textContent).toBe(PUMP_WORDS.signedIn(CODE));
+    reloaded.rejoined();
+    host('host-cccccc').grant(false, TICKET_REASONS.newSession);
+    expect(m.form().hidden).toBe(false);
+    expect(m.words()).toBe(PUMP_WORDS.newSession);
   });
 
   it('too many tries at the relay', async () => {

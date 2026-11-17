@@ -5,7 +5,7 @@
 // `learner` with its device key and the PIN (the real follower over a fake relay link the test drives); granted, the
 // monitor strip shows with three tabs and the connection line; "Change" returns to #/pick. Also Room setup's learner PIN
 // panel: behind press-and-hold, "New learner PIN". The tabs' 44 px is measured in a browser (mobile-learner.e2e.ts).
-import { createStamper, INSTRUCTOR_REASONS, LEARNER_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
+import { createStamper, INSTRUCTOR_REASONS, LEARNER_REASONS, REJOINED, RELAY_PEER, TICKET_REASONS, type ManagedTransport, type RelayFrame, type TransportStatus, type WireBody, type WireMessage } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const CODE = 'GP3P4G';
@@ -51,14 +51,17 @@ const { DEFAULT_SITE } = await import('../site.ts');
 
 const link = () => net.links.at(-1) as Link;
 /** The host's side of the latest link: its hello, its grant to the phone's hello `from`, the relay's error frame. */
-const host = () => {
+/** `id`: the host page's peer id (a reloaded page has a new one). */
+const host = (id = 'host-aaaaaa') => {
   const l = link();
-  const stamp = createStamper(CODE, 'host-aaaaaa', () => Date.now());
+  const stamp = createStamper(CODE, id, () => Date.now());
   const send = (b: WireBody) => [...l.msg].forEach((fn) => fn(stamp(b)));
   const phoneFrom = () => [...l.sent].reverse().find((m) => m.kind === 'hello')?.from as string;
   return {
     hello: () => send({ kind: 'hello', role: 'host' }),
-    grant: (granted: boolean, reason?: string) => send({ kind: 'grant', to: phoneFrom(), granted, ...(reason ? { reason } : {}) }),
+    grant: (granted: boolean, reason?: string, ticket?: string) => send({ kind: 'grant', to: phoneFrom(), granted, ...(reason ? { reason } : {}), ...(ticket ? { ticket } : {}) }),
+    /** The relay's own notice that a new host socket came. */
+    rejoined: () => [...l.msg].forEach((fn) => fn(createStamper(CODE, RELAY_PEER)({ kind: 'grant', to: phoneFrom(), granted: false, reason: REJOINED }))),
     relayError: (code: 'denied' | 'too-many-tries' | 'full' | 'forbidden', message = 'refused') => [...l.rf].forEach((fn) => fn({ relay: 'error', code, message })),
   };
 };
@@ -72,7 +75,7 @@ function mount() {
   const v = learnerRemoteView({
     code: CODE,
     stage,
-    follow: (code, bar, pin) => mountFollower({ stage, monitorHost } as never, DEFAULT_SITE, code, bar, { relay: 'ws://relay.test/' }, { show: 'learner', device: DEVICE, pin }),
+    follow: (code, bar, credential) => mountFollower({ stage, monitorHost } as never, DEFAULT_SITE, code, bar, { relay: 'ws://relay.test/' }, { show: 'learner', device: DEVICE, credential }),
   });
   document.body.append(v.el);
   const q = <T extends Element>(s: string) => v.el.querySelector(s) as T;
@@ -250,6 +253,44 @@ describe('L7: the learner remote sends under its hello\'s id, and hands each gra
     m.v.follower()?.destroy();
   });
 
+  it("the instructor's computer reconnects: the page stays, says it signs in again, and its next hello proves the ticket, never the PIN", async () => {
+    const m = mount();
+    const gone = vi.fn();
+    m.v.onSignedIn(() => gone);
+    await m.signIn();
+    const ticket = `ABCDEFGH.${'c'.repeat(22)}`;
+    host().grant(true, undefined, ticket);
+    host().rejoined();
+    expect(m.form().hidden).toBe(true);
+    expect(m.q('.lr-status')?.textContent).toBe(LEARNER_WORDS.signingInAgain);
+    host().relayError('forbidden', 'the learner remote is not signed in'); // a press in that second: not an older kit
+    expect(m.form().hidden).toBe(true);
+    const reloaded = host('host-bbbbbb');
+    reloaded.hello();
+    const hellos = () => link().sent.filter((x) => x.kind === 'hello');
+    await vi.waitFor(() => expect(hellos().at(-1)).toMatchObject({ role: 'learner', device: DEVICE, ticket }));
+    for (const x of hellos().slice(1)) expect(x).not.toHaveProperty('pin');
+    reloaded.grant(true, undefined, `ABCDEFGH.${'d'.repeat(22)}`);
+    expect(m.q('.lr-status')?.textContent).toBe(LEARNER_WORDS.signedIn(CODE)); // the words went away
+    expect(gone).not.toHaveBeenCalled(); // the menus kept this follower: its tray, its samples
+    expect(link().sent.filter((x) => JSON.stringify(x).includes(`"pin":"${PIN}"`))).toHaveLength(1); // the first hello only
+    m.v.follower()?.destroy();
+  });
+
+  it('the refusals that ask for the learner PIN again after a reconnect say why', async () => {
+    for (const [reason, words] of [[TICKET_REASONS.newSession, LEARNER_WORDS.newSession], [TICKET_REASONS.used, LEARNER_WORDS.notRenewed], [INSTRUCTOR_REASONS.takenOver, LEARNER_WORDS.takenOver], [LEARNER_REASONS.pinChanged, LEARNER_WORDS.pinChanged]] as const) {
+      const m = mount();
+      await m.signIn();
+      host().grant(true, undefined, `ABCDEFGH.${'e'.repeat(22)}`);
+      host().rejoined();
+      host().grant(false, reason);
+      expect(m.form().hidden).toBe(false);
+      expect(m.words()).toBe(words);
+      m.v.follower()?.destroy();
+      document.body.replaceChildren();
+    }
+  });
+
   it("the Drugs tab holds the drugs menu it is given; Infusions and Labs keep their one line", () => {
     history.replaceState(null, '', `/?join=${CODE}#/remote/learner`);
     const menu = document.createElement('div');
@@ -287,7 +328,7 @@ describe("Room setup's learner PIN (L6, §4 D9)", () => {
   };
   const card = (o: { remotes?: number; denials?: number; relay?: string | null } = {}) => {
     const p = pin();
-    const c = learnerPinCard({ pin: p, host: { learnerRemotes: () => o.remotes ?? 0, learnerDenials: () => o.denials ?? 0 }, relay: o.relay === undefined ? 'ws://relay.test/' : o.relay });
+    const c = learnerPinCard({ pin: p, host: { learnerRemotes: () => o.remotes ?? 0, learnerDenials: () => o.denials ?? 0, idle: () => Promise.resolve() }, relay: o.relay === undefined ? 'ws://relay.test/' : o.relay });
     document.body.replaceChildren(c.el);
     return { c, p, hold: c.el.querySelector('.ip-peer-hold') as HTMLButtonElement, value: c.el.querySelector('.ip-peer-pin-value') as HTMLElement };
   };

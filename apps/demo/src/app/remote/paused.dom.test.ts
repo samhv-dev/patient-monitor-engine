@@ -3,12 +3,14 @@
 // Give and "Deliver the tray", the Infusions tab's Start, Change and Stop) cannot be used and say why, from the pause the
 // phone already follows (the host's `time pause` / `resume`, as its "(paused)" mark reads it: follower-status.ts
 // hostPause). Preparing stays open. A give the host refused because the pause began while it was on its way (the
-// `paused` code) shows the host's reason in the tray, never "Given". After the resume the controls work again.
+// `paused` code) shows the host's reason in the tray, never "Given". After the resume the controls work again. A sample is
+// an act on the patient like a give: the Labs tab's Send buttons follow the same pause.
 import { createStamper, PAUSED_REFUSAL, type Formulary, type LearnerPrepNews, type LearnerPrepView, type WireBody, type WireMessage } from '@pme/controller';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { loadShippedFormulary } from '../formulary.ts';
 import type { FollowerCommand } from '../views/follower.ts';
 import { infusionsView, INFUSION_WORDS } from './infusions.ts';
+import { LAB_SENDS, LABS_WORDS, labsView } from './labs.ts';
 import { trayView, TRAY_WORDS } from './tray.ts';
 
 let f: Formulary;
@@ -96,5 +98,33 @@ describe('L14: the Infusions tab while the case is paused', () => {
     w.time('resume');
     expect(btns().map((b) => b.disabled)).toEqual([false, false, false]);
     expect(note().hidden).toBe(true);
+  });
+});
+
+describe('L14: the Labs tab while the case is paused', () => {
+  it('Send cannot be used and the tab says why; a sample refused on its way shows the host\'s reason; after the resume Send works', () => {
+    const w = wire();
+    const v = labsView();
+    document.body.replaceChildren(v.el);
+    v.attach({ ...w.link, onEngine: () => () => undefined, device: 'mephone00001' });
+    const sends = () => [...v.el.querySelectorAll<HTMLButtonElement>('.lr-lab-send')];
+    const note = () => v.el.querySelector<HTMLElement>('.lr-paused')!;
+    const said = () => v.el.querySelector('.lr-lab-said')!.textContent;
+    expect(sends().map((b) => b.disabled)).toEqual(LAB_SENDS.map(() => false));
+    expect(note().hidden).toBe(true);
+    sends()[0]!.click(); // sent while running
+    w.time('pause'); // the pause reached the host first
+    expect(sends().map((b) => b.disabled)).toEqual(LAB_SENDS.map(() => true));
+    expect([note().hidden, note().textContent]).toEqual([false, LABS_WORDS.paused]);
+    w.ack('cmd1', false, PAUSED_REFUSAL, 'paused');
+    expect(said()).toBe(`Not sent: ${PAUSED_REFUSAL}`);
+    expect(v.samples).toEqual([]);
+    sends()[1]!.click();
+    expect(w.sent).toHaveLength(1); // nothing sent from a disabled Send
+    w.time('resume');
+    expect(sends().map((b) => b.disabled)).toEqual(LAB_SENDS.map(() => false));
+    expect(note().hidden).toBe(true);
+    sends()[1]!.click();
+    expect(w.sent.at(-1)).toMatchObject({ type: 'applyEvent', event: { kind: 'lab', panel: LAB_SENDS[1]!.panel } });
   });
 });

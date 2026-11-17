@@ -502,7 +502,7 @@ describe('C2: the pump tablet\'s admission and its news', () => {
     await pumpIn(x);
     expect(x.host.pumpTablets()).toBe(1);
     expect(x.host.learnerRemotes()).toBe(0);
-    x.host.learnerPinChanged();
+    await x.host.learnerPinChanged();
     await waitFor(() => grants(x.got, 'pump.1').at(-1)?.granted === false);
     expect(x.host.pumpTablets()).toBe(0);
   });

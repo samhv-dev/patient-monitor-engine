@@ -16,7 +16,7 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
 | [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 34 | 18 |
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 13 | 43 | 10 |
-| [Brain, kidney and liver](organs.md) | 14 | 30 | 13 |
+| [Brain, kidney and liver](organs.md) | 15 | 31 | 13 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 16 |
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 34 | 12 |
 | [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 31 | 53 | 33 |
@@ -24,8 +24,8 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Alarms](alarms.md) | 5 | 17 | 0 |
 | [Defibrillator and pacer](defib-pacer.md) | 7 | 14 | 0 |
 | [Ventilator](ventilator.md) | 16 | 28 | 7 |
-| [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 25 | 19 | 0 |
-| [Control: commands, transports, scenarios](control.md) | 54 | 110 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 289 | 429 | 4 |
+| [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 25 | 20 | 0 |
+| [Control: commands, transports, scenarios](control.md) | 56 | 115 | 0 |
+| [Presentation: renderer, audio, skins, the app](presentation.md) | 290 | 433 | 4 |
 | [Validation harness](validation-harness.md) | 62 | 55 | 0 |
 | [Whole-patient scenario suites](integration.md) | 0 | 1 | 8 |

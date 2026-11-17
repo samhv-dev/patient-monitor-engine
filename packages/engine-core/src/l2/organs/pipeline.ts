@@ -10,6 +10,7 @@ import { l1Target, type L1State } from '../../l1/state.ts';
 import type { Command, EngineEvent, Measured, PatientProfile } from '../../types.ts';
 import type { OrgansEvent } from '../../types-organs.ts';
 import { caO2, drugsOf, NO_ANAESTHESIA, NO_DRUGS, type BrainDrugs } from '../brain/flow.ts';
+import { createBrainEnergy, stepBrainEnergy } from '../brain/energy.ts';
 import { brainParams, createBrain, giveOsmotherapy, stepBrain, type BrainInputs, type BrainState } from '../brain/model.ts';
 import { BRAIN_DT_S, ICP_THRESHOLD, MANNITOL_MOSM_PER_G, NACL_MOSM_PER_G } from '../brain/params.ts';
 import { icpSample } from '../brain/wave.ts';
@@ -131,6 +132,13 @@ export function rebaselineOrgans(os: OrgansState, ctx: OrganSources): void {
   os.view = v;
   build(os, v);
   os.num.pbto2 = os.brain.pbto2;
+}
+
+/** A snapshot taken before the brain had an energy state: derive it from the flow and the view of its last step. */
+export function upgradeOrgans(os: OrgansState): void {
+  if (os.brain.energy) return;
+  os.brain.energy = createBrainEnergy();
+  if (os.view) stepBrainEnergy(os.brain.energy, { cbfRel: os.brain.cbfRel, hb: os.view.hb, sao2: os.view.sao2, pao2: os.view.pao2 });
 }
 
 export function organChannelActive(os: OrgansState, ch: OrganChannel): boolean {

@@ -21,9 +21,9 @@ export function logTab(c: PanelCtx): HTMLElement {
   const show = (e: ClinicalLogEntry) => filter === 'all' || (filter === 'actions' && (e.kind === 'instructor' || e.kind === 'learner')) || (filter === 'alarms' && e.kind === 'alarm') || (filter === 'markers' && (e.kind === 'marker' || e.kind === 'note' || e.kind === 'scenario'));
   let n = -1;
   const draw = () => {
-    if (n === link.log.length) return;
-    n = link.log.length;
-    list.replaceChildren(...link.log.filter(show).slice(-300).reverse().map((e) => h('li', { 'data-kind': e.kind },
+    if (n === link.sessionLog.length) return;
+    n = link.sessionLog.length;
+    list.replaceChildren(...link.sessionLog.filter(show).slice(-300).reverse().map((e) => h('li', { 'data-kind': e.kind },
       h('time', {}, e.simT === null ? '--:--' : clock(e.simT)), h('span', { class: 'k' }, KIND_TEXT[e.kind]),
       h('span', {}, e.text, e.refused ? h('span', { class: 'refused' }, ' (not applied; the reason is in the exported log)') : null))));
   };
@@ -33,6 +33,6 @@ export function logTab(c: PanelCtx): HTMLElement {
     h('div', { class: 'row' }, note.el, button('Bookmark now', () => void bookmark(link), 'small')),
     list,
     h('div', { class: 'row' },
-      button('Export CSV', () => download('session-log.csv', logCsv(link.log), 'text/csv'), 'ghost small'),
-      button('Export JSON', () => download('session-log.json', JSON.stringify({ schema: 'pme-session-log/1', entries: link.log }, null, 1), 'application/json'), 'ghost small')));
+      button('Export CSV', () => download('session-log.csv', logCsv(link.sessionLog), 'text/csv'), 'ghost small'),
+      button('Export JSON', () => download('session-log.json', JSON.stringify({ schema: 'pme-session-log/1', entries: link.sessionLog }, null, 1), 'application/json'), 'ghost small')));
 }

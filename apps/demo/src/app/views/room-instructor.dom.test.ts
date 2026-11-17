@@ -3,7 +3,7 @@
 // the button is held (pointer or keyboard); Change the PIN draws a new one and revokes the signed-in phone (P3's revoke,
 // observed on a real HostSession whose phone is a real instructor ControllerSession); the row says the phone's state
 // and since when; the second QR code is the phone's address and carries no PIN.
-import { ControllerSession, createInProcessHub, HostSession, INSTRUCTOR_REASONS, type HostTarget } from '@pme/controller';
+import { ControllerSession, SignInCredential, createInProcessHub, HostSession, INSTRUCTOR_REASONS, type HostTarget } from '@pme/controller';
 import { createEngine } from '@pme/engine-core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { instructorPin, type PinStore } from '../instructor-pin.ts';
@@ -47,7 +47,7 @@ function laptop(o: { relay?: string | null } = {}) {
   document.body.replaceChildren(card.el);
   const phone = (typed: string) => {
     const t = hub.connect();
-    const ctl = new ControllerSession({ session: CODE, transport: t, role: 'instructor', pin: () => typed, issuedBy: 'remote' });
+    const ctl = new ControllerSession({ session: CODE, transport: t, role: 'instructor', credential: new SignInCredential(typed), issuedBy: 'remote' });
     closers.push(() => ctl.close());
     return ctl;
   };
@@ -124,7 +124,7 @@ describe("the instructor phone's row", () => {
     let n = 1;
     let fire: (k: number) => void = () => undefined;
     const card = instructorRoomCard({
-      code: CODE, relay: 'ws://h/', pin: instructorPin(memory(), () => 1), host: { instructorPinChanged: () => undefined, instructorDenials: () => 0 },
+      code: CODE, relay: 'ws://h/', pin: instructorPin(memory(), () => 1), host: { instructorPinChanged: () => Promise.resolve(), instructorDenials: () => 0 },
       instructors: () => n, onInstructors: (f) => ((fire = f), () => undefined), now: () => new Date(2026, 10, 6, 14, 20).getTime(),
     });
     expect(card.el.querySelector('.ip-peer-state')?.textContent).toBe('Signed in');

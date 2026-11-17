@@ -155,6 +155,13 @@ function eegLine(a: Any): string {
   return 'Device setting changed';
 }
 
+/** A learner's act the host refused (host-session.ts onNotGiven), for the Log and the record: a drug "not given", a
+ *  sample "not drawn". */
+export function notDoneOf(c: Any): { what: string; not: string } {
+  const e = (c.event ?? {}) as Any;
+  return e.kind === 'lab' ? { what: LAB_PANEL_WORDS[String(e.panel)] ?? 'Sample', not: 'not drawn' } : { what: describeCommand(c), not: 'not given' };
+}
+
 /** `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); the Log then names it. */
 export function describeCommand(c: Any, step?: string): string {
   switch (c.type) {

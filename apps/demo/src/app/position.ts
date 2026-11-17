@@ -1,10 +1,11 @@
 // A reload must not lose the running case (UI review 2026-10-24 #1: a reload mid-card came back as "No scenario", the
 // default patient, 00:05). The engine lives in this page, so the case cannot survive a reload: it is RESTORED. Every
 // SAVE_MS this tab keeps the run's position in sessionStorage — what a bookmark holds (the engine snapshot and the
-// runner state, ScenarioDriver.position), the card, the speed and the pause, and the Debrief's record — and on load,
-// under the same session code, the same build and within MAX_AGE_MS, the card loads again and returns to it through
-// the bookmark machinery (`restoreBookmark` to a mark the driver holds but does not list). The phones re-follow as
-// after any "Return here": a timeline event and a host hello. A new body (Restart patient, another card) forgets it.
+// runner state, ScenarioDriver.position), the card, the speed and the pause, the Debrief's record and the case's lines
+// of the instructor's log — and on load, under the same session code, the same build and within MAX_AGE_MS, the card
+// loads again and returns to it through the bookmark machinery (`restoreBookmark` to a mark the driver holds but does
+// not list). The phones re-follow as after any "Return here": a timeline event and a host hello. A new body (Restart
+// patient, another card) forgets it.
 // The course's stage marks (Instructor v2's returns to the start of a past stage) are kept too, under a key of their own
 // written only when the marks change (each holds a snapshot): the latest mark of each stage, placed again on the reloaded
 // page with the course's history (the owner's report of 30 October: after a refresh no past stage could be returned to,
@@ -12,8 +13,10 @@
 // both keeps the position and drops the marks.
 import { engineKey } from '@pme/engine-core';
 import type { RunPosition, StageMarkPosition } from '@pme/controller/scenario';
+import type { ClinicalLogEntry, Link } from './link.ts';
 import { RELOAD_MARK, type KeptRecord } from './record.ts';
 import { cardOf, scenarioById, type ScenarioCard } from './scenarios.ts';
+import { SIGN_INS_KEY } from './sign-ins.ts';
 import type { AppSession } from './session.ts';
 
 /** How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed.
@@ -49,6 +52,8 @@ export interface Position {
   learner: boolean;
   run: RunPosition;
   record: KeptRecord;
+  /** The case's lines of the instructor's log (Link.log): the board's off-card list reads them. */
+  log: ClinicalLogEntry[];
 }
 
 /** The stage marks kept beside a position: the same session, build, engine and card, or they are not read. */
@@ -61,12 +66,12 @@ interface KeptStageMarks {
   marks: StageMarkPosition[];
 }
 type Owner = Pick<Position, 'code' | 'build' | 'engine' | 'cardId'>;
-/** The kept position and stage marks as stored (key → value), for a hand-over to another tab of this browser
- *  (host-guard.ts): sessionStorage is the tab's own, so the other tab cannot read them. */
+/** The kept position, stage marks and book of signed-in devices as stored (key → value), for a hand-over to another tab
+ *  of this browser (host-guard.ts): sessionStorage is the tab's own, so the other tab cannot read them. */
 export function keptItems(s: Storage | null = storage()): Record<string, string> {
   const out: Record<string, string> = {};
   try {
-    for (const k of [KEY, MARKS_KEY]) {
+    for (const k of [KEY, MARKS_KEY, SIGN_INS_KEY]) {
       const v = s?.getItem(k);
       if (typeof v === 'string') out[k] = v;
     }
@@ -78,7 +83,7 @@ export function keptItems(s: Storage | null = storage()): Record<string, string>
 
 /** Store a position handed over by another tab (keptItems there); readPosition then checks it as after a reload. */
 export function putKeptItems(items: Record<string, string>, s: Storage | null = storage()): void {
-  for (const k of [KEY, MARKS_KEY]) {
+  for (const k of [KEY, MARKS_KEY, SIGN_INS_KEY]) {
     const v = items[k];
     try {
       if (typeof v === 'string') s?.setItem(k, v);
@@ -196,7 +201,7 @@ const runOf = (s: AppSession) => s.driver.runner ?? s.driver.phaseRunner;
  * is under way or the tab is hidden — a hidden tab pauses itself, and that pause is not the instructor's). A moment
  * without a consistent position (ScenarioDriver.position) is skipped; the next one is taken. Returns a stopper.
  */
-export function keepPositions(s: AppSession, every = SAVE_MS): () => void {
+export function keepPositions(s: AppSession, link: Pick<Link, 'log'>, every = SAVE_MS): () => void {
   let busy = false;
   let marksKept = '';
   const take = async () => {
@@ -209,6 +214,7 @@ export function keepPositions(s: AppSession, every = SAVE_MS): () => void {
       const p: Position = {
         schema: 'pme-position/1', code: s.code, build: APP_BUILD, engine: engineKey, savedAt: Date.now(), cardId: r.doc.id, title: cardOf(r.doc).title,
         stateId: run.runner.stateId, simT: run.snapshot.tick * TICK_S, speed: s.timeScale, paused: s.paused, learner: s.learner, run, record: s.record.keep(),
+        log: [...link.log],
       };
       if (!savePosition(p)) return;
       // the stage marks only when they changed (each holds a snapshot of ≈ 80 KB), or after a clear forgot them
@@ -226,10 +232,11 @@ export function keepPositions(s: AppSession, every = SAVE_MS): () => void {
 
 /**
  * After a reload: load the position's card again (`load`, the app's own Load: its log line and learner controls), then
- * return to the position as to a bookmark, with the Debrief's record, the speed and the pause. False when it could
- * not: the card is no longer in the library, the load or the return was refused (the card then runs from its start).
+ * return to the position as to a bookmark, with the Debrief's record, the case's log lines, the speed and the pause.
+ * False when it could not: the card is no longer in the library, the load or the return was refused (the card then runs
+ * from its start).
  */
-export async function restorePosition(p: Position, s: AppSession, load: (c: ScenarioCard) => boolean): Promise<boolean> {
+export async function restorePosition(p: Position, s: AppSession, link: Pick<Link, 'resumeCase'>, load: (c: ScenarioCard) => boolean): Promise<boolean> {
   const card = scenarioById(p.cardId);
   if (!card) return false;
   const marks = readStageMarks(p); // before the Load, which forgets what was kept
@@ -243,6 +250,7 @@ export async function restorePosition(p: Position, s: AppSession, load: (c: Scen
     const history = runOf(s)?.history;
     if (history) s.panel.scenario.history = [...history];
     s.record.resume(p.record, p.run.snapshot.tick * TICK_S);
+    link.resumeCase(p.log, p.run.snapshot.tick * TICK_S);
     s.setLearner(p.learner);
     if (p.speed !== s.timeScale) await s.panel.send({ type: 'time', action: 'scale', value: p.speed });
     if (p.paused) await s.panel.send({ type: 'time', action: 'pause' });

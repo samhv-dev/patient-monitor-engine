@@ -105,7 +105,7 @@ export interface LearnerPinDeps {
   /** The learner PIN (instructor-pin.ts learnerPin): its `change()` draws a new one; main.ts tells the host, which revokes every learner remote. */
   pin: InstructorPin;
   /** The host's half (L4): wrong learner PINs in the last minute, and the learner remotes granted now. */
-  host: { learnerDenials(): number; learnerRemotes(): number };
+  host: { learnerDenials(): number; learnerRemotes(): number; idle(): Promise<void> };
   /** The relay address, or null: no learner remote can sign in. */
   relay: string | null;
 }
@@ -124,6 +124,7 @@ export function learnerPinCard(d: LearnerPinDeps): { el: HTMLElement; draw(): vo
     d.pin.change();
     if (held()) reveal(true);
     draw();
+    void d.host.idle().then(draw); // the count once the host has revoked them (after any sign-in it was still checking)
   }, 'ip-peer-change lr-pin-change');
   const pinBox = h('div', { class: 'ip-peer-pinbox' }, h('span', { class: 'ip-peer-pin-label' }, W.label), value, hold, change);
   const noRelay = h('p', { class: 'hint ip-peer-norelay' }, W.noRelay);
