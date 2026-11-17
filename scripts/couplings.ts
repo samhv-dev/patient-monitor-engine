@@ -189,18 +189,16 @@ const node = (n: NodeRef) => {
   return `\`${n.path}\`${l ? ` (${l})` : ''}`;
 };
 const constCell = (c: Resolved) => `\`${c.name}\`${c.value !== undefined ? ` = ${c.value}` : ''}`;
-const CLASSES: EdgeClass[] = ['SOURCED', 'FIT', 'ENG', 'UNTAGGED', 'ABSENT'];
 
 /** The "Couplings" section of a module page (empty when the module has no row). */
 export function couplingsSection(root: string, module: string): string[] {
   const mine = registry(root).filter((x) => x.row.module === module);
   if (!mine.length) return [];
-  const count = (k: EdgeClass) => mine.filter((x) => x.cls === k).length;
   const timing = (r: Coupling) => [r.delay && `delay \`${r.delay.split('#')[1]}\``, r.tau && `τ \`${r.tau.split('#')[1]}\``, r.saturation && `saturates at \`${r.saturation.split('#')[1]}\``, r.blockedBy && `blocked by \`${r.blockedBy.path}\``].filter(Boolean).join('; ');
   return [
     '## Couplings',
     '',
-    `Generated from the coupling registry (\`packages/engine-core/src/couplings/\`, docs/plans/mechanism-tree.md piece R1): ${mine.length} rows; ${CLASSES.map((k) => `${k} ${count(k)}`).join(', ')}.`,
+    'Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).',
     'The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no',
     'constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).',
     '',

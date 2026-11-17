@@ -12,6 +12,7 @@
 // profile (D12, S1); a profile's gap is said in the face's own words ("near-end time not set"), never filled, and the
 // gap's own text (which names the device's manual) is not shown: the generic face names no maker or model. English only
 // (the owner's ruling of 10 November: a device's face carries no Persian), `lang="en"`, left to right.
+import { sp5TciMaxRateMlH, type Sp5TciProfile } from '@pme/controller';
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import { tciModelName } from '../tci-names.ts';
@@ -31,8 +32,8 @@ export type ProfileValue = { gap: string } | ({ src: string } & Record<string, u
 export interface FaceProfiles {
   syringe: { nearEnd: ProfileValue } & DeviceReadings;
   drip: { kvo: { after: ProfileValue } & Record<string, unknown> } & DeviceReadings;
-  /** sp5-tci.json (S1): the TCI mode of a syringe channel; its highest TCI rate is a gap until the SP5 TCI manual. */
-  tci: { tci: { maxRate: ProfileValue } & Record<string, unknown> };
+  /** sp5-tci.json (S1): the TCI mode of a syringe channel; its highest TCI rate is the rate maximum for the syringe. */
+  tci: Pick<Sp5TciProfile, 'rate'>;
 }
 
 /** A device's stated resolutions: its rate step (mL/h) and its infused-volume display range (mL). A TCI channel reads
@@ -78,7 +79,8 @@ export const FACE_LABELS = {
   inMl: (amount: string, unit: string, ml: string) => `${amount} ${unit} in ${ml} mL`,
   perMl: (amount: string, unit: string) => `${amount} ${unit}/mL`,
   // A device profile's gap, in the face's words (D8: the plan's words for each)
-  gap: { nearEnd: 'near-end time not set', kvoAfter: 'KVO not set from the manual', tciMaxRate: 'maximum TCI rate not set' },
+  gap: { nearEnd: 'near-end time not set', kvoAfter: 'KVO not set from the manual' },
+  upTo: (rate: string) => `up to ${rate} mL/h`,
   noProfile: 'device profile not loaded',
   history: 'History',
   historyEmpty: "This channel's history: not in this release yet.",
@@ -208,7 +210,11 @@ export function faceModel(row: FaceRow | null, kind: ChannelKind, profiles: Face
     target: () => (tci && tci.target !== null && tci.mode !== null ? `${faceNum(tci.target)} ${unitText(tci.unit)}` : L.dash),
     cp: () => (tci ? `${faceNum(tci.cp)} ${unitText(tci.unit)}` : L.dash),
     ce: () => (tci ? `${faceNum(tci.ce)} ${unitText(tci.unit)}` : L.dash),
-    tciMaxRate: () => (!profiles ? L.noProfile : isGap(profiles.tci.tci.maxRate) ? L.gap.tciMaxRate : null),
+    tciMaxRate: () => {
+      if (!profiles) return L.noProfile;
+      const max = sp5TciMaxRateMlH(profiles.tci, row?.syringeMl);
+      return max === undefined ? L.dash : L.upTo(faceNum(max));
+    },
   };
   const fields: FaceField[] = [];
   for (const key of FACE_FIELDS[faceLayout(k, mode)]) {

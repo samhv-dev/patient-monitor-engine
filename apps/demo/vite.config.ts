@@ -9,7 +9,7 @@ const page = (name: string) => resolve(import.meta.dirname, `${name}.html`);
 // Every developer page (apps/demo/dev/*.html) is a build input; the app's Developer view (src/app/views/dev.ts) lists them.
 const devPages = Object.fromEntries(readdirSync(resolve(import.meta.dirname, 'dev')).filter((f) => f.endsWith('.html')).map((f) => [f.slice(0, -5), page(`dev/${f.slice(0, -5)}`)]));
 // The showcase cards run on the engine for 10–60 sim-min each (≈ 3.5 min in all, alone). CI runs them in the
-// test-slow job's `showcase-a` and `showcase-b` groups (PME_TEST_SET=showcase-a|showcase-b, one file at a time); the main job's fast set
+// showcase job's `showcase-a` and `showcase-b` groups (PME_TEST_SET=showcase-a|showcase-b, one file at a time); the main job's fast set
 // (PME_TEST_SET=fast) leaves them out, as engine-core does with its SLOW set. Unset = everything (a local `pnpm test`).
 const SHOWCASE_SLOW = 'src/app/showcase/*.slow.test.ts';
 // CI splits the showcase set in two jobs, balanced on the per-file durations of main run 42046932502 (s): a = 568
