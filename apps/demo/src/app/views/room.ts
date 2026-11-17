@@ -27,6 +27,7 @@ import { deviceRows, HEARTBEAT_MS, PeerLog, roomStatus, WEAK_PING_MS, type Devic
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
 import { DEFIB_CHOICES, defibDefaults, EEG_CHOICES, pacerDefaults } from '../site.ts';
+import { DEFAULT_FACE, FACE_CHOICES, type FaceId } from '../../vent/faces/ids.ts';
 import { store as appStore } from '../store.ts';
 import { button, h, select, setText } from '../ui.ts';
 import { DEFIB_LINE, instrumentCard, PICKER_WORDS, type CardShow } from './join.ts';
@@ -79,6 +80,9 @@ export interface RoomDeps {
   depth?: { model(): string | null; choose(model: string | null): string | null };
   /** R8d: the ventilator's own screens and whether each drives (views/vent.ts `ventScreens`). Absent: no rows. */
   vent?: () => VentScreens;
+  /** The room's ventilator face, and the session's hand-over of a new one (views/vent.ts chooseVentFace), which answers
+   *  its refusal words (a cockpit is ventilating the patient) or null: applied. Absent: no card, the default face. */
+  ventFace?: { face(): FaceId; choose(face: FaceId): string | null };
   /** L6: the learner PIN and the host's count of learner remotes, for the panel beside the instructor's card. Absent: no panel. */
   learner?: LearnerPinDeps;
 }
@@ -91,6 +95,12 @@ export const PUMP_ROOM_WORDS = {
   channel: (ch: number) => `Channel ${ch}`,
   kind: { syringe: 'Syringe', drip: 'Drip' } satisfies Record<PumpKind, string>,
   hint: 'Each channel is a syringe pump or a drip pump. A change reaches a signed-in pump tablet at once.',
+};
+
+/** Room setup's ventilator card's words. */
+export const VENT_ROOM_WORDS = {
+  title: 'Ventilator in this room',
+  hint: 'The Ventilator view, a new window and a signed-in tablet open this model. It cannot change while a ventilator screen is ventilating the patient.',
 };
 
 export const LEARNER_PIN_WORDS = {
@@ -354,7 +364,7 @@ export function roomView(d: RoomDeps): RoomView {
         el: instrumentCard({ show: 'vent', title, chip: '', text: o.text, foot: o.foot, actions: [
           h('a', { class: 'btn small', href: hrefOf('vent') }, 'Open here'),
           // `noopener`, as the other windows: its own process; the link is the room code's BroadcastChannel
-          button('New window', () => (d.open ?? ((u: string) => void window.open(u, '_blank', 'noopener,width=1280,height=800')))(ventWindowUrl(d.code, location.pathname)), 'small', { 'aria-label': `${title} in a new window` }),
+          button('New window', () => (d.open ?? ((u: string) => void window.open(u, '_blank', 'noopener,width=1280,height=800')))(ventWindowUrl(d.code, location.pathname, d.ventFace?.face() ?? DEFAULT_FACE)), 'small', { 'aria-label': `${title} in a new window` }),
         ] }),
         chip: () => {
           const v = d.vent?.();
@@ -463,6 +473,23 @@ export function roomView(d: RoomDeps): RoomView {
       h('p', { class: 'hint' }, "A model applies to the patient at once and to every new patient; 'Not chosen' applies from the next patient start. It cannot change while the defibrillator is charging, charged, pacing or switched on."));
   })() : null;
 
+  // ----------------------------------------------------------------------------------------- ventilator in this room
+  // the face the Ventilator view, the Room's window and a signed-in tablet wear
+  const ventCard = d.ventFace ? (() => {
+    const choice = d.ventFace;
+    const refused = h('p', { class: 'error room-vent-refused', role: 'alert' });
+    const pick = select('Model', FACE_CHOICES.map((c): [string, string] => [c.id, c.label]), choice.face(), (v) => {
+      const why = choice.choose(v as FaceId);
+      setText(refused, why ?? '');
+      if (why) pick.sel.value = choice.face();
+    });
+    return h('section', { class: 'room-card room-vent', 'aria-labelledby': 'room-vent-h' },
+      h('h2', { id: 'room-vent-h' }, VENT_ROOM_WORDS.title),
+      pick.el,
+      refused,
+      h('p', { class: 'hint' }, VENT_ROOM_WORDS.hint));
+  })() : null;
+
   // --------------------------------------------------------------------------------------------- pumps in this room
   // A1 (plan pump-rack-tci.md §5; PQ1 = C, "1–8, default 4"; PQ2 = B): how many channels the pump tablet shows and each
   // channel's kind, syringe or drip; a new channel is a syringe channel (§5: a TIVA tower is syringes)
@@ -519,7 +546,7 @@ export function roomView(d: RoomDeps): RoomView {
         h('div', {}, h('h1', { id: 'room-h' }, 'Room setup'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
       h('div', { class: 'room-cols' }, join, connected),
-      computer, ...(defibCard ? [defibCard] : []), ...(depthCard ? [depthCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask);
+      computer, ...(ventCard ? [ventCard] : []), ...(defibCard ? [defibCard] : []), ...(depthCard ? [depthCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');

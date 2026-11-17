@@ -461,9 +461,10 @@ export type WireMessage = { v: 1; session: string; from: string; seq: number; se
   /**
    * The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. A grant
    * may carry the device's next `ticket` (sign-in-book.ts). `from: RELAY_PEER` is the relay's own notice that a new host
-   * socket came (REJOINED): the device stays and says its hello again on the host's hello.
+   * socket came (REJOINED): the device stays and says its hello again on the host's hello. A ventilator's grant carries
+   * the room's ventilator `face`, which its cockpit wears.
    */
-  | { kind: 'grant'; to: string; granted: boolean; reason?: string; ticket?: string }
+  | { kind: 'grant'; to: string; granted: boolean; reason?: string; ticket?: string; face?: string }
   /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`.
    *  `code: 'paused'` (L14): a learner device's drug was not given, or its sample not drawn, because the case was paused
    *  (PAUSED_REFUSAL). */

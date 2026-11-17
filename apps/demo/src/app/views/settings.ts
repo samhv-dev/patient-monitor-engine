@@ -8,6 +8,7 @@ import { setDrugNames } from '../glossary.ts';
 import { DRUG_NAME_SETS, MONITORS, parseSite, saveSite, THEMES, type SiteProfile } from '../site.ts';
 import { button, download, h, seg, select, toast } from '../ui.ts';
 import type { View } from '../shell.ts';
+import { chooseVentFace } from './vent.ts';
 
 /** The Settings view on the site profile. */
 export function settingsView(site: SiteProfile, session: AppSession | null): View {
@@ -43,12 +44,12 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
       setDrugNames(site.drugNames);
       save('Site profile imported');
       skin();
-      // the room's defibrillator model (R5b), its depth-of-anaesthesia device (E12) and its pump rack come with the
-      // profile; one the host refuses (a device in use) stays as it is, and the profile says so
+      // the room's defibrillator model (R5b), its depth-of-anaesthesia device (E12), its pump rack and its ventilator face
+      // come with the profile; one the host refuses (a device in use) stays as it is, and the profile says so
       if (!session) return;
-      const refused = [session.setDefibModel(site.defibModel), session.setEegModel(site.eegModel), session.setPumpRack(site.pumpRack)].filter((w) => w !== null);
+      const refused = [session.setDefibModel(site.defibModel), session.setEegModel(site.eegModel), session.setPumpRack(site.pumpRack), chooseVentFace(session, site.ventFace)].filter((w) => w !== null);
       if (refused.length === 0) return;
-      Object.assign(site, { defibModel: session.defibModel, eegModel: session.eegModel, pumpRack: [...session.pumpRack] });
+      Object.assign(site, { defibModel: session.defibModel, eegModel: session.eegModel, pumpRack: [...session.pumpRack], ventFace: session.ventFace });
       save(refused.join(' '));
     } catch {
       toast('That file is not a site profile');

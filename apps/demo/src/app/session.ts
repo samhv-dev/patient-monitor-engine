@@ -11,6 +11,7 @@ import {
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
 import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
+import { DEFAULT_FACE, type FaceId } from '../vent/faces/ids.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { shippedPumpDevices } from './pump/devices.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
@@ -194,13 +195,16 @@ export class AppSession {
   /** The room's depth-of-anaesthesia device (EEG plan E12; a site.ts EEG_CHOICES id), switched on and chosen at every
    *  patient mount, or null: no EEG device (none switched on). */
   eegModel: string | null;
+  /** The room's ventilator face (site.ts ventFace): the Ventilator view's and a granted tablet's (views/vent.ts chooseVentFace). */
+  ventFace: FaceId;
   /** L4: the shipped formulary, once loaded (a learner remote's `prep stage` is refused until then). */
   formulary: Formulary | null = null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[] }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; learnerPin?: () => string | null; defibModel?: string | null; eegModel?: string | null; pumpRack?: PumpKind[]; ventFace?: FaceId }) {
     this.el = el;
+    this.ventFace = o.ventFace ?? DEFAULT_FACE;
     this.defibModel = o.defibModel ?? null;
     this.eegModel = o.eegModel ?? null;
     this.pumpRack = [...(o.pumpRack ?? DEFAULT_SITE.pumpRack)];
@@ -308,6 +312,7 @@ export class AppSession {
       onVentilator: (from) => {
         for (const f of [...this.remoteFns]) f.ventilator(from);
       },
+      ventFace: () => this.ventFace,
     });
     this.host = hs;
     // Brief 195: the monitor stopped (`pme-monitor-failed`, bubbling from its canvas): the host tells every follower at
