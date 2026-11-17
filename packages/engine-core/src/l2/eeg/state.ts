@@ -10,7 +10,7 @@
 // but its size was not retrieved, so it is not modelled.
 import type { DrugBus } from '../../types-pk.ts';
 import type { AgentMix, CortexInputs, CortexState } from '../../types-eeg.ts';
-import { caO2 } from '../brain/flow.ts';
+import { METABOLIC_SLOW_SHARE } from '../brain/params.ts';
 import { ce50Propofol, locPropofol } from '../neuro/depth.ts';
 import { DEXMED_EEG_C50_NG_ML } from '../pk/combine.ts';
 import { MAC_AWAKE } from '../pk/volatile.ts';
@@ -50,15 +50,7 @@ export const BS_ISOELECTRIC_MAC = 2.5;
  * and etomidate at the same propofol-equivalent [INF]; not age-adjusted (the source gives a concentration). */
 export const BS_ONSET_PROP_NG_ML = 4900; // ng/mL
 
-// --- ischaemia, hypoxia (Ch35 pp. 1105, 1122, 1126) and hypothermia (Ch35 p. 1127; Stecker 2001) ---
-/** The EEG turns abnormal at CBF 20 of 50 mL/100 g/min (Miller Ch35 p. 1122) — read as O2 DELIVERY relative to normal,
- * so hypoxaemia acts only once flow compensation is exhausted (Ch35 p. 1126) [INF]. */
-export const DO2_EEG_ABNORMAL = 20 / 50;
-/** Cellular survival threatened at CBF 12 mL/100 g/min (Miller Ch35 p. 1122): the voltage is gone. */
-export const DO2_EEG_LOST = 12 / 50;
-/** The share of `metabolic` that only slows (voltage preserved) before the voltage goes (Ch35 p. 1105: "first slowing
- * with preserved voltage, then loss of voltage") [FIT: half; src Miller Ch35 p. 1105 gives the order, not the share]. */
-export const METABOLIC_SLOW_SHARE = 0.5;
+// --- hypothermia (Ch35 p. 1127; Stecker 2001) ---
 /** Hypothermic burst suppression appears at 24.4 °C (Stecker 2001, 109 patients, mean nasopharyngeal ± 4 °C). */
 export const BS_TEMP_ONSET_C = 24.4; // °C
 /** Electrocerebral silence at 17.8 °C (Stecker 2001; Miller Ch35 p. 1127 "complete suppression usually at 15–18 °C"). */
@@ -107,15 +99,9 @@ export function suppressionCurve(m: number, o: number): number {
   return Math.min(1, SUPP_NEAR_ISO + ((1 - SUPP_NEAR_ISO) * (m - BS_NEAR_ISO_MAC)) / (BS_ISOELECTRIC_MAC - BS_NEAR_ISO_MAC));
 }
 
-/** Cerebral O2 delivery relative to normal: CBF/CBF0 × CaO2 ÷ the brain model's reference CaO2 (Hb 14, SaO2 0.97,
- * PaO2 95: l2/brain/model.ts). */
-export function brainDo2Rel(cbfRel: number, hb: number, sao2: number, pao2: number): number {
-  return (Math.max(0, cbfRel) * caO2(hb, sao2, pao2)) / caO2(14, 0.97, 95);
-}
-
 /** The cortex's inputs from the drug bus and the physiology (read-only). `macF` is the endocrine model's hypothermic
  * MAC reduction, applied as the depth index applies it (l2/neuro/pipeline.ts). */
-export function cortexInputsOf(bus: DrugBus, o: { ageY: number; stimulus: number; antinoc: number; do2Rel: number; tempC: number; macF?: number }): CortexInputs {
+export function cortexInputsOf(bus: DrugBus, o: { ageY: number; stimulus: number; antinoc: number; metabolic: number; tempC: number; macF?: number }): CortexInputs {
   const h = bus.cns.hypByClass;
   const macF = Math.max(0.3, o.macF ?? 1);
   const mac = (a: 'sevoflurane' | 'isoflurane' | 'desflurane' | 'n2o') => (bus.volatiles[a]?.macFrac ?? 0) / macF;
@@ -125,7 +111,7 @@ export function cortexInputsOf(bus: DrugBus, o: { ageY: number; stimulus: number
     alpha2Eq: bus.cns.alpha2Eq ?? 0,
     mac: { sevoflurane: mac('sevoflurane'), isoflurane: mac('isoflurane'), desflurane: mac('desflurane'), n2o: mac('n2o') },
     opioidFentEq: bus.cns.opioidCeFentEq ?? 0,
-    stimulus: o.stimulus, antinoc: o.antinoc, do2Rel: o.do2Rel, tempC: o.tempC,
+    stimulus: o.stimulus, antinoc: o.antinoc, metabolic: o.metabolic, tempC: o.tempC,
   };
 }
 
@@ -164,8 +150,8 @@ export function cortexStep(prev: CortexState | undefined, x: CortexInputs, dtS: 
   const onset = vol > 0 ? ETHERS.reduce((a, k) => a + Math.max(0, x.mac[k]) * ONSET[k], 0) / vol : BS_ONSET_ISO_MAC; // IV alone: isoflurane's anchors [FIT: IV alone on the isoflurane curve; brief research/43 P-1]
   const mEq = vol + ivSupp * onset;
   const drugSupp = suppressionCurve(mEq, onset);
-  // Ischaemia / hypoxia: delivery below the abnormal level slows, then the voltage goes
-  const metabolic = clamp01((DO2_EEG_ABNORMAL - x.do2Rel) / (DO2_EEG_ABNORMAL - DO2_EEG_LOST));
+  // Ischaemia / hypoxia: the cortex's loss of function first slows, then the voltage goes
+  const metabolic = x.metabolic;
   const metSupp = clamp01((metabolic - METABOLIC_SLOW_SHARE) / (1 - METABOLIC_SLOW_SHARE));
   const cold = clamp01((COLD_SLOW_FROM_C - x.tempC) / (COLD_SLOW_FROM_C - BS_TEMP_ONSET_C));
   const coldSupp = clamp01((BS_TEMP_ONSET_C - x.tempC) / (BS_TEMP_ONSET_C - BS_TEMP_SILENT_C));

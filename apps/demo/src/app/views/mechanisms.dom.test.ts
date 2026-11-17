@@ -43,7 +43,7 @@ describe('the mechanism tree page, propofol: the default view (brief 104)', () =
     expect(p.trigger).toBe('trigger.drug.propofol');
     expect(words(node(svg(), 'trigger.drug.propofol'))).toContain('Propofol bolus');
     expect(svg().querySelectorAll('.mt-n')).toHaveLength(13); // graph.test.ts DEFAULT_PINS
-    expect(p.el.querySelector('.mt-drawn')?.textContent).toBe('Drawn: 12 of the 74 nodes, the trigger and 4 generations past it.');
+    expect(p.el.querySelector('.mt-drawn')?.textContent).toBe('Drawn: 12 of the 75 nodes, the trigger and 4 generations past it.');
   });
 
   it('every node in clinical words with its unit; no engine key is visible (the key is in the tooltip)', () => {
@@ -119,8 +119,8 @@ describe('the mechanism tree page, propofol: the whole tree (the T1 pins)', () =
     expect(words(baro)).toBe('⟲ Baroreflex | 5 states · 3 edges');
     expect(baro?.querySelector('title')?.textContent).toContain('hemo.circ.baro.es');
     expect(words(node(svg, 'mon.abpMean'))).toBe('ART M | mmHg');
-    expect(svg.querySelectorAll('.mt-n')).toHaveLength(74); // 182 rows: + eeg.cortex, eeg.signal (graph.test.ts PINS)
-    expect(svg.querySelectorAll('.mt-e')).toHaveLength(123); // + cbfRel → eeg.cortex, eeg.cortex → eeg.signal
+    expect(svg.querySelectorAll('.mt-n')).toHaveLength(75); // graph.test.ts PINS
+    expect(svg.querySelectorAll('.mt-e')).toHaveLength(124);
   });
 
   it('the G_HS edge is drawn fitted, its tag on hover (<title>) and on focus (the detail line)', () => {
@@ -151,7 +151,7 @@ describe('the mechanism tree page, propofol: the whole tree (the T1 pins)', () =
     for (const w of ['absent: the engine does not have this mechanism', 'fitted: the size is fitted, not sourced', 'solid: sourced', 'dotted', 'dash-dot', 'dashed', 'thin: no constant', 'feedback: the edge closes a loop'])
       expect(legend, w).toContain(w);
     expect(p.el.textContent).toContain(NO_LIVE);
-    expect(p.el.querySelector('.mt-counts')?.textContent).toBe('74 nodes, 123 edges: 14 feedback, 17 absent. 53 of the nodes lie on one feedback system (each reaches every other).');
+    expect(p.el.querySelector('.mt-counts')?.textContent).toBe('75 nodes, 124 edges: 14 feedback, 17 absent. 53 of the nodes lie on one feedback system (each reaches every other).');
   });
 
   it('the picker lists the six triggers and draws the one chosen, in its default view; the whole tree one click away', () => {
@@ -162,7 +162,7 @@ describe('the mechanism tree page, propofol: the whole tree (the T1 pins)', () =
     expect(node(p.el, 'trigger.bleed')).not.toBeNull();
     expect(p.el.querySelectorAll('.mt-fig .mt-n')).toHaveLength(6); // bleed's default view (graph.test.ts DEFAULT_PINS)
     click(p.el.querySelector('#mt-whole'));
-    expect(p.el.querySelectorAll('.mt-fig .mt-n')).toHaveLength(79); // bleed, 182 rows (graph.test.ts PINS)
+    expect(p.el.querySelectorAll('.mt-fig .mt-n')).toHaveLength(80); // bleed (graph.test.ts PINS)
     sel.value = 'trigger.drug.propofol';
     sel.dispatchEvent(new Event('change'));
   });
@@ -180,7 +180,7 @@ describe('the mechanism tree in Persian (Q13)', () => {
     expect((p.el.querySelector('.mt-review') as HTMLElement).hidden).toBe(false); // the labels' review line stands in Persian too
     expect(p.el.querySelector('.mt-legend')?.textContent).toContain('غایب: موتور این سازوکار را ندارد');
     expect(p.el.querySelector('.mt-text')?.getAttribute('dir')).toBe('rtl');
-    expect(p.el.querySelector('.mt-counts')?.textContent).toMatch(/^۷۴ گره و ۱۲۳ یال/); // the counts template, Persian digits
+    expect(p.el.querySelector('.mt-counts')?.textContent).toMatch(/^۷۵ گره و ۱۲۴ یال/); // the counts template, Persian digits
     const draft = p.el.querySelector('.mt-draft') as HTMLElement;
     expect(draft.hidden).toBe(false);
     expect(draft.textContent).toBe(DRAFT_LINE);

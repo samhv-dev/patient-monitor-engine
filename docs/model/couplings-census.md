@@ -6,9 +6,9 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 155; sites: 196.
+Seams (de-duplicated on module, kind and field): 152; sites: 193.
 
-Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 59; unregistered: 96
+Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 58; unregistered: 94
 (the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
 
 | Module | ctx | ext | endo-write | bus-read | All |
@@ -18,12 +18,12 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | endocrine-thermal | 4 | 7 | 9 | 4 | 24 |
 | engine-runtime | 0 | 6 | 0 | 6 | 12 |
 | lungs | 0 | 3 | 0 | 0 | 3 |
-| neuro | 23 | 0 | 0 | 18 | 41 |
+| neuro | 20 | 0 | 0 | 18 | 38 |
 | organs | 10 | 2 | 0 | 4 | 16 |
 | pharmacology | 19 | 0 | 0 | 0 | 19 |
 | pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
 | rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 91 | 22 | 9 | 33 | 155 |
+| **All** | 88 | 22 | 9 | 33 | 152 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
@@ -36,9 +36,9 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | gas-exchange | 44 | 12 |
 | breathing | 21 | 8 |
 | blood | 67 | 28 |
-| organs | 138 | 63 |
+| organs | 141 | 63 |
 | endocrine-thermal | 167 | 68 |
-| neuro | 191 | 94 |
+| neuro | 188 | 94 |
 | pharmacology | 34 | 14 |
 | monitor | 47 | 5 |
 | alarms | 17 | 0 |
@@ -46,7 +46,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | engine-runtime | 11 | 2 |
 | **All** | 1146 | 432 |
 
-## The ten effector expressions with the most factors (of 1727)
+## The ten effector expressions with the most factors (of 1728)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -76,7 +76,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/blood/solutes.ts#stepSolutes` | `jk` | product | 5 |
 | `l2/brain/params.ts#(top level)` | `OSM_WATER_ML_PER_MOSM` | product | 5 |
 
-## Unregistered seams (96)
+## Unregistered seams (94)
 
 The seams no coupling-registry row carries yet (piece R2 registers the rest); the list may shrink and never grow.
 
@@ -131,9 +131,7 @@ The seams no coupling-registry row carries yet (piece R2 registers the rest); th
 - `endocrine-thermal endo-write writeCond: ps.cond`
 - `endocrine-thermal endo-write writeLung: rs.lungSpecs`
 - `organs ctx organsCtx.l1`
-- `organs ctx organsCtx.resp`
 - `organs ctx organsCtx.rhythm`
-- `organs ctx organsCtx.blood`
 - `organs ctx organsCtx.pk`
 - `organs ctx organsCtx.neuro`
 - `organs ctx organsCtx.endo`
@@ -272,10 +270,7 @@ The seams no coupling-registry row carries yet (piece R2 registers the rest); th
 | neuro | ctx | `eegCtx.antinoc` | `engine.ts#eegCtx` | 1 |
 | neuro | ctx | `eegCtx.t1` | `engine.ts#eegCtx` | 1 |
 | neuro | ctx | `eegCtx.tube` | `engine.ts#eegCtx` | 1 |
-| neuro | ctx | `eegCtx.cbfRel` | `engine.ts#eegCtx` | 1 |
-| neuro | ctx | `eegCtx.hb` | `engine.ts#eegCtx` | 1 |
-| neuro | ctx | `eegCtx.sao2` | `engine.ts#eegCtx` | 1 |
-| neuro | ctx | `eegCtx.pao2` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.metabolic` | `engine.ts#eegCtx` | 1 |
 | neuro | ctx | `eegCtx.tempC` | `engine.ts#eegCtx` | 1 |
 | neuro | ctx | `eegCtx.macF` | `engine.ts#eegCtx` | 1 |
 | neuro | ctx | `eegCtx.art` | `engine.ts#eegCtx` | 1 |
