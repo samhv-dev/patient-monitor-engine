@@ -67,6 +67,8 @@ export const FLOW_WORDS = {
   cancel: 'Cancel',
   sent: "Sent: waiting for the instructor's computer…",
   refused: (why: string) => `Refused by the instructor's computer: ${why}`,
+  /** The host takes no pump command while the case is paused, as it gives no learner's drug (remote/tray.ts). */
+  paused: 'The case is paused: the pumps take no command until it resumes.',
   started: (ch: number) => `Started on channel ${ch}.`,
   stopped: (ch: number) => `Stopped on channel ${ch}.`,
   unloaded: (ch: number) => `Unloaded from channel ${ch}.`,
