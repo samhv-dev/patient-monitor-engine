@@ -200,14 +200,14 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   const b = (await engine(page))!;
   expect(b.drugs.find((d) => d.id === 'propofol')!.ce).toBeGreaterThan(0);
   // the tablet shows the pump's prediction only, the programme's fields; never the patient's
-  await expect(p.locator('.pump-face[data-ch="2"] [data-field="tciSet"] dd')).toHaveText('eleveld');
+  await expect(p.locator('.pump-face[data-ch="2"] [data-field="tciSet"] dd')).toHaveText('Eleveld');
 
   // The laptop's record rows and Log lines name the tablet and the channel
-  await expect.poll(async () => (await rows(page)).filter((r) => r.kind === 'pump' && r.channel === 2).map((r) => r.text), { timeout: 10_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/^Channel 2: TCI eleveld, Ce target 3/)]));
-  const tciRow = (await rows(page)).find((r) => r.kind === 'pump' && r.channel === 2 && /TCI eleveld/.test(r.text))!;
+  await expect.poll(async () => (await rows(page)).filter((r) => r.kind === 'pump' && r.channel === 2).map((r) => r.text), { timeout: 10_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/^Channel 2: TCI Eleveld, Ce target 3 µg\/mL/)]));
+  const tciRow = (await rows(page)).find((r) => r.kind === 'pump' && r.channel === 2 && /TCI Eleveld/.test(r.text))!;
   expect(tciRow).toMatchObject({ by: PUMPS, name: 'bed 2 pumps', ev: 'drug:propofol' });
   await expect.poll(() => logLines(page), { timeout: 10_000 }).toEqual(expect.arrayContaining([
-    'learner|Channel 2: TCI eleveld, Ce target 3 (pump tablet: bed 2 pumps)',
+    'learner|Channel 2: TCI Eleveld, Ce target 3 µg/mL (pump tablet: bed 2 pumps)',
     'learner|Channel 2 started (pump tablet: bed 2 pumps)',
   ]));
 

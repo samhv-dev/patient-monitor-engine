@@ -27,7 +27,8 @@ few words at most.
 
 **The tags.** `C`: read in the document's text, on the page cited. `W`: read on the web page W1. `I`: my reading of
 the cited rows (never a source value; a profile never cites an `I` row for a number). `GAP`: no document I could read
-gives it; the profile carries it as a `gap` naming what the manual must give.
+gives it; the profile carries it as a `gap` naming what the manual must give. `B`: given by the SP5 TCI's brochure; the
+profile cites that note's row (research/84, TB-nn).
 
 Values are written as the document prints them, units included ("ml" is printed; the profiles write mL).
 
@@ -109,8 +110,8 @@ pump's TCI features in a few words and no number of the pump's mechanics. Every 
 | TC-03 | Number of anaesthetics and protocols | 4 anaesthetics and 7 protocols, for adults and children | W1 | W |
 | TC-04 | Concentrations shown | effect-site and plasma concentration trend | W1 | W |
 | TC-05 | Drug compensation | "automatic drug compensation" is named, with no detail | W1 | W |
-| TC-06 | Which four drugs and which seven models | not in W1 | — | GAP |
-| TC-07 | Syringe sizes | not in W1 | — | GAP |
+| TC-06 | Which four drugs and which seven models | not in W1; the SP5 TCI brochure gives them (research/84 TB-01, TB-02) | research/84 | B |
+| TC-07 | Syringe sizes | not in W1; the SP5 TCI brochure gives them (research/84 TB-06) | research/84 | B |
 | TC-08 | Flow rate range and step, per syringe size | not in W1 | — | GAP |
 | TC-09 | Maximum rate in TCI (the induction rate) | not in W1 | — | GAP |
 | TC-10 | Bolus and purge rates | not in W1 | — | GAP |
@@ -125,7 +126,8 @@ specification sheet only as copies uploaded to third-party document sites (not t
 number legible, and for the SP5 without TCI: it lists rate, time and body-weight modes and no TCI mode), Mindray's
 safety-and-performance summaries of other models (uSP, iSP, uDSP) and a data sheet of the eSP TCI. Numbers of another
 model, or of a copy whose origin cannot be read, are not the SP5 TCI's: TC-07 to TC-15 stay gaps until the SP5 TCI
-operator's manual is in the library (plan SK2).
+operator's manual is in the library (plan SK2). The SP5 TCI's own brochure, read later, gives TC-06 and TC-07 and parts
+of TC-14 and TC-15 (`research/84-sp5-tci-brochure-readings.md`); the rest stays a gap.
 
 ## 4. Facts in the catalogues that no profile carries
 
