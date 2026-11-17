@@ -8,7 +8,7 @@
 // OT-701's set types; Rate offers mL/h, a dose rate in the programme's unit, and drops/min on a drip channel; TCI offers
 // only the sets the engine has registered for the programmed drug and asks for the mode and the patient, with "Copy from
 // the case sheet" (D6); Bolus and Purge as §5 and D7 state them. English only on the device's face.
-import type { WireMessage } from '@pme/controller';
+import { PAUSED_REFUSAL, type WireMessage } from '@pme/controller';
 import type { PumpPanelRow } from '@pme/engine-core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadShippedFormulary } from '../formulary.ts';
@@ -74,7 +74,7 @@ function setup(kinds: Array<'syringe' | 'drip'> = ['syringe', 'syringe', 'drip',
   };
   const hints = (ch: number) => [...form(ch).querySelectorAll('.pf-hint')].map((e) => e.textContent).join(' | ');
   const options = (s: HTMLSelectElement) => [...s.options].map((o) => [o.value, o.textContent]);
-  return { rack, flows, sent, news, ack, face, open, form, send, said, sel, inp, set, hints, options };
+  return { rack, flows, sent, say, news, ack, face, open, form, send, said, sel, inp, set, hints, options };
 }
 
 describe('the buttons (§5): a drip channel has no TCI and no Bolus', () => {
@@ -435,3 +435,41 @@ describe('Start, Stop and Unload; the mismatch notice; the words', () => {
     expect(t.rack.el.querySelector('.pf-btn')).toBeNull();
   });
 });
+
+describe("the case's pause: the tablet follows the host's, and says nothing was done that was not", () => {
+  const time = (action: 'pause' | 'resume') => ({ kind: 'event', body: [{ type: 'commandApplied', commandId: `panel-${action}`, tick: 1, resolved: { command: { type: 'time', action } } }] });
+  const controls = (t: ReturnType<typeof setup>) => [...t.rack.el.querySelectorAll<HTMLButtonElement>('.pf-btn, .pf-send')];
+  const note = (t: ReturnType<typeof setup>) => t.rack.el.querySelector<HTMLElement>('.pf-paused') as HTMLElement;
+
+  it('paused: the pause in words, every control that sends kept in place and unavailable; resumed: each works again', () => {
+    const t = setup();
+    t.open(1, 'rate');
+    expect(note(t).hidden).toBe(true);
+    t.say(time('pause'));
+    expect(note(t).hidden).toBe(false);
+    expect(note(t).textContent).toBe('The case is paused: the pumps take no command until it resumes.');
+    expect(note(t).getAttribute('role')).toBe('status');
+    const all = controls(t);
+    expect(all.map((b) => b.dataset.flow ?? 'send')).toEqual(expect.arrayContaining(['load', 'program', 'rate', 'tci', 'bolus', 'start', 'purge', 'unload', 'send']));
+    expect(all.every((b) => b.disabled)).toBe(true);
+    (t.face(1).querySelector('.pf-btn[data-flow="start"]') as HTMLButtonElement).click();
+    expect(t.sent).toEqual([]);
+    t.say(time('resume'));
+    expect(note(t).hidden).toBe(true);
+    expect(controls(t).some((b) => b.disabled)).toBe(false);
+    (t.face(1).querySelector('.pf-btn[data-flow="start"]') as HTMLButtonElement).click();
+    expect(t.sent).toEqual([{ type: 'pump', ch: 1, action: 'start' }]);
+    t.ack(1, true);
+    expect(t.said(1)).toBe('Started on channel 1.');
+  });
+
+  it('a command on its way when the pause began: the host\'s refusal in its words, never "Started"', () => {
+    const t = setup();
+    (t.face(1).querySelector('.pf-btn[data-flow="start"]') as HTMLButtonElement).click();
+    t.say(time('pause'));
+    t.ack(1, false, PAUSED_REFUSAL);
+    expect(t.said(1)).toBe("Refused by the instructor's computer: the case was paused");
+    expect(t.said(1)).not.toMatch(/started/i);
+  });
+});
+
