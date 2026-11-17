@@ -56,7 +56,7 @@ and it is newer than what is published. What stays by hand: the Windows checklis
 
 ## Before the tag (on the merged `main`)
 
-1. `ci` is green on the merge commit (a push to `main` runs every job): `build`, the three `unit` jobs, `renderer`, the four shards of `e2e (chromium …)` and the three of `e2e (webkit …)`, `e2e-count`, and all eleven `test-slow` groups (`slow-a` … `slow-i`, `showcase-a`, `showcase-b`). Read the "e2e tests that passed only on retry" step of every e2e shard (on WebKit it never fails the job) and list any line in the release notes' browser-coverage section.
+1. `ci` is green on the merge commit (a push to `main` runs every job): `changes`, `build and unit (ventilator)`, `unit (controller)`, `unit (rest)`, `unit (core)`, the four shards of `e2e (chromium …)` and the three of `e2e (webkit …)`, `showcase`, the six `test-slow` jobs (the twelve groups `slow-a` … `slow-l`, two to a job) and `verdict` (which includes the e2e count). Read the "e2e tests that passed only on retry" step of every e2e shard (on WebKit it never fails the job) and list any line in the release notes' browser-coverage section.
 2. `docs/guides/validation-summary.md` quotes the `docs/validation/report.md` of the release tree, or states that it
    is older and why (which physiology changes it predates). To refresh it: run `pnpm validate` on the tree (or the
    `validation` workflow, Actions → validation → Run workflow) and land the regenerated report in a PR before tagging.

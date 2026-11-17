@@ -69,6 +69,17 @@ describe('the scenario builder page (B2)', () => {
     return { id, s };
   };
 
+  it('no part of the page shows until enter has drawn it', async () => {
+    const p = builderPage(store());
+    document.body.append(p.el);
+    const shown = () => [...p.el.children].filter((c) => !(c as HTMLElement).hidden).map((c) => c.className);
+    const entering = p.enter('');
+    expect(shown()).toEqual([]);
+    await entering;
+    expect(shown()).toEqual(['console-page sb-start']);
+    expect(p.el.querySelector('.sb-drafts')?.textContent).toContain('No drafts in this browser yet');
+  });
+
   it('the start page: no drafts yet, the /2 library cards to copy, Import; a copy gets its own id and opens', async () => {
     const { p, q } = await mount();
     expect(q('.sb-drafts')?.textContent).toContain('No drafts in this browser yet');

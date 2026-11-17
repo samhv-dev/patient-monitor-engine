@@ -7,9 +7,10 @@
 // in the module, field by field, with its comment), the relations written as equations in the code comments, the
 // parameters (every exported numeric constant: value, unit, source/tag, comment), the module's data rows (drugs, lung
 // conditions, rhythms, …), its known misses (scripts/known-misses.ts) and its test files (expected failures and skips per file).
-// No repository-wide or per-file totals (file, line or test counts) on the pages: every PR changed them, so any two PRs
-// conflicted on the generated pages (research/42 §1.4 c). The index keeps its per-module table.
 // and, for a module with rows in the coupling registry, its Couplings (scripts/couplings.ts).
+// Every generated line describes one item (a file, a constant, a function, a row), never a count or total over many:
+// a count line is rewritten by every change to what it counts, so two independent pull requests would rewrite the same
+// line and conflict. The index is therefore a function of MODULES alone (scripts/generated-merge-proof.ts shows it).
 // Hand-written: purpose, equations in words, related documents.
 //   node --experimental-strip-types scripts/model-docs.ts          → writes docs/model/*.md
 //   node --experimental-strip-types scripts/model-docs.ts --check  → exit 1 if a committed page is stale
@@ -155,7 +156,7 @@ const DATA: Record<string, (root: string) => Promise<Rows[]>> = {
     const { STATE_SCHEMA } = await imp(root, file);
     const notes = new Map([...readFileSync(join(root, file), 'utf8').matchAll(/^\s*(\w+): \{[^}]*\},?\s*\/\/\s*(.*)$/gm)].map((m) => [m[1], m[2]]));
     type Spec = { def: number; min: number; max: number; manual: string };
-    return [{ title: `State variables (\`STATE_SCHEMA\`, ${Object.keys(STATE_SCHEMA).length}; \`${file}\`)`, head: ['Variable', 'Default', 'Min', 'Max', 'In MANUAL', 'Comment'], rows: Object.entries(STATE_SCHEMA as Record<string, Spec>).map(([id, v]) => [`\`${id}\``, String(v.def), String(v.min), String(v.max), v.manual, notes.get(id) ?? NONE]) }];
+    return [{ title: `State variables (\`STATE_SCHEMA\`; \`${file}\`)`, head: ['Variable', 'Default', 'Min', 'Max', 'In MANUAL', 'Comment'], rows: Object.entries(STATE_SCHEMA as Record<string, Spec>).map(([id, v]) => [`\`${id}\``, String(v.def), String(v.min), String(v.max), v.manual, notes.get(id) ?? NONE]) }];
   },
   pharmacology: async (root) => {
     const { DRUGS, DRUG_IDS } = await imp(root, 'packages/engine-core/src/l2/pk/data/drugs.ts');
@@ -163,18 +164,18 @@ const DATA: Record<string, (root: string) => Promise<Rows[]>> = {
     type Rm = { F: number; ka: number | null; lagS: number | null; src: string; local?: { text: string; src: string } };
     const routeRows = DRUG_IDS.flatMap((id: string) => Object.entries((DRUGS[id].routeModels ?? {}) as Record<string, Rm>).map(([route, m]) => [`\`${id}\``, route, String(m.F), m.ka === null ? NONE : String(m.ka), m.lagS === null ? NONE : String(m.lagS), m.src, m.local ? `${m.local.text} (${m.local.src})` : NONE]));
     return [
-      { title: `Drug rows (${DRUG_IDS.length}; \`packages/engine-core/src/l2/pk/data/\`)`, head: ['Id', 'Name', 'Class', 'PK', 'Source', 'Tag'], rows: DRUG_IDS.map((id: string) => { const r = DRUGS[id]; return [`\`${id}\``, r.name, r.cls, pk(r), r.src, r.tag]; }) },
+      { title: 'Drug rows (`packages/engine-core/src/l2/pk/data/`)', head: ['Id', 'Name', 'Class', 'PK', 'Source', 'Tag'], rows: DRUG_IDS.map((id: string) => { const r = DRUGS[id]; return [`\`${id}\``, r.name, r.cls, pk(r), r.src, r.tag]; }) },
       { title: 'Routes other than IV (`DrugRow.routeModels`; every other non-IV route is refused: "route X is not modelled")', head: ['Id', 'Route', 'F', 'ka (1/min)', 'Lag (s)', 'Source', 'Local effect (source)'], rows: routeRows },
     ];
   },
   lungs: async (root) => {
     const { LUNG_CONDITIONS } = await imp(root, 'packages/engine-core/data/lung-pathology.ts');
     type Eff = { key: string; src?: string; tag?: string };
-    return [{ title: `Lung conditions (${LUNG_CONDITIONS.length}; \`packages/engine-core/data/lung-pathology.ts\`)`, head: ['Id', 'Condition', 'Effects', 'Tags'], rows: LUNG_CONDITIONS.map((c: { id: string; label: string; effects: Eff[] }) => [`\`${c.id}\``, c.label, c.effects.map((e) => e.key).join(', '), [...new Set(c.effects.map((e) => e.tag ?? '?'))].join(', ')]) }];
+    return [{ title: 'Lung conditions (`packages/engine-core/data/lung-pathology.ts`)', head: ['Id', 'Condition', 'Effects', 'Tags'], rows: LUNG_CONDITIONS.map((c: { id: string; label: string; effects: Eff[] }) => [`\`${c.id}\``, c.label, c.effects.map((e) => e.key).join(', '), [...new Set(c.effects.map((e) => e.tag ?? '?'))].join(', ')]) }];
   },
   'rhythms-ecg': async (root) => {
     const { RHYTHMS, RHYTHM_IDS } = await imp(root, 'packages/engine-core/src/l2/ecg/rhythms.ts');
-    return [{ title: `Rhythms (${RHYTHM_IDS.length}; \`packages/engine-core/src/l2/ecg/rhythms.ts\`)`, head: ['Id', 'Group', 'Atria', 'AV', 'Rate range (/min)', 'Default (/min)'], rows: RHYTHM_IDS.map((id: string) => { const r = RHYTHMS[id]; return [`\`${id}\``, r.group, r.atria, r.av, r.rateRange ? r.rateRange.join('–') : NONE, String(r.defaultRateBpm ?? NONE)]; }) }];
+    return [{ title: 'Rhythms (`packages/engine-core/src/l2/ecg/rhythms.ts`)', head: ['Id', 'Group', 'Atria', 'AV', 'Rate range (/min)', 'Default (/min)'], rows: RHYTHM_IDS.map((id: string) => { const r = RHYTHMS[id]; return [`\`${id}\``, r.group, r.atria, r.av, r.rateRange ? r.rateRange.join('–') : NONE, String(r.defaultRateBpm ?? NONE)]; }) }];
   },
   circulation: async (root) => {
     const { CIRC_CONDITIONS } = await imp(root, 'packages/engine-core/src/l2/circ/conditions.ts');
@@ -267,13 +268,7 @@ export async function renderPage(root: string, m: ModelModule, old: string): Pro
     }
   } else out.push('No exported numeric constants.', '');
   for (const rows of (await DATA[m.id]?.(root)) ?? []) out.push(`### ${rows.title}`, '', ...table(rows.head, rows.rows), '');
-  const documented = fns.filter((x) => x.note);
-  if (fns.length) {
-    out.push('## Functions', '');
-    if (documented.length) out.push(...table(['Function', 'File', 'Doc'], documented.map((x) => [`\`${x.name}\``, link(x.file), x.note])), '');
-    const bare = fns.filter((x) => !x.note);
-    if (bare.length) out.push(`Exported without a doc comment: ${bare.map((x) => `\`${x.name}\``).join(', ')}.`, '');
-  }
+  if (fns.length) out.push('## Functions', '', ...table(['Function', 'File', 'Doc'], fns.map((x) => [`\`${x.name}\``, link(x.file), x.note])), '');
   out.push('## Source files', '', ...table(['File', 'Header'], files.map((f) => [link(f), headerSentence(readFileSync(join(root, f), 'utf8'))])), '');
   out.push('## Known misses', '');
   out.push(...(misses.length ? missRows(misses, '../../') : ['None recorded.']), '');
@@ -284,8 +279,7 @@ export async function renderPage(root: string, m: ModelModule, old: string): Pro
   return out.join('\n');
 }
 
-export function renderIndex(root: string): string {
-  const misses = listMisses(root);
+export function renderIndex(): string {
   return [
     '# The model, module by module',
     '',
@@ -293,15 +287,16 @@ export function renderIndex(root: string): string {
     '',
     'One page per module of the engine. Each page is generated from the code (state, parameters, data rows, tests,',
     'known misses); its purpose, equations in words and related documents are written by hand and kept across',
-    'regenerations. The list of known misses across modules is [known-misses.md](../validation/known-misses.md).',
+    'regenerations. Each page lists the module\'s source files, test files and known misses; the number of known misses',
+    'per module is in [known-misses.md](../validation/known-misses.md).',
     '',
-    ...table(['Module', 'Source files', 'Test files', 'Known misses'], MODULES.map((m) => [`[${m.title}](${m.id}.md)`, String(sourceFiles(root, m).length), String(testsOf(root, m).length), String(misses.filter((x) => x.module === m).length)])),
+    ...table(['Module'], MODULES.map((m) => [`[${m.title}](${m.id}.md)`])),
     '',
   ].join('\n');
 }
 
 export async function renderAll(root: string): Promise<Map<string, string>> {
-  const pages = new Map<string, string>([['docs/model/README.md', renderIndex(root)]]);
+  const pages = new Map<string, string>([['docs/model/README.md', renderIndex()]]);
   for (const m of MODULES) {
     const path = `docs/model/${m.id}.md`;
     const old = existsSync(join(root, path)) ? readFileSync(join(root, path), 'utf8') : '';

@@ -50,7 +50,7 @@ transports (`src/protocol.ts`).
 | Where | Relation |
 |---|---|
 | [`concentration.ts:1`](../../packages/controller/src/scenario/concentration.ts#L1) | DC1 (docs/plans/scenario-builder.md §13, BQ11 = B; shared with docs/plans/pump-rack-tci.md E2): a drug's plasma and |
-| [`types.ts:104`](../../packages/controller/src/scenario/types.ts#L104) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
+| [`types.ts:108`](../../packages/controller/src/scenario/types.ts#L108) | is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`. |
 | [`preparations.ts:135`](../../packages/controller/src/session/preparations.ts#L135) | `prep deliver` → one bolus `applyEvent drug` per drug in the preparation, each dose = volume × that drug's concentration |
 
 ## State
@@ -75,6 +75,7 @@ transports (`src/protocol.ts`).
 | `trueFor` | `Record<string, number>` | — |
 | `values` | `Record<string, { v: number; rank: number; t: number }>` | — |
 | `sensors` | `Record<string, string>` | — |
+| `rhythm` | `string` | The rhythm the engine last reported (absent until its first `state` event). |
 | `enteredT` | `number` | — |
 | `history` | `Array<{ t: number; stateId: string; transitionId?: string }>` | — |
 
@@ -220,6 +221,7 @@ transports (`src/protocol.ts`).
 | `httpHandler` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | `store`: the kit store's paths (store.ts `storeRoutes`), answered first: |
 | `writeHidden` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | `text` written whole to `file` (a hidden temporary file, then a rename) and the file hidden. |
 | `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir` (in `file`: |
+| `startRelay` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | — |
 | `safeName` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | `s` as a file name the store may use, or null: |
 | `parseVersionFile` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | A version file's number and time, or null when the name is not one. |
 | `writeRefusal` | [`packages/controller/relay/store.ts`](../../packages/controller/relay/store.ts) | Why the folder cannot be written, in words for the page, or null when it can. |
@@ -244,12 +246,23 @@ transports (`src/protocol.ts`).
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
 | `assertWireSafe` | [`guard.ts`](../../packages/controller/src/guard.ts) | Throws WireSafetyError when `m` carries samples. |
 | `parseWireMessage` | [`guard.ts`](../../packages/controller/src/guard.ts) | Parses and validates untrusted input (a JSON string or a structured-clone object). |
+| `clamp` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | — |
 | `rampFrom` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | A ramp from panel inputs; |
+| `targetCommand` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | — |
+| `pinCommand` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | — |
+| `releaseCommand` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | — |
+| `rhythmCommand` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | — |
 | `modifierPatch` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | Builds the nested Partial<Modifiers> for a dotted path, e.g. |
 | `modifierCommand` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | kind 'number' → the number; |
+| `deviceCommand` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | — |
+| `flagView` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | — |
 | `readout` | [`panel/controls.ts`](../../packages/controller/src/panel/controls.ts) | "target / truth / displayed" for one variable (truth is target-derived until the engine reports it, E1). |
 | `isTyping` | [`panel/keys.ts`](../../packages/controller/src/panel/keys.ts) | True when a key press belongs to a text field (its target or the focused element), or to an IME composition. |
+| `mountInstructorPanel` | [`panel/panel.ts`](../../packages/controller/src/panel/panel.ts) | — |
+| `renderControls` | [`panel/render-controls.ts`](../../packages/controller/src/panel/render-controls.ts) | — |
 | `attachReveal` | [`panel/reveal.ts`](../../packages/controller/src/panel/reveal.ts) | Wire a RevealGesture to a window. |
+| `mountScenarioTab` | [`panel/scenario-tab.ts`](../../packages/controller/src/panel/scenario-tab.ts) | — |
+| `injectStyles` | [`panel/styles.ts`](../../packages/controller/src/panel/styles.ts) | — |
 | `commandShape` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). |
 | `instructorMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). |
 | `learnerDefibMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, bare), else the reason it is refused (R5c). |
@@ -261,12 +274,17 @@ transports (`src/protocol.ts`).
 | `normalizeSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Upper-cases and strips spaces/dashes; |
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
 | `createStamper` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Adds {v, session, from, seq, sentAt}. |
+| `sp5TciMaxRateMlH` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The SP5 TCI's highest TCI rate (mL/h) with a syringe of `ml` mL loaded, or undefined: |
 | `checkPumpDevices` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The profiles' source rules: |
 | `loadPumpDevices` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The typed profiles, when every rule holds; |
+| `mountRemote` | [`remote/remote-app.ts`](../../packages/controller/src/remote/remote-app.ts) | — |
 | `briefingOf` | [`scenario/briefing.ts`](../../packages/controller/src/scenario/briefing.ts) | The card's briefing with its defaults (60 s, English), or null when it has none. |
 | `concentrationVar` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | A rule variable as a concentration: |
 | `ruleConcentrations` | [`scenario/concentration.ts`](../../packages/controller/src/scenario/concentration.ts) | The concentration variables a card's rules read, once each, in the order first met: |
+| `describeWhen` | [`scenario/describe.ts`](../../packages/controller/src/scenario/describe.ts) | — |
+| `describeTransition` | [`scenario/describe.ts`](../../packages/controller/src/scenario/describe.ts) | — |
 | `manualLabel` | [`scenario/describe.ts`](../../packages/controller/src/scenario/describe.ts) | The manual label of a transition, or null when it has no manual trigger. |
+| `isHop` | [`scenario/driver.ts`](../../packages/controller/src/scenario/driver.ts) | — |
 | `ruleWords` | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | A rule in words ("k > 5.5", "etco2 > 45 for 20 s"). |
 | `grade` | [`scenario/grade.ts`](../../packages/controller/src/scenario/grade.ts) | Grade the run at sim time `t`: |
 | `engineOptionsOf` | [`scenario/patient.ts`](../../packages/controller/src/scenario/patient.ts) | EngineOptions for `doc` (engine seed `seed`); |
@@ -282,9 +300,12 @@ transports (`src/protocol.ts`).
 | `slopePerMin` | [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts) | Least-squares slope of the samples, per minute (undefined below two samples). |
 | `spreadPct` | [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts) | The largest distance of a sample from the newest, in % of the newest (undefined without samples). |
 | `holds` | [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts) | Does the rule hold now? `rank` is the store its value leaves read (3 truth, 2 displayed). |
+| `compare` | [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | — |
 | `matches` | [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | Does a clinical event satisfy an `event` trigger? kind equal, min* filters as lower bounds, the rest exact. |
+| `hasManual` | [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | — |
 | `resolveRhythm` | [`scenario/standins.ts`](../../packages/controller/src/scenario/standins.ts) | The rhythm to send for `id` on an engine that knows `known`: |
 | `eventRefusal` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | The engine's reason for refusing a card's event of one of ENGINE_CHECKED_KINDS, in its own words; |
+| `formatAjvError` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | — |
 | `validateScenario` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | Validate an unknown value as a scenario document: |
 | `describe` | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | One-line human description of a command, for logs. |
 | `bolusDrugOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The drug a command gives as a bolus, else null. |
@@ -314,14 +335,17 @@ transports (`src/protocol.ts`).
 | `routedToChannel` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | D9: a remote's or the Drug sheet's rate for a drug that runs on exactly one channel (and no channel-less infusion), as that channel's `pump rate` (or `pump stop` at 0), checked against its device. |
 | `pumpWire` | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | The command a translated pump action becomes (the instructor's own `applyEvent`, through command()). |
 | `backoffDelay` | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Delay before reconnect attempt `attempt` (0-based): |
+| `createBroadcastChannelTransport` | [`transport/broadcast-channel.ts`](../../packages/controller/src/transport/broadcast-channel.ts) | — |
+| `createInProcessHub` | [`transport/in-process.ts`](../../packages/controller/src/transport/in-process.ts) | — |
+| `createPostMessageTransport` | [`transport/post-message.ts`](../../packages/controller/src/transport/post-message.ts) | — |
 | `windowEndpoint` | [`transport/post-message.ts`](../../packages/controller/src/transport/post-message.ts) | Endpoint for talking to another window (an iframe's contentWindow, or window.parent from inside the iframe). |
+| `isRelayFrame` | [`transport/relay-frames.ts`](../../packages/controller/src/transport/relay-frames.ts) | — |
 | `createRelaySignaling` | [`transport/webrtc.ts`](../../packages/controller/src/transport/webrtc.ts) | Signalling over the relay's /signal endpoint (url is the relay base, e.g. |
 | `createWebRtcTransport` | [`transport/webrtc.ts`](../../packages/controller/src/transport/webrtc.ts) | Initiator (controller/viewer) side, or a responder for one already-received offer (used by acceptWebRtcPeers). |
 | `acceptWebRtcPeers` | [`transport/webrtc.ts`](../../packages/controller/src/transport/webrtc.ts) | Host side: answer every incoming offer with a new responder transport. |
+| `createWebSocketTransport` | [`transport/websocket.ts`](../../packages/controller/src/transport/websocket.ts) | — |
 | `stage1Vocabulary` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | What the base engine accepts (engine.ts validate()). |
 | `vocabularyOf` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | The engine's own vocabulary when it has one, else the base-engine description. |
-
-Exported without a doc comment: `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `formatAjvError`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
 
 ## Source files
 
@@ -432,6 +456,7 @@ None recorded.
 | [`relay/relay.test.ts`](../../packages/controller/test/relay/relay.test.ts) | 0 | 0 |
 | [`remote/remote-scenario.dom.test.ts`](../../packages/controller/test/remote/remote-scenario.dom.test.ts) | 0 | 0 |
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 0 | 0 |
+| [`scenario/arrest-breathing.test.ts`](../../packages/controller/test/scenario/arrest-breathing.test.ts) | 0 | 0 |
 | [`scenario/arrest-cortex.test.ts`](../../packages/controller/test/scenario/arrest-cortex.test.ts) | 0 | 0 |
 | [`scenario/briefing.test.ts`](../../packages/controller/test/scenario/briefing.test.ts) | 0 | 0 |
 | [`scenario/builtins.test.ts`](../../packages/controller/test/scenario/builtins.test.ts) | 0 | 0 |

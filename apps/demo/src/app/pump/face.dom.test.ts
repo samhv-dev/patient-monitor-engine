@@ -44,8 +44,13 @@ const PROFILES: FaceProfiles = {
     rateStep: { step: 1 }, // ot-701.json, OT-09
     volumeDisplay: { max: 9999 }, // ot-701.json, OT-12
   },
-  // sp5-tci.json (S1, on main): the TCI mode's highest rate is a gap until the SP5 TCI manual
-  tci: { tci: { maxRate: { gap: "the highest rate the pump runs in TCI: SP5 TCI operator's manual (research/50 TC-09)" } } },
+  // sp5-tci.json: the TCI mode's highest rate is the SP5 family's rate maximum for the syringe (TM-01)
+  tci: {
+    rate: {
+      whose: 'SP5 family manual, not the TCI edition', src: 'TM-01', step: { step: 0.01, unit: 'mL/h', src: 'TM-02' },
+      bySyringe: [{ ml: 20, min: 0.1, max: 400, unit: 'mL/h', src: 'TM-01' }, { ml: 50, min: 0.1, max: 1500, unit: 'mL/h', src: 'TM-01' }],
+    },
+  },
 };
 /** E2: a syringe channel in TCI, Eleveld effect-site target 3 µg/mL; the pump's own Cp 3.4 and Ce 2.9, at 35 mL/h now. */
 const tciRow = (o: Partial<PumpPanelRow> = {}): PumpPanelRow => syringe({
@@ -141,7 +146,7 @@ describe('the face, per channel kind (§5)', () => {
 });
 
 describe('E2: a syringe channel in TCI shows the mode\'s read-only rows (§5; the flows to set a target are A2\'s)', () => {
-  it("the set, Cp or Ce, the target, the pump's own predicted Cp and Ce, the current rate, the volumes, and the profile's TCI gap", () => {
+  it("the set, Cp or Ce, the target, the pump's own predicted Cp and Ce, the current rate, the volumes, and the loaded syringe's TCI rate limit", () => {
     const f = faceView(1, 'syringe', PROFILES);
     f.update(faceRow(tciRow()));
     expect(f.el.dataset.mode).toBe('tci');
@@ -152,8 +157,12 @@ describe('E2: a syringe channel in TCI shows the mode\'s read-only rows (§5; th
     expect(field(f.el, 'cp')).toBe('3.4 µg/mL');
     expect(field(f.el, 'ce')).toBe('2.9 µg/mL');
     expect(field(f.el, 'rate')).toBe('35 mL/h');
-    expect(field(f.el, 'tciMaxRate')).toBe('maximum TCI rate not set');
+    expect(field(f.el, 'tciMaxRate')).toBe('up to 1500 mL/h'); // the 50 mL syringe's
     expect(f.el.outerHTML).not.toMatch(/Mindray|SP5|operator manual|TC-09/);
+    f.update(faceRow(tciRow({ syringeMl: 20 })));
+    expect(field(f.el, 'tciMaxRate')).toBe('up to 400 mL/h');
+    f.update(faceRow(tciRow({ syringeMl: 10 })));
+    expect(field(f.el, 'tciMaxRate')).toBe('—'); // a size the profile does not list: no limit is stated
   });
   it('a stopped TCI says so, with no target; the prediction still shows; time to empty is a dash at rate 0 (§5)', () => {
     const f = faceView(1, 'syringe', null);

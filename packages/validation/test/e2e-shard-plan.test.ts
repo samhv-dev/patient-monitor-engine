@@ -1,6 +1,6 @@
 // scripts/ci/e2e-shard-plan.mjs: the CI e2e shards are balanced by the durations recorded in the last green main run's
 // Playwright JSON reports. Checks the per-file sums, the longest-first assignment, the median for an unrecorded file,
-// that every file lands in exactly one shard, and that one plan, computed once in the renderer job, is what every shard
+// that every file lands in exactly one shard, and that one plan, computed once in the changes job, is what every shard
 // of a set reads (research/41 row 64: on main run 42284321017 shard 1/3 of WebKit downloaded 2 of the 3 reports and
 // planned its own split, so 174 tests ran against 165 listed).
 import { describe, expect, it } from 'vitest';
@@ -77,17 +77,18 @@ describe('e2e shard plan (scripts/ci/e2e-shard-plan.mjs)', () => {
     const picked = [1, 2, 3].map((i) => pickShard(json, 'webkit', i));
     expect(picked.flat().sort()).toEqual(files); // each file once, across the shards that read the same plan
     expect(pickShard(json, 'chromium', 1)).toBeNull(); // no plan: every shard of the set uses Playwright's --shard
-    expect(pickShard('', 'webkit', 1)).toBeNull(); // the renderer job's plan step failed: likewise, for every shard
+    expect(pickShard('', 'webkit', 1)).toBeNull(); // the changes job's plan step failed: likewise, for every shard
     expect(pickShard(json, 'webkit', 4)).toBeNull();
   });
 
-  it("ci.yml: the shard plan is computed once (the renderer job) and no e2e shard downloads reports to plan its own", () => {
+  it("ci.yml: the shard plan is computed once (the changes job) and no e2e shard downloads reports to plan its own", () => {
     const yml = readFileSync(resolve(import.meta.dirname, '../../../.github/workflows/ci.yml'), 'utf8');
-    const e2e = yml.slice(yml.indexOf('\n  e2e:\n'), yml.indexOf('\n  e2e-count:\n'));
-    const renderer = yml.slice(yml.indexOf('\n  renderer:\n'), yml.indexOf('\n  e2e:\n'));
+    const job = (name: string) => { const at = yml.indexOf(`\n  ${name}:\n`); const next = yml.slice(at + 1).search(/\n {2}[a-z0-9-]+:\n/); return yml.slice(at, at + 1 + next); };
+    const e2e = job('e2e');
+    const planner = job('changes');
     expect(e2e).not.toMatch(/run-id:/); // no shard reads another run's reports
     expect(e2e).toMatch(/e2e-shard-plan\.mjs pick /);
-    expect(renderer).toMatch(/e2e-shard-plan\.mjs plan /);
-    expect(renderer).toMatch(/shard_plan:/);
+    expect(planner).toMatch(/e2e-shard-plan\.mjs plan /);
+    expect(planner).toMatch(/shard_plan:/);
   });
 });

@@ -74,11 +74,18 @@ you apply the cause (`applyEvent` `bleed`, a `drug`, a `condition`) and the phys
 ## Transitions
 
 `when` is one trigger or a combination: `{ "afterS": 60 }` (time in the state), `{ "atScenarioS": 300 }`,
-`{ "vital": { "var": "spo2", "op": "<", "value": 90, "forS": 10 } }` (on the *measured* value),
+`{ "vital": { "var": "spo2", "op": "<", "value": 90, "forS": 10 } }` (the engine's own value when its 1 Hz `state`
+event carries the variable, else the measured one, so a rule on `etco2` reads with no capnograph attached),
 `{ "event": { "kind": "drug", "drugId": "atropine" } }` (a learner action; filters such as `minJ`, `minDose`),
-`{ "sensor": { "sensor": "spo2", "state": "off" } }`, `{ "manual": { "label": "Induce" } }` (an instructor button),
-and `{ "all": [ … ] }` / `{ "any": [ … ] }`. `probability` with an `else` target rolls on the scenario's own random
-stream, so a seeded run replays exactly.
+`{ "sensor": { "sensor": "spo2", "state": "off" } }`, `{ "rhythm": { "id": "vfCoarse", "forS": 240 } }` (the rhythm
+the engine draws, held without a break for `forS` while the state is current), `{ "manual": { "label": "Induce" } }`
+(an instructor button), and `{ "all": [ … ] }` / `{ "any": [ … ] }`. `probability` with an `else` target rolls on the
+scenario's own random stream, so a seeded run replays exactly. A transition's `src` says where its numbers come from,
+or PLACEHOLDER and why.
+
+A timer that sets a rhythm reads the rhythm it replaces: `{ "rhythm": { "id": "vfCoarse", "forS": 240 } }` turns
+coarse VF into fine VF only after four minutes of coarse VF, so a rhythm the instructor or a shock has set meanwhile
+stays. `{ "afterS": 240 }` would overwrite it.
 
 ## A complete example
 

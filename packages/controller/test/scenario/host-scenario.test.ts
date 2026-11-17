@@ -120,7 +120,7 @@ describe('scenario over a HostSession', () => {
     await waitFor(() => ctl.hostOnline);
     const r = await ctl.send({ type: 'scenario', action: 'load', doc: { schema: 'pme-scenario/1', id: 'x', title: 'x', initialState: 'a', states: [{ id: 'a', transitions: [{ id: 't', to: 'a', when: {} }] }] } });
     expect(r.accepted).toBe(false);
-    expect(r.reason).toBe('invalid scenario: /states/0/transitions/0/when: a trigger must have exactly one of afterS, atScenarioS, vital, event, sensor, manual, all, any');
+    expect(r.reason).toBe('invalid scenario: /states/0/transitions/0/when: a trigger must have exactly one of afterS, atScenarioS, vital, event, sensor, rhythm, manual, all, any');
   });
 
   it('a late joiner gets the doc (sticky load) and the current state (welcome event)', async () => {
