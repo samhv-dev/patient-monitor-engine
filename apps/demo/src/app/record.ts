@@ -22,6 +22,7 @@ import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/cont
 import { alarmLine } from './alarms.ts';
 import { describeCommand, notDoneOf } from './describe.ts';
 import { deviceLabel, kindOf, numberOf, type DeviceKind, type DeviceOrder } from './device-names.ts';
+import { PUMP_ALARM_PREFIX, pumpAlarmOfEvent, pumpAlarmsOf, type PumpAlarmNow } from './pump-alarms.ts';
 
 /** How a state row's state was entered (`Row.by` on a state row). */
 export type StateBy = 'press' | 'rule' | 'goto';
@@ -119,8 +120,14 @@ export type Sample = { t: number } & Record<ValueKey, number | null> & Partial<R
  *  row that stops compressions (a record without it kept no stop, so its hands-off time is unknown); 'recognised': the
  *  instructor's "Recognised" press on a /1 card without a recognition objective or a free run is a note row with
  *  `ev: 'recognised'` (a record without it had no such press, so its absence says nothing). 'rateChange': a row's text
- *  says an infusion's rate change with the rate it replaced (a record without it says a change as a start). */
-export const KEEPS = ['pressures', 'alarmEnd', 'cprStop', 'recognised', 'rateChange'] as const;
+ *  says an infusion's rate change with the rate it replaced (a record without it says a change as a start). 'delivered':
+ *  `RunData.delivered`, the engine's own amount given of each drug, and the pump channels' alarms as alarm rows (a record
+ *  without it counted boluses only and kept no pump alarm). */
+export const KEEPS = ['pressures', 'alarmEnd', 'cprStop', 'recognised', 'rateChange', 'delivered'] as const;
+
+/** One drug's amount given by every route, as the engine accounts it (`DrugPanelRow.totalAmount`, in its `amountUnit`);
+ *  `infused`: it ran by a rate (a channel-less infusion, TCI or a pump channel) at some time in the run. */
+export interface Delivered { amount: number; unit: string; infused?: true }
 
 export interface RunData {
   /** Wall clock (ms since 1970) when the run began, and of the last thing recorded. */
@@ -148,6 +155,9 @@ export interface RunData {
   /** The session's acting devices in the order first heard of, by kind (device-names.ts): "Learner remote 2" is the
    *  second learner key. Absent on a record made before it: the Debrief numbers them in the order the rows name them. */
   devices?: DeviceOrder;
+  /** The engine's amount given of each drug on the kept course, by drug id (its last `drugs` event; absent before it, and
+   *  on a record made before 'delivered'). */
+  delivered?: Record<string, Delivered>;
 }
 /** What the record copies from the host's phase runner (`ScenarioDriver.phaseRunner`). */
 export interface GradeInputs {
@@ -401,25 +411,18 @@ export class RunRecord {
   /** The host's engine events (truth included: it stays on this page). */
   engine(e: EngineEvent): void {
     if (e.type === 'deviceStatus' && e.defib) this.defibJ = e.defib.energyJ;
-    if (e.type === 'alarmStatus') {
+    if (e.type === 'pumpAlarm') this.raise(e.t, pumpAlarmOfEvent(e));
+    else if (e.type === 'drugs') this.drugs(e);
+    else if (e.type === 'alarmStatus') {
       for (const a of e.active) {
-        if (!this.active.has(a.id)) {
-          const row: Row = { t: e.t, kind: 'alarm', text: alarmLine(a).text, ev: `alarm:${a.id}` };
-          this.add(row);
-          this.open.set(a.id, row);
-        }
+        if (!this.active.has(a.id)) this.raise(e.t, { id: a.id, text: alarmLine(a).text });
         const row = this.open.get(a.id);
         if (!row) continue;
         if (a.latched) row.endT ??= e.t;
         else delete row.endT; // the condition came back while latched (the manager un-latches it): not ended yet
         if (a.acked) row.ackT ??= e.t;
       }
-      this.active = new Set(e.active.map((a) => a.id));
-      for (const [id, row] of this.open) {
-        if (this.active.has(id)) continue;
-        row.endT ??= e.t;
-        this.open.delete(id);
-      }
+      this.ended(e.t, new Set(e.active.map((a) => a.id)), (id) => !id.startsWith(PUMP_ALARM_PREFIX));
     } else if (e.type === 'beat') {
       // a run of VT is recorded at its third PVC and its row counts the beats until a beat that is not a PVC
       const r = this.pvcRun;
@@ -458,6 +461,47 @@ export class RunRecord {
     } else if (e.type === 'endo') {
       this.lab.glucose = e.glucoseMmolL;
       this.sample(e.t);
+    }
+  }
+
+  /** An alarm raised at `t`: its row, open until it ends. */
+  private raise(t: number, a: Pick<PumpAlarmNow, 'id' | 'text'>): void {
+    if (this.active.has(a.id)) return;
+    const row: Row = { t, kind: 'alarm', text: a.text, ev: `alarm:${a.id}` };
+    this.add(row);
+    this.open.set(a.id, row);
+    this.active.add(a.id);
+  }
+
+  /** The alarms of one source (`mine`) that stand now are `now`; every other one of that source ended at `t`. Returns
+   *  the raise rows it closed. */
+  private ended(t: number, now: ReadonlySet<string>, mine: (id: string) => boolean): Row[] {
+    const closed: Row[] = [];
+    for (const id of [...this.active]) {
+      if (!mine(id) || now.has(id)) continue;
+      this.active.delete(id);
+      const row = this.open.get(id);
+      if (row) {
+        row.endT ??= t;
+        closed.push(row);
+      }
+      this.open.delete(id);
+    }
+    for (const id of now) this.active.add(id);
+    return closed;
+  }
+
+  /** The engine's 1 Hz drug panel: the amount given of each drug, and the pump channels' standing alarms. */
+  private drugs(e: Extract<EngineEvent, { type: 'drugs' }>): void {
+    const was = this.data.delivered ?? {};
+    this.data.delivered = Object.fromEntries(e.drugs.map((d) => [d.id, {
+      amount: d.totalAmount, unit: d.amountUnit, ...(was[d.id]?.infused || (d.rate ?? 0) > 0 ? { infused: true as const } : {}),
+    }]));
+    const listed = pumpAlarmsOf(e.pumps ?? []);
+    for (const a of listed) this.raise(e.t, a);
+    // a channel's alarm ends by a command on it: the channel's own row says so, as its other acts do
+    for (const r of this.ended(e.t, new Set(listed.map((a) => a.id)), (id) => id.startsWith(PUMP_ALARM_PREFIX))) {
+      this.add({ t: e.t, kind: 'pump', channel: Number((r.ev ?? '').split(':')[2]), text: `${r.text} ended` });
     }
   }
 

@@ -24,6 +24,7 @@ import { mountHeader, type TopControls } from '../teach2/header.ts';
 import { mountKeys } from '../teach2/keys.ts';
 import { hostLabsSource } from '../teach2/labs-sheet.ts';
 import { mountLearnerPreps } from '../teach2/learner-preps.ts';
+import { mountPumpAlarmCard } from '../teach2/pump-alarm-card.ts';
 import { mountPumpMismatch } from '../teach2/pump-mismatch.ts';
 import { mount as mountSheets } from '../teach2/sheets.ts';
 import { mount as mountStrip } from '../teach2/strip.ts';
@@ -40,7 +41,8 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   const dock = mountDock(link, { finish: () => ctx.finish?.start(), canFinish: () => !!ctx.finish?.can(), finishing: () => !!ctx.finish?.open });
   const strip = h('nav', { class: 'ip2-strip', 'aria-label': 'Stages' });
   const cue = h('div', { class: 'ip2-cue' });
-  const state = h('section', { class: 'ip2-state', 'aria-labelledby': 'ip2-state-h' }, h('h2', { id: 'ip2-state-h', class: 'ip2-colhead' }, 'STATE'), cue);
+  const pumpAlarms = mountPumpAlarmCard(link, () => ctx.openSheet('pumps'));
+  const state = h('section', { class: 'ip2-state', 'aria-labelledby': 'ip2-state-h' }, h('h2', { id: 'ip2-state-h', class: 'ip2-colhead' }, 'STATE'), cue, pumpAlarms.el);
   // option G: under the cue box the Fast forward box, then the shell's monitor (placed by the grid), then the alarm
   // line; STATE and ACTION are told apart by a lifted background only (the STATE panel spans the four rows)
   const ff = mountFastForward(link);
@@ -106,6 +108,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
       header.destroy();
       preps.destroy();
       mismatch.destroy();
+      pumpAlarms.destroy();
       for (const s of slots) s.destroy();
       finish.destroy();
     },

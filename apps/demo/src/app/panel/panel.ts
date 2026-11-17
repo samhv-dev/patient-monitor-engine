@@ -17,11 +17,12 @@ import { devicesTab } from './devices.ts';
 import { drugsTab } from './drugs.ts';
 import { logTab } from './log.ts';
 import { patientTab } from './patient.ts';
+import { pumpsTab } from './pumps.ts';
 import { scenarioTab } from './scenario.ts';
 import { vitalsTab } from './vitals.ts';
 
 export const TABS: ReadonlyArray<[string, string]> = [
-  ['scenario', 'Scenario'], ['vitals', 'Vitals & rhythm'], ['drugs', 'Drugs & fluids'], ['airway', 'Airway & ventilation'],
+  ['scenario', 'Scenario'], ['vitals', 'Vitals & rhythm'], ['drugs', 'Drugs & fluids'], ['pumps', 'Pumps'], ['airway', 'Airway & ventilation'],
   ['defib', 'Defib, pacing & CPR'], ['devices', 'Devices & alarms'], ['patient', 'Patient'], ['log', 'Log'],
 ];
 
@@ -63,6 +64,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
     { id: 'scenario', label: 'Scenario', render: make('scenario', scenarioTab) },
     { id: 'vitals', label: 'Vitals & rhythm', render: make('vitals', vitalsTab) },
     { id: 'drugs', label: 'Drugs & fluids', render: make('drugs', drugsTab) },
+    { id: 'pumps', label: 'Pumps', render: make('pumps', pumpsTab) },
     { id: 'airway', label: 'Airway & ventilation', render: make('airway', airwayTab) },
     { id: 'defib', label: 'Defib, pacing & CPR', render: make('defib', defibTab) },
     { id: 'devices', label: 'Devices & alarms', render: make('devices', devicesTab) },

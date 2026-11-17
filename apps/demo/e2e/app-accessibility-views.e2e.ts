@@ -12,7 +12,7 @@ import { audit, closeSheets, EXPLORE, expect, focusWalk, go, openApp, type Page,
 let base = '';
 serveApp((b) => (base = b));
 
-const SHEETS: readonly SheetId[] = ['drug', 'airway', 'defib', 'vitals', 'devices', 'patient', 'log'];
+const SHEETS: readonly SheetId[] = ['drug', 'airway', 'defib', 'vitals', 'devices', 'patient', 'log', 'pumps'];
 
 for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800 }, false], ['iPad portrait 820×1180', { width: 820, height: 1180 }, true]] as const) {
   test(`accessibility: ${name}`, { tag: '@known-flaky' }, async ({ browser }) => {

@@ -22,9 +22,8 @@ import { asV1, type Formulary, type MarkKind } from '@pme/controller';
 import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import { kitOffLine } from '../kit-store.ts';
 import './debrief.css';
-import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, preparationsOf, PREP_WORDS, PRESSURE_KEYS, deviceWho, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type PrepRow, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, endOf, givenLines, facts, learnerWho, mmss, objectives, preparationsOf, PREP_WORDS, PRESSURE_KEYS, deviceWho, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type PrepRow, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { loadShippedFormulary } from '../formulary.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
@@ -601,7 +600,7 @@ export function debriefView(session: AppSession, link: Link): View {
     if (preps?.rows.length && !formulary() && !loading) loading = loadShippedFormulary().then((f) => void ((shipped = f) && render()), () => undefined);
     const fs = facts(d);
     const meds = d.rows.filter((r) => r.ev?.startsWith('drug:') || r.ev === 'fluid');
-    const totals = drugTotals(d);
+    const totals = givenLines(d);
     const marks = d.rows.filter((r) => r.kind === 'bookmark' || r.kind === 'restore');
     const ss = steps(d);
     const ms = keyMoments(d);
@@ -650,7 +649,7 @@ export function debriefView(session: AppSession, link: Link): View {
           h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)),
             h('td', {}, r.text, r.kind === 'learner' && r.remote ? `, by ${deviceWho(d, 'learner', r.by ?? '', names, r.name)}` : r.kind === 'pump' && r.by !== undefined ? `, by ${deviceWho(d, 'pump', r.by, names, r.name)}` : '', undoneText(r))))))
         : h('p', { class: 'muted' }, 'No drugs or fluids were given.'),
-        totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
+        totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, x.text))) : null),
       ...(r3 ? [
         section('actions', 'Actions on the card', h('p', { class: 'db-subhead' }, 'What the record shows: each action against its prescription and window; it does not grade the person'), actionsTable(r3)),
         ...(r3.outcomes.length ? [section('outcomes', 'Outcomes', h('ul', { class: 'db-outcomes' }, ...r3.outcomes.map((o) => h('li', { 'data-status': o.status }, h('b', {}, o.status === 'reached' ? '✓ reached' : o.status === 'pending' ? '… pending' : '✗ not reached'), ` ${o.text}`, h('div', { class: 'db-why' }, o.why)))))] : []),

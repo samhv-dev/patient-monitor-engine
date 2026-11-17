@@ -88,7 +88,7 @@ export async function tab(page: Page, id: string): Promise<void> {
   await page.waitForTimeout(600);
 }
 
-export const TABS = ['scenario', 'vitals', 'drugs', 'airway', 'defib', 'devices', 'patient', 'log'] as const;
+export const TABS = ['scenario', 'vitals', 'drugs', 'pumps', 'airway', 'defib', 'devices', 'patient', 'log'] as const;
 export const EXPLORE = ['overview', 'haemodynamics', 'respiratory', 'gas', 'blood', 'brain', 'kidney', 'liver', 'endocrine', 'neuro', 'drugs', 'labs'] as const;
 
 /**
@@ -268,7 +268,7 @@ export async function ffV2(page: Page, min: 2 | 5): Promise<void> {
 
 /** A dock sheet, or one of the Patient sheet's two tabs: since brief 208 (the owner's ruling of 12 November) 'vitals' is
  *  the Patient sheet on "Vitals & rhythm" and 'patient' the same sheet on "Patient & events". */
-export type SheetId = 'drug' | 'airway' | 'defib' | 'vitals' | 'devices' | 'patient' | 'log';
+export type SheetId = 'drug' | 'airway' | 'defib' | 'vitals' | 'devices' | 'patient' | 'log' | 'pumps';
 /** The tab of the Patient sheet a SheetId names. */
 const PATIENT_TABS: Partial<Record<SheetId, string>> = { vitals: 'Vitals & rhythm', patient: 'Patient & events' };
 

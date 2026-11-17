@@ -38,8 +38,11 @@ function showTip(anchor: HTMLElement, text: string): void {
 function hideTip(): void {
   if (bubble) bubble.hidden = true;
 }
-document.addEventListener('keydown', (e) => e.key === 'Escape' && hideTip());
-document.addEventListener('pointerdown', (e) => !(e.target as Element).closest?.('.tip') && hideTip());
+// Guarded so a module that only reads words (a device's labels) can be imported where no DOM is loaded (the record)
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && hideTip());
+  document.addEventListener('pointerdown', (e) => !(e.target as Element).closest?.('.tip') && hideTip());
+}
 
 /** "ⓘ" button that shows a glossary entry's long name, unit and normal range. `label` names the button after the row
  *  it sits in ("About Cp (Propofol)"), so two rows of one entry never share a button name. */

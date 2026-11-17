@@ -1,0 +1,7 @@
+/* The pump alarms card (pump-alarm-card.ts): under the cue box in STATE on the laptop, above the panel on the phone.
+   The colours are Instructor v2's tokens, with the alarm line's amber. */
+.ip2-pa { box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 14px; border: 1px solid var(--ip2-pause-line, #d29922); border-radius: 8px; background: #241f10; color: var(--ip2-text, #e8ecef); font-size: 13px; line-height: 1.4; }
+.ip2-pa[hidden] { display: none; }
+.ip2-pa-title { margin: 0; font-size: 13px; font-weight: 600; color: var(--ip2-pause, #f0b429); }
+.ip2-pa-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; flex: 1 1 16em; min-width: 0; }
+.ip2-pa-open { min-height: 32px; padding: 0 12px; border: 1px solid var(--ip2-pause-line, #d29922); border-radius: 6px; background: var(--ip2-control, #262c33); color: var(--ip2-text, #e8ecef); font: inherit; font-weight: 600; cursor: pointer; }

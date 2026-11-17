@@ -7,6 +7,7 @@
 // of the controller on the inputs the record copied (the panel's function), as actions, outcomes and violations
 // (`pme-debrief/3`; a team act the instructor observes is a record action among the actions: judged rows are retired,
 // the owner's ruling of 5 November). No DOM.
+import { DRUGS } from '@pme/engine-core';
 import { asV1, BEYOND_DATA_WORDS, GAP_WORDS, isV2, manualLabel, type Finding, type Formulary, type MarkKind } from '@pme/controller';
 import { grade, ruleWords, type Administration, type Anchor, type Grade, type Grades, type HintAnchor, type ObjectiveRule, type PhaseEntry, type PrepRecord, type RunEventId, type ScenarioDocV2, type StagedPrep } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
@@ -551,6 +552,8 @@ export interface Fact {
   value: string;
 }
 
+const round3 = (v: number) => String(+v.toPrecision(3));
+
 /** Bolus totals per drug (mass doses in mg; a per-kg dose × the patient's weight; other units summed as given). */
 export function drugTotals(d: RunData): Array<{ drugId: string; n: number; total: string }> {
   const by = new Map<string, { n: number; mg: number; other: Map<string, number> }>();
@@ -563,11 +566,39 @@ export function drugTotals(d: RunData): Array<{ drugId: string; n: number; total
     x.n++;
     by.set(r.dose.drugId, x);
   }
-  const round = (v: number) => String(+v.toPrecision(3));
   return [...by].map(([drugId, x]) => ({
     drugId, n: x.n,
-    total: [x.mg > 0 ? (x.mg < 1 ? `${round(x.mg * 1000)} µg` : `${round(x.mg)} mg`) : '', ...[...x.other].map(([u, v]) => `${round(v)} ${u}`)].filter(Boolean).join(' + '),
+    total: [x.mg > 0 ? (x.mg < 1 ? `${round3(x.mg * 1000)} µg` : `${round3(x.mg)} mg`) : '', ...[...x.other].map(([u, v]) => `${round3(v)} ${u}`)].filter(Boolean).join(' + '),
   }));
+}
+
+/** An amount in its drug's unit as the Debrief writes it: a mass in mg, or in µg below 1 mg. */
+export const givenText = (v: number, unit: string): string => {
+  const mg = unit === 'mg' ? v : unit === 'mcg' ? v * 1e-3 : null;
+  if (mg === null) return `${round3(v)} ${unitText(unit)}`;
+  return mg < 1 ? `${round3(mg * 1000)} µg` : `${round3(mg)} mg`;
+};
+
+/** The engine counts no amount for an infusion of a drug it models as a dose-response curve (no plasma compartment). */
+export const uncountedInfusion = (drugId: string): boolean => DRUGS[drugId]?.pk.kind === 'gamma';
+
+/** The Debrief's line of each drug given: the engine's own amount given by every route (`RunData.delivered`), the
+ *  boluses counted, and whether it also ran by a rate. A drug whose infusion the engine does not count says so, rather
+ *  than read as a total. A record made before 'delivered' has its
+ *  bolus totals only. */
+export function givenLines(d: RunData): Array<{ drugId: string; text: string }> {
+  const boluses = new Map(drugTotals(d).map((x) => [x.drugId, x]));
+  const count = (n: number) => `${n} ${n === 1 ? 'bolus' : 'boluses'}`;
+  const del = d.delivered;
+  const ids = [...new Set([...boluses.keys(), ...Object.keys(del ?? {})])];
+  return ids.flatMap((id) => {
+    const b = boluses.get(id);
+    const g = del?.[id];
+    if (!g || (!(g.amount > 0) && !g.infused)) return b ? [{ drugId: id, text: `${drugName(id)}: ${b.total} in ${count(b.n)}` }] : [];
+    const how = [b ? count(b.n) : '', g.infused ? 'by infusion' : ''].filter(Boolean).join(' and ');
+    const uncounted = g.infused && uncountedInfusion(id) ? '; the infusion is not counted in this amount' : '';
+    return [{ drugId: id, text: `${drugName(id)}: ${givenText(g.amount, g.unit)} in all${how ? ` (${how})` : ''}${uncounted}` }];
+  });
 }
 
 function extreme(d: RunData, k: ValueKey, dir: 'min' | 'max'): Sample | null {
