@@ -3,7 +3,7 @@
 // the previous green main run's Playwright JSON reports: per file, the sum of every test result's duration (retries
 // included). Files go longest first onto the least-loaded shard (LPT); a file with no recorded duration counts as the
 // median recorded file. Nothing is weighted or ordered by hand.
-// The plan is made ONCE per run, in ci.yml's renderer job, and every shard reads that one plan (research/41 row 64:
+// The plan is made ONCE per run, in ci.yml's changes job, and every shard reads that one plan (research/41 row 64:
 // when each shard downloaded the reports and planned for itself, one shard's failed download of one report gave it a
 // different split from its siblings', and the set ran 174 tests against 165 listed, run 42284321017).
 //   node scripts/ci/e2e-shard-plan.mjs plan <reports-dir|none>

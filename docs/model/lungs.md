@@ -94,7 +94,7 @@ per-breath mechanics and the per-lung PVR it hands to the circulation.
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 0, FIT 4, ENG 0, UNTAGGED 4, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1).
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -271,7 +271,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `EOFE_FLOW_ML_S` | `25` | mL/s | ERS 2019 | ATS/ERS 2019 end of forced expiration: flow < 25 mL/s, or 15 s. |
 | `EOFE_MAX_S` | `15` | s | — | — |
 
-### Lung conditions (32; `packages/engine-core/data/lung-pathology.ts`)
+### Lung conditions (`packages/engine-core/data/lung-pathology.ts`)
 
 | Id | Condition | Effects | Tags |
 |---|---|---|---|
@@ -315,6 +315,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `pesEstimate` | [`l2/lung/breath.ts`](../../packages/engine-core/src/l2/lung/breath.ts) | Supine balloon estimate (cmH2O, ventilated/anaesthetised): |
 | `expHold` | [`l2/lung/breath.ts`](../../packages/engine-core/src/l2/lung/breath.ts) | End-expiratory hold on a copy: |
 | `inspHold` | [`l2/lung/breath.ts`](../../packages/engine-core/src/l2/lung/breath.ts) | End-inspiratory hold on a copy: |
+| `breathMechanics` | [`l2/lung/breath.ts`](../../packages/engine-core/src/l2/lung/breath.ts) | — |
 | `deadSpaceSet` | [`l2/lung/breath.ts`](../../packages/engine-core/src/l2/lung/breath.ts) | The dead-space set of one breath. |
 | `circSideFlows` | [`l2/lung/circ-link.ts`](../../packages/engine-core/src/l2/lung/circ-link.ts) | Per-lung flows in L/min from the circulation, or null when the circulation model is not present (or not yet flowing). |
 | `writeCircPvr` | [`l2/lung/circ-link.ts`](../../packages/engine-core/src/l2/lung/circ-link.ts) | Hand the per-lung PVR multipliers to the circulation when it exists; |
@@ -322,11 +323,17 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `reversibleShare` | [`l2/lung/conditions.ts`](../../packages/engine-core/src/l2/lung/conditions.ts) | The share of a smooth-muscle condition's severity that bronchodilation can reverse (0–`frac`). |
 | `spasmSeverity` | [`l2/lung/conditions.ts`](../../packages/engine-core/src/l2/lung/conditions.ts) | The shark-fin capnogram's severity (0 = none) from the smooth-muscle conditions after bronchodilation — bronchospasm at its own (unclamped, 1.25 = the near-fatal extreme) severity; |
 | `relaxed` | [`l2/lung/conditions.ts`](../../packages/engine-core/src/l2/lung/conditions.ts) | Effective severity of `spec` for effect `key` under bronchodilation B; |
+| `conditionData` | [`l2/lung/conditions.ts`](../../packages/engine-core/src/l2/lung/conditions.ts) | — |
 | `effectValue` | [`l2/lung/conditions.ts`](../../packages/engine-core/src/l2/lung/conditions.ts) | Value of an effect at severity s: |
+| `interp` | [`l2/lung/conditions.ts`](../../packages/engine-core/src/l2/lung/conditions.ts) | — |
 | `resolveLung` | [`l2/lung/conditions.ts`](../../packages/engine-core/src/l2/lung/conditions.ts) | Resolve condition specs for a patient of `ibwKg`. |
+| `wakeShiftMmHg` | [`l2/lung/drive.ts`](../../packages/engine-core/src/l2/lung/drive.ts) | — |
+| `hypoxicFactor` | [`l2/lung/drive.ts`](../../packages/engine-core/src/l2/lung/drive.ts) | — |
 | `drive` | [`l2/lung/drive.ts`](../../packages/engine-core/src/l2/lung/drive.ts) | Minute ventilation and its split. |
 | `pti` | [`l2/lung/drive.ts`](../../packages/engine-core/src/l2/lung/drive.ts) | Pressure–time index of a spontaneous breath (VT mL, C mL/cmH2O, R cmH2O·s/L, Ti/Ttot). |
 | `stepFatigue` | [`l2/lung/drive.ts`](../../packages/engine-core/src/l2/lung/drive.ts) | Fatigue F (1 fresh → 0.3 exhausted): |
+| `blockedSides` | [`l2/lung/lung.ts`](../../packages/engine-core/src/l2/lung/lung.ts) | — |
+| `createLung` | [`l2/lung/lung.ts`](../../packages/engine-core/src/l2/lung/lung.ts) | — |
 | `lungMechStep` | [`l2/lung/lung.ts`](../../packages/engine-core/src/l2/lung/lung.ts) | Advance the mechanics by one 62.5 Hz sample (4 sub-steps). |
 | `capnoTerms` | [`l2/lung/lung.ts`](../../packages/engine-core/src/l2/lung/lung.ts) | Capnogram terms for the next cycle (decision 9): |
 | `lungGasStep` | [`l2/lung/lung.ts`](../../packages/engine-core/src/l2/lung/lung.ts) | 10 Hz: recruitment, HPV, perfusion, CO2 mix, O2 stores. |
@@ -336,28 +343,38 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `holdPressure` | [`l2/lung/measure.ts`](../../packages/engine-core/src/l2/lung/measure.ts) | Hold the airway closed for `s` seconds on a copy; |
 | `vcBreath` | [`l2/lung/measure.ts`](../../packages/engine-core/src/l2/lung/measure.ts) | Run one volume-controlled breath (square flow, pause, passive expiration to PEEP) on `ms` in place. |
 | `referenceRun` | [`l2/lung/measure.ts`](../../packages/engine-core/src/l2/lung/measure.ts) | Settle `n` breaths then measure one (the reference run of Task 12). |
+| `createMech` | [`l2/lung/mechanics.ts`](../../packages/engine-core/src/l2/lung/mechanics.ts) | — |
 | `unitPressure` | [`l2/lung/mechanics.ts`](../../packages/engine-core/src/l2/lung/mechanics.ts) | Alveolar pressure of unit u: |
+| `chestWallPressure` | [`l2/lung/mechanics.ts`](../../packages/engine-core/src/l2/lung/mechanics.ts) | — |
 | `mechSubstep` | [`l2/lung/mechanics.ts`](../../packages/engine-core/src/l2/lung/mechanics.ts) | One sub-step. |
 | `airwayFlow` | [`l2/lung/mechanics.ts`](../../packages/engine-core/src/l2/lung/mechanics.ts) | Total flow at the airway opening, mL/s. |
+| `mixCo2` | [`l2/lung/mix-co2.ts`](../../packages/engine-core/src/l2/lung/mix-co2.ts) | — |
+| `createO2Lung` | [`l2/lung/mix-o2.ts`](../../packages/engine-core/src/l2/lung/mix-o2.ts) | — |
 | `unitPao2` | [`l2/lung/mix-o2.ts`](../../packages/engine-core/src/l2/lung/mix-o2.ts) | Unit alveolar PO2s for the current store state (also used by HPV and the recruitment inputs). |
+| `stepO2Lung` | [`l2/lung/mix-o2.ts`](../../packages/engine-core/src/l2/lung/mix-o2.ts) | — |
+| `createHpv` | [`l2/lung/perfusion.ts`](../../packages/engine-core/src/l2/lung/perfusion.ts) | — |
 | `hpvStimulus` | [`l2/lung/perfusion.ts`](../../packages/engine-core/src/l2/lung/perfusion.ts) | Aerated-region hypoxic stimulus 0–1 from the side's alveolar PO2 [FIT: |
 | `stepHpv` | [`l2/lung/perfusion.ts`](../../packages/engine-core/src/l2/lung/perfusion.ts) | HPV activation: |
 | `perfusion` | [`l2/lung/perfusion.ts`](../../packages/engine-core/src/l2/lung/perfusion.ts) | Side flows. |
+| `createRecruit` | [`l2/lung/recruit.ts`](../../packages/engine-core/src/l2/lung/recruit.ts) | — |
 | `fio2AtelFactor` | [`l2/lung/recruit.ts`](../../packages/engine-core/src/l2/lung/recruit.ts) | Edmark 2003 FiO2 dependence of induction atelectasis: |
 | `tauCollapseS` | [`l2/lung/recruit.ts`](../../packages/engine-core/src/l2/lung/recruit.ts) | Rothen 1995 re-collapse τ (s): |
+| `stepRecruit` | [`l2/lung/recruit.ts`](../../packages/engine-core/src/l2/lung/recruit.ts) | — |
 | `nonAerated` | [`l2/lung/recruit.ts`](../../packages/engine-core/src/l2/lung/recruit.ts) | Non-aerated fraction of each side now (capped 0.98): |
 | `healthyParams` | [`l2/lung/side.ts`](../../packages/engine-core/src/l2/lung/side.ts) | Healthy adult (crs 55 incl. |
 | `mechParams` | [`l2/lung/side.ts`](../../packages/engine-core/src/l2/lung/side.ts) | Unit mechanics for the current aeration `aer[s]` (1 − atel − consol, dynamic) and blocked sides. |
 | `aeratedFrc` | [`l2/lung/state-event.ts`](../../packages/engine-core/src/l2/lung/state-event.ts) | THE bedside FRC (mL) — the gas the lungs hold at end-expiration: |
+| `lungStatePayload` | [`l2/lung/state-event.ts`](../../packages/engine-core/src/l2/lung/state-event.ts) | — |
 | `sigmoidFor` | [`l2/lung/venegas.ts`](../../packages/engine-core/src/l2/lung/venegas.ts) | A unit whose volume range is `rangeMl` and whose compliance at P = c is `cMl` (mL/cmH2O); |
+| `volumeAt` | [`l2/lung/venegas.ts`](../../packages/engine-core/src/l2/lung/venegas.ts) | — |
 | `pressureAt` | [`l2/lung/venegas.ts`](../../packages/engine-core/src/l2/lung/venegas.ts) | Transpulmonary pressure for volume v (inverse), clamped 0.1 % inside the asymptotes. |
 | `complianceAt` | [`l2/lung/venegas.ts`](../../packages/engine-core/src/l2/lung/venegas.ts) | Compliance dV/dP at volume v (mL/cmH2O). |
+| `ventReference` | [`l2/lung/vent-reference.ts`](../../packages/engine-core/src/l2/lung/vent-reference.ts) | — |
+| `predictedVolumes` | [`l2/lung/volumes.ts`](../../packages/engine-core/src/l2/lung/volumes.ts) | — |
 | `tauRef` | [`l2/lung/volumes.ts`](../../packages/engine-core/src/l2/lung/volumes.ts) | τf,ref (s) for a predicted FEV1/FVC. |
 | `actualVolumes` | [`l2/lung/volumes.ts`](../../packages/engine-core/src/l2/lung/volumes.ts) | This patient's static volumes and forced expiration now. |
 | `closingCapacity` | [`l2/lung/volumes.ts`](../../packages/engine-core/src/l2/lung/volumes.ts) | Closing capacity (mL, supine reference): |
 | `pattern` | [`l2/lung/volumes.ts`](../../packages/engine-core/src/l2/lung/volumes.ts) | ATS/ERS 2005 pattern: |
-
-Exported without a doc comment: `breathMechanics`, `conditionData`, `interp`, `wakeShiftMmHg`, `hypoxicFactor`, `blockedSides`, `createLung`, `createMech`, `chestWallPressure`, `mixCo2`, `createO2Lung`, `stepO2Lung`, `createHpv`, `createRecruit`, `stepRecruit`, `lungStatePayload`, `volumeAt`, `ventReference`, `predictedVolumes`.
 
 ## Source files
 

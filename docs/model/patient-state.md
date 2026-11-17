@@ -68,7 +68,7 @@ a pruned copy of the pipeline state for developer tools.
 
 No exported numeric constants.
 
-### State variables (`STATE_SCHEMA`, 21; `packages/engine-core/src/l1/state.ts`)
+### State variables (`STATE_SCHEMA`; `packages/engine-core/src/l1/state.ts`)
 
 | Variable | Default | Min | Max | In MANUAL | Comment |
 |---|---|---|---|---|---|
@@ -98,7 +98,10 @@ No exported numeric constants.
 
 | Function | File | Doc |
 |---|---|---|
+| `constantRamp` | [`l1/ramp.ts`](../../packages/engine-core/src/l1/ramp.ts) | — |
+| `rampValue` | [`l1/ramp.ts`](../../packages/engine-core/src/l1/ramp.ts) | — |
 | `retarget` | [`l1/ramp.ts`](../../packages/engine-core/src/l1/ramp.ts) | Start a new ramp at time t from the CURRENT value (a mid-ramp retarget never jumps). |
+| `createL1State` | [`l1/state.ts`](../../packages/engine-core/src/l1/state.ts) | — |
 | `l1Value` | [`l1/state.ts`](../../packages/engine-core/src/l1/state.ts) | Truth of an L1 variable at time t (sim seconds): |
 | `l1Target` | [`l1/state.ts`](../../packages/engine-core/src/l1/state.ts) | The instructor's target (ramp) itself, ignoring couplings. |
 | `isRamping` | [`l1/state.ts`](../../packages/engine-core/src/l1/state.ts) | True while a ramp is still moving at time t (brief §4.9 'ramping' flag). |
@@ -110,8 +113,7 @@ No exported numeric constants.
 | `defaultArtefact` | [`modifiers.ts`](../../packages/engine-core/src/modifiers.ts) | Default artefact levels: |
 | `defaultModifiers` | [`modifiers.ts`](../../packages/engine-core/src/modifiers.ts) | Default modifiers (brief §5 defaults; |
 | `mergeModifiers` | [`modifiers.ts`](../../packages/engine-core/src/modifiers.ts) | Apply a setModifiers patch: |
-
-Exported without a doc comment: `constantRamp`, `rampValue`, `createL1State`, `pruneTruth`.
+| `pruneTruth` | [`truth.ts`](../../packages/engine-core/src/truth.ts) | — |
 
 ## Source files
 
