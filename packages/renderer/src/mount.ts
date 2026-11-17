@@ -397,7 +397,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       for (const fn of listeners) fn(e);
     }
     ui?.paint(a.simT);
-    sounder?.pump(a.simT);
+    sounder?.pump(simNow()); // now, not the batch's time: a raise in it starts its train here
   };
 
   const sizeOf = (): Size => ({
@@ -468,6 +468,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     const s = scheduler;
     bridge = new AlarmAudioBridge(sounder, () => s.clock.timeScale, { windowSilence: opts.audioSilence === 'window' });
     if (lastStatus) bridge.onStatus({ ...lastStatus, t: simNow() });
+    sounder.pump(simNow());
   };
 
   /**

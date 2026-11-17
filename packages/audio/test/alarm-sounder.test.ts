@@ -21,8 +21,11 @@ function rig(profile: AlarmSoundProfile, opts: { overrides?: ProfileOverrides; t
   });
   sched.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: k, runS: 0 });
   const s = new AlarmSounder(sched, profile, opts.overrides ? { overrides: opts.overrides } : {});
-  /** Advance sim time to t in 25 ms steps, pumping both (as the 25 ms timer would). */
+  /** Pump now (as the page does after each batch of events), then advance sim time to t in 25 ms steps, pumping both
+   *  (as the 25 ms timer would). */
   const run = (t: number) => {
+    s.pump(now);
+    sched.pump();
     while (now < t - 1e-9) {
       now = Math.min(t, now + 0.025);
       s.pump(now);
@@ -203,8 +206,10 @@ function hostRig(profile: AlarmSoundProfile) {
   const anchor = () => sched.clock.setAnchor({ simT: sim, perfMs: wall * 1000, timeScale: speed, runS: run });
   anchor();
   const s = new AlarmSounder(sched, profile);
-  /** Run `seconds` of wall time. */
+  /** Pump now (as the page does after each batch of events), then run `seconds` of wall time. */
   const wait = (seconds: number) => {
+    s.pump(sim);
+    sched.pump();
     const end = wall + seconds;
     while (wall < end - 1e-9) {
       const dt = Math.min(0.025, end - wall);
@@ -290,6 +295,15 @@ describe('AlarmSounder: the sound keeps real time when the case speed changes', 
     h.speed(4);
     h.wait(20);
     expect(h.starts()).toEqual([0, 40, 50]);
+  });
+
+  it('an alarm whose raise arrives late (a busy engine posts it 1 s after its sim time) sounds its first burst whole, from now', () => {
+    const h = hostRig(IEC_STYLE);
+    h.wait(5);
+    h.s.raise('VT', 1, h.sim - 1);
+    h.wait(12);
+    expect(diffs(onsets(h.played).slice(0, 10))).toEqual([0.25, 0.25, 0.5, 0.25, 0.75, 0.25, 0.25, 0.5, 0.25]);
+    expect(h.starts()).toEqual([5, 15]);
   });
 
   it('an alarm that starts and ends during ×8 sounds its burst in real time, once, and nothing after it ends', () => {

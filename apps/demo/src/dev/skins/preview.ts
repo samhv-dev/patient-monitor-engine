@@ -131,6 +131,7 @@ async function renderTiming(profileId: string, level: AlarmLevel, seconds: numbe
   };
   const s = new AlarmSounder(fake, profile, { overrides: ov, horizonS: seconds });
   s.raise('offline', level, 0);
+  s.pump(0);
   const buf = await ctx.startRendering();
   return measureOnsets(buf.getChannelData(0), sr);
 }
