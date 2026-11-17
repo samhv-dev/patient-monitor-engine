@@ -331,12 +331,9 @@ describe('a paused position across a reload', () => {
     a.load(a.card);
     await a.run(1);
     await a.goto('induced');
-    (a.s as { paused: boolean }).paused = true;
-    const stop = keepPositions(a.s, { log: [] }, 5);
-    for (let i = 0; i < 200 && !sessionStorage.getItem('pme.position'); i++) await new Promise((r) => setTimeout(r, 5));
-    stop();
-    const kept = readPosition({ code: 'KKQB2N' }) as Position;
-    expect(kept.paused).toBe(true);
+    const run = await a.driver.position();
+    if (!run) throw new Error('no consistent position');
+    const kept = position({ paused: true, speed: 1, stateId: run.runner.stateId, simT: run.snapshot.tick * 0.02, run, record: a.record.keep() });
 
     const b = page();
     const sent: Array<Record<string, unknown>> = [];

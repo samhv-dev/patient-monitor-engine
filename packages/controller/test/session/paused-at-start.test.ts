@@ -7,7 +7,7 @@ import { ControllerSession } from '../../src/session/controller-session.ts';
 import { HostSession, type HostTarget } from '../../src/session/host-session.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import type { TimelineCause, WireMessage } from '../../src/protocol.ts';
-import { collect, waitFor } from '../helpers.ts';
+import { collect } from '../helpers.ts';
 
 const S = 'PAS234';
 
@@ -29,13 +29,19 @@ function setup() {
   const wire = hub.connect();
   const seen = collect(wire); // registered before the controller's own listener: the controller has it when this does
   const ctl = new ControllerSession({ session: S, transport: wire });
+  /** Resolves on the controller's change (each message it takes) that makes `pred` true. */
+  const until = (pred: () => boolean) => new Promise<void>((done) => {
+    if (pred()) return done();
+    const off = ctl.onChange(() => pred() && (off(), done()));
+  });
   const timelines = () => seen.filter((m) => m.kind === 'event').flatMap((m) => (m as Extract<WireMessage, { kind: 'event' }>).body).filter((e) => e.type === 'timeline').length;
   return {
     host,
     ctl,
+    online: () => until(() => ctl.hostOnline),
     async time(action: 'pause' | 'resume') {
       expect((await ctl.send({ type: 'time', action })).accepted).toBe(true);
-      await waitFor(() => ctl.hostPaused === (action === 'pause'), 2000, `the host's ${action}`);
+      await until(() => ctl.hostPaused === (action === 'pause'));
     },
     async newTimeline(cause: TimelineCause) {
       const n = timelines();
@@ -45,7 +51,7 @@ function setup() {
         off = engine.on((e) => fns.forEach((f) => f(e)));
       }
       host.newTimeline(cause);
-      await waitFor(() => timelines() > n, 2000, 'the timeline event');
+      await until(() => timelines() > n);
     },
     run: (s: number) => engine.advanceTo(engine.now().simT + s),
   };
@@ -61,7 +67,7 @@ describe('a case that begins on a paused host', () => {
 
   it('a new engine while paused (a case loaded after Debrief now, or while paused by hand) begins paused, until the host resumes', async () => {
     x = setup();
-    await waitFor(() => x!.ctl.hostOnline);
+    await x.online();
     await x.time('pause');
     expect(x.ctl.pausedAtStart).toBe(false); // a pause in a running case is not a case that has not started
     await x.newTimeline('restart');
@@ -74,7 +80,7 @@ describe('a case that begins on a paused host', () => {
 
   it('a return to a position while paused (a bookmark restore, a reload restoring a paused position) begins paused', async () => {
     x = setup();
-    await waitFor(() => x!.ctl.hostOnline);
+    await x.online();
     x.run(30);
     await x.time('pause');
     await x.newTimeline('restore');
@@ -85,7 +91,7 @@ describe('a case that begins on a paused host', () => {
 
   it('a new engine on a running host does not', async () => {
     x = setup();
-    await waitFor(() => x!.ctl.hostOnline);
+    await x.online();
     await x.newTimeline('restart');
     expect(x.ctl.pausedAtStart).toBe(false);
   });
