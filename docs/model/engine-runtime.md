@@ -49,7 +49,7 @@ too busy to keep real time says so (the clock pill reads BEHIND) instead of runn
 | Where | Relation |
 |---|---|
 | [`clock.ts:1`](../../packages/engine-core/src/clock/clock.ts#L1) | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. |
-| [`engine.ts:699`](../../packages/engine-core/src/engine.ts#L699) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`engine.ts:700`](../../packages/engine-core/src/engine.ts#L700) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
@@ -142,6 +142,7 @@ None recorded.
 | [`buffers/ring.test.ts`](../../packages/engine-core/test/buffers/ring.test.ts) | 0 | 0 |
 | [`clock/clock.test.ts`](../../packages/engine-core/test/clock/clock.test.ts) | 0 | 0 |
 | [`couplings/registry.test.ts`](../../packages/engine-core/test/couplings/registry.test.ts) | 0 | 0 |
+| [`engine/brain-energy-snapshot.test.ts`](../../packages/engine-core/test/engine/brain-energy-snapshot.test.ts) | 0 | 0 |
 | [`engine/engine-command-ownership.test.ts`](../../packages/engine-core/test/engine/engine-command-ownership.test.ts) | 0 | 0 |
 | [`engine/engine-command-validation.test.ts`](../../packages/engine-core/test/engine/engine-command-validation.test.ts) | 0 | 0 |
 | [`engine/engine-commands.test.ts`](../../packages/engine-core/test/engine/engine-commands.test.ts) | 0 | 0 |

@@ -32,7 +32,7 @@ import type { CortexInputs, EegSpectrum } from '../../../src/types-eeg.ts';
 const H0 = { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 };
 const M0 = { sevoflurane: 0, isoflurane: 0, desflurane: 0, n2o: 0 };
 const inp = (ageY: number, ugMl: number): CortexInputs => ({
-  ageY, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, do2Rel: 1, tempC: 37, hyp: { ...H0, gabaIv: 1000 * ugMl }, mac: M0,
+  ageY, alpha2Eq: 0, opioidFentEq: 0, stimulus: 0, antinoc: 0, metabolic: 0, tempC: 37, hyp: { ...H0, gabaIv: 1000 * ugMl }, mac: M0,
 });
 const prop = (ugMl: number, ageY = 40): EegSpectrum => { const x = inp(ageY, ugMl); return spectrumOf(cortexStep(undefined, x, 0.1), agentMixOf(x)); };
 const db = (x: number) => 10 * Math.log10(x);
