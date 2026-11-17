@@ -224,6 +224,31 @@ describe('pump-rack E2: the prediction is the pump\'s own record of what it gave
     expect(pk.drugs.propofol!.pumpRate).toBeCloseTo((300 * 10) / 60, 9);
   });
 
+  it('under its ceiling the pump runs at the ceiling and reaches the target later; the patient receives what it delivers', () => {
+    const run = (maxRateMlH?: number) => {
+      const pk = pinned();
+      send(pk, { kind: 'pump', action: 'load', ch: 1, channel: 'syringe', syringeMl: 50, contents: { drugId: 'propofol', concentration: PROPOFOL_10, volumeMl: 50 } });
+      send(pk, { kind: 'pump', action: 'program', ch: 1, drugId: 'propofol', concentration: PROPOFOL_10 });
+      send(pk, { kind: 'pump', action: 'tci', ch: 1, setId: 'eleveld', mode: 'effect', target: 3, patient: REF, ...(maxRateMlH ? { maxRateMlH } : {}) });
+      send(pk, { kind: 'pump', action: 'start', ch: 1 });
+      let highest = 0;
+      let reachedS = Number.POSITIVE_INFINITY;
+      for (let s = 1; s <= 900; s++) {
+        advancePk(pk, NEUTRAL_PK_CTX, s);
+        highest = Math.max(highest, chan(pk, 1).rateMlH);
+        if (reachedS === Number.POSITIVE_INFINITY && (chan(pk, 1).pred!.x[3] as number) >= 2.99) reachedS = s;
+      }
+      return { pk, highest, reachedS };
+    };
+    const capped = run(300);
+    const free = run();
+    expect(capped.highest).toBe(300);
+    expect(free.highest).toBeGreaterThan(300); // the target asks for more than the ceiling
+    expect(capped.reachedS).toBeLessThan(900);
+    expect(capped.reachedS).toBeGreaterThan(free.reachedS);
+    expect(capped.pk.drugs.propofol!.total).toBeCloseTo(chan(capped.pk, 1).infusedMl * 10, 6); // mg: mL × 10 mg/mL
+  });
+
   it('a new target with the same set and patient keeps the prediction (no re-loading); target 0 stops and the prediction decays', () => {
     const pk = pinned();
     tciChannel(pk);
