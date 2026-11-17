@@ -9,6 +9,8 @@ import type { VentConfig } from '@pme/ventilator';
 import { onStep } from '../../core/pending.ts';
 import type { Range, Setting } from '../../core/types.ts';
 import { dec, L, num, S, word, type ReasonId, type WordId } from './data.ts';
+import type { TestId } from './manoeuvres.ts';
+import type { LayoutId, Q } from './screen.ts';
 
 type Cfg = Readonly<VentConfig>;
 /** What a control can do in a configuration: set, show without setting (I:E outside PCV, research/57 T-16), or nothing yet. */
@@ -264,8 +266,12 @@ export const LIMITS: Record<string, LimitCtl> = {
   }, 'o2Set'),
 };
 
-/** The face's own actions (no cfg key: they move the knob's state; knob.ts), the knob's two motions included. */
-export type FaceAction = 'mode' | 'menu' | 'alarmLimits' | 'silence' | 'ctrl' | 'esc' | 'knobTurn' | 'knobPress';
+/**
+ * The face's own actions (no cfg key: they move the knob's state or act on the cockpit; knob.ts), the knob's two motions
+ * included. `pause` and `lock` are keys that are held (research/57 H-12, H-19).
+ */
+export type FaceAction = 'mode' | 'menu' | 'alarmLimits' | 'silence' | 'ctrl' | 'esc' | 'knobTurn' | 'knobPress'
+  | 'graphics' | 'freeze' | 'respMech' | 'saveLoop' | 'help' | 'lock' | 'manualInsp' | 'pause' | 'scale';
 
 /** One control the face draws. */
 export type Ctl =
@@ -273,9 +279,12 @@ export type Ctl =
   | { id: string; region: Region; kind: 'limit'; limit: string }
   | { id: string; region: Region; kind: 'action'; action: FaceAction; word?: WordId; gap: string }
   | { id: string; region: Region; kind: 'unavailable'; word?: WordId; reason: ReasonId; gap: string; value?: WordId };
-export type Region = 'bottom' | 'tag' | 'right' | 'side' | 'under' | 'window';
+export type Region = 'bottom' | 'tag' | 'right' | 'side' | 'under' | 'window' | 'scale';
 
 const un = (id: string, region: Region, word: WordId | undefined, reason: ReasonId, gap: string, value?: WordId): Ctl => ({ id, region, kind: 'unavailable', word, reason, gap, ...(value ? { value } : {}) });
+const act = (id: string, region: Region, action: FaceAction, gap: string, word?: WordId): Ctl => ({ id, region, kind: 'action', action, gap, ...(word ? { word } : {}) });
+/** The touch keys of a quantity's axis numbers (research/57 K-11). */
+export const scaleCtl = (q: Q): string => `scale:${q}`;
 
 /** Every control outside the windows. The bottom row's keys come from the mode (modes.ts); their settings are here. */
 export const CONTROLS: Ctl[] = [
@@ -283,12 +292,12 @@ export const CONTROLS: Ctl[] = [
   // alarm-limit tags under the top row and in the left column (research/57 R-11, R-12, R-18, R-24)
   ...Object.keys(LIMITS).map((k): Ctl => ({ id: `tag:${k}`, region: 'tag', kind: 'limit', limit: k })),
   // the right column (research/57 R-33)
-  un('right:graphics', 'right', 'graphics', 'graphics', 'GD12'),
-  un('right:freeze', 'right', 'freeze', 'freeze', 'GD13'),
-  un('right:respMech', 'right', 'respMech', 'respMech', 'GX13'),
-  un('right:saveLoop', 'right', 'saveLoop', 'saveLoop', 'GD14'),
+  act('right:graphics', 'right', 'graphics', 'GD12', 'graphics'),
+  act('right:freeze', 'right', 'freeze', 'GD13', 'freeze'),
+  act('right:respMech', 'right', 'respMech', 'GX13', 'respMech'),
+  act('right:saveLoop', 'right', 'saveLoop', 'GD14', 'saveLoop'),
   un('right:nebulizer', 'right', 'nebulizer', 'nebul', 'GX6'),
-  un('right:help', 'right', 'help', 'help', 'GX8'),
+  act('right:help', 'right', 'help', 'GX8', 'help'),
   un('right:standby', 'right', 'standby', 'standby', 'GX5'),
   // the keys beside the screen (research/57 H-31) and the knob (H-26)
   { id: 'side:alarmLimits', region: 'side', kind: 'action', action: 'alarmLimits', word: 'alarmLimits', gap: 'GA17' },
@@ -298,12 +307,14 @@ export const CONTROLS: Ctl[] = [
   { id: 'side:knobTurn', region: 'side', kind: 'action', action: 'knobTurn', gap: 'GX10' },
   { id: 'side:knobPress', region: 'side', kind: 'action', action: 'knobPress', gap: 'GX10' },
   // the keys under the screen (research/57 H-30)
-  un('under:lock', 'under', undefined, 'lock', 'GX7'),
+  act('under:lock', 'under', 'lock', 'GX7'),
   un('under:suction', 'under', 'suction', 'suction', 'GX4'),
-  un('under:manualInsp', 'under', 'manualInsp', 'manualInsp', 'GX1'),
-  un('under:inspExpPause', 'under', 'inspExpPause', 'inspExpPause', 'GX3'),
+  act('under:manualInsp', 'under', 'manualInsp', 'GX1', 'manualInsp'),
+  act('under:inspExpPause', 'under', 'pause', 'GX3', 'inspExpPause'),
   { id: 'under:ctrl', region: 'under', kind: 'action', action: 'ctrl', word: 'ctrl', gap: 'GX10' },
   { id: 'under:esc', region: 'under', kind: 'action', action: 'esc', word: 'esc', gap: 'GX10' },
+  // the axis numbers of the curves and loops (research/57 K-11 to K-13)
+  ...(['p', 'v', 'f'] as const).map((q) => act(scaleCtl(q), 'scale', 'scale', 'GD15')),
 ];
 
 /** A window's row: a mode, a submenu, a setting or limits edited in it, or a row the model does not honour yet. */
@@ -315,11 +326,23 @@ export type Row =
   | { kind: 'limits'; word: WordId; cells: string[]; off?: { reason: ReasonId; gap: string } }
   | { kind: 'off'; word: WordId; reason: ReasonId; gap: string; value?: WordId; more?: true }
   /** Applies the window's draft (research/57 T-41); Esc instead returns to the previous values. */
-  | { kind: 'accept'; word: WordId };
+  | { kind: 'accept'; word: WordId }
+  /** A screen of the Graphics window (research/57 K-10). */
+  | { kind: 'layout'; word: WordId; layout: LayoutId }
+  /** A respiratory-mechanics test, started by the knob's press (research/57 E-14). */
+  | { kind: 'test'; word: WordId; test: TestId }
+  /** A value the window shows, measured with no test (P0.1, research/57 K-19; plan GX14). */
+  | { kind: 'reading'; word: WordId; note: ReasonId }
+  /** A Yes/No of the face (Tools → Autoscale, research/57 E-06, K-12). */
+  | { kind: 'toggle'; word: WordId; toggle: 'autoscale' };
 
-export type WindowId = 'modes' | 'otherModes' | 'menu' | 'adjuncts' | 'tools' | 'settings' | 'alarms' | 'backup';
-/** `draft`: the window's settings are edited into a draft that its Accept row applies (the Backup window, T-41). */
-export interface WindowDef { title: WordId; rows: Row[]; footer: boolean; draft?: true }
+export type WindowId = 'modes' | 'otherModes' | 'menu' | 'adjuncts' | 'tools' | 'settings' | 'alarms' | 'backup'
+  | 'graphics' | 'respMech' | 'patientsData' | 'help';
+/**
+ * `draft`: the window's settings are edited into a draft that its Accept row applies (the Backup window, T-41).
+ * `pages`: its rows are Patient's Data's pages, turned by the knob (patient-data.ts; N-02). `text`: it shows a help text.
+ */
+export interface WindowDef { title: WordId; rows: Row[]; footer: boolean; draft?: true; pages?: true; text?: true }
 
 /**
  * The windows the knob moves through (research/57 O-09, O-10, O-13, E-01, E-02, E-04, E-06, A-21). The mode windows are
@@ -345,7 +368,7 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
     { kind: 'open', word: 'otherModes', window: 'modes', inferred: true },
   ] },
   menu: { title: 'menuTitle', footer: true, rows: [
-    { kind: 'off', word: 'patientsData', reason: 'patientsData', gap: 'GD16' },
+    { kind: 'open', word: 'patientsData', window: 'patientsData' },
     { kind: 'open', word: 'backupVent', window: 'backup' },
     { kind: 'open', word: 'ventAdjuncts', window: 'adjuncts' },
     { kind: 'off', word: 'records', reason: 'records', gap: 'GD20', more: true },
@@ -369,7 +392,7 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
     { kind: 'off', word: 'leakComp', reason: 'leak', gap: 'GP22', value: 'no' },
   ] },
   tools: { title: 'toolsTitle', footer: true, rows: [
-    { kind: 'off', word: 'autoscale', reason: 'autoscale', gap: 'GD15', value: 'no' },
+    { kind: 'toggle', word: 'autoscale', toggle: 'autoscale' },
     { kind: 'off', word: 'suctionConfig', reason: 'suctionConfig', gap: 'GX4', more: true },
     { kind: 'off', word: 'calibration', reason: 'calibration', gap: 'GX19', more: true },
     { kind: 'open', word: 'settings', window: 'settings' },
@@ -394,4 +417,26 @@ export const WINDOWS: Record<WindowId, WindowDef> = {
     { kind: 'limits', word: 'lowPeep', cells: ['peepHi'] },
     { kind: 'off', word: 'etco2', reason: 'etco2', gap: 'GA13' },
   ] },
+  // the Graphics key's six screens (research/57 E-15, K-10); the CO2 screen waits for capnography (plan GD18)
+  graphics: { title: 'graphics', footer: true, rows: [
+    { kind: 'layout', word: 'gr5', layout: 'curves5' },
+    { kind: 'layout', word: 'grPawFlow', layout: 'pawFlow' },
+    { kind: 'layout', word: 'grPawVtFlow', layout: 'pawVtFlow' },
+    { kind: 'layout', word: 'grLoops', layout: 'loops' },
+    { kind: 'layout', word: 'grData', layout: 'curvesData' },
+    { kind: 'off', word: 'grCo2', reason: 'co2Layout', gap: 'GD18' },
+  ] },
+  // the Respiratory mechanics key's window, in the figure's order (research/57 E-14)
+  respMech: { title: 'respMechTitle', footer: true, rows: [
+    { kind: 'test', word: 'autoPeep', test: 'autoPeep' },
+    { kind: 'test', word: 'complRes', test: 'complRes' },
+    { kind: 'test', word: 'trappedVol', test: 'trapped' },
+    { kind: 'off', word: 'svc', reason: 'effort', gap: 'GX16' },
+    { kind: 'reading', word: 'p01', note: 'p01Effort' },
+    { kind: 'off', word: 'pvFlex', reason: 'pvFlex', gap: 'GX15' },
+    { kind: 'off', word: 'pimax', reason: 'effort', gap: 'GX16' },
+    { kind: 'off', word: 'vdvt', reason: 'vdvt', gap: 'GX17' },
+  ] },
+  patientsData: { title: 'patientsData', footer: true, pages: true, rows: [] },
+  help: { title: 'helpTitle', footer: false, text: true, rows: [] },
 };

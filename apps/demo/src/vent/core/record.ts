@@ -1,50 +1,115 @@
-// The breath record (plan vent-skin-edp-ts.md §4.3, §3.3 GD1, GD2, GD6; piece V1): what a ventilator reports of the
+// The breath record (plan vent-skin-edp-ts.md §4.3, §3.3 GD1, GD2, GD6, GD16, GD17): what a ventilator reports of the
 // last COMPLETE breath, from the 5 ms steps: peak inspiratory flow, Ti (with a pause or an inspiratory hold, as a
-// ventilator reports it: research/57 R-08), Te, I:E, and the end-expiratory pressure as the EDP-TS measures it, the
-// mean airway pressure of the last 50 ms of expiration (research/57 R-23). It is fed on every step, frozen or not:
-// freezing the display leaves the numbers live (research/57 K-07). V4 adds VE mandatory and spontaneous.
+// ventilator reports it: research/57 R-08), Te, I:E, the end-expiratory pressure as the EDP-TS measures it (the mean
+// airway pressure of the last 50 ms of expiration, R-23); and what the respiratory mechanics read of it: the volume and
+// the peak pressure of its inspiratory flow, how long that flow lasted, whether it was a spontaneous breath, and the
+// expiratory time constant from its flow–volume curve (N-10). It is fed on every step, frozen or not: freezing the
+// display leaves the numbers live (K-07).
 import type { VentState } from '@pme/ventilator';
 import type { BreathRecord } from './types.ts';
 
 /** The window of the end-expiratory pressure, s (research/57 R-23). */
 export const PEEP_WINDOW_S = 0.05;
 
+/** The breath in progress once its inspiratory flow has ended (an inspiratory hold reads it before the breath is complete). */
+export interface BreathSoFar { t0: number; vtMl: number; pmax: number; tiFlow: number }
+
+export interface RecorderOptions {
+  /** How many complete breaths of each kind `breaths()` keeps. */
+  perKind: number;
+  /** The share of the exhaled volume whose flow–volume slope gives the time constant, [from, to]. */
+  tcexpWindow: readonly [number, number];
+}
+
 export interface Recorder {
   /** Take one 5 ms step's state. */
   step(vs: Readonly<VentState>): void;
   /** The last complete breath, or null before the first. */
   last(): BreathRecord | null;
+  /** The last complete breaths of one kind, oldest first. */
+  breaths(spont: boolean): readonly BreathRecord[];
+  /** The breath in progress, from the end of its inspiratory flow until it is complete; null otherwise. */
+  current(): BreathSoFar | null;
 }
 
-export function createRecorder(): Recorder {
+/** Spontaneous: a breath the patient's effort shapes and ends (a support breath), not a backup breath of the device. */
+const isSpont = (vs: Readonly<VentState>) => (vs.cfg.mode === 'PSV' || vs.cfg.mode === 'PAV') && vs.backupBreath === undefined;
+
+/**
+ * The expiratory time constant (s) from the expiration's [lung volume L, flow L/s] samples: the slope of flow against
+ * volume over the window's share of the exhaled volume (a passive lung empties as flow = −volume / τ). NaN when the
+ * window holds fewer than three samples.
+ */
+export function timeConstant(samples: ReadonlyArray<readonly [number, number]>, [from, to]: readonly [number, number]): number {
+  if (samples.length < 3) return Number.NaN;
+  const v0 = samples[0]![0];
+  const out = v0 - samples[samples.length - 1]![0];
+  if (!(out > 0)) return Number.NaN;
+  const w = samples.filter(([v]) => (v0 - v) / out >= from && (v0 - v) / out <= to);
+  if (w.length < 3) return Number.NaN;
+  const mv = w.reduce((s, [v]) => s + v, 0) / w.length;
+  const mq = w.reduce((s, [, q]) => s + q, 0) / w.length;
+  let sxy = 0, sxx = 0;
+  for (const [v, q] of w) { sxy += (v - mv) * (q - mq); sxx += (v - mv) ** 2; }
+  return sxx > 0 && sxy < 0 ? -sxx / sxy : Number.NaN;
+}
+
+/** Without options (a face with no mechanics) no breaths are kept by kind and no time constant is read. */
+export function createRecorder(o?: RecorderOptions): Recorder {
   let last: BreathRecord | null = null;
+  const kept = { true: [] as BreathRecord[], false: [] as BreathRecord[] };
   let t0 = NaN; // this breath's inspiration start
   let te0 = NaN; // its expiration start
   let peak = 0;
   let wasInsp = false;
+  let flowing = false; // the last step ended in inspiratory flow, so this step's sub-steps were inspiratory
+  let vStart = 0, pmax = 0, so: BreathSoFar | null = null, spont = false;
   const tail: Array<[number, number]> = []; // [t, Paw] of the expiration's last 50 ms
+  const expSamples: Array<[number, number]> = []; // [V L, Q L/s] of the expiration's passive flow
   return {
     step(vs) {
       const p = vs.p;
-      const insp = vs.circuit !== 'disconnected' && (vs.hold === 'insp' || (vs.hold === null && p.phase !== 'exp'));
+      const open = vs.circuit === 'disconnected';
+      const insp = !open && (vs.hold === 'insp' || (vs.hold === null && p.phase !== 'exp'));
+      const wasFlowing = flowing;
+      flowing = !open && vs.hold === null && p.phase === 'insp';
+      if (wasFlowing) {
+        pmax = Math.max(pmax, p.Paw);
+        if (!flowing) so = { t0, vtMl: p.V - vStart, pmax, tiFlow: p.t - t0 };
+      }
       if (insp && !wasInsp) {
         if (Number.isFinite(t0) && Number.isFinite(te0) && tail.length) {
           const ti = te0 - t0;
           const te = p.t - te0;
-          last = { t0, peakFlowLpm: peak, ti, te, ie: ti / Math.max(1e-9, te), peepEnd: tail.reduce((s, [, v]) => s + v, 0) / tail.length, tiTtot: ti / (ti + te) };
+          last = {
+            t0, peakFlowLpm: peak, ti, te, ie: ti / Math.max(1e-9, te), peepEnd: tail.reduce((s, [, v]) => s + v, 0) / tail.length, tiTtot: ti / (ti + te),
+            vtMl: so?.vtMl ?? Number.NaN, pmax: so?.pmax ?? Number.NaN, tiFlow: so?.tiFlow ?? Number.NaN, spont, tcexp: o ? timeConstant(expSamples, o.tcexpWindow) : Number.NaN,
+          };
+          const k = kept[`${spont}`];
+          k.push(last);
+          if (k.length > (o?.perKind ?? 0)) k.shift();
         }
-        t0 = p.t;
+        // from the model's own breath start: a breath given within a step (a hold released) began before this sample
+        t0 = p.t - p.breathT;
         te0 = NaN;
         peak = 0;
         tail.length = 0;
+        expSamples.length = 0;
+        vStart = p.breathVstart;
+        pmax = -Infinity;
+        so = null;
+        spont = isSpont(vs);
       } else if (!insp && wasInsp) te0 = p.t;
       if (insp) peak = Math.max(peak, p.Q * 60);
       else {
         tail.push([p.t, p.Paw]);
         while (tail.length && p.t - (tail[0] as [number, number])[0] >= PEEP_WINDOW_S - 1e-9) tail.shift();
+        if (vs.hold === null && !open) expSamples.push([p.V / 1000, p.Q]);
       }
       wasInsp = insp;
     },
     last: () => last,
+    breaths: (s) => kept[`${s}`],
+    current: () => so,
   };
 }

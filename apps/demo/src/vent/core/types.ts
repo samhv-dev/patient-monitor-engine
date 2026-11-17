@@ -1,6 +1,5 @@
 // The ventilator cockpit's core types (plan vent-skin-edp-ts.md §4.3, piece V0). The core knows nothing of any look:
-// a face is a module that builds its own DOM and draws from a Cockpit. The parts a later piece fills are named and
-// typed here, unbuilt: the alarm profile (V3) and the breath record (V1/V4).
+// a face is a module that builds its own DOM and draws from a Cockpit.
 import type { PresetId, VentAlarm, VentConfig, VentMode } from '@pme/ventilator';
 import type { SimTools } from '../sim-tools.ts';
 import type { Cockpit } from './cockpit.ts';
@@ -58,8 +57,8 @@ export interface AlarmProfile {
 }
 
 /**
- * V1/V4 fill this from the 5 ms steps: the last breath's peak flow, Ti, Te, I:E, end-expiratory PEEP, VE mandatory and
- * spontaneous, Ti/Ttot (§3.3 GD16–GD17). Not built in V0: the Hamilton face reads the model's measured view only.
+ * The last complete breath, from the 5 ms steps (record.ts): what the device's top row, left column and Patient's Data
+ * read of it (§3.3 GD1, GD2, GD6, GD16, GD17).
  */
 export interface BreathRecord {
   /** Sim time the breath (its inspiration) started, s. */
@@ -73,9 +72,45 @@ export interface BreathRecord {
   /** Mean airway pressure over the last 50 ms of expiration, cmH2O. */
   peepEnd: number;
   tiTtot: number;
-  /** V4. */
-  veMandLpm?: number;
-  veSpontLpm?: number;
+  /** The volume of the inspiratory flow, mL (the exhaled volume: the model has no leak). */
+  vtMl: number;
+  /** The highest airway pressure of the inspiratory flow, cmH2O. */
+  pmax: number;
+  /** How long the inspiratory flow lasted (Ti without a pause or a hold), s. */
+  tiFlow: number;
+  /** A spontaneous (support) breath, not a mandatory or backup one. */
+  spont: boolean;
+  /** The expiratory time constant from the flow–volume curve, s (NaN when it cannot be read). */
+  tcexp: number;
+}
+
+/** A hold that has ended: what the device reads at its end. */
+export interface HoldResult {
+  kind: 'insp' | 'exp';
+  /** Sim time the hold ended, s, and how long the valves were closed. */
+  t: number;
+  durS: number;
+  /** The airway pressure held at its end, cmH2O (plateau after an inspiratory hold, total PEEP after an expiratory one). */
+  paw: number;
+  /** The lung's volume above its relaxed volume at the set PEEP, mL. */
+  vMl: number;
+  /** The set PEEP and mode it was made at. */
+  peep: number;
+  mode: VentMode;
+  /** An inspiratory hold: the breath it held (its volume, peak pressure and flow time). */
+  breath?: { vtMl: number; pmax: number; tiFlow: number };
+}
+
+/** The device's manoeuvres and measurements: the face's numbers, each sourced in its data. */
+export interface MechanicsSpec {
+  /** The longest hold the Insp/Exp Pause key gives, s, by kind. */
+  holdMaxS: { insp: number; exp: number };
+  /** The modes in which the key holds. */
+  holdModes: readonly VentMode[];
+  /** How many breaths of a kind the averaged values take. */
+  breathsAveraged: number;
+  /** The share of the exhaled volume whose flow–volume slope gives the expiratory time constant, [from, to]. */
+  tcexpWindow: readonly [number, number];
 }
 
 export interface FaceSpec {
@@ -99,6 +134,8 @@ export interface FaceSpec {
    * invariants (a device mode label after a remote patch or a scenario; VC's flow from the set Ti after a VT change).
    */
   settle?: (cfg: Readonly<VentConfig>) => Partial<VentConfig>;
+  /** The holds and the breath record's averages. Absent (Hamilton): the model's toggled holds only. */
+  mechanics?: MechanicsSpec;
 }
 
 /**

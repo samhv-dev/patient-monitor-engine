@@ -90,6 +90,19 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-time .tl span { position: absolute; top: 1px; transform: translateX(-50%); font-size: 10px; line-height: 10px; color: var(--edp-inkSoft); }
 .edp-time .tl span.first { transform: translateX(1px); }
 .edp-time .tl span.last { transform: translateX(-100%); }
+/* the axis numbers are a touch key (K-11): their colour changes while the scale is selected */
+.edp-curves { position: absolute; inset: 0; pointer-events: none; }
+.edp-curves > * { position: absolute; pointer-events: auto; }
+button.edp-scale, button.edp-time { background: var(--edp-axis) !important; }
+button.edp-scale.sel, button.edp-time.sel { background: var(--edp-selected) !important; }
+.edp-scale.sel span, .edp-time.sel span { color: var(--edp-inkLight); }
+.edp-time .tl { position: absolute; }
+/* the reference loop's date and time (K-09), at the panel's lower left */
+.edp-panel .ref { position: absolute; left: 6px; bottom: 4px; color: var(--edp-refLoop); font-weight: 700; font-size: 10px; white-space: nowrap; }
+/* Patient's Data beside the curves (the "Curves and Patient's Data" screen, K-10) */
+.edp-data { background: var(--edp-winGround); border: 1px solid var(--edp-divider); border-radius: 3px; padding: 4px 6px; overflow: hidden; }
+.edp-data .dr { position: static; display: flex; justify-content: space-between; font-size: 12px; line-height: 22px; border-bottom: 1px solid var(--edp-key); }
+.edp-data .dr .val { font-weight: 700; }
 
 /* ---- the pictogram column (R-33; P-07, P-28): pale keys with a soft raised edge, pictograms only ---- */
 .edp-rkey { background: var(--edp-key) !important; border-radius: 6px; color: var(--edp-ink);
@@ -97,6 +110,7 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-rkey svg { position: absolute; left: 8px; top: 8px; width: 34px; height: 34px; }
 .edp-rkey .pf { opacity: .55; }
 .edp-rkey.dim svg { opacity: .3; }
+.edp-rkey.lit { background: var(--edp-selected) !important; color: var(--edp-inkLight); }
 
 /* ---- the settings row (R-35; P-13, P-29): value large and thin, unit small, the label on a light-blue band ---- */
 .edp-tile { background: var(--edp-key) !important; border-radius: 7px; overflow: hidden; text-align: center; line-height: 1;
@@ -131,6 +145,11 @@ body.edp-ts #drawer:not(.on), body.edp-ts #sheet:not(.on) { visibility: hidden; 
 .edp-cell-btn { position: static !important; min-width: 56px; height: 26px; background: var(--edp-tag) !important; border-radius: 3px; font-size: 12px; }
 .edp-cell-btn.sel { background: var(--edp-selected) !important; color: var(--edp-inkLight); }
 .edp-cell-btn.focus { outline: 3px solid var(--edp-selected); }
+/* Patient's Data: its page number at the top right (N-02), its rows read at a compact pitch */
+.edp-win .pg { right: 9px; top: 0; line-height: 31px; font-size: 13px; font-weight: 700; }
+.edp-entry.data { font-size: 12.5px; box-shadow: none; }
+.edp-entry.data .val { font-size: 12.5px; font-weight: 700; }
+.edp-win p.help { position: static; margin: 42px 12px 0; font-size: 14px; line-height: 20px; white-space: normal; }
 .edp-win .ft { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--edp-inkSoft); line-height: 16px; }
 .edp-win.conf p { position: static; margin: 0; padding: 0 12px; font-size: 14px; line-height: 22px; }
 .edp-win.conf .t + p { margin-top: 44px; }

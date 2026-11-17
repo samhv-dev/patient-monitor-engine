@@ -13,7 +13,8 @@ import { applyTokens, createDevice } from '../../src/vent/faces/edp-ts/device.ts
 import css from '../../src/vent/faces/edp-ts/face.css?inline';
 import { drawTraces, fitDevice } from '../../src/vent/faces/edp-ts/face.ts';
 import { EDP_SPEC } from '../../src/vent/faces/edp-ts/modes.ts';
-import type { EntryView, LimitView, TileView, View, WindowView } from '../../src/vent/faces/edp-ts/view.ts';
+import { createScreen } from '../../src/vent/faces/edp-ts/screen.ts';
+import { graphicsOf, type EntryView, type LimitView, type TileView, type View, type WindowView } from '../../src/vent/faces/edp-ts/view.ts';
 
 const W = (id: WordId) => word(id);
 const lim = (ctl: string, text: string): LimitView => ({ ctl, text, sel: false, unsim: null });
@@ -39,7 +40,7 @@ const base = (o: Partial<View>): View => ({
   },
   left: { peak: '', trach: '', plateau: '', mean: '', peep: '' },
   tiles: TILES(), rightDim: ['right:respMech', 'right:standby'], window: null, alarm: null,
-  lamps: { inop: 'off', high: 'steady', med: 'steady' }, silencedS: 0, ring: true, ctrl: false, ...o,
+  lamps: { inop: 'off', high: 'steady', med: 'steady' }, silencedS: 0, ring: true, ctrl: false, graphics: graphicsOf(createScreen()), data: null, lit: [], ...o,
 });
 const top = (...v: Array<string | [string]>) => v.map((x) => (Array.isArray(x) ? { v: x[0], dim: true } : { v: x, dim: false }));
 const MODES1 = ['VCV', 'PCV', 'PSV/CPAP', 'SIMV(PCV)+PSV', 'SIMV(VCV)+PSV', 'Noninvasive (NIV)'].map((w) => W(w as WordId)).concat(W('otherModes'));
@@ -68,7 +69,7 @@ style.textContent = css;
 document.head.append(style);
 document.body.classList.add('edp-ts');
 applyTokens(document.body);
-const dev = createDevice({ press: () => {}, touch: () => {}, explain: () => {} });
+const dev = createDevice({ press: () => {}, touch: () => {}, explain: () => {}, down: () => {}, up: () => {} });
 const root = document.createElement('main');
 root.className = 'edp';
 root.append(dev.dev);

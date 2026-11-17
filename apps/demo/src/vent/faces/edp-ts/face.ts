@@ -17,6 +17,7 @@ import css from './face.css?inline';
 import { createKnob, type Knob } from './knob.ts';
 import { EDP_SPEC } from './modes.ts';
 import { audioPackagePlayer, createAlarmSound, gainOf, train } from './tones.ts';
+import { refLoop, type Q, type SavedLoop } from './screen.ts';
 import { viewOf } from './view.ts';
 
 const SIM_WORD = 'Simulator'; // an app string outside the device (plan §6): Persian only through the app's table (env.translate)
@@ -32,8 +33,11 @@ export function fitDevice(dev: HTMLElement, w: number, h: number): number {
   return s;
 }
 
-/** The lanes and loops of the cockpit's buffer: a 12 s sweep (R-26), inspiration green and expiration red (R-30). */
-export function drawTraces(d: Device, B: Cockpit['buf']): void {
+/**
+ * The lanes and loops of the cockpit's buffer: a 12 s sweep (R-26), inspiration green and expiration red (R-30), each on
+ * its quantity's axis; and the saved reference loop, in its own colour on every loop (K-09).
+ */
+export function drawTraces(d: Device, B: Cockpit['buf'], ref: SavedLoop | null = null): void {
   const ink = (k: string) => (DATA.colours as Record<string, Leaf<string>>)[k]!.v;
   const sized = (cv: HTMLCanvasElement) => {
     const w = Math.max(1, cv.parentElement!.offsetWidth * 2), h = Math.max(1, cv.parentElement!.offsetHeight * 2);
@@ -47,16 +51,17 @@ export function drawTraces(d: Device, B: Cockpit['buf']): void {
     g.setLineDash([3, 5]); g.strokeStyle = ink('inkLight'); g.lineWidth = 2;
     g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
   };
-  const paths = (g: CanvasRenderingContext2D, pts: Array<[number, number, boolean, boolean]>) => {
-    for (const insp of [true, false]) {
-      g.strokeStyle = ink(insp ? 'insp' : 'exp');
+  /** Polylines through the points, one colour per phase (or one colour for all, the reference loop). */
+  const paths = (g: CanvasRenderingContext2D, pts: Array<[number, number, boolean, boolean]>, only?: string) => {
+    for (const insp of only ? [null] : [true, false]) {
+      g.strokeStyle = only ? ink(only) : ink(insp ? 'insp' : 'exp');
       g.lineWidth = 5; // 2.5 screen px (the canvas is drawn at 2x): the photographs' stroke, 2.1 % of a 120-px panel (P-70)
       g.lineJoin = 'round';
       g.beginPath();
       for (let i = 1; i < pts.length; i++) {
         const [x0, y0] = pts[i - 1]!;
         const [x, y, ph, brk] = pts[i]!;
-        if (brk || ph !== insp) continue;
+        if (brk || (insp !== null && ph !== insp)) continue;
         g.moveTo(x0, y0);
         g.lineTo(x, y);
       }
@@ -65,12 +70,13 @@ export function drawTraces(d: Device, B: Cockpit['buf']): void {
   };
   const n = B.t.length;
   const sw = num(LAYOUT.sweepS);
-  const val = (k: 'p' | 'v' | 'f', i: number) => (k === 'p' ? B.p[i]! : k === 'f' ? B.f[i]! : B.vb[i]! / 1000);
+  const val = (k: Q, i: number) => (k === 'p' ? B.p[i]! : k === 'f' ? B.f[i]! : B.vb[i]! / 1000);
+  const clip = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
   for (const ln of d.lanes) {
     const g = sized(ln.cv);
     if (!g) continue;
     const w = ln.cv.width, h = ln.cv.height;
-    const Y = (v: number) => h - ((v - ln.lo) / (ln.hi - ln.lo)) * h;
+    const Y = (v: number) => h - ((clip(v, ln.lo, ln.hi) - ln.lo) / (ln.hi - ln.lo)) * h;
     dotted(g, 0, Y(0), w, Y(0));
     if (!n) continue;
     const tNow = B.t[n - 1]!;
@@ -80,22 +86,22 @@ export function drawTraces(d: Device, B: Cockpit['buf']): void {
       const t = B.t[i]!;
       if (t <= tNow - sw) continue;
       const x = ((t % sw) / sw) * w;
-      pts.push([x, Y(Math.max(ln.lo, Math.min(ln.hi, val(ln.key, i)))), B.ph[i] !== 'exp', x < px]);
+      pts.push([x, Y(val(ln.key, i)), B.ph[i] !== 'exp', x < px]);
       px = x;
     }
     paths(g, pts);
   }
   let s = n - 1;
   while (s > 0 && !(B.ph[s] !== 'exp' && B.ph[s - 1] === 'exp')) s--;
-  const rng = { p: [num(LAYOUT.pawMin), num(LAYOUT.pawMax)], v: [num(LAYOUT.vtMin), num(LAYOUT.vtMax)], f: [num(LAYOUT.flowMin), num(LAYOUT.flowMax)] } as const;
   for (const lp of d.loops) {
     const g = sized(lp.cv);
     if (!g) continue;
     const w = lp.cv.width, h = lp.cv.height;
-    const X = (v: number) => ((v - rng[lp.x][0]) / (rng[lp.x][1] - rng[lp.x][0])) * w;
-    const Y = (v: number) => h - ((v - rng[lp.y][0]) / (rng[lp.y][1] - rng[lp.y][0])) * h;
+    const X = (v: number) => ((clip(v, ...lp.xr) - lp.xr[0]) / (lp.xr[1] - lp.xr[0])) * w;
+    const Y = (v: number) => h - ((clip(v, ...lp.yr) - lp.yr[0]) / (lp.yr[1] - lp.yr[0])) * h;
     dotted(g, 0, Y(0), w, Y(0));
     dotted(g, X(0), 0, X(0), h);
+    if (ref) paths(g, ref[lp.x].map((x, i) => [X(x), Y(ref[lp.y][i]!), ref.insp[i]!, false]), 'refLoop');
     const pts: Array<[number, number, boolean, boolean]> = [];
     for (let i = Math.max(0, s); i < n; i++) pts.push([X(val(lp.x, i)), Y(val(lp.y, i)), B.ph[i] !== 'exp', false]);
     paths(g, pts);
@@ -112,7 +118,7 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   const screenHost = $('screen');
   const saved = [...screenHost.childNodes];
 
-  const d = createDevice({ press: (id) => knob.press(id), touch: (w, i) => knob.touchRow(w, i), explain: (r) => knob.explain(r) });
+  const d = createDevice({ press: (id) => knob.press(id), touch: (w, i) => knob.touchRow(w, i), explain: (r) => knob.explain(r), down: (id) => knob.down(id), up: (id) => knob.up(id) });
   const root = el('main', { class: 'edp', 'aria-label': word('faceName') });
   root.append(el('h1', { class: 'edp-sr' }, word('faceName')), d.dev);
   screenHost.replaceChildren(root);
@@ -202,7 +208,7 @@ function mountEdp(c: Cockpit, tools: SimTools, env: FaceEnv = {}): { draw(ts: nu
   return {
     draw(ts) {
       if (ts - lastRender > 250) { lastRender = ts; render(); }
-      drawTraces(d, c.buf);
+      drawTraces(d, c.buf, refLoop(knob.screen));
     },
     stop() {
       stopped = true;
