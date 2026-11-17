@@ -15,7 +15,7 @@ function setup(nowPerfMs: { v: number }, outputLatency: () => number | undefined
       return { stop: () => stopped.push(tone.id) };
     },
   });
-  s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1 });
+  s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1, runS: 0 });
   return { s, played, stopped };
 }
 
@@ -114,9 +114,41 @@ describe('ToneScheduler', () => {
   it('follows the time scale (beeps follow sim time)', () => {
     const now = { v: 0 };
     const { s, played } = setup(now);
-    s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 2 });
+    s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 2, runS: 0 });
     s.enqueue({ t: 0.1, id: 'a', kind: 'qrs' });
     expect(played[0]!.when).toBeCloseTo(0.05, 12);
+  });
+
+  it('a tone placed on run time keeps its wall time when the speed changes, and holds while paused', () => {
+    const now = { v: 0 };
+    const { s, played } = setup(now);
+    s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 8, runS: 0 });
+    s.enqueue({ t: 4, runT: 0.5, id: 'a', kind: 'alarm' });
+    s.clock.setAnchor({ simT: 0.8, perfMs: 100, timeScale: 1, runS: 0.1 });
+    now.v = 300;
+    s.pump();
+    expect(played).toHaveLength(0);
+    s.clock.setAnchor({ simT: 1, perfMs: 300, timeScale: 1, runS: 0.3 }); // paused from here
+    now.v = 5000;
+    s.clock.setAnchor({ simT: 1, perfMs: 5000, timeScale: 1, runS: 0.3 });
+    s.pump();
+    expect(played).toHaveLength(0);
+    now.v = 5150;
+    s.clock.setAnchor({ simT: 1.15, perfMs: 5150, timeScale: 1, runS: 0.45 }); // resumed
+    s.pump();
+    expect(played[0]!.when).toBeCloseTo(5.2, 12);
+  });
+
+  it('a tone due on run time is not held behind a sim-time tone that is not due', () => {
+    const now = { v: 0 };
+    const { s, played } = setup(now);
+    s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 8, runS: 0 });
+    s.enqueue({ t: 2, id: 'beep', kind: 'device' }); // 250 ms ahead at ×8
+    s.enqueue({ t: 7.2, runT: 0.9, id: 'alarm', kind: 'alarm' });
+    s.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1, runS: 0 }); // ×1: the device tone is now 2 s ahead
+    now.v = 850;
+    s.pump();
+    expect(played.map((p) => p.tone.id)).toEqual(['alarm']);
   });
 
   it('beep envelope: 5 ms attack, 100 ms total, back to zero', () => {

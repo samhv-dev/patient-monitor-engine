@@ -3,7 +3,7 @@
 // device tones follow the skin, `setSkin` switches without restarting the engine, and the handle exposes the 12-lead
 // capture, the trends and the event log. Without `skin` the legacy look stays.
 import {
-  AlarmSounder, beepMsAt, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
+  AlarmSounder, beepMsAt, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type Anchor, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
 } from '@pme/audio';
 import { BEHIND_REPORT_S, EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type AlarmEntry, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
 import { resolveSkin, type ResolvedSkin } from '@pme/skins';
@@ -308,7 +308,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     sk
       ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like' }) // RR-6
       : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, 0.25, tone.durMs);
-  let anchor: { simT: number; perfMs: number; timeScale: number } = { simT: 0, perfMs: performance.now(), timeScale: 1 };
+  let anchor: Anchor = { simT: 0, perfMs: performance.now(), timeScale: 1, runS: 0 };
   let nominalRate: number | undefined; // a viewer's session speed (set by ViewerSync); a host gates on its own rate
   let lastBeatT: number | null = null; // sim time of the last beat tone: the beat interval that caps the beep's length
   const simNow = () => anchor.simT + ((performance.now() - anchor.perfMs) / 1000) * anchor.timeScale;
@@ -327,9 +327,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     }
   };
   const onEvents = (a: ClockAnchor, events: EngineEvent[]) => {
-    anchor = { simT: a.simT, perfMs: a.epochMs - performance.timeOrigin, timeScale: a.timeScale };
+    anchor = { simT: a.simT, perfMs: a.epochMs - performance.timeOrigin, timeScale: a.timeScale, runS: a.runS };
     onBehind(a.behindS ?? 0);
-    scheduler?.clock.setAnchor({ simT: a.simT, perfMs: anchor.perfMs, timeScale: a.timeScale });
+    scheduler?.clock.setAnchor(anchor);
     for (const e of events) {
       trends.record(e);
       eventLog.event(e);
@@ -403,7 +403,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       for (const fn of listeners) fn(e);
     }
     ui?.paint(a.simT);
-    sounder?.pump(a.simT);
+    sounder?.pump(simNow()); // now, not the batch's time: a raise in it starts its train here
   };
 
   const sizeOf = (): Size => ({
@@ -481,6 +481,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     const s = scheduler;
     bridge = new AlarmAudioBridge(sounder, () => s.clock.timeScale, { windowSilence: opts.audioSilence === 'window' });
     if (lastStatus) bridge.onStatus({ ...lastStatus, t: simNow() });
+    sounder.pump(simNow());
   };
 
   /**
@@ -496,7 +497,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ffLatched = ffLatched.filter((x) => x.since <= t); // A rewind drops the latched alarms of its discarded future
     nibpLast = null;
     lastPi = undefined;
-    anchor = { simT: t, perfMs: performance.now(), timeScale: anchor.timeScale };
+    anchor = { ...anchor, simT: t, perfMs: performance.now() }; // run time comes with the next post
     const line = (s.state as { st?: { resp?: { co2Sensor?: string } } } | null)?.st?.resp?.co2Sensor;
     if (line !== undefined) setCo2(line !== 'off', h);
     // UI review #14 follow-up: the cuff's last result is the restored engine's too (it is emitted only when measured,
@@ -577,7 +578,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           outputLatency: out.outputLatency,
           play: (tone, when) => play?.(tone, when),
         });
-        scheduler.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.perfMs, timeScale: anchor.timeScale });
+        scheduler.clock.setAnchor(anchor);
         scheduler.start();
         makeSounder();
       });

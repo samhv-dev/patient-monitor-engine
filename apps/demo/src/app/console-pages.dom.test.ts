@@ -10,7 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EDUCATION_LINE } from './about.ts';
 import { persianDate, Rail, railClock } from './rail.ts';
 import { noteRecent } from './recent.ts';
+import { RunRecord } from './record.ts';
+import { readLayout } from './room-layout.ts';
 import { deviceRows, roomStatus, PeerLog } from './room-status.ts';
+import { store } from './store.ts';
 import { parseRoute, type RouteId } from './router.ts';
 import type { ScenarioCard } from './scenarios.ts';
 import { Shell, type View } from './shell.ts';
@@ -213,6 +216,18 @@ describe('Room', () => {
     expect(rows.slice(1).map((r) => [r.showing, r.state, r.device])).toEqual([['Learner remote', 'signing in', 'learnkey0001'], ['Learner remote', 'granted', 'learnkey0002']]);
   });
 
+  it("the acting devices are named as the Log and the Debrief name them (the host record's numbers), the others \"Phone n\"", () => {
+    const record = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, (k) => (k === 'learnkey0002' ? 'Bed 2' : null));
+    const devices = [
+      dev('q1', { role: 'learner', device: 'learnkey0001', granted: true }), dev('q0', { device: 'viewkey00001' }), dev('q2', { role: 'learner', device: 'learnkey0002', granted: true }),
+      dev('q3', { role: 'pump', show: 'pump', device: 'pumpkey00001', granted: true }), dev('q4', { role: 'learner', device: 'learnkey0003', granted: true }),
+    ];
+    record.heard(devices);
+    const rows = deviceRows({ relay: 'open', phones: 5, peers: [], now: 60_000, devices, known: {}, label: (k, kind) => record.label(k, kind) });
+    expect(rows.slice(1).map((r) => r.name)).toEqual(['Learner remote 1', 'Phone 1', 'Bed 2', 'Pump tablet 1', 'Learner remote 3']);
+    expect(record.label('learnkey0003', 'learner')).toBe('Learner remote 3');
+  });
+
   it("R7 the table: one row per device the relay lists, with what it shows, its ping and when it was last heard; this computer's windows; remembered names; the absent grey", () => {
     const log = new PeerLog();
     log.heard('w2', 'local', 'viewer', 58_000, 'monitor');
@@ -285,7 +300,7 @@ describe('Room', () => {
   });
 
   /** Room setup on a fake relay of three devices (R7). */
-  function setup(o: { devices?: RelayDevice[]; renew?: (code: string) => void } = {}) {
+  function setup(o: { devices?: RelayDevice[]; renew?: (code: string) => void; label?: (key: string, kind: 'learner' | 'pump' | 'defib') => string } = {}) {
     let table: RelayDevice[] | null = o.devices ?? [
       dev('p1', { device: 'phonekey0001', rttMs: 18, sinceMs: 4000 }),
       dev('p2', { show: 'monitor', device: 'tabletkey002', rttMs: 35, sinceMs: 5000 }),
@@ -297,7 +312,7 @@ describe('Room', () => {
     const make = () => roomView({
       code: 'ABC234', relay: 'ws://192.168.1.20:8787/', relayLink: fakeTransport('open'), local, hostPeerId: 'host-1', learnerUrl: 'http://127.0.0.1:5173/?follow=ABC234#/monitor', now: () => 100_000,
       followers: () => table?.filter((x) => x.role !== 'instructor').length ?? 0, onFollowers: (f) => (fns.add(f), () => void fns.delete(f)), devices: () => table,
-      info: async () => ({ relay: 'pme', port: 8787, addresses: ['192.168.1.20'], serves: true }), open: (u) => void opened.push(u), ...(o.renew ? { renew: o.renew } : {}),
+      info: async () => ({ relay: 'pme', port: 8787, addresses: ['192.168.1.20'], serves: true }), open: (u) => void opened.push(u), ...(o.renew ? { renew: o.renew } : {}), ...(o.label ? { label: o.label } : {}),
     });
     const v = make();
     document.body.append(v.el);
@@ -336,6 +351,21 @@ describe('Room', () => {
     expect(calls).toContain('enter');
     expect(calls).toContain('leave');
     expect(calls).toContain('draw');
+  });
+
+  it('two learner remotes and a pump tablet: each by its own name, the one the Log uses; a name typed over one names it there too', () => {
+    const record = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, (k) => readLayout(store)[k]?.name ?? null);
+    const devices = [dev('r1', { role: 'learner', device: 'learnkey0001', granted: true }), dev('r2', { role: 'learner', device: 'learnkey0002', granted: true }), dev('r3', { role: 'pump', show: 'pump', device: 'pumpkey00001', granted: true })];
+    record.heard(devices);
+    const { v, rows } = setup({ devices, label: (k, kind) => record.label(k, kind) });
+    expect(rows().slice(1).map((r) => r[1])).toEqual(['Learner remote 1', 'Learner remote 2', 'Pump tablet 1']);
+    const input = v.el.querySelector<HTMLInputElement>('tr[data-device="learnkey0002"] input.room-name')!;
+    input.value = 'Bed 2';
+    input.dispatchEvent(new Event('change'));
+    expect(v.el.querySelector('tr[data-device="learnkey0002"] input.room-name')?.getAttribute('aria-label')).toBe('Name of Bed 2');
+    expect(record.label('learnkey0002', 'learner')).toBe('Bed 2');
+    expect(v.el.querySelector('.room-table')?.textContent).not.toMatch(/learnkey|pumpkey/);
+    v.leave?.();
   });
 
   it('R7 names: edited, kept under the device key across a reload of the page, the absent device grey; "Forget the room" clears them, not the code', () => {

@@ -16,6 +16,7 @@ import { givenByOf, LEARNER_ISSUED_BY, type LearnerPrepNews, type LearnerPrepVie
 import { DRUGS, TICK_S, type DrugsEvent, type EngineEvent, type PatientSnapshot, type PkState } from '@pme/engine-core';
 import { PRESETS, unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
+import { faceNum } from '../pump/face.ts';
 import { button, clock, h, setText, stepper, type Stepper } from '../ui.ts';
 import type { Follower, FollowerCommand } from '../views/follower.ts';
 import { hostPause } from '../views/follower-status.ts';
@@ -39,7 +40,7 @@ export const INFUSION_WORDS = {
   doseRunning: 'Dose rate',
   forWeight: (kg: number) => `for ${+kg.toFixed(1)} kg`,
   noWeight: "the patient's weight is not known on this phone yet",
-  mlH: (v: number) => `${fmt(v)} mL/h`,
+  mlH: (v: number) => `${faceNum(v)} mL/h`,
   noMlH: 'mL/h not known on this phone',
   tci: 'Target-controlled: changed on the instructor’s computer',
   setBy: (who: string, t: number) => `set by ${who} at ${clock(t)}`,
@@ -47,10 +48,10 @@ export const INFUSION_WORDS = {
   thisPhone: 'this phone',
   instructor: 'the instructor',
   card: 'the case card',
-  otherRemote: (key: string) => `another learner remote (${key.slice(0, 4)})`,
+  otherRemote: 'another learner remote',
   sending: 'Sent to the instructor’s computer…',
-  started: (ml: number) => `Started at ${fmt(ml)} mL/h`,
-  changed: (drug: string, ml: number) => `${drug}: changed to ${fmt(ml)} mL/h`,
+  started: (ml: number) => `Started at ${faceNum(ml)} mL/h`,
+  changed: (drug: string, ml: number) => `${drug}: changed to ${faceNum(ml)} mL/h`,
   stopped: (drug: string) => `${drug}: stopped`,
   notStarted: (why: string) => `Not started: ${why}`,
   notChanged: (drug: string, why: string) => `${drug}: not changed: ${why}`,
@@ -59,8 +60,6 @@ export const INFUSION_WORDS = {
   paused: 'The case is paused: no infusion can be started, changed or stopped until it resumes.',
 } as const;
 
-/** A number as the phone prints a rate: three significant figures, no trailing zeros. */
-const fmt = (x: number): string => String(+x.toPrecision(3));
 
 /** The follower's side the menu needs: its command path, its messages, its engine's events, its weight, who it is. */
 export interface InfusionsLink {
@@ -128,8 +127,8 @@ export function doseRateText(drugId: string, perMin: number, from: string, weigh
   const perKg = unit.includes('/kg/');
   const u = perKg && weightKg === null ? unit.replace('/kg', '') : unit;
   const v = inUnit(perMin, from, u, weightKg ?? 1);
-  if (v === null) return `${fmt(perMin)} ${unitText(from)}/min`;
-  return `${fmt(v)} ${unitText(u)}${perKg ? ` ${weightKg === null ? `(${INFUSION_WORDS.noWeight})` : INFUSION_WORDS.forWeight(weightKg)}` : ''}`;
+  if (v === null) return `${faceNum(perMin)} ${unitText(from)}/min`;
+  return `${faceNum(v)} ${unitText(u)}${perKg ? ` ${weightKg === null ? `(${INFUSION_WORDS.noWeight})` : INFUSION_WORDS.forWeight(weightKg)}` : ''}`;
 }
 
 /** The host's syringe of an infusion: amount per mL, in `unit`. */
@@ -336,7 +335,7 @@ export function infusionsView(o: { now(): number | null }): Infusions {
     const issuedBy = String(c.issuedBy ?? '');
     const by = typeof c.by === 'string' ? c.by : null;
     const who = issuedBy === LEARNER_ISSUED_BY
-      ? by === link?.device ? INFUSION_WORDS.thisPhone : INFUSION_WORDS.otherRemote(by ?? '')
+      ? by === link?.device ? INFUSION_WORDS.thisPhone : INFUSION_WORDS.otherRemote
       : givenByOf(issuedBy) === 'card' ? INFUSION_WORDS.card : INFUSION_WORDS.instructor;
     const k = e.concentration;
     const syringe = k && typeof k.amount === 'number' && typeof k.unit === 'string' && typeof k.perMl === 'number' && k.perMl > 0 ? { perMl: k.amount / k.perMl, unit: k.unit } : null;

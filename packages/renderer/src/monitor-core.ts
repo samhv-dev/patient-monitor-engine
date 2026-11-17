@@ -114,6 +114,7 @@ export class MonitorCore {
   private fps: 60 | 30;
   private filterMode = 'monitor';
   private lastEpoch: number | null = null;
+  private runMs = 0; // wall time the case has run (ClockAnchor.runS)
   private parity = 0;
   private batch: EngineEvent[] = [];
   private lastPost = -Infinity;
@@ -293,6 +294,7 @@ export class MonitorCore {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
     if (this.clock.paused || dt === 0 || this.ffWasPaused !== null) return;
+    this.runMs += dt;
     if (this.clock.advance(dt) > 0) this.runTo(this.clock.simT); // Remainder carried
     // Post what was generated while hidden, so the batch does not grow without frames.
     this.post(this.anchor(this.clock.renderT, epochMs), this.batch);
@@ -378,6 +380,7 @@ export class MonitorCore {
     if (this.fps === 30 && this.parity++ % 2 === 1) return; // 30 fps mode: skip every other frame
     const dt = this.lastEpoch === null ? 0 : epochMs - this.lastEpoch;
     this.lastEpoch = epochMs;
+    if (!this.clock.paused) this.runMs += dt;
     // Brief 105: the whole gap is owed (no 250 ms clamp), run tick by tick within the frame budget; the rest runs on the
     // next frames, and the anchor says how far behind the clock is meanwhile
     this.clock.credit(dt);
@@ -416,7 +419,7 @@ export class MonitorCore {
 
   /** The clock anchor a post carries: sim time at `epochMs`, the speed, and how far the clock is behind real time. */
   private anchor(simT: number, epochMs: number): ClockAnchor {
-    return { simT, epochMs, timeScale: this.clock.timeScale, behindS: this.clock.behindS };
+    return { simT, epochMs, timeScale: this.clock.timeScale, behindS: this.clock.behindS, runS: this.runMs / 1000 };
   }
 
   private ecgLaneIndices(): number[] {

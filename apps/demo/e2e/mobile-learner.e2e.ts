@@ -392,6 +392,7 @@ test('L6: the Learner remote card opens the learner-PIN form; the learner PIN fr
   // the laptop: the table lists it as a learner remote, granted; its PIN panel beside the instructor's, behind press-and-hold
   await page.evaluate(() => (location.hash = '#/room'));
   const row = page.locator(`.room-table tbody tr[data-device="${key}"] td`);
+  await expect(row.nth(1).locator('input.room-name')).toHaveAttribute('placeholder', 'Learner remote 1'); // the name the Log and the Debrief give it
   await expect(row.nth(2)).toHaveText('Learner remote');
   await expect(row.nth(3)).toHaveText('granted');
   const panel = page.locator('#room-learner');

@@ -5,7 +5,7 @@
 // showPumpNotice, C2) and the pump tablet shows "syringe and programme differ" on that channel. The pump never warns by
 // itself; nothing here changes the channel (D10, PQ9 = A). The Link keeps the host's findings (link.ts pumpFindings).
 // The instructor phone's copy of the card and A3's Pumps sheet are later pieces; this is the laptop's.
-import type { PumpMismatchNews } from '@pme/controller';
+import { DEVICE_RE, type PumpMismatchNews } from '@pme/controller';
 import { unitText } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
@@ -36,8 +36,7 @@ export function mountPumpMismatch(link: Pick<Link, 'pumpFindings' | 'onChange' |
   const list = h('ul', { class: 'ip2-pm-list' });
   const el = h('section', { class: 'ip2-pm', 'aria-label': MISMATCH_CARD_WORDS.title, hidden: true }, list);
   const card = (f: PumpMismatchNews, name: string | null): HTMLElement => {
-    const who = name ? `${MISMATCH_CARD_WORDS.tablet}: ${name}` : MISMATCH_CARD_WORDS.tablet;
-    const what = MISMATCH_CARD_WORDS.what(f.ch, who, f.kind, conc(f.contents.drugId, f.label), conc(f.programmed.drugId, f.programmed.concentration));
+    const what = MISMATCH_CARD_WORDS.what(f.ch, name ?? MISMATCH_CARD_WORDS.tablet, f.kind, conc(f.contents.drugId, f.label), conc(f.programmed.drugId, f.programmed.concentration));
     const control = f.notice
       ? h('p', { class: 'ip2-pm-shown', role: 'status' }, MISMATCH_CARD_WORDS.shownAt(f.notice.shownAt))
       : h('button', { type: 'button', class: 'ip2-pm-show', 'data-ch': String(f.ch), onclick: () => {
@@ -57,7 +56,7 @@ export function mountPumpMismatch(link: Pick<Link, 'pumpFindings' | 'onChange' |
     if (sig === drawn) return;
     drawn = sig;
     el.hidden = all.length === 0;
-    const names = all.map((f) => link.host?.deviceName(f.device) ?? null);
+    const names = all.map((f) => (link.host && DEVICE_RE.test(f.device) ? link.host.deviceLabel(f.device, 'pump') : null));
     keepOrder(list, keyed(cards, all.map((f, i) => JSON.stringify([f, names[i]])), (_, i) => card(all[i] as PumpMismatchNews, names[i] ?? null)));
   };
   const off = link.onChange(draw);
