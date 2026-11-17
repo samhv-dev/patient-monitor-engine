@@ -70,7 +70,7 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`params.ts:68`](../../packages/engine-core/src/l2/brain/params.ts#L68) | OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg) |
 | [`wave.ts:3`](../../packages/engine-core/src/l2/brain/wave.ts#L3) | AMP = elastance × arterial pulse volume (≈ 1.6 mL at PP 40), so AMP ≈ 0.1·ICP + 0.5 when compliant and rises |
 | [`effects.ts:2`](../../packages/engine-core/src/l2/organs/effects.ts#L2) | `coupled` sbp/dbp (+1.3/+0.85 × ΔMAP, the widened pulse pressure; MAP = dbp + (sbp − dbp)/3 rises by exactly ΔMAP) |
-| [`pipeline.ts:178`](../../packages/engine-core/src/l2/organs/pipeline.ts#L178) | ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the |
+| [`pipeline.ts:183`](../../packages/engine-core/src/l2/organs/pipeline.ts#L183) | ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the |
 | [`kidney.ts:33`](../../packages/engine-core/src/l2/renal/kidney.ts#L33) | One algebraic kidney (both kidneys in parallel, so resistances ÷ 2): RBF = (Pa − Pv)/ΣR; P_gc from the divider; |
 | [`kidney.ts:34`](../../packages/engine-core/src/l2/renal/kidney.ts#L34) | GFR = Kf·(P_gc − P_B − π_gc)+. `k` scales every resistance (calibration to the resting RBF), `rAff` is the TGF state |
 | [`kidney.ts:49`](../../packages/engine-core/src/l2/renal/kidney.ts#L49) | leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol |
@@ -400,6 +400,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `stepCushing` | [`l2/brain/cushing.ts`](../../packages/engine-core/src/l2/brain/cushing.ts) | Advance by dt (s) with the pre-surge CPP and the current head-MAP − ICP gap (Infinity: |
 | `brainDo2Rel` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | O2 delivery relative to normal: |
 | `functionLoss` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | The share of a compartment's function lost at `delivery`. |
+| `brainstemFrom` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | The brainstem entry from a snapshot that kept the gate's state on the spontaneous drive's record: |
 | `stepBrainEnergy` | [`l2/brain/energy.ts`](../../packages/engine-core/src/l2/brain/energy.ts) | Set the energy state from the supply now (no stored energy yet: |
 | `autoregIntact` | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | Pressure autoregulation A(CPP) with intact regulation (tables A(): |
 | `autoreg` | [`l2/brain/flow.ts`](../../packages/engine-core/src/l2/brain/flow.ts) | A with an autoregulation index ar (1 intact, 0 pressure-passive: |

@@ -42,8 +42,11 @@ export function baseOf(link: Link): Map<string, number> {
   return b.base;
 }
 
-/** The host's hold progress (`ScenarioDriver.vitalHolds()`, answer 8); null without a driver (a remote). */
-const holdsOf = (link: Link): readonly HoldLike[] | null => link.host?.driver.vitalHolds() ?? null;
+/** The host's hold progress (`ScenarioDriver.vitalHolds()` and `rhythmHolds()`, answer 8); null without a driver (a remote). */
+const holdsOf = (link: Link): readonly HoldLike[] | null => {
+  const d = link.host?.driver;
+  return d ? [...d.vitalHolds(), ...d.rhythmHolds()] : null;
+};
 
 /** ACTION's board as this Link reads it: on a remote, the host's feed for the current state when it has one. */
 export function boardOf(link: Link): Board | null {

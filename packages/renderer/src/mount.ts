@@ -12,6 +12,7 @@ import { DeviceUI, gridOf } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
 import { normalIbpScales, type IbpChannel, type IbpScales } from './ibp-scale.ts';
+import { beatToneHz, pulseTone } from './pulse-tone.ts';
 import { filterModeFor, renderPlan, type LaneOverride, type RenderPlan } from './skin-plan.ts';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
@@ -176,6 +177,8 @@ export const BEAT_TONE_MAX_SCALE = 4;
 export const beatToneAt = (kind: string, timeScale: number, nominal?: number): boolean => (kind !== 'qrs' && kind !== 'pulse') || (nominal ?? timeScale) <= BEAT_TONE_MAX_SCALE;
 /** The two-tone cue at the end of a fast-forward (none at its start), Hz [ENG: display]. */
 const FF_CUE_HZ = [660, 990] as const;
+/** Gain of the fast-forward end cue, and of the beep in the legacy look, which has no style to take one from [ENG: display]. */
+const CUE_GAIN = 0.25;
 
 export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorHandle {
   // Showcase hotfix item 4: a skin's layout.whenAttached follows the CO2 line (saadat-like: the CO2 waveform takes the
@@ -300,8 +303,8 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   let play: ((tone: ToneRequest, when: number) => ToneHandle | void) | null = null; // Follows the skin
   const playerFor = (out: AudioOut, sk: ResolvedSkin | null) =>
     sk
-      ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like' }) // RR-6
-      : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, 0.25, tone.durMs);
+      ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like', beepGain: pulseTone(sk).gain }) // RR-6
+      : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, CUE_GAIN, tone.durMs);
   let anchor: Anchor = { simT: 0, perfMs: performance.now(), timeScale: 1, runS: 0 };
   let nominalRate: number | undefined; // a viewer's session speed (set by ViewerSync); a host gates on its own rate
   let lastBeatT: number | null = null; // sim time of the last beat tone: the beat interval that caps the beep's length
@@ -380,11 +383,11 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       const beat = e.type === 'tone' && (e.kind === 'qrs' || e.kind === 'pulse');
       const rr = beat && lastBeatT !== null ? e.t - lastBeatT : 0; // ≤ 0 after a rewind or a re-posted tone: no cap
       if (beat) lastBeatT = e.t;
-      if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale, nominalRate) && (e.kind !== 'qrs' || !r || r.audio.beep.enabled)) {
+      if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale, nominalRate) && (!beat || !r || (r.audio.beep.enabled && e.kind === pulseTone(r).kind))) {
         scheduler?.enqueue({
           t: e.t, id: e.id, kind: e.kind,
           ...(rr > 0 ? { durMs: beepMsAt(60 / rr, nominalRate ?? a.timeScale) } : {}), // the same speed as the gate
-          ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
+          ...(beat && r ? { freqHz: beatToneHz(r, e.freqHz) } : e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
           ...(e.refT !== undefined ? { refT: e.refT } : {}),
           ...(e.chargeS !== undefined ? { chargeS: e.chargeS } : {}),
         });
@@ -673,7 +676,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
             ff = false;
             makeSounder(); // the alarms active NOW sound again (makeSounder replays the last alarm status)
             // the owner's cue: one short two-tone at the END only (the Sound toggle's gain applies)
-            if (audio) FF_CUE_HZ.forEach((hz, i) => playBeep((audio as AudioOut).ctx, (audio as AudioOut).master, (audio as AudioOut).ctx.currentTime + 0.05 + 0.18 * i, hz));
+            if (audio) FF_CUE_HZ.forEach((hz, i) => playBeep((audio as AudioOut).ctx, (audio as AudioOut).master, (audio as AudioOut).ctx.currentTime + 0.05 + 0.18 * i, hz, CUE_GAIN));
           }
         }
       }),

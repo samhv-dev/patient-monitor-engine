@@ -145,6 +145,10 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `lungConditionsOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | The row's engine lung conditions (Stage V.1): |
 | `createRelayPort` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | `settings`: |
 | `ventWireOver` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The cockpit's wire over its socket to the relay (a @pme/controller ManagedTransport and its stamper): |
+| `roomVentCommandRefusal` | [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | Why the host refuses this command from a room's ventilator, or null when a ventilator may send it. |
+| `roomVentMessageRefusal` | [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | Why the host refuses this link message from a room's ventilator, or null when a ventilator may send it. |
+| `roomVentPort` | [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | The host's end of a room ventilator's link: |
+| `roomVentMonitor` | [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | The monitor as a room ventilator's link may drive it: |
 | `lungMechanics` | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | One lung (C, R_insp, R_exp, pleural) → the ventilator's single compartment (catalogue rows and lungState alike). |
 | `pbw` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Predicted body weight (kg) from height and sex (Devine; |
 | `recoilPressure` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Elastic recoil (cmH2O above PEEP) at volume v (mL above the PEEP volume). |
@@ -175,6 +179,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | The window link (the second transport): the ventilator in its own window/iframe, the monitor elsewhere in the same browser. |
 | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | Link profiles: one per lung-pathology row (pathology/catalogue.ts). |
 | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The window link over the relay (plan room-and-instruments.md R8c): a cockpit on another device and the host's monitor exchange the link's messages inside the controller's `vent` message (R8a), which the relay carries bet |
+| [`link/room-guard.ts`](../../packages/ventilator/src/link/room-guard.ts) | A ventilator linked to a room drives the room's patient through the room's host, which takes from it only what a ventilator does: its breaths (the VentFrame), its own circuit at the Y-piece, and its settings for a hand-o |
 | [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts) | Ventilator side of the window link: runs the ventilator on real time × scale, but never past the tick the monitor's `clock` messages allow (the engine is the master clock; before the first clock message it may run 2·LEAD |
 | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | Engine → vent: the `lungState` event IS the patient's lung. |
 | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Lung mechanics of the original simulator (ventilator-sim-hamilton.html v1.9, "ENGINE" block), ported line for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil (airway clo |
@@ -224,6 +229,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`ports.test.ts`](../../packages/ventilator/test/ports.test.ts) | 0 | 0 |
 | [`reference.test.ts`](../../packages/ventilator/test/reference.test.ts) | 0 | 0 |
 | [`relay-port.test.ts`](../../packages/ventilator/test/relay-port.test.ts) | 0 | 0 |
+| [`room-guard.test.ts`](../../packages/ventilator/test/room-guard.test.ts) | 0 | 0 |
 | [`v2-options.test.ts`](../../packages/ventilator/test/v2-options.test.ts) | 0 | 0 |
 | [`vc-flow-parity.test.ts`](../../packages/ventilator/test/vc-flow-parity.test.ts) | 0 | 0 |
 | [`vent-basics.test.ts`](../../packages/ventilator/test/vent-basics.test.ts) | 0 | 0 |

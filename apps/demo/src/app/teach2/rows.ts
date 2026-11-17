@@ -32,6 +32,7 @@ import { signStates } from '../debrief-moments.ts';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
 import type { RunData, ValueKey } from '../record.ts';
+import { rhythmLabel } from '../rhythms.ts';
 import { showVital, vitalOf } from '../vitals.ts';
 import type { StateVar } from '@pme/engine-core';
 
@@ -75,7 +76,7 @@ export interface Board {
   later?: LiveRow[];
 }
 
-/** One `vital` rule as the host-side runner reads it (`ScenarioDriver.vitalHolds()`, @pme/controller `VitalHold`). */
+/** One `vital` or `rhythm` rule as the host-side runner reads it (`ScenarioDriver.vitalHolds()` and `rhythmHolds()`). */
 export interface HoldLike {
   transitionId: string;
   key: string;
@@ -99,7 +100,7 @@ export interface Source {
   record: RunData | null;
   /** The engine's state values (the 1 Hz `state` event): what a `vital` rule reads. */
   values: Partial<Record<string, number>> | undefined;
-  /** The runner's hold progress (`ScenarioDriver.vitalHolds()`), host only; null on a follower. */
+  /** The runner's hold progress (`ScenarioDriver.vitalHolds()` and `rhythmHolds()`), host only; null on a follower. */
   holds: readonly HoldLike[] | null;
   /** The value each A row's bar starts from, kept by the caller across refreshes (key: stage entry time and row). */
   base: Map<string, number>;
@@ -224,6 +225,7 @@ function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number 
   const w = tr.when;
   if ('afterS' in w) return { progress: Math.min(1, src.inState / Math.max(w.afterS, 1e-6)), right: src.paused ? 'frozen' : `in ${mmss(Math.max(0, w.afterS - src.inState))}` };
   if ('atScenarioS' in w) return { progress: Math.min(1, src.simT / Math.max(w.atScenarioS, 1e-6)), right: src.paused ? 'frozen' : `in ${mmss(Math.max(0, w.atScenarioS - src.simT))}` };
+  if ('rhythm' in w) return rhythmBar(src, tr.id, w.rhythm);
   if (!('vital' in w)) return { progress: 0, right: '' };
   const { var: name, op, value: thr } = w.vital;
   const v = src.values?.[name];
@@ -239,6 +241,14 @@ function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number 
   const hold = src.holds?.find((x) => x.transitionId === tr.id && x.key === tr.id) ?? null;
   const holdFrac = !met ? 0 : hold ? (hold.met ? hold.fraction : 0) : 1;
   return { progress: met ? VALUE_PART + (1 - VALUE_PART) * holdFrac : VALUE_PART * valueFrac, right: src.paused ? 'frozen' : `${show(name, v)} → ${show(name, thr)}` };
+}
+
+/** A rhythm rule's bar: its hold on the host; on a follower, only the rhythm it waits for. */
+function rhythmBar(src: Source, transitionId: string, r: { id: string; forS?: number }): { progress: number | null; right: string } {
+  const hold = src.holds?.find((x) => x.transitionId === transitionId && x.key === transitionId);
+  if (!hold) return { progress: 0, right: `while ${rhythmLabel(r.id)}` };
+  if (!hold.met) return { progress: 0, right: `not in ${rhythmLabel(r.id)}` };
+  return { progress: hold.fraction, right: src.paused ? 'frozen' : `in ${mmss(Math.max(0, (1 - hold.fraction) * (r.forS ?? 0)))}` };
 }
 
 // ---- the off-card actions ----
