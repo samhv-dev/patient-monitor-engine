@@ -1,4 +1,5 @@
 {
+  "$comment": "Label 2.4 lists the fluids it found compatible with esmolol at 10 mg/mL; those are its listed diluents. Water and glucose 4 % in saline 0.18 % are not in that list.",
   "drugId": "esmolol",
   "products": [
     {
@@ -12,18 +13,25 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "Label 2.4: at 10 mg/mL in a fluid it lists as compatible, stable for at least 24 h at controlled room temperature or refrigerated.",
+          "src": "dailymed-brevibloc"
+        }
+      ]
     }
   ],
   "diluents": [
     {
       "id": "saline",
-      "listed": false,
+      "listed": true,
       "src": "dailymed-brevibloc"
     },
     {
       "id": "dextrose5",
-      "listed": false,
+      "listed": true,
       "src": "dailymed-brevibloc"
     },
     {
@@ -33,12 +41,12 @@
     },
     {
       "id": "ringerLactate",
-      "listed": false,
+      "listed": true,
       "src": "dailymed-brevibloc"
     },
     {
       "id": "dextrose5Saline",
-      "listed": false,
+      "listed": true,
       "src": "dailymed-brevibloc"
     },
     {

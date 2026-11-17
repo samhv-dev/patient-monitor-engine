@@ -1,5 +1,5 @@
 {
-  "$comment": "The label states 1 mg/mL when reconstituted to 10 mL and names no other volume; the diluent added is read as that 10 mL.",
+  "$comment": "The label states 1 mg/mL when reconstituted to 10 mL, a final volume (carton and vial panels); it states no volume of diluent to add. The format requires one: 10 mL is entered.",
   "drugId": "vecuronium",
   "products": [
     {

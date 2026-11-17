@@ -27,7 +27,19 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "Label 2.12: reconstituted and diluted to 20-250 mcg/mL in water, glucose 5 %, glucose 5 % in saline, saline, 0.45 % saline or LR with glucose 5 %, room temperature.",
+          "src": "dailymed-ultiva"
+        },
+        {
+          "h": 4,
+          "condition": "Label 2.12: reconstituted and diluted to 20-250 mcg/mL in lactated Ringer's, room temperature.",
+          "src": "dailymed-ultiva"
+        }
+      ]
     },
     {
       "id": "ultiva-2mg",
@@ -55,7 +67,19 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "Label 2.12: reconstituted and diluted to 20-250 mcg/mL in water, glucose 5 %, glucose 5 % in saline, saline, 0.45 % saline or LR with glucose 5 %, room temperature.",
+          "src": "dailymed-ultiva"
+        },
+        {
+          "h": 4,
+          "condition": "Label 2.12: reconstituted and diluted to 20-250 mcg/mL in lactated Ringer's, room temperature.",
+          "src": "dailymed-ultiva"
+        }
+      ]
     },
     {
       "id": "ultiva-5mg",
@@ -83,7 +107,19 @@
       },
       "prepTime": {
         "gap": "LQ7"
-      }
+      },
+      "inUse": [
+        {
+          "h": 24,
+          "condition": "Label 2.12: reconstituted and diluted to 20-250 mcg/mL in water, glucose 5 %, glucose 5 % in saline, saline, 0.45 % saline or LR with glucose 5 %, room temperature.",
+          "src": "dailymed-ultiva"
+        },
+        {
+          "h": 4,
+          "condition": "Label 2.12: reconstituted and diluted to 20-250 mcg/mL in lactated Ringer's, room temperature.",
+          "src": "dailymed-ultiva"
+        }
+      ]
     }
   ],
   "diluents": [
