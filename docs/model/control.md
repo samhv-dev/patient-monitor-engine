@@ -204,6 +204,12 @@ transports (`src/protocol.ts`).
 | `PREP_TEMP_C` | `25` | — | [ENG: scenario; the case is set in an air-conditioned theatre at controlled room temperature, and 25 °C is the condition the formulary's room-temperature rows were measured at (USP <659>, 20–25 °C)] | The temperature the room keeps a preparation at, °C: which of the source's stability rows applies (remaining.ts matches the row's temperature exactly) [ENG: scenario; the case is set in an air-conditioned theatre at controlled room temperature, and 25 °C is the condition the formulary's room-temperature rows were measured at (USP <659>, 20–25 °C)]. |
 | `PREPS_PER_DEVICE` | `32` | — | [ENG: network; a bound on the host's memory against a looping device: a tray of 4 (§4 D2) eight times over] | The most preparations one remote keeps at a time; one more is refused until it discards one [ENG: network; a bound on the host's memory against a looping device: a tray of 4 (§4 D2) eight times over]. |
 
+### [`session/sign-in-book.ts`](../../packages/controller/src/session/sign-in-book.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `CHAINS_MAX` | `248` | — | [ENG: network; four times the relay's 60 peers and 2 instructor places] | The most chains a book keeps; the oldest go first [ENG: network; four times the relay's 60 peers and 2 instructor places]. |
+
 ## Functions
 
 | Function | File | Doc |
@@ -364,6 +370,8 @@ Exported without a doc comment: `startRelay`, `clamp`, `targetCommand`, `pinComm
 | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The host end of every transport (brief §3.7, R7): it owns the engine. |
 | [`session/preparations.ts`](../../packages/controller/src/session/preparations.ts) | Plan learner-action-remote.md L4 (§4 D3, D7, D8; §7.1; LQ3, LQ4, LQ7–LQ9): the host's table of the preparations its learner remotes staged, and the translation of a remote's `prep deliver`, `prep infuse` and `infusion se |
 | [`session/pump-host.ts`](../../packages/controller/src/session/pump-host.ts) | Plan pump-rack-tci.md C2 (§4 D2, D4, D7, D9, D12; §7, §8): the host's side of the pump tablet. |
+| [`session/sign-in-book.ts`](../../packages/controller/src/session/sign-in-book.ts) | The host's book of signed-in devices: a device admitted on a PIN is handed a one-time ticket, and the next time it says hello (a new socket, or this page reloaded) it proves the ticket instead of the PIN and is handed th |
+| [`session/sign-in-credential.ts`](../../packages/controller/src/session/sign-in-credential.ts) | What a signing-in device proves in its hello: the PIN typed into its form until the host hands it a ticket (sign-in-book.ts), then that ticket alone. |
 | [`session/viewer-sync.ts`](../../packages/controller/src/session/viewer-sync.ts) | Viewer role (brief §3.7): a second monitor that runs its OWN engine and never receives samples. |
 | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Reconnect delays: exponential with jitter, capped [ENG: network]. |
 | [`transport/base.ts`](../../packages/controller/src/transport/base.ts) | Shared plumbing for every transport: listener sets, status replay on subscribe, send-side sample guard, receive-side validation. |
@@ -418,6 +426,7 @@ None recorded.
 | [`relay/relay-pump.test.ts`](../../packages/controller/test/relay/relay-pump.test.ts) | 0 | 0 |
 | [`relay/relay-refuses-mirror.test.ts`](../../packages/controller/test/relay/relay-refuses-mirror.test.ts) | 0 | 0 |
 | [`relay/relay-state.test.ts`](../../packages/controller/test/relay/relay-state.test.ts) | 0 | 0 |
+| [`relay/relay-ticket.test.ts`](../../packages/controller/test/relay/relay-ticket.test.ts) | 0 | 0 |
 | [`relay/relay-vent.test.ts`](../../packages/controller/test/relay/relay-vent.test.ts) | 0 | 0 |
 | [`relay/relay.test.ts`](../../packages/controller/test/relay/relay.test.ts) | 0 | 0 |
 | [`remote/remote-scenario.dom.test.ts`](../../packages/controller/test/remote/remote-scenario.dom.test.ts) | 0 | 0 |
@@ -470,12 +479,14 @@ None recorded.
 | [`session/host-pump.test.ts`](../../packages/controller/test/session/host-pump.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |
+| [`session/host-sign-in.test.ts`](../../packages/controller/test/session/host-sign-in.test.ts) | 0 | 0 |
 | [`session/host-speed-range.test.ts`](../../packages/controller/test/session/host-speed-range.test.ts) | 0 | 0 |
 | [`session/host-stage-group.test.ts`](../../packages/controller/test/session/host-stage-group.test.ts) | 0 | 0 |
 | [`session/host-time.test.ts`](../../packages/controller/test/session/host-time.test.ts) | 0 | 0 |
 | [`session/host-ventilator.test.ts`](../../packages/controller/test/session/host-ventilator.test.ts) | 0 | 0 |
 | [`session/learner-baseline.test.ts`](../../packages/controller/test/session/learner-baseline.test.ts) | 0 | 0 |
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |
+| [`session/sign-in-book.test.ts`](../../packages/controller/test/session/sign-in-book.test.ts) | 0 | 0 |
 | [`session/timeline-reset.test.ts`](../../packages/controller/test/session/timeline-reset.test.ts) | 0 | 0 |
 | [`session/timeline-restore.test.ts`](../../packages/controller/test/session/timeline-restore.test.ts) | 0 | 0 |
 | [`session/viewer-chain.test.ts`](../../packages/controller/test/session/viewer-chain.test.ts) | 0 | 0 |
