@@ -5,17 +5,18 @@
 // refresh the past stages could no longer be returned to): kept beside the position with the snapshots they hold, placed
 // again on the reloaded page with the course's history, so the strip's past stages have their time and their return.
 import { createEngine, engineKey, type Command } from '@pme/engine-core';
-import { ScenarioView, type ScenarioCommand, type WireEvent } from '@pme/controller';
+import { ControllerSession, createInProcessHub, ScenarioView, type ScenarioCommand, type WireEvent } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, type Action, type PhaseRunnerState, type ScenarioDocV2, type StageMarkPosition } from '@pme/controller/scenario';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import mh from './showcase/showcase-mh.json';
-import type { Link } from './link.ts';
+import { Link, type ClinicalLogEntry } from './link.ts';
 import { APP_BUILD, clearPosition, keepPositions, MAX_AGE_MS, readPosition, readStageMarks, RELOAD_MARK, restorePosition, savePosition, saveStageMarks, type Position } from './position.ts';
 import { report3 } from './debrief.ts';
 import { RunRecord } from './record.ts';
 import { scenarioById, type ScenarioCard } from './scenarios.ts';
 import type { AppSession } from './session.ts';
 import type { Teach2Ctx } from './teach2/ctx.ts';
+import { boardOf } from './teach2/feed.ts';
 import { mount as mountStrip, stageMarks } from './teach2/strip.ts';
 
 const NOW = 1_800_000_000_000;
@@ -24,6 +25,7 @@ const position = (o: Partial<Position> = {}): Position => ({
   stateId: 'intubated', simT: 511.2, speed: 4, paused: false, learner: false,
   run: { snapshot: { schema: 'pme-snapshot/1', engineVersion: engineKey, seed: 7, tick: 25560, state: { any: 'json' } }, seed: 0, runner: { stateId: 'intubated' } as never },
   record: new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 })).keep(),
+  log: [],
   ...o,
 });
 const read = (code = 'KKQB2N', now = NOW) => readPosition({ code, now });
@@ -155,7 +157,7 @@ describe('stage marks across a reload (the owner\'s report of 30 October)', () =
     for (const st of ['preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'triggerOff', 'treating', 'triggerOff', 'treating']) await a.goto(st);
     const before = a.driver.stageMarks();
     expect(before.filter((m) => m.note === 'triggerOff')).toHaveLength(2);
-    const stop = keepPositions(a.s, 5);
+    const stop = keepPositions(a.s, { log: [] }, 5);
     for (let i = 0; i < 200 && !(sessionStorage.getItem('pme.position') && sessionStorage.getItem('pme.position.marks')); i++) await new Promise((r) => setTimeout(r, 5));
     stop();
     const kept = readPosition({ code: 'KKQB2N' }) as Position;
@@ -163,7 +165,7 @@ describe('stage marks across a reload (the owner\'s report of 30 October)', () =
 
     // the reloaded page
     const b = page();
-    expect(await restorePosition(kept, b.s, b.load)).toBe(true);
+    expect(await restorePosition(kept, b.s, { resumeCase: () => undefined }, b.load)).toBe(true);
     expect(b.driver.runner?.stateId).toBe('treating');
     // the course's marks are back (the latest of each stage: the one the strip returns to), with their labels
     expect(b.driver.stageMarks().map((m) => m.target)).toEqual(latestPerStage(before).map((m) => m.target));
@@ -248,7 +250,7 @@ describe('a /2 card across a reload (brief 50)', () => {
     const a = page('KKQB2N', 'showcase-mh-v2');
     a.load(a.card);
     await a.run(1);
-    stop = keepPositions(a.s, 5);
+    stop = keepPositions(a.s, { log: [] }, 5);
     // a taking: kept with its count and its administration
     await a.press('dantrolene');
     let p = await until((x) => state(x)?.takings.dantrolene === 1);
@@ -279,7 +281,7 @@ describe('a /2 card across a reload (brief 50)', () => {
 
     // the reloaded page
     const b = page('KKQB2N', 'showcase-mh-v2');
-    expect(await restorePosition(JSON.parse(JSON.stringify(pos)) as Position, b.s, b.load)).toBe(true);
+    expect(await restorePosition(JSON.parse(JSON.stringify(pos)) as Position, b.s, { resumeCase: () => undefined }, b.load)).toBe(true);
     expect(b.driver.phaseRunner?.getState()).toEqual(pos.run.runner);
     expect(b.driver.phaseRunner?.stateId).toBe('arrest');
     expect(b.sv.history.slice(0, a.driver.phaseRunner?.history.length)).toEqual(a.driver.phaseRunner?.history);
@@ -291,5 +293,32 @@ describe('a /2 card across a reload (brief 50)', () => {
     for (const x of [a, b]) await x.run(3);
     expect(b.driver.phaseRunner?.getState()).toEqual(a.driver.phaseRunner?.getState());
     expect(report3(b.record.data)).toEqual(report3(a.record.data));
+  }, 60_000);
+});
+
+describe("the case's lines of the instructor's log across a reload", () => {
+  beforeEach(() => sessionStorage.clear());
+
+  it("the restored case's board lists what was given off the card before the reload, ahead of the restore's own lines", async () => {
+    const a = page();
+    a.load(a.card);
+    await a.run(1);
+    for (const st of ['preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'treating']) await a.goto(st);
+    const given: ClinicalLogEntry = { simT: a.engine.now().simT - 0.5, kind: 'learner', text: 'Ephedrine 50 mg IV (learner remote)' };
+    const stop = keepPositions(a.s, { log: [{ simT: 0, kind: 'scenario', text: 'Scenario state: Awake' }, given] }, 5);
+    for (let i = 0; i < 200 && !sessionStorage.getItem('pme.position'); i++) await new Promise((r) => setTimeout(r, 5));
+    stop();
+    const kept = readPosition({ code: 'KKQB2N' }) as Position;
+
+    // the reloaded page: its instructor's Link starts empty
+    const b = page();
+    const t = createInProcessHub().connect();
+    const link = new Link(new ControllerSession({ session: 'KKQB2N', transport: t }), t, null);
+    expect(await restorePosition(kept, b.s, link, b.load)).toBe(true);
+    link.note('Restored after reload: Malignant hyperthermia', 'system');
+    expect(link.log.map((x) => x.text)).toEqual(['Scenario state: Awake', given.text, 'Restored after reload: Malignant hyperthermia']);
+    Object.assign(link.ctl.scenario, { doc: b.sv.doc, docVersion: 1, stateId: b.sv.stateId, history: [...b.sv.history], enteredT: b.sv.enteredT });
+    expect(boardOf(link)?.offCard.map((x) => x.text)).toEqual([given.text]);
+    link.close();
   }, 60_000);
 });

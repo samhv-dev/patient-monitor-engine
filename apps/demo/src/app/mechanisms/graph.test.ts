@@ -75,14 +75,16 @@ describe('mechanismTree(): loop boxes, merged edges, classes, feedback', () => {
  *  two nodes eeg.cortex and eeg.signal and the edges cbfRel → eeg.cortex (neuro.eeg.cortex.metabolic) and
  *  eeg.cortex → eeg.signal (neuro.eeg.signal.cortex), +2 nodes +2 edges; ptxTension and peep also reach resp.o2.sa,
  *  so they gain resp.o2.sa → eeg.cortex (the same metabolic row), +2 nodes +3 edges. Feedback, absent, columns and the
- *  loop are unchanged (the EEG nodes lie after the loop and feed nothing back). */
+ *  loop are unchanged (the EEG nodes lie after the loop and feed nothing back). The cortex's metabolic term is the organ
+ *  model's brain energy state (organs.brain.energy.cortex): cbfRel and the blood gases reach it, and it reaches eeg.cortex,
+ *  one node and one edge more on every trigger. */
 const PINS = {
-  'trigger.bleed': { nodes: 79, edges: 129, feedback: 4, absent: 17, columns: 20, loop: 53 },
-  'trigger.drug.propofol': { nodes: 74, edges: 123, feedback: 14, absent: 17, columns: 23, loop: 53 },
-  'trigger.drug.phenylephrine': { nodes: 75, edges: 127, feedback: 22, absent: 17, columns: 21, loop: 53 },
-  'trigger.drug.esmolol': { nodes: 76, edges: 127, feedback: 13, absent: 17, columns: 20, loop: 53 },
-  'trigger.lungCondition.ptxTension': { nodes: 93, edges: 153, feedback: 4, absent: 19, columns: 23, loop: 55 },
-  'trigger.ventilation.peep': { nodes: 93, edges: 153, feedback: 27, absent: 19, columns: 32, loop: 55 },
+  'trigger.bleed': { nodes: 80, edges: 130, feedback: 4, absent: 17, columns: 20, loop: 53 },
+  'trigger.drug.propofol': { nodes: 75, edges: 124, feedback: 14, absent: 17, columns: 23, loop: 53 },
+  'trigger.drug.phenylephrine': { nodes: 76, edges: 128, feedback: 22, absent: 17, columns: 21, loop: 53 },
+  'trigger.drug.esmolol': { nodes: 77, edges: 128, feedback: 13, absent: 17, columns: 20, loop: 53 },
+  'trigger.lungCondition.ptxTension': { nodes: 94, edges: 154, feedback: 4, absent: 19, columns: 23, loop: 55 },
+  'trigger.ventilation.peep': { nodes: 94, edges: 154, feedback: 27, absent: 19, columns: 32, loop: 55 },
 } as const;
 
 describe('the registry the page draws', () => {
