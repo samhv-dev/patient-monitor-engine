@@ -58,7 +58,7 @@ export const transports = {
 export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT, STOCK_FILE } from './formulary/load.ts';
 export type * from './formulary/types.ts';
 // Plan pump-rack-tci.md D12, S1: the reference pumps' device profiles (pump-devices/), their source check and loader
-export { checkPumpDevices, loadPumpDevices, PUMP_DEVICE_IDS, MAX_DEVICE_TEXT } from './pump-devices.ts';
+export { checkPumpDevices, loadPumpDevices, PUMP_DEVICE_IDS, MAX_DEVICE_TEXT, sp5TciMaxRateMlH } from './pump-devices.ts';
 export type * from './pump-devices.ts';
 // Plan learner-action-remote.md L5: the bench's Finding, which the /2 administration record's `prep` carries
 export type { Finding, FindingKind } from './formulary/findings.ts';

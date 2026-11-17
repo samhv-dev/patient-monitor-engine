@@ -274,6 +274,7 @@ transports (`src/protocol.ts`).
 | `normalizeSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Upper-cases and strips spaces/dashes; |
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
 | `createStamper` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Adds {v, session, from, seq, sentAt}. |
+| `sp5TciMaxRateMlH` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The SP5 TCI's highest TCI rate (mL/h) with a syringe of `ml` mL loaded, or undefined: |
 | `checkPumpDevices` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The profiles' source rules: |
 | `loadPumpDevices` | [`pump-devices.ts`](../../packages/controller/src/pump-devices.ts) | The typed profiles, when every rule holds; |
 | `mountRemote` | [`remote/remote-app.ts`](../../packages/controller/src/remote/remote-app.ts) | — |
