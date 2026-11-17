@@ -3,7 +3,7 @@
 **STATUS: BEING BUILT; THIRD REVISION FOR REVIEW.** The flow rise with anaemia is re-planned to land whole: what it is
 made of by mechanism and source (§2.2), the shared vasodilator reserve it spends (B2v), who reads flow and who reads
 delivery (§1.4, B5c), the start of a run (B2d), the set of pieces that lands together and its order (§6), and what
-each cell is expected to do (§6.3). Every earlier design question is decided (§9.1); two questions are open (§9.2).
+each cell is expected to do (§6.3). Every earlier design question is decided (§9.1); one question is open (§9.2).
 The parameters were checked against the published measurements in `research/81-evidence-brain-under-arrest-and-cpr.md`,
 `research/85-evidence-temperature-and-recovery-after-return-of-circulation.md` and
 `research/89-full-text-check-of-abstract-only-brain-numbers.md` (§5.1 gives the outcome number by number). No product
@@ -223,8 +223,10 @@ the breathing gate reads CBF today. The EEG steps after the organs and reads the
    exactly. A silent brain lowering its own target flow, which lowers delivery, which keeps it silent, is a latch; its
    real counterpart, post-ischaemic hypoperfusion and the falling reflow under CPR after a long no-flow time, is a
    named attachment (§7). The flow rise with anaemia (B2a) is a different input (the blood's O2 capacity, not the
-   brain's function) and makes no latch. Test, with the points chosen by delivery (hypoxaemia at PaO2 35 keeps delivery
-   above 1 through `o2Factor`, so it would test nothing): MAP lowered until cortex delivery is 0.30 for 60 s and
+   brain's function) and makes no latch. Test, with the points chosen by delivery (hypoxaemia at PaO2 35 at normal
+   pressure keeps delivery near or above 1 through `o2Factor` while the request fits B2v's reserve, so it would test
+   nothing; with the passive-line ceiling of §9.2 item 1 option A, the hypoxic rise is capped from PaO2 ≈ 48 at CPP 80
+   and delivery at PaO2 35 then falls below 1): MAP lowered until cortex delivery is 0.30 for 60 s and
    restored; Hb lowered until delivery is 0.35 and restored (after B2a this needs a lower Hb, which the test computes
    from the B2a factor, not a literal); PaO2 lowered until delivery is 0.35 and restored. Each time function returns
    to 1 and debt to 0 (no latch).
@@ -328,8 +330,9 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
       large enough to explain it, "a disproportionate reduction of in vivo viscosity must be responsible", and pial
       arteriolar constriction after haemodilution read as "a normal autoregulatory adjustment of vasomotor tone to
       altered blood rheology" (1992 [ABS], PMID 1566914).
-    - **What the plan takes.** The content share of the rise is 0.5 of its logarithm [P: the middle of Tomiyama's
-      40–60 %; Hudak's lambs give 44 % to content for the opposite change, consistent], the viscosity share the rest.
+    - **What the plan takes.** The content share of the rise is 0.5 of its logarithm [INF: Tomiyama's 40–60 % is a share of the
+      linear rise, not of its logarithm; 0.5 is its middle, carried to the exponent; Hudak's lambs give 44 % to content
+      for the opposite change, consistent], the viscosity share the rest.
       So at normal pressure the whole rise is Mühling's, (Hb ÷ Hb_normal)^−k with k = 0.683, made of a content factor
       (Hb ÷ Hb_normal)^−0.5k and a viscosity factor (Hb ÷ Hb_normal)^−0.5k. Every cell of B2a is checked at both ends
       of the 0.4–0.6 range, so no cell depends on the point value. **No human source separates them** (WANTED, §5.3).
@@ -345,8 +348,10 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     term, not read here), so the viscosity share fades with flow, as the engine's systemic one already does
     (`setCircViscosity`, `l2/blood/circ-adapter.ts`: full at the resting output, none at CPR-level output 0.3). The
     brain's viscosity share reads **the same fade function** (one function, two readers) [INF, mine: the systemic
-    anchors stand in for the brain's shear rates]. Under chest compressions the anaemia factor is therefore 1: the
-    reserve leaves the content share nothing, and the viscosity share has faded.
+    anchors stand in for the brain's shear rates]. Under chest compressions the anaemia factor is therefore about 1
+    (exactly 1 while the output ratio is at or below 0.3; B2a reads the card's own value): the reserve leaves the
+    content share nothing, and the viscosity share has faded. The engine's systemic term acts in MODELED only; the
+    brain's viscosity share acts in both modes, as the brain's flow does.
   - *What is measured about cerebral flow in anaemia combined with hypotension.* Humans, sevoflurane–N2O, Hct 32 % or
     24 % with hydroxyethyl starch, then prostaglandin E1 to MAP ≈ 55 for 80 min: MCA velocity +122 % and +156 % after
     haemodilution and still +135 % at 80 min of hypotension in the Hct 24 % group (J Clin Anesth 2005 [ABS], PMID
@@ -373,7 +378,7 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     falls back to 14/14, and a patient whose Hb was set by hand jumps at the first blood step (× 1.42 at Hb 9, × 2.12
     at Hb 5, relaxing over `TAU_VASC_S`). B2d makes the t = 0 view read the blood core's `pat.hb` and `pat.hbRef`,
     which exist before the first step, so the brain's conductance is created at the anaemic target. **A patient whose
-    Hb is set in his profile is a chronic anaemia** (decision asked, §9.2): at t = 0 his flow is already raised, CBV,
+    Hb is set in his profile is a chronic anaemia** (the plan's rule: a profile describes the patient as he arrives): at t = 0 his flow is already raised, CBV,
     ICP, PbtO2 and SjvO2 at their raised values, in equilibrium. An acute anaemia is a fall of Hb during the run
     (bleeding, dilution), whose flow follows with `TAU_VASC_S`. An older snapshot of an anaemic patient (taken before
     B2a) restores the factor-free conductance, and its flow settles to the anaemic target over about 30 s after the
@@ -408,8 +413,9 @@ Each row: mechanism, source, time course, the cell it becomes. Every reader comp
     conscious with an EEG above the abnormal level (delivery above 0.40 for any k in 0.65–1.34 and any content share in
     0.4–0.6, mine). Mühling: CBF at Hb 10.3 ÷ CBF at 14.5 equal to the source's velocity ratio 77.3/61.2 at normal
     pressure (arithmetic on the source, not an independent cell). Todd 1992: direction and size at Hct 20 as a check,
-    rats. Tomiyama 1999: at normal pressure, restoring content at the same Hb removes the content share only (the flow
-    falls by 40–60 % of its rise; direction and the source's range, rats). The maximal-dilation cells are B2v's.
+    rats. Tomiyama 1999 cannot be a whole-engine cell (the factor reads Hb, not CaO2, so restoring content at the same Hb
+    changes nothing in the engine): it is unit arithmetic on the two shares, the content share's part of the rise at
+    Hct 17–19 % within the source's 40–60 %. The maximal-dilation cells are B2v's.
 - **Hypoglycaemia:** today a separate hypnotic term (`GLYCO_U` 1.2 [FIT], glucose 60 → 30 mg/dL). Under this structure
   glucose is the second substrate of the same state: `fnSS` takes min(O2 supply, glucose supply), with EEG slowing at
   about 40 mg/dL and suppression below 20 mg/dL (Miller Ch10 p. 219, the EEG plan's U7). Piece B8 moves it and retires
@@ -761,10 +767,16 @@ set and needs only B5.
 
 **Why the anaemia set, and why in this order.** The flow rise is whole only when three things already stand: a shared
 reserve, so that its active share cannot dilate maximally dilated vessels (B2v); a delivery measured against the
-patient's own normal, read at t = 0 (B2d); and a brainstem that reads delivery, not flow (B5c). Each of the first three
-is a whole mechanism by itself, with its own stated moves, and creates no artefact without B2a, so each merges on its
-own, in this order (B5c reads B2d's reference). **B2a merges last, and only onto a main that holds the other three**;
-it is built on a branch stacked on them, so its suite is read against the whole set. After the four, no cell that
+patient's own normal, read at t = 0 (B2d); and a brainstem that reads delivery, not flow (B5c). B2v and B2d are each a whole
+mechanism by themselves, with their own stated moves, and create no artefact without B2a, so each merges on its own,
+in this order. **B5c and B2a land in one merge**: a brainstem that reads delivery with no flow rise yet would read every
+normotensive anaemic patient as ischaemic (at Hb 7 and normal flow his delivery is ≈ 0.47 of his own normal and the
+vasomotor gate reads (0.47 − 0.2) ÷ 0.4 ≈ 0.68; at Hb 5 ≈ 0.36; the gate starts to close below Hb ≈ 9, mine,
+arithmetic), the mirror of pull request 512's artefact; and the flow rise without a brainstem reading delivery is
+pull request 512's artefact itself. B5c is built on a branch from main after B2d, B2a on a branch stacked on B5c, and
+the two land together, after B2v and B2d are on main; until then B5c's suite alone shows its own unit cells green and
+the anaemic patients' rows moved toward ischaemia (listed, not merged), and B2a's suite on the stacked branch is read
+against the whole set. After the four, no cell that
 passed before fails, no artefact of the kinds found in pull request 512 is recorded into a regression window, and the
 default patients' records move only for the causes each piece states. B2a must merge before B2 (the condition of the
 consciousness decision). B3b needs B3. B7a needs B5b; it does not need B5c; its R2 cell needs B6b. B8 needs only B1
@@ -776,8 +788,8 @@ and may run any time after B4. B7b and B9 are blocked on sources.
 | B5 | Brainstem gate state relocated | **on main** (pull request 504) | none | — |
 | B2v | Shared vasodilator reserve (pull request 188's mechanism, rebuilt) | not started | design | — (§9.2 item 1 decides its normal-pressure ceiling) |
 | B2d | The delivery reference is the patient's own normal; the t = 0 read | briefed, not started | none | — |
-| B5c | The brainstem entry reads delivery; the vasomotor gate reads the entry | not started | design | B2d merged |
-| B2a | Anaemia's flow rise, two shares | **in review**, pull request 512 (head b72d7b1b), to be reworked as §6 B2a says | design | B2v, B2d and B5c merged before it merges; §9.2 item 2 before it records the hand-set patients |
+| B5c | The brainstem entry reads delivery; the vasomotor gate reads the entry | not started | design | B2d merged; lands in one merge with B2a |
+| B2a | Anaemia's flow rise, two shares | **in review**, pull request 512 (head b72d7b1b), to be reworked as §6 B2a says | design | B2v and B2d merged; stacked on B5c and lands with it |
 | B5b | The brainstem's no-flow timer on the organ model's clock, both modes; the arrest record | not started | design | B5 (on main) |
 | B2 | Consciousness | not started | none | B2a merged (decided, §9.1 item 4) |
 | B3 | Artefacts and readers | not started | none | B2 merged |
@@ -807,7 +819,7 @@ and may run any time after B4. B7b and B9 are blocked on sources.
 | The low-flow oximetry cell (PI < 0.3 once MAP < 30 in a 3 L bleed) newly failed through the flow-read chain and was marked as an expected failure, which then guards nothing | review of pull request 512 | B5c (delivery read) with B2v (no content share below LL); the mark is taken back (B2a) |
 | Dilution under CPR appears to raise the coronary perfusion pressure, and the value was re-recorded into `cppAt60`'s window | review of pull request 512 | B2v and the viscosity fade (no anaemia factor under compressions) and B5c; the re-record is taken back (B2a; §6.3) |
 | The factor multiplies flow below the lower limit and under CPR | review of pull request 512 | B2v; the content share is spent from the reserve, the viscosity share fades with flow (§2.2) |
-| A patient set anaemic by hand starts at a factor of 1 and jumps at the first blood step | review of pull request 512 | B2d reads `pat.hb` and `pat.hbRef` at t = 0; a profile Hb is chronic (§2.2; §9.2 item 2) |
+| A patient set anaemic by hand starts at a factor of 1 and jumps at the first blood step | review of pull request 512 | B2d reads `pat.hb` and `pat.hbRef` at t = 0; a profile Hb is chronic, the plan's rule (§2.2); B2a settles the start's CSF displacement |
 | The default man's EEG and arrest records moved with no cause written beside them | review of pull request 512 | every record's cause in its test header (§2.2, B2a) |
 | The lower hold 4.8 is a systemic measurement, below the cerebral source's 5.7 | review of pull request 512 | hold at 5.7 (B2a) |
 | `HB_REF` (delivery) and `hbRef` (patient's normal) share a name | review of pull request 512 | `HB_REF` retired by B2d |
@@ -827,6 +839,17 @@ and may run any time after B4. B7b and B9 are blocked on sources.
 
 ### 6.3 The cells the anaemia set moves, with what is expected before the engine is asked
 
+- **The three cells most at risk from B2v** (each left its band when pull request 512's factor at a reference of 14
+  lowered low-flow cerebral flow by only 4.6 %, and B2v lowers CPR flow by more, 0.496 → 0.405 on pull request 188's
+  base): the tamponade-drainage ROSC (≤ 240 s; 198 → 250 then), the CPR-offset spread of the myocardial state (< 0.03;
+  0.016 → 0.033 then) and the warm septic MAP (55–60; 56 → 54.9 then). **Expected (mine):** each moves the same way
+  with B2v, through the vasomotor gate (lower cerebral flow in the 0.2–0.6 ramp, less sympathetic output), and may
+  leave its band. **B2v's first step is to measure these three on the current main with and without the reserve, and
+  if any leaves its band the piece stops and asks.** The mechanism at fault would then be the vasomotor ramp itself
+  (0.2–0.6 on flow, [P], above the cortex's own abnormal level against the sourced order, §1.5.6), now parked behind
+  the blocked B7b; the question is whether its re-sourcing joins the set. It is never "re-recorded with the reserve as
+  cause", because the tamponade and septic bands are not the engine's own output.
+
 Each expectation is the plan's (mine), from the mechanisms of §2.2 and the pieces; a source sets a band only where
 named. If the engine disagrees with an expectation, the piece reports the mechanism; no band a source sets is moved.
 
@@ -844,16 +867,17 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   compressions). History, from its file: recorded as the prototype ± a stated tolerance, [15, 23] = 19 ± 4, "never
   widened"; when the card gained its rapid-sequence blocker it measured 23.03 and the window was shifted by the
   overshoot to [15.03, 23.03] rather than re-centred, which is why it sat at its top edge (23.02 on main before B2a).
-  No source is cited for the row (§9.1 item 7). **Expected after the set:** under compressions the anaemia factor is 1
-  (B2v, viscosity fade), so dilution no longer raises cerebral flow; B2v lowers the CPR cerebral flow itself (CO2 and
+  No source is cited for the row (§9.1 item 7). **Expected after the set:** under compressions the anaemia factor is about 1
+  (B2v, viscosity fade; B2a reads the card's own output ratio), so dilution no longer raises cerebral flow; B2v lowers the CPR cerebral flow itself (CO2 and
   hypoxic dilation no longer add flow below the lower limit), so the vasomotor gate reads less, the sympathetic tone and
-  with it the relaxation-phase aortic pressure fall, and `cppAt60` falls below main's 23.02, inside [15.03, 23.03]
+  with it the relaxation-phase aortic pressure fall, and B5c reads the diluted patient's lower delivery under CPR, lowering the gate further, so `cppAt60` falls below
+  main's 23.02, inside [15.03, 23.03]
   (direction; size not sourced). If B2v alone takes it outside the window, B2v re-records this own-output row once with
   its own cause; B2a does not re-record it.
 - **The coronary perfusion pressure under compressions against its source band** (Paradis 1990, 15–25 mmHg; 24.7 at
   70 s on the measurement cited in `baroreflex.ts`). **Expected:** down with B2v (less cerebral flow under CPR, a lower
   vasomotor gate, less sympathetic tone), unchanged by B2d and B5c at the default man's normal content, unchanged by
-  B2a (factor 1 under compressions). Down from near the upper edge is toward the band's middle; if any piece takes it
+  B2a (factor about 1 under compressions). Down from near the upper edge is toward the band's middle; if any piece takes it
   below 15, that piece stops and asks.
 - **The default man's EEG record** (`eeg-baseline.json`). **Expected:** B2v byte-identical (the anaesthetised runs keep
   CPP inside the plateau and their dilating requests inside the reserve; a run where they do not is listed); B2d moves
@@ -915,6 +939,9 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   (where B2a's factor will be a fourth limb), carries its tests over, measures again every number its description
   gives, and records the demo cards' courses on the current main. Whether the old pull request is closed is the
   orchestrator's call; B2v's pull request names it as superseded.
+- **First step, before any product code:** measure on the current main, with and without the reserve, the three cells
+  most at risk (§6.3: tamponade-drainage ROSC, CPR-offset spread, warm septic MAP) and the CPR coronary perfusion
+  pressure; if any leaves its band, stop and ask (§6.3 names the mechanism that would then be at fault).
 - **Tests:** unit: `dilatorReserve` 1.40 / 1.20 / 1 at CPP 80 / 70 / ≤ 60; 70/65 for an LL of 75; 1 with no flow;
   `spendReserve` passes a constricting request unchanged. Cells: (a) at normal CPP, PaCO2 50 → CBF 1.30 and 30 → 0.70
   (the tables, unchanged); (b) at CPP 35.5, PaCO2 40 → 52 adds no flow, ratio 0.99–1.01 (Harper & Glass at MAP 50,
@@ -944,7 +971,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
 - **Must not change:** any threshold, `targetCbf`, the brainstem's reading.
 - **Needs before it starts:** nothing (main).
 
-### B2a. The flow rise with anaemia, whole (plan 12 h · 1.5–2.0 executor-h). Advisor: design. **In review (pull request 512); its merge waits for B2v, B2d and B5c.**
+### B2a. The flow rise with anaemia, whole (plan 12 h · 1.5–2.0 executor-h). Advisor: design. **In review (pull request 512); it lands in one merge with B5c, after B2v and B2d.**
 - **What:** `anaemiaFactor(hb, hbRef)` in `l2/brain/flow.ts` as two shares (§2.2): a **content share**
   (Hb ÷ Hb_normal)^−s·k that joins the dilating request spent from B2v's reserve, and a **viscosity share**
   (Hb ÷ Hb_normal)^−(1−s)·k multiplied outside the reserve and faded with flow by the systemic viscosity term's own fade
@@ -970,17 +997,19 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
   lies outside it, with Hb, factor and each piece's cause written beside it (the decision on that row, §9.1 item 7).
   (3) The re-recorded `eeg-baseline.json` and `arrest-cortex.json`: recorded again at the end, with their causes in the
   headers, after B2v, B2d and B5c have each recorded theirs.
-- **Tests:** unit: factor exactly 1 at hb = hbRef in every band; the two shares multiply to Mühling's factor at normal
+- **Tests:** unit: factor exactly 1 at hb = hbRef in every band; a chronic anaemia's start is at equilibrium in conductance and in
+  CSF displacement (`createBrain` today starts `csfDisp` at 0, so a hyperaemic start would begin with a raised ICP that
+  drifts down as CSF is displaced: B2a settles the start's displacement, and the test holds ICP at t = 0 equal to ICP
+  at 10 min for a hand-set Hb 5 at rest); the two shares multiply to Mühling's factor at normal
   pressure; the content share adds nothing at and below LL and under CPR (B2v's reserve); the viscosity share fades to
   1 at CPR-level output; holds at 5.7 and 19.1; t = 0 equals the first step for a hand-set Hb 9 and 5 (no jump). Cells:
   §2.2's (Weiskopf, Lieberman, Mühling, Todd, Tomiyama), each at s = 0.4 and 0.6; the low-flow oximetry cell passing;
   the cells of §6.3. Regression: every row listed by §2.2's permission, nothing else moved.
-- **What its own tests show while the set is incomplete:** on a branch stacked on B2v, B2d and B5c the suite is green;
-  on main alone the piece is not merged (its low-flow cell would fail, and that is the evidence that it needs the
+- **What its own tests show while the set is incomplete:** on its branch stacked on B5c (itself after B2v and B2d) the
+  suite is green; on main alone the piece is not merged (its low-flow cell would fail, and that is the evidence that it needs the
   set). No cell is made green by an expected-failure mark.
 - **Must not change:** `o2Factor`, `co2Factor`, autoregulation, `cmro2Rel`, the reserve's form, any threshold.
-- **Owner decisions:** given (§9.1 items 6–8, 10, 11); §9.2 item 2 (a profile Hb is chronic) before it records the
-  hand-set patients.
+- **Owner decisions:** given (§9.1 items 6–8, 10, 11).
 
 ### B2. Consciousness from the cortex's function (plan 9 h · 1.1–1.5 executor-h). Advisor: none.
 - **What:** `NeuroEnv` carries the cortex's `fn` and `metabolic`; `depth()` adds `isch` (§1.4, on `fn`, with
@@ -1107,7 +1136,7 @@ named. If the engine disagrees with an expectation, the piece reports the mechan
 - **Relative to B7a:** B7a does not wait for B5c. If B5c lands first, B7a's gate reads delivery from the start; if
   B7a lands first, B5c switches the comparison and re-records the arrest-breathing record with that cause.
 - **Must not change:** the thresholds' values, the gasp rule, `targetCbf`, the cortex.
-- **Needs before it starts:** B2d merged (the delivery reference it reads); B5 is on main. It does not need B5b (the
+- **Needs before it starts:** B2d merged (the delivery reference it reads); B5 is on main. **It lands in one merge with B2a** (§6, order). It does not need B5b (the
   timer's clock) or B2a.
 
 ### B6a. The cortex's O2 store (plan 7 h · 0.9–1.2 executor-h). Advisor: design.
@@ -1410,11 +1439,12 @@ setting; its estimate stays 12 h, with the risk stated here (mine).
 ### 9.2 Open (each blocks only what it names; the questions in full are in this revision's hand-over)
 
 1. **How far the brain's vessels can still widen at normal pressure when several dilating causes ask at once.** The
-   reserve's ceiling taken from the engine's own pressure-passive line (B2v, pull request 188's form) is 1.40 at CPP
-   80; the dog data give a larger hypercapnic ceiling near normal pressure (× 1.52 at MAP 100, Harper & Glass [S]),
-   and cats kept their hypercapnic dilation after dilution to Hct 19 % (Rebel 2003 [ABS]), which a ceiling of 1.40
-   would mostly forbid. Below the lower limit every reading gives 1. **Decides only B2v's ceiling at normal pressure
-   and its cell (d); B2v's below-limit behaviour, which removes the artefacts, does not wait.**
-2. **Whether a patient whose haemoglobin is set in his profile is a chronic anaemia** (brain already adapted at the
-   start) or an acute one (starting normal and adapting in the first minute). The plan builds chronic (§2.2). **Bounds
-   only how B2a records the hand-set patients.**
+   reserve's ceiling taken from the engine's own pressure-passive line (B2v, pull request 188's form, option A) is 1.40
+   at CPP 80. That caps far more than the CO2 response: the tables' hypoxic doubling at PaO2 30 is capped from PaO2
+   ≈ 48; Todd 1994's hypoxaemic rabbits raised flow about × 2.5 at a third of normal content; the anaemia content share
+   alone reaches ≈ 1.39 at the 5.7 g/dL hold, leaving nothing for a volatile's direct dilation or CO2 in the same
+   request; and Rebel 2003's cats kept their hypercapnic dilation after dilution to Hct 19 %. The dog data give a
+   larger, pressure-dependent ceiling (× 2.11 at MAP 150, 1.52 at 100, ≈ 1 at 50, Harper & Glass [S], option B). Below
+   the lower limit both give 1. **Decides B2v's ceiling at normal pressure (and with it hypoxaemia and anaemia under
+   anaesthesia at normal pressure, and cell (d)); B2v's below-limit behaviour, which removes the artefacts, is the same
+   either way.**
