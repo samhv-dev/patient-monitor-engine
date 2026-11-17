@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
+import { ANALYSERS, LABORATORY } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
-import { LAB_ROWS, labCritical, labFlag, mountLabPanel } from '../src/lab-panel.ts';
+import { LAB_ROWS, labCritical, labFlag, labLabel, mountLabPanel } from '../src/lab-panel.ts';
 
 const V = { ph: 7.21, pco2: 40, po2: 95, hco3: 15.6, be: -11, so2: 97, cohb: 0, methb: 0, lactate: 6.1, na: 140, k: 6.2, cl: 104, iCa: 1.2, mg: 0.85, hb: 12, glucose: 100, ag: 20, osm: 290 };
 const row = (k: string) => LAB_ROWS.find((r) => r.key === k)!;
@@ -45,13 +46,28 @@ describe('lab panel widget', () => {
     expect(el.querySelector('tr[data-key="na"]')?.classList.contains('crit')).toBe(false);
   });
 
+  it('flags a venous PCO2 against the glossary\'s mixed-venous range, an arterial one against the arterial range', () => {
+    expect(labFlag(row('pco2'), 55, 'vbg')).toBe('high');
+    expect(labFlag(row('pco2'), 38, 'vbg')).toBe('low');
+    expect(labFlag(row('pco2'), 38, 'abg')).toBe('ok');
+    expect(row('pco2').venous?.range?.src).toContain('entry 113');
+  });
+
+  it('names every test an analyser row names, computed or not', () => {
+    for (const row of [...Object.values(ANALYSERS), LABORATORY]) for (const sec of row.sections) for (const a of sec.analytes) if (!LAB_ROWS.some((r) => r.key === a)) expect(labLabel(a), `${row.id} ${a}`).not.toBe(a);
+    expect(labLabel('pco2')).toBe('PCO2');
+    expect(labLabel('caTotal')).toBe('Total calcium');
+    expect(labLabel('aptt')).toBe('APTT');
+  });
+
   it('shows the range it flags against; a venous gas is not flagged against arterial ranges', () => {
     const el = document.createElement('div');
     const up = mountLabPanel(el);
-    up({ po2: 40, pco2: 50 }, 'VBG', 'vbg');
+    up({ po2: 40, pco2: 50, ph: 7.3 }, 'VBG', 'vbg');
     expect(el.querySelector('tr[data-key="po2"]')?.className).toBe('ok'); // venous 35–45
-    expect(el.querySelector('tr[data-key="pco2"]')?.className).toBe('ok'); // no sourced venous range: unflagged
-    expect(el.querySelector('tr[data-key="pco2"] .range')?.textContent).toBe('—');
+    expect(el.querySelector('tr[data-key="pco2"]')?.className).toBe('ok'); // mixed venous 41–51
+    expect(el.querySelector('tr[data-key="pco2"] .range')?.textContent).toBe('41–51');
+    expect(el.querySelector('tr[data-key="ph"] .range')?.textContent).toBe('—'); // no sourced venous pH range: unflagged
     up({ po2: 40, pco2: 50 }, 'ABG', 'abg');
     expect(el.querySelector('tr[data-key="pco2"]')?.className).toBe('high');
     expect(el.querySelector('tr[data-key="pco2"] .range')?.textContent).toBe('35–45');

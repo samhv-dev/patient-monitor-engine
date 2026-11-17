@@ -127,6 +127,8 @@ test('L15: a phone sends a sample through a relay process; the laptop\'s Labs sh
   expect((await send(page, { type: 'applyEvent', event: { kind: 'lab', panel: 'chem' } })).accepted).toBe(true);
   await expect(labsSheet(page).locator('.ip2-lab')).toHaveCount(2);
   await expect(labsSheet(page).locator('.ip2-lab[data-panel="chem"] .ip2-lab-who')).toHaveText('Drawn by Instructor');
+  await expect(labsSheet(page).locator('.ip2-lab-empty')).toBeHidden();
+  await expect(labsSheet(page).locator('.ip2-lab[data-panel="chem"] .ip2-lab-tests')).toHaveText('Its tests: Na, K, Cl, Total calcium, Mg, Glucose, Creatinine, CK. Which of them the simulator computes is shown with the result.');
   // the case's clock at ×8 on the laptop: the gas's 80 s pass in about ten
   expect((await send(page, { type: 'time', action: 'scale', value: 8 })).accepted).toBe(true);
   const gas = labsSheet(page).locator('.ip2-lab[data-panel="abg"]');
@@ -135,6 +137,9 @@ test('L15: a phone sends a sample through a relay process; the laptop\'s Labs sh
   expect((await send(page, { type: 'time', action: 'scale', value: 1 })).accepted).toBe(true);
   expect(await gas.locator('.lr-lab-state').textContent()).toBe(await mine.locator('.lr-lab-state').textContent());
   expect(await gas.locator('tbody tr').count()).toBeGreaterThan(10);
+  // the one line under the table names only what the table does not hold, and it is on screen
+  await expect(gas.locator('.ip2-lab-tests')).toBeVisible();
+  await expect(gas.locator('.ip2-lab-tests')).toHaveText('Not computed by the simulator: HHb.');
   // the laptop's engine and the phone's froze the same panel at the same tick: the same table, value for value
   expect(await gas.locator('.lr-lab-result').innerHTML()).toBe(await mine.locator('.lr-lab-result').innerHTML());
   // the phone still lists only its own sample (LQ13)
