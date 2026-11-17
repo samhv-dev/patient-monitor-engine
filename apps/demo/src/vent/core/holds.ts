@@ -3,7 +3,8 @@
 // plus the lung's recoil, less the patient's effort with `holdEffort`). A key held during inspiration holds at the end
 // of that inspiration; held during expiration, at the end of that expiration (the model's `expHoldAt: 'end'`). The
 // hold lasts while the key is held, at most the face's longest hold, then ends by itself and the key must be released
-// before it holds again. A hold that ends as it should (released, at its length, at its test's end) leaves its result:
+// before it holds again. A hold that ends as it should (released, at its length, at its test's end) after at least
+// one step with the valves closed leaves its result:
 // the pressure and lung volume at its end, and for an inspiratory hold the breath it held. A hold that cannot measure
 // leaves none and gives no held-back breath: the circuit opened, the model reset, the results forgotten, a test
 // cancelled or its valves not closed in time. Holds run on sim time, so a test drives them with the driver's clock.
@@ -19,6 +20,8 @@ export interface HoldState {
   by: 'key' | 'timed';
   /** Sim time the valves closed, or null while the hold waits for its point of the breath. */
   since: number | null;
+  /** Steps run with the valves closed after the step they closed on, which still carried that step's flow. */
+  held: number;
 }
 /** Why the key did not hold: a mode it does not hold in, or a test's occlusion running. */
 export type KeyRefusal = 'mode' | 'busy';
@@ -72,7 +75,8 @@ export function createHolds(vs: VentState, rec: Recorder, spec: MechanicsSpec, c
     const h = cur!;
     cur = null;
     const so = rec.current();
-    const r: HoldResult | null = h.since === null ? null : {
+    // a hold released before any step ran with the valves closed has no held pressure to read
+    const r: HoldResult | null = h.since === null || h.held === 0 ? null : {
       kind: h.kind, t: P.t, durS: P.t - h.since, paw: P.Paw, vMl: P.V, peep: vs.cfg.peep, mode: vs.cfg.mode,
       ...(h.kind === 'insp' && so ? { breath: { t0: so.t0, vtMl: so.vtMl, pmax: so.pmax, tiFlow: so.tiFlow, constFlow: so.constFlow, peepBefore: rec.last()?.peepEnd ?? vs.cfg.peep, tcexp: Number.NaN } } : {}),
     };
@@ -115,16 +119,16 @@ export function createHolds(vs: VentState, rec: Recorder, spec: MechanicsSpec, c
       if (!keyMode(vs.cfg.mode)) return 'mode';
       if (spent) return true;
       const kind: Kind = P.phase === 'exp' ? 'exp' : 'insp';
-      start({ kind, by: 'key', since: null, maxS: spec.holdMaxS[kind], waitMaxS: Infinity, from: P.t });
+      start({ kind, by: 'key', since: null, held: 0, maxS: spec.holdMaxS[kind], waitMaxS: Infinity, from: P.t });
       return true;
     },
     occlude(kind, o, done) {
       if (cur) return false;
-      start({ kind, by: 'timed', since: null, ...o, from: P.t, done });
+      start({ kind, by: 'timed', since: null, held: 0, ...o, from: P.t, done });
       return true;
     },
     cancel: abandon,
-    state: () => (cur ? { kind: cur.kind, by: cur.by, since: cur.since } : null),
+    state: () => (cur ? { kind: cur.kind, by: cur.by, since: cur.since, held: cur.held } : null),
     last: (k) => results[k],
     forget,
     epoch: () => epoch,
@@ -138,7 +142,7 @@ export function createHolds(vs: VentState, rec: Recorder, spec: MechanicsSpec, c
       if (!h) return;
       if (vs.circuit === 'disconnected') return abandon();
       if (vs.hold === h.kind) {
-        if (h.since === null) { h.since = P.t; changed(); }
+        if (h.since === null) { h.since = P.t; changed(); } else h.held++;
         const full = P.t - h.since >= h.maxS - 1e-9;
         if (full || h.until?.()) {
           if (full && h.by === 'key') spent = true;

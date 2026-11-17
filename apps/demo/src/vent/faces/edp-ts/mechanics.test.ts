@@ -354,6 +354,26 @@ describe('what ends a hold, and what it leaves', () => {
     until(s.d, () => s.c.holds!.state()?.since != null, 10, 'the hold closes');
     return s;
   };
+  it('released on the step the valves close, before any step has held, the key keeps no result: there was no plateau to read', () => {
+    const { d, c } = setup(LUNG, VCV);
+    settled(d);
+    toPhase(d, 'insp');
+    c.holds!.key(true);
+    // released on the step the valves close: that step still carried the inspiration's last flow
+    until(d, () => c.holds!.state()?.since != null, 10, 'the valves close');
+    c.holds!.key(false);
+    expect(c.holds!.last('insp')).toBeNull();
+    expect(d.vs.hold).toBeNull();
+  });
+  it('released after one held step, the plateau is the held pressure: PEEP plus the lung\'s recoil, no flow', () => {
+    const { d, c } = setup(LUNG, VCV);
+    settled(d);
+    toPhase(d, 'insp');
+    c.holds!.key(true);
+    until(d, () => (c.holds!.state()?.held ?? 0) >= 1, 10, 'one held step');
+    c.holds!.key(false);
+    expect(c.holds!.last('insp')!.paw).toBeCloseTo(VCV.peep! + recoilPressure(d.vs.cfg, d.vs.p.V), 9);
+  });
   it('the circuit opened during a hold ends it, keeps no result and gives no held-back breath', () => {
     const { d, c } = holding();
     setCircuit(d.vs, 'disconnected');

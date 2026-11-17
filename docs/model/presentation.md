@@ -93,6 +93,7 @@ renderer, audio and skin contracts.
 | `kind` | `Kind` | An inspiratory or an expiratory hold. |
 | `by` | `'key' \| 'timed'` | 'key' while the key is held; 'timed' for a test's occlusion. |
 | `since` | `number \| null` | Sim time the valves closed, or null while the hold waits for its point of the breath. |
+| `held` | `number` | Steps run with the valves closed after the step they closed on, which still carried that step's flow. |
 
 ## Parameters
 

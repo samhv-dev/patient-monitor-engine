@@ -44,7 +44,9 @@ test('EDP-TS face: an inspiratory hold held with the key gives the plateau and t
   // stay closed while the key is held
   await page.waitForFunction(() => { const v = (window as Any).__vent.vs; return v.hold !== null || v.pendingHold !== null; }, null, { timeout: 10_000, polling: 'raf' });
   expect(await page.evaluate(() => { const v = (window as Any).__vent.vs; return v.hold ?? v.pendingHold; }), 'pressed during the inspiration').toBe('insp');
-  await page.waitForFunction(() => (window as Any).__vent.vs.hold === 'insp', null, { timeout: 10_000, polling: 'raf' });
+  // the valves closed, then a step ran with them closed: no flow, the airway at the plateau (the step they close on
+  // still carries the inspiration's last flow)
+  await page.waitForFunction(() => { const v = (window as Any).__vent.vs; return v.hold === 'insp' && v.p.Q === 0; }, null, { timeout: 10_000, polling: 'raf' });
   await expect(key).toHaveClass(/\blit\b/);
   const plateau = page.locator('.edp-screen .lv').nth(2); // under Peak and Trach.
   const held = await vent();
