@@ -144,3 +144,19 @@ describe('Airway & ventilation: oxygen for the spontaneously breathing patient (
     expect(r.hint.textContent).toBe('A breathing change is staged: commit it first.');
   });
 });
+
+describe('Airway & ventilation: what acts on the patient now', () => {
+  beforeEach(() => document.body.replaceChildren());
+
+  it('the airway the engine reports, whoever breathes: a disconnection or an apnoea on the Ventilator view shows as acting', () => {
+    const { el, breathe } = rig({ source: 'external', device: 'ett' });
+    const now = () => el.querySelector('[data-testid=airway-now]')?.textContent;
+    expect(now()).toBe('Now: Patent.');
+    breathe({ source: 'external', device: 'ett', airway: 'disconnected' });
+    expect(now()).toBe('Now: Circuit disconnected.');
+    breathe({ source: 'ventilator', device: 'ett', airway: 'apnoea' });
+    expect(now()).toBe('Now: Apnoea.');
+    breathe({ source: 'external', device: 'ett' });
+    expect(now()).toBe('Now: Patent.');
+  });
+});

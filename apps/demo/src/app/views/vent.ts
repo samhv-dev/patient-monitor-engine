@@ -83,7 +83,15 @@ export interface CockpitDesk {
    * leave the patient without a ventilator (FU-11 H6).
    */
   handOver(c: Cockpit, still: () => boolean, release: boolean): Promise<number | undefined>;
+  /**
+   * The engine's own ventilator settings `c` starts again from, or null when they are still the ones `c` handed over:
+   * it then keeps its own mode and settings, which the engine's volume-control stand-in could only approximate.
+   */
+  resumeSettings(c: Cockpit): VentSettings | null;
 }
+
+const VENT_KEYS = ['rr', 'vtMl', 'peep', 'fio2', 'ie', 'pmax'] as const;
+const sameVent = (a: VentSettings, b: VentSettings) => VENT_KEYS.every((k) => a[k] === b[k]);
 
 const desks = new WeakMap<AppSession, CockpitDesk>();
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -93,6 +101,7 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
   const had = desks.get(session);
   if (had) return had;
   let driving: Cockpit | null = null;
+  const handedOver = new WeakMap<Cockpit, VentSettings>();
   let detach: () => void = () => {};
   let offAttach: () => void = () => {};
   /** Link `c` to the monitor (and to every new monitor while it stays linked). */
@@ -109,6 +118,9 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
       const refused = (what: string, why?: string) => console.warn('vent link rejected', what, why);
       const l = attachMonitorToLink(roomVentMonitor(session.linked(m)), roomVentPort(p, refused), (cmd, r) => refused(cmd.type, r));
       detach = l;
+      // the patient as it is now: what changed while this cockpit was not linked (an airway event) reaches it at once
+      const ls = session.last.lungState;
+      if (ls?.type === 'lungState') p.post({ v: 1, kind: 'lungState', ev: ls });
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
       // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,
       // through the link so a learner monitor mirrors it
@@ -164,15 +176,21 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
         link(c); // Its settings cannot be read: it drives on (FU-11 H6), as before E128
         return (off(), last);
       }
-      const event = { kind: 'ventilation', source: 'ventilator', ...engineVentilation(s.cfg, s.measured) };
+      const settings = engineVentilation(s.cfg, s.measured);
+      const event = { kind: 'ventilation', source: 'ventilator', ...settings };
       const r = await session.host.submit({ id: `vent-handover-${Date.now()}`, issuedBy: 'ventilator', type: 'applyEvent', event, atTick: last + 1 } as never);
       if (!still()) return undefined;
       if (!r.accepted) {
         console.warn('ventilator hand-over refused:', r.reason);
         link(c); // FU-11 H6: the patient stays ventilated
-      }
+      } else handedOver.set(c, settings);
       off();
       return last;
+    },
+    resumeSettings(c) {
+      const s = session.ventSettings;
+      const h = handedOver.get(c);
+      return s && !(h && sameVent(h, s)) ? s : null;
     },
   };
   desks.set(session, desk);
@@ -249,7 +267,7 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, o:
   const start = () => {
     starting = true;
     const g = gen;
-    const s = session.ventSettings; // it takes over from the engine's own ventilator (what was handed over, or set since)
+    const s = desk.resumeSettings(cockpit); // it takes over from the engine's own ventilator when that was set since
     if (s) linkPort.post({ v: 1, kind: 'control', patch: cockpitPatch(s, last?.cfg) });
     linkPort.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
     void desk.take(cockpit, () => g === gen && !hidden).then(() => {
@@ -416,11 +434,11 @@ export function ventView(session: AppSession): View {
       gen++;
       session.ventShown = true;
       if (started) {
-        // Back on the view after a hand-over: the cockpit starts again from the engine's own ventilator settings (what it
-        // handed over, or what the instructor or the case has set since). Back before it (a fast-forward was running),
+        // Back on the view after a hand-over: the cockpit starts again from the engine's own ventilator settings when the
+        // instructor or the case has set them since; otherwise it keeps its own. Back before it (a fast-forward was running),
         // the cockpit never stopped and keeps its own.
         if (linked() || !port) return;
-        const s = handing ? null : session.ventSettings; // Back before the hand-over landed: it keeps its own
+        const s = handing || !mine ? null : desk.resumeSettings(mine); // Back before the hand-over landed: it keeps its own
         handing = false;
         if (s) port.post({ v: 1, kind: 'control', patch: cockpitPatch(s, cockpit()?.vs.cfg) });
         port.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });

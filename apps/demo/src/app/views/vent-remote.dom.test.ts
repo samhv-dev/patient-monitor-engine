@@ -365,6 +365,37 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     expect(sources(0)).not.toContain('none');
   });
 
+  it('handed over and back: it keeps its own mode unless the ventilator was set meanwhile, and meets the airway as it is now', async () => {
+    const until = async (n: number) => {
+      for (let i = 0; handOvers().length < n; i++) {
+        if (i >= 3000) throw new Error(`hand-over ${n} not applied`);
+        await vi.advanceTimersByTimeAsync(1);
+      }
+    };
+    const a = await remote('vent-a.1');
+    Object.assign(a.d.vs.cfg, { mode: 'PSV', modeLabel: 'SPONT', ps: 8 });
+    await vi.advanceTimersByTimeAsync(2000);
+    a.port.setHidden(true);
+    await until(1);
+    await s.host.submit({ id: 'airway-1', issuedBy: 'panel', type: 'applyEvent', event: { kind: 'airway', state: 'disconnected' } } as never);
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(a.d.vs.circuit).toBe('connected'); // unlinked, it hears nothing
+    a.port.setHidden(false);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(cockpitDesk(s).driving?.remote).toBe(true);
+    expect(a.d.vs.cfg).toMatchObject({ mode: 'PSV', modeLabel: 'SPONT', ps: 8 });
+    expect(a.d.vs.circuit).toBe('disconnected');
+    a.port.setHidden(true);
+    await until(2);
+    await s.host.submit({ id: 'set-1', issuedBy: 'panel', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 16, vtMl: 450, peep: 6, fio2: 0.5 } } as never);
+    await s.host.submit({ id: 'airway-2', issuedBy: 'panel', type: 'applyEvent', event: { kind: 'airway', state: 'patent' } } as never);
+    await vi.advanceTimersByTimeAsync(1500);
+    a.port.setHidden(false);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(a.d.vs.cfg).toMatchObject({ mode: 'VC', rate: 16, vt: 450, peep: 6, fio2: 50 });
+    expect(a.d.vs.circuit).toBe('connected');
+  });
+
   it('the second granted cockpit takes over: the first is told and handed over, the second drives', async () => {
     const a = await remote('vent-a.1');
     await vi.advanceTimersByTimeAsync(2000);

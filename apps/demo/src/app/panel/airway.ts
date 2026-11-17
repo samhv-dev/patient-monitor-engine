@@ -33,6 +33,8 @@ export const O2_CHOICES: Array<[O2Device, string]> = [['none', 'Off (room air)']
 export const LUNG_CHOICES = LUNG_CONDITIONS.filter((x) => x.id !== 'pregnancy');
 export const LUNG_SEVERITY: Array<[string, string]> = [['0.33', 'Mild'], ['0.67', 'Moderate'], ['1', 'Severe']];
 export const LUNG_SIDES: Array<['L' | 'R', string]> = [['L', 'Left'], ['R', 'Right']];
+/** The airway acting now in the sheet's words (absent: patent). */
+export const airwayWords = (state: string | undefined): string => AIRWAY.find(([id]) => id === (state ?? 'patent'))?.[1] ?? 'Patent';
 /** The sheet's airway command. */
 export const airwayCmd = (state: string): Record<string, unknown> => ({ type: 'applyEvent', event: { kind: 'airway', state } });
 /** The sheet's breathing command: the FiO₂ is typed in %. */
@@ -44,6 +46,10 @@ export function airwayTab(c: PanelCtx): HTMLElement {
 
   const airway = select('Airway', AIRWAY, 'patent');
   const airwayRow = h('div', { class: 'row' }, airway.el, button('Stage', () => stage(airwayCmd(airway.sel.value), 'airway')));
+  // what acts on the patient now, whoever breathes for it (a ventilator meets the same circuit and the same apnoea)
+  const airwayNow = h('p', { class: 'hint', 'data-testid': 'airway-now' });
+  const showAirway = () => setText(airwayNow, `Now: ${airwayWords(c.link.ctl.state?.breathing?.airway)}.`);
+  showAirway();
 
   let source = 'spontaneous';
   const rr = stepper({ ...VENT_LIMITS.rr });
@@ -99,7 +105,7 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   };
   syncO2();
   gateO2();
-  c.onRefresh(gateO2);
+  c.onRefresh(() => (gateO2(), showAirway()));
 
   const conds = LUNG_CHOICES;
   // short names from the glossary (Task 26); the catalogue's full text is each option's tooltip and the hint below
@@ -121,7 +127,7 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   syncSide();
 
   return h('div', {},
-    h('h3', {}, 'Airway'), airwayRow,
+    h('h3', {}, 'Airway'), airwayRow, airwayNow,
     h('h3', {}, 'Breathing'), src, settings,
     h('div', { class: 'row' },
       button('Stage', () => stage(breathingCmd(source, rr.value, vt.value, peep.value, fio2.value), 'ventilation')),

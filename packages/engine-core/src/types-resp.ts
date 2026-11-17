@@ -54,4 +54,7 @@ export type RespEvent =
       /** 0–1 tendency to gas trapping (obstruction). */
       autoPeepTendency: number;
       shunt: number; deadSpaceMl: number; frcMl: number;
+      /** The airway as the patient meets it, absent while patent: a ventilator on the link reads its circuit
+       *  (`disconnected`) and the patient's own effort (`apnoea`) from it. */
+      airway?: Exclude<AirwayState, 'patent'>;
     } & Partial<LungStateExt>; // Additive per-lung fields

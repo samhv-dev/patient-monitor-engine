@@ -174,8 +174,11 @@ function patientTriggers(vs: VentState): boolean {
   return sP >= -c.presTrig;
 }
 
-/** `backup`: plan V2, a backup breath of that kind (mandatory; it leaves the apnoea clock where it is). */
-export function startInspiration(vs: VentState, mandatory: boolean, backup?: 'VC' | 'PC'): void {
+/**
+ * `backup`: plan V2, a backup breath of that kind (mandatory; it leaves the apnoea clock where it is). `safety`: the
+ * spontaneous modes' safety breath, given because the patient made none, which leaves the apnoea clock running too.
+ */
+export function startInspiration(vs: VentState, mandatory: boolean, backup?: 'VC' | 'PC', safety = false): void {
   const p = vs.p;
   p.measured.autoPEEP = Math.max(0, recoilPressure(vs.cfg, p.V));
   p.phase = 'insp';
@@ -194,7 +197,7 @@ export function startInspiration(vs: VentState, mandatory: boolean, backup?: 'VC
   if (backup !== undefined) vs.backupBreath = backup; // plan V2: the apnoea clock runs on from the patient's last breath
   else {
     if (vs.backupBreath !== undefined) delete vs.backupBreath;
-    vs.lastBreathT = p.t; // Stage V: apnoea clock
+    if (!safety) vs.lastBreathT = p.t; // Stage V: apnoea clock
   }
 }
 
@@ -277,9 +280,11 @@ function advancePhase(vs: VentState, pmaxHit: boolean, stepPeak: number): void {
     }
     if (p.phaseT >= minEx && patientTriggers(vs)) tg = true;
     const armed = backupArmed(c);
+    let safety = false;
     if (isSpont && !armed && p.breathT >= Math.max(mp, 6)) {
       tg = true;
       md = true;
+      safety = true;
     }
     // plan V2 (manual pp. 49–50; research/57 T-38, A-26, A-45): no patient breath for the apnoea time starts the backup;
     // its next breaths come at the set rate; a patient trigger on the same step wins and ends the backup
@@ -295,7 +300,7 @@ function advancePhase(vs: VentState, pmaxHit: boolean, stepPeak: number): void {
       p.measured.autoPEEP = Math.max(0, recoilPressure(c, p.V));
       return;
     }
-    if (tg) startInspiration(vs, md, bk);
+    if (tg) startInspiration(vs, md, bk, safety);
   }
 }
 

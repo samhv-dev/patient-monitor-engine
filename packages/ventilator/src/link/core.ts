@@ -10,6 +10,7 @@ import { applyLungState, createLungLink, LUNG_KEYS, lungBaseOf, type LungLink } 
 import type { VentConfig } from '../types.ts';
 import { toVentFrame } from '../frame.ts';
 import { modeName } from '../presets.ts';
+import { setCircuit } from '../vent.ts';
 import type { VentState } from '../types.ts';
 import type { LinkProfile } from './profiles.ts';
 
@@ -62,9 +63,20 @@ export function linkTick(core: LinkCore, _dt: number): Command[] {
   return out;
 }
 
-/** Engine events the ventilator consumes. */
+/**
+ * Engine events the ventilator consumes. The circuit is one: opened or closed at the patient by anyone (the ventilator's
+ * own toggle, the instructor), the engine's airway carries it, and the ventilator follows each change of it without
+ * sending it back. Only a change is followed, so a lungState sent before the engine applied the ventilator's own toggle
+ * does not undo it.
+ */
 export function linkEvent(core: LinkCore, ev: EngineEvent): void {
-  if (ev.type === 'lungState') applyLungState(core.vs, core.lung, ev);
+  if (ev.type !== 'lungState') return;
+  const was = core.lung.last?.airway;
+  applyLungState(core.vs, core.lung, ev);
+  if (ev.airway === was) return;
+  if (ev.airway === 'disconnected') setCircuit(core.vs, 'disconnected');
+  else if (was === 'disconnected') setCircuit(core.vs, 'connected');
+  core.circuitSent = core.vs.circuit;
 }
 
 /**

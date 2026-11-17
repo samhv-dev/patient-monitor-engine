@@ -43,7 +43,8 @@ export function applyLungState(vs: VentState, ll: LungLink, ls: LungStateEvent):
     compliance: ls.complianceMlPerCmH2O, rInsp: ls.resistanceCmH2OPerLps,
     rExp: ls.resistanceExpCmH2OPerLps ?? ls.resistanceCmH2OPerLps, pleural: ls.pleuralCmH2O ?? 0,
   }));
-  // effort only ADDS a patient: a profile that breathes keeps its own effort
-  c.spont = b.spont || ls.effort > 0.05;
-  c.pmus = b.spont ? b.pmus : EFFORT_PMUS_CMH2O * ls.effort;
+  // effort only ADDS a patient: a profile that breathes keeps its own effort, unless the patient has stopped breathing
+  const own = b.spont && ls.airway !== 'apnoea';
+  c.spont = own || ls.effort > 0.05;
+  c.pmus = own ? b.pmus : EFFORT_PMUS_CMH2O * ls.effort;
 }

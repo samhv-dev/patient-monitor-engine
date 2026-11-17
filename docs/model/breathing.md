@@ -53,8 +53,8 @@ reads it for the tick order, the ventilator link and the events it emits.
 | [`driver.ts:17`](../../packages/engine-core/src/l2/resp/driver.ts#L17) | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
 | [`driver.ts:77`](../../packages/engine-core/src/l2/resp/driver.ts#L77) | the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p. |
 | [`driver.ts:442`](../../packages/engine-core/src/l2/resp/driver.ts#L442) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
-| [`pipeline.ts:456`](../../packages/engine-core/src/l2/resp/pipeline.ts#L456) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
-| [`pipeline.ts:511`](../../packages/engine-core/src/l2/resp/pipeline.ts#L511) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
+| [`pipeline.ts:457`](../../packages/engine-core/src/l2/resp/pipeline.ts#L457) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
+| [`pipeline.ts:512`](../../packages/engine-core/src/l2/resp/pipeline.ts#L512) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
 ## Couplings
 
@@ -199,6 +199,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `cycleVolume` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Lung volume above FRC (mL) at time t within cycle c (constant-flow inspiration, passive expiration). |
 | `chestVolume` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Chest volume (mL above FRC) for the impedance channel: |
 | `breathSignal` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): |
+| `lungPeep` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The end-expiratory pressure the lung meets (cmH2O): |
 | `meanAirwayPressure` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Mean airway pressure (cmH2O) now: |
 | `alveolarVentilation` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Alveolar ventilation (L/min) delivered at time t: |
 | `nominalRate` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | Nominal breaths/min and VT of the current settings (MANUAL calibration and the `state` event). |

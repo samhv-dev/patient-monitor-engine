@@ -51,12 +51,12 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 
 | Where | Relation |
 |---|---|
-| [`core.ts:21`](../../packages/ventilator/src/link/core.ts#L21) | The VC flow that gives the monitor's own ventilator breath — x = VT / Ti, Ti = 60 / rate / (1 + I:E), no pause — so |
+| [`core.ts:22`](../../packages/ventilator/src/link/core.ts#L22) | The VC flow that gives the monitor's own ventilator breath — x = VT / Ti, Ti = 60 / rate / (1 + I:E), no pause — so |
 | [`lung-input.ts:3`](../../packages/ventilator/src/lung-input.ts#L3) | v1.9's custom factor eflK = R_insp/R_exp with no PEEP stenting, exactly as the catalogue rows are), and the pleural |
 | [`mechanics.ts:2`](../../packages/ventilator/src/mechanics.ts#L2) | for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil |
 | [`mechanics.ts:54`](../../packages/ventilator/src/mechanics.ts#L54) | the alveolar pressure (PEEP) by E = pleural − 5.44 − PEEP; the lung is then collapsed at end-expiration and every |
 | [`catalogue.ts:4`](../../packages/ventilator/src/pathology/catalogue.ts#L4) | plateau = PEEP + autoPEEP + VT/C, driving pressure = VT/C, peak − plateau = R_insp × 1 L/s; `signature` bands are the |
-| [`vent.ts:394`](../../packages/ventilator/src/vent.ts#L394) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
+| [`vent.ts:399`](../../packages/ventilator/src/vent.ts#L399) | Step until the vent clock reaches sim time `t` (s). Sim time = n·DT, so 4 steps per 20 ms engine tick. |
 
 ## State
 
@@ -224,6 +224,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | [`fast-forward-run.test.ts`](../../packages/ventilator/test/fast-forward-run.test.ts) | 0 | 0 |
 | [`fidelity.test.ts`](../../packages/ventilator/test/fidelity.test.ts) | 0 | 0 |
 | [`fx1-frame-port.test.ts`](../../packages/ventilator/test/fx1-frame-port.test.ts) | 0 | 0 |
+| [`instructor-airway.test.ts`](../../packages/ventilator/test/instructor-airway.test.ts) | 0 | 0 |
 | [`link-core.test.ts`](../../packages/ventilator/test/link-core.test.ts) | 0 | 0 |
 | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) | 1 | 0 |
 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) | 4 | 0 |
