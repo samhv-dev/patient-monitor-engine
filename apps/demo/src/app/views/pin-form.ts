@@ -16,6 +16,7 @@ export const PHONE_WORDS = {
   takenOver: (at: string) => `Taken over by another phone at ${at}. Enter the PIN to sign in again.`,
   pinChanged: "The PIN was changed on the instructor's computer. Enter the new PIN.",
   newSession: "The instructor's computer started a new session. Enter the PIN to sign in again.",
+  roomForgotten: "The instructor's computer forgot the room. Enter the PIN to sign in again.",
   notRenewed: "This phone's sign-in could not be renewed. Enter the PIN to sign in again.",
   noPhone: "The instructor's computer does not take an instructor phone.",
   restarted: (at: string) => `The instructor's computer restarted at ${at}: presses still waiting for an answer were not given.`,
@@ -34,6 +35,7 @@ export function refusalWords(a: Pick<InstructorAccess, 'reason' | 'code'>, at: s
   if (a.reason === INSTRUCTOR_REASONS.pinChanged) return PHONE_WORDS.pinChanged;
   if (a.reason === INSTRUCTOR_REASONS.noPhone) return PHONE_WORDS.noPhone;
   if (a.reason === TICKET_REASONS.newSession) return PHONE_WORDS.newSession;
+  if (a.reason === TICKET_REASONS.roomForgotten) return PHONE_WORDS.roomForgotten;
   if (a.reason === TICKET_REASONS.used) return PHONE_WORDS.notRenewed;
   return `Not signed in: ${a.reason ?? "the instructor's computer refused the phone"}.`;
 }

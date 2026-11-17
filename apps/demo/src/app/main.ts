@@ -356,6 +356,7 @@ if (follow && shows === 'pick') {
       },
     },
     learner: { pin: learner, host: session.host, relay }, // L6: the learner PIN beside the instructor's (§4 D9)
+    signOut: () => session.host.forgetSignIns(),
   });
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario, runDraft: (id, doc) => draft.run(id, doc) }));

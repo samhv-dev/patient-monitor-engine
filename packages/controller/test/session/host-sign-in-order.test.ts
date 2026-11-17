@@ -1,9 +1,9 @@
 // The host's sign-in check waits on a SHA-256 (sign-in-book.ts, crypto.subtle). Here the digest is held and released in a
 // chosen order, so each case is the same every run: a step of the host's own (a PIN change, the ventilator's silence
-// hand-over, a transport that closes) taken while a device's check is pending comes after that check, and the same
-// device's next message too.
+// hand-over, a transport that closes, "Forget the room") taken while a device's check is pending comes after that check,
+// and the same device's next message too.
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, VENTILATOR_REASONS, type HostTarget } from '../../src/session/host-session.ts';
+import { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, TICKET_REASONS, VENTILATOR_REASONS, type HostTarget } from '../../src/session/host-session.ts';
 import { SignInBook, type BookKeep } from '../../src/session/sign-in-book.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { createStamper, type WireMessage } from '../../src/protocol.ts';
@@ -45,7 +45,7 @@ function host(keep: BookKeep, pins: { learner: () => string; instructor: () => s
   const vents: Array<string | null> = [];
   const h = new HostSession({
     session: S, target, stateIntervalMs: 0, instructorPin: pins.instructor, learnerPin: pins.learner, signIns: new SignInBook(S, keep),
-    onInstructors: (n) => counts.push(n), onVent: () => undefined, onVentilator: (f) => vents.push(f),
+    onInstructors: (n) => counts.push(n), onVent: () => undefined, onVentilator: (f) => vents.push(f), pumpRack: () => ['syringe'],
   });
   hosts.push(h);
   const hub = createInProcessHub();
@@ -56,16 +56,20 @@ function host(keep: BookKeep, pins: { learner: () => string; instructor: () => s
 }
 const grants = (got: WireMessage[], to: string) => got.filter((m): m is Grant => m.kind === 'grant' && m.to === to);
 const stampers = new Map<string, ReturnType<typeof createStamper>>(); // one sequence per peer id, as a page keeps
-const hello = (relay: ReturnType<typeof host>['relay'], from: string, role: 'learner' | 'instructor' | 'ventilator', proof: Record<string, string>) =>
-  relay.send((stampers.get(from) ?? stampers.set(from, createStamper(S, from)).get(from)!)({ kind: 'hello', role, ...(role === 'learner' ? { show: 'learner', device: 'remote0001' } : {}), ...proof } as never));
+const hello = (relay: ReturnType<typeof host>['relay'], from: string, role: 'learner' | 'pump' | 'instructor' | 'ventilator', proof: Record<string, string>) =>
+  relay.send((stampers.get(from) ?? stampers.set(from, createStamper(S, from)).get(from)!)({ kind: 'hello', role, ...(role === 'learner' ? { show: 'learner', device: 'remote0001' } : role === 'pump' ? { device: 'pump00000001' } : {}), ...proof } as never));
+const forgotten = (h: HostSession) => h.forgetSignIns();
 
 describe("the host's own steps while a sign-in check is pending come after it", () => {
-  for (const c of [
+  type Case = { role: 'learner' | 'pump' | 'instructor' | 'ventilator'; pin: string; reason: string; change: (h: HostSession) => Promise<void> };
+  const cases: Case[] = [
     { role: 'learner', pin: LEARNER_PIN, reason: LEARNER_REASONS.pinChanged, change: (h: HostSession) => h.learnerPinChanged() },
     { role: 'instructor', pin: INSTRUCTOR_PIN, reason: INSTRUCTOR_REASONS.pinChanged, change: (h: HostSession) => h.instructorPinChanged() },
     { role: 'ventilator', pin: INSTRUCTOR_PIN, reason: INSTRUCTOR_REASONS.pinChanged, change: (h: HostSession) => h.instructorPinChanged() },
-  ] as const) {
-    it(`${c.role}: the PIN changes during the check: the device ends refused, and its ticket admits it no more`, async () => {
+    ...(['learner', 'pump', 'instructor', 'ventilator'] as const).map((role) => ({ role, pin: role === 'learner' || role === 'pump' ? LEARNER_PIN : INSTRUCTOR_PIN, reason: TICKET_REASONS.roomForgotten, change: forgotten })),
+  ];
+  for (const c of cases) {
+    it(`${c.role}: ${c.change === forgotten ? 'the room is forgotten' : 'the PIN changes'} during the check: the device ends refused, and its ticket admits it no more`, async () => {
       const keep = memory();
       const a = host(keep, { learner: () => LEARNER_PIN, instructor: () => INSTRUCTOR_PIN });
       const d = holdDigests();
@@ -84,6 +88,27 @@ describe("the host's own steps while a sign-in check is pending come after it", 
       expect(grants(a.got, 'd.2').at(-1)).toMatchObject({ granted: false, reason: c.reason });
     });
   }
+
+  it('a learner proving its ticket while the room is forgotten: the ticket handed on is void too', async () => {
+    const a = host(memory(), { learner: () => LEARNER_PIN, instructor: () => INSTRUCTOR_PIN });
+    hello(a.relay, 'lr.1', 'learner', { pin: LEARNER_PIN });
+    await waitFor(() => grants(a.got, 'lr.1').length > 0, 2000, 'the grant');
+    const first = grants(a.got, 'lr.1')[0]?.ticket as string;
+    const d = holdDigests();
+    hello(a.relay, 'lr.2', 'learner', { ticket: first }); // its new socket, proving the ticket
+    await waitFor(() => d.asked() > 0, 2000, 'the check pending');
+    const done = a.h.forgetSignIns();
+    d.release();
+    await done;
+    expect(grants(a.got, 'lr.2').map((g) => [g.granted, g.reason])).toEqual([[true, undefined], [false, TICKET_REASONS.roomForgotten]]);
+    expect(a.h.learnerRemotes()).toBe(0);
+    for (const ticket of [first, grants(a.got, 'lr.2')[0]?.ticket as string]) {
+      const n = grants(a.got, 'lr.3').length;
+      hello(a.relay, 'lr.3', 'learner', { ticket });
+      await waitFor(() => grants(a.got, 'lr.3').length > n, 2000, 'the answer to the ticket');
+      expect(grants(a.got, 'lr.3').at(-1)).toMatchObject({ granted: false, reason: TICKET_REASONS.roomForgotten });
+    }
+  });
 
   it("the ventilator's silence hand-over during its own pending check: it ends revoked for its silence, the place free", async () => {
     const a = host(memory(), { learner: () => LEARNER_PIN, instructor: () => INSTRUCTOR_PIN });

@@ -1,8 +1,8 @@
 // The Room page's instructor phone (plan instructor-peer-role.md P7, §1, §3, §5): one card, self-contained so that the
 // Room set-up page (R7) can move it into its `#room-instructor` slot with no change here. It holds:
 // - the instructor phone's row: no phone, signed in since hh:mm (a second phone with the PIN takes over: option B),
-//   lost at hh:mm (its socket left; the case runs on, Q5), or signed out by a PIN change; and the host's count of wrong
-//   PINs in the last minute (no host lockout: the relay limits each phone's address);
+//   lost at hh:mm (its socket left; the case runs on, Q5), or signed out by a PIN change or "Forget the room"; and the
+//   host's count of wrong PINs in the last minute (no host lockout: the relay limits each phone's address);
 // - the PIN behind press-and-hold (Q2): while not held the digits are not in the page at all, so a laptop mirrored to
 //   the projector never shows them; Change the PIN draws a new one and the host revokes the phone at once;
 // - a second QR code, the phone's address `?relay#/remote?code=CODE` (classroom.ts instructorUrl), which carries no
@@ -33,9 +33,15 @@ export interface InstructorRoomCard {
   draw(): void;
   enter(): void;
   leave(): void;
+  /** The phone's revocation until `done` is the Room page's own "Forget the room": "signed out", not "lost". */
+  forgetting(done: Promise<void>): void;
 }
 
-type Row = { state: 'none' } | { state: 'in'; since: number; tookOver: boolean } | { state: 'lost'; at: number } | { state: 'changed'; at: number };
+/** Why this computer itself signed the phone out. */
+type SignedOut = 'pin' | 'room';
+type Row = { state: 'none' } | { state: 'in'; since: number; tookOver: boolean } | { state: 'lost'; at: number } | { state: 'out'; at: number; why: SignedOut };
+
+const OUT_WORDS: Record<SignedOut, string> = { pin: 'Signed out: the PIN was changed', room: 'Signed out: the room was forgotten' };
 
 export const HIDDEN_PIN = '••••';
 
@@ -45,7 +51,7 @@ const hhmm = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-d
 export function rowWords(r: Row): { level: 'stable' | 'weak' | 'down'; state: string; when: string } {
   if (r.state === 'in') return { level: 'stable', state: r.tookOver ? 'Signed in (another phone took over)' : 'Signed in', when: `since ${hhmm(r.since)}` };
   if (r.state === 'lost') return { level: 'down', state: 'Lost: the case runs on; the phone signs in again with the PIN', when: `at ${hhmm(r.at)}` };
-  if (r.state === 'changed') return { level: 'weak', state: 'Signed out: the PIN was changed', when: `at ${hhmm(r.at)}` };
+  if (r.state === 'out') return { level: 'weak', state: OUT_WORDS[r.why], when: `at ${hhmm(r.at)}` };
   return { level: 'weak', state: 'No phone signed in', when: '—' };
 }
 
@@ -88,7 +94,15 @@ export function pinHold(o: { get(): string; what: string }): { value: HTMLElemen
 export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
   const now = d.now ?? Date.now;
   let row: Row = d.instructors() > 0 ? { state: 'in', since: now(), tookOver: false } : { state: 'none' };
-  let changing = false; // the revocation our own Change the PIN causes is "signed out", not "lost"
+  let signingOut: SignedOut | null = null; // the revocation this page causes is "signed out", not "lost"
+  // the host revokes after any sign-in it is still checking (host-session.ts inOrder): "signed out" until it has
+  const signOut = (why: SignedOut, done: Promise<void>) => {
+    signingOut = why;
+    void done.then(() => {
+      signingOut = null;
+      draw();
+    });
+  };
 
   // ------------------------------------------------------------------------------------------------------- the row
   const dot = h('i', { class: 'room-dot', role: 'img' });
@@ -100,14 +114,9 @@ export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
   // --------------------------------------------------------------------------------------------------- the PIN
   const { value, hold, reveal, held } = pinHold({ get: () => d.pin.get(), what: 'PIN' });
   const change = button('Change the PIN', () => {
-    changing = true;
     d.pin.change();
     if (held()) reveal(true);
-    // the host revokes after any sign-in it is still checking (host-session.ts inOrder): "changed" until it has
-    void d.host.instructorPinChanged().then(() => {
-      changing = false;
-      draw();
-    });
+    signOut('pin', d.host.instructorPinChanged());
     draw();
   }, 'ip-peer-change');
   const pinBox = h('div', { class: 'ip-peer-pinbox' }, h('span', { class: 'ip-peer-pin-label' }, 'PIN'), value, hold, change);
@@ -156,7 +165,7 @@ export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
   d.onInstructors((n) => {
     const t = now();
     if (n > 0) row = { state: 'in', since: t, tookOver: row.state === 'in' };
-    else if (row.state === 'in') row = changing ? { state: 'changed', at: t } : { state: 'lost', at: t };
+    else if (row.state === 'in') row = signingOut ? { state: 'out', at: t, why: signingOut } : { state: 'lost', at: t };
     draw();
   });
   draw();
@@ -168,5 +177,6 @@ export function instructorRoomCard(d: InstructorRoomDeps): InstructorRoomCard {
       draw();
     },
     leave: () => reveal(false),
+    forgetting: (done) => signOut('room', done),
   };
 }

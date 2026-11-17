@@ -40,6 +40,7 @@ export const PUMP_WORDS = {
   pinChanged: "The learner PIN was changed on the instructor's computer. Enter the new learner PIN.",
   takenOver: 'This sign-in was taken by another device. Enter the learner PIN to sign in again.',
   newSession: "The instructor's computer started a new session. Enter the learner PIN to sign in again.",
+  roomForgotten: "The instructor's computer forgot the room. Enter the learner PIN to sign in again.",
   notRenewed: "This tablet's sign-in could not be renewed. Enter the learner PIN to sign in again.",
   noRemote: "The instructor's computer does not take a learner PIN yet: it has none set on Room setup.",
   samePins: "The instructor's computer cannot take a pump tablet until it draws a new learner PIN. Ask the instructor.",
@@ -63,6 +64,7 @@ export function pumpRefusalWords(a: { reason?: string; code?: string }): string 
   if (a.reason === LEARNER_REASONS.samePins) return PUMP_WORDS.samePins;
   if (a.reason === INSTRUCTOR_REASONS.takenOver) return PUMP_WORDS.takenOver;
   if (a.reason === TICKET_REASONS.newSession) return PUMP_WORDS.newSession;
+  if (a.reason === TICKET_REASONS.roomForgotten) return PUMP_WORDS.roomForgotten;
   if (a.reason === TICKET_REASONS.used) return PUMP_WORDS.notRenewed;
   return `Not signed in: ${a.reason ?? "the instructor's computer refused the tablet"}.`;
 }

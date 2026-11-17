@@ -308,18 +308,20 @@ describe('Room', () => {
     ];
     const fns = new Set<(n: number, d: RelayDevice[] | null) => void>();
     const opened: string[] = [];
+    const signedOut: number[] = [];
     const local = fakeTransport('open');
     const make = () => roomView({
       code: 'ABC234', relay: 'ws://192.168.1.20:8787/', relayLink: fakeTransport('open'), local, hostPeerId: 'host-1', learnerUrl: 'http://127.0.0.1:5173/?follow=ABC234#/monitor', now: () => 100_000,
       followers: () => table?.filter((x) => x.role !== 'instructor').length ?? 0, onFollowers: (f) => (fns.add(f), () => void fns.delete(f)), devices: () => table,
       info: async () => ({ relay: 'pme', port: 8787, addresses: ['192.168.1.20'], serves: true }), open: (u) => void opened.push(u), ...(o.renew ? { renew: o.renew } : {}), ...(o.label ? { label: o.label } : {}),
+      signOut: async () => void signedOut.push(1),
     });
     const v = make();
     document.body.append(v.el);
     v.enter?.('');
     const tell = (next: RelayDevice[]) => ((table = next), fns.forEach((f) => f(next.length, next)));
     const rows = () => [...v.el.querySelectorAll<HTMLTableRowElement>('.room-table tbody tr')].map((tr) => [tr.dataset.level, ...[...tr.cells].slice(1).map((td) => (td.querySelector('input') as HTMLInputElement | null)?.placeholder ?? td.textContent)]);
-    return { v, make, tell, rows, opened, local };
+    return { v, make, tell, rows, opened, local, signedOut };
   }
 
   it('R7 Room setup: the table of a three-device fake relay, the box, and the instructor slot left empty for P7', () => {
@@ -342,7 +344,7 @@ describe('Room', () => {
 
   it("R7 the instructor phone's card (P7, room-instructor.ts) sits in Room setup's `#room-instructor` slot, unchanged", () => {
     const calls: string[] = [];
-    const card = { el: h('section', { class: 'room-card ip-room' }, 'instructor card'), draw: () => void calls.push('draw'), enter: () => void calls.push('enter'), leave: () => void calls.push('leave') };
+    const card = { el: h('section', { class: 'room-card ip-room' }, 'instructor card'), draw: () => void calls.push('draw'), enter: () => void calls.push('enter'), leave: () => void calls.push('leave'), forgetting: () => void calls.push('forgetting') };
     const v = roomView({ code: 'ABC234', relay: null, relayLink: null, local: fakeTransport('open'), hostPeerId: 'host-1', learnerUrl: 'about:blank', followers: () => 0, onFollowers: () => () => undefined, instructor: card });
     document.body.append(v.el);
     expect(v.el.querySelector('#room-instructor > .ip-room')).toBe(card.el);
@@ -368,9 +370,9 @@ describe('Room', () => {
     v.leave?.();
   });
 
-  it('R7 names: edited, kept under the device key across a reload of the page, the absent device grey; "Forget the room" clears them, not the code', () => {
+  it('R7 names: edited, kept under the device key across a reload of the page, the absent device grey; "Forget the room", once confirmed, clears them and signs every device out, not the code', () => {
     localStorage.setItem('pme.roomCode', 'ABC234');
-    const { v, make, tell, rows } = setup();
+    const { v, make, tell, rows, signedOut } = setup();
     const input = v.el.querySelector<HTMLInputElement>('tr[data-device="phonekey0001"] input.room-name')!;
     expect(input.getAttribute('aria-label')).toBe('Name of Phone 1');
     input.value = 'Bed 3 phone';
@@ -387,10 +389,19 @@ describe('Room', () => {
     const grey = again.el.querySelector<HTMLTableRowElement>('tr[data-device="tabletkey002"]')!;
     expect([grey.dataset.level, grey.cells[2]?.textContent, grey.cells[3]?.textContent]).toEqual(['absent', 'Monitor', 'expected, not connected']);
     expect(again.el.querySelector('.room-last')?.textContent).toBe('Last time in this room: 2 devices (1 learner monitor, 1 monitor).');
+    const ask = again.el.querySelector('dialog.room-forget-ask') as HTMLDialogElement;
     (again.el.querySelector('.room-forget') as HTMLButtonElement).click();
+    expect(ask.open).toBe(true);
+    expect(ask.textContent).toBe('Forget the room?Every phone and tablet signed in with a PIN is signed out: each shows its sign-in form and needs the PIN again. The device names and the windows kept for the next time are cleared. The room code and the PINs stay, and a screen that follows without a PIN (a learner monitor, a depth window) keeps following.Keep the roomForget the room');
+    ([...ask.querySelectorAll('button')].find((b) => b.textContent === 'Keep the room') as HTMLButtonElement).click();
+    expect([ask.open, signedOut.length, names()]).toEqual([false, 0, ['This window', 'Bed 3 phone', '']]);
+    (again.el.querySelector('.room-forget') as HTMLButtonElement).click();
+    (ask.querySelector('.room-forget-yes') as HTMLButtonElement).click();
+    expect([ask.open, signedOut.length]).toEqual([false, 1]);
     expect(again.el.querySelector('tr[data-device="tabletkey002"]')).toBeNull();
     expect((again.el.querySelector<HTMLInputElement>('tr[data-device="phonekey0001"] input')!).value).toBe('');
-    expect(again.el.querySelector('.room-said')?.textContent).toBe('Forgotten: the device names and the windows. The room code ABC234 stays.');
+    expect(again.el.querySelector('.room-said')?.textContent).toBe('Forgotten: the device names and the windows, and every phone and tablet is signed out. The room code ABC234 and the PINs stay.');
+    expect(again.el.querySelector('.room-setup .hint')?.textContent).toBe('Forgetting the room clears the device names and the windows, and signs every phone and tablet out; the code and the PINs stay.');
     expect(localStorage.getItem('pme.roomCode')).toBe('ABC234');
     expect(rows().length).toBeGreaterThan(0);
     again.leave?.();

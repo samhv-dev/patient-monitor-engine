@@ -3,7 +3,7 @@
 // the button is held (pointer or keyboard); Change the PIN draws a new one and revokes the signed-in phone (P3's revoke,
 // observed on a real HostSession whose phone is a real instructor ControllerSession); the row says the phone's state
 // and since when; the second QR code is the phone's address and carries no PIN.
-import { ControllerSession, SignInCredential, createInProcessHub, HostSession, INSTRUCTOR_REASONS, type HostTarget } from '@pme/controller';
+import { ControllerSession, SignInCredential, createInProcessHub, HostSession, INSTRUCTOR_REASONS, TICKET_REASONS, type HostTarget } from '@pme/controller';
 import { createEngine } from '@pme/engine-core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { instructorPin, type PinStore } from '../instructor-pin.ts';
@@ -97,6 +97,27 @@ describe("the Room's instructor PIN", () => {
     expect(host.instructorDenials()).toBe(1);
     const fresh = phone(pin.get());
     await until(() => fresh.access.state === 'granted', 'the new PIN signs in');
+  });
+
+  it('"Forget the room", confirmed on the Room page, signs the phone out ("the room was forgotten"); the PIN stays and signs in', async () => {
+    const { pin, phone, row, tick, host, card } = laptop();
+    const a = phone('4729');
+    await until(() => a.access.state === 'granted', 'the phone signed in');
+    const room = roomView({
+      code: CODE, relay: null, relayLink: null, local: createInProcessHub().connect(), hostPeerId: 'host-x', learnerUrl: '/?follow=AB2CD3',
+      followers: () => 0, onFollowers: () => () => undefined, instructor: card, signOut: () => host.forgetSignIns(),
+    });
+    document.body.replaceChildren(room.el);
+    tick(3 * 60_000);
+    (room.el.querySelector('.room-forget') as HTMLButtonElement).click();
+    expect(a.access.state).toBe('granted'); // asked first
+    (room.el.querySelector('.room-forget-yes') as HTMLButtonElement).click();
+    await until(() => a.access.state === 'revoked', 'the phone signed out');
+    expect(a.access).toMatchObject({ state: 'revoked', reason: TICKET_REASONS.roomForgotten });
+    expect(row()).toBe('Signed out: the room was forgotten at 13:08');
+    expect(pin.get()).toBe('4729');
+    const again = phone('4729');
+    await until(() => again.access.state === 'granted', 'the same PIN signs in');
   });
 });
 

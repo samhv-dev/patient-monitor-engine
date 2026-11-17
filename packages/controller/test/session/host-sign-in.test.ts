@@ -1,10 +1,12 @@
 // The host's side of the round after its page reloads: a device admitted on a PIN was handed a ticket; a new host on
 // the same book admits it on that ticket and hands on the next; every case that must ask for the PIN again is refused
-// with its own reason (the PIN changed, taken over, another session, a ticket not known or said by a copy).
+// with its own reason (the PIN changed, taken over, another session, a ticket not known or said by a copy). "Forget the
+// room" voids every ticket and signs every device out.
 import { afterEach, describe, expect, it } from 'vitest';
 import { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, TICKET_REASONS, type HostTarget } from '../../src/session/host-session.ts';
 import { SignInBook, type BookKeep } from '../../src/session/sign-in-book.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
+import { channelName, createBroadcastChannelTransport } from '../../src/transport/broadcast-channel.ts';
 import { createStamper, type ManagedTransport, type WireMessage } from '../../src/protocol.ts';
 import { collect, waitFor } from '../helpers.ts';
 
@@ -205,5 +207,77 @@ describe('the cases that ask for the PIN again, each with its reason', () => {
     expect((await answer(got, 'lr.1', 1)).ticket).toBeUndefined();
     device(relay, 'lr.2', 'learner', { show: 'learner', device: KEY })({ ticket: `ABCDEFGH.${'A'.repeat(22)}` });
     expect(await answer(got, 'lr.2', 1)).toMatchObject({ granted: false, reason: TICKET_REASONS.newSession });
+  });
+});
+
+describe('"Forget the room" signs every device out, and only the host can do it', () => {
+  const pins = { learner: () => LEARNER_PIN, instructor: () => INSTRUCTOR_PIN };
+  const signed = [
+    { from: 'ins.1', role: 'instructor', extra: {}, pin: INSTRUCTOR_PIN },
+    { from: 'ven.1', role: 'ventilator', extra: {}, pin: INSTRUCTOR_PIN },
+    { from: 'lr.1', role: 'learner', extra: { show: 'learner', device: KEY }, pin: LEARNER_PIN },
+    { from: 'pu.1', role: 'pump', extra: { device: 'pump00000001' }, pin: LEARNER_PIN },
+  ] as const;
+  /** The host with a device of every role signed in on its PIN, a same-computer channel, and a monitor window on it. */
+  async function room() {
+    const a = hostPage(memory(), pins);
+    const local = createBroadcastChannelTransport(S);
+    a.host.addTransport(local);
+    const page = createBroadcastChannelTransport(S);
+    const heard = collect(page);
+    const tickets = new Map<string, string>();
+    for (const d of signed) {
+      device(a.relay, d.from, d.role, d.extra)({ pin: d.pin });
+      const g = await answer(a.got, d.from, 1);
+      expect(g.granted).toBe(true);
+      tickets.set(d.from, g.ticket as string);
+    }
+    device(page, 'mon.1', 'viewer' as never, { show: 'monitor' })({});
+    await waitFor(() => heard.some((m) => m.kind === 'snapshot'), 2000, "the monitor window's welcome");
+    return { ...a, local, page, heard, tickets, close: () => (local.close(), page.close()) };
+  }
+  const grantsTo = (got: WireMessage[], to: string) => got.filter((m): m is Grant => m.kind === 'grant' && m.to === to);
+
+  it('every role is told why, every ticket is void, the PINs still sign in, and the monitor window is not touched', async () => {
+    const r = await room();
+    await r.host.forgetSignIns();
+    for (const d of signed) expect(grantsTo(r.got, d.from).at(-1)).toMatchObject({ granted: false, reason: TICKET_REASONS.roomForgotten });
+    expect([r.host.learnerRemotes(), r.host.ventilator]).toEqual([0, null]);
+    expect(r.heard.filter((m) => m.kind === 'grant')).toEqual([]);
+    for (const d of signed) {
+      device(r.relay, `${d.from}b`, d.role, d.extra)({ ticket: r.tickets.get(d.from) });
+      expect(await answer(r.got, `${d.from}b`, 1)).toMatchObject({ granted: false, reason: TICKET_REASONS.roomForgotten });
+      device(r.relay, `${d.from}c`, d.role, d.extra)({ pin: d.pin });
+      expect(await answer(r.got, `${d.from}c`, 1)).toMatchObject({ granted: true });
+    }
+    r.close();
+  });
+
+  it('nothing a relay peer or a same-computer page sends signs a device out or voids its ticket', async () => {
+    const r = await room();
+    const tries = (from: string) => [
+      { kind: 'hello', role: 'host' },
+      { kind: 'hello', role: 'instructor', pin: '0000' },
+      { kind: 'hello', role: 'learner', show: 'learner', device: 'eve000000001', ticket: `ABCDEFGH.${'A'.repeat(22)}` },
+      ...signed.map((d) => ({ kind: 'grant', to: d.from, granted: false, reason: TICKET_REASONS.roomForgotten })),
+      { kind: 'command', body: { id: `${from}-c`, issuedBy: 'remote', type: 'forgetSignIns' } },
+    ];
+    for (const [t, from] of [[r.relay, 'eve.1'], [r.page, 'eve.2']] as const) {
+      const st = createStamper(S, from);
+      for (const f of tries(from)) t.send(st(f as never));
+    }
+    const raw = new BroadcastChannel(channelName(S)); // any page of the origin may post a farewell naming any id
+    for (const d of signed) raw.postMessage({ relay: 'peer-left', id: d.from });
+    raw.postMessage(createStamper(S, 'eve.3')({ kind: 'hello', role: 'instructor', pin: '0000' })); // after the farewells, on the same channel
+    raw.close();
+    await waitFor(() => grantsTo(r.got, 'eve.1').length === 2 && grantsTo(r.heard, 'eve.2').length === 2 && grantsTo(r.heard, 'eve.3').length === 1, 2000, "the host's answers to each");
+    await r.host.idle();
+    for (const d of signed) expect(grantsTo(r.got, d.from)).toHaveLength(1);
+    expect([r.host.learnerRemotes(), r.host.ventilator]).toEqual([1, 'ven.1']);
+    for (const d of signed) {
+      device(r.relay, `${d.from}b`, d.role, d.extra)({ ticket: r.tickets.get(d.from) });
+      expect(await answer(r.got, `${d.from}b`, 1)).toMatchObject({ granted: true });
+    }
+    r.close();
   });
 });
