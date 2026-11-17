@@ -1,6 +1,6 @@
 // The host end of every transport (brief §3.7, R7): it owns the engine. Commands in → dispatch → ack; engine
 // events out, batched per frame; a `state` event at 1 Hz; a snapshot for anyone who says hello.
-import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds, type StateVar, type Tick } from '@pme/engine-core';
+import { MAX_TIME_SCALE, MIN_TIME_SCALE, withoutDevices, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds, type StateVar, type Tick } from '@pme/engine-core';
 import {
   createStamper,
   instructorMay,
@@ -14,6 +14,8 @@ import {
   type PumpCommand,
   type PumpMeta,
   type PumpSource,
+  HOST_ONLY_COMMANDS,
+  HOST_ONLY_REASON,
   SeqFilter,
   type AppliedResolution,
   type ControlFlag,
@@ -306,7 +308,7 @@ export const EVENTS_PER_MESSAGE = 200;
  * display (`eegReading`: its raw samples and spectrogram column) is drawn by every follower from its own engine's
  * EEG, which reads the same samples (EEG plan D3: no EEG sample crosses the wire; the wire guard refuses them).
  */
-const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel', 'eegReading']);
+const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel', 'eegReading', 'deviceState']);
 const TICK_S = 0.02;
 /** A viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every
  *  resync) [ENG: network]. */
@@ -1349,7 +1351,7 @@ export class HostSession {
     const body = [...replay, ...(this.o.welcomeEvents?.() ?? [])];
     this.flush();
     if (body.length) t.send(this.stamp({ kind: 'event', body }));
-    t.send(this.stamp({ kind: 'snapshot', body: await this.o.target.snapshot() }));
+    t.send(this.stamp({ kind: 'snapshot', body: withoutDevices(await this.o.target.snapshot()) })); // the patient only
     this.stats.snapshotsSent++;
   }
 
@@ -1366,7 +1368,7 @@ export class HostSession {
     // dispatched, so neither the engine nor the scenario driver's record sees it, and no commandApplied goes out
     const now = this.o.target.now();
     const lock = this.ff ? null : this.lockOf(cmd, now.simT, this.gives);
-    const refused = this.ff ? FF_REFUSAL : lock ? lockReason(lock) : null;
+    const refused = HOST_ONLY_COMMANDS.has(cmd.type) ? HOST_ONLY_REASON : this.ff ? FF_REFUSAL : lock ? lockReason(lock) : null;
     // R15: a staged delivery's items (one stageGroup, `batch` of n) are held until all n are here, then go to the engine
     // in one dispatch: one tick, whatever the monitor's round trip. An item refused on arrival is answered at once and
     // the delivery waits for one item fewer

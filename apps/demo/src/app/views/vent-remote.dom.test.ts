@@ -6,7 +6,7 @@
 // The real AppSession, HostSession, desk and a real cockpit (its link driver over the relay port) on a fake relay that
 // passes every frame through the real guard; the monitor is a real engine on the fake clock (no worker, no canvas).
 import type { ManagedTransport, TransportStatus, WireEvent, WireMessage } from '@pme/controller';
-import type { EngineEvent, PatientSnapshot } from '@pme/engine-core';
+import { withoutDevices, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 type Fake = ManagedTransport & { id: string; muted: boolean; got: WireMessage[] };
@@ -100,7 +100,7 @@ vi.mock('@pme/renderer', async () => {
 const { createStamper } = await import('@pme/controller');
 const ctl = (await import('@pme/controller')) as unknown as { __end: (l: unknown, k: string) => Fake };
 const { createEngine } = await import('@pme/engine-core');
-const { createLocalPortPair, createRelayPort, createVentDriver, ventWireOver } = await import('@pme/ventilator');
+const { createLocalPortPair, createRelayPort, createVentDriver, RUN_TIMEOUT_MS, ventWireOver } = await import('@pme/ventilator');
 const { AppSession } = await import('../session.ts');
 const { cockpitDesk, COCKPIT_SILENCE_MS, engineVentilation, serveRemoteCockpit } = await import('./vent.ts');
 const { VENTILATOR_REASONS } = await import('@pme/controller');
@@ -416,7 +416,9 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     v2.e.advanceTo(tick * 0.02 + 1e-9);
     expect(v2.e.now().tick).toBe(tick);
     expect(frames('vent-a.1').length).toBeGreaterThan(200);
-    expect(v2.e.snapshot()).toEqual(host.snapshot());
+    // the host's engine also holds the cockpit's record for its bookmarks; a viewer is sent, and holds, the patient only
+    expect((host.snapshot().state as { devices?: unknown }).devices).toBeDefined();
+    expect(JSON.stringify(v2.e.snapshot())).toBe(JSON.stringify(withoutDevices(host.snapshot())));
   });
 });
 
@@ -438,5 +440,65 @@ describe("a room's ventilator drives the patient with its breaths and its circui
       ['time', "a ventilator in a room may not send 'time'"],
     ]);
     warn.mockRestore();
+  });
+});
+
+describe('"Return here" while a remote cockpit drives', () => {
+  const bookmark = () => s.panel.send({ type: 'scenario', action: 'bookmark', target: 'b' } as never);
+  const back = () => s.panel.send({ type: 'scenario', action: 'restoreBookmark', target: 'b' } as never);
+  /** The tick the restore went back to, and the record the restored engine gave back (the deviceState after the marker). */
+  const restoredTo = () => {
+    const ev = hostEvents.filter((e) => e.type === 'deviceState').at(-1) as Extract<EngineEvent, { type: 'deviceState' }>;
+    return { tick: Math.round(ev.t / 0.02), record: ev.state as { link: { lastTick: number; offset: number } } };
+  };
+
+  it('the cockpit takes the bookmark back and ventilates the restored patient', async () => {
+    const v = await remote('vent-a.1');
+    await vi.advanceTimersByTimeAsync(6000);
+    await bookmark();
+    await vi.advanceTimersByTimeAsync(3000);
+    await back();
+    const outcome = s.ventLink?.restoring();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(await outcome).toBe('loaded');
+    expect(cockpitDesk(s).driving).not.toBeNull();
+    const { tick } = restoredTo();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(frames('vent-a.1').filter((f) => f.tick > tick).length).toBeGreaterThan(100);
+    v.stop();
+  });
+
+  it('a cockpit that is heard but does not ventilate after the return: within RUN_TIMEOUT_MS the engine ventilator has the patient, on the bookmark tick after its last frame', async () => {
+    const v = await remote('vent-a.1');
+    await vi.advanceTimersByTimeAsync(6000);
+    await bookmark();
+    await vi.advanceTimersByTimeAsync(3000);
+    v.d.frame = () => {}; // its frames stop; its page still says its settings once a second
+    const before = handOvers().length;
+    await back();
+    const { tick, record } = restoredTo();
+    await vi.advanceTimersByTimeAsync(RUN_TIMEOUT_MS + 500);
+    expect(await s.ventLink?.restoring() ?? 'unlinked').not.toBe('loaded');
+    expect(handOvers().length).toBe(before + 1);
+    expect(handOvers().at(-1)?.tick).toBe(Math.max(tick + 1, record.link.lastTick + record.link.offset + 1));
+    expect(cockpitDesk(s).driving).toBeNull();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(sources(tick * 0.02 + 1).slice(-2)).toEqual(['ventilator', 'ventilator']);
+    v.stop();
+  });
+
+  it('no cockpit linked at the return: the engine ventilator takes the patient with the bookmark settings on the tick after its last frame', async () => {
+    const v = await remote('vent-a.1');
+    await vi.advanceTimersByTimeAsync(6000);
+    await bookmark();
+    await vi.advanceTimersByTimeAsync(1000);
+    v.stop(); // its socket closes: handed over
+    await vi.advanceTimersByTimeAsync(2000);
+    const before = handOvers().length;
+    await back();
+    await vi.advanceTimersByTimeAsync(500);
+    const { tick, record } = restoredTo();
+    expect(handOvers().length).toBe(before + 1);
+    expect(handOvers().at(-1)?.tick).toBe(Math.max(tick + 1, record.link.lastTick + record.link.offset + 1));
   });
 });

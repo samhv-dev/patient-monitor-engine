@@ -14,6 +14,18 @@ export interface Recorder {
   step(vs: Readonly<VentState>): void;
   /** The last complete breath, or null before the first. */
   last(): BreathRecord | null;
+  /** Its state, for the ventilator's snapshot (VentExtension), and back. */
+  save(): RecorderState;
+  load(s: RecorderState): void;
+}
+
+export interface RecorderState {
+  last: BreathRecord | null;
+  t0: number;
+  te0: number;
+  peak: number;
+  wasInsp: boolean;
+  tail: Array<[number, number]>;
 }
 
 export function createRecorder(): Recorder {
@@ -46,5 +58,10 @@ export function createRecorder(): Recorder {
       wasInsp = insp;
     },
     last: () => last,
+    save: () => ({ last, t0, te0, peak, wasInsp, tail: tail.map(([t, v]) => [t, v] as [number, number]) }),
+    load(x) {
+      ({ last, t0, te0, peak, wasInsp } = x);
+      tail.splice(0, tail.length, ...x.tail);
+    },
   };
 }

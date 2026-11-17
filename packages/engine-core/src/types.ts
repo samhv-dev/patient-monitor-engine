@@ -111,6 +111,9 @@ export type Command = CommandBase &
     | OrganCommandBody // types-organs.ts
     | LungCommandBody // types-lung.ts
     | NeuroCommandBody // types-neuro.ts
+    /** The state of a device that drives the patient from outside (a ventilator cockpit), held opaque in the snapshot so a
+     *  restore returns the device with the patient; taken at dispatch, never queued, never applied; null clears it. */
+    | { type: 'deviceState'; source: 'ventilator'; state: unknown }
   );
 
 export type DispatchResult = { accepted: boolean; tick: Tick; reason?: string };
@@ -149,6 +152,8 @@ export type EngineEvent =
     }
   /** Revoke tones: those listed in `ids` when present (the engine's normal case), else every tone with t > after. */
   | { type: 'toneCancel'; after: SimSeconds; ids?: string[] }
+  /** After a restore (right after its toneCancel): the device state the snapshot held, for that device to load. */
+  | { type: 'deviceState'; t: SimSeconds; source: 'ventilator'; state: unknown }
   | HemoEvent // types-hemo.ts
   | TruthEvent // types-truth.ts
   | DeviceEvent // types-device.ts

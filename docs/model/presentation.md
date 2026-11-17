@@ -85,6 +85,28 @@ renderer, audio and skin contracts.
 | `slack` | `number` | How many generations longer than the shortest a route to `pathTo` may be (default PATH_SLACK). |
 | `whole` | `boolean` | The whole tree, nothing folded. |
 
+### `AlarmViewState` ([`apps/demo/src/vent/core/alarms-view.ts`](../../apps/demo/src/vent/core/alarms-view.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `pending` | `Array<[Id, number]>` | — |
+| `sig` | `AlarmSignal[]` | — |
+| `lastT` | `number` | — |
+| `silFrom` | `number` | — |
+| `silUntil` | `number` | — |
+| `presses` | `number` | — |
+
+### `RecorderState` ([`apps/demo/src/vent/core/record.ts`](../../apps/demo/src/vent/core/record.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `last` | `BreathRecord \| null` | — |
+| `t0` | `number` | — |
+| `te0` | `number` | — |
+| `peak` | `number` | — |
+| `wasInsp` | `boolean` | — |
+| `tail` | `Array<[number, number]>` | — |
+
 ## Parameters
 
 ### [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts)
@@ -1737,6 +1759,7 @@ renderer, audio and skin contracts.
 | [`apps/demo/src/vent/core/cockpit.test.ts`](../../apps/demo/src/vent/core/cockpit.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/pending.test.ts`](../../apps/demo/src/vent/core/pending.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/record.test.ts`](../../apps/demo/src/vent/core/record.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/core/restore.test.ts`](../../apps/demo/src/vent/core/restore.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/device-link.dom.test.ts`](../../apps/demo/src/vent/device-link.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/alarm-signals.dom.test.ts`](../../apps/demo/src/vent/faces/edp-ts/alarm-signals.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/faces/edp-ts/alarms.test.ts`](../../apps/demo/src/vent/faces/edp-ts/alarms.test.ts) | 0 | 0 |

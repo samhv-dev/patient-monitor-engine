@@ -106,7 +106,8 @@ export interface FaceSpec {
  * `tool`: the simulator's tools (the patient drawer); `remote`: a link `control` message; `mode`, `preset`, `scenario`:
  * those actions; `action`: freeze, hold, manual breath, reset, silence.
  */
-export type ChangeSource = 'face' | 'tool' | 'remote' | 'mode' | 'preset' | 'scenario' | 'action';
+/** `restore`: the ventilator went back with the patient to a bookmark (every setting, the breath and the alarms). */
+export type ChangeSource = 'face' | 'tool' | 'remote' | 'mode' | 'preset' | 'scenario' | 'action' | 'restore';
 export interface Change {
   source: ChangeSource;
   /** The settings written (empty for an action or a remote patch, whose keys the core does not see). */

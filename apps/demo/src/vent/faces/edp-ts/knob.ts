@@ -80,6 +80,15 @@ export function createKnob(c: Cockpit, now: () => number = () => performance.now
   const subs = new Set<() => void>();
   const changed = () => { for (const fn of [...subs]) fn(); };
   const say = (r: ReasonId) => { note = { r, until: now() + num(LAYOUT.reasonMs) }; };
+  // Back to a bookmark: a turned value and the drafts belonged to the discarded run; the windows show the bookmark's settings
+  c.onChange((ch) => {
+    if (ch.source !== 'restore') return;
+    pending.cancel();
+    confirming = null;
+    edits = {};
+    wedits = {};
+    changed();
+  });
 
   const draftCfg = (): Cfg => {
     if (!confirming) return c.cfg;

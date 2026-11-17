@@ -14,6 +14,7 @@ import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { shippedPumpDevices } from './pump/devices.ts';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
+import type { RestoreOutcome } from '@pme/ventilator';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
@@ -116,7 +117,7 @@ export class AppSession {
   /** A fast-forward holds the monitor's clock (the sim clock estimate stands still between its steps). */
   fastForwarding = false;
   /** The Ventilator view's link (it sets it): a fast-forward steps the cockpit with the engine through it. */
-  ventLink: { runTo(engTick: number): Promise<void> } | null = null;
+  ventLink: { runTo(engTick: number): Promise<void>; restoring(): Promise<RestoreOutcome> | null } | null = null;
   /** The Ventilator view is on screen (it sets it): only then does its cockpit hold the phones (UI-A #2). */
   ventShown = false;
   /** R8c: a remote cockpit drives the patient (views/vent.ts sets it): it holds the phones wherever the laptop is. */
@@ -460,15 +461,18 @@ export class AppSession {
       dispatch: (c) => {
         // A frame from the cockpit means it ventilates the patient (a fast-forward then steps it along); one from a
         // cockpit opened during a fast-forward waits for its end — refused, the cockpit's first frames would never
-        // teach the link its clock and the cockpit would stall for good
-        this.ventFrameAt = performance.now();
+        // teach the link its clock and the cockpit would stall for good. The cockpit's state (`deviceState`) keeps
+        // their order and is the engine's alone: no viewer mirrors it, it is no frame.
+        const frame = c.type !== 'deviceState';
+        if (frame) this.ventFrameAt = performance.now();
         const go = () => m.dispatch(c).then((r) => {
+          if (!frame) return r;
           this.host.mirror(c, r, this.ventShown || this.ventRemote);
           if (r.accepted) this.ventTick = Math.max(this.ventTick, r.tick);
           return r;
         });
         const sent = this.fastForwarding && !this.ffCockpit ? new Promise<void>((res) => this.ffWaiters.push(res)).then(go) : go();
-        this.ventInflight = sent.catch(() => undefined);
+        if (frame) this.ventInflight = sent.catch(() => undefined);
         return sent;
       },
       on: (fn) => m.on(fn),
@@ -530,7 +534,7 @@ export class AppSession {
    *  stepping back (FX-11b). */
   simNow(): number {
     const dt = ((performance.now() - this.lastWall) / 1000) * this.timeScale;
-    const est = this.paused || this.fastForwarding ? this.lastT : this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale); // exact between fast-forward steps
+    const est = this.paused || this.fastForwarding || this.holds > 0 ? this.lastT : this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale); // exact between fast-forward steps
     this.readT = Math.max(this.readT, est);
     return this.readT;
   }
@@ -564,7 +568,23 @@ export class AppSession {
     this.lastWall = performance.now();
     this.paused = p;
     if (p) this.monitor?.pause();
-    else this.monitor?.resume();
+    else if (this.holds === 0) this.monitor?.resume();
+  }
+
+  private holds = 0;
+  /** The patient's clock stands while `until` runs (a ventilator brought back by a return makes its first frames). */
+  async holdClock(until: Promise<unknown>): Promise<void> {
+    this.lastT = this.simNow();
+    this.lastWall = performance.now();
+    if (this.holds++ === 0) this.monitor?.pause();
+    try {
+      await until;
+    } finally {
+      if (--this.holds === 0) {
+        this.lastWall = performance.now();
+        if (!this.paused) this.monitor?.resume();
+      }
+    }
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */

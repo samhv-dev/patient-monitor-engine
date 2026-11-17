@@ -35,6 +35,7 @@ describe('what a ventilator in a room may send', () => {
       cmd({ type: 'setRhythm', rhythm: 'vf' }),
       cmd({ type: 'setModifiers', modifiers: {} }),
       cmd({ type: 'externalDrive', source: 'manual', frame: {} }),
+      cmd({ type: 'deviceState', source: 'ventilator', state: { v: 1 } }), // the host's link writes its record, never a ventilator
     ]) expect(roomVentCommandRefusal(c)).toMatch(/^a ventilator in a room may not send /);
   });
 
@@ -46,12 +47,14 @@ describe('what a ventilator in a room may send', () => {
     const msgs: LinkMsg[] = [
       { v: 1, kind: 'cmds', tick: 1, cmds: [] },
       { v: 1, kind: 'settings', cfg: createVent().cfg },
+      { v: 1, kind: 'state', tick: 1, state: { v: 1, face: null, tick: 1, body: {} } },
+      { v: 1, kind: 'restored', epoch: 'e.1', loaded: true },
       { v: 1, kind: 'time', action: 'pause' },
       { v: 1, kind: 'control', profile: 'ards-severe-recruitable' },
       { v: 1, kind: 'clock', ventTick: 9 },
     ];
     for (const m of msgs) vent.post(m);
-    expect(heard).toEqual(['cmds', 'settings']);
+    expect(heard).toEqual(['cmds', 'settings', 'state', 'restored']);
     expect(refused.map(([k]) => k)).toEqual(['time', 'control', 'clock']);
     expect(refused[0]?.[1]).toBe("a ventilator in a room may not send 'time'");
   });

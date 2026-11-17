@@ -77,6 +77,7 @@ describe('FX-1: a restore while the cockpit is at its clock limit', () => {
     d.frame(0);
     await run(100);
     const snap = e.snapshot();
+    const snapT = e.now().simT;
     await run(500);
     d.scale = 4; // one long animation frame at ×4: the cockpit runs to its clock limit and stops there
     ms += 500;
@@ -89,9 +90,47 @@ describe('FX-1: a restore while the cockpit is at its clock limit', () => {
     e.restore(snap);
     await run(100);
     expect(clocks.length, 'a clock after the restore').toBeGreaterThan(clocksBefore);
-    expect(d.simT()).toBeGreaterThan(atLimit + 1); // the cockpit kept ventilating
+    expect(d.simT()).toBeGreaterThan(snapT + 1); // the cockpit went back with the patient and kept ventilating
     const late = scheduled.slice(5);
     expect(late.length).toBeGreaterThan(20);
     for (const s of late) expect(s.at - s.engine).toBeLessThanOrEqual(LEAD_TICKS + 2);
+  });
+});
+
+describe('a restore of a cockpit-ventilated patient', () => {
+  it('replays the same breaths: every frame the engine takes after the restore is the one it took the first time', { timeout: 60_000 }, async () => {
+    const [ventPort, monPort] = createLocalPortPair();
+    const e = createEngine({ seed: 7, patient: PROFILES.normal!.patient });
+    const taken: Array<Map<number, string>> = [new Map(), new Map()];
+    let pass = 0;
+    const mon = {
+      dispatch: (c: Command): DispatchResult => {
+        const r = e.dispatch(c);
+        if (c.type === 'externalDrive' && r.accepted) taken[pass]!.set(r.tick, JSON.stringify(c.frame));
+        return r;
+      },
+      on: (fn: (x: EngineEvent) => void) => e.on(fn),
+    };
+    attachMonitorToLink(mon, monPort);
+    const d = createVentDriver(ventPort, 'normal');
+    let ms = 0;
+    const runTo = async (t: number) => {
+      while (e.now().simT < t - 1e-9) {
+        ms += 20;
+        d.frame(ms);
+        e.advanceTo(e.now().simT + 0.02);
+        await Promise.resolve();
+      }
+    };
+    d.frame(0);
+    await runTo(40);
+    const snap = e.snapshot();
+    await runTo(110);
+    e.restore(snap);
+    pass = 1;
+    await runTo(110);
+    const ticks = [...taken[1]!.keys()].filter((tk) => taken[0]!.has(tk));
+    expect(ticks.length).toBeGreaterThan(3000);
+    expect(ticks.filter((tk) => taken[1]!.get(tk) !== taken[0]!.get(tk))).toEqual([]);
   });
 });

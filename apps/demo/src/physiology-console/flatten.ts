@@ -17,11 +17,11 @@ const MAX_EVENT_ARRAY = 16;
 /** Event leaves that are timestamps or counters, not physiology. */
 const EVENT_SKIP_KEYS = new Set(['t', 'tick', 'seq']);
 /**
- * Event types that are not folded: discrete marks (tones, markers, alarms, atrial activations), the alarm manager's
+ * Event types that are not folded: discrete marks (tones, markers, alarms, atrial activations), a driving device's state, the alarm manager's
  * configuration, and `truth` itself (ingested whole by the model). Every other event type, including those of stages
  * not merged yet, is folded automatically.
  */
-export const SKIP_EVENTS: ReadonlySet<string> = new Set(['tone', 'toneCancel', 'marker', 'alarm', 'atrial', 'alarmStatus', 'truth', 'measurement']);
+export const SKIP_EVENTS: ReadonlySet<string> = new Set(['tone', 'toneCancel', 'marker', 'alarm', 'atrial', 'alarmStatus', 'truth', 'measurement', 'deviceState']);
 
 /** An array element's `id`/`drugId`/`agent` when it has one (a drug row, a lung unit). */
 function idOf(x: unknown): string | undefined {
