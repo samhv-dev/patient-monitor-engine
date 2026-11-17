@@ -4,6 +4,7 @@
 import { PUMP_KINDS, PUMP_LIMITS, type PumpKind } from '@pme/controller';
 import { EEG_DEVICES, EEG_MODEL_IDS } from '@pme/engine-core';
 import { resolveSkin, type Skin } from '@pme/skins';
+import { DEFAULT_FACE, faceOf, type FaceId } from '../vent/faces/ids.ts';
 import { store } from './store.ts';
 
 export interface SiteProfile {
@@ -32,6 +33,8 @@ export interface SiteProfile {
    *  host switches on (`device eeg on`, then `device eeg model <id>`) at every patient mount, or null (no EEG device:
    *  the engine computes no EEG, D4, as before). */
   eegModel: string | null;
+  /** The room's ventilator face (vent/faces/ids.ts): what the Ventilator view, the Room's window and a signed-in tablet wear. */
+  ventFace: FaceId;
 }
 
 /** Monitor choices, in the words the Settings and Start screens use. */
@@ -78,7 +81,7 @@ export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark
 /** PQ1 = C, the owner's ruling (research/00-orchestrator-rulings.md, 9 November 16:00): "1–8, default 4". All syringe
  *  channels by default, a plan decision (§5, ENG: ui): a TIVA tower is syringes; Room setup turns any channel into drip. */
 export const DEFAULT_PUMP_CHANNELS = 4;
-export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, eegModel: null, pumpRack: Array<PumpKind>(DEFAULT_PUMP_CHANNELS).fill('syringe') };
+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null, eegModel: null, ventFace: DEFAULT_FACE, pumpRack: Array<PumpKind>(DEFAULT_PUMP_CHANNELS).fill('syringe') };
 
 /** A stored rack (1 to PUMP_LIMITS.channels channels of the two kinds), or null. */
 export const pumpRackOf = (v: unknown): PumpKind[] | null =>
@@ -100,6 +103,7 @@ export function parseSite(raw: unknown): SiteProfile {
     defibModel: DEFIB_CHOICES.some((c) => c.id === o.defibModel) ? (o.defibModel as string) : d.defibModel,
     eegModel: EEG_CHOICES.some((c) => c.id === o.eegModel) ? (o.eegModel as string) : d.eegModel,
     pumpRack: pumpRackOf(o.pumpRack) ?? [...d.pumpRack],
+    ventFace: faceOf(o.ventFace),
   };
 }
 

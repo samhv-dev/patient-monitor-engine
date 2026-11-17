@@ -26,6 +26,8 @@ export interface VentDevice {
   readonly access: Pick<InstructorAccess, 'reason' | 'code'>;
   /** This socket's peer id (null before the first). */
   readonly sender: string | null;
+  /** The room's ventilator face from the host's last grant (null: the host named none). */
+  readonly face: string | null;
   /** The cockpit's link over the relay (createRelayPort's wire). */
   readonly wire: VentWire;
   onChange(fn: () => void): () => void;
@@ -49,6 +51,7 @@ export function signInVentilator(o: VentDeviceOptions): VentDevice {
   let state: VentDeviceState = 'pending';
   let access: Pick<InstructorAccess, 'reason' | 'code'> = {};
   let sender: string | null = null;
+  let face: string | null = null;
   let stamp: ReturnType<typeof createStamper> | null = null;
   let link: { t: ManagedTransport; offs: Array<() => void> } | null = null;
   let rejoined = false; // the relay said a new host socket came: say the hello again on its hello
@@ -84,7 +87,10 @@ export function signInVentilator(o: VentDeviceOptions): VentDevice {
         if (m.kind === 'grant') {
           if (m.to !== sender) return;
           o.credential.take(m);
-          if (m.granted) return set('granted');
+          if (m.granted) {
+            face = m.face ?? face;
+            return set('granted');
+          }
           if (isRejoined(m)) return void ((rejoined = true), set('pending'));
           // handed over for its silence (the hand-over contract): this socket id is done; sign in again at once on a
           // new socket with the PIN held, and take over from the engine's settings then
@@ -127,6 +133,9 @@ export function signInVentilator(o: VentDeviceOptions): VentDevice {
     },
     get sender() {
       return sender;
+    },
+    get face() {
+      return face;
     },
     wire: {
       send: (body) => {
