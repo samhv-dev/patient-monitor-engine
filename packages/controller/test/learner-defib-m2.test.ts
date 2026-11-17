@@ -95,7 +95,7 @@ describe('the admitted learner defibrillator: the table is §5.1, both ways (pla
       expect(Object.hasOwn(LEARNER_DEFIB_M2, `device defib ${action}`), action).toBe(cls === 'learner');
     expect(M2_DEVICE_ACTION_CLASS.model).toBe('refused');
     expect(M2_DEVICE_ACTION_CLASS.config).toBe('roomSetup'); // §5.4: the Supervisor configuration is set in Room setup (R4)
-    // §5.1: the instructor's inputs of §5.2, which the learner is never allowed
+    // the instructor's inputs, which the learner is never allowed
     for (const a of ['faults', 'impedance', 'compressions']) expect(M2_DEVICE_ACTION_CLASS[a], a).toBe('refused');
   });
 

@@ -251,7 +251,7 @@ const IDLE: M2State = {
   // pads on, good contact, so E2a's gates refuse nothing a room does today [ENG: device; choice, for E2a to revisit]
   connections: {
     mfc: true, therapy: 'pads',
-    mfcType: 'plain', // [ENG: device; choice, the room's pads are plain adult pads]
+    mfcType: 'plain', // the cable the unit ships with, which takes adult pads without the CPR sensor [G 2-8], [G 2-9] [ENG: device; choice]
     paddlesOffAt: 'wells', // [ENG: device; choice, a unit stands with its paddles in their wells [G 2-2]]
     pads: { type: 'adult', placement: 'apexSternum', contact: 'good' },
     paddles: { pediPlates: false, shockButtons: true, contact: 'off' },

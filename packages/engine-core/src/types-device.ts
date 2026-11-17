@@ -76,7 +76,8 @@ export type M2Contact = 'good' | 'poor' | 'off';
 export interface M2Connections {
   /** The multi-function cable is plugged into the device ("Connect Therapy Cable" otherwise [G 12-10]). */
   mfc: boolean;
-  /** Which MFC: the plain cable, or the one with the CPRD connector that CPR pads need [G 2-8], [G 2-9]. */
+  /** Which MFC: the plain MFC, for paddles and for pads without the CPR sensor; or the MFC with the CPRD connector (or
+   * the CPRD adapter fitted), which pads with the CPR sensor need and paddles cannot use [G 2-8], [G 2-9]. */
   mfcType: 'plain' | 'cprd';
   /** What the MFC carries [G 2-8], [G 14-4], [G 14-18]. */
   therapy: 'none' | 'pads' | 'externalPaddles' | 'internalHandles' | 'testPlug';
@@ -169,8 +170,8 @@ export interface M2Faults {
   defibChargingFailed: boolean;
   excessiveDisarms: boolean;
   test30JFailed: boolean;
-  /** The front-panel SHOCK, the CHARGE and a paddle button [G 18-13] [ENG: device; placeholder, the list the reading
-   * log records, which ends "…"; E9b completes it from the page]. */
+  /** The front-panel SHOCK, the CHARGE and a paddle button, as chapter 18 names them before its "etc." [G 18-13]
+   * [ENG: device; placeholder, appendix C gives each key its own "Button Stuck" message [G C-1 to C-9]]. */
   shockButtonStuck: boolean;
   chargeButtonStuck: boolean;
   paddleButtonStuck: boolean;
@@ -230,7 +231,7 @@ export type M2DeviceAction =
   /** The Trend and Export data keys [G 2-14], [G 2-15] (Export saves the incident as a file). */
   | { device: 'defib'; action: 'trend'; value: 'press'; lane?: never }
   | { device: 'defib'; action: 'export'; value: 'press'; lane?: never }
-  // The instructor's inputs (plan §5.2), never the learner's
+  // The instructor's inputs, never the learner's
   /** Device faults injected or cleared. */
   | { device: 'defib'; action: 'faults'; value: Partial<M2Faults>; lane?: never }
   /** The transthoracic impedance the instructor sets; null = the patient's own (E2b). */

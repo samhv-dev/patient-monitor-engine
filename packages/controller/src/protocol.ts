@@ -600,7 +600,7 @@ export const M2_DEVICE_ACTION_CLASS: Readonly<Record<string, 'learner' | 'refuse
   fourToOne: 'learner', alarmControl: 'learner', alarmLimit: 'learner', nibp: 'learner', co2: 'learner',
   codeMarker: 'learner', print: 'learner', setting: 'learner', lead: 'learner',
   clear: 'learner', test30J: 'learner', diag: 'learner', twelveLead: 'learner', brightness: 'learner', trend: 'learner', export: 'learner',
-  // the instructor's inputs (§5.2), which §5.1 never gives the learner
+  // the instructor's inputs (device faults, the impedance, the compressions), never the learner's
   faults: 'refused', impedance: 'refused', compressions: 'refused',
   // The learner connects the patient (pads, paddles, the ECG cable, the sensors). The instructor's override is
   // the laptop's own path (a controller, or the granted instructor phone) and never crosses a `defib` socket, so the wire

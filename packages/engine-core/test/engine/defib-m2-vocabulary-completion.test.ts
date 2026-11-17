@@ -1,8 +1,8 @@
-// Defibrillator plan E0b (docs/plans/defibrillator-zoll-m2.md §6 E0b): the vocabulary E0 froze, completed. The new
-// `device defib` commands are cased with E0's in defib-m2-vocabulary.test.ts (valid, invalid, no-op, refused off the
-// M2); here: the connection state E0 lacked (the therapy cable's kind, where the paddles are while off the patient) in
-// the status, the snapshot and on a follower; the bedside monitor's two declared actions; the package's exports. Pages
-// are the guide's printed pages, [G n-m] (ZOLL M2 Operator's Guide, REF 9650-000873-01 Rev. C).
+// The ZOLL M2's vocabulary, completed (docs/plans/defibrillator-zoll-m2.md, piece E0b). The `device defib` commands
+// are cased in defib-m2-vocabulary.test.ts (valid, invalid, no-op, refused off the M2); here: the connection state for
+// the therapy cable's kind and where the paddles are while off the patient, in the status, the snapshot and on a
+// follower; the bedside monitor's two declared actions; the package's exports. Pages are the guide's printed pages,
+// [G n-m] (ZOLL M2 Operator's Guide, REF 9650-000873-01 Rev. C).
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 import * as entry from '../../src/index.ts';
@@ -23,13 +23,17 @@ function room(model: string | null, skin = 'saadat-like'): { e: MonitorEngine; e
   return r;
 }
 
-describe('E0b: the connection state E0 lacked [G 2-8], [G 2-9], [G 12-11], [G 18-6]', () => {
+describe("the M2's therapy cable and where its paddles rest [G 2-8], [G 2-9], [G 12-11], [G 18-6]", () => {
   it('idle: the plain MFC, the paddles in their wells', () => {
     expect(M2_IDLE_STATUS.connections).toMatchObject({ mfcType: 'plain', paddlesOffAt: 'wells' });
   });
 
   it('a connect patch sets them; the status carries them at once, the snapshot round trip keeps them, a follower holds the same', () => {
-    const script: Command[] = [m2('connect', { mfcType: 'cprd' }), m2('connect', { therapy: 'externalPaddles', paddlesOffAt: 'faceToFace' })];
+    // paddles held face to face, then the CPRD cable with CPR pads (that cable takes no paddles [G 2-8])
+    const script: Command[] = [
+      m2('connect', { therapy: 'externalPaddles', paddlesOffAt: 'faceToFace' }),
+      m2('connect', { mfcType: 'cprd', therapy: 'pads', pads: { type: 'adultCpr', placement: 'apexSternum', contact: 'good' } }),
+    ];
     const run = () => {
       const r = room('zoll-m2');
       for (const c of script) expect(r.e.dispatch(c).accepted).toBe(true);
@@ -38,7 +42,7 @@ describe('E0b: the connection state E0 lacked [G 2-8], [G 2-9], [G 12-11], [G 18
     };
     const host = run();
     const follower = run();
-    expect(lastStatus(host.ev).m2!.connections).toMatchObject({ mfcType: 'cprd', therapy: 'externalPaddles', paddlesOffAt: 'faceToFace' });
+    expect(lastStatus(host.ev).m2!.connections).toMatchObject({ mfcType: 'cprd', therapy: 'pads', paddlesOffAt: 'faceToFace' });
     expect(follower.e.snapshot().state).toEqual(host.e.snapshot().state);
     expect(lastStatus(follower.ev)).toEqual(lastStatus(host.ev));
     const restored = createEngine({ seed: 11, device: { skin: 'saadat-like' } });
@@ -52,7 +56,7 @@ describe('E0b: the connection state E0 lacked [G 2-8], [G 2-9], [G 12-11], [G 18
   });
 });
 
-describe("E0b: the bedside monitor's relearn and analysis-lead actions (plan §3.4.4)", () => {
+describe("the bedside monitor's relearn and analysis-lead actions", () => {
   const OK: Array<[string, unknown]> = [['relearn', undefined], ['analysisLeads', 'single'], ['analysisLeads', 'multi']];
   const BAD: Array<[string, unknown]> = [['relearn', 'now'], ['relearn', 1], ['analysisLeads', undefined], ['analysisLeads', 'II'], ['analysisLeads', true]];
 
@@ -78,7 +82,7 @@ describe("E0b: the bedside monitor's relearn and analysis-lead actions (plan §3
   });
 });
 
-describe('E0b: the package entry', () => {
+describe('the package entry', () => {
   it("exports the connection words and their priority, the M2's vocabulary with them", () => {
     expect(entry.MSG).toBe(MSG);
     expect(entry.messagePriority).toBe(messagePriority);
