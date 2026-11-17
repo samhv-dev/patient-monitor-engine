@@ -424,19 +424,15 @@ export class HostSession {
     this.timer = period > 0 ? setInterval(() => this.emitState(), period) : null;
   }
 
-  /** Serve peers on this transport. Returns a detach function. */
-  addTransport(t: ManagedTransport): () => void {
-    const offMsg = t.onMessage((m) => {
-      this.chain = this.chain.then(() => this.receive(t, m)).catch((err) => console.error('[pme host]', err));
-    });
+  /** Serve peers on this transport. Returns a detach function (resolves once its peers and grants are forgotten, in order). */
+  addTransport(t: ManagedTransport): () => Promise<void> {
+    const offMsg = t.onMessage((m) => void this.inOrder(() => this.receive(t, m)));
     const offStatus = t.onStatus((s) => {
       if (s === 'open') t.send(this.stamp({ kind: 'hello', role: 'host' }));
-      if (s === 'closed') this.detach(t);
+      if (s === 'closed') void this.detach(t);
     });
     // R29: the relay says a peer's socket left; frames are handled in order on this.chain, so the forgetting is too
-    const offLeft = t.onPeerLeft?.((from) => {
-      this.chain = this.chain.then(() => this.forget(t, from));
-    });
+    const offLeft = t.onPeerLeft?.((from) => void this.inOrder(() => this.forget(t, from)));
     this.transports.set(t, () => {
       offMsg();
       offStatus();
@@ -456,11 +452,16 @@ export class HostSession {
     return this.denials.length;
   }
 
-  /** The instructor's PIN changed: every grant is revoked at once (the phone and the ventilator sign in again). */
-  instructorPinChanged(): void {
-    this.revoke('instructor', INSTRUCTOR_REASONS.pinChanged);
-    this.revoke('ventilator', INSTRUCTOR_REASONS.pinChanged);
-    this.o.signIns?.void((c) => c.role === 'instructor' || c.role === 'ventilator', INSTRUCTOR_REASONS.pinChanged);
+  /**
+   * The instructor's PIN changed: every grant is revoked (the phone and the ventilator sign in again), after the frames
+   * received so far, so a sign-in check still pending is revoked too. Resolves once done.
+   */
+  instructorPinChanged(): Promise<void> {
+    return this.inOrder(() => {
+      this.revoke('instructor', INSTRUCTOR_REASONS.pinChanged);
+      this.revoke('ventilator', INSTRUCTOR_REASONS.pinChanged);
+      this.o.signIns?.void((c) => c.role === 'instructor' || c.role === 'ventilator', INSTRUCTOR_REASONS.pinChanged);
+    });
   }
 
   /** Wrong learner PINs in the last DENIAL_WINDOW_MS, at most DENIAL_RECORD_MAX (no host lockout; the relay limits tries). */
@@ -470,11 +471,18 @@ export class HostSession {
     return this.learnerDenied.length;
   }
 
-  /** L4 (§4 D9): the learner PIN changed: every granted learner remote is revoked at once (each signs in again). */
-  learnerPinChanged(): void {
-    for (const [t, m] of this.learners) for (const from of m.keys()) this.grant(t, from, false, LEARNER_REASONS.pinChanged);
-    this.o.signIns?.void((c) => c.role === 'learner' || c.role === 'pump', LEARNER_REASONS.pinChanged);
-    this.learners.clear();
+  /** L4 (§4 D9): the learner PIN changed: every granted learner remote is revoked (each signs in again), in order as instructorPinChanged. */
+  learnerPinChanged(): Promise<void> {
+    return this.inOrder(() => {
+      for (const [t, m] of this.learners) for (const from of m.keys()) this.grant(t, from, false, LEARNER_REASONS.pinChanged);
+      this.o.signIns?.void((c) => c.role === 'learner' || c.role === 'pump', LEARNER_REASONS.pinChanged);
+      this.learners.clear();
+    });
+  }
+
+  /** Resolves once every frame received so far, and every step of the host's own queued so far, has been handled. */
+  idle(): Promise<void> {
+    return this.chain;
   }
 
   /** How many learner remotes are granted now. */
@@ -543,15 +551,18 @@ export class HostSession {
   /**
    * The hand-over contract: revoke the granted ventilator `from` (a silence hand-over: `reason` VENTILATOR_REASONS.silent).
    * It is told so; its place is free; a `vent` from it later is not heard and is answered with the same refusal, so the
-   * device signs in again on a new socket. False: `from` is not the holder (nothing changes).
+   * device signs in again on a new socket. Taken after the frames received so far (a pending sign-in of `from` first).
+   * False: `from` is not the holder (nothing changes).
    */
-  revokeVentilator(from: string, reason: string): boolean {
-    const h = this.signedIn.ventilator;
-    if (!h || h.from !== from) return false;
-    if (this.silentVents.size >= 16) this.silentVents.delete(this.silentVents.keys().next().value as string); // [ENG: network] bounded: one tablet, a few outages
-    this.silentVents.set(from, h.t);
-    this.revoke('ventilator', reason);
-    return true;
+  revokeVentilator(from: string, reason: string): Promise<boolean> {
+    return this.inOrder(() => {
+      const h = this.signedIn.ventilator;
+      if (!h || h.from !== from) return false;
+      if (this.silentVents.size >= 16) this.silentVents.delete(this.silentVents.keys().next().value as string); // [ENG: network] bounded: one tablet, a few outages
+      this.silentVents.set(from, h.t);
+      this.revoke('ventilator', reason);
+      return true;
+    });
   }
 
   /** R8c: send a link message to the granted remote ventilator only (`to` its id). False: none is granted. */
@@ -733,21 +744,35 @@ export class HostSession {
     this.queue(ev);
   }
 
-  close(): void {
+  /** Stop at once: nothing more is heard or sent; the transports' peers and grants are forgotten in order (resolves then). */
+  close(): Promise<void> {
     if (this.timer !== null) clearInterval(this.timer);
     for (const h of this.held.values()) if (h.timer !== null) clearTimeout(h.timer);
     this.held.clear();
     this.offEngine();
-    for (const t of [...this.transports.keys()]) this.detach(t);
+    return Promise.all([...this.transports.keys()].map((t) => this.detach(t))).then(() => undefined);
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
-  private detach(t: ManagedTransport): void {
+  /**
+   * Run `fn` after every frame received so far and every step queued before it: the one order in which the host
+   * handles its peers' frames (a sign-in check awaits a digest) and its own steps that change a grant.
+   */
+  private inOrder<T>(fn: () => T | Promise<T>): Promise<T> {
+    const done = this.chain.then(fn);
+    this.chain = done.then(() => undefined, (err: unknown) => console.error('[pme host]', err));
+    return done;
+  }
+
+  /** The transport is no longer served: nothing more is heard or sent on it at once; its peers and grants go in order. */
+  private detach(t: ManagedTransport): Promise<void> {
     this.transports.get(t)?.();
     this.transports.delete(t);
-    this.peers.delete(t);
-    this.learners.delete(t);
-    for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t) this.setHolder(r, null);
+    return this.inOrder(() => {
+      this.peers.delete(t);
+      this.learners.delete(t);
+      for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t) this.setHolder(r, null);
+    });
   }
 
   private setHolder(role: SignsIn, h: Holder | null): void {
@@ -759,6 +784,7 @@ export class HostSession {
   }
 
   private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string, ticket?: string): void {
+    if (!this.transports.has(t)) return; // detached or closed while its check was pending
     t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}), ...(ticket !== undefined ? { ticket } : {}) }));
   }
 
@@ -840,6 +866,7 @@ export class HostSession {
       return this.grant(t, from, false, reason);
     }
     const next = 'chain' in r ? r : await this.firstTicket(role, null, from);
+    if (!this.transports.has(t)) return; // its transport went while the check was pending: nobody to admit
     const h = this.signedIn[role];
     if (h && !isHolder()) {
       this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
@@ -873,6 +900,7 @@ export class HostSession {
     }
     if (device === undefined) return deny(role === 'pump' ? PUMP_REASONS.noDevice : LEARNER_REASONS.noDevice);
     const next = 'chain' in r ? r : await this.firstTicket(role, device, from);
+    if (!this.transports.has(t)) return; // its transport went while the check was pending: nobody to admit
     if (next.chain !== undefined) this.dropChain(next.chain, INSTRUCTOR_REASONS.takenOver, { t, from }); // one device per chain
     let m = this.learners.get(t);
     if (!m) this.learners.set(t, (m = new Map()));

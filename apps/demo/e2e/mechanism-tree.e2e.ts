@@ -16,9 +16,8 @@ test.beforeAll(async () => {
 test.afterAll(async () => vite?.close());
 
 const SIX: string[] = ['trigger.bleed', 'trigger.drug.propofol', 'trigger.drug.phenylephrine', 'trigger.drug.esmolol', 'trigger.lungCondition.ptxTension', 'trigger.ventilation.peep'];
-// the whole tree's node counts, src/app/mechanisms/graph.test.ts PINS, re-recorded at 182 rows (main 8119ecd0): the EEG
-// rows add eeg.cortex and eeg.signal to every trigger's tree (+2 each; the cause per trigger is written beside PINS)
-const WHOLE: Record<string, number> = { 'trigger.bleed': 79, 'trigger.drug.propofol': 74, 'trigger.drug.phenylephrine': 75, 'trigger.drug.esmolol': 76, 'trigger.lungCondition.ptxTension': 93, 'trigger.ventilation.peep': 93 };
+// the whole tree's node counts, src/app/mechanisms/graph.test.ts PINS (the cause per trigger is written beside PINS)
+const WHOLE: Record<string, number> = { 'trigger.bleed': 80, 'trigger.drug.propofol': 75, 'trigger.drug.phenylephrine': 76, 'trigger.drug.esmolol': 77, 'trigger.lungCondition.ptxTension': 94, 'trigger.ventilation.peep': 94 };
 // the default view's node counts (graph.test.ts DEFAULT_PINS), re-recorded for brief 104: the page opens on the trigger
 // and 4 generations past it, folds drawn (a fold box counts as a node); the measured fit below holds for these
 const NODES: Record<string, number> = { 'trigger.bleed': 6, 'trigger.drug.propofol': 13, 'trigger.drug.phenylephrine': 8, 'trigger.drug.esmolol': 12, 'trigger.lungCondition.ptxTension': 12, 'trigger.ventilation.peep': 11 };
