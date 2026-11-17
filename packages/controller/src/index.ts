@@ -18,6 +18,7 @@ export {
 export { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './transport/backoff.ts';
 export type { RelayDevice, RelayFrame } from './transport/relay-frames.ts';
 export { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, MISMATCH_WORDS, PUMP_REASONS, STAGE_LEAD_TICKS, TICKET_REASONS, UNKNOWN_ROLE, VENTILATOR_REASONS, type HostSessionOptions, type HostTarget, type NotGiven, type PumpLabels, type PumpMismatchNews, type PumpNews, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
+export { ROOM_REFUSALS } from './session/room-refusal.ts';
 // Plan learner-action-remote.md L4: the host's preparations — what a remote may name as a container, the room temperature
 // the stability rows are read at, and the bodies of the host's `prep` events (L7's tray, L9's instructor card)
 export { PREP_CONTAINERS, PREP_TEMP_C, PREPS_PER_DEVICE, type InstructorPrepNews, type InstructorPrepView, type LearnerPrepNews, type LearnerPrepView, type PrepNewsKind } from './session/preparations.ts';
@@ -58,8 +59,10 @@ export const transports = {
 export { checkFormulary, loadFormulary, injectableDrugIds, GAP_ID, TRISSEL_EDITION, MAX_STATEMENT, STOCK_FILE } from './formulary/load.ts';
 export type * from './formulary/types.ts';
 // Plan pump-rack-tci.md D12, S1: the reference pumps' device profiles (pump-devices/), their source check and loader
-export { checkPumpDevices, loadPumpDevices, PUMP_DEVICE_IDS, MAX_DEVICE_TEXT } from './pump-devices.ts';
+export { checkPumpDevices, loadPumpDevices, PUMP_DEVICE_IDS, MAX_DEVICE_TEXT, sp5TciMaxRateMlH } from './pump-devices.ts';
 export type * from './pump-devices.ts';
+// the range a channel's rate is checked against on the host, which every screen that offers a rate for a channel reads
+export { rateRange, type RateRange } from './session/pump-host.ts';
 // Plan learner-action-remote.md L5: the bench's Finding, which the /2 administration record's `prep` carries
 export type { Finding, FindingKind } from './formulary/findings.ts';
 // Plan learner-action-remote.md L7: the bench's preview on the learner's phone runs the host's own pure step (the host's

@@ -2,15 +2,15 @@
 // loads and what it programs, never what a syringe holds: this module resolves a preparation (from the host's table,
 // learner plan D3) or a stock item (S1) to the syringe's or bag's TRUE contents, checks every command against the
 // channel's kind (Room setup's rack, A1) and the reference device's profile (D12, S1: every range and device word on a
-// refusal is the profile's), resolves the device rates the engine needs (the bolus and purge rates), and builds the
-// engine's `pump` event (E1, E2). It also keeps what the host APPLIED to each channel — its kind, syringe size, contents
+// refusal is the profile's), resolves the device rates the engine needs (the bolus and purge rates, a TCI channel's
+// highest rate), and builds the engine's `pump` event (E1, E2). It also keeps what the host APPLIED to each channel — its kind, syringe size, contents
 // and their origin, programme, rate, TCI and who set each — so a change can name the value it replaced, a mismatch of
 // contents and programme can be found (§8), and a remote's `infusion set` can be routed to its channel (D9). The volumes
 // stay the engine's (D4): this table holds none. Pure: no clock, no I/O; host-session.ts owns when each step runs.
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
 import type { PumpCommand, PumpMeta, PumpPatient, PumpReplaced, PumpSource, WireCommand } from '../protocol.ts';
 import type { Formulary, StockItem } from '../formulary/types.ts';
-import type { PumpDevices, Sp500Profile, Ot701Profile } from '../pump-devices.ts';
+import { sp5TciMaxRateMlH, type PumpDevices, type Sp500Profile, type Ot701Profile } from '../pump-devices.ts';
 import { notUsable, remainingOf, type HostPrep } from './preparations.ts';
 
 /** A channel's kind, as Room setup sets it (A1; protocol.ts PumpKind once A1 merges). */
@@ -59,7 +59,7 @@ const STEP_EPS = 1e-6;
 /** µg per unit of mass; units and mmol stand alone. */
 const MASS: Readonly<Record<string, number>> = { g: 1e6, mg: 1000, mcg: 1 };
 const CONC_UNITS: ReadonlySet<string> = new Set(['mg', 'mcg', 'g', 'units', 'mmol']);
-const list = (xs: readonly (string | number)[]): string => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`);
+export const list = (xs: readonly (string | number)[]): string => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`);
 const fix = (n: number): number => +n.toFixed(3);
 export const deviceName = (d: { maker: string; model: string }): string => `${d.maker} ${d.model}`;
 
@@ -116,12 +116,12 @@ export function doseMl(dose: { amount: number; unit: DoseUnit }, c: Pick<HostCha
 }
 
 /** The SP-500's figures for the loaded syringe size, or why there are none. */
-function syringeOf(sp: Sp500Profile, c: HostChannel | undefined): Sp500Profile['syringes'][number] | string {
+function syringeOf(sp: Sp500Profile, c: Pick<HostChannel, 'syringeMl'> | undefined): Sp500Profile['syringes'][number] | string {
   const s = c?.syringeMl != null ? sp.syringes.find((x) => x.ml === c.syringeMl) : undefined;
   return s ?? `load a syringe first: the ${deviceName(sp)}'s rates are per syringe size (${list(sp.syringes.map((x) => x.ml))} mL)`;
 }
 /** The OT-701's figures for the programmed IV set, or why there are none. */
-function setOf(ot: Ot701Profile, c: HostChannel | undefined): Ot701Profile['sets'][number] | string {
+function setOf(ot: Ot701Profile, c: Pick<HostChannel, 'set'> | undefined): Ot701Profile['sets'][number] | string {
   const s = c?.set != null ? ot.sets.find((x) => x.dropsPerMl === c.set) : undefined;
   return s ?? `program the IV set first: the ${deviceName(ot)}'s rates are per set (${list(ot.sets.map((x) => x.dropsPerMl))} drops/mL)`;
 }
@@ -227,12 +227,15 @@ export function translatePump(cmd: PumpCommand, x: PumpContext): PumpTranslated 
     }
     case 'tci': {
       if (kind !== 'syringe') return no(`the ${deviceName(ot)} has no TCI`);
+      // the engine's controller never runs above the device's highest rate for the loaded syringe
+      const tc = x.devices['sp5-tci'];
+      const maxRateMlH = sp5TciMaxRateMlH(tc, c?.syringeMl);
+      if (cmd.target > 0 && maxRateMlH === undefined) return no(`load a syringe first: the ${deviceName(tc)}'s TCI rate limit is per syringe size (${list(tc.rate.bySyringe.map((s) => s.ml))} mL)`);
       prev('tci');
       if (c?.tci && !samePatient(c.tci.patient, cmd.patient)) prev('patient');
       if (cmd.target > 0) gives();
       const { opioids, ...patient } = cmd.patient;
-      // the SP5 TCI's ceiling is a gap until its manual (sp5-tci.json tci.maxRate): none sent, the engine's 1200 mL/h holds
-      return ev({ action: 'tci', setId: cmd.setId, mode: cmd.mode, target: cmd.target, patient, ...(opioids !== undefined ? { opioids } : {}) });
+      return ev({ action: 'tci', setId: cmd.setId, mode: cmd.mode, target: cmd.target, patient, ...(opioids !== undefined ? { opioids } : {}), ...(cmd.target > 0 ? { maxRateMlH } : {}) });
     }
     case 'bolus': {
       if (kind !== 'syringe') return no(`the ${deviceName(ot)} has no bolus`);
@@ -269,34 +272,49 @@ export function translatePump(cmd: PumpCommand, x: PumpContext): PumpTranslated 
   }
 }
 
-/** The device range a rate must fall in (D2 item 3, D12), in the profile's own figures, or null when it does. */
-export function rateRefusal(rate: number, unit: RateUnit | 'drops/min', kind: ChannelKind, c: HostChannel | undefined, devices: PumpDevices, weightKg?: number): string | null {
-  const ch = c ?? { programmed: null, set: null, kind };
+/** A channel's mL/h range (and, on a drip channel, drops/min range) for its loaded syringe or programmed set, in the
+ * profile's own figures and words (D2 item 3, D12). */
+export interface RateRange {
+  min: number;
+  max: number;
+  step: number;
+  words: string;
+  dropsMin: { min: number; max: number; words: string } | null;
+}
+
+/** The range every rate on a channel is checked against, whoever sends it; or why the channel has none yet. */
+export function rateRange(kind: ChannelKind, c: Pick<HostChannel, 'syringeMl' | 'set'> | undefined, devices: PumpDevices): RateRange | string {
   if (kind === 'syringe') {
     const sp = devices['sp-500'];
     const s = syringeOf(sp, c);
     if (typeof s === 'string') return s;
-    const ml = rateMlH(rate, unit, ch, weightKg);
-    if (typeof ml === 'string') return ml;
-    const words = `the ${deviceName(sp)} runs ${s.rate.min}–${s.rate.max} mL/h with a ${s.ml} mL syringe, in ${sp.rateStep.step} mL/h steps`;
-    if (ml < s.rate.min - STEP_EPS || ml > s.rate.max + STEP_EPS) return `${fix(ml)} mL/h: ${words}`;
-    if (unit === 'mL/h' && !onStep(rate, sp.rateStep.step)) return `${rate} mL/h: ${words}`;
-    return null;
+    const step = sp.rateStep.step;
+    return { min: s.rate.min, max: s.rate.max, step, words: `the ${deviceName(sp)} runs ${s.rate.min}–${s.rate.max} mL/h with a ${s.ml} mL syringe, in ${step} mL/h steps`, dropsMin: null };
   }
   const ot = devices['ot-701'];
   const s = setOf(ot, c);
   if (typeof s === 'string') return s;
   // the factory range ("standard", ot-701.json factory); the narrow range waits for the manual (narrowRange gap)
   const r = s.standard;
-  if (unit === 'drops/min') {
-    if (rate < r.dropsMin.min || rate > r.dropsMin.max) return `${rate} drops/min: the ${deviceName(ot)} runs ${r.dropsMin.min}–${r.dropsMin.max} drops/min with a ${s.dropsPerMl} drops/mL set`;
-    return null; // the drops/min step is a gap until the manual (dropsStep)
+  const step = ot.rateStep.step;
+  return {
+    min: r.mlH.min, max: r.mlH.max, step, words: `the ${deviceName(ot)} runs ${r.mlH.min}–${r.mlH.max} mL/h with a ${s.dropsPerMl} drops/mL set, in ${step} mL/h steps`,
+    dropsMin: { min: r.dropsMin.min, max: r.dropsMin.max, words: `the ${deviceName(ot)} runs ${r.dropsMin.min}–${r.dropsMin.max} drops/min with a ${s.dropsPerMl} drops/mL set` },
+  };
+}
+
+/** Why a rate falls outside its channel's range (rateRange), or null when it does not. */
+export function rateRefusal(rate: number, unit: RateUnit | 'drops/min', kind: ChannelKind, c: HostChannel | undefined, devices: PumpDevices, weightKg?: number): string | null {
+  const r = rateRange(kind, c, devices);
+  if (typeof r === 'string') return r;
+  if (unit === 'drops/min' && r.dropsMin) {
+    const d = r.dropsMin;
+    return rate < d.min || rate > d.max ? `${rate} drops/min: ${d.words}` : null; // the drops/min step is a gap until the manual (dropsStep)
   }
-  const ml = rateMlH(rate, unit, ch, weightKg);
+  const ml = rateMlH(rate, unit, c ?? { programmed: null, set: null, kind }, weightKg);
   if (typeof ml === 'string') return ml;
-  const words = `the ${deviceName(ot)} runs ${r.mlH.min}–${r.mlH.max} mL/h with a ${s.dropsPerMl} drops/mL set, in ${ot.rateStep.step} mL/h steps`;
-  if (ml < r.mlH.min - STEP_EPS || ml > r.mlH.max + STEP_EPS) return `${fix(ml)} mL/h: ${words}`;
-  if (unit === 'mL/h' && !onStep(rate, ot.rateStep.step)) return `${rate} mL/h: ${words}`;
+  if (ml < r.min - STEP_EPS || ml > r.max + STEP_EPS) return `${fix(ml)} mL/h: ${r.words}`;
+  if (unit === 'mL/h' && !onStep(rate, r.step)) return `${rate} mL/h: ${r.words}`;
   return null;
 }
 

@@ -1,0 +1,17 @@
+{
+ "failedAt": 348306,
+ "signs": [
+  {
+   "signature": "network-process-crashed",
+   "text": "WebSocket connection to 'ws://127.0.0.1:9811/' failed: WebSocket network error: Network process crashed.",
+   "url": "(from the trace)",
+   "at": 348055
+  },
+  {
+   "signature": "webkit-internal-error",
+   "text": "Failed to load resource: WebKit encountered an internal error",
+   "url": "(from the trace)",
+   "at": 348088
+  }
+ ]
+}

@@ -79,8 +79,9 @@ const dirOf = (pathname: string) => pathname.replace(/[^/]*$/, '');
  * form (P7's), which never puts the PIN in an address.
  */
 export const ventDeviceUrl = (loc: Pick<PageLocation, 'pathname' | 'search'>): string => `${dirOf(loc.pathname)}vent-hamilton.html${loc.search}${VENT_HASH}`;
-/** R8d: the ventilator in a window of this computer, linked by the room code over BroadcastChannel (§4 D9: no PIN). */
-export const ventWindowUrl = (code: string, pathname: string): string => `${dirOf(pathname)}vent-hamilton.html?link=${code}`;
+/** R8d: the ventilator in a window of this computer, linked by the room code over BroadcastChannel (§4 D9: no PIN),
+ *  wearing the room's face. */
+export const ventWindowUrl = (code: string, pathname: string, face: string): string => `${dirOf(pathname)}vent-hamilton.html?link=${code}&face=${face}`;
 
 /** `others`: the learner address on this computer's other networks (shown under the code, for a phone the QR fails). */
 export type QrTarget = { ok: true; url: string; origin: string; others: string[] } | { ok: false; why: string };

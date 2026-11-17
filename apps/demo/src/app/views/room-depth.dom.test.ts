@@ -2,7 +2,7 @@
 // EEG plan E12: Room setup's "Depth of anaesthesia in this room". The choices are the engine's EEG registry (built
 // readers only: the generic processed-EEG reader, since E7 the BIS-type reader, since E8 the Entropy reader), with "Off" first; a choice is handed to the session, which
 // switches the patient's EEG on with that reader (eeg-model-session.dom.test.ts).
-import type { ManagedTransport, TransportStatus } from '@pme/controller';
+import { ROOM_REFUSALS, type ManagedTransport, type TransportStatus } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
 import { roomView } from './room.ts';
 
@@ -13,7 +13,7 @@ describe("E12: Room setup's depth-of-anaesthesia device", () => {
   it('offers Off and the built readers; a choice and Off are handed to the session', () => {
     let model: string | null = null;
     const chosen: Array<string | null> = [];
-    const v = roomView({ ...base, depth: { model: () => model, choose: (m) => void (chosen.push(m), (model = m)) } });
+    const v = roomView({ ...base, depth: { model: () => model, choose: (m) => (chosen.push(m), (model = m), null) } });
     document.body.replaceChildren(v.el);
     const card = v.el.querySelector('.room-depth') as HTMLElement;
     expect(card.querySelector('h2')?.textContent).toBe('Depth of anaesthesia in this room');
@@ -31,8 +31,28 @@ describe("E12: Room setup's depth-of-anaesthesia device", () => {
     expect(chosen).toEqual(['generic', 'bisType', 'entropy', null]);
     expect(card.textContent).toContain("switches the patient's EEG on");
   });
+  it("Off or another device the host refuses (a depth window reads it) says the host's words, naming the window, and the choice goes back", () => {
+    let refusal: string | null = ROOM_REFUSALS.depth(['"Bed 3"']);
+    let model: string | null = 'generic';
+    const v = roomView({ ...base, depth: { model: () => model, choose: (m) => refusal ?? ((model = m), null) } });
+    document.body.replaceChildren(v.el);
+    const card = v.el.querySelector('.room-depth') as HTMLElement;
+    const sel = card.querySelector('select') as HTMLSelectElement;
+    const alert = card.querySelector('[role="alert"]') as HTMLElement;
+    for (const to of ['', 'entropy']) {
+      sel.value = to;
+      sel.dispatchEvent(new Event('change'));
+      expect(alert.textContent).toBe('The Depth of anaesthesia window "Bed 3" is reading the EEG: close it first.');
+      expect(sel.value).toBe('generic');
+    }
+    refusal = null;
+    sel.value = '';
+    sel.dispatchEvent(new Event('change'));
+    expect([model, alert.textContent]).toEqual([null, '']);
+    expect(card.textContent).toContain('It cannot be switched off or changed while a Depth of anaesthesia window reads it.');
+  });
   it('the kept choice is shown; without the session\'s choice there is no card', () => {
-    const v = roomView({ ...base, depth: { model: () => 'generic', choose: () => undefined } });
+    const v = roomView({ ...base, depth: { model: () => 'generic', choose: () => null } });
     expect((v.el.querySelector('.room-depth select') as HTMLSelectElement).value).toBe('generic');
     expect(roomView(base).el.querySelector('.room-depth')).toBeNull();
   });

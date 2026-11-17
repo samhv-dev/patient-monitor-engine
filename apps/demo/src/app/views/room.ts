@@ -27,6 +27,7 @@ import { deviceRows, HEARTBEAT_MS, PeerLog, roomStatus, WEAK_PING_MS, type Devic
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
 import { DEFIB_CHOICES, defibDefaults, EEG_CHOICES, pacerDefaults } from '../site.ts';
+import { DEFAULT_FACE, FACE_CHOICES, type FaceId } from '../../vent/faces/ids.ts';
 import { store as appStore } from '../store.ts';
 import { button, h, select, setText } from '../ui.ts';
 import { DEFIB_LINE, instrumentCard, PICKER_WORDS, type CardShow } from './join.ts';
@@ -69,17 +70,22 @@ export interface RoomDeps {
   /** The instructor phone's card (room-instructor.ts, plan instructor-peer-role.md P7), in the `#room-instructor` slot. */
   instructor?: InstructorRoomCard;
   /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
-   *  sends it to the patient's engine). Absent: no card. */
-  defib?: { model(): string | null; choose(model: string | null): void };
+   *  sends it to the patient's engine), which answers the host's refusal words (the device is in use) or null: applied.
+   *  Absent: no card. */
+  defib?: { model(): string | null; choose(model: string | null): string | null };
   /** A1 (plan pump-rack-tci.md §5, PQ1 = C): the room's pump rack, each channel's kind, and the session's hand-over of a
    *  new setting (it saves it and sends it to the pump tablet), which answers the host's refusal words (a channel in use
    *  would go or change kind) or null: applied. Absent: no card. */
   pumps?: { kinds(): PumpKind[]; choose(kinds: PumpKind[]): string | null };
   /** The room's depth-of-anaesthesia device (EEG plan E12): the site's choice, and the session's hand-over of a new one
-   *  (it saves it and switches the patient's EEG on with that reader, or off). Absent: no card. */
-  depth?: { model(): string | null; choose(model: string | null): void };
+   *  (it saves it and switches the patient's EEG on with that reader, or off), which answers the host's refusal words (a
+   *  depth window reads it) or null: applied. Absent: no card. */
+  depth?: { model(): string | null; choose(model: string | null): string | null };
   /** R8d: the ventilator's own screens and whether each drives (views/vent.ts `ventScreens`). Absent: no rows. */
   vent?: () => VentScreens;
+  /** The room's ventilator face, and the session's hand-over of a new one (views/vent.ts chooseVentFace), which answers
+   *  its refusal words (a cockpit is ventilating the patient) or null: applied. Absent: no card, the default face. */
+  ventFace?: { face(): FaceId; choose(face: FaceId): string | null };
   /** L6: the learner PIN and the host's count of learner remotes, for the panel beside the instructor's card. Absent: no panel. */
   learner?: LearnerPinDeps;
 }
@@ -92,6 +98,12 @@ export const PUMP_ROOM_WORDS = {
   channel: (ch: number) => `Channel ${ch}`,
   kind: { syringe: 'Syringe', drip: 'Drip' } satisfies Record<PumpKind, string>,
   hint: 'Each channel is a syringe pump or a drip pump. A change reaches a signed-in pump tablet at once.',
+};
+
+/** Room setup's ventilator card's words. */
+export const VENT_ROOM_WORDS = {
+  title: 'Ventilator in this room',
+  hint: 'The Ventilator view, a new window and a signed-in tablet open this model. It cannot change while a ventilator screen is ventilating the patient.',
 };
 
 /** "Forget the room": its line, its dialog and what it says once done. */
@@ -183,6 +195,15 @@ const OPENERS: Array<{ show: CardShow; title?: string; text: string; foot: strin
 
 /** The address of a window of this computer that shows `show` (the learner monitor's address, its hash changed). */
 export const windowUrl = (learnerUrl: string, show: 'learner' | 'monitor' | 'defib' | 'depth'): string => learnerUrl.replace(/#.*$/, '') + hashOf(show);
+
+/**
+ * A Room setting the host may refuse (a device in use would go or be replaced): its words in the card's alert, cleared
+ * by the next change taken. `tried` answers whether the change was taken; the caller sets its control back when not.
+ */
+function refusable(cls: string): { el: HTMLElement; tried(why: string | null): boolean } {
+  const el = h('p', { class: `error ${cls}`, role: 'alert' });
+  return { el, tried: (why) => (setText(el, why ?? ''), why === null) };
+}
 
 export function roomView(d: RoomDeps): RoomView {
   const now = d.now ?? Date.now;
@@ -354,7 +375,7 @@ export function roomView(d: RoomDeps): RoomView {
         el: instrumentCard({ show: 'vent', title, chip: '', text: o.text, foot: o.foot, actions: [
           h('a', { class: 'btn small', href: hrefOf('vent') }, 'Open here'),
           // `noopener`, as the other windows: its own process; the link is the room code's BroadcastChannel
-          button('New window', () => (d.open ?? ((u: string) => void window.open(u, '_blank', 'noopener,width=1280,height=800')))(ventWindowUrl(d.code, location.pathname)), 'small', { 'aria-label': `${title} in a new window` }),
+          button('New window', () => (d.open ?? ((u: string) => void window.open(u, '_blank', 'noopener,width=1280,height=800')))(ventWindowUrl(d.code, location.pathname, d.ventFace?.face() ?? DEFAULT_FACE)), 'small', { 'aria-label': `${title} in a new window` }),
         ] }),
         chip: () => {
           const v = d.vent?.();
@@ -461,12 +482,33 @@ export function roomView(d: RoomDeps): RoomView {
       const pacer = p ? `; pacer ${p.ratePpm} ppm, PAUSE at ${p.pausePct === null ? '0 mA' : `${p.pausePct} % of the rate`}` : '';
       return `${l}: ${e.energyAdultJ} J adult${e.energyPaedJ === null ? '' : `, ${e.energyPaedJ} J paediatric`}${pacer}`;
     };
-    const pick = select('Model', [['', "Not chosen: the monitor style's own values"], ...DEFIB_CHOICES.map((c): [string, string] => [c.id, label(c.id, c.label)])], choice.model() ?? '', (v) => choice.choose(v || null));
+    const refused = refusable('room-defib-refused');
+    const pick = select('Model', [['', "Not chosen: the monitor style's own values"], ...DEFIB_CHOICES.map((c): [string, string] => [c.id, label(c.id, c.label)])], choice.model() ?? '', (v) => {
+      if (!refused.tried(choice.choose(v || null))) pick.sel.value = choice.model() ?? '';
+    });
     return h('section', { class: 'room-card room-defib', 'aria-labelledby': 'room-defib-h' },
       h('h2', { id: 'room-defib-h' }, 'Defibrillator in this room'),
       pick.el,
+      refused.el,
       h('p', { class: 'hint' }, "Your department's machine: not named yet."),
-      h('p', { class: 'hint' }, "A model applies to the patient at once and to every new patient; 'Not chosen' applies from the next patient start."));
+      h('p', { class: 'hint' }, "A model applies to the patient at once and to every new patient; 'Not chosen' applies from the next patient start. It cannot change while the defibrillator is charging, charged, pacing or switched on."));
+  })() : null;
+
+  // ----------------------------------------------------------------------------------------- ventilator in this room
+  // the face the Ventilator view, the Room's window and a signed-in tablet wear
+  const ventCard = d.ventFace ? (() => {
+    const choice = d.ventFace;
+    const refused = h('p', { class: 'error room-vent-refused', role: 'alert' });
+    const pick = select('Model', FACE_CHOICES.map((c): [string, string] => [c.id, c.label]), choice.face(), (v) => {
+      const why = choice.choose(v as FaceId);
+      setText(refused, why ?? '');
+      if (why) pick.sel.value = choice.face();
+    });
+    return h('section', { class: 'room-card room-vent', 'aria-labelledby': 'room-vent-h' },
+      h('h2', { id: 'room-vent-h' }, VENT_ROOM_WORDS.title),
+      pick.el,
+      refused,
+      h('p', { class: 'hint' }, VENT_ROOM_WORDS.hint));
   })() : null;
 
   // --------------------------------------------------------------------------------------------- pumps in this room
@@ -475,12 +517,8 @@ export function roomView(d: RoomDeps): RoomView {
   const pumpCard = d.pumps ? (() => {
     const choice = d.pumps;
     const kindsBox = h('div', { class: 'room-pump-kinds' });
-    const refused = h('p', { class: 'error room-pumps-refused', role: 'alert' });
-    const tried = (next: PumpKind[]): boolean => {
-      const why = choice.choose(next);
-      setText(refused, why ?? '');
-      return why === null;
-    };
+    const refused = refusable('room-pumps-refused');
+    const tried = (next: PumpKind[]): boolean => refused.tried(choice.choose(next));
     const counts = Array.from({ length: PUMP_LIMITS.channels }, (_, i): [string, string] => [String(i + 1), String(i + 1)]);
     const count = select(PUMP_ROOM_WORDS.count, counts, String(choice.kinds().length), (v) => {
       const now = choice.kinds();
@@ -501,7 +539,7 @@ export function roomView(d: RoomDeps): RoomView {
     return h('section', { class: 'room-card room-pumps', 'aria-labelledby': 'room-pumps-h' },
       h('h2', { id: 'room-pumps-h' }, PUMP_ROOM_WORDS.title),
       count.el,
-      refused,
+      refused.el,
       kindsBox,
       h('p', { class: 'hint' }, PUMP_ROOM_WORDS.hint));
   })() : null;
@@ -510,11 +548,15 @@ export function roomView(d: RoomDeps): RoomView {
   // of its own beside the defibrillator's; the host switches the patient's EEG on with it, and the depth window shows it
   const depthCard = d.depth ? (() => {
     const choice = d.depth;
-    const pick = select('Device', [['', 'Off: no EEG device'], ...EEG_CHOICES.map((c): [string, string] => [c.id, c.label])], choice.model() ?? '', (v) => choice.choose(v || null));
+    const refused = refusable('room-depth-refused');
+    const pick = select('Device', [['', 'Off: no EEG device'], ...EEG_CHOICES.map((c): [string, string] => [c.id, c.label])], choice.model() ?? '', (v) => {
+      if (!refused.tried(choice.choose(v || null))) pick.sel.value = choice.model() ?? '';
+    });
     return h('section', { class: 'room-card room-depth', 'aria-labelledby': 'room-depth-h' },
       h('h2', { id: 'room-depth-h' }, 'Depth of anaesthesia in this room'),
       pick.el,
-      h('p', { class: 'hint' }, "A device switches the patient's EEG on at once and at every new patient; the monitor's BFA tile and the Depth of anaesthesia window show its reading."),
+      refused.el,
+      h('p', { class: 'hint' }, "A device switches the patient's EEG on at once and at every new patient; the monitor's BFA tile and the Depth of anaesthesia window show its reading. It cannot be switched off or changed while a Depth of anaesthesia window reads it."),
       h('p', { class: 'hint' }, 'The named devices (BIS-type, Entropy, Narcotrend, PSI) join as their sources are approved.'));
   })() : null;
 
@@ -525,7 +567,7 @@ export function roomView(d: RoomDeps): RoomView {
         h('div', {}, h('h1', { id: 'room-h' }, 'Room setup'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
       h('div', { class: 'room-cols' }, join, connected),
-      computer, ...(defibCard ? [defibCard] : []), ...(depthCard ? [depthCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask, forgetAsk);
+      computer, ...(ventCard ? [ventCard] : []), ...(defibCard ? [defibCard] : []), ...(depthCard ? [depthCard] : []), ...(pumpCard ? [pumpCard] : []), roomCard), big, ask, forgetAsk);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');

@@ -10,9 +10,11 @@ import { createStamper, type Formulary, type LearnerPrepNews, type LearnerPrepVi
 import { createEngine, TICK_S, type Command, type DrugsEvent, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { infusePrep, learnerView, stagePrep } from '../../../../../packages/controller/src/session/preparations.ts';
+import { rateRange, rateRefusal, type RateRange } from '../../../../../packages/controller/src/session/pump-host.ts';
+import { shippedPumpDevices } from '../pump/devices.ts';
 import { loadShippedFormulary } from '../formulary.ts';
 import type { FollowerCommand } from '../views/follower.ts';
-import { doseRateText, doseUnitOf, infusionsView, INFUSION_WORDS, weightOfSnapshot } from './infusions.ts';
+import { doseRateText, doseUnitOf, infusionsView, INFUSION_ML_H, INFUSION_WORDS, weightOfSnapshot } from './infusions.ts';
 
 let f: Formulary;
 beforeAll(async () => void (f = (await loadShippedFormulary()) as Formulary));
@@ -29,7 +31,7 @@ function mount(kg: number | null = 64) {
   const sent: Array<FollowerCommand & { id: string }> = [];
   const fns = new Set<(m: WireMessage) => void>();
   const eng = new Set<(e: EngineEvent) => void>();
-  const v = infusionsView({ now: () => now });
+  const v = infusionsView({ now: () => now, devices: shippedPumpDevices });
   document.body.replaceChildren(v.el);
   let c = 0;
   let resolveSnap: (s: PatientSnapshot) => void = () => undefined;
@@ -246,5 +248,79 @@ describe('the infusions menu (L8)', () => {
     m.news('discarded', propofol());
     expect(m.v.el.querySelectorAll('.lr-inf-prep')).toHaveLength(0);
     m.off();
+  });
+});
+
+describe("a drug on one pump channel is offered that channel's range, as the host checks it", () => {
+  const DEVICES = shippedPumpDevices() as NonNullable<ReturnType<typeof shippedPumpDevices>>;
+  type Pump = NonNullable<DrugsEvent['pumps']>[number];
+  const pump = (o: Partial<Pump> & Pick<Pump, 'ch' | 'kind'>): Pump => ({
+    state: 'running', programmed: null, contents: { drugId: 'propofol', concentration: { amount: 10, unit: 'mg', perMl: 1 } }, syringeMl: null, set: null, mode: 'rate',
+    rate: null, rateMlH: 20, limitMl: null, volumeMl: 30, infusedMl: 1, wasteMl: 0, timeToEmptyMin: null, alarms: [], tci: null, ...o,
+  });
+  const withPumps = (e: DrugsEvent, pumps: Pump[]): DrugsEvent => ({ ...e, pumps });
+  const propofolRunning = (ml: number) => drugs([{ id: 'propofol', rate: (ml * 10) / 60, amountUnit: 'mg' }]);
+  const offered = (m: ReturnType<typeof mount>, d: string) => {
+    const i = m.q<HTMLInputElement>(`.lr-inf[data-drug="${d}"] .stepper input`);
+    return { min: Number(i.min), max: Number(i.max), step: Number(i.step), value: Number(i.value) };
+  };
+  const range = (kind: 'syringe' | 'drip', c: { syringeMl: number | null; set: number | null }) => rateRange(kind, c, DEVICES) as RateRange;
+  const limits = (r: RateRange) => ({ min: r.min, max: r.max, step: r.step });
+
+  it("a syringe channel: the SP-500's range for the loaded syringe, the channel's own mL/h, and a typed rate kept inside the range", async () => {
+    const m = mount();
+    await m.settle();
+    const sizes = DEVICES['sp-500'].syringes.map((s) => s.ml);
+    const big = Math.max(...sizes);
+    const small = Math.min(...sizes);
+    m.engine(withPumps(propofolRunning(20), [pump({ ch: 1, kind: 'syringe', syringeMl: big, rateMlH: 20 })]));
+    expect(offered(m, 'propofol')).toEqual({ ...limits(range('syringe', { syringeMl: big, set: null })), value: 20 });
+    expect(m.text('.lr-inf[data-drug="propofol"] .lr-rate')).toBe('20 mL/h');
+    const input = m.q<HTMLInputElement>('.lr-inf[data-drug="propofol"] .stepper input');
+    input.value = String(range('syringe', { syringeMl: big, set: null }).max * 2);
+    input.dispatchEvent(new Event('change'));
+    m.q<HTMLButtonElement>('.lr-inf[data-drug="propofol"] .lr-change-btn').click();
+    expect(m.sent.at(-1)).toMatchObject({ type: 'infusion', action: 'set', drugId: 'propofol', rateMlH: range('syringe', { syringeMl: big, set: null }).max });
+    // the syringe on that channel is changed for the smallest size: the offer follows it
+    m.engine(withPumps(propofolRunning(20), [pump({ ch: 1, kind: 'syringe', syringeMl: small, rateMlH: 20 })]));
+    expect(offered(m, 'propofol')).toMatchObject(limits(range('syringe', { syringeMl: small, set: null })));
+    expect(offered(m, 'propofol').value).toBeLessThanOrEqual(range('syringe', { syringeMl: small, set: null }).max);
+  });
+
+  it("a drip channel: the OT-701's range and step for the programmed set", async () => {
+    const m = mount();
+    await m.settle();
+    const set = Math.max(...DEVICES['ot-701'].sets.map((s) => s.dropsPerMl));
+    m.engine(withPumps(propofolRunning(40), [pump({ ch: 3, kind: 'drip', set, rateMlH: 40 })]));
+    expect(offered(m, 'propofol')).toEqual({ ...limits(range('drip', { syringeMl: null, set })), value: 40 });
+  });
+
+  it("the refusal is the host's words for that channel", async () => {
+    const m = mount();
+    await m.settle();
+    const c = { syringeMl: Math.max(...DEVICES['sp-500'].syringes.map((s) => s.ml)), set: null };
+    m.engine(withPumps(propofolRunning(20), [pump({ ch: 1, kind: 'syringe', ...c })]));
+    m.q<HTMLButtonElement>('.lr-inf[data-drug="propofol"] .lr-change-btn').click();
+    const r = range('syringe', c);
+    const why = rateRefusal(r.max + 1, 'mL/h', 'syringe', { ch: 1, kind: 'syringe', ...c, contents: null, programmed: null, rate: null, tci: null, running: true, by: {}, mismatch: null }, DEVICES) as string;
+    m.ack(String(m.sent.at(-1)?.id), false, why);
+    expect(m.text('.lr-inf-said')).toBe(INFUSION_WORDS.notChanged('Propofol', why));
+  });
+
+  it('on no channel, on two, or stopped on its channel: the range of an infusion on no pump channel, as before; Start always offers that range', async () => {
+    const m = mount();
+    await m.settle();
+    const old = { min: INFUSION_ML_H.min, max: INFUSION_ML_H.max, step: INFUSION_ML_H.step };
+    const sp = (ch: number, state: Pump['state'] = 'running') => pump({ ch, kind: 'syringe', syringeMl: DEVICES['sp-500'].syringes[0]?.ml ?? null, state });
+    m.engine(withPumps(propofolRunning(20), []));
+    expect(offered(m, 'propofol')).toMatchObject(old);
+    m.engine(withPumps(propofolRunning(20), [sp(1), sp(2)]));
+    expect(offered(m, 'propofol')).toMatchObject(old);
+    m.engine(withPumps(propofolRunning(20), [sp(1, 'alarm')]));
+    expect(offered(m, 'propofol')).toMatchObject(old);
+    m.engine(withPumps(propofolRunning(20), [sp(1)]));
+    m.news('made', propofol());
+    const start = m.q<HTMLInputElement>('.lr-inf-prep .stepper input');
+    expect({ min: Number(start.min), max: Number(start.max), step: Number(start.step) }).toEqual(old);
   });
 });
