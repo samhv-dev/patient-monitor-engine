@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { HostSession, INSTRUCTOR_REASONS, LEARNER_REASONS, TICKET_REASONS, type HostTarget } from '../../src/session/host-session.ts';
 import { SignInBook, type BookKeep } from '../../src/session/sign-in-book.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { createBroadcastChannelTransport } from '../../src/transport/broadcast-channel.ts';
+import { channelName, createBroadcastChannelTransport } from '../../src/transport/broadcast-channel.ts';
 import { createStamper, type ManagedTransport, type WireMessage } from '../../src/protocol.ts';
 import { collect, waitFor } from '../helpers.ts';
 
@@ -266,7 +266,11 @@ describe('"Forget the room" signs every device out, and only the host can do it'
       const st = createStamper(S, from);
       for (const f of tries(from)) t.send(st(f as never));
     }
-    await waitFor(() => grantsTo(r.got, "eve.1").length === 2 && grantsTo(r.heard, "eve.2").length === 2, 2000, `answers ${JSON.stringify([grantsTo(r.got, "eve.1"), grantsTo(r.heard, "eve.2")])}`);
+    const raw = new BroadcastChannel(channelName(S)); // any page of the origin may post a farewell naming any id
+    for (const d of signed) raw.postMessage({ relay: 'peer-left', id: d.from });
+    raw.postMessage(createStamper(S, 'eve.3')({ kind: 'hello', role: 'instructor', pin: '0000' })); // after the farewells, on the same channel
+    raw.close();
+    await waitFor(() => grantsTo(r.got, 'eve.1').length === 2 && grantsTo(r.heard, 'eve.2').length === 2 && grantsTo(r.heard, 'eve.3').length === 1, 2000, "the host's answers to each");
     await r.host.idle();
     for (const d of signed) expect(grantsTo(r.got, d.from)).toHaveLength(1);
     expect([r.host.learnerRemotes(), r.host.ventilator]).toEqual([1, 'ven.1']);
