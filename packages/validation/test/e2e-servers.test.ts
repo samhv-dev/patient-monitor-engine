@@ -43,7 +43,7 @@ describe('e2e servers on their own ports', () => {
     expect(users.length).toBeGreaterThan(60);
   });
 
-  it('the helper binds the dev server's port itself, holds the preview's strictly and never asks Vite for port 0', () => {
+  it('the helper binds the dev server port itself, holds the preview port strictly and never asks Vite for port 0', () => {
     const src = readFileSync(join(e2e, helper), 'utf8');
     expect(src).toMatch(/middlewareMode: true, hmr: \{ server: http \}/); // Vite serves on the helper's own HTTP server
     expect(src).toMatch(/listen\(http, e2ePort\(o\.portOffset\) \?\? 0\)/); // bound at once: the operating system's free port
