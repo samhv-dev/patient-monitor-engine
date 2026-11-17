@@ -16,8 +16,10 @@
 //   vent → monitor: { kind: 'settings' }  the cockpit's settings, for a hand-over to the engine's own ventilator when a
 //                                         cockpit on another device goes (plan room-and-instruments.md §4 D9, R8a;
 //                                         sent from R8c on; over the relay, inside the controller's `vent` message)
+//   vent → monitor: { kind: 'alarms' }    the alarms its face shows, at ventilator tick `tick`: on every change (a raise,
+//                                         a priority, a silence, an end) and again when it is linked (`time resume`)
 import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
-import type { VentConfig } from '../types.ts';
+import type { VentAlarm, VentConfig } from '../types.ts';
 import type { LungStateEvent } from '../lung-input.ts';
 import type { ProfileId } from './profiles.ts';
 
@@ -28,7 +30,18 @@ export type LinkMsg =
   | { v: 1; kind: 'run'; ventTick: number }
   | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
   | { v: 1; kind: 'control'; patch?: Partial<VentConfig>; circuit?: 'connected' | 'disconnected'; profile?: ProfileId }
-  | { v: 1; kind: 'settings'; cfg: VentConfig };
+  | { v: 1; kind: 'settings'; cfg: VentConfig }
+  | VentAlarmsMsg;
+
+/** One alarm as the ventilator's face shows it: the face's own words and priority, and whether its sound is silenced. */
+export interface VentAlarmReport {
+  id: VentAlarm['id'];
+  text: string;
+  priority: VentAlarm['priority'];
+  silenced: boolean;
+}
+/** The face's active alarms at ventilator tick `tick`, in the face's order. */
+export type VentAlarmsMsg = { v: 1; kind: 'alarms'; tick: number; alarms: VentAlarmReport[] };
 
 export interface LinkPort {
   post(m: LinkMsg): void;
@@ -151,6 +164,8 @@ export type LinkDetach = (() => void) & {
    * engine runs there. Resolves at once when the link has not learnt its offset yet (no cockpit ventilates).
    */
   runTo(engTick: number): Promise<void>;
+  /** The engine tick a ventilator tick is dispatched on, or null before the link has learnt its offset. */
+  engineTick(ventTick: number): number | null;
 };
 
 /**
@@ -263,6 +278,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
     waiter?.done();
   };
   return Object.assign(detach, {
+    engineTick: (ventTick: number) => (offset === null ? null : ventTick + offset),
     runTo(eng: number): Promise<void> {
       if (offset === null) return Promise.resolve();
       const ventTick = eng - offset;

@@ -9,7 +9,7 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice } from '@pme/controller';
+import type { Formulary, ManagedTransport, NoteEvent, NotGiven, PumpKind, RelayDevice, VentAlarmEntry, VentScreen } from '@pme/controller';
 import { DEFAULT_SITE } from './site.ts';
 import { loadShippedFormulary } from './formulary.ts';
 import { shippedPumpDevices } from './pump/devices.ts';
@@ -121,6 +121,8 @@ export class AppSession {
   ventShown = false;
   /** R8c: a remote cockpit drives the patient (views/vent.ts sets it): it holds the phones wherever the laptop is. */
   ventRemote = false;
+  /** The driving ventilator's alarms as last reported to every peer (null: none active). */
+  private ventAlarmsNow: Extract<WireEvent, { type: 'ventAlarms' }> | null = null;
   private readonly remoteFns = new Set<RemoteVent>();
   /**
    * The engine tick of the cockpit's last applied frame (−1: none since the view reset it). E128: when the Ventilator view
@@ -270,6 +272,7 @@ export class AppSession {
       welcomeEvents: () => [
         ...this.driver.welcomeEvents(), ...(this.relay ? [{ ...this.styleEvent(), replay: true as const }] : []),
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
+        ...(this.ventAlarmsNow ? [this.ventAlarmsNow] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
       // B6 "To the next phase": the /2 card's last phase entry (its id and time), the stop the host's fast-forward reads
@@ -337,7 +340,7 @@ export class AppSession {
       this.onIbpScales(() => hs?.publish(this.styleEvent())); // … and every IBP scale change (E130)
     }
     this.panelTransport = hub.connect();
-    this.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => (this.record.wire(e), this.trackVent(e))))); // every source's commands, in order
+    this.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => (this.record.wire(e), this.trackVent(e), this.reportVentAlarms(e))))); // every source's commands, in order
     this.panel = new ControllerSession({ session: this.code, transport: this.panelTransport, issuedBy: 'instructor' });
     this.mount(start.seed ?? 7);
     // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG: ui]
@@ -478,6 +481,27 @@ export class AppSession {
       resume: () => void this.panel.send({ type: 'time', action: 'resume' }),
       setTimeScale: (k) => void this.panel.send({ type: 'time', action: 'scale', value: k }),
     };
+  }
+
+  /**
+   * The driving cockpit's alarms (views/vent.ts), at engine time `t`: kept and sent to every peer when they change; an
+   * empty list ends them.
+   */
+  ventAlarms(screen: VentScreen, active: VentAlarmEntry[], t: number): void {
+    if (!active.length && !this.ventAlarmsNow) return;
+    const e = { type: 'ventAlarms' as const, t, screen, active };
+    this.ventAlarmsNow = active.length ? e : null;
+    this.host.publish(e);
+  }
+
+  /** A new timeline starts a new case in the Log and the record (a restore undoes rows): the alarms still on are said
+   *  again, after the timeline's own work (a new patient unloads the view's cockpit first, which ends them). */
+  private reportVentAlarms(e: WireEvent): void {
+    if (e.type !== 'timeline') return;
+    queueMicrotask(() => {
+      const now = this.ventAlarmsNow;
+      if (now) this.host.publish({ ...now, t: e.t });
+    });
   }
 
   /** R8c: the granted remote cockpit's link messages and every change of its grant (views/vent.ts drives from them). */

@@ -6,7 +6,8 @@
 // outside it — each repeat its own — with the verdict's glyph and words beside the tick; an act that never came has no
 // tick and its words at the deadline), Monitor alarms (one bar per raise, from the raise to the end of its condition,
 // open to the run's end when it has none, a small ring where it was acknowledged; a record that did not keep alarm
-// ends draws each raise as a tick, and the lane says "end not recorded") and Drugs and fluids (one ▲ per kept drug or
+// ends draws each raise as a tick, and the lane says "end not recorded"), Ventilator alarms (the same, for the ventilator's
+// own) and Drugs and fluids (one ▲ per kept drug or
 // fluid row). No pressures lane (DQ11, ruled 5 November). A lane with nothing in this record is left out, except
 // Patient and Team. No colour without a shape (E45): the two accents only on the moments' shapes; a window band and its
 // tick carry the verdict as the objectives' chips do (Decision 13): solid, bold, dashed grey, grey fill.
@@ -17,7 +18,7 @@ import { endOf, mmss, objectives, report3, span, type Status } from '../debrief.
 import { pulselessSpans, type KeyMoment } from '../debrief-moments.ts';
 import { placeBadges } from './debrief-course.ts';
 import type { Grade } from '@pme/controller/scenario';
-import type { Row, RunData } from '../record.ts';
+import { isVentAlarm, type Row, type RunData } from '../record.ts';
 
 /** The four verdict styles of the objectives' chips (E43; `views/debrief.css` `.db-chip`). */
 export type Mark = 'observed' | 'not-observed' | 'not-assessable' | 'discuss';
@@ -193,10 +194,11 @@ export function swimlaneSvg(d: RunData, moments: KeyMoment[], windows: SwimWindo
     out += `<g class="db-swim-lane" data-lane="windows"><text class="db-swim-l" x="${L - 6}" y="${f(head + 9)}" text-anchor="end">Expected windows</text>${body}</g>`;
     y = top + h + GAP;
   }
-  // Monitor alarms: each raise a bar to its end on the first track it fits (its words after its start)
-  if (alarms.length) {
+  // Alarms, the monitor's then the ventilator's: each raise a bar to its end on the first track it fits (its words after its start)
+  const alarmLane = (id: string, label: string, raised: Row[]): void => {
+    if (!raised.length) return;
     const tracks: number[] = []; // each track's right edge so far
-    const bars = alarms.map((a) => {
+    const bars = raised.map((a) => {
       const words = a.text;
       const x0 = x(a.t);
       const x1 = endsKept ? x(a.endT ?? end) : x0;
@@ -219,8 +221,10 @@ export function swimlaneSvg(d: RunData, moments: KeyMoment[], windows: SwimWindo
       return `<g class="db-swim-a" data-t="${a.t}"${a.endT !== undefined && endsKept ? ` data-end="${a.endT}"` : ''}${a.ackT !== undefined && endsKept ? ` data-ack="${a.ackT}"` : ''}><title>${esc(title)}</title>${bar}${tick}${ack}`
         + `<text class="db-swim-at" x="${f(x0 + 3)}" y="${f(mid - 2)}">${esc(words)}</text></g>`;
     }).join('');
-    lane('monitor', Math.max(tracks.length * TRACK_H, 22), 'Monitor alarms', body, endsKept ? '' : 'end not recorded');
-  }
+    lane(id, Math.max(tracks.length * TRACK_H, 22), label, body, endsKept ? '' : 'end not recorded');
+  };
+  alarmLane('monitor', 'Monitor alarms', alarms.filter((r) => !isVentAlarm(r)));
+  alarmLane('ventilator', 'Ventilator alarms', alarms.filter(isVentAlarm));
   // Drugs and fluids: one ▲ each
   if (meds.length) {
     const top = y, base = top + DRUGS_H - 3;

@@ -202,6 +202,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 |---|---|---|
 | [`alarms-edp.test.ts`](../../packages/ventilator/test/alarms-edp.test.ts) | 1 | 0 |
 | [`alarms-frame.test.ts`](../../packages/ventilator/test/alarms-frame.test.ts) | 0 | 0 |
+| [`alarms-report.test.ts`](../../packages/ventilator/test/alarms-report.test.ts) | 0 | 0 |
 | [`catalogue-md.test.ts`](../../packages/ventilator/test/catalogue-md.test.ts) | 0 | 0 |
 | [`determinism.test.ts`](../../packages/ventilator/test/determinism.test.ts) | 0 | 0 |
 | [`effort-parity.test.ts`](../../packages/ventilator/test/effort-parity.test.ts) | 0 | 0 |

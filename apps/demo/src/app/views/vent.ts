@@ -12,10 +12,10 @@
 // handOver: opening one hands the other over first. The remote drives exactly as the view does, and is handed over
 // with its last settings the moment its page is hidden, its socket closes, its grant is revoked, or it is silent 1 s.
 // R8d: the laptop's own ventilator window (BroadcastChannel by the room code, no PIN) is served on the desk the same way.
-import type { Command } from '@pme/engine-core';
-import { VENTILATOR_REASONS, type VentLinkBody } from '@pme/controller';
+import { TICK_S, type Command } from '@pme/engine-core';
+import { VENTILATOR_REASONS, type VentLinkBody, type VentScreen } from '@pme/controller';
 import {
-  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
+  attachMonitorToLink, createBroadcastPort, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkDetach, type LinkPort, type VentConfig, type VentDriver, type VentWireBody,
 } from '@pme/ventilator';
 import type { VentScreens } from '../room-status.ts';
 import { parseRoute } from '../router.ts';
@@ -61,6 +61,8 @@ export interface Cockpit {
   readonly port: LinkPort;
   /** A remote cockpit holds the phones wherever the laptop is; the view's only while it is on screen (UI-A #2). */
   readonly remote: boolean;
+  /** Where it runs (the name its alarms carry). */
+  readonly screen: VentScreen;
   /** Its settings now, for a hand-over (null: they cannot be read). */
   settings(): CockpitSettings | null;
   /** Called when the desk handed it over because another cockpit opened. */
@@ -93,8 +95,9 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
   const had = desks.get(session);
   if (had) return had;
   let driving: Cockpit | null = null;
-  let detach: () => void = () => {};
+  let detach: LinkDetach | null = null;
   let offAttach: () => void = () => {};
+  let offAlarms: () => void = () => {};
   /** Link `c` to the monitor (and to every new monitor while it stays linked). */
   const link = (c: Cockpit) => {
     if (driving === c) return;
@@ -103,8 +106,14 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
     session.ventRemote = c.remote;
     const p = c.port;
     session.ventTick = -1;
+    // the driving cockpit's alarms, at the engine time of the ventilator tick they were shown on
+    offAlarms = p.onMessage((msg) => {
+      if (msg.kind !== 'alarms') return;
+      const tick = detach?.engineTick(msg.tick) ?? null;
+      session.ventAlarms(c.screen, msg.alarms, tick === null ? session.simNow() : tick * TICK_S);
+    });
     offAttach = session.onMount((m) => {
-      detach();
+      detach?.();
       const l = attachMonitorToLink(session.linked(m), p, (cmd, r) => console.warn('vent link rejected', cmd.type, r));
       detach = l;
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
@@ -142,9 +151,11 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
       session.ventRemote = false;
       c.port.post({ v: 1, kind: 'time', action: 'pause' });
       offAttach();
-      detach();
-      detach = () => {};
+      offAlarms();
+      detach?.();
+      detach = null;
       session.ventLink = null;
+      session.ventAlarms(c.screen, [], session.simNow()); // a cockpit that no longer drives shows the patient no alarm
     },
     async handOver(c, still, release) {
       while (session.host.fastForwarding) {
@@ -199,7 +210,7 @@ interface Served {
   end(): void;
 }
 
-function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, o: { revokeOnSilence?: () => void } = {}): Served {
+function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, screen: VentScreen, o: { revokeOnSilence?: () => void } = {}): Served {
   let last: CockpitSettings | null = null;
   let heardAt = performance.now();
   let hidden = false;
@@ -220,7 +231,7 @@ function serveCockpit(session: AppSession, desk: CockpitDesk, port: LinkPort, o:
     onMessage: (fn) => port.onMessage(fn),
     close: () => port.close(),
   };
-  const cockpit: Cockpit = { port: linkPort, remote: true, settings: () => last, displaced: () => void (displaced = true) };
+  const cockpit: Cockpit = { port: linkPort, remote: true, screen, settings: () => last, displaced: () => void (displaced = true) };
   const lose = (silent = false) => {
     if (desk.driving !== cockpit) return;
     const g = gen;
@@ -326,7 +337,7 @@ export function serveRemoteCockpit(session: AppSession): () => void {
       r.served = serveCockpit(session, desk, createRelayPort({
         send: (b) => void session.host.ventPost(b as VentLinkBody),
         onBody: (fn) => ((r.deliver = fn), () => void (r.deliver = null)),
-      }), { revokeOnSilence: () => void session.host.revokeVentilator(from, VENTILATOR_REASONS.silent) });
+      }), 'device', { revokeOnSilence: () => void session.host.revokeVentilator(from, VENTILATOR_REASONS.silent) });
       cur = r;
       mine.device = r.served;
     },
@@ -353,7 +364,7 @@ export function serveRemoteCockpit(session: AppSession): () => void {
 export function serveWindowCockpit(session: AppSession, open: (name: string) => LinkPort = createBroadcastPort): () => void {
   const desk = cockpitDesk(session);
   const port = open(session.code);
-  const served = serveCockpit(session, desk, port);
+  const served = serveCockpit(session, desk, port, 'window');
   const off = port.onMessage((m) => served.heard(m as VentWireBody));
   screensOf(session).window = null; // listed once it is heard
   const offSeen = port.onMessage(() => {
@@ -433,7 +444,7 @@ export function ventView(session: AppSession): View {
       const p = createFramePort(name, () => frame.contentWindow);
       port = p;
       mine = {
-        port: p, remote: false,
+        port: p, remote: false, screen: 'view',
         settings: () => {
           const v = cockpit();
           return v ? { cfg: { ...v.vs.cfg }, measured: { RR: v.vs.p.measured.RR, VTE: v.vs.p.measured.VTE } } : null;

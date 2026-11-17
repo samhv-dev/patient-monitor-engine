@@ -803,6 +803,8 @@ renderer, audio and skin contracts.
 | `toggle` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Toggle button with aria-pressed and a filled dot when on (brief §7 "toggle"). |
 | `infoDialog` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Information dialog with one Close button (shortcut sheet, help). |
 | `pausedMark` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | UI review #32: |
+| `ventAlarmChanges` | [`apps/demo/src/app/vent-alarms.ts`](../../apps/demo/src/app/vent-alarms.ts) | What changed from one report to the next, per alarm: |
+| `ventAlarmLogLine` | [`apps/demo/src/app/vent-alarms.ts`](../../apps/demo/src/app/vent-alarms.ts) | The Log's line for one change. |
 | `downloadEntry` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | Download one entry (`pme-archive-entry/1`), once its body is read (IndexedDB answers asynchronously). |
 | `exportAll` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | "Export all": |
 | `archiveList` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | The list, its classes `<p>-list`, `<p>-row`, …; |
@@ -1117,6 +1119,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/strip.ts`](../../apps/demo/src/app/teach2/strip.ts) | Instructor v2, the stage strip (design §3.2, board "Proposal v6"; plan IP5; answers 2 and 3, the owner's ruling of 29 October on clicks). |
 | [`apps/demo/src/app/triggers.ts`](../../apps/demo/src/app/triggers.ts) | A scenario transition's trigger in clinical words ("EtCO₂ ≥ 20 mmHg for 30 s", "Shock of at least 150 J", "Adrenaline given"), for the run strip's "next" list. |
 | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | The app's small component set (research/13 brief §7), plain DOM, no library: element builder, buttons, segmented control, numeric stepper with unit, glossary tooltip, confirm dialog (native <dialog>), toasts. |
+| [`apps/demo/src/app/vent-alarms.ts`](../../apps/demo/src/app/vent-alarms.ts) | The ventilator's alarms as the instructor reads them (the host's `ventAlarms` event): each named with the ventilator as every page names it (device-names.ts), its priority as the monitor's alarm level, and what changed b |
 | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | The archive's list (the owner's board "Finish 2"), the one builder the Instructor v2 Finish pane and the Debrief view's Archive section share: one row per saved debrief, oldest first: its number, "<Resident> · <card>", t |
 | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The Debrief's course strip: the run on one time axis as an SVG string (no DOM state). |
 | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The Debrief's swimlane, "The run, lane by lane" (Debrief 2, D7a): the run on one time axis as an SVG string (no DOM state), lanes top to bottom, each named in words at its left: Patient (the patient's key moments, ● verm |
@@ -1392,6 +1395,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/e2e/ui-polish-b.e2e.ts`](../../apps/demo/e2e/ui-polish-b.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/validation-bedside.e2e.ts`](../../apps/demo/e2e/validation-bedside.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/validation-review.e2e.ts`](../../apps/demo/e2e/validation-review.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/vent-alarms-instructor.e2e.ts`](../../apps/demo/e2e/vent-alarms-instructor.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-edp-ts-stills.e2e.ts`](../../apps/demo/e2e/vent-edp-ts-stills.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-edp-ts.e2e.ts`](../../apps/demo/e2e/vent-edp-ts.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/vent-embed.e2e.ts`](../../apps/demo/e2e/vent-embed.e2e.ts) | 0 | 0 |
@@ -1553,8 +1557,10 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/app/teach2/spokes.dom.test.ts`](../../apps/demo/src/app/teach2/spokes.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/strip.dom.test.ts`](../../apps/demo/src/app/teach2/strip.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/v2.dom.test.ts`](../../apps/demo/src/app/teach2/v2.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/vent-alarms.dom.test.ts`](../../apps/demo/src/app/teach2/vent-alarms.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/tokens.test.ts`](../../apps/demo/src/app/tokens.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/ui.dom.test.ts`](../../apps/demo/src/app/ui.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/vent-alarms.test.ts`](../../apps/demo/src/app/vent-alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-archive.dom.test.ts`](../../apps/demo/src/app/views/debrief-archive.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-fa.dom.test.ts`](../../apps/demo/src/app/views/debrief-fa.dom.test.ts) | 0 | 0 |
@@ -1611,6 +1617,7 @@ Exported without a doc comment: `anchorKind`, `readAnchor`, `outcomeSection`, `b
 | [`apps/demo/src/physiology-console/organs.test.ts`](../../apps/demo/src/physiology-console/organs.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/sparkline.test.ts`](../../apps/demo/src/physiology-console/sparkline.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/view.dom.test.ts`](../../apps/demo/src/physiology-console/view.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/vent/core/alarm-report.test.ts`](../../apps/demo/src/vent/core/alarm-report.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/alarms-view.test.ts`](../../apps/demo/src/vent/core/alarms-view.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/cockpit.test.ts`](../../apps/demo/src/vent/core/cockpit.test.ts) | 0 | 0 |
 | [`apps/demo/src/vent/core/pending.test.ts`](../../apps/demo/src/vent/core/pending.test.ts) | 0 | 0 |

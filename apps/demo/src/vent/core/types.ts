@@ -92,6 +92,8 @@ export interface FaceSpec {
   matchMonitorFlow: boolean;
   /** The face's alarm scheme (V3). Absent: the model's alarms as they are, with v1.9's banner and 120 s silence. */
   alarmProfile?: AlarmProfile;
+  /** The words the face shows for an alarm id, or null for the model's own. Absent: the model's words throughout. */
+  alarmText?: (id: VentAlarm['id']) => string | null;
   /** V1: the device's own starting settings, written once when the cockpit is created (before any link patch). */
   init?: Partial<VentConfig>;
   /**
