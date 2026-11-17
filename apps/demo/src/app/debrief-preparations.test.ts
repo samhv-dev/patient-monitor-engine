@@ -1,6 +1,6 @@
 // Plan learner-action-remote.md L13 ("Tests first"): the Debrief tells the learner remotes' story from the record alone.
-// 1. The who line of a learner give and of an infusion change ("…, replacing the instructor's 4 mL/h"), named by the one
-//    name source (AppSession.deviceName, PR 423), else numbered among the remotes. 2. The record keeps the /2 runner's
+// 1. The who line of a learner give and of an infusion change ("…, replacing the instructor's rate"), named by the name
+//    Room setup gives the device now, else by the record's number for it. 2. The record keeps the /2 runner's
 //    staged preparations, so one never given is in the Debrief too. 3. The Preparations section's rows from a scripted
 //    run: what was prepared (the HOST's figures), when it was ready (the formulary's sourced time, or its LQ7 words), each
 //    finding with its statement and sources (the formulary's, as the instructor's card names them), whether the
@@ -29,13 +29,14 @@ const applied = (tick: number, command: Record<string, unknown>): WireEvent =>
   ({ type: 'commandApplied', commandId: `c${tick}`, tick, resolved: { command: { id: `c${tick}`, issuedBy: LEARNER_ISSUED_BY, ...command } } }) as WireEvent;
 
 describe('L13: the who line of a learner remote', () => {
-  it('a give: "<what> at 04:12, by Learner remote (bed 2)", the name read now through the one name source', () => {
+  it('a give: "<what> at 04:12, by bed 2", the name Room setup gives the device now', () => {
     const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0);
     r.wire(applied(12_600, { by: KEY, prepId: 'p0000001', type: 'applyEvent', event: { kind: 'drug', drugId: 'dantrolene', dose: 175, unit: 'mg', route: 'iv' } }));
     const row = r.data.rows[0] as Row;
-    expect(learnerWho(r.data.rows, row, names({ [KEY]: 'bed 2' }))).toBe(`${row.text} at 04:12, by Learner remote (bed 2)`);
+    expect(learnerWho(r.data, row, names({ [KEY]: 'bed 2' }))).toBe(`${row.text} at 04:12, by bed 2`);
+    expect(learnerWho(r.data, row, names({}))).toBe(`${row.text} at 04:12, by Learner remote 1`);
   });
-  it("an infusion change says whose rate it replaced: the instructor's (laptop or phone), the card's, another remote's", () => {
+  it("an infusion change says the rate it replaced and whose it was: the instructor's (laptop or phone), the card's, another remote's", () => {
     const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0);
     const inf = (tick: number, rate: number, by: string) => r.wire(applied(tick, { by: KEY3, type: 'applyEvent', event: { kind: 'infusion', drugId: 'norepinephrine', rate, unit: 'mL/h' }, replaced: { rate: rate / 2, rateUnit: 'mL/h', by } }));
     inf(19_500, 8, 'laptop');
@@ -44,11 +45,24 @@ describe('L13: the who line of a learner remote', () => {
     inf(22_000, 14, KEY);
     const n = names({ [KEY3]: 'bed 3', [KEY]: 'bed 2' });
     const [a, b, c, d] = r.data.rows as [Row, Row, Row, Row];
-    expect(learnerWho(r.data.rows, a, n)).toBe(`${a.text} at 06:30, by Learner remote (bed 3), replacing the instructor's 4 mL/h`);
-    expect(learnerWho(r.data.rows, b, n)).toBe(`${b.text} at 06:40, by Learner remote (bed 3), replacing the instructor's 5 mL/h`);
-    expect(learnerWho(r.data.rows, c, n)).toBe(`${c.text} at 07:00, by Learner remote (bed 3), replacing the card's 6 mL/h`);
-    expect(learnerWho(r.data.rows, d, n)).toBe(`${d.text} at 07:20, by Learner remote (bed 3), replacing Learner remote (bed 2)'s 7 mL/h`);
-    expect(learnerWho(r.data.rows, d, names({}))).toMatch(/, by Learner remote 1, replacing Learner remote 2's 7 mL\/h$/);
+    expect(a.text).toBe('Norepinephrine infusion rate changed from 4 to 8 mL/h');
+    expect(learnerWho(r.data, a, n)).toBe("Norepinephrine infusion rate changed from 4 to 8 mL/h at 06:30, by bed 3, replacing the instructor's rate");
+    expect(learnerWho(r.data, b, n)).toBe(`${b.text} at 06:40, by bed 3, replacing the instructor's rate`);
+    expect(learnerWho(r.data, c, n)).toBe(`${c.text} at 07:00, by bed 3, replacing the card's rate`);
+    expect(learnerWho(r.data, d, n)).toBe(`${d.text} at 07:20, by bed 3, replacing bed 2's rate`);
+    expect(learnerWho(r.data, d, names({}))).toMatch(/, by Learner remote 1, replacing Learner remote 2's rate$/);
+  });
+  it("a remote's change of its own rate names no second device", () => {
+    const r = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0);
+    r.wire(applied(1000, { by: KEY, type: 'applyEvent', event: { kind: 'infusion', drugId: 'phenylephrine', rate: 20, unit: 'mL/h' }, replaced: { rate: 10, rateUnit: 'mL/h', by: KEY } }));
+    expect(learnerWho(r.data, r.data.rows[0] as Row, names({}))).toBe('Phenylephrine infusion rate changed from 10 to 20 mL/h at 00:20, by Learner remote 1');
+  });
+  it('a record saved before rate changes and device numbers were kept: its words, the replaced rate, the remotes in row order', () => {
+    const row = (t: number, by: string, rate: number, rep: string): Row => ({ t, kind: 'learner', remote: true, by, text: `Norepinephrine ${rate} mL/h infusion started`, ev: 'drug:norepinephrine', replaced: { rate: rate / 2, rateUnit: 'mL/h', by: rep } });
+    const old = { ...emptyRun('P', 70, 0), keeps: ['pressures', 'alarmEnd', 'cprStop', 'recognised'], rows: [row(390, KEY3, 8, 'laptop'), row(440, KEY3, 14, KEY)] };
+    const [a, d] = old.rows as [Row, Row];
+    expect(learnerWho(old, a, names({}))).toBe("Norepinephrine 8 mL/h infusion started at 06:30, by Learner remote 1, replacing the instructor's 4 mL/h");
+    expect(learnerWho(old, d, names({}))).toBe("Norepinephrine 14 mL/h infusion started at 07:20, by Learner remote 1, replacing Learner remote 2's 7 mL/h");
   });
 });
 
@@ -118,8 +132,8 @@ describe('L13: the Preparations section, from a scripted /2 run', () => {
   it('one row per preparation in the order staged, each naming the remote that made it, in the HOST\'s figures', () => {
     const rows = rowsOf(scripted(), names({ [KEY]: 'bed 2' }), F);
     expect(rows.map((r) => [r.id, r.head])).toEqual([
-      ['m0000001', `00:40 · Learner remote (bed 2) staged ${drugName('sodiumBicarbonate')} 10 mmol (0.909 mmol/mL) + ${drugName('epinephrine')} 1 mg (0.0909 mg/mL), 11 mL`],
-      ['p0000002', `01:40 · Learner remote (bed 2) staged ${drugName('dantrolene')} 120 mg (5.31 mg/mL) in ${water()}, 22.6 mL`],
+      ['m0000001', `00:40 · bed 2 staged ${drugName('sodiumBicarbonate')} 10 mmol (0.909 mmol/mL) + ${drugName('epinephrine')} 1 mg (0.0909 mg/mL), 11 mL`],
+      ['p0000002', `01:40 · bed 2 staged ${drugName('dantrolene')} 120 mg (5.31 mg/mL) in ${water()}, 22.6 mL`],
       ['q0000001', `03:20 · Learner remote 2 staged ${drugName('epinephrine')} 1 mg (0.1 mg/mL) in ${water()}, 10 mL`],
     ]);
   });
