@@ -10,6 +10,7 @@ export abstract class TransportBase implements ManagedTransport {
   private readonly statusFns = new Set<(s: TransportStatus) => void>();
   private readonly presenceFns = new Set<(p: { hostOnline: boolean }) => void>();
   private readonly peerLeftFns = new Set<(from: string) => void>();
+  private readonly farewellFns = new Set<(from: string) => void>();
   private readonly relayFns = new Set<(f: RelayFrame) => void>();
   private current: TransportStatus = 'connecting';
   protected closed = false;
@@ -91,6 +92,19 @@ export abstract class TransportBase implements ManagedTransport {
     return () => {
       this.peerLeftFns.delete(fn);
     };
+  }
+
+  /** A page on this computer says it closed (only the same-computer link calls farewell()). */
+  onFarewell(fn: (from: string) => void): () => void {
+    this.farewellFns.add(fn);
+    return () => {
+      this.farewellFns.delete(fn);
+    };
+  }
+
+  protected farewell(from: string): void {
+    if (this.closed) return;
+    for (const fn of [...this.farewellFns]) fn(from);
   }
 
   protected peerLeft(from: string): void {

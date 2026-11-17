@@ -28,7 +28,7 @@ import { archive } from './archive.ts';
 import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession, type RoomKeep } from './session.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
-import { loadSite, saveSite, setLightScreen } from './site.ts';
+import { loadSite, saveSite, setLightScreen, type SiteProfile } from './site.ts';
 import { button, clock, h, pausedMark, setText, throttle, toast, trackChromeBottom } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
@@ -326,25 +326,25 @@ if (follow && shows === 'pick') {
   };
   // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
   shell.add(homeView());
+  // A Room setting the session applies, or refuses with the host's words (a device in use): kept with the site profile
+  // only when it is taken
+  const taken = <K extends keyof SiteProfile>(key: K, apply: (v: SiteProfile[K]) => string | null) => (v: SiteProfile[K]): string | null => {
+    const refused = apply(v);
+    if (!refused) (site[key] = v), saveSite(site);
+    return refused;
+  };
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
     followers: () => session.followers, onFollowers: (f) => session.onFollowers(f), devices: () => session.devices,
     label: (key, kind) => session.deviceLabel(key, kind),
     instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
-    defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
+    defib: { model: () => site.defibModel, choose: taken('defibModel', (m) => session.setDefibModel(m)) },
     // E12: the room's depth-of-anaesthesia device, kept with the site profile and switched on in the patient's engine
-    depth: { model: () => site.eegModel, choose: (m) => ((site.eegModel = m), saveSite(site), session.setEegModel(m)) },
+    depth: { model: () => site.eegModel, choose: taken('eegModel', (m) => session.setEegModel(m)) },
     // A1 (plan pump-rack-tci.md §5): the room's pump rack, sent to the pump tablet on the style event and kept with the
-    // site profile (so a restart keeps it); a rack the host refuses is neither
-    pumps: {
-      kinds: () => site.pumpRack,
-      choose: (k) => {
-        const refused = session.setPumpRack(k);
-        if (!refused) (site.pumpRack = k), saveSite(site);
-        return refused;
-      },
-    },
+    // site profile (so a restart keeps it)
+    pumps: { kinds: () => site.pumpRack, choose: taken('pumpRack', (k) => session.setPumpRack(k)) },
     vent: () => ventScreens(session), // R8d: the ventilator's window and tablet, driving or handed over
     // the room's ventilator face, kept with the site profile; refused while a cockpit ventilates the patient
     ventFace: {

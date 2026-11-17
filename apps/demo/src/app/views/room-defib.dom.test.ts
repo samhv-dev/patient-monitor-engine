@@ -2,7 +2,7 @@
 // Room plan R5b: Room setup's "Defibrillator in this room" (owner's Q6 ruling, 5 November). One model, the generic one,
 // and the line that keeps the hook for the department's own machine. It sits in a card of its own on today's Room page
 // (R7, the Room page proper, is not built yet).
-import { createStamper, type ManagedTransport, type TransportStatus, type WireMessage } from '@pme/controller';
+import { createStamper, ROOM_REFUSALS, type ManagedTransport, type TransportStatus, type WireMessage } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
 import { roomView } from './room.ts';
 
@@ -15,7 +15,7 @@ describe("R5b: Room setup's defibrillator choice", () => {
     const v = roomView({
       code: 'ABC234', relay: null, relayLink: null, local: quiet(), hostPeerId: 'host-1', learnerUrl: 'about:blank',
       followers: () => 0, onFollowers: () => () => undefined,
-      defib: { model: () => model, choose: (m) => void (chosen.push(m), (model = m)) },
+      defib: { model: () => model, choose: (m) => (chosen.push(m), (model = m), null) },
     });
     document.body.replaceChildren(v.el);
     const card = v.el.querySelector('.room-defib') as HTMLElement;
@@ -34,6 +34,33 @@ describe("R5b: Room setup's defibrillator choice", () => {
     sel.dispatchEvent(new Event('change'));
     expect(chosen).toEqual(['generic', null]);
     expect(card.textContent).toContain('from the next patient start');
+  });
+  it("a model the host refuses (the device is in use) says the host's words in an alert and the choice goes back; the next change taken clears them", () => {
+    let model: string | null = 'generic';
+    let refusal: string | null = ROOM_REFUSALS.charged;
+    const chosen: Array<string | null> = [];
+    const v = roomView({
+      code: 'ABC234', relay: null, relayLink: null, local: quiet(), hostPeerId: 'host-1', learnerUrl: 'about:blank',
+      followers: () => 0, onFollowers: () => () => undefined,
+      defib: { model: () => model, choose: (m) => refusal ?? (chosen.push(m), (model = m), null) },
+    });
+    document.body.replaceChildren(v.el);
+    const card = v.el.querySelector('.room-defib') as HTMLElement;
+    const sel = card.querySelector('select') as HTMLSelectElement;
+    const alert = card.querySelector('[role="alert"]') as HTMLElement;
+    expect(alert.className).toContain('error');
+    expect(alert.textContent).toBe('');
+    sel.value = '';
+    sel.dispatchEvent(new Event('change'));
+    expect(alert.textContent).toBe('The defibrillator is charged: disarm it first.');
+    expect(sel.value).toBe('generic');
+    expect(chosen).toEqual([]);
+    refusal = null;
+    sel.value = '';
+    sel.dispatchEvent(new Event('change'));
+    expect(chosen).toEqual([null]);
+    expect(alert.textContent).toBe('');
+    expect(card.textContent).toContain('It cannot change while the defibrillator is charging, charged, pacing or switched on.');
   });
   it('without the session\'s choice (a page that does not pass one) there is no card', () => {
     const v = roomView({ code: 'ABC234', relay: null, relayLink: null, local: quiet(), hostPeerId: 'host-1', learnerUrl: 'about:blank', followers: () => 0, onFollowers: () => () => undefined });
