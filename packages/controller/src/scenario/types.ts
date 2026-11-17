@@ -18,6 +18,8 @@ export type When =
   | { vital: { var: VitalVar; op: Op; value: number; forS?: number } }
   | { event: EventFilter }
   | { sensor: { sensor: SensorId; state: string } }
+  /** The rhythm the engine draws (its id), held without a break for `forS` while the state is current. */
+  | { rhythm: { id: string; forS?: number } }
   | { manual: { label: string } }
   | { all: When[] }
   | { any: When[] };
@@ -45,6 +47,8 @@ export interface Transition extends C {
   /** Rolled once on the `scenario` PRNG stream when `when` holds: success → `to`, failure → `else` (absent: stay). */
   probability?: number;
   else?: string;
+  /** Where its numbers come from, or PLACEHOLDER and why: data, as a /2 entry's `src`. */
+  src?: string;
 }
 
 export interface ScenarioState extends C {

@@ -28,6 +28,7 @@ const SHOCK = { kind: 'defib', action: 'shock', energyJ: 200 };
 // Stage 4b: the engine models the defibrillator, so a shock needs a charge first (200 J charges in 7 s [ENG: device]).
 const CHARGE = { kind: 'defib', action: 'charge', energyJ: 200 };
 const CHARGE_LEAD_S = 9;
+const instructorRhythm = (rhythm: string): Command => ({ id: `I${++nL}`, issuedBy: 'instructor', type: 'setRhythm', rhythm, when: 'now' } as unknown as Command);
 
 /** A driver over a fresh engine; await run(ticks) steps one tick at a time, sends the learner's commands, polls. */
 function rig(seed = 42) {
@@ -109,11 +110,58 @@ describe('ScenarioDriver', () => {
     expect(host.engine.now().simT).toBe(600);
   }, SLOW);
 
-  it('ACLS VF without shocks decays: VF → fine VF at 4 min → asystole 5 min later', async () => {
+  it('ACLS VF without shocks decays: fine VF after 4 min of coarse VF, asystole after 5 min of fine VF', async () => {
     const { driver, events, run } = rig();
     driver.load('acls-vf-witnessed');
     await run(50 * 700);
     expect(events.map((e) => `${e.t}:${e.stateId}`)).toEqual(['0:stable', '60:vf', '300:vfFine', '600:asystole']);
+  }, SLOW);
+
+  it("ACLS VF: the instructor's asystole stays asystole past the card's fine-VF timer", async () => {
+    const { driver, events, run, host } = rig();
+    let rhythm = '';
+    host.engine.on((e) => {
+      if (e.type === 'state') rhythm = (e as { rhythm?: { id: string } }).rhythm?.id ?? rhythm;
+    });
+    driver.load('acls-vf-witnessed');
+    await run(50 * 210); // coarse VF since 60 s
+    expect(driver.host.dispatch({ id: 'i1', issuedBy: 'instructor', type: 'setRhythm', rhythm: 'asystole', when: 'now' } as Command)).toMatchObject({ accepted: true });
+    await run(50 * 700); // past the timer's 240 s of coarse VF, and past it again from the instructor's change
+    expect(events.map((e) => `${e.t}:${e.stateId}`)).toEqual(['0:stable', '60:vf']);
+    expect(driver.runner!.log.filter((e) => e.op === 'dispatch' && e.type === 'setRhythm')).toHaveLength(2); // the patient's sinus, the card's VF
+    expect(rhythm).toBe('asystole');
+  }, SLOW);
+
+  // Each card's timer would set a rhythm; the instructor (or a treatment) sets another first, and the timer then leaves it.
+  const KEPT: Array<{ card: string; steps: Array<[number, Command | string]>; untilS: number; rhythm: string; states: string[] }> = [
+    { card: 'acls-pea-hypovolaemia', steps: [[60, instructorRhythm('sinus')]], untilS: 240, rhythm: 'sinus', states: ['bleeding'] },
+    { card: 'acls-pea-hypovolaemia', steps: [[10, 'losePulse'], [100, instructorRhythm('asystole')]], untilS: 400, rhythm: 'asystole', states: ['bleeding', 'pea'] },
+    { card: 'acls-pea-hypovolaemia', steps: [[10, 'losePulse'], [20, 'brady'], [60, instructorRhythm('sinus')]], untilS: 260, rhythm: 'sinus', states: ['bleeding', 'pea', 'peaBrady'] },
+    { card: 'acls-bradycardia-unstable', steps: [[60, instructorRhythm('sinus')]], untilS: 480, rhythm: 'sinus', states: ['chb'] },
+    { card: 'or-induction-hypotension', steps: [[5, 'induce'], [30, instructorRhythm('sinusBrady')]], untilS: 120, rhythm: 'sinusBrady', states: ['preInduction', 'induction'] },
+    { card: 'svt-adenosine', steps: [[5, learner({ kind: 'drug', drugId: 'adenosine', dose: 6, unit: 'mg', route: 'iv' })], [10, instructorRhythm('sinus')]], untilS: 40, rhythm: 'sinus', states: ['svt', 'circulating'] },
+  ];
+  it.each(KEPT)("$card: the instructor's rhythm stays past the card's timers ($states)", async ({ card, steps, untilS, rhythm: want, states }) => {
+    const { driver, events, run, host } = rig();
+    let rhythm = '';
+    host.engine.on((e) => {
+      if (e.type === 'state') rhythm = (e as { rhythm?: { id: string } }).rhythm?.id ?? rhythm;
+    });
+    expect(driver.load(card).ok).toBe(true);
+    let before = 0;
+    for (const [atS, c] of steps) {
+      await run(50 * atS);
+      if (typeof c === 'string') {
+        expect((await driver.hook({ id: `P${++nL}`, issuedBy: 'instructor', type: 'scenario', action: 'trigger', target: c })).accepted).toBe(true);
+        continue;
+      }
+      expect(driver.host.dispatch(c)).toMatchObject({ accepted: true });
+      if (c.issuedBy === 'instructor' && c.type === 'setRhythm') before = driver.runner!.log.filter((e) => e.op === 'dispatch' && e.type === 'setRhythm').length;
+    }
+    await run(50 * untilS);
+    expect(events.map((e) => e.stateId).filter((s, i, a) => s !== a[i - 1])).toEqual(states);
+    expect(driver.runner!.log.filter((e) => e.op === 'dispatch' && e.type === 'setRhythm')).toHaveLength(before); // no card rhythm after the instructor's
+    expect(rhythm).toBe(want);
   }, SLOW);
 
   it('a different runner seed takes a different path through the same shocks', async () => {
@@ -447,13 +495,19 @@ describe('ScenarioDriver and a pme-scenario/2 document (F2)', () => {
     expect((await driver.hook({ id: 'r', issuedBy: 'instructor', type: 'scenario', action: 'resume' })).accepted).toBe(true);
   });
 
-  it('a /1 card\'s runner still receives only today\'s input kinds (the rhythm feed is for a PhaseRunner only)', async () => {
-    const { driver, run } = rig();
-    expect(driver.load('acls-vf-witnessed').ok).toBe(true);
-    await run(150);
-    const kinds = new Set(driver.runner!.log.flatMap((l) => (l.op === 'advance' ? l.inputs.map((i) => i.kind) : [])));
-    expect([...kinds].every((k) => k === 'values' || k === 'clinical' || k === 'sensor')).toBe(true);
-    expect(kinds.has('values')).toBe(true);
+  it('a /1 card\'s runner is fed the rhythm only when the card reads one', async () => {
+    const kindsOf = async (id: string) => {
+      const { driver, run } = rig();
+      expect(driver.load(id).ok).toBe(true);
+      await run(150);
+      return new Set(driver.runner!.log.flatMap((l) => (l.op === 'advance' ? l.inputs.map((i) => i.kind) : [])));
+    };
+    const today = (k: string) => k === 'values' || k === 'clinical' || k === 'sensor';
+    const pea = await kindsOf('depth-light-anaesthesia'); // no rhythm rule
+    expect([...pea].every(today)).toBe(true);
+    expect(pea.has('values')).toBe(true);
+    const vf = await kindsOf('acls-vf-witnessed'); // its timers read the rhythm
+    expect([...vf].filter((k) => !today(k))).toEqual(['rhythm']);
   });
 });
 

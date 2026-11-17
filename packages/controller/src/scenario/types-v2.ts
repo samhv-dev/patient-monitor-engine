@@ -287,12 +287,11 @@ export interface Administration {
 
 /** F4's engine signals (the `state` event's additive `signals` field), rank 3. The /1 runner never receives them. */
 export type SignalsInput = { kind: 'signals'; signals: { pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number; mhActivity: number; mhExcess?: number | null } };
-/** The rhythm id the engine draws (the `state` event's `rhythm.id`), rank 3: what a `rhythm:<id>` signal leaf reads
- *  (F2). The /1 runner never receives it. */
-export type RhythmInput = { kind: 'rhythm'; id: string };
-/** What the phase runner takes: the /1 runner's inputs plus the signals and the rhythm. (The plan names it
- *  `RunnerInput`; that name is the /1 runner's, in runner.ts, which no piece edits.) */
-export type RunnerInputV2 = RunnerInput | SignalsInput | RhythmInput;
+/** The rhythm id the engine draws (the `state` event's `rhythm.id`): what a `rhythm:<id>` signal leaf and a /1
+ *  `rhythm` trigger read. */
+export type RhythmInput = Extract<RunnerInput, { kind: 'rhythm' }>;
+/** What the phase runner takes: the /1 runner's inputs plus the signals. */
+export type RunnerInputV2 = RunnerInput | SignalsInput;
 
 /**
  * The phase runner's state (plan F2): plain JSON, so a bookmark holds it next to the engine snapshot and a restore
