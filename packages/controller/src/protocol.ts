@@ -2,6 +2,7 @@
 // low-rate state come out, snapshots serve late joiners. Raw samples never cross the wire — the types below
 // have no field that can hold one, and guard.ts refuses any message that tries (typed arrays, long numeric runs).
 import type {
+  AirwayState,
   AlarmEntry,
   Command,
   DispatchResult,
@@ -279,7 +280,11 @@ export type ExtraEvent =
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
       rhythm?: { id: RhythmId; rateBpm: number }; // The engine's running rhythm (absent from a host-synthesised state)
       /** Who breathes and through what (E121b; the engine's own state, absent from a host-synthesised one). */
-      breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
+      breathing?: {
+        source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga';
+        /** The airway event acting now, absent while patent. */
+        airway?: Exclude<AirwayState, 'patent'>;
+      };
       /** While an EEG device is on (EEG plan E12, Q9; the engine's own state, absent from a host-synthesised one). */
       eeg?: { model: string; impedanceKOhm: number[]; ecgPickup: boolean };
     }

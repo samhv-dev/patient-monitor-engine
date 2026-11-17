@@ -940,7 +940,8 @@ class Engine implements MonitorEngine {
       if (e.type !== 'state') continue;
       e.sensors = sensorMap(this.st); // 1 Hz, built only here
       const dev = this.st.neuro.airway;
-      e.breathing = { source: this.st.resp.driver.source, device: dev === 'auto' ? 'none' : dev }; // E121b
+      const airway = this.st.resp.driver.airway;
+      e.breathing = { source: this.st.resp.driver.source, device: dev === 'auto' ? 'none' : dev, ...(airway === 'patent' ? {} : { airway }) }; // E121b
       e.signals = stateSignals(this.st, e.t); // scenario-format-v2 F4
       const g = this.st.eeg; // E12 (Q9): the EEG's switched settings, a copy
       if (g) e.eeg = { model: g.dev.model, impedanceKOhm: [...g.impedanceKOhm], ecgPickup: g.ecgPickup };

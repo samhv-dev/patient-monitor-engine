@@ -1,6 +1,7 @@
 // Haemodynamic public types (brief §7.2–§7.3), kept in their own file. types.ts adds `HemoCommandBody`,
 // `NibpDeviceAction` and `HemoEvent` to its unions.
 import type { Ramp, RhythmId, SimSeconds, StateVar } from './types.ts';
+import type { AirwayState } from './types-resp.ts';
 
 /** Sensors named in brief §7.2 `attachSensor`. The haemodynamics implement abp, cvp, pap, spo2 (pleth) and nibp. */
 export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp' | 'pv' | 'icp' | 'pbto2' | 'urometer'; // 'pv' = teaching channels; icp, pbto2, urometer
@@ -81,7 +82,11 @@ export type HemoEvent =
       sensors?: Partial<Record<SensorId, string>>;
       /** Who breathes and through what (E121b), so a panel can tell a spontaneously breathing patient without an airway
        *  device from a bagged, ventilated (external = the Ventilator view) or intubated one. Assembled with `sensors`. */
-      breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
+      breathing?: {
+        source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga';
+        /** The airway event acting now (the instructor's or a ventilator's own circuit), absent while patent. */
+        airway?: Exclude<AirwayState, 'patent'>;
+      };
       /** Engine truths a `pme-scenario/2` phase rule reads (scenario-format-v2 plan F4, Q21/Q22), otherwise only in the
        *  opt-in truth tree or nowhere. Set on every emitted state event: the engine fills it from the committed state
        *  when the event is committed, as it does `sensors` (optional in the type for the same reason: the haemodynamic
