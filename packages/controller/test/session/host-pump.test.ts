@@ -585,6 +585,17 @@ describe('C2: the pump tablet\'s admission and its news', () => {
     const labels = prepsTo(x.got, 'pump.1').filter((e) => (e.body as { news: string }).news === 'labels').at(-1)?.body as { labels: Array<Record<string, unknown>> };
     expect(labels.labels[0]).toMatchObject({ device: REMOTE_KEY, id: 's0000002', drugId: 'fentanyl', container: 'syringe-pp', volumeMl: 2 });
     expect(labels.labels[0]).not.toHaveProperty('findings');
+    expect(labels.labels[0]).not.toHaveProperty('name'); // no name source: the tablet says "a learner remote"
+  });
+
+  it("a preparation's label carries its maker's name from the host's name source, so the tablet never shows a device key", async () => {
+    const x = setup({ deviceName: (k) => (k === REMOTE_KEY ? 'Learner remote 1' : null) });
+    await pumpIn(x);
+    const lr = await remoteIn(x);
+    expect((await lr.send({ type: 'prep', action: 'stage', prep: { id: 's0000003', components: [{ productId: 'fentanyl-50mcg-ml', amount: 2, unit: 'mL' }], container: 'syringe-pp' } })).accepted).toBe(true);
+    await waitFor(() => prepsTo(x.got, 'pump.1').some((e) => (e.body as { news: string }).news === 'labels'));
+    const labels = prepsTo(x.got, 'pump.1').filter((e) => (e.body as { news: string }).news === 'labels').at(-1)?.body as { labels: Array<Record<string, unknown>> };
+    expect(labels.labels[0]).toMatchObject({ device: REMOTE_KEY, name: 'Learner remote 1', id: 's0000003' });
   });
 });
 

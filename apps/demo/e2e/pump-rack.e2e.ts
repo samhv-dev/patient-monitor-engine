@@ -151,7 +151,7 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   // Load (D2 item 1): the remote's preparation by its LABEL, on channel 2
   await flow(p, 2, 'load', async (form) => {
     const source = form.locator('select[name="source"]');
-    await expect(source.locator('option').first()).toHaveText(/^Propofol 10 mg\/mL · 20 mL · made on bed2remote01 at \d\d:\d\d$/);
+    await expect(source.locator('option').first()).toHaveText(/^Propofol 10 mg\/mL · 20 mL · made on bed 2 remote at \d\d:\d\d$/);
     await source.selectOption(`prep|${REMOTE}|${remote.id}`);
   }, '201-load');
   await expect(said(p, 2)).toHaveText('Loaded on channel 2.', { timeout: 10_000 });
@@ -207,8 +207,8 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   const tciRow = (await rows(page)).find((r) => r.kind === 'pump' && r.channel === 2 && /TCI Eleveld/.test(r.text))!;
   expect(tciRow).toMatchObject({ by: PUMPS, name: 'bed 2 pumps', ev: 'drug:propofol' });
   await expect.poll(() => logLines(page), { timeout: 10_000 }).toEqual(expect.arrayContaining([
-    'learner|Channel 2: TCI Eleveld, Ce target 3 µg/mL (pump tablet: bed 2 pumps)',
-    'learner|Channel 2 started (pump tablet: bed 2 pumps)',
+    'learner|Channel 2: TCI Eleveld, Ce target 3 µg/mL (bed 2 pumps)',
+    'learner|Channel 2 (Propofol) started (bed 2 pumps)',
   ]));
 
   // A refusal is the host's words: 400 mL/h with a 20 mL stock syringe is past the SP-500's 300
@@ -244,7 +244,7 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   // the instructor's card at once; the pump says nothing of it (§8: the pump never warns by itself)
   const card = page.locator('.ip2-dock .ip2-pm');
   await expect(card).toBeVisible({ timeout: 10_000 });
-  await expect(card.locator('.ip2-pm-what')).toHaveText('Channel 1 (pump tablet: bed 2 pumps): syringe and programme differ. Loaded: Phenylephrine 100 µg/mL; programmed: Propofol 10 mg/mL.');
+  await expect(card.locator('.ip2-pm-what')).toHaveText('Channel 1 (bed 2 pumps): syringe and programme differ. Loaded: Phenylephrine 100 µg/mL; programmed: Propofol 10 mg/mL.');
   await expect(p.locator('.pump-face[data-ch="1"] .pf-notice')).toBeHidden();
   expect(await p.content()).not.toMatch(/phenylephrine 100|100 µg\/mL/i); // the label listed it; the face shows the programme only
   if (process.env.PME_A2_SHOTS) await card.screenshot({ path: `${process.env.PME_A2_SHOTS}/201-card-${browserName}.png` });
@@ -322,8 +322,8 @@ test("the case's pause: the tablet shows it and its controls are unavailable; a 
   await expect(p.locator('.pump-face[data-ch="1"] .pf-btn[data-flow="load"]')).toBeDisabled();
   // a Start that reaches the host while paused (as a press sends it, through the tablet's own follower)
   await p.evaluate(() => (window as unknown as { __pmePumpPage: { follower(): { command(b: unknown): string } } }).__pmePumpPage.follower().command({ type: 'pump', ch: 1, action: 'start' }));
-  await expect.poll(() => logLines(page), { timeout: 10_000 }).toContain('learner|Channel 1 started (pump tablet: bed 2 pumps) not done: the case was paused');
-  expect((await rows(page)).find((r) => r.kind === 'pump' && r.text === 'Channel 1 started not done: the case was paused')).toMatchObject({ channel: 1, by: PUMPS, name: 'bed 2 pumps' });
+  await expect.poll(() => logLines(page), { timeout: 10_000 }).toContain('learner|Channel 1 (Propofol) started (bed 2 pumps) not done: the case was paused');
+  expect((await rows(page)).find((r) => r.kind === 'pump' && r.text === 'Channel 1 (Propofol) started not done: the case was paused')).toMatchObject({ channel: 1, by: PUMPS, name: 'bed 2 pumps' });
   expect((await engine(page))?.pumps.find((c) => c.ch === 1)?.state).not.toBe('running');
 
   await time('resume');

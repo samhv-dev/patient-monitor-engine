@@ -17,10 +17,11 @@
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type NotGiven, type PumpMeta, type PumpReplaced, type WireEvent } from '@pme/controller';
+import { asV1, DEVICE_RE, isV2, LEARNER_ISSUED_BY, PUMP_ISSUED_BY, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type NotGiven, type PumpMeta, type PumpReplaced, type RelayDevice, type WireEvent } from '@pme/controller';
 import type { Administration, PhaseEntry, RuleEdge, StagedPrep } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand, notDoneOf } from './describe.ts';
+import { deviceLabel, kindOf, numberOf, type DeviceKind, type DeviceOrder } from './device-names.ts';
 
 /** How a state row's state was entered (`Row.by` on a state row). */
 export type StateBy = 'press' | 'rule' | 'goto';
@@ -117,8 +118,9 @@ export type Sample = { t: number } & Record<ValueKey, number | null> & Partial<R
  *  `Row.endT` and `Row.ackT` on alarm rows; 'cprStop': `ev: 'cprStop'` on the command
  *  row that stops compressions (a record without it kept no stop, so its hands-off time is unknown); 'recognised': the
  *  instructor's "Recognised" press on a /1 card without a recognition objective or a free run is a note row with
- *  `ev: 'recognised'` (a record without it had no such press, so its absence says nothing). */
-export const KEEPS = ['pressures', 'alarmEnd', 'cprStop', 'recognised'] as const;
+ *  `ev: 'recognised'` (a record without it had no such press, so its absence says nothing). 'rateChange': a row's text
+ *  says an infusion's rate change with the rate it replaced (a record without it says a change as a start). */
+export const KEEPS = ['pressures', 'alarmEnd', 'cprStop', 'recognised', 'rateChange'] as const;
 
 export interface RunData {
   /** Wall clock (ms since 1970) when the run began, and of the last thing recorded. */
@@ -143,6 +145,9 @@ export interface RunData {
   /** A pme-scenario/2 run (learner-action-remote.md L13): the preparations the learner remotes staged, given or not, as
    *  the runner keeps them (absent: none staged, or a record made before L13). */
   preps?: StagedPrep[];
+  /** The session's acting devices in the order first heard of, by kind (device-names.ts): "Learner remote 2" is the
+   *  second learner key. Absent on a record made before it: the Debrief numbers them in the order the rows name them. */
+  devices?: DeviceOrder;
 }
 /** What the record copies from the host's phase runner (`ScenarioDriver.phaseRunner`). */
 export interface GradeInputs {
@@ -204,6 +209,8 @@ export class RunRecord {
   private readonly now: () => number;
   private readonly runner: () => GradeInputs | null;
   private readonly deviceName: (key: string) => string | null;
+  /** Kept across a new case: a device keeps its number for the whole session. */
+  private order: DeviceOrder = {};
 
   /** `runner`: the host's phase runner (a follower has none). `deviceName`: the name the instructor gave a device key in
    *  Room setup (R7's remembered layout), for a learner's press (R5d). */
@@ -214,6 +221,27 @@ export class RunRecord {
     this.deviceName = deviceName;
     const w = who();
     this.data = emptyRun(w.patient, w.weightKg, now());
+    this.data.devices = this.order;
+  }
+
+  /** The name a person reads for the device `key` of `kind` (device-names.ts), numbering it if it is new. */
+  label(key: string, kind: DeviceKind): string {
+    return deviceLabel(this.order, kind, key, this.deviceName(key));
+  }
+
+  /** The relay's device table: every acting device is numbered in the order it joined. */
+  heard(devices: readonly RelayDevice[]): void {
+    for (const d of devices) {
+      const kind = kindOf(d.role);
+      if (kind && d.device) numberOf(this.order, kind, d.device);
+    }
+  }
+
+  /** The name Room setup gives `by` now, the device numbered as it acts (`by` a device key; the laptop's words are not). */
+  private given(by: string | undefined, kind: DeviceKind): string | null {
+    if (by === undefined || !DEVICE_RE.test(by)) return null;
+    numberOf(this.order, kind, by);
+    return this.deviceName(by);
   }
 
   /** The host's wire events (its own panel's end of the in-process hub): commands applied, states, timelines. */
@@ -304,10 +332,10 @@ export class RunRecord {
   notGiven(n: NotGiven): void {
     const c = n.command as unknown as Record<string, unknown>;
     const by = typeof c.by === 'string' ? c.by : undefined;
-    const name = by !== undefined ? this.deviceName(by) : null;
+    const onPump = c.issuedBy === PUMP_ISSUED_BY;
+    const name = this.given(by, onPump ? 'pump' : 'learner');
     const { what, not } = notDoneOf(c);
-    const ev = c.event as { kind?: unknown; ch?: unknown } | undefined;
-    const pump = c.issuedBy === PUMP_ISSUED_BY ? { kind: 'pump' as const, channel: Number(ev?.ch) } : { kind: 'learner' as const, remote: true as const };
+    const pump = onPump ? { kind: 'pump' as const, channel: Number((c.event as { ch?: unknown } | undefined)?.ch) } : { kind: 'learner' as const, remote: true as const };
     this.add({ t: n.t, text: `${what} ${not}: ${n.reason}`, ...pump, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), notGiven: n.reason });
     // the runner's administrations now hold the attempt (AppSession records it there first); a paused clock sends no
     // sample, so the once-a-second copy would not carry it until the case resumed
@@ -321,7 +349,7 @@ export class RunRecord {
   private learnerRow(t: number, c: Record<string, unknown>, ev: Record<string, unknown> | null): Row {
     const shock = ev?.kind === 'defib' && ev.action === 'shock';
     const by = typeof c.by === 'string' ? c.by : undefined;
-    const name = by !== undefined ? this.deviceName(by) : null;
+    const name = this.given(by, 'defib');
     return {
       t, kind: 'learner', text: `${shock ? 'Shock' : 'Charge'}${this.defibJ !== null ? ` ${this.defibJ} J` : ''}`,
       ...(shock ? { ev: 'shock' } : {}), ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}),
@@ -338,7 +366,7 @@ export class RunRecord {
     const meta = c.pump as PumpMeta | undefined;
     const kind: RowKind = c.issuedBy === PUMP_ISSUED_BY ? 'pump' : c.issuedBy === LEARNER_ISSUED_BY ? 'learner' : c.issuedBy === 'remote' ? 'remote' : 'action';
     const by = kind === 'pump' || kind === 'learner' ? (typeof c.by === 'string' ? c.by : undefined) : undefined;
-    const name = by !== undefined ? this.deviceName(by) : null;
+    const name = kind === 'pump' || kind === 'learner' ? this.given(by, kind) : null;
     const drug = meta?.contents?.drugId;
     const gives = ev.action === 'bolus' || ev.action === 'tci' || meta?.infusion !== undefined;
     const extra: Row['pump'] = { ...(meta?.replaced ? { replaced: meta.replaced } : {}), ...(meta?.origin ? { origin: meta.origin } : {}), ...(meta?.mismatch ? { mismatch: true as const } : {}) };
@@ -363,8 +391,9 @@ export class RunRecord {
   /** L4: a learner remote's device key, the name Room setup gave it, its preparation and an infusion change's replaced rate. */
   private learnerOf(c: Record<string, unknown>): Pick<Row, 'remote' | 'by' | 'name' | 'prepId' | 'replaced'> {
     const by = typeof c.by === 'string' ? c.by : undefined;
-    const name = by !== undefined ? this.deviceName(by) : null;
+    const name = this.given(by, 'learner');
     const r = c.replaced as { rate?: unknown; rateUnit?: unknown; by?: unknown } | undefined;
+    if (typeof r?.by === 'string') this.given(r.by, 'learner');
     return {
       remote: true, ...(by !== undefined ? { by } : {}), ...(name ? { name } : {}), ...(typeof c.prepId === 'string' ? { prepId: c.prepId } : {}),
       ...(r && typeof r.rate === 'number' && typeof r.rateUnit === 'string' && typeof r.by === 'string' ? { replaced: { rate: r.rate, rateUnit: r.rateUnit, by: r.by } } : {}),
@@ -474,6 +503,9 @@ export class RunRecord {
   /** The page reloaded and the engine came back at sim time `t`: the kept record goes on from there, with one row saying so. */
   resume(k: KeptRecord, t: number): void {
     this.data = structuredClone(k.data);
+    // the kept numbers first; a device this page heard of before the resume comes after them
+    for (const [kind, keys] of Object.entries(this.order) as Array<[DeviceKind, string[]]>) for (const key of keys) numberOf((this.data.devices ??= {}), kind, key);
+    this.order = this.data.devices ??= {};
     this.data.rows = this.data.rows.filter((r) => r.t <= t + EPS);
     this.data.samples = this.data.samples.filter((s) => s.t <= t + EPS);
     this.active = new Set(k.active);
@@ -499,6 +531,7 @@ export class RunRecord {
   private reset(): void {
     const w = this.who();
     this.data = emptyRun(w.patient, w.weightKg, this.now());
+    this.data.devices = this.order;
     this.active = new Set();
     this.open.clear();
     this.lastVent = -Infinity;

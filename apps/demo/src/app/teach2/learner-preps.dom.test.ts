@@ -105,7 +105,7 @@ describe('L9: the staging card on the laptop and on the instructor phone', () =>
     expect(r.tick()).toBe(t0); // the host's clock has not moved: shown within the tick that staged it
     for (const el of [c.laptop, c.phone]) {
       const card = el.querySelector('.ip2-lp-card[data-prep="bicepi01"]') as HTMLElement;
-      expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 remote staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/);
+      expect(card.querySelector('.ip2-lp-what')?.textContent).toMatch(/^Bed 2 staged Sodium bicarbonate 8\.4 % 10 mmol \+ Epinephrine 1 mg, one syringe, 11 mL$/);
       const row = card.querySelector('.ip2-lp-finding[data-kind="incompatible"]') as HTMLElement;
       expect(row.textContent).toBe('Incompatible: Stabilis (epinephrine monograph): NaHCO3 as solvent degrades epinephrine. (Stabilis Epinephrine hydrochloride (Monographie.php?IdMolecule=106); Trissel 2013 PDF p. 1859 (page stamp 1839) agrees)');
       expect([...card.querySelectorAll('button')].map((b) => b.textContent)).toEqual([PREPS_WORDS.show]);

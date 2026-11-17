@@ -47,10 +47,11 @@ describe('L14: a learner give refused while paused, on the host', () => {
   it("the host's Log has the line, with the phone's Room-setup name and the reason", () => {
     const hub = createInProcessHub();
     const t: ManagedTransport = hub.connect();
-    const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
+    const record = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, names);
+    const host = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner') => record.label(k, kind), record: { note: () => undefined } } as unknown as AppSession;
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(fentanyl);
-    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (learner remote: bed 2 remote) not given: the case was paused' }]);
+    expect(link.log).toEqual([{ simT: 75, kind: 'learner', text: 'Fentanyl 50 µg IV (bed 2 remote) not given: the case was paused' }]);
     link.close();
   });
 
@@ -60,10 +61,10 @@ describe('L14: a learner give refused while paused, on the host', () => {
     expect(r.data.rows).toEqual([{ t: 80, kind: 'learner', text: 'Arterial blood gas not drawn: the case was paused', remote: true, by: KEY, name: 'bed 2 remote', notGiven: PAUSED_REFUSAL }]);
     const hub = createInProcessHub();
     const t: ManagedTransport = hub.connect();
-    const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
+    const host = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'learner') => r.label(k, kind), record: { note: () => undefined } } as unknown as AppSession;
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(abg);
-    expect(link.log).toEqual([{ simT: 80, kind: 'learner', text: 'Arterial blood gas (learner remote: bed 2 remote) not drawn: the case was paused' }]);
+    expect(link.log).toEqual([{ simT: 80, kind: 'learner', text: 'Arterial blood gas (bed 2 remote) not drawn: the case was paused' }]);
     link.close();
   });
 
@@ -73,10 +74,17 @@ describe('L14: a learner give refused while paused, on the host', () => {
     expect(r.data.rows).toEqual([{ t: 90, kind: 'pump', channel: 1, text: 'Channel 1 started not done: the case was paused', by: PUMP_KEY, name: 'bed 2 pumps', notGiven: PAUSED_REFUSAL }]);
     const hub = createInProcessHub();
     const t: ManagedTransport = hub.connect();
-    const host = { onMount: () => () => undefined, deviceName: names, record: { note: () => undefined } } as unknown as AppSession;
+    const host = { onMount: () => () => undefined, deviceLabel: (k: string, kind: 'pump') => r.label(k, kind), record: { note: () => undefined } } as unknown as AppSession;
     const link = new Link(new ControllerSession({ session: 'LNK234', transport: t }), t, host);
     link.notGiven(start);
-    expect(link.log).toEqual([{ simT: 90, kind: 'learner', text: 'Channel 1 started (pump tablet: bed 2 pumps) not done: the case was paused' }]);
+    expect(link.log).toEqual([{ simT: 90, kind: 'learner', text: 'Channel 1 started (bed 2 pumps) not done: the case was paused' }]);
+    // no name in Room setup: the tablet's number among the pump tablets, as every page reads it
+    const unnamed = new RunRecord(() => ({ patient: 'P', weightKg: 70 }), () => 0, () => null, () => null);
+    const t2: ManagedTransport = hub.connect();
+    const link2 = new Link(new ControllerSession({ session: 'LNK235', transport: t2 }), t2, { ...host, deviceLabel: (k: string, kind: 'pump') => unnamed.label(k, kind) } as unknown as AppSession);
+    link2.notGiven(start);
+    expect(link2.log.at(-1)?.text).toBe('Channel 1 started (Pump tablet 1) not done: the case was paused');
+    link2.close();
     link.close();
   });
 });

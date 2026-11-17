@@ -183,7 +183,7 @@ describe('the infusions menu (L8)', () => {
     expect(row('remifentanil', '.lr-setby')).toBe('set by the instructor at 01:40');
     expect(row('remifentanil', '.lr-dose')).toBe(`${INFUSION_WORDS.doseRunning}: 0.1 µg/kg/min for 64 kg`);
     expect(row('remifentanil', '.lr-rate')).toBe('7.68 mL/h'); // 6.4 µg/min × 60 ÷ 50 µg/mL, the row's syringe the host keeps
-    expect(row('propofol', '.lr-setby')).toBe('set by another learner remote (othe) at 02:10');
+    expect(row('propofol', '.lr-setby')).toBe('set by another learner remote at 02:10');
     expect(row('propofol', '.lr-rate')).toBe('8 mL/h');
     expect(row('propofol', '.lr-dose')).toBe(`${INFUSION_WORDS.doseRunning}: 20.8 µg/kg/min for 64 kg`);
     expect(row('phenylephrine', '.lr-setby')).toBe('set by the case card at 01:05');
