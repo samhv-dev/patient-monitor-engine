@@ -1,0 +1,70 @@
+{
+  "drugId": "bupivacaine",
+  "products": [
+    {
+      "id": "bupivacaine-0-25pct",
+      "form": "solution",
+      "strength": {
+        "amount": 2.5,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-bupivacaine"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    },
+    {
+      "id": "bupivacaine-0-5pct",
+      "form": "solution",
+      "strength": {
+        "amount": 5,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-bupivacaine"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "dailymed-bupivacaine"
+    },
+    {
+      "id": "dextrose5",
+      "listed": false,
+      "src": "dailymed-bupivacaine"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-bupivacaine"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-bupivacaine"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-bupivacaine"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-bupivacaine"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "drugId": "dopamine",
+  "products": [
+    {
+      "id": "dopamine-40mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 40,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-dopamine"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": true,
+      "src": "dailymed-dopamine"
+    },
+    {
+      "id": "dextrose5",
+      "listed": true,
+      "src": "dailymed-dopamine"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-dopamine"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": true,
+      "src": "dailymed-dopamine"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": true,
+      "src": "dailymed-dopamine"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-dopamine"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "drugId": "ropivacaine",
+  "products": [
+    {
+      "id": "naropin-5mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 5,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-naropin"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "dailymed-naropin"
+    },
+    {
+      "id": "dextrose5",
+      "listed": false,
+      "src": "dailymed-naropin"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-naropin"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-naropin"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-naropin"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-naropin"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
