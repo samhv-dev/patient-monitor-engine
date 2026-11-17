@@ -1,0 +1,57 @@
+{
+  "drugId": "dextrose",
+  "products": [
+    {
+      "id": "dextrose-50pct-500mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 500,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-dextrose50"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "dailymed-dextrose50"
+    },
+    {
+      "id": "dextrose5",
+      "listed": false,
+      "src": "dailymed-dextrose50"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-dextrose50"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-dextrose50"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-dextrose50"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-dextrose50"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}
