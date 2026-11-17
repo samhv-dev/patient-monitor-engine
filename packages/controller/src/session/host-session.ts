@@ -443,10 +443,12 @@ export class HostSession {
     });
     // R29: the relay says a peer's socket left; frames are handled in order on this.chain, so the forgetting is too
     const offLeft = t.onPeerLeft?.((from) => void this.inOrder(() => this.forget(t, from)));
+    const offFarewell = t.onFarewell?.((from) => void this.inOrder(() => this.stopCountingShown(t, from)));
     this.transports.set(t, () => {
       offMsg();
       offStatus();
       offLeft?.();
+      offFarewell?.();
     });
     return () => this.detach(t);
   }
@@ -963,6 +965,15 @@ export class HostSession {
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
     if (this.silentVents.get(from) === t) this.silentVents.delete(from); // its socket is gone: nothing more can come from it
+  }
+
+  /**
+   * A same-computer page's farewell: it no longer counts as showing anything (a depth window, for depthRefusal) until its
+   * next hello says so again. Anyone on the channel can send one for any id, so it forgets nothing else (forget() is the
+   * relay's proof that a socket left).
+   */
+  private stopCountingShown(t: ManagedTransport, from: string): void {
+    this.peers.get(t)?.shows.delete(from);
   }
 
   private queue(e: WireEvent): void {

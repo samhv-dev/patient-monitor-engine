@@ -1,10 +1,10 @@
 // BroadcastChannel transport (brief §3.7): same origin, same browser — e.g. an instructor window plus a
 // projector window. The channel is named after the session code; a channel never hears its own posts.
-// A page that closes, reloads or closes its link says so (the relay's `peer-left` frame, for each id it sent as), so
-// the windows still on the channel know who left, as a relay's host does.
+// A page that closes, reloads or closes its link says so (a `peer-left` frame, for each id it sent as). Any page of the
+// origin can post one naming any id, so it is a farewell, not the relay's proof that a socket left: onFarewell, never
+// onPeerLeft.
 import type { ManagedTransport, WireMessage } from '../protocol.ts';
 import { TransportBase } from './base.ts';
-import { isRelayFrame } from './relay-frames.ts';
 
 export type BroadcastChannelCtor = new (name: string) => BroadcastChannel;
 export const channelName = (session: string): string => `pme/${session}`;
@@ -22,9 +22,9 @@ class BroadcastChannelTransport extends TransportBase {
     super();
     this.ch = new Impl(channelName(session));
     this.ch.onmessage = (ev: MessageEvent) => {
-      const o: unknown = ev.data;
-      if (!isRelayFrame(o)) return this.deliver(o);
-      if (o.relay === 'peer-left' && typeof o.id === 'string') this.peerLeft(o.id);
+      const o = ev.data as { relay?: unknown; id?: unknown } | null;
+      if (o?.relay === 'peer-left' && typeof o.id === 'string') return this.farewell(o.id);
+      this.deliver(o); // every other frame is a wire message or rejected
     };
     this.ch.onmessageerror = () => this.rejected++;
     globalThis.addEventListener?.('pagehide', this.leave);
