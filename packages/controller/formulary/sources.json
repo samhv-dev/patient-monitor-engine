@@ -687,5 +687,187 @@
     "holder": "Hospira, Inc.",
     "version": "SPL setid 8664c7ce-707b-4c6c-9ce4-7160b5f877f8, version 6, published 2026-04-08",
     "issuer": "DailyMed"
+  },
+  "dailymed-amiodarone": {
+    "kind": "monograph",
+    "product": "Amiodarone HCl 50 mg/mL vials",
+    "holder": "Fresenius Kabi USA, LLC",
+    "version": "SPL setid d8d04647-8e25-4127-8ecf-360ce1991c2f, version 6, effective 2025-03-31",
+    "issuer": "DailyMed"
+  },
+  "dailymed-atropine": {
+    "kind": "monograph",
+    "product": "Atropine Sulfate 0.1 mg/mL syringe",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid ad8916e7-206e-409e-2582-30d072845dd4, version 31, effective 2026-05-18",
+    "issuer": "DailyMed"
+  },
+  "dailymed-adenosine": {
+    "kind": "monograph",
+    "product": "Adenosine 3 mg/mL vials",
+    "holder": "Mylan Institutional LLC",
+    "version": "SPL setid d2d06ee6-c89f-49f7-9e2c-46d33ce877a9, version 3, effective 2021-06-16",
+    "issuer": "DailyMed"
+  },
+  "dailymed-naloxone": {
+    "kind": "monograph",
+    "product": "Naloxone HCl 0.4 mg/mL vial",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 8535cc84-ad4a-4d67-8480-fb5a2e3406f8, version 35, effective 2026-05-27",
+    "issuer": "DailyMed"
+  },
+  "dailymed-bridion": {
+    "kind": "monograph",
+    "product": "Bridion (sugammadex) 100 mg/mL vials",
+    "holder": "Merck Sharp & Dohme LLC",
+    "version": "SPL setid 5171d883-fe8f-482c-97ab-40b00975b64a, version 26, effective 2026-03-13",
+    "issuer": "DailyMed"
+  },
+  "dailymed-ultiva": {
+    "kind": "monograph",
+    "product": "Ultiva (remifentanil) 1, 2 and 5 mg powder vials",
+    "holder": "Mylan Institutional LLC",
+    "version": "SPL setid 8b4c8696-e23e-4c51-a4d2-babab5bd945a, version 6, effective 2025-12-08",
+    "issuer": "DailyMed"
+  },
+  "dailymed-ketalar": {
+    "kind": "monograph",
+    "product": "Ketalar (ketamine) 10, 50 and 100 mg/mL vials",
+    "holder": "Par Health USA, LLC",
+    "version": "SPL setid 14e8f864-8b8a-4e7e-8439-e510d3107063, version 33, effective 2026-03-27",
+    "issuer": "DailyMed"
+  },
+  "dailymed-precedex": {
+    "kind": "monograph",
+    "product": "Precedex (dexmedetomidine) 100 and 4 mcg/mL vials",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 548a88c0-afda-427e-75ac-5af0cfa2224c, version 59, effective 2026-05-20",
+    "issuer": "DailyMed"
+  },
+  "dailymed-sufentanil": {
+    "kind": "monograph",
+    "product": "Sufentanil Citrate 50 mcg/mL vial",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 20293943-46ff-4345-1aa4-929b4e017a25, version 32, effective 2026-06-01",
+    "issuer": "DailyMed"
+  },
+  "dailymed-vecuronium": {
+    "kind": "monograph",
+    "product": "Vecuronium Bromide for 10 mg vial",
+    "holder": "Hikma Pharmaceuticals USA Inc.",
+    "version": "SPL setid dceeec01-2910-4489-8d70-9c0c711d17ab, version 4, effective 2026-01-29",
+    "issuer": "DailyMed"
+  },
+  "dailymed-cisatracurium": {
+    "kind": "monograph",
+    "product": "Cisatracurium 2 and 10 mg/mL vials",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 67908e20-044d-454d-9c51-bf106e817bd0, version 16, effective 2026-10-14",
+    "issuer": "DailyMed"
+  },
+  "dailymed-atracurium": {
+    "kind": "monograph",
+    "product": "Atracurium Besylate 10 mg/mL vial",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid de1c2dcd-295b-47ce-b7a1-a8be59939a54, version 12, effective 2023-11-23",
+    "issuer": "DailyMed"
+  },
+  "dailymed-levophed": {
+    "kind": "monograph",
+    "product": "Levophed (norepinephrine) 1 mg/mL",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid c4de72a8-2a75-4984-ce90-e4870226dc12, version 20, effective 2025-06-12",
+    "issuer": "DailyMed"
+  },
+  "dailymed-vasostrict": {
+    "kind": "monograph",
+    "product": "Vasostrict (vasopressin) 20 units/mL vial",
+    "holder": "Par Health USA, LLC",
+    "version": "SPL setid b1147beb-743e-4c62-8927-91192447f8b8, version 49, effective 2026-04-21",
+    "issuer": "DailyMed"
+  },
+  "dailymed-dobutamine": {
+    "kind": "monograph",
+    "product": "Dobutamine 12.5 mg/mL vial",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 89becb0c-da60-4f43-0a98-29ff7a9eca58, version 19, effective 2026-05-27",
+    "issuer": "DailyMed"
+  },
+  "dailymed-milrinone": {
+    "kind": "monograph",
+    "product": "Milrinone Lactate 1 mg/mL vials",
+    "holder": "Hikma Pharmaceuticals USA Inc.",
+    "version": "SPL setid 88f78780-399f-4780-be19-205739db1682, version 22, effective 2025-05-08",
+    "issuer": "DailyMed"
+  },
+  "dailymed-dopamine": {
+    "kind": "monograph",
+    "product": "Dopamine HCl 40 mg/mL vial",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 1f306ad2-3606-4525-5a8a-ce78f426c1a2, version 22, effective 2026-05-13",
+    "issuer": "DailyMed"
+  },
+  "dailymed-nitroglycerin": {
+    "kind": "monograph",
+    "product": "Nitroglycerin 5 mg/mL vial",
+    "holder": "American Regent, Inc.",
+    "version": "SPL setid 8c52cdf6-87be-4719-b105-f08be096d462, version 7, effective 2021-07-22",
+    "issuer": "DailyMed"
+  },
+  "dailymed-nitroprusside": {
+    "kind": "monograph",
+    "product": "Sodium Nitroprusside 25 mg/mL vial",
+    "holder": "Mylan Institutional LLC",
+    "version": "SPL setid 6fbfb86c-da8d-4741-b1e0-7000e2bbad5f, version 5, effective 2026-04-15",
+    "issuer": "DailyMed"
+  },
+  "dailymed-brevibloc": {
+    "kind": "monograph",
+    "product": "Brevibloc (esmolol) 10 mg/mL vial",
+    "holder": "Baxter Healthcare Company",
+    "version": "SPL setid 595cc3d5-1306-4828-aefa-5595219ffd62, version 29, effective 2025-03-14",
+    "issuer": "DailyMed"
+  },
+  "dailymed-magnesium": {
+    "kind": "monograph",
+    "product": "Magnesium Sulfate 50% (500 mg/mL)",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid d4b5863a-efb9-4551-a9ad-2b06e8666d87, version 22, effective 2026-04-23",
+    "issuer": "DailyMed"
+  },
+  "dailymed-lidocaine": {
+    "kind": "monograph",
+    "product": "Lidocaine HCl 1% and 2%",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 3b2dd84e-cee8-4e58-d494-395a65a353a0, version 48, effective 2026-10-19",
+    "issuer": "DailyMed"
+  },
+  "dailymed-bupivacaine": {
+    "kind": "monograph",
+    "product": "Bupivacaine HCl 0.25% and 0.5%",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid bb44c7e1-d911-4788-908f-09b7b271969b, version 21, effective 2026-04-14",
+    "issuer": "DailyMed"
+  },
+  "dailymed-humulin-r": {
+    "kind": "monograph",
+    "product": "Humulin R (insulin human) U-100, 100 units/mL vials",
+    "holder": "Eli Lilly and Company",
+    "version": "SPL setid b519bd83-038c-4ec5-a231-a51ec5cc291f, version 35, effective 2026-06-16",
+    "issuer": "DailyMed"
+  },
+  "dailymed-dextrose50": {
+    "kind": "monograph",
+    "product": "Dextrose 50% (500 mg/mL) syringe and vial",
+    "holder": "Hospira, Inc.",
+    "version": "SPL setid 4ed365da-4e62-4329-c1b9-c197ab4fb6e1, version 34, effective 2026-07-13",
+    "issuer": "DailyMed"
+  },
+  "dailymed-naropin": {
+    "kind": "monograph",
+    "product": "Naropin (ropivacaine) 5 mg/mL vial",
+    "holder": "Fresenius Kabi USA, LLC",
+    "version": "SPL setid cb6583ff-cde4-4280-aa5b-0bea2b844792, version 1, effective 2026-07-17",
+    "issuer": "DailyMed"
   }
 }

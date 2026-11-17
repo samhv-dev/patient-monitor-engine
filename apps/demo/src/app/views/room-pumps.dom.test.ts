@@ -8,13 +8,14 @@ import { roomView } from './room.ts';
 
 const quiet = (): ManagedTransport => ({ kind: 'broadcastChannel', status: 'open', send: () => undefined, close: () => undefined, onMessage: () => () => undefined, onStatus: (fn: (s: TransportStatus) => void) => (fn('open'), () => undefined) }) as unknown as ManagedTransport;
 
-function mount(start: PumpKind[]) {
+/** `refuse`: the host's words for a rack it refuses (null: it takes it). */
+function mount(start: PumpKind[], refuse: (k: PumpKind[]) => string | null = () => null) {
   let kinds = start;
   const chosen: PumpKind[][] = [];
   const v = roomView({
     code: 'ABC234', relay: null, relayLink: null, local: quiet(), hostPeerId: 'host-1', learnerUrl: 'about:blank',
     followers: () => 0, onFollowers: () => () => undefined,
-    pumps: { kinds: () => kinds, choose: (k) => void (chosen.push(k), (kinds = k)) },
+    pumps: { kinds: () => kinds, choose: (k) => refuse(k) ?? (chosen.push(k), (kinds = k), null) },
   });
   document.body.replaceChildren(v.el);
   const card = v.el.querySelector('.room-pumps') as HTMLElement;
@@ -46,6 +47,25 @@ describe("A1: Room setup's pump rack", () => {
     change(count(), '2');
     expect(chosen.at(-1)).toEqual(['syringe', 'drip']);
     expect(kindSel()).toHaveLength(2);
+  });
+
+  it("a rack the host refuses keeps the card as it was and says the host's words in an alert; the next change taken clears them", () => {
+    const running = 'Channel 3 is running: stop it first.';
+    const { card, count, kindSel, change, chosen } = mount(['syringe', 'syringe', 'syringe', 'syringe'], (k) => (k.length < 3 || k[2] !== 'syringe' ? running : null));
+    const alert = card.querySelector('[role="alert"]') as HTMLElement;
+    expect(alert.textContent).toBe('');
+    change(count(), '2');
+    expect(alert.textContent).toBe(running);
+    expect(count().value).toBe('4');
+    expect(kindSel()).toHaveLength(4);
+    change(kindSel()[2] as HTMLSelectElement, 'drip');
+    expect(alert.textContent).toBe(running);
+    expect((kindSel()[2] as HTMLSelectElement).value).toBe('syringe');
+    expect(chosen).toEqual([]);
+    change(count(), '3');
+    expect(chosen).toEqual([['syringe', 'syringe', 'syringe']]);
+    expect(alert.textContent).toBe('');
+    expect(kindSel()).toHaveLength(3);
   });
 
   it('says when the setting reaches the tablet, in English', () => {

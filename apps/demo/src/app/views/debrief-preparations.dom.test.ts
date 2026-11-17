@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
 // Plan learner-action-remote.md L13: the Debrief view draws the learner remotes' preparations in a section of its own on
 // page 2, after the violations, from the record (debrief.ts preparationsOf); the timeline and the drugs table name the
-// remote through the session's one name source (AppSession.deviceName, PR 423), never a copy of their own; a run with no
-// learner remote prints no such section and no such words.
+// remote by the name Room setup gives it now, else by the record's number for it; a run with no learner remote prints
+// no such section and no such words. A rate change reads as a change, and a record saved before either still opens.
 import type { Administration, StagedPrep } from '@pme/controller/scenario';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Link } from '../link.ts';
-import { emptyRun, type RunData } from '../record.ts';
+import { emptyRun, type Row, type RunData } from '../record.ts';
 import mhV2 from '../showcase/showcase-mh-v2.json';
 import type { AppSession } from '../session.ts';
 import { debriefView } from './debrief.ts';
@@ -55,7 +55,7 @@ describe('L13: the Debrief view', () => {
     expect(order.indexOf('db-preparations')).toBe(order.indexOf('db-violations') + 1);
     const items = [...(sec?.querySelectorAll('.db-preps > li') ?? [])];
     expect(items).toHaveLength(1);
-    expect(items[0]?.querySelector('.db-prep-head')?.textContent).toMatch(/^01:40 · Learner remote \(bed 2\) staged Dantrolene 120 mg \(5\.31 mg\/mL\) in .+, 22\.6 mL$/);
+    expect(items[0]?.querySelector('.db-prep-head')?.textContent).toMatch(/^01:40 · bed 2 staged Dantrolene 120 mg \(5\.31 mg\/mL\) in .+, 22\.6 mL$/);
     expect(items[0]?.querySelector('.db-prep-ready')?.textContent).toMatch(/^Ready at 02:30 \(.+\)$/);
     expect([...(items[0]?.querySelectorAll('.db-prep-give') ?? [])].map((x) => x.textContent)).toEqual(['Given at 02:40: Dantrolene 120 mg active of 120 mg prepared (100 % intact)']);
   });
@@ -64,8 +64,19 @@ describe('L13: the Debrief view', () => {
     const v = open(remoteRun(), (k) => (k === KEY ? 'bed 2' : null));
     leave = v.leave;
     const line = [...v.el.querySelectorAll('#db-timeline tbody tr[data-kind="learner"] td:last-child')].map((x) => x.textContent);
-    expect(line).toEqual(['Dantrolene 120 mg IV at 02:40, by Learner remote (bed 2)']);
-    expect([...v.el.querySelectorAll('#db-drugs tbody td:last-child')].map((x) => x.textContent)).toEqual(['Dantrolene 120 mg IV, by Learner remote (bed 2)']);
+    expect(line).toEqual(['Dantrolene 120 mg IV at 02:40, by bed 2']);
+    expect([...v.el.querySelectorAll('#db-drugs tbody td:last-child')].map((x) => x.textContent)).toEqual(['Dantrolene 120 mg IV, by bed 2']);
+  });
+
+  it("no name in Room setup: the record's number for the remote, as the Log and the Room page say it; never its key", () => {
+    const d = remoteRun();
+    d.rows = d.rows.map(({ name: _n, ...r }) => r);
+    d.devices = { learner: ['otherphone01', KEY] };
+    const v = open(d);
+    leave = v.leave;
+    expect([...v.el.querySelectorAll('#db-timeline tbody tr[data-kind="learner"] td:last-child')].map((x) => x.textContent)).toEqual(['Dantrolene 120 mg IV at 02:40, by Learner remote 2']);
+    expect(v.el.querySelector('.db-prep-head')?.textContent).toMatch(/^01:40 · Learner remote 2 staged /);
+    expect(v.el.textContent).not.toContain(KEY);
   });
 
   it('no learner remote: no Preparations section, and no learner words anywhere', () => {
@@ -77,5 +88,59 @@ describe('L13: the Debrief view', () => {
     leave = v.leave;
     expect(v.el.querySelector('#db-preparations')).toBeNull();
     expect(v.el.textContent).not.toMatch(/Learner remote|staged|Notice (not )?shown/);
+  });
+});
+
+describe("the Debrief view: an infusion's start, change and stop, and who acted", () => {
+  let leave: (() => void) | undefined;
+  afterEach(() => (leave?.(), document.body.replaceChildren()));
+  const PUMP = 'pumptab0001';
+  const run = (): RunData => {
+    const d = emptyRun('P', 70);
+    const inf = (t: number, text: string) => d.rows.push({ t, kind: 'learner', remote: true, by: KEY, text, ev: 'drug:phenylephrine' });
+    inf(60, 'Phenylephrine 10 mL/h infusion started');
+    inf(90, 'Phenylephrine infusion rate changed from 10 to 20 mL/h');
+    (d.rows.at(-1) as Row).replaced = { rate: 10, rateUnit: 'mL/h', by: 'laptop' };
+    inf(120, 'Phenylephrine infusion stopped');
+    d.rows.push({ t: 130, kind: 'pump', channel: 2, by: PUMP, text: 'Channel 2 (Propofol): rate changed from 20 to 30 mL/h', ev: 'drug:propofol' });
+    d.devices = { learner: [KEY], pump: [PUMP] };
+    for (let t = 0; t <= 200; t++) d.samples.push({ t, hr: 80, map: 80, spo2: 98, etco2: 40, rr: 12, temp: 37, k: null, lactate: null, ph: null, glucose: null, tcore: null });
+    return d;
+  };
+  const timeline = (el: HTMLElement) => [...el.querySelectorAll('#db-timeline tbody tr td:last-child')].map((x) => x.textContent);
+
+  it('the timeline says a start, a change with the rate it replaced and whose it was, a stop, and the pump tablet by its number', () => {
+    const v = open(run());
+    leave = v.leave;
+    expect(timeline(v.el)).toEqual([
+      'Phenylephrine 10 mL/h infusion started at 01:00, by Learner remote 1',
+      "Phenylephrine infusion rate changed from 10 to 20 mL/h at 01:30, by Learner remote 1, replacing the instructor's rate",
+      'Phenylephrine infusion stopped at 02:00, by Learner remote 1',
+      'Channel 2 (Propofol): rate changed from 20 to 30 mL/h, by Pump tablet 1',
+    ]);
+    expect([...v.el.querySelectorAll('#db-drugs tbody td:last-child')].map((x) => x.textContent)).toEqual([
+      'Phenylephrine 10 mL/h infusion started, by Learner remote 1',
+      'Phenylephrine infusion rate changed from 10 to 20 mL/h, by Learner remote 1',
+      'Phenylephrine infusion stopped, by Learner remote 1',
+      'Channel 2 (Propofol): rate changed from 20 to 30 mL/h, by Pump tablet 1',
+    ]);
+    // the totals count boluses: a rate change adds none
+    expect(v.el.querySelector('.db-totals')).toBeNull();
+  });
+
+  it('a record saved before device numbers and rate changes were kept still opens: its words, the replaced rate, the remotes in row order', () => {
+    const d = run();
+    delete d.devices;
+    d.keeps = ['pressures', 'alarmEnd', 'cprStop', 'recognised'];
+    const change = d.rows[1] as Row;
+    change.text = 'Phenylephrine 20 mL/h infusion started';
+    const v = open(JSON.parse(JSON.stringify(d)) as RunData);
+    leave = v.leave;
+    expect(timeline(v.el)).toEqual([
+      'Phenylephrine 10 mL/h infusion started at 01:00, by Learner remote 1',
+      "Phenylephrine 20 mL/h infusion started at 01:30, by Learner remote 1, replacing the instructor's 10 mL/h",
+      'Phenylephrine infusion stopped at 02:00, by Learner remote 1',
+      'Channel 2 (Propofol): rate changed from 20 to 30 mL/h, by Pump tablet 1',
+    ]);
   });
 });

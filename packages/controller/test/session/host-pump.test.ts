@@ -422,6 +422,67 @@ describe('C2, D9: a remote and the Drug sheet change a drug on its one channel, 
   });
 });
 
+describe("Room setup's rack never removes or changes a channel in use", () => {
+  const S4: Array<'syringe' | 'drip'> = ['syringe', 'syringe', 'syringe', 'syringe'];
+  const row = (ch: number, state: string) => ({ ch, kind: 'syringe', state });
+  const drugs = (x: ReturnType<typeof setup>, pumps: unknown[]) => x.tg.emit({ type: 'drugs', t: 1, drugs: [], volatile: null, macTotal: 0, pumps } as never);
+
+  it('an empty, idle rack takes any count and any kind', async () => {
+    const x = setup({ rack: S4 });
+    expect(x.host.pumpRackRefusal(['syringe'])).toBeNull();
+    expect(x.host.pumpRackRefusal(['drip', 'drip'])).toBeNull();
+  });
+
+  it('a running channel 3 refuses a count of 2 and a change of its kind, with the words that say why; a count that keeps it, or a change to an empty channel, is taken', async () => {
+    const x = setup({ rack: S4 });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 3);
+    expect((await p.send({ action: 'rate', ch: 3, rate: 10, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 3 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 3 is running: stop it first.');
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe', 'drip', 'syringe'])).toBe('Channel 3 is running: stop it first.');
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe', 'syringe'])).toBeNull();
+    expect(x.host.pumpRackRefusal(['syringe', 'drip', 'syringe', 'syringe'])).toBeNull();
+  });
+
+  it('stopped, the channel is still loaded and still refused; unloaded, it can go', async () => {
+    const x = setup({ rack: S4 });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 3);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 3 is loaded: unload it first.');
+    expect((await p.send({ action: 'rate', ch: 3, rate: 10, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 3 })).accepted).toBe(true);
+    expect((await p.send({ action: 'stop', ch: 3 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 3 is loaded: unload it first.');
+    expect((await p.send({ action: 'unload', ch: 3 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBeNull();
+  });
+
+  it('a running channel is named before a loaded one; two of a kind are named together', async () => {
+    const x = setup({ rack: S4 });
+    const p = await pumpIn(x);
+    await propofolChannel(p, 3);
+    await propofolChannel(p, 4);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channels 3 and 4 are loaded: unload them first.');
+    expect((await p.send({ action: 'rate', ch: 4, rate: 10, unit: 'mL/h' })).accepted).toBe(true);
+    expect((await p.send({ action: 'start', ch: 4 })).accepted).toBe(true);
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe'])).toBe('Channel 4 is running: stop it first.');
+  });
+
+  it("the engine's own rows count for a channel the host's table does not hold (a restored bookmark), and a restart ends them", async () => {
+    const x = setup({ rack: S4 });
+    drugs(x, [row(1, 'notLoaded'), row(2, 'alarm'), row(3, 'running'), row(4, 'paused')]);
+    expect(x.host.pumpRackRefusal(['syringe'])).toBe('Channel 3 is running: stop it first.');
+    drugs(x, [row(1, 'notLoaded'), row(2, 'alarm'), row(3, 'loaded'), row(4, 'paused')]);
+    expect(x.host.pumpRackRefusal(['syringe'])).toBe('Channels 2, 3 and 4 are loaded: unload them first.');
+    expect(x.host.pumpRackRefusal(['syringe', 'syringe', 'syringe', 'syringe'])).toBeNull();
+    x.host.newTimeline('restore');
+    expect(x.host.pumpRackRefusal(['syringe'])).toBe('Channels 2, 3 and 4 are loaded: unload them first.');
+    x.host.newTimeline('restart');
+    expect(x.host.pumpRackRefusal(['syringe'])).toBeNull();
+  });
+});
+
 describe('C2, §8 and PQ8 = A: the mismatch finding reaches the instructor, and the pump only with the notice', () => {
   it('propofol 10 mg/mL programmed as phenylephrine: a finding to the instructor\'s screens at once; the pump hears of it when the instructor shows it', async () => {
     const x = setup();
@@ -502,7 +563,7 @@ describe('C2: the pump tablet\'s admission and its news', () => {
     await pumpIn(x);
     expect(x.host.pumpTablets()).toBe(1);
     expect(x.host.learnerRemotes()).toBe(0);
-    x.host.learnerPinChanged();
+    await x.host.learnerPinChanged();
     await waitFor(() => grants(x.got, 'pump.1').at(-1)?.granted === false);
     expect(x.host.pumpTablets()).toBe(0);
   });
@@ -524,5 +585,16 @@ describe('C2: the pump tablet\'s admission and its news', () => {
     const labels = prepsTo(x.got, 'pump.1').filter((e) => (e.body as { news: string }).news === 'labels').at(-1)?.body as { labels: Array<Record<string, unknown>> };
     expect(labels.labels[0]).toMatchObject({ device: REMOTE_KEY, id: 's0000002', drugId: 'fentanyl', container: 'syringe-pp', volumeMl: 2 });
     expect(labels.labels[0]).not.toHaveProperty('findings');
+    expect(labels.labels[0]).not.toHaveProperty('name'); // no name source: the tablet says "a learner remote"
+  });
+
+  it("a preparation's label carries its maker's name from the host's name source, so the tablet never shows a device key", async () => {
+    const x = setup({ deviceName: (k) => (k === REMOTE_KEY ? 'Learner remote 1' : null) });
+    await pumpIn(x);
+    const lr = await remoteIn(x);
+    expect((await lr.send({ type: 'prep', action: 'stage', prep: { id: 's0000003', components: [{ productId: 'fentanyl-50mcg-ml', amount: 2, unit: 'mL' }], container: 'syringe-pp' } })).accepted).toBe(true);
+    await waitFor(() => prepsTo(x.got, 'pump.1').some((e) => (e.body as { news: string }).news === 'labels'));
+    const labels = prepsTo(x.got, 'pump.1').filter((e) => (e.body as { news: string }).news === 'labels').at(-1)?.body as { labels: Array<Record<string, unknown>> };
+    expect(labels.labels[0]).toMatchObject({ device: REMOTE_KEY, name: 'Learner remote 1', id: 's0000003' });
   });
 });

@@ -69,11 +69,11 @@ type HostW = {
 };
 
 /** The laptop on free roam with the room's rack (two syringe channels, a drip one, a syringe one) and Room setup's names. */
-async function laptop(page: Page): Promise<{ code: string; pin: string }> {
+async function laptop(page: Page, pumpRack = ['syringe', 'syringe', 'drip', 'syringe']): Promise<{ code: string; pin: string }> {
   await page.setViewportSize({ width: 1440, height: 900 });
   const names = { [REMOTE]: { name: 'bed 2 remote', show: 'remote' }, [PUMPS]: { name: 'bed 2 pumps', show: 'pump' } };
   await page.addInitScript((n) => localStorage.setItem('pme.roomLayout', JSON.stringify(Object.fromEntries(Object.entries(n).map(([k, v]) => [k, { ...v, lastSeen: Date.now() }])))), names);
-  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/teach2`, { warmMs: 1500, site: { schema: 'pme-site/1', pumpRack: ['syringe', 'syringe', 'drip', 'syringe'] } });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/teach2`, { warmMs: 1500, site: { schema: 'pme-site/1', pumpRack } });
   const code = await page.evaluate(() => (window as unknown as HostW).__pmeApp.session.code);
   const pin = (await page.evaluate(() => localStorage.getItem('pme.learnerPin'))) as string;
   // the host ENGINE's own `drugs` event, kept as it last came (the patient's drugs and the pump channels)
@@ -151,7 +151,7 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   // Load (D2 item 1): the remote's preparation by its LABEL, on channel 2
   await flow(p, 2, 'load', async (form) => {
     const source = form.locator('select[name="source"]');
-    await expect(source.locator('option').first()).toHaveText(/^Propofol 10 mg\/mL · 20 mL · made on bed2remote01 at \d\d:\d\d$/);
+    await expect(source.locator('option').first()).toHaveText(/^Propofol 10 mg\/mL · 20 mL · made on bed 2 remote at \d\d:\d\d$/);
     await source.selectOption(`prep|${REMOTE}|${remote.id}`);
   }, '201-load');
   await expect(said(p, 2)).toHaveText('Loaded on channel 2.', { timeout: 10_000 });
@@ -200,15 +200,15 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   const b = (await engine(page))!;
   expect(b.drugs.find((d) => d.id === 'propofol')!.ce).toBeGreaterThan(0);
   // the tablet shows the pump's prediction only, the programme's fields; never the patient's
-  await expect(p.locator('.pump-face[data-ch="2"] [data-field="tciSet"] dd')).toHaveText('eleveld');
+  await expect(p.locator('.pump-face[data-ch="2"] [data-field="tciSet"] dd')).toHaveText('Eleveld');
 
   // The laptop's record rows and Log lines name the tablet and the channel
-  await expect.poll(async () => (await rows(page)).filter((r) => r.kind === 'pump' && r.channel === 2).map((r) => r.text), { timeout: 10_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/^Channel 2: TCI eleveld, Ce target 3/)]));
-  const tciRow = (await rows(page)).find((r) => r.kind === 'pump' && r.channel === 2 && /TCI eleveld/.test(r.text))!;
+  await expect.poll(async () => (await rows(page)).filter((r) => r.kind === 'pump' && r.channel === 2).map((r) => r.text), { timeout: 10_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/^Channel 2: TCI Eleveld, Ce target 3 µg\/mL/)]));
+  const tciRow = (await rows(page)).find((r) => r.kind === 'pump' && r.channel === 2 && /TCI Eleveld/.test(r.text))!;
   expect(tciRow).toMatchObject({ by: PUMPS, name: 'bed 2 pumps', ev: 'drug:propofol' });
   await expect.poll(() => logLines(page), { timeout: 10_000 }).toEqual(expect.arrayContaining([
-    'learner|Channel 2: TCI eleveld, Ce target 3 (pump tablet: bed 2 pumps)',
-    'learner|Channel 2 started (pump tablet: bed 2 pumps)',
+    'learner|Channel 2: TCI Eleveld, Ce target 3 µg/mL (bed 2 pumps)',
+    'learner|Channel 2 (Propofol) started (bed 2 pumps)',
   ]));
 
   // A refusal is the host's words: 400 mL/h with a 20 mL stock syringe is past the SP-500's 300
@@ -244,7 +244,7 @@ test("A2: a remote's propofol loaded on channel 2 runs Eleveld Ce 3 µg/mL in th
   // the instructor's card at once; the pump says nothing of it (§8: the pump never warns by itself)
   const card = page.locator('.ip2-dock .ip2-pm');
   await expect(card).toBeVisible({ timeout: 10_000 });
-  await expect(card.locator('.ip2-pm-what')).toHaveText('Channel 1 (pump tablet: bed 2 pumps): syringe and programme differ. Loaded: Phenylephrine 100 µg/mL; programmed: Propofol 10 mg/mL.');
+  await expect(card.locator('.ip2-pm-what')).toHaveText('Channel 1 (bed 2 pumps): syringe and programme differ. Loaded: Phenylephrine 100 µg/mL; programmed: Propofol 10 mg/mL.');
   await expect(p.locator('.pump-face[data-ch="1"] .pf-notice')).toBeHidden();
   expect(await p.content()).not.toMatch(/phenylephrine 100|100 µg\/mL/i); // the label listed it; the face shows the programme only
   if (process.env.PME_A2_SHOTS) await card.screenshot({ path: `${process.env.PME_A2_SHOTS}/201-card-${browserName}.png` });
@@ -297,3 +297,45 @@ test('the pump tablet: a channel button held while Room setup adds a channel tak
   await ctx.close();
 });
 
+
+test('Room setup refuses a channel count that removes a running channel, in its own words; the tablet and the engine keep it; unloaded, it goes', async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  await relayProcess();
+  const { code, pin } = await laptop(page, ['syringe', 'syringe', 'syringe', 'syringe']);
+  const { ctx, p } = await pumpTablet(browser, code, pin);
+  await flow(p, 3, 'load', async (form) => void (await form.locator('select[name="source"]').selectOption('stock|propofol-10mg-ml-50ml')));
+  await expect(said(p, 3)).toHaveText('Loaded on channel 3.', { timeout: 10_000 });
+  await flow(p, 3, 'program', async (form) => {
+    await form.locator('select[name="drugId"]').selectOption('propofol');
+    await form.locator('input[name="amount"]').fill('10');
+    await form.locator('select[name="unit"]').selectOption('mg');
+    await form.locator('input[name="perMl"]').fill('1');
+  });
+  await expect(said(p, 3)).toHaveText('Programmed on channel 3.', { timeout: 10_000 });
+  await flow(p, 3, 'rate', async (form) => void (await form.locator('input[name="rate"]').fill('10')));
+  await expect(said(p, 3)).toHaveText('Rate set on channel 3.', { timeout: 10_000 });
+  await p.locator('.pump-face[data-ch="3"] .pf-btn[data-flow="start"]').click();
+  await expect(said(p, 3)).toHaveText('Started on channel 3.', { timeout: 10_000 });
+  await expect(p.locator('.pump-face[data-ch="3"]')).toHaveAttribute('data-state', 'running', { timeout: 10_000 });
+
+  await page.evaluate(() => (location.hash = '#/room'));
+  const card = page.locator('.room-pumps');
+  await card.locator('select[data-pumps="count"]').selectOption('2');
+  await expect(card.getByRole('alert')).toHaveText('Channel 3 is running: stop it first.');
+  await expect(card.locator('select[data-pumps="count"]')).toHaveValue('4');
+  await expect(card.locator('select[data-pumps="kind"]')).toHaveCount(4);
+  await expect(p.locator('.pump-face')).toHaveCount(4);
+  expect((await engine(page))?.pumps.find((c) => c.ch === 3)?.state).toBe('running');
+
+  await p.locator('.pump-face[data-ch="3"] .pf-btn[data-flow="start"]').click();
+  await expect(said(p, 3)).toHaveText('Stopped on channel 3.', { timeout: 10_000 });
+  await card.locator('select[data-pumps="count"]').selectOption('2');
+  await expect(card.getByRole('alert')).toHaveText('Channel 3 is loaded: unload it first.');
+  await p.locator('.pump-face[data-ch="3"] .pf-btn[data-flow="unload"]').click();
+  await expect(said(p, 3)).toHaveText('Unloaded from channel 3.', { timeout: 10_000 });
+  await card.locator('select[data-pumps="count"]').selectOption('2');
+  await expect(card.getByRole('alert')).toHaveText('');
+  await expect(card.locator('select[data-pumps="kind"]')).toHaveCount(2);
+  await expect(p.locator('.pump-face')).toHaveCount(2);
+  await ctx.close();
+});

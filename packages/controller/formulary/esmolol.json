@@ -1,0 +1,57 @@
+{
+  "drugId": "esmolol",
+  "products": [
+    {
+      "id": "brevibloc-10mg-ml",
+      "form": "solution",
+      "strength": {
+        "amount": 10,
+        "unit": "mg",
+        "perVial": false,
+        "src": "dailymed-brevibloc"
+      },
+      "prepTime": {
+        "gap": "LQ7"
+      }
+    }
+  ],
+  "diluents": [
+    {
+      "id": "saline",
+      "listed": false,
+      "src": "dailymed-brevibloc"
+    },
+    {
+      "id": "dextrose5",
+      "listed": false,
+      "src": "dailymed-brevibloc"
+    },
+    {
+      "id": "water",
+      "listed": false,
+      "src": "dailymed-brevibloc"
+    },
+    {
+      "id": "ringerLactate",
+      "listed": false,
+      "src": "dailymed-brevibloc"
+    },
+    {
+      "id": "dextrose5Saline",
+      "listed": false,
+      "src": "dailymed-brevibloc"
+    },
+    {
+      "id": "dextrose4Saline018",
+      "listed": false,
+      "src": "dailymed-brevibloc"
+    }
+  ],
+  "admixtures": [],
+  "stability": [],
+  "has": {
+    "stabilis": false,
+    "trissel": false,
+    "monograph": true
+  }
+}

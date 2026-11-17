@@ -1,6 +1,7 @@
 // Plan pump-rack-tci.md D12, piece S1: the reference pumps' device profiles (`packages/controller/pump-devices/`), as
 // sourced data. Every number sits in an object whose `src` is a row id of research/50-pump-reference-devices.md (the
-// catalogue and its page), or the field is a `gap` naming what the operator manual must give. The host (piece C2) checks
+// catalogue and its page) or, for the SP5 TCI's brochure, of research/84-sp5-tci-brochure-readings.md, or the field is
+// a `gap` naming what the operator manual must give. The host (piece C2) checks
 // every pump command against these profiles and resolves the bolus and purge rates the engine needs; the pump face (A1)
 // draws its ranges from them. This module reads no file, so it runs in the browser as in Node; the CI check
 // (test/formulary/sources.test.ts) runs it on the shipped folder, with the JSON Schema and the rows of research/50.
@@ -9,8 +10,8 @@
  *  `ot-701`, a TCI channel `sp5-tci` for its TCI numbers and `sp-500` for the rest (D12). */
 export const PUMP_DEVICE_IDS = ['sp-500', 'ot-701', 'sp5-tci'] as const;
 export type PumpDeviceId = (typeof PUMP_DEVICE_IDS)[number];
-/** Each device's rows in research/50: SP-nn, OT-nn, TC-nn. */
-const ROW_PREFIX: Record<PumpDeviceId, string> = { 'sp-500': 'SP', 'ot-701': 'OT', 'sp5-tci': 'TC' };
+/** Each device's rows: SP-nn, OT-nn, TC-nn in research/50; TB-nn (the SP5 TCI's brochure) in research/84. */
+const ROW_PREFIX: Record<PumpDeviceId, string> = { 'sp-500': 'SP', 'ot-701': 'OT', 'sp5-tci': 'TC|TB' };
 /** A string in a profile is our words or a few printed ones, never a copied catalogue passage [ENG: test; as the formulary's MAX_STATEMENT]. */
 export const MAX_DEVICE_TEXT = 200;
 
@@ -94,7 +95,21 @@ export interface Ot701Profile {
   alarms: Names;
 }
 
-/** Mindray BeneFusion SP5 TCI: the maker's page gives its TCI features; every mechanical number is a gap. */
+/** One model of the SP5 TCI's library, named as the brochure writes it, with the targets and the age column it prints. */
+export interface Sp5TciModel extends RowSourced {
+  name: string;
+  targets: Array<'plasma' | 'effect-site'>;
+  ageYears: RowSourced & { min: number; max: number };
+}
+/** One drug of the SP5 TCI's library: its concentrations (a list or a range), its target range and its models. */
+export interface Sp5TciDrug extends RowSourced {
+  drugId: string;
+  concentration: RowSourced & { unit: 'mg/mL' | 'µg/mL' | 'ng/mL' } & ({ values: number[] } | { min: number; max: number });
+  targetRange: RowSourced & { min: number; max: number; unit: 'µg/mL' | 'ng/mL' };
+  models: Sp5TciModel[];
+}
+
+/** Mindray BeneFusion SP5 TCI: the maker's page and brochure give its TCI library; every mechanical number is a gap. */
 export interface Sp5TciProfile {
   deviceId: 'sp5-tci';
   maker: string;
@@ -103,13 +118,16 @@ export interface Sp5TciProfile {
   tci: {
     modes: Names;
     targets: Names;
-    drugs: RowSourced & { count: number; which: DeviceGap };
-    protocols: RowSourced & { count: number; which: DeviceGap };
+    drugs: RowSourced & { count: number };
+    protocols: RowSourced & { count: number };
+    library: Sp5TciDrug[];
     maxRate: DeviceGap;
     patient: DeviceGap;
-    targetRange: DeviceGap;
+    targetStep: DeviceGap;
   };
-  syringes: DeviceGap;
+  syringes: RowSourced & { ml: number[] };
+  /** ± pct at atLeastMlH and above, ± belowPct below it. */
+  accuracy: RowSourced & { pct: number; atLeastMlH: number; belowPct: number };
   rate: DeviceGap;
   bolus: DeviceGap;
   purge: DeviceGap;
@@ -174,14 +192,14 @@ export function checkPumpDevices(files: PumpDeviceFiles): PumpDeviceProblem[] {
       continue;
     }
     if (data.deviceId !== stem) no(file, '/deviceId', `the file's id "${String(data.deviceId)}" is not its name "${stem}"`);
-    const row = new RegExp(`^${ROW_PREFIX[stem]}-\\d{2}$`);
+    const row = new RegExp(`^(${ROW_PREFIX[stem]})-\\d{2}$`);
     for (const n of numbers(data)) if (!n.owner || (!('src' in n.owner) && !('gap' in n.owner))) no(file, n.path, 'a number with no src beside it (a gap holds none)');
     for (const { o, path } of objects(data)) {
       if ('gap' in o) {
         if ([...numbers(o)].length || 'src' in o) no(file, path, 'a gap holds no number and no src: a number needs its row');
         if (typeof o.gap !== 'string' || o.gap.trim() === '' || o.gap.length > MAX_DEVICE_TEXT) no(file, `${path}/gap`, `a gap names what the manual must give (1–${MAX_DEVICE_TEXT} characters)`);
       }
-      if ('src' in o && (typeof o.src !== 'string' || !row.test(o.src))) no(file, `${path}/src`, `"${String(o.src)}" is not a row of this device in research/50 (${ROW_PREFIX[stem]}-nn)`);
+      if ('src' in o && (typeof o.src !== 'string' || !row.test(o.src))) no(file, `${path}/src`, `"${String(o.src)}" is not a row of this device (${ROW_PREFIX[stem]}-nn)`);
     }
     for (const { path, s } of strings(data)) if (s.length > MAX_DEVICE_TEXT && !path.endsWith('/gap')) no(file, path, `${s.length} characters: at most ${MAX_DEVICE_TEXT}, our words or a few printed ones`);
   }
