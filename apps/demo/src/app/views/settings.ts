@@ -43,8 +43,13 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
       setDrugNames(site.drugNames);
       save('Site profile imported');
       skin();
-      session?.setDefibModel(site.defibModel); // the room's defibrillator model comes with the profile (R5b)
-      session?.setEegModel(site.eegModel); // and its depth-of-anaesthesia device (E12)
+      // the room's defibrillator model (R5b), its depth-of-anaesthesia device (E12) and its pump rack come with the
+      // profile; one the host refuses (a device in use) stays as it is, and the profile says so
+      if (!session) return;
+      const refused = [session.setDefibModel(site.defibModel), session.setEegModel(site.eegModel), session.setPumpRack(site.pumpRack)].filter((w) => w !== null);
+      if (refused.length === 0) return;
+      Object.assign(site, { defibModel: session.defibModel, eegModel: session.eegModel, pumpRack: [...session.pumpRack] });
+      save(refused.join(' '));
     } catch {
       toast('That file is not a site profile');
     }

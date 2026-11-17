@@ -59,7 +59,7 @@ const STEP_EPS = 1e-6;
 /** µg per unit of mass; units and mmol stand alone. */
 const MASS: Readonly<Record<string, number>> = { g: 1e6, mg: 1000, mcg: 1 };
 const CONC_UNITS: ReadonlySet<string> = new Set(['mg', 'mcg', 'g', 'units', 'mmol']);
-const list = (xs: readonly (string | number)[]): string => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`);
+export const list = (xs: readonly (string | number)[]): string => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`);
 const fix = (n: number): number => +n.toFixed(3);
 export const deviceName = (d: { maker: string; model: string }): string => `${d.maker} ${d.model}`;
 
